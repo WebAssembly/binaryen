@@ -42,10 +42,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
 	i32.const	$push2=, 1
-	i32.store	$discard=, i($pop7), $pop2
+	i32.store	$drop=, i($pop7), $pop2
 	i32.const	$push6=, 0
 	i64.const	$push0=, 184683593727
-	i64.store	$discard=, a($pop6):p2align=2, $pop0
+	i64.store	$drop=, a($pop6):p2align=2, $pop0
 	block
 	i32.const	$push1=, a
 	i32.call	$push3=, foo@FUNCTION, $pop1

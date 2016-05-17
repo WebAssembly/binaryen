@@ -8,7 +8,7 @@ func0:                                  # @func0
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, dummy($pop0), $pop1
+	i32.store	$drop=, dummy($pop0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -79,21 +79,21 @@ func1:                                  # @func1
 	i32.store16	$7=, w2($pop19), $pop7
 	call    	func0@FUNCTION
 	i32.const	$push18=, 0
-	i32.store16	$discard=, w3+6($pop18), $0
+	i32.store16	$drop=, w3+6($pop18), $0
 	i32.const	$push17=, 0
-	i32.store16	$discard=, w3+4($pop17), $1
+	i32.store16	$drop=, w3+4($pop17), $1
 	i32.const	$push16=, 0
-	i32.store16	$discard=, w3+2($pop16), $2
+	i32.store16	$drop=, w3+2($pop16), $2
 	i32.const	$push15=, 0
-	i32.store16	$discard=, w3($pop15), $3
+	i32.store16	$drop=, w3($pop15), $3
 	i32.const	$push14=, 0
-	i32.store16	$discard=, w4+6($pop14), $6
+	i32.store16	$drop=, w4+6($pop14), $6
 	i32.const	$push13=, 0
-	i32.store16	$discard=, w4+4($pop13), $5
+	i32.store16	$drop=, w4+4($pop13), $5
 	i32.const	$push12=, 0
-	i32.store16	$discard=, w4+2($pop12), $4
+	i32.store16	$drop=, w4+2($pop12), $4
 	i32.const	$push11=, 0
-	i32.store16	$discard=, w4($pop11), $7
+	i32.store16	$drop=, w4($pop11), $7
 	return
 	.endfunc
 .Lfunc_end1:
@@ -164,21 +164,21 @@ func2:                                  # @func2
 	i32.store16	$7=, z2($pop19), $pop7
 	call    	func1@FUNCTION
 	i32.const	$push18=, 0
-	i32.store16	$discard=, z3+6($pop18), $0
+	i32.store16	$drop=, z3+6($pop18), $0
 	i32.const	$push17=, 0
-	i32.store16	$discard=, z3+4($pop17), $1
+	i32.store16	$drop=, z3+4($pop17), $1
 	i32.const	$push16=, 0
-	i32.store16	$discard=, z3+2($pop16), $2
+	i32.store16	$drop=, z3+2($pop16), $2
 	i32.const	$push15=, 0
-	i32.store16	$discard=, z3($pop15), $3
+	i32.store16	$drop=, z3($pop15), $3
 	i32.const	$push14=, 0
-	i32.store16	$discard=, z4+6($pop14), $6
+	i32.store16	$drop=, z4+6($pop14), $6
 	i32.const	$push13=, 0
-	i32.store16	$discard=, z4+4($pop13), $5
+	i32.store16	$drop=, z4+4($pop13), $5
 	i32.const	$push12=, 0
-	i32.store16	$discard=, z4+2($pop12), $4
+	i32.store16	$drop=, z4+2($pop12), $4
 	i32.const	$push11=, 0
-	i32.store16	$discard=, z4($pop11), $7
+	i32.store16	$drop=, z4($pop11), $7
 	return
 	.endfunc
 .Lfunc_end2:

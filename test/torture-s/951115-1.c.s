@@ -10,7 +10,7 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, var($pop0), $pop1
+	i32.store	$drop=, var($pop0), $pop1
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -26,7 +26,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, var($pop0), $pop1
+	i32.store	$drop=, var($pop0), $pop1
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -41,7 +41,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, var($pop1), $pop0
+	i32.store	$drop=, var($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

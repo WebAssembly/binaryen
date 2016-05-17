@@ -23,7 +23,7 @@ baz:                                    # @baz
 f1:                                     # @f1
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, bar@FUNCTION
+	i32.call	$drop=, bar@FUNCTION
 	i32.const	$push0=, 17
 	return  	$pop0
 	.endfunc
@@ -37,7 +37,7 @@ bar:                                    # @bar
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, bar.b
-	i32.call	$discard=, baz@FUNCTION, $pop0
+	i32.call	$drop=, baz@FUNCTION, $pop0
 .Ltmp0:                                 # Block address taken
 # BB#1:                                 # %addr
 	return  	$0
@@ -52,7 +52,7 @@ bar:                                    # @bar
 f2:                                     # @f2
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, bar@FUNCTION
+	i32.call	$drop=, bar@FUNCTION
 	i32.const	$push0=, 17
 	return  	$pop0
 	.endfunc
@@ -66,10 +66,10 @@ f2:                                     # @f2
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, f1@FUNCTION
-	i32.call	$discard=, f1@FUNCTION
-	i32.call	$discard=, f2@FUNCTION
-	i32.call	$discard=, f2@FUNCTION
+	i32.call	$drop=, f1@FUNCTION
+	i32.call	$drop=, f1@FUNCTION
+	i32.call	$drop=, f2@FUNCTION
+	i32.call	$drop=, f2@FUNCTION
 	i32.const	$push0=, 0
 	return  	$pop0
 	.endfunc

@@ -18,13 +18,13 @@ f:                                      # @f
 	i32.load	$4=, 0($pop2)
 	i32.load	$3=, 12($0)
 	i32.load	$push0=, 0($6)
-	i32.store	$discard=, 8($6), $pop0
+	i32.store	$drop=, 8($6), $pop0
 	i32.load	$1=, 4($6)
-	i32.store	$discard=, 0($6), $4
-	i32.store	$discard=, 0($5), $3
-	i32.store	$discard=, 12($0), $2
-	i32.store	$discard=, 4($0), $1
-	i32.store	$discard=, 0($0), $6
+	i32.store	$drop=, 0($6), $4
+	i32.store	$drop=, 0($5), $3
+	i32.store	$drop=, 12($0), $2
+	i32.store	$drop=, 4($0), $1
+	i32.store	$drop=, 0($0), $6
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.load	$0=, main.sc($pop6)
 	i32.const	$push5=, 0
 	i32.const	$push1=, 11
-	i32.store	$discard=, main.sc($pop5), $pop1
+	i32.store	$drop=, main.sc($pop5), $pop1
 	block
 	i32.const	$push4=, 0
 	i32.store	$push0=, main.sc+8($pop4), $0

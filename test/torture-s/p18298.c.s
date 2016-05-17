@@ -31,7 +31,7 @@ main:                                   # @main
 # BB#1:                                 # %while.body
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
-	i32.store8	$discard=, s($pop3), $pop2
+	i32.store8	$drop=, s($pop3), $pop2
 .LBB1_2:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push4=, 0

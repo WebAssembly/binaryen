@@ -54,7 +54,7 @@ bar:                                    # @bar
 	i32.load	$push1=, a($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, a($pop0), $pop3
+	i32.store	$drop=, a($pop0), $pop3
 	return  	$0
 	.endfunc
 .Lfunc_end2:

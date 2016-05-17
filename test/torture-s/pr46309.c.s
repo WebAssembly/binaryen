@@ -55,12 +55,12 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i32.const	$push0=, 2
-	i32.store	$discard=, 12($1), $pop0
+	i32.store	$drop=, 12($1), $pop0
 	i32.const	$push11=, 12
 	i32.add 	$push12=, $1, $pop11
 	call    	bar@FUNCTION, $pop12
 	i32.const	$push1=, 3
-	i32.store	$discard=, 12($1), $pop1
+	i32.store	$drop=, 12($1), $pop1
 	i32.const	$push13=, 12
 	i32.add 	$push14=, $1, $pop13
 	call    	bar@FUNCTION, $pop14
@@ -71,11 +71,11 @@ main:                                   # @main
 	tee_local	$push22=, $2=, $pop23
 	i32.const	$push15=, 8
 	i32.add 	$push16=, $1, $pop15
-	i32.store	$discard=, q($pop22), $pop16
+	i32.store	$drop=, q($pop22), $pop16
 	i32.const	$push17=, 12
 	i32.add 	$push18=, $1, $pop17
 	call    	bar@FUNCTION, $pop18
-	i32.store	$discard=, 12($1), $0
+	i32.store	$drop=, 12($1), $0
 	i32.store	$0=, 8($1), $2
 	i32.const	$push19=, 12
 	i32.add 	$push20=, $1, $pop19
@@ -83,7 +83,7 @@ main:                                   # @main
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $1, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return  	$0
 	.endfunc
 .Lfunc_end1:

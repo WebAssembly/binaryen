@@ -35,7 +35,7 @@ main:                                   # @main
 	i32.load	$0=, i($pop20)
 	i32.const	$push19=, 0
 	i64.const	$push0=, 562525691183104
-	i64.store	$discard=, s+8($pop19), $pop0
+	i64.store	$drop=, s+8($pop19), $pop0
 	block
 	i32.const	$push18=, 0
 	i32.gt_s	$push1=, $0, $pop18
@@ -49,7 +49,7 @@ main:                                   # @main
 	tee_local	$push22=, $0=, $pop23
 	i32.const	$push21=, 1
 	i32.add 	$push3=, $pop22, $pop21
-	i32.store	$discard=, i($pop25), $pop3
+	i32.store	$drop=, i($pop25), $pop3
 	i32.const	$push4=, -1
 	i32.gt_s	$push5=, $0, $pop4
 	br_if   	0, $pop5        # 0: down to label1
@@ -81,7 +81,7 @@ main:                                   # @main
 	tee_local	$push28=, $0=, $pop29
 	i32.const	$push27=, 1
 	i32.add 	$push16=, $pop28, $pop27
-	i32.store	$discard=, i($pop31), $pop16
+	i32.store	$drop=, i($pop31), $pop16
 	i32.const	$push26=, 0
 	i32.lt_s	$push17=, $0, $pop26
 	br_if   	0, $pop17       # 0: up to label2

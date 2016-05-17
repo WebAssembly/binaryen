@@ -22,8 +22,8 @@ bar:                                    # @bar
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$discard=, ap($pop0), $1
-	i32.call	$discard=, foo@FUNCTION
+	i32.store	$drop=, ap($pop0), $1
+	i32.call	$drop=, foo@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.store	$push7=, 0($pop4), $pop5
 	tee_local	$push6=, $0=, $pop7
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($pop6), $pop0
+	i32.store	$drop=, 0($pop6), $pop0
 	call    	bar@FUNCTION, $0, $0
 	unreachable
 	.endfunc

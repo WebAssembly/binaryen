@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push31=, 0
 	i64.const	$push32=, 1
-	i64.store	$discard=, bid_Kx192+32($pop31), $pop32
+	i64.store	$drop=, bid_Kx192+32($pop31), $pop32
 	i32.const	$push64=, 0
 	i32.const	$push63=, 0
 	i32.const	$push62=, 0
@@ -72,7 +72,7 @@ main:                                   # @main
 	i64.store	$push27=, bid_Kx192+680($pop61), $pop26
 	i64.store	$push28=, bid_Kx192+704($pop62), $pop27
 	i64.store	$push29=, bid_Kx192+728($pop63), $pop28
-	i64.store	$discard=, bid_Kx192+752($pop64), $pop29
+	i64.store	$drop=, bid_Kx192+752($pop64), $pop29
 	i32.const	$push33=, 0
 	return  	$pop33
 	.endfunc

@@ -30,7 +30,7 @@ main:                                   # @main
 	i32.sub 	$push6=, $pop2, $pop3
 	i32.const	$push4=, 12
 	i32.add 	$push5=, $pop6, $pop4
-	i32.store	$discard=, x($pop0), $pop5
+	i32.store	$drop=, x($pop0), $pop5
 	i32.const	$push7=, 0
 	return  	$pop7
 	.endfunc

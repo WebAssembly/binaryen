@@ -34,11 +34,11 @@ loop:                                   # @loop
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label3:
 	i32.const	$push14=, 92
-	i32.store8	$discard=, 0($0), $pop14
+	i32.store8	$drop=, 0($0), $pop14
 	i32.const	$push13=, 1
 	i32.add 	$push6=, $0, $pop13
 	i32.load8_u	$push5=, 0($1)
-	i32.store8	$discard=, 0($pop6), $pop5
+	i32.store8	$drop=, 0($pop6), $pop5
 	i32.const	$push12=, 2
 	i32.add 	$push0=, $0, $pop12
 	copy_local	$0=, $pop0

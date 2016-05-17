@@ -28,7 +28,7 @@ f:                                      # @f
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $1, $pop5
-	i32.store	$discard=, 12($3), $pop6
+	i32.store	$drop=, 12($3), $pop6
 	i32.load	$push7=, 0($2)
 	i32.const	$push19=, 20
 	i32.ne  	$push8=, $pop7, $pop19
@@ -37,7 +37,7 @@ f:                                      # @f
 	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 16
 	i32.add 	$push14=, $3, $pop13
-	i32.store	$discard=, 0($pop15), $pop14
+	i32.store	$drop=, 0($pop15), $pop14
 	i32.const	$push20=, 20
 	return  	$pop20
 .LBB0_3:                                # %if.then6
@@ -64,8 +64,8 @@ main:                                   # @main
 	i32.store	$push8=, 0($pop5), $pop6
 	tee_local	$push7=, $0=, $pop8
 	i64.const	$push0=, 85899345930
-	i64.store	$discard=, 0($pop7), $pop0
-	i32.call	$discard=, f@FUNCTION, $0, $0
+	i64.store	$drop=, 0($pop7), $pop0
+	i32.call	$drop=, f@FUNCTION, $0, $0
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable

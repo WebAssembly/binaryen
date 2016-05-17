@@ -50,7 +50,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.load	$2=, 0($0)
 	i32.const	$push0=, 0
-	i32.store	$discard=, c($pop0), $0
+	i32.store	$drop=, c($pop0), $0
 	block
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $2, $pop1
@@ -95,20 +95,20 @@ main:                                   # @main
 	i32.store	$push21=, 0($pop13), $pop18
 	tee_local	$push20=, $0=, $pop21
 	i64.const	$push1=, 8589934593
-	i64.store	$discard=, 16($pop20), $pop1
+	i64.store	$drop=, 16($pop20), $pop1
 	i32.const	$push3=, 12
 	i32.add 	$push4=, $0, $pop3
 	i32.const	$push2=, 3
 	i32.store	$push0=, 24($0), $pop2
-	i32.store	$discard=, 0($pop4), $pop0
+	i32.store	$drop=, 0($pop4), $pop0
 	i32.const	$push14=, 4
 	i32.add 	$push15=, $0, $pop14
 	i32.const	$push5=, 4
 	i32.add 	$push6=, $pop15, $pop5
 	i32.load	$push7=, 20($0)
-	i32.store	$discard=, 0($pop6), $pop7
+	i32.store	$drop=, 0($pop6), $pop7
 	i32.const	$push8=, 1
-	i32.store	$discard=, 4($0), $pop8
+	i32.store	$drop=, 4($0), $pop8
 	i32.const	$push16=, 4
 	i32.add 	$push17=, $0, $pop16
 	i32.const	$push19=, 4

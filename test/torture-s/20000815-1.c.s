@@ -127,13 +127,13 @@ main:                                   # @main
 	i32.add 	$push15=, $pop23, $pop14
 	i32.const	$push22=, 0
 	i32.const	$push0=, 40
-	i32.call	$discard=, memset@FUNCTION, $pop15, $pop22, $pop0
+	i32.call	$drop=, memset@FUNCTION, $pop15, $pop22, $pop0
 	i32.const	$push1=, 1
 	i32.store8	$0=, 44($3), $pop1
 	i32.const	$push21=, 0
 	i32.const	$push16=, 8
 	i32.add 	$push17=, $3, $pop16
-	i32.store	$discard=, table($pop21), $pop17
+	i32.store	$drop=, table($pop21), $pop17
 	i32.const	$push18=, 8
 	i32.add 	$push19=, $3, $pop18
 	copy_local	$2=, $pop19
@@ -186,7 +186,7 @@ main:                                   # @main
 	i32.const	$push13=, __stack_pointer
 	i32.const	$push11=, 48
 	i32.add 	$push12=, $3, $pop11
-	i32.store	$discard=, 0($pop13), $pop12
+	i32.store	$drop=, 0($pop13), $pop12
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB3_8:                                # %if.then.i

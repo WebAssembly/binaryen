@@ -12,7 +12,7 @@ frob:                                   # @frob
 	i32.const	$push0=, 0
 	i32.load8_u	$2=, e($pop0)
 	i32.const	$push13=, 0
-	i32.store16	$discard=, p($pop13), $1
+	i32.store16	$drop=, p($pop13), $1
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
 	i32.const	$push4=, 1
@@ -22,7 +22,7 @@ frob:                                   # @frob
 	i32.eq  	$push3=, $0, $pop2
 	i32.select	$push10=, $pop11, $pop5, $pop3
 	tee_local	$push9=, $0=, $pop10
-	i32.store16	$discard=, g($pop12), $pop9
+	i32.store16	$drop=, g($pop12), $pop9
 	i32.const	$push6=, 65535
 	i32.and 	$push7=, $0, $pop6
 	i32.eq  	$push8=, $1, $pop7
@@ -82,7 +82,7 @@ get_n:                                  # @get_n
 .LBB1_4:                                # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push9=, 0
-	i32.store16	$discard=, g($pop9), $2
+	i32.store16	$drop=, g($pop9), $2
 .LBB1_5:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push10=, 65535
@@ -101,12 +101,12 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push2=, 0
 	i32.const	$push1=, 3
-	i32.store8	$discard=, e($pop2), $pop1
+	i32.store8	$drop=, e($pop2), $pop1
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
 	i32.const	$push3=, 2
 	i32.store16	$push0=, p($pop5), $pop3
-	i32.store16	$discard=, g($pop6), $pop0
+	i32.store16	$drop=, g($pop6), $pop0
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4
 	unreachable

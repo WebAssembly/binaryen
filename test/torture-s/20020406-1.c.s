@@ -51,12 +51,12 @@ DUPFFnew:                               # @DUPFFnew
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push6=, 4
 	i32.call	$push7=, calloc@FUNCTION, $pop5, $pop6
-	i32.store	$discard=, 0($pop9), $pop7
+	i32.store	$drop=, 0($pop9), $pop7
 .LBB2_2:                                # %if.end
 	end_block                       # label0:
-	i32.store	$discard=, 0($1), $0
+	i32.store	$drop=, 0($1), $0
 	i32.const	$push10=, -1
-	i32.store	$discard=, 4($1), $pop10
+	i32.store	$drop=, 4($1), $pop10
 	return  	$1
 	.endfunc
 .Lfunc_end2:
@@ -131,14 +131,14 @@ DUPFFexgcd:                             # @DUPFFexgcd
 .LBB7_1:                                # %tailrecurse
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.store	$discard=, 4($4), $8
-	i32.store	$discard=, 0($4), $7
+	i32.store	$drop=, 4($4), $8
+	i32.store	$drop=, 0($4), $7
 	copy_local	$6=, $3
 	copy_local	$3=, $2
 	copy_local	$5=, $1
 	copy_local	$1=, $0
 	i32.const	$push31=, .L.str
-	i32.call	$discard=, printf@FUNCTION, $pop31, $4
+	i32.call	$drop=, printf@FUNCTION, $pop31, $4
 	copy_local	$0=, $5
 	copy_local	$2=, $6
 	i32.load	$push30=, 4($3)
@@ -174,18 +174,18 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.const	$push13=, 1
 	i32.store	$8=, 0($pop0), $pop13
 	i64.const	$push12=, 1
-	i64.store	$discard=, 0($7):p2align=2, $pop12
+	i64.store	$drop=, 0($7):p2align=2, $pop12
 	i32.const	$push34=, 12
 	i32.call	$2=, malloc@FUNCTION, $pop34
 	i32.const	$push14=, 3
 	i32.const	$push33=, 4
 	i32.call	$0=, calloc@FUNCTION, $pop14, $pop33
 	i64.const	$push15=, -4294967294
-	i64.store	$discard=, 0($2):p2align=2, $pop15
+	i64.store	$drop=, 0($2):p2align=2, $pop15
 	i32.const	$push32=, 4
 	i32.add 	$push16=, $6, $pop32
 	i32.load	$6=, 0($pop16)
-	i32.store	$discard=, 8($2), $0
+	i32.store	$drop=, 8($2), $0
 	block
 	i32.lt_s	$push17=, $6, $8
 	br_if   	0, $pop17       # 0: down to label5
@@ -206,14 +206,14 @@ DUPFFexgcd:                             # @DUPFFexgcd
 .LBB7_9:                                # %if.end57
 	end_loop                        # label9:
 	end_block                       # label5:
-	i32.store	$discard=, 0($1), $7
-	i32.store	$discard=, 0($5), $2
+	i32.store	$drop=, 0($1), $7
+	i32.store	$drop=, 0($5), $2
 .LBB7_10:                               # %cleanup
 	end_block                       # label4:
 	i32.const	$push25=, __stack_pointer
 	i32.const	$push23=, 16
 	i32.add 	$push24=, $4, $pop23
-	i32.store	$discard=, 0($pop25), $pop24
+	i32.store	$drop=, 0($pop25), $pop24
 	return  	$3
 .LBB7_11:                               # %if.then10
 	end_block                       # label3:
@@ -247,32 +247,32 @@ main:                                   # @main
 	i32.const	$push6=, 1
 	i32.store	$0=, 4($pop0), $pop6
 	i64.const	$push5=, 4294967297
-	i64.store	$discard=, 0($4):p2align=2, $pop5
+	i64.store	$drop=, 0($4):p2align=2, $pop5
 	i32.const	$push27=, 12
 	i32.call	$2=, malloc@FUNCTION, $pop27
 	i32.const	$push7=, 3
 	i32.const	$push26=, 4
 	i32.call	$push25=, calloc@FUNCTION, $pop7, $pop26
 	tee_local	$push24=, $3=, $pop25
-	i32.store	$discard=, 8($pop24), $0
-	i32.store	$discard=, 8($2), $3
+	i32.store	$drop=, 8($pop24), $0
+	i32.store	$drop=, 8($2), $3
 	i32.load	$0=, 4($4)
 	i64.const	$push8=, 8589934594
-	i64.store	$discard=, 0($2):p2align=2, $pop8
+	i64.store	$drop=, 0($2):p2align=2, $pop8
 	i32.const	$push23=, 2
-	i32.store	$discard=, 4($1), $pop23
-	i32.store	$discard=, 0($1), $0
+	i32.store	$drop=, 4($1), $pop23
+	i32.store	$drop=, 0($1), $0
 	i32.const	$push9=, .L.str.1
-	i32.call	$discard=, printf@FUNCTION, $pop9, $1
+	i32.call	$drop=, printf@FUNCTION, $pop9, $1
 	i32.const	$push18=, 12
 	i32.add 	$push19=, $1, $pop18
 	i32.const	$push20=, 8
 	i32.add 	$push21=, $1, $pop20
-	i32.call	$discard=, DUPFFexgcd@FUNCTION, $pop19, $pop21, $4, $2
+	i32.call	$drop=, DUPFFexgcd@FUNCTION, $pop19, $pop21, $4, $2
 	i32.const	$push17=, __stack_pointer
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $1, $pop15
-	i32.store	$discard=, 0($pop17), $pop16
+	i32.store	$drop=, 0($pop17), $pop16
 	i32.const	$push10=, 0
 	return  	$pop10
 	.endfunc

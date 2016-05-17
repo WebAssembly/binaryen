@@ -73,19 +73,19 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	#APP
-	 i32.const       $discard=, i@FUNCTION
+	 i32.const       $drop=, i@FUNCTION
 	#NO_APP
 	#APP
-	 i32.const       $discard=, jf@FUNCTION
+	 i32.const       $drop=, jf@FUNCTION
 	#NO_APP
 	#APP
-	 i32.const       $discard=, vd@FUNCTION
+	 i32.const       $drop=, vd@FUNCTION
 	#NO_APP
 	#APP
-	 i32.const       $discard=, ffjjdi@FUNCTION
+	 i32.const       $drop=, ffjjdi@FUNCTION
 	#NO_APP
 	#APP
-	 i32.const       $discard=, vd2@FUNCTION
+	 i32.const       $drop=, vd2@FUNCTION
 	#NO_APP
 	i32.const	$push0=, 0
 	return  	$pop0

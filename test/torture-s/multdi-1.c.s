@@ -25,7 +25,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, -1
-	i64.store	$discard=, mpy_res($pop1), $pop0
+	i64.store	$drop=, mpy_res($pop1), $pop0
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc

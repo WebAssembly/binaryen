@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.const	$push1=, 25
 	i32.mul 	$push2=, $2, $pop1
 	i32.add 	$push3=, $pop0, $pop2
-	i32.store	$discard=, c($pop4), $pop3
+	i32.store	$drop=, c($pop4), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -56,7 +56,7 @@ test:                                   # @test
 	i32.const	$push6=, 0
 	i32.load	$push3=, b($pop6)
 	i32.select	$push5=, $pop2, $pop4, $pop3
-	i32.call	$discard=, bar@FUNCTION, $2, $pop5, $2, $2, $2
+	i32.call	$drop=, bar@FUNCTION, $2, $pop5, $2, $2, $2
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -72,7 +72,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, a
-	i32.store	$discard=, d($pop0), $pop1
+	i32.store	$drop=, d($pop0), $pop1
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
 	i32.store	$0=, d+4($pop8), $pop7
@@ -82,7 +82,7 @@ main:                                   # @main
 	i32.const	$push5=, 65536
 	i32.load	$push4=, b($0)
 	i32.select	$push6=, $0, $pop5, $pop4
-	i32.call	$discard=, bar@FUNCTION, $0, $pop6, $0, $0, $0
+	i32.call	$drop=, bar@FUNCTION, $0, $pop6, $0, $0, $0
 	unreachable
 	.endfunc
 .Lfunc_end3:

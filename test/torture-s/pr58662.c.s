@@ -25,7 +25,7 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i32.ne  	$push6=, $pop5, $pop12
 	i32.and 	$push9=, $pop8, $pop6
-	i32.store	$discard=, b($pop15), $pop9
+	i32.store	$drop=, b($pop15), $pop9
 	block
 	i32.const	$push11=, 0
 	i32.load	$push10=, b($pop11)

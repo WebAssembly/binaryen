@@ -9,7 +9,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8
 	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
-	i32.store	$discard=, 0($0), $pop1
+	i32.store	$drop=, 0($0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -32,7 +32,7 @@ foo:                                    # @foo
 	i32.add 	$push9=, $pop4, $pop5
 	tee_local	$push8=, $0=, $pop9
 	i32.const	$push6=, 0
-	i32.store	$discard=, 0($pop8), $pop6
+	i32.store	$drop=, 0($pop8), $pop6
 	call    	bar@FUNCTION, $0
 	i32.load	$push7=, 0($0)
 	return  	$pop7

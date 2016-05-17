@@ -111,7 +111,7 @@ main:                                   # @main
 	i32.const	$push49=, 0
 	i32.load	$2=, y($pop49)
 	i32.const	$push146=, 0
-	i32.store	$discard=, x($pop146), $4
+	i32.store	$drop=, x($pop146), $4
 	i32.const	$push145=, 0
 	i32.const	$push54=, -1
 	i32.add 	$push144=, $2, $pop54
@@ -136,9 +136,9 @@ main:                                   # @main
 # BB#14:                                # %if.end90
 	i32.const	$push152=, 0
 	i32.const	$push151=, 6
-	i32.store	$discard=, x($pop152), $pop151
+	i32.store	$drop=, x($pop152), $pop151
 	i32.const	$push62=, 1869376613
-	i32.store	$discard=, 1($1):p2align=0, $pop62
+	i32.store	$drop=, 1($1):p2align=0, $pop62
 	i32.const	$push150=, 0
 	i32.const	$push61=, 1
 	i32.store	$2=, y($pop150), $pop61
@@ -154,7 +154,7 @@ main:                                   # @main
 	i32.call	$4=, memset@FUNCTION, $1, $4, $pop67
 	i32.const	$push154=, 0
 	i32.const	$push69=, 2
-	i32.store	$discard=, y($pop154), $pop69
+	i32.store	$drop=, y($pop154), $pop69
 	i32.const	$push153=, 0
 	i32.const	$push68=, 7
 	i32.store	$1=, x($pop153), $pop68
@@ -202,14 +202,14 @@ main:                                   # @main
 	i32.load	$1=, y($pop92)
 	i32.const	$push161=, 0
 	i32.const	$push93=, 34
-	i32.store	$discard=, x($pop161), $pop93
+	i32.store	$drop=, x($pop161), $pop93
 	i32.const	$push96=, 33
 	i32.const	$push160=, 0
 	i32.const	$push94=, 1
 	i32.add 	$push95=, $1, $pop94
 	i32.store	$push159=, y($pop160), $pop95
 	tee_local	$push158=, $1=, $pop159
-	i32.call	$discard=, memset@FUNCTION, $4, $pop96, $pop158
+	i32.call	$drop=, memset@FUNCTION, $4, $pop96, $pop158
 	i32.const	$push157=, 3
 	i32.ne  	$push97=, $1, $pop157
 	br_if   	0, $pop97       # 0: down to label0
@@ -221,10 +221,10 @@ main:                                   # @main
 # BB#23:                                # %lor.lhs.false158
 	i32.const	$push165=, 0
 	i32.const	$push100=, 4
-	i32.store	$discard=, y($pop165), $pop100
+	i32.store	$drop=, y($pop165), $pop100
 	i32.const	$push164=, 0
 	i64.const	$push101=, 3255307777713450285
-	i64.store	$discard=, buf+3($pop164):p2align=0, $pop101
+	i64.store	$drop=, buf+3($pop164):p2align=0, $pop101
 	i32.const	$push102=, buf
 	i32.const	$push103=, .L.str.10
 	i32.const	$push163=, 11
@@ -233,13 +233,13 @@ main:                                   # @main
 # BB#24:                                # %lor.lhs.false171
 	i32.const	$push170=, 0
 	i32.const	$push169=, 11
-	i32.store	$discard=, x($pop170), $pop169
+	i32.store	$drop=, x($pop170), $pop169
 	i32.const	$push168=, 0
 	i32.const	$push105=, 5
-	i32.store	$discard=, y($pop168), $pop105
+	i32.store	$drop=, y($pop168), $pop105
 	i32.const	$push167=, 0
 	i32.const	$push166=, 0
-	i32.store	$discard=, buf+11($pop167):p2align=0, $pop166
+	i32.store	$drop=, buf+11($pop167):p2align=0, $pop166
 	i32.const	$push108=, buf+8
 	i32.const	$push106=, .L.str.11
 	i32.const	$push107=, 7
@@ -248,12 +248,12 @@ main:                                   # @main
 # BB#25:                                # %lor.lhs.false180
 	i32.const	$push111=, 0
 	i32.const	$push110=, 15
-	i32.store	$discard=, x($pop111), $pop110
+	i32.store	$drop=, x($pop111), $pop110
 	i32.const	$push174=, 0
 	i32.const	$push173=, 0
 	i32.store16	$push172=, buf+19($pop174):p2align=0, $pop173
 	tee_local	$push171=, $4=, $pop172
-	i32.store	$discard=, buf+15($pop171):p2align=0, $4
+	i32.store	$drop=, buf+15($pop171):p2align=0, $4
 	i32.const	$push114=, buf+10
 	i32.const	$push112=, .L.str.12
 	i32.const	$push113=, 11
@@ -263,7 +263,7 @@ main:                                   # @main
 	i32.const	$push122=, __stack_pointer
 	i32.const	$push120=, 64
 	i32.add 	$push121=, $2, $pop120
-	i32.store	$discard=, 0($pop122), $pop121
+	i32.store	$drop=, 0($pop122), $pop121
 	return  	$4
 .LBB0_27:                               # %if.then183
 	end_block                       # label0:

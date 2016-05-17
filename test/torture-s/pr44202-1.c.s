@@ -16,7 +16,7 @@ add512:                                 # @add512
 	i32.eqz 	$push3=, $pop1
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.store	$discard=, 0($1), $0
+	i32.store	$drop=, 0($1), $0
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return  	$2
@@ -39,7 +39,7 @@ add513:                                 # @add513
 	tee_local	$push1=, $2=, $pop2
 	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.then
-	i32.store	$discard=, 0($1), $0
+	i32.store	$drop=, 0($1), $0
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
 	return  	$2

@@ -62,9 +62,9 @@ main:                                   # @main
 	i32.store	$push15=, 0($pop8), $pop12
 	tee_local	$push14=, $2=, $pop15
 	i64.const	$push0=, 9218868437227405312
-	i64.store	$discard=, 0($pop14), $pop0
+	i64.store	$drop=, 0($pop14), $pop0
 	i64.const	$push1=, 4627167142146473984
-	i64.store	$discard=, 8($2), $pop1
+	i64.store	$drop=, 8($2), $pop1
 	i32.const	$push13=, 8
 	i32.or  	$0=, $2, $pop13
 	f64.const	$1=, infinity
@@ -88,7 +88,7 @@ main:                                   # @main
 	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $2, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
+	i32.store	$drop=, 0($pop11), $pop10
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_4:                                # %if.then3.i

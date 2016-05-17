@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.gt_s	$push6=, $0, $pop7
 	tee_local	$push5=, $1=, $pop6
 	i32.select	$push4=, $pop3, $0, $pop5
-	i32.store	$discard=, a+4($pop8), $pop4
+	i32.store	$drop=, a+4($pop8), $pop4
 	block
 	i32.eqz 	$push9=, $1
 	br_if   	0, $pop9        # 0: down to label0
@@ -54,10 +54,10 @@ main:                                   # @main
 # BB#0:                                 # %foo.exit
 	i32.const	$push1=, 0
 	i32.const	$push2=, 3384
-	i32.store	$discard=, b($pop1), $pop2
+	i32.store	$drop=, b($pop1), $pop2
 	i32.const	$push4=, 0
 	i64.const	$push0=, 9626087063552
-	i64.store	$discard=, a($pop4):p2align=2, $pop0
+	i64.store	$drop=, a($pop4):p2align=2, $pop0
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

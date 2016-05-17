@@ -54,7 +54,7 @@ CallFunctionRec:                        # @CallFunctionRec
 # BB#2:                                 # %if.then1
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $0, $pop2
-	i32.call	$discard=, CallFunctionRec@FUNCTION, $pop3
+	i32.call	$drop=, CallFunctionRec@FUNCTION, $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 .LBB1_3:                                # %return
@@ -76,7 +76,7 @@ storemax:                               # @storemax
 	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %if.then
 	i32.const	$push3=, 0
-	i32.store	$discard=, max($pop3), $0
+	i32.store	$drop=, max($pop3), $0
 .LBB2_2:                                # %if.end
 	end_block                       # label3:
 	return

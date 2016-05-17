@@ -47,7 +47,7 @@ test:                                   # @test
 # BB#1:                                 # %dummy.exit
 	i32.const	$push1=, 4
 	i32.or  	$push0=, $2, $pop1
-	i32.store	$discard=, 0($pop0), $1
+	i32.store	$drop=, 0($pop0), $1
 	i32.load	$push4=, 4($2)
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push20=, 1234
@@ -57,7 +57,7 @@ test:                                   # @test
 	i32.const	$push13=, __stack_pointer
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $2, $pop11
-	i32.store	$discard=, 0($pop13), $pop12
+	i32.store	$drop=, 0($pop13), $pop12
 	return
 .LBB1_3:                                # %if.then.i14
 	end_block                       # label1:
@@ -83,7 +83,7 @@ main:                                   # @main
 	i32.store	$push8=, 0($pop5), $pop6
 	tee_local	$push7=, $0=, $pop8
 	i32.const	$push0=, 1234
-	i32.store	$discard=, 0($pop7), $pop0
+	i32.store	$drop=, 0($pop7), $pop0
 	call    	test@FUNCTION, $0, $0
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1

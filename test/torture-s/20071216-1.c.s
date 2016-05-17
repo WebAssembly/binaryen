@@ -62,7 +62,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push31=, 0
 	i32.const	$push6=, -39
-	i32.store	$discard=, x($pop31), $pop6
+	i32.store	$drop=, x($pop31), $pop6
 	i32.call	$1=, bar@FUNCTION
 	i32.const	$push30=, -37
 	i32.const	$push29=, -1

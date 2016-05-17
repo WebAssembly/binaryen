@@ -68,9 +68,9 @@ main:                                   # @main
 	i32.store	$push26=, 0($pop17), $pop24
 	tee_local	$push25=, $0=, $pop26
 	i32.const	$push1=, 1048641535
-	i32.store	$discard=, 4($pop25), $pop1
+	i32.store	$drop=, 4($pop25), $pop1
 	i64.const	$push0=, 68723771703295
-	i64.store	$discard=, 8($0), $pop0
+	i64.store	$drop=, 8($0), $pop0
 	block
 	i32.const	$push18=, 8
 	i32.add 	$push19=, $0, $pop18

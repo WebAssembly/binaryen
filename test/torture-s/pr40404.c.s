@@ -12,7 +12,7 @@ main:                                   # @main
 	i32.load	$push1=, s($pop5)
 	i32.const	$push2=, 131071
 	i32.or  	$push3=, $pop1, $pop2
-	i32.store	$discard=, s($pop0), $pop3
+	i32.store	$drop=, s($pop0), $pop3
 	i32.const	$push4=, 0
 	return  	$pop4
 	.endfunc

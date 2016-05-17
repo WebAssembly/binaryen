@@ -72,7 +72,7 @@ compare:                                # @compare
 	i32.load	$push3=, errors($pop9)
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$discard=, errors($pop2), $pop5
+	i32.store	$drop=, errors($pop2), $pop5
 .LBB3_3:                                # %if.end
 	end_block                       # label0:
 	i32.call_indirect	$push6=, $2, $1

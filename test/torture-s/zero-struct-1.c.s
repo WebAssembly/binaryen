@@ -14,11 +14,11 @@ h:                                      # @h
 	i32.load	$push1=, f($pop7)
 	i32.const	$push2=, 2
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, f($pop8), $pop3
+	i32.store	$drop=, f($pop8), $pop3
 	i32.const	$push6=, 0
 	i32.const	$push5=, 2
 	i32.add 	$push4=, $0, $pop5
-	i32.store	$discard=, ff($pop6), $pop4
+	i32.store	$drop=, ff($pop6), $pop4
 	return
 	.endfunc
 .Lfunc_end0:

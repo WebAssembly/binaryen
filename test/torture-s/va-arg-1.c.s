@@ -36,14 +36,14 @@ f:                                      # @f
 # BB#2:                                 # %if.end6
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $9, $pop10
-	i32.store	$discard=, 12($12), $pop11
+	i32.store	$drop=, 12($12), $pop11
 	i32.load	$push12=, 0($11)
 	br_if   	0, $pop12       # 0: down to label0
 # BB#3:                                 # %if.end11
 	i32.const	$push19=, __stack_pointer
 	i32.const	$push17=, 16
 	i32.add 	$push18=, $12, $pop17
-	i32.store	$discard=, 0($pop19), $pop18
+	i32.store	$drop=, 0($pop19), $pop18
 	return  	$12
 .LBB0_4:                                # %if.then10
 	end_block                       # label0:
@@ -71,8 +71,8 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.store	$0=, 8($pop7), $pop0
 	i64.const	$push1=, 47244640266
-	i64.store	$discard=, 0($1), $pop1
-	i32.call	$discard=, f@FUNCTION, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1
+	i64.store	$drop=, 0($1), $pop1
+	i32.call	$drop=, f@FUNCTION, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1
 	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc

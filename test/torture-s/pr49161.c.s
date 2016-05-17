@@ -14,7 +14,7 @@ bar:                                    # @bar
 	tee_local	$push4=, $1=, $pop5
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop4, $pop1
-	i32.store	$discard=, c($pop0), $pop2
+	i32.store	$drop=, c($pop0), $pop2
 	block
 	i32.ne  	$push3=, $1, $0
 	br_if   	0, $pop3        # 0: down to label0

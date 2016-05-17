@@ -33,7 +33,7 @@ f883b:                                  # @f883b
 	i64.extend_u/i32	$push9=, $pop8
 	i64.load	$push10=, 0($3)
 	i64.and 	$push11=, $pop9, $pop10
-	i64.store8	$discard=, 0($pop12), $pop11
+	i64.store8	$drop=, 0($pop12), $pop11
 	i32.const	$push18=, 1
 	i32.add 	$6=, $6, $pop18
 	i32.const	$push17=, 2
@@ -70,11 +70,11 @@ main:                                   # @main
 	i32.const	$push31=, 255
 	i32.and 	$push3=, $4, $pop31
 	i32.store16	$push1=, 0($3), $pop3
-	i32.store	$discard=, 0($2), $pop1
+	i32.store	$drop=, 0($2), $pop1
 	i64.extend_u/i32	$push2=, $4
 	i64.const	$push30=, 255
 	i64.and 	$push4=, $pop2, $pop30
-	i64.store	$discard=, 0($1), $pop4
+	i64.store	$drop=, 0($1), $pop4
 	i32.const	$push29=, 2
 	i32.add 	$3=, $3, $pop29
 	i32.const	$push28=, 4
@@ -117,7 +117,7 @@ main:                                   # @main
 	i64.extend_u/i32	$push15=, $pop14
 	i64.load	$push16=, 0($2)
 	i64.and 	$push17=, $pop15, $pop16
-	i64.store8	$discard=, 0($3), $pop17
+	i64.store8	$drop=, 0($3), $pop17
 	i32.const	$push35=, 1
 	i32.add 	$3=, $3, $pop35
 	i32.const	$push34=, 8

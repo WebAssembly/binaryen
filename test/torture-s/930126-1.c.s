@@ -12,10 +12,10 @@ f:                                      # @f
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $0, $pop2
 	i64.const	$push4=, 205
-	i64.store8	$discard=, 0($pop3), $pop4
+	i64.store8	$drop=, 0($pop3), $pop4
 	i64.const	$push0=, 4010947584
 	i64.or  	$push1=, $2, $pop0
-	i64.store32	$discard=, 0($0), $pop1
+	i64.store32	$drop=, 0($0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -30,13 +30,13 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
 	i32.const	$push0=, 12
-	i32.store8	$discard=, main.i($pop11), $pop0
+	i32.store8	$drop=, main.i($pop11), $pop0
 	i32.const	$push10=, 0
 	i64.const	$push1=, 205
-	i64.store8	$discard=, main.i+4($pop10), $pop1
+	i64.store8	$drop=, main.i+4($pop10), $pop1
 	i32.const	$push9=, 0
 	i64.const	$push2=, 4010947596
-	i64.store32	$discard=, main.i($pop9), $pop2
+	i64.store32	$drop=, main.i($pop9), $pop2
 	block
 	i32.const	$push8=, 0
 	i64.load	$push3=, main.i($pop8)

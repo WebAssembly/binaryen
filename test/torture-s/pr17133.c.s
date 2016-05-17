@@ -35,7 +35,7 @@ pure_alloc:                             # @pure_alloc
 	i32.const	$2=, 0
 	i32.const	$push15=, 0
 	i32.const	$push4=, 2
-	i32.store	$discard=, foo($pop15), $pop4
+	i32.store	$drop=, foo($pop15), $pop4
 .LBB0_4:                                # %if.then
 	end_block                       # label0:
 	i32.add 	$push5=, $0, $2
@@ -81,7 +81,7 @@ main:                                   # @main
 # BB#4:                                 # %pure_alloc.exit.thread.split
 	i32.const	$push5=, 0
 	i32.const	$push6=, 2
-	i32.store	$discard=, foo($pop5), $pop6
+	i32.store	$drop=, foo($pop5), $pop6
 .LBB1_5:                                # %if.end
 	end_block                       # label4:
 	i32.const	$push7=, 0

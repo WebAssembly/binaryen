@@ -20,17 +20,17 @@ foo:                                    # @foo
 	loop                            # label1:
 	i32.const	$push12=, 4
 	i32.add 	$push3=, $0, $pop12
-	i32.store	$discard=, 0($pop3), $6
+	i32.store	$drop=, 0($pop3), $6
 	i32.const	$push11=, 8
 	i32.add 	$push4=, $0, $pop11
-	i32.store	$discard=, 0($pop4), $7
+	i32.store	$drop=, 0($pop4), $7
 	i32.const	$push10=, 12
 	i32.add 	$push5=, $0, $pop10
-	i32.store	$discard=, 0($pop5), $8
+	i32.store	$drop=, 0($pop5), $8
 	i32.const	$push9=, 16
 	i32.add 	$push6=, $0, $pop9
-	i32.store	$discard=, 0($pop6), $9
-	i32.store	$discard=, 0($0), $5
+	i32.store	$drop=, 0($pop6), $9
+	i32.store	$drop=, 0($0), $5
 	i32.const	$push8=, 1
 	i32.add 	$4=, $4, $pop8
 	i32.const	$push7=, 20

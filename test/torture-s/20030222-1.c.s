@@ -9,7 +9,7 @@ ll_to_int:                              # @ll_to_int
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	i64.store32	$discard=, 0($1), $0
+	i64.store32	$drop=, 0($1), $0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -35,7 +35,7 @@ main:                                   # @main
 	i64.extend_s/i32	$1=, $pop7
 	#APP
 	#NO_APP
-	i64.store32	$discard=, 12($0), $1
+	i64.store32	$drop=, 12($0), $1
 	block
 	i32.load	$push0=, 12($0)
 	i32.ne  	$push1=, $2, $pop0

@@ -98,14 +98,14 @@ main:                                   # @main
 	i32.store	$push13=, 0($pop5), $pop11
 	tee_local	$push12=, $0=, $pop13
 	i64.const	$push0=, -9223372036854775807
-	i64.store	$discard=, 8($pop12), $pop0
+	i64.store	$drop=, 8($pop12), $pop0
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
 	call    	do_test@FUNCTION, $pop10
 	i32.const	$push8=, __stack_pointer
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$discard=, 0($pop8), $pop7
+	i32.store	$drop=, 0($pop8), $pop7
 	i32.const	$push1=, 0
 	return  	$pop1
 	.endfunc

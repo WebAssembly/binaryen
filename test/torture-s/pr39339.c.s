@@ -46,8 +46,8 @@ foo:                                    # @foo
 	tee_local	$push26=, $1=, $pop27
 	i32.const	$push25=, -4
 	i32.add 	$push15=, $pop26, $pop25
-	i32.store	$discard=, 0($pop15), $4
-	i32.store	$discard=, 0($1), $5
+	i32.store	$drop=, 0($pop15), $4
+	i32.store	$drop=, 0($1), $5
 	i32.const	$push24=, 8
 	i32.add 	$0=, $0, $pop24
 	i32.const	$push23=, -1
@@ -80,32 +80,32 @@ main:                                   # @main
 	i32.add 	$push6=, $pop40, $pop5
 	i32.const	$push3=, 0
 	i64.load	$push4=, .Lmain.e+8($pop3):p2align=2
-	i64.store	$discard=, 0($pop6), $pop4
+	i64.store	$drop=, 0($pop6), $pop4
 	i32.const	$push8=, 4
-	i32.store	$discard=, 12($1), $pop8
+	i32.store	$drop=, 12($1), $pop8
 	i32.const	$push9=, 255
-	i32.store8	$discard=, 4($1), $pop9
+	i32.store8	$drop=, 4($1), $pop9
 	i32.const	$push13=, 32
 	i32.add 	$push14=, $1, $pop13
 	i32.const	$push10=, 40
 	i32.add 	$push11=, $1, $pop10
 	i64.const	$push12=, 0
 	i64.store	$push0=, 0($pop11), $pop12
-	i64.store	$discard=, 0($pop14), $pop0
+	i64.store	$drop=, 0($pop14), $pop0
 	i32.const	$push39=, 0
 	i32.store	$push38=, 28($1), $pop39
 	tee_local	$push37=, $0=, $pop38
 	i32.store	$push1=, 24($1), $pop37
 	i32.store	$push2=, 20($1), $pop1
-	i32.store	$discard=, 16($1), $pop2
+	i32.store	$drop=, 16($1), $pop2
 	i64.load	$push7=, .Lmain.e($0):p2align=2
-	i64.store	$discard=, 48($1), $pop7
+	i64.store	$drop=, 48($1), $pop7
 	i32.const	$push29=, 16
 	i32.add 	$push30=, $1, $pop29
-	i32.store	$discard=, 8($1), $pop30
+	i32.store	$drop=, 8($1), $pop30
 	i32.const	$push31=, 8
 	i32.add 	$push32=, $1, $pop31
-	i32.store	$discard=, 0($1), $pop32
+	i32.store	$drop=, 0($1), $pop32
 	i32.const	$push33=, 48
 	i32.add 	$push34=, $1, $pop33
 	i32.const	$push16=, 65
@@ -125,7 +125,7 @@ main:                                   # @main
 	i32.const	$push28=, __stack_pointer
 	i32.const	$push26=, 64
 	i32.add 	$push27=, $1, $pop26
-	i32.store	$discard=, 0($pop28), $pop27
+	i32.store	$drop=, 0($pop28), $pop27
 	i32.const	$push21=, 0
 	return  	$pop21
 .LBB1_3:                                # %if.then12

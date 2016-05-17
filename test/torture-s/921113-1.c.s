@@ -102,7 +102,7 @@ gitter:                                 # @gitter
 # BB#4:                                 # %f2.exit
 	f32.load	$6=, 0($1)
 	i32.const	$push10=, 0
-	i32.store	$discard=, 0($3), $pop10
+	i32.store	$drop=, 0($3), $pop10
 	block
 	f32.const	$push11=, 0x0p0
 	f32.gt  	$push12=, $6, $pop11
@@ -124,7 +124,7 @@ gitter:                                 # @gitter
 	br_if   	0, $pop21       # 0: down to label3
 # BB#6:                                 # %if.then15
 	i32.const	$push22=, 1065353216
-	i32.store	$discard=, 0($2), $pop22
+	i32.store	$drop=, 0($2), $pop22
 .LBB3_7:                                # %if.end18
 	end_block                       # label3:
 	return  	$4
@@ -158,7 +158,7 @@ main:                                   # @main
 	i32.add 	$push11=, $0, $pop10
 	i32.const	$push0=, limit
 	f32.const	$push2=, 0x1p0
-	i32.call	$discard=, gitter@FUNCTION, $0, $pop1, $pop9, $pop11, $pop0, $pop2
+	i32.call	$drop=, gitter@FUNCTION, $0, $pop1, $pop9, $pop11, $pop0, $pop2
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

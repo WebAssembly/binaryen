@@ -94,7 +94,7 @@ main:                                   # @main
 	i32.const	$push48=, 2
 	i32.shl 	$push10=, $pop49, $pop48
 	i32.const	$push47=, 0
-	i32.store	$discard=, x($pop10), $pop47
+	i32.store	$drop=, x($pop10), $pop47
 	i32.const	$push46=, 1
 	i32.add 	$4=, $4, $pop46
 	i32.const	$push45=, 10

@@ -5,7 +5,7 @@ _Z6reporti:                             # @_Z6reporti
 	.param  	i32
 # BB#0:
 	i32.const	$push0=, 8
-	i32.store	$discard=, 0($pop0), $0
+	i32.store	$drop=, 0($pop0), $0
 	i32.const	$push1=, .str
 	call    	emscripten_asm_const@FUNCTION, $pop1
 	return
@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.add 	$10=, $12, $10
 	i32.add 	$push1=, $10, $4
 	i32.add 	$push0=, $6, $4
-	i32.store8	$discard=, 0($pop1), $pop0
+	i32.store8	$drop=, 0($pop1), $pop0
 	i32.const	$2=, 1
 	i32.add 	$4=, $4, $2
 	i32.const	$3=, 1048576

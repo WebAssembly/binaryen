@@ -11,7 +11,7 @@ f:                                      # @f
 	i32.add 	$push16=, $0, $pop15
 	i32.const	$push14=, 0
 	i32.store	$push4=, 992($0), $pop14
-	i32.store	$discard=, 0($pop16), $pop4
+	i32.store	$drop=, 0($pop16), $pop4
 	i32.const	$push21=, 996
 	i32.add 	$push22=, $0, $pop21
 	i32.const	$push19=, 1004
@@ -31,7 +31,7 @@ f:                                      # @f
 	i64.store	$push3=, 0($pop13):p2align=2, $pop2
 	i64.store	$push5=, 0($pop18):p2align=2, $pop3
 	i64.store	$push6=, 0($pop20):p2align=2, $pop5
-	i64.store	$discard=, 0($pop22):p2align=2, $pop6
+	i64.store	$drop=, 0($pop22):p2align=2, $pop6
 	return
 	.endfunc
 .Lfunc_end0:
@@ -57,7 +57,7 @@ main:                                   # @main
 	loop                            # label0:
 	i32.add 	$push5=, $2, $3
 	i32.const	$push33=, 1
-	i32.store	$discard=, 0($pop5), $pop33
+	i32.store	$drop=, 0($pop5), $pop33
 	i32.const	$push32=, 4
 	i32.add 	$3=, $3, $pop32
 	i32.const	$push31=, 1024
@@ -87,8 +87,8 @@ main:                                   # @main
 	i64.store	$push3=, 0($pop17):p2align=2, $pop2
 	i64.store	$push4=, 0($pop19):p2align=2, $pop3
 	i64.store	$push1=, 8($2), $pop4
-	i64.store	$discard=, 0($2), $pop1
-	i32.store	$discard=, 992($2), $1
+	i64.store	$drop=, 0($2), $pop1
+	i32.store	$drop=, 992($2), $1
 	copy_local	$2=, $2
 .LBB1_3:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1

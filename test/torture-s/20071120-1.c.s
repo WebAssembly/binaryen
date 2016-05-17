@@ -42,7 +42,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.const	$push14=, 0
 	i32.const	$push1=, -1
 	i32.add 	$push2=, $0, $pop1
-	i32.store	$discard=, deferred_access_no_check($pop14), $pop2
+	i32.store	$drop=, deferred_access_no_check($pop14), $pop2
 	return
 .LBB2_2:                                # %if.else
 	end_block                       # label0:
@@ -101,11 +101,11 @@ main:                                   # @main
 	i32.const	$push3=, 8
 	i32.add 	$push4=, $pop7, $pop3
 	i32.const	$push5=, 1
-	i32.store	$discard=, 0($pop4), $pop5
+	i32.store	$drop=, 0($pop4), $pop5
 	i32.const	$push2=, 2
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	i32.const	$push1=, 0
-	i32.store	$discard=, deferred_access_stack($pop1), $0
+	i32.store	$drop=, deferred_access_stack($pop1), $0
 	call    	pop_to_parent_deferring_access_checks@FUNCTION
 	i32.const	$push6=, 0
 	return  	$pop6

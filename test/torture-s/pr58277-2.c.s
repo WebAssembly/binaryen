@@ -18,14 +18,14 @@ main:                                   # @main
 	i32.eqz 	$push12=, $1
 	br_if   	0, $pop12       # 0: down to label1
 # BB#1:                                 # %fn2.exit.thread.i
-	i32.load	$discard=, d($0)
+	i32.load	$drop=, d($0)
 	br      	1               # 1: down to label0
 .LBB0_2:                                # %if.end.loopexit.i
 	end_block                       # label1:
 	i32.load	$push3=, h($0)
 	i32.store	$push0=, 0($pop3), $0
 	i32.const	$push4=, 1
-	i32.store8	$discard=, n($pop0), $pop4
+	i32.store8	$drop=, n($pop0), $pop4
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push5=, 0

@@ -19,7 +19,7 @@ foo:                                    # @foo
 	i32.load	$push1=, e($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, e($pop0), $pop3
+	i32.store	$drop=, e($pop0), $pop3
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
 	return

@@ -28,10 +28,10 @@ bar:                                    # @bar
 # BB#1:                                 # %for.cond4.preheader.preheader
 	i32.const	$push7=, 0
 	i32.const	$push2=, 1
-	i32.store	$discard=, d($pop7), $pop2
+	i32.store	$drop=, d($pop7), $pop2
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
-	i32.store	$discard=, e($pop6), $pop5
+	i32.store	$drop=, e($pop6), $pop5
 .LBB1_2:                                # %for.end9
 	end_block                       # label0:
 	i32.const	$push8=, 0
@@ -76,13 +76,13 @@ main:                                   # @main
 	tee_local	$push9=, $1=, $pop10
 	i32.store	$push0=, e($pop9), $1
 	i32.const	$push8=, 1
-	i32.store	$discard=, d($pop0), $pop8
+	i32.store	$drop=, d($pop0), $pop8
 	br      	0               # 0: up to label2
 .LBB2_4:                                # %for.inc.1
 	end_loop                        # label3:
 	end_block                       # label1:
 	i32.const	$push4=, 2
-	i32.store	$discard=, b($0), $pop4
+	i32.store	$drop=, b($0), $pop4
 	return  	$0
 	.endfunc
 .Lfunc_end2:

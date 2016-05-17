@@ -379,8 +379,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_38:                               # %if.then35.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label80:
-	i32.store	$discard=, 12($8), $4
-	i32.store	$discard=, 8($8), $3
+	i32.store	$drop=, 12($8), $4
+	i32.store	$drop=, 8($8), $3
 	i32.const	$push88=, 12
 	i32.add 	$push89=, $8, $pop88
 	copy_local	$0=, $pop89
@@ -411,8 +411,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_43:                               # %if.then.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label77:
-	i32.store	$discard=, 12($8), $4
-	i32.store	$discard=, 8($8), $3
+	i32.store	$drop=, 12($8), $4
+	i32.store	$drop=, 8($8), $3
 	i32.const	$push84=, 12
 	i32.add 	$push85=, $8, $pop84
 	copy_local	$0=, $pop85
@@ -443,8 +443,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_48:                               # %if.then23.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label74:
-	i32.store	$discard=, 12($8), $4
-	i32.store	$discard=, 8($8), $3
+	i32.store	$drop=, 12($8), $4
+	i32.store	$drop=, 8($8), $3
 	i32.const	$push96=, 12
 	i32.add 	$push97=, $8, $pop96
 	copy_local	$0=, $pop97
@@ -475,8 +475,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_53:                               # %if.then29.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label71:
-	i32.store	$discard=, 12($8), $4
-	i32.store	$discard=, 8($8), $3
+	i32.store	$drop=, 12($8), $4
+	i32.store	$drop=, 8($8), $3
 	i32.const	$push92=, 12
 	i32.add 	$push93=, $8, $pop92
 	copy_local	$0=, $pop93
@@ -516,8 +516,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_60:                               # %if.then43.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label67:
-	i32.store	$discard=, 12($8), $4
-	i32.store	$discard=, 8($8), $3
+	i32.store	$drop=, 12($8), $4
+	i32.store	$drop=, 8($8), $3
 	i32.const	$push80=, 12
 	i32.add 	$push81=, $8, $pop80
 	copy_local	$0=, $pop81
@@ -643,8 +643,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_80:                               # %if.then52.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label56:
-	i32.store	$discard=, 12($8), $6
-	i32.store	$discard=, 8($8), $1
+	i32.store	$drop=, 12($8), $6
+	i32.store	$drop=, 8($8), $1
 	i32.const	$push108=, 12
 	i32.add 	$push109=, $8, $pop108
 	copy_local	$0=, $pop109
@@ -675,8 +675,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_85:                               # %if.then.i24
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label53:
-	i32.store	$discard=, 12($8), $1
-	i32.store	$discard=, 8($8), $5
+	i32.store	$drop=, 12($8), $1
+	i32.store	$drop=, 8($8), $5
 	i32.const	$push104=, 12
 	i32.add 	$push105=, $8, $pop104
 	copy_local	$0=, $pop105
@@ -707,8 +707,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_90:                               # %if.then34.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label50:
-	i32.store	$discard=, 12($8), $1
-	i32.store	$discard=, 8($8), $6
+	i32.store	$drop=, 12($8), $1
+	i32.store	$drop=, 8($8), $6
 	i32.const	$push116=, 12
 	i32.add 	$push117=, $8, $pop116
 	copy_local	$0=, $pop117
@@ -739,8 +739,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_95:                               # %if.then43.i51
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label47:
-	i32.store	$discard=, 12($8), $9
-	i32.store	$discard=, 8($8), $1
+	i32.store	$drop=, 12($8), $9
+	i32.store	$drop=, 8($8), $1
 	i32.const	$push112=, 12
 	i32.add 	$push113=, $8, $pop112
 	copy_local	$0=, $pop113
@@ -784,8 +784,8 @@ mymemcmp:                               # @mymemcmp
 .LBB0_102:                              # %if.then63.i
                                         #   in Loop: Header=BB0_22 Depth=1
 	end_block                       # label43:
-	i32.store	$discard=, 12($8), $0
-	i32.store	$discard=, 8($8), $5
+	i32.store	$drop=, 12($8), $0
+	i32.store	$drop=, 8($8), $5
 	i32.const	$push100=, 12
 	i32.add 	$push101=, $8, $pop100
 	copy_local	$0=, $pop101
@@ -931,35 +931,35 @@ main:                                   # @main
 	i32.const	$push29=, 0
 	i32.const	$push28=, 0
 	i32.load8_u	$push0=, .L.str+14($pop28)
-	i32.store8	$discard=, buf+39($pop29), $pop0
+	i32.store8	$drop=, buf+39($pop29), $pop0
 	i32.const	$push27=, 0
 	i32.const	$push26=, 0
 	i32.load16_u	$push1=, .L.str+12($pop26):p2align=0
-	i32.store16	$discard=, buf+37($pop27):p2align=0, $pop1
+	i32.store16	$drop=, buf+37($pop27):p2align=0, $pop1
 	i32.const	$push25=, 0
 	i32.const	$push24=, 0
 	i32.load	$push2=, .L.str+8($pop24):p2align=0
-	i32.store	$discard=, buf+33($pop25):p2align=0, $pop2
+	i32.store	$drop=, buf+33($pop25):p2align=0, $pop2
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0
 	i32.load8_u	$push4=, .L.str.1+14($pop22)
-	i32.store8	$discard=, buf+182($pop23), $pop4
+	i32.store8	$drop=, buf+182($pop23), $pop4
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
 	i32.load16_u	$push5=, .L.str.1+12($pop20):p2align=0
-	i32.store16	$discard=, buf+180($pop21), $pop5
+	i32.store16	$drop=, buf+180($pop21), $pop5
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load	$push6=, .L.str.1+8($pop18):p2align=0
-	i32.store	$discard=, buf+176($pop19), $pop6
+	i32.store	$drop=, buf+176($pop19), $pop6
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i64.load	$push3=, .L.str($pop16):p2align=0
-	i64.store	$discard=, buf+25($pop17):p2align=0, $pop3
+	i64.store	$drop=, buf+25($pop17):p2align=0, $pop3
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i64.load	$push7=, .L.str.1($pop14):p2align=0
-	i64.store	$discard=, buf+168($pop15), $pop7
+	i64.store	$drop=, buf+168($pop15), $pop7
 	block
 	i32.const	$push10=, buf+25
 	i32.const	$push9=, buf+168

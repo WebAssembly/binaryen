@@ -33,7 +33,7 @@ f:                                      # @f
 	i32.add 	$1=, $pop6, $1
 	i32.const	$push16=, -1
 	i32.add 	$push7=, $1, $pop16
-	i32.store	$discard=, 0($0), $pop7
+	i32.store	$drop=, 0($0), $pop7
 	i32.const	$push15=, 1
 	i32.add 	$4=, $4, $pop15
 	i32.const	$push14=, 4

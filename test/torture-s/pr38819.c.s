@@ -21,9 +21,9 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %for.body
 	i32.const	$push0=, 0
-	i32.load	$discard=, a($pop0)
+	i32.load	$drop=, a($pop0)
 	i32.const	$push1=, 0
-	i32.load	$discard=, b($pop1)
+	i32.load	$drop=, b($pop1)
 	call    	foo@FUNCTION
 	unreachable
 	.endfunc

@@ -14,7 +14,7 @@ foo:                                    # @foo
 	tee_local	$push9=, $1=, $pop10
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop9, $pop1
-	i32.store	$discard=, foo.cnt($pop0), $pop2
+	i32.store	$drop=, foo.cnt($pop0), $pop2
 	block
 	i32.const	$push3=, 4
 	i32.shl 	$push4=, $1, $pop3
@@ -55,7 +55,7 @@ main:                                   # @main
 	tee_local	$push35=, $1=, $pop36
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.r+8($pop0)
-	i32.store	$discard=, 0($pop35), $pop1
+	i32.store	$drop=, 0($pop35), $pop1
 	i32.const	$push34=, 0
 	i64.load	$push3=, .Lmain.r($pop34):p2align=2
 	i64.store	$0=, 32($2), $pop3
@@ -65,34 +65,34 @@ main:                                   # @main
 	i32.add 	$push5=, $pop26, $pop33
 	i32.const	$push32=, 0
 	i64.load	$push4=, .Lmain.r+8($pop32):p2align=2
-	i64.store	$discard=, 0($pop5):p2align=2, $pop4
-	i64.store	$discard=, 16($2):p2align=2, $0
+	i64.store	$drop=, 0($pop5):p2align=2, $pop4
+	i64.store	$drop=, 16($2):p2align=2, $0
 	i32.const	$push27=, 16
 	i32.add 	$push28=, $2, $pop27
 	call    	foo@FUNCTION, $pop28
 	i64.const	$push6=, 8589934592
-	i64.store	$discard=, 32($2), $pop6
+	i64.store	$drop=, 32($2), $pop6
 	i64.const	$push7=, 12884901887
-	i64.store	$discard=, 0($1), $pop7
+	i64.store	$drop=, 0($1), $pop7
 	i32.const	$push8=, 12
 	i32.add 	$push9=, $2, $pop8
 	i32.const	$push10=, 2
-	i32.store	$discard=, 0($pop9), $pop10
+	i32.store	$drop=, 0($pop9), $pop10
 	i32.const	$push31=, 8
 	i32.add 	$push11=, $2, $pop31
 	i32.load	$push12=, 0($1)
-	i32.store	$discard=, 0($pop11), $pop12
+	i32.store	$drop=, 0($pop11), $pop12
 	i32.const	$push13=, 4
 	i32.add 	$push14=, $2, $pop13
 	i32.load	$push15=, 36($2)
-	i32.store	$discard=, 0($pop14), $pop15
+	i32.store	$drop=, 0($pop14), $pop15
 	i32.const	$push30=, 0
 	i32.store	$1=, 0($2), $pop30
 	call    	foo@FUNCTION, $2
 	i32.const	$push22=, __stack_pointer
 	i32.const	$push20=, 48
 	i32.add 	$push21=, $2, $pop20
-	i32.store	$discard=, 0($pop22), $pop21
+	i32.store	$drop=, 0($pop22), $pop21
 	return  	$1
 	.endfunc
 .Lfunc_end1:

@@ -7,7 +7,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:
 	i32.const	$push0=, .str
-	call    	$discard=, puts@FUNCTION, $pop0
+	call    	$drop=, puts@FUNCTION, $pop0
 	i32.const	$push1=, 31
 	i32.shr_s	$push2=, $0, $pop1
 	i32.const	$push3=, 30
@@ -48,7 +48,7 @@ main:                                   # @main
 	end_block
 	i32.const	$push11=, -12
 	i32.add 	$0=, $0, $pop11
-	i32.const	$discard=, main@FUNCTION # just take address for testing
+	i32.const	$drop=, main@FUNCTION # just take address for testing
 	end_block
 	return  	$0
 .Lfunc_end0:

@@ -10,9 +10,9 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, i($pop0), $pop1
+	i32.store	$drop=, i($pop0), $pop1
 	i32.const	$push2=, 2
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	i32.const	$push4=, 0
 	i32.load	$push3=, i($pop4)
 	return  	$pop3
@@ -29,10 +29,10 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	i32.const	$push1=, 0
 	i32.const	$push2=, 1
-	i32.store	$discard=, i($pop1), $pop2
+	i32.store	$drop=, i($pop1), $pop2
 	i32.load	$push3=, 0($0)
 	return  	$pop3
 	.endfunc
@@ -55,7 +55,7 @@ main:                                   # @main
 	i32.store	$push30=, 0($pop19), $pop27
 	tee_local	$push29=, $0=, $pop30
 	i32.const	$push0=, 0
-	i32.store	$discard=, 12($pop29), $pop0
+	i32.store	$drop=, 12($pop29), $pop0
 	block
 	i32.const	$push28=, i
 	i32.call	$push1=, foo@FUNCTION, $pop28
@@ -96,7 +96,7 @@ main:                                   # @main
 	i32.const	$push22=, __stack_pointer
 	i32.const	$push20=, 16
 	i32.add 	$push21=, $0, $pop20
-	i32.store	$discard=, 0($pop22), $pop21
+	i32.store	$drop=, 0($pop22), $pop21
 	i32.const	$push15=, 0
 	return  	$pop15
 .LBB2_7:                                # %if.then17

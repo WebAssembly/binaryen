@@ -13,7 +13,7 @@ check:                                  # @check
 	i32.const	$push12=, 16
 	i32.sub 	$push15=, $pop11, $pop12
 	tee_local	$push14=, $3=, $pop15
-	i32.store	$discard=, 12($pop14), $1
+	i32.store	$drop=, 12($pop14), $1
 	i32.const	$push13=, 4
 	i32.shl 	$2=, $0, $pop13
 	i32.const	$0=, 3
@@ -36,7 +36,7 @@ check:                                  # @check
 	tee_local	$push22=, $4=, $pop23
 	i32.const	$push21=, 12
 	i32.add 	$push6=, $pop22, $pop21
-	i32.store	$discard=, 12($3), $pop6
+	i32.store	$drop=, 12($3), $pop6
 	i32.const	$push20=, 0
 	i32.load	$1=, fails($pop20)
 	i32.const	$push19=, 0
@@ -49,7 +49,7 @@ check:                                  # @check
 	i32.const	$push25=, 1
 	i32.add 	$1=, $1, $pop25
 	i32.const	$push24=, 0
-	i32.store	$discard=, fails($pop24), $1
+	i32.store	$drop=, fails($pop24), $1
 	br      	1               # 1: down to label2
 .LBB0_4:                                # %sw.epilog.thread
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -60,7 +60,7 @@ check:                                  # @check
 	i32.const	$push28=, 1
 	i32.add 	$push27=, $pop5, $pop28
 	tee_local	$push26=, $1=, $pop27
-	i32.store	$discard=, fails($pop30), $pop26
+	i32.store	$drop=, fails($pop30), $pop26
 .LBB0_5:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
@@ -96,29 +96,29 @@ main:                                   # @main
 	i32.store	$0=, 0($pop14), $pop22
 	i32.const	$push28=, 0
 	i32.const	$push0=, -952139264
-	i32.store	$discard=, a+32($pop28), $pop0
+	i32.store	$drop=, a+32($pop28), $pop0
 	i32.const	$push1=, 24
 	i32.add 	$push2=, $0, $pop1
 	i32.const	$push27=, 0
 	i64.load	$push3=, a+28($pop27):p2align=2
-	i64.store	$discard=, 0($pop2):p2align=2, $pop3
+	i64.store	$drop=, 0($pop2):p2align=2, $pop3
 	i32.const	$push26=, 0
 	i32.load	$push4=, a+24($pop26)
-	i32.store	$discard=, 20($0), $pop4
+	i32.store	$drop=, 20($0), $pop4
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $0, $pop5
 	i32.const	$push25=, 0
 	i32.load	$push7=, a+32($pop25)
-	i32.store	$discard=, 0($pop6), $pop7
+	i32.store	$drop=, 0($pop6), $pop7
 	i32.const	$push24=, 0
 	i64.load	$push8=, a+24($pop24)
-	i64.store	$discard=, 8($0):p2align=2, $pop8
+	i64.store	$drop=, 8($0):p2align=2, $pop8
 	i32.const	$push18=, 20
 	i32.add 	$push19=, $0, $pop18
-	i32.store	$discard=, 0($0), $pop19
+	i32.store	$drop=, 0($0), $pop19
 	i32.const	$push20=, 8
 	i32.add 	$push21=, $0, $pop20
-	i32.store	$discard=, 4($0), $pop21
+	i32.store	$drop=, 4($0), $pop21
 	i32.const	$push9=, 1
 	call    	check@FUNCTION, $pop9, $0
 	block
@@ -129,7 +129,7 @@ main:                                   # @main
 	i32.const	$push17=, __stack_pointer
 	i32.const	$push15=, 32
 	i32.add 	$push16=, $0, $pop15
-	i32.store	$discard=, 0($pop17), $pop16
+	i32.store	$drop=, 0($pop17), $pop16
 	i32.const	$push29=, 0
 	return  	$pop29
 .LBB1_2:                                # %if.then

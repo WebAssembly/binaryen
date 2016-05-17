@@ -14,7 +14,7 @@ end:
 copy:
 	.param  	i32, i32
 	i32.load	$push0=, 0($1)
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end1:
@@ -30,7 +30,7 @@ arg_i8:
 	tee_local	$push4=, $1=, $pop0
 	i32.const	$push1=, 4
 	i32.add 	$push2=, $pop4, $pop1
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	i32.load	$push3=, 0($1)
 	return  	$pop3
 	.endfunc
@@ -51,7 +51,7 @@ arg_i32:
 	tee_local	$push8=, $1=, $pop4
 	i32.const	$push5=, 4
 	i32.add 	$push6=, $pop8, $pop5
-	i32.store	$discard=, 0($0), $pop6
+	i32.store	$drop=, 0($0), $pop6
 	i32.load	$push7=, 0($1)
 	return  	$pop7
 	.endfunc
@@ -75,12 +75,12 @@ arg_i128:
 	i64.load	$3=, 0($4)
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $4, $pop7
-	i32.store	$discard=, 0($1), $pop8
+	i32.store	$drop=, 0($1), $pop8
 	i32.const	$push11=, 8
 	i32.add 	$push10=, $0, $pop11
 	i64.load	$push9=, 0($2)
-	i64.store	$discard=, 0($pop10), $pop9
-	i64.store	$discard=, 0($0), $3
+	i64.store	$drop=, 0($pop10), $pop9
+	i64.store	$drop=, 0($0), $3
 	return
 	.endfunc
 .Lfunc_end4:
@@ -112,11 +112,11 @@ caller_some:
 	i32.const	$2=, __stack_pointer
 	i32.store	$8=, 0($2), $8
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($8), $pop0
+	i32.store	$drop=, 0($8), $pop0
 	i32.const	$push1=, 8
 	i32.add 	$0=, $8, $pop1
 	i64.const	$push2=, 4611686018427387904
-	i64.store	$discard=, 0($0), $pop2
+	i64.store	$drop=, 0($0), $pop2
 	call    	callee@FUNCTION
 	i32.const	$3=, __stack_pointer
 	i32.load	$3=, 0($3)

@@ -41,14 +41,14 @@ main:                                   # @main
 	i32.store	$push12=, 0($pop5), $pop10
 	tee_local	$push11=, $0=, $pop12
 	i32.const	$push0=, 65531
-	i32.store16	$discard=, 14($pop11), $pop0
+	i32.store16	$drop=, 14($pop11), $pop0
 	i32.const	$push1=, 65526
-	i32.store16	$discard=, 12($0), $pop1
+	i32.store16	$drop=, 12($0), $pop1
 	i32.const	$push6=, 14
 	i32.add 	$push7=, $0, $pop6
 	i32.const	$push8=, 12
 	i32.add 	$push9=, $0, $pop8
-	i32.call	$discard=, foo@FUNCTION, $pop7, $pop9
+	i32.call	$drop=, foo@FUNCTION, $pop7, $pop9
 	unreachable
 	.endfunc
 .Lfunc_end1:

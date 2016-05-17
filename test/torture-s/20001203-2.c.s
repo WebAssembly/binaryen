@@ -17,10 +17,10 @@ create_array_type:                      # @create_array_type
 	i32.load	$push2=, 0($1)
 	i32.const	$push3=, 3
 	i32.mul 	$push4=, $pop2, $pop3
-	i32.store	$discard=, 0($0), $pop4
+	i32.store	$drop=, 0($0), $pop4
 	i32.load	$1=, 4($0)
 	i32.const	$push5=, 1
-	i32.store16	$discard=, 8($0), $pop5
+	i32.store16	$drop=, 8($0), $pop5
 	i32.const	$5=, 0
 	block
 	i32.eqz 	$push49=, $1
@@ -56,7 +56,7 @@ create_array_type:                      # @create_array_type
 	i32.const	$push13=, 28
 	i32.add 	$push14=, $1, $pop13
 	i32.const	$push15=, 1
-	i32.store	$discard=, 0($pop14), $pop15
+	i32.store	$drop=, 0($pop14), $pop15
 .LBB0_5:                                # %if.end17
 	end_block                       # label3:
 	i32.const	$push22=, 8
@@ -74,20 +74,20 @@ create_array_type:                      # @create_array_type
 	i32.xor 	$push20=, $1, $pop19
 	i32.and 	$push43=, $pop18, $pop20
 	tee_local	$push42=, $1=, $pop43
-	i32.store	$discard=, 0($pop46), $pop42
+	i32.store	$drop=, 0($pop46), $pop42
 	i32.sub 	$push24=, $1, $2
 	i32.sub 	$push25=, $4, $2
 	i32.gt_s	$push26=, $pop24, $pop25
 	i32.select	$push27=, $4, $1, $pop26
 	i32.store	$push0=, 0($7), $pop27
-	i32.store	$discard=, 0($6), $pop0
+	i32.store	$drop=, 0($6), $pop0
 .LBB0_6:                                # %cond.end
 	end_block                       # label2:
-	i32.store	$discard=, 12($0), $5
+	i32.store	$drop=, 12($0), $5
 	return  	$0
 .LBB0_7:                                # %if.then
 	end_block                       # label1:
-	i32.call	$discard=, alloc_type@FUNCTION
+	i32.call	$drop=, alloc_type@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.then8
 	end_block                       # label0:
@@ -118,9 +118,9 @@ get_discrete_bounds:                    # @get_discrete_bounds
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	i64.const	$push1=, 2
-	i64.store	$discard=, 0($1), $pop1
+	i64.store	$drop=, 0($1), $pop1
 	return
 	.endfunc
 .Lfunc_end2:

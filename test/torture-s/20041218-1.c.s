@@ -111,16 +111,16 @@ foo:                                    # @foo
 # BB#2:                                 # %sw.bb
 	i32.const	$push3=, 0
 	i32.const	$push2=, 1
-	i32.store	$discard=, baz.v($pop3), $pop2
+	i32.store	$drop=, baz.v($pop3), $pop2
 	i32.const	$push5=, baz.v+4
 	i32.const	$push8=, 0
 	i32.const	$push4=, 40
-	i32.call	$discard=, memset@FUNCTION, $pop5, $pop8, $pop4
-	i32.call	$discard=, dummy2@FUNCTION, $4, $4
+	i32.call	$drop=, memset@FUNCTION, $pop5, $pop8, $pop4
+	i32.call	$drop=, dummy2@FUNCTION, $4, $4
 	unreachable
 .LBB4_3:                                # %for.end
 	end_block                       # label2:
-	i32.store	$discard=, 0($2), $3
+	i32.store	$drop=, 0($2), $3
 .LBB4_4:                                # %cleanup2
 	end_block                       # label1:
 	return  	$4
@@ -149,7 +149,7 @@ main:                                   # @main
 	i32.store	$push0=, 12($0), $pop1
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8
-	i32.call	$discard=, foo@FUNCTION, $pop7, $pop0, $pop9
+	i32.call	$drop=, foo@FUNCTION, $pop7, $pop0, $pop9
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

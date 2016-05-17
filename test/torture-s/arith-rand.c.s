@@ -16,7 +16,7 @@ simple_rand:                            # @simple_rand
 	i32.const	$push4=, 12345
 	i32.add 	$push8=, $pop3, $pop4
 	tee_local	$push7=, $0=, $pop8
-	i32.store	$discard=, simple_rand.seed($pop0), $pop7
+	i32.store	$drop=, simple_rand.seed($pop0), $pop7
 	i32.const	$push5=, 8
 	i32.shr_u	$push6=, $0, $pop5
 	return  	$pop6
@@ -76,7 +76,7 @@ random_bitstring:                       # @random_bitstring
 .LBB1_5:                                # %cleanup
 	end_loop                        # label1:
 	i32.const	$push6=, 0
-	i32.store	$discard=, simple_rand.seed($pop6), $3
+	i32.store	$drop=, simple_rand.seed($pop6), $3
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -328,26 +328,26 @@ main:                                   # @main
 # BB#22:                                # %for.end
 	end_loop                        # label7:
 	i32.const	$push57=, 0
-	i32.store	$discard=, simple_rand.seed($pop57), $5
+	i32.store	$drop=, simple_rand.seed($pop57), $5
 	i32.const	$push137=, 0
 	call    	exit@FUNCTION, $pop137
 	unreachable
 .LBB2_23:                               # %if.then136
 	end_block                       # label5:
 	i32.const	$push37=, 0
-	i32.store	$discard=, simple_rand.seed($pop37), $5
+	i32.store	$drop=, simple_rand.seed($pop37), $5
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_24:                               # %if.then40
 	end_block                       # label4:
 	i32.const	$push19=, 0
-	i32.store	$discard=, simple_rand.seed($pop19), $5
+	i32.store	$drop=, simple_rand.seed($pop19), $5
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_25:                               # %if.then227
 	end_block                       # label3:
 	i32.const	$push55=, 0
-	i32.store	$discard=, simple_rand.seed($pop55), $5
+	i32.store	$drop=, simple_rand.seed($pop55), $5
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

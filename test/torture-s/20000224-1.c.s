@@ -41,7 +41,7 @@ test:                                   # @test
 # BB#3:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push7=, 0
-	i32.store	$discard=, flag($pop7), $1
+	i32.store	$drop=, flag($pop7), $1
 .LBB0_4:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push19=, 1
@@ -57,7 +57,7 @@ test:                                   # @test
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, test@FUNCTION
+	i32.call	$drop=, test@FUNCTION
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable

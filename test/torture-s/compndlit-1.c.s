@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.eq  	$push8=, $pop2, $pop3
 	tee_local	$push7=, $0=, $pop8
 	i32.select	$push6=, $pop5, $pop4, $pop7
-	i32.store	$discard=, x($pop10), $pop6
+	i32.store	$drop=, x($pop10), $pop6
 	block
 	i32.eqz 	$push12=, $0
 	br_if   	0, $pop12       # 0: down to label0

@@ -57,15 +57,15 @@ foo:                                    # @foo
 	i32.const	$push3=, a+7
 	i32.const	$push2=, 0
 	i32.const	$push1=, 2041
-	i32.call	$discard=, memset@FUNCTION, $pop3, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load8_u	$push5=, .L.str.1+4($pop18)
-	i32.store8	$discard=, a+5($pop19), $pop5
+	i32.store8	$drop=, a+5($pop19), $pop5
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i32.load	$push6=, .L.str.1($pop16):p2align=0
-	i32.store	$discard=, a+1($pop17):p2align=0, $pop6
+	i32.store	$drop=, a+1($pop17):p2align=0, $pop6
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i32.const	$push4=, 1
@@ -121,15 +121,15 @@ main:                                   # @main
 	i32.const	$push3=, a+7
 	i32.const	$push2=, 0
 	i32.const	$push1=, 2041
-	i32.call	$discard=, memset@FUNCTION, $pop3, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.load8_u	$push5=, .L.str.1+4($pop18)
-	i32.store8	$discard=, a+5($pop19), $pop5
+	i32.store8	$drop=, a+5($pop19), $pop5
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i32.load	$push6=, .L.str.1($pop16):p2align=0
-	i32.store	$discard=, a+1($pop17):p2align=0, $pop6
+	i32.store	$drop=, a+1($pop17):p2align=0, $pop6
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i32.const	$push4=, 1

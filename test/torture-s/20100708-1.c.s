@@ -11,7 +11,7 @@ f:                                      # @f
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push3=, 0
 	i32.const	$push2=, 192
-	i32.call	$discard=, memset@FUNCTION, $pop1, $pop3, $pop2
+	i32.call	$drop=, memset@FUNCTION, $pop1, $pop3, $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -38,7 +38,7 @@ main:                                   # @main
 	i32.const	$push7=, __stack_pointer
 	i32.const	$push5=, 208
 	i32.add 	$push6=, $0, $pop5
-	i32.store	$discard=, 0($pop7), $pop6
+	i32.store	$drop=, 0($pop7), $pop6
 	i32.const	$push0=, 0
 	return  	$pop0
 	.endfunc

@@ -102,7 +102,7 @@ f:                                      # @f
 	f64.load	$7=, 0($pop65)
 	i32.const	$push47=, 8
 	i32.add 	$push48=, $1, $pop47
-	i32.store	$discard=, 12($4), $pop48
+	i32.store	$drop=, 12($4), $pop48
 	f64.const	$push49=, 0x1.5c28f5c28f5c3p1
 	f64.ne  	$push50=, $7, $pop49
 	br_if   	0, $pop50       # 0: down to label0
@@ -110,7 +110,7 @@ f:                                      # @f
 	i32.const	$push57=, __stack_pointer
 	i32.const	$push55=, 16
 	i32.add 	$push56=, $4, $pop55
-	i32.store	$discard=, 0($pop57), $pop56
+	i32.store	$drop=, 0($pop57), $pop56
 	return  	$4
 .LBB0_10:                               # %if.then40
 	end_block                       # label0:
@@ -138,40 +138,40 @@ main:                                   # @main
 	i32.const	$push0=, 64
 	i32.add 	$push1=, $pop32, $pop0
 	i64.const	$push2=, 4613307314293241283
-	i64.store	$discard=, 0($pop1), $pop2
+	i64.store	$drop=, 0($pop1), $pop2
 	i32.const	$push3=, 56
 	i32.add 	$push4=, $0, $pop3
 	i32.const	$push5=, 14
-	i32.store	$discard=, 0($pop4), $pop5
+	i32.store	$drop=, 0($pop4), $pop5
 	i32.const	$push6=, 48
 	i32.add 	$push7=, $0, $pop6
 	i64.const	$push8=, 20000000000
-	i64.store	$discard=, 0($pop7), $pop8
+	i64.store	$drop=, 0($pop7), $pop8
 	i32.const	$push9=, 44
 	i32.add 	$push10=, $0, $pop9
 	i32.const	$push11=, 13
-	i32.store	$discard=, 0($pop10), $pop11
+	i32.store	$drop=, 0($pop10), $pop11
 	i32.const	$push12=, 40
 	i32.add 	$push13=, $0, $pop12
 	i32.const	$push14=, 12
-	i32.store	$discard=, 0($pop13), $pop14
+	i32.store	$drop=, 0($pop13), $pop14
 	i32.const	$push15=, 32
 	i32.add 	$push16=, $0, $pop15
 	i64.const	$push17=, 4611846459164112977
-	i64.store	$discard=, 0($pop16), $pop17
+	i64.store	$drop=, 0($pop16), $pop17
 	i32.const	$push18=, 24
 	i32.add 	$push19=, $0, $pop18
 	i64.const	$push20=, -1475739525896764129
-	i64.store	$discard=, 0($pop19), $pop20
+	i64.store	$drop=, 0($pop19), $pop20
 	i32.const	$push21=, 16
 	i32.add 	$push22=, $0, $pop21
 	i32.const	$push23=, 11
-	i32.store	$discard=, 0($pop22), $pop23
+	i32.store	$drop=, 0($pop22), $pop23
 	i64.const	$push24=, 10000000000
-	i64.store	$discard=, 8($0), $pop24
+	i64.store	$drop=, 8($0), $pop24
 	i32.const	$push25=, 10
-	i32.store	$discard=, 0($0), $pop25
-	i32.call	$discard=, f@FUNCTION, $0, $0
+	i32.store	$drop=, 0($0), $pop25
+	i32.call	$drop=, f@FUNCTION, $0, $0
 	i32.const	$push26=, 0
 	call    	exit@FUNCTION, $pop26
 	unreachable

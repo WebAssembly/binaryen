@@ -15,7 +15,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 536870911
 	i32.and 	$push3=, $0, $pop2
 	i32.or  	$push6=, $pop5, $pop3
-	i32.store	$discard=, f($pop0), $pop6
+	i32.store	$drop=, f($pop0), $pop6
 	return
 	.endfunc
 .Lfunc_end0:
@@ -35,7 +35,7 @@ main:                                   # @main
 	i32.and 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 536870857
 	i32.or  	$push5=, $pop3, $pop4
-	i32.store	$discard=, f($pop0), $pop5
+	i32.store	$drop=, f($pop0), $pop5
 	i32.const	$push6=, 0
 	return  	$pop6
 	.endfunc

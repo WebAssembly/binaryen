@@ -21,10 +21,10 @@ void vd2(double d) {
 }
 
 int main() {
-  asm(" i32.const       $discard=, i@FUNCTION");
-  asm(" i32.const       $discard=, jf@FUNCTION");
-  asm(" i32.const       $discard=, vd@FUNCTION");
-  asm(" i32.const       $discard=, ffjjdi@FUNCTION");
-  asm(" i32.const       $discard=, vd2@FUNCTION");
+  asm(" i32.const       $drop=, i@FUNCTION");
+  asm(" i32.const       $drop=, jf@FUNCTION");
+  asm(" i32.const       $drop=, vd@FUNCTION");
+  asm(" i32.const       $drop=, ffjjdi@FUNCTION");
+  asm(" i32.const       $drop=, vd2@FUNCTION");
   return 0;
 }

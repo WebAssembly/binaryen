@@ -69,7 +69,7 @@ f1:                                     # @f1
 	i32.sub 	$push25=, $pop19, $pop20
 	i32.store	$push27=, 0($pop21), $pop25
 	tee_local	$push26=, $3=, $pop27
-	i32.store	$discard=, 12($pop26), $2
+	i32.store	$drop=, 12($pop26), $2
 	block
 	block
 	block
@@ -94,7 +94,7 @@ f1:                                     # @f1
 	i32.const	$push24=, __stack_pointer
 	i32.const	$push22=, 16
 	i32.add 	$push23=, $3, $pop22
-	i32.store	$discard=, 0($pop24), $pop23
+	i32.store	$drop=, 0($pop24), $pop23
 	return
 .LBB1_5:                                # %entry
 	end_block                       # label6:
@@ -138,7 +138,7 @@ f2:                                     # @f2
 	i32.sub 	$push31=, $pop25, $pop26
 	i32.store	$push33=, 0($pop27), $pop31
 	tee_local	$push32=, $5=, $pop33
-	i32.store	$discard=, 12($pop32), $4
+	i32.store	$drop=, 12($pop32), $4
 	block
 	block
 	block
@@ -196,7 +196,7 @@ f2:                                     # @f2
 	i32.const	$push30=, __stack_pointer
 	i32.const	$push28=, 16
 	i32.add 	$push29=, $5, $pop28
-	i32.store	$discard=, 0($pop30), $pop29
+	i32.store	$drop=, 0($pop30), $pop29
 	return
 .LBB2_12:                               # %if.then
 	end_block                       # label7:
@@ -222,14 +222,14 @@ main:                                   # @main
 	i32.store	$push20=, 0($pop12), $pop18
 	tee_local	$push19=, $0=, $pop20
 	i64.const	$push0=, 17179869187
-	i64.store	$discard=, 16($pop19), $pop0
+	i64.store	$drop=, 16($pop19), $pop0
 	i32.const	$push2=, 1
 	i64.const	$push1=, 2
 	i32.const	$push16=, 16
 	i32.add 	$push17=, $0, $pop16
 	call    	f1@FUNCTION, $pop2, $pop1, $pop17
 	i64.const	$push3=, 42949672969
-	i64.store	$discard=, 0($0), $pop3
+	i64.store	$drop=, 0($0), $pop3
 	i32.const	$push7=, 5
 	i32.const	$push6=, 6
 	i32.const	$push5=, 7
@@ -238,7 +238,7 @@ main:                                   # @main
 	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 32
 	i32.add 	$push14=, $0, $pop13
-	i32.store	$discard=, 0($pop15), $pop14
+	i32.store	$drop=, 0($pop15), $pop14
 	i32.const	$push8=, 0
 	return  	$pop8
 	.endfunc

@@ -12,11 +12,11 @@ g:                                      # @g
 	i32.const	$push3=, __stack_pointer
 	i32.load	$4=, 0($pop3)
 	i32.const	$push1=, 0
-	i32.store	$discard=, 0($3), $pop1
+	i32.store	$drop=, 0($3), $pop1
 	i32.const	$push4=, 16
 	i32.sub 	$push8=, $4, $pop4
 	tee_local	$push7=, $3=, $pop8
-	i32.store	$discard=, 12($pop7), $0
+	i32.store	$drop=, 12($pop7), $0
 	i32.const	$push5=, 12
 	i32.add 	$push6=, $3, $pop5
 	i32.select	$push0=, $pop6, $2, $1

@@ -32,7 +32,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push8=, 128
 	i32.or  	$push3=, $3, $pop8
-	i32.store8	$discard=, bytes($2), $pop3
+	i32.store8	$drop=, bytes($2), $pop3
 	i32.const	$push7=, 1
 	i32.add 	$2=, $2, $pop7
 	br      	0               # 0: up to label0
@@ -40,7 +40,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	end_loop                        # label1:
 	i32.const	$push4=, 127
 	i32.and 	$push5=, $3, $pop4
-	i32.store8	$discard=, bytes($2), $pop5
+	i32.store8	$drop=, bytes($2), $pop5
 	return
 	.endfunc
 .Lfunc_end0:
@@ -75,7 +75,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push14=, 128
 	i32.or  	$push0=, $3, $pop14
-	i32.store8	$discard=, bytes($1), $pop0
+	i32.store8	$drop=, bytes($1), $pop0
 	i32.const	$push13=, 1
 	i32.add 	$1=, $1, $pop13
 	br      	0               # 0: up to label2
@@ -83,7 +83,7 @@ main:                                   # @main
 	end_loop                        # label3:
 	i32.const	$push2=, 127
 	i32.and 	$push3=, $3, $pop2
-	i32.store8	$discard=, bytes($1), $pop3
+	i32.store8	$drop=, bytes($1), $pop3
 	block
 	i32.const	$push20=, 0
 	i32.load8_u	$push4=, bytes($pop20)

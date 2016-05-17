@@ -51,8 +51,8 @@ main:                                   # @main
 	br_if   	0, $pop5        # 0: down to label7
 # BB#5:                                 # %if.then
                                         #   in Loop: Header=BB0_4 Depth=2
-	i32.store	$discard=, 0($7), $8
-	i32.store	$discard=, 0($3), $6
+	i32.store	$drop=, 0($7), $8
+	i32.store	$drop=, 0($3), $6
 .LBB0_6:                                # %for.cond1.backedge
                                         #   in Loop: Header=BB0_4 Depth=2
 	end_block                       # label7:

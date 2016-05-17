@@ -11,7 +11,7 @@ g:                                      # @g
 	i32.const	$push3=, 0
 	i32.load	$push1=, sum($pop3)
 	i32.add 	$push2=, $pop1, $0
-	i32.store	$discard=, sum($pop0), $pop2
+	i32.store	$drop=, sum($pop0), $pop2
 	return
 	.endfunc
 .Lfunc_end0:
@@ -30,7 +30,7 @@ f:                                      # @f
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 81
 	i32.add 	$push4=, $pop2, $pop3
-	i32.store	$discard=, sum($pop0), $pop4
+	i32.store	$drop=, sum($pop0), $pop4
 	return
 	.endfunc
 .Lfunc_end1:
@@ -50,7 +50,7 @@ main:                                   # @main
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 81
 	i32.add 	$push1=, $pop2, $pop0
-	i32.store	$discard=, sum($pop5), $pop1
+	i32.store	$drop=, sum($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end

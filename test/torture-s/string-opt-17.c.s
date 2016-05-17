@@ -10,7 +10,7 @@ test1:                                  # @test1
 # BB#0:                                 # %entry
 	i32.const	$push2=, .L.str
 	i32.add 	$push3=, $1, $pop2
-	i32.call	$discard=, strcpy@FUNCTION, $0, $pop3
+	i32.call	$drop=, strcpy@FUNCTION, $0, $pop3
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $1, $pop0
 	return  	$pop1
@@ -60,9 +60,9 @@ test2:                                  # @test2
 # BB#1:                                 # %check2.exit
 	i32.const	$push6=, 0
 	i32.const	$push3=, 6
-	i32.store	$discard=, check2.r($pop6), $pop3
+	i32.store	$drop=, check2.r($pop6), $pop3
 	i32.const	$push4=, 8020322
-	i32.store	$discard=, 0($0):p2align=0, $pop4
+	i32.store	$drop=, 0($0):p2align=0, $pop4
 	return
 .LBB2_2:                                # %if.then.i
 	end_block                       # label1:
@@ -89,10 +89,10 @@ main:                                   # @main
 	tee_local	$push20=, $0=, $pop21
 	i32.const	$push19=, 0
 	i32.load8_u	$push0=, .L.str+9($pop19)
-	i32.store8	$discard=, 6($pop20), $pop0
+	i32.store8	$drop=, 6($pop20), $pop0
 	i32.const	$push18=, 0
 	i32.load16_u	$push1=, .L.str+7($pop18):p2align=0
-	i32.store16	$discard=, 4($0), $pop1
+	i32.store16	$drop=, 4($0), $pop1
 	block
 	i32.const	$push15=, 4
 	i32.add 	$push16=, $0, $pop15
@@ -109,9 +109,9 @@ main:                                   # @main
 # BB#2:                                 # %test2.exit
 	i32.const	$push23=, 0
 	i32.const	$push8=, 6
-	i32.store	$discard=, check2.r($pop23), $pop8
+	i32.store	$drop=, check2.r($pop23), $pop8
 	i32.const	$push9=, 8020322
-	i32.store	$discard=, 4($0), $pop9
+	i32.store	$drop=, 4($0), $pop9
 	i32.const	$push10=, 1
 	i32.eqz 	$push25=, $pop10
 	br_if   	0, $pop25       # 0: down to label2

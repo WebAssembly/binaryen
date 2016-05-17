@@ -29,7 +29,7 @@ foo:                                    # @foo
 	end_loop                        # label2:
 	end_block                       # label0:
 	i32.const	$push11=, 0
-	i32.store	$discard=, d($pop11), $0
+	i32.store	$drop=, d($pop11), $0
 	i32.const	$push10=, 0
 	return  	$pop10
 	.endfunc

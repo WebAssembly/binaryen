@@ -18,7 +18,7 @@ main:                                   # @main
 	i32.shr_s	$push2=, $pop1, $pop7
 	i32.const	$push3=, -1
 	i32.xor 	$push4=, $pop2, $pop3
-	i32.store	$discard=, b($pop11), $pop4
+	i32.store	$drop=, b($pop11), $pop4
 	block
 	i32.const	$push5=, 1
 	i32.and 	$push6=, $0, $pop5

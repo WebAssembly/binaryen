@@ -16,7 +16,7 @@ t1:                                     # @t1
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $2, $pop3
 	i32.load	$push5=, 0($pop4)
-	i32.store	$discard=, 0($2), $pop5
+	i32.store	$drop=, 0($2), $pop5
 	f32.const	$push7=, 0x1.4p1
 	f32.const	$push6=, 0x1.cp1
 	call_indirect	$3, $pop7, $pop6
@@ -43,7 +43,7 @@ t2:                                     # @t2
 	i32.const	$push4=, 4
 	i32.add 	$push5=, $4, $pop4
 	i32.load	$push6=, 0($pop5)
-	i32.store	$discard=, 0($4), $pop6
+	i32.store	$drop=, 0($4), $pop6
 	f32.const	$push8=, 0x1.4p1
 	f32.const	$push7=, 0x1.cp1
 	call_indirect	$3, $pop8, $pop7

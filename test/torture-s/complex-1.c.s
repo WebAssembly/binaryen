@@ -50,9 +50,9 @@ xcexp:                                  # @xcexp
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, -4616189618054758400
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	i64.const	$push1=, 0
-	i64.store	$discard=, 8($0), $pop1
+	i64.store	$drop=, 8($0), $pop1
 	return
 	.endfunc
 .Lfunc_end3:

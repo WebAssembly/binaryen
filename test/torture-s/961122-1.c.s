@@ -15,7 +15,7 @@ addhi:                                  # @addhi
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
 	i64.add 	$push5=, $pop4, $pop2
-	i64.store	$discard=, acc($pop3), $pop5
+	i64.store	$drop=, acc($pop3), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -36,7 +36,7 @@ subhi:                                  # @subhi
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
 	i64.sub 	$push5=, $pop4, $pop2
-	i64.store	$discard=, acc($pop3), $pop5
+	i64.store	$drop=, acc($pop3), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -51,7 +51,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end4
 	i32.const	$push1=, 0
 	i64.const	$push0=, 281470681743360
-	i64.store	$discard=, acc($pop1), $pop0
+	i64.store	$drop=, acc($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

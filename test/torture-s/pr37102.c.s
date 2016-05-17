@@ -38,11 +38,11 @@ main:                                   # @main
 	br_if   	0, $pop14       # 0: down to label1
 # BB#1:                                 # %if.then.3
 	i32.const	$push10=, 0
-	i32.store	$discard=, a($pop10), $0
+	i32.store	$drop=, a($pop10), $0
 .LBB1_2:                                # %for.inc.3
 	end_block                       # label1:
 	i32.const	$push13=, 0
-	i32.store	$discard=, a($pop13), $0
+	i32.store	$drop=, a($pop13), $0
 	i32.const	$push3=, 2
 	i32.shl 	$push4=, $0, $pop3
 	i32.const	$push5=, 1

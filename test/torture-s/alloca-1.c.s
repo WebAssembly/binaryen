@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.const	$push9=, __stack_pointer
 	i32.const	$push7=, 32
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$discard=, 0($pop9), $pop8
+	i32.store	$drop=, 0($pop9), $pop8
 	i32.const	$push2=, 0
 	return  	$pop2
 .LBB1_2:                                # %if.then

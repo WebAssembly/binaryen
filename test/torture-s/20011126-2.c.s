@@ -71,7 +71,7 @@ main:                                   # @main
 # BB#6:                                 # %while.body14.i.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label6:
-	i32.store8	$discard=, 0($0), $1
+	i32.store8	$drop=, 0($0), $1
 	i32.const	$push34=, 1
 	i32.add 	$1=, $2, $pop34
 	i32.const	$push33=, 1
@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.const	$push37=, 1
 	i32.add 	$2=, $2, $pop37
 	i32.load8_u	$push8=, 0($2)
-	i32.store8	$discard=, 0($3), $pop8
+	i32.store8	$drop=, 0($3), $pop8
 	i32.const	$push36=, 1
 	i32.add 	$push0=, $3, $pop36
 	copy_local	$3=, $pop0

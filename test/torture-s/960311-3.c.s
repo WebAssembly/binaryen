@@ -11,7 +11,7 @@ a1:                                     # @a1
 	i32.load	$push1=, count($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, count($pop0), $pop3
+	i32.store	$drop=, count($pop0), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -34,7 +34,7 @@ b:                                      # @b
 	i32.load	$push3=, count($pop18)
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$discard=, count($pop2), $pop5
+	i32.store	$drop=, count($pop2), $pop5
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	block
@@ -48,7 +48,7 @@ b:                                      # @b
 	i32.load	$push9=, count($pop19)
 	i32.const	$push10=, 1
 	i32.add 	$push11=, $pop9, $pop10
-	i32.store	$discard=, count($pop8), $pop11
+	i32.store	$drop=, count($pop8), $pop11
 .LBB1_4:                                # %if.end4
 	end_block                       # label1:
 	block
@@ -62,7 +62,7 @@ b:                                      # @b
 	i32.load	$push15=, count($pop20)
 	i32.const	$push16=, 1
 	i32.add 	$push17=, $pop15, $pop16
-	i32.store	$discard=, count($pop14), $pop17
+	i32.store	$drop=, count($pop14), $pop17
 .LBB1_6:                                # %if.end9
 	end_block                       # label2:
 	return
@@ -79,7 +79,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end21
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$discard=, count($pop1), $pop0
+	i32.store	$drop=, count($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

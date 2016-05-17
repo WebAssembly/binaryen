@@ -41,8 +41,8 @@ bar:                                    # @bar
 	i64.load	$2=, v+8($pop0)
 	i32.const	$push2=, 0
 	i64.load	$push1=, v($pop2)
-	i64.store	$discard=, 0($0), $pop1
-	i64.store	$discard=, 8($0), $2
+	i64.store	$drop=, 0($0), $pop1
+	i64.store	$drop=, 8($0), $2
 	return
 	.endfunc
 .Lfunc_end1:

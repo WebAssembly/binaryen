@@ -45,7 +45,7 @@ main:                                   # @main
 	loop                            # label2:
 	i32.const	$push2=, 255
 	i32.and 	$push0=, $0, $pop2
-	i32.call	$discard=, t@FUNCTION, $pop0
+	i32.call	$drop=, t@FUNCTION, $pop0
 	i32.const	$push1=, 1
 	i32.add 	$0=, $0, $pop1
 	br      	0               # 0: up to label2

@@ -33,7 +33,7 @@ debug:                                  # @debug
 	i64.load	$12=, 0($pop22)
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $9, $pop8
-	i32.store	$discard=, 12($11), $pop9
+	i32.store	$drop=, 12($11), $pop9
 	i64.const	$push10=, 20014547621496
 	i64.ne  	$push11=, $12, $pop10
 	br_if   	0, $pop11       # 0: down to label0
@@ -41,7 +41,7 @@ debug:                                  # @debug
 	i32.const	$push18=, __stack_pointer
 	i32.const	$push16=, 16
 	i32.add 	$push17=, $11, $pop16
-	i32.store	$discard=, 0($pop18), $pop17
+	i32.store	$drop=, 0($pop18), $pop17
 	return
 .LBB0_3:                                # %if.then5
 	end_block                       # label0:
@@ -67,9 +67,9 @@ main:                                   # @main
 	i32.store	$push9=, 0($pop6), $pop7
 	tee_local	$push8=, $0=, $pop9
 	i64.const	$push0=, 20014547621496
-	i64.store	$discard=, 8($pop8), $pop0
+	i64.store	$drop=, 8($pop8), $pop0
 	i32.const	$push1=, 10
-	i32.store	$discard=, 0($0), $pop1
+	i32.store	$drop=, 0($0), $pop1
 	call    	debug@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

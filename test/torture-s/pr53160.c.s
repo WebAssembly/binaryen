@@ -8,7 +8,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 0
-	i32.store	$discard=, e($pop0), $pop1
+	i32.store	$drop=, e($pop0), $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -29,7 +29,7 @@ main:                                   # @main
 	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push8=, 0
-	i32.load	$discard=, b($pop8)
+	i32.load	$drop=, b($pop8)
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push12=, 0
@@ -39,7 +39,7 @@ main:                                   # @main
 	i32.load8_s	$0=, f($pop9)
 	i32.load	$1=, c($2)
 	i32.const	$push4=, -1
-	i32.store	$discard=, d($2), $pop4
+	i32.store	$drop=, d($2), $pop4
 	block
 	i32.store16	$push0=, i($2), $0
 	i32.select	$push5=, $pop0, $2, $1

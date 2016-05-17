@@ -16,14 +16,14 @@ main:                                   # @main
 	i32.store	$push66=, 0($pop30), $pop63
 	tee_local	$push65=, $2=, $pop66
 	i32.const	$push0=, 20
-	i32.store	$discard=, 8($pop65), $pop0
+	i32.store	$drop=, 8($pop65), $pop0
 	i32.const	$push1=, 2
-	i32.store	$discard=, 8($2), $pop1
+	i32.store	$drop=, 8($2), $pop1
 	i32.const	$0=, 10
 	i32.const	$push64=, 10
-	i32.store	$discard=, 12($2), $pop64
+	i32.store	$drop=, 12($2), $pop64
 	i32.const	$push2=, 9
-	i32.store	$discard=, 12($2), $pop2
+	i32.store	$drop=, 12($2), $pop2
 	i32.const	$3=, 18
 .LBB0_1:                                # %while.body.1
                                         # =>This Inner Loop Header: Depth=1
@@ -38,7 +38,7 @@ main:                                   # @main
 	tee_local	$push70=, $0=, $pop71
 	i32.const	$push69=, -1
 	i32.add 	$push4=, $pop70, $pop69
-	i32.store	$discard=, 8($2), $pop4
+	i32.store	$drop=, 8($2), $pop4
 	i32.const	$push68=, 1
 	i32.add 	$3=, $1, $pop68
 	br_if   	0, $0           # 0: up to label0
@@ -56,7 +56,7 @@ main:                                   # @main
 	tee_local	$push74=, $3=, $pop75
 	i32.const	$push73=, -1
 	i32.add 	$push5=, $pop74, $pop73
-	i32.store	$discard=, 0($0), $pop5
+	i32.store	$drop=, 0($0), $pop5
 	i32.eqz 	$push120=, $3
 	br_if   	1, $pop120      # 1: down to label3
 # BB#5:                                 # %while.body.2
@@ -83,7 +83,7 @@ main:                                   # @main
 	tee_local	$push80=, $3=, $pop81
 	i32.const	$push79=, -1
 	i32.add 	$push7=, $pop80, $pop79
-	i32.store	$discard=, 0($0), $pop7
+	i32.store	$drop=, 0($0), $pop7
 	i32.eqz 	$push121=, $3
 	br_if   	1, $pop121      # 1: down to label5
 # BB#8:                                 # %while.body.3
@@ -110,7 +110,7 @@ main:                                   # @main
 	tee_local	$push86=, $3=, $pop87
 	i32.const	$push85=, -1
 	i32.add 	$push9=, $pop86, $pop85
-	i32.store	$discard=, 0($0), $pop9
+	i32.store	$drop=, 0($0), $pop9
 	i32.eqz 	$push122=, $3
 	br_if   	1, $pop122      # 1: down to label7
 # BB#11:                                # %while.body.4
@@ -137,7 +137,7 @@ main:                                   # @main
 	tee_local	$push92=, $3=, $pop93
 	i32.const	$push91=, -1
 	i32.add 	$push11=, $pop92, $pop91
-	i32.store	$discard=, 0($0), $pop11
+	i32.store	$drop=, 0($0), $pop11
 	i32.eqz 	$push123=, $3
 	br_if   	1, $pop123      # 1: down to label9
 # BB#14:                                # %while.body.5
@@ -164,7 +164,7 @@ main:                                   # @main
 	tee_local	$push98=, $3=, $pop99
 	i32.const	$push97=, -1
 	i32.add 	$push13=, $pop98, $pop97
-	i32.store	$discard=, 0($0), $pop13
+	i32.store	$drop=, 0($0), $pop13
 	i32.eqz 	$push124=, $3
 	br_if   	1, $pop124      # 1: down to label11
 # BB#17:                                # %while.body.6
@@ -191,7 +191,7 @@ main:                                   # @main
 	tee_local	$push104=, $3=, $pop105
 	i32.const	$push103=, -1
 	i32.add 	$push15=, $pop104, $pop103
-	i32.store	$discard=, 0($0), $pop15
+	i32.store	$drop=, 0($0), $pop15
 	i32.eqz 	$push125=, $3
 	br_if   	1, $pop125      # 1: down to label13
 # BB#20:                                # %while.body.7
@@ -218,7 +218,7 @@ main:                                   # @main
 	tee_local	$push110=, $3=, $pop111
 	i32.const	$push109=, -1
 	i32.add 	$push17=, $pop110, $pop109
-	i32.store	$discard=, 0($0), $pop17
+	i32.store	$drop=, 0($0), $pop17
 	i32.eqz 	$push126=, $3
 	br_if   	1, $pop126      # 1: down to label15
 # BB#23:                                # %while.body.8
@@ -245,7 +245,7 @@ main:                                   # @main
 	tee_local	$push116=, $3=, $pop117
 	i32.const	$push115=, -1
 	i32.add 	$push19=, $pop116, $pop115
-	i32.store	$discard=, 0($0), $pop19
+	i32.store	$drop=, 0($0), $pop19
 	i32.eqz 	$push127=, $3
 	br_if   	1, $pop127      # 1: down to label17
 # BB#26:                                # %while.body.9

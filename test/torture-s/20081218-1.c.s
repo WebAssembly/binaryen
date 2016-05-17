@@ -10,7 +10,7 @@ foo:                                    # @foo
 	i32.const	$push0=, a
 	i32.const	$push2=, 38
 	i32.const	$push1=, 520
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push3=, 640034342
 	return  	$pop3
 	.endfunc
@@ -26,10 +26,10 @@ bar:                                    # @bar
 	i32.const	$push0=, a
 	i32.const	$push2=, 54
 	i32.const	$push1=, 520
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push3=, 0
 	i32.const	$push4=, 909588022
-	i32.store	$discard=, a+4($pop3), $pop4
+	i32.store	$drop=, a+4($pop3), $pop4
 	return
 	.endfunc
 .Lfunc_end1:
@@ -79,7 +79,7 @@ main:                                   # @main
 # BB#5:                                 # %if.end9
 	i32.const	$push18=, 0
 	i32.const	$push9=, 909522486
-	i32.store	$discard=, a+4($pop18), $pop9
+	i32.store	$drop=, a+4($pop18), $pop9
 .LBB2_6:                                # %for.body13
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label6:

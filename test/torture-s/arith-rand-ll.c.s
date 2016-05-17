@@ -16,7 +16,7 @@ simple_rand:                            # @simple_rand
 	i64.const	$push4=, 12345
 	i64.add 	$push8=, $pop3, $pop4
 	tee_local	$push7=, $0=, $pop8
-	i64.store	$discard=, simple_rand.seed($pop0), $pop7
+	i64.store	$drop=, simple_rand.seed($pop0), $pop7
 	i64.const	$push5=, 8
 	i64.shr_u	$push6=, $0, $pop5
 	return  	$pop6
@@ -81,7 +81,7 @@ random_bitstring:                       # @random_bitstring
 .LBB1_5:                                # %cleanup
 	end_loop                        # label1:
 	i32.const	$push9=, 0
-	i64.store	$discard=, simple_rand.seed($pop9), $4
+	i64.store	$drop=, simple_rand.seed($pop9), $4
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -393,32 +393,32 @@ main:                                   # @main
 # BB#28:                                # %for.end
 	end_loop                        # label8:
 	i32.const	$push75=, 0
-	i64.store	$discard=, simple_rand.seed($pop75), $8
+	i64.store	$drop=, simple_rand.seed($pop75), $8
 	i32.const	$push175=, 0
 	call    	exit@FUNCTION, $pop175
 	unreachable
 .LBB2_29:                               # %if.then32
 	end_block                       # label6:
 	i32.const	$push27=, 0
-	i64.store	$discard=, simple_rand.seed($pop27), $8
+	i64.store	$drop=, simple_rand.seed($pop27), $8
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_30:                               # %if.then111
 	end_block                       # label5:
 	i32.const	$push73=, 0
-	i64.store	$discard=, simple_rand.seed($pop73), $8
+	i64.store	$drop=, simple_rand.seed($pop73), $8
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_31:                               # %if.then208
 	end_block                       # label4:
 	i32.const	$push54=, 0
-	i64.store	$discard=, simple_rand.seed($pop54), $8
+	i64.store	$drop=, simple_rand.seed($pop54), $8
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_32:                               # %if.then299
 	end_block                       # label3:
 	i32.const	$push72=, 0
-	i64.store	$discard=, simple_rand.seed($pop72), $8
+	i64.store	$drop=, simple_rand.seed($pop72), $8
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

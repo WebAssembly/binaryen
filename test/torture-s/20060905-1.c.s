@@ -22,7 +22,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push8=, 0
 	i32.load8_u	$push1=, 0($0)
-	i32.store8	$discard=, g($pop8), $pop1
+	i32.store8	$drop=, g($pop8), $pop1
 	i32.const	$push7=, 1
 	i32.add 	$1=, $1, $pop7
 .LBB0_3:                                # %for.inc.i

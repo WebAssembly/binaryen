@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.const	$push4=, 1
 	i32.and 	$push5=, $pop1, $pop4
 	i32.or  	$push8=, $pop7, $pop5
-	i32.store8	$discard=, t($pop2), $pop8
+	i32.store8	$drop=, t($pop2), $pop8
 	return
 	.endfunc
 .Lfunc_end0:

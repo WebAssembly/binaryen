@@ -83,7 +83,7 @@ vafunction:                             # @vafunction
 # BB#8:                                 # %if.end36
 	i32.const	$push40=, 36
 	i32.add 	$push41=, $1, $pop40
-	i32.store	$discard=, 12($4), $pop41
+	i32.store	$drop=, 12($4), $pop41
 	i32.load	$push42=, 0($3)
 	i32.const	$push43=, 9
 	i32.ne  	$push44=, $pop42, $pop43
@@ -92,7 +92,7 @@ vafunction:                             # @vafunction
 	i32.const	$push51=, __stack_pointer
 	i32.const	$push49=, 16
 	i32.add 	$push50=, $4, $pop49
-	i32.store	$discard=, 0($pop51), $pop50
+	i32.store	$drop=, 0($pop51), $pop50
 	return
 .LBB0_10:                               # %if.then40
 	end_block                       # label0:
@@ -120,19 +120,19 @@ main:                                   # @main
 	i32.const	$push0=, 32
 	i32.add 	$push1=, $pop17, $pop0
 	i32.const	$push2=, 9
-	i32.store	$discard=, 0($pop1), $pop2
+	i32.store	$drop=, 0($pop1), $pop2
 	i32.const	$push3=, 24
 	i32.add 	$push4=, $0, $pop3
 	i64.const	$push5=, 34359738375
-	i64.store	$discard=, 0($pop4), $pop5
+	i64.store	$drop=, 0($pop4), $pop5
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
 	i64.const	$push8=, 25769803781
-	i64.store	$discard=, 0($pop7), $pop8
+	i64.store	$drop=, 0($pop7), $pop8
 	i64.const	$push9=, 17179869187
-	i64.store	$discard=, 8($0), $pop9
+	i64.store	$drop=, 8($0), $pop9
 	i64.const	$push10=, 8589934593
-	i64.store	$discard=, 0($0), $pop10
+	i64.store	$drop=, 0($0), $pop10
 	call    	vafunction@FUNCTION, $0, $0
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11

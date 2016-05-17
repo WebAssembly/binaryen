@@ -22,12 +22,12 @@ ll_to_ld:                               # @ll_to_ld
 	i32.const	$push12=, 8
 	i32.add 	$push1=, $2, $pop12
 	i64.load	$push2=, 0($pop1)
-	i64.store	$discard=, 0($pop3), $pop2
-	i64.store	$discard=, 0($0), $1
+	i64.store	$drop=, 0($pop3), $pop2
+	i64.store	$drop=, 0($0), $1
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $2, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return
 	.endfunc
 .Lfunc_end0:

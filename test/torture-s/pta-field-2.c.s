@@ -11,7 +11,7 @@ bar:                                    # @bar
 	i32.add 	$push1=, $0, $pop0
 	i32.load	$push2=, 0($pop1)
 	i32.const	$push3=, 0
-	i32.store	$discard=, 0($pop2), $pop3
+	i32.store	$drop=, 0($pop2), $pop3
 	return
 	.endfunc
 .Lfunc_end0:
@@ -33,12 +33,12 @@ foo:                                    # @foo
 	i32.store	$push17=, 0($pop7), $pop15
 	tee_local	$push16=, $1=, $pop17
 	i32.const	$push0=, 1
-	i32.store	$discard=, 4($pop16), $pop0
+	i32.store	$drop=, 4($pop16), $pop0
 	i32.const	$push1=, 2
-	i32.store	$discard=, 0($1), $pop1
+	i32.store	$drop=, 0($1), $pop1
 	i32.const	$push11=, 4
 	i32.add 	$push12=, $1, $pop11
-	i32.store	$discard=, 8($1), $pop12
+	i32.store	$drop=, 8($1), $pop12
 	i32.store	$0=, 12($1), $1
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $1, $pop13
@@ -49,7 +49,7 @@ foo:                                    # @foo
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $0, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return  	$1
 	.endfunc
 .Lfunc_end1:
@@ -71,12 +71,12 @@ main:                                   # @main
 	i32.store	$push19=, 0($pop9), $pop17
 	tee_local	$push18=, $1=, $pop19
 	i32.const	$push0=, 1
-	i32.store	$discard=, 4($pop18), $pop0
+	i32.store	$drop=, 4($pop18), $pop0
 	i32.const	$push1=, 2
-	i32.store	$discard=, 0($1), $pop1
+	i32.store	$drop=, 0($1), $pop1
 	i32.const	$push13=, 4
 	i32.add 	$push14=, $1, $pop13
-	i32.store	$discard=, 8($1), $pop14
+	i32.store	$drop=, 8($1), $pop14
 	i32.store	$0=, 12($1), $1
 	i32.const	$push15=, 8
 	i32.add 	$push16=, $1, $pop15
@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB2_2:                                # %if.then

@@ -34,7 +34,7 @@ f3:                                     # @f3
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$discard=, val($pop0), $0
+	i32.store	$drop=, val($pop0), $0
 	return
 	.endfunc
 .Lfunc_end2:
@@ -48,7 +48,7 @@ f4:                                     # @f4
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 1577058610
-	i32.store	$discard=, val($pop0), $pop1
+	i32.store	$drop=, val($pop0), $pop1
 	return
 	.endfunc
 .Lfunc_end3:
@@ -63,7 +63,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1577058610
-	i32.store	$discard=, val($pop1), $pop0
+	i32.store	$drop=, val($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

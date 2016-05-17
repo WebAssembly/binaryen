@@ -11,7 +11,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	f64.load	$2=, 0($1)
 	i64.const	$push0=, 4607182418800017408
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	f64.const	$push1=, 0x1p0
 	f64.add 	$push2=, $2, $pop1
 	return  	$pop2

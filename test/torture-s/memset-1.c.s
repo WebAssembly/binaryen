@@ -37,7 +37,7 @@ main:                                   # @main
 	i32.const	$push100=, u
 	i32.const	$push99=, 97
 	i32.const	$push98=, 96
-	i32.call	$discard=, memset@FUNCTION, $pop100, $pop99, $pop98
+	i32.call	$drop=, memset@FUNCTION, $pop100, $pop99, $pop98
 	i32.const	$push97=, 0
 	i32.call	$0=, memset@FUNCTION, $2, $pop97, $3
 	block
@@ -157,7 +157,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push126=, 0
 	i32.load8_u	$push29=, A($pop126)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop29, $3
+	i32.call	$drop=, memset@FUNCTION, $0, $pop29, $3
 	i32.const	$6=, u
 	block
 	br_if   	0, $5           # 0: down to label10
@@ -274,7 +274,7 @@ main:                                   # @main
 # BB#34:                                # %for.inc88.7
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push153=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop153, $3
+	i32.call	$drop=, memset@FUNCTION, $0, $pop153, $3
 	i32.const	$6=, u
 	block
 	br_if   	0, $5           # 0: down to label15

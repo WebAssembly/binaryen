@@ -68,7 +68,7 @@ main:                                   # @main
 	loop                            # label3:
 	i32.add 	$push24=, $2, $4
 	i32.const	$push52=, 8
-	i32.store	$discard=, 0($pop24), $pop52
+	i32.store	$drop=, 0($pop24), $pop52
 	i32.const	$push51=, 4
 	i32.add 	$4=, $4, $pop51
 	i32.const	$push50=, 576
@@ -84,7 +84,7 @@ main:                                   # @main
 	loop                            # label5:
 	i32.add 	$push27=, $3, $4
 	i32.const	$push55=, 9
-	i32.store	$discard=, 0($pop27), $pop55
+	i32.store	$drop=, 0($pop27), $pop55
 	i32.const	$push54=, 4
 	i32.add 	$4=, $4, $pop54
 	i32.const	$push53=, 448
@@ -97,7 +97,7 @@ main:                                   # @main
 	i64.store	$push1=, 1032($2), $pop0
 	i64.store	$push2=, 1040($2), $pop1
 	i64.store	$push3=, 1048($2), $pop2
-	i64.store	$discard=, 1056($2), $pop3
+	i64.store	$drop=, 1056($2), $pop3
 	i32.const	$push30=, 7
 	i32.store	$push4=, 1064($2), $pop30
 	i32.store	$push5=, 1068($2), $pop4
@@ -155,7 +155,7 @@ main:                                   # @main
 	i32.const	$push48=, __stack_pointer
 	i32.const	$push46=, 1152
 	i32.add 	$push47=, $2, $pop46
-	i32.store	$discard=, 0($pop48), $pop47
+	i32.store	$drop=, 0($pop48), $pop47
 	i32.const	$push41=, 0
 	return  	$pop41
 .LBB1_8:                                # %if.then.i

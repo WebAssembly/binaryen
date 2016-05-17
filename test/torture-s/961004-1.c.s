@@ -14,7 +14,7 @@ main:                                   # @main
 # BB#1:                                 # %if.else
 	i32.const	$push3=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, k($pop3), $pop1
+	i32.store	$drop=, k($pop3), $pop1
 .LBB0_2:                                # %for.inc.1
 	end_block                       # label0:
 	i32.const	$push4=, 0

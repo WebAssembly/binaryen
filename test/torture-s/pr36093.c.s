@@ -10,19 +10,19 @@ main:                                   # @main
 	i32.const	$push0=, foo
 	i32.const	$push2=, 97
 	i32.const	$push1=, 129
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop1
 	i32.const	$push4=, foo+129
 	i32.const	$push3=, 98
 	i32.const	$push12=, 129
-	i32.call	$discard=, memset@FUNCTION, $pop4, $pop3, $pop12
+	i32.call	$drop=, memset@FUNCTION, $pop4, $pop3, $pop12
 	i32.const	$push6=, foo+258
 	i32.const	$push5=, 99
 	i32.const	$push11=, 129
-	i32.call	$discard=, memset@FUNCTION, $pop6, $pop5, $pop11
+	i32.call	$drop=, memset@FUNCTION, $pop6, $pop5, $pop11
 	i32.const	$push8=, foo+387
 	i32.const	$push7=, 100
 	i32.const	$push10=, 129
-	i32.call	$discard=, memset@FUNCTION, $pop8, $pop7, $pop10
+	i32.call	$drop=, memset@FUNCTION, $pop8, $pop7, $pop10
 	i32.const	$push9=, 0
 	return  	$pop9
 	.endfunc

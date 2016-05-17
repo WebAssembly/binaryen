@@ -14,8 +14,8 @@ func:                                   # @func
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push4=, 0
 	i64.load	$push3=, x+8($pop4):p2align=2
-	i64.store	$discard=, 0($pop1):p2align=2, $pop3
-	i64.store	$discard=, 0($0):p2align=2, $1
+	i64.store	$drop=, 0($pop1):p2align=2, $pop3
+	i64.store	$drop=, 0($0):p2align=2, $1
 	return
 	.endfunc
 .Lfunc_end0:

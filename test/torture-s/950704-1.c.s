@@ -11,7 +11,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push11=, 0
-	i32.store	$discard=, errflag($pop0), $pop11
+	i32.store	$drop=, errflag($pop0), $pop11
 	i64.add 	$2=, $1, $0
 	block
 	block
@@ -41,7 +41,7 @@ f:                                      # @f
 	end_block                       # label1:
 	i32.const	$push8=, 0
 	i32.const	$push9=, 1
-	i32.store	$discard=, errflag($pop8), $pop9
+	i32.store	$drop=, errflag($pop8), $pop9
 	i64.const	$2=, 0
 .LBB0_6:                                # %cleanup
 	end_block                       # label0:

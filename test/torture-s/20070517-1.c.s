@@ -52,7 +52,7 @@ get_kind:                               # @get_kind
 	i32.sub 	$push6=, $pop3, $pop4
 	tee_local	$push5=, $0=, $pop6
 	i32.const	$push0=, 10
-	i32.store	$discard=, 12($pop5), $pop0
+	i32.store	$drop=, 12($pop5), $pop0
 	i32.load	$push1=, 12($0)
 	return  	$pop1
 	.endfunc

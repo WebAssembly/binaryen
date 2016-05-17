@@ -15,7 +15,7 @@ g:                                      # @g
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
 	i32.const	$push4=, 0
-	i32.store8	$discard=, g_list($pop3), $pop4
+	i32.store8	$drop=, g_list($pop3), $pop4
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -40,7 +40,7 @@ main:                                   # @main
 # BB#1:                                 # %g.exit
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
-	i32.store8	$discard=, g_list($pop3), $pop2
+	i32.store8	$drop=, g_list($pop3), $pop2
 .LBB1_2:                                # %for.end
 	end_block                       # label1:
 	i32.const	$push4=, 0

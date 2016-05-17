@@ -33,7 +33,7 @@ check_header:                           # @check_header
 # BB#1:                                 # %cond.true
 	i32.const	$push1=, 1
 	i32.add 	$2=, $2, $pop1
-	i32.store	$discard=, 0($0), $2
+	i32.store	$drop=, 0($0), $2
 .LBB1_2:                                # %for.inc
 	end_block                       # label0:
 	block
@@ -42,7 +42,7 @@ check_header:                           # @check_header
 # BB#3:                                 # %cond.true.1
 	i32.const	$push3=, 1
 	i32.add 	$2=, $2, $pop3
-	i32.store	$discard=, 0($0), $2
+	i32.store	$drop=, 0($0), $2
 .LBB1_4:                                # %for.inc.1
 	end_block                       # label1:
 	block
@@ -51,7 +51,7 @@ check_header:                           # @check_header
 # BB#5:                                 # %cond.true.2
 	i32.const	$push5=, 1
 	i32.add 	$2=, $2, $pop5
-	i32.store	$discard=, 0($0), $2
+	i32.store	$drop=, 0($0), $2
 .LBB1_6:                                # %for.inc.2
 	end_block                       # label2:
 	block
@@ -60,7 +60,7 @@ check_header:                           # @check_header
 # BB#7:                                 # %cond.true.3
 	i32.const	$push7=, 1
 	i32.add 	$2=, $2, $pop7
-	i32.store	$discard=, 0($0), $2
+	i32.store	$drop=, 0($0), $2
 .LBB1_8:                                # %for.inc.3
 	end_block                       # label3:
 	block
@@ -69,7 +69,7 @@ check_header:                           # @check_header
 # BB#9:                                 # %cond.true.4
 	i32.const	$push9=, 1
 	i32.add 	$2=, $2, $pop9
-	i32.store	$discard=, 0($0), $2
+	i32.store	$drop=, 0($0), $2
 .LBB1_10:                               # %for.inc.4
 	end_block                       # label4:
 	block
@@ -78,7 +78,7 @@ check_header:                           # @check_header
 # BB#11:                                # %cond.true.5
 	i32.const	$push11=, 1
 	i32.add 	$push12=, $2, $pop11
-	i32.store	$discard=, 0($0), $pop12
+	i32.store	$drop=, 0($0), $pop12
 .LBB1_12:                               # %for.inc.5
 	end_block                       # label5:
 	i32.const	$push13=, 1
@@ -98,7 +98,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.const	$push1=, b+6
 	i32.store	$push0=, s+4($pop4), $pop1
-	i32.store	$discard=, s($pop2), $pop0
+	i32.store	$drop=, s($pop2), $pop0
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

@@ -17,10 +17,10 @@ vat:                                    # @vat
 	tee_local	$push39=, $3=, $pop40
 	i32.store	$2=, 8($pop39), $1
 	i32.load	$1=, 8($3)
-	i32.store	$discard=, 12($3), $0
+	i32.store	$drop=, 12($3), $0
 	i32.const	$push38=, 4
 	i32.add 	$push3=, $1, $pop38
-	i32.store	$discard=, 8($3), $pop3
+	i32.store	$drop=, 8($3), $pop3
 	i32.const	$push37=, 0
 	i32.store	$push0=, global($pop37), $2
 	i32.store	$0=, 12($3), $pop0
@@ -36,7 +36,7 @@ vat:                                    # @vat
 	tee_local	$push43=, $1=, $pop44
 	i32.const	$push42=, 4
 	i32.add 	$push6=, $pop43, $pop42
-	i32.store	$discard=, global($pop46), $pop6
+	i32.store	$drop=, global($pop46), $pop6
 	i32.load	$push7=, 0($1)
 	i32.const	$push41=, 1
 	i32.ne  	$push8=, $pop7, $pop41
@@ -46,7 +46,7 @@ vat:                                    # @vat
 	tee_local	$push49=, $1=, $pop50
 	i32.const	$push48=, 4
 	i32.add 	$push9=, $pop49, $pop48
-	i32.store	$discard=, 12($3), $pop9
+	i32.store	$drop=, 12($3), $pop9
 	i32.load	$push10=, 0($1)
 	i32.const	$push47=, 1
 	i32.ne  	$push11=, $pop10, $pop47
@@ -56,7 +56,7 @@ vat:                                    # @vat
 	tee_local	$push54=, $1=, $pop55
 	i32.const	$push53=, 4
 	i32.add 	$push12=, $pop54, $pop53
-	i32.store	$discard=, 8($3), $pop12
+	i32.store	$drop=, 8($3), $pop12
 	i32.const	$push52=, 0
 	i32.store	$push1=, 12($3), $1
 	i32.store	$push2=, global($pop52), $pop1
@@ -71,7 +71,7 @@ vat:                                    # @vat
 	tee_local	$push58=, $1=, $pop59
 	i32.const	$push57=, 4
 	i32.add 	$push16=, $pop58, $pop57
-	i32.store	$discard=, 8($3), $pop16
+	i32.store	$drop=, 8($3), $pop16
 	i32.load	$push17=, 0($1)
 	i32.const	$push56=, 1
 	i32.ne  	$push18=, $pop17, $pop56
@@ -83,7 +83,7 @@ vat:                                    # @vat
 	tee_local	$push63=, $1=, $pop64
 	i32.const	$push62=, 4
 	i32.add 	$push20=, $pop63, $pop62
-	i32.store	$discard=, global($pop19), $pop20
+	i32.store	$drop=, global($pop19), $pop20
 	i32.load	$push21=, 0($1)
 	i32.const	$push61=, 1
 	i32.ne  	$push22=, $pop21, $pop61
@@ -93,7 +93,7 @@ vat:                                    # @vat
 	tee_local	$push66=, $1=, $pop67
 	i32.const	$push23=, 4
 	i32.add 	$push24=, $pop66, $pop23
-	i32.store	$discard=, 12($3), $pop24
+	i32.store	$drop=, 12($3), $pop24
 	i32.load	$push25=, 0($1)
 	i32.const	$push26=, 1
 	i32.ne  	$push27=, $pop25, $pop26
@@ -102,7 +102,7 @@ vat:                                    # @vat
 	i32.const	$push34=, __stack_pointer
 	i32.const	$push32=, 16
 	i32.add 	$push33=, $3, $pop32
-	i32.store	$discard=, 0($pop34), $pop33
+	i32.store	$drop=, 0($pop34), $pop33
 	return
 .LBB0_8:                                # %if.then35
 	end_block                       # label0:
@@ -128,7 +128,7 @@ main:                                   # @main
 	i32.store	$push8=, 0($pop5), $pop6
 	tee_local	$push7=, $0=, $pop8
 	i32.const	$push0=, 1
-	i32.store	$discard=, 0($pop7), $pop0
+	i32.store	$drop=, 0($pop7), $pop0
 	call    	vat@FUNCTION, $0, $0
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1

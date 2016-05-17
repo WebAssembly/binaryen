@@ -317,12 +317,12 @@ f:                                      # @f
 	i32.const	$push215=, 8
 	i32.add 	$push80=, $5, $pop215
 	i64.load	$push81=, 0($pop80)
-	i64.store	$discard=, 0($pop82), $pop81
-	i64.store	$discard=, 0($0), $3
+	i64.store	$drop=, 0($pop82), $pop81
+	i64.store	$drop=, 0($0), $3
 	i32.const	$push89=, __stack_pointer
 	i32.const	$push87=, 512
 	i32.add 	$push88=, $5, $pop87
-	i32.store	$discard=, 0($pop89), $pop88
+	i32.store	$drop=, 0($pop89), $pop88
 	return
 	.endfunc
 .Lfunc_end0:

@@ -10,7 +10,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, glob_dbl
 	i32.select	$push1=, $0, $pop0, $0
-	f64.store	$discard=, 0($pop1), $1
+	f64.store	$drop=, 0($pop1), $1
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -25,7 +25,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, 4632951452917877965
-	i64.store	$discard=, glob_dbl($pop1), $pop0
+	i64.store	$drop=, glob_dbl($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

@@ -22,7 +22,7 @@ main:                                   # @main
 	i32.load	$push16=, 12($1)
 	tee_local	$push15=, $0=, $pop16
 	i32.shl 	$push1=, $pop0, $pop15
-	i32.store	$discard=, 12($1), $pop1
+	i32.store	$drop=, 12($1), $pop1
 	block
 	i32.const	$push2=, 30
 	i32.le_u	$push3=, $0, $pop2
@@ -31,7 +31,7 @@ main:                                   # @main
 	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $1, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
+	i32.store	$drop=, 0($pop11), $pop10
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB0_2:                                # %if.then
@@ -48,7 +48,7 @@ set:                                    # @set
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 31
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end1:

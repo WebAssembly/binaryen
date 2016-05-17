@@ -42,7 +42,7 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 129
-	i32.store8	$discard=, 0($0), $pop0
+	i32.store8	$drop=, 0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end1:

@@ -37,14 +37,14 @@ bar:                                    # @bar
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i64.const	$push19=, 1
-	i64.store	$discard=, 0($3), $pop19
+	i64.store	$drop=, 0($3), $pop19
 	i32.const	$push18=, 0
 	i64.load	$push9=, 0($0)
 	i64.load	$push8=, 0($4)
 	i64.add 	$push10=, $pop9, $pop8
-	i64.store	$discard=, m($pop18), $pop10
+	i64.store	$drop=, m($pop18), $pop10
 	i64.const	$push17=, 2
-	i64.store	$discard=, 0($3), $pop17
+	i64.store	$drop=, 0($3), $pop17
 	i32.eqz 	$push20=, $2
 	br_if   	0, $pop20       # 0: up to label0
 # BB#2:                                 # %if.end
@@ -53,7 +53,7 @@ bar:                                    # @bar
 	i32.shl 	$push12=, $2, $pop11
 	i32.add 	$push13=, $1, $pop12
 	i64.const	$push14=, 1
-	i64.store	$discard=, 0($pop13), $pop14
+	i64.store	$drop=, 0($pop13), $pop14
 	return
 	.endfunc
 .Lfunc_end1:
@@ -75,22 +75,22 @@ main:                                   # @main
 	i32.store	$0=, 0($pop9), $pop12
 	i32.const	$push0=, 0
 	i64.const	$push1=, 47
-	i64.store	$discard=, main.r+32($pop0), $pop1
+	i64.store	$drop=, main.r+32($pop0), $pop1
 	i32.const	$push17=, 0
 	i64.const	$push2=, 11
-	i64.store	$discard=, main.r+64($pop17), $pop2
+	i64.store	$drop=, main.r+64($pop17), $pop2
 	i32.const	$push16=, 0
 	i64.const	$push3=, 58
-	i64.store	$discard=, m($pop16), $pop3
+	i64.store	$drop=, m($pop16), $pop3
 	i64.const	$push4=, 2
-	i64.store	$discard=, 8($0), $pop4
+	i64.store	$drop=, 8($0), $pop4
 	i32.const	$push15=, 0
 	i64.const	$push5=, 1
-	i64.store	$discard=, main.r+120($pop15), $pop5
+	i64.store	$drop=, main.r+120($pop15), $pop5
 	i32.const	$push14=, 0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$discard=, cp($pop14), $pop11
+	i32.store	$drop=, cp($pop14), $pop11
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
 	unreachable

@@ -16,7 +16,7 @@ f:                                      # @f
 	i32.const	$push0=, 1
 	i32.and 	$push1=, $1, $pop0
 	i32.select	$push6=, $pop3, $pop5, $pop1
-	i32.store	$discard=, 0($0), $pop6
+	i32.store	$drop=, 0($0), $pop6
 	return
 	.endfunc
 .Lfunc_end0:

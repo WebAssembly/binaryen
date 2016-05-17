@@ -18,7 +18,7 @@ f:                                      # @f
 	f32.load	$push3=, 0($1)
 	f32.load	$push4=, 0($2)
 	f32.eq  	$push5=, $pop3, $pop4
-	i32.store	$discard=, 0($0), $pop5
+	i32.store	$drop=, 0($0), $pop5
 	i32.const	$push9=, -1
 	i32.add 	$3=, $3, $pop9
 	i32.const	$push8=, 4

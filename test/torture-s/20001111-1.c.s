@@ -49,7 +49,7 @@ main:                                   # @main
 	end_block                       # label0:
 	i32.const	$push4=, 0
 	i32.const	$push1=, 1
-	i32.store8	$discard=, next_buffer($pop4), $pop1
+	i32.store8	$drop=, next_buffer($pop4), $pop1
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

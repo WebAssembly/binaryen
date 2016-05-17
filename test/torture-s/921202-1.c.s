@@ -7,7 +7,7 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %for.cond
-	i32.call	$discard=, exxit@FUNCTION
+	i32.call	$drop=, exxit@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:

@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.const	$push9=, 1
 	i32.add 	$0=, $0, $pop9
 	i32.const	$push8=, 0
-	i32.store	$discard=, p($pop8), $0
+	i32.store	$drop=, p($pop8), $0
 	br      	0               # 0: up to label0
 .LBB0_4:                                # %while.end
 	end_loop                        # label1:
@@ -60,7 +60,7 @@ main:                                   # @main
 	loop                            # label3:
 	i32.load8_u	$0=, 0($1)
 	i32.const	$push13=, 0
-	i32.store	$discard=, p($pop13), $1
+	i32.store	$drop=, p($pop13), $1
 	block
 	i32.const	$push12=, -10
 	i32.add 	$push0=, $0, $pop12

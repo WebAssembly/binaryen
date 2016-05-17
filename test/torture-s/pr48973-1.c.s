@@ -40,7 +40,7 @@ main:                                   # @main
 	i32.and 	$push7=, $pop0, $pop4
 	tee_local	$push6=, $0=, $pop7
 	i32.or  	$push5=, $pop3, $pop6
-	i32.store8	$discard=, s($pop10), $pop5
+	i32.store8	$drop=, s($pop10), $pop5
 	block
 	i32.eqz 	$push12=, $0
 	br_if   	0, $pop12       # 0: down to label1

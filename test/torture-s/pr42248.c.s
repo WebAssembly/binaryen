@@ -37,8 +37,8 @@ init:                                   # @init
 # BB#0:                                 # %entry
 	i64.load	$2=, 8($1)
 	i64.load	$push0=, 0($1)
-	i64.store	$discard=, 0($0), $pop0
-	i64.store	$discard=, 8($0), $2
+	i64.store	$drop=, 0($0), $pop0
+	i64.store	$drop=, 8($0), $2
 	return
 	.endfunc
 .Lfunc_end1:
@@ -53,10 +53,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i64.const	$push0=, 4607182418800017408
-	i64.store	$discard=, g1s($pop1), $pop0
+	i64.store	$drop=, g1s($pop1), $pop0
 	i32.const	$push4=, 0
 	i64.const	$push2=, 0
-	i64.store	$discard=, g1s+8($pop4), $pop2
+	i64.store	$drop=, g1s+8($pop4), $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

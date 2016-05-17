@@ -77,7 +77,7 @@ foo:                                    # @foo
 	i32.add 	$push35=, $4, $pop20
 	tee_local	$push34=, $0=, $pop35
 	i32.load	$push21=, 8($pop34)
-	i32.store	$discard=, 0($6), $pop21
+	i32.store	$drop=, 0($6), $pop21
 	i32.load	$0=, 4($0)
 	i32.const	$push33=, -1
 	i32.add 	$3=, $3, $pop33
@@ -89,7 +89,7 @@ foo:                                    # @foo
 .LBB0_10:                               # %for.end16
 	end_loop                        # label7:
 	end_block                       # label5:
-	i32.store	$discard=, 0($2), $0
+	i32.store	$drop=, 0($2), $0
 	i32.const	$push37=, 1
 	i32.add 	$6=, $5, $pop37
 .LBB0_11:                               # %cleanup
@@ -123,7 +123,7 @@ main:                                   # @main
 	i32.call	$push41=, memset@FUNCTION, $pop1, $pop42, $pop2
 	tee_local	$push40=, $1=, $pop41
 	i64.const	$push3=, 4294967297
-	i64.store	$discard=, 0($pop40), $pop3
+	i64.store	$drop=, 0($pop40), $pop3
 	i32.load	$4=, 12($1)
 	i32.const	$push4=, 2
 	i32.store	$3=, 8($1), $pop4
@@ -197,7 +197,7 @@ main:                                   # @main
 	i32.add 	$push58=, $0, $pop19
 	tee_local	$push57=, $4=, $pop58
 	i32.load	$push20=, 8($pop57)
-	i32.store	$discard=, 0($3), $pop20
+	i32.store	$drop=, 0($3), $pop20
 	i32.load	$4=, 4($4)
 	i32.const	$push56=, -1
 	i32.add 	$1=, $1, $pop56
@@ -224,7 +224,7 @@ main:                                   # @main
 	i32.const	$push34=, __stack_pointer
 	i32.const	$push32=, 48
 	i32.add 	$push33=, $0, $pop32
-	i32.store	$discard=, 0($pop34), $pop33
+	i32.store	$drop=, 0($pop34), $pop33
 	i32.const	$push27=, 0
 	return  	$pop27
 .LBB1_13:                               # %if.then6.i
@@ -234,7 +234,7 @@ main:                                   # @main
 .LBB1_14:                               # %foo.exit.thread
 	end_block                       # label12:
 	i32.const	$push60=, 0
-	i32.store	$discard=, 36($0), $pop60
+	i32.store	$drop=, 36($0), $pop60
 .LBB1_15:                               # %if.then5
 	end_block                       # label11:
 	call    	abort@FUNCTION

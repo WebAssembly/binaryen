@@ -8,9 +8,9 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 31
-	i32.store	$discard=, 8($0), $pop1
+	i32.store	$drop=, 8($0), $pop1
 	i64.const	$push0=, 223338299568
-	i64.store	$discard=, 0($0):p2align=2, $pop0
+	i64.store	$drop=, 0($0):p2align=2, $pop0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -64,9 +64,9 @@ main:                                   # @main
 	i32.store	$push9=, 0($pop6), $pop7
 	tee_local	$push8=, $0=, $pop9
 	i32.const	$push1=, 31
-	i32.store	$discard=, 8($pop8), $pop1
+	i32.store	$drop=, 8($pop8), $pop1
 	i64.const	$push0=, 223338299568
-	i64.store	$discard=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	call    	baz@FUNCTION, $0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2

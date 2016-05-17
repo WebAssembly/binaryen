@@ -20,9 +20,9 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.store	$0=, 0($pop1), $pop2
 	i64.const	$push3=, 4294967298
-	i64.store	$discard=, 8($1), $pop3
+	i64.store	$drop=, 8($1), $pop3
 	i64.const	$push4=, 12884901892
-	i64.store	$discard=, 0($1), $pop4
+	i64.store	$drop=, 0($1), $pop4
 	block
 	i32.call	$push5=, foo@FUNCTION, $1, $1
 	br_if   	0, $pop5        # 0: down to label0
@@ -52,7 +52,7 @@ foo:                                    # @foo
 	tee_local	$push8=, $1=, $pop9
 	i32.const	$push0=, 20
 	i32.add 	$push1=, $pop8, $pop0
-	i32.store	$discard=, 12($2), $pop1
+	i32.store	$drop=, 12($2), $pop1
 	i32.const	$push2=, 16
 	i32.add 	$push3=, $1, $pop2
 	i32.load	$push4=, 0($pop3)

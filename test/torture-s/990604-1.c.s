@@ -13,7 +13,7 @@ f:                                      # @f
 # BB#1:                                 # %do.body.preheader
 	i32.const	$push3=, 0
 	i32.const	$push1=, 9
-	i32.store	$discard=, b($pop3), $pop1
+	i32.store	$drop=, b($pop3), $pop1
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	return
@@ -42,7 +42,7 @@ main:                                   # @main
 # BB#2:                                 # %f.exit.thread
 	i32.const	$push2=, 0
 	i32.const	$push3=, 9
-	i32.store	$discard=, b($pop2), $pop3
+	i32.store	$drop=, b($pop2), $pop3
 .LBB1_3:                                # %if.end
 	end_block                       # label2:
 	i32.const	$push7=, 0

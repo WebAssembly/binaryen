@@ -25,7 +25,7 @@ bar:                                    # @bar
 	i32.or  	$push13=, $pop2, $pop4
 	tee_local	$push12=, $0=, $pop13
 	i32.select	$push9=, $pop8, $pop15, $pop12
-	i32.store	$discard=, global($pop0), $pop9
+	i32.store	$drop=, global($pop0), $pop9
 	i32.const	$push11=, 1
 	i32.xor 	$push10=, $0, $pop11
 	return  	$pop10
@@ -42,7 +42,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
-	i32.store	$discard=, global($pop1), $pop0
+	i32.store	$drop=, global($pop1), $pop0
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc

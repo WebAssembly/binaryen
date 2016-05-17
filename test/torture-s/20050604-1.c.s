@@ -20,13 +20,13 @@ foo:                                    # @foo
 	f32.add 	$push8=, $pop6, $pop7
 	f32.const	$push29=, 0x0p0
 	f32.add 	$push18=, $pop8, $pop29
-	f32.store	$discard=, v+12($pop31), $pop18
+	f32.store	$drop=, v+12($pop31), $pop18
 	i32.const	$push28=, 0
 	f32.const	$push9=, 0x1.6p4
 	f32.add 	$push10=, $3, $pop9
 	f32.const	$push27=, 0x1.6p4
 	f32.add 	$push17=, $pop10, $pop27
-	f32.store	$discard=, v+8($pop28), $pop17
+	f32.store	$drop=, v+8($pop28), $pop17
 	i32.const	$push26=, 0
 	i32.load16_u	$0=, u($pop26)
 	i32.const	$push25=, 0
@@ -34,23 +34,23 @@ foo:                                    # @foo
 	f32.add 	$push12=, $2, $pop11
 	f32.const	$push24=, 0x1.4p4
 	f32.add 	$push16=, $pop12, $pop24
-	f32.store	$discard=, v+4($pop25), $pop16
+	f32.store	$drop=, v+4($pop25), $pop16
 	i32.const	$push23=, 0
 	i32.const	$push22=, 0
 	i32.load16_u	$push1=, u+2($pop22)
 	i32.const	$push4=, 28
 	i32.add 	$push5=, $pop1, $pop4
-	i32.store16	$discard=, u+2($pop23), $pop5
+	i32.store16	$drop=, u+2($pop23), $pop5
 	i32.const	$push21=, 0
 	i32.const	$push2=, 24
 	i32.add 	$push3=, $0, $pop2
-	i32.store16	$discard=, u($pop21), $pop3
+	i32.store16	$drop=, u($pop21), $pop3
 	i32.const	$push20=, 0
 	f32.const	$push13=, 0x1.2p4
 	f32.add 	$push14=, $1, $pop13
 	f32.const	$push19=, 0x1.2p4
 	f32.add 	$push15=, $pop14, $pop19
-	f32.store	$discard=, v($pop20), $pop15
+	f32.store	$drop=, v($pop20), $pop15
 	return
 	.endfunc
 .Lfunc_end0:

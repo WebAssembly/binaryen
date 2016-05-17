@@ -10,7 +10,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 0
 	i32.const	$push2=, 1
 	i32.store8	$push0=, x($pop3), $pop2
-	i32.store8	$discard=, y($pop1), $pop0
+	i32.store8	$drop=, y($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -27,7 +27,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.const	$push1=, 1
 	i32.store8	$push0=, x($pop4), $pop1
-	i32.store8	$discard=, y($pop2), $pop0
+	i32.store8	$drop=, y($pop2), $pop0
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

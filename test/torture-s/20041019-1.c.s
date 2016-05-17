@@ -28,9 +28,9 @@ test_store_ccp:                         # @test_store_ccp
 	i32.select	$push20=, $pop18, $pop4, $pop1
 	tee_local	$push19=, $0=, $pop20
 	i32.const	$push5=, 10
-	i32.store	$discard=, 0($pop19), $pop5
+	i32.store	$drop=, 0($pop19), $pop5
 	i32.const	$push6=, 3
-	i32.store	$discard=, 8($1), $pop6
+	i32.store	$drop=, 8($1), $pop6
 	i32.load	$push7=, 0($0)
 	i32.const	$push8=, 2
 	i32.add 	$push9=, $pop7, $pop8
@@ -68,7 +68,7 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	i32.store	$push0=, 0($pop18), $0
 	i32.const	$push6=, 1
 	i32.add 	$push7=, $pop0, $pop6
-	i32.store	$discard=, 8($1), $pop7
+	i32.store	$drop=, 8($1), $pop7
 	i32.load	$push8=, 0($2)
 	return  	$pop8
 	.endfunc

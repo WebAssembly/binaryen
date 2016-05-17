@@ -21,7 +21,7 @@ foo:
 	loop
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
-	i32.store	$discard=, pos($pop4), $pop3
+	i32.store	$drop=, pos($pop4), $pop3
 	i32.const	$push2=, 1
 	i32.add 	$0=, $0, $pop2
 	i32.const	$push1=, 256
@@ -42,7 +42,7 @@ bar:
 	loop
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
-	i32.store	$discard=, pos($pop4), $pop3
+	i32.store	$drop=, pos($pop4), $pop3
 	f32.const	$push2=, 0x1p0
 	f32.add 	$0=, $0, $pop2
 	f32.const	$push1=, 0x1p8
@@ -67,7 +67,7 @@ fi_ret:
 	i32.sub 	$4=, $1, $2
 	i32.const	$2=, __stack_pointer
 	i32.store	$4=, 0($2), $4
-	i32.store	$discard=, 0($0), $4
+	i32.store	$drop=, 0($0), $4
 	i32.const	$3=, 32
 	i32.add 	$4=, $4, $3
 	i32.const	$3=, __stack_pointer

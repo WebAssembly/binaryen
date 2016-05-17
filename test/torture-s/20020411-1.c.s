@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, -4647714814380998656
-	i64.store	$discard=, 0($0):p2align=2, $pop0
+	i64.store	$drop=, 0($0):p2align=2, $pop0
 	return
 	.endfunc
 .Lfunc_end0:

@@ -18,7 +18,7 @@ x:                                      # @x
 	tee_local	$push5=, $0=, $pop6
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $pop5, $pop1
-	i32.store	$discard=, s+4($pop2), $0
+	i32.store	$drop=, s+4($pop2), $0
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push3=, 1
@@ -36,7 +36,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, 0
-	i64.store	$discard=, s($pop1), $pop0
+	i64.store	$drop=, s($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

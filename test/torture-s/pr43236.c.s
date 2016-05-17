@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.const	$push15=, 257
 	i32.store16	$push0=, 0($pop14), $pop15
 	i32.store16	$push5=, 0($pop22), $pop0
-	i32.store16	$discard=, 0($pop30), $pop5
+	i32.store16	$drop=, 0($pop30), $pop5
 	i32.const	$push16=, 24
 	i32.add 	$push31=, $2, $pop16
 	i32.const	$push50=, 32
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.const	$push18=, 16843009
 	i32.store	$push1=, 0($pop17), $pop18
 	i32.store	$push6=, 0($pop23), $pop1
-	i32.store	$discard=, 0($pop31), $pop6
+	i32.store	$drop=, 0($pop31), $pop6
 	i32.const	$push54=, 32
 	i32.add 	$push55=, $2, $pop54
 	i32.const	$push19=, 16
@@ -67,20 +67,20 @@ main:                                   # @main
 	i32.store16	$1=, 0($pop29), $pop9
 	i32.const	$push67=, 16
 	i32.add 	$push32=, $2, $pop67
-	i64.store	$discard=, 0($pop32), $0
+	i64.store	$drop=, 0($pop32), $0
 	i32.const	$push66=, 18
 	i32.add 	$push33=, $2, $pop66
-	i32.store16	$discard=, 0($pop33), $1
+	i32.store16	$drop=, 0($pop33), $1
 	i64.store	$push3=, 64($2), $0
 	i64.store	$push4=, 72($2), $pop3
 	i64.store	$push7=, 40($2), $pop4
 	i64.store	$push8=, 32($2), $pop7
 	i64.store	$push12=, 8($2), $pop8
-	i64.store	$discard=, 0($2), $pop12
+	i64.store	$drop=, 0($2), $pop12
 	i64.const	$push28=, 0
 	i64.store	$push10=, 74($2):p2align=1, $pop28
 	i64.store	$push11=, 42($2):p2align=1, $pop10
-	i64.store	$discard=, 10($2):p2align=1, $pop11
+	i64.store	$drop=, 10($2):p2align=1, $pop11
 	block
 	i32.const	$push60=, 64
 	i32.add 	$push61=, $2, $pop60
@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.const	$push43=, __stack_pointer
 	i32.const	$push41=, 96
 	i32.add 	$push42=, $2, $pop41
-	i32.store	$discard=, 0($pop43), $pop42
+	i32.store	$drop=, 0($pop43), $pop42
 	i32.const	$push36=, 0
 	return  	$pop36
 .LBB0_3:                                # %if.then

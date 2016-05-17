@@ -25,7 +25,7 @@ foo:                                    # @foo
 	i32.store	$push0=, 0($pop3), $1
 	i32.store	$push1=, 0($pop4), $pop0
 	i32.store	$push2=, 0($pop5), $pop1
-	i32.store	$discard=, 0($pop6), $pop2
+	i32.store	$drop=, 0($pop6), $pop2
 	i32.const	$push7=, -16
 	i32.add 	$2=, $2, $pop7
 	br_if   	0, $2           # 0: up to label0
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.add 	$push3=, $2, $pop20
 	i64.const	$push19=, 25769803782
 	i64.store	$push0=, 0($pop3):p2align=2, $pop19
-	i64.store	$discard=, 0($pop4):p2align=2, $pop0
+	i64.store	$drop=, 0($pop4):p2align=2, $pop0
 	i32.const	$push18=, -16
 	i32.add 	$1=, $1, $pop18
 	br_if   	0, $1           # 0: up to label2
@@ -80,7 +80,7 @@ main:                                   # @main
 	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 1024
 	i32.add 	$push14=, $0, $pop13
-	i32.store	$discard=, 0($pop15), $pop14
+	i32.store	$drop=, 0($pop15), $pop14
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB1_4:                                # %if.then

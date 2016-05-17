@@ -88,7 +88,7 @@ preinc_glob_ptr:                        # @preinc_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, ptr($pop0), $pop3
+	i32.store	$drop=, ptr($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -121,7 +121,7 @@ postinc_glob_ptr:                       # @postinc_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, ptr($pop0), $pop3
+	i32.store	$drop=, ptr($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -154,7 +154,7 @@ predec_glob_ptr:                        # @predec_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, -4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, ptr($pop0), $pop3
+	i32.store	$drop=, ptr($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -187,7 +187,7 @@ postdec_glob_ptr:                       # @postdec_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, -4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, ptr($pop0), $pop3
+	i32.store	$drop=, ptr($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -220,7 +220,7 @@ preinc_glob_idx:                        # @preinc_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, arrindex($pop0), $pop3
+	i32.store	$drop=, arrindex($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -253,7 +253,7 @@ postinc_glob_idx:                       # @postinc_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, arrindex($pop0), $pop3
+	i32.store	$drop=, arrindex($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -286,7 +286,7 @@ predec_glob_idx:                        # @predec_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, arrindex($pop0), $pop3
+	i32.store	$drop=, arrindex($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -319,7 +319,7 @@ postdec_glob_idx:                       # @postdec_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, arrindex($pop0), $pop3
+	i32.store	$drop=, arrindex($pop0), $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
 	.endfunc
@@ -339,7 +339,7 @@ getptr:                                 # @getptr
 	i32.load	$push1=, getptrcnt($pop6)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, getptrcnt($pop0), $pop3
+	i32.store	$drop=, getptrcnt($pop0), $pop3
 	i32.const	$push4=, 4
 	i32.add 	$push5=, $0, $pop4
 	return  	$pop5
@@ -362,7 +362,7 @@ funccall_arg_ptr:                       # @funccall_arg_ptr
 	i32.const	$push2=, 1
 	i32.add 	$push6=, $pop1, $pop2
 	tee_local	$push5=, $1=, $pop6
-	i32.store	$discard=, getptrcnt($pop0), $pop5
+	i32.store	$drop=, getptrcnt($pop0), $pop5
 	i32.const	$push4=, 1
 	i32.eq  	$push3=, $1, $pop4
 	return  	$pop3
@@ -383,7 +383,7 @@ getint:                                 # @getint
 	i32.load	$push1=, getintcnt($pop6)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, getintcnt($pop0), $pop3
+	i32.store	$drop=, getintcnt($pop0), $pop3
 	i32.const	$push5=, 1
 	i32.add 	$push4=, $0, $pop5
 	return  	$pop4
@@ -406,7 +406,7 @@ funccall_arg_idx:                       # @funccall_arg_idx
 	i32.const	$push2=, 1
 	i32.add 	$push6=, $pop1, $pop2
 	tee_local	$push5=, $2=, $pop6
-	i32.store	$discard=, getintcnt($pop0), $pop5
+	i32.store	$drop=, getintcnt($pop0), $pop5
 	i32.const	$push4=, 1
 	i32.eq  	$push3=, $2, $pop4
 	return  	$pop3
@@ -440,7 +440,7 @@ main:                                   # @main
 	i32.load	$push8=, ptr($pop35)
 	i32.const	$push34=, 4
 	i32.add 	$push2=, $pop8, $pop34
-	i32.store	$discard=, ptr($pop36), $pop2
+	i32.store	$drop=, ptr($pop36), $pop2
 	i32.const	$push33=, 1
 	i32.eqz 	$push73=, $pop33
 	br_if   	0, $pop73       # 0: down to label0
@@ -450,7 +450,7 @@ main:                                   # @main
 	i32.load	$push3=, ptr($pop39)
 	i32.const	$push38=, 4
 	i32.add 	$push9=, $pop3, $pop38
-	i32.store	$discard=, ptr($pop40), $pop9
+	i32.store	$drop=, ptr($pop40), $pop9
 	i32.const	$push37=, 1
 	i32.eqz 	$push74=, $pop37
 	br_if   	0, $pop74       # 0: down to label0
@@ -460,7 +460,7 @@ main:                                   # @main
 	i32.load	$push10=, ptr($pop43)
 	i32.const	$push42=, -4
 	i32.add 	$push4=, $pop10, $pop42
-	i32.store	$discard=, ptr($pop44), $pop4
+	i32.store	$drop=, ptr($pop44), $pop4
 	i32.const	$push41=, 1
 	i32.eqz 	$push75=, $pop41
 	br_if   	0, $pop75       # 0: down to label0
@@ -470,7 +470,7 @@ main:                                   # @main
 	i32.load	$push5=, ptr($pop47)
 	i32.const	$push46=, -4
 	i32.add 	$push11=, $pop5, $pop46
-	i32.store	$discard=, ptr($pop48), $pop11
+	i32.store	$drop=, ptr($pop48), $pop11
 	i32.const	$push45=, 1
 	i32.eqz 	$push76=, $pop45
 	br_if   	0, $pop76       # 0: down to label0
@@ -480,7 +480,7 @@ main:                                   # @main
 	i32.load	$push12=, arrindex($pop51)
 	i32.const	$push50=, 1
 	i32.add 	$push13=, $pop12, $pop50
-	i32.store	$discard=, arrindex($pop52), $pop13
+	i32.store	$drop=, arrindex($pop52), $pop13
 	i32.const	$push49=, 1
 	i32.eqz 	$push77=, $pop49
 	br_if   	0, $pop77       # 0: down to label0
@@ -490,7 +490,7 @@ main:                                   # @main
 	i32.load	$push14=, arrindex($pop55)
 	i32.const	$push54=, 1
 	i32.add 	$push15=, $pop14, $pop54
-	i32.store	$discard=, arrindex($pop56), $pop15
+	i32.store	$drop=, arrindex($pop56), $pop15
 	i32.const	$push53=, 1
 	i32.eqz 	$push78=, $pop53
 	br_if   	0, $pop78       # 0: down to label0
@@ -500,7 +500,7 @@ main:                                   # @main
 	i32.load	$push16=, arrindex($pop59)
 	i32.const	$push58=, -1
 	i32.add 	$push17=, $pop16, $pop58
-	i32.store	$discard=, arrindex($pop60), $pop17
+	i32.store	$drop=, arrindex($pop60), $pop17
 	i32.const	$push57=, 1
 	i32.eqz 	$push79=, $pop57
 	br_if   	0, $pop79       # 0: down to label0
@@ -510,7 +510,7 @@ main:                                   # @main
 	i32.load	$push18=, arrindex($pop63)
 	i32.const	$push62=, -1
 	i32.add 	$push19=, $pop18, $pop62
-	i32.store	$discard=, arrindex($pop64), $pop19
+	i32.store	$drop=, arrindex($pop64), $pop19
 	i32.const	$push61=, 1
 	i32.eqz 	$push80=, $pop61
 	br_if   	0, $pop80       # 0: down to label0

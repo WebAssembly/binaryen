@@ -7,7 +7,7 @@ no0:
 	.result 	i32
 	i32.load	$1=, 0($1)
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -20,7 +20,7 @@ no1:
 	.result 	i32
 	i32.load	$1=, 0($1)
 	i32.const	$push0=, 0
-	i32.store	$discard=, 0($0), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	return  	$1
 	.endfunc
 .Lfunc_end1:
@@ -32,7 +32,7 @@ yes0:
 	.param  	i32, i32
 	.result 	i32
 	i32.const	$push1=, 0
-	i32.store	$discard=, 0($0), $pop1
+	i32.store	$drop=, 0($0), $pop1
 	i32.load	$push0=, 0($1)
 	return  	$pop0
 	.endfunc
@@ -92,7 +92,7 @@ multiple_uses:
 	br_if   	0, $pop1
 	i32.lt_u	$push2=, $3, $0
 	br_if   	0, $pop2
-	i32.store	$discard=, 0($2), $3
+	i32.store	$drop=, 0($2), $3
 .LBB5_3:
 	end_block
 	return
@@ -109,7 +109,7 @@ stackify_store_across_side_effects:
 	i64.const	$push0=, 4611686018427387904
 	i64.store	$1=, 0($0), $pop0
 	call    	evoke_side_effects@FUNCTION
-	i64.store	$discard=, 0($0), $1
+	i64.store	$drop=, 0($0), $1
 	call    	evoke_side_effects@FUNCTION
 	return
 	.endfunc

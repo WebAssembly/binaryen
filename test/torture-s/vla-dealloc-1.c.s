@@ -11,7 +11,7 @@ main:                                   # @main
 	i32.const	$push7=, __stack_pointer
 	i32.load	$push9=, 0($pop7)
 	tee_local	$push8=, $2=, $pop9
-	copy_local	$discard=, $pop8
+	copy_local	$drop=, $pop8
 	i32.const	$1=, 0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
@@ -27,14 +27,14 @@ main:                                   # @main
 	i32.and 	$push3=, $pop2, $pop16
 	i32.sub 	$push15=, $2, $pop3
 	tee_local	$push14=, $3=, $pop15
-	copy_local	$discard=, $pop14
+	copy_local	$drop=, $pop14
 	i32.const	$push13=, 1
 	i32.store	$0=, 0($3), $pop13
 	i32.add 	$push4=, $3, $4
 	i32.const	$push12=, 2
-	i32.store	$discard=, 0($pop4), $pop12
+	i32.store	$drop=, 0($pop4), $pop12
 	i32.const	$push11=, 0
-	i32.store	$discard=, p($pop11), $3
+	i32.store	$drop=, p($pop11), $3
 	i32.add 	$1=, $1, $0
 	copy_local	$push1=, $2
 	copy_local	$2=, $pop1

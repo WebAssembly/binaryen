@@ -10,7 +10,7 @@ main:                                   # @main
 	i32.const	$push1=, foo@FUNCTION
 	i32.call	$push0=, __builtin_apply_args@FUNCTION
 	i32.const	$push2=, 16
-	i32.call	$discard=, __builtin_apply@FUNCTION, $pop1, $pop0, $pop2
+	i32.call	$drop=, __builtin_apply@FUNCTION, $pop1, $pop0, $pop2
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

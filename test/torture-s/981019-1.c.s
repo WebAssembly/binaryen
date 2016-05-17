@@ -33,13 +33,13 @@ ff:                                     # @ff
 # BB#5:                                 # %land.lhs.true
 	end_loop                        # label4:
 	i32.const	$push2=, 0
-	i32.store	$discard=, f3.x($pop2), $0
-	i32.call	$discard=, f2@FUNCTION
+	i32.store	$drop=, f3.x($pop2), $0
+	i32.call	$drop=, f2@FUNCTION
 	unreachable
 .LBB0_6:                                # %while.end
 	end_block                       # label2:
 	i32.const	$push1=, 0
-	i32.store	$discard=, f3.x($pop1), $0
+	i32.store	$drop=, f3.x($pop1), $0
 	br_if   	0, $2           # 0: down to label0
 # BB#7:                                 # %if.end16
 	return
@@ -114,7 +114,7 @@ main:                                   # @main
 # BB#2:                                 # %ff.exit
 	end_loop                        # label6:
 	i32.const	$push1=, 0
-	i32.store	$discard=, f3.x($pop1), $0
+	i32.store	$drop=, f3.x($pop1), $0
 	i32.const	$push4=, 0
 	return  	$pop4
 	.endfunc

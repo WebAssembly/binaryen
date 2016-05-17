@@ -109,16 +109,16 @@ main:                                   # @main
 	i32.add 	$push3=, $pop17, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.t+8($pop0)
-	i32.store	$discard=, 0($pop3), $pop1
+	i32.store	$drop=, 0($pop3), $pop1
 	i32.const	$push16=, 0
 	i64.load	$push4=, .Lmain.t($pop16):p2align=2
-	i64.store	$discard=, 4($0):p2align=2, $pop4
+	i64.store	$drop=, 4($0):p2align=2, $pop4
 	i32.const	$push12=, 4
 	i32.add 	$push13=, $0, $pop12
 	i32.const	$push7=, 4
 	i32.const	$push6=, 5
 	i32.const	$push5=, 6
-	i32.call	$discard=, foo@FUNCTION, $pop13, $pop7, $pop6, $pop5
+	i32.call	$drop=, foo@FUNCTION, $pop13, $pop7, $pop6, $pop5
 	i32.const	$push15=, 0
 	call    	exit@FUNCTION, $pop15
 	unreachable

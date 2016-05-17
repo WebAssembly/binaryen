@@ -55,7 +55,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$discard=, idx($pop1), $pop0
+	i32.store	$drop=, idx($pop1), $pop0
 	call    	glob_ptr@FUNCTION
 	call    	glob_idx@FUNCTION
 	i32.const	$push9=, 0
@@ -63,10 +63,10 @@ main:                                   # @main
 	i32.load	$push2=, ptr($pop8)
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
-	i32.store	$discard=, ptr($pop9), $pop4
+	i32.store	$drop=, ptr($pop9), $pop4
 	i32.const	$push7=, 0
 	i32.const	$push5=, 2
-	i32.store	$discard=, idx($pop7), $pop5
+	i32.store	$drop=, idx($pop7), $pop5
 	call    	glob_ptr@FUNCTION
 	call    	glob_idx@FUNCTION
 	i32.const	$push6=, 0

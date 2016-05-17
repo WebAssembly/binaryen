@@ -9,7 +9,7 @@ reset:                                  # @reset
 	i32.const	$push0=, u
 	i32.const	$push2=, 97
 	i32.const	$push1=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -148,7 +148,7 @@ main:                                   # @main
 	i32.const	$push78=, 31
 	i32.call	$push0=, memset@FUNCTION, $pop80, $pop79, $pop78
 	i32.const	$push77=, 0
-	i32.call	$discard=, memset@FUNCTION, $pop0, $pop77, $1
+	i32.call	$drop=, memset@FUNCTION, $pop0, $pop77, $1
 	block
 	i32.const	$push76=, 1
 	i32.lt_s	$push75=, $1, $pop76
@@ -231,7 +231,7 @@ main:                                   # @main
 	i32.const	$push96=, u
 	i32.const	$push95=, 0
 	i32.load8_u	$push19=, A($pop95)
-	i32.call	$discard=, memset@FUNCTION, $pop96, $pop19, $1
+	i32.call	$drop=, memset@FUNCTION, $pop96, $pop19, $1
 	block
 	br_if   	0, $2           # 0: down to label13
 # BB#15:                                # %for.body6.i241.preheader
@@ -312,7 +312,7 @@ main:                                   # @main
 	i32.const	$0=, u
 	i32.const	$push113=, u
 	i32.const	$push112=, 66
-	i32.call	$discard=, memset@FUNCTION, $pop113, $pop112, $1
+	i32.call	$drop=, memset@FUNCTION, $pop113, $pop112, $1
 	block
 	br_if   	0, $2           # 0: down to label16
 # BB#28:                                # %for.body6.i278.preheader
@@ -404,7 +404,7 @@ main:                                   # @main
 	i32.const	$push145=, u
 	i32.const	$push144=, 97
 	i32.const	$push143=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop145, $pop144, $pop143
+	i32.call	$drop=, memset@FUNCTION, $pop145, $pop144, $pop143
 	i32.const	$push142=, u+1
 	i32.const	$push141=, 0
 	i32.call	$0=, memset@FUNCTION, $pop142, $pop141, $1
@@ -413,12 +413,12 @@ main:                                   # @main
 	call    	check@FUNCTION, $pop140, $1, $pop139
 	i32.const	$push138=, 0
 	i32.load8_u	$push59=, A($pop138)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop59, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop59, $1
 	i32.const	$push137=, 1
 	i32.const	$push136=, 65
 	call    	check@FUNCTION, $pop137, $1, $pop136
 	i32.const	$push135=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop135, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop135, $1
 	i32.const	$push134=, 1
 	i32.const	$push133=, 66
 	call    	check@FUNCTION, $pop134, $1, $pop133
@@ -436,7 +436,7 @@ main:                                   # @main
 	i32.const	$push160=, u
 	i32.const	$push159=, 97
 	i32.const	$push158=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop160, $pop159, $pop158
+	i32.call	$drop=, memset@FUNCTION, $pop160, $pop159, $pop158
 	i32.const	$push157=, u+2
 	i32.const	$push156=, 0
 	i32.call	$0=, memset@FUNCTION, $pop157, $pop156, $1
@@ -445,12 +445,12 @@ main:                                   # @main
 	call    	check@FUNCTION, $pop155, $1, $pop154
 	i32.const	$push153=, 0
 	i32.load8_u	$push61=, A($pop153)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop61, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop61, $1
 	i32.const	$push152=, 2
 	i32.const	$push151=, 65
 	call    	check@FUNCTION, $pop152, $1, $pop151
 	i32.const	$push150=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop150, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop150, $1
 	i32.const	$push149=, 2
 	i32.const	$push148=, 66
 	call    	check@FUNCTION, $pop149, $1, $pop148
@@ -468,7 +468,7 @@ main:                                   # @main
 	i32.const	$push175=, u
 	i32.const	$push174=, 97
 	i32.const	$push173=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop175, $pop174, $pop173
+	i32.call	$drop=, memset@FUNCTION, $pop175, $pop174, $pop173
 	i32.const	$push172=, u+3
 	i32.const	$push171=, 0
 	i32.call	$0=, memset@FUNCTION, $pop172, $pop171, $1
@@ -477,12 +477,12 @@ main:                                   # @main
 	call    	check@FUNCTION, $pop170, $1, $pop169
 	i32.const	$push168=, 0
 	i32.load8_u	$push63=, A($pop168)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop63, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop63, $1
 	i32.const	$push167=, 3
 	i32.const	$push166=, 65
 	call    	check@FUNCTION, $pop167, $1, $pop166
 	i32.const	$push165=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop165, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop165, $1
 	i32.const	$push164=, 3
 	i32.const	$push163=, 66
 	call    	check@FUNCTION, $pop164, $1, $pop163
@@ -500,7 +500,7 @@ main:                                   # @main
 	i32.const	$push190=, u
 	i32.const	$push189=, 97
 	i32.const	$push188=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop190, $pop189, $pop188
+	i32.call	$drop=, memset@FUNCTION, $pop190, $pop189, $pop188
 	i32.const	$push187=, u+4
 	i32.const	$push186=, 0
 	i32.call	$0=, memset@FUNCTION, $pop187, $pop186, $1
@@ -509,12 +509,12 @@ main:                                   # @main
 	call    	check@FUNCTION, $pop185, $1, $pop184
 	i32.const	$push183=, 0
 	i32.load8_u	$push65=, A($pop183)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop65, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop65, $1
 	i32.const	$push182=, 4
 	i32.const	$push181=, 65
 	call    	check@FUNCTION, $pop182, $1, $pop181
 	i32.const	$push180=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop180, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop180, $1
 	i32.const	$push179=, 4
 	i32.const	$push178=, 66
 	call    	check@FUNCTION, $pop179, $1, $pop178
@@ -532,7 +532,7 @@ main:                                   # @main
 	i32.const	$push205=, u
 	i32.const	$push204=, 97
 	i32.const	$push203=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop205, $pop204, $pop203
+	i32.call	$drop=, memset@FUNCTION, $pop205, $pop204, $pop203
 	i32.const	$push202=, u+5
 	i32.const	$push201=, 0
 	i32.call	$0=, memset@FUNCTION, $pop202, $pop201, $1
@@ -541,12 +541,12 @@ main:                                   # @main
 	call    	check@FUNCTION, $pop200, $1, $pop199
 	i32.const	$push198=, 0
 	i32.load8_u	$push67=, A($pop198)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop67, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop67, $1
 	i32.const	$push197=, 5
 	i32.const	$push196=, 65
 	call    	check@FUNCTION, $pop197, $1, $pop196
 	i32.const	$push195=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop195, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop195, $1
 	i32.const	$push194=, 5
 	i32.const	$push193=, 66
 	call    	check@FUNCTION, $pop194, $1, $pop193
@@ -564,7 +564,7 @@ main:                                   # @main
 	i32.const	$push220=, u
 	i32.const	$push219=, 97
 	i32.const	$push218=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop220, $pop219, $pop218
+	i32.call	$drop=, memset@FUNCTION, $pop220, $pop219, $pop218
 	i32.const	$push217=, u+6
 	i32.const	$push216=, 0
 	i32.call	$0=, memset@FUNCTION, $pop217, $pop216, $1
@@ -573,12 +573,12 @@ main:                                   # @main
 	call    	check@FUNCTION, $pop215, $1, $pop214
 	i32.const	$push213=, 0
 	i32.load8_u	$push69=, A($pop213)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop69, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop69, $1
 	i32.const	$push212=, 6
 	i32.const	$push211=, 65
 	call    	check@FUNCTION, $pop212, $1, $pop211
 	i32.const	$push210=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop210, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop210, $1
 	i32.const	$push209=, 6
 	i32.const	$push208=, 66
 	call    	check@FUNCTION, $pop209, $1, $pop208
@@ -596,7 +596,7 @@ main:                                   # @main
 	i32.const	$push235=, u
 	i32.const	$push234=, 97
 	i32.const	$push233=, 31
-	i32.call	$discard=, memset@FUNCTION, $pop235, $pop234, $pop233
+	i32.call	$drop=, memset@FUNCTION, $pop235, $pop234, $pop233
 	i32.const	$push232=, u+7
 	i32.const	$push231=, 0
 	i32.call	$0=, memset@FUNCTION, $pop232, $pop231, $1
@@ -605,12 +605,12 @@ main:                                   # @main
 	call    	check@FUNCTION, $pop230, $1, $pop229
 	i32.const	$push228=, 0
 	i32.load8_u	$push71=, A($pop228)
-	i32.call	$discard=, memset@FUNCTION, $0, $pop71, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop71, $1
 	i32.const	$push227=, 7
 	i32.const	$push226=, 65
 	call    	check@FUNCTION, $pop227, $1, $pop226
 	i32.const	$push225=, 66
-	i32.call	$discard=, memset@FUNCTION, $0, $pop225, $1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop225, $1
 	i32.const	$push224=, 7
 	i32.const	$push223=, 66
 	call    	check@FUNCTION, $pop224, $1, $pop223

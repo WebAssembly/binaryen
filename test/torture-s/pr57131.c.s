@@ -18,11 +18,11 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.store	$0=, 44($pop21), $pop1
 	i64.const	$push2=, 0
-	i64.store	$discard=, 32($7), $pop2
+	i64.store	$drop=, 32($7), $pop2
 	i32.store	$1=, 28($7), $0
 	i32.const	$push3=, 1
 	i32.store	$push0=, 24($7), $pop3
-	i32.store	$discard=, 20($7), $pop0
+	i32.store	$drop=, 20($7), $pop0
 	i64.const	$push4=, 1
 	i64.store	$2=, 8($7), $pop4
 	i64.load32_s	$3=, 44($7)
@@ -44,7 +44,7 @@ main:                                   # @main
 	i32.const	$push19=, __stack_pointer
 	i32.const	$push17=, 48
 	i32.add 	$push18=, $7, $pop17
-	i32.store	$discard=, 0($pop19), $pop18
+	i32.store	$drop=, 0($pop19), $pop18
 	return  	$1
 .LBB0_2:                                # %if.then
 	end_block                       # label0:

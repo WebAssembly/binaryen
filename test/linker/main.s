@@ -22,7 +22,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.call	$discard=, foo@FUNCTION
+	i32.call	$drop=, foo@FUNCTION
 	call    	bar@FUNCTION
 	i32.const	$0=, 0
 	return  	$0

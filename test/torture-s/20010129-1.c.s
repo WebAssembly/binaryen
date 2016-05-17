@@ -15,7 +15,7 @@ baz1:                                   # @baz1
 	tee_local	$push3=, $1=, $pop4
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop3, $pop1
-	i32.store	$discard=, baz1.l($pop0), $pop2
+	i32.store	$drop=, baz1.l($pop0), $pop2
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -72,7 +72,7 @@ foo:                                    # @foo
 	tee_local	$push25=, $9=, $pop26
 	i32.const	$push24=, 1
 	i32.add 	$push3=, $pop25, $pop24
-	i32.store	$discard=, baz1.l($pop28), $pop3
+	i32.store	$drop=, baz1.l($pop28), $pop3
 	block
 	block
 	i32.ge_s	$push4=, $9, $1
@@ -140,7 +140,7 @@ foo:                                    # @foo
 	i32.const	$push40=, 0
 	i32.const	$push39=, 2
 	i32.add 	$push22=, $9, $pop39
-	i32.store	$discard=, baz1.l($pop40), $pop22
+	i32.store	$drop=, baz1.l($pop40), $pop22
 	i32.const	$push38=, 1
 	i32.add 	$9=, $9, $pop38
 	copy_local	$2=, $8
@@ -179,10 +179,10 @@ main:                                   # @main
 	tee_local	$push10=, $0=, $pop11
 	i32.const	$push7=, 12
 	i32.add 	$push8=, $1, $pop7
-	i32.store	$discard=, bar($pop10), $pop8
+	i32.store	$drop=, bar($pop10), $pop8
 	i32.const	$push2=, 1
 	i32.const	$push1=, 51217
-	i32.call	$discard=, foo@FUNCTION, $1, $pop2, $pop1
+	i32.call	$drop=, foo@FUNCTION, $1, $pop2, $pop1
 	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc

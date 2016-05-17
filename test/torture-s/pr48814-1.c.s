@@ -32,7 +32,7 @@ main:                                   # @main
 	tee_local	$push12=, $1=, $pop13
 	i32.const	$push4=, 2
 	i32.shl 	$push5=, $pop12, $pop4
-	i32.store	$discard=, arr($pop5), $0
+	i32.store	$drop=, arr($pop5), $0
 	block
 	i32.const	$push11=, 0
 	i32.const	$push2=, 1

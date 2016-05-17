@@ -19,7 +19,7 @@ f:                                      # @f
 	tee_local	$push19=, $1=, $pop20
 	i32.const	$push18=, 4
 	i32.add 	$push1=, $pop19, $pop18
-	i32.store	$discard=, 12($2), $pop1
+	i32.store	$drop=, 12($2), $pop1
 	i32.load	$5=, 0($1)
 	block
 	block
@@ -62,7 +62,7 @@ f:                                      # @f
 	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 16
 	i32.add 	$push14=, $2, $pop13
-	i32.store	$discard=, 0($pop15), $pop14
+	i32.store	$drop=, 0($pop15), $pop14
 	return  	$1
 .LBB0_6:                                # %if.then
 	end_block                       # label1:
@@ -92,11 +92,11 @@ main:                                   # @main
 	i32.store	$push10=, 0($pop7), $pop8
 	tee_local	$push9=, $0=, $pop10
 	i64.const	$push0=, 528280977420
-	i64.store	$discard=, 8($pop9), $pop0
+	i64.store	$drop=, 8($pop9), $pop0
 	i64.const	$push1=, 47244640266
-	i64.store	$discard=, 0($0), $pop1
+	i64.store	$drop=, 0($0), $pop1
 	i32.const	$push2=, 3
-	i32.call	$discard=, f@FUNCTION, $pop2, $0
+	i32.call	$drop=, f@FUNCTION, $pop2, $0
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

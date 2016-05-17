@@ -19,7 +19,7 @@ new_unit:                               # @new_unit
 	i32.const	$push1=, 4
 	i32.add 	$push2=, $0, $pop1
 	i32.const	$push9=, 0
-	i32.store	$discard=, 0($pop2), $pop9
+	i32.store	$drop=, 0($pop2), $pop9
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block
@@ -29,7 +29,7 @@ new_unit:                               # @new_unit
 	br_if   	0, $pop4        # 0: down to label1
 # BB#3:                                 # %if.then3
 	i32.const	$push5=, 0
-	i32.store	$discard=, 0($0), $pop5
+	i32.store	$drop=, 0($0), $pop5
 .LBB0_4:                                # %if.end5
 	end_block                       # label1:
 	block

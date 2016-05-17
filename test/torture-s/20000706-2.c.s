@@ -120,7 +120,7 @@ main:                                   # @main
 	i32.store	$push24=, 0($pop17), $pop22
 	tee_local	$push23=, $3=, $pop24
 	i64.const	$push0=, 8589934593
-	i64.store	$discard=, 24($pop23), $pop0
+	i64.store	$drop=, 24($pop23), $pop0
 	i32.const	$push1=, 3
 	i32.store	$0=, 32($3), $pop1
 	i32.const	$push2=, 4
@@ -129,20 +129,20 @@ main:                                   # @main
 	i32.store	$2=, 40($3), $pop3
 	i32.const	$push4=, 16
 	i32.add 	$push5=, $3, $pop4
-	i32.store	$discard=, 0($pop5), $1
+	i32.store	$drop=, 0($pop5), $1
 	i32.const	$push6=, 12
 	i32.add 	$push7=, $3, $pop6
-	i32.store	$discard=, 0($pop7), $0
+	i32.store	$drop=, 0($pop7), $0
 	i32.const	$push8=, 20
 	i32.add 	$push9=, $3, $pop8
-	i32.store	$discard=, 0($pop9), $2
+	i32.store	$drop=, 0($pop9), $2
 	i32.const	$push18=, 4
 	i32.add 	$push19=, $3, $pop18
 	i32.add 	$push10=, $1, $pop19
 	i32.load	$push11=, 28($3)
-	i32.store	$discard=, 0($pop10), $pop11
+	i32.store	$drop=, 0($pop10), $pop11
 	i32.const	$push12=, 1
-	i32.store	$discard=, 4($3), $pop12
+	i32.store	$drop=, 4($3), $pop12
 	i32.const	$push20=, 4
 	i32.add 	$push21=, $3, $pop20
 	call    	foo@FUNCTION, $3, $pop21, $3

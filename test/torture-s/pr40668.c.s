@@ -27,22 +27,22 @@ bar:                                    # @bar
 .LBB0_2:                                # %sw.bb
 	end_block                       # label4:
 	i32.const	$push6=, 305419896
-	i32.store	$discard=, 0($1):p2align=0, $pop6
+	i32.store	$drop=, 0($1):p2align=0, $pop6
 	return
 .LBB0_3:                                # %sw.bb1
 	end_block                       # label3:
 	i32.const	$push5=, 0
-	i32.store	$discard=, 0($1):p2align=0, $pop5
+	i32.store	$drop=, 0($1):p2align=0, $pop5
 	return
 .LBB0_4:                                # %sw.bb2
 	end_block                       # label2:
 	i32.const	$push4=, 0
-	i32.store	$discard=, 0($1):p2align=0, $pop4
+	i32.store	$drop=, 0($1):p2align=0, $pop4
 	return
 .LBB0_5:                                # %sw.bb3
 	end_block                       # label1:
 	i32.const	$push3=, 0
-	i32.store	$discard=, 0($1):p2align=0, $pop3
+	i32.store	$drop=, 0($1):p2align=0, $pop3
 .LBB0_6:                                # %sw.epilog
 	end_block                       # label0:
 	return

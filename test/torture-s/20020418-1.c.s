@@ -25,7 +25,7 @@ gcc_crash:                              # @gcc_crash
 	br_if   	0, $1           # 0: up to label1
 # BB#3:                                 # %if.end6
 	end_loop                        # label2:
-	i32.store	$discard=, 0($0), $2
+	i32.store	$drop=, 0($0), $2
 	return
 .LBB0_4:                                # %if.then
 	end_block                       # label0:
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.store	$push10=, 0($pop5), $pop8
 	tee_local	$push9=, $0=, $pop10
 	i32.const	$push0=, 53
-	i32.store	$discard=, 8($pop9), $pop0
+	i32.store	$drop=, 8($pop9), $pop0
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
 	call    	gcc_crash@FUNCTION, $pop7

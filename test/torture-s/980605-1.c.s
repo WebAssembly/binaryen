@@ -15,7 +15,7 @@ f2:                                     # @f2
 	tee_local	$push9=, $1=, $pop10
 	i32.const	$push1=, 10
 	i32.add 	$push2=, $pop9, $pop1
-	i32.store	$discard=, x($pop0), $pop2
+	i32.store	$drop=, x($pop0), $pop2
 	i32.trunc_u/f64	$push3=, $0
 	i32.const	$push8=, 10
 	i32.mul 	$push4=, $1, $pop8
@@ -41,7 +41,7 @@ getval:                                 # @getval
 	tee_local	$push3=, $0=, $pop4
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop3, $pop1
-	i32.store	$discard=, x($pop0), $pop2
+	i32.store	$drop=, x($pop0), $pop2
 	return  	$0
 	.endfunc
 .Lfunc_end1:
@@ -66,7 +66,7 @@ f:                                      # @f
 	tee_local	$push21=, $1=, $pop22
 	i32.const	$push1=, 20
 	i32.add 	$push2=, $pop21, $pop1
-	i32.store	$discard=, x($pop0), $pop2
+	i32.store	$drop=, x($pop0), $pop2
 	i32.const	$push3=, 10
 	i32.mul 	$push20=, $1, $pop3
 	tee_local	$push19=, $1=, $pop20
@@ -76,7 +76,7 @@ f:                                      # @f
 	i32.store	$1=, 0($0), $pop6
 	i32.const	$push8=, buf
 	i32.const	$push7=, .L.str
-	i32.call	$discard=, sprintf@FUNCTION, $pop8, $pop7, $0
+	i32.call	$drop=, sprintf@FUNCTION, $pop8, $pop7, $0
 	block
 	i32.const	$push9=, 227
 	i32.ne  	$push10=, $1, $pop9
@@ -85,7 +85,7 @@ f:                                      # @f
 	i32.const	$push17=, __stack_pointer
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $0, $pop15
-	i32.store	$discard=, 0($pop17), $pop16
+	i32.store	$drop=, 0($pop17), $pop16
 	return
 .LBB2_2:                                # %if.then
 	end_block                       # label0:

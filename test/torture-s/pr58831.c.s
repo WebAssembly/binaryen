@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.load	$0=, b($pop1)
 	i32.const	$push3=, 0
 	i32.const	$push0=, r
-	i32.store	$discard=, i($pop3), $pop0
+	i32.store	$drop=, i($pop3), $pop0
 	call    	fn1@FUNCTION, $0
 	i32.const	$push2=, 0
 	return  	$pop2
@@ -27,10 +27,10 @@ fn2:                                    # @fn2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push1=, 42
-	i32.store	$discard=, f($pop0), $pop1
+	i32.store	$drop=, f($pop0), $pop1
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
-	i32.store16	$discard=, o($pop3), $pop2
+	i32.store16	$drop=, o($pop3), $pop2
 	return
 	.endfunc
 .Lfunc_end1:
@@ -65,7 +65,7 @@ fn1:                                    # @fn1
 	i32.const	$push11=, 0
 	i32.const	$push6=, d
 	i32.store	$push2=, r($pop11), $pop6
-	i32.store	$discard=, b($pop12), $pop2
+	i32.store	$drop=, b($pop12), $pop2
 	return
 	.endfunc
 .Lfunc_end2:

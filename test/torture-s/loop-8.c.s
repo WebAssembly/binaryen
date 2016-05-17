@@ -66,7 +66,7 @@ main:                                   # @main
 	br_if   	1, $pop31       # 1: down to label1
 .LBB1_3:                                # %e
 	end_block                       # label2:
-	f64.store	$discard=, 8($0), $1
+	f64.store	$drop=, 8($0), $1
 	i32.const	$push28=, 0
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $0, $pop12
@@ -76,7 +76,7 @@ main:                                   # @main
 	unreachable
 .LBB1_4:                                # %for.cond.2
 	end_block                       # label1:
-	f64.store	$discard=, 8($0), $1
+	f64.store	$drop=, 8($0), $1
 	i32.const	$push7=, 1
 	i32.const	$push14=, 8
 	i32.add 	$push15=, $0, $pop14

@@ -78,13 +78,13 @@ foo:                                    # @foo
 	br_if   	1, $pop3        # 1: down to label5
 # BB#3:                                 # %if.then
 	i32.const	$push5=, 0
-	i32.store16	$discard=, s($pop5), $2
+	i32.store16	$drop=, s($pop5), $2
 	call    	bar@FUNCTION, $1
 	return
 .LBB1_4:                                # %if.then8
 	end_block                       # label6:
 	i32.const	$push7=, 0
-	i32.store	$discard=, l($pop7), $2
+	i32.store	$drop=, l($pop7), $2
 .LBB1_5:                                # %if.end11
 	end_block                       # label5:
 	call    	bar@FUNCTION, $1
@@ -92,7 +92,7 @@ foo:                                    # @foo
 .LBB1_6:                                # %if.then3
 	end_block                       # label4:
 	i32.const	$push4=, 0
-	i32.store	$discard=, i($pop4), $2
+	i32.store	$drop=, i($pop4), $2
 	call    	bar@FUNCTION, $1
 	return
 	.endfunc

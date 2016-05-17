@@ -16,7 +16,7 @@ main:                                   # @main
 # BB#1:                                 # %for.inc.preheader
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
-	i32.store	$discard=, b($pop16), $pop15
+	i32.store	$drop=, b($pop16), $pop15
 .LBB0_2:                                # %for.end
 	end_block                       # label0:
 	block

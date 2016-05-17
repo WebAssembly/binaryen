@@ -57,7 +57,7 @@ foo:                                    # @foo
 	i32.shl 	$push4=, $pop3, $pop28
 	i32.add 	$push5=, $0, $pop4
 	i64.load	$push6=, 0($pop5)
-	i64.store	$discard=, 0($pop16), $pop6
+	i64.store	$drop=, 0($pop16), $pop6
 	i32.add 	$push17=, $6, $1
 	i32.const	$push27=, 3
 	i32.shl 	$push18=, $pop17, $pop27
@@ -70,7 +70,7 @@ foo:                                    # @foo
 	i32.shl 	$push23=, $pop22, $pop25
 	i32.add 	$push24=, $0, $pop23
 	i64.add 	$push20=, $4, $3
-	i64.store	$discard=, 0($pop24), $pop20
+	i64.store	$drop=, 0($pop24), $pop20
 	return
 	.endfunc
 .Lfunc_end1:

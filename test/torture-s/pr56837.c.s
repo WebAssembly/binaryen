@@ -12,7 +12,7 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i64.const	$push1=, 4294967295
-	i64.store	$discard=, a+8192($0), $pop1
+	i64.store	$drop=, a+8192($0), $pop1
 	i32.const	$push0=, 8
 	i32.add 	$0=, $0, $pop0
 	br_if   	0, $0           # 0: up to label0

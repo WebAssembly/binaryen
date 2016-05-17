@@ -46,7 +46,7 @@ foo:                                    # @foo
 	tee_local	$push16=, $2=, $pop17
 	i32.const	$push13=, 12
 	i32.add 	$push14=, $pop16, $pop13
-	i32.store	$discard=, c($pop1), $pop14
+	i32.store	$drop=, c($pop1), $pop14
 	block
 	i32.store	$push0=, 12($2), $0
 	i32.const	$push2=, 1
@@ -60,7 +60,7 @@ foo:                                    # @foo
 	i32.const	$push12=, __stack_pointer
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $2, $pop10
-	i32.store	$discard=, 0($pop12), $pop11
+	i32.store	$drop=, 0($pop12), $pop11
 	return
 .LBB1_3:                                # %if.then.i
 	end_block                       # label1:

@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, g_9($pop1), $pop0
+	i32.store	$drop=, g_9($pop1), $pop0
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc

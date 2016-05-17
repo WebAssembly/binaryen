@@ -15,7 +15,7 @@ inner:                                  # @inner
 	i32.sub 	$push83=, $pop77, $pop78
 	i32.store	$2=, 0($pop79), $pop83
 	i32.store	$push0=, 12($2), $1
-	i32.store	$discard=, 8($2), $pop0
+	i32.store	$drop=, 8($2), $pop0
 	block
 	block
 	block
@@ -52,7 +52,7 @@ inner:                                  # @inner
 	tee_local	$push85=, $0=, $pop86
 	i32.const	$push71=, .L.str
 	i32.load	$push70=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop85, $pop71, $pop70
+	i32.call	$drop=, vfprintf@FUNCTION, $pop85, $pop71, $pop70
 	i32.const	$push84=, .L.str
 	i32.load	$push72=, 8($2)
 	i32.call	$push73=, vfprintf@FUNCTION, $0, $pop84, $pop72
@@ -69,7 +69,7 @@ inner:                                  # @inner
 	tee_local	$push88=, $0=, $pop89
 	i32.const	$push64=, .L.str.1
 	i32.load	$push63=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop88, $pop64, $pop63
+	i32.call	$drop=, vfprintf@FUNCTION, $pop88, $pop64, $pop63
 	i32.const	$push87=, .L.str.1
 	i32.load	$push65=, 8($2)
 	i32.call	$push66=, vfprintf@FUNCTION, $0, $pop87, $pop65
@@ -86,7 +86,7 @@ inner:                                  # @inner
 	tee_local	$push91=, $0=, $pop92
 	i32.const	$push57=, .L.str.2
 	i32.load	$push56=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop91, $pop57, $pop56
+	i32.call	$drop=, vfprintf@FUNCTION, $pop91, $pop57, $pop56
 	i32.const	$push90=, .L.str.2
 	i32.load	$push58=, 8($2)
 	i32.call	$push59=, vfprintf@FUNCTION, $0, $pop90, $pop58
@@ -103,7 +103,7 @@ inner:                                  # @inner
 	tee_local	$push94=, $0=, $pop95
 	i32.const	$push52=, .L.str.3
 	i32.load	$push51=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop94, $pop52, $pop51
+	i32.call	$drop=, vfprintf@FUNCTION, $pop94, $pop52, $pop51
 	i32.const	$push93=, .L.str.3
 	i32.load	$push53=, 8($2)
 	i32.call	$push54=, vfprintf@FUNCTION, $0, $pop93, $pop53
@@ -119,7 +119,7 @@ inner:                                  # @inner
 	tee_local	$push97=, $0=, $pop98
 	i32.const	$push45=, .L.str.4
 	i32.load	$push44=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop97, $pop45, $pop44
+	i32.call	$drop=, vfprintf@FUNCTION, $pop97, $pop45, $pop44
 	i32.const	$push96=, .L.str.4
 	i32.load	$push46=, 8($2)
 	i32.call	$push47=, vfprintf@FUNCTION, $0, $pop96, $pop46
@@ -136,7 +136,7 @@ inner:                                  # @inner
 	tee_local	$push100=, $0=, $pop101
 	i32.const	$push38=, .L.str.4
 	i32.load	$push37=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop100, $pop38, $pop37
+	i32.call	$drop=, vfprintf@FUNCTION, $pop100, $pop38, $pop37
 	i32.const	$push99=, .L.str.4
 	i32.load	$push39=, 8($2)
 	i32.call	$push40=, vfprintf@FUNCTION, $0, $pop99, $pop39
@@ -153,7 +153,7 @@ inner:                                  # @inner
 	tee_local	$push103=, $0=, $pop104
 	i32.const	$push31=, .L.str.4
 	i32.load	$push30=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop103, $pop31, $pop30
+	i32.call	$drop=, vfprintf@FUNCTION, $pop103, $pop31, $pop30
 	i32.const	$push102=, .L.str.4
 	i32.load	$push32=, 8($2)
 	i32.call	$push33=, vfprintf@FUNCTION, $0, $pop102, $pop32
@@ -170,7 +170,7 @@ inner:                                  # @inner
 	tee_local	$push106=, $0=, $pop107
 	i32.const	$push26=, .L.str.4
 	i32.load	$push25=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop106, $pop26, $pop25
+	i32.call	$drop=, vfprintf@FUNCTION, $pop106, $pop26, $pop25
 	i32.const	$push105=, .L.str.4
 	i32.load	$push27=, 8($2)
 	i32.call	$push28=, vfprintf@FUNCTION, $0, $pop105, $pop27
@@ -186,7 +186,7 @@ inner:                                  # @inner
 	tee_local	$push109=, $0=, $pop110
 	i32.const	$push12=, .L.str.6
 	i32.load	$push11=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop109, $pop12, $pop11
+	i32.call	$drop=, vfprintf@FUNCTION, $pop109, $pop12, $pop11
 	i32.const	$push108=, .L.str.6
 	i32.load	$push13=, 8($2)
 	i32.call	$push14=, vfprintf@FUNCTION, $0, $pop108, $pop13
@@ -203,7 +203,7 @@ inner:                                  # @inner
 	tee_local	$push112=, $0=, $pop113
 	i32.const	$push5=, .L.str.7
 	i32.load	$push4=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop112, $pop5, $pop4
+	i32.call	$drop=, vfprintf@FUNCTION, $pop112, $pop5, $pop4
 	i32.const	$push111=, .L.str.7
 	i32.load	$push6=, 8($2)
 	i32.call	$push7=, vfprintf@FUNCTION, $0, $pop111, $pop6
@@ -221,7 +221,7 @@ inner:                                  # @inner
 	tee_local	$push115=, $0=, $pop116
 	i32.const	$push19=, .L.str.5
 	i32.load	$push18=, 12($2)
-	i32.call	$discard=, vfprintf@FUNCTION, $pop115, $pop19, $pop18
+	i32.call	$drop=, vfprintf@FUNCTION, $pop115, $pop19, $pop18
 	i32.const	$push114=, .L.str.5
 	i32.load	$push20=, 8($2)
 	i32.call	$push21=, vfprintf@FUNCTION, $0, $pop114, $pop20
@@ -233,7 +233,7 @@ inner:                                  # @inner
 	i32.const	$push82=, __stack_pointer
 	i32.const	$push80=, 16
 	i32.add 	$push81=, $2, $pop80
-	i32.store	$discard=, 0($pop82), $pop81
+	i32.store	$drop=, 0($pop82), $pop81
 	return
 .LBB0_24:                               # %if.then50
 	end_block                       # label0:
@@ -270,7 +270,7 @@ main:                                   # @main
 	i32.const	$push37=, 0
 	call    	inner@FUNCTION, $pop3, $pop37
 	i32.const	$push4=, .L.str
-	i32.store	$discard=, 96($1), $pop4
+	i32.store	$drop=, 96($1), $pop4
 	i32.const	$push5=, 4
 	i32.const	$push23=, 96
 	i32.add 	$push24=, $1, $pop23
@@ -282,24 +282,24 @@ main:                                   # @main
 	i32.add 	$push26=, $1, $pop25
 	call    	inner@FUNCTION, $pop7, $pop26
 	i32.const	$push8=, .L.str.2
-	i32.store	$discard=, 64($1), $pop8
+	i32.store	$drop=, 64($1), $pop8
 	i32.const	$push9=, 6
 	i32.const	$push27=, 64
 	i32.add 	$push28=, $1, $pop27
 	call    	inner@FUNCTION, $pop9, $pop28
 	i32.const	$push10=, .L.str.3
-	i32.store	$discard=, 48($1), $pop10
+	i32.store	$drop=, 48($1), $pop10
 	i32.const	$push11=, 7
 	i32.const	$push29=, 48
 	i32.add 	$push30=, $1, $pop29
 	call    	inner@FUNCTION, $pop11, $pop30
 	i32.const	$push12=, 120
-	i32.store	$discard=, 32($1), $pop12
+	i32.store	$drop=, 32($1), $pop12
 	i32.const	$push13=, 8
 	i32.const	$push31=, 32
 	i32.add 	$push32=, $1, $pop31
 	call    	inner@FUNCTION, $pop13, $pop32
-	i32.store	$discard=, 16($1), $0
+	i32.store	$drop=, 16($1), $0
 	i32.const	$push14=, 9
 	i32.const	$push33=, 16
 	i32.add 	$push34=, $1, $pop33
@@ -311,7 +311,7 @@ main:                                   # @main
 	i32.const	$push22=, __stack_pointer
 	i32.const	$push20=, 112
 	i32.add 	$push21=, $1, $pop20
-	i32.store	$discard=, 0($pop22), $pop21
+	i32.store	$drop=, 0($pop22), $pop21
 	return  	$0
 	.endfunc
 .Lfunc_end1:

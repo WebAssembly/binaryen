@@ -14,7 +14,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 16
 	i32.sub 	$push5=, $pop1, $pop2
 	tee_local	$push4=, $1=, $pop5
-	i32.store	$discard=, 12($pop4), $0
+	i32.store	$drop=, 12($pop4), $0
 	i32.const	$push3=, 12
 	i32.add 	$1=, $1, $pop3
 	#APP
@@ -62,7 +62,7 @@ bar:                                    # @bar
 	end_loop                        # label5:
 	end_block                       # label3:
 	i32.call	$push2=, foo@FUNCTION, $3
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end1:
@@ -78,7 +78,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, g
-	i32.store	$discard=, f($pop1), $pop0
+	i32.store	$drop=, f($pop1), $pop0
 	i32.const	$push4=, d
 	i32.const	$push3=, e
 	i32.const	$push2=, f

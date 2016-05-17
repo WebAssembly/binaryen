@@ -176,9 +176,9 @@ main:                                   # @main
 	i32.add 	$push59=, $pop69, $12
 	i32.store	$16=, k+4($pop131), $pop59
 	i32.const	$push130=, 0
-	i32.store	$discard=, res($pop130), $13
+	i32.store	$drop=, res($pop130), $13
 	i32.const	$push129=, 0
-	i32.store	$discard=, res+4($pop129), $16
+	i32.store	$drop=, res+4($pop129), $16
 	i32.const	$push72=, 1675
 	i32.ne  	$push73=, $13, $pop72
 	br_if   	0, $pop73       # 0: down to label1
@@ -204,9 +204,9 @@ main:                                   # @main
 	i32.mul 	$push76=, $pop86, $12
 	i32.store	$16=, k+4($pop134), $pop76
 	i32.const	$push133=, 0
-	i32.store	$discard=, res($pop133), $13
+	i32.store	$drop=, res($pop133), $13
 	i32.const	$push132=, 0
-	i32.store	$discard=, res+4($pop132), $16
+	i32.store	$drop=, res+4($pop132), $16
 	i32.const	$push89=, 1456467968
 	i32.ne  	$push90=, $13, $pop89
 	br_if   	0, $pop90       # 0: down to label1

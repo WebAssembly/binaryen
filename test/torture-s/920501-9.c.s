@@ -90,24 +90,24 @@ print_longlong:                         # @print_longlong
 	i32.eqz 	$push16=, $pop14
 	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %if.then
-	i32.store	$discard=, 20($2), $3
-	i32.store	$discard=, 16($2), $4
+	i32.store	$drop=, 20($2), $3
+	i32.store	$drop=, 16($2), $4
 	i32.const	$push2=, .L.str
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $2, $pop11
-	i32.call	$discard=, sprintf@FUNCTION, $1, $pop2, $pop12
+	i32.call	$drop=, sprintf@FUNCTION, $1, $pop2, $pop12
 	br      	1               # 1: down to label0
 .LBB5_2:                                # %if.else
 	end_block                       # label1:
-	i32.store	$discard=, 0($2), $3
+	i32.store	$drop=, 0($2), $3
 	i32.const	$push3=, .L.str.1
-	i32.call	$discard=, sprintf@FUNCTION, $1, $pop3, $2
+	i32.call	$drop=, sprintf@FUNCTION, $1, $pop3, $2
 .LBB5_3:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 32
 	i32.add 	$push9=, $2, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return  	$2
 	.endfunc
 .Lfunc_end5:
@@ -129,13 +129,13 @@ main:                                   # @main
 	i32.store	$push52=, 0($pop20), $pop49
 	tee_local	$push51=, $0=, $pop52
 	i32.const	$push0=, 1
-	i32.store	$discard=, 64($pop51), $pop0
+	i32.store	$drop=, 64($pop51), $pop0
 	i32.const	$push21=, 80
 	i32.add 	$push22=, $0, $pop21
 	i32.const	$push50=, .L.str.1
 	i32.const	$push23=, 64
 	i32.add 	$push24=, $0, $pop23
-	i32.call	$discard=, sprintf@FUNCTION, $pop22, $pop50, $pop24
+	i32.call	$drop=, sprintf@FUNCTION, $pop22, $pop50, $pop24
 	block
 	i32.const	$push1=, .L.str.2
 	i32.const	$push25=, 80
@@ -144,13 +144,13 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 305419896
-	i32.store	$discard=, 48($0), $pop3
+	i32.store	$drop=, 48($0), $pop3
 	i32.const	$push27=, 80
 	i32.add 	$push28=, $0, $pop27
 	i32.const	$push53=, .L.str.1
 	i32.const	$push29=, 48
 	i32.add 	$push30=, $0, $pop29
-	i32.call	$discard=, sprintf@FUNCTION, $pop28, $pop53, $pop30
+	i32.call	$drop=, sprintf@FUNCTION, $pop28, $pop53, $pop30
 	i32.const	$push4=, .L.str.3
 	i32.const	$push31=, 80
 	i32.add 	$push32=, $0, $pop31
@@ -158,13 +158,13 @@ main:                                   # @main
 	br_if   	0, $pop5        # 0: down to label2
 # BB#2:                                 # %if.end11
 	i64.const	$push6=, 1311768467732155613
-	i64.store	$discard=, 32($0), $pop6
+	i64.store	$drop=, 32($0), $pop6
 	i32.const	$push33=, 80
 	i32.add 	$push34=, $0, $pop33
 	i32.const	$push54=, .L.str
 	i32.const	$push35=, 32
 	i32.add 	$push36=, $0, $pop35
-	i32.call	$discard=, sprintf@FUNCTION, $pop34, $pop54, $pop36
+	i32.call	$drop=, sprintf@FUNCTION, $pop34, $pop54, $pop36
 	i32.const	$push7=, .L.str.4
 	i32.const	$push37=, 80
 	i32.add 	$push38=, $0, $pop37
@@ -172,13 +172,13 @@ main:                                   # @main
 	br_if   	0, $pop8        # 0: down to label2
 # BB#3:                                 # %if.end19
 	i64.const	$push9=, -1
-	i64.store	$discard=, 16($0), $pop9
+	i64.store	$drop=, 16($0), $pop9
 	i32.const	$push39=, 80
 	i32.add 	$push40=, $0, $pop39
 	i32.const	$push55=, .L.str
 	i32.const	$push41=, 16
 	i32.add 	$push42=, $0, $pop41
-	i32.call	$discard=, sprintf@FUNCTION, $pop40, $pop55, $pop42
+	i32.call	$drop=, sprintf@FUNCTION, $pop40, $pop55, $pop42
 	i32.const	$push10=, .L.str.5
 	i32.const	$push43=, 80
 	i32.add 	$push44=, $0, $pop43
@@ -186,11 +186,11 @@ main:                                   # @main
 	br_if   	0, $pop11       # 0: down to label2
 # BB#4:                                 # %if.end27
 	i32.const	$push12=, -1430532899
-	i32.store	$discard=, 0($0), $pop12
+	i32.store	$drop=, 0($0), $pop12
 	i32.const	$push45=, 80
 	i32.add 	$push46=, $0, $pop45
 	i32.const	$push13=, .L.str.1
-	i32.call	$discard=, sprintf@FUNCTION, $pop46, $pop13, $0
+	i32.call	$drop=, sprintf@FUNCTION, $pop46, $pop13, $0
 	i32.const	$push14=, .L.str.6
 	i32.const	$push47=, 80
 	i32.add 	$push48=, $0, $pop47

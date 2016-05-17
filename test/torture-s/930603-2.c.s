@@ -12,7 +12,7 @@ f:                                      # @f
 	i32.const	$push3=, 0
 	i32.const	$push2=, 1
 	i32.store	$push0=, w($pop3), $pop2
-	i32.store	$discard=, w+12($pop1), $pop0
+	i32.store	$drop=, w+12($pop1), $pop0
 	return  	$0
 	.endfunc
 .Lfunc_end0:
@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	i32.const	$push1=, 1
 	i32.store	$push0=, w($pop3), $pop1
-	i32.store	$discard=, w+12($pop4), $pop0
+	i32.store	$drop=, w+12($pop4), $pop0
 	block
 	i32.or  	$push2=, $1, $0
 	br_if   	0, $pop2        # 0: down to label0

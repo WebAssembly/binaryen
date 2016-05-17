@@ -16,7 +16,7 @@ signbit:                                # @signbit
 	i32.const	$push9=, 16
 	i32.sub 	$push13=, $pop8, $pop9
 	tee_local	$push12=, $2=, $pop13
-	f64.store	$discard=, 8($pop12), $0
+	f64.store	$drop=, 8($pop12), $0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $2, $pop10
 	i32.const	$push1=, 2
@@ -61,7 +61,7 @@ main:                                   # @main
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i64.const	$push4=, -4625196817309499392
-	i64.store	$discard=, 8($0), $pop4
+	i64.store	$drop=, 8($0), $pop4
 	block
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $0, $pop13

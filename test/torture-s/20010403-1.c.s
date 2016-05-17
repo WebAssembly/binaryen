@@ -22,7 +22,7 @@ b:                                      # @b
 	i32.load	$push0=, 0($0)
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$discard=, 0($0), $pop2
+	i32.store	$drop=, 0($0), $pop2
 	return
 	.endfunc
 .Lfunc_end1:

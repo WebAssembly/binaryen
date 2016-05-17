@@ -9,7 +9,7 @@ baz:                                    # @baz
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.load	$push0=, 0($0)
-	i32.store	$discard=, c($pop1), $pop0
+	i32.store	$drop=, c($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -78,7 +78,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, c($pop1), $pop0
+	i32.store	$drop=, c($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable

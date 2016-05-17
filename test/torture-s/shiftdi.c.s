@@ -21,7 +21,7 @@ g:                                      # @g
 	i64.extend_u/i32	$push9=, $2
 	i64.shl 	$push10=, $pop8, $pop9
 	i64.or  	$push12=, $pop11, $pop10
-	i64.store	$discard=, 0($3), $pop12
+	i64.store	$drop=, 0($3), $pop12
 	return
 	.endfunc
 .Lfunc_end0:

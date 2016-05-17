@@ -18,7 +18,7 @@ find:                                   # @find
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.else
 	i32.const	$push0=, 42
-	i32.store	$discard=, 12($1), $pop0
+	i32.store	$drop=, 12($1), $pop0
 	copy_local	$0=, $1
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
@@ -31,7 +31,7 @@ find:                                   # @find
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 128
 	i32.add 	$push9=, $1, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	return
 .LBB0_4:                                # %if.then.i
 	end_block                       # label1:

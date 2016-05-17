@@ -168,9 +168,9 @@ __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 	i32.load	$push1=, entry_calls($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, entry_calls($pop0), $pop3
+	i32.store	$drop=, entry_calls($pop0), $pop3
 	i32.const	$push4=, 0
-	i32.store	$discard=, last_fn_entered($pop4), $0
+	i32.store	$drop=, last_fn_entered($pop4), $0
 	return
 	.endfunc
 .Lfunc_end3:
@@ -188,9 +188,9 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	i32.load	$push1=, exit_calls($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$discard=, exit_calls($pop0), $pop3
+	i32.store	$drop=, exit_calls($pop0), $pop3
 	i32.const	$push4=, 0
-	i32.store	$discard=, last_fn_exited($pop4), $0
+	i32.store	$drop=, last_fn_exited($pop4), $0
 	return
 	.endfunc
 .Lfunc_end4:

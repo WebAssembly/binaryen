@@ -33,7 +33,7 @@ foo:                                    # @foo
 # BB#2:                                 # %if.then13
 	i32.const	$push10=, 4
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$discard=, 0($pop11), $5
+	i32.store	$drop=, 0($pop11), $5
 .LBB0_3:                                # %cleanup
 	end_block                       # label0:
 	return  	$3

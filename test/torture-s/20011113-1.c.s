@@ -122,9 +122,9 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, t
-	i32.call	$discard=, baz@FUNCTION, $pop0
+	i32.call	$drop=, baz@FUNCTION, $pop0
 	i32.const	$push2=, t
-	i32.call	$discard=, foo@FUNCTION, $pop2
+	i32.call	$drop=, foo@FUNCTION, $pop2
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable

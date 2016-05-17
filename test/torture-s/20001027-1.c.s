@@ -12,7 +12,7 @@ main:                                   # @main
 	i32.load	$0=, p($pop7)
 	i32.const	$push6=, 0
 	i32.const	$push1=, 1
-	i32.store	$discard=, x($pop6), $pop1
+	i32.store	$drop=, x($pop6), $pop1
 	block
 	i32.const	$push2=, 2
 	i32.store	$push0=, 0($0), $pop2

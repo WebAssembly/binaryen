@@ -35,9 +35,9 @@ test:                                   # @test
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$discard=, foo.s($pop0), $0
+	i32.store	$drop=, foo.s($pop0), $0
 	i32.const	$push2=, 0
-	i32.store	$discard=, foo.s+4($pop2), $1
+	i32.store	$drop=, foo.s+4($pop2), $1
 	i32.const	$push1=, foo.s
 	return  	$pop1
 	.endfunc
@@ -91,7 +91,7 @@ main:                                   # @main
 	i32.const	$push15=, __stack_pointer
 	i32.const	$push13=, 16
 	i32.add 	$push14=, $1, $pop13
-	i32.store	$discard=, 0($pop15), $pop14
+	i32.store	$drop=, 0($pop15), $pop14
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB3_5:                                # %if.then

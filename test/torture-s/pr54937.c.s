@@ -31,7 +31,7 @@ t:                                      # @t
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
 	i32.const	$push7=, 0
-	i32.store	$discard=, a($1), $pop7
+	i32.store	$drop=, a($1), $pop7
 	i32.const	$push6=, 4
 	i32.add 	$1=, $1, $pop6
 	i32.const	$push5=, -1
@@ -54,9 +54,9 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, exit@FUNCTION
-	i32.store	$discard=, terminate_me($pop1), $pop0
+	i32.store	$drop=, terminate_me($pop1), $pop0
 	i32.const	$push2=, 100
-	i32.call	$discard=, t@FUNCTION, $pop2
+	i32.call	$drop=, t@FUNCTION, $pop2
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

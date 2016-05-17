@@ -9,7 +9,7 @@ add_input_file:                         # @add_input_file
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, B+4($pop0)
-	i32.store	$discard=, 0($pop1), $0
+	i32.store	$drop=, 0($pop1), $0
 	return
 	.endfunc
 .Lfunc_end0:
@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.sub 	$push6=, $pop2, $pop3
 	i32.const	$push4=, 12
 	i32.add 	$push5=, $pop6, $pop4
-	i32.store	$discard=, B+4($pop0), $pop5
+	i32.store	$drop=, B+4($pop0), $pop5
 	i32.const	$push7=, 0
 	return  	$pop7
 	.endfunc

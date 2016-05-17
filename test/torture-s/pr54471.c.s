@@ -50,15 +50,15 @@ foo:                                    # @foo
 	br_if   	0, $pop26       # 0: down to label0
 # BB#4:                                 # %if.end
 	i64.const	$push24=, 14348907
-	i64.store	$discard=, 0($0), $pop24
+	i64.store	$drop=, 0($0), $pop24
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $0, $pop5
 	i64.const	$push7=, 0
-	i64.store	$discard=, 0($pop6), $pop7
+	i64.store	$drop=, 0($pop6), $pop7
 	i32.const	$push14=, __stack_pointer
 	i32.const	$push12=, 32
 	i32.add 	$push13=, $4, $pop12
-	i32.store	$discard=, 0($pop14), $pop13
+	i32.store	$drop=, 0($pop14), $pop13
 	return
 .LBB0_5:                                # %if.then
 	end_block                       # label0:
@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.const	$push10=, __stack_pointer
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $0, $pop8
-	i32.store	$discard=, 0($pop10), $pop9
+	i32.store	$drop=, 0($pop10), $pop9
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc

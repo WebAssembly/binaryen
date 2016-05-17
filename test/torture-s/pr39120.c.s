@@ -22,7 +22,7 @@ bar:                                    # @bar
 	i32.const	$push0=, 0
 	i32.load	$push1=, x($pop0)
 	i32.const	$push2=, 1
-	i32.store	$discard=, 0($pop1), $pop2
+	i32.store	$drop=, 0($pop1), $pop2
 	return
 	.endfunc
 .Lfunc_end1:
@@ -49,7 +49,7 @@ main:                                   # @main
 	i32.const	$push12=, 12
 	i32.add 	$push13=, $1, $pop12
 	i32.call	$push1=, foo@FUNCTION, $pop13
-	i32.store	$discard=, x($pop15), $pop1
+	i32.store	$drop=, x($pop15), $pop1
 	call    	bar@FUNCTION
 	block
 	i32.load	$push2=, 12($1)
@@ -60,7 +60,7 @@ main:                                   # @main
 	i32.const	$push11=, __stack_pointer
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $1, $pop9
-	i32.store	$discard=, 0($pop11), $pop10
+	i32.store	$drop=, 0($pop11), $pop10
 	return  	$0
 .LBB2_2:                                # %if.then
 	end_block                       # label0:

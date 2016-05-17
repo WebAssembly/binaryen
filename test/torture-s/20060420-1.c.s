@@ -62,7 +62,7 @@ foo:                                    # @foo
 	end_loop                        # label5:
 	end_block                       # label3:
 	i32.add 	$push9=, $0, $9
-	f32.store	$discard=, 0($pop9), $25
+	f32.store	$drop=, 0($pop9), $25
 	i32.const	$push92=, 1
 	i32.add 	$7=, $7, $pop92
 	i32.lt_s	$push10=, $7, $3
@@ -219,46 +219,46 @@ foo:                                    # @foo
 	end_block                       # label9:
 	i32.add 	$push146=, $0, $27
 	tee_local	$push145=, $28=, $pop146
-	f32.store	$discard=, 0($pop145), $22
+	f32.store	$drop=, 0($pop145), $22
 	i32.const	$push144=, 12
 	i32.add 	$push60=, $28, $pop144
-	f32.store	$discard=, 0($pop60), $25
+	f32.store	$drop=, 0($pop60), $25
 	i32.const	$push143=, 8
 	i32.add 	$push61=, $28, $pop143
-	f32.store	$discard=, 0($pop61), $24
+	f32.store	$drop=, 0($pop61), $24
 	i32.const	$push142=, 4
 	i32.add 	$push62=, $28, $pop142
-	f32.store	$discard=, 0($pop62), $23
-	f32.store	$discard=, 16($28), $18
+	f32.store	$drop=, 0($pop62), $23
+	f32.store	$drop=, 16($28), $18
 	i32.const	$push141=, 28
 	i32.add 	$push63=, $28, $pop141
-	f32.store	$discard=, 0($pop63), $21
+	f32.store	$drop=, 0($pop63), $21
 	i32.const	$push140=, 24
 	i32.add 	$push64=, $28, $pop140
-	f32.store	$discard=, 0($pop64), $20
+	f32.store	$drop=, 0($pop64), $20
 	i32.const	$push139=, 20
 	i32.add 	$push65=, $28, $pop139
-	f32.store	$discard=, 0($pop65), $19
-	f32.store	$discard=, 32($28), $14
+	f32.store	$drop=, 0($pop65), $19
+	f32.store	$drop=, 32($28), $14
 	i32.const	$push138=, 44
 	i32.add 	$push66=, $28, $pop138
-	f32.store	$discard=, 0($pop66), $17
+	f32.store	$drop=, 0($pop66), $17
 	i32.const	$push137=, 40
 	i32.add 	$push67=, $28, $pop137
-	f32.store	$discard=, 0($pop67), $16
+	f32.store	$drop=, 0($pop67), $16
 	i32.const	$push136=, 36
 	i32.add 	$push68=, $28, $pop136
-	f32.store	$discard=, 0($pop68), $15
-	f32.store	$discard=, 48($28), $10
+	f32.store	$drop=, 0($pop68), $15
+	f32.store	$drop=, 48($28), $10
 	i32.const	$push135=, 60
 	i32.add 	$push69=, $28, $pop135
-	f32.store	$discard=, 0($pop69), $13
+	f32.store	$drop=, 0($pop69), $13
 	i32.const	$push134=, 56
 	i32.add 	$push70=, $28, $pop134
-	f32.store	$discard=, 0($pop70), $12
+	f32.store	$drop=, 0($pop70), $12
 	i32.const	$push133=, 52
 	i32.add 	$push71=, $28, $pop133
-	f32.store	$discard=, 0($pop71), $11
+	f32.store	$drop=, 0($pop71), $11
 	i32.const	$push132=, 16
 	i32.add 	$7=, $7, $pop132
 	i32.lt_s	$push72=, $7, $26
@@ -313,7 +313,7 @@ foo:                                    # @foo
 	end_loop                        # label17:
 	end_block                       # label15:
 	i32.add 	$push80=, $0, $9
-	f32.store	$discard=, 0($pop80), $25
+	f32.store	$drop=, 0($pop80), $25
 	i32.const	$push155=, 1
 	i32.add 	$7=, $7, $pop155
 	i32.ne  	$push81=, $7, $3
@@ -350,11 +350,11 @@ main:                                   # @main
 	tee_local	$push39=, $2=, $pop40
 	i32.const	$push4=, buffer+128
 	i32.add 	$push5=, $pop39, $pop4
-	i32.store	$discard=, 12($pop42), $pop5
+	i32.store	$drop=, 12($pop42), $pop5
 	i32.const	$push3=, buffer+64
 	i32.add 	$push38=, $2, $pop3
 	tee_local	$push37=, $2=, $pop38
-	i32.store	$discard=, 8($3), $pop37
+	i32.store	$drop=, 8($3), $pop37
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label18:
@@ -364,11 +364,11 @@ main:                                   # @main
 	f32.const	$push48=, 0x1.8p3
 	f32.mul 	$push8=, $0, $pop48
 	f32.add 	$push9=, $0, $pop8
-	f32.store	$discard=, 0($pop10), $pop9
+	f32.store	$drop=, 0($pop10), $pop9
 	f32.const	$push47=, 0x1.6p3
 	f32.mul 	$push6=, $0, $pop47
 	f32.add 	$push7=, $0, $pop6
-	f32.store	$discard=, 0($2), $pop7
+	f32.store	$drop=, 0($2), $pop7
 	i32.const	$push46=, 1
 	i32.add 	$1=, $1, $pop46
 	i32.const	$push45=, 4
@@ -422,7 +422,7 @@ main:                                   # @main
 	i32.const	$push33=, __stack_pointer
 	i32.const	$push31=, 16
 	i32.add 	$push32=, $3, $pop31
-	i32.store	$discard=, 0($pop33), $pop32
+	i32.store	$drop=, 0($pop33), $pop32
 	i32.const	$push26=, 0
 	return  	$pop26
 .LBB1_6:                                # %if.then

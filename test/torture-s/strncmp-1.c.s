@@ -82,7 +82,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push34=, u1
 	i32.const	$push33=, 0
-	i32.call	$discard=, memset@FUNCTION, $pop34, $pop33, $4
+	i32.call	$drop=, memset@FUNCTION, $pop34, $pop33, $4
 	copy_local	$9=, $5
 .LBB1_5:                                # %for.cond10.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -109,7 +109,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push38=, u2
 	i32.const	$push37=, 0
-	i32.call	$discard=, memset@FUNCTION, $pop38, $pop37, $6
+	i32.call	$drop=, memset@FUNCTION, $pop38, $pop37, $6
 	copy_local	$11=, $7
 .LBB1_9:                                # %for.cond31.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
@@ -126,7 +126,7 @@ main:                                   # @main
 .LBB1_11:                               # %for.cond38.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
 	end_block                       # label15:
-	i64.store	$discard=, 0($12):p2align=0, $0
+	i64.store	$drop=, 0($12):p2align=0, $0
 	i32.const	$push41=, 0
 	i32.store8	$push2=, 0($10), $pop41
 	i32.store8	$2=, 0($12), $pop2
@@ -141,7 +141,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push43=, 97
 	i32.store16	$1=, 0($10):p2align=0, $pop43
-	i32.store8	$discard=, 0($12), $2
+	i32.store8	$drop=, 0($12), $2
 	i32.const	$push42=, 80
 	i32.call	$push5=, strncmp@FUNCTION, $9, $11, $pop42
 	i32.le_s	$push6=, $pop5, $2
@@ -152,8 +152,8 @@ main:                                   # @main
 	br_if   	6, $pop7        # 6: down to label5
 # BB#15:                                # %test.exit196
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.store8	$discard=, 0($10), $2
-	i32.store16	$discard=, 0($12):p2align=0, $1
+	i32.store8	$drop=, 0($10), $2
+	i32.store16	$drop=, 0($12):p2align=0, $1
 	i32.const	$push44=, 80
 	i32.call	$push8=, strncmp@FUNCTION, $9, $11, $pop44
 	i32.ge_s	$push9=, $pop8, $2
@@ -178,8 +178,8 @@ main:                                   # @main
 	br_if   	6, $pop13       # 6: down to label5
 # BB#19:                                # %test.exit219
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.store16	$discard=, 0($10):p2align=0, $3
-	i32.store16	$discard=, 0($12):p2align=0, $1
+	i32.store16	$drop=, 0($10):p2align=0, $3
+	i32.store16	$drop=, 0($12):p2align=0, $1
 	i32.const	$push48=, 80
 	i32.call	$push14=, strncmp@FUNCTION, $9, $11, $pop48
 	i32.le_s	$push15=, $pop14, $2
@@ -190,7 +190,7 @@ main:                                   # @main
 	br_if   	6, $pop16       # 6: down to label5
 # BB#21:                                # %test.exit231
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.store16	$discard=, 0($10):p2align=0, $1
+	i32.store16	$drop=, 0($10):p2align=0, $1
 	i32.const	$push50=, 169
 	i32.store16	$3=, 0($12):p2align=0, $pop50
 	i32.const	$push49=, 80
@@ -203,8 +203,8 @@ main:                                   # @main
 	br_if   	6, $pop19       # 6: down to label5
 # BB#23:                                # %test.exit243
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.store16	$discard=, 0($10):p2align=0, $3
-	i32.store16	$discard=, 0($12):p2align=0, $1
+	i32.store16	$drop=, 0($10):p2align=0, $3
+	i32.store16	$drop=, 0($12):p2align=0, $1
 	i32.const	$push51=, 80
 	i32.call	$push20=, strncmp@FUNCTION, $9, $11, $pop51
 	i32.le_s	$push21=, $pop20, $2
@@ -228,8 +228,8 @@ main:                                   # @main
 	br_if   	6, $pop25       # 6: down to label5
 # BB#27:                                # %test.exit267
                                         #   in Loop: Header=BB1_3 Depth=3
-	i32.store16	$discard=, 0($10):p2align=0, $3
-	i32.store16	$discard=, 0($12):p2align=0, $1
+	i32.store16	$drop=, 0($10):p2align=0, $3
+	i32.store16	$drop=, 0($12):p2align=0, $1
 	i32.const	$push54=, 80
 	i32.call	$push26=, strncmp@FUNCTION, $9, $11, $pop54
 	i32.le_s	$push27=, $pop26, $2

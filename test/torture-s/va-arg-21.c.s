@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.store	$push8=, 0($pop5), $pop6
 	tee_local	$push7=, $0=, $pop8
 	i32.const	$push0=, .L.str.1
-	i32.store	$discard=, 0($pop7), $pop0
+	i32.store	$drop=, 0($pop7), $pop0
 	call    	doit@FUNCTION, $0, $0
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
@@ -38,10 +38,10 @@ doit:                                   # @doit
 	i32.const	$push2=, .L.str
 	i32.store	$push5=, 0($2), $1
 	tee_local	$push4=, $1=, $pop5
-	i32.call	$discard=, vprintf@FUNCTION, $pop2, $pop4
+	i32.call	$drop=, vprintf@FUNCTION, $pop2, $pop4
 	i32.const	$push3=, .L.str
 	i32.store	$push0=, 0($3), $1
-	i32.call	$discard=, vprintf@FUNCTION, $pop3, $pop0
+	i32.call	$drop=, vprintf@FUNCTION, $pop3, $pop0
 	block
 	i32.eqz 	$push7=, $3
 	br_if   	0, $pop7        # 0: down to label0

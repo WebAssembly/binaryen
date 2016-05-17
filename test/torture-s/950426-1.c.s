@@ -9,16 +9,16 @@ main:                                   # @main
 # BB#0:                                 # %if.then
 	i32.const	$push1=, 0
 	i32.const	$push0=, -1
-	i32.store	$discard=, s1($pop1), $pop0
+	i32.store	$drop=, s1($pop1), $pop0
 	i32.const	$push8=, 0
 	i32.const	$push2=, s1
-	i32.store	$discard=, p1($pop8), $pop2
+	i32.store	$drop=, p1($pop8), $pop2
 	i32.const	$push7=, 0
 	i32.const	$push3=, 3
-	i32.store	$discard=, i($pop7), $pop3
+	i32.store	$drop=, i($pop7), $pop3
 	i32.const	$push6=, 0
 	i32.const	$push4=, .L.str.1+1
-	i32.store	$discard=, s1+16($pop6), $pop4
+	i32.store	$drop=, s1+16($pop6), $pop4
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable

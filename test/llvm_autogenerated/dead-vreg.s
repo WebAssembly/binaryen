@@ -23,7 +23,7 @@ foo:
 	br_if   	0, $4
 .LBB0_3:
 	loop
-	i32.store	$discard=, 0($7), $6
+	i32.store	$drop=, 0($7), $6
 	i32.const	$push6=, -1
 	i32.add 	$8=, $8, $pop6
 	i32.const	$push5=, 4

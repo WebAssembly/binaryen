@@ -57,10 +57,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$discard=, a($pop1), $pop0
+	i32.store	$drop=, a($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push2=, 64
-	i32.store	$discard=, i($pop4), $pop2
+	i32.store	$drop=, i($pop4), $pop2
 	call    	g@FUNCTION
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3

@@ -11,7 +11,7 @@ alloca32:
 	i32.const	$1=, __stack_pointer
 	i32.store	$3=, 0($1), $3
 	i32.const	$push0=, 0
-	i32.store	$discard=, 12($3), $pop0
+	i32.store	$drop=, 12($3), $pop0
 	i32.const	$2=, 16
 	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
@@ -32,9 +32,9 @@ alloca3264:
 	i32.const	$1=, __stack_pointer
 	i32.store	$3=, 0($1), $3
 	i32.const	$push0=, 0
-	i32.store	$discard=, 12($3), $pop0
+	i32.store	$drop=, 12($3), $pop0
 	i64.const	$push1=, 0
-	i64.store	$discard=, 0($3), $pop1
+	i64.store	$drop=, 0($3), $pop1
 	i32.const	$2=, 16
 	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
@@ -60,7 +60,7 @@ allocarray:
 	i32.add 	$push3=, $3, $pop2
 	i32.const	$push0=, 1
 	i32.store	$push1=, 12($4), $pop0
-	i32.store	$discard=, 0($pop3), $pop1
+	i32.store	$drop=, 0($pop3), $pop1
 	i32.const	$2=, 32
 	i32.add 	$4=, $4, $2
 	i32.const	$2=, __stack_pointer
@@ -87,7 +87,7 @@ non_mem_use:
 	call    	ext_func@FUNCTION, $6
 	i32.const	$5=, 16
 	i32.add 	$5=, $6, $5
-	i32.store	$discard=, 0($0), $5
+	i32.store	$drop=, 0($0), $5
 	i32.const	$3=, 48
 	i32.add 	$6=, $6, $3
 	i32.const	$3=, __stack_pointer
@@ -109,7 +109,7 @@ allocarray_inbounds:
 	i32.store	$3=, 0($1), $3
 	i32.const	$push0=, 1
 	i32.store	$push1=, 12($3), $pop0
-	i32.store	$discard=, 24($3), $pop1
+	i32.store	$drop=, 24($3), $pop1
 	i32.const	$2=, 32
 	i32.add 	$3=, $3, $2
 	i32.const	$2=, __stack_pointer
@@ -136,7 +136,7 @@ dynamic_alloca:
 	i32.sub 	$0=, $3, $pop5
 	copy_local	$3=, $0
 	i32.const	$push6=, 0
-	i32.store	$discard=, 0($0), $pop6
+	i32.store	$drop=, 0($0), $pop6
 	i32.const	$2=, __stack_pointer
 	i32.store	$3=, 0($2), $4
 	return
@@ -165,7 +165,7 @@ dynamic_static_alloca:
 	i32.sub 	$0=, $4, $pop5
 	copy_local	$4=, $0
 	i32.const	$push6=, 0
-	i32.store	$discard=, 0($0), $pop6
+	i32.store	$drop=, 0($0), $pop6
 	i32.const	$3=, 16
 	i32.add 	$4=, $5, $3
 	i32.const	$3=, __stack_pointer
