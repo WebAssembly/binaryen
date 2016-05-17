@@ -58,16 +58,17 @@ def fetch_waterfall():
     local_rev = None
   if local_rev == rev: return
   # fetch it
-  print '(downloading waterfall ' + rev + ')'
   basename = 'wasm-binaries-' + rev + '.tbz2'
-  downloaded = urllib2.urlopen('https://storage.googleapis.com/wasm-llvm/builds/git/' + basename).read().strip()
+  url = 'https://storage.googleapis.com/wasm-llvm/builds/git/' + basename
+  print '(downloading waterfall %s: %s)' % (rev, url)
+  downloaded = urllib2.urlopen(url).read().strip()
   fullname = os.path.join('test', basename)
   open(fullname, 'wb').write(downloaded)
   print '(unpacking)'
   if os.path.exists(WATERFALL_BUILD_DIR):
     shutil.rmtree(WATERFALL_BUILD_DIR)
   os.mkdir(WATERFALL_BUILD_DIR)
-  subprocess.check_call(['tar', '-xvf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD_DIR)
+  subprocess.check_call(['tar', '-xf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD_DIR)
   print '(noting local revision)'
   open(os.path.join('test', 'local-revision'), 'w').write(rev)
 
