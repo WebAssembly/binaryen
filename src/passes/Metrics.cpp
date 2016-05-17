@@ -44,8 +44,16 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       keys.push_back(i.first);
       total += i.second;
     }
+    // add total
     keys.push_back("[total]");
     counts["[total]"] = total;
+    // add vars
+    size_t vars = 0;
+    for (auto& func : module->functions) {
+      vars += func->getNumVars();
+    }
+    keys.push_back("[vars]");
+    counts["[vars]"] = vars;
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
       return strcmp(b, a) > 0;
     });

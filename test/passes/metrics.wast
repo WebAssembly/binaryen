@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
-  (func $ifs
+  (func $ifs (param $x i32)
+    (local $y f32)
     (block
       (if
         (i32.const 0)
