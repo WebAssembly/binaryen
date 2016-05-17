@@ -154,6 +154,14 @@ struct Walker : public VisitorType {
   // function either (which could be very inefficient).
   bool isFunctionParallel() { return false; }
 
+  // This method is used to create instances per function for a function-parallel
+  // pass. You may need to override this if you subclass a Walker, as otherwise
+  // this will create the parent class.
+  // Note that this returns nullptr, and we check if the result is nullptr and
+  // do  new SubType  later. This is important since non-function parallel
+  // passes may not be constructable via  new SubType.
+  virtual SubType* create() { return nullptr; }
+
   // Useful methods for visitor implementions
 
   // Replace the current node. You can call this in your visit*() methods.
@@ -191,13 +199,14 @@ struct Walker : public VisitorType {
       self->visitExport(curr.get());
     }
 
-    auto processFunction = [](Module* module, SubType* instance, Function* func) {
+    auto processFunction = [this](Module* module, SubType* instance, Function* func) {
       std::unique_ptr<SubType> allocated;
       if (!instance) {
-        instance = new SubType;
-        allocated = std::unique_ptr<SubType>(instance);
+        instance = create();
+        if (!instance) instance = new SubType;
         assert(module);
         instance->setModule(module);
+        allocated = std::unique_ptr<SubType>(instance);
       }
       instance->setFunction(func);
       instance->walk(func->body);
