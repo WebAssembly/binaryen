@@ -29,15 +29,6 @@
 
 using namespace wasm;
 
-
-namespace {
-  template<typename T>
-  T implicit_cast(T value) {
-    return value;
-  }
-}
-
-
 // Literal utilities
 
 static_assert(sizeof(BinaryenLiteral) == sizeof(Literal), "Binaryen C API literal must match wasm.h");
@@ -188,7 +179,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
     ret->list.push_back((Expression*)children[i]);
   }
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef condition, BinaryenExpressionRef ifTrue, BinaryenExpressionRef ifFalse) {
   auto* ret = ((Module*)module)->allocator.alloc<If>();
@@ -196,14 +187,14 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef
   ret->ifTrue = (Expression*)ifTrue;
   ret->ifFalse = (Expression*)ifFalse;
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* out, const char* in, BinaryenExpressionRef body) {
   if (out && !in) abort();
-  return implicit_cast<Expression*>(Builder(*((Module*)module)).makeLoop(out ? Name(out) : Name(), in ? Name(in) : Name(), (Expression*)body));
+  return static_cast<Expression*>(Builder(*((Module*)module)).makeLoop(out ? Name(out) : Name(), in ? Name(in) : Name(), (Expression*)body));
 }
 BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef condition, BinaryenExpressionRef value) {
-  return implicit_cast<Expression*>(Builder(*((Module*)module)).makeBreak(name, (Expression*)value, (Expression*)condition));
+  return static_cast<Expression*>(Builder(*((Module*)module)).makeBreak(name, (Expression*)value, (Expression*)condition));
 }
 BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<Switch>();
@@ -214,7 +205,7 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
   ret->condition = (Expression*)condition;
   ret->value = (Expression*)value;
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
   auto* ret = ((Module*)module)->allocator.alloc<Call>();
@@ -224,7 +215,7 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target,
   }
   ret->type = WasmType(returnType);
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
   auto* ret = ((Module*)module)->allocator.alloc<CallImport>();
@@ -234,7 +225,7 @@ BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *t
   }
   ret->type = WasmType(returnType);
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenFunctionTypeRef type) {
   auto* ret = ((Module*)module)->allocator.alloc<CallIndirect>();
@@ -244,21 +235,21 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
   }
   ret->fullType = (FunctionType*)type;
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<GetLocal>();
   ret->index = index;
   ret->type = WasmType(type);
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<SetLocal>();
   ret->index = index;
   ret->value = (Expression*)value;
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr) {
   auto* ret = ((Module*)module)->allocator.alloc<Load>();
@@ -269,7 +260,7 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int
   ret->type = WasmType(type);
   ret->ptr = (Expression*)ptr;
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, uint32_t align, BinaryenExpressionRef ptr, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<Store>();
@@ -279,16 +270,16 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
   ret->ptr = (Expression*)ptr;
   ret->value = (Expression*)value;
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, BinaryenLiteral value) {
-  return implicit_cast<Expression*>(Builder(*((Module*)module)).makeConst(fromBinaryenLiteral(value)));
+  return static_cast<Expression*>(Builder(*((Module*)module)).makeConst(fromBinaryenLiteral(value)));
 }
 BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef value) {
-  return implicit_cast<Expression*>(Builder(*((Module*)module)).makeUnary(UnaryOp(op), (Expression*)value));
+  return static_cast<Expression*>(Builder(*((Module*)module)).makeUnary(UnaryOp(op), (Expression*)value));
 }
 BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef left, BinaryenExpressionRef right) {
-  return implicit_cast<Expression*>(Builder(*((Module*)module)).makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right));
+  return static_cast<Expression*>(Builder(*((Module*)module)).makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right));
 }
 BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module, BinaryenExpressionRef condition, BinaryenExpressionRef ifTrue, BinaryenExpressionRef ifFalse) {
   auto* ret = ((Module*)module)->allocator.alloc<Select>();
@@ -296,10 +287,10 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module, BinaryenExpressio
   ret->ifTrue = (Expression*)ifTrue;
   ret->ifFalse = (Expression*)ifFalse;
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressionRef value) {
-  return implicit_cast<Expression*>(Builder(*((Module*)module)).makeReturn((Expression*)value));
+  return static_cast<Expression*>(Builder(*((Module*)module)).makeReturn((Expression*)value));
 }
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands) {
   auto* ret = ((Module*)module)->allocator.alloc<Host>();
@@ -309,13 +300,13 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, cons
     ret->operands.push_back((Expression*)operands[i]);
   }
   ret->finalize();
-  return implicit_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
-  return implicit_cast<Expression*>(((Module*)module)->allocator.alloc<Nop>());
+  return static_cast<Expression*>(((Module*)module)->allocator.alloc<Nop>());
 }
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
-  return implicit_cast<Expression*>(((Module*)module)->allocator.alloc<Unreachable>());
+  return static_cast<Expression*>(((Module*)module)->allocator.alloc<Unreachable>());
 }
 
 // Functions
