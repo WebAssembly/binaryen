@@ -514,9 +514,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
         first = false;
       } else {
         // leave params alone, shuffle the rest
-        std::random_shuffle(ret->begin() + parent->getFunction()->getNumParams(), ret->end(), [this](int i) {
-          return noise() % i;
-        });
+        std::shuffle(ret->begin() + parent->getFunction()->getNumParams(), ret->end(), noise);
       }
       calculateFitness(ret);
 #ifdef CFG_LEARN_DEBUG
