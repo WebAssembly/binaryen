@@ -1133,11 +1133,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           return ret;
         }
         auto ret = allocator.alloc<Unary>();
-        ret->op = Neg;
         ret->value = process(ast[2]);
         if (asmType == ASM_DOUBLE) {
+          ret->op = NegFloat64;
           ret->type = WasmType::f64;
         } else if (asmType == ASM_FLOAT) {
+          ret->op = NegFloat32;
           ret->type = WasmType::f32;
         } else {
           abort();
@@ -1188,7 +1189,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       } else if (ast[1] == L_NOT) {
         auto ret = allocator.alloc<Unary>();
-        ret->op = EqZ;
+        ret->op = EqZInt32;
         ret->value = process(ast[2]);
         ret->type = i32;
         return ret;
@@ -1215,7 +1216,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (name == Math_clz32 || name == llvm_cttz_i32) {
           assert(ast[2]->size() == 1);
           auto ret = allocator.alloc<Unary>();
-          ret->op = name == Math_clz32 ? Clz : Ctz;
+          ret->op = name == Math_clz32 ? ClzInt32 : CtzInt32;
           ret->value = process(ast[2][0]);
           ret->type = WasmType::i32;
           return ret;
@@ -1283,7 +1284,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             return block;
           } else if (value->type == f32 || value->type == f64) {
             auto ret = allocator.alloc<Unary>();
-            ret->op = Abs;
+            ret->op = value->type == f32 ? AbsFloat32 : AbsFloat64;
             ret->value = value;
             ret->type = value->type;
             return ret;
@@ -1294,15 +1295,18 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
           // overloaded on type: f32 or f64
           Expression* value = process(ast[2][0]);
-          if (value->type == f32 || value->type == f64) {
-            auto ret = allocator.alloc<Unary>();
-            ret->op = name == Math_floor ? Floor : name == Math_ceil ? Ceil : Sqrt;
-            ret->value = value;
+          auto ret = allocator.alloc<Unary>();
+          ret->value = value;
+          if (value->type == f32) {
+            ret->op = name == Math_floor ? FloorFloat32 : name == Math_ceil ? CeilFloat32 : SqrtFloat32;
             ret->type = value->type;
-            return ret;
+          } else if (value->type == f64) {
+            ret->op = name == Math_floor ? FloorFloat64 : name == Math_ceil ? CeilFloat64 : SqrtFloat64;
+            ret->type = value->type;
           } else {
             abort();
           }
+          return ret;
         }
         Expression* ret;
         ExpressionList* operands;
@@ -1404,7 +1408,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Break *breakOut = allocator.alloc<Break>();
         breakOut->name = out;
         If *condition = allocator.alloc<If>();
-        condition->condition = builder.makeUnary(EqZ, process(ast[1]));
+        condition->condition = builder.makeUnary(EqZInt32, process(ast[1]));
         condition->ifTrue = breakOut;
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
@@ -1501,7 +1505,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Break *breakOut = allocator.alloc<Break>();
       breakOut->name = out;
       If *condition = allocator.alloc<If>();
-      condition->condition = builder.makeUnary(EqZ, process(fcond));
+      condition->condition = builder.makeUnary(EqZInt32, process(fcond));
       condition->ifTrue = breakOut;
       auto body = allocator.alloc<Block>();
       body->list.push_back(condition);

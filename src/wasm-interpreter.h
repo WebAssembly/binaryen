@@ -402,10 +402,10 @@ private:
         NOTE_EVAL1(value);
         if (value.type == i32) {
           switch (curr->op) {
-            case Clz:            return value.countLeadingZeroes();
-            case Ctz:            return value.countTrailingZeroes();
-            case Popcnt:         return value.popCount();
-            case EqZ:            return Literal(int32_t(value == Literal(int32_t(0))));
+            case ClzInt32:            return value.countLeadingZeroes();
+            case CtzInt32:            return value.countTrailingZeroes();
+            case PopcntInt32:         return value.popCount();
+            case EqZInt32:            return Literal(int32_t(value == Literal(int32_t(0))));
             case ReinterpretInt32: return value.castToF32();
             case ExtendSInt32:   return value.extendToSI64();
             case ExtendUInt32:   return value.extendToUI64();
@@ -418,10 +418,10 @@ private:
         }
         if (value.type == i64) {
           switch (curr->op) {
-            case Clz:            return value.countLeadingZeroes();
-            case Ctz:            return value.countTrailingZeroes();
-            case Popcnt:         return value.popCount();
-            case EqZ:            return Literal(int32_t(value == Literal(int64_t(0))));
+            case ClzInt64:            return value.countLeadingZeroes();
+            case CtzInt64:            return value.countTrailingZeroes();
+            case PopcntInt64:         return value.popCount();
+            case EqZInt64:            return Literal(int32_t(value == Literal(int64_t(0))));
             case WrapInt64:      return value.truncateToI32();
             case ReinterpretInt64: return value.castToF64();
             case ConvertUInt64ToFloat32: return value.convertUToF32();
@@ -433,13 +433,13 @@ private:
         }
         if (value.type == f32) {
           switch (curr->op) {
-            case Neg:              return value.neg();
-            case Abs:              return value.abs();
-            case Ceil:             return value.ceil();
-            case Floor:            return value.floor();
-            case Trunc:            return value.trunc();
-            case Nearest:          return value.nearbyint();
-            case Sqrt:             return value.sqrt();
+            case NegFloat32:              return value.neg();
+            case AbsFloat32:              return value.abs();
+            case CeilFloat32:             return value.ceil();
+            case FloorFloat32:            return value.floor();
+            case TruncFloat32:            return value.trunc();
+            case NearestFloat32:          return value.nearbyint();
+            case SqrtFloat32:             return value.sqrt();
             case TruncSFloat32ToInt32:
             case TruncSFloat32ToInt64: return truncSFloat(curr, value);
             case TruncUFloat32ToInt32:
@@ -451,13 +451,13 @@ private:
         }
         if (value.type == f64) {
           switch (curr->op) {
-            case Neg:              return value.neg();
-            case Abs:              return value.abs();
-            case Ceil:             return value.ceil();
-            case Floor:            return value.floor();
-            case Trunc:            return value.trunc();
-            case Nearest:          return value.nearbyint();
-            case Sqrt:             return value.sqrt();
+            case NegFloat64:              return value.neg();
+            case AbsFloat64:              return value.abs();
+            case CeilFloat64:             return value.ceil();
+            case FloorFloat64:            return value.floor();
+            case TruncFloat64:            return value.trunc();
+            case NearestFloat64:          return value.nearbyint();
+            case SqrtFloat64:             return value.sqrt();
             case TruncSFloat64ToInt32:
             case TruncSFloat64ToInt64: return truncSFloat(curr, value);
             case TruncUFloat64ToInt32:

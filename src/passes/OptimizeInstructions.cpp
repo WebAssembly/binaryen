@@ -32,14 +32,14 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
     // flip branches to get rid of an i32.eqz
     if (curr->ifFalse) {
       auto condition = curr->condition->dynCast<Unary>();
-      if (condition && condition->op == EqZ && condition->value->type == i32) {
+      if (condition && condition->op == EqZInt32 && condition->value->type == i32) {
         curr->condition = condition->value;
         std::swap(curr->ifTrue, curr->ifFalse);
       }
     }
   }
   void visitUnary(Unary* curr) {
-    if (curr->op == EqZ) {
+    if (curr->op == EqZInt32) {
       // fold comparisons that flow into an EqZ
       auto* child = curr->value->dynCast<Binary>();
       if (child && (child->type == i32 || child->type == i64)) {

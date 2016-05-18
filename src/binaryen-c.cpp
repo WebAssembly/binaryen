@@ -98,17 +98,28 @@ BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x) { return toBinaryenLiteral
 
 // Expressions
 
-BinaryenOp BinaryenClz(void) { return Clz; }
-BinaryenOp BinaryenCtz(void) { return Ctz; }
-BinaryenOp BinaryenPopcnt(void) { return Popcnt; }
-BinaryenOp BinaryenNeg(void) { return Neg; }
-BinaryenOp BinaryenAbs(void) { return Abs; }
-BinaryenOp BinaryenCeil(void) { return Ceil; }
-BinaryenOp BinaryenFloor(void) { return Floor; }
-BinaryenOp BinaryenTrunc(void) { return Trunc; }
-BinaryenOp BinaryenNearest(void) { return Nearest; }
-BinaryenOp BinaryenSqrt(void) { return Sqrt; }
-BinaryenOp BinaryenEqZ(void) { return EqZ; }
+BinaryenOp BinaryenClzInt32(void) { return ClzInt32; }
+BinaryenOp BinaryenCtzInt32(void) { return CtzInt32; }
+BinaryenOp BinaryenPopcntInt32(void) { return PopcntInt32; }
+BinaryenOp BinaryenNegFloat32(void) { return NegFloat32; }
+BinaryenOp BinaryenAbsFloat32(void) { return AbsFloat32; }
+BinaryenOp BinaryenCeilFloat32(void) { return CeilFloat32; }
+BinaryenOp BinaryenFloorFloat32(void) { return FloorFloat32; }
+BinaryenOp BinaryenTruncFloat32(void) { return TruncFloat32; }
+BinaryenOp BinaryenNearestFloat32(void) { return NearestFloat32; }
+BinaryenOp BinaryenSqrtFloat32(void) { return SqrtFloat32; }
+BinaryenOp BinaryenEqZInt32(void) { return EqZInt32; }
+BinaryenOp BinaryenClzInt64(void) { return ClzInt64; }
+BinaryenOp BinaryenCtzInt64(void) { return CtzInt64; }
+BinaryenOp BinaryenPopcntInt64(void) { return PopcntInt64; }
+BinaryenOp BinaryenNegFloat64(void) { return NegFloat64; }
+BinaryenOp BinaryenAbsFloat64(void) { return AbsFloat64; }
+BinaryenOp BinaryenCeilFloat64(void) { return CeilFloat64; }
+BinaryenOp BinaryenFloorFloat64(void) { return FloorFloat64; }
+BinaryenOp BinaryenTruncFloat64(void) { return TruncFloat64; }
+BinaryenOp BinaryenNearestFloat64(void) { return NearestFloat64; }
+BinaryenOp BinaryenSqrtFloat64(void) { return SqrtFloat64; }
+BinaryenOp BinaryenEqZInt64(void) { return EqZInt64; }
 BinaryenOp BinaryenExtendSInt32(void) { return ExtendSInt32; }
 BinaryenOp BinaryenExtentUInt32(void) { return ExtendUInt32; }
 BinaryenOp BinaryenWrapInt64(void) { return WrapInt64; }

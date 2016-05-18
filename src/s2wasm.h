@@ -745,7 +745,7 @@ class S2WasmBuilder {
         case 'a': {
           if (match("add")) makeBinary(BinaryOp::Add, type);
           else if (match("and")) makeBinary(BinaryOp::And, type);
-          else if (match("abs")) makeUnary(UnaryOp::Abs, type);
+          else if (match("abs")) makeUnary(type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
           else abort_on("type.a");
           break;
         }
@@ -768,10 +768,10 @@ class S2WasmBuilder {
           else if (match("convert_u/i32")) makeUnary(type == f32 ? UnaryOp::ConvertUInt32ToFloat32 : UnaryOp::ConvertUInt32ToFloat64, type);
           else if (match("convert_s/i64")) makeUnary(type == f32 ? UnaryOp::ConvertSInt64ToFloat32 : UnaryOp::ConvertSInt64ToFloat64, type);
           else if (match("convert_u/i64")) makeUnary(type == f32 ? UnaryOp::ConvertUInt64ToFloat32 : UnaryOp::ConvertUInt64ToFloat64, type);
-          else if (match("clz")) makeUnary(UnaryOp::Clz, type);
-          else if (match("ctz")) makeUnary(UnaryOp::Ctz, type);
+          else if (match("clz")) makeUnary(type == i32 ? UnaryOp::ClzInt32 : UnaryOp::ClzInt64, type);
+          else if (match("ctz")) makeUnary(type == i32 ? UnaryOp::CtzInt32 : UnaryOp::CtzInt64, type);
           else if (match("copysign")) makeBinary(BinaryOp::CopySign, type);
-          else if (match("ceil")) makeUnary(UnaryOp::Ceil, type);
+          else if (match("ceil")) makeUnary(type == f32 ? UnaryOp::CeilFloat32 : UnaryOp::CeilFloat64, type);
           else abort_on("type.c");
           break;
         }
@@ -784,7 +784,7 @@ class S2WasmBuilder {
           break;
         }
         case 'e': {
-          if (match("eqz")) makeUnary(UnaryOp::EqZ, i32);
+          if (match("eqz")) makeUnary(type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
           else if (match("eq")) makeBinary(BinaryOp::Eq, i32);
           else if (match("extend_s/i32")) makeUnary(UnaryOp::ExtendSInt32, type);
           else if (match("extend_u/i32")) makeUnary(UnaryOp::ExtendUInt32, type);
@@ -792,7 +792,7 @@ class S2WasmBuilder {
           break;
         }
         case 'f': {
-          if (match("floor")) makeUnary(UnaryOp::Floor, type);
+          if (match("floor")) makeUnary(type == f32 ? UnaryOp::FloorFloat32 : UnaryOp::FloorFloat64, type);
           else abort_on("type.e");
           break;
         }
@@ -825,8 +825,8 @@ class S2WasmBuilder {
           break;
         }
         case 'n': {
-          if (match("neg")) makeUnary(UnaryOp::Neg, type);
-          else if (match("nearest")) makeUnary(UnaryOp::Nearest, type);
+          if (match("neg")) makeUnary(type == f32 ? UnaryOp::NegFloat32 : UnaryOp::NegFloat64, type);
+          else if (match("nearest")) makeUnary(type == f32 ? UnaryOp::NearestFloat32 : UnaryOp::NearestFloat64, type);
           else if (match("ne")) makeBinary(BinaryOp::Ne, i32);
           else abort_on("type.n");
           break;
@@ -838,7 +838,7 @@ class S2WasmBuilder {
         }
         case 'p': {
           if (match("promote/f32")) makeUnary(UnaryOp::PromoteFloat32, type);
-          else if (match("popcnt")) makeUnary(UnaryOp::Popcnt, type);
+          else if (match("popcnt")) makeUnary(type == i32 ? UnaryOp::PopcntInt32 : UnaryOp::PopcntInt64, type);
           else abort_on("type.p");
           break;
         }
@@ -861,7 +861,7 @@ class S2WasmBuilder {
           else if (match("sub")) makeBinary(BinaryOp::Sub, type);
           else if (match("store")) makeStore(type);
           else if (match("select")) makeSelect(type);
-          else if (match("sqrt")) makeUnary(UnaryOp::Sqrt, type);
+          else if (match("sqrt")) makeUnary(type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
           else abort_on("type.s");
           break;
         }
@@ -870,7 +870,7 @@ class S2WasmBuilder {
           else if (match("trunc_u/f32")) makeUnary(type == i32 ? UnaryOp::TruncUFloat32ToInt32 : UnaryOp::TruncUFloat32ToInt64, type);
           else if (match("trunc_s/f64")) makeUnary(type == i32 ? UnaryOp::TruncSFloat64ToInt32 : UnaryOp::TruncSFloat64ToInt64, type);
           else if (match("trunc_u/f64")) makeUnary(type == i32 ? UnaryOp::TruncUFloat64ToInt32 : UnaryOp::TruncUFloat64ToInt64, type);
-          else if (match("trunc")) makeUnary(UnaryOp::Trunc, type);
+          else if (match("trunc")) makeUnary(type == f32 ? UnaryOp::TruncFloat32 : UnaryOp::TruncFloat64, type);
           else abort_on("type.t");
           break;
         }

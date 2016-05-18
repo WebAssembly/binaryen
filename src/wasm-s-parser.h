@@ -529,14 +529,14 @@ public:
       strncpy(op, dot + 1, maxNameSize);
       switch (op[0]) {
         case 'a': {
-          if (op[1] == 'b') return makeUnary(s, UnaryOp::Abs, type);
+          if (op[1] == 'b') return makeUnary(s, type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
           if (op[1] == 'd') return makeBinary(s, BinaryOp::Add, type);
           if (op[1] == 'n') return makeBinary(s, BinaryOp::And, type);
           abort_on(op);
         }
         case 'c': {
-          if (op[1] == 'e') return makeUnary(s, UnaryOp::Ceil, type);
-          if (op[1] == 'l') return makeUnary(s, UnaryOp::Clz, type);
+          if (op[1] == 'e') return makeUnary(s, type == f32 ? UnaryOp::CeilFloat32 : UnaryOp::CeilFloat64, type);
+          if (op[1] == 'l') return makeUnary(s, type == i32 ? UnaryOp::ClzInt32 : UnaryOp::ClzInt64, type);
           if (op[1] == 'o') {
             if (op[2] == 'p') return makeBinary(s, BinaryOp::CopySign, type);
             if (op[2] == 'n') {
@@ -547,7 +547,7 @@ public:
               if (op[3] == 's') return makeConst(s, type);
             }
           }
-          if (op[1] == 't') return makeUnary(s, UnaryOp::Ctz, type);
+          if (op[1] == 't') return makeUnary(s, type == i32 ? UnaryOp::CtzInt32 : UnaryOp::CtzInt64, type);
           abort_on(op);
         }
         case 'd': {
@@ -561,13 +561,13 @@ public:
         case 'e': {
           if (op[1] == 'q') {
             if (op[2] == 0) return makeBinary(s, BinaryOp::Eq, type);
-            if (op[2] == 'z') return makeUnary(s, UnaryOp::EqZ, type);
+            if (op[2] == 'z') return makeUnary(s, type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
           }
           if (op[1] == 'x') return makeUnary(s, op[7] == 'u' ? UnaryOp::ExtendUInt32 : UnaryOp::ExtendSInt32, type);
           abort_on(op);
         }
         case 'f': {
-          if (op[1] == 'l') return makeUnary(s, UnaryOp::Floor, type);
+          if (op[1] == 'l') return makeUnary(s, type == f32 ? UnaryOp::FloorFloat32 : UnaryOp::FloorFloat64, type);
           abort_on(op);
         }
         case 'g': {
@@ -602,8 +602,8 @@ public:
         case 'n': {
           if (op[1] == 'e') {
             if (op[2] == 0) return makeBinary(s, BinaryOp::Ne, type);
-            if (op[2] == 'a') return makeUnary(s, UnaryOp::Nearest, type);
-            if (op[2] == 'g') return makeUnary(s, UnaryOp::Neg, type);
+            if (op[2] == 'a') return makeUnary(s, type == f32 ? UnaryOp::NearestFloat32 : UnaryOp::NearestFloat64, type);
+            if (op[2] == 'g') return makeUnary(s, type == f32 ? UnaryOp::NegFloat32 : UnaryOp::NegFloat64, type);
           }
           abort_on(op);
         }
@@ -613,7 +613,7 @@ public:
         }
         case 'p': {
           if (op[1] == 'r') return makeUnary(s,  UnaryOp::PromoteFloat32, type);
-          if (op[1] == 'o') return makeUnary(s, UnaryOp::Popcnt, type);
+          if (op[1] == 'o') return makeUnary(s, type == i32 ? UnaryOp::PopcntInt32 : UnaryOp::PopcntInt64, type);
           abort_on(op);
         }
         case 'r': {
@@ -632,7 +632,7 @@ public:
             return makeBinary(s, op[4] == 'u' ? BinaryOp::ShrU : BinaryOp::ShrS, type);
           }
           if (op[1] == 'u') return makeBinary(s, BinaryOp::Sub, type);
-          if (op[1] == 'q') return makeUnary(s, UnaryOp::Sqrt, type);
+          if (op[1] == 'q') return makeUnary(s, type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
           if (op[1] == 't') return makeStore(s, type);
           abort_on(op);
         }
@@ -640,7 +640,7 @@ public:
           if (op[1] == 'r') {
             if (op[6] == 's') return makeUnary(s, op[9] == '3' ? (type == i32 ? UnaryOp::TruncSFloat32ToInt32 : UnaryOp::TruncSFloat32ToInt64) : (type == i32 ? UnaryOp::TruncSFloat64ToInt32 : UnaryOp::TruncSFloat64ToInt64), type);
             if (op[6] == 'u') return makeUnary(s, op[9] == '3' ? (type == i32 ? UnaryOp::TruncUFloat32ToInt32 : UnaryOp::TruncUFloat32ToInt64) : (type == i32 ? UnaryOp::TruncUFloat64ToInt32 : UnaryOp::TruncUFloat64ToInt64), type);
-            if (op[2] == 'u') return makeUnary(s, UnaryOp::Trunc, type);
+            if (op[2] == 'u') return makeUnary(s, type == f32 ? UnaryOp::TruncFloat32 : UnaryOp::TruncFloat64, type);
           }
           abort_on(op);
         }
@@ -743,17 +743,28 @@ private:
     // type is the reported type, e.g. i64.ctz reports i64 (but has a return type of i32, in this case)
     // verify the reported type is correct
     switch (op) {
-      case EqZ:
-      case Neg:
-      case Abs:
-      case Ceil:
-      case Floor:
-      case Trunc:
-      case Nearest:
-      case Sqrt:
-      case Clz:
-      case Ctz:
-      case Popcnt: {
+      case EqZInt32:
+      case NegFloat32:
+      case AbsFloat32:
+      case CeilFloat32:
+      case FloorFloat32:
+      case TruncFloat32:
+      case NearestFloat32:
+      case SqrtFloat32:
+      case ClzInt32:
+      case CtzInt32:
+      case PopcntInt32:
+      case EqZInt64:
+      case NegFloat64:
+      case AbsFloat64:
+      case CeilFloat64:
+      case FloorFloat64:
+      case TruncFloat64:
+      case NearestFloat64:
+      case SqrtFloat64:
+      case ClzInt64:
+      case CtzInt64:
+      case PopcntInt64: {
         if (ret->value->type != unreachable && type != ret->value->type) throw ParseException(std::string("bad type for ") + getExpressionName(ret) + ": " + printWasmType(type) + " vs value type " + printWasmType(ret->value->type), s.line, s.col);
         break;
       }

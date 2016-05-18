@@ -283,44 +283,55 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitUnary(Unary *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->isRelational() ? curr->value->type : curr->type) << '.';
+    prepareColor(o);
     switch (curr->op) {
-      case Clz:              o << "clz";     break;
-      case Ctz:              o << "ctz";     break;
-      case Popcnt:           o << "popcnt";  break;
-      case EqZ:              o << "eqz";     break;
-      case Neg:              o << "neg";     break;
-      case Abs:              o << "abs";     break;
-      case Ceil:             o << "ceil";    break;
-      case Floor:            o << "floor";   break;
-      case Trunc:            o << "trunc";   break;
-      case Nearest:          o << "nearest"; break;
-      case Sqrt:             o << "sqrt";    break;
-      case ExtendSInt32:     o << "extend_s/i32"; break;
-      case ExtendUInt32:     o << "extend_u/i32"; break;
-      case WrapInt64:        o << "wrap/i64"; break;
-      case TruncSFloat32ToInt32:
-      case TruncSFloat32ToInt64: o << "trunc_s/f32"; break;
-      case TruncUFloat32ToInt32:
-      case TruncUFloat32ToInt64: o << "trunc_u/f32"; break;
-      case TruncSFloat64ToInt32:
-      case TruncSFloat64ToInt64: o << "trunc_s/f64"; break;
-      case TruncUFloat64ToInt32:
-      case TruncUFloat64ToInt64: o << "trunc_u/f64"; break;
-      case ReinterpretFloat32: o << "reinterpret/f32"; break;
-      case ReinterpretFloat64: o << "reinterpret/f64"; break;
-      case ConvertUInt32ToFloat32:
-      case ConvertUInt32ToFloat64: o << "convert_u/i32"; break;
-      case ConvertSInt32ToFloat32:
-      case ConvertSInt32ToFloat64: o << "convert_s/i32"; break;
-      case ConvertUInt64ToFloat32:
-      case ConvertUInt64ToFloat64: o << "convert_u/i64"; break;
-      case ConvertSInt64ToFloat32:
-      case ConvertSInt64ToFloat64: o << "convert_s/i64"; break;
-      case PromoteFloat32:   o << "promote/f32"; break;
-      case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt32: o << "reinterpret/i32"; break;
-      case ReinterpretInt64: o << "reinterpret/i64"; break;
+      case ClzInt32:               o << "i32.clz";     break;
+      case CtzInt32:               o << "i32.ctz";     break;
+      case PopcntInt32:            o << "i32.popcnt";  break;
+      case EqZInt32:               o << "i32.eqz";     break;
+      case ClzInt64:               o << "i64.clz";     break;
+      case CtzInt64:               o << "i64.ctz";     break;
+      case PopcntInt64:            o << "i64.popcnt";  break;
+      case EqZInt64:               o << "i64.eqz";     break;
+      case NegFloat32:             o << "f32.neg";     break;
+      case AbsFloat32:             o << "f32.abs";     break;
+      case CeilFloat32:            o << "f32.ceil";    break;
+      case FloorFloat32:           o << "f32.floor";   break;
+      case TruncFloat32:           o << "f32.trunc";   break;
+      case NearestFloat32:         o << "f32.nearest"; break;
+      case SqrtFloat32:            o << "f32.sqrt";    break;
+      case NegFloat64:             o << "f64.neg";     break;
+      case AbsFloat64:             o << "f64.abs";     break;
+      case CeilFloat64:            o << "f64.ceil";    break;
+      case FloorFloat64:           o << "f64.floor";   break;
+      case TruncFloat64:           o << "f64.trunc";   break;
+      case NearestFloat64:         o << "f64.nearest"; break;
+      case SqrtFloat64:            o << "f64.sqrt";    break;
+      case ExtendSInt32:           o << "i64.extend_s/i32"; break;
+      case ExtendUInt32:           o << "i64.extend_u/i32"; break;
+      case WrapInt64:              o << "i32.wrap/i64"; break;
+      case TruncSFloat32ToInt32:   o << "i32.trunc_s/f32"; break;
+      case TruncSFloat32ToInt64:   o << "i64.trunc_s/f32"; break;
+      case TruncUFloat32ToInt32:   o << "i32.trunc_u/f32"; break;
+      case TruncUFloat32ToInt64:   o << "i64.trunc_u/f32"; break;
+      case TruncSFloat64ToInt32:   o << "i32.trunc_s/f64"; break;
+      case TruncSFloat64ToInt64:   o << "i64.trunc_s/f64"; break;
+      case TruncUFloat64ToInt32:   o << "i32.trunc_u/f64"; break;
+      case TruncUFloat64ToInt64:   o << "i64.trunc_u/f64"; break;
+      case ReinterpretFloat32:     o << "i32.reinterpret/f32"; break;
+      case ReinterpretFloat64:     o << "i64.reinterpret/f64"; break;
+      case ConvertUInt32ToFloat32: o << "f32.convert_u/i32"; break;
+      case ConvertUInt32ToFloat64: o << "f64.convert_u/i32"; break;
+      case ConvertSInt32ToFloat32: o << "f32.convert_s/i32"; break;
+      case ConvertSInt32ToFloat64: o << "f64.convert_s/i32"; break;
+      case ConvertUInt64ToFloat32: o << "f32.convert_u/i64"; break;
+      case ConvertUInt64ToFloat64: o << "f64.convert_u/i64"; break;
+      case ConvertSInt64ToFloat32: o << "f32.convert_s/i64"; break;
+      case ConvertSInt64ToFloat64: o << "f64.convert_s/i64"; break;
+      case PromoteFloat32:         o << "f64.promote/f32"; break;
+      case DemoteFloat64:          o << "f32.demote/f64"; break;
+      case ReinterpretInt32:       o << "f32.reinterpret/i32"; break;
+      case ReinterpretInt64:       o << "f64.reinterpret/i64"; break;
       default: abort();
     }
     incIndent();

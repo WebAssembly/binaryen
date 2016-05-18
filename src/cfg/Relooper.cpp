@@ -199,7 +199,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
         }
       }
     } else {
-      auto* Now = Builder.makeUnary(wasm::EqZ, Details->Condition);
+      auto* Now = Builder.makeUnary(wasm::EqZInt32, Details->Condition);
       if (RemainingConditions) {
         RemainingConditions = Builder.makeBinary(wasm::And, RemainingConditions, Now);
       } else {

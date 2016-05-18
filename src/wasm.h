@@ -775,10 +775,10 @@ private:
 // Operators
 
 enum UnaryOp {
-  Clz, Ctz, Popcnt, // int
-  Neg, Abs, Ceil, Floor, Trunc, Nearest, Sqrt, // float
+  ClzInt32, ClzInt64, CtzInt32, CtzInt64, PopcntInt32, PopcntInt64, // int
+  NegFloat32, NegFloat64, AbsFloat32, AbsFloat64, CeilFloat32, CeilFloat64, FloorFloat32, FloorFloat64, TruncFloat32, TruncFloat64, NearestFloat32, NearestFloat64, SqrtFloat32, SqrtFloat64, // float
   // relational
-  EqZ,
+  EqZInt32, EqZInt64,
   // conversions
   ExtendSInt32, ExtendUInt32, // extend i32 to i64
   WrapInt64, // i64 to i32
@@ -1116,21 +1116,32 @@ public:
   UnaryOp op;
   Expression *value;
 
-  bool isRelational() { return op == EqZ; }
+  bool isRelational() { return op == EqZInt32 || op == EqZInt64; }
 
   void finalize() {
     switch (op) {
-      case Clz:
-      case Ctz:
-      case Popcnt:
-      case Neg:
-      case Abs:
-      case Ceil:
-      case Floor:
-      case Trunc:
-      case Nearest:
-      case Sqrt: type = value->type; break;
-      case EqZ: type = i32; break;
+      case ClzInt32:
+      case CtzInt32:
+      case PopcntInt32:
+      case NegFloat32:
+      case AbsFloat32:
+      case CeilFloat32:
+      case FloorFloat32:
+      case TruncFloat32:
+      case NearestFloat32:
+      case SqrtFloat32:
+      case ClzInt64:
+      case CtzInt64:
+      case PopcntInt64:
+      case NegFloat64:
+      case AbsFloat64:
+      case CeilFloat64:
+      case FloorFloat64:
+      case TruncFloat64:
+      case NearestFloat64:
+      case SqrtFloat64: type = value->type; break;
+      case EqZInt32:
+      case EqZInt64: type = i32; break;
       case ExtendSInt32: case ExtendUInt32: type = i64; break;
       case WrapInt64: type = i32; break;
       case PromoteFloat32: type = f64; break;
@@ -1155,7 +1166,7 @@ public:
       case ConvertUInt32ToFloat64:
       case ConvertSInt64ToFloat64:
       case ConvertUInt64ToFloat64: type = f64; break;
-      default: WASM_UNREACHABLE();
+      default: std::cerr << "waka " << op << '\n'; WASM_UNREACHABLE();
     }
   }
 };
