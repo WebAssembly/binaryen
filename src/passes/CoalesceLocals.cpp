@@ -469,8 +469,8 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
   }
 
   struct Order : public std::vector<Index> {
-    void setFitness(Index f) { fitness = f; }
-    Index getFitness() { return fitness; }
+    void setFitness(double f) { fitness = f; }
+    double getFitness() { return fitness; }
     void dump(std::string text) {
       std::cout << text + ": ( ";
       for (Index i = 0; i < size(); i++) std::cout << (*this)[i] << " ";
@@ -478,11 +478,27 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
       std::cout << "of quality: " << getFitness() << "\n";
     }
   private:
-    Index fitness;
+    double fitness;
   };
 
   struct Generator {
     Generator(CoalesceLocalsWithLearning* parent) : parent(parent), noise(42) {}
+
+    void calculateFitness(Order* order) {
+      // apply the order
+      std::vector<Index> indices; // the phenotype
+      parent->pickIndicesFromOrder(*order, indices);
+      auto maxIndex = *std::max_element(indices.begin(), indices.end());
+      assert(maxIndex <= parent->numLocals);
+      // main part of fitness is the number of locals
+      double fitness = parent->numLocals - maxIndex; // higher fitness is better
+      // secondarily, it is nice to not reorder locals unnecessarily
+      double fragment = 1.0 / (2.0 * parent->numLocals);
+      for (Index i = 0; i < parent->numLocals; i++) {
+        if ((*order)[i] == i) fitness += fragment; // boost for each that wasn't moved
+      }
+      order->setFitness(fitness);
+    }
 
     Order* makeRandom() {
       auto* ret = new Order;
@@ -502,17 +518,39 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
           return noise() % i;
         });
       }
-      // apply the order
-      std::vector<Index> indices; // the phenotype
-      parent->pickIndicesFromOrder(*ret, indices);
-      auto maxIndex = *std::max_element(indices.begin(), indices.end());
-      assert(maxIndex <= parent->numLocals);
-      auto fitness = parent->numLocals - maxIndex; // higher fitness is better
-      ret->setFitness(fitness);
+      calculateFitness(ret);
 #ifdef CFG_LEARN_DEBUG
-      ret->dump("new one");
+      order->dump("new rando");
 #endif
-      // all done
+      return ret;
+    }
+
+    Order* makeMixture(Order* left, Order* right) {
+      // perturb left using right. this is useful since
+      // we don't care about absolute locations, relative ones matter more,
+      // and a true merge of two vectors could obscure that (e.g.
+      // a.......... and ..........a would merge a into the middle, for no
+      // reason), and cause a lot of unnecessary noise
+      Index size = left->size();
+      Order reverseRight; // reverseRight[x] is the index of x in right
+      reverseRight.resize(size);
+      for (Index i = 0; i < size; i++) {
+        reverseRight[(*right)[i]] = i;
+      }
+      auto* ret = new Order;
+      *ret = *left;
+      assert(size >= 1);
+      for (Index i = parent->getFunction()->getNumParams(); i < size - 1; i++) {
+        // if (i, i + 1) is in reverse order in right, flip them
+        if (reverseRight[(*ret)[i]] > reverseRight[(*ret)[i + 1]]) {
+          std::swap((*ret)[i], (*ret)[i + 1]);
+          i++; // if we don't skip, we might end up pushing an element all the way to the end, which is not very perturbation-y
+        }
+      }
+      calculateFitness(ret);
+#ifdef CFG_LEARN_DEBUG
+      ret->dump("new mixture");
+#endif
       return ret;
     }
 
@@ -522,14 +560,31 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
     bool first = true;
   };
 
-  Generator generator(this);
-  GeneticLearner<Order, Index, Generator> learner(generator, 10);
-  // TODO: run some generations
-  auto* best = learner.getBest();
 #ifdef CFG_LEARN_DEBUG
-  best->dump("new one");
+  std::cout << "[learning for " << getFunction()->name << "]\n";
 #endif
-  pickIndicesFromOrder(*best, indices); // TODO: cache indices in Orders, at the cost of more memory?
+  auto numVars = getFunction()->getNumVars();
+  const int GENERATION_SIZE = std::min(Index(numVars * (numVars - 1)), Index(20));
+  Generator generator(this);
+  GeneticLearner<Order, double, Generator> learner(generator, GENERATION_SIZE);
+#ifdef CFG_LEARN_DEBUG
+  learner.getBest()->dump("first best");
+#endif
+  // keep working while we see improvement
+  auto oldBest = learner.getBest()->getFitness();
+  while (1) {
+    learner.runGeneration();
+    auto newBest = learner.getBest()->getFitness();
+    if (newBest == oldBest) break; // unlikely we can improve
+    oldBest = newBest;
+#ifdef CFG_LEARN_DEBUG
+    learner.getBest()->dump("current best");
+#endif
+  }
+#ifdef CFG_LEARN_DEBUG
+  learner.getBest()->dump("the best");
+#endif
+  pickIndicesFromOrder(*learner.getBest(), indices); // TODO: cache indices in Orders, at the cost of more memory?
 }
 
 // declare passes

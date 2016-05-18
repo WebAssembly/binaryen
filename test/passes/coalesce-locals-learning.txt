@@ -440,71 +440,71 @@
         (if
           (i32.const 2)
           (block $block3
-            (set_local $1
+            (set_local $0
               (i32.const 100)
             )
-            (set_local $0
+            (set_local $1
               (i32.const 101)
             )
-            (get_local $1)
             (get_local $0)
+            (get_local $1)
           )
           (block $block5
-            (set_local $1
+            (set_local $0
               (i32.const 102)
             )
-            (set_local $0
+            (set_local $1
               (i32.const 103)
             )
-            (get_local $1)
             (get_local $0)
+            (get_local $1)
           )
         )
         (if
           (i32.const 3)
           (block $block8
-            (set_local $1
+            (set_local $0
               (i32.const 104)
             )
-            (set_local $0
+            (set_local $1
               (i32.const 105)
             )
-            (get_local $1)
             (get_local $0)
+            (get_local $1)
           )
           (block $block10
-            (set_local $1
+            (set_local $0
               (i32.const 106)
             )
-            (set_local $0
+            (set_local $1
               (i32.const 107)
             )
-            (get_local $1)
             (get_local $0)
+            (get_local $1)
           )
         )
       )
       (if
         (i32.const 4)
         (block $block13
-          (set_local $1
+          (set_local $0
             (i32.const 108)
           )
-          (set_local $0
+          (set_local $1
             (i32.const 109)
           )
-          (get_local $1)
           (get_local $0)
+          (get_local $1)
         )
         (block $block15
-          (set_local $1
+          (set_local $0
             (i32.const 110)
           )
-          (set_local $0
+          (set_local $1
             (i32.const 111)
           )
-          (get_local $1)
           (get_local $0)
+          (get_local $1)
         )
       )
     )

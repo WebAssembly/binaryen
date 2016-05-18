@@ -59,8 +59,7 @@ class GeneticLearner {
   std::mt19937 noise;
 
   size_t randomIndex() {
-    // simple random index that favorizes low indexes TODO tweak
-    return std::min(noise() % population.size(), noise() % population.size());
+    return noise() % population.size();
   }
 
 public:
