@@ -116,6 +116,7 @@ struct LEB {
   }
 };
 
+#define SIZE32LEB(v) U32LEB((uint32_t)(v))
 typedef LEB<uint32_t, uint8_t> U32LEB;
 typedef LEB<uint64_t, uint8_t> U64LEB;
 typedef LEB<int32_t, int8_t> S32LEB;
@@ -500,7 +501,7 @@ public:
   }
 
   int32_t writeU32LEBPlaceholder() {
-    int32_t ret = o.size();
+    int32_t ret = (int32_t)o.size();
     o << int32_t(0);
     o << int8_t(0);
     return ret;
@@ -513,8 +514,8 @@ public:
   }
 
   void finishSection(int32_t start) {
-    int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
-    o.writeAt(start, U32LEB(size));
+    size_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
+    o.writeAt(start, SIZE32LEB(size));
   }
 
   void writeStart() {
@@ -539,11 +540,11 @@ public:
     if (wasm->functionTypes.size() == 0) return;
     if (debug) std::cerr << "== writeSignatures" << std::endl;
     auto start = startSection(BinaryConsts::Section::Signatures);
-    o << U32LEB(wasm->functionTypes.size());
+    o << SIZE32LEB(wasm->functionTypes.size());
     for (auto& type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
       o << int8_t(BinaryConsts::TypeForms::Basic);
-      o << U32LEB(type->params.size());
+      o << SIZE32LEB(type->params.size());
       for (auto param : type->params) {
         o << binaryWasmType(param);
       }
@@ -560,7 +561,7 @@ public:
   int32_t getFunctionTypeIndex(Name type) {
     // TODO: optimize
     for (size_t i = 0; i < wasm->functionTypes.size(); i++) {
-      if (wasm->functionTypes[i]->name == type) return i;
+      if (wasm->functionTypes[i]->name == type) return (int32_t)i;
     }
     abort();
   }
@@ -569,7 +570,7 @@ public:
     if (wasm->imports.size() == 0) return;
     if (debug) std::cerr << "== writeImports" << std::endl;
     auto start = startSection(BinaryConsts::Section::ImportTable);
-    o << U32LEB(wasm->imports.size());
+    o << SIZE32LEB(wasm->imports.size());
     for (auto& import : wasm->imports) {
       if (debug) std::cerr << "write one" << std::endl;
       o << U32LEB(getFunctionTypeIndex(import->type->name));
@@ -579,20 +580,20 @@ public:
     finishSection(start);
   }
 
-  std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<WasmType, size_t> numLocalsByType; // type => number of locals of that type in the compact form
+  std::map<Index, Index> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
+  std::map<WasmType, Index> numLocalsByType; // type => number of locals of that type in the compact form
 
   void mapLocals(Function* function) {
     for (Index i = 0; i < function->getNumParams(); i++) {
       size_t curr = mappedLocals.size();
-      mappedLocals[i] = curr;
+      mappedLocals[i] = toIndex(curr, function->getNumParams());
     }
     for (auto type : function->vars) {
       numLocalsByType[type]++;
     }
-    std::map<WasmType, size_t> currLocalsByType;
+    std::map<WasmType, Index> currLocalsByType;
     for (Index i = function->getVarIndexBase(); i < function->getNumLocals(); i++) {
-      size_t index = function->getVarIndexBase();
+      Index index = function->getVarIndexBase();
       WasmType type = function->getLocalType(i);
       currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
       if (type == i32) {
@@ -622,7 +623,7 @@ public:
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
     auto start = startSection(BinaryConsts::Section::FunctionSignatures);
-    o << U32LEB(wasm->functions.size());
+    o << SIZE32LEB(wasm->functions.size());
     for (auto& curr : wasm->functions) {
       if (debug) std::cerr << "write one" << std::endl;
       o << U32LEB(getFunctionTypeIndex(curr->type));
@@ -635,7 +636,7 @@ public:
     if (debug) std::cerr << "== writeFunctions" << std::endl;
     auto start = startSection(BinaryConsts::Section::Functions);
     size_t total = wasm->functions.size();
-    o << U32LEB(total);
+    o << SIZE32LEB(total);
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       size_t sizePos = writeU32LEBPlaceholder();
@@ -651,17 +652,17 @@ public:
         (numLocalsByType[f32] ? 1 : 0) +
         (numLocalsByType[f64] ? 1 : 0)
       );
-      if (numLocalsByType[i32]) o << U32LEB(numLocalsByType[i32]) << binaryWasmType(i32);
-      if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
-      if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
-      if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
+      if (numLocalsByType[i32]) o << SIZE32LEB(numLocalsByType[i32]) << binaryWasmType(i32);
+      if (numLocalsByType[i64]) o << SIZE32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
+      if (numLocalsByType[f32]) o << SIZE32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
+      if (numLocalsByType[f64]) o << SIZE32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
       depth = 0;
       recurse(function->body);
       assert(depth == 0);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
       if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
-      o.writeAt(sizePos, U32LEB(size));
+      o.writeAt(sizePos, SIZE32LEB(size));
     }
     finishSection(start);
   }
@@ -670,7 +671,7 @@ public:
     if (wasm->exports.size() == 0) return;
     if (debug) std::cerr << "== writeexports" << std::endl;
     auto start = startSection(BinaryConsts::Section::ExportTable);
-    o << U32LEB(wasm->exports.size());
+    o << SIZE32LEB(wasm->exports.size());
     for (auto& curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
       o << U32LEB(getFunctionIndex(curr->value));
@@ -695,26 +696,26 @@ public:
     finishSection(start);
   }
 
-  std::map<Name, uint32_t> mappedImports; // name of the Import => index
-  uint32_t getImportIndex(Name name) {
+  std::map<Name, Index> mappedImports; // name of the Import => index
+  Index getImportIndex(Name name) {
     if (!mappedImports.size()) {
       // Create name => index mapping. 
       for (size_t i = 0; i < wasm->imports.size(); i++) {
         assert(mappedImports.count(wasm->imports[i]->name) == 0);
-        mappedImports[wasm->imports[i]->name] = i;
+        mappedImports[wasm->imports[i]->name] = toIndex(i, wasm->imports.size());
       }    
     }
     assert(mappedImports.count(name));
     return mappedImports[name];
   }
   
-  std::map<Name, uint32_t> mappedFunctions; // name of the Function => index 
-  uint32_t getFunctionIndex(Name name) {
+  std::map<Name, Index> mappedFunctions; // name of the Function => index 
+  Index getFunctionIndex(Name name) {
     if (!mappedFunctions.size()) {
       // Create name => index mapping. 
       for (size_t i = 0; i < wasm->functions.size(); i++) {
         assert(mappedFunctions.count(wasm->functions[i]->name) == 0);
-        mappedFunctions[wasm->functions[i]->name] = i;
+        mappedFunctions[wasm->functions[i]->name] = toIndex(i, wasm->functions.size());
       }    
     }
     assert(mappedFunctions.count(name));
@@ -725,7 +726,7 @@ public:
     if (wasm->table.names.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionTable" << std::endl;
     auto start = startSection(BinaryConsts::Section::FunctionTable);
-    o << U32LEB(wasm->table.names.size());
+    o << SIZE32LEB(wasm->table.names.size());
     for (auto name : wasm->table.names) {
       o << U32LEB(getFunctionIndex(name));
     }
@@ -736,7 +737,7 @@ public:
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeNames" << std::endl;
     auto start = startSection(BinaryConsts::Section::Names);
-    o << U32LEB(wasm->functions.size());
+    o << SIZE32LEB(wasm->functions.size());
     for (auto& curr : wasm->functions) {
       writeInlineString(curr->name.str);
       o << U32LEB(0); // TODO: locals
@@ -748,14 +749,14 @@ public:
 
   void writeInlineString(const char* name) {
     size_t size = strlen(name);
-    o << U32LEB(size);
+    o << SIZE32LEB(size);
     for (size_t i = 0; i < size; i++) {
       o << int8_t(name[i]);
     }
   }
 
   void writeInlineBuffer(const char* data, size_t size) {
-    o << U32LEB(size);
+    o << SIZE32LEB(size);
     for (size_t i = 0; i < size; i++) {
       o << int8_t(data[i]);
     }
@@ -857,10 +858,10 @@ public:
     o << int8_t(BinaryConsts::End);
   }
 
-  int32_t getBreakIndex(Name name) { // -1 if not found
-    for (int i = breakStack.size() - 1; i >= 0; i--) {
+  Index getBreakIndex(Name name) {
+    for (size_t i = breakStack.size(); i-- > 0;) { // need to double check indexing rewrite -- BSalita
       if (breakStack[i] == name) {
-        return breakStack.size() - 1 - i;
+        return toIndex(breakStack.size() - 1 - i, breakStack.size());
       }
     }
     std::cerr << "bad break: " << name << std::endl;
@@ -882,7 +883,7 @@ public:
       recurse(curr->value);
     }
     recurse(curr->condition);
-    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->value ? 1 : 0) << U32LEB(curr->targets.size());
+    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->value ? 1 : 0) << SIZE32LEB(curr->targets.size());
     for (auto target : curr->targets) {
       o << uint32_t(getBreakIndex(target));
     }
@@ -893,14 +894,14 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallFunction) << U32LEB(curr->operands.size()) << U32LEB(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallFunction) << SIZE32LEB(curr->operands.size()) << U32LEB(getFunctionIndex(curr->target));
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallImport) << U32LEB(curr->operands.size()) << U32LEB(getImportIndex(curr->target));
+    o << int8_t(BinaryConsts::CallImport) << SIZE32LEB(curr->operands.size()) << U32LEB(getImportIndex(curr->target));
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
@@ -908,7 +909,7 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType->name));
+    o << int8_t(BinaryConsts::CallIndirect) << SIZE32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType->name));
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
@@ -921,7 +922,7 @@ public:
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
-    o << U32LEB(Log2(alignment ? alignment : bytes));
+    o << U32LEB(Log2(alignment ? (uint32_t)alignment : (uint32_t)bytes));
     o << U32LEB(offset);
   }
 
@@ -1180,7 +1181,8 @@ public:
     // read sections until the end
     while (more()) {
       auto nameSize = getU32LEB();
-      uint32_t sectionSize, before;
+	  uint32_t sectionSize;
+	  size_t before;
       auto match = [&](const char* name) {
         for (size_t i = 0; i < nameSize; i++) {
           if (pos + i >= input.size()) return false;
@@ -1445,7 +1447,7 @@ public:
   // We read functions before we know their names, so we need to backpatch the names later
 
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
-  std::map<size_t, std::vector<Call*>> functionCalls; // at index i we have all calls to i
+  std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to i
   Function* currFunction = nullptr;
   size_t endOfFunction;
 
@@ -1504,7 +1506,7 @@ public:
     }
   }
 
-  std::map<Export*, size_t> exportIndexes;
+  std::map<Export*, Index> exportIndexes;
 
   void readExports() {
     if (debug) std::cerr << "== readExports" << std::endl;
@@ -1562,7 +1564,7 @@ public:
     }
 
     for (auto& iter : functionCalls) {
-      size_t index = iter.first;
+      Index index = iter.first;
       auto& calls = iter.second;
       for (auto* call : calls) {
         call->target = wasm.functions[index]->name;
