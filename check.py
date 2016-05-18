@@ -170,7 +170,7 @@ def split_wast(wast):
   ret = []
   def to_end(j):
     depth = 1
-    while depth > 0:
+    while depth > 0 and j < len(wast):
       if wast[j] == '"':
         j = wast.find('"', j + 1)
       elif wast[j] == '(':

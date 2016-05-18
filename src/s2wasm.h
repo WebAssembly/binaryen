@@ -635,7 +635,7 @@ class S2WasmBuilder {
       auto curr = allocator->alloc<Unary>();
       curr->op = op;
       curr->value = getInput();
-      curr->type = type;
+      curr->finalize();
       setOutput(curr, assign);
     };
     auto makeHost = [&](HostOp op) {

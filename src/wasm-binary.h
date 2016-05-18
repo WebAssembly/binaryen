@@ -1015,7 +1015,7 @@ public:
       case Ctz:              o << int8_t(curr->type == i32 ? BinaryConsts::I32Ctz        : BinaryConsts::I64Ctz); break;
       case Popcnt:           o << int8_t(curr->type == i32 ? BinaryConsts::I32Popcnt     : BinaryConsts::I64Popcnt); break;
       case EqZ:              o << int8_t(curr->type == i32 ? BinaryConsts::I32EqZ        : BinaryConsts::I64EqZ); break;
-      case Neg:              o << int8_t(curr->type == f32 ? BinaryConsts::F32Neg        : BinaryConsts::F64Neg); break;
+      case Neg:              o << int8_t(curr->type == f64 ? BinaryConsts::F64Neg        : BinaryConsts::F32Neg); break; // TODO: wasm.h needs separate opcodes for all these
       case Abs:              o << int8_t(curr->type == f32 ? BinaryConsts::F32Abs        : BinaryConsts::F64Abs); break;
       case Ceil:             o << int8_t(curr->type == f32 ? BinaryConsts::F32Ceil       : BinaryConsts::F64Ceil); break;
       case Floor:            o << int8_t(curr->type == f32 ? BinaryConsts::F32Floor      : BinaryConsts::F64Floor); break;

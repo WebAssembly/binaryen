@@ -1118,7 +1118,46 @@ public:
 
   bool isRelational() { return op == EqZ; }
 
-  // no finalize since some opcodes have more than one type, so user must set it anyhow
+  void finalize() {
+    switch (op) {
+      case Clz:
+      case Ctz:
+      case Popcnt:
+      case Neg:
+      case Abs:
+      case Ceil:
+      case Floor:
+      case Trunc:
+      case Nearest:
+      case Sqrt: type = value->type; break;
+      case EqZ: type = i32; break;
+      case ExtendSInt32: case ExtendUInt32: type = i64; break;
+      case WrapInt64: type = i32; break;
+      case PromoteFloat32: type = f64; break;
+      case DemoteFloat64: type = f32; break;
+      case TruncSFloat32ToInt32:
+      case TruncUFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncUFloat64ToInt32:
+      case ReinterpretFloat32: type = i32; break;
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case ReinterpretFloat64: type = i64; break;
+      case ReinterpretInt32:
+      case ConvertSInt32ToFloat32:
+      case ConvertUInt32ToFloat32:
+      case ConvertSInt64ToFloat32:
+      case ConvertUInt64ToFloat32: type = f32; break;
+      case ReinterpretInt64:
+      case ConvertSInt32ToFloat64:
+      case ConvertUInt32ToFloat64:
+      case ConvertSInt64ToFloat64:
+      case ConvertUInt64ToFloat64: type = f64; break;
+      default: WASM_UNREACHABLE();
+    }
+  }
 };
 
 class Binary : public SpecificExpression<Expression::BinaryId> {

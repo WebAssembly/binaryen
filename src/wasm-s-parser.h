@@ -60,14 +60,14 @@ class Element {
   IString str_;
   bool dollared_;
 
-  size_t line, col;
-
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
   bool dollared() { return dollared_; }
+
+  size_t line, col;
 
   // list methods
 
@@ -300,11 +300,9 @@ private:
     if (id == TYPE) return parseType(s);
     if (id != FUNC) return;
     size_t i = 1;
-    Name name;
-    if (s[i]->isStr()) {
-      name = s[i]->str();
-      i++;
-    } else {
+    Name name, exportName;
+    i = parseFunctionNames(s, name, exportName);
+    if (!name.is()) {
       // unnamed, use an index
       name = Name::fromInt(functionCounter);
     }
@@ -371,21 +369,26 @@ private:
     wasm.addStart(getFunctionName(*s[1]));
   }
 
-  void parseFunction(Element& s) {
+  // returns the next index in s
+  size_t parseFunctionNames(Element& s, Name& name, Name& exportName) {
     size_t i = 1;
-    Name name, exportName;
-    if (s[i]->isStr()) {
+    while (i < s.size() && s[i]->isStr()) {
       if (!s[i]->dollared()) {
         // an export name
         exportName = s[i]->str();
         i++;
-      }
-      if (s[i]->isStr()) {
-        assert(s[i]->dollared());
+      } else {
         name = s[i]->str();
         i++;
       }
     }
+    return i;
+  }
+
+  void parseFunction(Element& s) {
+    size_t i = 1;
+    Name name, exportName;
+    i = parseFunctionNames(s, name, exportName);
     if (!name.is()) {
       // unnamed, use an index
       name = Name::fromInt(functionCounter);
@@ -558,7 +561,7 @@ public:
         case 'e': {
           if (op[1] == 'q') {
             if (op[2] == 0) return makeBinary(s, BinaryOp::Eq, type);
-            if (op[2] == 'z') return makeUnary(s, UnaryOp::EqZ, i32);
+            if (op[2] == 'z') return makeUnary(s, UnaryOp::EqZ, type);
           }
           if (op[1] == 'x') return makeUnary(s, op[7] == 'u' ? UnaryOp::ExtendUInt32 : UnaryOp::ExtendSInt32, type);
           abort_on(op);
@@ -736,7 +739,50 @@ private:
     auto ret = allocator.alloc<Unary>();
     ret->op = op;
     ret->value = parseExpression(s[1]);
-    ret->type = type;
+    ret->finalize();
+    // type is the reported type, e.g. i64.ctz reports i64 (but has a return type of i32, in this case)
+    // verify the reported type is correct
+    switch (op) {
+      case EqZ:
+      case Neg:
+      case Abs:
+      case Ceil:
+      case Floor:
+      case Trunc:
+      case Nearest:
+      case Sqrt:
+      case Clz:
+      case Ctz:
+      case Popcnt: {
+        if (ret->value->type != unreachable && type != ret->value->type) throw ParseException(std::string("bad type for ") + getExpressionName(ret) + ": " + printWasmType(type) + " vs value type " + printWasmType(ret->value->type), s.line, s.col);
+        break;
+      }
+      case ExtendSInt32: case ExtendUInt32:
+      case WrapInt64:
+      case PromoteFloat32:
+      case DemoteFloat64:
+      case TruncSFloat32ToInt32:
+      case TruncUFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncUFloat64ToInt32:
+      case ReinterpretFloat32:
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case ReinterpretFloat64:
+      case ReinterpretInt32:
+      case ConvertSInt32ToFloat32:
+      case ConvertUInt32ToFloat32:
+      case ConvertSInt64ToFloat32:
+      case ConvertUInt64ToFloat32:
+      case ReinterpretInt64:
+      case ConvertSInt32ToFloat64:
+      case ConvertUInt32ToFloat64:
+      case ConvertSInt64ToFloat64:
+      case ConvertUInt64ToFloat64: break;
+      default: WASM_UNREACHABLE();
+    }
     return ret;
   }
 
@@ -1150,6 +1196,7 @@ private:
     size_t i = 2;
     if (s[i]->isStr()) {
       wasm.memory.max = atoi(s[i]->c_str());
+      if (wasm.memory.max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
       i++;
     }
     while (i < s.size()) {

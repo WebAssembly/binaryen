@@ -73,7 +73,7 @@ void test_core() {
                         constF64Bits = BinaryenConst(module, BinaryenLiteralFloat64Bits(0xffff12345678abcdLL));
 
   const char* switchValueNames[] = { "the-value" };
-  const char* switchBodyNames[] = { "the-body" };
+  const char* switchBodyNames[] = { "the-nothing" };
 
   BinaryenExpressionRef callOperands2[] = { makeInt32(module, 13), makeFloat64(module, 3.7) };
   BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
@@ -81,7 +81,7 @@ void test_core() {
   BinaryenType params[4] = { BinaryenInt32(), BinaryenInt64(), BinaryenFloat32(), BinaryenFloat64() };
   BinaryenFunctionTypeRef iiIfF = BinaryenAddFunctionType(module, "iiIfF", BinaryenInt32(), params, 4);
 
-  BinaryenExpressionRef bodyList[] = {
+  BinaryenExpressionRef valueList[] = {
     // Unary
     makeUnary(module, BinaryenClz(), 1),
     makeUnary(module, BinaryenCtz(), 2),
@@ -160,16 +160,19 @@ void test_core() {
     BinaryenLoop(module, NULL, "in2", makeInt32(module, 0)),
     BinaryenLoop(module, NULL, NULL, makeInt32(module, 0)),
     BinaryenBreak(module, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
-    BinaryenBreak(module, "the-body", makeInt32(module, 2), NULL),
+    BinaryenBreak(module, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),
-    BinaryenBreak(module, "the-body", NULL, NULL),
+    BinaryenBreak(module, "the-nothing", NULL, NULL),
     BinaryenSwitch(module, switchValueNames, 1, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
-    BinaryenSwitch(module, switchBodyNames, 1, "the-body", makeInt32(module, 2), NULL),
+    BinaryenSwitch(module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
       BinaryenCall(module, "kitchen-sinker", callOperands4, 4, BinaryenInt32())
     ),
     BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
-      BinaryenCallImport(module, "an-imported", callOperands2, 2, BinaryenFloat32())
+      BinaryenUnary(module,
+        BinaryenTruncSFloat32ToInt32(),
+        BinaryenCallImport(module, "an-imported", callOperands2, 2, BinaryenFloat32())
+      )
     ),
     BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
       BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, iiIfF)
@@ -183,16 +186,17 @@ void test_core() {
     BinaryenStore(module, 4, 0, 0, makeInt32(module, 10), makeInt32(module, 11)),
     BinaryenStore(module, 8, 2, 4, makeInt32(module, 110), makeInt64(module, 111)),
     BinaryenSelect(module, makeInt32(module, 1), makeInt32(module, 3), makeInt32(module, 5)),
-    BinaryenReturn(module, NULL),
-    BinaryenReturn(module, makeFloat32(module, 1)),
+    BinaryenReturn(module, makeInt32(module, 1337)),
     // TODO: Host
     BinaryenNop(module),
     BinaryenUnreachable(module),
   };
 
-  // Make the main body of the function. one block with a return value, one without
-  BinaryenExpressionRef value = BinaryenBlock(module, "the-value", bodyList, sizeof(bodyList) / sizeof(BinaryenExpressionRef));
-  BinaryenExpressionRef body = BinaryenBlock(module, "the-body", &value, 1);
+  // Make the main body of the function. and one block with a return value, one without
+  BinaryenExpressionRef value = BinaryenBlock(module, "the-value", valueList, sizeof(valueList) / sizeof(BinaryenExpressionRef));
+  BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &value, 1);
+  BinaryenExpressionRef bodyList[] = { nothing, makeInt32(module, 42) };
+  BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, 2);
 
   // Create the function
   BinaryenType localTypes[] = { BinaryenInt32() };

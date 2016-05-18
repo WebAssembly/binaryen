@@ -22,11 +22,51 @@ namespace wasm {
 
 struct BlockTypeSeeker : public PostWalker<BlockTypeSeeker, Visitor<BlockTypeSeeker>> {
   Block* target; // look for this one
-  WasmType type = unreachable;
+  std::vector<WasmType> types;
 
   BlockTypeSeeker(Block* target) : target(target) {}
 
-  void noteType(WasmType other) {
+  void visitBreak(Break *curr) {
+    if (curr->name == target->name) {
+      types.push_back(curr->value ? curr->value->type : none);
+    }
+  }
+
+  void visitSwitch(Switch *curr) {
+    for (auto name : curr->targets) {
+      if (name == target->name) types.push_back(curr->value ? curr->value->type : none);
+    }
+  }
+
+  void visitBlock(Block *curr) {
+    if (curr == target) {
+      if (curr->list.size() > 0) {
+        types.push_back(curr->list.back()->type);
+      } else {
+        types.push_back(none);
+      }
+    } else if (curr->name == target->name) {
+      types.clear(); // ignore all breaks til now, they were captured by someone with the same name
+    }
+  }
+};
+
+void Block::finalize() {
+  if (!name.is()) {
+    // nothing branches here, so this is easy
+    if (list.size() > 0) {
+      type = list.back()->type;
+    } else {
+      type = unreachable;
+    }
+    return;
+  }
+
+  BlockTypeSeeker seeker(this);
+  Expression* temp = this;
+  seeker.walk(temp);
+  type = unreachable;
+  for (auto other : seeker.types) {
     // once none, stop. it then indicates a poison value, that must not be consumed
     // and ignore unreachable
     if (type != none) {
@@ -41,47 +81,6 @@ struct BlockTypeSeeker : public PostWalker<BlockTypeSeeker, Visitor<BlockTypeSee
       }
     }
   }
-
-  void visitBreak(Break *curr) {
-    if (curr->name == target->name) {
-      noteType(curr->value ? curr->value->type : none);
-    }
-  }
-
-  void visitSwitch(Switch *curr) {
-    for (auto name : curr->targets) {
-      if (name == target->name) noteType(curr->value ? curr->value->type : none);
-    }
-  }
-
-  void visitBlock(Block *curr) {
-    if (curr == target) {
-      if (curr->list.size() > 0) noteType(curr->list.back()->type);
-    } else {
-      type = unreachable; // ignore all breaks til now, they were captured by someone with the same name
-    }
-  }
-};
-
-void Block::finalize() {
-  if (list.size() > 0) {
-    auto last = list.back()->type;
-    if (last != unreachable) {
-      // well that was easy
-      type = last;
-      return;
-    }
-  }
-  if (!name.is()) {
-    // that was rather silly
-    type = unreachable;
-    return;
-  }
-  // oh no this is hard
-  BlockTypeSeeker seeker(this);
-  Expression* temp = this;
-  seeker.walk(temp);
-  type = seeker.type;
 }
 
 } // namespace wasm
