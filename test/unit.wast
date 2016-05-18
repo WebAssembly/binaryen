@@ -402,4 +402,10 @@
     )
     (i32.const 0)
   )
+  (func $loop-roundtrip (param $0 f64) (result f64)
+    (loop $loop-out0 $loop-in1
+      (get_local $0)
+      (get_local $0)
+    )
+  )
 )
