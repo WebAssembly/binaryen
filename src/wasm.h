@@ -91,8 +91,9 @@ struct Name : public cashew::IString {
 // An index in a wasm module
 typedef uint32_t Index;
 
-inline Index toIndex(size_t index) {
-  return (Index)index;
+inline Index toIndex(size_t index, size_t max) {
+	assert(index < max);
+    return (Index)index;
 }
 
 // An address in linear memory. For now only wasm32
@@ -1236,7 +1237,7 @@ public:
     return localIndices[name];
   }
   Index getVarIndexBase() {
-    return toIndex(params.size());
+    return (Index)params.size();
   }
   WasmType getLocalType(Index index) {
     if (isParam(index)) {
