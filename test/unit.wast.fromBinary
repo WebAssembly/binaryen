@@ -9,6 +9,7 @@
   (type $4 (func (result f64)))
   (type $5 (func (result i32)))
   (type $6 (func (param i32) (result i32)))
+  (type $7 (func (param f64) (result f64)))
   (import $import$0 "env" "_emscripten_asm_const_vi")
   (import $import$1 "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $import$2 "asm2wasm" "f64-rem" (param f64 f64) (result f64))
@@ -260,20 +261,16 @@
             )
             (block $label$15
               (loop $label$16 $label$17
-                (block $label$18
-                  (br $label$16)
-                  (br $label$17)
-                )
+                (br $label$16)
+                (br $label$17)
               )
               (br $label$9)
             )
           )
-          (block $label$19
-            (loop $label$20 $label$21
-              (block $label$22
-                (br $label$9)
-                (br $label$21)
-              )
+          (block $label$18
+            (loop $label$19 $label$20
+              (br $label$9)
+              (br $label$20)
             )
             (br $label$9)
           )
@@ -417,6 +414,12 @@
         (br $label$1)
       )
       (i32.const 0)
+    )
+  )
+  (func $loop-roundtrip (type $7) (param $var$0 f64) (result f64)
+    (loop $label$0 $label$1
+      (get_local $var$0)
+      (get_local $var$0)
     )
   )
 )

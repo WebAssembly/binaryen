@@ -848,11 +848,10 @@ public:
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
-    // TODO: optimize, as we usually have a block as our singleton child
     o << int8_t(BinaryConsts::Loop);
     breakStack.push_back(curr->out);
     breakStack.push_back(curr->in);
-    recurse(curr->body);
+    recursePossibleBlockContents(curr->body);
     breakStack.pop_back();
     breakStack.pop_back();
     o << int8_t(BinaryConsts::End);
