@@ -1209,8 +1209,9 @@ private:
     if (s.size() == 2) return;
     size_t i = 2;
     if (s[i]->isStr()) {
-      wasm.memory.max = atoi(s[i]->c_str());
-      if (wasm.memory.max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
+      uint64_t max = atoll(s[i]->c_str());
+      if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
+      wasm.memory.max = max;
       i++;
     }
     while (i < s.size()) {
