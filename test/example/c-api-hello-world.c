@@ -13,7 +13,7 @@ int main() {
   // Get the 0 and 1 arguments, and add them
   BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenInt32()),
                         y = BinaryenGetLocal(module, 1, BinaryenInt32());
-  BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAdd(), x, y);
+  BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
 
   // Create the add function
   // Note: no additional local variables

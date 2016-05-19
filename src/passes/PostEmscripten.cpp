@@ -47,7 +47,7 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<Pos
     if (curr->offset) return;
     Expression* ptr = curr->ptr;
     auto add = ptr->dynCast<Binary>();
-    if (!add || add->op != Add) return;
+    if (!add || add->op != AddInt32) return;
     assert(add->type == i32);
     auto c = add->right->dynCast<Const>();
     if (!c) {

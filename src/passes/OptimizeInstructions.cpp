@@ -44,16 +44,38 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       auto* child = curr->value->dynCast<Binary>();
       if (child && (child->type == i32 || child->type == i64)) {
         switch (child->op) {
-          case Eq:  child->op = Ne; break;
-          case Ne:  child->op = Eq; break;
-          case LtS: child->op = GeS; break;
-          case LtU: child->op = GeU; break;
-          case LeS: child->op = GtS; break;
-          case LeU: child->op = GtU; break;
-          case GtS: child->op = LeS; break;
-          case GtU: child->op = LeU; break;
-          case GeS: child->op = LtS; break;
-          case GeU: child->op = LtU; break;
+          case EqInt32:   child->op = NeInt32; break;
+          case NeInt32:   child->op = EqInt32; break;
+          case LtSInt32:  child->op = GeSInt32; break;
+          case LtUInt32:  child->op = GeUInt32; break;
+          case LeSInt32:  child->op = GtSInt32; break;
+          case LeUInt32:  child->op = GtUInt32; break;
+          case GtSInt32:  child->op = LeSInt32; break;
+          case GtUInt32:  child->op = LeUInt32; break;
+          case GeSInt32:  child->op = LtSInt32; break;
+          case GeUInt32:  child->op = LtUInt32; break;
+          case EqInt64:   child->op = NeInt64; break;
+          case NeInt64:   child->op = EqInt64; break;
+          case LtSInt64:  child->op = GeSInt64; break;
+          case LtUInt64:  child->op = GeUInt64; break;
+          case LeSInt64:  child->op = GtSInt64; break;
+          case LeUInt64:  child->op = GtUInt64; break;
+          case GtSInt64:  child->op = LeSInt64; break;
+          case GtUInt64:  child->op = LeUInt64; break;
+          case GeSInt64:  child->op = LtSInt64; break;
+          case GeUInt64:  child->op = LtUInt64; break;
+          case EqFloat32: child->op = NeFloat32; break;
+          case NeFloat32: child->op = EqFloat32; break;
+          case LtFloat32: child->op = GeFloat32; break;
+          case LeFloat32: child->op = GtFloat32; break;
+          case GtFloat32: child->op = LeFloat32; break;
+          case GeFloat32: child->op = LtFloat32; break;
+          case EqFloat64: child->op = NeFloat64; break;
+          case NeFloat64: child->op = EqFloat64; break;
+          case LtFloat64: child->op = GeFloat64; break;
+          case LeFloat64: child->op = GtFloat64; break;
+          case GtFloat64: child->op = LeFloat64; break;
+          case GeFloat64: child->op = LtFloat64; break;
           default: return;
         }
         replaceCurrent(child);

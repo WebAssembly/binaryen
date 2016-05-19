@@ -16,7 +16,7 @@ int main() {
   // if the end, halt
   BinaryenExpressionRef halter = BinaryenIf(module,
     BinaryenBinary(module,
-      BinaryenEq(),
+      BinaryenEqInt32(),
       BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(), BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4 * 27)) // jumps of 4 bytes
     ),
@@ -28,7 +28,7 @@ int main() {
     4, 0, 0,
     BinaryenConst(module, BinaryenLiteralInt32(4)),
     BinaryenBinary(module,
-      BinaryenAdd(),
+      BinaryenAddInt32(),
       BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(), BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4))
     )
@@ -37,7 +37,7 @@ int main() {
   // optionally, print the return value
   BinaryenExpressionRef args[] = {
     BinaryenBinary(module,
-      BinaryenSub(),
+      BinaryenSubInt32(),
       BinaryenConst(module, BinaryenLiteralInt32(0)),
       BinaryenLoad(module,
         4, 0, 4, 0, BinaryenInt32(),
@@ -155,9 +155,9 @@ int main() {
   }
 
   RelooperAddBranch(b0, b5, BinaryenBinary(module,
-    BinaryenEq(),
+    BinaryenEqInt32(),
     BinaryenBinary(module,
-      BinaryenRemU(),
+      BinaryenRemUInt32(),
       BinaryenGetLocal(module, 0, BinaryenInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(2))
     ),
@@ -171,9 +171,9 @@ int main() {
   RelooperAddBranch(b2, b5, NULL, NULL);
 
   RelooperAddBranch(b3, b5, BinaryenBinary(module,
-    BinaryenEq(),
+    BinaryenEqInt32(),
     BinaryenBinary(module,
-      BinaryenRemU(),
+      BinaryenRemUInt32(),
       BinaryenGetLocal(module, 0, BinaryenInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(2))
     ),
@@ -183,9 +183,9 @@ int main() {
   RelooperAddBranch(b3, b8, NULL, NULL);
 
   RelooperAddBranch(b4, b4, BinaryenBinary(module,
-    BinaryenEq(),
+    BinaryenEqInt32(),
     BinaryenBinary(module,
-      BinaryenRemU(),
+      BinaryenRemUInt32(),
       BinaryenGetLocal(module, 0, BinaryenInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(3))
     ),
@@ -193,9 +193,9 @@ int main() {
   ), NULL);
 
   RelooperAddBranch(b4, b5, BinaryenBinary(module,
-    BinaryenEq(),
+    BinaryenEqInt32(),
     BinaryenBinary(module,
-      BinaryenRemU(),
+      BinaryenRemUInt32(),
       BinaryenGetLocal(module, 0, BinaryenInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(3))
     ),
@@ -205,9 +205,9 @@ int main() {
   RelooperAddBranch(b4, b2, NULL, NULL);
 
   RelooperAddBranch(b5, b4, BinaryenBinary(module,
-    BinaryenEq(),
+    BinaryenEqInt32(),
     BinaryenBinary(module,
-      BinaryenRemU(),
+      BinaryenRemUInt32(),
       BinaryenGetLocal(module, 0, BinaryenInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(2))
     ),

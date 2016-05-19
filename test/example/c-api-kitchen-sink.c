@@ -91,7 +91,7 @@ void test_core() {
     makeUnary(module, BinaryenCeilFloat32(), 3),
     makeUnary(module, BinaryenFloorFloat64(), 4),
     makeUnary(module, BinaryenTruncFloat32(), 3),
-    makeUnary(module, BinaryenNearestFloat64(), 3),
+    makeUnary(module, BinaryenNearestFloat32(), 3),
     makeUnary(module, BinaryenSqrtFloat64(), 4),
     makeUnary(module, BinaryenEqZInt32(), 1),
     makeUnary(module, BinaryenExtendSInt32(), 1),
@@ -120,38 +120,38 @@ void test_core() {
     makeUnary(module, BinaryenReinterpretInt32(), 1),
     makeUnary(module, BinaryenReinterpretInt64(), 2),
     // Binary
-    makeBinary(module, BinaryenAdd(), 1),
-    makeBinary(module, BinaryenSub(), 4),
-    makeBinary(module, BinaryenDivS(), 1),
-    makeBinary(module, BinaryenDivU(), 2),
-    makeBinary(module, BinaryenRemS(), 2),
-    makeBinary(module, BinaryenRemU(), 1),
-    makeBinary(module, BinaryenAnd(), 1),
-    makeBinary(module, BinaryenOr(), 2),
-    makeBinary(module, BinaryenXor(), 1),
-    makeBinary(module, BinaryenShl(), 2),
-    makeBinary(module, BinaryenShrU(), 2),
-    makeBinary(module, BinaryenShrS(), 1),
-    makeBinary(module, BinaryenRotL(), 1),
-    makeBinary(module, BinaryenRotR(), 2),
-    makeBinary(module, BinaryenDiv(), 3),
-    makeBinary(module, BinaryenCopySign(), 4),
-    makeBinary(module, BinaryenMin(), 3),
-    makeBinary(module, BinaryenMax(), 4),
-    makeBinary(module, BinaryenEq(), 1),
-    makeBinary(module, BinaryenNe(), 3),
-    makeBinary(module, BinaryenLtS(), 1),
-    makeBinary(module, BinaryenLtU(), 2),
-    makeBinary(module, BinaryenLeS(), 2),
-    makeBinary(module, BinaryenLeU(), 1),
-    makeBinary(module, BinaryenGtS(), 2),
-    makeBinary(module, BinaryenGtU(), 1),
-    makeBinary(module, BinaryenGeS(), 1),
-    makeBinary(module, BinaryenGeU(), 2),
-    makeBinary(module, BinaryenLt(), 3),
-    makeBinary(module, BinaryenLe(), 4),
-    makeBinary(module, BinaryenGt(), 4),
-    makeBinary(module, BinaryenGe(), 3),
+    makeBinary(module, BinaryenAddInt32(), 1),
+    makeBinary(module, BinaryenSubFloat64(), 4),
+    makeBinary(module, BinaryenDivSInt32(), 1),
+    makeBinary(module, BinaryenDivUInt64(), 2),
+    makeBinary(module, BinaryenRemSInt64(), 2),
+    makeBinary(module, BinaryenRemUInt32(), 1),
+    makeBinary(module, BinaryenAndInt32(), 1),
+    makeBinary(module, BinaryenOrInt64(), 2),
+    makeBinary(module, BinaryenXorInt32(), 1),
+    makeBinary(module, BinaryenShlInt64(), 2),
+    makeBinary(module, BinaryenShrUInt64(), 2),
+    makeBinary(module, BinaryenShrSInt32(), 1),
+    makeBinary(module, BinaryenRotLInt32(), 1),
+    makeBinary(module, BinaryenRotRInt64(), 2),
+    makeBinary(module, BinaryenDivFloat32(), 3),
+    makeBinary(module, BinaryenCopySignFloat64(), 4),
+    makeBinary(module, BinaryenMinFloat32(), 3),
+    makeBinary(module, BinaryenMaxFloat64(), 4),
+    makeBinary(module, BinaryenEqInt32(), 1),
+    makeBinary(module, BinaryenNeFloat32(), 3),
+    makeBinary(module, BinaryenLtSInt32(), 1),
+    makeBinary(module, BinaryenLtUInt64(), 2),
+    makeBinary(module, BinaryenLeSInt64(), 2),
+    makeBinary(module, BinaryenLeUInt32(), 1),
+    makeBinary(module, BinaryenGtSInt64(), 2),
+    makeBinary(module, BinaryenGtUInt32(), 1),
+    makeBinary(module, BinaryenGeSInt32(), 1),
+    makeBinary(module, BinaryenGeUInt64(), 2),
+    makeBinary(module, BinaryenLtFloat32(), 3),
+    makeBinary(module, BinaryenLeFloat64(), 4),
+    makeBinary(module, BinaryenGtFloat64(), 4),
+    makeBinary(module, BinaryenGeFloat32(), 3),
     // All the rest
     BinaryenBlock(module, NULL, NULL, 0), // block with no name
     BinaryenIf(module, makeInt32(module, 1), makeInt32(module, 2), makeInt32(module, 3)),
@@ -165,16 +165,16 @@ void test_core() {
     BinaryenBreak(module, "the-nothing", NULL, NULL),
     BinaryenSwitch(module, switchValueNames, 1, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
     BinaryenSwitch(module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
-    BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
+    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenCall(module, "kitchen-sinker", callOperands4, 4, BinaryenInt32())
     ),
-    BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
+    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenUnary(module,
         BinaryenTruncSFloat32ToInt32(),
         BinaryenCallImport(module, "an-imported", callOperands2, 2, BinaryenFloat32())
       )
     ),
-    BinaryenUnary(module, BinaryenEqZ(), // check the output type of the call node
+    BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, iiIfF)
     ),
     BinaryenGetLocal(module, 0, BinaryenInt32()),
@@ -401,7 +401,7 @@ void test_binaries() {
     BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenInt32(), params, 2);
     BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenInt32()),
                           y = BinaryenGetLocal(module, 1, BinaryenInt32());
-    BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAdd(), x, y);
+    BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
     BinaryenFunctionRef adder = BinaryenAddFunction(module, "adder", iii, NULL, 0, add);
     size = BinaryenModuleWrite(module, buffer, 1024); // write out the module
     BinaryenModuleDispose(module);

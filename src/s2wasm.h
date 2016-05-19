@@ -740,11 +740,14 @@ class S2WasmBuilder {
         setOutput(curr, assign);
       }
     };
+    #define BINARY_INT_OR_FLOAT(op) (type == i32 ? BinaryOp::op##Int32 : (type == i64 ? BinaryOp::op##Int64 : (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)))
+    #define BINARY_INT(op) (type == i32 ? BinaryOp::op##Int32 : BinaryOp::op##Int64)
+    #define BINARY_FLOAT(op) (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)
     auto handleTyped = [&](WasmType type) {
       switch (*s) {
         case 'a': {
-          if (match("add")) makeBinary(BinaryOp::Add, type);
-          else if (match("and")) makeBinary(BinaryOp::And, type);
+          if (match("add")) makeBinary(BINARY_INT_OR_FLOAT(Add), type);
+          else if (match("and")) makeBinary(BINARY_INT(And), type);
           else if (match("abs")) makeUnary(type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
           else abort_on("type.a");
           break;
@@ -770,22 +773,22 @@ class S2WasmBuilder {
           else if (match("convert_u/i64")) makeUnary(type == f32 ? UnaryOp::ConvertUInt64ToFloat32 : UnaryOp::ConvertUInt64ToFloat64, type);
           else if (match("clz")) makeUnary(type == i32 ? UnaryOp::ClzInt32 : UnaryOp::ClzInt64, type);
           else if (match("ctz")) makeUnary(type == i32 ? UnaryOp::CtzInt32 : UnaryOp::CtzInt64, type);
-          else if (match("copysign")) makeBinary(BinaryOp::CopySign, type);
+          else if (match("copysign")) makeBinary(BINARY_FLOAT(CopySign), type);
           else if (match("ceil")) makeUnary(type == f32 ? UnaryOp::CeilFloat32 : UnaryOp::CeilFloat64, type);
           else abort_on("type.c");
           break;
         }
         case 'd': {
           if (match("demote/f64")) makeUnary(UnaryOp::DemoteFloat64, type);
-          else if (match("div_s")) makeBinary(BinaryOp::DivS, type);
-          else if (match("div_u")) makeBinary(BinaryOp::DivU, type);
-          else if (match("div")) makeBinary(BinaryOp::Div, type);
+          else if (match("div_s")) makeBinary(BINARY_INT(DivS), type);
+          else if (match("div_u")) makeBinary(BINARY_INT(DivU), type);
+          else if (match("div")) makeBinary(BINARY_FLOAT(Div), type);
           else abort_on("type.g");
           break;
         }
         case 'e': {
           if (match("eqz")) makeUnary(type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
-          else if (match("eq")) makeBinary(BinaryOp::Eq, i32);
+          else if (match("eq")) makeBinary(BINARY_INT_OR_FLOAT(Eq), i32);
           else if (match("extend_s/i32")) makeUnary(UnaryOp::ExtendSInt32, type);
           else if (match("extend_u/i32")) makeUnary(UnaryOp::ExtendUInt32, type);
           else abort_on("type.e");
@@ -797,42 +800,42 @@ class S2WasmBuilder {
           break;
         }
         case 'g': {
-          if (match("gt_s")) makeBinary(BinaryOp::GtS, i32);
-          else if (match("gt_u")) makeBinary(BinaryOp::GtU, i32);
-          else if (match("ge_s")) makeBinary(BinaryOp::GeS, i32);
-          else if (match("ge_u")) makeBinary(BinaryOp::GeU, i32);
-          else if (match("gt")) makeBinary(BinaryOp::Gt, i32);
-          else if (match("ge")) makeBinary(BinaryOp::Ge, i32);
+          if (match("gt_s")) makeBinary(BINARY_INT(GtS), i32);
+          else if (match("gt_u")) makeBinary(BINARY_INT(GtU), i32);
+          else if (match("ge_s")) makeBinary(BINARY_INT(GeS), i32);
+          else if (match("ge_u")) makeBinary(BINARY_INT(GeU), i32);
+          else if (match("gt")) makeBinary(BINARY_FLOAT(Gt), i32);
+          else if (match("ge")) makeBinary(BINARY_FLOAT(Ge), i32);
           else abort_on("type.g");
           break;
         }
         case 'l': {
-          if (match("lt_s")) makeBinary(BinaryOp::LtS, i32);
-          else if (match("lt_u")) makeBinary(BinaryOp::LtU, i32);
-          else if (match("le_s")) makeBinary(BinaryOp::LeS, i32);
-          else if (match("le_u")) makeBinary(BinaryOp::LeU, i32);
+          if (match("lt_s")) makeBinary(BINARY_INT(LtS), i32);
+          else if (match("lt_u")) makeBinary(BINARY_INT(LtU), i32);
+          else if (match("le_s")) makeBinary(BINARY_INT(LeS), i32);
+          else if (match("le_u")) makeBinary(BINARY_INT(LeU), i32);
           else if (match("load")) makeLoad(type);
-          else if (match("lt")) makeBinary(BinaryOp::Lt, i32);
-          else if (match("le")) makeBinary(BinaryOp::Le, i32);
+          else if (match("lt")) makeBinary(BINARY_FLOAT(Lt), i32);
+          else if (match("le")) makeBinary(BINARY_FLOAT(Le), i32);
           else abort_on("type.g");
           break;
         }
         case 'm': {
-          if (match("mul")) makeBinary(BinaryOp::Mul, type);
-          else if (match("min")) makeBinary(BinaryOp::Min, type);
-          else if (match("max")) makeBinary(BinaryOp::Max, type);
+          if (match("mul")) makeBinary(BINARY_INT_OR_FLOAT(Mul), type);
+          else if (match("min")) makeBinary(BINARY_FLOAT(Min), type);
+          else if (match("max")) makeBinary(BINARY_FLOAT(Max), type);
           else abort_on("type.m");
           break;
         }
         case 'n': {
           if (match("neg")) makeUnary(type == f32 ? UnaryOp::NegFloat32 : UnaryOp::NegFloat64, type);
           else if (match("nearest")) makeUnary(type == f32 ? UnaryOp::NearestFloat32 : UnaryOp::NearestFloat64, type);
-          else if (match("ne")) makeBinary(BinaryOp::Ne, i32);
+          else if (match("ne")) makeBinary(BINARY_INT_OR_FLOAT(Ne), i32);
           else abort_on("type.n");
           break;
         }
         case 'o': {
-          if (match("or")) makeBinary(BinaryOp::Or, type);
+          if (match("or")) makeBinary(BINARY_INT(Or), type);
           else abort_on("type.o");
           break;
         }
@@ -843,22 +846,22 @@ class S2WasmBuilder {
           break;
         }
         case 'r': {
-          if (match("rem_s")) makeBinary(BinaryOp::RemS, type);
-          else if (match("rem_u")) makeBinary(BinaryOp::RemU, type);
+          if (match("rem_s")) makeBinary(BINARY_INT(RemS), type);
+          else if (match("rem_u")) makeBinary(BINARY_INT(RemU), type);
           else if (match("reinterpret/i32")) makeUnary(UnaryOp::ReinterpretInt32, type);
           else if (match("reinterpret/i64")) makeUnary(UnaryOp::ReinterpretInt64, type);
           else if (match("reinterpret/f32")) makeUnary(UnaryOp::ReinterpretFloat32, type);
           else if (match("reinterpret/f64")) makeUnary(UnaryOp::ReinterpretFloat64, type);
-          else if (match("rotl")) makeBinary(BinaryOp::RotL, type);
-          else if (match("rotr")) makeBinary(BinaryOp::RotR, type);
+          else if (match("rotl")) makeBinary(BINARY_INT(RotL), type);
+          else if (match("rotr")) makeBinary(BINARY_INT(RotR), type);
           else abort_on("type.r");
           break;
         }
         case 's': {
-          if (match("shr_s")) makeBinary(BinaryOp::ShrS, type);
-          else if (match("shr_u")) makeBinary(BinaryOp::ShrU, type);
-          else if (match("shl")) makeBinary(BinaryOp::Shl, type);
-          else if (match("sub")) makeBinary(BinaryOp::Sub, type);
+          if (match("shr_s")) makeBinary(BINARY_INT(ShrS), type);
+          else if (match("shr_u")) makeBinary(BINARY_INT(ShrU), type);
+          else if (match("shl")) makeBinary(BINARY_INT(Shl), type);
+          else if (match("sub")) makeBinary(BINARY_INT_OR_FLOAT(Sub), type);
           else if (match("store")) makeStore(type);
           else if (match("select")) makeSelect(type);
           else if (match("sqrt")) makeUnary(type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
@@ -880,7 +883,7 @@ class S2WasmBuilder {
           break;
         }
         case 'x': {
-          if (match("xor")) makeBinary(BinaryOp::Xor, type);
+          if (match("xor")) makeBinary(BINARY_INT(Xor), type);
           else abort_on("type.x");
           break;
         }

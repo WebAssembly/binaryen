@@ -96,7 +96,7 @@ int main() {
   // if the end, halt
   BinaryenExpressionRef halter = BinaryenIf(module,
     BinaryenBinary(module,
-      BinaryenEq(),
+      BinaryenEqInt32(),
       BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4 * %d)) // jumps of 4 bytes
@@ -109,7 +109,7 @@ int main() {
     4, 0, 0,
     BinaryenConst(module, BinaryenLiteralInt32(4)),
     BinaryenBinary(module,
-      BinaryenAdd(),
+      BinaryenAddInt32(),
       BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4))
@@ -119,7 +119,7 @@ int main() {
   // optionally, print the return value
   BinaryenExpressionRef args[] = {
     BinaryenBinary(module,
-      BinaryenSub(),
+      BinaryenSubInt32(),
       BinaryenConst(module, BinaryenLiteralInt32(0)),
       BinaryenLoad(module,
         4, 0, 4, 0, BinaryenInt32(),
@@ -186,9 +186,9 @@ int main() {
     for j in range(len(b)):
       fast += '''
   RelooperAddBranch(b%d, b%d, BinaryenBinary(module,
-    BinaryenEq(),
+    BinaryenEqInt32(),
     BinaryenBinary(module,
-      BinaryenRemU(),
+      BinaryenRemUInt32(),
       BinaryenGetLocal(module, 0, BinaryenInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(%d))
     ),
@@ -265,7 +265,7 @@ int main() {
 
   print '.'
   cmd = [os.environ.get('CC') or 'gcc', 'fuzz.c', '-Isrc',
-         '-lbinaryen-c', '-lasmjs',
+         '-lbinaryen', '-lasmjs',
          '-lsupport', '-Llib/.', '-pthread', '-o', 'fuzz']
   subprocess.check_call(cmd)
   print '^'
