@@ -212,6 +212,18 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
 
     self->pushTask(visitPre, currp);
   }
+
+  void visitFunction(Function* curr) {
+    auto* optimized = optimize(curr->body, curr->result != none);
+    if (optimized) {
+      curr->body = optimized;
+    } else {
+      ExpressionManipulator::nop(curr->body);
+    }
+    if (curr->result == none && !EffectAnalyzer(curr->body).hasSideEffects()) {
+      ExpressionManipulator::nop(curr->body);
+    }
+  }
 };
 
 static RegisterPass<Vacuum> registerPass("vacuum", "removes obviously unneeded code");

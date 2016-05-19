@@ -111,4 +111,10 @@
       (unreachable)
     )
   )
+  (func $recurse
+    (nop)
+  )
+  (func $func-block
+    (nop)
+  )
 )

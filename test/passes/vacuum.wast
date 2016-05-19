@@ -117,5 +117,12 @@
       (unreachable)
     )
   )
+  (func $recurse
+    (nop)
+    (f32.abs (f32.abs (f32.abs (f32.abs (f32.abs (f32.abs (f32.const 1.0) ) ) ) ) ) )
+  )
+  (func $func-block
+    (f32.abs (f32.abs (f32.abs (f32.abs (f32.abs (f32.abs (f32.const 1.0) ) ) ) ) ) )
+  )
 )
 

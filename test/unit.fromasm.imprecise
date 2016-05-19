@@ -86,13 +86,7 @@
     )
   )
   (func $hexLiterals
-    (i32.add
-      (i32.add
-        (i32.const 0)
-        (i32.const 313249263)
-      )
-      (i32.const -19088752)
-    )
+    (nop)
   )
   (func $conversions
     (local $0 i32)
@@ -104,10 +98,7 @@
     )
   )
   (func $seq
-    (f64.sub
-      (f64.const 5.1)
-      (f64.const 4.2)
-    )
+    (nop)
   )
   (func $switcher (param $0 i32) (result i32)
     (block $switch-default$3
@@ -231,7 +222,7 @@
     (f64.const -0)
   )
   (func $abs
-    (i32.const 0)
+    (nop)
   )
   (func $neg
     (local $0 f32)
@@ -261,11 +252,7 @@
     )
   )
   (func $___syscall_ret
-    (local $0 i32)
-    (i32.gt_u
-      (get_local $0)
-      (i32.const -4096)
-    )
+    (nop)
   )
   (func $smallCompare (result i32)
     (local $0 i32)
