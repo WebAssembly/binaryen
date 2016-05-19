@@ -10,9 +10,9 @@
       (current_memory)
     )
   )
-  (func $grow_memory (param $$0 i32)
+  (func $grow_memory (param $0 i32)
     (grow_memory
-      (get_local $$0)
+      (get_local $0)
     )
     (return)
   )

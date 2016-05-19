@@ -53,31 +53,31 @@
     (call_import $void_nullary)
     (return)
   )
-  (func $call_i32_unary (param $$0 i32) (result i32)
+  (func $call_i32_unary (param $0 i32) (result i32)
     (return
       (call_import $i32_unary
-        (get_local $$0)
+        (get_local $0)
       )
     )
   )
-  (func $call_i32_binary (param $$0 i32) (param $$1 i32) (result i32)
+  (func $call_i32_binary (param $0 i32) (param $1 i32) (result i32)
     (return
       (call_import $i32_binary
-        (get_local $$0)
-        (get_local $$1)
+        (get_local $0)
+        (get_local $1)
       )
     )
   )
-  (func $call_indirect_void (param $$0 i32)
+  (func $call_indirect_void (param $0 i32)
     (call_indirect $FUNCSIG$v
-      (get_local $$0)
+      (get_local $0)
     )
     (return)
   )
-  (func $call_indirect_i32 (param $$0 i32) (result i32)
+  (func $call_indirect_i32 (param $0 i32) (result i32)
     (return
       (call_indirect $FUNCSIG$i
-        (get_local $$0)
+        (get_local $0)
       )
     )
   )

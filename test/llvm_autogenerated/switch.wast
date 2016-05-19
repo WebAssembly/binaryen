@@ -12,11 +12,11 @@
   (import $foo5 "env" "foo5")
   (export "bar32" $bar32)
   (export "bar64" $bar64)
-  (func $bar32 (param $$0 i32)
+  (func $bar32 (param $0 i32)
     (block $label$0
       (br_if $label$0
         (i32.gt_u
-          (get_local $$0)
+          (get_local $0)
           (i32.const 23)
         )
       )
@@ -27,7 +27,7 @@
               (block $label$5
                 (block $label$6
                   (br_table $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$4 $label$4 $label$4 $label$4 $label$4 $label$4 $label$3 $label$2 $label$1 $label$6
-                    (get_local $$0)
+                    (get_local $0)
                   )
                 )
                 (call_import $foo0)
@@ -49,11 +49,11 @@
     )
     (return)
   )
-  (func $bar64 (param $$0 i64)
+  (func $bar64 (param $0 i64)
     (block $label$0
       (br_if $label$0
         (i64.gt_u
-          (get_local $$0)
+          (get_local $0)
           (i64.const 23)
         )
       )
@@ -65,7 +65,7 @@
                 (block $label$6
                   (br_table $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$4 $label$4 $label$4 $label$4 $label$4 $label$4 $label$3 $label$2 $label$1 $label$6
                     (i32.wrap/i64
-                      (get_local $$0)
+                      (get_local $0)
                     )
                   )
                 )

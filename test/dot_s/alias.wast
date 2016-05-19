@@ -7,7 +7,7 @@
   (export "dynCall_v" $dynCall_v)
   (table $__exit)
   (func $__exit (type $FUNCSIG$v)
-    (local $$0 i32)
+    (local $0 i32)
     (return)
   )
   (func $__needs_exit (result i32)

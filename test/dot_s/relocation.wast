@@ -6,7 +6,7 @@
   (export "memory" memory)
   (export "main" $main)
   (func $main (result i32)
-    (local $$0 i32)
+    (local $0 i32)
     (return
       (i32.load
         (i32.const 16)

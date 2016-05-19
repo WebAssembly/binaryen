@@ -285,8 +285,9 @@ class S2WasmBuilder {
   Name getAssign() {
     skipWhitespace();
     if (*s != '$') return Name();
-    std::string str;
     const char *before = s;
+    s++;
+    std::string str;
     while (*s && *s != '=' && *s != '\n' && *s != ',') {
       str += *s;
       s++;
@@ -486,7 +487,7 @@ class S2WasmBuilder {
 
     unsigned nextId = 0;
     auto getNextId = [&nextId]() {
-      return cashew::IString(('$' + std::to_string(nextId++)).c_str(), false);
+      return cashew::IString(std::to_string(nextId++).c_str(), false);
     };
     wasm::Builder builder(*wasm);
     std::vector<NameType> params;
@@ -564,11 +565,14 @@ class S2WasmBuilder {
         if (match("$pop")) {
           skipToSep();
           inputs[i] = nullptr;
-        } else {
+        } else if (*s == '$') {
+          s++;
           auto curr = allocator->alloc<GetLocal>();
           curr->index = func->getLocalIndex(getStrToSep());
           curr->type = func->getLocalType(curr->index);
           inputs[i] = curr;
+        } else {
+          abort_on("bad input register");
         }
         if (*s == ')') s++; // tolerate 0(argument) syntax, where we started at the 'a'
         if (*s == ':') { // tolerate :attribute=value syntax (see getAttributes)
@@ -586,9 +590,9 @@ class S2WasmBuilder {
       return getInputs(1)[0];
     };
     auto setOutput = [&](Expression* curr, Name assign) {
-      if (assign.isNull() || assign.str[1] == 'd') { // discard
+      if (assign.isNull() || assign.str[0] == 'd') { // discard
         addToBlock(curr);
-      } else if (assign.str[1] == 'p') { // push
+      } else if (assign.str[0] == 'p') { // push
         push(curr);
       } else { // set to a local
         auto set = allocator->alloc<SetLocal>();
