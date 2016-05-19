@@ -307,63 +307,58 @@ private:
   }
 
   BinaryOp parseAsmBinaryOp(IString op, Ref left, Ref right, AsmData *asmData) {
-    if (op == PLUS) return BinaryOp::Add;
-    if (op == MINUS) return BinaryOp::Sub;
-    if (op == MUL) return BinaryOp::Mul;
-    if (op == AND) return BinaryOp::And;
-    if (op == OR) return BinaryOp::Or;
-    if (op == XOR) return BinaryOp::Xor;
-    if (op == LSHIFT) return BinaryOp::Shl;
-    if (op == RSHIFT) return BinaryOp::ShrS;
-    if (op == TRSHIFT) return BinaryOp::ShrU;
-    if (op == EQ) return BinaryOp::Eq;
-    if (op == NE) return BinaryOp::Ne;
     WasmType leftType = detectWasmType(left, asmData);
-#if 0
-    std::cout << "CHECK\n";
-    left->stringify(std::cout);
-    std::cout << " => " << printWasmType(leftType);
-    std::cout << '\n';
-    right->stringify(std::cout);
-    std::cout << " => " << printWasmType(detectWasmType(right, asmData)) << "\n";
-#endif
     bool isInteger = leftType == WasmType::i32;
+
+    if (op == PLUS) return isInteger ? BinaryOp::AddInt32 : (leftType == f32 ? BinaryOp::AddFloat32 : BinaryOp::AddFloat64);
+    if (op == MINUS) return isInteger ? BinaryOp::SubInt32 : (leftType == f32 ? BinaryOp::SubFloat32 : BinaryOp::SubFloat64);
+    if (op == MUL) return isInteger ? BinaryOp::MulInt32 : (leftType == f32 ? BinaryOp::MulFloat32 : BinaryOp::MulFloat64);
+    if (op == AND) return BinaryOp::AndInt32;
+    if (op == OR) return BinaryOp::OrInt32;
+    if (op == XOR) return BinaryOp::XorInt32;
+    if (op == LSHIFT) return BinaryOp::ShlInt32;
+    if (op == RSHIFT) return BinaryOp::ShrSInt32;
+    if (op == TRSHIFT) return BinaryOp::ShrUInt32;
+    if (op == EQ) return isInteger ? BinaryOp::EqInt32 : (leftType == f32 ? BinaryOp::EqFloat32 : BinaryOp::EqFloat64);
+    if (op == NE) return isInteger ? BinaryOp::NeInt32 : (leftType == f32 ? BinaryOp::NeFloat32 : BinaryOp::NeFloat64);
+
     bool isUnsigned = isUnsignedCoercion(left) || isUnsignedCoercion(right);
+
     if (op == DIV) {
       if (isInteger) {
-        return isUnsigned ? BinaryOp::DivU : BinaryOp::DivS;
+        return isUnsigned ? BinaryOp::DivUInt32 : BinaryOp::DivSInt32;
       }
-      return BinaryOp::Div;
+      return leftType == f32 ? BinaryOp::DivFloat32 : BinaryOp::DivFloat64;
     }
     if (op == MOD) {
       if (isInteger) {
-        return isUnsigned ? BinaryOp::RemU : BinaryOp::RemS;
+        return isUnsigned ? BinaryOp::RemUInt32 : BinaryOp::RemSInt32;
       }
-      return BinaryOp::RemS; // XXX no floating-point remainder op, this must be handled by the caller
+      return BinaryOp::RemSInt32; // XXX no floating-point remainder op, this must be handled by the caller
     }
     if (op == GE) {
       if (isInteger) {
-        return isUnsigned ? BinaryOp::GeU : BinaryOp::GeS;
+        return isUnsigned ? BinaryOp::GeUInt32 : BinaryOp::GeSInt32;
       }
-      return BinaryOp::Ge;
+      return leftType == f32 ? BinaryOp::GeFloat32 : BinaryOp::GeFloat64;
     }
     if (op == GT) {
       if (isInteger) {
-        return isUnsigned ? BinaryOp::GtU : BinaryOp::GtS;
+        return isUnsigned ? BinaryOp::GtUInt32 : BinaryOp::GtSInt32;
       }
-      return BinaryOp::Gt;
+      return leftType == f32 ? BinaryOp::GtFloat32 : BinaryOp::GtFloat64;
     }
     if (op == LE) {
       if (isInteger) {
-        return isUnsigned ? BinaryOp::LeU : BinaryOp::LeS;
+        return isUnsigned ? BinaryOp::LeUInt32 : BinaryOp::LeSInt32;
       }
-      return BinaryOp::Le;
+      return leftType == f32 ? BinaryOp::LeFloat32 : BinaryOp::LeFloat64;
     }
     if (op == LT) {
       if (isInteger) {
-        return isUnsigned ? BinaryOp::LtU : BinaryOp::LtS;
+        return isUnsigned ? BinaryOp::LtUInt32 : BinaryOp::LtSInt32;
       }
-      return BinaryOp::Lt;
+      return leftType == f32 ? BinaryOp::LtFloat32 : BinaryOp::LtFloat64;
     }
     abort_on("bad wasm binary op", op);
     abort(); // avoid warning
@@ -733,7 +728,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     assert(functionTableStarts.find(tableName) != functionTableStarts.end());
     auto sub = allocator.alloc<Binary>();
     // note that the target is already masked, so we just offset it, we don't need to guard against overflow (which would be an error anyhow)
-    sub->op = Add;
+    sub->op = AddInt32;
     sub->left = call->target;
     sub->right = allocator.alloc<Const>()->set(Literal((int32_t)functionTableStarts[tableName]));
     sub->type = WasmType::i32;
@@ -1008,7 +1003,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->left = process(ast[2]);
       ret->right = process(ast[3]);
       ret->finalize();
-      if (binary == BinaryOp::RemS && isWasmTypeFloat(ret->type)) {
+      if (binary == BinaryOp::RemSInt32 && isWasmTypeFloat(ret->type)) {
         // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
         CallImport *call = allocator.alloc<CallImport>();
         call->target = F64_REM;
@@ -1126,18 +1121,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (asmType == ASM_INT) {
           // wasm has no unary negation for int, so do 0-
           auto ret = allocator.alloc<Binary>();
-          ret->op = Sub;
+          ret->op = SubInt32;
           ret->left = allocator.alloc<Const>()->set(Literal((int32_t)0));
           ret->right = process(ast[2]);
           ret->type = WasmType::i32;
           return ret;
         }
         auto ret = allocator.alloc<Unary>();
-        ret->op = Neg;
         ret->value = process(ast[2]);
         if (asmType == ASM_DOUBLE) {
+          ret->op = NegFloat64;
           ret->type = WasmType::f64;
         } else if (asmType == ASM_FLOAT) {
+          ret->op = NegFloat32;
           ret->type = WasmType::f32;
         } else {
           abort();
@@ -1181,14 +1177,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
-        ret->op = Xor;
+        ret->op = XorInt32;
         ret->left = process(ast[2]);
         ret->right = allocator.alloc<Const>()->set(Literal(int32_t(-1)));
         ret->type = WasmType::i32;
         return ret;
       } else if (ast[1] == L_NOT) {
         auto ret = allocator.alloc<Unary>();
-        ret->op = EqZ;
+        ret->op = EqZInt32;
         ret->value = process(ast[2]);
         ret->type = i32;
         return ret;
@@ -1206,7 +1202,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (name == Math_imul) {
           assert(ast[2]->size() == 2);
           auto ret = allocator.alloc<Binary>();
-          ret->op = Mul;
+          ret->op = MulInt32;
           ret->left = process(ast[2][0]);
           ret->right = process(ast[2][1]);
           ret->type = WasmType::i32;
@@ -1215,7 +1211,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (name == Math_clz32 || name == llvm_cttz_i32) {
           assert(ast[2]->size() == 1);
           auto ret = allocator.alloc<Unary>();
-          ret->op = name == Math_clz32 ? Clz : Ctz;
+          ret->op = name == Math_clz32 ? ClzInt32 : CtzInt32;
           ret->value = process(ast[2][0]);
           ret->type = WasmType::i32;
           return ret;
@@ -1262,14 +1258,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               return ret;
             };
             auto isNegative = allocator.alloc<Binary>();
-            isNegative->op = LtS;
+            isNegative->op = LtSInt32;
             isNegative->left = get();
             isNegative->right = allocator.alloc<Const>()->set(Literal(0));
             isNegative->finalize();
             auto block = allocator.alloc<Block>();
             block->list.push_back(set);
             auto flip = allocator.alloc<Binary>();
-            flip->op = Sub;
+            flip->op = SubInt32;
             flip->left = allocator.alloc<Const>()->set(Literal(0));
             flip->right = get();
             flip->type = i32;
@@ -1283,7 +1279,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             return block;
           } else if (value->type == f32 || value->type == f64) {
             auto ret = allocator.alloc<Unary>();
-            ret->op = Abs;
+            ret->op = value->type == f32 ? AbsFloat32 : AbsFloat64;
             ret->value = value;
             ret->type = value->type;
             return ret;
@@ -1294,15 +1290,18 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
           // overloaded on type: f32 or f64
           Expression* value = process(ast[2][0]);
-          if (value->type == f32 || value->type == f64) {
-            auto ret = allocator.alloc<Unary>();
-            ret->op = name == Math_floor ? Floor : name == Math_ceil ? Ceil : Sqrt;
-            ret->value = value;
+          auto ret = allocator.alloc<Unary>();
+          ret->value = value;
+          if (value->type == f32) {
+            ret->op = name == Math_floor ? FloorFloat32 : name == Math_ceil ? CeilFloat32 : SqrtFloat32;
             ret->type = value->type;
-            return ret;
+          } else if (value->type == f64) {
+            ret->op = name == Math_floor ? FloorFloat64 : name == Math_ceil ? CeilFloat64 : SqrtFloat64;
+            ret->type = value->type;
           } else {
             abort();
           }
+          return ret;
         }
         Expression* ret;
         ExpressionList* operands;
@@ -1404,7 +1403,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Break *breakOut = allocator.alloc<Break>();
         breakOut->name = out;
         If *condition = allocator.alloc<If>();
-        condition->condition = builder.makeUnary(EqZ, process(ast[1]));
+        condition->condition = builder.makeUnary(EqZInt32, process(ast[1]));
         condition->ifTrue = breakOut;
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
@@ -1501,7 +1500,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Break *breakOut = allocator.alloc<Break>();
       breakOut->name = out;
       If *condition = allocator.alloc<If>();
-      condition->condition = builder.makeUnary(EqZ, process(fcond));
+      condition->condition = builder.makeUnary(EqZInt32, process(fcond));
       condition->ifTrue = breakOut;
       auto body = allocator.alloc<Block>();
       body->list.push_back(condition);
@@ -1627,7 +1626,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
       }
       Binary* offsetor = allocator.alloc<Binary>();
-      offsetor->op = BinaryOp::Sub;
+      offsetor->op = BinaryOp::SubInt32;
       offsetor->left = br->condition;
       offsetor->right = allocator.alloc<Const>()->set(Literal(min));
       offsetor->type = i32;

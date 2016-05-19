@@ -145,7 +145,7 @@ private:
 
     class FunctionScope {
      public:
-      std::map<IString, Literal> locals;
+      std::vector<Literal> locals;
       Function* function;
 
       FunctionScope(Function* function, LiteralList& arguments)
@@ -156,6 +156,7 @@ private:
                     << arguments.size() << " arguments." << std::endl;
           abort();
         }
+        locals.resize(function->getNumLocals());
         for (size_t i = 0; i < function->getNumLocals(); i++) {
           if (i < arguments.size()) {
             assert(function->isParam(i));
@@ -166,10 +167,10 @@ private:
                         << printWasmType(arguments[i].type) << "." << std::endl;
               abort();
             }
-            locals[function->getLocalName(i)] = arguments[i];
+            locals[i] = arguments[i];
           } else {
             assert(function->isVar(i));
-            locals[function->getLocalName(i)].type = function->getLocalType(i);
+            locals[i].type = function->getLocalType(i);
           }
         }
       }
@@ -358,20 +359,20 @@ private:
 
       Flow visitGetLocal(GetLocal *curr) {
         NOTE_ENTER("GetLocal");
-        IString name = scope.function->getLocalName(curr->index);
-        NOTE_NAME(name);
-        NOTE_EVAL1(scope.locals[name]);
-        return scope.locals[name];
+        auto index = curr->index;
+        NOTE_EVAL1(index);
+        NOTE_EVAL1(scope.locals[index]);
+        return scope.locals[index];
       }
       Flow visitSetLocal(SetLocal *curr) {
         NOTE_ENTER("SetLocal");
-        IString name = scope.function->getLocalName(curr->index);
+        auto index = curr->index;
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
-        NOTE_NAME(name);
+        NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
         assert(flow.value.type == curr->type);
-        scope.locals[name] = flow.value;
+        scope.locals[index] = flow.value;
         return flow;
       }
       Flow visitLoad(Load *curr) {
@@ -402,10 +403,10 @@ private:
         NOTE_EVAL1(value);
         if (value.type == i32) {
           switch (curr->op) {
-            case Clz:            return value.countLeadingZeroes();
-            case Ctz:            return value.countTrailingZeroes();
-            case Popcnt:         return value.popCount();
-            case EqZ:            return Literal(int32_t(value == Literal(int32_t(0))));
+            case ClzInt32:            return value.countLeadingZeroes();
+            case CtzInt32:            return value.countTrailingZeroes();
+            case PopcntInt32:         return value.popCount();
+            case EqZInt32:            return Literal(int32_t(value == Literal(int32_t(0))));
             case ReinterpretInt32: return value.castToF32();
             case ExtendSInt32:   return value.extendToSI64();
             case ExtendUInt32:   return value.extendToUI64();
@@ -418,10 +419,10 @@ private:
         }
         if (value.type == i64) {
           switch (curr->op) {
-            case Clz:            return value.countLeadingZeroes();
-            case Ctz:            return value.countTrailingZeroes();
-            case Popcnt:         return value.popCount();
-            case EqZ:            return Literal(int32_t(value == Literal(int64_t(0))));
+            case ClzInt64:            return value.countLeadingZeroes();
+            case CtzInt64:            return value.countTrailingZeroes();
+            case PopcntInt64:         return value.popCount();
+            case EqZInt64:            return Literal(int32_t(value == Literal(int64_t(0))));
             case WrapInt64:      return value.truncateToI32();
             case ReinterpretInt64: return value.castToF64();
             case ConvertUInt64ToFloat32: return value.convertUToF32();
@@ -433,13 +434,13 @@ private:
         }
         if (value.type == f32) {
           switch (curr->op) {
-            case Neg:              return value.neg();
-            case Abs:              return value.abs();
-            case Ceil:             return value.ceil();
-            case Floor:            return value.floor();
-            case Trunc:            return value.trunc();
-            case Nearest:          return value.nearbyint();
-            case Sqrt:             return value.sqrt();
+            case NegFloat32:              return value.neg();
+            case AbsFloat32:              return value.abs();
+            case CeilFloat32:             return value.ceil();
+            case FloorFloat32:            return value.floor();
+            case TruncFloat32:            return value.trunc();
+            case NearestFloat32:          return value.nearbyint();
+            case SqrtFloat32:             return value.sqrt();
             case TruncSFloat32ToInt32:
             case TruncSFloat32ToInt64: return truncSFloat(curr, value);
             case TruncUFloat32ToInt32:
@@ -451,13 +452,13 @@ private:
         }
         if (value.type == f64) {
           switch (curr->op) {
-            case Neg:              return value.neg();
-            case Abs:              return value.abs();
-            case Ceil:             return value.ceil();
-            case Floor:            return value.floor();
-            case Trunc:            return value.trunc();
-            case Nearest:          return value.nearbyint();
-            case Sqrt:             return value.sqrt();
+            case NegFloat64:              return value.neg();
+            case AbsFloat64:              return value.abs();
+            case CeilFloat64:             return value.ceil();
+            case FloorFloat64:            return value.floor();
+            case TruncFloat64:            return value.trunc();
+            case NearestFloat64:          return value.nearbyint();
+            case SqrtFloat64:             return value.sqrt();
             case TruncSFloat64ToInt32:
             case TruncSFloat64ToInt64: return truncSFloat(curr, value);
             case TruncUFloat64ToInt32:
@@ -489,105 +490,105 @@ private:
         assert(isConcreteWasmType(curr->right->type) ? right.type == curr->right->type : true);
         if (left.type == i32) {
           switch (curr->op) {
-            case Add:      return left.add(right);
-            case Sub:      return left.sub(right);
-            case Mul:      return left.mul(right);
-            case DivS: {
+            case AddInt32:      return left.add(right);
+            case SubInt32:      return left.sub(right);
+            case MulInt32:      return left.mul(right);
+            case DivSInt32: {
               if (right.getInteger() == 0) trap("i32.div_s by 0");
               if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) trap("i32.div_s overflow"); // signed division overflow
               return left.divS(right);
             }
-            case DivU: {
+            case DivUInt32: {
               if (right.getInteger() == 0) trap("i32.div_u by 0");
               return left.divU(right);
             }
-            case RemS: {
+            case RemSInt32: {
               if (right.getInteger() == 0) trap("i32.rem_s by 0");
               if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) return Literal(int32_t(0));
               return left.remS(right);
             }
-            case RemU: {
+            case RemUInt32: {
               if (right.getInteger() == 0) trap("i32.rem_u by 0");
               return left.remU(right);
             }
-            case And:  return left.and_(right);
-            case Or:   return left.or_(right);
-            case Xor:  return left.xor_(right);
-            case Shl:  return left.shl(right.and_(Literal(int32_t(31))));
-            case ShrU: return left.shrU(right.and_(Literal(int32_t(31))));
-            case ShrS: return left.shrS(right.and_(Literal(int32_t(31))));
-            case RotL: return left.rotL(right);
-            case RotR: return left.rotR(right);
-            case Eq:   return left.eq(right);
-            case Ne:   return left.ne(right);
-            case LtS:  return left.ltS(right);
-            case LtU:  return left.ltU(right);
-            case LeS:  return left.leS(right);
-            case LeU:  return left.leU(right);
-            case GtS:  return left.gtS(right);
-            case GtU:  return left.gtU(right);
-            case GeS:  return left.geS(right);
-            case GeU:  return left.geU(right);
+            case AndInt32:  return left.and_(right);
+            case OrInt32:   return left.or_(right);
+            case XorInt32:  return left.xor_(right);
+            case ShlInt32:  return left.shl(right.and_(Literal(int32_t(31))));
+            case ShrUInt32: return left.shrU(right.and_(Literal(int32_t(31))));
+            case ShrSInt32: return left.shrS(right.and_(Literal(int32_t(31))));
+            case RotLInt32: return left.rotL(right);
+            case RotRInt32: return left.rotR(right);
+            case EqInt32:   return left.eq(right);
+            case NeInt32:   return left.ne(right);
+            case LtSInt32:  return left.ltS(right);
+            case LtUInt32:  return left.ltU(right);
+            case LeSInt32:  return left.leS(right);
+            case LeUInt32:  return left.leU(right);
+            case GtSInt32:  return left.gtS(right);
+            case GtUInt32:  return left.gtU(right);
+            case GeSInt32:  return left.geS(right);
+            case GeUInt32:  return left.geU(right);
             default: abort();
           }
         } else if (left.type == i64) {
           switch (curr->op) {
-            case Add:      return left.add(right);
-            case Sub:      return left.sub(right);
-            case Mul:      return left.mul(right);
-            case DivS: {
+            case AddInt64:      return left.add(right);
+            case SubInt64:      return left.sub(right);
+            case MulInt64:      return left.mul(right);
+            case DivSInt64: {
               if (right.getInteger() == 0) trap("i64.div_s by 0");
               if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) trap("i64.div_s overflow"); // signed division overflow
               return left.divS(right);
             }
-            case DivU: {
+            case DivUInt64: {
               if (right.getInteger() == 0) trap("i64.div_u by 0");
               return left.divU(right);
             }
-            case RemS: {
+            case RemSInt64: {
               if (right.getInteger() == 0) trap("i64.rem_s by 0");
               if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) return Literal(int64_t(0));
               return left.remS(right);
             }
-            case RemU: {
+            case RemUInt64: {
               if (right.getInteger() == 0) trap("i64.rem_u by 0");
               return left.remU(right);
             }
-            case And:  return left.and_(right);
-            case Or:   return left.or_(right);
-            case Xor:  return left.xor_(right);
-            case Shl:  return left.shl(right.and_(Literal(int64_t(63))));
-            case ShrU: return left.shrU(right.and_(Literal(int64_t(63))));
-            case ShrS: return left.shrS(right.and_(Literal(int64_t(63))));
-            case RotL: return left.rotL(right);
-            case RotR: return left.rotR(right);
-            case Eq:   return left.eq(right);
-            case Ne:   return left.ne(right);
-            case LtS:  return left.ltS(right);
-            case LtU:  return left.ltU(right);
-            case LeS:  return left.leS(right);
-            case LeU:  return left.leU(right);
-            case GtS:  return left.gtS(right);
-            case GtU:  return left.gtU(right);
-            case GeS:  return left.geS(right);
-            case GeU:  return left.geU(right);
+            case AndInt64:  return left.and_(right);
+            case OrInt64:   return left.or_(right);
+            case XorInt64:  return left.xor_(right);
+            case ShlInt64:  return left.shl(right.and_(Literal(int64_t(63))));
+            case ShrUInt64: return left.shrU(right.and_(Literal(int64_t(63))));
+            case ShrSInt64: return left.shrS(right.and_(Literal(int64_t(63))));
+            case RotLInt64: return left.rotL(right);
+            case RotRInt64: return left.rotR(right);
+            case EqInt64:   return left.eq(right);
+            case NeInt64:   return left.ne(right);
+            case LtSInt64:  return left.ltS(right);
+            case LtUInt64:  return left.ltU(right);
+            case LeSInt64:  return left.leS(right);
+            case LeUInt64:  return left.leU(right);
+            case GtSInt64:  return left.gtS(right);
+            case GtUInt64:  return left.gtU(right);
+            case GeSInt64:  return left.geS(right);
+            case GeUInt64:  return left.geU(right);
             default: abort();
           }
         } else if (left.type == f32 || left.type == f64) {
           switch (curr->op) {
-            case Add:      return left.add(right);
-            case Sub:      return left.sub(right);
-            case Mul:      return left.mul(right);
-            case Div:      return left.div(right);
-            case CopySign: return left.copysign(right);
-            case Min:      return left.min(right);
-            case Max:      return left.max(right);
-            case Eq:       return left.eq(right);
-            case Ne:       return left.ne(right);
-            case Lt:       return left.lt(right);
-            case Le:       return left.le(right);
-            case Gt:       return left.gt(right);
-            case Ge:       return left.ge(right);
+            case AddFloat32:      case AddFloat64:      return left.add(right);
+            case SubFloat32:      case SubFloat64:      return left.sub(right);
+            case MulFloat32:      case MulFloat64:      return left.mul(right);
+            case DivFloat32:      case DivFloat64:      return left.div(right);
+            case CopySignFloat32: case CopySignFloat64: return left.copysign(right);
+            case MinFloat32:      case MinFloat64:      return left.min(right);
+            case MaxFloat32:      case MaxFloat64:      return left.max(right);
+            case EqFloat32:       case EqFloat64:       return left.eq(right);
+            case NeFloat32:       case NeFloat64:       return left.ne(right);
+            case LtFloat32:       case LtFloat64:       return left.lt(right);
+            case LeFloat32:       case LeFloat64:       return left.le(right);
+            case GtFloat32:       case GtFloat64:       return left.gt(right);
+            case GeFloat32:       case GeFloat64:       return left.ge(right);
             default: abort();
           }
         }

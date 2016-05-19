@@ -50,7 +50,7 @@ public:
     return makeSetLocal(labelHelper, makeConst(wasm::Literal(int32_t(value))));
   }
   wasm::Binary* makeCheckLabel(wasm::Index value) {
-    return makeBinary(wasm::Eq, makeGetLabel(), makeConst(wasm::Literal(int32_t(value))));
+    return makeBinary(wasm::EqInt32, makeGetLabel(), makeConst(wasm::Literal(int32_t(value))));
   }
   wasm::Break* makeBreak(int id) {
     return wasm::Builder::makeBreak(getBreakName(id));

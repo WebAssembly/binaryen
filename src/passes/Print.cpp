@@ -283,44 +283,55 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitUnary(Unary *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->isRelational() ? curr->value->type : curr->type) << '.';
+    prepareColor(o);
     switch (curr->op) {
-      case Clz:              o << "clz";     break;
-      case Ctz:              o << "ctz";     break;
-      case Popcnt:           o << "popcnt";  break;
-      case EqZ:              o << "eqz";     break;
-      case Neg:              o << "neg";     break;
-      case Abs:              o << "abs";     break;
-      case Ceil:             o << "ceil";    break;
-      case Floor:            o << "floor";   break;
-      case Trunc:            o << "trunc";   break;
-      case Nearest:          o << "nearest"; break;
-      case Sqrt:             o << "sqrt";    break;
-      case ExtendSInt32:     o << "extend_s/i32"; break;
-      case ExtendUInt32:     o << "extend_u/i32"; break;
-      case WrapInt64:        o << "wrap/i64"; break;
-      case TruncSFloat32ToInt32:
-      case TruncSFloat32ToInt64: o << "trunc_s/f32"; break;
-      case TruncUFloat32ToInt32:
-      case TruncUFloat32ToInt64: o << "trunc_u/f32"; break;
-      case TruncSFloat64ToInt32:
-      case TruncSFloat64ToInt64: o << "trunc_s/f64"; break;
-      case TruncUFloat64ToInt32:
-      case TruncUFloat64ToInt64: o << "trunc_u/f64"; break;
-      case ReinterpretFloat32: o << "reinterpret/f32"; break;
-      case ReinterpretFloat64: o << "reinterpret/f64"; break;
-      case ConvertUInt32ToFloat32:
-      case ConvertUInt32ToFloat64: o << "convert_u/i32"; break;
-      case ConvertSInt32ToFloat32:
-      case ConvertSInt32ToFloat64: o << "convert_s/i32"; break;
-      case ConvertUInt64ToFloat32:
-      case ConvertUInt64ToFloat64: o << "convert_u/i64"; break;
-      case ConvertSInt64ToFloat32:
-      case ConvertSInt64ToFloat64: o << "convert_s/i64"; break;
-      case PromoteFloat32:   o << "promote/f32"; break;
-      case DemoteFloat64:    o << "demote/f64"; break;
-      case ReinterpretInt32: o << "reinterpret/i32"; break;
-      case ReinterpretInt64: o << "reinterpret/i64"; break;
+      case ClzInt32:               o << "i32.clz";     break;
+      case CtzInt32:               o << "i32.ctz";     break;
+      case PopcntInt32:            o << "i32.popcnt";  break;
+      case EqZInt32:               o << "i32.eqz";     break;
+      case ClzInt64:               o << "i64.clz";     break;
+      case CtzInt64:               o << "i64.ctz";     break;
+      case PopcntInt64:            o << "i64.popcnt";  break;
+      case EqZInt64:               o << "i64.eqz";     break;
+      case NegFloat32:             o << "f32.neg";     break;
+      case AbsFloat32:             o << "f32.abs";     break;
+      case CeilFloat32:            o << "f32.ceil";    break;
+      case FloorFloat32:           o << "f32.floor";   break;
+      case TruncFloat32:           o << "f32.trunc";   break;
+      case NearestFloat32:         o << "f32.nearest"; break;
+      case SqrtFloat32:            o << "f32.sqrt";    break;
+      case NegFloat64:             o << "f64.neg";     break;
+      case AbsFloat64:             o << "f64.abs";     break;
+      case CeilFloat64:            o << "f64.ceil";    break;
+      case FloorFloat64:           o << "f64.floor";   break;
+      case TruncFloat64:           o << "f64.trunc";   break;
+      case NearestFloat64:         o << "f64.nearest"; break;
+      case SqrtFloat64:            o << "f64.sqrt";    break;
+      case ExtendSInt32:           o << "i64.extend_s/i32"; break;
+      case ExtendUInt32:           o << "i64.extend_u/i32"; break;
+      case WrapInt64:              o << "i32.wrap/i64"; break;
+      case TruncSFloat32ToInt32:   o << "i32.trunc_s/f32"; break;
+      case TruncSFloat32ToInt64:   o << "i64.trunc_s/f32"; break;
+      case TruncUFloat32ToInt32:   o << "i32.trunc_u/f32"; break;
+      case TruncUFloat32ToInt64:   o << "i64.trunc_u/f32"; break;
+      case TruncSFloat64ToInt32:   o << "i32.trunc_s/f64"; break;
+      case TruncSFloat64ToInt64:   o << "i64.trunc_s/f64"; break;
+      case TruncUFloat64ToInt32:   o << "i32.trunc_u/f64"; break;
+      case TruncUFloat64ToInt64:   o << "i64.trunc_u/f64"; break;
+      case ReinterpretFloat32:     o << "i32.reinterpret/f32"; break;
+      case ReinterpretFloat64:     o << "i64.reinterpret/f64"; break;
+      case ConvertUInt32ToFloat32: o << "f32.convert_u/i32"; break;
+      case ConvertUInt32ToFloat64: o << "f64.convert_u/i32"; break;
+      case ConvertSInt32ToFloat32: o << "f32.convert_s/i32"; break;
+      case ConvertSInt32ToFloat64: o << "f64.convert_s/i32"; break;
+      case ConvertUInt64ToFloat32: o << "f32.convert_u/i64"; break;
+      case ConvertUInt64ToFloat64: o << "f64.convert_u/i64"; break;
+      case ConvertSInt64ToFloat32: o << "f32.convert_s/i64"; break;
+      case ConvertSInt64ToFloat64: o << "f64.convert_s/i64"; break;
+      case PromoteFloat32:         o << "f64.promote/f32"; break;
+      case DemoteFloat64:          o << "f32.demote/f64"; break;
+      case ReinterpretInt32:       o << "f32.reinterpret/i32"; break;
+      case ReinterpretInt64:       o << "f64.reinterpret/i64"; break;
       default: abort();
     }
     incIndent();
@@ -329,41 +340,88 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitBinary(Binary *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->isRelational() ? curr->left->type : curr->type) << '.';
+    prepareColor(o);
     switch (curr->op) {
-      case Add:      o << "add";      break;
-      case Sub:      o << "sub";      break;
-      case Mul:      o << "mul";      break;
-      case DivS:     o << "div_s";    break;
-      case DivU:     o << "div_u";    break;
-      case RemS:     o << "rem_s";    break;
-      case RemU:     o << "rem_u";    break;
-      case And:      o << "and";      break;
-      case Or:       o << "or";       break;
-      case Xor:      o << "xor";      break;
-      case Shl:      o << "shl";      break;
-      case ShrU:     o << "shr_u";    break;
-      case ShrS:     o << "shr_s";    break;
-      case RotL:     o << "rotl";     break;
-      case RotR:     o << "rotr";     break;
-      case Div:      o << "div";      break;
-      case CopySign: o << "copysign"; break;
-      case Min:      o << "min";      break;
-      case Max:      o << "max";      break;
-      case Eq:       o << "eq";       break;
-      case Ne:       o << "ne";       break;
-      case LtS:      o << "lt_s";     break;
-      case LtU:      o << "lt_u";     break;
-      case LeS:      o << "le_s";     break;
-      case LeU:      o << "le_u";     break;
-      case GtS:      o << "gt_s";     break;
-      case GtU:      o << "gt_u";     break;
-      case GeS:      o << "ge_s";     break;
-      case GeU:      o << "ge_u";     break;
-      case Lt:       o << "lt";       break;
-      case Le:       o << "le";       break;
-      case Gt:       o << "gt";       break;
-      case Ge:       o << "ge";       break;
+      case AddInt32:      o << "i32.add";      break;
+      case SubInt32:      o << "i32.sub";      break;
+      case MulInt32:      o << "i32.mul";      break;
+      case DivSInt32:     o << "i32.div_s";    break;
+      case DivUInt32:     o << "i32.div_u";    break;
+      case RemSInt32:     o << "i32.rem_s";    break;
+      case RemUInt32:     o << "i32.rem_u";    break;
+      case AndInt32:      o << "i32.and";      break;
+      case OrInt32:       o << "i32.or";       break;
+      case XorInt32:      o << "i32.xor";      break;
+      case ShlInt32:      o << "i32.shl";      break;
+      case ShrUInt32:     o << "i32.shr_u";    break;
+      case ShrSInt32:     o << "i32.shr_s";    break;
+      case RotLInt32:     o << "i32.rotl";     break;
+      case RotRInt32:     o << "i32.rotr";     break;
+      case EqInt32:       o << "i32.eq";       break;
+      case NeInt32:       o << "i32.ne";       break;
+      case LtSInt32:      o << "i32.lt_s";     break;
+      case LtUInt32:      o << "i32.lt_u";     break;
+      case LeSInt32:      o << "i32.le_s";     break;
+      case LeUInt32:      o << "i32.le_u";     break;
+      case GtSInt32:      o << "i32.gt_s";     break;
+      case GtUInt32:      o << "i32.gt_u";     break;
+      case GeSInt32:      o << "i32.ge_s";     break;
+      case GeUInt32:      o << "i32.ge_u";     break;
+
+      case AddInt64:      o << "i64.add";      break;
+      case SubInt64:      o << "i64.sub";      break;
+      case MulInt64:      o << "i64.mul";      break;
+      case DivSInt64:     o << "i64.div_s";    break;
+      case DivUInt64:     o << "i64.div_u";    break;
+      case RemSInt64:     o << "i64.rem_s";    break;
+      case RemUInt64:     o << "i64.rem_u";    break;
+      case AndInt64:      o << "i64.and";      break;
+      case OrInt64:       o << "i64.or";       break;
+      case XorInt64:      o << "i64.xor";      break;
+      case ShlInt64:      o << "i64.shl";      break;
+      case ShrUInt64:     o << "i64.shr_u";    break;
+      case ShrSInt64:     o << "i64.shr_s";    break;
+      case RotLInt64:     o << "i64.rotl";     break;
+      case RotRInt64:     o << "i64.rotr";     break;
+      case EqInt64:       o << "i64.eq";       break;
+      case NeInt64:       o << "i64.ne";       break;
+      case LtSInt64:      o << "i64.lt_s";     break;
+      case LtUInt64:      o << "i64.lt_u";     break;
+      case LeSInt64:      o << "i64.le_s";     break;
+      case LeUInt64:      o << "i64.le_u";     break;
+      case GtSInt64:      o << "i64.gt_s";     break;
+      case GtUInt64:      o << "i64.gt_u";     break;
+      case GeSInt64:      o << "i64.ge_s";     break;
+      case GeUInt64:      o << "i64.ge_u";     break;
+
+      case AddFloat32:      o << "f32.add";      break;
+      case SubFloat32:      o << "f32.sub";      break;
+      case MulFloat32:      o << "f32.mul";      break;
+      case DivFloat32:      o << "f32.div";      break;
+      case CopySignFloat32: o << "f32.copysign"; break;
+      case MinFloat32:      o << "f32.min";      break;
+      case MaxFloat32:      o << "f32.max";      break;
+      case EqFloat32:       o << "f32.eq";       break;
+      case NeFloat32:       o << "f32.ne";       break;
+      case LtFloat32:       o << "f32.lt";       break;
+      case LeFloat32:       o << "f32.le";       break;
+      case GtFloat32:       o << "f32.gt";       break;
+      case GeFloat32:       o << "f32.ge";       break;
+
+      case AddFloat64:      o << "f64.add";      break;
+      case SubFloat64:      o << "f64.sub";      break;
+      case MulFloat64:      o << "f64.mul";      break;
+      case DivFloat64:      o << "f64.div";      break;
+      case CopySignFloat64: o << "f64.copysign"; break;
+      case MinFloat64:      o << "f64.min";      break;
+      case MaxFloat64:      o << "f64.max";      break;
+      case EqFloat64:       o << "f64.eq";       break;
+      case NeFloat64:       o << "f64.ne";       break;
+      case LtFloat64:       o << "f64.lt";       break;
+      case LeFloat64:       o << "f64.le";       break;
+      case GtFloat64:       o << "f64.gt";       break;
+      case GeFloat64:       o << "f64.ge";       break;
+
       default:       abort();
     }
     restoreNormalColor(o);

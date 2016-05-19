@@ -775,10 +775,10 @@ private:
 // Operators
 
 enum UnaryOp {
-  Clz, Ctz, Popcnt, // int
-  Neg, Abs, Ceil, Floor, Trunc, Nearest, Sqrt, // float
+  ClzInt32, ClzInt64, CtzInt32, CtzInt64, PopcntInt32, PopcntInt64, // int
+  NegFloat32, NegFloat64, AbsFloat32, AbsFloat64, CeilFloat32, CeilFloat64, FloorFloat32, FloorFloat64, TruncFloat32, TruncFloat64, NearestFloat32, NearestFloat64, SqrtFloat32, SqrtFloat64, // float
   // relational
-  EqZ,
+  EqZInt32, EqZInt64,
   // conversions
   ExtendSInt32, ExtendUInt32, // extend i32 to i64
   WrapInt64, // i64 to i32
@@ -791,13 +791,29 @@ enum UnaryOp {
 };
 
 enum BinaryOp {
-  Add, Sub, Mul, // int or float
-  DivS, DivU, RemS, RemU, And, Or, Xor, Shl, ShrU, ShrS, RotL, RotR, // int
-  Div, CopySign, Min, Max, // float
+  AddInt32, SubInt32, MulInt32, // int or float
+  DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, // int
   // relational ops
-  Eq, Ne, // int or float
-  LtS, LtU, LeS, LeU, GtS, GtU, GeS, GeU, // int
-  Lt, Le, Gt, Ge // float
+  EqInt32, NeInt32, // int or float
+  LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32, // int
+
+  AddInt64, SubInt64, MulInt64, // int or float
+  DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64, // int
+  // relational ops
+  EqInt64, NeInt64, // int or float
+  LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64, // int
+
+  AddFloat32, SubFloat32, MulFloat32, // int or float
+  DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32, // float
+  // relational ops
+  EqFloat32, NeFloat32, // int or float
+  LtFloat32, LeFloat32, GtFloat32, GeFloat32, // float
+
+  AddFloat64, SubFloat64, MulFloat64, // int or float
+  DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64, // float
+  // relational ops
+  EqFloat64, NeFloat64, // int or float
+  LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
 };
 
 enum HostOp {
@@ -1116,9 +1132,59 @@ public:
   UnaryOp op;
   Expression *value;
 
-  bool isRelational() { return op == EqZ; }
+  bool isRelational() { return op == EqZInt32 || op == EqZInt64; }
 
-  // no finalize since some opcodes have more than one type, so user must set it anyhow
+  void finalize() {
+    switch (op) {
+      case ClzInt32:
+      case CtzInt32:
+      case PopcntInt32:
+      case NegFloat32:
+      case AbsFloat32:
+      case CeilFloat32:
+      case FloorFloat32:
+      case TruncFloat32:
+      case NearestFloat32:
+      case SqrtFloat32:
+      case ClzInt64:
+      case CtzInt64:
+      case PopcntInt64:
+      case NegFloat64:
+      case AbsFloat64:
+      case CeilFloat64:
+      case FloorFloat64:
+      case TruncFloat64:
+      case NearestFloat64:
+      case SqrtFloat64: type = value->type; break;
+      case EqZInt32:
+      case EqZInt64: type = i32; break;
+      case ExtendSInt32: case ExtendUInt32: type = i64; break;
+      case WrapInt64: type = i32; break;
+      case PromoteFloat32: type = f64; break;
+      case DemoteFloat64: type = f32; break;
+      case TruncSFloat32ToInt32:
+      case TruncUFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncUFloat64ToInt32:
+      case ReinterpretFloat32: type = i32; break;
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case ReinterpretFloat64: type = i64; break;
+      case ReinterpretInt32:
+      case ConvertSInt32ToFloat32:
+      case ConvertUInt32ToFloat32:
+      case ConvertSInt64ToFloat32:
+      case ConvertUInt64ToFloat32: type = f32; break;
+      case ReinterpretInt64:
+      case ConvertSInt32ToFloat64:
+      case ConvertUInt32ToFloat64:
+      case ConvertSInt64ToFloat64:
+      case ConvertUInt64ToFloat64: type = f64; break;
+      default: std::cerr << "waka " << op << '\n'; WASM_UNREACHABLE();
+    }
+  }
 };
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
@@ -1132,7 +1198,43 @@ public:
   // the type is always the type of the operands,
   // except for relationals
 
-  bool isRelational() { return op >= Eq; }
+  bool isRelational() {
+    switch (op) {
+      case EqFloat64:
+      case NeFloat64:
+      case LtFloat64: 
+      case LeFloat64: 
+      case GtFloat64: 
+      case GeFloat64:
+      case EqInt32: 
+      case NeInt32:
+      case LtSInt32: 
+      case LtUInt32: 
+      case LeSInt32: 
+      case LeUInt32: 
+      case GtSInt32: 
+      case GtUInt32: 
+      case GeSInt32: 
+      case GeUInt32:
+      case EqInt64: 
+      case NeInt64:
+      case LtSInt64: 
+      case LtUInt64: 
+      case LeSInt64: 
+      case LeUInt64: 
+      case GtSInt64: 
+      case GtUInt64: 
+      case GeSInt64: 
+      case GeUInt64:
+      case EqFloat32: 
+      case NeFloat32:
+      case LtFloat32: 
+      case LeFloat32: 
+      case GtFloat32: 
+      case GeFloat32: return true;
+      default: return false;
+    }
+  }
 
   void finalize() {
     if (isRelational()) {

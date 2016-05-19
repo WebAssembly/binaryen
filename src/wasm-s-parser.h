@@ -60,14 +60,14 @@ class Element {
   IString str_;
   bool dollared_;
 
-  size_t line, col;
-
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
   bool dollared() { return dollared_; }
+
+  size_t line, col;
 
   // list methods
 
@@ -300,11 +300,9 @@ private:
     if (id == TYPE) return parseType(s);
     if (id != FUNC) return;
     size_t i = 1;
-    Name name;
-    if (s[i]->isStr()) {
-      name = s[i]->str();
-      i++;
-    } else {
+    Name name, exportName;
+    i = parseFunctionNames(s, name, exportName);
+    if (!name.is()) {
       // unnamed, use an index
       name = Name::fromInt(functionCounter);
     }
@@ -371,21 +369,26 @@ private:
     wasm.addStart(getFunctionName(*s[1]));
   }
 
-  void parseFunction(Element& s) {
+  // returns the next index in s
+  size_t parseFunctionNames(Element& s, Name& name, Name& exportName) {
     size_t i = 1;
-    Name name, exportName;
-    if (s[i]->isStr()) {
+    while (i < s.size() && s[i]->isStr()) {
       if (!s[i]->dollared()) {
         // an export name
         exportName = s[i]->str();
         i++;
-      }
-      if (s[i]->isStr()) {
-        assert(s[i]->dollared());
+      } else {
         name = s[i]->str();
         i++;
       }
     }
+    return i;
+  }
+
+  void parseFunction(Element& s) {
+    size_t i = 1;
+    Name name, exportName;
+    i = parseFunctionNames(s, name, exportName);
     if (!name.is()) {
       // unnamed, use an index
       name = Name::fromInt(functionCounter);
@@ -524,18 +527,21 @@ public:
       enum { maxNameSize = 15 };
       char op[maxNameSize + 1] = {'\0'};
       strncpy(op, dot + 1, maxNameSize);
+      #define BINARY_INT_OR_FLOAT(op) (type == i32 ? BinaryOp::op##Int32 : (type == i64 ? BinaryOp::op##Int64 : (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)))
+      #define BINARY_INT(op) (type == i32 ? BinaryOp::op##Int32 : BinaryOp::op##Int64)
+      #define BINARY_FLOAT(op) (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)
       switch (op[0]) {
         case 'a': {
-          if (op[1] == 'b') return makeUnary(s, UnaryOp::Abs, type);
-          if (op[1] == 'd') return makeBinary(s, BinaryOp::Add, type);
-          if (op[1] == 'n') return makeBinary(s, BinaryOp::And, type);
+          if (op[1] == 'b') return makeUnary(s, type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
+          if (op[1] == 'd') return makeBinary(s, BINARY_INT_OR_FLOAT(Add), type);
+          if (op[1] == 'n') return makeBinary(s, BINARY_INT(And), type);
           abort_on(op);
         }
         case 'c': {
-          if (op[1] == 'e') return makeUnary(s, UnaryOp::Ceil, type);
-          if (op[1] == 'l') return makeUnary(s, UnaryOp::Clz, type);
+          if (op[1] == 'e') return makeUnary(s, type == f32 ? UnaryOp::CeilFloat32 : UnaryOp::CeilFloat64, type);
+          if (op[1] == 'l') return makeUnary(s, type == i32 ? UnaryOp::ClzInt32 : UnaryOp::ClzInt64, type);
           if (op[1] == 'o') {
-            if (op[2] == 'p') return makeBinary(s, BinaryOp::CopySign, type);
+            if (op[2] == 'p') return makeBinary(s, BINARY_FLOAT(CopySign), type);
             if (op[2] == 'n') {
               if (op[3] == 'v') {
                 if (op[8] == 's') return makeUnary(s, op[11] == '3' ? (type == f32 ? UnaryOp::ConvertSInt32ToFloat32 : UnaryOp::ConvertSInt32ToFloat64) : (type == f32 ? UnaryOp::ConvertSInt64ToFloat32 : UnaryOp::ConvertSInt64ToFloat64), type);
@@ -544,92 +550,92 @@ public:
               if (op[3] == 's') return makeConst(s, type);
             }
           }
-          if (op[1] == 't') return makeUnary(s, UnaryOp::Ctz, type);
+          if (op[1] == 't') return makeUnary(s, type == i32 ? UnaryOp::CtzInt32 : UnaryOp::CtzInt64, type);
           abort_on(op);
         }
         case 'd': {
           if (op[1] == 'i') {
-            if (op[3] == '_') return makeBinary(s, op[4] == 'u' ? BinaryOp::DivU : BinaryOp::DivS, type);
-            if (op[3] == 0) return makeBinary(s, BinaryOp::Div, type);
+            if (op[3] == '_') return makeBinary(s, op[4] == 'u' ? BINARY_INT(DivU) : BINARY_INT(DivS), type);
+            if (op[3] == 0) return makeBinary(s, BINARY_FLOAT(Div), type);
           }
           if (op[1] == 'e') return makeUnary(s,  UnaryOp::DemoteFloat64, type);
           abort_on(op);
         }
         case 'e': {
           if (op[1] == 'q') {
-            if (op[2] == 0) return makeBinary(s, BinaryOp::Eq, type);
-            if (op[2] == 'z') return makeUnary(s, UnaryOp::EqZ, i32);
+            if (op[2] == 0) return makeBinary(s, BINARY_INT_OR_FLOAT(Eq), type);
+            if (op[2] == 'z') return makeUnary(s, type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
           }
           if (op[1] == 'x') return makeUnary(s, op[7] == 'u' ? UnaryOp::ExtendUInt32 : UnaryOp::ExtendSInt32, type);
           abort_on(op);
         }
         case 'f': {
-          if (op[1] == 'l') return makeUnary(s, UnaryOp::Floor, type);
+          if (op[1] == 'l') return makeUnary(s, type == f32 ? UnaryOp::FloorFloat32 : UnaryOp::FloorFloat64, type);
           abort_on(op);
         }
         case 'g': {
           if (op[1] == 't') {
-            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BinaryOp::GtU : BinaryOp::GtS, type);
-            if (op[2] == 0) return makeBinary(s, BinaryOp::Gt, type);
+            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BINARY_INT(GtU) : BINARY_INT(GtS), type);
+            if (op[2] == 0) return makeBinary(s, BINARY_FLOAT(Gt), type);
           }
           if (op[1] == 'e') {
-            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BinaryOp::GeU : BinaryOp::GeS, type);
-            if (op[2] == 0) return makeBinary(s, BinaryOp::Ge, type);
+            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BINARY_INT(GeU) : BINARY_INT(GeS), type);
+            if (op[2] == 0) return makeBinary(s, BINARY_FLOAT(Ge), type);
           }
           abort_on(op);
         }
         case 'l': {
           if (op[1] == 't') {
-            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BinaryOp::LtU : BinaryOp::LtS, type);
-            if (op[2] == 0) return makeBinary(s, BinaryOp::Lt, type);
+            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BINARY_INT(LtU) : BINARY_INT(LtS), type);
+            if (op[2] == 0) return makeBinary(s, BINARY_FLOAT(Lt), type);
           }
           if (op[1] == 'e') {
-            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BinaryOp::LeU : BinaryOp::LeS, type);
-            if (op[2] == 0) return makeBinary(s, BinaryOp::Le, type);
+            if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BINARY_INT(LeU) : BINARY_INT(LeS), type);
+            if (op[2] == 0) return makeBinary(s, BINARY_FLOAT(Le), type);
           }
           if (op[1] == 'o') return makeLoad(s, type);
           abort_on(op);
         }
         case 'm': {
-          if (op[1] == 'i') return makeBinary(s, BinaryOp::Min, type);
-          if (op[1] == 'a') return makeBinary(s, BinaryOp::Max, type);
-          if (op[1] == 'u') return makeBinary(s, BinaryOp::Mul, type);
+          if (op[1] == 'i') return makeBinary(s, BINARY_FLOAT(Min), type);
+          if (op[1] == 'a') return makeBinary(s, BINARY_FLOAT(Max), type);
+          if (op[1] == 'u') return makeBinary(s, BINARY_INT_OR_FLOAT(Mul), type);
           abort_on(op);
         }
         case 'n': {
           if (op[1] == 'e') {
-            if (op[2] == 0) return makeBinary(s, BinaryOp::Ne, type);
-            if (op[2] == 'a') return makeUnary(s, UnaryOp::Nearest, type);
-            if (op[2] == 'g') return makeUnary(s, UnaryOp::Neg, type);
+            if (op[2] == 0) return makeBinary(s, BINARY_INT_OR_FLOAT(Ne), type);
+            if (op[2] == 'a') return makeUnary(s, type == f32 ? UnaryOp::NearestFloat32 : UnaryOp::NearestFloat64, type);
+            if (op[2] == 'g') return makeUnary(s, type == f32 ? UnaryOp::NegFloat32 : UnaryOp::NegFloat64, type);
           }
           abort_on(op);
         }
         case 'o': {
-          if (op[1] == 'r') return makeBinary(s, BinaryOp::Or, type);
+          if (op[1] == 'r') return makeBinary(s, BINARY_INT(Or), type);
           abort_on(op);
         }
         case 'p': {
           if (op[1] == 'r') return makeUnary(s,  UnaryOp::PromoteFloat32, type);
-          if (op[1] == 'o') return makeUnary(s, UnaryOp::Popcnt, type);
+          if (op[1] == 'o') return makeUnary(s, type == i32 ? UnaryOp::PopcntInt32 : UnaryOp::PopcntInt64, type);
           abort_on(op);
         }
         case 'r': {
           if (op[1] == 'e') {
-            if (op[2] == 'm') return makeBinary(s, op[4] == 'u' ? BinaryOp::RemU : BinaryOp::RemS, type);
+            if (op[2] == 'm') return makeBinary(s, op[4] == 'u' ? BINARY_INT(RemU) : BINARY_INT(RemS), type);
             if (op[2] == 'i') return makeUnary(s, isWasmTypeFloat(type) ? (type == f32 ? UnaryOp::ReinterpretInt32 : UnaryOp::ReinterpretInt64) : (type == i32 ? UnaryOp::ReinterpretFloat32 : UnaryOp::ReinterpretFloat64), type);
           }
           if (op[1] == 'o' && op[2] == 't') {
-            return makeBinary(s, op[3] == 'l' ? BinaryOp::RotL : BinaryOp::RotR, type);
+            return makeBinary(s, op[3] == 'l' ? BINARY_INT(RotL) : BINARY_INT(RotR), type);
           }
           abort_on(op);
         }
         case 's': {
           if (op[1] == 'h') {
-            if (op[2] == 'l') return makeBinary(s, BinaryOp::Shl, type);
-            return makeBinary(s, op[4] == 'u' ? BinaryOp::ShrU : BinaryOp::ShrS, type);
+            if (op[2] == 'l') return makeBinary(s, BINARY_INT(Shl), type);
+            return makeBinary(s, op[4] == 'u' ? BINARY_INT(ShrU) : BINARY_INT(ShrS), type);
           }
-          if (op[1] == 'u') return makeBinary(s, BinaryOp::Sub, type);
-          if (op[1] == 'q') return makeUnary(s, UnaryOp::Sqrt, type);
+          if (op[1] == 'u') return makeBinary(s, BINARY_INT_OR_FLOAT(Sub), type);
+          if (op[1] == 'q') return makeUnary(s, type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
           if (op[1] == 't') return makeStore(s, type);
           abort_on(op);
         }
@@ -637,7 +643,7 @@ public:
           if (op[1] == 'r') {
             if (op[6] == 's') return makeUnary(s, op[9] == '3' ? (type == i32 ? UnaryOp::TruncSFloat32ToInt32 : UnaryOp::TruncSFloat32ToInt64) : (type == i32 ? UnaryOp::TruncSFloat64ToInt32 : UnaryOp::TruncSFloat64ToInt64), type);
             if (op[6] == 'u') return makeUnary(s, op[9] == '3' ? (type == i32 ? UnaryOp::TruncUFloat32ToInt32 : UnaryOp::TruncUFloat32ToInt64) : (type == i32 ? UnaryOp::TruncUFloat64ToInt32 : UnaryOp::TruncUFloat64ToInt64), type);
-            if (op[2] == 'u') return makeUnary(s, UnaryOp::Trunc, type);
+            if (op[2] == 'u') return makeUnary(s, type == f32 ? UnaryOp::TruncFloat32 : UnaryOp::TruncFloat64, type);
           }
           abort_on(op);
         }
@@ -646,7 +652,7 @@ public:
           abort_on(op);
         }
         case 'x': {
-          if (op[1] == 'o') return makeBinary(s, BinaryOp::Xor, type);
+          if (op[1] == 'o') return makeBinary(s, BINARY_INT(Xor), type);
           abort_on(op);
         }
         default: abort_on(op);
@@ -736,7 +742,61 @@ private:
     auto ret = allocator.alloc<Unary>();
     ret->op = op;
     ret->value = parseExpression(s[1]);
-    ret->type = type;
+    ret->finalize();
+    // type is the reported type, e.g. i64.ctz reports i64 (but has a return type of i32, in this case)
+    // verify the reported type is correct
+    switch (op) {
+      case EqZInt32:
+      case NegFloat32:
+      case AbsFloat32:
+      case CeilFloat32:
+      case FloorFloat32:
+      case TruncFloat32:
+      case NearestFloat32:
+      case SqrtFloat32:
+      case ClzInt32:
+      case CtzInt32:
+      case PopcntInt32:
+      case EqZInt64:
+      case NegFloat64:
+      case AbsFloat64:
+      case CeilFloat64:
+      case FloorFloat64:
+      case TruncFloat64:
+      case NearestFloat64:
+      case SqrtFloat64:
+      case ClzInt64:
+      case CtzInt64:
+      case PopcntInt64: {
+        if (ret->value->type != unreachable && type != ret->value->type) throw ParseException(std::string("bad type for ") + getExpressionName(ret) + ": " + printWasmType(type) + " vs value type " + printWasmType(ret->value->type), s.line, s.col);
+        break;
+      }
+      case ExtendSInt32: case ExtendUInt32:
+      case WrapInt64:
+      case PromoteFloat32:
+      case DemoteFloat64:
+      case TruncSFloat32ToInt32:
+      case TruncUFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncUFloat64ToInt32:
+      case ReinterpretFloat32:
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case ReinterpretFloat64:
+      case ReinterpretInt32:
+      case ConvertSInt32ToFloat32:
+      case ConvertUInt32ToFloat32:
+      case ConvertSInt64ToFloat32:
+      case ConvertUInt64ToFloat32:
+      case ReinterpretInt64:
+      case ConvertSInt32ToFloat64:
+      case ConvertUInt32ToFloat64:
+      case ConvertSInt64ToFloat64:
+      case ConvertUInt64ToFloat64: break;
+      default: WASM_UNREACHABLE();
+    }
     return ret;
   }
 
@@ -1149,7 +1209,9 @@ private:
     if (s.size() == 2) return;
     size_t i = 2;
     if (s[i]->isStr()) {
-      wasm.memory.max = atoi(s[i]->c_str());
+      uint64_t max = atoll(s[i]->c_str());
+      if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
+      wasm.memory.max = max;
       i++;
     }
     while (i < s.size()) {

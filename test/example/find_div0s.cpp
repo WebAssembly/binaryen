@@ -42,7 +42,7 @@ int main() {
   struct DivZeroSeeker : public PostWalker<DivZeroSeeker, Visitor<DivZeroSeeker>> {
     void visitBinary(Binary* curr) {
       // In every Binary, look for integer divisions
-      if (curr->op == BinaryOp::DivS || curr->op == BinaryOp::DivU) {
+      if (curr->op == BinaryOp::DivSInt32 || curr->op == BinaryOp::DivUInt32) {
         // Check if the right operand is a constant, and if it is 0
         auto right = curr->right->dynCast<Const>();
         if (right && right->value.getInteger() == 0) {
