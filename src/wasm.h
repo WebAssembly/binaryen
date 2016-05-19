@@ -92,7 +92,7 @@ struct Name : public cashew::IString {
 typedef uint32_t Index;
 
 inline Index toIndex(size_t index, size_t max) {
-	assert(index < max);
+	//assert(index < max);
     return (Index)index;
 }
 
