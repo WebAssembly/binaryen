@@ -26,12 +26,12 @@
       )
     )
   )
-  (func $call_memcpy (param $$0 i32) (param $$1 i32) (param $$2 i32) (result i32)
+  (func $call_memcpy (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
       (call_import $memcpy
-        (get_local $$0)
-        (get_local $$1)
-        (get_local $$2)
+        (get_local $0)
+        (get_local $1)
+        (get_local $2)
       )
     )
   )

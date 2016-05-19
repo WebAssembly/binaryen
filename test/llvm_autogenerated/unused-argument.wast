@@ -8,14 +8,14 @@
   (export "unused_first" $unused_first)
   (export "unused_second" $unused_second)
   (export "call_something" $call_something)
-  (func $unused_first (param $$0 i32) (param $$1 i32) (result i32)
+  (func $unused_first (param $0 i32) (param $1 i32) (result i32)
     (return
-      (get_local $$1)
+      (get_local $1)
     )
   )
-  (func $unused_second (param $$0 i32) (param $$1 i32) (result i32)
+  (func $unused_second (param $0 i32) (param $1 i32) (result i32)
     (return
-      (get_local $$0)
+      (get_local $0)
     )
   )
   (func $call_something

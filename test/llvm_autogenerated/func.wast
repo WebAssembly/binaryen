@@ -17,20 +17,20 @@
       (i32.const 0)
     )
   )
-  (func $f2 (param $$0 i32) (param $$1 f32) (result i32)
+  (func $f2 (param $0 i32) (param $1 f32) (result i32)
     (return
       (i32.const 0)
     )
   )
-  (func $f3 (param $$0 i32) (param $$1 f32)
+  (func $f3 (param $0 i32) (param $1 f32)
     (return)
   )
-  (func $f4 (param $$0 i32) (result i32)
+  (func $f4 (param $0 i32) (result i32)
     (block $label$0
       (br_if $label$0
         (i32.eq
           (i32.and
-            (get_local $$0)
+            (get_local $0)
             (i32.const 1)
           )
           (i32.const 0)

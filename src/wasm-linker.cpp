@@ -355,7 +355,7 @@ void Linker::makeDynCallThunks() {
     std::vector<NameType> params;
     params.emplace_back("fptr", i32); // function pointer param
     int p = 0;
-    for (const auto& ty : funcType->params) params.emplace_back("$" + std::to_string(p++), ty);
+    for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
     Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
     Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
     std::vector<Expression*> args;
