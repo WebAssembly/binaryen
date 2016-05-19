@@ -586,7 +586,7 @@ public:
   void mapLocals(Function* function) {
     for (Index i = 0; i < function->getNumParams(); i++) {
       size_t curr = mappedLocals.size();
-      mappedLocals[i] = toIndex(curr, function->getNumParams());
+      mappedLocals[i] = toIndex(curr, mappedLocals.size());
     }
     for (auto type : function->vars) {
       numLocalsByType[type]++;
