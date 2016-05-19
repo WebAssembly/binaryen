@@ -529,7 +529,6 @@ class S2WasmBuilder {
         last = last->cast<Loop>()->body;
       }
       last->cast<Block>()->list.push_back(curr);
-      last->cast<Block>()->finalize();
     };
     bstack.push_back(func->body);
     std::vector<Expression*> estack;
@@ -924,6 +923,7 @@ class S2WasmBuilder {
         addToBlock(curr);
         bstack.push_back(curr);
       } else if (match("end_block")) {
+        bstack.back()->cast<Block>()->finalize();
         bstack.pop_back();
       } else if (match(".LBB")) {
         s = strchr(s, '\n');
@@ -999,6 +999,7 @@ class S2WasmBuilder {
       }
     }
     // finishing touches
+    bstack.back()->cast<Block>()->finalize();
     bstack.pop_back(); // remove the base block for the function body
     assert(bstack.empty());
     assert(estack.empty());
