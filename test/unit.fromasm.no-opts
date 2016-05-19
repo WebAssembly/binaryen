@@ -1,0 +1,575 @@
+(module
+  (memory 256 256)
+  (export "memory" memory)
+  (type $FUNCSIG$id (func (param f64) (result i32)))
+  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+  (type $FUNCSIG$vf (func (param f32)))
+  (type $FUNCSIG$vi (func (param i32)))
+  (import $abort "env" "abort" (param i32))
+  (import $print "env" "print" (param i32))
+  (import $h "env" "h" (param i32))
+  (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
+  (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
+  (export "big_negative" $big_negative)
+  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (func $big_negative
+    (local $temp f64)
+    (set_local $temp
+      (f64.const -2147483648)
+    )
+    (set_local $temp
+      (f64.const -2147483648)
+    )
+    (set_local $temp
+      (f64.const -21474836480)
+    )
+    (set_local $temp
+      (f64.const 0.039625)
+    )
+    (set_local $temp
+      (f64.const -0.039625)
+    )
+  )
+  (func $importedDoubles (result f64)
+    (local $temp f64)
+    (set_local $temp
+      (f64.add
+        (f64.add
+          (f64.add
+            (f64.load
+              (i32.const 8)
+            )
+            (f64.load
+              (i32.const 16)
+            )
+          )
+          (f64.neg
+            (f64.load
+              (i32.const 16)
+            )
+          )
+        )
+        (f64.neg
+          (f64.load
+            (i32.const 8)
+          )
+        )
+      )
+    )
+    (if
+      (i32.gt_s
+        (i32.load
+          (i32.const 24)
+        )
+        (i32.const 0)
+      )
+      (return
+        (f64.const -3.4)
+      )
+    )
+    (if
+      (f64.gt
+        (f64.load
+          (i32.const 32)
+        )
+        (f64.const 0)
+      )
+      (return
+        (f64.const 5.6)
+      )
+    )
+    (return
+      (f64.const 1.2)
+    )
+  )
+  (func $doubleCompares (param $x f64) (param $y f64) (result f64)
+    (local $t f64)
+    (local $Int f64)
+    (local $Double i32)
+    (if
+      (f64.gt
+        (get_local $x)
+        (f64.const 0)
+      )
+      (return
+        (f64.const 1.2)
+      )
+    )
+    (if
+      (f64.gt
+        (get_local $Int)
+        (f64.const 0)
+      )
+      (return
+        (f64.const -3.4)
+      )
+    )
+    (if
+      (i32.gt_s
+        (get_local $Double)
+        (i32.const 0)
+      )
+      (return
+        (f64.const 5.6)
+      )
+    )
+    (if
+      (f64.lt
+        (get_local $x)
+        (get_local $y)
+      )
+      (return
+        (get_local $x)
+      )
+    )
+    (return
+      (get_local $y)
+    )
+  )
+  (func $intOps (result i32)
+    (local $x i32)
+    (return
+      (i32.eqz
+        (get_local $x)
+      )
+    )
+  )
+  (func $hexLiterals
+    (local $i i32)
+    (set_local $i
+      (i32.add
+        (i32.add
+          (i32.const 0)
+          (i32.const 313249263)
+        )
+        (i32.const -19088752)
+      )
+    )
+  )
+  (func $conversions
+    (local $i i32)
+    (local $d f64)
+    (local $f f32)
+    (set_local $i
+      (call_import $f64-to-int
+        (get_local $d)
+      )
+    )
+    (set_local $i
+      (call_import $f64-to-int
+        (f64.promote/f32
+          (get_local $f)
+        )
+      )
+    )
+    (set_local $d
+      (f64.convert_s/i32
+        (get_local $i)
+      )
+    )
+    (set_local $d
+      (f64.convert_u/i32
+        (get_local $i)
+      )
+    )
+  )
+  (func $seq
+    (local $J f64)
+    (set_local $J
+      (f64.sub
+        (block
+          (f64.const 0.1)
+          (f64.const 5.1)
+        )
+        (block
+          (f64.const 3.2)
+          (f64.const 4.2)
+        )
+      )
+    )
+  )
+  (func $switcher (param $x i32) (result i32)
+    (local $waka i32)
+    (block $switch$0
+      (block $switch-default$3
+        (block $switch-case$2
+          (block $switch-case$1
+            (br_table $switch-case$1 $switch-case$2 $switch-default$3
+              (i32.sub
+                (get_local $x)
+                (i32.const 1)
+              )
+            )
+          )
+          (return
+            (i32.const 1)
+          )
+        )
+        (return
+          (i32.const 2)
+        )
+      )
+    )
+    (block $switch$4
+      (block $switch-default$7
+        (block $switch-case$6
+          (block $switch-case$5
+            (br_table $switch-case$6 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-case$5 $switch-default$7
+              (i32.sub
+                (get_local $x)
+                (i32.const 5)
+              )
+            )
+          )
+          (return
+            (i32.const 121)
+          )
+        )
+        (return
+          (i32.const 51)
+        )
+      )
+    )
+    (block $label$break$Lout
+      (block $switch-default$16
+        (block $switch-case$15
+          (block $switch-case$12
+            (block $switch-case$9
+              (block $switch-case$8
+                (br_table $switch-case$15 $switch-default$16 $switch-default$16 $switch-case$12 $switch-default$16 $switch-default$16 $switch-default$16 $switch-default$16 $switch-case$9 $switch-default$16 $switch-case$8 $switch-default$16
+                  (i32.sub
+                    (get_local $x)
+                    (i32.const 2)
+                  )
+                )
+              )
+              (br $label$break$Lout)
+            )
+            (br $label$break$Lout)
+          )
+          (block
+            (loop $while-out$10 $while-in$11
+              (br $while-out$10)
+              (br $while-in$11)
+            )
+            (br $label$break$Lout)
+          )
+        )
+        (block
+          (loop $while-out$13 $while-in$14
+            (br $label$break$Lout)
+            (br $while-in$14)
+          )
+          (br $label$break$Lout)
+        )
+      )
+    )
+    (loop $label$break$L1 $label$continue$L1
+      (loop $label$break$L3 $label$continue$L3
+        (block $switch$17
+          (block $switch-default$21
+            (block $switch-default$21
+              (block $switch-case$20
+                (block $switch-case$19
+                  (block $switch-case$18
+                    (br_table $switch-case$18 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$20 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$19 $switch-default$21
+                      (i32.sub
+                        (get_local $x)
+                        (i32.const -1)
+                      )
+                    )
+                  )
+                  (block
+                    (br $label$break$L1)
+                    (br $switch$17)
+                  )
+                )
+                (block
+                  (set_local $waka
+                    (i32.const 1)
+                  )
+                  (br $switch$17)
+                )
+              )
+              (block
+                (br $label$break$L3)
+                (br $switch$17)
+              )
+            )
+            (br $label$break$L1)
+          )
+        )
+        (br $label$continue$L3)
+      )
+      (call_import $h
+        (i32.const 120)
+      )
+      (br $label$continue$L1)
+    )
+    (return
+      (i32.const 0)
+    )
+  )
+  (func $blocker
+    (block $label$break$L
+      (br $label$break$L)
+    )
+  )
+  (func $frem (result f64)
+    (return
+      (call_import $f64-rem
+        (f64.const 5.5)
+        (f64.const 1.2)
+      )
+    )
+  )
+  (func $big_uint_div_u (result i32)
+    (local $x i32)
+    (set_local $x
+      (i32.and
+        (i32.div_u
+          (i32.const -1)
+          (i32.const 2)
+        )
+        (i32.const -1)
+      )
+    )
+    (return
+      (get_local $x)
+    )
+  )
+  (func $fr (param $x f32)
+    (local $y f32)
+    (local $z f64)
+    (f32.demote/f64
+      (get_local $z)
+    )
+    (get_local $y)
+    (f32.const 5)
+    (f32.const 0)
+    (f32.const 5)
+    (f32.const 0)
+  )
+  (func $negZero (result f64)
+    (return
+      (f64.const -0)
+    )
+  )
+  (func $abs
+    (local $x i32)
+    (local $y f64)
+    (local $z f32)
+    (local $asm2wasm_i32_temp i32)
+    (set_local $x
+      (block
+        (set_local $asm2wasm_i32_temp
+          (i32.const 0)
+        )
+        (select
+          (i32.sub
+            (i32.const 0)
+            (get_local $asm2wasm_i32_temp)
+          )
+          (get_local $asm2wasm_i32_temp)
+          (i32.lt_s
+            (get_local $asm2wasm_i32_temp)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+    (set_local $y
+      (f64.abs
+        (f64.const 0)
+      )
+    )
+    (set_local $z
+      (f32.abs
+        (f32.const 0)
+      )
+    )
+  )
+  (func $neg
+    (local $x f32)
+    (set_local $x
+      (f32.neg
+        (get_local $x)
+      )
+    )
+    (call_indirect $FUNCSIG$vf
+      (i32.add
+        (i32.and
+          (i32.const 1)
+          (i32.const 7)
+        )
+        (i32.const 8)
+      )
+      (get_local $x)
+    )
+  )
+  (func $cneg (param $x f32)
+    (call_indirect $FUNCSIG$vf
+      (i32.add
+        (i32.and
+          (i32.const 1)
+          (i32.const 7)
+        )
+        (i32.const 8)
+      )
+      (get_local $x)
+    )
+  )
+  (func $___syscall_ret
+    (local $$0 i32)
+    (i32.gt_u
+      (get_local $$0)
+      (i32.const -4096)
+    )
+  )
+  (func $smallCompare (result i32)
+    (local $i i32)
+    (local $j i32)
+    (if
+      (i32.lt_s
+        (get_local $i)
+        (get_local $j)
+      )
+      (set_local $i
+        (i32.add
+          (get_local $i)
+          (i32.const 1)
+        )
+      )
+    )
+    (if
+      (i32.lt_u
+        (get_local $i)
+        (get_local $j)
+      )
+      (set_local $i
+        (i32.add
+          (get_local $i)
+          (i32.const 1)
+        )
+      )
+    )
+    (return
+      (get_local $i)
+    )
+  )
+  (func $cneg_nosemicolon
+    (call_indirect $FUNCSIG$vi
+      (i32.add
+        (i32.and
+          (i32.const 1)
+          (i32.const 7)
+        )
+        (i32.const 8)
+      )
+      (i32.const 1)
+    )
+  )
+  (func $forLoop
+    (local $i i32)
+    (set_local $i
+      (i32.const 1)
+    )
+    (loop $for-out$0 $for-in$1
+      (if
+        (i32.eqz
+          (i32.lt_s
+            (get_local $i)
+            (i32.const 200)
+          )
+        )
+        (br $for-out$0)
+      )
+      (call_import $h
+        (get_local $i)
+      )
+      (set_local $i
+        (i32.add
+          (get_local $i)
+          (i32.const 1)
+        )
+      )
+      (br $for-in$1)
+    )
+  )
+  (func $ceiling_32_64 (param $u f32) (param $B f64)
+    (local $temp f32)
+    (set_local $temp
+      (f32.demote/f64
+        (f64.ceil
+          (get_local $B)
+        )
+      )
+    )
+    (set_local $temp
+      (f32.mul
+        (get_local $u)
+        (f32.ceil
+          (f32.demote/f64
+            (get_local $B)
+          )
+        )
+      )
+    )
+  )
+  (func $aborts
+    (call_import $abort
+      (i32.const 0)
+    )
+    (call_import $abort
+      (i32.const 55)
+    )
+    (call_import $abort
+      (i32.const 0)
+    )
+  )
+  (func $continues
+    (loop $while-out$0 $while-in$1
+      (call_import $print
+        (i32.const 1)
+      )
+      (loop $do-once$2 $unlikely-continue$3
+        (call_import $print
+          (i32.const 5)
+        )
+        (if
+          (i32.const 0)
+          (br $unlikely-continue$3)
+        )
+      )
+      (call_import $print
+        (i32.const 2)
+      )
+      (br $while-in$1)
+    )
+  )
+  (func $bitcasts (param $i i32) (param $f f32)
+    (local $d f64)
+    (f32.reinterpret/i32
+      (get_local $i)
+    )
+    (f64.promote/f32
+      (f32.reinterpret/i32
+        (get_local $i)
+      )
+    )
+    (i32.reinterpret/f32
+      (get_local $f)
+    )
+    (i32.reinterpret/f32
+      (f32.demote/f64
+        (get_local $d)
+      )
+    )
+  )
+  (func $z
+    (nop)
+  )
+  (func $w
+    (nop)
+  )
+)

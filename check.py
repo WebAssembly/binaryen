@@ -285,47 +285,51 @@ print '[ checking asm2wasm testcases... ]\n'
 
 for asm in tests:
   if asm.endswith('.asm.js'):
-    cmd = [os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)]
     for precise in [1, 0]:
-      wasm = asm.replace('.asm.js', '.fromasm')
-      if not precise:
-        cmd += ['--imprecise']
-        wasm += '.imprecise'
-      wasm = os.path.join('test', wasm)
-      print '..', asm, wasm
-      actual = run_command(cmd)
+      for opts in [1, 0]:
+        cmd = [os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)]
+        wasm = asm.replace('.asm.js', '.fromasm')
+        if not precise:
+          cmd += ['--imprecise']
+          wasm += '.imprecise'
+        if not opts:
+          cmd += ['--no-opts']
+          wasm += '.no-opts'
+        wasm = os.path.join('test', wasm)
+        print '..', asm, wasm
+        actual = run_command(cmd)
 
-      # verify output
-      if not os.path.exists(wasm):
-        raise Exception('output .wast file %s does not exist' % wasm)
-      expected = open(wasm).read()
-      if actual != expected:
-        fail(actual, expected)
+        # verify output
+        if not os.path.exists(wasm):
+          raise Exception('output .wast file %s does not exist' % wasm)
+        expected = open(wasm).read()
+        if actual != expected:
+          fail(actual, expected)
 
-      binary_format_check(wasm, verify_final_result=False)
+        binary_format_check(wasm, verify_final_result=False)
 
-      # verify in wasm
-      if interpreter:
-        # remove imports, spec interpreter doesn't know what to do with them
-        subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
-        proc = subprocess.Popen([interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
-        out, err = proc.communicate()
-        if proc.returncode != 0:
-          try: # to parse the error
-            reported = err.split(':')[1]
-            start, end = reported.split('-')
-            start_line, start_col = map(int, start.split('.'))
-            lines = open('ztemp.wast').read().split('\n')
-            print
-            print '='*80
-            print lines[start_line-1]
-            print (' '*(start_col-1)) + '^'
-            print (' '*(start_col-2)) + '/_\\'
-            print '='*80
-            print err
-          except Exception, e:
-            raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
-          raise Exception('wasm interpreter error')
+        # verify in wasm
+        if interpreter:
+          # remove imports, spec interpreter doesn't know what to do with them
+          subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
+          proc = subprocess.Popen([interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
+          out, err = proc.communicate()
+          if proc.returncode != 0:
+            try: # to parse the error
+              reported = err.split(':')[1]
+              start, end = reported.split('-')
+              start_line, start_col = map(int, start.split('.'))
+              lines = open('ztemp.wast').read().split('\n')
+              print
+              print '='*80
+              print lines[start_line-1]
+              print (' '*(start_col-1)) + '^'
+              print (' '*(start_col-2)) + '/_\\'
+              print '='*80
+              print err
+            except Exception, e:
+              raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
+            raise Exception('wasm interpreter error')
 
 print '\n[ checking binaryen-shell parsing & printing... ]\n'
 
