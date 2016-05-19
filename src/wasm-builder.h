@@ -52,13 +52,13 @@ public:
 
     for (auto& param : params) {
       func->params.push_back(param.type);
-      Index i = func->localNames.size();
+      size_t i = func->localNames.size();
       func->localNames.push_back(param.name);
       func->localIndices[param.name] = toIndex(i, func->localNames.size());
     }
     for (auto& var : vars) {
       func->vars.push_back(var.type);
-      Index i = func->localNames.size();
+      size_t i = func->localNames.size();
       func->localNames.push_back(var.name);
       func->localIndices[var.name] = toIndex(i, func->localNames.size());
     }
@@ -205,9 +205,9 @@ public:
     // only ok to add a param if no vars, otherwise indices are invalidated
     assert(func->localIndices.size() == func->params.size());
     func->params.push_back(type);
-    Index index = func->localNames.size();
-    func->localNames.push_back(name);
-    index = toIndex(index, func->localNames.size());
+	  size_t i = func->localNames.size();
+	  func->localNames.push_back(name);
+	  Index index = toIndex(i, func->localNames.size());
     func->localIndices[name] = index;
     return index;
   }
@@ -216,9 +216,12 @@ public:
     // always ok to add a var, it does not affect other indices
     assert(func->localIndices.size() == func->params.size() + func->vars.size());
     func->vars.emplace_back(type);
-    Index index = func->localNames.push_back(name);
-    index = toIndex(index, func->vars.size());
+	  size_t i = func->localNames.size();
+	  func->localNames.push_back(name);
+	  Index index = toIndex(i, func->localNames.size());
     func->localIndices[name] = index;
+    return index;
+
     return index;
   }
 
