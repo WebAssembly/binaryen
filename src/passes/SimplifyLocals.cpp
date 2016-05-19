@@ -26,8 +26,7 @@
 // removing multiple set_locals and replacing them with one that the
 // block returns to. Further optimization rounds then have the opportunity
 // to remove that set_local as well. TODO: support partial traces; right
-// now, whenever control flow splits, we invalidate everything. This is
-// enough for SSA form, but not otherwise.
+// now, whenever control flow splits, we invalidate everything.
 //
 // After this pass, some locals may be completely unused. reorder-locals
 // can get rid of those (the operation is trivial there after it sorts by use

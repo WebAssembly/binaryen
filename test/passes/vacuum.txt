@@ -1,11 +1,7 @@
 (module
   (memory 256 256)
   (func $b
-    (i32.const 50)
-    (i32.const 51)
-    (i32.const 52)
     (block $waka1
-      (i32.const 53)
       (br $waka1)
     )
     (block $waka2
@@ -26,7 +22,6 @@
       (i32.const 102)
       (i32.const 103)
     )
-    (i32.const 104)
   )
   (func $l
     (local $x i32)
@@ -48,5 +43,78 @@
         (get_local $y)
       )
     )
+  )
+  (func $loopy (param $0 i32)
+    (nop)
+  )
+  (func $unary (result f32)
+    (unreachable)
+    (f32.abs
+      (f32.const 2)
+    )
+  )
+  (func $binary (result f32)
+    (unreachable)
+    (unreachable)
+    (f32.add
+      (unreachable)
+      (unreachable)
+    )
+    (f32.add
+      (f32.const 5)
+      (f32.const 6)
+    )
+  )
+  (func $select (result i32)
+    (unreachable)
+    (unreachable)
+    (unreachable)
+    (select
+      (unreachable)
+      (unreachable)
+      (i32.const 10)
+    )
+    (select
+      (unreachable)
+      (i32.const 11)
+      (unreachable)
+    )
+    (select
+      (i32.const 12)
+      (unreachable)
+      (unreachable)
+    )
+    (select
+      (unreachable)
+      (unreachable)
+      (unreachable)
+    )
+    (select
+      (i32.const 13)
+      (i32.const 14)
+      (i32.const 15)
+    )
+  )
+  (func $block-to-one
+    (block $block0
+    )
+    (block $block1
+      (unreachable)
+    )
+    (block $block2
+      (unreachable)
+    )
+    (block $block3
+      (unreachable)
+    )
+    (block $block4
+      (unreachable)
+    )
+  )
+  (func $recurse
+    (nop)
+  )
+  (func $func-block
+    (nop)
   )
 )

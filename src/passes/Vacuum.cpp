@@ -30,25 +30,119 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
 
   std::vector<Expression*> expressionStack;
 
-  bool isDead(Expression* curr, bool resultMayBeUsed) {
-    if (curr->is<Nop>()) return true;
-    // dead get_locals may be generated from coalesce-locals
-    if (curr->is<GetLocal>() && (!resultMayBeUsed || !ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()))) return true;
-    // TODO: more dead code
-    return false;
+  // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
+  Expression* optimize(Expression* curr, bool resultUsed) {
+    while (1) {
+      switch (curr->_id) {
+        case Expression::Id::NopId: return nullptr; // never needed
+
+        case Expression::Id::BlockId: return curr; // not always needed, but handled in visitBlock()
+        case Expression::Id::IfId: return curr; // not always needed, but handled in visitIf()
+        case Expression::Id::LoopId: return curr; // not always needed, but handled in visitLoop()
+
+        case Expression::Id::BreakId:
+        case Expression::Id::SwitchId:
+        case Expression::Id::CallId:
+        case Expression::Id::CallImportId:
+        case Expression::Id::CallIndirectId:
+        case Expression::Id::SetLocalId:
+        case Expression::Id::LoadId:
+        case Expression::Id::StoreId:
+        case Expression::Id::ReturnId:
+        case Expression::Id::HostId:
+        case Expression::Id::UnreachableId: return curr; // always needed
+
+        case Expression::Id::ConstId:
+        case Expression::Id::GetLocalId:
+        case Expression::Id::UnaryId:
+        case Expression::Id::BinaryId:
+        case Expression::Id::SelectId: {
+          if (resultUsed) {
+            return curr; // used, keep it
+          }
+          // result is not used, perhaps it is dead
+          if (curr->is<Const>() || curr->is<GetLocal>()) {
+            return nullptr;
+          }
+          // for unary, binary, and select, we need to check their arguments for side effects
+          if (auto* unary = curr->dynCast<Unary>()) {
+            if (EffectAnalyzer(unary->value).hasSideEffects()) {
+              curr = unary->value;
+              continue;
+            } else {
+              return nullptr;
+            }
+          } else if (auto* binary = curr->dynCast<Binary>()) {
+            if (EffectAnalyzer(binary->left).hasSideEffects()) {
+              if (EffectAnalyzer(binary->right).hasSideEffects()) {
+                return curr; // leave them
+              } else {
+                curr = binary->left;
+                continue;
+              }
+            } else {
+              if (EffectAnalyzer(binary->right).hasSideEffects()) {
+                curr = binary->right;
+                continue;
+              } else {
+                return nullptr;
+              }
+            }
+          } else {
+            // TODO: if two have side effects, we could replace the select with say an add?
+            auto* select = curr->cast<Select>();
+            if (EffectAnalyzer(select->ifTrue).hasSideEffects()) {
+              if (EffectAnalyzer(select->ifFalse).hasSideEffects()) {
+                return curr; // leave them
+              } else {
+                if (EffectAnalyzer(select->condition).hasSideEffects()) {
+                  return curr; // leave them
+                } else {
+                  curr = select->ifTrue;
+                  continue;
+                }
+              }
+            } else {
+              if (EffectAnalyzer(select->ifFalse).hasSideEffects()) {
+                if (EffectAnalyzer(select->condition).hasSideEffects()) {
+                  return curr; // leave them
+                } else {
+                  curr = select->ifFalse;
+                  continue;
+                }
+              } else {
+                if (EffectAnalyzer(select->condition).hasSideEffects()) {
+                  curr = select->condition;
+                  continue;
+                } else {
+                  return nullptr;
+                }
+              }
+            }
+          }
+        }
+
+        default: WASM_UNREACHABLE();
+      }
+    }
   }
 
   void visitBlock(Block *curr) {
     // compress out nops and other dead code
+    bool resultUsed = ExpressionAnalyzer::isResultUsed(expressionStack, getFunction());
     int skip = 0;
     auto& list = curr->list;
     size_t size = list.size();
     bool needResize = false;
     for (size_t z = 0; z < size; z++) {
-      if (isDead(list[z], z == size - 1)) {
+      auto* optimized = optimize(list[z], z == size - 1 && resultUsed);
+      if (!optimized) {
         skip++;
         needResize = true;
       } else {
+        if (optimized != list[z]) {
+          list[z] = optimized;
+        }
         if (skip > 0) {
           list[z - skip] = list[z];
         }
@@ -67,7 +161,12 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
     }
     if (!curr->name.is()) {
       if (list.size() == 1) {
-        replaceCurrent(list[0]);
+        // just one element. replace the block, either with it or with a nop if it's not needed
+        if (resultUsed || EffectAnalyzer(list[0]).hasSideEffects()) {
+          replaceCurrent(list[0]);
+        } else {
+          ExpressionManipulator::nop(curr);
+        }
       } else if (list.size() == 0) {
         ExpressionManipulator::nop(curr);
       }
@@ -93,6 +192,10 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
     }
   }
 
+  void visitLoop(Loop* curr) {
+    if (curr->body->is<Nop>()) ExpressionManipulator::nop(curr);
+  }
+
   static void visitPre(Vacuum* self, Expression** currp) {
     self->expressionStack.push_back(*currp);
   }
@@ -108,6 +211,18 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
     WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>>::scan(self, currp);
 
     self->pushTask(visitPre, currp);
+  }
+
+  void visitFunction(Function* curr) {
+    auto* optimized = optimize(curr->body, curr->result != none);
+    if (optimized) {
+      curr->body = optimized;
+    } else {
+      ExpressionManipulator::nop(curr->body);
+    }
+    if (curr->result == none && !EffectAnalyzer(curr->body).hasSideEffects()) {
+      ExpressionManipulator::nop(curr->body);
+    }
   }
 };
 
