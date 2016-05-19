@@ -590,7 +590,7 @@ class S2WasmBuilder {
       return getInputs(1)[0];
     };
     auto setOutput = [&](Expression* curr, Name assign) {
-      if (assign.isNull() || assign.str[0] == 'd') { // discard
+      if (assign.isNull() || assign.str[0] == 'd') { // drop
         addToBlock(curr);
       } else if (assign.str[0] == 'p') { // push
         push(curr);
