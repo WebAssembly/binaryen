@@ -859,7 +859,7 @@ public:
   }
 
   Index getBreakIndex(Name name) {
-    for (size_t i = breakStack.size(); i-- > 0;) { // need to double check indexing rewrite -- BSalita
+    for (size_t i = breakStack.size(); i-- > 0;) {
       if (breakStack[i] == name) {
         return toIndex(breakStack.size() - 1 - i, breakStack.size());
       }
