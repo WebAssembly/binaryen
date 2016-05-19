@@ -11,35 +11,9 @@
   (export "big_negative" $big_negative)
   (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
-    (f64.const -2147483648)
-    (f64.const -2147483648)
-    (f64.const -21474836480)
-    (f64.const 0.039625)
-    (f64.const -0.039625)
+    (nop)
   )
   (func $importedDoubles (result f64)
-    (f64.add
-      (f64.add
-        (f64.add
-          (f64.load
-            (i32.const 8)
-          )
-          (f64.load
-            (i32.const 16)
-          )
-        )
-        (f64.neg
-          (f64.load
-            (i32.const 16)
-          )
-        )
-      )
-      (f64.neg
-        (f64.load
-          (i32.const 8)
-        )
-      )
-    )
     (if
       (i32.gt_s
         (i32.load
@@ -124,30 +98,16 @@
     (local $0 i32)
     (local $1 f64)
     (local $2 f32)
-    (i32.trunc_s/f64
-      (get_local $1)
-    )
-    (f64.convert_s/i32
-      (set_local $0
-        (i32.trunc_s/f32
-          (get_local $2)
-        )
+    (set_local $0
+      (i32.trunc_s/f32
+        (get_local $2)
       )
-    )
-    (f64.convert_u/i32
-      (get_local $0)
     )
   )
   (func $seq
     (f64.sub
-      (block
-        (f64.const 0.1)
-        (f64.const 5.1)
-      )
-      (block
-        (f64.const 3.2)
-        (f64.const 4.2)
-      )
+      (f64.const 5.1)
+      (f64.const 4.2)
     )
   )
   (func $switcher (param $0 i32) (result i32)
@@ -231,7 +191,6 @@
                   )
                   (br $label$break$L1)
                 )
-                (i32.const 1)
                 (br $switch$17)
               )
               (br $label$break$L3)
@@ -268,37 +227,15 @@
   )
   (func $fr (param $0 f32)
     (local $1 f64)
-    (f32.demote/f64
-      (get_local $1)
-    )
-    (f32.const 5)
-    (f32.const 0)
-    (f32.const 5)
-    (f32.const 0)
+    (nop)
   )
   (func $negZero (result f64)
     (f64.const -0)
   )
   (func $abs
     (local $0 i32)
-    (select
-      (i32.sub
-        (i32.const 0)
-        (set_local $0
-          (i32.const 0)
-        )
-      )
-      (get_local $0)
-      (i32.lt_s
-        (get_local $0)
-        (i32.const 0)
-      )
-    )
-    (f64.abs
-      (f64.const 0)
-    )
-    (f32.abs
-      (f32.const 0)
+    (set_local $0
+      (i32.const 0)
     )
   )
   (func $neg
@@ -401,19 +338,7 @@
     )
   )
   (func $ceiling_32_64 (param $0 f32) (param $1 f64)
-    (f32.demote/f64
-      (f64.ceil
-        (get_local $1)
-      )
-    )
-    (f32.mul
-      (get_local $0)
-      (f32.ceil
-        (f32.demote/f64
-          (get_local $1)
-        )
-      )
-    )
+    (nop)
   )
   (func $aborts
     (call_import $abort
@@ -447,22 +372,7 @@
   )
   (func $bitcasts (param $0 i32) (param $1 f32)
     (local $2 f64)
-    (f32.reinterpret/i32
-      (get_local $0)
-    )
-    (f64.promote/f32
-      (f32.reinterpret/i32
-        (get_local $0)
-      )
-    )
-    (i32.reinterpret/f32
-      (get_local $1)
-    )
-    (i32.reinterpret/f32
-      (f32.demote/f64
-        (get_local $2)
-      )
-    )
+    (nop)
   )
   (func $z
     (nop)

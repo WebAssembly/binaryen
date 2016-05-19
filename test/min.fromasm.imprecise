@@ -23,17 +23,7 @@
     )
   )
   (func $bitcasts (param $0 i32) (param $1 f32)
-    (f32.reinterpret/i32
-      (get_local $0)
-    )
-    (f64.promote/f32
-      (f32.reinterpret/i32
-        (get_local $0)
-      )
-    )
-    (i32.reinterpret/f32
-      (get_local $1)
-    )
+    (nop)
   )
   (func $ctzzzz (result i32)
     (i32.ctz

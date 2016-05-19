@@ -63,5 +63,59 @@
       )
     )
   )
+  (func $loopy (param $0 i32)
+    (loop (nop))
+    (loop
+      (nop)
+      (nop)
+    )
+    (loop
+      (get_local $0)
+      (i32.const 20)
+    )
+  )
+  (func $unary (result f32)
+    (f32.abs (f32.const 1.0)) ;; unneeded position
+    (f32.abs (unreachable)) ;; side effects
+
+    (f32.abs (f32.const 2.0)) ;; return position
+  )
+  (func $binary (result f32)
+    (f32.add (f32.const 1.0) (f32.const 2.0))
+    (f32.add (unreachable)   (f32.const 3.0))
+    (f32.add (f32.const 4.0) (unreachable))
+    (f32.add (unreachable)   (unreachable))
+
+    (f32.add (f32.const 5.0) (f32.const 6.0))
+  )
+  (func $select (result i32)
+    (select (i32.const 1)  (i32.const 2)  (i32.const 3))
+    (select (unreachable)  (i32.const 4)  (i32.const 5))
+    (select (i32.const 6)  (unreachable)  (i32.const 7))
+    (select (i32.const 8)  (i32.const 9)  (unreachable))
+    (select (unreachable)  (unreachable)  (i32.const 10))
+    (select (unreachable)  (i32.const 11) (unreachable))
+    (select (i32.const 12) (unreachable)  (unreachable))
+    (select (unreachable)  (unreachable)  (unreachable))
+
+    (select (i32.const 13) (i32.const 14) (i32.const 15))
+  )
+  (func $block-to-one
+    (block
+      (nop) (nop)
+    )
+    (block
+      (nop) (unreachable)
+    )
+    (block
+      (nop) (unreachable) (nop)
+    )
+    (block
+      (unreachable) (nop)
+    )
+    (block
+      (unreachable)
+    )
+  )
 )
 

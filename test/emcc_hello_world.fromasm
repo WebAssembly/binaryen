@@ -272,7 +272,6 @@
       )
       (call_import $abort)
     )
-    (i32.const 0)
     (call $_printf
       (i32.const 672)
       (get_local $0)
@@ -506,7 +505,6 @@
         (i32.const 5)
       )
       (loop $while-out$2 $while-in$3
-        (i32.const 0)
         (set_local $1
           (get_local $3)
         )
@@ -565,7 +563,6 @@
             (set_local $3
               (get_local $1)
             )
-            (i32.const 5)
           )
         )
         (br $while-in$3)
@@ -1035,9 +1032,7 @@
     (i32.const 0)
   )
   (func $___unlockfile (param $0 i32)
-    (i32.load
-      (i32.const 8)
-    )
+    (nop)
   )
   (func $___stdio_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (local $3 i32)
@@ -3360,7 +3355,6 @@
                 (set_local $70
                   (get_local $5)
                 )
-                (i32.const 9)
               )
               (block
                 (set_local $41
@@ -8113,7 +8107,6 @@
             (i32.const 64)
           )
           (block
-            (i32.const 0)
             (set_local $7
               (i32.and
                 (get_local $69)
@@ -8300,7 +8293,6 @@
               (i32.const 76)
             )
             (block
-              (i32.const 0)
               (set_local $34
                 (call $_fmt_u
                   (get_local $45)
@@ -11902,7 +11894,6 @@
                         (set_local $31
                           (get_local $6)
                         )
-                        (i32.const 90)
                         (br $while-in$20)
                       )
                     )
@@ -11934,7 +11925,6 @@
                         (set_local $31
                           (get_local $6)
                         )
-                        (i32.const 90)
                       )
                     )
                     (br $while-in$20)
@@ -18082,10 +18072,6 @@
     (nop)
   )
   (func $_i64Subtract (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-    (i32.sub
-      (get_local $1)
-      (get_local $3)
-    )
     (i32.store
       (i32.const 168)
       (i32.sub

@@ -1945,7 +1945,6 @@
                         (set_local $32
                           (get_local $1)
                         )
-                        (i32.const 90)
                         (br $while-in$20)
                       )
                     )
@@ -1962,7 +1961,6 @@
                         (set_local $32
                           (get_local $1)
                         )
-                        (i32.const 90)
                       )
                       (block
                         (set_local $16
