@@ -5,6 +5,7 @@ bin/s2wasm
 bin/wasm-as
 bin/wasm-dis
 lib/libbinaryen.so
+lib/libbinaryen.dylib
 *.a
 *~
 *.diff

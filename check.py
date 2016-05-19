@@ -611,7 +611,9 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
     print ' '.join(extra)
     subprocess.check_call(extra)
     # Link against the binaryen C library DSO, using an executable-relative rpath
-    cmd = ['example.o', '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
+    cmd = ['example.o', '-lbinaryen'] + cmd
+    if sys.platform == 'linux' or sys.platform == 'linux2':
+      cmd = cmd + ['-Wl,-rpath=$ORIGIN/../lib']
   else:
     continue
   if os.environ.get('COMPILER_FLAGS'):
@@ -625,6 +627,9 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
     expected = open(os.path.join('test', 'example', '.'.join(t.split('.')[:-1]) + '.txt')).read()
   finally:
     os.remove(output_file)
+    if sys.platform == 'darwin':
+      # Also removes debug directory produced on Mac OS
+      shutil.rmtree(output_file + '.dSYM')
   if actual != expected:
     fail(actual, expected)
 
