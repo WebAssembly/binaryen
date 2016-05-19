@@ -676,7 +676,6 @@ optimized:
     )
   )
   (func $nontrivial-loop-plus-phi-to-head (type $v)
-    (local $0 i32)
     (loop $shape$1$break $shape$1$continue
       (if
         (i32.eqz
@@ -686,12 +685,7 @@ optimized:
       )
       (if
         (i32.const -6)
-        (block
-          (set_local $0
-            (i32.const 4)
-          )
-          (br $shape$1$break)
-        )
+        (br $shape$1$break)
         (br $shape$1$continue)
       )
     )

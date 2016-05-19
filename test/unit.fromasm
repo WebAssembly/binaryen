@@ -233,17 +233,13 @@
     )
   )
   (func $fr (param $0 f32)
-    (local $1 f64)
     (nop)
   )
   (func $negZero (result f64)
     (f64.const -0)
   )
   (func $abs
-    (local $0 i32)
-    (set_local $0
-      (i32.const 0)
-    )
+    (i32.const 0)
   )
   (func $neg
     (local $0 f32)
@@ -378,7 +374,6 @@
     )
   )
   (func $bitcasts (param $0 i32) (param $1 f32)
-    (local $2 f64)
     (nop)
   )
   (func $z

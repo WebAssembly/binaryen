@@ -62,11 +62,13 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("remove-unused-names");
   add("optimize-instructions");
   add("simplify-locals");
+  add("vacuum"); // previous pass creates garbage
   add("coalesce-locals");
+  add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
-  add("vacuum");
   add("merge-blocks");
   add("optimize-instructions");
+  add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
 }
 
 void PassRunner::run() {
