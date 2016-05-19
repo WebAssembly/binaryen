@@ -57,7 +57,7 @@ public:
     }
     for (auto& var : vars) {
       func->vars.push_back(var.type);
-      func->localIndices[var.name] = toIndex(func->localNames.size(), vars.size()); // BSalita - not sure about func->vars.size()
+      func->localIndices[var.name] = toIndex(func->localNames.size(), func->vars.size()); // BSalita - not sure about func->vars.size()
       func->localNames.push_back(var.name);
     }
 
