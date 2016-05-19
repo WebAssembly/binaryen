@@ -207,7 +207,7 @@ public:
     func->params.push_back(type);
     Index index = func->localNames.size();
     func->localNames.push_back(name);
-    index = toIndex(index, func->params.size());
+    index = toIndex(index, func->localNames.size());
     func->localIndices[name] = index;
     return index;
   }
