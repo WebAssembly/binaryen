@@ -91,7 +91,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
     auto& global = pair.second;
     if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
     double value = EM_ASM_DOUBLE({ return Module['lookupImport'](Pointer_stringify($0), Pointer_stringify($1)) }, global.module.str, global.base.str);
-    unsigned address = global.address;
+    uint32_t address = global.address;
     switch (global.type) {
       case i32: EM_ASM_({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, address, value); break;
       case f32: EM_ASM_({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, address, value); break;
@@ -196,7 +196,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           var source = Module['HEAP8'].subarray($1, $1 + $2);
           var target = new Int8Array(Module['outside']['newBuffer']);
           target.set(source, $0);
-        }, segment.offset, &segment.data[0], segment.data.size());
+        }, (uint32_t)segment.offset, &segment.data[0], segment.data.size());
       }
     }
 
@@ -236,7 +236,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    Literal load(Load* load, Address addr) override {
+    Literal load(Load* load, Address address) override {
+      uint32_t addr = address;
       if (load->align < load->bytes || (addr & (load->bytes-1))) {
         int64_t out64;
         double ret = EM_ASM_DOUBLE({
@@ -325,7 +326,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    void store(Store* store_, Address addr, Literal value) override {
+    void store(Store* store_, Address address, Literal value) override {
+      uint32_t addr = address;
       // support int64 stores
       if (value.type == WasmType::i64) {
         Store fake = *store_;

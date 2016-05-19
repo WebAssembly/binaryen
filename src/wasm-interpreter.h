@@ -145,7 +145,7 @@ private:
 
     class FunctionScope {
      public:
-      std::map<IString, Literal> locals;
+      std::vector<Literal> locals;
       Function* function;
 
       FunctionScope(Function* function, LiteralList& arguments)
@@ -156,6 +156,7 @@ private:
                     << arguments.size() << " arguments." << std::endl;
           abort();
         }
+        locals.resize(function->getNumLocals());
         for (size_t i = 0; i < function->getNumLocals(); i++) {
           if (i < arguments.size()) {
             assert(function->isParam(i));
@@ -166,10 +167,10 @@ private:
                         << printWasmType(arguments[i].type) << "." << std::endl;
               abort();
             }
-            locals[function->getLocalName(i)] = arguments[i];
+            locals[i] = arguments[i];
           } else {
             assert(function->isVar(i));
-            locals[function->getLocalName(i)].type = function->getLocalType(i);
+            locals[i].type = function->getLocalType(i);
           }
         }
       }
@@ -358,20 +359,20 @@ private:
 
       Flow visitGetLocal(GetLocal *curr) {
         NOTE_ENTER("GetLocal");
-        IString name = scope.function->getLocalName(curr->index);
-        NOTE_NAME(name);
-        NOTE_EVAL1(scope.locals[name]);
-        return scope.locals[name];
+        auto index = curr->index;
+        NOTE_EVAL1(index);
+        NOTE_EVAL1(scope.locals[index]);
+        return scope.locals[index];
       }
       Flow visitSetLocal(SetLocal *curr) {
         NOTE_ENTER("SetLocal");
-        IString name = scope.function->getLocalName(curr->index);
+        auto index = curr->index;
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
-        NOTE_NAME(name);
+        NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
         assert(flow.value.type == curr->type);
-        scope.locals[name] = flow.value;
+        scope.locals[index] = flow.value;
         return flow;
       }
       Flow visitLoad(Load *curr) {
