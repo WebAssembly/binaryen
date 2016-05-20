@@ -276,106 +276,63 @@
     (set_local $$rem
       (get_local $__stackBase__)
     )
-    (set_local $$1$0
-      (i32.or
-        (i32.shr_s
-          (get_local $$a$1)
-          (i32.const 31)
-        )
-        (i32.shl
-          (if
-            (i32.lt_s
-              (get_local $$a$1)
-              (i32.const 0)
-            )
-            (i32.const -1)
-            (i32.const 0)
-          )
-          (i32.const 1)
-        )
-      )
-    )
-    (set_local $$1$1
-      (i32.or
-        (i32.shr_s
-          (if
-            (i32.lt_s
-              (get_local $$a$1)
-              (i32.const 0)
-            )
-            (i32.const -1)
-            (i32.const 0)
-          )
-          (i32.const 31)
-        )
-        (i32.shl
-          (if
-            (i32.lt_s
-              (get_local $$a$1)
-              (i32.const 0)
-            )
-            (i32.const -1)
-            (i32.const 0)
-          )
-          (i32.const 1)
-        )
-      )
-    )
-    (set_local $$2$0
-      (i32.or
-        (i32.shr_s
-          (get_local $$b$1)
-          (i32.const 31)
-        )
-        (i32.shl
-          (if
-            (i32.lt_s
-              (get_local $$b$1)
-              (i32.const 0)
-            )
-            (i32.const -1)
-            (i32.const 0)
-          )
-          (i32.const 1)
-        )
-      )
-    )
-    (set_local $$2$1
-      (i32.or
-        (i32.shr_s
-          (if
-            (i32.lt_s
-              (get_local $$b$1)
-              (i32.const 0)
-            )
-            (i32.const -1)
-            (i32.const 0)
-          )
-          (i32.const 31)
-        )
-        (i32.shl
-          (if
-            (i32.lt_s
-              (get_local $$b$1)
-              (i32.const 0)
-            )
-            (i32.const -1)
-            (i32.const 0)
-          )
-          (i32.const 1)
-        )
-      )
-    )
+    (nop)
+    (nop)
+    (nop)
+    (nop)
     (nop)
     (nop)
     (call_import $___udivmoddi4
       (call_import $_i64Subtract
         (i32.xor
-          (get_local $$1$0)
+          (set_local $$1$0
+            (i32.or
+              (i32.shr_s
+                (get_local $$a$1)
+                (i32.const 31)
+              )
+              (i32.shl
+                (if
+                  (i32.lt_s
+                    (get_local $$a$1)
+                    (i32.const 0)
+                  )
+                  (i32.const -1)
+                  (i32.const 0)
+                )
+                (i32.const 1)
+              )
+            )
+          )
           (get_local $$a$0)
         )
         (i32.xor
-          (get_local $$1$1)
+          (set_local $$1$1
+            (i32.or
+              (i32.shr_s
+                (if
+                  (i32.lt_s
+                    (get_local $$a$1)
+                    (i32.const 0)
+                  )
+                  (i32.const -1)
+                  (i32.const 0)
+                )
+                (i32.const 31)
+              )
+              (i32.shl
+                (if
+                  (i32.lt_s
+                    (get_local $$a$1)
+                    (i32.const 0)
+                  )
+                  (i32.const -1)
+                  (i32.const 0)
+                )
+                (i32.const 1)
+              )
+            )
+          )
           (get_local $$a$1)
         )
         (get_local $$1$0)
@@ -386,11 +343,54 @@
       )
       (call_import $_i64Subtract
         (i32.xor
-          (get_local $$2$0)
+          (set_local $$2$0
+            (i32.or
+              (i32.shr_s
+                (get_local $$b$1)
+                (i32.const 31)
+              )
+              (i32.shl
+                (if
+                  (i32.lt_s
+                    (get_local $$b$1)
+                    (i32.const 0)
+                  )
+                  (i32.const -1)
+                  (i32.const 0)
+                )
+                (i32.const 1)
+              )
+            )
+          )
           (get_local $$b$0)
         )
         (i32.xor
-          (get_local $$2$1)
+          (set_local $$2$1
+            (i32.or
+              (i32.shr_s
+                (if
+                  (i32.lt_s
+                    (get_local $$b$1)
+                    (i32.const 0)
+                  )
+                  (i32.const -1)
+                  (i32.const 0)
+                )
+                (i32.const 31)
+              )
+              (i32.shl
+                (if
+                  (i32.lt_s
+                    (get_local $$b$1)
+                    (i32.const 0)
+                  )
+                  (i32.const -1)
+                  (i32.const 0)
+                )
+                (i32.const 1)
+              )
+            )
+          )
           (get_local $$b$1)
         )
         (get_local $$2$0)
