@@ -974,9 +974,13 @@ public:
   Name out, in;
   Expression *body;
 
-  void finalize() {
-    type = body->type; // loop might have a type, if the body ends in something that does not break
+  // set the type of a loop if you already know it
+  void finalize(WasmType type_) {
+    type = type_;
   }
+
+  // set the type of a loop based on its contents. this scans the loop, so it is not fast
+  void finalize();
 };
 
 class Break : public SpecificExpression<Expression::BreakId> {

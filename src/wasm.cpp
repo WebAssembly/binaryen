@@ -20,53 +20,52 @@
 
 namespace wasm {
 
-struct BlockTypeSeeker : public PostWalker<BlockTypeSeeker, Visitor<BlockTypeSeeker>> {
-  Block* target; // look for this one
+struct TypeSeeker : public PostWalker<TypeSeeker, Visitor<TypeSeeker>> {
+  Expression* target; // look for this one
+  Name targetName;
   std::vector<WasmType> types;
 
-  BlockTypeSeeker(Block* target) : target(target) {}
+  TypeSeeker(Expression* target, Name targetName) : target(target), targetName(targetName) {
+    Expression* temp = target;
+    walk(temp);
+  }
 
-  void visitBreak(Break *curr) {
-    if (curr->name == target->name) {
+  void visitBreak(Break* curr) {
+    if (curr->name == targetName) {
       types.push_back(curr->value ? curr->value->type : none);
     }
   }
 
-  void visitSwitch(Switch *curr) {
+  void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
-      if (name == target->name) types.push_back(curr->value ? curr->value->type : none);
+      if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
     }
   }
 
-  void visitBlock(Block *curr) {
+  void visitBlock(Block* curr) {
     if (curr == target) {
       if (curr->list.size() > 0) {
         types.push_back(curr->list.back()->type);
       } else {
         types.push_back(none);
       }
-    } else if (curr->name == target->name) {
+    } else if (curr->name == targetName) {
+      types.clear(); // ignore all breaks til now, they were captured by someone with the same name
+    }
+  }
+
+  void visitLoop(Loop* curr) {
+    if (curr == target) {
+      types.push_back(curr->body->type);
+    } else if (curr->in == targetName || curr->out == targetName) {
       types.clear(); // ignore all breaks til now, they were captured by someone with the same name
     }
   }
 };
 
-void Block::finalize() {
-  if (!name.is()) {
-    // nothing branches here, so this is easy
-    if (list.size() > 0) {
-      type = list.back()->type;
-    } else {
-      type = unreachable;
-    }
-    return;
-  }
-
-  BlockTypeSeeker seeker(this);
-  Expression* temp = this;
-  seeker.walk(temp);
-  type = unreachable;
-  for (auto other : seeker.types) {
+static WasmType mergeTypes(std::vector<WasmType>& types) {
+  WasmType type = unreachable;
+  for (auto other : types) {
     // once none, stop. it then indicates a poison value, that must not be consumed
     // and ignore unreachable
     if (type != none) {
@@ -81,6 +80,32 @@ void Block::finalize() {
       }
     }
   }
+  return type;
+}
+
+void Block::finalize() {
+  if (!name.is()) {
+    // nothing branches here, so this is easy
+    if (list.size() > 0) {
+      type = list.back()->type;
+    } else {
+      type = unreachable;
+    }
+    return;
+  }
+
+  TypeSeeker seeker(this, this->name);
+  type = mergeTypes(seeker.types);
+}
+
+void Loop::finalize() {
+  if (!out.is()) {
+    type = body->type;
+    return;
+  }
+
+  TypeSeeker seeker(this, this->out);
+  type = mergeTypes(seeker.types);
 }
 
 } // namespace wasm

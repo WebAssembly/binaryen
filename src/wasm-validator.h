@@ -56,9 +56,6 @@ public:
   }
   void visitLoop(Loop *curr) {
     if (curr->in.is()) {
-      LoopChildChecker childChecker(curr->in);
-      childChecker.walk(curr->body);
-      shouldBeTrue(childChecker.valid, curr, "loop must return none");
       breakTypes.erase(curr->in);
     }
     if (curr->out.is()) {
@@ -209,7 +206,13 @@ public:
 
   void visitReturn(Return* curr) {
     if (curr->value) {
-      returnType = curr->value->type;
+      if (returnType == unreachable) {
+        returnType = curr->value->type;
+      } else if (curr->value->type != unreachable && returnType != curr->value->type) {
+        returnType = none; // poison
+      }
+    } else {
+      returnType = none;
     }
   }
 
@@ -284,20 +287,6 @@ public:
   }
 
 private:
-
-  // the "in" label has a none type, since no one can receive its value. make sure no one breaks to it with a value.
-  struct LoopChildChecker : public PostWalker<LoopChildChecker, Visitor<LoopChildChecker>> {
-    Name in;
-    bool valid = true;
-
-    LoopChildChecker(Name in) : in(in) {}
-
-    void visitBreak(Break *curr) {
-      if (curr->name == in && curr->value) {
-        valid = false;
-      }
-    }
-  };
 
   // helpers
 
