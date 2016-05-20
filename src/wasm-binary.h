@@ -586,7 +586,7 @@ public:
   void mapLocals(Function* function) {
     for (Index i = 0; i < function->getNumParams(); i++) {
       size_t curr = mappedLocals.size();
-      mappedLocals[i] = toIndex(curr, mappedLocals.size());
+      mappedLocals[i] = toIndex(curr);
     }
     for (auto type : function->vars) {
       numLocalsByType[type]++;
@@ -702,7 +702,7 @@ public:
       // Create name => index mapping. 
       for (size_t i = 0; i < wasm->imports.size(); i++) {
         assert(mappedImports.count(wasm->imports[i]->name) == 0);
-        mappedImports[wasm->imports[i]->name] = toIndex(i, wasm->imports.size());
+        mappedImports[wasm->imports[i]->name] = toIndex(i);
       }    
     }
     assert(mappedImports.count(name));
@@ -715,7 +715,7 @@ public:
       // Create name => index mapping. 
       for (size_t i = 0; i < wasm->functions.size(); i++) {
         assert(mappedFunctions.count(wasm->functions[i]->name) == 0);
-        mappedFunctions[wasm->functions[i]->name] = toIndex(i, wasm->functions.size());
+        mappedFunctions[wasm->functions[i]->name] = toIndex(i);
       }    
     }
     assert(mappedFunctions.count(name));
@@ -861,7 +861,7 @@ public:
   Index getBreakIndex(Name name) {
     for (size_t i = breakStack.size(); i-- > 0;) {
       if (breakStack[i] == name) {
-        return toIndex(breakStack.size() - 1 - i, breakStack.size());
+        return toIndex(breakStack.size() - 1 - i);
       }
     }
     std::cerr << "bad break: " << name << std::endl;
