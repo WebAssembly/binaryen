@@ -1046,13 +1046,13 @@ private:
   Expression* makeLoop(Element& s) {
     auto ret = allocator.alloc<Loop>();
     size_t i = 1;
-    if (s[i]->isStr() && s[i+1]->isStr()) { // out can only be named if both are
+    if (s.size() > i + 1 && s[i]->isStr() && s[i + 1]->isStr()) { // out can only be named if both are
       ret->out = s[i]->str();
       i++;
     } else {
       ret->out = getPrefixedName("loop-out");
     }
-    if (s[i]->isStr()) {
+    if (s.size() > i && s[i]->isStr()) {
       ret->in = s[i]->str();
       i++;
     } else {
