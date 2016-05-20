@@ -1002,6 +1002,10 @@ class S2WasmBuilder {
         abort_on("function element");
       }
     }
+    if (!estack.empty()) {
+      addToBlock(estack.back());
+      estack.pop_back();
+    }
     // finishing touches
     bstack.back()->cast<Block>()->finalize();
     bstack.pop_back(); // remove the base block for the function body
