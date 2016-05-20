@@ -91,8 +91,8 @@ struct Name : public cashew::IString {
 // An index in a wasm module
 typedef uint32_t Index;
 
-inline Index toIndex(size_t index, size_t max) {
-	//assert(index < max);
+inline Index toIndex(size_t index) {
+	assert(index <= std::numeric_limits<Index>::max());
     return (Index)index;
 }
 
