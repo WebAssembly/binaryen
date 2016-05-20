@@ -206,7 +206,13 @@ public:
 
   void visitReturn(Return* curr) {
     if (curr->value) {
-      returnType = curr->value->type;
+      if (returnType == unreachable) {
+        returnType = curr->value->type;
+      } else if (curr->value->type != unreachable && returnType != curr->value->type) {
+        returnType = none; // poison
+      }
+    } else {
+      returnType = none;
     }
   }
 
