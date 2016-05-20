@@ -1237,7 +1237,7 @@ public:
     return localIndices[name];
   }
   Index getVarIndexBase() {
-    return (Index)params.size();
+    return toIndex(params.size());
   }
   WasmType getLocalType(Index index) {
     if (isParam(index)) {
