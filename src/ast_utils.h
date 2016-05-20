@@ -53,9 +53,11 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   EffectAnalyzer() {}
   EffectAnalyzer(Expression *ast) {
     walk(ast);
+    // if we are left with breaks, they are external
+    if (breakNames.size() > 0) branches = true;
   }
 
-  bool branches = false;
+  bool branches = false; // branches out of this expression
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
@@ -101,9 +103,25 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
     return hasAnything();
   }
 
-  void visitIf(If *curr) { branches = true; }
-  void visitBreak(Break *curr) { branches = true; }
-  void visitSwitch(Switch *curr) { branches = true; }
+  std::set<Name> breakNames;
+
+  void visitBreak(Break *curr) {
+    breakNames.insert(curr->name);
+  }
+  void visitSwitch(Switch *curr) {
+    for (auto name : curr->targets) {
+      breakNames.insert(name);
+    }
+    breakNames.insert(curr->default_);
+  }
+  void visitBlock(Block* curr) {
+    if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
+  }
+  void visitLoop(Loop* curr) {
+    if (curr->in.is()) breakNames.erase(curr->in); // these were internal breaks
+    if (curr->out.is()) breakNames.erase(curr->out); // these were internal breaks
+  }
+
   void visitCall(Call *curr) { calls = true; }
   void visitCallImport(CallImport *curr) { calls = true; }
   void visitCallIndirect(CallIndirect *curr) { calls = true; }

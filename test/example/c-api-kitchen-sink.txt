@@ -642,14 +642,10 @@ optimized:
     (nop)
   )
   (func $loop (type $v)
-    (loop $shape$0$break $shape$0$continue
-      (br $shape$0$continue)
-    )
+    (nop)
   )
   (func $loop-plus-code (type $v)
-    (loop $shape$0$break $shape$0$continue
-      (br $shape$0$continue)
-    )
+    (nop)
   )
   (func $split (type $v)
     (nop)
@@ -667,28 +663,10 @@ optimized:
     (nop)
   )
   (func $loop-tail (type $v)
-    (loop $shape$0$break $shape$0$continue
-      (if
-        (i32.const 10)
-        (br $shape$0$continue)
-        (br $shape$0$break)
-      )
-    )
+    (nop)
   )
   (func $nontrivial-loop-plus-phi-to-head (type $v)
-    (loop $shape$1$break $shape$1$continue
-      (if
-        (i32.eqz
-          (i32.const -2)
-        )
-        (br $shape$1$break)
-      )
-      (if
-        (i32.const -6)
-        (br $shape$1$break)
-        (br $shape$1$continue)
-      )
-    )
+    (nop)
   )
 )
 module loaded from binary form:

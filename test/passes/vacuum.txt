@@ -1,27 +1,7 @@
 (module
   (memory 256 256)
   (func $b
-    (block $waka1
-      (br $waka1)
-    )
-    (block $waka2
-      (br $waka2)
-    )
-    (block $waka3
-      (br_table $waka3 $waka3 $waka3
-        (i32.const 57)
-      )
-    )
-    (if
-      (i32.eqz
-        (i32.const 100)
-      )
-      (i32.const 101)
-    )
-    (if
-      (i32.const 102)
-      (i32.const 103)
-    )
+    (nop)
   )
   (func $l
     (local $x i32)
