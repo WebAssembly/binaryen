@@ -1181,8 +1181,8 @@ public:
     // read sections until the end
     while (more()) {
       auto nameSize = getU32LEB();
-	  uint32_t sectionSize;
-	  size_t before;
+      uint32_t sectionSize;
+      size_t before;
       auto match = [&](const char* name) {
         for (size_t i = 0; i < nameSize; i++) {
           if (pos + i >= input.size()) return false;
