@@ -1031,6 +1031,7 @@ private:
   }
 
   Expression* makeMaybeBlock(Element& s, size_t i, size_t stopAt=-1) {
+    if (s.size() == i) return allocator.alloc<Nop>();
     if (s.size() == i+1) return parseExpression(s[i]);
     auto ret = allocator.alloc<Block>();
     for (; i < s.size() && i < stopAt; i++) {
