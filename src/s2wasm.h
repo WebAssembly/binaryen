@@ -485,6 +485,12 @@ class S2WasmBuilder {
 
     mustMatch(":");
 
+    if (match(".Lfunc_begin")) {
+      s = strchr(s, '\n');
+      s++;
+      skipWhitespace();
+    }
+
     unsigned nextId = 0;
     auto getNextId = [&nextId]() {
       return cashew::IString(std::to_string(nextId++).c_str(), false);
@@ -987,15 +993,10 @@ class S2WasmBuilder {
         addToBlock(builder.makeReturn(*s == '$' ? getInput() : nullptr));
       } else if (match("unreachable")) {
         addToBlock(allocator->alloc<Unreachable>());
-      } else if (match("memory_size")) {
+      } else if (match("current_memory")) {
         makeHost(CurrentMemory);
       } else if (match("grow_memory")) {
         makeHost1(GrowMemory);
-      } else if (match(".Lfunc_end")) {
-        s = strchr(s, '\n');
-        s++;
-        s = strchr(s, '\n');
-        break; // the function is done
       } else if (match(".endfunc")) {
         break; // the function is done
       } else {

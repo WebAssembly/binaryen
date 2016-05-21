@@ -14,7 +14,6 @@ f1:
 	.type	f2,@function
 f2:
 	unreachable
-	return
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
@@ -23,7 +22,6 @@ f2:
 	.type	f3,@function
 f3:
 	unreachable
-	return
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3

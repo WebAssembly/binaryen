@@ -9,6 +9,7 @@ _Z6reporti:                             # @_Z6reporti
 	i32.const	$push1=, .str
 	call    	emscripten_asm_const@FUNCTION, $pop1
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	_Z6reporti, .Lfunc_end0-_Z6reporti
 
@@ -80,6 +81,7 @@ main:                                   # @main
 	i32.const	$9=, 0
 	i32.store	$12=, 0($9), $12
 	return  	$pop17
+	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 

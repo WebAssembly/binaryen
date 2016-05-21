@@ -58,6 +58,7 @@ def main(args):
                      'vtable',     # external global symbol
                      'offset-folding', # external global symbol
                      'address-offsets', # external global symbol
+                     'memory-addr64', # wasm64
                      ]
         if name_noext in BLACKLIST:
           continue

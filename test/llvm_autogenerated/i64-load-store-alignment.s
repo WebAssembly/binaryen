@@ -60,7 +60,7 @@ ldi64:
 ldi64_a16:
 	.param  	i32
 	.result 	i64
-	i64.load	$push0=, 0($0):p2align=3
+	i64.load	$push0=, 0($0)
 	return  	$pop0
 	.endfunc
 .Lfunc_end5:
@@ -82,7 +82,7 @@ ldi8_a1:
 ldi8_a2:
 	.param  	i32
 	.result 	i64
-	i64.load8_u	$push0=, 0($0):p2align=1
+	i64.load8_u	$push0=, 0($0)
 	return  	$pop0
 	.endfunc
 .Lfunc_end7:
@@ -115,7 +115,7 @@ ldi16_a2:
 ldi16_a4:
 	.param  	i32
 	.result 	i64
-	i64.load16_u	$push0=, 0($0):p2align=2
+	i64.load16_u	$push0=, 0($0)
 	return  	$pop0
 	.endfunc
 .Lfunc_end10:
@@ -159,7 +159,7 @@ ldi32_a4:
 ldi32_a8:
 	.param  	i32
 	.result 	i64
-	i64.load32_u	$push0=, 0($0):p2align=3
+	i64.load32_u	$push0=, 0($0)
 	return  	$pop0
 	.endfunc
 .Lfunc_end14:
@@ -219,7 +219,7 @@ sti64:
 	.type	sti64_a16,@function
 sti64_a16:
 	.param  	i32, i64
-	i64.store	$drop=, 0($0):p2align=3, $1
+	i64.store	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end20:
@@ -239,7 +239,7 @@ sti8_a1:
 	.type	sti8_a2,@function
 sti8_a2:
 	.param  	i32, i64
-	i64.store8	$drop=, 0($0):p2align=1, $1
+	i64.store8	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end22:
@@ -269,7 +269,7 @@ sti16_a2:
 	.type	sti16_a4,@function
 sti16_a4:
 	.param  	i32, i64
-	i64.store16	$drop=, 0($0):p2align=2, $1
+	i64.store16	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end25:
@@ -309,7 +309,7 @@ sti32_a4:
 	.type	sti32_a8,@function
 sti32_a8:
 	.param  	i32, i64
-	i64.store32	$drop=, 0($0):p2align=3, $1
+	i64.store32	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end29:

@@ -66,25 +66,26 @@ set_no:
 	.globl	frame_index
 	.type	frame_index,@function
 frame_index:
-	.local  	i32, i32, i32, i32, i32
-	i32.const	$0=, __stack_pointer
-	i32.load	$0=, 0($0)
-	i32.const	$1=, 4096
-	i32.sub 	$4=, $0, $1
-	i32.const	$1=, __stack_pointer
-	i32.store	$4=, 0($1), $4
-	i32.const	$push1=, 0
-	i32.const	$push0=, 1024
-	i32.const	$3=, 2048
-	i32.add 	$3=, $4, $3
-	i32.call	$drop=, memset@FUNCTION, $3, $pop1, $pop0
-	i32.const	$push3=, 0
-	i32.const	$push2=, 1024
-	i32.call	$drop=, memset@FUNCTION, $4, $pop3, $pop2
-	i32.const	$2=, 4096
-	i32.add 	$4=, $4, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
+	.local  	i32
+	i32.const	$push6=, __stack_pointer
+	i32.const	$push3=, __stack_pointer
+	i32.load	$push4=, 0($pop3)
+	i32.const	$push5=, 4096
+	i32.sub 	$push12=, $pop4, $pop5
+	i32.store	$push16=, 0($pop6), $pop12
+	tee_local	$push15=, $0=, $pop16
+	i32.const	$push10=, 2048
+	i32.add 	$push11=, $pop15, $pop10
+	i32.const	$push2=, 0
+	i32.const	$push1=, 1024
+	i32.call	$drop=, memset@FUNCTION, $pop11, $pop2, $pop1
+	i32.const	$push9=, __stack_pointer
+	i32.const	$push14=, 0
+	i32.const	$push13=, 1024
+	i32.call	$push0=, memset@FUNCTION, $0, $pop14, $pop13
+	i32.const	$push7=, 4096
+	i32.add 	$push8=, $pop0, $pop7
+	i32.store	$drop=, 0($pop9), $pop8
 	return
 	.endfunc
 .Lfunc_end6:
@@ -97,20 +98,53 @@ drop_result:
 	.result 	i32
 	block
 	block
-	i32.const	$push0=, 0
-	i32.eq  	$push1=, $3, $pop0
-	br_if   	0, $pop1
+	block
+	i32.eqz 	$push0=, $3
+	br_if   	0, $pop0
 	i32.call	$0=, def@FUNCTION
 	br      	1
 .LBB7_2:
 	end_block
-	br_if   	0, $4
-	i32.call	$drop=, memset@FUNCTION, $0, $1, $2
+	i32.eqz 	$push1=, $4
+	br_if   	1, $pop1
+.LBB7_3:
+	end_block
+	call    	block_tail_dup@FUNCTION
+	return  	$0
 .LBB7_4:
 	end_block
+	i32.call	$drop=, memset@FUNCTION, $0, $1, $2
+	call    	block_tail_dup@FUNCTION
 	return  	$0
 	.endfunc
 .Lfunc_end7:
 	.size	drop_result, .Lfunc_end7-drop_result
+
+	.globl	tail_dup_to_reuse_result
+	.type	tail_dup_to_reuse_result,@function
+tail_dup_to_reuse_result:
+	.param  	i32, i32, i32, i32, i32
+	.result 	i32
+	block
+	block
+	block
+	i32.eqz 	$push1=, $3
+	br_if   	0, $pop1
+	i32.call	$0=, def@FUNCTION
+	br      	1
+.LBB8_2:
+	end_block
+	i32.eqz 	$push2=, $4
+	br_if   	1, $pop2
+.LBB8_3:
+	end_block
+	return  	$0
+.LBB8_4:
+	end_block
+	i32.call	$push0=, memset@FUNCTION, $0, $1, $2
+	return  	$pop0
+	.endfunc
+.Lfunc_end8:
+	.size	tail_dup_to_reuse_result, .Lfunc_end8-tail_dup_to_reuse_result
 
 

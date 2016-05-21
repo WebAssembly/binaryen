@@ -21,6 +21,11 @@
   (export "ctz32" $ctz32)
   (export "ctz32_zero_undef" $ctz32_zero_undef)
   (export "popcnt32" $popcnt32)
+  (export "eqz32" $eqz32)
+  (export "rotl" $rotl)
+  (export "masked_rotl" $masked_rotl)
+  (export "rotr" $rotr)
+  (export "masked_rotr" $masked_rotr)
   (func $add32 (param $0 i32) (param $1 i32) (result i32)
     (return
       (i32.add
@@ -157,6 +162,45 @@
     (return
       (i32.popcnt
         (get_local $0)
+      )
+    )
+  )
+  (func $eqz32 (param $0 i32) (result i32)
+    (return
+      (i32.eqz
+        (get_local $0)
+      )
+    )
+  )
+  (func $rotl (param $0 i32) (param $1 i32) (result i32)
+    (return
+      (i32.rotl
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $masked_rotl (param $0 i32) (param $1 i32) (result i32)
+    (return
+      (i32.rotl
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $rotr (param $0 i32) (param $1 i32) (result i32)
+    (return
+      (i32.rotr
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $masked_rotr (param $0 i32) (param $1 i32) (result i32)
+    (return
+      (i32.rotr
+        (get_local $0)
+        (get_local $1)
       )
     )
   )

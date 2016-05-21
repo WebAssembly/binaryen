@@ -4,6 +4,7 @@
 	.type	foo,@function
 foo:
 	return
+	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
 
@@ -14,6 +15,7 @@ bar:
 	.param  	i32
 	.result 	i32
 	return  	$0
+	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
 
@@ -25,6 +27,7 @@ qux:
 	.result 	f64
 	f64.add 	$push0=, $0, $1
 	return  	$pop0
+	.endfunc
 .Lfunc_end2:
 	.size	qux, .Lfunc_end2-qux
 

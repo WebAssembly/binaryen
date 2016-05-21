@@ -3,8 +3,10 @@
     (segment 4 "\10\04\00\00")
   )
   (export "memory" memory)
+  (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+  (import $block_tail_dup "env" "block_tail_dup")
   (import $def "env" "def" (result i32))
   (import $memcpy "env" "memcpy" (param i32 i32 i32) (result i32))
   (import $memmove "env" "memmove" (param i32 i32 i32) (result i32))
@@ -17,6 +19,7 @@
   (export "set_no" $set_no)
   (export "frame_index" $frame_index)
   (export "drop_result" $drop_result)
+  (export "tail_dup_to_reuse_result" $tail_dup_to_reuse_result)
   (func $copy_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
       (call_import $memcpy
@@ -70,71 +73,33 @@
   )
   (func $frame_index
     (local $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (set_local $0
-      (i32.const 4)
-    )
-    (set_local $0
-      (i32.load
-        (get_local $0)
-      )
-    )
-    (set_local $1
-      (i32.const 4096)
-    )
-    (set_local $4
-      (i32.sub
-        (get_local $0)
-        (get_local $1)
-      )
-    )
-    (set_local $1
-      (i32.const 4)
-    )
-    (set_local $4
-      (i32.store
-        (get_local $1)
-        (get_local $4)
-      )
-    )
-    (set_local $3
-      (i32.const 2048)
-    )
-    (set_local $3
-      (i32.add
-        (get_local $4)
-        (get_local $3)
-      )
-    )
     (call_import $memset
-      (get_local $3)
+      (i32.add
+        (set_local $0
+          (i32.store
+            (i32.const 4)
+            (i32.sub
+              (i32.load
+                (i32.const 4)
+              )
+              (i32.const 4096)
+            )
+          )
+        )
+        (i32.const 2048)
+      )
       (i32.const 0)
       (i32.const 1024)
     )
-    (call_import $memset
-      (get_local $4)
-      (i32.const 0)
-      (i32.const 1024)
-    )
-    (set_local $2
-      (i32.const 4096)
-    )
-    (set_local $4
-      (i32.add
-        (get_local $4)
-        (get_local $2)
-      )
-    )
-    (set_local $2
+    (i32.store
       (i32.const 4)
-    )
-    (set_local $4
-      (i32.store
-        (get_local $2)
-        (get_local $4)
+      (i32.add
+        (call_import $memset
+          (get_local $0)
+          (i32.const 0)
+          (i32.const 1024)
+        )
+        (i32.const 4096)
       )
     )
     (return)
@@ -142,28 +107,68 @@
   (func $drop_result (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
     (block $label$0
       (block $label$1
-        (br_if $label$1
-          (i32.eq
-            (get_local $3)
-            (i32.const 0)
+        (block $label$2
+          (br_if $label$2
+            (i32.eqz
+              (get_local $3)
+            )
+          )
+          (set_local $0
+            (call_import $def)
+          )
+          (br $label$1)
+        )
+        (br_if $label$0
+          (i32.eqz
+            (get_local $4)
           )
         )
-        (set_local $0
-          (call_import $def)
+      )
+      (call_import $block_tail_dup)
+      (return
+        (get_local $0)
+      )
+    )
+    (call_import $memset
+      (get_local $0)
+      (get_local $1)
+      (get_local $2)
+    )
+    (call_import $block_tail_dup)
+    (return
+      (get_local $0)
+    )
+  )
+  (func $tail_dup_to_reuse_result (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
+    (block $label$0
+      (block $label$1
+        (block $label$2
+          (br_if $label$2
+            (i32.eqz
+              (get_local $3)
+            )
+          )
+          (set_local $0
+            (call_import $def)
+          )
+          (br $label$1)
         )
-        (br $label$0)
+        (br_if $label$0
+          (i32.eqz
+            (get_local $4)
+          )
+        )
       )
-      (br_if $label$0
-        (get_local $4)
+      (return
+        (get_local $0)
       )
+    )
+    (return
       (call_import $memset
         (get_local $0)
         (get_local $1)
         (get_local $2)
       )
-    )
-    (return
-      (get_local $0)
     )
   )
 )

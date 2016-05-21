@@ -7,5 +7,6 @@ main:                                   # @main
 	.result 	i32
 # BB#0:
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
