@@ -10,11 +10,9 @@ enum WasmType {
 interface Literal {
   void Literal(double x);
   attribute WasmType type;
-  float getf32();
   long geti32();
+  float getf32();
   double getf64();
-  long geti64Low();
-  long geti64High();
 };
 
 interface I32Literal {
@@ -31,6 +29,8 @@ F32Literal implements Literal;
 
 interface I64Literal {
   void I64Literal(long x, long y);
+  long geti64Low();
+  long geti64High();
 };
 
 I64Literal implements Literal;

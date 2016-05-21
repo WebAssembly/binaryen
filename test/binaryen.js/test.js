@@ -40,6 +40,6 @@ var args = new Binaryen.LiteralList();
 args.push_back(new Binaryen.I64Literal(40, 5145));
 args.push_back(new Binaryen.I64Literal(-2, 5144));
 
-var result = instance.callExport(name, args);
+var result = Binaryen.castObject(instance.callExport(name, args), Binaryen.I64Literal);
 console.log('answer is ' + (result.geti64Low() + result.geti64High()) + '.');
 

@@ -20,14 +20,27 @@ class I32Literal : public Literal {
 public:
   I32Literal(int32_t  init) : Literal(init) {}
 };
+
+class I64Literal : public Literal {
+public:
+  I64Literal(int64_t  init) : Literal(init) {}
+  I64Literal(int32_t  low, int32_t  high) : Literal(((uint64_t) high) << 32 | (uint32_t) low) {}
+  
+  int32_t geti64Low() {
+    assert(type == WasmType::i64);
+    return geti64() & 0xFFFFFFFF;
+  }
+  int32_t geti64High() {
+    assert(type == WasmType::i64);
+    return geti64() >> 32;
+  }
+};
+
 class F32Literal : public Literal {
 public:
   F32Literal(float  init) : Literal(init) {}
 };
-class I64Literal : public Literal {
-public:
-  I64Literal(int32_t  low, int32_t  high) : Literal(((uint64_t) high) << 32 | (uint32_t) low) {}
-};
+
 class F64Literal : public Literal {
 public:
   F64Literal(double  init) : Literal(init) {}
