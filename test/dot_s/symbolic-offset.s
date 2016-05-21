@@ -6,6 +6,7 @@ f:
         .param          i32
         i32.store       $drop=, m+4($0), $1
         return
+        .endfunc
 .Lfunc_end0:
         .size   f, .Lfunc_end0-f
 

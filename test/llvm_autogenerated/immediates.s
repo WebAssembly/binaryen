@@ -160,6 +160,26 @@ neginf_f32:
 .Lfunc_end15:
 	.size	neginf_f32, .Lfunc_end15-neginf_f32
 
+	.globl	custom_nan_f32
+	.type	custom_nan_f32,@function
+custom_nan_f32:
+	.result 	f32
+	f32.const	$push0=, -nan:0x6bcdef
+	return  	$pop0
+	.endfunc
+.Lfunc_end16:
+	.size	custom_nan_f32, .Lfunc_end16-custom_nan_f32
+
+	.globl	custom_nans_f32
+	.type	custom_nans_f32,@function
+custom_nans_f32:
+	.result 	f32
+	f32.const	$push0=, -nan:0x6bcdef
+	return  	$pop0
+	.endfunc
+.Lfunc_end17:
+	.size	custom_nans_f32, .Lfunc_end17-custom_nans_f32
+
 	.globl	negzero_f64
 	.type	negzero_f64,@function
 negzero_f64:
@@ -167,8 +187,8 @@ negzero_f64:
 	f64.const	$push0=, -0x0p0
 	return  	$pop0
 	.endfunc
-.Lfunc_end16:
-	.size	negzero_f64, .Lfunc_end16-negzero_f64
+.Lfunc_end18:
+	.size	negzero_f64, .Lfunc_end18-negzero_f64
 
 	.globl	zero_f64
 	.type	zero_f64,@function
@@ -177,8 +197,8 @@ zero_f64:
 	f64.const	$push0=, 0x0p0
 	return  	$pop0
 	.endfunc
-.Lfunc_end17:
-	.size	zero_f64, .Lfunc_end17-zero_f64
+.Lfunc_end19:
+	.size	zero_f64, .Lfunc_end19-zero_f64
 
 	.globl	one_f64
 	.type	one_f64,@function
@@ -187,8 +207,8 @@ one_f64:
 	f64.const	$push0=, 0x1p0
 	return  	$pop0
 	.endfunc
-.Lfunc_end18:
-	.size	one_f64, .Lfunc_end18-one_f64
+.Lfunc_end20:
+	.size	one_f64, .Lfunc_end20-one_f64
 
 	.globl	two_f64
 	.type	two_f64,@function
@@ -197,8 +217,8 @@ two_f64:
 	f64.const	$push0=, 0x1p1
 	return  	$pop0
 	.endfunc
-.Lfunc_end19:
-	.size	two_f64, .Lfunc_end19-two_f64
+.Lfunc_end21:
+	.size	two_f64, .Lfunc_end21-two_f64
 
 	.globl	nan_f64
 	.type	nan_f64,@function
@@ -207,8 +227,8 @@ nan_f64:
 	f64.const	$push0=, nan
 	return  	$pop0
 	.endfunc
-.Lfunc_end20:
-	.size	nan_f64, .Lfunc_end20-nan_f64
+.Lfunc_end22:
+	.size	nan_f64, .Lfunc_end22-nan_f64
 
 	.globl	negnan_f64
 	.type	negnan_f64,@function
@@ -217,8 +237,8 @@ negnan_f64:
 	f64.const	$push0=, -nan
 	return  	$pop0
 	.endfunc
-.Lfunc_end21:
-	.size	negnan_f64, .Lfunc_end21-negnan_f64
+.Lfunc_end23:
+	.size	negnan_f64, .Lfunc_end23-negnan_f64
 
 	.globl	inf_f64
 	.type	inf_f64,@function
@@ -227,8 +247,8 @@ inf_f64:
 	f64.const	$push0=, infinity
 	return  	$pop0
 	.endfunc
-.Lfunc_end22:
-	.size	inf_f64, .Lfunc_end22-inf_f64
+.Lfunc_end24:
+	.size	inf_f64, .Lfunc_end24-inf_f64
 
 	.globl	neginf_f64
 	.type	neginf_f64,@function
@@ -237,7 +257,27 @@ neginf_f64:
 	f64.const	$push0=, -infinity
 	return  	$pop0
 	.endfunc
-.Lfunc_end23:
-	.size	neginf_f64, .Lfunc_end23-neginf_f64
+.Lfunc_end25:
+	.size	neginf_f64, .Lfunc_end25-neginf_f64
+
+	.globl	custom_nan_f64
+	.type	custom_nan_f64,@function
+custom_nan_f64:
+	.result 	f64
+	f64.const	$push0=, -nan:0xabcdef0123456
+	return  	$pop0
+	.endfunc
+.Lfunc_end26:
+	.size	custom_nan_f64, .Lfunc_end26-custom_nan_f64
+
+	.globl	custom_nans_f64
+	.type	custom_nans_f64,@function
+custom_nans_f64:
+	.result 	f64
+	f64.const	$push0=, -nan:0x2bcdef0123456
+	return  	$pop0
+	.endfunc
+.Lfunc_end27:
+	.size	custom_nans_f64, .Lfunc_end27-custom_nans_f64
 
 

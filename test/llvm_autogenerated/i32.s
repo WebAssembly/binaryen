@@ -198,4 +198,59 @@ popcnt32:
 .Lfunc_end17:
 	.size	popcnt32, .Lfunc_end17-popcnt32
 
+	.globl	eqz32
+	.type	eqz32,@function
+eqz32:
+	.param  	i32
+	.result 	i32
+	i32.eqz 	$push0=, $0
+	return  	$pop0
+	.endfunc
+.Lfunc_end18:
+	.size	eqz32, .Lfunc_end18-eqz32
+
+	.globl	rotl
+	.type	rotl,@function
+rotl:
+	.param  	i32, i32
+	.result 	i32
+	i32.rotl	$push0=, $0, $1
+	return  	$pop0
+	.endfunc
+.Lfunc_end19:
+	.size	rotl, .Lfunc_end19-rotl
+
+	.globl	masked_rotl
+	.type	masked_rotl,@function
+masked_rotl:
+	.param  	i32, i32
+	.result 	i32
+	i32.rotl	$push0=, $0, $1
+	return  	$pop0
+	.endfunc
+.Lfunc_end20:
+	.size	masked_rotl, .Lfunc_end20-masked_rotl
+
+	.globl	rotr
+	.type	rotr,@function
+rotr:
+	.param  	i32, i32
+	.result 	i32
+	i32.rotr	$push0=, $0, $1
+	return  	$pop0
+	.endfunc
+.Lfunc_end21:
+	.size	rotr, .Lfunc_end21-rotr
+
+	.globl	masked_rotr
+	.type	masked_rotr,@function
+masked_rotr:
+	.param  	i32, i32
+	.result 	i32
+	i32.rotr	$push0=, $0, $1
+	return  	$pop0
+	.endfunc
+.Lfunc_end22:
+	.size	masked_rotr, .Lfunc_end22-masked_rotr
+
 

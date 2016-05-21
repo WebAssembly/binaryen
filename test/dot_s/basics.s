@@ -51,6 +51,7 @@ main:                                   # @main
 	i32.const	$drop=, main@FUNCTION # just take address for testing
 	end_block
 	return  	$0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 

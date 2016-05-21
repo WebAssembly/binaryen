@@ -14,11 +14,9 @@
   )
   (func $f2
     (unreachable)
-    (return)
   )
   (func $f3
     (unreachable)
-    (return)
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

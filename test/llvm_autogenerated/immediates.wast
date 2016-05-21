@@ -19,6 +19,8 @@
   (export "negnan_f32" $negnan_f32)
   (export "inf_f32" $inf_f32)
   (export "neginf_f32" $neginf_f32)
+  (export "custom_nan_f32" $custom_nan_f32)
+  (export "custom_nans_f32" $custom_nans_f32)
   (export "negzero_f64" $negzero_f64)
   (export "zero_f64" $zero_f64)
   (export "one_f64" $one_f64)
@@ -27,6 +29,8 @@
   (export "negnan_f64" $negnan_f64)
   (export "inf_f64" $inf_f64)
   (export "neginf_f64" $neginf_f64)
+  (export "custom_nan_f64" $custom_nan_f64)
+  (export "custom_nans_f64" $custom_nans_f64)
   (func $zero_i32 (result i32)
     (return
       (i32.const 0)
@@ -107,6 +111,16 @@
       (f32.const -infinity)
     )
   )
+  (func $custom_nan_f32 (result f32)
+    (return
+      (f32.const -nan:0x6bcdef)
+    )
+  )
+  (func $custom_nans_f32 (result f32)
+    (return
+      (f32.const -nan:0x6bcdef)
+    )
+  )
   (func $negzero_f64 (result f64)
     (return
       (f64.const -0)
@@ -145,6 +159,16 @@
   (func $neginf_f64 (result f64)
     (return
       (f64.const -infinity)
+    )
+  )
+  (func $custom_nan_f64 (result f64)
+    (return
+      (f64.const -nan:0xabcdef0123456)
+    )
+  )
+  (func $custom_nans_f64 (result f64)
+    (return
+      (f64.const -nan:0x2bcdef0123456)
     )
   )
 )

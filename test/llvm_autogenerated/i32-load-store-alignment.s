@@ -49,7 +49,7 @@ ldi32:
 ldi32_a8:
 	.param  	i32
 	.result 	i32
-	i32.load	$push0=, 0($0):p2align=3
+	i32.load	$push0=, 0($0)
 	return  	$pop0
 	.endfunc
 .Lfunc_end4:
@@ -71,7 +71,7 @@ ldi8_a1:
 ldi8_a2:
 	.param  	i32
 	.result 	i32
-	i32.load8_u	$push0=, 0($0):p2align=1
+	i32.load8_u	$push0=, 0($0)
 	return  	$pop0
 	.endfunc
 .Lfunc_end6:
@@ -104,7 +104,7 @@ ldi16_a2:
 ldi16_a4:
 	.param  	i32
 	.result 	i32
-	i32.load16_u	$push0=, 0($0):p2align=2
+	i32.load16_u	$push0=, 0($0)
 	return  	$pop0
 	.endfunc
 .Lfunc_end9:
@@ -154,7 +154,7 @@ sti32:
 	.type	sti32_a8,@function
 sti32_a8:
 	.param  	i32, i32
-	i32.store	$drop=, 0($0):p2align=3, $1
+	i32.store	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end14:
@@ -174,7 +174,7 @@ sti8_a1:
 	.type	sti8_a2,@function
 sti8_a2:
 	.param  	i32, i32
-	i32.store8	$drop=, 0($0):p2align=1, $1
+	i32.store8	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end16:
@@ -204,7 +204,7 @@ sti16_a2:
 	.type	sti16_a4,@function
 sti16_a4:
 	.param  	i32, i32
-	i32.store16	$drop=, 0($0):p2align=2, $1
+	i32.store16	$drop=, 0($0), $1
 	return
 	.endfunc
 .Lfunc_end19:

@@ -21,6 +21,11 @@
   (export "ctz64" $ctz64)
   (export "ctz64_zero_undef" $ctz64_zero_undef)
   (export "popcnt64" $popcnt64)
+  (export "eqz64" $eqz64)
+  (export "rotl" $rotl)
+  (export "masked_rotl" $masked_rotl)
+  (export "rotr" $rotr)
+  (export "masked_rotr" $masked_rotr)
   (func $add64 (param $0 i64) (param $1 i64) (result i64)
     (return
       (i64.add
@@ -157,6 +162,45 @@
     (return
       (i64.popcnt
         (get_local $0)
+      )
+    )
+  )
+  (func $eqz64 (param $0 i64) (result i32)
+    (return
+      (i64.eqz
+        (get_local $0)
+      )
+    )
+  )
+  (func $rotl (param $0 i64) (param $1 i64) (result i64)
+    (return
+      (i64.rotl
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $masked_rotl (param $0 i64) (param $1 i64) (result i64)
+    (return
+      (i64.rotl
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $rotr (param $0 i64) (param $1 i64) (result i64)
+    (return
+      (i64.rotr
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $masked_rotr (param $0 i64) (param $1 i64) (result i64)
+    (return
+      (i64.rotr
+        (get_local $0)
+        (get_local $1)
       )
     )
   )

@@ -28,12 +28,11 @@
   (func $f4 (param $0 i32) (result i32)
     (block $label$0
       (br_if $label$0
-        (i32.eq
+        (i32.eqz
           (i32.and
             (get_local $0)
             (i32.const 1)
           )
-          (i32.const 0)
         )
       )
       (return

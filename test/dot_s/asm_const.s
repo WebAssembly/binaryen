@@ -9,6 +9,7 @@ main:                                   # @main
 	call    	emscripten_asm_const@FUNCTION, $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 

@@ -14,27 +14,27 @@ bar32:
 	block
 	block
 	block
-	br_table	$0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
+	br_table 	$0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
 .LBB0_2:
 	end_block
 	call    	foo0@FUNCTION
-	br      	5
+	return
 .LBB0_3:
 	end_block
 	call    	foo1@FUNCTION
-	br      	4
+	return
 .LBB0_4:
 	end_block
 	call    	foo2@FUNCTION
-	br      	3
+	return
 .LBB0_5:
 	end_block
 	call    	foo3@FUNCTION
-	br      	2
+	return
 .LBB0_6:
 	end_block
 	call    	foo4@FUNCTION
-	br      	1
+	return
 .LBB0_7:
 	end_block
 	call    	foo5@FUNCTION
@@ -60,27 +60,27 @@ bar64:
 	block
 	block
 	i32.wrap/i64	$push0=, $0
-	br_table	$pop0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
+	br_table 	$pop0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
 .LBB1_2:
 	end_block
 	call    	foo0@FUNCTION
-	br      	5
+	return
 .LBB1_3:
 	end_block
 	call    	foo1@FUNCTION
-	br      	4
+	return
 .LBB1_4:
 	end_block
 	call    	foo2@FUNCTION
-	br      	3
+	return
 .LBB1_5:
 	end_block
 	call    	foo3@FUNCTION
-	br      	2
+	return
 .LBB1_6:
 	end_block
 	call    	foo4@FUNCTION
-	br      	1
+	return
 .LBB1_7:
 	end_block
 	call    	foo5@FUNCTION

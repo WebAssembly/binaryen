@@ -7,6 +7,7 @@ main:                                   # @main
 # BB#0:
 	i32.const	$push0=, 5
 	return  	$pop0
+	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
 

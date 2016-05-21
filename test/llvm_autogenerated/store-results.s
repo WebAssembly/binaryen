@@ -5,9 +5,9 @@
 single_block:
 	.param  	i32
 	.result 	i32
-	i32.const	$push0=, 0
-	i32.store	$push1=, 0($0), $pop0
-	return  	$pop1
+	i32.const	$push1=, 0
+	i32.store	$push0=, 0($0), $pop1
+	return  	$pop0
 	.endfunc
 .Lfunc_end0:
 	.size	single_block, .Lfunc_end0-single_block
@@ -19,13 +19,14 @@ foo:
 	i32.const	$0=, 0
 .LBB1_1:
 	loop
-	i32.const	$push4=, 0
-	i32.const	$push3=, 0
-	i32.store	$drop=, pos($pop4), $pop3
-	i32.const	$push2=, 1
-	i32.add 	$0=, $0, $pop2
+	i32.const	$push6=, 0
+	i32.const	$push5=, 0
+	i32.store	$drop=, pos($pop6), $pop5
+	i32.const	$push4=, 1
+	i32.add 	$push3=, $0, $pop4
+	tee_local	$push2=, $0=, $pop3
 	i32.const	$push1=, 256
-	i32.ne  	$push0=, $0, $pop1
+	i32.ne  	$push0=, $pop2, $pop1
 	br_if   	0, $pop0
 	end_loop
 	return
@@ -40,13 +41,14 @@ bar:
 	f32.const	$0=, 0x0p0
 .LBB2_1:
 	loop
-	i32.const	$push4=, 0
-	i32.const	$push3=, 0
-	i32.store	$drop=, pos($pop4), $pop3
-	f32.const	$push2=, 0x1p0
-	f32.add 	$0=, $0, $pop2
+	i32.const	$push6=, 0
+	i32.const	$push5=, 0
+	i32.store	$drop=, pos($pop6), $pop5
+	f32.const	$push4=, 0x1p0
+	f32.add 	$push3=, $0, $pop4
+	tee_local	$push2=, $0=, $pop3
 	f32.const	$push1=, 0x1p8
-	f32.ne  	$push0=, $0, $pop1
+	f32.ne  	$push0=, $pop2, $pop1
 	br_if   	0, $pop0
 	end_loop
 	return
@@ -60,19 +62,12 @@ bar:
 fi_ret:
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32, i32, i32
-	i32.const	$1=, __stack_pointer
-	i32.load	$1=, 0($1)
-	i32.const	$2=, 32
-	i32.sub 	$4=, $1, $2
-	i32.const	$2=, __stack_pointer
-	i32.store	$4=, 0($2), $4
-	i32.store	$drop=, 0($0), $4
-	i32.const	$3=, 32
-	i32.add 	$4=, $4, $3
-	i32.const	$3=, __stack_pointer
-	i32.store	$4=, 0($3), $4
-	return  	$4
+	i32.const	$push1=, __stack_pointer
+	i32.load	$push2=, 0($pop1)
+	i32.const	$push3=, 32
+	i32.sub 	$push4=, $pop2, $pop3
+	i32.store	$push0=, 0($0), $pop4
+	return  	$pop0
 	.endfunc
 .Lfunc_end3:
 	.size	fi_ret, .Lfunc_end3-fi_ret
