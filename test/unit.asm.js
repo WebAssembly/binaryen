@@ -8,6 +8,7 @@ function asm(global, env, buffer) {
   var Math_abs = global.Math.abs;
   var Math_ceil = global.Math.ceil;
   var tempDoublePtr = env.tempDoublePtr | 0;
+  var n = env.gb | 0;
 
   var abort = env.abort;
   var print = env.print;
@@ -212,6 +213,12 @@ function asm(global, env, buffer) {
     (HEAP32[tempDoublePtr >> 2] = i, +HEAPF32[tempDoublePtr >> 2]); // i32->f32, no fround
     (HEAPF32[tempDoublePtr >> 2] = f, HEAP32[tempDoublePtr >> 2] | 0); // f32->i32
     (HEAPF32[tempDoublePtr >> 2] = d, HEAP32[tempDoublePtr >> 2] | 0); // f64 with implict f32 conversion, ->i32
+  }
+
+  function lb(a) {
+   a = a | 0;
+   HEAP32[a >> 2] = n + 136 + 8;
+   return;
   }
 
   function z() {

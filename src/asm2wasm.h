@@ -306,8 +306,8 @@ private:
     return detectSign(ast, Math_fround) == ASM_UNSIGNED;
   }
 
-  BinaryOp parseAsmBinaryOp(IString op, Ref left, Ref right, AsmData *asmData) {
-    WasmType leftType = detectWasmType(left, asmData);
+  BinaryOp parseAsmBinaryOp(IString op, Ref left, Ref right, Expression* leftWasm, Expression* rightWasm) {
+    WasmType leftType = leftWasm->type;
     bool isInteger = leftType == WasmType::i32;
 
     if (op == PLUS) return isInteger ? BinaryOp::AddInt32 : (leftType == f32 ? BinaryOp::AddFloat32 : BinaryOp::AddFloat64);
@@ -997,13 +997,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         fixCallType(ret, i32);
         return ret;
       }
-      BinaryOp binary = parseAsmBinaryOp(ast[1]->getIString(), ast[2], ast[3], &asmData);
       auto ret = allocator.alloc<Binary>();
-      ret->op = binary;
       ret->left = process(ast[2]);
       ret->right = process(ast[3]);
+      ret->op = parseAsmBinaryOp(ast[1]->getIString(), ast[2], ast[3], ret->left, ret->right);
       ret->finalize();
-      if (binary == BinaryOp::RemSInt32 && isWasmTypeFloat(ret->type)) {
+      if (ret->op == BinaryOp::RemSInt32 && isWasmTypeFloat(ret->type)) {
         // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
         CallImport *call = allocator.alloc<CallImport>();
         call->target = F64_REM;
