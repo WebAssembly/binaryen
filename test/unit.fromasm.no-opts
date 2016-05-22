@@ -566,6 +566,21 @@
       )
     )
   )
+  (func $lb (param $a i32)
+    (i32.store
+      (get_local $a)
+      (i32.add
+        (i32.add
+          (i32.load
+            (i32.const 48)
+          )
+          (i32.const 136)
+        )
+        (i32.const 8)
+      )
+    )
+    (return)
+  )
   (func $z
     (nop)
   )
