@@ -1,6 +1,7 @@
 SET(passes_SOURCES
   pass.cpp
   CoalesceLocals.cpp
+  DeadCodeElimination.cpp
   LowerIfElse.cpp
   MergeBlocks.cpp
   Metrics.cpp

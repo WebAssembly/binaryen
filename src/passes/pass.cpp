@@ -58,6 +58,7 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRunner::addDefaultOptimizationPasses() {
+  add("dce");
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");

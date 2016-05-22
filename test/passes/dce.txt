@@ -1,0 +1,239 @@
+(module
+  (memory 10)
+  (type $ii (func (param i32 i32)))
+  (table $call-me)
+  (func $call-me (param $0 i32) (param $1 i32)
+    (nop)
+  )
+  (func $code-to-kill
+    (local $x i32)
+    (block $out
+      (br $out)
+    )
+    (if
+      (i32.const 0)
+      (unreachable)
+    )
+    (if
+      (i32.const 0)
+      (block $out
+        (return)
+      )
+    )
+    (block $out
+      (br_table $out $out $out $out
+        (i32.const 4)
+      )
+    )
+    (block $out
+      (br_if $out
+        (i32.const 3)
+      )
+      (i32.const 0)
+    )
+    (if
+      (i32.const 0)
+      (block $block4
+        (if
+          (i32.const 0)
+          (unreachable)
+          (unreachable)
+        )
+      )
+    )
+    (if
+      (i32.const 0)
+      (unreachable)
+    )
+    (if
+      (i32.const 0)
+      (unreachable)
+    )
+    (if
+      (i32.const 0)
+      (unreachable)
+    )
+    (block $out
+      (block $in
+        (br_if $out
+          (i32.const 1)
+        )
+      )
+      (unreachable)
+    )
+    (if
+      (i32.const 0)
+      (block $block11
+        (block $out
+          (block $in
+            (br_if $in
+              (i32.const 1)
+            )
+          )
+          (unreachable)
+        )
+      )
+    )
+    (block $out
+      (block $in
+        (br_table $out $in
+          (i32.const 1)
+        )
+      )
+      (unreachable)
+    )
+    (block $out
+      (block $in
+        (br_table $in $out
+          (i32.const 1)
+        )
+      )
+      (unreachable)
+    )
+    (if
+      (i32.const 0)
+      (block $block13
+        (block $out
+          (block $in
+            (br_table $in $in
+              (i32.const 1)
+            )
+          )
+          (unreachable)
+        )
+      )
+    )
+    (if
+      (i32.const 0)
+      (block $block15
+        (i32.const 10)
+        (i32.const 42)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const 0)
+      (unreachable)
+    )
+    (loop $out $in
+      (br_if $out
+        (i32.const 1)
+      )
+      (unreachable)
+    )
+    (if
+      (i32.const 0)
+      (block $block20
+        (loop $out $in
+          (br_if $in
+            (i32.const 1)
+          )
+          (unreachable)
+        )
+      )
+    )
+    (if
+      (i32.const 1)
+      (block
+        (i32.const 123)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const 2)
+      (unreachable)
+    )
+    (if
+      (i32.const 3)
+      (unreachable)
+    )
+    (if
+      (i32.const -1)
+      (block
+        (i32.const 123)
+        (i32.const 456)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const -2)
+      (block
+        (i32.const 139)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const -3)
+      (block
+        (i32.const 246)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const -4)
+      (unreachable)
+    )
+    (if
+      (i32.const 11)
+      (unreachable)
+    )
+    (if
+      (i32.const 22)
+      (unreachable)
+    )
+    (if
+      (i32.const 33)
+      (block
+        (i32.const 0)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const 44)
+      (unreachable)
+    )
+    (if
+      (i32.const 55)
+      (unreachable)
+    )
+    (if
+      (i32.const 66)
+      (unreachable)
+    )
+    (if
+      (i32.const 77)
+      (unreachable)
+    )
+    (if
+      (i32.const 88)
+      (block
+        (i32.const 0)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const 99)
+      (unreachable)
+    )
+    (if
+      (i32.const 100)
+      (block
+        (i32.const 123)
+        (i32.const 456)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const 101)
+      (block
+        (i32.const 123)
+        (unreachable)
+      )
+    )
+    (if
+      (i32.const 102)
+      (unreachable)
+    )
+    (i32.const 1337)
+  )
+)
