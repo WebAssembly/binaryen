@@ -202,8 +202,8 @@ struct ExpressionAnalyzer {
         // continue down
       } else if (curr->is<If>()) {
         auto* iff = curr->cast<If>();
-        if (!iff->ifFalse) return false;
         if (above == iff->condition) return true;
+        if (!iff->ifFalse) return false;
         assert(above == iff->ifTrue || above == iff->ifFalse);
         // continue down
       } else {

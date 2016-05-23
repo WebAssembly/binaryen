@@ -97,4 +97,28 @@
   (func $func-block
     (nop)
   )
+  (func $Gu (param $b i32) (param $e f64) (param $l i32) (param $d i32)
+    (if
+      (if
+        (get_local $d)
+        (block $block1
+          (f64.ne
+            (f64.promote/f32
+              (f32.load
+                (set_local $l
+                  (i32.add
+                    (get_local $b)
+                    (i32.const 60)
+                  )
+                )
+              )
+            )
+            (get_local $e)
+          )
+        )
+        (i32.const 0)
+      )
+      (unreachable)
+    )
+  )
 )

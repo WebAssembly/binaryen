@@ -124,5 +124,30 @@
   (func $func-block
     (f32.abs (f32.abs (f32.abs (f32.abs (f32.abs (f32.abs (f32.const 1.0) ) ) ) ) ) )
   )
+  (func $Gu (param $b i32) (param $e f64) (param $l i32) (param $d i32)
+    (if ;; if condition must remain valid
+      (if
+        (get_local $d)
+        (block
+          (nop)
+          (f64.ne
+            (f64.promote/f32
+              (f32.load
+                (set_local $l
+                  (i32.add
+                    (get_local $b)
+                    (i32.const 60)
+                  )
+                )
+              )
+            )
+            (get_local $e)
+          )
+        )
+        (i32.const 0)
+      )
+      (unreachable)
+    )
+  )
 )
 
