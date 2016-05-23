@@ -929,14 +929,14 @@ struct JSPrinter {
             test[1] = (char)('0' + num);
             test[2] = 0;
           } else if (num < 100) {
-            test[1] = (char)('0' + (num / 10));
-            test[2] = (char)('0' + (num % 10));
+            test[1] = '0' + (char)(num / 10);
+            test[2] = '0' + (char)(num % 10);
             test[3] = 0;
           } else {
             assert(num < 1000);
-            test[1] = (char)('0' + (num / 100));
-            test[2] = (char)('0' + (num % 100) / 10);
-            test[3] = (char)('0' + (num % 10));
+            test[1] = '0' + (char)(num / 100);
+            test[2] = '0' + (char)((num % 100) / 10);
+            test[3] = '0' + (char)(num % 10);
             test[4] = 0;
           }
         }
