@@ -88,17 +88,13 @@
       )
       (i32.const 0)
     )
-    (return
-      (get_local $0)
-    )
+    (get_local $0)
   )
   (func $dynCall_iii (param $fptr i32) (param $0 i32) (param $1 i32) (result i32)
-    (return
-      (call_indirect $FUNCSIG$iii
-        (get_local $fptr)
-        (get_local $0)
-        (get_local $1)
-      )
+    (call_indirect $FUNCSIG$iii
+      (get_local $fptr)
+      (get_local $0)
+      (get_local $1)
     )
   )
 )

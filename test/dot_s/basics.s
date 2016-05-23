@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop11
 	i32.const	$drop=, main@FUNCTION # just take address for testing
 	end_block
-	return  	$0
+	copy_local	$push24=, $0
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

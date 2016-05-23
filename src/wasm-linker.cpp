@@ -363,7 +363,7 @@ void Linker::makeDynCallThunks() {
       args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
     }
     Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
-    f->body = funcType->result == none ? call : wasmBuilder.makeReturn(call);
+    f->body = call;
     out.wasm.addFunction(f);
     exportFunction(f->name, true);
   }
