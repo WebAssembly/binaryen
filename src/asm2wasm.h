@@ -30,6 +30,7 @@
 #include "pass.h"
 #include "ast_utils.h"
 #include "wasm-builder.h"
+#include <wasm-validator.h>
 
 namespace wasm {
 
@@ -730,7 +731,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     // note that the target is already masked, so we just offset it, we don't need to guard against overflow (which would be an error anyhow)
     sub->op = AddInt32;
     sub->left = call->target;
-    sub->right = allocator.alloc<Const>()->set(Literal((int32_t)functionTableStarts[tableName]));
+    sub->right = builder.makeConst(Literal((int32_t)functionTableStarts[tableName]));
     sub->type = WasmType::i32;
     call->target = sub;
   }
@@ -854,6 +855,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     func->body = body;
   }
 #endif
+
+  assert(WasmValidator().validate(wasm));
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
@@ -957,9 +960,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->bytes = getWasmTypeSize(global.type);
         ret->offset = 0;
         ret->align = ret->bytes;
-        auto ptr = allocator.alloc<Const>();
-        ptr->value = Literal(int32_t(global.address)); // XXX for wasm64, need 64
-        ret->ptr = ptr;
+        ret->ptr = builder.makeConst(Literal(int32_t(global.address)));
         ret->value = process(ast[3]);
         ret->type = global.type;
         return ret;
@@ -1067,9 +1068,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->signed_ = true; // but doesn't matter
       ret->offset = 0;
       ret->align = ret->bytes;
-      auto ptr = allocator.alloc<Const>();
-      ptr->value = Literal(int32_t(global.address)); // XXX for wasm64, need 64
-      ret->ptr = ptr;
+      ret->ptr = builder.makeConst(Literal(int32_t(global.address)));
       ret->type = global.type;
       return ret;
     } else if (what == SUB) {
@@ -1090,7 +1089,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       if (ast[1] == PLUS) {
         Literal literal = checkLiteral(ast);
         if (literal.type != none) {
-          return allocator.alloc<Const>()->set(literal);
+          return builder.makeConst(literal);
         }
         auto ret = process(ast[2]); // we are a +() coercion
         if (ret->type == i32) {
@@ -1121,7 +1120,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // wasm has no unary negation for int, so do 0-
           auto ret = allocator.alloc<Binary>();
           ret->op = SubInt32;
-          ret->left = allocator.alloc<Const>()->set(Literal((int32_t)0));
+          ret->left = builder.makeConst(Literal((int32_t)0));
           ret->right = process(ast[2]);
           ret->type = WasmType::i32;
           return ret;
@@ -1178,7 +1177,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         auto ret = allocator.alloc<Binary>();
         ret->op = XorInt32;
         ret->left = process(ast[2]);
-        ret->right = allocator.alloc<Const>()->set(Literal(int32_t(-1)));
+        ret->right = builder.makeConst(Literal(int32_t(-1)));
         ret->type = WasmType::i32;
         return ret;
       } else if (ast[1] == L_NOT) {
@@ -1219,9 +1218,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           assert(ast[2]->size() == 1);
           Literal lit = checkLiteral(ast[2][0]);
           if (lit.type == i32) {
-            return allocator.alloc<Const>()->set(Literal((float)lit.geti32()));
+            return builder.makeConst(Literal((float)lit.geti32()));
           } else if (lit.type == f64) {
-            return allocator.alloc<Const>()->set(Literal((float)lit.getf64()));
+            return builder.makeConst(Literal((float)lit.getf64()));
           }
           auto ret = allocator.alloc<Unary>();
           ret->value = process(ast[2][0]);
@@ -1259,13 +1258,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             auto isNegative = allocator.alloc<Binary>();
             isNegative->op = LtSInt32;
             isNegative->left = get();
-            isNegative->right = allocator.alloc<Const>()->set(Literal(0));
+            isNegative->right = builder.makeConst(Literal(0));
             isNegative->finalize();
             auto block = allocator.alloc<Block>();
             block->list.push_back(set);
             auto flip = allocator.alloc<Binary>();
             flip->op = SubInt32;
-            flip->left = allocator.alloc<Const>()->set(Literal(0));
+            flip->left = builder.makeConst(Literal(0));
             flip->right = get();
             flip->type = i32;
             auto select = allocator.alloc<Select>();
@@ -1627,7 +1626,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Binary* offsetor = allocator.alloc<Binary>();
       offsetor->op = BinaryOp::SubInt32;
       offsetor->left = br->condition;
-      offsetor->right = allocator.alloc<Const>()->set(Literal(min));
+      offsetor->right = builder.makeConst(Literal(min));
       offsetor->type = i32;
       br->condition = offsetor;
 
@@ -1695,9 +1694,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       // constant, apply a shift (e.g. HEAP32[1] is address 4)
       unsigned addr = ptr[1]->getInteger();
       unsigned shifted = addr << shifts;
-      auto ret = allocator.alloc<Const>();
-      ret->value = Literal(int32_t(shifted));
-      return (Expression*)ret;
+      return (Expression*)builder.makeConst(Literal(int32_t(shifted)));
     }
     abort_on("bad processUnshifted", ptr);
     return (Expression*)nullptr; // avoid warning
@@ -1729,6 +1726,8 @@ void Asm2WasmBuilder::optimize() {
     passRunner.add("post-emscripten");
   }
   passRunner.run();
+
+  assert(WasmValidator().validate(wasm));
 }
 
 } // namespace wasm

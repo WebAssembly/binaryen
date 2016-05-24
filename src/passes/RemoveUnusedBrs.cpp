@@ -156,6 +156,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
 
   void walk(Expression*& root) {
     // multiple cycles may be needed
+    bool worked = false;
     do {
       anotherCycle = false;
       WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::walk(root);
@@ -174,6 +175,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
       }
       flows.clear();
+      if (anotherCycle) worked = true;
     } while (anotherCycle);
     // finally, we may have simplified ifs enough to turn them into selects
     struct Selectifier : public WalkerPass<PostWalker<Selectifier, Visitor<Selectifier>>> {
@@ -202,6 +204,22 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     Selectifier selectifier;
     selectifier.setModule(getModule());
     selectifier.walk(root);
+    if (worked) {
+      // Our work may alter block and if types, they may now return
+      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
+        void visitBlock(Block* curr) {
+          curr->finalize();
+        }
+        void visitLoop(Loop* curr) {
+          curr->finalize();
+        }
+        void visitIf(If* curr) {
+          curr->finalize();
+        }
+      };
+      TypeUpdater typeUpdater;
+      typeUpdater.walk(root);
+    }
   }
 };
 

@@ -235,6 +235,7 @@ int main(int argc, const char* argv[]) {
           }
         }
         passRunner.run();
+        assert(WasmValidator().validate(wasm));
       }
 
       run_asserts(&i, &checked, &wasm, &root, &builder, entry);
