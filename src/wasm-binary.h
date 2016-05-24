@@ -44,7 +44,7 @@ struct LEB {
   T value;
 
   LEB() {}
-  LEB(size_t v) : value(v) {}
+  LEB(T value) : value(value) {}
 
   bool hasMore(T temp, MiniT byte) {
     // for signed, we must ensure the last bit has the right sign, as it will zero extend
@@ -514,7 +514,7 @@ public:
   }
 
   void finishSection(int32_t start) {
-    size_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
+    int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
     o.writeAt(start, U32LEB(size));
   }
 
