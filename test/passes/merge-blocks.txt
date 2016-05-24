@@ -1,5 +1,18 @@
 (module
   (memory 256 256)
+  (type $i (func (param i32)))
+  (type $ii (func (param i32 i32)))
+  (type $iii (func (param i32 i32 i32)))
+  (table $call-i)
+  (func $call-i (param $0 i32)
+    (nop)
+  )
+  (func $call-ii (param $0 i32) (param $1 i32)
+    (nop)
+  )
+  (func $call-iii (param $0 i32) (param $1 i32) (param $2 i32)
+    (nop)
+  )
   (func $b0-yes (param $i1 i32)
     (block $topmost
       (block $block0
@@ -80,6 +93,445 @@
         (br $middle)
       )
       (i32.const 20)
+    )
+  )
+  (func $unary
+    (local $x i32)
+    (i32.eqz
+      (block $block0
+        (i32.const 10)
+      )
+    )
+    (block $block1
+      (i32.const 10)
+      (i32.eqz
+        (i32.const 20)
+      )
+    )
+    (block $block2
+      (i32.const 10)
+      (i32.const 20)
+      (i32.eqz
+        (i32.const 30)
+      )
+    )
+    (block $block3
+      (i32.const 10)
+      (set_local $x
+        (i32.const 20)
+      )
+    )
+    (block $block4
+      (i32.const 10)
+      (i32.load
+        (i32.const 20)
+      )
+    )
+    (block $block5
+      (i32.const 10)
+      (return
+        (unreachable)
+      )
+    )
+  )
+  (func $binary
+    (i32.add
+      (block $block0
+        (i32.const 10)
+      )
+      (i32.const 20)
+    )
+    (block $block1
+      (i32.const 10)
+      (i32.add
+        (i32.const 20)
+        (i32.const 30)
+      )
+    )
+    (block $block2
+      (i32.const 10)
+      (i32.const 20)
+      (i32.add
+        (i32.const 30)
+        (i32.const 40)
+      )
+    )
+    (i32.add
+      (i32.const 10)
+      (block $block3
+        (i32.const 20)
+      )
+    )
+    (block $block4
+      (i32.const 20)
+      (i32.add
+        (i32.const 10)
+        (i32.const 30)
+      )
+    )
+    (block $block5
+      (i32.const 20)
+      (i32.const 30)
+      (i32.add
+        (i32.const 10)
+        (i32.const 40)
+      )
+    )
+    (i32.add
+      (block $block6
+        (i32.const 10)
+      )
+      (block $block7
+        (i32.const 20)
+      )
+    )
+    (block $block8
+      (i32.const 10)
+      (i32.const 30)
+      (i32.add
+        (i32.const 20)
+        (i32.const 40)
+      )
+    )
+    (block $block10
+      (i32.const 10)
+      (i32.const 20)
+      (i32.const 40)
+      (i32.const 50)
+      (i32.add
+        (i32.const 30)
+        (i32.const 60)
+      )
+    )
+    (block $block12
+      (i32.const 20)
+      (i32.store
+        (i32.const 10)
+        (i32.const 30)
+      )
+    )
+    (block $block13
+      (i32.const 10)
+      (i32.store
+        (i32.const 20)
+        (i32.const 30)
+      )
+    )
+    (i32.add
+      (unreachable)
+      (block $block14
+        (i32.const 10)
+        (i32.const 20)
+      )
+    )
+    (block $block15
+      (unreachable)
+      (i32.const 20)
+      (i32.add
+        (i32.const 10)
+        (i32.const 30)
+      )
+    )
+  )
+  (func $trinary
+    (block $block0
+      (i32.const 10)
+      (i32.const 30)
+      (i32.const 50)
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (block $block4
+      (i32.const 20)
+      (i32.const 40)
+      (select
+        (block $block3
+          (i32.const 10)
+        )
+        (i32.const 30)
+        (i32.const 50)
+      )
+    )
+    (block $block6
+      (i32.const 10)
+      (i32.const 40)
+      (select
+        (i32.const 20)
+        (block $block7
+          (i32.const 30)
+        )
+        (i32.const 50)
+      )
+    )
+    (block $block9
+      (i32.const 10)
+      (i32.const 30)
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (block $block11
+          (i32.const 50)
+        )
+      )
+    )
+    (block $block14
+      (i32.const 30)
+      (select
+        (block $block12
+          (i32.const 10)
+        )
+        (block $block13
+          (i32.const 20)
+        )
+        (i32.const 40)
+      )
+    )
+    (block $block16
+      (i32.const 20)
+      (select
+        (block $block15
+          (i32.const 10)
+        )
+        (i32.const 30)
+        (block $block17
+          (i32.const 40)
+        )
+      )
+    )
+    (block $block18
+      (i32.const 10)
+      (select
+        (i32.const 20)
+        (block $block19
+          (i32.const 30)
+        )
+        (block $block20
+          (i32.const 40)
+        )
+      )
+    )
+    (block $block21
+      (unreachable)
+      (i32.const 30)
+      (i32.const 50)
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (block $block24
+      (i32.const 10)
+      (select
+        (unreachable)
+        (block $block25
+          (i32.const 30)
+          (i32.const 40)
+        )
+        (block $block26
+          (i32.const 50)
+          (i32.const 60)
+        )
+      )
+    )
+    (block $block27
+      (i32.const 10)
+      (unreachable)
+      (i32.const 50)
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (block $block30
+      (i32.const 10)
+      (i32.const 30)
+      (select
+        (i32.const 20)
+        (unreachable)
+        (block $block32
+          (i32.const 50)
+          (i32.const 60)
+        )
+      )
+    )
+    (block $block33
+      (i32.const 10)
+      (i32.const 30)
+      (unreachable)
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (block $block36
+      (i32.const 10)
+      (i32.const 30)
+      (i32.const 50)
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (unreachable)
+      )
+    )
+  )
+  (func $breaks
+    (block $out
+      (block $block0
+        (i32.const 10)
+        (br $out
+          (i32.const 20)
+        )
+      )
+      (block $block1
+        (i32.const 10)
+        (br_if $out
+          (i32.const 20)
+        )
+      )
+      (block $block2
+        (i32.const 10)
+        (i32.const 30)
+        (br_if $out
+          (i32.const 20)
+          (i32.const 40)
+        )
+      )
+      (block $block4
+        (i32.const 10)
+        (br_table $out $out
+          (i32.const 20)
+        )
+      )
+      (block $block5
+        (i32.const 10)
+        (i32.const 30)
+        (br_table $out $out
+          (i32.const 20)
+          (i32.const 40)
+        )
+      )
+    )
+  )
+  (func $calls
+    (call $call-i
+      (block $block0
+        (i32.const 10)
+      )
+    )
+    (block $block1
+      (i32.const 10)
+      (call $call-i
+        (i32.const 20)
+      )
+    )
+    (block $block2
+      (i32.const 10)
+      (i32.const 20)
+      (call $call-i
+        (i32.const 30)
+      )
+    )
+    (block $block3
+      (i32.const 10)
+      (i32.const 30)
+      (call $call-ii
+        (i32.const 20)
+        (i32.const 40)
+      )
+    )
+    (block $block5
+      (unreachable)
+      (i32.const 20)
+      (call $call-ii
+        (i32.const 10)
+        (i32.const 30)
+      )
+    )
+    (block $block7
+      (i32.const 10)
+      (call $call-ii
+        (unreachable)
+        (block $block8
+          (i32.const 20)
+          (i32.const 30)
+        )
+      )
+    )
+    (block $block9
+      (i32.const 10)
+      (unreachable)
+      (call $call-ii
+        (i32.const 20)
+        (i32.const 30)
+      )
+    )
+    (block $block11
+      (i32.const 10)
+      (i32.const 30)
+      (call $call-ii
+        (i32.const 20)
+        (unreachable)
+      )
+    )
+    (block $block13
+      (i32.const 10)
+      (i32.const 30)
+      (i32.const 50)
+      (call $call-iii
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (block $block16
+      (i32.const 10)
+      (i32.const 40)
+      (call $call-iii
+        (i32.const 20)
+        (i32.const 30)
+        (i32.const 50)
+      )
+    )
+    (block $block18
+      (i32.const 10)
+      (i32.const 30)
+      (i32.const 50)
+      (call_indirect $ii
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (call_indirect $ii
+      (unreachable)
+      (block $block21
+        (i32.const 30)
+        (i32.const 40)
+      )
+      (block $block22
+        (i32.const 50)
+        (i32.const 60)
+      )
+    )
+  )
+  (func $block-type-change
+    (local $0 f64)
+    (local $1 f64)
+    (if
+      (block $block0
+        (nop)
+        (f64.gt
+          (get_local $0)
+          (get_local $1)
+        )
+      )
+      (nop)
     )
   )
 )

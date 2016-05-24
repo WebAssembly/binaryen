@@ -173,7 +173,7 @@ private:
         curr->list().push_back(parseString());
       }
     }
-    assert(stack.size() == 0); 
+    if (stack.size() != 0) throw ParseException("stack is not empty", curr->line, curr->col);
     return curr;
   }
 

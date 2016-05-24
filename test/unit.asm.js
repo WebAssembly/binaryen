@@ -214,11 +214,17 @@ function asm(global, env, buffer) {
     (HEAPF32[tempDoublePtr >> 2] = f, HEAP32[tempDoublePtr >> 2] | 0); // f32->i32
     (HEAPF32[tempDoublePtr >> 2] = d, HEAP32[tempDoublePtr >> 2] | 0); // f64 with implict f32 conversion, ->i32
   }
+  function recursiveBlockMerging(x) {
+    x = x | 0;
+    lb((1, x) + (2, 3) + (((4, 5), 6), 7) + (8, (9, (10, (11, 12))))) | 0;
+    x = (lb(1) | 0, x) + (lb(2) | 0, lb(3) | 0) + (((lb(4) | 0, lb(5) | 0), lb(6) | 0), lb(7) | 0) + (lb(8) | 0, (lb(9) | 0, (lb(10) | 0, (lb(11) | 0, lb(12) | 0)))) | 0;
+    return x | 0;
+  }
 
   function lb(a) {
    a = a | 0;
    HEAP32[a >> 2] = n + 136 + 8;
-   return;
+   return 0;
   }
 
   function z() {
