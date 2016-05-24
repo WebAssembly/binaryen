@@ -363,7 +363,68 @@
   (func $bitcasts (param $0 i32) (param $1 f32)
     (nop)
   )
-  (func $lb (param $0 i32)
+  (func $recursiveBlockMerging (param $0 i32) (result i32)
+    (call $lb
+      (i32.add
+        (i32.add
+          (i32.add
+            (get_local $0)
+            (i32.const 3)
+          )
+          (i32.const 7)
+        )
+        (i32.const 12)
+      )
+    )
+    (call $lb
+      (i32.const 1)
+    )
+    (call $lb
+      (i32.const 2)
+    )
+    (i32.add
+      (i32.add
+        (i32.add
+          (get_local $0)
+          (call $lb
+            (i32.const 3)
+          )
+        )
+        (block
+          (call $lb
+            (i32.const 4)
+          )
+          (call $lb
+            (i32.const 5)
+          )
+          (call $lb
+            (i32.const 6)
+          )
+          (call $lb
+            (i32.const 7)
+          )
+        )
+      )
+      (block
+        (call $lb
+          (i32.const 8)
+        )
+        (call $lb
+          (i32.const 9)
+        )
+        (call $lb
+          (i32.const 10)
+        )
+        (call $lb
+          (i32.const 11)
+        )
+        (call $lb
+          (i32.const 12)
+        )
+      )
+    )
+  )
+  (func $lb (param $0 i32) (result i32)
     (i32.store
       (get_local $0)
       (i32.add
@@ -376,6 +437,7 @@
         (i32.const 8)
       )
     )
+    (i32.const 0)
   )
   (func $z
     (nop)
