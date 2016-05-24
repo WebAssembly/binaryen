@@ -198,50 +198,51 @@ int main(int argc, const char* argv[]) {
 
   auto input(read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
-  if (options.debug) std::cerr << "parsing text to s-expressions...\n";
-  SExpressionParser parser(input.data());
-  Element& root = *parser.root;
-
-  // A .wast may have multiple modules, with some asserts after them
   bool checked = false;
-  size_t i = 0;
-  while (i < root.size()) {
-    Element& curr = *root[i];
-    IString id = curr[0]->str();
-    if (id == MODULE) {
-      if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
-      Module wasm;
-      std::unique_ptr<SExpressionWasmBuilder> builder;
-      try {
+
+  try {
+    if (options.debug) std::cerr << "parsing text to s-expressions...\n";
+    SExpressionParser parser(input.data());
+    Element& root = *parser.root;
+
+    // A .wast may have multiple modules, with some asserts after them
+    size_t i = 0;
+    while (i < root.size()) {
+      Element& curr = *root[i];
+      IString id = curr[0]->str();
+      if (id == MODULE) {
+        if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
+        Module wasm;
+        std::unique_ptr<SExpressionWasmBuilder> builder;
         builder = make_unique<SExpressionWasmBuilder>(wasm, *root[i]);
-      } catch (ParseException& p) {
-        p.dump(std::cerr);
-        abort();
-      }
-      i++;
-      assert(WasmValidator().validate(wasm));
-
-      MixedArena moreModuleAllocations;
-
-      if (passes.size() > 0) {
-        if (options.debug) std::cerr << "running passes...\n";
-        PassRunner passRunner(&wasm);
-        if (options.debug) passRunner.setDebug(true);
-        for (auto& passName : passes) {
-          if (passName == "O") {
-            passRunner.addDefaultOptimizationPasses();
-          } else {
-            passRunner.add(passName);
-          }
-        }
-        passRunner.run();
+        i++;
         assert(WasmValidator().validate(wasm));
-      }
 
-      run_asserts(&i, &checked, &wasm, &root, &builder, entry);
-    } else {
-      run_asserts(&i, &checked, nullptr, &root, nullptr, entry);
+        MixedArena moreModuleAllocations;
+
+        if (passes.size() > 0) {
+          if (options.debug) std::cerr << "running passes...\n";
+          PassRunner passRunner(&wasm);
+          if (options.debug) passRunner.setDebug(true);
+          for (auto& passName : passes) {
+            if (passName == "O") {
+              passRunner.addDefaultOptimizationPasses();
+            } else {
+              passRunner.add(passName);
+            }
+          }
+          passRunner.run();
+          assert(WasmValidator().validate(wasm));
+        }
+
+        run_asserts(&i, &checked, &wasm, &root, &builder, entry);
+      } else {
+        run_asserts(&i, &checked, nullptr, &root, nullptr, entry);
+      }
     }
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    abort();
   }
 
   if (checked) {
