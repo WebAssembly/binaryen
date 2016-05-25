@@ -419,7 +419,7 @@ enum ASTNodes {
   CallIndirect = 0x17,
   CallImport = 0x18,
 
-  Nop = 0x00,
+  Unreachable = 0x00,
   Block = 0x01,
   Loop = 0x02,
   If = 0x03,
@@ -429,7 +429,7 @@ enum ASTNodes {
   BrIf = 0x07,
   TableSwitch = 0x08,
   Return = 0x09,
-  Unreachable = 0x0a,
+  Nop = 0x0a,
   End = 0x0f
 };
 
