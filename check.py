@@ -128,7 +128,7 @@ def run_command(cmd, stderr=None):
   print 'executing: ', ' '.join(cmd)
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
   out, err = proc.communicate()
-  assert proc.returncode == 0, err
+  if proc.returncode != 0: raise Exception(('run_command failed', err))
   return out
 
 def fail(actual, expected):
@@ -398,8 +398,19 @@ for t in spec_tests:
         if actual != expected:
           fail(actual, expected)
 
-    actual = run_spec_test(wast)
-    check_expected(actual, os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log'))
+    expected = os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log')
+
+    # some spec tests should fail (actual process failure, not just assert_invalid)
+    try:
+      actual = run_spec_test(wast)
+    except Exception, e:
+      if 'wasm-validator error' in str(e) and '.fail.' in t:
+        print '<< test failed as expected >>'
+        continue # don't try all the binary format stuff TODO
+      else:
+        raise e
+
+    check_expected(actual, expected)
 
     # check binary format. here we can verify execution of the final result, no need for an output verification
     split_num = 0
