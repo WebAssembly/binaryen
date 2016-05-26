@@ -17,6 +17,21 @@
       )
     )
   )
+  (func $b0-no (param $i1 i32)
+    (block $topmost
+      (block $block0
+        (br $block0)
+      )
+      (br $topmost)
+    )
+  )
+  (func $b0-br-but-ok (param $i1 i32)
+    (block $topmost
+      (block $block0
+        (br $topmost)
+      )
+    )
+  )
   (func $b1-yes (param $i1 i32)
     (block $topmost
       (block
