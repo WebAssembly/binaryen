@@ -100,7 +100,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
     if (dependency1 && *dependency1 && EffectAnalyzer(*dependency1).hasSideEffects()) return outer;
     if (dependency2 && *dependency2 && EffectAnalyzer(*dependency2).hasSideEffects()) return outer;
     if (auto* block = child->dynCast<Block>()) {
-      if (block->list.size() >= 2) {
+      if (!block->name.is() && block->list.size() >= 2) {
         child = block->list.back();
         if (outer == nullptr) {
           // reuse the block, move it out
