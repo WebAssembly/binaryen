@@ -276,8 +276,8 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
-    opt = '-O' if passname == 'O' else '--' + passname
-    cmd = [os.path.join('bin', 'binaryen-shell'), opt, os.path.join('test', 'passes', t), '--print']
+    opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
+    cmd = [os.path.join('bin', 'binaryen-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
     actual = run_command(cmd)
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 

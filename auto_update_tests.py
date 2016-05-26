@@ -67,7 +67,8 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
-    cmd = [os.path.join('bin', 'binaryen-shell'), ('--' + passname if passname != 'O' else '-O'), os.path.join('test', 'passes', t), '--print']
+    opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
+    cmd = [os.path.join('bin', 'binaryen-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     open(os.path.join('test', 'passes', passname + '.txt'), 'w').write(actual)
