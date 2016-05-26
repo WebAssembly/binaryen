@@ -93,25 +93,25 @@ struct Name : public cashew::IString {
 template <typename T>
 struct WasmIndex {
   typedef T value_type;
-  T addr;
-  WasmIndex() : addr(0) {}
-  static void CheckValid(uint64_t v) {
+  T value;
+  WasmIndex() : value(0) {}
+  static void checkValid(uint64_t v) {
     // Allow -1 as an invalid sentinel value
     assert(v <= std::numeric_limits<T>::max() ||
-	   v == static_cast<uint64_t>(-1));
+	   v == -1ULL);
   }
-  WasmIndex(uint64_t a) : addr(static_cast<T>(a)) {
-    CheckValid(a);
+  WasmIndex(uint64_t a) : value(static_cast<T>(a)) {
+    checkValid(a);
   }
   WasmIndex& operator=(uint64_t a) {
-    CheckValid(a);
-    addr = static_cast<T>(a);
+    checkValid(a);
+    value = static_cast<T>(a);
     return *this;
   }
-  operator T() const { return addr; }
-  WasmIndex& operator++() { ++addr; return *this; }
+  operator T() const { return value; }
+  WasmIndex& operator++() { ++value; return *this; }
   WasmIndex operator++(int) {
-    WasmIndex temp(addr);
+    WasmIndex temp(value);
     ++(*this);
     return temp;
   }
@@ -1523,7 +1523,7 @@ private:
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::value_type>()(a.addr);
+    return std::hash<wasm::Address::value_type>()(a);
   }
 };
 }
