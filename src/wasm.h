@@ -1501,6 +1501,14 @@ public:
     }
     importsMap.erase(name);
   }
+  // TODO: remove* for other elements
+
+  void updateFunctionsMap() {
+    functionsMap.clear();
+    for (auto& func : functions) {
+      functionsMap[func->name] = func.get();
+    }
+  }
 
 private:
   size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
