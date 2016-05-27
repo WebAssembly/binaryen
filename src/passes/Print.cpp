@@ -28,6 +28,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
 
+  bool debugInfoComments = false;
+  size_t lastDebugLocationId = 0;
+  std::vector<DebugLocation>* functionDebugLocations = nullptr;
+  size_t lastLabelId = 0;
+  std::vector<Name>* functionLabels = nullptr;
+
   bool minify;
   const char *maybeSpace;
   const char *maybeNewLine;
@@ -48,6 +54,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 
   void setFullAST(bool fullAST_) { fullAST = fullAST_; }
+
+  void setDebugInfoComments(bool debugInfoComments_) { debugInfoComments = debugInfoComments_; }
 
   void incIndent() {
     if (minify) return;
@@ -76,6 +84,32 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       name = Name::fromInt(index);
     }
     return name;
+  }
+
+  void visit(Expression *curr) {
+    if (debugInfoComments && curr->debugInfo.labelIndex != lastLabelId) {
+      lastLabelId = curr->debugInfo.labelIndex;
+      if (functionLabels) { // no labels -- skipping
+        const Name& labelName = (*functionLabels)[lastLabelId];
+        o << "(;!bookmark " << labelName.str << ";)";
+        o << maybeNewLine;
+        !minify && doIndent(o, indent);
+      }
+    }
+    if (debugInfoComments && curr->debugInfo.locationIndex != lastDebugLocationId) {
+      lastDebugLocationId = curr->debugInfo.locationIndex;
+      // skipping location id 0 or debug information is absent
+      if (functionDebugLocations && lastDebugLocationId) {
+        const DebugLocation& debugLocation = (*functionDebugLocations)[lastDebugLocationId];
+        o << "(;!loc " << debugLocation.fileId << ' ' << debugLocation.row << ' ' << debugLocation.column << ";)";
+        o << maybeNewLine;
+        !minify && doIndent(o, indent);
+      }
+    }
+    Visitor<PrintSExpression>::visit(curr);
+    // keeping previously set location for next siblings
+    lastDebugLocationId = curr->debugInfo.locationIndex;
+    lastLabelId = curr->debugInfo.labelIndex;
   }
 
   void visitBlock(Block *curr) {
@@ -506,6 +540,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitFunction(Function *curr) {
     currFunction = curr;
     printOpening(o, "func ", true) << curr->name;
+    functionDebugLocations = &(curr->debugLocations);
+    lastDebugLocationId = 0;
+    functionLabels = &(curr->labels);
+    lastLabelId = 0;
+
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';
     }
@@ -523,6 +562,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
       printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ")";
+      o << maybeNewLine;
+    }
+    if (debugInfoComments && functionLabels) { // no labels -- skipping
+      const Name& labelName = (*functionLabels)[0]; // first label is normally a function name
+      doIndent(o, indent);
+      o << "(;!bookmark " << labelName.str << ";)";
       o << maybeNewLine;
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
@@ -543,6 +588,35 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ' ' << name;
     }
     o << ')';
+  }
+  void printDebugSections(Module *curr) {
+    if (!debugInfoComments)
+      return;
+
+    bool hasSequences = false;
+    for (auto& child : curr->functions) {
+      if (child->labels.size() > 0) {
+        hasSequences = true;
+      }
+    }
+    if (hasSequences) {
+        doIndent(o, indent);
+        o << "(;!dbg_section .label_sequences\n";
+        for (auto& child : curr->functions) {
+          o << "\t.function";
+          for (auto item : child->labels) {
+            o << " " << item.str;
+          }
+          o << '\n';
+        }
+        o << ";)";
+        o << maybeNewLine;
+    }
+    for (auto& child : curr->debugSections) {
+        doIndent(o, indent);
+        o << "(;!dbg_section " << child.c_str() << ";)";
+        o << maybeNewLine;
+    }
   }
   void visitModule(Module *curr) {
     printOpening(o, "module", true);
@@ -608,18 +682,31 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitTable(&curr->table);
       o << maybeNewLine;
     }
+    if (debugInfoComments) {
+      for(auto const &item : curr->debugFileMap) {
+        doIndent(o, indent);
+        o << "(;!file " << item.first << " ";
+        printText(o, item.second.str);
+        o << ";)";
+        o << maybeNewLine;
+      }
+    }
     for (auto& child : curr->functions) {
       doIndent(o, indent);
       visitFunction(child.get());
       o << maybeNewLine;
     }
+    printDebugSections(curr);
     decIndent();
     o << maybeNewLine;
   }
 };
 
 void Printer::run(PassRunner* runner, Module* module) {
-  PrintSExpression print(o);
+  PrintSExpression print(args.o);
+  print.setMinify(args.minify);
+  print.setFullAST(args.fullAST);
+  print.setDebugInfoComments(args.debugInfo);
   print.visitModule(module);
 }
 
@@ -629,14 +716,8 @@ static RegisterPass<Printer> registerPass("print", "print in s-expression format
 
 class MinifiedPrinter : public Printer {
   public:
-  MinifiedPrinter() : Printer() {}
-  MinifiedPrinter(std::ostream& o) : Printer(o) {}
-
-  void run(PassRunner* runner, Module* module) override {
-    PrintSExpression print(o);
-    print.setMinify(true);
-    print.visitModule(module);
-  }
+  MinifiedPrinter() : Printer(PrinterArgs(std::cout, true, false, false)) {}
+  MinifiedPrinter(std::ostream& o) : Printer(PrinterArgs(o, true, false, false)) {}
 };
 
 static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print in minified s-expression format");
@@ -645,17 +726,20 @@ static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print
 
 class FullPrinter : public Printer {
   public:
-  FullPrinter() : Printer() {}
-  FullPrinter(std::ostream& o) : Printer(o) {}
-
-  void run(PassRunner* runner, Module* module) override {
-    PrintSExpression print(o);
-    print.setFullAST(true);
-    print.visitModule(module);
-  }
+  FullPrinter() : Printer(PrinterArgs(std::cout, false, true, false)) {}
+  FullPrinter(std::ostream& o) : Printer(PrinterArgs(o, false, true, false)) {}
 };
 
 static RegisterPass<FullPrinter> registerFullASTPass("print-full", "print in full s-expression format");
+
+// Prints out full ast module with additional debug info comments
+class DebugInfoCommentsPrinter : public Printer {
+  public:
+  DebugInfoCommentsPrinter() : Printer(PrinterArgs(std::cout, false, true, true)) {}
+  DebugInfoCommentsPrinter(std::ostream& o) : Printer(PrinterArgs(o, false, true, true)) {}
+};
+
+static RegisterPass<DebugInfoCommentsPrinter> registerDebugInfoCommentsPass("print-debug-info", "print in full s-expression format with debug info comments");
 
 // Print individual expressions
 
