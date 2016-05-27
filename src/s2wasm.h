@@ -409,8 +409,11 @@ class S2WasmBuilder {
     auto section = getCommaSeparated();
     // Skipping .debug_ sections
     if (!strncmp(section.c_str(), ".debug_", strlen(".debug_"))) {
+      s -= strlen(section.c_str()); // we want name as well
       const char *next = strstr(s, ".section");
-      s = !next ? s + strlen(s) : next;
+      if (!next) next = s + strlen(s);
+      wasm->debugSections.emplace_back(s, next);
+      s = next;
       return;
     }
     // Initializers are anything in a section whose name begins with .init_array
@@ -460,7 +463,8 @@ class S2WasmBuilder {
       size_t fileId = getInt();
       skipWhitespace();
       auto quoted = getQuoted();
-      WASM_UNUSED(fileId); WASM_UNUSED(quoted); // TODO: use the fileId and quoted
+      Name filename(std::string(quoted.begin(), quoted.end()));
+      wasm->addDebugFile(fileId, filename);
       s = strchr(s, '\n');
       return;
     }
@@ -500,12 +504,20 @@ class S2WasmBuilder {
 
     mustMatch(":");
 
+    std::vector<DebugLocation> debugLocations;
+    debugLocations.emplace_back(); // reserve 0 slot
+    size_t currentDebugLocationIndex = 0;
+    std::vector<Name> labels;
+    labels.emplace_back(name); // reserve 0 slot for function name (which is a label too)
+    size_t currentLabelIndex = 0;
+
     auto recordFile = [&]() {
       if (debug) dump("file");
       size_t fileId = getInt();
       skipWhitespace();
       auto quoted = getQuoted();
-      WASM_UNUSED(fileId); WASM_UNUSED(quoted); // TODO: use the fileId and quoted
+      Name filename(std::string(quoted.begin(), quoted.end()));
+      wasm->addDebugFile(fileId, filename);
       s = strchr(s, '\n');
     };
     auto recordLoc = [&]() {
@@ -515,14 +527,16 @@ class S2WasmBuilder {
       size_t row = getInt();
       skipWhitespace();
       size_t column = getInt();
-      WASM_UNUSED(fileId); WASM_UNUSED(row); WASM_UNUSED(column); // TODO: use the fileId, row and column
+      debugLocations.emplace_back(fileId, row, column);
+      currentDebugLocationIndex++;
       s = strchr(s, '\n');
     };
     auto recordLabel = [&]() {
       if (debug) dump("label");
       Name label = getStrToSep();
+      labels.emplace_back(label);
+      currentLabelIndex++;
       // TODO: track and create map of labels and their ranges for our AST
-      WASM_UNUSED(label);
       s = strchr(s, '\n');
     };
 
@@ -620,6 +634,7 @@ class S2WasmBuilder {
           auto curr = allocator->alloc<GetLocal>();
           curr->index = func->getLocalIndex(getStrToSep());
           curr->type = func->getLocalType(curr->index);
+          curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
           inputs[i] = curr;
         } else {
           abort_on("bad input register");
@@ -649,6 +664,7 @@ class S2WasmBuilder {
         set->index = func->getLocalIndex(assign);
         set->value = curr;
         set->type = curr->type;
+        set->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         addToBlock(set);
       }
     };
@@ -678,6 +694,7 @@ class S2WasmBuilder {
       auto inputs = getInputs(2);
       curr->left = inputs[0];
       curr->right = inputs[1];
+      curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
       curr->finalize();
       assert(curr->type == type);
       setOutput(curr, assign);
@@ -689,6 +706,7 @@ class S2WasmBuilder {
       curr->op = op;
       curr->value = getInput();
       curr->type = type;
+      curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
       curr->finalize();
       setOutput(curr, assign);
     };
@@ -696,6 +714,7 @@ class S2WasmBuilder {
       Name assign = getAssign();
       auto curr = allocator->alloc<Host>();
       curr->op = op;
+      curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
       setOutput(curr, assign);
     };
     auto makeHost1 = [&](HostOp op) {
@@ -703,12 +722,14 @@ class S2WasmBuilder {
       auto curr = allocator->alloc<Host>();
       curr->op = op;
       curr->operands.push_back(getInput());
+      curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
       setOutput(curr, assign);
     };
     auto makeLoad = [&](WasmType type) {
       skipComma();
       auto curr = allocator->alloc<Load>();
       curr->type = type;
+      curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       curr->signed_ = match("_s");
@@ -729,6 +750,7 @@ class S2WasmBuilder {
       skipComma();
       auto curr = allocator->alloc<Store>();
       curr->type = type;
+      curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       Name assign = getAssign();
@@ -755,6 +777,7 @@ class S2WasmBuilder {
       curr->condition = inputs[2];
       assert(curr->condition->type == i32);
       curr->type = type;
+      curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
       setOutput(curr, assign);
     };
     auto makeCall = [&](WasmType type) {
@@ -769,6 +792,7 @@ class S2WasmBuilder {
         auto* funcType = ensureFunctionType(getSig(type, operands), wasm);
         assert(type == funcType->result);
         auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
+        indirect->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         setOutput(indirect, assign);
 
       } else {
@@ -779,6 +803,7 @@ class S2WasmBuilder {
         Call* curr = allocator->alloc<Call>();
         curr->target = target;
         curr->type = type;
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         if (!linkerObj->isFunctionImplemented(target)) {
           linkerObj->addUndefinedFunctionCall(curr);
         }
@@ -813,6 +838,7 @@ class S2WasmBuilder {
               // may be a relocation
               auto curr = allocator->alloc<Const>();
               curr->type = curr->value.type = i32;
+              curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
               getRelocatableConst((uint32_t*)curr->value.geti32Ptr());
               setOutput(curr, assign);
             } else {
@@ -975,6 +1001,7 @@ class S2WasmBuilder {
       } else if (match("block")) {
         auto curr = allocator->alloc<Block>();
         curr->name = getNextLabel();
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         addToBlock(curr);
         bstack.push_back(curr);
       } else if (match("end_block")) {
@@ -992,9 +1019,11 @@ class S2WasmBuilder {
         addToBlock(curr);
         curr->in = getNextLabel();
         curr->out = getNextLabel();
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         auto block = allocator->alloc<Block>();
         block->name = curr->out; // temporary, fake - this way, on bstack we have the right label at the right offset for a br
         curr->body = block;
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         loopBlocks.push_back(block);
         bstack.push_back(block);
         bstack.push_back(curr);
@@ -1010,6 +1039,7 @@ class S2WasmBuilder {
         assert(curr->targets.size() > 0);
         curr->default_ = curr->targets.back();
         curr->targets.pop_back();
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         addToBlock(curr);
       } else if (match("br")) {
         auto curr = allocator->alloc<Break>();
@@ -1019,6 +1049,7 @@ class S2WasmBuilder {
           hasCondition = true;
         }
         curr->name = getBranchLabel(getInt());
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         if (hasCondition) {
           skipComma();
           curr->condition = getInput();
@@ -1038,11 +1069,16 @@ class S2WasmBuilder {
         skipComma();
         curr->value = getInput();
         curr->type = curr->value->type;
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
         setOutput(curr, assign);
       } else if (match("return")) {
-        addToBlock(builder.makeReturn(*s == '$' ? getInput() : nullptr));
+        auto curr = builder.makeReturn(*s == '$' ? getInput() : nullptr);
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
+        addToBlock(curr);
       } else if (match("unreachable")) {
-        addToBlock(allocator->alloc<Unreachable>());
+        auto curr = allocator->alloc<Unreachable>();
+        curr->setDebugInfo(currentDebugLocationIndex, currentLabelIndex);
+        addToBlock(curr);
       } else if (match("current_memory")) {
         makeHost(CurrentMemory);
       } else if (match("grow_memory")) {
@@ -1088,6 +1124,8 @@ class S2WasmBuilder {
       block->name = Name();
     }
     func->body->dynCast<Block>()->finalize();
+    func->debugLocations.swap(debugLocations);
+    func->labels.swap(labels);
     wasm->addFunction(func);
   }
 
