@@ -50,6 +50,7 @@ struct RemoveUnusedFunctions : public Pass {
       return analyzer.reachable.count(curr.get()) == 0;
     }), v.end());
     assert(module->functions.size() == analyzer.reachable.size());
+    module->updateFunctionsMap();
   }
 };
 
