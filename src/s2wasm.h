@@ -101,6 +101,10 @@ class S2WasmBuilder {
     abort();              \
   }
 
+  bool peek(const char *pattern) {
+    return strncmp(s, pattern, strlen(pattern)) == 0;
+  }
+
   // match and skip the pattern, if matched
   bool match(const char *pattern) {
     size_t size = strlen(pattern);
@@ -396,17 +400,19 @@ class S2WasmBuilder {
       else if (match("ident")) {}
       else if (match("section")) parseToplevelSection();
       else if (match("align") || match("p2align")) s = strchr(s, '\n');
-      else if (match("Lfunc_end")) {
-        // skip the next line, which has a .size we can ignore
-        s = strstr(s, ".size");
-        s = strchr(s, '\n');
-      } else if (match("globl")) parseGlobl();
+      else if (match("globl")) parseGlobl();
       else abort_on("process");
     }
   }
 
   void parseToplevelSection() {
     auto section = getCommaSeparated();
+    // Skipping .debug_ sections
+    if (!strncmp(section.c_str(), ".debug_", strlen(".debug_"))) {
+      const char *next = strstr(s, ".section");
+      s = !next ? s + strlen(s) : next;
+      return;
+    }
     // Initializers are anything in a section whose name begins with .init_array
     if (!strncmp(section.c_str(), ".init_array", strlen(".init_array") - 1)) {
       parseInitializer();
@@ -449,7 +455,16 @@ class S2WasmBuilder {
   }
 
   void parseFile() {
-    assert(*s == '"');
+    if (*s != '"') {
+      // TODO: optimize, see recordFile below
+      size_t fileId = getInt();
+      skipWhitespace();
+      auto quoted = getQuoted();
+      WASM_UNUSED(fileId); WASM_UNUSED(quoted); // TODO: use the fileId and quoted
+      s = strchr(s, '\n');
+      return;
+    }
+    // '.file' without first index argument points to bc-file
     s++;
     std::string filename;
     while (*s != '"') {
@@ -457,7 +472,7 @@ class S2WasmBuilder {
       s++;
     }
     s++;
-    // TODO: use the filename?
+    WASM_UNUSED(filename); // TODO: use the filename
   }
 
   void parseGlobl() {
@@ -485,11 +500,31 @@ class S2WasmBuilder {
 
     mustMatch(":");
 
-    if (match(".Lfunc_begin")) {
-      s = strchr(s, '\n');
-      s++;
+    auto recordFile = [&]() {
+      if (debug) dump("file");
+      size_t fileId = getInt();
       skipWhitespace();
-    }
+      auto quoted = getQuoted();
+      WASM_UNUSED(fileId); WASM_UNUSED(quoted); // TODO: use the fileId and quoted
+      s = strchr(s, '\n');
+    };
+    auto recordLoc = [&]() {
+      if (debug) dump("loc");
+      size_t fileId = getInt();
+      skipWhitespace();
+      size_t row = getInt();
+      skipWhitespace();
+      size_t column = getInt();
+      WASM_UNUSED(fileId); WASM_UNUSED(row); WASM_UNUSED(column); // TODO: use the fileId, row and column
+      s = strchr(s, '\n');
+    };
+    auto recordLabel = [&]() {
+      if (debug) dump("label");
+      Name label = getStrToSep();
+      // TODO: track and create map of labels and their ranges for our AST
+      WASM_UNUSED(label);
+      s = strchr(s, '\n');
+    };
 
     unsigned nextId = 0;
     auto getNextId = [&nextId]() {
@@ -523,6 +558,15 @@ class S2WasmBuilder {
           skipWhitespace();
           if (!match(",")) break;
         }
+      } else if (match(".file")) {
+        recordFile();
+        skipWhitespace();
+      } else if (match(".loc")) {
+        recordLoc();
+        skipWhitespace();
+      } else if (peek(".Lfunc_begin")) {
+        recordLabel();
+        skipWhitespace();
       } else break;
     }
     Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(vars));
@@ -644,6 +688,7 @@ class S2WasmBuilder {
       auto curr = allocator->alloc<Unary>();
       curr->op = op;
       curr->value = getInput();
+      curr->type = type;
       curr->finalize();
       setOutput(curr, assign);
     };
@@ -935,8 +980,13 @@ class S2WasmBuilder {
       } else if (match("end_block")) {
         bstack.back()->cast<Block>()->finalize();
         bstack.pop_back();
-      } else if (match(".LBB")) {
-        s = strchr(s, '\n');
+      } else if (peek(".LBB")) {
+        // FIXME legacy tests: it can be leftover from "loop" or "block", but it can be a label too
+        auto p = s;
+        while (*p && *p != ':' && *p != '#' && *p != '\n') p++;
+        if (*p == ':') { // it's a label
+          recordLabel();
+        } else s = strchr(s, '\n');
       } else if (match("loop")) {
         auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
@@ -997,8 +1047,30 @@ class S2WasmBuilder {
         makeHost(CurrentMemory);
       } else if (match("grow_memory")) {
         makeHost1(GrowMemory);
-      } else if (match(".endfunc")) {
+      } else if (peek(".Lfunc_end")) {
+        // TODO fix handwritten tests to have .endfunc
+        recordLabel();
+        // skip the next line, which has a .size we can ignore
+        s = strstr(s, ".size");
+        s = strchr(s, '\n');
         break; // the function is done
+      } else if (match(".endfunc")) {
+        skipWhitespace();
+        // getting all labels at the end of function
+        while (peek(".L") && strchr(s, ':') < strchr(s, '\n')) {
+          recordLabel();
+          skipWhitespace();
+        }
+        // skip the next line, which has a .size we can ignore
+        s = strstr(s, ".size");
+        s = strchr(s, '\n');
+        break; // the function is done
+      } else if (match(".file")) {
+        recordFile();
+      } else if (match(".loc")) {
+        recordLoc();
+      } else if (peek(".L") && strchr(s, ':') < strchr(s, '\n')) {
+        recordLabel();
       } else {
         abort_on("function element");
       }
