@@ -399,6 +399,7 @@ class S2WasmBuilder {
       else if (match("data")) {}
       else if (match("ident")) {}
       else if (match("section")) parseToplevelSection();
+      else if (match("file")) parseFile();
       else if (match("align") || match("p2align")) s = strchr(s, '\n');
       else if (match("globl")) parseGlobl();
       else abort_on("process");
@@ -408,7 +409,8 @@ class S2WasmBuilder {
   void parseToplevelSection() {
     auto section = getCommaSeparated();
     // Skipping .debug_ sections
-    if (!strncmp(section.c_str(), ".debug_", strlen(".debug_"))) {
+    if (!strncmp(section.c_str(), ".debug_", strlen(".debug_")) ||
+        !strncmp(section.c_str(), ".apple_", strlen(".apple_"))) {
       s -= strlen(section.c_str()); // we want name as well
       const char *next = strstr(s, ".section");
       if (!next) next = s + strlen(s);
@@ -465,7 +467,6 @@ class S2WasmBuilder {
       auto quoted = getQuoted();
       Name filename(std::string(quoted.begin(), quoted.end()));
       wasm->addDebugFile(fileId, filename);
-      s = strchr(s, '\n');
       return;
     }
     // '.file' without first index argument points to bc-file
@@ -518,7 +519,6 @@ class S2WasmBuilder {
       auto quoted = getQuoted();
       Name filename(std::string(quoted.begin(), quoted.end()));
       wasm->addDebugFile(fileId, filename);
-      s = strchr(s, '\n');
     };
     auto recordLoc = [&]() {
       if (debug) dump("loc");
