@@ -1195,7 +1195,7 @@ class WasmBinaryBuilder {
   bool debug;
 
   size_t pos = 0;
-  int32_t startIndex = -1;
+  Index startIndex = -1;
 
 public:
   WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
@@ -1234,6 +1234,7 @@ public:
       else if (match(BinaryConsts::Section::Names)) readNames();
       else {
         std::cerr << "unfamiliar section: ";
+        assert(pos + nameSize - 1 < input.size());
         for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
         std::cerr << std::endl;
         abort();
@@ -1479,6 +1480,7 @@ public:
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
     size_t total = getU32LEB();
+    assert(total == functionTypes.size());
     for (size_t i = 0; i < total; i++) {
       if (debug) std::cerr << "read one at " << pos << std::endl;
       size_t size = getU32LEB();
@@ -1578,7 +1580,7 @@ public:
     }
     // now that we have names for each function, apply things
 
-    if (startIndex >= 0) {
+    if (startIndex != static_cast<Index>(-1) && startIndex < wasm.functions.size()) {
       wasm.start = wasm.functions[startIndex]->name;
     }
 
@@ -1632,6 +1634,7 @@ public:
   void readNames() {
     if (debug) std::cerr << "== readNames" << std::endl;
     auto num = getU32LEB();
+    assert(num == functions.size());
     for (size_t i = 0; i < num; i++) {
       functions[i]->name = getInlineString();
       auto numLocals = getU32LEB();
@@ -1804,6 +1807,7 @@ public:
     if (debug) std::cerr << "zz node: Call" << std::endl;
     auto arity = getU32LEB();
     auto index = getU32LEB();
+    assert(index < functionTypes.size());
     auto type = functionTypes[index];
     auto num = type->params.size();
     assert(num == arity);
@@ -1817,8 +1821,9 @@ public:
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     auto arity = getU32LEB();
-    curr->target = wasm.imports[getU32LEB()]->name;
-    auto type = wasm.getImport(curr->target)->type;
+    auto import = wasm.getImport(getU32LEB());
+    curr->target = import->name;
+    auto type = import->type;
     assert(type);
     auto num = type->params.size();
     assert(num == arity);
