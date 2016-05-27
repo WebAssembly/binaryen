@@ -36,4 +36,10 @@
 # define WASM_UNREACHABLE() abort()
 #endif
 
+// The code might contain TODOs or stubs that read some values but do nothing
+// with them. The compiler might fail with [-Werror,-Wunused-variable].
+// The WASM_UNUSED(varible) is a wrapper that helps to suppress the error.
+#define WASM_UNUSED(expr) \
+   do { if (sizeof expr) { (void)0; } } while (0)
+
 #endif // wasm_compiler_support_h
