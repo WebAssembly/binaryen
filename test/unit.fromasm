@@ -91,16 +91,16 @@
     (nop)
   )
   (func $conversions
-    (local $0 i32)
-    (local $1 f64)
-    (local $2 f32)
+    (local $0 f64)
+    (local $1 f32)
+    (local $2 i32)
     (call_import $f64-to-int
-      (get_local $1)
+      (get_local $0)
     )
-    (set_local $0
+    (set_local $2
       (call_import $f64-to-int
         (f64.promote/f32
-          (get_local $2)
+          (get_local $1)
         )
       )
     )

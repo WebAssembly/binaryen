@@ -17,7 +17,8 @@
 //
 // Sorts locals by access frequency.
 //
-
+// Secondarily, sort by first appearance. This canonicalizes the order.
+//
 
 #include <memory>
 
@@ -29,7 +30,8 @@ namespace wasm {
 struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<ReorderLocals>>> {
   bool isFunctionParallel() { return true; }
 
-  std::map<Index, uint32_t> counts;
+  std::map<Index, Index> counts; // local => times it is used
+  std::map<Index, Index> firstUses; // local => index in the list of which local is first seen
 
   void visitFunction(Function *curr) {
     Index num = curr->getNumLocals();
@@ -44,10 +46,11 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<Reord
       if (curr->isParam(b) && curr->isParam(a)) {
         return a < b;
       }
-      if (this->counts[a] == this->counts[b]) {
-        return a < b;
+      if (counts[a] == counts[b]) {
+        if (counts[a] == 0) return a < b;
+        return firstUses[a] < firstUses[b];
       }
-      return this->counts[a] > this->counts[b];
+      return counts[a] > counts[b];
     });
     // sorting left params in front, perhaps slightly reordered. verify and fix.
     for (size_t i = 0; i < curr->params.size(); i++) {
@@ -116,10 +119,16 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<Reord
 
   void visitGetLocal(GetLocal *curr) {
     counts[curr->index]++;
+    if (firstUses.count(curr->index) == 0) {
+      firstUses[curr->index] = firstUses.size();
+    }
   }
 
   void visitSetLocal(SetLocal *curr) {
     counts[curr->index]++;
+    if (firstUses.count(curr->index) == 0) {
+      firstUses[curr->index] = firstUses.size();
+    }
   }
 };
 
