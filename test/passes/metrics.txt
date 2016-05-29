@@ -1,4 +1,5 @@
 Counts
+ [funcs]        : 1       
  [total]        : 18      
  [vars]         : 1       
  binary         : 1       

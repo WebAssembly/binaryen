@@ -54,6 +54,10 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     }
     keys.push_back("[vars]");
     counts["[vars]"] = vars;
+    // add functions
+    keys.push_back("[funcs]");
+    counts["[funcs]"] = module->functions.size();
+    // sort
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
       return strcmp(b, a) > 0;
     });

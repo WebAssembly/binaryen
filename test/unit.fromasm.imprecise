@@ -9,7 +9,7 @@
   (import $h "env" "h" (param i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
-  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (table $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
   (func $big_negative
     (nop)
   )
@@ -85,20 +85,14 @@
       (get_local $0)
     )
   )
-  (func $hexLiterals
-    (nop)
-  )
   (func $conversions
-    (local $0 i32)
-    (local $1 f32)
-    (set_local $0
+    (local $0 f32)
+    (local $1 i32)
+    (set_local $1
       (i32.trunc_s/f32
-        (get_local $1)
+        (get_local $0)
       )
     )
-  )
-  (func $seq
-    (nop)
   )
   (func $switcher (param $0 i32) (result i32)
     (block $switch-default$3
@@ -197,9 +191,6 @@
     )
     (i32.const 0)
   )
-  (func $blocker
-    (nop)
-  )
   (func $frem (result f64)
     (call_import $f64-rem
       (f64.const 5.5)
@@ -220,9 +211,6 @@
   )
   (func $negZero (result f64)
     (f64.const -0)
-  )
-  (func $abs
-    (nop)
   )
   (func $neg
     (local $0 f32)
@@ -250,9 +238,6 @@
       )
       (get_local $0)
     )
-  )
-  (func $___syscall_ret
-    (nop)
   )
   (func $smallCompare (result i32)
     (local $0 i32)
@@ -430,11 +415,5 @@
       )
     )
     (i32.const 0)
-  )
-  (func $z
-    (nop)
-  )
-  (func $w
-    (nop)
   )
 )

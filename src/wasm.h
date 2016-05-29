@@ -250,6 +250,14 @@ private:
     }
   }
 
+  int64_t getBits() {
+    switch (type) {
+      case WasmType::i32: case WasmType::f32: return i32;
+      case WasmType::i64: case WasmType::f64: return i64;
+      default: abort();
+    }
+  }
+
   bool operator==(const Literal& other) const {
     if (type != other.type) return false;
     switch (type) {
@@ -260,6 +268,10 @@ private:
       case WasmType::f64: return getf64() == other.getf64();
       default: abort();
     }
+  }
+
+  bool operator!=(const Literal& other) const {
+    return !(*this == other);
   }
 
   static uint32_t NaNPayload(float f) {

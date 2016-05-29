@@ -58,6 +58,7 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRunner::addDefaultOptimizationPasses() {
+  add("duplicate-function-elimination");
   add("dce");
   add("remove-unused-brs");
   add("remove-unused-names");
@@ -70,6 +71,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("merge-blocks");
   add("optimize-instructions");
   add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
+  add("duplicate-function-elimination"); // optimizations show more functions as duplicate
 }
 
 void PassRunner::run() {

@@ -1561,7 +1561,7 @@
                               (set_local $25
                                 (get_local $19)
                               )
-                              (set_local $30
+                              (set_local $29
                                 (get_local $19)
                               )
                               (set_local $8
@@ -1632,7 +1632,7 @@
                             (set_local $34
                               (get_local $18)
                             )
-                            (set_local $29
+                            (set_local $30
                               (get_local $6)
                             )
                             (set_local $8
@@ -1671,7 +1671,7 @@
                       (set_local $34
                         (i32.const 0)
                       )
-                      (set_local $29
+                      (set_local $30
                         (i32.const 0)
                       )
                       (set_local $8
@@ -1694,7 +1694,7 @@
                             (i32.const 0)
                           )
                           (i32.eq
-                            (get_local $29)
+                            (get_local $30)
                             (i32.const 0)
                           )
                         )
@@ -1833,8 +1833,8 @@
                       (set_local $25
                         (get_local $0)
                       )
-                      (set_local $30
-                        (get_local $29)
+                      (set_local $29
+                        (get_local $30)
                       )
                       (set_local $8
                         (i32.const 90)
@@ -1845,7 +1845,7 @@
                         (get_local $33)
                       )
                       (set_local $12
-                        (get_local $29)
+                        (get_local $30)
                       )
                     )
                   )
@@ -1885,7 +1885,7 @@
                     (set_local $6
                       (select
                         (get_local $25)
-                        (get_local $30)
+                        (get_local $29)
                         (get_local $1)
                       )
                     )
@@ -1902,7 +1902,7 @@
                         (set_local $25
                           (get_local $1)
                         )
-                        (set_local $30
+                        (set_local $29
                           (get_local $6)
                         )
                         (br $while-in$20)
@@ -1918,7 +1918,7 @@
                         (set_local $27
                           (get_local $4)
                         )
-                        (set_local $30
+                        (set_local $29
                           (get_local $6)
                         )
                       )
