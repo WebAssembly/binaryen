@@ -376,7 +376,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     self->pushTask(visitPre, currp);
   }
 
-  void walk(Expression*& root) {
+  void doWalkFunction(Function* func) {
     // multiple passes may be required per function, consider this:
     //    x = load
     //    y = store
@@ -385,7 +385,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     do {
       anotherCycle = false;
       // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>>::walk(root);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>>::doWalkFunction(func);
       // enlarge blocks that were marked, for the next round
       if (blocksToEnlarge.size() > 0) {
         for (auto* block : blocksToEnlarge) {
@@ -421,14 +421,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     // remove the set.
     // First, count get_locals
     std::vector<int> numGetLocals; // local => # of get_locals for it
-    numGetLocals.resize(getFunction()->getNumLocals());
+    numGetLocals.resize(func->getNumLocals());
     GetLocalCounter counter;
     counter.numGetLocals = &numGetLocals;
-    counter.walk(root);
+    counter.walkFunction(func);
     // Second, remove unneeded sets
     SetLocalRemover remover;
     remover.numGetLocals = &numGetLocals;
-    remover.walk(root);
+    remover.walkFunction(func);
   }
 };
 

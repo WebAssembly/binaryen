@@ -241,12 +241,12 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
-  void walk(Expression*& root) {
+  void doWalkFunction(Function* func) {
     basicBlocks.clear();
 
     doStartBasicBlock(static_cast<SubType*>(this), nullptr);
     entry = currBasicBlock;
-    PostWalker<SubType, VisitorType>::walk(root);
+    PostWalker<SubType, VisitorType>::doWalkFunction(func);
 
     assert(branches.size() == 0);
     assert(ifStack.size() == 0);

@@ -52,6 +52,6 @@ int main() {
     }
   };
   DivZeroSeeker seeker;
-  seeker.startWalk(&module);
+  seeker.walkModule(&module);
 }
 

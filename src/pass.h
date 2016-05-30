@@ -135,7 +135,7 @@ class WalkerPass : public Pass, public WalkerType {
 public:
   void run(PassRunner* runner, Module* module) override {
     prepare(runner, module);
-    WalkerType::startWalk(module);
+    WalkerType::walkModule(module);
     finalize(runner, module);
   }
 };

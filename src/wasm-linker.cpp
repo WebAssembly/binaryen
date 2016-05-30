@@ -316,7 +316,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
   };
   AsmConstWalker walker;
   walker.parent = this;
-  walker.startWalk(&out.wasm);
+  walker.walkModule(&out.wasm);
   // print
   o << "\"asmConsts\": {";
   bool first = true;

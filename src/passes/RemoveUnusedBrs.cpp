@@ -154,12 +154,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     }
   }
 
-  void walk(Expression*& root) {
+  void doWalkFunction(Function* func) {
     // multiple cycles may be needed
     bool worked = false;
     do {
       anotherCycle = false;
-      WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::walk(root);
+      WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
       for (size_t i = 0; i < flows.size(); i++) {
@@ -203,7 +203,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     };
     Selectifier selectifier;
     selectifier.setModule(getModule());
-    selectifier.walk(root);
+    selectifier.walkFunction(func);
     if (worked) {
       // Our work may alter block and if types, they may now return
       struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
@@ -218,7 +218,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
       };
       TypeUpdater typeUpdater;
-      typeUpdater.walk(root);
+      typeUpdater.walkFunction(func);
     }
   }
 };
