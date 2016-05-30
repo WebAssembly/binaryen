@@ -187,6 +187,7 @@ struct Walker : public VisitorType {
   void walkFunction(Function* func) {
     setFunction(func);
     static_cast<SubType*>(this)->doWalkFunction(func);
+    static_cast<SubType*>(this)->visitFunction(func);
   }
 
   // override this to provide custom functionality
@@ -197,6 +198,7 @@ struct Walker : public VisitorType {
   void walkModule(Module *module) {
     setModule(module);
     static_cast<SubType*>(this)->doWalkModule(module);
+    static_cast<SubType*>(this)->visitModule(module);
   }
 
   // override this to provide custom functionality
@@ -223,7 +225,6 @@ struct Walker : public VisitorType {
         allocated = std::unique_ptr<SubType>(instance);
       }
       instance->walkFunction(func);
-      instance->visitFunction(func);
     };
 
     // if this is not a function-parallel traversal, run
@@ -259,7 +260,6 @@ struct Walker : public VisitorType {
     }
     self->visitTable(&module->table);
     self->visitMemory(&module->memory);
-    self->visitModule(module);
   }
 
   // Walk implementation. We don't use recursion as ASTs may be highly

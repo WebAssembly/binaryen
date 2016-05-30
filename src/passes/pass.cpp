@@ -74,6 +74,25 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
 }
 
+void PassRunner::addDefaultFunctionOptimizationPasses() {
+  add("dce");
+  add("remove-unused-brs");
+  add("remove-unused-names");
+  add("optimize-instructions");
+  add("simplify-locals");
+  add("vacuum"); // previous pass creates garbage
+  add("coalesce-locals");
+  add("vacuum"); // previous pass creates garbage
+  add("reorder-locals");
+  add("merge-blocks");
+  add("optimize-instructions");
+  add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
+}
+
+void PassRunner::addDefaultGlobalOptimizationPasses() {
+  add("duplicate-function-elimination");
+}
+
 void PassRunner::run() {
   std::chrono::high_resolution_clock::time_point beforeEverything;
   size_t padding = 0;
@@ -105,6 +124,12 @@ void PassRunner::run() {
     auto after = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = after - beforeEverything;
     std::cerr << "[PassRunner] passes took " << diff.count() << " seconds." << std::endl;
+  }
+}
+
+void PassRunner::runFunction(Function* func) {
+  for (auto pass : passes) {
+    pass->runFunction(this, wasm, func);
   }
 }
 

@@ -97,7 +97,19 @@ struct PassRunner {
   // what -O does.
   void addDefaultOptimizationPasses();
 
+  // Adds the default optimization passes that work on
+  // individual functions.
+  void addDefaultFunctionOptimizationPasses();
+
+  // Adds the default optimization passes that work on
+  // entire modules as a whole.
+  void addDefaultGlobalOptimizationPasses();
+
+  // Run the passes on the module
   void run();
+
+  // Run the passes on a specific function
+  void runFunction(Function* func);
 
   // Get the last pass that was already executed of a certain type.
   template<class P>
@@ -112,11 +124,17 @@ struct PassRunner {
 class Pass {
 public:
   virtual ~Pass() {};
+
   // Override this to perform preparation work before the pass runs.
   virtual void prepare(PassRunner* runner, Module* module) {}
   virtual void run(PassRunner* runner, Module* module) = 0;
   // Override this to perform finalization work after the pass runs.
   virtual void finalize(PassRunner* runner, Module* module) {}
+
+  // Run on a single function. This has no prepare/finalize calls.
+  virtual void runFunction(PassRunner* runner, Module* module, Function* function) {
+    WASM_UNREACHABLE(); // by default, passes cannot be run this way
+  }
 
   std::string name;
 
@@ -137,6 +155,11 @@ public:
     prepare(runner, module);
     WalkerType::walkModule(module);
     finalize(runner, module);
+  }
+
+  void runFunction(PassRunner* runner, Module* module, Function* func) override {
+    WalkerType::setModule(module);
+    WalkerType::walkFunction(func);
   }
 };
 
