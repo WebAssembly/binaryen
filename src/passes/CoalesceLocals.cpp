@@ -177,7 +177,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   // main entry point
 
-  void walk(Expression*& root);
+  void doWalkFunction(Function* func);
 
   void flowLiveness();
 
@@ -217,10 +217,10 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
   }
 };
 
-void CoalesceLocals::walk(Expression*& root) {
-  numLocals = getFunction()->getNumLocals();
+void CoalesceLocals::doWalkFunction(Function* func) {
+  numLocals = func->getNumLocals();
   // collect initial liveness info
-  WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>>::walk(root);
+  WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>>::doWalkFunction(func);
   // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
   liveBlocks = findLiveBlocks();
   unlinkDeadBlocks(liveBlocks);
@@ -243,7 +243,7 @@ void CoalesceLocals::walk(Expression*& root) {
   std::vector<Index> indices;
   pickIndices(indices);
   // apply indices
-  applyIndices(indices, root);
+  applyIndices(indices, func->body);
 }
 
 void CoalesceLocals::flowLiveness() {

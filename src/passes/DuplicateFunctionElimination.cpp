@@ -39,16 +39,15 @@ struct FunctionHasher : public PostWalker<FunctionHasher, Visitor<FunctionHasher
     output = output_;
   }
 
-  void walk(Expression*& root) {
+  void doWalkFunction(Function* func) {
     assert(digest == 0);
-    auto* func = getFunction();
     hash(func->getNumParams());
     for (auto type : func->params) hash(type);
     hash(func->getNumVars());
     for (auto type : func->vars) hash(type);
     hash(func->result);
     hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
-    hash(ExpressionAnalyzer::hash(root));
+    hash(ExpressionAnalyzer::hash(func->body));
     output->at(func) = digest;
   }
 
@@ -98,7 +97,7 @@ struct DuplicateFunctionElimination : public Pass {
       }
       FunctionHasher hasher;
       hasher.setOutput(&hashes);
-      hasher.startWalk(module);
+      hasher.walkModule(module);
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       for (auto& func : module->functions) {
@@ -130,7 +129,7 @@ struct DuplicateFunctionElimination : public Pass {
         // replace direct calls
         FunctionReplacer replacer;
         replacer.setReplacements(&replacements);
-        replacer.startWalk(module);
+        replacer.walkModule(module);
         // replace in table
         for (auto& name : module->table.names) {
           auto iter = replacements.find(name);

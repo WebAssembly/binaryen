@@ -35,7 +35,7 @@ struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> 
 public:
   bool validate(Module& module) {
     valid = true;
-    startWalk(&module);
+    walkModule(&module);
     return valid;
   }
 
@@ -280,9 +280,8 @@ public:
     }
   }
 
-  void walk(Expression*& root) {
-    //std::cerr << "start a function " << getFunction()->name << "\n";
-    PostWalker<WasmValidator, Visitor<WasmValidator>>::walk(root);
+  void doWalkFunction(Function* func) {
+    PostWalker<WasmValidator, Visitor<WasmValidator>>::doWalkFunction(func);
     shouldBeTrue(breakTypes.size() == 0, "break targets", "all break targets must be valid");
   }
 

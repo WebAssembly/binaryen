@@ -184,9 +184,23 @@ struct Walker : public VisitorType {
 
   // Walk starting
 
-  void startWalk(Module *module) {
-    setModule(module);
+  void walkFunction(Function* func) {
+    setFunction(func);
+    static_cast<SubType*>(this)->doWalkFunction(func);
+  }
 
+  // override this to provide custom functionality
+  void doWalkFunction(Function* func) {
+    walk(func->body);
+  }
+
+  void walkModule(Module *module) {
+    setModule(module);
+    static_cast<SubType*>(this)->doWalkModule(module);
+  }
+
+  // override this to provide custom functionality
+  void doWalkModule(Module *module) {
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
     for (auto& curr : module->functionTypes) {
@@ -208,8 +222,7 @@ struct Walker : public VisitorType {
         instance->setModule(module);
         allocated = std::unique_ptr<SubType>(instance);
       }
-      instance->setFunction(func);
-      instance->walk(func->body);
+      instance->walkFunction(func);
       instance->visitFunction(func);
     };
 
