@@ -660,6 +660,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       // exports
       Ref object = curr[1];
       Ref contents = object[1];
+      std::map<Name, Export*> exported;
       for (unsigned k = 0; k < contents->size(); k++) {
         Ref pair = contents[k];
         IString key = pair[0]->getIString();
@@ -675,10 +676,16 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           getTempRet0 = value;
         }
         assert(wasm.checkFunction(value));
-        auto export_ = new Export;
-        export_->name = key;
-        export_->value = value;
-        wasm.addExport(export_);
+        if (exported.count(key) > 0) {
+          // asm.js allows duplicate exports, but not wasm. use the last, like asm.js
+          exported[key]->value = value;
+        } else {
+          auto* export_ = new Export;
+          export_->name = key;
+          export_->value = value;
+          wasm.addExport(export_);
+          exported[key] = export_;
+        }
       }
     }
   }
