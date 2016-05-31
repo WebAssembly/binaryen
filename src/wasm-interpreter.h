@@ -46,7 +46,7 @@ enum {
   maxCallDepth = 250
 };
 
-// Stuff that flows around during executing expressions: a literal, or a change in control flow
+// Stuff that flows around during executing expressions: a literal, or a change in control flow.
 class Flow {
 public:
   Flow() {}
@@ -125,23 +125,28 @@ public:
   }
 
 private:
+  // Keep a record of call depth, to guard against excessive recursion.
+  size_t callDepth;
 
-  size_t callDepth = 0;
+  // Function name stack. We maintain this explicitly to allow printing of
+  // stack traces.
+  std::vector<Name> functionStack;
 
 #ifdef WASM_INTERPRETER_DEBUG
   int indent = 0;
 #endif
 
-  // Function stack. We maintain this explicitly to allow printing of
-  // stack traces.
-  std::vector<Name> functionStack;
-
-  //
-  // Calls a function. This can be used both internally (calls from
-  // the interpreter to another method), or when you want to call into
-  // the module.
-  //
+  // Call a function, starting an invocation.
   Literal callFunction(IString name, LiteralList& arguments) {
+    // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
+    callDepth = 0;
+    functionStack.clear();
+    return callFunctionInternal(name, arguments);
+  }
+
+private:
+  // Internal function call.
+  Literal callFunctionInternal(IString name, LiteralList& arguments) {
 
     class FunctionScope {
      public:
@@ -329,7 +334,7 @@ private:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        Flow ret = instance.callFunction(curr->target, arguments);
+        Flow ret = instance.callFunctionInternal(curr->target, arguments);
 #ifdef WASM_INTERPRETER_DEBUG
         std::cout << "(returned to " << scope.function->name << ")\n";
 #endif
@@ -354,7 +359,7 @@ private:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        return instance.callFunction(name, arguments);
+        return instance.callFunctionInternal(name, arguments);
       }
 
       Flow visitGetLocal(GetLocal *curr) {
@@ -698,7 +703,9 @@ private:
     };
 
     if (callDepth > maxCallDepth) externalInterface->trap("stack limit");
+    auto previousCallDepth = callDepth;
     callDepth++;
+    auto previousFunctionStackSize = functionStack.size();
     functionStack.push_back(name);
 
     Function *function = wasm.getFunction(name);
@@ -714,9 +721,11 @@ private:
     Literal ret = flow.value;
     if (function->result == none) ret = Literal();
     assert(function->result == ret.type);
-    callDepth--;
-    assert(functionStack.back() == name);
-    functionStack.pop_back();
+    callDepth = previousCallDepth; // may decrease more than one, if we jumped up the stack
+    // if we jumped up the stack, we also need to pop higher frames
+    while (functionStack.size() > previousFunctionStackSize) {
+      functionStack.pop_back();
+    }
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "exiting " << function->name << " with " << ret << '\n';
 #endif
