@@ -1107,10 +1107,9 @@ private:
     if (s.dollared()) {
       return s.str();
     } else {
-      size_t offset = atol(s.c_str());
-      if (offset >= labelStack.size())
-        return getPrefixedName("invalid");
       // offset, break to nth outside label
+      uint64_t offset = std::stoll(s.c_str(), nullptr, 0);
+      if (offset >= labelStack.size()) throw ParseException("total memory must be <= 4GB", s.line, s.col);
       return labelStack[labelStack.size() - 1 - offset];
     }
   }
