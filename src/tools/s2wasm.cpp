@@ -31,6 +31,7 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
   bool generateEmscriptenGlue = false;
+  bool addDebugInfoComments = false;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   Options options("s2wasm", "Link .s file into .wast");
@@ -80,6 +81,11 @@ int main(int argc, const char *argv[]) {
            Options::Arguments::N,
            [&archiveLibraries](Options *o, const std::string &argument) {
              archiveLibraries.push_back(argument);
+           })
+      .add("--debug-info", "", "Add debug info comments to the AST",
+           Options::Arguments::Zero,
+           [&addDebugInfoComments](Options *, const std::string &) {
+             addDebugInfoComments = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
@@ -133,7 +139,8 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&linker.getOutput().wasm, output.getStream());
+  WasmPrinter::printModule(&linker.getOutput().wasm, PrinterArgs(output.getStream(), false, false, addDebugInfoComments));
+
   output << meta.str();
 
   if (options.debug) std::cerr << "Done." << std::endl;

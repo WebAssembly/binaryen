@@ -852,6 +852,14 @@ enum HostOp {
 // have internal allocation will need an allocator provided to them in order
 // to be constructed.
 
+struct DebugInfoRef {
+  size_t locationIndex; // the reference to debug location in the function, or 0
+  size_t labelIndex; // the reference to function label in the function, or 0
+
+  DebugInfoRef() : locationIndex(0), labelIndex(0) {}
+  DebugInfoRef(size_t locationIndex, size_t labelIndex) : locationIndex(locationIndex), labelIndex(labelIndex) {}
+};
+
 class Expression {
 public:
   enum Id {
@@ -881,8 +889,9 @@ public:
   Id _id;
 
   WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
+  DebugInfoRef debugInfo; // the reference to debug info: location and label
 
-  Expression(Id id) : _id(id), type(none) {}
+  Expression(Id id) : _id(id), type(none), debugInfo() {}
 
   void finalize() {}
 
@@ -900,6 +909,11 @@ public:
   T* cast() {
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
+  }
+
+  void setDebugInfo(size_t locationIndex, size_t labelIndex) {
+    debugInfo.locationIndex = locationIndex;
+    debugInfo.labelIndex = labelIndex;
   }
 };
 
@@ -1319,6 +1333,16 @@ public:
 
 // Globals
 
+class DebugLocation {
+public:
+  size_t fileId;
+  size_t row;
+  size_t column;
+
+  DebugLocation(): fileId(0), row(0), column(0) {}
+  DebugLocation(size_t fileId, size_t row, size_t column) : fileId(fileId), row(row), column(column) {}
+};
+
 class Function {
 public:
   Name name;
@@ -1327,6 +1351,8 @@ public:
   std::vector<WasmType> vars;   // params plus vars
   Name type; // if null, it is implicit in params and result
   Expression *body;
+  std::vector<DebugLocation> debugLocations;
+  std::vector<Name> labels;
 
   // local names. these are optional.
   std::vector<Name> localNames;
@@ -1432,6 +1458,9 @@ public:
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
 
+  std::map<size_t, Name> debugFileMap;
+  std::vector<std::string> debugSections;
+
   Table table;
   Memory memory;
   Name start;
@@ -1505,6 +1534,9 @@ public:
   }
   void addStart(const Name &s) {
     start = s;
+  }
+  void addDebugFile(size_t id, Name name) {
+    debugFileMap[id] = name;
   }
 
   void removeImport(Name name) {

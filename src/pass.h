@@ -167,14 +167,26 @@ private:
   size_t counter = 0;
 };
 
+struct PrinterArgs {
+  std::ostream& o;
+  bool minify;
+  bool fullAST;
+  bool debugInfo;
+
+  PrinterArgs(): o(std::cout), minify(false), fullAST(false), debugInfo(false) {}
+  PrinterArgs(std::ostream& o): o(o), minify(false), fullAST(false), debugInfo(false) {}
+  PrinterArgs(std::ostream& o, bool minify, bool fullAST, bool debugInfo): o(o), minify(minify), fullAST(fullAST), debugInfo(debugInfo) {}
+};
+
 // Prints out a module
 class Printer : public Pass {
 protected:
-  std::ostream& o;
+  PrinterArgs args;
 
 public:
-  Printer() : o(std::cout) {}
-  Printer(std::ostream& o) : o(o) {}
+  Printer() : args(PrinterArgs()) {}
+  Printer(std::ostream& o) : args(PrinterArgs(o)) {}
+  Printer(const PrinterArgs& args) : args(args) {}
 
   void run(PassRunner* runner, Module* module) override;
 };

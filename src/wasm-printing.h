@@ -32,6 +32,12 @@ struct WasmPrinter {
     return o;
   }
 
+  static void printModule(Module* module, const PrinterArgs& args) {
+    PassRunner passRunner(module);
+    passRunner.add<Printer>(args);
+    passRunner.run();
+  }
+
   static std::ostream& printModule(Module* module) {
     return printModule(module, std::cout);
   }
