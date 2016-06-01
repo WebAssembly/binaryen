@@ -183,7 +183,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   void calculateInterferences();
 
-  void calculateInterferences(LocalSet& locals);
+  void calculateInterferences(const LocalSet& locals);
 
   // merge starts of a list of blocks, adding new interferences as necessary. return
   // whether anything changed vs an old state (which indicates further processing is necessary).
@@ -282,8 +282,6 @@ void CoalesceLocals::flowLiveness() {
       queue.insert(in);
     }
   }
-  // live locals at the entry block include params, obviously, but also
-  // vars, in which case the 0-init value is actually used.
 #ifdef CFG_DEBUG
   std::hash<std::vector<bool>> hasher;
   std::cout << getFunction()->name << ": interference hash: " << hasher(*(std::vector<bool>*)&interferences) << "\n";
@@ -347,9 +345,17 @@ void CoalesceLocals::calculateInterferences() {
       }
     }
   }
+  // Params have a value on entry, so mark them as live, as variables
+  // live at the entry expect their zero-init value.
+  LocalSet start = entry->contents.start;
+  auto numParams = getFunction()->getNumParams();
+  for (Index i = 0; i < numParams; i++) {
+    start.insert(i);
+  }
+  calculateInterferences(start);
 }
 
-void CoalesceLocals::calculateInterferences(LocalSet& locals) {
+void CoalesceLocals::calculateInterferences(const LocalSet& locals) {
   size_t size = locals.size();
   for (size_t i = 0; i < size; i++) {
     for (size_t j = i + 1; j < size; j++) {
