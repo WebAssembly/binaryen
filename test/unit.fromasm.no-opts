@@ -697,6 +697,34 @@
   (func $exportMe
     (f64.const -3.14159)
   )
+  (func $zeroInit (param $x i32)
+    (local $y i32)
+    (if
+      (call $lb
+        (i32.const 0)
+      )
+      (if
+        (call $lb
+          (i32.const 1)
+        )
+        (set_local $y
+          (i32.const 3)
+        )
+      )
+      (set_local $y
+        (i32.const 3)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $y)
+        (i32.const 3)
+      )
+      (call $lb
+        (i32.const 2)
+      )
+    )
+  )
   (func $z
     (nop)
   )
