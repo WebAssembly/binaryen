@@ -227,6 +227,13 @@ function asm(global, env, buffer) {
    return 0;
   }
 
+  function forgetMe() {
+    123.456;
+  }
+  function exportMe() {
+    -3.14159;
+  }
+
   function z() {
   }
   function w() {
@@ -236,6 +243,6 @@ function asm(global, env, buffer) {
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg ];
 
-  return { big_negative: big_negative };
+  return { big_negative: big_negative, pick: forgetMe, pick: exportMe };
 }
 
