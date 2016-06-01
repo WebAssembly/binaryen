@@ -972,6 +972,7 @@ public:
   Expression *condition, *ifTrue, *ifFalse;
 
   void finalize() {
+    assert(ifTrue);
     if (ifFalse) {
       type = getReachableWasmType(ifTrue->type, ifFalse->type);
     }
@@ -1253,6 +1254,7 @@ public:
   }
 
   void finalize() {
+    assert(left && right);
     if (isRelational()) {
       type = i32;
     } else {
@@ -1269,6 +1271,7 @@ public:
   Expression *ifTrue, *ifFalse, *condition;
 
   void finalize() {
+    assert(ifTrue && ifFalse);
     type = getReachableWasmType(ifTrue->type, ifFalse->type);
   }
 };
