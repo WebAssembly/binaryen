@@ -40,6 +40,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker, Visitor<TypeSeeker>> {
     for (auto name : curr->targets) {
       if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
     }
+    if (curr->default_ == targetName) types.push_back(curr->value ? curr->value->type : none);
   }
 
   void visitBlock(Block* curr) {
