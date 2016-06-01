@@ -1428,7 +1428,6 @@ public:
   std::vector<std::unique_ptr<Import>> imports;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
-  std::vector<std::unique_ptr<FunctionType>> externTypes;
 
   Table table;
   Memory memory;
@@ -1442,6 +1441,7 @@ private:
   std::map<Name, Import*> importsMap;
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
+  // Types of functions which are declared but not defined.
   std::map<Name, FunctionType*> externTypesMap;
 
 public:
@@ -1508,10 +1508,8 @@ public:
     functionsMap[numericName] = curr;
     functionIndex++;
   }
-  void addExternType(FunctionType* curr) {
-    externTypes.push_back(std::unique_ptr<FunctionType>(curr));
-    assert(!!curr->name);
-    externTypesMap[curr->name] = curr;
+  void addExternType(Name name, FunctionType* ty) {
+    externTypesMap[name] = ty;
   }
   void addStart(const Name &s) {
     start = s;

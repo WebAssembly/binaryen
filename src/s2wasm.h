@@ -487,18 +487,19 @@ class S2WasmBuilder {
   }
 
   void parseFuncType() {
-    FunctionType* decl = new FunctionType;//allocator->alloc<FunctionType>();
-    decl->name = getCommaSeparated();
+    auto decl = make_unique<FunctionType>();
+    Name name = getCommaSeparated();
     skipComma();
     if(match("void")) {
       decl->result = none;
     } else {
       decl->result = getType();
     }
-
     while (*s && skipComma()) decl->params.push_back(getType());
 
-    wasm->addExternType(decl);
+    FunctionType *ty = wasm->checkFunctionType(getSig(decl.get()));
+    if (!ty) ty = decl.release();
+    wasm->addExternType(name, ty);
   }
 
   bool parseVersionMin() {

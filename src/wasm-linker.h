@@ -263,7 +263,7 @@ class Linker {
     out.wasm.addExport(exp);
   }
 
-  Function* generateImportThunk(const FunctionType* t);
+  Function* generateImportThunk(Name name, const FunctionType* t);
 
   // The output module (linked executable)
   LinkerObject out;
