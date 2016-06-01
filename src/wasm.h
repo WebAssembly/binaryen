@@ -1428,6 +1428,7 @@ public:
   std::vector<std::unique_ptr<Import>> imports;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
+  std::vector<std::unique_ptr<FunctionType>> externTypes;
 
   Table table;
   Memory memory;
@@ -1441,6 +1442,7 @@ private:
   std::map<Name, Import*> importsMap;
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
+  std::map<Name, FunctionType*> externTypesMap;
 
 public:
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
@@ -1459,6 +1461,12 @@ public:
   Import* checkImport(Name name) { if (importsMap.find(name) == importsMap.end()) return nullptr; return importsMap[name]; }
   Export* checkExport(Name name) { if (exportsMap.find(name) == exportsMap.end()) return nullptr; return exportsMap[name]; }
   Function* checkFunction(Name name) { if (functionsMap.find(name) == functionsMap.end()) return nullptr; return functionsMap[name]; }
+
+  FunctionType* getExternType(Name name) {
+    auto f = externTypesMap.find(name);
+    if (f == externTypesMap.end()) return nullptr;
+    return f->second;
+  }
 
   void addFunctionType(FunctionType* curr) {
     Name numericName = Name::fromInt(functionTypeIndex); // TODO: remove all these, assert on names already existing, do numeric stuff in wasm-s-parser etc.
@@ -1499,6 +1507,11 @@ public:
     functionsMap[curr->name] = curr;
     functionsMap[numericName] = curr;
     functionIndex++;
+  }
+  void addExternType(FunctionType* curr) {
+    externTypes.push_back(std::unique_ptr<FunctionType>(curr));
+    assert(!!curr->name);
+    externTypesMap[curr->name] = curr;
   }
   void addStart(const Name &s) {
     start = s;

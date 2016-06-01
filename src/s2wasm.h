@@ -88,6 +88,11 @@ class S2WasmBuilder {
     }
   }
 
+  void skipToEOL() {
+    s = strchr(s, '\n');
+    assert(s);
+  }
+
   bool skipComma() {
     skipWhitespace();
     if (*s != ',') return false;
@@ -397,10 +402,11 @@ class S2WasmBuilder {
       else if (match("weak") || match("hidden") || match("protected") || match("internal")) getStr(); // contents are in the content that follows
       else if (match("imports")) skipImports();
       else if (match("data")) {}
-      else if (match("ident")) {}
+      else if (match("ident")) skipToEOL();
       else if (match("section")) parseToplevelSection();
-      else if (match("align") || match("p2align")) s = strchr(s, '\n');
+      else if (match("align") || match("p2align")) skipToEOL();
       else if (match("globl")) parseGlobl();
+      else if (match("functype")) parseFuncType();
       else abort_on("process");
     }
   }
@@ -423,11 +429,11 @@ class S2WasmBuilder {
 
   void parseInitializer() {
     // Ignore the rest of the .section line
-    s = strchr(s, '\n');
+    skipToEOL();
     skipWhitespace();
     // The section may start with .p2align
     if (match(".p2align")) {
-      s = strchr(s, '\n');
+      skipToEOL();
       skipWhitespace();
     }
     mustMatch(".int32");
@@ -478,6 +484,21 @@ class S2WasmBuilder {
   void parseGlobl() {
     linkerObj->addGlobal(getStr());
     skipWhitespace();
+  }
+
+  void parseFuncType() {
+    FunctionType* decl = new FunctionType;//allocator->alloc<FunctionType>();
+    decl->name = getCommaSeparated();
+    skipComma();
+    if(match("void")) {
+      decl->result = none;
+    } else {
+      decl->result = getType();
+    }
+
+    while (*s && skipComma()) decl->params.push_back(getType());
+
+    wasm->addExternType(decl);
   }
 
   bool parseVersionMin() {

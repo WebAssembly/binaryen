@@ -217,7 +217,7 @@ public:
   }
 
   template<typename ListType>
-  void set(ListType& list) {
+  void set(const ListType& list) {
     size_t size = list.size();
     if (allocatedElements < size) {
       allocate(size);

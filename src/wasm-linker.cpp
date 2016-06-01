@@ -138,9 +138,17 @@ void Linker::layout() {
       // function address
       name = out.resolveAlias(name);
       if (!out.wasm.checkFunction(name)) {
-        std::cerr << "Unknown symbol: " << name << '\n';
-        if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
-        *(relocation->data) = 0;
+        if (FunctionType* f = out.wasm.getExternType(name)) {
+          // Address of an imported function is taken, but imports do not have addresses in wasm.
+          // Generate a thunk to forward to the call_import.
+          Function* thunk = generateImportThunk(f);
+          ensureFunctionIndex(thunk->name);
+          *(relocation->data) = functionIndexes[thunk->name] + relocation->addend;
+        } else {
+          std::cerr << "Unknown symbol: " << name << '\n';
+          if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
+          *(relocation->data) = 0;
+        }
       } else {
         ensureFunctionIndex(name);
         *(relocation->data) = functionIndexes[name] + relocation->addend;
@@ -362,9 +370,25 @@ void Linker::makeDynCallThunks() {
     for (unsigned i = 0; i < funcType->params.size(); ++i) {
       args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
     }
-    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
+    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
     f->body = call;
     out.wasm.addFunction(f);
     exportFunction(f->name, true);
   }
+}
+
+Function* Linker::generateImportThunk(const FunctionType* funcType) {
+  wasm::Builder wasmBuilder(out.wasm);
+  std::vector<NameType> params;
+  int p = 0;
+  for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
+  Function *f = wasmBuilder.makeFunction(std::string("__importThunk_") + funcType->name.c_str(), std::move(params), funcType->result, {});
+  std::vector<Expression*> args;
+  for (unsigned i = 0; i < funcType->params.size(); ++i) {
+    args.push_back(wasmBuilder.makeGetLocal(i, funcType->params[i]));
+  }
+  Expression* call = wasmBuilder.makeCallImport(funcType->name, args);
+  f->body = call;
+  out.wasm.addFunction(f);
+  return f;
 }
