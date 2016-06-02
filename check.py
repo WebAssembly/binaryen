@@ -22,6 +22,7 @@ import scripts.support
 interpreter = None
 requested = []
 torture = True
+only_prepare = False
 
 for arg in sys.argv[1:]:
   if arg.startswith('--interpreter='):
@@ -32,6 +33,8 @@ for arg in sys.argv[1:]:
     torture = True
   elif arg == '--no-torture':
     torture = False
+  elif arg == '--only-prepare':
+    only_prepare = True
   else:
     requested.append(arg)
 
@@ -78,15 +81,20 @@ def setup_waterfall():
   # if we can use the waterfall llvm, do so
   global has_vanilla_llvm
   CLANG = os.path.join(BIN_DIR, 'clang')
+  print 'trying waterfall clang at', CLANG
   try:
-    subprocess.check_call([CLANG, '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.check_call([CLANG, '-v'])
     has_vanilla_llvm = True
+    print '...success'
   except Exception, e:
     warn('could not run vanilla LLVM from waterfall: ' + str(e) + ', looked for clang at ' + CLANG)
 
 fetch_waterfall()
 setup_waterfall()
 
+if only_prepare:
+  print 'waterfall is fetched and setup, exiting since --only-prepare'
+  sys.exit(0)
 
 # external tools
 

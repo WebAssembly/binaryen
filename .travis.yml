@@ -6,35 +6,32 @@ python:
 matrix:
   include:
 
-    - env: COMPILER_VERSION=3.6
+    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
       compiler: clang
-      addons: &clang36
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-          packages: ['cmake', 'nodejs', 'clang-3.6']
-
-    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=`pwd`/ubsan.blacklist"
-      compiler: clang
-      addons: *clang36
-
-    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=address"
-      compiler: clang
-      addons: *clang36
-
-    - env: COMPILER_VERSION=3.6 COMPILER_FLAGS="-fsanitize=thread"
-      compiler: clang
-      addons: *clang36
-
-    - env: COMPILER_VERSION=5
-      compiler: gcc
       addons: &gcc5
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'nodejs', 'g++-5']
 
+    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=`pwd`/ubsan.blacklist"
+      compiler: clang
+      addons: *gcc5
+
+    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=address"
+      compiler: clang
+      addons: *gcc5
+
+    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=thread"
+      compiler: clang
+      addons: *gcc5
+
+    - env: CC_COMPILER="gcc-5" CXX_COMPILER="g++-5"
+      compiler: gcc
+      addons: *gcc5
+
 before_install:
-  - export CC="${CC}-${COMPILER_VERSION}"
-  - export CXX="${CXX}-${COMPILER_VERSION}"
+  - export CC="${CC_COMPILER}"
+  - export CXX="${CXX_COMPILER}"
   - export ASAN_OPTIONS="symbolize=1"
 
 install:
@@ -45,6 +42,7 @@ before_script:
   - flake8 ./scripts/*
 
 script:
+  - ./check.py --only-prepare
   - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
   - make -j2
   - ./check.py
