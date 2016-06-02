@@ -7,22 +7,22 @@ matrix:
   include:
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-      compiler: gcc
+      compiler: clang
       addons: &gcc5
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'nodejs', 'g++-5']
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=`pwd`/ubsan.blacklist"
-      compiler: gcc
+      compiler: clang
       addons: *gcc5
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=address"
-      compiler: gcc
+      compiler: clang
       addons: *gcc5
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=thread"
-      compiler: gcc
+      compiler: clang
       addons: *gcc5
 
     - env: CC_COMPILER="gcc-5" CXX_COMPILER="g++-5"
