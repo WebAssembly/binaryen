@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 28
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -21,9 +21,9 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.call	$push0=, foo@FUNCTION
-	i32.const	$push1=, 28
-	i32.ne  	$push2=, $pop0, $pop1
+	i32.call	$push1=, foo@FUNCTION
+	i32.const	$push0=, 28
+	i32.ne  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0

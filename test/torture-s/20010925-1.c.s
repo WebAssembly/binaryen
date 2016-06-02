@@ -6,18 +6,17 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	i64.load	$0=, src($pop0)
+	i32.const	$push6=, 0
+	i32.load16_u	$push1=, src+8($pop6)
+	i32.store16	$drop=, dst+8($pop0), $pop1
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.load16_u	$push1=, src+8($pop4)
-	i32.store16	$drop=, dst+8($pop5), $pop1
+	i64.load	$push2=, src($pop4)
+	i64.store	$drop=, dst($pop5), $pop2
 	i32.const	$push3=, 0
-	i64.store	$drop=, dst($pop3), $0
-	i32.const	$push2=, 0
-	call    	exit@FUNCTION, $pop2
+	call    	exit@FUNCTION, $pop3
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -41,7 +40,8 @@ foo:                                    # @foo
 	i32.const	$3=, 0
 .LBB1_2:                                # %return
 	end_block                       # label0:
-	return  	$3
+	copy_local	$push1=, $3
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

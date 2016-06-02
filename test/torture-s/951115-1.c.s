@@ -8,10 +8,11 @@ g:                                      # @g
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 1
-	i32.store	$drop=, var($pop0), $pop1
-	return  	$0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1
+	i32.store	$drop=, var($pop1), $pop0
+	copy_local	$push2=, $0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -24,10 +25,11 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 1
-	i32.store	$drop=, var($pop0), $pop1
-	return  	$0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1
+	i32.store	$drop=, var($pop1), $pop0
+	copy_local	$push2=, $0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

@@ -6,10 +6,10 @@
 	.type	bar,@function
 bar:                                    # @bar
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 1
-	i32.store8	$drop=, ok($pop0), $pop1
-	return
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1
+	i32.store8	$drop=, ok($pop1), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -31,7 +31,7 @@ foo:                                    # @foo
 	i32.store8	$drop=, ok($pop1), $pop3
 .LBB1_2:                                # %sw.epilog
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store8	$drop=, ok($pop1), $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

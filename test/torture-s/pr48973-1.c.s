@@ -31,15 +31,15 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.load8_u	$push1=, s($pop9)
-	i32.const	$push2=, 254
-	i32.and 	$push3=, $pop1, $pop2
+	i32.load8_u	$push2=, s($pop9)
+	i32.const	$push3=, 254
+	i32.and 	$push4=, $pop2, $pop3
 	i32.const	$push8=, 0
 	i32.load	$push0=, v($pop8)
-	i32.const	$push4=, 1
-	i32.and 	$push7=, $pop0, $pop4
+	i32.const	$push1=, 1
+	i32.and 	$push7=, $pop0, $pop1
 	tee_local	$push6=, $0=, $pop7
-	i32.or  	$push5=, $pop3, $pop6
+	i32.or  	$push5=, $pop4, $pop6
 	i32.store8	$drop=, s($pop10), $pop5
 	block
 	i32.eqz 	$push12=, $0

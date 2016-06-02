@@ -11,7 +11,7 @@ g:                                      # @g
 	i32.const	$push0=, 0
 	i32.store	$drop=, glob($pop0), $0
 	i32.const	$push1=, 0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -35,7 +35,8 @@ f:                                      # @f
 	i32.store	$drop=, glob($pop2), $pop1
 .LBB1_2:                                # %while.end
 	end_block                       # label0:
-	return  	$0
+	copy_local	$push5=, $0
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

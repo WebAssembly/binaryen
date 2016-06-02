@@ -20,7 +20,7 @@ test:                                   # @test
 	i32.const	$push6=, 255
 	i32.and 	$push7=, $pop5, $pop6
 	i32.eqz 	$push8=, $pop7
-	return  	$pop8
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push9=, 0
 	i32.ne  	$push8=, $pop7, $pop9
-	return  	$pop8
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

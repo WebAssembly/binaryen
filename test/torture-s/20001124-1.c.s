@@ -9,17 +9,17 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
-	i32.const	$push0=, 512
-	i32.store	$drop=, s($pop1), $pop0
+	i32.const	$push0=, 9
+	i32.store8	$drop=, s+4($pop1), $pop0
 	i32.const	$push10=, 0
-	i32.const	$push3=, 9
-	i32.store8	$drop=, s+4($pop10), $pop3
+	i32.const	$push2=, 512
+	i32.store	$drop=, s($pop10), $pop2
 	i32.const	$push9=, 0
-	i32.const	$push2=, s
-	i32.store	$drop=, i+8($pop9), $pop2
+	i64.const	$push3=, 2048
+	i64.store	$drop=, i($pop9), $pop3
 	i32.const	$push8=, 0
-	i64.const	$push4=, 2048
-	i64.store	$drop=, i($pop8), $pop4
+	i32.const	$push4=, s
+	i32.store	$drop=, i+8($pop8), $pop4
 	i32.const	$push7=, 0
 	i64.const	$push5=, 0
 	i64.store	$drop=, f($pop7), $pop5

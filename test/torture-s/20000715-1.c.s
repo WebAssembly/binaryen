@@ -6,7 +6,7 @@
 	.type	test1,@function
 test1:                                  # @test1
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -17,7 +17,7 @@ test1:                                  # @test1
 	.type	test2,@function
 test2:                                  # @test2
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
@@ -28,7 +28,7 @@ test2:                                  # @test2
 	.type	test3,@function
 test3:                                  # @test3
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
@@ -39,12 +39,12 @@ test3:                                  # @test3
 	.type	test4,@function
 test4:                                  # @test4
 # BB#0:                                 # %if.end8
-	i32.const	$push1=, 0
+	i32.const	$push2=, 0
 	i32.const	$push3=, 0
-	i32.const	$push2=, 3
-	i32.store	$push0=, x($pop3), $pop2
-	i32.store	$drop=, y($pop1), $pop0
-	return
+	i32.const	$push1=, 3
+	i32.store	$push0=, y($pop3), $pop1
+	i32.store	$drop=, x($pop2), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
@@ -55,12 +55,12 @@ test4:                                  # @test4
 	.type	test5,@function
 test5:                                  # @test5
 # BB#0:                                 # %if.end8
-	i32.const	$push1=, 0
+	i32.const	$push2=, 0
 	i32.const	$push3=, 0
-	i32.const	$push2=, 3
-	i32.store	$push0=, x($pop3), $pop2
-	i32.store	$drop=, y($pop1), $pop0
-	return
+	i32.const	$push1=, 3
+	i32.store	$push0=, y($pop3), $pop1
+	i32.store	$drop=, x($pop2), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
@@ -71,12 +71,12 @@ test5:                                  # @test5
 	.type	test6,@function
 test6:                                  # @test6
 # BB#0:                                 # %if.end8
-	i32.const	$push1=, 0
+	i32.const	$push2=, 0
 	i32.const	$push3=, 0
-	i32.const	$push2=, 3
-	i32.store	$push0=, x($pop3), $pop2
-	i32.store	$drop=, y($pop1), $pop0
-	return
+	i32.const	$push1=, 3
+	i32.store	$push0=, y($pop3), $pop1
+	i32.store	$drop=, x($pop2), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6

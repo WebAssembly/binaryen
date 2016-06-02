@@ -9,8 +9,8 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push5=, __stack_pointer
-	i32.load	$push6=, 0($pop5)
+	i32.const	$push5=, 0
+	i32.load	$push6=, __stack_pointer($pop5)
 	i32.const	$push7=, 128
 	i32.sub 	$push10=, $pop6, $pop7
 	tee_local	$push9=, $1=, $pop10
@@ -22,7 +22,7 @@ foo:                                    # @foo
 	i32.const	$push8=, 2
 	i32.store	$drop=, 0($pop3), $pop8
 	i32.load	$push4=, 0($1)
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -35,7 +35,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

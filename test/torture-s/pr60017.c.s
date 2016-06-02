@@ -6,17 +6,16 @@
 	.type	func,@function
 func:                                   # @func
 	.param  	i32
-	.local  	i64
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
-	i64.load	$1=, x($pop2):p2align=2
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
-	i32.const	$push4=, 0
-	i64.load	$push3=, x+8($pop4):p2align=2
+	i32.const	$push2=, 0
+	i64.load	$push3=, x+8($pop2):p2align=2
 	i64.store	$drop=, 0($pop1):p2align=2, $pop3
-	i64.store	$drop=, 0($0):p2align=2, $1
-	return
+	i32.const	$push5=, 0
+	i64.load	$push4=, x($pop5):p2align=2
+	i64.store	$drop=, 0($0):p2align=2, $pop4
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	func, .Lfunc_end0-func

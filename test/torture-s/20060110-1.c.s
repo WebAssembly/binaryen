@@ -12,7 +12,7 @@ f:                                      # @f
 	i64.shl 	$push1=, $0, $pop0
 	i64.const	$push3=, 32
 	i64.shr_s	$push2=, $pop1, $pop3
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -26,10 +26,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push4=, 0
-	i64.load32_s	$push0=, a($pop4)
+	i64.load32_s	$push1=, a($pop4)
 	i32.const	$push3=, 0
-	i64.load	$push1=, b($pop3)
-	i64.ne  	$push2=, $pop0, $pop1
+	i64.load	$push0=, b($pop3)
+	i64.ne  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push5=, 0

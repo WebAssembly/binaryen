@@ -7,7 +7,7 @@
 test1:                                  # @test1
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -21,10 +21,10 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, 8
-	i32.call	$push1=, mempcpy@FUNCTION, $0, $0, $pop0
+	i32.call	$push2=, mempcpy@FUNCTION, $0, $0, $pop0
 	i32.const	$push4=, 8
-	i32.add 	$push2=, $0, $pop4
-	i32.ne  	$push3=, $pop1, $pop2
+	i32.add 	$push1=, $0, $pop4
+	i32.ne  	$push3=, $pop2, $pop1
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
@@ -43,7 +43,7 @@ test2:                                  # @test2
 test3:                                  # @test3
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
@@ -55,7 +55,7 @@ test3:                                  # @test3
 test4:                                  # @test4
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
@@ -67,7 +67,7 @@ test4:                                  # @test4
 test5:                                  # @test5
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
@@ -79,7 +79,7 @@ test5:                                  # @test5
 test6:                                  # @test6
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6
@@ -91,7 +91,7 @@ test6:                                  # @test6
 test7:                                  # @test7
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end6:
 	.size	test7, .Lfunc_end6-test7
@@ -105,30 +105,30 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push8=, __stack_pointer
-	i32.const	$push5=, __stack_pointer
-	i32.load	$push6=, 0($pop5)
+	i32.const	$push8=, 0
+	i32.const	$push5=, 0
+	i32.load	$push6=, __stack_pointer($pop5)
 	i32.const	$push7=, 16
 	i32.sub 	$push18=, $pop6, $pop7
-	i32.store	$push21=, 0($pop8), $pop18
+	i32.store	$push21=, __stack_pointer($pop8), $pop18
 	tee_local	$push20=, $0=, $pop21
-	i32.const	$push12=, 6
-	i32.add 	$push13=, $pop20, $pop12
 	i32.const	$push14=, 6
-	i32.add 	$push15=, $0, $pop14
-	i32.const	$push0=, 8
-	i32.call	$push1=, mempcpy@FUNCTION, $pop13, $pop15, $pop0
+	i32.add 	$push15=, $pop20, $pop14
 	i32.const	$push16=, 6
 	i32.add 	$push17=, $0, $pop16
+	i32.const	$push0=, 8
+	i32.call	$push2=, mempcpy@FUNCTION, $pop15, $pop17, $pop0
+	i32.const	$push12=, 6
+	i32.add 	$push13=, $0, $pop12
 	i32.const	$push19=, 8
-	i32.add 	$push2=, $pop17, $pop19
-	i32.ne  	$push3=, $pop1, $pop2
+	i32.add 	$push1=, $pop13, $pop19
+	i32.ne  	$push3=, $pop2, $pop1
 	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %test2.exit
-	i32.const	$push11=, __stack_pointer
+	i32.const	$push11=, 0
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$drop=, 0($pop11), $pop10
+	i32.store	$drop=, __stack_pointer($pop11), $pop10
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB7_2:                                # %if.then.i

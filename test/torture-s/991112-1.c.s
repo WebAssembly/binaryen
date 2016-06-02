@@ -9,7 +9,7 @@ rl_show_char:                           # @rl_show_char
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	rl_show_char, .Lfunc_end0-rl_show_char
@@ -26,7 +26,7 @@ rl_character_len:                       # @rl_character_len
 	i32.const	$push1=, 2
 	i32.call	$push0=, isprint@FUNCTION, $0
 	i32.select	$push3=, $pop2, $pop1, $pop0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	rl_character_len, .Lfunc_end1-rl_character_len

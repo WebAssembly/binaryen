@@ -9,7 +9,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -32,13 +32,15 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.load	$0=, 0($0)
-	i32.const	$push2=, -1
-	i32.add 	$1=, $1, $pop2
-	br_if   	0, $1           # 0: up to label1
+	i32.const	$push4=, -1
+	i32.add 	$push3=, $1, $pop4
+	tee_local	$push2=, $1=, $pop3
+	br_if   	0, $pop2        # 0: up to label1
 .LBB1_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push5=, $1
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -51,25 +53,26 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push5=, __stack_pointer
-	i32.const	$push2=, __stack_pointer
-	i32.load	$push3=, 0($pop2)
+	i32.const	$push5=, 0
+	i32.const	$push2=, 0
+	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
 	i32.sub 	$push13=, $pop3, $pop4
-	i32.store	$0=, 0($pop5), $pop13
+	i32.store	$push15=, __stack_pointer($pop5), $pop13
+	tee_local	$push14=, $0=, $pop15
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$drop=, 8($0), $pop10
+	i32.store	$drop=, 8($pop14), $pop10
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push0=, 10
 	i32.call	$drop=, foo@FUNCTION, $pop12, $pop0
-	i32.const	$push8=, __stack_pointer
+	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$drop=, 0($pop8), $pop7
+	i32.store	$drop=, __stack_pointer($pop8), $pop7
 	i32.const	$push1=, 0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

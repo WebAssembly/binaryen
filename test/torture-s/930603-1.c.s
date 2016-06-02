@@ -17,7 +17,7 @@ fx:                                     # @fx
 	f64.const	$push6=, 0x1p0
 	f64.add 	$push7=, $pop5, $pop6
 	f32.demote/f64	$push8=, $pop7
-	return  	$pop8
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end0:
 	.size	fx, .Lfunc_end0-fx
@@ -44,7 +44,7 @@ inita:                                  # @inita
 	.result 	f32
 # BB#0:                                 # %entry
 	f32.const	$push0=, 0x1.8p1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	inita, .Lfunc_end2-inita
@@ -57,7 +57,7 @@ initc:                                  # @initc
 	.result 	f32
 # BB#0:                                 # %entry
 	f32.const	$push0=, 0x1p2
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	initc, .Lfunc_end3-initc
@@ -70,7 +70,8 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	f, .Lfunc_end4-f

@@ -12,7 +12,7 @@ main:                                   # @main
 	i64.call	$push2=, foo@FUNCTION, $pop1
 	i64.const	$push3=, -1
 	i64.ne  	$push4=, $pop2, $pop3
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -28,7 +28,7 @@ foo:                                    # @foo
 	i64.shl 	$push2=, $pop0, $pop1
 	i64.const	$push4=, 48
 	i64.shr_s	$push3=, $pop2, $pop4
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

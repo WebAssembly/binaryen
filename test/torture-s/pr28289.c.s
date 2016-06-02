@@ -12,7 +12,7 @@ ix86_split_ashr:                        # @ix86_split_ashr
 	i32.select	$push2=, $pop1, $pop0, $0
 	i32.const	$push3=, 0
 	i32.call_indirect	$drop=, $pop2, $pop3
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	ix86_split_ashr, .Lfunc_end0-ix86_split_ashr
@@ -38,7 +38,7 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	gen_x86_64_shrd, .Lfunc_end2-gen_x86_64_shrd
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.call_indirect	$drop=, $pop4, $pop6
 	i32.const	$push5=, 1
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

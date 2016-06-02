@@ -11,8 +11,8 @@ ffs:                                    # @ffs
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	block
-	i32.eqz 	$push5=, $0
-	br_if   	0, $pop5        # 0: down to label0
+	i32.eqz 	$push7=, $0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$2=, 1
 	i32.const	$push2=, 1
@@ -24,17 +24,19 @@ ffs:                                    # @ffs
 .LBB0_3:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push4=, 1
-	i32.add 	$2=, $2, $pop4
-	i32.const	$push3=, 1
-	i32.shl 	$1=, $1, $pop3
-	i32.and 	$push1=, $1, $0
-	i32.eqz 	$push6=, $pop1
-	br_if   	0, $pop6        # 0: up to label1
+	i32.const	$push6=, 1
+	i32.add 	$2=, $2, $pop6
+	i32.const	$push5=, 1
+	i32.shl 	$push4=, $1, $pop5
+	tee_local	$push3=, $1=, $pop4
+	i32.and 	$push1=, $pop3, $0
+	i32.eqz 	$push8=, $pop1
+	br_if   	0, $pop8        # 0: up to label1
 .LBB0_4:                                # %cleanup
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$2
+	copy_local	$push9=, $2
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	ffs, .Lfunc_end0-ffs

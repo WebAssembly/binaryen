@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -18,7 +18,6 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32, i32, i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
 	block
 	block
@@ -33,31 +32,31 @@ bar:                                    # @bar
 	br_if   	1, $pop5        # 1: down to label0
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
-	i32.load	$5=, 16($0)
-	i32.const	$push19=, 4
-	i32.add 	$push20=, $0, $pop19
-	i32.load	$push6=, 20($0)
-	f64.convert_s/i32	$push13=, $pop6
-	f64.const	$push8=, 0x0p0
-	f64.mul 	$push14=, $pop13, $pop8
-	f64.const	$push10=, 0x1p-1
-	f64.mul 	$push15=, $pop14, $pop10
-	i32.trunc_s/f64	$push16=, $pop15
-	i32.add 	$push18=, $pop16, $2
-	i32.store	$drop=, 0($pop20), $pop18
-	f64.convert_s/i32	$push7=, $5
-	f64.const	$push22=, 0x0p0
-	f64.mul 	$push9=, $pop7, $pop22
-	f64.const	$push21=, 0x1p-1
-	f64.mul 	$push11=, $pop9, $pop21
-	i32.trunc_s/f64	$push12=, $pop11
-	i32.add 	$push17=, $pop12, $1
-	i32.store	$drop=, 0($0), $pop17
 	i32.store	$drop=, 8($0), $3
 	i32.store	$drop=, 12($0), $4
+	i32.load	$push6=, 16($0)
+	f64.convert_s/i32	$push7=, $pop6
+	f64.const	$push8=, 0x0p0
+	f64.mul 	$push9=, $pop7, $pop8
+	f64.const	$push10=, 0x1p-1
+	f64.mul 	$push11=, $pop9, $pop10
+	i32.trunc_s/f64	$push12=, $pop11
+	i32.add 	$push13=, $pop12, $1
+	i32.store	$drop=, 0($0), $pop13
+	i32.const	$push14=, 4
+	i32.add 	$push15=, $0, $pop14
+	i32.load	$push16=, 20($0)
+	f64.convert_s/i32	$push17=, $pop16
+	f64.const	$push23=, 0x0p0
+	f64.mul 	$push18=, $pop17, $pop23
+	f64.const	$push22=, 0x1p-1
+	f64.mul 	$push19=, $pop18, $pop22
+	i32.trunc_s/f64	$push20=, $pop19
+	i32.add 	$push21=, $pop20, $2
+	i32.store	$drop=, 0($pop15), $pop21
 .LBB1_3:                                # %if.end
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

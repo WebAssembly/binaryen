@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 4
 	i32.or  	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -29,7 +29,7 @@ bar:                                    # @bar
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 3
 	i32.or  	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

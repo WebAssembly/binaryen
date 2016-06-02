@@ -35,49 +35,51 @@ do_test:                                # @do_test
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i64.const	$push15=, 4294967295
-	i64.and 	$2=, $3, $pop15
+	i64.const	$push17=, 1
+	i64.add 	$4=, $4, $pop17
+	i64.const	$push16=, 4294967295
+	i64.and 	$2=, $3, $pop16
+	i64.const	$push15=, -1
+	i64.add 	$push0=, $3, $pop15
+	copy_local	$3=, $pop0
 	i64.const	$push14=, 1
-	i64.add 	$4=, $4, $pop14
-	i64.const	$push13=, -1
-	i64.add 	$3=, $3, $pop13
-	i64.const	$push12=, 1
-	i64.shl 	$push0=, $pop12, $2
-	i64.and 	$push1=, $pop0, $1
-	i64.eqz 	$push2=, $pop1
-	br_if   	0, $pop2        # 0: up to label1
+	i64.shl 	$push2=, $pop14, $2
+	i64.and 	$push3=, $pop2, $1
+	i64.eqz 	$push4=, $pop3
+	br_if   	0, $pop4        # 0: up to label1
 # BB#2:                                 # %foo.exit
 	end_loop                        # label2:
-	i64.const	$push3=, 32
-	i64.shl 	$push4=, $4, $pop3
-	i64.const	$push16=, 32
-	i64.shr_s	$push5=, $pop4, $pop16
-	call    	bar@FUNCTION, $pop5
+	i64.const	$push5=, 32
+	i64.shl 	$push6=, $4, $pop5
+	i64.const	$push18=, 32
+	i64.shr_s	$push7=, $pop6, $pop18
+	call    	bar@FUNCTION, $pop7
 	i64.load	$1=, 0($0)
 	i64.const	$3=, 63
 	i64.const	$4=, -1
 .LBB1_3:                                # %for.cond.i.1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i64.const	$push20=, 4294967295
-	i64.and 	$2=, $3, $pop20
+	i64.const	$push22=, 1
+	i64.add 	$4=, $4, $pop22
+	i64.const	$push21=, 4294967295
+	i64.and 	$2=, $3, $pop21
+	i64.const	$push20=, -1
+	i64.add 	$push1=, $3, $pop20
+	copy_local	$3=, $pop1
 	i64.const	$push19=, 1
-	i64.add 	$4=, $4, $pop19
-	i64.const	$push18=, -1
-	i64.add 	$3=, $3, $pop18
-	i64.const	$push17=, 1
-	i64.shl 	$push6=, $pop17, $2
-	i64.and 	$push7=, $pop6, $1
-	i64.eqz 	$push8=, $pop7
-	br_if   	0, $pop8        # 0: up to label3
+	i64.shl 	$push8=, $pop19, $2
+	i64.and 	$push9=, $pop8, $1
+	i64.eqz 	$push10=, $pop9
+	br_if   	0, $pop10       # 0: up to label3
 # BB#4:                                 # %foo.exit.1
 	end_loop                        # label4:
-	i64.const	$push9=, 32
-	i64.shl 	$push10=, $4, $pop9
-	i64.const	$push21=, 32
-	i64.shr_s	$push11=, $pop10, $pop21
-	call    	bar@FUNCTION, $pop11
-	return
+	i64.const	$push11=, 32
+	i64.shl 	$push12=, $4, $pop11
+	i64.const	$push23=, 32
+	i64.shr_s	$push13=, $pop12, $pop23
+	call    	bar@FUNCTION, $pop13
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	do_test, .Lfunc_end1-do_test
@@ -90,24 +92,24 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push5=, __stack_pointer
-	i32.const	$push2=, __stack_pointer
-	i32.load	$push3=, 0($pop2)
+	i32.const	$push5=, 0
+	i32.const	$push2=, 0
+	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
 	i32.sub 	$push11=, $pop3, $pop4
-	i32.store	$push13=, 0($pop5), $pop11
+	i32.store	$push13=, __stack_pointer($pop5), $pop11
 	tee_local	$push12=, $0=, $pop13
 	i64.const	$push0=, -9223372036854775807
 	i64.store	$drop=, 8($pop12), $pop0
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
 	call    	do_test@FUNCTION, $pop10
-	i32.const	$push8=, __stack_pointer
+	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$drop=, 0($pop8), $pop7
+	i32.store	$drop=, __stack_pointer($pop8), $pop7
 	i32.const	$push1=, 0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

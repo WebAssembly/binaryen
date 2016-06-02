@@ -42,7 +42,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 16
 	i32.shr_s	$push0=, $pop2, $pop3
 	call    	bar@FUNCTION, $pop0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -54,11 +54,11 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, v
-	i32.const	$push1=, 0
-	call    	foo@FUNCTION, $pop0, $pop1
+	i32.const	$push1=, v
+	i32.const	$push0=, 0
+	call    	foo@FUNCTION, $pop1, $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

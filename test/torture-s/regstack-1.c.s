@@ -6,294 +6,300 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64, i32
+	.local  	i64, i64, i64, i64, i64, i64, i32, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64
 # BB#0:                                 # %entry
-	i32.const	$push56=, __stack_pointer
-	i32.const	$push53=, __stack_pointer
-	i32.load	$push54=, 0($pop53)
-	i32.const	$push55=, 320
-	i32.sub 	$push133=, $pop54, $pop55
-	i32.store	$push205=, 0($pop56), $pop133
-	tee_local	$push204=, $18=, $pop205
-	i32.const	$push57=, 304
-	i32.add 	$push58=, $pop204, $pop57
-	i32.const	$push7=, 0
-	i64.load	$push203=, C($pop7)
-	tee_local	$push202=, $4=, $pop203
-	i32.const	$push201=, 0
-	i64.load	$push200=, C+8($pop201)
-	tee_local	$push199=, $5=, $pop200
-	i32.const	$push198=, 0
-	i64.load	$push197=, U($pop198)
-	tee_local	$push196=, $17=, $pop197
-	i32.const	$push195=, 0
-	i64.load	$push194=, U+8($pop195)
-	tee_local	$push193=, $16=, $pop194
-	call    	__addtf3@FUNCTION, $pop58, $pop202, $pop199, $pop196, $pop193
-	i32.const	$push61=, 192
-	i32.add 	$push62=, $18, $pop61
-	i64.load	$push192=, 304($18)
-	tee_local	$push191=, $11=, $pop192
-	i32.const	$push59=, 304
-	i32.add 	$push60=, $18, $pop59
-	i32.const	$push8=, 8
-	i32.add 	$push9=, $pop60, $pop8
-	i64.load	$push190=, 0($pop9)
-	tee_local	$push189=, $10=, $pop190
-	i32.const	$push188=, 0
-	i64.load	$push187=, Y2($pop188)
-	tee_local	$push186=, $15=, $pop187
-	i32.const	$push185=, 0
-	i64.load	$push184=, Y2+8($pop185)
-	tee_local	$push183=, $14=, $pop184
-	call    	__multf3@FUNCTION, $pop62, $pop191, $pop189, $pop186, $pop183
-	i32.const	$push63=, 192
-	i32.add 	$push64=, $18, $pop63
+	i32.const	$push71=, 0
+	i32.const	$push68=, 0
+	i32.load	$push69=, __stack_pointer($pop68)
+	i32.const	$push70=, 320
+	i32.sub 	$push148=, $pop69, $pop70
+	i32.store	$push232=, __stack_pointer($pop71), $pop148
+	tee_local	$push231=, $6=, $pop232
+	i32.const	$push72=, 304
+	i32.add 	$push73=, $pop231, $pop72
+	i32.const	$push12=, 0
+	i64.load	$push230=, C($pop12)
+	tee_local	$push229=, $12=, $pop230
+	i32.const	$push228=, 0
+	i64.load	$push227=, C+8($pop228)
+	tee_local	$push226=, $11=, $pop227
+	i32.const	$push225=, 0
+	i64.load	$push224=, U($pop225)
+	tee_local	$push223=, $8=, $pop224
+	i32.const	$push222=, 0
+	i64.load	$push221=, U+8($pop222)
+	tee_local	$push220=, $7=, $pop221
+	call    	__addtf3@FUNCTION, $pop73, $pop229, $pop226, $pop223, $pop220
+	i32.const	$push74=, 240
+	i32.add 	$push75=, $6, $pop74
+	call    	__subtf3@FUNCTION, $pop75, $12, $11, $8, $7
+	i32.const	$push78=, 288
+	i32.add 	$push79=, $6, $pop78
+	i64.load	$push219=, 304($6)
+	tee_local	$push218=, $14=, $pop219
+	i32.const	$push76=, 304
+	i32.add 	$push77=, $6, $pop76
+	i32.const	$push13=, 8
+	i32.add 	$push14=, $pop77, $pop13
+	i64.load	$push217=, 0($pop14)
+	tee_local	$push216=, $13=, $pop217
+	call    	__addtf3@FUNCTION, $pop79, $8, $7, $pop218, $pop216
+	i32.const	$push82=, 224
+	i32.add 	$push83=, $6, $pop82
+	i64.load	$push215=, 240($6)
+	tee_local	$push214=, $16=, $pop215
+	i32.const	$push80=, 240
+	i32.add 	$push81=, $6, $pop80
+	i32.const	$push213=, 8
+	i32.add 	$push15=, $pop81, $pop213
+	i64.load	$push212=, 0($pop15)
+	tee_local	$push211=, $15=, $pop212
+	call    	__subtf3@FUNCTION, $pop83, $pop214, $pop211, $8, $7
+	i32.const	$push86=, 272
+	i32.add 	$push87=, $6, $pop86
+	i64.load	$push210=, 288($6)
+	tee_local	$push209=, $10=, $pop210
+	i32.const	$push84=, 288
+	i32.add 	$push85=, $6, $pop84
+	i32.const	$push208=, 8
+	i32.add 	$push16=, $pop85, $pop208
+	i64.load	$push207=, 0($pop16)
+	tee_local	$push206=, $9=, $pop207
+	call    	__addtf3@FUNCTION, $pop87, $pop209, $pop206, $8, $7
+	i32.const	$push88=, 128
+	i32.add 	$push89=, $6, $pop88
+	i32.const	$push205=, 0
+	i64.load	$push204=, Y2($pop205)
+	tee_local	$push203=, $12=, $pop204
+	i32.const	$push202=, 0
+	i64.load	$push201=, Y2+8($pop202)
+	tee_local	$push200=, $11=, $pop201
+	call    	__addtf3@FUNCTION, $pop89, $8, $7, $pop203, $pop200
+	i32.const	$push90=, 192
+	i32.add 	$push91=, $6, $pop90
+	call    	__multf3@FUNCTION, $pop91, $14, $13, $12, $11
+	i32.const	$push92=, 112
+	i32.add 	$push93=, $6, $pop92
+	i32.const	$push199=, 0
+	i64.load	$push198=, Y1($pop199)
+	tee_local	$push197=, $14=, $pop198
+	i32.const	$push196=, 0
+	i64.load	$push195=, Y1+8($pop196)
+	tee_local	$push194=, $13=, $pop195
+	call    	__multf3@FUNCTION, $pop93, $16, $15, $pop197, $pop194
+	i32.const	$push96=, 80
+	i32.add 	$push97=, $6, $pop96
+	i64.load	$push193=, 224($6)
+	tee_local	$push192=, $16=, $pop193
+	i32.const	$push94=, 224
+	i32.add 	$push95=, $6, $pop94
+	i32.const	$push191=, 8
+	i32.add 	$push17=, $pop95, $pop191
+	i64.load	$push190=, 0($pop17)
+	tee_local	$push189=, $15=, $pop190
+	call    	__multf3@FUNCTION, $pop97, $pop192, $pop189, $14, $13
+	i32.const	$push98=, 208
+	i32.add 	$push99=, $6, $pop98
+	call    	__subtf3@FUNCTION, $pop99, $8, $7, $16, $15
+	i32.const	$push100=, 160
+	i32.add 	$push101=, $6, $pop100
+	call    	__multf3@FUNCTION, $pop101, $10, $9, $12, $11
+	i32.const	$push104=, 256
+	i32.add 	$push105=, $6, $pop104
+	i64.load	$push188=, 272($6)
+	tee_local	$push187=, $10=, $pop188
+	i32.const	$push102=, 272
+	i32.add 	$push103=, $6, $pop102
+	i32.const	$push186=, 8
+	i32.add 	$push18=, $pop103, $pop186
+	i64.load	$push185=, 0($pop18)
+	tee_local	$push184=, $9=, $pop185
+	call    	__addtf3@FUNCTION, $pop105, $8, $7, $pop187, $pop184
+	i32.const	$push108=, 48
+	i32.add 	$push109=, $6, $pop108
+	i64.load	$push21=, 128($6)
+	i32.const	$push106=, 128
+	i32.add 	$push107=, $6, $pop106
+	i32.const	$push183=, 8
+	i32.add 	$push19=, $pop107, $pop183
+	i64.load	$push20=, 0($pop19)
+	call    	__multf3@FUNCTION, $pop109, $pop21, $pop20, $14, $13
+	i32.const	$push110=, 16
+	i32.add 	$push111=, $6, $pop110
+	call    	__multf3@FUNCTION, $pop111, $12, $11, $14, $13
+	i32.const	$push114=, 176
+	i32.add 	$push115=, $6, $pop114
+	i64.load	$push24=, 192($6)
+	i32.const	$push112=, 192
+	i32.add 	$push113=, $6, $pop112
 	i32.const	$push182=, 8
-	i32.add 	$push10=, $pop64, $pop182
-	i64.load	$2=, 0($pop10)
-	i64.load	$3=, 192($18)
-	i32.const	$push65=, 240
-	i32.add 	$push66=, $18, $pop65
-	call    	__subtf3@FUNCTION, $pop66, $4, $5, $17, $16
-	i32.const	$push69=, 224
-	i32.add 	$push70=, $18, $pop69
-	i64.load	$push181=, 240($18)
-	tee_local	$push180=, $13=, $pop181
-	i32.const	$push67=, 240
-	i32.add 	$push68=, $18, $pop67
+	i32.add 	$push22=, $pop113, $pop182
+	i64.load	$push23=, 0($pop22)
+	call    	__subtf3@FUNCTION, $pop115, $pop24, $pop23, $10, $9
+	i32.const	$push118=, 96
+	i32.add 	$push119=, $6, $pop118
+	i64.load	$push27=, 112($6)
+	i32.const	$push116=, 112
+	i32.add 	$push117=, $6, $pop116
+	i32.const	$push181=, 8
+	i32.add 	$push25=, $pop117, $pop181
+	i64.load	$push26=, 0($pop25)
+	call    	__subtf3@FUNCTION, $pop119, $pop27, $pop26, $16, $15
+	i32.const	$push124=, 64
+	i32.add 	$push125=, $6, $pop124
+	i64.load	$push33=, 208($6)
+	i32.const	$push122=, 208
+	i32.add 	$push123=, $6, $pop122
+	i32.const	$push180=, 8
+	i32.add 	$push30=, $pop123, $pop180
+	i64.load	$push31=, 0($pop30)
+	i64.load	$push32=, 80($6)
+	i32.const	$push120=, 80
+	i32.add 	$push121=, $6, $pop120
 	i32.const	$push179=, 8
-	i32.add 	$push11=, $pop68, $pop179
-	i64.load	$push178=, 0($pop11)
-	tee_local	$push177=, $12=, $pop178
-	call    	__subtf3@FUNCTION, $pop70, $pop180, $pop177, $17, $16
-	i32.const	$push71=, 224
-	i32.add 	$push72=, $18, $pop71
-	i32.const	$push176=, 8
-	i32.add 	$push12=, $pop72, $pop176
-	i64.load	$4=, 0($pop12)
-	i64.load	$5=, 224($18)
-	i32.const	$push73=, 288
-	i32.add 	$push74=, $18, $pop73
-	call    	__addtf3@FUNCTION, $pop74, $17, $16, $11, $10
-	i32.const	$push75=, 288
-	i32.add 	$push76=, $18, $pop75
-	i32.const	$push175=, 8
-	i32.add 	$push13=, $pop76, $pop175
-	i64.load	$6=, 0($pop13)
-	i64.load	$7=, 288($18)
-	i32.const	$push77=, 112
-	i32.add 	$push78=, $18, $pop77
-	i32.const	$push174=, 0
-	i64.load	$push173=, Y1($pop174)
-	tee_local	$push172=, $11=, $pop173
-	i32.const	$push171=, 0
-	i64.load	$push170=, Y1+8($pop171)
-	tee_local	$push169=, $10=, $pop170
-	call    	__multf3@FUNCTION, $pop78, $13, $12, $pop172, $pop169
-	i32.const	$push79=, 112
-	i32.add 	$push80=, $18, $pop79
-	i32.const	$push168=, 8
-	i32.add 	$push14=, $pop80, $pop168
-	i64.load	$13=, 0($pop14)
-	i64.load	$12=, 112($18)
-	i32.const	$push81=, 272
-	i32.add 	$push82=, $18, $pop81
-	call    	__addtf3@FUNCTION, $pop82, $7, $6, $17, $16
-	i32.const	$push85=, 176
-	i32.add 	$push86=, $18, $pop85
-	i64.load	$push167=, 272($18)
-	tee_local	$push166=, $9=, $pop167
-	i32.const	$push83=, 272
-	i32.add 	$push84=, $18, $pop83
-	i32.const	$push165=, 8
-	i32.add 	$push15=, $pop84, $pop165
-	i64.load	$push164=, 0($pop15)
-	tee_local	$push163=, $8=, $pop164
-	call    	__subtf3@FUNCTION, $pop86, $3, $2, $pop166, $pop163
-	i64.load	$2=, 176($18)
-	i32.const	$push162=, 0
-	i32.const	$push87=, 176
-	i32.add 	$push88=, $18, $pop87
-	i32.const	$push161=, 8
-	i32.add 	$push16=, $pop88, $pop161
-	i64.load	$push6=, 0($pop16)
-	i64.store	$0=, X+8($pop162), $pop6
-	i32.const	$push160=, 0
-	i64.store	$1=, X($pop160), $2
-	i32.const	$push89=, 80
-	i32.add 	$push90=, $18, $pop89
-	call    	__multf3@FUNCTION, $pop90, $5, $4, $11, $10
-	i32.const	$push91=, 80
-	i32.add 	$push92=, $18, $pop91
-	i32.const	$push159=, 8
-	i32.add 	$push17=, $pop92, $pop159
-	i64.load	$2=, 0($pop17)
-	i64.load	$3=, 80($18)
-	i32.const	$push93=, 160
-	i32.add 	$push94=, $18, $pop93
-	call    	__multf3@FUNCTION, $pop94, $7, $6, $15, $14
-	i64.load	$7=, 160($18)
-	i32.const	$push158=, 0
-	i32.const	$push95=, 160
-	i32.add 	$push96=, $18, $pop95
-	i32.const	$push157=, 8
-	i32.add 	$push18=, $pop96, $pop157
-	i64.load	$push1=, 0($pop18)
-	i64.store	$6=, S+8($pop158), $pop1
-	i32.const	$push156=, 0
-	i64.store	$drop=, S($pop156), $7
-	i32.const	$push97=, 96
-	i32.add 	$push98=, $18, $pop97
-	call    	__subtf3@FUNCTION, $pop98, $12, $13, $5, $4
-	i64.load	$13=, 96($18)
-	i32.const	$push155=, 0
-	i32.const	$push99=, 96
-	i32.add 	$push100=, $18, $pop99
-	i32.const	$push154=, 8
-	i32.add 	$push19=, $pop100, $pop154
-	i64.load	$push0=, 0($pop19)
-	i64.store	$12=, T+8($pop155), $pop0
-	i32.const	$push153=, 0
-	i64.store	$drop=, T($pop153), $13
-	i32.const	$push101=, 208
-	i32.add 	$push102=, $18, $pop101
-	call    	__subtf3@FUNCTION, $pop102, $17, $16, $5, $4
-	i32.const	$push105=, 64
-	i32.add 	$push106=, $18, $pop105
-	i64.load	$push22=, 208($18)
-	i32.const	$push103=, 208
-	i32.add 	$push104=, $18, $pop103
-	i32.const	$push152=, 8
-	i32.add 	$push20=, $pop104, $pop152
-	i64.load	$push21=, 0($pop20)
-	call    	__addtf3@FUNCTION, $pop106, $pop22, $pop21, $3, $2
-	i64.load	$4=, 64($18)
-	i32.const	$push151=, 0
-	i32.const	$push107=, 64
-	i32.add 	$push108=, $18, $pop107
-	i32.const	$push150=, 8
-	i32.add 	$push23=, $pop108, $pop150
-	i64.load	$push5=, 0($pop23)
-	i64.store	$2=, Y+8($pop151), $pop5
-	i32.const	$push149=, 0
-	i64.store	$3=, Y($pop149), $4
-	i32.const	$push109=, 256
-	i32.add 	$push110=, $18, $pop109
-	call    	__addtf3@FUNCTION, $pop110, $17, $16, $9, $8
-	i32.const	$push113=, 144
-	i32.add 	$push114=, $18, $pop113
-	i64.load	$push26=, 256($18)
-	i32.const	$push111=, 256
-	i32.add 	$push112=, $18, $pop111
-	i32.const	$push148=, 8
-	i32.add 	$push24=, $pop112, $pop148
-	i64.load	$push25=, 0($pop24)
-	call    	__subtf3@FUNCTION, $pop114, $7, $6, $pop26, $pop25
-	i64.load	$4=, 144($18)
-	i32.const	$push147=, 0
-	i32.const	$push115=, 144
-	i32.add 	$push116=, $18, $pop115
-	i32.const	$push146=, 8
-	i32.add 	$push27=, $pop116, $pop146
-	i64.load	$push4=, 0($pop27)
-	i64.store	$9=, Z+8($pop147), $pop4
-	i32.const	$push145=, 0
-	i64.store	$8=, Z($pop145), $4
-	i32.const	$push117=, 128
-	i32.add 	$push118=, $18, $pop117
-	call    	__addtf3@FUNCTION, $pop118, $17, $16, $15, $14
-	i32.const	$push121=, 48
-	i32.add 	$push122=, $18, $pop121
-	i64.load	$push30=, 128($18)
-	i32.const	$push119=, 128
-	i32.add 	$push120=, $18, $pop119
-	i32.const	$push144=, 8
-	i32.add 	$push28=, $pop120, $pop144
+	i32.add 	$push28=, $pop121, $pop179
 	i64.load	$push29=, 0($pop28)
-	call    	__multf3@FUNCTION, $pop122, $pop30, $pop29, $11, $10
-	i32.const	$push123=, 48
-	i32.add 	$push124=, $18, $pop123
-	i32.const	$push143=, 8
-	i32.add 	$push31=, $pop124, $pop143
-	i64.load	$17=, 0($pop31)
-	i64.load	$16=, 48($18)
-	i32.const	$push125=, 16
-	i32.add 	$push126=, $18, $pop125
-	call    	__multf3@FUNCTION, $pop126, $15, $14, $11, $10
-	i32.const	$push127=, 16
-	i32.add 	$push128=, $18, $pop127
-	i32.const	$push142=, 8
-	i32.add 	$push32=, $pop128, $pop142
-	i64.load	$4=, 0($pop32)
-	i64.load	$5=, 16($18)
-	i32.const	$push129=, 32
-	i32.add 	$push130=, $18, $pop129
-	call    	__subtf3@FUNCTION, $pop130, $16, $17, $15, $14
-	i64.load	$17=, 32($18)
-	i32.const	$push141=, 0
-	i32.const	$push131=, 32
-	i32.add 	$push132=, $18, $pop131
-	i32.const	$push140=, 8
-	i32.add 	$push33=, $pop132, $pop140
-	i64.load	$push2=, 0($pop33)
-	i64.store	$16=, R+8($pop141), $pop2
-	i32.const	$push139=, 0
-	i64.store	$11=, R($pop139), $17
-	i64.const	$push138=, 0
-	i64.const	$push34=, -4612248968380809216
-	call    	__addtf3@FUNCTION, $18, $5, $4, $pop138, $pop34
-	i64.load	$17=, 0($18)
-	i32.const	$push137=, 0
-	i32.const	$push136=, 8
-	i32.add 	$push35=, $18, $pop136
-	i64.load	$push3=, 0($pop35)
-	i64.store	$4=, Y1+8($pop137), $pop3
-	i32.const	$push135=, 0
-	i64.store	$drop=, Y1($pop135), $17
+	call    	__addtf3@FUNCTION, $pop125, $pop33, $pop31, $pop32, $pop29
+	i32.const	$push130=, 144
+	i32.add 	$push131=, $6, $pop130
+	i64.load	$push178=, 160($6)
+	tee_local	$push177=, $8=, $pop178
+	i32.const	$push126=, 160
+	i32.add 	$push127=, $6, $pop126
+	i32.const	$push176=, 8
+	i32.add 	$push34=, $pop127, $pop176
+	i64.load	$push175=, 0($pop34)
+	tee_local	$push174=, $7=, $pop175
+	i64.load	$push37=, 256($6)
+	i32.const	$push128=, 256
+	i32.add 	$push129=, $6, $pop128
+	i32.const	$push173=, 8
+	i32.add 	$push35=, $pop129, $pop173
+	i64.load	$push36=, 0($pop35)
+	call    	__subtf3@FUNCTION, $pop131, $pop177, $pop174, $pop37, $pop36
+	i32.const	$push134=, 32
+	i32.add 	$push135=, $6, $pop134
+	i64.load	$push40=, 48($6)
+	i32.const	$push132=, 48
+	i32.add 	$push133=, $6, $pop132
+	i32.const	$push172=, 8
+	i32.add 	$push38=, $pop133, $pop172
+	i64.load	$push39=, 0($pop38)
+	call    	__subtf3@FUNCTION, $pop135, $pop40, $pop39, $12, $11
+	i64.load	$push44=, 16($6)
+	i32.const	$push136=, 16
+	i32.add 	$push137=, $6, $pop136
+	i32.const	$push171=, 8
+	i32.add 	$push41=, $pop137, $pop171
+	i64.load	$push42=, 0($pop41)
+	i64.const	$push170=, 0
+	i64.const	$push43=, -4612248968380809216
+	call    	__addtf3@FUNCTION, $6, $pop44, $pop42, $pop170, $pop43
+	i32.const	$push169=, 0
+	i64.store	$14=, S+8($pop169), $7
+	i32.const	$push168=, 0
+	i64.store	$13=, S($pop168), $8
+	i32.const	$push167=, 0
+	i32.const	$push138=, 176
+	i32.add 	$push139=, $6, $pop138
+	i32.const	$push166=, 8
+	i32.add 	$push45=, $pop139, $pop166
+	i64.load	$push11=, 0($pop45)
+	i64.store	$10=, X+8($pop167), $pop11
+	i32.const	$push165=, 0
+	i64.load	$push10=, 176($6)
+	i64.store	$9=, X($pop165), $pop10
+	i32.const	$push164=, 0
+	i32.const	$push140=, 96
+	i32.add 	$push141=, $6, $pop140
+	i32.const	$push163=, 8
+	i32.add 	$push46=, $pop141, $pop163
+	i64.load	$push1=, 0($pop46)
+	i64.store	$8=, T+8($pop164), $pop1
+	i32.const	$push162=, 0
+	i64.load	$push0=, 96($6)
+	i64.store	$7=, T($pop162), $pop0
+	i32.const	$push161=, 0
+	i32.const	$push142=, 64
+	i32.add 	$push143=, $6, $pop142
+	i32.const	$push160=, 8
+	i32.add 	$push47=, $pop143, $pop160
+	i64.load	$push9=, 0($pop47)
+	i64.store	$0=, Y+8($pop161), $pop9
+	i32.const	$push159=, 0
+	i64.load	$push8=, 64($6)
+	i64.store	$1=, Y($pop159), $pop8
+	i32.const	$push158=, 0
+	i32.const	$push144=, 144
+	i32.add 	$push145=, $6, $pop144
+	i32.const	$push157=, 8
+	i32.add 	$push48=, $pop145, $pop157
+	i64.load	$push7=, 0($pop48)
+	i64.store	$2=, Z+8($pop158), $pop7
+	i32.const	$push156=, 0
+	i64.load	$push6=, 144($6)
+	i64.store	$3=, Z($pop156), $pop6
+	i32.const	$push155=, 0
+	i32.const	$push146=, 32
+	i32.add 	$push147=, $6, $pop146
+	i32.const	$push154=, 8
+	i32.add 	$push49=, $pop147, $pop154
+	i64.load	$push3=, 0($pop49)
+	i64.store	$16=, R+8($pop155), $pop3
+	i32.const	$push153=, 0
+	i64.load	$push2=, 32($6)
+	i64.store	$15=, R($pop153), $pop2
+	i32.const	$push152=, 0
+	i32.const	$push151=, 8
+	i32.add 	$push50=, $6, $pop151
+	i64.load	$push5=, 0($pop50)
+	i64.store	$4=, Y1+8($pop152), $pop5
+	i32.const	$push150=, 0
+	i64.load	$push4=, 0($6)
+	i64.store	$5=, Y1($pop150), $pop4
 	block
-	i64.const	$push134=, 0
-	i64.const	$push36=, 4612354521497075712
-	i32.call	$push37=, __netf2@FUNCTION, $15, $14, $pop134, $pop36
-	br_if   	0, $pop37       # 0: down to label0
+	i64.const	$push149=, 0
+	i64.const	$push51=, 4612354521497075712
+	i32.call	$push52=, __netf2@FUNCTION, $12, $11, $pop149, $pop51
+	br_if   	0, $pop52       # 0: down to label0
 # BB#1:                                 # %entry
-	i64.const	$push206=, 0
-	i64.const	$push38=, 4613097791357452288
-	i32.call	$push39=, __netf2@FUNCTION, $13, $12, $pop206, $pop38
-	br_if   	0, $pop39       # 0: down to label0
+	i64.const	$push233=, 0
+	i64.const	$push53=, 4613097791357452288
+	i32.call	$push54=, __netf2@FUNCTION, $7, $8, $pop233, $pop53
+	br_if   	0, $pop54       # 0: down to label0
 # BB#2:                                 # %entry
-	i64.const	$push207=, 0
-	i64.const	$push40=, 4613150567915585536
-	i32.call	$push41=, __netf2@FUNCTION, $7, $6, $pop207, $pop40
-	br_if   	0, $pop41       # 0: down to label0
+	i64.const	$push234=, 0
+	i64.const	$push55=, 4613150567915585536
+	i32.call	$push56=, __netf2@FUNCTION, $13, $14, $pop234, $pop55
+	br_if   	0, $pop56       # 0: down to label0
 # BB#3:                                 # %entry
-	i64.const	$push208=, 0
-	i64.const	$push42=, 4613517804799262720
-	i32.call	$push43=, __netf2@FUNCTION, $11, $16, $pop208, $pop42
-	br_if   	0, $pop43       # 0: down to label0
+	i64.const	$push235=, 0
+	i64.const	$push57=, 4613517804799262720
+	i32.call	$push58=, __netf2@FUNCTION, $15, $16, $pop235, $pop57
+	br_if   	0, $pop58       # 0: down to label0
 # BB#4:                                 # %entry
-	i64.const	$push209=, 0
-	i64.const	$push44=, 4613503511148101632
-	i32.call	$push45=, __netf2@FUNCTION, $17, $4, $pop209, $pop44
-	br_if   	0, $pop45       # 0: down to label0
+	i64.const	$push236=, 0
+	i64.const	$push59=, 4613503511148101632
+	i32.call	$push60=, __netf2@FUNCTION, $5, $4, $pop236, $pop59
+	br_if   	0, $pop60       # 0: down to label0
 # BB#5:                                 # %entry
-	i64.const	$push210=, 0
-	i64.const	$push46=, 4613110985496985600
-	i32.call	$push47=, __netf2@FUNCTION, $8, $9, $pop210, $pop46
-	br_if   	0, $pop47       # 0: down to label0
+	i64.const	$push237=, 0
+	i64.const	$push61=, 4613110985496985600
+	i32.call	$push62=, __netf2@FUNCTION, $3, $2, $pop237, $pop61
+	br_if   	0, $pop62       # 0: down to label0
 # BB#6:                                 # %entry
-	i64.const	$push211=, 0
-	i64.const	$push48=, 4612961451915608064
-	i32.call	$push49=, __netf2@FUNCTION, $3, $2, $pop211, $pop48
-	br_if   	0, $pop49       # 0: down to label0
+	i64.const	$push238=, 0
+	i64.const	$push63=, 4612961451915608064
+	i32.call	$push64=, __netf2@FUNCTION, $1, $0, $pop238, $pop63
+	br_if   	0, $pop64       # 0: down to label0
 # BB#7:                                 # %entry
-	i64.const	$push212=, 0
-	i64.const	$push50=, 4613040616752807936
-	i32.call	$push51=, __eqtf2@FUNCTION, $1, $0, $pop212, $pop50
-	br_if   	0, $pop51       # 0: down to label0
+	i64.const	$push239=, 0
+	i64.const	$push65=, 4613040616752807936
+	i32.call	$push66=, __eqtf2@FUNCTION, $9, $10, $pop239, $pop65
+	br_if   	0, $pop66       # 0: down to label0
 # BB#8:                                 # %if.end
-	i32.const	$push52=, 0
-	call    	exit@FUNCTION, $pop52
+	i32.const	$push67=, 0
+	call    	exit@FUNCTION, $pop67
 	unreachable
 .LBB0_9:                                # %if.then
 	end_block                       # label0:

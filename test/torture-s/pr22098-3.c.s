@@ -13,7 +13,7 @@ f:                                      # @f
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$push0=, n($pop1), $pop4
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

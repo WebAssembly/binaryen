@@ -10,7 +10,7 @@ f1:                                     # @f1
 # BB#0:                                 # %entry
 	i32.const	$push0=, -16777216
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -25,7 +25,7 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 16777215
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
@@ -40,7 +40,7 @@ f3:                                     # @f3
 # BB#0:                                 # %entry
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
@@ -55,7 +55,7 @@ f4:                                     # @f4
 # BB#0:                                 # %entry
 	i32.const	$push0=, -256
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
@@ -70,7 +70,7 @@ f5:                                     # @f5
 # BB#0:                                 # %entry
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
@@ -85,7 +85,7 @@ f6:                                     # @f6
 # BB#0:                                 # %entry
 	i32.const	$push0=, -65536
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6

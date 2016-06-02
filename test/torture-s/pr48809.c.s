@@ -9,7 +9,7 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
+	i32.const	$2=, 0
 	block
 	block
 	block
@@ -46,13 +46,13 @@ foo:                                    # @foo
 	block
 	i32.const	$push0=, 62
 	i32.add 	$push37=, $0, $pop0
-	tee_local	$push36=, $2=, $pop37
+	tee_local	$push36=, $1=, $pop37
 	i32.const	$push1=, 160
 	i32.gt_u	$push2=, $pop36, $pop1
 	br_if   	0, $pop2        # 0: down to label33
 # BB#1:                                 # %entry
 	block
-	br_table 	$2, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 34, 0 # 0: down to label34
+	br_table 	$1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 34, 0 # 0: down to label34
                                         # 1: down to label33
                                         # 2: down to label32
                                         # 3: down to label31
@@ -89,10 +89,10 @@ foo:                                    # @foo
                                         # 34: down to label0
 .LBB0_2:                                # %sw.bb34
 	end_block                       # label34:
-	i32.const	$1=, 19
+	i32.const	$2=, 19
 .LBB0_3:                                # %sw.epilog
 	end_block                       # label33:
-	return  	$1
+	return  	$2
 .LBB0_4:                                # %sw.bb
 	end_block                       # label32:
 	i32.const	$push35=, 1
@@ -224,7 +224,7 @@ foo:                                    # @foo
 .LBB0_36:                               # %sw.bb33
 	end_block                       # label0:
 	i32.const	$push5=, 18
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -237,7 +237,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end25
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

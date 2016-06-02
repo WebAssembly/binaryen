@@ -15,7 +15,8 @@ g:                                      # @g
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$drop=, n($pop0), $pop3
-	return  	$1
+	copy_local	$push5=, $1
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -28,25 +29,26 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
+	i32.const	$push8=, 0
 	i32.const	$push16=, 0
-	i32.load	$push1=, n($pop16)
-	i32.const	$push2=, 268435455
+	i32.load	$push9=, n($pop16)
+	i32.const	$push0=, 268435455
 	i32.const	$push15=, 268435455
-	i32.lt_s	$push3=, $0, $pop15
-	i32.select	$push4=, $0, $pop2, $pop3
-	i32.const	$push5=, -1
-	i32.xor 	$push6=, $pop4, $pop5
-	i32.add 	$push7=, $0, $pop6
+	i32.lt_s	$push1=, $0, $pop15
+	i32.select	$push2=, $0, $pop0, $pop1
+	i32.const	$push3=, -1
+	i32.xor 	$push4=, $pop2, $pop3
+	i32.add 	$push5=, $0, $pop4
 	i32.const	$push14=, 268435455
-	i32.add 	$push8=, $pop7, $pop14
+	i32.add 	$push6=, $pop5, $pop14
 	i32.const	$push13=, 268435455
-	i32.div_u	$push9=, $pop8, $pop13
-	i32.add 	$push10=, $pop1, $pop9
+	i32.div_u	$push7=, $pop6, $pop13
+	i32.add 	$push10=, $pop9, $pop7
 	i32.const	$push11=, 1
 	i32.add 	$push12=, $pop10, $pop11
-	i32.store	$drop=, n($pop0), $pop12
-	return  	$0
+	i32.store	$drop=, n($pop8), $pop12
+	copy_local	$push17=, $0
+                                        # fallthrough-return: $pop17
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

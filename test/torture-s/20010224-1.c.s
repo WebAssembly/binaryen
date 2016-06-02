@@ -6,52 +6,54 @@
 	.type	ba_compute_psd,@function
 ba_compute_psd:                         # @ba_compute_psd
 	.param  	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push18=, 1
-	i32.shl 	$push17=, $0, $pop18
-	tee_local	$push16=, $1=, $pop17
-	i32.load16_s	$push0=, masktab($pop16)
-	i32.const	$push15=, 1
-	i32.shl 	$push14=, $pop0, $pop15
-	tee_local	$push13=, $3=, $pop14
-	i32.load16_u	$push12=, psd($1)
-	tee_local	$push11=, $2=, $pop12
-	i32.store16	$drop=, bndpsd($pop13), $pop11
+	i32.const	$push19=, 1
+	i32.shl 	$push18=, $0, $pop19
+	tee_local	$push17=, $4=, $pop18
+	i32.load16_s	$push1=, masktab($pop17)
+	i32.const	$push16=, 1
+	i32.shl 	$push15=, $pop1, $pop16
+	tee_local	$push14=, $3=, $pop15
+	i32.load16_u	$push13=, psd($4)
+	tee_local	$push12=, $4=, $pop13
+	i32.store16	$drop=, bndpsd($pop14), $pop12
 	block
-	i32.const	$push10=, 1
-	i32.add 	$push9=, $0, $pop10
-	tee_local	$push8=, $1=, $pop9
-	i32.const	$push7=, 3
-	i32.gt_s	$push2=, $pop8, $pop7
-	br_if   	0, $pop2        # 0: down to label0
+	i32.const	$push11=, 1
+	i32.add 	$push10=, $0, $pop11
+	tee_local	$push9=, $2=, $pop10
+	i32.const	$push8=, 3
+	i32.gt_s	$push3=, $pop9, $pop8
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$push1=, bndpsd
-	i32.add 	$3=, $3, $pop1
+	i32.const	$push2=, bndpsd
+	i32.add 	$1=, $3, $pop2
+	i32.const	$push21=, 3
+	i32.sub 	$3=, $pop21, $0
 	i32.const	$push20=, 1
-	i32.shl 	$push3=, $1, $pop20
-	i32.const	$push4=, psd
-	i32.add 	$1=, $pop3, $pop4
-	i32.const	$push19=, 3
-	i32.sub 	$0=, $pop19, $0
+	i32.shl 	$push4=, $2, $pop20
+	i32.const	$push5=, psd
+	i32.add 	$0=, $pop4, $pop5
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.load16_u	$push6=, 0($1)
-	i32.const	$push23=, 65535
-	i32.and 	$push5=, $2, $pop23
-	i32.add 	$2=, $pop6, $pop5
-	i32.const	$push22=, 2
-	i32.add 	$1=, $1, $pop22
-	i32.const	$push21=, -1
-	i32.add 	$0=, $0, $pop21
-	br_if   	0, $0           # 0: up to label1
+	i32.load16_u	$push7=, 0($0)
+	i32.const	$push26=, 65535
+	i32.and 	$push6=, $4, $pop26
+	i32.add 	$4=, $pop7, $pop6
+	i32.const	$push25=, 2
+	i32.add 	$push0=, $0, $pop25
+	copy_local	$0=, $pop0
+	i32.const	$push24=, -1
+	i32.add 	$push23=, $3, $pop24
+	tee_local	$push22=, $3=, $pop23
+	br_if   	0, $pop22       # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
-	i32.store16	$drop=, 0($3), $2
+	i32.store16	$drop=, 0($1), $4
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	ba_compute_psd, .Lfunc_end0-ba_compute_psd
@@ -71,7 +73,7 @@ logadd:                                 # @logadd
 	i32.shl 	$push4=, $pop2, $pop3
 	i32.const	$push6=, 16
 	i32.shr_s	$push5=, $pop4, $pop6
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	logadd, .Lfunc_end1-logadd

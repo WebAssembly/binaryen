@@ -9,26 +9,27 @@ try_a:                                  # @try_a
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, __stack_pointer
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
+	i32.const	$push6=, 0
+	i32.const	$push3=, 0
+	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
 	i32.sub 	$push12=, $pop4, $pop5
-	i32.store	$push14=, 0($pop6), $pop12
+	i32.store	$push14=, __stack_pointer($pop6), $pop12
 	tee_local	$push13=, $1=, $pop14
-	i32.store	$drop=, 8($pop13), $0
 	i32.const	$push0=, 0
-	i32.store	$drop=, 12($1), $pop0
+	i32.store	$drop=, 12($pop13), $pop0
+	i32.store	$drop=, 8($1), $0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $1, $pop10
 	i32.const	$push1=, 1
 	i32.or  	$push2=, $pop11, $pop1
 	i32.call	$0=, check_a@FUNCTION, $pop2
-	i32.const	$push9=, __stack_pointer
+	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $1, $pop7
-	i32.store	$drop=, 0($pop9), $pop8
-	return  	$0
+	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	copy_local	$push15=, $0
+                                        # fallthrough-return: $pop15
 	.endfunc
 .Lfunc_end0:
 	.size	try_a, .Lfunc_end0-try_a
@@ -60,7 +61,8 @@ check_a:                                # @check_a
 	i32.const	$1=, -1
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push7=, $1
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	check_a, .Lfunc_end1-check_a

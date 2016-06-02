@@ -50,20 +50,21 @@ bug:                                    # @bug
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push7=, 65535
-	i32.and 	$push2=, $0, $pop7
-	i32.load16_u	$push1=, 0($1)
-	i32.sub 	$0=, $pop2, $pop1
-	i32.const	$push6=, 2
-	i32.add 	$1=, $1, $pop6
-	i32.lt_u	$push3=, $1, $2
+	i32.const	$push9=, 65535
+	i32.and 	$push1=, $0, $pop9
+	i32.load16_u	$push2=, 0($1)
+	i32.sub 	$0=, $pop1, $pop2
+	i32.const	$push8=, 2
+	i32.add 	$push7=, $1, $pop8
+	tee_local	$push6=, $1=, $pop7
+	i32.lt_u	$push3=, $pop6, $2
 	br_if   	0, $pop3        # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:
 	i32.const	$push4=, 65535
 	i32.and 	$push5=, $0, $pop4
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug

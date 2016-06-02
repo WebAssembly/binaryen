@@ -10,7 +10,7 @@ test1:                                  # @test1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -25,7 +25,7 @@ test1u:                                 # @test1u
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	test1u, .Lfunc_end1-test1u
@@ -40,7 +40,7 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
@@ -55,7 +55,7 @@ test2u:                                 # @test2u
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end3:
 	.size	test2u, .Lfunc_end3-test2u
@@ -70,7 +70,7 @@ test3:                                  # @test3
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end4:
 	.size	test3, .Lfunc_end4-test3
@@ -85,7 +85,7 @@ test3u:                                 # @test3u
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end5:
 	.size	test3u, .Lfunc_end5-test3u
@@ -100,7 +100,7 @@ test4:                                  # @test4
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end6:
 	.size	test4, .Lfunc_end6-test4
@@ -115,7 +115,7 @@ test4u:                                 # @test4u
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end7:
 	.size	test4u, .Lfunc_end7-test4u
@@ -130,7 +130,7 @@ test5:                                  # @test5
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end8:
 	.size	test5, .Lfunc_end8-test5
@@ -145,7 +145,7 @@ test5u:                                 # @test5u
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end9:
 	.size	test5u, .Lfunc_end9-test5u
@@ -160,7 +160,7 @@ test6:                                  # @test6
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end10:
 	.size	test6, .Lfunc_end10-test6
@@ -175,7 +175,7 @@ test6u:                                 # @test6u
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483647
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end11:
 	.size	test6u, .Lfunc_end11-test6u
@@ -232,7 +232,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end14:
 	.size	main, .Lfunc_end14-main

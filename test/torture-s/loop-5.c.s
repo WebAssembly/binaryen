@@ -6,7 +6,7 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64, i32, i32
+	.local  	i32, i32, i32, i64
 # BB#0:                                 # %entry
 	block
 	i32.const	$push36=, 0
@@ -17,11 +17,11 @@ main:                                   # @main
 	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %ap.exit.i
 	i32.const	$push39=, 2
-	i32.shl 	$push7=, $2, $pop39
+	i32.shl 	$push6=, $2, $pop39
 	i32.const	$push38=, 0
-	i32.store	$push0=, a($pop7), $pop38
-	i32.const	$push6=, 1
-	i32.add 	$push1=, $2, $pop6
+	i32.store	$push0=, a($pop6), $pop38
+	i32.const	$push7=, 1
+	i32.add 	$push1=, $2, $pop7
 	i32.store	$0=, t($pop0), $pop1
 	i32.const	$push37=, 3
 	i32.eq  	$push8=, $2, $pop37
@@ -35,50 +35,51 @@ main:                                   # @main
 	i32.const	$push42=, 2
 	i32.add 	$push2=, $2, $pop42
 	i32.store	$push41=, t($pop43), $pop2
-	tee_local	$push40=, $3=, $pop41
+	tee_local	$push40=, $1=, $pop41
 	i32.gt_s	$push10=, $pop40, $0
 	br_if   	0, $pop10       # 0: down to label0
 # BB#3:                                 # %ap.exit.2.i
-	i32.const	$push12=, 2
-	i32.shl 	$push13=, $3, $pop12
+	i32.const	$push11=, 2
+	i32.shl 	$push12=, $1, $pop11
 	i32.const	$push48=, 2
-	i32.store	$0=, a($pop13), $pop48
+	i32.store	$0=, a($pop12), $pop48
 	i32.const	$push47=, 0
-	i32.const	$push11=, 3
-	i32.add 	$push3=, $2, $pop11
-	i32.store	$3=, t($pop47), $pop3
+	i32.const	$push13=, 3
+	i32.add 	$push3=, $2, $pop13
+	i32.store	$1=, t($pop47), $pop3
 	i32.const	$push46=, 0
 	i32.gt_s	$push14=, $2, $pop46
 	br_if   	0, $pop14       # 0: down to label0
 # BB#4:                                 # %testit.exit
-	i32.shl 	$push18=, $3, $0
-	i32.const	$push19=, 1
-	i32.store	$drop=, a($pop18), $pop19
-	i32.const	$push17=, 0
-	i64.load	$1=, a($pop17)
-	i32.const	$push49=, 0
-	i32.const	$push15=, 4
-	i32.add 	$push16=, $2, $pop15
-	i32.store	$drop=, t($pop49), $pop16
-	i32.wrap/i64	$push20=, $1
+	i32.shl 	$push15=, $1, $0
+	i32.const	$push16=, 1
+	i32.store	$drop=, a($pop15), $pop16
+	i32.const	$push19=, 0
+	i32.const	$push17=, 4
+	i32.add 	$push18=, $2, $pop17
+	i32.store	$drop=, t($pop19), $pop18
+	i32.const	$push51=, 0
+	i64.load	$push50=, a($pop51)
+	tee_local	$push49=, $3=, $pop50
+	i32.wrap/i64	$push20=, $pop49
 	br_if   	0, $pop20       # 0: down to label0
 # BB#5:                                 # %if.end
 	i64.const	$push21=, -4294967296
-	i64.and 	$push22=, $1, $pop21
+	i64.and 	$push22=, $3, $pop21
 	i64.const	$push23=, 12884901888
 	i64.ne  	$push24=, $pop22, $pop23
 	br_if   	0, $pop24       # 0: down to label0
 # BB#6:                                 # %if.end3
 	i32.const	$push25=, 0
-	i64.load	$push51=, a+8($pop25)
-	tee_local	$push50=, $1=, $pop51
-	i32.wrap/i64	$push26=, $pop50
+	i64.load	$push53=, a+8($pop25)
+	tee_local	$push52=, $3=, $pop53
+	i32.wrap/i64	$push26=, $pop52
 	i32.const	$push27=, 2
 	i32.ne  	$push28=, $pop26, $pop27
 	br_if   	0, $pop28       # 0: down to label0
 # BB#7:                                 # %if.end6
 	i64.const	$push29=, -4294967296
-	i64.and 	$push30=, $1, $pop29
+	i64.and 	$push30=, $3, $pop29
 	i64.const	$push31=, 4294967296
 	i64.ne  	$push32=, $pop30, $pop31
 	br_if   	0, $pop32       # 0: down to label0

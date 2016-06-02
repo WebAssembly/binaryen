@@ -9,7 +9,7 @@ log_compare:                            # @log_compare
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	log_compare, .Lfunc_end0-log_compare
@@ -25,9 +25,9 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 # BB#0:                                 # %entry
 	i32.const	$push7=, 1
 	i32.and 	$4=, $3, $pop7
+	i32.const	$3=, 0
 	i32.const	$push1=, 12
 	i32.add 	$5=, $1, $pop1
-	i32.const	$3=, 0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
@@ -56,7 +56,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i64.load	$push6=, 0($pop5):p2align=2
 	i64.store	$drop=, 0($2):p2align=2, $pop6
 	i32.add 	$push0=, $0, $3
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	__db_txnlist_lsnadd, .Lfunc_end1-__db_txnlist_lsnadd

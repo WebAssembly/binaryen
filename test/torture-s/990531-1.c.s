@@ -9,8 +9,8 @@ bad:                                    # @bad
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
+	i32.const	$push3=, 0
+	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
 	i32.sub 	$push9=, $pop4, $pop5
 	tee_local	$push8=, $2=, $pop9
@@ -21,7 +21,7 @@ bad:                                    # @bad
 	i32.const	$push1=, 0
 	i32.store8	$drop=, 0($pop0), $pop1
 	i32.load	$push2=, 8($2)
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	bad, .Lfunc_end0-bad

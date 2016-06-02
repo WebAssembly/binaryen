@@ -11,14 +11,14 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, 0
-	i32.load	$push1=, a($pop0)
+	i32.load	$push3=, a($pop0)
 	i32.const	$push8=, 0
-	i32.ne  	$push2=, $pop1, $pop8
+	i32.ne  	$push4=, $pop3, $pop8
 	i32.const	$push7=, 0
-	i32.load	$push3=, b($pop7)
+	i32.load	$push1=, b($pop7)
 	i32.const	$push6=, 0
-	i32.ne  	$push4=, $pop3, $pop6
-	i32.ne  	$push5=, $pop2, $pop4
+	i32.ne  	$push2=, $pop1, $pop6
+	i32.ne  	$push5=, $pop4, $pop2
 	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$1
@@ -41,14 +41,14 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, 0
-	i32.load	$push1=, a($pop0)
+	i32.load	$push3=, a($pop0)
 	i32.const	$push8=, 0
-	i32.ne  	$push2=, $pop1, $pop8
+	i32.ne  	$push4=, $pop3, $pop8
 	i32.const	$push7=, 0
-	i32.load	$push3=, b($pop7)
+	i32.load	$push1=, b($pop7)
 	i32.const	$push6=, 0
-	i32.ne  	$push4=, $pop3, $pop6
-	i32.ne  	$push5=, $pop2, $pop4
+	i32.ne  	$push2=, $pop1, $pop6
+	i32.ne  	$push5=, $pop4, $pop2
 	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %g.exit
 	return  	$1

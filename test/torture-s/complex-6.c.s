@@ -6,14 +6,13 @@
 	.type	ctest_float,@function
 ctest_float:                            # @ctest_float
 	.param  	i32, i32
-	.local  	f32
 # BB#0:                                 # %entry
-	f32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
 	i32.store	$drop=, 0($0), $pop0
-	f32.neg 	$push1=, $2
-	f32.store	$drop=, 4($0), $pop1
-	return
+	f32.load	$push1=, 4($1)
+	f32.neg 	$push2=, $pop1
+	f32.store	$drop=, 4($0), $pop2
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	ctest_float, .Lfunc_end0-ctest_float
@@ -24,7 +23,7 @@ ctest_float:                            # @ctest_float
 	.type	test_float,@function
 test_float:                             # @test_float
 # BB#0:                                 # %if.end
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	test_float, .Lfunc_end1-test_float
@@ -35,14 +34,13 @@ test_float:                             # @test_float
 	.type	ctest_double,@function
 ctest_double:                           # @ctest_double
 	.param  	i32, i32
-	.local  	f64
 # BB#0:                                 # %entry
-	f64.load	$2=, 8($1)
 	i64.load	$push0=, 0($1)
 	i64.store	$drop=, 0($0), $pop0
-	f64.neg 	$push1=, $2
-	f64.store	$drop=, 8($0), $pop1
-	return
+	f64.load	$push1=, 8($1)
+	f64.neg 	$push2=, $pop1
+	f64.store	$drop=, 8($0), $pop2
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	ctest_double, .Lfunc_end2-ctest_double
@@ -53,7 +51,7 @@ ctest_double:                           # @ctest_double
 	.type	test_double,@function
 test_double:                            # @test_double
 # BB#0:                                 # %if.end
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	test_double, .Lfunc_end3-test_double
@@ -64,42 +62,43 @@ test_double:                            # @test_double
 	.type	ctest_long_double,@function
 ctest_long_double:                      # @ctest_long_double
 	.param  	i32, i32
-	.local  	i32, i64, i64, i64, i64
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push14=, __stack_pointer
-	i32.const	$push11=, __stack_pointer
-	i32.load	$push12=, 0($pop11)
-	i32.const	$push13=, 16
-	i32.sub 	$push18=, $pop12, $pop13
-	i32.store	$2=, 0($pop14), $pop18
-	i32.const	$push0=, 8
+	i32.const	$push18=, 0
+	i32.const	$push15=, 0
+	i32.load	$push16=, __stack_pointer($pop15)
+	i32.const	$push17=, 16
+	i32.sub 	$push22=, $pop16, $pop17
+	i32.store	$push27=, __stack_pointer($pop18), $pop22
+	tee_local	$push26=, $2=, $pop27
+	i64.const	$push5=, 0
+	i64.const	$push4=, -9223372036854775808
+	i64.load	$push3=, 16($1)
+	i32.const	$push0=, 24
 	i32.add 	$push1=, $1, $pop0
-	i64.load	$3=, 0($pop1)
-	i64.load	$4=, 0($1)
-	i64.const	$push7=, 0
-	i64.const	$push6=, -9223372036854775808
-	i64.load	$push5=, 16($1)
-	i32.const	$push2=, 24
-	i32.add 	$push3=, $1, $pop2
-	i64.load	$push4=, 0($pop3)
-	call    	__subtf3@FUNCTION, $2, $pop7, $pop6, $pop5, $pop4
-	i32.const	$push21=, 8
-	i32.add 	$push8=, $2, $pop21
-	i64.load	$5=, 0($pop8)
-	i64.load	$6=, 0($2)
-	i64.store	$drop=, 0($0), $4
-	i32.const	$push20=, 8
-	i32.add 	$push9=, $0, $pop20
-	i64.store	$drop=, 0($pop9), $3
-	i32.const	$push19=, 24
-	i32.add 	$push10=, $0, $pop19
-	i64.store	$drop=, 0($pop10), $5
-	i64.store	$drop=, 16($0), $6
-	i32.const	$push17=, __stack_pointer
-	i32.const	$push15=, 16
-	i32.add 	$push16=, $2, $pop15
-	i32.store	$drop=, 0($pop17), $pop16
-	return
+	i64.load	$push2=, 0($pop1)
+	call    	__subtf3@FUNCTION, $pop26, $pop5, $pop4, $pop3, $pop2
+	i64.load	$push6=, 0($1)
+	i64.store	$drop=, 0($0), $pop6
+	i32.const	$push7=, 8
+	i32.add 	$push8=, $0, $pop7
+	i32.const	$push25=, 8
+	i32.add 	$push9=, $1, $pop25
+	i64.load	$push10=, 0($pop9)
+	i64.store	$drop=, 0($pop8), $pop10
+	i32.const	$push24=, 24
+	i32.add 	$push11=, $0, $pop24
+	i32.const	$push23=, 8
+	i32.add 	$push12=, $2, $pop23
+	i64.load	$push13=, 0($pop12)
+	i64.store	$drop=, 0($pop11), $pop13
+	i64.load	$push14=, 0($2)
+	i64.store	$drop=, 16($0), $pop14
+	i32.const	$push21=, 0
+	i32.const	$push19=, 16
+	i32.add 	$push20=, $2, $pop19
+	i32.store	$drop=, __stack_pointer($pop21), $pop20
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end4:
 	.size	ctest_long_double, .Lfunc_end4-ctest_long_double
@@ -110,7 +109,7 @@ ctest_long_double:                      # @ctest_long_double
 	.type	test_long_double,@function
 test_long_double:                       # @test_long_double
 # BB#0:                                 # %if.end
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end5:
 	.size	test_long_double, .Lfunc_end5-test_long_double
@@ -121,15 +120,14 @@ test_long_double:                       # @test_long_double
 	.type	ctest_int,@function
 ctest_int:                              # @ctest_int
 	.param  	i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
 	i32.store	$drop=, 0($0), $pop0
-	i32.const	$push1=, 0
-	i32.sub 	$push2=, $pop1, $2
-	i32.store	$drop=, 4($0), $pop2
-	return
+	i32.const	$push2=, 0
+	i32.load	$push1=, 4($1)
+	i32.sub 	$push3=, $pop2, $pop1
+	i32.store	$drop=, 4($0), $pop3
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end6:
 	.size	ctest_int, .Lfunc_end6-ctest_int
@@ -140,7 +138,7 @@ ctest_int:                              # @ctest_int
 	.type	test_int,@function
 test_int:                               # @test_int
 # BB#0:                                 # %if.end
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end7:
 	.size	test_int, .Lfunc_end7-test_int
@@ -151,15 +149,14 @@ test_int:                               # @test_int
 	.type	ctest_long_int,@function
 ctest_long_int:                         # @ctest_long_int
 	.param  	i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
 	i32.store	$drop=, 0($0), $pop0
-	i32.const	$push1=, 0
-	i32.sub 	$push2=, $pop1, $2
-	i32.store	$drop=, 4($0), $pop2
-	return
+	i32.const	$push2=, 0
+	i32.load	$push1=, 4($1)
+	i32.sub 	$push3=, $pop2, $pop1
+	i32.store	$drop=, 4($0), $pop3
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end8:
 	.size	ctest_long_int, .Lfunc_end8-ctest_long_int
@@ -170,7 +167,7 @@ ctest_long_int:                         # @ctest_long_int
 	.type	test_long_int,@function
 test_long_int:                          # @test_long_int
 # BB#0:                                 # %if.end
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end9:
 	.size	test_long_int, .Lfunc_end9-test_long_int
@@ -185,7 +182,7 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push2=, 0
 	i32.store	$push0=, err($pop1), $pop2
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main

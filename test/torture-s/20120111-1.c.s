@@ -12,7 +12,7 @@ f0a:                                    # @f0a
 	i64.gt_u	$push1=, $0, $pop0
 	i32.const	$push2=, -1
 	i32.xor 	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	f0a, .Lfunc_end0-f0a

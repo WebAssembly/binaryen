@@ -8,14 +8,14 @@ movegt:                                 # @movegt
 	.param  	i32, i32, i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i64.const	$push2=, -1152921504606846977
-	i64.gt_s	$push3=, $2, $pop2
-	i32.select	$push4=, $0, $1, $pop3
-	i32.const	$push0=, 0
+	i64.const	$push0=, -1152921504606846977
+	i64.gt_s	$push1=, $2, $pop0
+	i32.select	$push2=, $0, $1, $pop1
+	i32.const	$push3=, 0
 	i32.const	$push6=, 0
-	i32.gt_s	$push1=, $1, $pop6
-	i32.select	$push5=, $pop4, $pop0, $pop1
-	return  	$pop5
+	i32.gt_s	$push4=, $1, $pop6
+	i32.select	$push5=, $pop2, $pop3, $pop4
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	movegt, .Lfunc_end0-movegt

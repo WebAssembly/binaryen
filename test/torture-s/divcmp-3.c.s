@@ -12,7 +12,7 @@ test1:                                  # @test1
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 100
 	i32.lt_u	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -26,7 +26,7 @@ test1u:                                 # @test1u
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	test1u, .Lfunc_end1-test1u
@@ -43,7 +43,7 @@ test2:                                  # @test2
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 99
 	i32.gt_u	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
@@ -57,7 +57,7 @@ test2u:                                 # @test2u
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	test2u, .Lfunc_end3-test2u
@@ -71,7 +71,7 @@ test3:                                  # @test3
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	test3, .Lfunc_end4-test3
@@ -85,7 +85,7 @@ test3u:                                 # @test3u
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end5:
 	.size	test3u, .Lfunc_end5-test3u
@@ -99,7 +99,7 @@ test4:                                  # @test4
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end6:
 	.size	test4, .Lfunc_end6-test4
@@ -113,7 +113,7 @@ test4u:                                 # @test4u
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end7:
 	.size	test4u, .Lfunc_end7-test4u
@@ -127,7 +127,7 @@ test5:                                  # @test5
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end8:
 	.size	test5, .Lfunc_end8-test5
@@ -141,7 +141,7 @@ test5u:                                 # @test5u
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end9:
 	.size	test5u, .Lfunc_end9-test5u
@@ -155,7 +155,7 @@ test6:                                  # @test6
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end10:
 	.size	test6, .Lfunc_end10-test6
@@ -169,7 +169,7 @@ test6u:                                 # @test6u
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end11:
 	.size	test6u, .Lfunc_end11-test6u
@@ -197,12 +197,13 @@ main:                                   # @main
 	br_if   	2, $pop2        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB12_1 Depth=1
-	i32.const	$push10=, 1
-	i32.add 	$1=, $1, $pop10
-	i32.const	$push9=, 16777216
-	i32.add 	$0=, $0, $pop9
+	i32.const	$push12=, 16777216
+	i32.add 	$0=, $0, $pop12
+	i32.const	$push11=, 1
+	i32.add 	$push10=, $1, $pop11
+	tee_local	$push9=, $1=, $pop10
 	i32.const	$push8=, 255
-	i32.le_s	$push3=, $1, $pop8
+	i32.le_s	$push3=, $pop9, $pop8
 	br_if   	0, $pop3        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop                        # label2:

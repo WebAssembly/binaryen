@@ -10,15 +10,15 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	block
 	i32.const	$push9=, 0
-	i32.load	$push0=, b($pop9)
+	i32.load	$push2=, b($pop9)
 	i32.const	$push8=, 0
-	i32.gt_s	$push1=, $pop0, $pop8
+	i32.gt_s	$push3=, $pop2, $pop8
 	i32.const	$push7=, 0
 	i32.load	$push6=, a($pop7)
 	tee_local	$push5=, $0=, $pop6
-	i32.const	$push2=, 1
-	i32.and 	$push3=, $pop5, $pop2
-	i32.or  	$push4=, $pop1, $pop3
+	i32.const	$push0=, 1
+	i32.and 	$push1=, $pop5, $pop0
+	i32.or  	$push4=, $pop3, $pop1
 	i32.eqz 	$push12=, $pop4
 	br_if   	0, $pop12       # 0: down to label0
 .LBB0_1:                                # %for.inc
@@ -31,7 +31,7 @@ foo:                                    # @foo
 	i32.const	$push11=, 0
 	i32.store	$drop=, d($pop11), $0
 	i32.const	$push10=, 0
-	return  	$pop10
+                                        # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -46,15 +46,15 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block
 	i32.const	$push13=, 0
-	i32.load	$push1=, b($pop13)
+	i32.load	$push3=, b($pop13)
 	i32.const	$push12=, 0
-	i32.gt_s	$push2=, $pop1, $pop12
+	i32.gt_s	$push4=, $pop3, $pop12
 	i32.const	$push11=, 0
 	i32.load	$push10=, a($pop11)
 	tee_local	$push9=, $0=, $pop10
-	i32.const	$push3=, 1
-	i32.and 	$push4=, $pop9, $pop3
-	i32.or  	$push5=, $pop2, $pop4
+	i32.const	$push1=, 1
+	i32.and 	$push2=, $pop9, $pop1
+	i32.or  	$push5=, $pop4, $pop2
 	i32.eqz 	$push15=, $pop5
 	br_if   	0, $pop15       # 0: down to label3
 .LBB1_1:                                # %for.inc.i

@@ -12,11 +12,11 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i64.load	$push11=, x($pop12)
 	tee_local	$push10=, $0=, $pop11
-	i32.wrap/i64	$push0=, $pop10
+	i32.wrap/i64	$push2=, $pop10
 	i64.const	$push9=, 32
-	i64.shr_u	$push1=, $0, $pop9
-	i32.wrap/i64	$push2=, $pop1
-	i32.ge_s	$push3=, $pop0, $pop2
+	i64.shr_u	$push0=, $0, $pop9
+	i32.wrap/i64	$push1=, $pop0
+	i32.ge_s	$push3=, $pop2, $pop1
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push16=, 0

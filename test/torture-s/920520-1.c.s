@@ -10,7 +10,8 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8
 	i32.store	$drop=, 0($0), $pop0
-	return  	$0
+	copy_local	$push1=, $0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -23,7 +24,7 @@ bugger:                                 # @bugger
 	.result 	i32
 # BB#0:                                 # %sw.epilog
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	bugger, .Lfunc_end1-bugger

@@ -12,13 +12,13 @@ sub1:                                   # @sub1
 	i32.add 	$push9=, $0, $pop0
 	tee_local	$push8=, $0=, $pop9
 	i32.const	$push7=, 2
-	i32.shl 	$push2=, $pop8, $pop7
-	i32.const	$push3=, 12
-	i32.mul 	$push4=, $0, $pop3
+	i32.shl 	$push4=, $pop8, $pop7
+	i32.const	$push2=, 12
+	i32.mul 	$push3=, $0, $pop2
 	i32.const	$push6=, 2
 	i32.eq  	$push1=, $1, $pop6
-	i32.select	$push5=, $pop2, $pop4, $pop1
-	return  	$pop5
+	i32.select	$push5=, $pop4, $pop3, $pop1
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	sub1, .Lfunc_end0-sub1
@@ -31,7 +31,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

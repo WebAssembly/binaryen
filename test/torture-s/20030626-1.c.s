@@ -11,7 +11,7 @@ main:                                   # @main
 	i32.const	$push0=, 7303014
 	i32.store	$drop=, buf($pop1), $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

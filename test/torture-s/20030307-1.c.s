@@ -8,7 +8,8 @@ vfswrap_lock:                           # @vfswrap_lock
 	.param  	i32, i32, i32, i64, i64, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	return  	$5
+	copy_local	$push0=, $5
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	vfswrap_lock, .Lfunc_end0-vfswrap_lock
@@ -21,7 +22,8 @@ fcntl_lock:                             # @fcntl_lock
 	.param  	i32, i32, i64, i64, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	return  	$4
+	copy_local	$push0=, $4
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	fcntl_lock, .Lfunc_end1-fcntl_lock
@@ -34,7 +36,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

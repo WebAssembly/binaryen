@@ -8,7 +8,7 @@ test_endianness:                        # @test_endianness
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	test_endianness, .Lfunc_end0-test_endianness
@@ -21,17 +21,17 @@ test_endianness_vol:                    # @test_endianness_vol
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, __stack_pointer
-	i32.load	$push5=, 0($pop4)
+	i32.const	$push4=, 0
+	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
 	i32.sub 	$push8=, $pop5, $pop6
 	tee_local	$push7=, $0=, $pop8
 	i64.const	$push0=, 4621819117588971520
 	i64.store	$drop=, 8($pop7), $pop0
-	i32.load	$push1=, 8($0)
-	i32.const	$push2=, 0
-	i32.ne  	$push3=, $pop1, $pop2
-	return  	$pop3
+	i32.load	$push2=, 8($0)
+	i32.const	$push1=, 0
+	i32.ne  	$push3=, $pop2, $pop1
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	test_endianness_vol, .Lfunc_end1-test_endianness_vol
@@ -44,12 +44,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, __stack_pointer
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
+	i32.const	$push6=, 0
+	i32.const	$push3=, 0
+	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
 	i32.sub 	$push7=, $pop4, $pop5
-	i32.store	$push9=, 0($pop6), $pop7
+	i32.store	$push9=, __stack_pointer($pop6), $pop7
 	tee_local	$push8=, $0=, $pop9
 	i64.const	$push0=, 4621819117588971520
 	i64.store	$drop=, 8($pop8), $pop0

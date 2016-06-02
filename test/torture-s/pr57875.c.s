@@ -11,15 +11,15 @@ main:                                   # @main
 	block
 	i32.const	$push15=, 0
 	i32.load	$push14=, i($pop15)
-	tee_local	$push13=, $3=, $pop14
+	tee_local	$push13=, $4=, $pop14
 	i32.const	$push12=, 0
 	i32.gt_s	$push1=, $pop13, $pop12
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$push17=, 0
-	i32.load	$0=, d($pop17)
+	i32.load	$1=, c($pop17)
 	i32.const	$push16=, 0
-	i32.load	$1=, c($pop16)
+	i32.load	$0=, d($pop16)
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -34,12 +34,12 @@ main:                                   # @main
 # BB#4:                                 # %if.then.if.end_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push18=, 0
-	i32.load	$2=, f($pop18)
+	i32.load	$3=, f($pop18)
 	br      	1               # 1: down to label4
 .LBB0_5:                                # %if.then2
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label5:
-	i32.const	$2=, 2
+	i32.const	$3=, 2
 	i32.const	$push20=, 0
 	i32.const	$push19=, 2
 	i32.store	$drop=, f($pop20), $pop19
@@ -49,22 +49,22 @@ main:                                   # @main
 	i32.const	$push22=, 0
 	i32.const	$push21=, 0
 	i32.load8_u	$push2=, e($pop21)
-	i32.and 	$push3=, $pop2, $2
+	i32.and 	$push3=, $pop2, $3
 	i32.store8	$drop=, e($pop22), $pop3
 .LBB0_7:                                # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
 	i32.const	$push26=, 0
-	i32.lt_s	$2=, $3, $pop26
+	i32.lt_s	$3=, $4, $pop26
 	i32.const	$push25=, 1
-	i32.add 	$push24=, $3, $pop25
-	tee_local	$push23=, $4=, $pop24
-	copy_local	$3=, $pop23
-	br_if   	0, $2           # 0: up to label1
+	i32.add 	$push24=, $4, $pop25
+	tee_local	$push23=, $2=, $pop24
+	copy_local	$4=, $pop23
+	br_if   	0, $3           # 0: up to label1
 # BB#8:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push4=, 0
-	i32.store	$drop=, i($pop4), $4
+	i32.store	$drop=, i($pop4), $2
 .LBB0_9:                                # %for.end
 	end_block                       # label0:
 	block

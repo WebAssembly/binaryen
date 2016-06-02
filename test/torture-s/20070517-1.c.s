@@ -12,9 +12,9 @@ main:                                   # @main
 	block
 	i32.call	$push12=, get_kind@FUNCTION
 	tee_local	$push11=, $0=, $pop12
-	i32.const	$push2=, 10
-	i32.gt_u	$push3=, $pop11, $pop2
-	br_if   	0, $pop3        # 0: down to label1
+	i32.const	$push1=, 10
+	i32.gt_u	$push2=, $pop11, $pop1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %entry
 	i32.const	$push4=, 1
 	i32.shl 	$push5=, $pop4, $0
@@ -23,8 +23,8 @@ main:                                   # @main
 	i32.eqz 	$push13=, $pop7
 	br_if   	0, $pop13       # 0: down to label1
 # BB#2:                                 # %if.then.i
-	i32.const	$push1=, -9
-	i32.add 	$push0=, $0, $pop1
+	i32.const	$push3=, -9
+	i32.add 	$push0=, $0, $pop3
 	i32.const	$push8=, 2
 	i32.ge_u	$push9=, $pop0, $pop8
 	br_if   	1, $pop9        # 1: down to label0
@@ -46,15 +46,15 @@ get_kind:                               # @get_kind
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, __stack_pointer
-	i32.load	$push3=, 0($pop2)
+	i32.const	$push2=, 0
+	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
 	i32.sub 	$push6=, $pop3, $pop4
 	tee_local	$push5=, $0=, $pop6
 	i32.const	$push0=, 10
 	i32.store	$drop=, 12($pop5), $pop0
 	i32.load	$push1=, 12($0)
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	get_kind, .Lfunc_end1-get_kind

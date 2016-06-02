@@ -11,46 +11,47 @@ create_array_type:                      # @create_array_type
 # BB#0:                                 # %entry
 	block
 	block
-	i32.eqz 	$push48=, $0
-	br_if   	0, $pop48       # 0: down to label1
+	i32.eqz 	$push53=, $0
+	br_if   	0, $pop53       # 0: down to label1
 # BB#1:                                 # %if.end
-	i32.load	$push2=, 0($1)
-	i32.const	$push3=, 3
-	i32.mul 	$push4=, $pop2, $pop3
-	i32.store	$drop=, 0($0), $pop4
-	i32.load	$1=, 4($0)
-	i32.const	$push5=, 1
-	i32.store16	$drop=, 8($0), $pop5
-	i32.const	$5=, 0
+	i32.const	$push2=, 1
+	i32.store16	$drop=, 8($0), $pop2
+	i32.load	$push3=, 0($1)
+	i32.const	$push4=, 3
+	i32.mul 	$push5=, $pop3, $pop4
+	i32.store	$drop=, 0($0), $pop5
+	i32.const	$7=, 0
 	block
-	i32.eqz 	$push49=, $1
-	br_if   	0, $pop49       # 0: down to label2
+	i32.load	$push30=, 4($0)
+	tee_local	$push29=, $1=, $pop30
+	i32.eqz 	$push54=, $pop29
+	br_if   	0, $pop54       # 0: down to label2
 # BB#2:                                 # %cond.true
 	i32.const	$push6=, 20
 	i32.add 	$push7=, $1, $pop6
-	i32.load	$push34=, 0($pop7)
-	tee_local	$push33=, $4=, $pop34
-	i32.const	$push32=, 16
-	i32.add 	$push31=, $1, $pop32
-	tee_local	$push30=, $2=, $pop31
-	i32.load	$push29=, 0($pop30)
-	tee_local	$push28=, $3=, $pop29
-	i32.sub 	$push8=, $pop33, $pop28
+	i32.load	$push37=, 0($pop7)
+	tee_local	$push36=, $2=, $pop37
+	i32.const	$push35=, 16
+	i32.add 	$push34=, $1, $pop35
+	tee_local	$push33=, $7=, $pop34
+	i32.load	$push32=, 0($pop33)
+	tee_local	$push31=, $3=, $pop32
+	i32.sub 	$push8=, $pop36, $pop31
 	i32.const	$push9=, 15
 	i32.le_s	$push10=, $pop8, $pop9
 	br_if   	2, $pop10       # 2: down to label0
 # BB#3:                                 # %if.end9
 	block
+	i32.const	$push44=, 16
+	i32.add 	$push1=, $3, $pop44
+	i32.store	$push43=, 0($7), $pop1
+	tee_local	$push42=, $3=, $pop43
 	i32.const	$push11=, 12
 	i32.add 	$push41=, $1, $pop11
-	tee_local	$push40=, $6=, $pop41
+	tee_local	$push40=, $4=, $pop41
 	i32.load	$push39=, 0($pop40)
-	tee_local	$push38=, $5=, $pop39
-	i32.const	$push37=, 16
-	i32.add 	$push1=, $3, $pop37
-	i32.store	$push36=, 0($2), $pop1
-	tee_local	$push35=, $3=, $pop36
-	i32.ne  	$push12=, $pop38, $pop35
+	tee_local	$push38=, $7=, $pop39
+	i32.ne  	$push12=, $pop42, $pop38
 	br_if   	0, $pop12       # 0: down to label3
 # BB#4:                                 # %if.then16
 	i32.const	$push13=, 28
@@ -59,31 +60,32 @@ create_array_type:                      # @create_array_type
 	i32.store	$drop=, 0($pop14), $pop15
 .LBB0_5:                                # %if.end17
 	end_block                       # label3:
-	i32.const	$push22=, 8
-	i32.add 	$push23=, $1, $pop22
-	i32.load	$2=, 0($pop23)
-	i32.const	$push21=, 16
-	i32.add 	$push47=, $1, $pop21
-	tee_local	$push46=, $7=, $pop47
+	i32.const	$push22=, 16
+	i32.add 	$push52=, $1, $pop22
+	tee_local	$push51=, $6=, $pop52
 	i32.const	$push16=, 24
 	i32.add 	$push17=, $1, $pop16
-	i32.load	$push45=, 0($pop17)
-	tee_local	$push44=, $1=, $pop45
-	i32.add 	$push18=, $pop44, $3
-	i32.const	$push19=, -1
-	i32.xor 	$push20=, $1, $pop19
-	i32.and 	$push43=, $pop18, $pop20
-	tee_local	$push42=, $1=, $pop43
-	i32.store	$drop=, 0($pop46), $pop42
-	i32.sub 	$push24=, $1, $2
-	i32.sub 	$push25=, $4, $2
-	i32.gt_s	$push26=, $pop24, $pop25
-	i32.select	$push27=, $4, $1, $pop26
-	i32.store	$push0=, 0($7), $pop27
-	i32.store	$drop=, 0($6), $pop0
+	i32.load	$push50=, 0($pop17)
+	tee_local	$push49=, $5=, $pop50
+	i32.add 	$push20=, $pop49, $3
+	i32.const	$push18=, -1
+	i32.xor 	$push19=, $5, $pop18
+	i32.and 	$push21=, $pop20, $pop19
+	i32.store	$push48=, 0($6), $pop21
+	tee_local	$push47=, $3=, $pop48
+	i32.const	$push23=, 8
+	i32.add 	$push24=, $1, $pop23
+	i32.load	$push46=, 0($pop24)
+	tee_local	$push45=, $1=, $pop46
+	i32.sub 	$push25=, $3, $pop45
+	i32.sub 	$push26=, $2, $1
+	i32.gt_s	$push27=, $pop25, $pop26
+	i32.select	$push28=, $2, $pop47, $pop27
+	i32.store	$push0=, 0($pop51), $pop28
+	i32.store	$drop=, 0($4), $pop0
 .LBB0_6:                                # %cond.end
 	end_block                       # label2:
-	i32.store	$drop=, 12($0), $5
+	i32.store	$drop=, 12($0), $7
 	return  	$0
 .LBB0_7:                                # %if.then
 	end_block                       # label1:
@@ -121,7 +123,7 @@ get_discrete_bounds:                    # @get_discrete_bounds
 	i64.store	$drop=, 0($0), $pop0
 	i64.const	$push1=, 2
 	i64.store	$drop=, 0($1), $pop1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	get_discrete_bounds, .Lfunc_end2-get_discrete_bounds
@@ -148,7 +150,7 @@ xmalloc:                                # @xmalloc
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	xmalloc, .Lfunc_end4-xmalloc

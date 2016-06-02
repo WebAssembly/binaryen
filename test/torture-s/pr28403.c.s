@@ -17,7 +17,8 @@ foo:                                    # @foo
 	i32.add 	$push5=, $pop4, $6
 	i32.add 	$push6=, $pop5, $7
 	i32.store	$drop=, global($pop7), $pop6
-	return  	$1
+	copy_local	$push8=, $7
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -42,7 +43,7 @@ bar:                                    # @bar
 	i32.const	$push5=, 0
 	i64.load32_u	$push6=, global($pop5)
 	i64.shr_u	$push7=, $0, $pop6
-	return  	$pop7
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

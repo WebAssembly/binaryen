@@ -11,7 +11,8 @@ f:                                      # @f
 	i32.const	$push0=, glob_dbl
 	i32.select	$push1=, $0, $pop0, $0
 	f64.store	$drop=, 0($pop1), $1
-	return  	$0
+	copy_local	$push2=, $0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

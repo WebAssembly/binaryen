@@ -46,7 +46,7 @@ foo:                                    # @foo
 .LBB1_2:                                # %if.end
 	end_block                       # label2:
 	call    	bar@FUNCTION, $0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -69,7 +69,7 @@ baz:                                    # @baz
 	i32.store8	$drop=, e($pop2), $0
 .LBB2_2:                                # %if.end
 	end_block                       # label3:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	baz, .Lfunc_end2-baz

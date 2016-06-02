@@ -11,7 +11,7 @@ foo:                                    # @foo
 	i32.const	$push1=, 0
 	i32.load	$push2=, x($pop1)
 	i32.store	$push0=, 0($pop2), $0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -24,15 +24,15 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	i32.const	$push1=, __stack_pointer
-	i32.load	$push2=, 0($pop1)
+	i32.const	$push1=, 0
+	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 16
 	i32.sub 	$push6=, $pop2, $pop3
 	i32.const	$push4=, 12
 	i32.add 	$push5=, $pop6, $pop4
 	i32.store	$drop=, x($pop0), $pop5
 	i32.const	$push7=, 0
-	return  	$pop7
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

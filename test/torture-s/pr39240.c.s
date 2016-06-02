@@ -11,7 +11,7 @@ bar1:                                   # @bar1
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo1@FUNCTION, $pop1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	bar1, .Lfunc_end0-bar1
@@ -22,7 +22,8 @@ foo1:                                   # @foo1
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	foo1, .Lfunc_end1-foo1
@@ -40,7 +41,7 @@ bar2:                                   # @bar2
 	i32.call	$push2=, foo2@FUNCTION, $pop1
 	i32.const	$push3=, 65535
 	i32.and 	$push4=, $pop2, $pop3
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end2:
 	.size	bar2, .Lfunc_end2-bar2
@@ -55,7 +56,7 @@ foo2:                                   # @foo2
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push3=, 16
 	i32.shr_s	$push2=, $pop1, $pop3
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end3:
 	.size	foo2, .Lfunc_end3-foo2
@@ -73,7 +74,7 @@ bar3:                                   # @bar3
 	i32.call	$push2=, foo3@FUNCTION, $pop1
 	i32.const	$push3=, 255
 	i32.and 	$push4=, $pop2, $pop3
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end4:
 	.size	bar3, .Lfunc_end4-bar3
@@ -88,7 +89,7 @@ foo3:                                   # @foo3
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push3=, 24
 	i32.shr_s	$push2=, $pop1, $pop3
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end5:
 	.size	foo3, .Lfunc_end5-foo3
@@ -104,7 +105,7 @@ bar4:                                   # @bar4
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo4@FUNCTION, $pop1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end6:
 	.size	bar4, .Lfunc_end6-bar4
@@ -115,7 +116,8 @@ foo4:                                   # @foo4
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end7:
 	.size	foo4, .Lfunc_end7-foo4
@@ -135,7 +137,7 @@ bar5:                                   # @bar5
 	i32.shl 	$push4=, $pop2, $pop3
 	i32.const	$push6=, 16
 	i32.shr_s	$push5=, $pop4, $pop6
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end8:
 	.size	bar5, .Lfunc_end8-bar5
@@ -148,7 +150,7 @@ foo5:                                   # @foo5
 # BB#0:                                 # %entry
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end9:
 	.size	foo5, .Lfunc_end9-foo5
@@ -168,7 +170,7 @@ bar6:                                   # @bar6
 	i32.shl 	$push4=, $pop2, $pop3
 	i32.const	$push6=, 24
 	i32.shr_s	$push5=, $pop4, $pop6
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end10:
 	.size	bar6, .Lfunc_end10-bar6
@@ -181,7 +183,7 @@ foo6:                                   # @foo6
 # BB#0:                                 # %entry
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end11:
 	.size	foo6, .Lfunc_end11-foo6

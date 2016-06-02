@@ -42,7 +42,7 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %bar.exit
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

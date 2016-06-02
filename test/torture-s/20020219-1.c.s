@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.result 	i64
 # BB#0:                                 # %entry
 	i64.const	$push0=, -9223372036854775808
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

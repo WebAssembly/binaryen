@@ -8,12 +8,13 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %for.inc.1.1
-	i32.const	$push1=, 0
+	i32.const	$push2=, 0
 	i32.const	$push3=, 0
-	i32.const	$push2=, 1
-	i32.store	$push0=, w($pop3), $pop2
-	i32.store	$drop=, w+12($pop1), $pop0
-	return  	$0
+	i32.const	$push1=, 1
+	i32.store	$push0=, w+12($pop3), $pop1
+	i32.store	$drop=, w($pop2), $pop0
+	copy_local	$push4=, $0
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -24,23 +25,22 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, 0
-	i32.load	$0=, w+8($pop6)
-	i32.const	$push5=, 0
-	i32.load	$1=, w+4($pop5)
-	i32.const	$push4=, 0
-	i32.const	$push3=, 0
-	i32.const	$push1=, 1
-	i32.store	$push0=, w($pop3), $pop1
-	i32.store	$drop=, w+12($pop4), $pop0
-	block
-	i32.or  	$push2=, $1, $0
-	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
+	i32.const	$push8=, 0
 	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.const	$push1=, 1
+	i32.store	$push0=, w+12($pop7), $pop1
+	i32.store	$drop=, w($pop8), $pop0
+	block
+	i32.const	$push6=, 0
+	i32.load	$push3=, w+4($pop6)
+	i32.const	$push5=, 0
+	i32.load	$push2=, w+8($pop5)
+	i32.or  	$push4=, $pop3, $pop2
+	br_if   	0, $pop4        # 0: down to label0
+# BB#1:                                 # %if.end
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

@@ -17,13 +17,13 @@ foo:                                    # @foo
 	i32.eq  	$push3=, $1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.end
-	i32.gt_u	$push6=, $0, $1
-	i32.select	$2=, $0, $1, $pop6
+	i32.gt_u	$push4=, $0, $1
+	i32.select	$2=, $0, $1, $pop4
 	block
-	i32.lt_u	$push4=, $0, $1
-	i32.select	$push5=, $0, $1, $pop4
+	i32.lt_u	$push5=, $0, $1
+	i32.select	$push6=, $0, $1, $pop5
 	i32.const	$push17=, 1
-	i32.ne  	$push7=, $pop5, $pop17
+	i32.ne  	$push7=, $pop6, $pop17
 	br_if   	0, $pop7        # 0: down to label1
 # BB#3:                                 # %if.then9
 	i32.const	$push8=, 0
@@ -46,7 +46,7 @@ foo:                                    # @foo
 	i32.store	$drop=, cnt($pop13), $pop16
 .LBB0_6:                                # %cleanup
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

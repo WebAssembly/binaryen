@@ -9,14 +9,14 @@ foobar:                                 # @foobar
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push0=, 1
-	i32.and 	$push11=, $0, $pop0
+	i32.const	$push1=, 1
+	i32.and 	$push11=, $0, $pop1
 	tee_local	$push10=, $0=, $pop11
 	i32.eqz 	$push14=, $pop10
 	br_if   	0, $pop14       # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push1=, 3
-	i32.and 	$push13=, $1, $pop1
+	i32.const	$push0=, 3
+	i32.and 	$push13=, $1, $pop0
 	tee_local	$push12=, $1=, $pop13
 	i32.sub 	$push2=, $pop12, $0
 	i32.mul 	$push3=, $pop2, $1

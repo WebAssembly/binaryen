@@ -8,20 +8,20 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, 1
+	i32.const	$push5=, 1
 	i32.const	$push12=, 1
-	i32.const	$push7=, -1
+	i32.const	$push4=, -1
 	i32.const	$push0=, 2
 	i32.or  	$push1=, $0, $pop0
 	i32.const	$push2=, 6
 	i32.ne  	$push3=, $pop1, $pop2
-	i32.select	$push9=, $pop12, $pop7, $pop3
-	i32.const	$push4=, 4
-	i32.or  	$push5=, $0, $pop4
+	i32.select	$push6=, $pop12, $pop4, $pop3
+	i32.const	$push7=, 4
+	i32.or  	$push8=, $0, $pop7
 	i32.const	$push11=, 6
-	i32.eq  	$push6=, $pop5, $pop11
-	i32.select	$push10=, $pop8, $pop9, $pop6
-	return  	$pop10
+	i32.eq  	$push9=, $pop8, $pop11
+	i32.select	$push10=, $pop5, $pop6, $pop9
+                                        # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -40,14 +40,14 @@ main:                                   # @main
 	block
 	loop                            # label1:
 	i32.const	$push11=, 4
-	i32.add 	$push1=, $1, $pop11
-	i32.call	$push2=, foo@FUNCTION, $pop1
+	i32.add 	$push4=, $1, $pop11
+	i32.call	$push5=, foo@FUNCTION, $pop4
 	i32.const	$push10=, 1
-	i32.eqz 	$push3=, $1
+	i32.eqz 	$push1=, $1
 	i32.const	$push9=, 1
-	i32.shl 	$push4=, $pop3, $pop9
-	i32.sub 	$push5=, $pop10, $pop4
-	i32.ne  	$push6=, $pop2, $pop5
+	i32.shl 	$push2=, $pop1, $pop9
+	i32.sub 	$push3=, $pop10, $pop2
+	i32.ne  	$push6=, $pop5, $pop3
 	br_if   	2, $pop6        # 2: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1

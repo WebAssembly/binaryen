@@ -7,7 +7,7 @@
 good_const:                             # @good_const
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	good_const, .Lfunc_end0-good_const
@@ -19,7 +19,7 @@ good_const:                             # @good_const
 good_enum:                              # @good_enum
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	good_enum, .Lfunc_end1-good_enum
@@ -31,7 +31,7 @@ good_enum:                              # @good_enum
 good_expr:                              # @good_expr
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	good_expr, .Lfunc_end2-good_expr
@@ -43,7 +43,7 @@ good_expr:                              # @good_expr
 good_vararg:                            # @good_vararg
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	good_vararg, .Lfunc_end3-good_vararg

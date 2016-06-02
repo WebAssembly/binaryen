@@ -10,7 +10,7 @@ test1:                                  # @test1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 31
 	i32.shr_u	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -25,7 +25,7 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 31
 	i32.shr_s	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
@@ -40,7 +40,7 @@ test3:                                  # @test3
 # BB#0:                                 # %entry
 	i32.const	$push0=, 31
 	i32.shr_u	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
@@ -55,7 +55,7 @@ test4:                                  # @test4
 # BB#0:                                 # %entry
 	i32.const	$push0=, 31
 	i32.shr_s	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
@@ -68,7 +68,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end44
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main

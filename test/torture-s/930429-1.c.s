@@ -10,7 +10,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

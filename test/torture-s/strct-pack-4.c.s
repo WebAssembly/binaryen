@@ -8,7 +8,7 @@ my_set_a:                               # @my_set_a
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 171
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	my_set_a, .Lfunc_end0-my_set_a
@@ -21,7 +21,7 @@ my_set_b:                               # @my_set_b
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4660
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	my_set_b, .Lfunc_end1-my_set_b

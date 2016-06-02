@@ -32,7 +32,8 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 	i32.load8_s	$1=, 0($1)
 .LBB0_4:                                # %cleanup
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push9=, $1
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	stab_xcoff_builtin_type, .Lfunc_end0-stab_xcoff_builtin_type
@@ -58,12 +59,13 @@ main:                                   # @main
 	br_if   	2, $pop2        # 2: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push8=, -1
-	i32.add 	$1=, $1, $pop8
-	i32.const	$push7=, 4
-	i32.add 	$0=, $0, $pop7
+	i32.const	$push10=, 4
+	i32.add 	$0=, $0, $pop10
+	i32.const	$push9=, -1
+	i32.add 	$push8=, $1, $pop9
+	tee_local	$push7=, $1=, $pop8
 	i32.const	$push6=, -34
-	i32.ge_s	$push3=, $1, $pop6
+	i32.ge_s	$push3=, $pop7, $pop6
 	br_if   	0, $pop3        # 0: up to label3
 # BB#3:                                 # %if.end21
 	end_loop                        # label4:

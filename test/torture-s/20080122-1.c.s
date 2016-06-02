@@ -85,7 +85,7 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

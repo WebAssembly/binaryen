@@ -9,7 +9,7 @@ g2:                                     # @g2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.trunc_s/f64	$push0=, $0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	g2, .Lfunc_end0-g2
@@ -23,7 +23,7 @@ f:                                      # @f
 	.result 	f64
 # BB#0:                                 # %if.end
 	f64.convert_s/i32	$push0=, $0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

@@ -13,7 +13,7 @@ incr:                                   # @incr
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$push0=, count($pop1), $pop4
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	incr, .Lfunc_end0-incr
@@ -24,21 +24,21 @@ incr:                                   # @incr
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
-	i32.load	$push15=, count($pop1)
-	tee_local	$push14=, $1=, $pop15
+	i32.const	$push15=, 0
+	i32.load	$push14=, count($pop15)
+	tee_local	$push13=, $1=, $pop14
+	i32.const	$push12=, 2
+	i32.add 	$push0=, $pop13, $pop12
+	i32.store	$0=, count($pop1), $pop0
 	i32.const	$push2=, 1
-	i32.add 	$push13=, $pop14, $pop2
-	tee_local	$push12=, $0=, $pop13
-	i32.const	$push11=, 2
-	i32.shl 	$push3=, $pop12, $pop11
-	i32.store	$drop=, arr($pop3), $0
-	i32.const	$push10=, 0
+	i32.add 	$push11=, $1, $pop2
+	tee_local	$push10=, $2=, $pop11
 	i32.const	$push9=, 2
-	i32.add 	$push0=, $1, $pop9
-	i32.store	$0=, count($pop10), $pop0
+	i32.shl 	$push3=, $pop10, $pop9
+	i32.store	$drop=, arr($pop3), $2
 	block
 	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false

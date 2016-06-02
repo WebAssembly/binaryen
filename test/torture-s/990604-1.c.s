@@ -16,7 +16,7 @@ f:                                      # @f
 	i32.store	$drop=, b($pop3), $pop1
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -40,9 +40,9 @@ main:                                   # @main
 # BB#1:                                 # %entry
 	br_if   	1, $0           # 1: down to label1
 # BB#2:                                 # %f.exit.thread
-	i32.const	$push2=, 0
-	i32.const	$push3=, 9
-	i32.store	$drop=, b($pop2), $pop3
+	i32.const	$push3=, 0
+	i32.const	$push2=, 9
+	i32.store	$drop=, b($pop3), $pop2
 .LBB1_3:                                # %if.end
 	end_block                       # label2:
 	i32.const	$push7=, 0

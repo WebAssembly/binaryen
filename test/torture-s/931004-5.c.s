@@ -60,21 +60,21 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push12=, __stack_pointer
-	i32.const	$push9=, __stack_pointer
-	i32.load	$push10=, 0($pop9)
+	i32.const	$push12=, 0
+	i32.const	$push9=, 0
+	i32.load	$push10=, __stack_pointer($pop9)
 	i32.const	$push11=, 32
 	i32.sub 	$push19=, $pop10, $pop11
-	i32.store	$push21=, 0($pop12), $pop19
+	i32.store	$push21=, __stack_pointer($pop12), $pop19
 	tee_local	$push20=, $0=, $pop21
 	i32.const	$push0=, 1310730
 	i32.store	$drop=, 16($pop20), $pop0
-	i32.const	$push1=, 11
-	i32.store16	$drop=, 20($0), $pop1
-	i32.const	$push2=, 1441804
-	i32.store	$drop=, 24($0), $pop2
-	i32.const	$push3=, 21
-	i32.store16	$drop=, 22($0), $pop3
+	i32.const	$push1=, 21
+	i32.store16	$drop=, 22($0), $pop1
+	i32.const	$push2=, 11
+	i32.store16	$drop=, 20($0), $pop2
+	i32.const	$push3=, 1441804
+	i32.store	$drop=, 24($0), $pop3
 	i32.load	$push4=, 16($0)
 	i32.store	$drop=, 12($0), $pop4
 	i32.load	$push5=, 20($0)

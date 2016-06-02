@@ -10,7 +10,7 @@ sub:                                    # @sub
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x1p0
 	f64.add 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub

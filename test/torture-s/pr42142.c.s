@@ -8,16 +8,16 @@ sort:                                   # @sort
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, 2
-	i32.const	$push2=, 1
+	i32.const	$push2=, 2
+	i32.const	$push0=, 1
 	i32.const	$push8=, 1
-	i32.lt_s	$push3=, $0, $pop8
-	i32.select	$push5=, $pop4, $pop2, $pop3
+	i32.lt_s	$push1=, $0, $pop8
+	i32.select	$push3=, $pop2, $pop0, $pop1
 	i32.const	$push6=, 0
-	i32.const	$push0=, 10
-	i32.lt_s	$push1=, $0, $pop0
-	i32.select	$push7=, $pop5, $pop6, $pop1
-	return  	$pop7
+	i32.const	$push4=, 10
+	i32.lt_s	$push5=, $0, $pop4
+	i32.select	$push7=, $pop3, $pop6, $pop5
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end0:
 	.size	sort, .Lfunc_end0-sort

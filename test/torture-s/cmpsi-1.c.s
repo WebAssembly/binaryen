@@ -56,7 +56,8 @@ dummy:                                  # @dummy
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	dummy, .Lfunc_end2-dummy

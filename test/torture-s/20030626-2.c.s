@@ -20,7 +20,7 @@ main:                                   # @main
 	i64.load	$push3=, .L.str.2($pop5):p2align=0
 	i64.store	$drop=, buf($pop6), $pop3
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

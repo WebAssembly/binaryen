@@ -43,7 +43,7 @@ g:                                      # @g
 	i32.const	$push0=, 0
 	i64.load	$push1=, R($pop0)
 	i64.store	$drop=, 0($0):p2align=2, $pop1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	g, .Lfunc_end1-g

@@ -5,52 +5,52 @@
 	.globl	doit
 	.type	doit,@function
 doit:                                   # @doit
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push20=, 0
-	i32.load	$push19=, markstack_ptr($pop20)
-	tee_local	$push18=, $3=, $pop19
-	i32.const	$push3=, -4
-	i32.add 	$push4=, $pop18, $pop3
-	i32.load	$push17=, 0($pop4)
-	tee_local	$push16=, $0=, $pop17
-	i32.const	$push5=, 6
-	i32.eq  	$push6=, $pop16, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	i32.const	$push19=, 0
+	i32.load	$push18=, markstack_ptr($pop19)
+	tee_local	$push17=, $0=, $pop18
+	i32.const	$push2=, -4
+	i32.add 	$push3=, $pop17, $pop2
+	i32.load	$push16=, 0($pop3)
+	tee_local	$push15=, $1=, $pop16
+	i32.const	$push4=, 6
+	i32.eq  	$push5=, $pop15, $pop4
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
-	i32.const	$push23=, 0
-	i32.load	$push1=, stack_base($pop23)
-	i32.const	$push2=, 40
-	i32.add 	$2=, $pop1, $pop2
-	i32.const	$push9=, -6
-	i32.add 	$1=, $0, $pop9
-	i32.const	$push22=, -8
-	i32.add 	$push7=, $3, $pop22
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push10=, 3
-	i32.shl 	$push11=, $pop8, $pop10
-	i32.const	$push21=, 3
-	i32.shl 	$push12=, $0, $pop21
-	i32.sub 	$0=, $pop11, $pop12
+	i32.const	$push22=, 0
+	i32.load	$push0=, stack_base($pop22)
+	i32.const	$push1=, 40
+	i32.add 	$2=, $pop0, $pop1
+	i32.const	$push21=, -8
+	i32.add 	$push8=, $0, $pop21
+	i32.load	$push9=, 0($pop8)
+	i32.const	$push6=, 3
+	i32.shl 	$push10=, $pop9, $pop6
+	i32.const	$push20=, 3
+	i32.shl 	$push7=, $1, $pop20
+	i32.sub 	$0=, $pop10, $pop7
+	i32.const	$push11=, -6
+	i32.add 	$1=, $1, $pop11
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.add 	$push14=, $2, $0
-	i32.const	$push26=, 16
-	i32.add 	$push15=, $pop14, $pop26
-	i64.load	$push13=, 0($2)
-	i64.store	$drop=, 0($pop15), $pop13
+	i32.add 	$push12=, $2, $0
+	i32.const	$push27=, 16
+	i32.add 	$push13=, $pop12, $pop27
+	i64.load	$push14=, 0($2)
+	i64.store	$drop=, 0($pop13), $pop14
+	i32.const	$push26=, -8
+	i32.add 	$2=, $2, $pop26
 	i32.const	$push25=, 1
-	i32.add 	$1=, $1, $pop25
-	i32.const	$push24=, -8
-	i32.add 	$push0=, $2, $pop24
-	copy_local	$2=, $pop0
-	br_if   	0, $1           # 0: up to label1
+	i32.add 	$push24=, $1, $pop25
+	tee_local	$push23=, $1=, $pop24
+	br_if   	0, $pop23       # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	doit, .Lfunc_end0-doit
@@ -61,57 +61,58 @@ doit:                                   # @doit
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i64
 # BB#0:                                 # %entry
-	i32.const	$push31=, 0
-	i32.const	$push8=, indices+36
-	i32.store	$drop=, markstack_ptr($pop31), $pop8
 	i32.const	$push30=, 0
-	i32.const	$push9=, 2
-	i32.store	$drop=, indices+32($pop30), $pop9
+	i64.const	$push0=, 1
+	i64.store	$drop=, list+8($pop30), $pop0
 	i32.const	$push29=, 0
-	i32.const	$push10=, 1
-	i32.store	$drop=, indices+28($pop29), $pop10
-	i32.const	$push28=, 0
-	i32.const	$push11=, list+16
-	i32.store	$drop=, stack_base($pop28), $pop11
-	i32.const	$push27=, 0
 	i64.const	$push1=, 0
-	i64.store	$drop=, list($pop27), $pop1
+	i64.store	$drop=, list($pop29), $pop1
+	i32.const	$push28=, 0
+	i64.const	$push2=, 2
+	i64.store	$drop=, list+16($pop28), $pop2
+	i32.const	$push27=, 0
+	i64.const	$push3=, 3
+	i64.store	$drop=, list+24($pop27), $pop3
 	i32.const	$push26=, 0
-	i64.const	$push3=, 1
-	i64.store	$drop=, list+8($pop26), $pop3
+	i64.const	$push4=, 4
+	i64.store	$0=, list+32($pop26), $pop4
 	i32.const	$push25=, 0
-	i64.const	$push4=, 2
-	i64.store	$drop=, list+16($pop25), $pop4
+	i64.const	$push5=, 9
+	i64.store	$drop=, list+72($pop25), $pop5
 	i32.const	$push24=, 0
-	i64.const	$push5=, 3
-	i64.store	$drop=, list+24($pop24), $pop5
+	i32.const	$push6=, indices+36
+	i32.store	$drop=, markstack_ptr($pop24), $pop6
 	i32.const	$push23=, 0
-	i64.const	$push7=, 9
-	i64.store	$drop=, list+72($pop23), $pop7
+	i32.const	$push7=, 2
+	i32.store	$drop=, indices+32($pop23), $pop7
 	i32.const	$push22=, 0
-	i64.const	$push12=, 7
-	i64.store	$drop=, list+64($pop22), $pop12
+	i32.const	$push8=, 1
+	i32.store	$drop=, indices+28($pop22), $pop8
 	i32.const	$push21=, 0
-	i64.const	$push13=, 6
-	i64.store	$drop=, list+56($pop21), $pop13
+	i32.const	$push9=, list+16
+	i32.store	$drop=, stack_base($pop21), $pop9
 	i32.const	$push20=, 0
-	i64.const	$push14=, 5
-	i64.store	$drop=, list+48($pop20), $pop14
+	i64.const	$push10=, 7
+	i64.store	$drop=, list+64($pop20), $pop10
 	i32.const	$push19=, 0
+	i64.const	$push11=, 6
+	i64.store	$drop=, list+56($pop19), $pop11
 	i32.const	$push18=, 0
-	i64.const	$push6=, 4
-	i64.store	$push0=, list+32($pop18), $pop6
-	i64.store	$drop=, list+40($pop19), $pop0
+	i64.const	$push12=, 5
+	i64.store	$drop=, list+48($pop18), $pop12
+	i32.const	$push17=, 0
+	i64.store	$drop=, list+40($pop17), $0
 	block
 	i32.const	$push15=, expect
-	i32.const	$push2=, list
-	i32.const	$push16=, 80
-	i32.call	$push17=, memcmp@FUNCTION, $pop15, $pop2, $pop16
-	br_if   	0, $pop17       # 0: down to label3
+	i32.const	$push14=, list
+	i32.const	$push13=, 80
+	i32.call	$push16=, memcmp@FUNCTION, $pop15, $pop14, $pop13
+	br_if   	0, $pop16       # 0: down to label3
 # BB#1:                                 # %if.end
-	i32.const	$push32=, 0
-	return  	$pop32
+	i32.const	$push31=, 0
+	return  	$pop31
 .LBB1_2:                                # %if.then
 	end_block                       # label3:
 	call    	abort@FUNCTION

@@ -8,7 +8,7 @@ z:                                      # @z
 	.result 	i32
 # BB#0:                                 # %f.exit
 	i32.const	$push0=, 96
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	z, .Lfunc_end0-z
@@ -38,9 +38,9 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.const	$2=, 70
 	block
-	i32.load8_u	$push0=, 0($0)
-	i32.load8_u	$push1=, 0($1)
-	i32.ne  	$push2=, $pop0, $pop1
+	i32.load8_u	$push1=, 0($0)
+	i32.load8_u	$push0=, 0($1)
+	i32.ne  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load8_s	$push4=, 1($1)
@@ -48,7 +48,8 @@ f:                                      # @f
 	i32.add 	$2=, $pop4, $pop3
 .LBB2_2:                                # %return
 	end_block                       # label0:
-	return  	$2
+	copy_local	$push5=, $2
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end2:
 	.size	f, .Lfunc_end2-f

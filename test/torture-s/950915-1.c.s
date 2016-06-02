@@ -15,7 +15,7 @@ f:                                      # @f
 	i64.const	$push4=, 16
 	i64.shr_u	$push5=, $pop3, $pop4
 	i32.wrap/i64	$push6=, $pop5
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

@@ -8,7 +8,8 @@ f1:                                     # @f1
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -21,7 +22,8 @@ f2:                                     # @f2
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
@@ -34,7 +36,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

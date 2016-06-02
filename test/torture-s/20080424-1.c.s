@@ -11,10 +11,10 @@ bar:                                    # @bar
 	block
 	i32.const	$push13=, 0
 	i32.load	$push12=, bar.i($pop13)
-	tee_local	$push11=, $3=, $pop12
+	tee_local	$push11=, $2=, $pop12
 	i32.const	$push0=, 36
 	i32.mul 	$push10=, $pop11, $pop0
-	tee_local	$push9=, $2=, $pop10
+	tee_local	$push9=, $3=, $pop10
 	i32.const	$push1=, g+288
 	i32.add 	$push2=, $pop9, $pop1
 	i32.ne  	$push3=, $pop2, $0
@@ -22,10 +22,10 @@ bar:                                    # @bar
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push14=, 0
 	i32.const	$push4=, 1
-	i32.add 	$push5=, $3, $pop4
+	i32.add 	$push5=, $2, $pop4
 	i32.store	$drop=, bar.i($pop14), $pop5
 	i32.const	$push6=, g
-	i32.add 	$push7=, $2, $pop6
+	i32.add 	$push7=, $3, $pop6
 	i32.ne  	$push8=, $pop7, $1
 	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end
@@ -70,7 +70,7 @@ main:                                   # @main
 	i32.const	$push14=, g+252
 	call    	bar@FUNCTION, $pop15, $pop14
 	i32.const	$push16=, 0
-	return  	$pop16
+                                        # fallthrough-return: $pop16
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

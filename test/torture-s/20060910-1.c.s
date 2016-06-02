@@ -9,7 +9,7 @@ input_getc_complicated:                 # @input_getc_complicated
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	input_getc_complicated, .Lfunc_end0-input_getc_complicated
@@ -32,8 +32,9 @@ check_header:                           # @check_header
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %cond.true
 	i32.const	$push1=, 1
-	i32.add 	$2=, $2, $pop1
-	i32.store	$drop=, 0($0), $2
+	i32.add 	$push19=, $2, $pop1
+	tee_local	$push18=, $2=, $pop19
+	i32.store	$drop=, 0($0), $pop18
 .LBB1_2:                                # %for.inc
 	end_block                       # label0:
 	block
@@ -41,8 +42,9 @@ check_header:                           # @check_header
 	br_if   	0, $pop2        # 0: down to label1
 # BB#3:                                 # %cond.true.1
 	i32.const	$push3=, 1
-	i32.add 	$2=, $2, $pop3
-	i32.store	$drop=, 0($0), $2
+	i32.add 	$push21=, $2, $pop3
+	tee_local	$push20=, $2=, $pop21
+	i32.store	$drop=, 0($0), $pop20
 .LBB1_4:                                # %for.inc.1
 	end_block                       # label1:
 	block
@@ -50,8 +52,9 @@ check_header:                           # @check_header
 	br_if   	0, $pop4        # 0: down to label2
 # BB#5:                                 # %cond.true.2
 	i32.const	$push5=, 1
-	i32.add 	$2=, $2, $pop5
-	i32.store	$drop=, 0($0), $2
+	i32.add 	$push23=, $2, $pop5
+	tee_local	$push22=, $2=, $pop23
+	i32.store	$drop=, 0($0), $pop22
 .LBB1_6:                                # %for.inc.2
 	end_block                       # label2:
 	block
@@ -59,8 +62,9 @@ check_header:                           # @check_header
 	br_if   	0, $pop6        # 0: down to label3
 # BB#7:                                 # %cond.true.3
 	i32.const	$push7=, 1
-	i32.add 	$2=, $2, $pop7
-	i32.store	$drop=, 0($0), $2
+	i32.add 	$push25=, $2, $pop7
+	tee_local	$push24=, $2=, $pop25
+	i32.store	$drop=, 0($0), $pop24
 .LBB1_8:                                # %for.inc.3
 	end_block                       # label3:
 	block
@@ -68,8 +72,9 @@ check_header:                           # @check_header
 	br_if   	0, $pop8        # 0: down to label4
 # BB#9:                                 # %cond.true.4
 	i32.const	$push9=, 1
-	i32.add 	$2=, $2, $pop9
-	i32.store	$drop=, 0($0), $2
+	i32.add 	$push27=, $2, $pop9
+	tee_local	$push26=, $2=, $pop27
+	i32.store	$drop=, 0($0), $pop26
 .LBB1_10:                               # %for.inc.4
 	end_block                       # label4:
 	block
@@ -82,7 +87,7 @@ check_header:                           # @check_header
 .LBB1_12:                               # %for.inc.5
 	end_block                       # label5:
 	i32.const	$push13=, 1
-	return  	$pop13
+                                        # fallthrough-return: $pop13
 	.endfunc
 .Lfunc_end1:
 	.size	check_header, .Lfunc_end1-check_header
@@ -97,10 +102,10 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.const	$push4=, 0
 	i32.const	$push1=, b+6
-	i32.store	$push0=, s+4($pop4), $pop1
-	i32.store	$drop=, s($pop2), $pop0
+	i32.store	$push0=, s($pop4), $pop1
+	i32.store	$drop=, s+4($pop2), $pop0
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

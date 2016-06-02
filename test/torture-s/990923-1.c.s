@@ -8,15 +8,15 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, 65535
-	i32.and 	$push5=, $0, $pop4
-	i32.const	$push6=, 1
-	i32.const	$push0=, -65536
+	i32.const	$push0=, 65535
 	i32.and 	$push1=, $0, $pop0
-	i32.const	$push2=, -1412628480
-	i32.eq  	$push3=, $pop1, $pop2
-	i32.select	$push7=, $pop5, $pop6, $pop3
-	return  	$pop7
+	i32.const	$push6=, 1
+	i32.const	$push2=, -65536
+	i32.and 	$push3=, $0, $pop2
+	i32.const	$push4=, -1412628480
+	i32.eq  	$push5=, $pop3, $pop4
+	i32.select	$push7=, $pop1, $pop6, $pop5
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

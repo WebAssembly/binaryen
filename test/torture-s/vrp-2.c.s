@@ -24,7 +24,8 @@ f:                                      # @f
 	i32.ne  	$1=, $pop3, $pop5
 .LBB0_2:                                # %return
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push8=, $1
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

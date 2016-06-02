@@ -6,17 +6,16 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	call    	fn2@FUNCTION
 	i32.const	$push1=, 0
-	i32.load	$0=, b($pop1)
-	i32.const	$push3=, 0
 	i32.const	$push0=, r
-	i32.store	$drop=, i($pop3), $pop0
-	call    	fn1@FUNCTION, $0
-	i32.const	$push2=, 0
-	return  	$pop2
+	i32.store	$drop=, i($pop1), $pop0
+	i32.const	$push4=, 0
+	i32.load	$push2=, b($pop4)
+	call    	fn1@FUNCTION, $pop2
+	i32.const	$push3=, 0
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -25,13 +24,13 @@ main:                                   # @main
 	.type	fn2,@function
 fn2:                                    # @fn2
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 42
-	i32.store	$drop=, f($pop0), $pop1
+	i32.const	$push1=, 0
+	i32.const	$push0=, 42
+	i32.store	$drop=, f($pop1), $pop0
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
 	i32.store16	$drop=, o($pop3), $pop2
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	fn2, .Lfunc_end1-fn2
@@ -64,9 +63,9 @@ fn1:                                    # @fn1
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
 	i32.const	$push6=, d
-	i32.store	$push2=, r($pop11), $pop6
-	i32.store	$drop=, b($pop12), $pop2
-	return
+	i32.store	$push2=, b($pop11), $pop6
+	i32.store	$drop=, r($pop12), $pop2
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	fn1, .Lfunc_end2-fn1

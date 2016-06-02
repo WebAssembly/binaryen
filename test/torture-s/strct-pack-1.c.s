@@ -24,7 +24,8 @@ check:                                  # @check
 	i32.const	$1=, 0
 .LBB0_3:                                # %return
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push6=, $1
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check

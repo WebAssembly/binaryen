@@ -76,7 +76,7 @@ foo:                                    # @foo
 	call    	bar@FUNCTION, $pop14
 .LBB1_7:                                # %return
 	end_block                       # label1:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

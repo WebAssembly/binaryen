@@ -11,9 +11,9 @@ main:                                   # @main
 	i32.const	$push0=, 6513249
 	i32.store	$drop=, buf($pop6), $pop0
 	block
-	i32.const	$push1=, buf
-	i32.const	$push2=, .L.str
-	i32.call	$push3=, strcmp@FUNCTION, $pop1, $pop2
+	i32.const	$push2=, buf
+	i32.const	$push1=, .L.str
+	i32.call	$push3=, strcmp@FUNCTION, $pop2, $pop1
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %foo.exit
 	i32.const	$push11=, 0

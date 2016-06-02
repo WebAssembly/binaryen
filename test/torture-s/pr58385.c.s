@@ -10,7 +10,7 @@ foo:                                    # @foo
 	i32.const	$push1=, 0
 	i32.const	$push2=, 0
 	i32.store	$push0=, b($pop1), $pop2
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -25,7 +25,7 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push2=, 0
 	i32.store	$push0=, b($pop1), $pop2
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

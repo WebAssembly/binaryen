@@ -16,7 +16,7 @@ test:                                   # @test
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %land.rhs.preheader
 	i32.const	$push5=, 4
-	i32.add 	$1=, $0, $pop5
+	i32.add 	$2=, $0, $pop5
 .LBB0_2:                                # %land.rhs
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -26,17 +26,17 @@ test:                                   # @test
 	i32.add 	$push2=, $0, $pop13
 	i32.const	$push12=, 8
 	i32.add 	$push11=, $pop2, $pop12
-	tee_local	$push10=, $2=, $pop11
+	tee_local	$push10=, $1=, $pop11
 	i32.load8_u	$push3=, 0($pop10)
 	i32.const	$push9=, 47
 	i32.ne  	$push4=, $pop3, $pop9
 	br_if   	1, $pop4        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.store	$drop=, 0($1), $3
+	i32.store	$drop=, 0($2), $3
 	i32.const	$push19=, 0
-	i32.store8	$drop=, 0($2), $pop19
-	i32.load	$push18=, 0($1)
+	i32.store8	$drop=, 0($1), $pop19
+	i32.load	$push18=, 0($2)
 	tee_local	$push17=, $3=, $pop18
 	i32.const	$push16=, 1
 	i32.gt_s	$push6=, $pop17, $pop16
@@ -44,7 +44,7 @@ test:                                   # @test
 .LBB0_4:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
@@ -62,7 +62,7 @@ main:                                   # @main
 	#NO_APP
 	call    	test@FUNCTION, $0
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

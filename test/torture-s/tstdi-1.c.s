@@ -12,7 +12,7 @@ feq:                                    # @feq
 	i32.const	$push1=, 140
 	i64.eqz 	$push0=, $0
 	i32.select	$push3=, $pop2, $pop1, $pop0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	feq, .Lfunc_end0-feq
@@ -29,7 +29,7 @@ fne:                                    # @fne
 	i32.const	$push1=, 13
 	i64.eqz 	$push0=, $0
 	i32.select	$push3=, $pop2, $pop1, $pop0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	fne, .Lfunc_end1-fne
@@ -47,7 +47,7 @@ flt:                                    # @flt
 	i64.const	$push0=, 0
 	i64.lt_s	$push1=, $0, $pop0
 	i32.select	$push4=, $pop3, $pop2, $pop1
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end2:
 	.size	flt, .Lfunc_end2-flt
@@ -65,7 +65,7 @@ fge:                                    # @fge
 	i64.const	$push0=, -1
 	i64.gt_s	$push1=, $0, $pop0
 	i32.select	$push4=, $pop3, $pop2, $pop1
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end3:
 	.size	fge, .Lfunc_end3-fge
@@ -83,7 +83,7 @@ fgt:                                    # @fgt
 	i64.const	$push0=, 0
 	i64.gt_s	$push1=, $0, $pop0
 	i32.select	$push4=, $pop3, $pop2, $pop1
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end4:
 	.size	fgt, .Lfunc_end4-fgt
@@ -101,7 +101,7 @@ fle:                                    # @fle
 	i64.const	$push0=, 1
 	i64.lt_s	$push1=, $0, $pop0
 	i32.select	$push4=, $pop3, $pop2, $pop1
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end5:
 	.size	fle, .Lfunc_end5-fle

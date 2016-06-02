@@ -9,12 +9,12 @@ test:                                   # @test
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push16=, __stack_pointer
-	i32.const	$push13=, __stack_pointer
-	i32.load	$push14=, 0($pop13)
+	i32.const	$push16=, 0
+	i32.const	$push13=, 0
+	i32.load	$push14=, __stack_pointer($pop13)
 	i32.const	$push15=, 16
 	i32.sub 	$push20=, $pop14, $pop15
-	i32.store	$1=, 0($pop16), $pop20
+	i32.store	$1=, __stack_pointer($pop16), $pop20
 	i32.load	$2=, 4($0)
 	block
 	i32.const	$push0=, 8
@@ -24,11 +24,11 @@ test:                                   # @test
 	br_if   	0, $pop21       # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push5=, 20
-	i32.const	$push3=, .L.str
-	i32.const	$push4=, 924
+	i32.const	$push4=, .L.str
+	i32.const	$push3=, 924
 	i32.const	$push2=, .L__func__.test
 	i32.const	$push23=, 0
-	i32.call	$push6=, fn1@FUNCTION, $pop5, $pop3, $pop4, $pop2, $pop23
+	i32.call	$push6=, fn1@FUNCTION, $pop5, $pop4, $pop3, $pop2, $pop23
 	i32.const	$push7=, 255
 	i32.and 	$push8=, $pop6, $pop7
 	i32.eqz 	$push25=, $pop8
@@ -43,12 +43,12 @@ test:                                   # @test
 	call    	fn2@FUNCTION, $3, $1
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
-	i32.const	$push19=, __stack_pointer
+	i32.const	$push19=, 0
 	i32.const	$push17=, 16
 	i32.add 	$push18=, $1, $pop17
-	i32.store	$drop=, 0($pop19), $pop18
+	i32.store	$drop=, __stack_pointer($pop19), $pop18
 	i32.div_s	$push12=, $2, $0
-	return  	$pop12
+                                        # fallthrough-return: $pop12
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
@@ -69,7 +69,7 @@ fn1:                                    # @fn1
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push3=, 24
 	i32.shr_s	$push2=, $pop1, $pop3
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	fn1, .Lfunc_end1-fn1
@@ -106,7 +106,8 @@ fn3:                                    # @fn3
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	fn3, .Lfunc_end3-fn3
@@ -122,7 +123,7 @@ fn4:                                    # @fn4
 	#APP
 	#NO_APP
 	i32.load8_s	$push0=, 0($0)
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	fn4, .Lfunc_end4-fn4
@@ -135,12 +136,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, __stack_pointer
-	i32.const	$push5=, __stack_pointer
-	i32.load	$push6=, 0($pop5)
+	i32.const	$push8=, 0
+	i32.const	$push5=, 0
+	i32.load	$push6=, __stack_pointer($pop5)
 	i32.const	$push7=, 16
 	i32.sub 	$push9=, $pop6, $pop7
-	i32.store	$push12=, 0($pop8), $pop9
+	i32.store	$push12=, __stack_pointer($pop8), $pop9
 	tee_local	$push11=, $0=, $pop12
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $pop11, $pop2

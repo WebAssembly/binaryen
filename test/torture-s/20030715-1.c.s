@@ -9,7 +9,7 @@ ap_check_cmd_context:                   # @ap_check_cmd_context
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	ap_check_cmd_context, .Lfunc_end0-ap_check_cmd_context
@@ -43,7 +43,8 @@ server_type:                            # @server_type
 	i32.const	$4=, 0
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
-	return  	$4
+	copy_local	$push6=, $4
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end1:
 	.size	server_type, .Lfunc_end1-server_type
@@ -59,7 +60,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$drop=, ap_standalone($pop1), $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

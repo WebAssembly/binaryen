@@ -12,15 +12,17 @@ t1:                                     # @t1
 	call_indirect	$2, $pop0
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $1, $pop1
-	i32.add 	$2=, $0, $pop2
+	i32.add 	$push9=, $0, $pop2
+	tee_local	$push8=, $0=, $pop9
 	i32.const	$push3=, 4
-	i32.add 	$push4=, $2, $pop3
+	i32.add 	$push4=, $0, $pop3
 	i32.load	$push5=, 0($pop4)
-	i32.store	$drop=, 0($2), $pop5
+	i32.store	$drop=, 0($pop8), $pop5
 	f32.const	$push7=, 0x1.4p1
 	f32.const	$push6=, 0x1.cp1
 	call_indirect	$3, $pop7, $pop6
-	return  	$2
+	copy_local	$push10=, $3
+                                        # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
@@ -39,15 +41,17 @@ t2:                                     # @t2
 	call_indirect	$2, $pop1
 	i32.const	$push2=, 2
 	i32.shl 	$push3=, $1, $pop2
-	i32.add 	$4=, $0, $pop3
+	i32.add 	$push10=, $0, $pop3
+	tee_local	$push9=, $0=, $pop10
 	i32.const	$push4=, 4
-	i32.add 	$push5=, $4, $pop4
+	i32.add 	$push5=, $0, $pop4
 	i32.load	$push6=, 0($pop5)
-	i32.store	$drop=, 0($4), $pop6
+	i32.store	$drop=, 0($pop9), $pop6
 	f32.const	$push8=, 0x1.4p1
 	f32.const	$push7=, 0x1.cp1
 	call_indirect	$3, $pop8, $pop7
-	return  	$4
+	copy_local	$push11=, $3
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2

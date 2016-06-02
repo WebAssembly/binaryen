@@ -9,7 +9,7 @@ mod:                                    # @mod
 	.result 	i64
 # BB#0:                                 # %entry
 	i64.rem_s	$push0=, $0, $1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	mod, .Lfunc_end0-mod

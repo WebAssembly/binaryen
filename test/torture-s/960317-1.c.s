@@ -27,7 +27,7 @@ f:                                      # @f
 .LBB0_2:                                # %cleanup
 	end_block                       # label0:
 	i32.const	$push11=, 0
-	return  	$pop11
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

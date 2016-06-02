@@ -7,10 +7,10 @@
 foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push2=, 4044
-	i32.store	$push0=, blah($pop1), $pop2
-	return  	$pop0
+	i32.const	$push2=, 0
+	i32.const	$push1=, 4044
+	i32.store	$push0=, blah($pop2), $pop1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

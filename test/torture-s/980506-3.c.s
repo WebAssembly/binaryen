@@ -8,10 +8,10 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %if.else
-	i32.const	$push0=, lookup_table
-	i32.const	$push2=, 4
-	i32.const	$push1=, 257
-	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.const	$push2=, lookup_table
+	i32.const	$push1=, 4
+	i32.const	$push0=, 257
+	i32.call	$drop=, memset@FUNCTION, $pop2, $pop1, $pop0
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

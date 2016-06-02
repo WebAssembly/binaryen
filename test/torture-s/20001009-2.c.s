@@ -31,7 +31,7 @@ foo:                                    # @foo
 	end_loop                        # label2:
 	end_block                       # label0:
 	i32.const	$push4=, -1
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -67,7 +67,7 @@ main:                                   # @main
 	end_loop                        # label5:
 	end_block                       # label3:
 	i32.const	$push8=, 0
-	return  	$pop8
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

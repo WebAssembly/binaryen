@@ -8,9 +8,9 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.call	$push0=, foo@FUNCTION
-	i32.const	$push1=, 102
-	i32.ne  	$push2=, $pop0, $pop1
+	i32.call	$push1=, foo@FUNCTION
+	i32.const	$push0=, 102
+	i32.ne  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0
@@ -38,7 +38,7 @@ foo:                                    # @foo
 	i32.call	$push3=, bar@FUNCTION, $pop2
 	i32.call	$push4=, bar@FUNCTION, $0
 	i32.add 	$push5=, $pop3, $pop4
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -55,7 +55,8 @@ bar:                                    # @bar
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$drop=, a($pop0), $pop3
-	return  	$0
+	copy_local	$push5=, $0
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar

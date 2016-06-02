@@ -10,7 +10,7 @@ float_min1:                             # @float_min1
 # BB#0:                                 # %entry
 	f32.lt  	$push0=, $0, $1
 	f32.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	float_min1, .Lfunc_end0-float_min1
@@ -25,7 +25,7 @@ float_min2:                             # @float_min2
 # BB#0:                                 # %entry
 	f32.le  	$push0=, $0, $1
 	f32.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	float_min2, .Lfunc_end1-float_min2
@@ -40,7 +40,7 @@ float_max1:                             # @float_max1
 # BB#0:                                 # %entry
 	f32.gt  	$push0=, $0, $1
 	f32.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	float_max1, .Lfunc_end2-float_max1
@@ -55,7 +55,7 @@ float_max2:                             # @float_max2
 # BB#0:                                 # %entry
 	f32.ge  	$push0=, $0, $1
 	f32.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end3:
 	.size	float_max2, .Lfunc_end3-float_max2
@@ -70,7 +70,7 @@ double_min1:                            # @double_min1
 # BB#0:                                 # %entry
 	f64.lt  	$push0=, $0, $1
 	f64.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end4:
 	.size	double_min1, .Lfunc_end4-double_min1
@@ -85,7 +85,7 @@ double_min2:                            # @double_min2
 # BB#0:                                 # %entry
 	f64.le  	$push0=, $0, $1
 	f64.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end5:
 	.size	double_min2, .Lfunc_end5-double_min2
@@ -100,7 +100,7 @@ double_max1:                            # @double_max1
 # BB#0:                                 # %entry
 	f64.gt  	$push0=, $0, $1
 	f64.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end6:
 	.size	double_max1, .Lfunc_end6-double_max1
@@ -115,7 +115,7 @@ double_max2:                            # @double_max2
 # BB#0:                                 # %entry
 	f64.ge  	$push0=, $0, $1
 	f64.select	$push1=, $0, $1, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end7:
 	.size	double_max2, .Lfunc_end7-double_max2

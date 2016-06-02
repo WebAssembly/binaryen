@@ -14,7 +14,7 @@ bar:                                    # @bar
 	i32.load	$push2=, t($pop1)
 	i32.store	$drop=, 0($0), $pop2
 	i32.load	$push3=, 0($1)
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar

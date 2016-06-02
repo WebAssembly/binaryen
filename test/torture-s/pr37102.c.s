@@ -34,17 +34,18 @@ main:                                   # @main
 	block
 	i32.const	$push8=, 0
 	i32.load	$push0=, c($pop8)
-	i32.eqz 	$push14=, $pop0
-	br_if   	0, $pop14       # 0: down to label1
+	i32.eqz 	$push16=, $pop0
+	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %if.then.3
 	i32.const	$push10=, 0
 	i32.store	$drop=, a($pop10), $0
 .LBB1_2:                                # %for.inc.3
 	end_block                       # label1:
-	i32.const	$push13=, 0
-	i32.store	$drop=, a($pop13), $0
+	i32.const	$push15=, 0
+	i32.store	$push14=, a($pop15), $0
+	tee_local	$push13=, $0=, $pop14
 	i32.const	$push3=, 2
-	i32.shl 	$push4=, $0, $pop3
+	i32.shl 	$push4=, $pop13, $pop3
 	i32.const	$push5=, 1
 	i32.or  	$push6=, $pop4, $pop5
 	i32.const	$push12=, 0
@@ -53,7 +54,7 @@ main:                                   # @main
 	i32.select	$push7=, $pop6, $pop12, $pop2
 	call    	foo@FUNCTION, $pop7
 	i32.const	$push11=, 0
-	return  	$pop11
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

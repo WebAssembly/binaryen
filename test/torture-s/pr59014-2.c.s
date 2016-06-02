@@ -9,11 +9,11 @@ foo:                                    # @foo
 	.result 	i64
 # BB#0:                                 # %entry
 	i64.const	$push3=, 6
-	i64.add 	$push2=, $1, $0
-	i64.or  	$push0=, $1, $0
-	i32.wrap/i64	$push1=, $pop0
-	i64.select	$push4=, $pop3, $pop2, $pop1
-	return  	$pop4
+	i64.add 	$push0=, $1, $0
+	i64.or  	$push1=, $1, $0
+	i32.wrap/i64	$push2=, $pop1
+	i64.select	$push4=, $pop3, $pop0, $pop2
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

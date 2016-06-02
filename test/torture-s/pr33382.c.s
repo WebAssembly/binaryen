@@ -6,14 +6,13 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$0=, x+8($pop0)
-	i32.const	$push2=, 0
-	i32.const	$push1=, 1
-	i32.store	$drop=, x+4($pop2), $pop1
-	return  	$0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1
+	i32.store	$drop=, x+4($pop1), $pop0
+	i32.const	$push3=, 0
+	i32.load	$push2=, x+8($pop3)
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -24,18 +23,17 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
-	i32.load	$0=, x+8($pop2)
-	i32.const	$push1=, 0
-	i32.const	$push0=, 1
-	i32.store	$drop=, x+4($pop1), $pop0
-	block
-	br_if   	0, $0           # 0: down to label0
-# BB#1:                                 # %if.end
 	i32.const	$push3=, 0
-	return  	$pop3
+	i32.const	$push0=, 1
+	i32.store	$drop=, x+4($pop3), $pop0
+	block
+	i32.const	$push2=, 0
+	i32.load	$push1=, x+8($pop2)
+	br_if   	0, $pop1        # 0: down to label0
+# BB#1:                                 # %if.end
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

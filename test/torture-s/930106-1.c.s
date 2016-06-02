@@ -8,7 +8,7 @@ g:                                      # @g
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x1p0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -21,7 +21,7 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

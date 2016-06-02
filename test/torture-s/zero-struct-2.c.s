@@ -12,7 +12,7 @@ one_raw_spinlock:                       # @one_raw_spinlock
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$drop=, ii($pop0), $pop3
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	one_raw_spinlock, .Lfunc_end0-one_raw_spinlock

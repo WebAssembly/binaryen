@@ -8,7 +8,7 @@ union_size:                             # @union_size
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1073741568
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	union_size, .Lfunc_end0-union_size
@@ -21,7 +21,7 @@ struct_size:                            # @struct_size
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483152
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	struct_size, .Lfunc_end1-struct_size
@@ -34,7 +34,7 @@ struct_a_offset:                        # @struct_a_offset
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2147483136
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	struct_a_offset, .Lfunc_end2-struct_a_offset
@@ -47,7 +47,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

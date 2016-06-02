@@ -11,7 +11,7 @@ foo:                                    # @foo
 	i32.const	$push0=, s
 	i32.call	$push1=, strcmp@FUNCTION, $pop0, $0
 	i32.eqz 	$push2=, $pop1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -35,7 +35,7 @@ main:                                   # @main
 .LBB1_2:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

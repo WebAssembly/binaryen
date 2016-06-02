@@ -19,23 +19,26 @@ f:                                      # @f
 .LBB0_2:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push5=, 1
-	i32.add 	$1=, $1, $pop5
+	i32.const	$push7=, 1
+	i32.add 	$push6=, $1, $pop7
+	tee_local	$push5=, $1=, $pop6
 	i32.const	$push4=, 7
-	i32.gt_s	$push2=, $1, $pop4
+	i32.gt_s	$push2=, $pop5, $pop4
 	br_if   	1, $pop2        # 1: down to label2
 # BB#3:                                 # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push7=, 1
-	i32.shr_s	$0=, $0, $pop7
-	i32.const	$push6=, 1
-	i32.and 	$push1=, $0, $pop6
-	i32.eqz 	$push8=, $pop1
-	br_if   	0, $pop8        # 0: up to label1
+	i32.const	$push11=, 1
+	i32.shr_s	$push10=, $0, $pop11
+	tee_local	$push9=, $0=, $pop10
+	i32.const	$push8=, 1
+	i32.and 	$push1=, $pop9, $pop8
+	i32.eqz 	$push12=, $pop1
+	br_if   	0, $pop12       # 0: up to label1
 .LBB0_4:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push13=, $1
+                                        # fallthrough-return: $pop13
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

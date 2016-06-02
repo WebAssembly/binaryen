@@ -9,13 +9,14 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.load	$1=, c($pop1)
+	i32.const	$push3=, 0
+	i32.load	$1=, c($pop3)
 	i32.load	$push0=, 0($0)
-	i32.const	$push2=, -10
-	i32.add 	$push3=, $pop0, $pop2
-	i32.store	$drop=, 0($0), $pop3
-	return  	$1
+	i32.const	$push1=, -10
+	i32.add 	$push2=, $pop0, $pop1
+	i32.store	$drop=, 0($0), $pop2
+	copy_local	$push4=, $1
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

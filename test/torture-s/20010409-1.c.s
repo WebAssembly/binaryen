@@ -8,12 +8,12 @@ foo:                                    # @foo
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push4=, 0
-	i32.load8_s	$push0=, 4($1)
-	i32.const	$push1=, 25
-	i32.mul 	$push2=, $2, $pop1
-	i32.add 	$push3=, $pop0, $pop2
+	i32.load8_s	$push2=, 4($1)
+	i32.const	$push0=, 25
+	i32.mul 	$push1=, $2, $pop0
+	i32.add 	$push3=, $pop2, $pop1
 	i32.store	$drop=, c($pop4), $pop3
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -48,9 +48,9 @@ test:                                   # @test
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, .L.str
-	i32.const	$push1=, 200
-	call    	foo@FUNCTION, $2, $pop0, $pop1
+	i32.const	$push1=, .L.str
+	i32.const	$push0=, 200
+	call    	foo@FUNCTION, $2, $pop1, $pop0
 	i32.const	$push2=, 0
 	i32.const	$push4=, 65536
 	i32.const	$push6=, 0
@@ -70,15 +70,15 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, a
-	i32.store	$drop=, d($pop0), $pop1
+	i32.const	$push1=, 0
+	i32.const	$push0=, a
+	i32.store	$drop=, d($pop1), $pop0
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
 	i32.store	$0=, d+4($pop8), $pop7
-	i32.const	$push2=, .L.str
-	i32.const	$push3=, 200
-	call    	foo@FUNCTION, $0, $pop2, $pop3
+	i32.const	$push3=, .L.str
+	i32.const	$push2=, 200
+	call    	foo@FUNCTION, $0, $pop3, $pop2
 	i32.const	$push5=, 65536
 	i32.load	$push4=, b($0)
 	i32.select	$push6=, $0, $pop5, $pop4

@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -19,32 +19,32 @@ bar:                                    # @bar
 	.param  	i32, i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, 511
-	i32.and 	$2=, $0, $pop6
-	i32.const	$push4=, 6
-	i32.shr_u	$push5=, $0, $pop4
-	i32.const	$push2=, 4088
-	i32.and 	$push7=, $pop5, $pop2
-	i32.add 	$4=, $1, $pop7
-	i32.const	$push16=, 0
-	i32.load	$3=, cp($pop16)
-	i32.const	$push0=, 20
-	i32.shr_u	$push1=, $0, $pop0
-	i32.const	$push15=, 4088
-	i32.and 	$push3=, $pop1, $pop15
-	i32.add 	$0=, $1, $pop3
+	i32.const	$push0=, 511
+	i32.and 	$2=, $0, $pop0
+	i32.const	$push1=, 20
+	i32.shr_u	$push2=, $0, $pop1
+	i32.const	$push3=, 4088
+	i32.and 	$push4=, $pop2, $pop3
+	i32.add 	$4=, $1, $pop4
+	i32.const	$push5=, 6
+	i32.shr_u	$push6=, $0, $pop5
+	i32.const	$push16=, 4088
+	i32.and 	$push7=, $pop6, $pop16
+	i32.add 	$3=, $1, $pop7
+	i32.const	$push15=, 0
+	i32.load	$0=, cp($pop15)
 .LBB1_1:                                # %top
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i64.const	$push19=, 1
-	i64.store	$drop=, 0($3), $pop19
+	i64.store	$drop=, 0($0), $pop19
 	i32.const	$push18=, 0
-	i64.load	$push9=, 0($0)
-	i64.load	$push8=, 0($4)
+	i64.load	$push9=, 0($4)
+	i64.load	$push8=, 0($3)
 	i64.add 	$push10=, $pop9, $pop8
 	i64.store	$drop=, m($pop18), $pop10
 	i64.const	$push17=, 2
-	i64.store	$drop=, 0($3), $pop17
+	i64.store	$drop=, 0($0), $pop17
 	i32.eqz 	$push20=, $2
 	br_if   	0, $pop20       # 0: up to label0
 # BB#2:                                 # %if.end
@@ -54,7 +54,7 @@ bar:                                    # @bar
 	i32.add 	$push13=, $1, $pop12
 	i64.const	$push14=, 1
 	i64.store	$drop=, 0($pop13), $pop14
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -67,30 +67,30 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push9=, __stack_pointer
-	i32.const	$push6=, __stack_pointer
-	i32.load	$push7=, 0($pop6)
+	i32.const	$push9=, 0
+	i32.const	$push6=, 0
+	i32.load	$push7=, __stack_pointer($pop6)
 	i32.const	$push8=, 16
 	i32.sub 	$push12=, $pop7, $pop8
-	i32.store	$0=, 0($pop9), $pop12
-	i32.const	$push0=, 0
-	i64.const	$push1=, 47
-	i64.store	$drop=, main.r+32($pop0), $pop1
+	i32.store	$0=, __stack_pointer($pop9), $pop12
+	i32.const	$push1=, 0
+	i64.const	$push0=, 47
+	i64.store	$drop=, main.r+32($pop1), $pop0
 	i32.const	$push17=, 0
 	i64.const	$push2=, 11
 	i64.store	$drop=, main.r+64($pop17), $pop2
 	i32.const	$push16=, 0
 	i64.const	$push3=, 58
 	i64.store	$drop=, m($pop16), $pop3
-	i64.const	$push4=, 2
-	i64.store	$drop=, 8($0), $pop4
 	i32.const	$push15=, 0
-	i64.const	$push5=, 1
-	i64.store	$drop=, main.r+120($pop15), $pop5
+	i64.const	$push4=, 1
+	i64.store	$drop=, main.r+120($pop15), $pop4
 	i32.const	$push14=, 0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $0, $pop10
 	i32.store	$drop=, cp($pop14), $pop11
+	i64.const	$push5=, 2
+	i64.store	$drop=, 8($0), $pop5
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
 	unreachable

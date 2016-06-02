@@ -6,10 +6,10 @@
 	.type	not_inlinable,@function
 not_inlinable:                          # @not_inlinable
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, -10
-	i32.store	$drop=, test_var($pop0), $pop1
-	return
+	i32.const	$push1=, 0
+	i32.const	$push0=, -10
+	i32.store	$drop=, test_var($pop1), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	not_inlinable, .Lfunc_end0-not_inlinable

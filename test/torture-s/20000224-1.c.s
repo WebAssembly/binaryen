@@ -6,46 +6,47 @@
 	.type	test,@function
 test:                                   # @test
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push11=, 0
-	i32.load	$push10=, loop_1($pop11)
-	tee_local	$push9=, $3=, $pop10
-	i32.const	$push8=, 1
-	i32.lt_s	$push0=, $pop9, $pop8
+	i32.const	$push10=, 0
+	i32.load	$push9=, loop_1($pop10)
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push7=, 1
+	i32.lt_s	$push0=, $pop8, $pop7
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
-	i32.const	$push13=, 0
-	i32.load	$0=, loop_2($pop13)
 	i32.const	$push12=, 0
-	i32.load	$1=, flag($pop12)
-	i32.const	$2=, 0
+	i32.load	$3=, flag($pop12)
+	i32.const	$push11=, 0
+	i32.load	$1=, loop_2($pop11)
+	i32.const	$4=, 0
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push18=, 31
-	i32.shl 	$push2=, $1, $pop18
+	i32.const	$push19=, 31
+	i32.shl 	$2=, $3, $pop19
+	i32.const	$push18=, 1
+	i32.add 	$3=, $3, $pop18
 	i32.const	$push17=, 31
-	i32.shr_s	$push3=, $pop2, $pop17
+	i32.shr_s	$push3=, $2, $pop17
 	i32.const	$push16=, 0
 	i32.const	$push15=, 1
-	i32.lt_s	$push1=, $0, $pop15
-	i32.select	$push4=, $pop16, $0, $pop1
-	i32.and 	$push5=, $pop3, $pop4
-	i32.add 	$2=, $2, $pop5
-	i32.const	$push14=, 1
-	i32.add 	$1=, $1, $pop14
-	i32.gt_s	$push6=, $3, $2
-	br_if   	0, $pop6        # 0: up to label1
+	i32.lt_s	$push1=, $1, $pop15
+	i32.select	$push2=, $pop16, $1, $pop1
+	i32.and 	$push4=, $pop3, $pop2
+	i32.add 	$push14=, $4, $pop4
+	tee_local	$push13=, $4=, $pop14
+	i32.gt_s	$push5=, $0, $pop13
+	br_if   	0, $pop5        # 0: up to label1
 # BB#3:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
-	i32.const	$push7=, 0
-	i32.store	$drop=, flag($pop7), $1
+	i32.const	$push6=, 0
+	i32.store	$drop=, flag($pop6), $3
 .LBB0_4:                                # %while.end
 	end_block                       # label0:
-	i32.const	$push19=, 1
-	return  	$pop19
+	i32.const	$push20=, 1
+                                        # fallthrough-return: $pop20
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test

@@ -10,27 +10,29 @@ f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.eqz 	$push5=, $0
-	br_if   	0, $pop5        # 0: down to label0
+	i32.eqz 	$push7=, $0
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 	i32.const	$2=, 0
 	i32.const	$1=, a
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push4=, -2
-	i32.add 	$push0=, $2, $pop4
+	i32.const	$push6=, -2
+	i32.add 	$push0=, $2, $pop6
 	i32.store	$drop=, 0($1), $pop0
-	i32.const	$push3=, 1
-	i32.add 	$2=, $2, $pop3
-	i32.const	$push2=, 4
-	i32.add 	$1=, $1, $pop2
-	i32.ne  	$push1=, $0, $2
+	i32.const	$push5=, 4
+	i32.add 	$1=, $1, $pop5
+	i32.const	$push4=, 1
+	i32.add 	$push3=, $2, $pop4
+	tee_local	$push2=, $2=, $pop3
+	i32.ne  	$push1=, $0, $pop2
 	br_if   	0, $pop1        # 0: up to label1
 .LBB0_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$2
+	copy_local	$push8=, $2
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

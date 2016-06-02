@@ -9,9 +9,9 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.load8_u	$push0=, 0($0)
-	i32.load8_u	$push1=, 1($0)
-	i32.ne  	$push2=, $pop0, $pop1
+	i32.load8_u	$push1=, 0($0)
+	i32.load8_u	$push0=, 1($0)
+	i32.ne  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.load8_u	$push3=, 2($0)

@@ -14,34 +14,36 @@ f:                                      # @f
 	i32.lt_u	$push0=, $3, $4
 	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %if.end.preheader
-	copy_local	$5=, $0
+	copy_local	$6=, $0
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	block
 	i32.load	$push6=, 0($3)
-	tee_local	$push5=, $6=, $pop6
+	tee_local	$push5=, $5=, $pop6
 	i32.ge_u	$push1=, $pop5, $2
 	br_if   	0, $pop1        # 0: down to label4
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.lt_u	$push2=, $6, $1
+	i32.lt_u	$push2=, $5, $1
 	br_if   	0, $pop2        # 0: down to label4
 # BB#4:                                 # %if.then3
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push7=, -4
-	i32.add 	$5=, $5, $pop7
-	i32.store	$drop=, 0($5), $6
+	i32.const	$push9=, -4
+	i32.add 	$push8=, $6, $pop9
+	tee_local	$push7=, $6=, $pop8
+	i32.store	$drop=, 0($pop7), $5
 .LBB0_5:                                # %if.end4
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label4:
-	i32.const	$push8=, -4
-	i32.add 	$3=, $3, $pop8
-	i32.ge_u	$push3=, $3, $4
+	i32.const	$push12=, -4
+	i32.add 	$push11=, $3, $pop12
+	tee_local	$push10=, $3=, $pop11
+	i32.ge_u	$push3=, $pop10, $4
 	br_if   	0, $pop3        # 0: up to label2
 # BB#6:                                 # %out
 	end_loop                        # label3:
-	i32.ne  	$push4=, $5, $0
+	i32.ne  	$push4=, $6, $0
 	br_if   	1, $pop4        # 1: down to label0
 .LBB0_7:                                # %if.end8
 	end_block                       # label1:

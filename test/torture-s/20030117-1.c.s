@@ -26,7 +26,7 @@ foo:                                    # @foo
 	i32.add 	$push1=, $pop0, $2
 	i32.const	$push2=, 3
 	i32.div_s	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -41,12 +41,12 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.mul 	$push1=, $1, $1
 	i32.mul 	$push0=, $0, $0
-	i32.add 	$push3=, $pop1, $pop0
-	i32.mul 	$push2=, $2, $2
-	i32.add 	$push4=, $pop3, $pop2
+	i32.add 	$push2=, $pop1, $pop0
+	i32.mul 	$push3=, $2, $2
+	i32.add 	$push4=, $pop2, $pop3
 	i32.const	$push5=, 3
 	i32.div_u	$push6=, $pop4, $pop5
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar

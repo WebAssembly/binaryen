@@ -13,7 +13,7 @@ doit:                                   # @doit
 	i32.select	$push2=, $pop1, $pop0, $0
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	doit, .Lfunc_end0-doit

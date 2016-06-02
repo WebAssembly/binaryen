@@ -12,13 +12,13 @@ foo:                                    # @foo
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $0, $pop2
 	i32.load	$push4=, 0($pop3)
-	i32.const	$push9=, 21
-	i32.ne  	$push10=, $pop4, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i32.const	$push5=, 21
+	i32.ne  	$push6=, $pop4, $pop5
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push5=, 12
-	i32.add 	$push6=, $0, $pop5
-	i32.load	$push0=, 0($pop6)
+	i32.const	$push9=, 12
+	i32.add 	$push10=, $0, $pop9
+	i32.load	$push0=, 0($pop10)
 	i32.const	$push11=, 22
 	i32.ne  	$push12=, $pop0, $pop11
 	br_if   	0, $pop12       # 0: down to label0
@@ -86,13 +86,13 @@ baz:                                    # @baz
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $0, $pop2
 	i32.load	$push4=, 0($pop3)
-	i32.const	$push9=, 21
-	i32.ne  	$push10=, $pop4, $pop9
-	br_if   	0, $pop10       # 0: down to label2
+	i32.const	$push5=, 21
+	i32.ne  	$push6=, $pop4, $pop5
+	br_if   	0, $pop6        # 0: down to label2
 # BB#1:                                 # %entry
-	i32.const	$push5=, 12
-	i32.add 	$push6=, $0, $pop5
-	i32.load	$push0=, 0($pop6)
+	i32.const	$push9=, 12
+	i32.add 	$push10=, $0, $pop9
+	i32.load	$push0=, 0($pop10)
 	i32.const	$push11=, 22
 	i32.ne  	$push12=, $pop0, $pop11
 	br_if   	0, $pop12       # 0: down to label2

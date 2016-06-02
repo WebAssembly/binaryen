@@ -7,7 +7,7 @@
 f:                                      # @f
 	.param  	i32, f64
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -20,12 +20,12 @@ g:                                      # @g
 	.param  	f64, f64, f64, f64
 	.result 	f64
 # BB#0:                                 # %entry
-	f64.add 	$push0=, $0, $1
-	f64.mul 	$push1=, $2, $3
-	f64.mul 	$push2=, $pop0, $pop1
+	f64.add 	$push1=, $0, $1
+	f64.mul 	$push0=, $2, $3
+	f64.mul 	$push2=, $pop1, $pop0
 	f64.mul 	$push3=, $pop2, $0
 	f64.add 	$push4=, $pop3, $1
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	g, .Lfunc_end1-g

@@ -164,14 +164,14 @@ __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
+	i32.store	$drop=, last_fn_entered($pop0), $0
 	i32.const	$push5=, 0
-	i32.load	$push1=, entry_calls($pop5)
+	i32.const	$push4=, 0
+	i32.load	$push1=, entry_calls($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, entry_calls($pop0), $pop3
-	i32.const	$push4=, 0
-	i32.store	$drop=, last_fn_entered($pop4), $0
-	return
+	i32.store	$drop=, entry_calls($pop5), $pop3
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	__cyg_profile_func_enter, .Lfunc_end3-__cyg_profile_func_enter
@@ -184,14 +184,14 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
+	i32.store	$drop=, last_fn_exited($pop0), $0
 	i32.const	$push5=, 0
-	i32.load	$push1=, exit_calls($pop5)
+	i32.const	$push4=, 0
+	i32.load	$push1=, exit_calls($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, exit_calls($pop0), $pop3
-	i32.const	$push4=, 0
-	i32.store	$drop=, last_fn_exited($pop4), $0
-	return
+	i32.store	$drop=, exit_calls($pop5), $pop3
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end4:
 	.size	__cyg_profile_func_exit, .Lfunc_end4-__cyg_profile_func_exit

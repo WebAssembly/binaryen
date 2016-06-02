@@ -8,12 +8,12 @@ test1:                                  # @test1
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, .L.str
-	i32.add 	$push3=, $1, $pop2
-	i32.call	$drop=, strcpy@FUNCTION, $0, $pop3
-	i32.const	$push0=, 1
+	i32.const	$push0=, .L.str
 	i32.add 	$push1=, $1, $pop0
-	return  	$pop1
+	i32.call	$drop=, strcpy@FUNCTION, $0, $pop1
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $1, $pop2
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -80,12 +80,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %lor.lhs.false
-	i32.const	$push14=, __stack_pointer
-	i32.const	$push11=, __stack_pointer
-	i32.load	$push12=, 0($pop11)
+	i32.const	$push14=, 0
+	i32.const	$push11=, 0
+	i32.load	$push12=, __stack_pointer($pop11)
 	i32.const	$push13=, 16
 	i32.sub 	$push17=, $pop12, $pop13
-	i32.store	$push21=, 0($pop14), $pop17
+	i32.store	$push21=, __stack_pointer($pop14), $pop17
 	tee_local	$push20=, $0=, $pop21
 	i32.const	$push19=, 0
 	i32.load8_u	$push0=, .L.str+9($pop19)
@@ -96,9 +96,9 @@ main:                                   # @main
 	block
 	i32.const	$push15=, 4
 	i32.add 	$push16=, $0, $pop15
-	i32.const	$push2=, .L.str.1
-	i32.const	$push3=, 3
-	i32.call	$push4=, memcmp@FUNCTION, $pop16, $pop2, $pop3
+	i32.const	$push3=, .L.str.1
+	i32.const	$push2=, 3
+	i32.call	$push4=, memcmp@FUNCTION, $pop16, $pop3, $pop2
 	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push22=, 0

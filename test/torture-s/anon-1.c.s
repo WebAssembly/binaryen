@@ -12,7 +12,7 @@ main:                                   # @main
 	i64.const	$push0=, 25769803781
 	i64.store	$drop=, foo+4($pop1):p2align=2, $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

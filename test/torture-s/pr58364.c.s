@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	i32.select	$push3=, $pop2, $0, $pop1
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -23,18 +23,17 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$1=, a($pop0)
-	i32.const	$push4=, 0
-	i32.load	$2=, c($pop4)
-	i32.const	$push3=, 0
-	i32.const	$push2=, 0
-	i32.store	$0=, b($pop3), $pop2
 	block
-	i32.le_s	$push1=, $1, $2
-	br_if   	0, $pop1        # 0: down to label0
+	i32.const	$push0=, 0
+	i32.const	$push6=, 0
+	i32.store	$push5=, b($pop0), $pop6
+	tee_local	$push4=, $0=, $pop5
+	i32.load	$push2=, a($pop4)
+	i32.load	$push1=, c($0)
+	i32.le_s	$push3=, $pop2, $pop1
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then

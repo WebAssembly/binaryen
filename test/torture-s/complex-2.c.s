@@ -6,17 +6,16 @@
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32, i32
-	.local  	f64, f64
 # BB#0:                                 # %entry
-	f64.load	$3=, 8($2)
-	f64.load	$4=, 8($1)
-	f64.load	$push0=, 0($2)
-	f64.load	$push1=, 0($1)
-	f64.add 	$push2=, $pop0, $pop1
+	f64.load	$push1=, 0($2)
+	f64.load	$push0=, 0($1)
+	f64.add 	$push2=, $pop1, $pop0
 	f64.store	$drop=, 0($0), $pop2
-	f64.add 	$push3=, $3, $4
-	f64.store	$drop=, 8($0), $pop3
-	return
+	f64.load	$push4=, 8($2)
+	f64.load	$push3=, 8($1)
+	f64.add 	$push5=, $pop4, $pop3
+	f64.store	$drop=, 8($0), $pop5
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

@@ -44,7 +44,7 @@ main:                                   # @main
 .LBB1_2:                                # %for.end
 	end_block                       # label1:
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -8,12 +8,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push46=, __stack_pointer
-	i32.const	$push43=, __stack_pointer
-	i32.load	$push44=, 0($pop43)
+	i32.const	$push46=, 0
+	i32.const	$push43=, 0
+	i32.load	$push44=, __stack_pointer($pop43)
 	i32.const	$push45=, 176
 	i32.sub 	$push70=, $pop44, $pop45
-	i32.store	$1=, 0($pop46), $pop70
+	i32.store	$1=, __stack_pointer($pop46), $pop70
 	i32.const	$push74=, .Lstr
 	i32.const	$push73=, 0
 	i32.call	$drop=, printf@FUNCTION, $pop74, $pop73
@@ -36,9 +36,9 @@ main:                                   # @main
 # BB#2:                                 # %if.end6
 	i32.const	$push7=, 97
 	i32.call	$drop=, putchar@FUNCTION, $pop7
-	i32.const	$push8=, .L.str.2
-	i32.const	$push9=, 0
-	i32.call	$push10=, printf@FUNCTION, $pop8, $pop9
+	i32.const	$push9=, .L.str.2
+	i32.const	$push8=, 0
+	i32.call	$push10=, printf@FUNCTION, $pop9, $pop8
 	i32.const	$push11=, 1
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	0, $pop12       # 0: down to label0
@@ -135,10 +135,10 @@ main:                                   # @main
 	i32.ne  	$push42=, $pop40, $pop41
 	br_if   	0, $pop42       # 0: down to label0
 # BB#10:                                # %if.end51
-	i32.const	$push49=, __stack_pointer
+	i32.const	$push49=, 0
 	i32.const	$push47=, 176
 	i32.add 	$push48=, $1, $pop47
-	i32.store	$drop=, 0($pop49), $pop48
+	i32.store	$drop=, __stack_pointer($pop49), $pop48
 	return  	$0
 .LBB0_11:                               # %if.then50
 	end_block                       # label0:

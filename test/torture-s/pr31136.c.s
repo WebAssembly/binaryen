@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.or  	$push5=, $pop3, $pop4
 	i32.store16	$drop=, s($pop0), $pop5
 	i32.const	$push6=, 0
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

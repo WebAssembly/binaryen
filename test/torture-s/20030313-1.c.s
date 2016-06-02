@@ -87,42 +87,43 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push11=, __stack_pointer
-	i32.const	$push8=, __stack_pointer
-	i32.load	$push9=, 0($pop8)
-	i32.const	$push10=, 160
-	i32.sub 	$push12=, $pop9, $pop10
-	i32.store	$0=, 0($pop11), $pop12
-	i32.const	$push3=, 0
-	i32.load	$1=, x($pop3)
-	i32.const	$push2=, 3
-	i32.store	$drop=, 16($0), $pop2
-	i32.const	$push16=, 0
-	i32.load	$2=, x+4($pop16)
-	i32.store	$drop=, 20($0), $1
-	i32.const	$push4=, 4
-	i32.store	$drop=, 24($0), $pop4
-	i32.store	$drop=, 28($0), $2
 	i32.const	$push15=, 0
-	i32.load	$1=, x+8($pop15)
-	i32.const	$push5=, 5
-	i32.store	$drop=, 32($0), $pop5
-	i32.const	$push14=, 0
-	i32.load	$2=, x+12($pop14)
-	i32.store	$drop=, 36($0), $1
-	i32.const	$push6=, 6
-	i32.store	$drop=, 40($0), $pop6
-	i32.store	$drop=, 44($0), $2
+	i32.const	$push12=, 0
+	i32.load	$push13=, __stack_pointer($pop12)
+	i32.const	$push14=, 160
+	i32.sub 	$push16=, $pop13, $pop14
+	i32.store	$push22=, __stack_pointer($pop15), $pop16
+	tee_local	$push21=, $0=, $pop22
 	i64.const	$push0=, 47244640257
-	i64.store	$drop=, 0($0), $pop0
+	i64.store	$drop=, 0($pop21), $pop0
 	i64.const	$push1=, 51539607554
 	i64.store	$drop=, 8($0), $pop1
-	i32.const	$push7=, 12
-	call    	foo@FUNCTION, $0, $pop7
-	i32.const	$push13=, 0
-	call    	exit@FUNCTION, $pop13
+	i32.const	$push2=, 3
+	i32.store	$drop=, 16($0), $pop2
+	i32.const	$push3=, 4
+	i32.store	$drop=, 24($0), $pop3
+	i32.const	$push4=, 0
+	i32.load	$push5=, x($pop4)
+	i32.store	$drop=, 20($0), $pop5
+	i32.const	$push20=, 0
+	i32.load	$push6=, x+4($pop20)
+	i32.store	$drop=, 28($0), $pop6
+	i32.const	$push7=, 5
+	i32.store	$drop=, 32($0), $pop7
+	i32.const	$push19=, 0
+	i32.load	$push8=, x+8($pop19)
+	i32.store	$drop=, 36($0), $pop8
+	i32.const	$push9=, 6
+	i32.store	$drop=, 40($0), $pop9
+	i32.const	$push18=, 0
+	i32.load	$push10=, x+12($pop18)
+	i32.store	$drop=, 44($0), $pop10
+	i32.const	$push11=, 12
+	call    	foo@FUNCTION, $0, $pop11
+	i32.const	$push17=, 0
+	call    	exit@FUNCTION, $pop17
 	unreachable
 	.endfunc
 .Lfunc_end1:

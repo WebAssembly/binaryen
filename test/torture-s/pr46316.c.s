@@ -20,7 +20,7 @@ foo:                                    # @foo
 	i64.const	$push8=, -2
 	i64.and 	$push9=, $pop7, $pop8
 	i64.sub 	$push10=, $0, $pop9
-	return  	$pop10
+                                        # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

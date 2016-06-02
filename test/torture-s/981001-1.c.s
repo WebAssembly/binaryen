@@ -21,31 +21,30 @@ sub:                                    # @sub
 	i32.and 	$push2=, $0, $pop13
 	br_if   	1, $pop2        # 1: down to label0
 # BB#2:                                 # %if.then2
+	i32.call	$push17=, sub@FUNCTION, $1
+	tee_local	$push16=, $0=, $pop17
 	i32.const	$push7=, -1
 	i32.add 	$push8=, $1, $pop7
 	i32.call	$push9=, sub@FUNCTION, $pop8
-	i32.const	$push17=, 1
-	i32.shl 	$push10=, $pop9, $pop17
-	i32.call	$push16=, sub@FUNCTION, $1
-	tee_local	$push15=, $0=, $pop16
-	i32.add 	$push11=, $pop10, $pop15
-	i32.mul 	$push12=, $pop11, $0
+	i32.const	$push15=, 1
+	i32.shl 	$push10=, $pop9, $pop15
+	i32.add 	$push11=, $0, $pop10
+	i32.mul 	$push12=, $pop16, $pop11
 	return  	$pop12
 .LBB0_3:                                # %cleanup
 	end_block                       # label1:
 	return  	$0
 .LBB0_4:                                # %if.else
 	end_block                       # label0:
-	i32.call	$push22=, sub@FUNCTION, $1
-	tee_local	$push21=, $0=, $pop22
-	i32.mul 	$push5=, $pop21, $0
 	i32.const	$push20=, 1
 	i32.add 	$push3=, $1, $pop20
-	i32.call	$push19=, sub@FUNCTION, $pop3
-	tee_local	$push18=, $0=, $pop19
-	i32.mul 	$push4=, $pop18, $0
+	i32.call	$0=, sub@FUNCTION, $pop3
+	i32.call	$push19=, sub@FUNCTION, $1
+	tee_local	$push18=, $1=, $pop19
+	i32.mul 	$push5=, $pop18, $1
+	i32.mul 	$push4=, $0, $0
 	i32.add 	$push6=, $pop5, $pop4
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub

@@ -14,7 +14,7 @@ f1:                                     # @f1
 	i32.shr_s	$push3=, $pop1, $pop2
 	i32.const	$push4=, 2
 	i32.or  	$push5=, $pop3, $pop4
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -33,7 +33,7 @@ f2:                                     # @f2
 	i32.shr_s	$push3=, $pop1, $pop2
 	i32.const	$push4=, 2
 	i32.or  	$push5=, $pop3, $pop4
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
@@ -54,7 +54,7 @@ f3:                                     # @f3
 	i32.shr_u	$push5=, $pop3, $pop4
 	i32.const	$push6=, 4
 	i32.or  	$push7=, $pop5, $pop6
-	return  	$pop7
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3

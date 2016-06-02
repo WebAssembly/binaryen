@@ -64,7 +64,7 @@ f1:                                     # @f1
 	i32.const	$push20=, 9
 	i32.eq  	$push9=, $0, $pop20
 	i32.select	$push11=, $pop8, $pop10, $pop9
-	return  	$pop11
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -78,7 +78,7 @@ f2:                                     # @f2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.eqz 	$push0=, $0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
@@ -148,7 +148,7 @@ f3:                                     # @f3
 	i32.const	$push17=, 10
 	i32.eq  	$push18=, $0, $pop17
 	i32.select	$push20=, $pop22, $pop19, $pop18
-	return  	$pop20
+                                        # fallthrough-return: $pop20
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
@@ -163,7 +163,7 @@ f4:                                     # @f4
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	i32.eq  	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
@@ -233,7 +233,7 @@ f5:                                     # @f5
 	i32.const	$push18=, -10
 	i32.eq  	$push19=, $0, $pop18
 	i32.select	$push22=, $pop21, $pop20, $pop19
-	return  	$pop22
+                                        # fallthrough-return: $pop22
 	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
@@ -248,7 +248,7 @@ f6:                                     # @f6
 # BB#0:                                 # %entry
 	i32.const	$push0=, -1
 	i32.eq  	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6

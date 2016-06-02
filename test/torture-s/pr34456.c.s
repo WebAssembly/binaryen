@@ -8,7 +8,7 @@ debug:                                  # @debug
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	debug, .Lfunc_end0-debug
@@ -23,7 +23,7 @@ bad_compare:                            # @bad_compare
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	bad_compare, .Lfunc_end1-bad_compare
@@ -35,15 +35,15 @@ bad_compare:                            # @bad_compare
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, array
-	i32.const	$push3=, 2
-	i32.const	$push2=, 8
+	i32.const	$push3=, array
+	i32.const	$push2=, 2
+	i32.const	$push1=, 8
 	i32.const	$push0=, compare@FUNCTION
-	call    	qsort@FUNCTION, $pop1, $pop3, $pop2, $pop0
+	call    	qsort@FUNCTION, $pop3, $pop2, $pop1, $pop0
 	i32.const	$push4=, 0
 	i32.load	$push5=, errors($pop4)
 	i32.eqz 	$push6=, $pop5
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
@@ -76,7 +76,7 @@ compare:                                # @compare
 .LBB3_3:                                # %if.end
 	end_block                       # label0:
 	i32.call_indirect	$push6=, $2, $1
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end3:
 	.size	compare, .Lfunc_end3-compare

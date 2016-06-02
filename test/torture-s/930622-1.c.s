@@ -8,7 +8,7 @@ g:                                      # @g
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -22,7 +22,8 @@ h:                                      # @h
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$1
+	copy_local	$push0=, $1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	h, .Lfunc_end1-h
@@ -37,7 +38,7 @@ f:                                      # @f
 	i32.const	$push1=, 0
 	i32.const	$push2=, 0
 	i32.store	$push0=, a($pop1), $pop2
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	f, .Lfunc_end2-f

@@ -6,15 +6,14 @@
 	.type	f,@function
 f:                                      # @f
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.load16_u	$1=, 6($0)
 	i32.const	$push1=, 0
 	i32.load16_u	$push0=, 4($0)
 	i32.store	$drop=, b($pop1), $pop0
-	i32.const	$push2=, 0
-	i32.store	$drop=, a($pop2), $1
-	return
+	i32.const	$push3=, 0
+	i32.load16_u	$push2=, 6($0)
+	i32.store	$drop=, a($pop3), $pop2
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -26,9 +25,9 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push1=, 0
-	i32.const	$push2=, 38
-	i32.store	$drop=, a($pop1), $pop2
+	i32.const	$push2=, 0
+	i32.const	$push1=, 38
+	i32.store	$drop=, a($pop2), $pop1
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
 	i32.store	$push0=, b($pop4), $pop3

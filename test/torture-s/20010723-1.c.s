@@ -8,7 +8,7 @@ test:                                   # @test
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
