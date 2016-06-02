@@ -142,7 +142,7 @@ void Linker::layout() {
       // function address
       name = out.resolveAlias(name);
       if (!out.wasm.checkFunction(name)) {
-        if (FunctionType* f = out.wasm.getExternType(name)) {
+        if (FunctionType* f = out.getExternType(name)) {
           // Address of an imported function is taken, but imports do not have addresses in wasm.
           // Generate a thunk to forward to the call_import.
           Function* thunk = generateImportThunk(name, f);

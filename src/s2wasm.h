@@ -499,7 +499,7 @@ class S2WasmBuilder {
 
     FunctionType *ty = wasm->checkFunctionType(getSig(decl.get()));
     if (!ty) ty = decl.release();
-    wasm->addExternType(name, ty);
+    linkerObj->addExternType(name, ty);
   }
 
   bool parseVersionMin() {

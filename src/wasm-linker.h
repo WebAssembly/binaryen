@@ -119,6 +119,15 @@ class LinkerObject {
     undefinedFunctionCalls[call->target].push_back(call);
   }
 
+  void addExternType(Name name, FunctionType* ty) {
+    externTypesMap[name] = ty;
+  }
+  FunctionType* getExternType(Name name) {
+    auto f = externTypesMap.find(name);
+    if (f == externTypesMap.end()) return nullptr;
+    return f->second;
+  }
+
   bool isEmpty() {
     return wasm.functions.empty();
   }
@@ -145,6 +154,9 @@ class LinkerObject {
 
   using CallList = std::vector<Call*>;
   std::map<Name, CallList> undefinedFunctionCalls;
+
+  // Types of functions which are declared but not defined.
+  std::unordered_map<cashew::IString, FunctionType*> externTypesMap;
 
   std::map<Name, Address> segments; // name => segment index (in wasm module)
 

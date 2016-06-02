@@ -1441,8 +1441,6 @@ private:
   std::map<Name, Import*> importsMap;
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
-  // Types of functions which are declared but not defined.
-  std::map<Name, FunctionType*> externTypesMap;
 
 public:
   Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
@@ -1461,12 +1459,6 @@ public:
   Import* checkImport(Name name) { if (importsMap.find(name) == importsMap.end()) return nullptr; return importsMap[name]; }
   Export* checkExport(Name name) { if (exportsMap.find(name) == exportsMap.end()) return nullptr; return exportsMap[name]; }
   Function* checkFunction(Name name) { if (functionsMap.find(name) == functionsMap.end()) return nullptr; return functionsMap[name]; }
-
-  FunctionType* getExternType(Name name) {
-    auto f = externTypesMap.find(name);
-    if (f == externTypesMap.end()) return nullptr;
-    return f->second;
-  }
 
   void addFunctionType(FunctionType* curr) {
     Name numericName = Name::fromInt(functionTypeIndex); // TODO: remove all these, assert on names already existing, do numeric stuff in wasm-s-parser etc.
@@ -1507,9 +1499,6 @@ public:
     functionsMap[curr->name] = curr;
     functionsMap[numericName] = curr;
     functionIndex++;
-  }
-  void addExternType(Name name, FunctionType* ty) {
-    externTypesMap[name] = ty;
   }
   void addStart(const Name &s) {
     start = s;
