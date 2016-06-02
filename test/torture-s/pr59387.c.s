@@ -25,24 +25,25 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop9
 	i32.const	$push8=, 0
 	i32.load	$push2=, d($pop8)
-	i32.eqz 	$push16=, $pop2
-	br_if   	1, $pop16       # 1: down to label1
+	i32.eqz 	$push18=, $pop2
+	br_if   	1, $pop18       # 1: down to label1
 # BB#2:                                 # %for.inc4
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push13=, 1
-	i32.add 	$0=, $0, $pop13
-	i32.const	$push12=, 0
-	i32.store	$push0=, a($pop12), $0
+	i32.const	$push15=, 0
+	i32.const	$push14=, 1
+	i32.add 	$push13=, $0, $pop14
+	tee_local	$push12=, $0=, $pop13
+	i32.store	$push0=, a($pop15), $pop12
 	br_if   	0, $pop0        # 0: up to label0
 .LBB0_3:                                # %return
 	end_loop                        # label1:
-	i32.const	$push3=, 0
-	i32.store8	$drop=, c($pop3), $1
-	i32.const	$push15=, 0
-	i32.const	$push4=, 24
-	i32.store	$drop=, b($pop15), $pop4
-	i32.const	$push14=, 0
-	return  	$pop14
+	i32.const	$push4=, 0
+	i32.const	$push3=, 24
+	i32.store	$drop=, b($pop4), $pop3
+	i32.const	$push17=, 0
+	i32.store8	$drop=, c($pop17), $1
+	i32.const	$push16=, 0
+                                        # fallthrough-return: $pop16
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

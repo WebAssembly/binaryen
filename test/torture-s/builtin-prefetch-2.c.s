@@ -6,7 +6,7 @@
 	.type	simple_global,@function
 simple_global:                          # @simple_global
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	simple_global, .Lfunc_end0-simple_global
@@ -17,7 +17,7 @@ simple_global:                          # @simple_global
 	.type	simple_file,@function
 simple_file:                            # @simple_file
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	simple_file, .Lfunc_end1-simple_file
@@ -28,7 +28,7 @@ simple_file:                            # @simple_file
 	.type	simple_static_local,@function
 simple_static_local:                    # @simple_static_local
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	simple_static_local, .Lfunc_end2-simple_static_local
@@ -39,17 +39,17 @@ simple_static_local:                    # @simple_static_local
 	.type	simple_local,@function
 simple_local:                           # @simple_local
 # BB#0:                                 # %entry
-	i32.const	$push7=, __stack_pointer
-	i32.const	$push4=, __stack_pointer
-	i32.const	$push1=, __stack_pointer
-	i32.load	$push2=, 0($pop1)
+	i32.const	$push7=, 0
+	i32.const	$push4=, 0
+	i32.const	$push1=, 0
+	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 416
 	i32.sub 	$push8=, $pop2, $pop3
-	i32.store	$push0=, 0($pop4), $pop8
+	i32.store	$push0=, __stack_pointer($pop4), $pop8
 	i32.const	$push5=, 416
 	i32.add 	$push6=, $pop0, $pop5
-	i32.store	$drop=, 0($pop7), $pop6
-	return
+	i32.store	$drop=, __stack_pointer($pop7), $pop6
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	simple_local, .Lfunc_end3-simple_local
@@ -61,12 +61,12 @@ simple_local:                           # @simple_local
 simple_arg:                             # @simple_arg
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, __stack_pointer
-	i32.load	$push1=, 0($pop0)
+	i32.const	$push0=, 0
+	i32.load	$push1=, __stack_pointer($pop0)
 	i32.const	$push2=, 16
 	i32.sub 	$push3=, $pop1, $pop2
 	i32.store	$drop=, 12($pop3), $2
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end4:
 	.size	simple_arg, .Lfunc_end4-simple_arg
@@ -77,7 +77,7 @@ simple_arg:                             # @simple_arg
 	.type	expr_global,@function
 expr_global:                            # @expr_global
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end5:
 	.size	expr_global, .Lfunc_end5-expr_global
@@ -88,11 +88,11 @@ expr_global:                            # @expr_global
 	.type	expr_local,@function
 expr_local:                             # @expr_local
 # BB#0:                                 # %entry
-	i32.const	$push0=, __stack_pointer
-	i32.load	$push1=, 0($pop0)
+	i32.const	$push0=, 0
+	i32.load	$push1=, __stack_pointer($pop0)
 	i32.const	$push2=, 80
 	i32.sub 	$drop=, $pop1, $pop2
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end6:
 	.size	expr_local, .Lfunc_end6-expr_local
@@ -109,10 +109,10 @@ main:                                   # @main
 	call    	simple_static_local@FUNCTION
 	i32.const	$push3=, glob_int_arr
 	i32.const	$push0=, 0
-	i32.load	$push1=, glob_ptr_int($pop0)
+	i32.load	$push2=, glob_ptr_int($pop0)
 	i32.const	$push7=, 0
-	i32.load	$push2=, glob_int($pop7)
-	call    	simple_arg@FUNCTION, $pop3, $pop1, $pop2
+	i32.load	$push1=, glob_int($pop7)
+	call    	simple_arg@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push6=, 0
 	i32.const	$push4=, str
 	i32.store	$drop=, str+16($pop6), $pop4

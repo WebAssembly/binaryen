@@ -28,12 +28,13 @@ main:                                   # @main
 .LBB0_3:                                # %for.inc.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
-	i32.const	$push11=, 1
-	i32.add 	$2=, $2, $pop11
-	i32.const	$push10=, 3
-	i32.add 	$0=, $0, $pop10
+	i32.const	$push13=, 3
+	i32.add 	$0=, $0, $pop13
+	i32.const	$push12=, 1
+	i32.add 	$push11=, $2, $pop12
+	tee_local	$push10=, $2=, $pop11
 	i32.const	$push9=, 256
-	i32.ne  	$push2=, $2, $pop9
+	i32.ne  	$push2=, $pop10, $pop9
 	br_if   	0, $pop2        # 0: up to label0
 # BB#4:                                 # %foo.exit
 	end_loop                        # label1:

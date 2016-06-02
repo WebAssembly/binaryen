@@ -72,7 +72,6 @@ bcp-1.c.s.wast
 bitfld-3.c.s.wast
 builtin-constant.c.s.wast
 eeprof-1.c.s.wast
-frame-address.c.s.wast
 pr22493-1.c.s.wast
 pr32244-1.c.s.wast
 pr34971.c.s.wast

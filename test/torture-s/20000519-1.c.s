@@ -22,7 +22,7 @@ bar:                                    # @bar
 # BB#2:                                 # %do.end
 	end_loop                        # label1:
 	i32.add 	$push2=, $2, $0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -36,8 +36,8 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
+	i32.const	$push3=, 0
+	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
 	i32.sub 	$push6=, $pop4, $pop5
 	i32.store	$drop=, 12($pop6), $1
@@ -54,7 +54,7 @@ foo:                                    # @foo
 # BB#2:                                 # %bar.exit
 	end_loop                        # label3:
 	i32.add 	$push2=, $2, $0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -67,12 +67,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push9=, __stack_pointer
-	i32.const	$push6=, __stack_pointer
-	i32.load	$push7=, 0($pop6)
+	i32.const	$push9=, 0
+	i32.const	$push6=, 0
+	i32.load	$push7=, __stack_pointer($pop6)
 	i32.const	$push8=, 16
 	i32.sub 	$push13=, $pop7, $pop8
-	i32.store	$push15=, 0($pop9), $pop13
+	i32.store	$push15=, __stack_pointer($pop9), $pop13
 	tee_local	$push14=, $0=, $pop15
 	i64.const	$push0=, 12884901890
 	i64.store	$drop=, 0($pop14), $pop0
@@ -83,10 +83,10 @@ main:                                   # @main
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label4
 # BB#1:                                 # %if.end
-	i32.const	$push12=, __stack_pointer
+	i32.const	$push12=, 0
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$drop=, 0($pop12), $pop11
+	i32.store	$drop=, __stack_pointer($pop12), $pop11
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB2_2:                                # %if.then

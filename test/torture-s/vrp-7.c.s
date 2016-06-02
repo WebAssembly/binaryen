@@ -7,18 +7,18 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
+	i32.const	$push4=, 0
 	i32.const	$push9=, 0
-	i32.load8_u	$push3=, t($pop9)
+	i32.load8_u	$push5=, t($pop9)
 	i32.const	$push6=, 254
-	i32.and 	$push7=, $pop3, $pop6
+	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push0=, 4
 	i32.shr_u	$push1=, $0, $pop0
-	i32.const	$push4=, 1
-	i32.and 	$push5=, $pop1, $pop4
-	i32.or  	$push8=, $pop7, $pop5
-	i32.store8	$drop=, t($pop2), $pop8
-	return
+	i32.const	$push2=, 1
+	i32.and 	$push3=, $pop1, $pop2
+	i32.or  	$push8=, $pop7, $pop3
+	i32.store8	$drop=, t($pop4), $pop8
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

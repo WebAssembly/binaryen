@@ -13,7 +13,7 @@ incr:                                   # @incr
 	i32.const	$push3=, 1
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$push0=, count($pop1), $pop4
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	incr, .Lfunc_end0-incr
@@ -30,14 +30,14 @@ main:                                   # @main
 	i32.const	$push14=, 0
 	i32.load	$push13=, count($pop14)
 	tee_local	$push12=, $1=, $pop13
-	i32.const	$push4=, 2
-	i32.shl 	$push5=, $pop12, $pop4
-	i32.store	$drop=, arr($pop5), $0
+	i32.const	$push2=, 2
+	i32.shl 	$push3=, $pop12, $pop2
+	i32.store	$drop=, arr($pop3), $0
 	block
 	i32.const	$push11=, 0
-	i32.const	$push2=, 1
-	i32.add 	$push3=, $1, $pop2
-	i32.store	$push0=, count($pop11), $pop3
+	i32.const	$push4=, 1
+	i32.add 	$push5=, $1, $pop4
+	i32.store	$push0=, count($pop11), $pop5
 	i32.const	$push10=, 2
 	i32.ne  	$push6=, $pop0, $pop10
 	br_if   	0, $pop6        # 0: down to label0

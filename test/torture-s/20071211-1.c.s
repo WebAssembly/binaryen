@@ -19,21 +19,21 @@ main:                                   # @main
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i64.load	$push17=, sv($pop18)
-	tee_local	$push16=, $1=, $pop17
-	i64.const	$push3=, 40
-	i64.shr_u	$push4=, $pop16, $pop3
-	i64.const	$push5=, 1
-	i64.add 	$push15=, $pop4, $pop5
-	tee_local	$push14=, $0=, $pop15
+	tee_local	$push16=, $0=, $pop17
+	i64.const	$push5=, 40
+	i64.shr_u	$push6=, $pop16, $pop5
+	i64.const	$push7=, 1
+	i64.add 	$push15=, $pop6, $pop7
+	tee_local	$push14=, $1=, $pop15
 	i64.const	$push13=, 40
-	i64.shl 	$push6=, $pop14, $pop13
-	i64.const	$push7=, 1099511627775
-	i64.and 	$push8=, $1, $pop7
-	i64.or  	$push9=, $pop6, $pop8
+	i64.shl 	$push8=, $pop14, $pop13
+	i64.const	$push3=, 1099511627775
+	i64.and 	$push4=, $0, $pop3
+	i64.or  	$push9=, $pop8, $pop4
 	i64.store	$drop=, sv($pop19), $pop9
 	block
 	i64.const	$push10=, 16777215
-	i64.and 	$push11=, $0, $pop10
+	i64.and 	$push11=, $1, $pop10
 	i64.eqz 	$push12=, $pop11
 	i32.eqz 	$push23=, $pop12
 	br_if   	0, $pop23       # 0: down to label0

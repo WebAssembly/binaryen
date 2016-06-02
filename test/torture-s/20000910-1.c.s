@@ -21,7 +21,7 @@ main:                                   # @main
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -33,7 +33,7 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar

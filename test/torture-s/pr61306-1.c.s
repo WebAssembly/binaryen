@@ -9,21 +9,21 @@ fake_bswap32:                           # @fake_bswap32
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 24
-	i32.shr_s	$push9=, $0, $pop0
+	i32.shr_s	$push2=, $0, $pop0
 	i32.const	$push14=, 24
 	i32.shl 	$push1=, $0, $pop14
-	i32.or  	$push10=, $pop9, $pop1
-	i32.const	$push2=, 8
-	i32.shl 	$push3=, $0, $pop2
-	i32.const	$push4=, 16711680
-	i32.and 	$push5=, $pop3, $pop4
-	i32.or  	$push11=, $pop10, $pop5
+	i32.or  	$push3=, $pop2, $pop1
+	i32.const	$push4=, 8
+	i32.shl 	$push5=, $0, $pop4
+	i32.const	$push6=, 16711680
+	i32.and 	$push7=, $pop5, $pop6
+	i32.or  	$push8=, $pop3, $pop7
 	i32.const	$push13=, 8
-	i32.shr_u	$push6=, $0, $pop13
-	i32.const	$push7=, 65280
-	i32.and 	$push8=, $pop6, $pop7
-	i32.or  	$push12=, $pop11, $pop8
-	return  	$pop12
+	i32.shr_u	$push9=, $0, $pop13
+	i32.const	$push10=, 65280
+	i32.and 	$push11=, $pop9, $pop10
+	i32.or  	$push12=, $pop8, $pop11
+                                        # fallthrough-return: $pop12
 	.endfunc
 .Lfunc_end0:
 	.size	fake_bswap32, .Lfunc_end0-fake_bswap32

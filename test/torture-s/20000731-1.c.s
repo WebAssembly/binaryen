@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x0p0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -19,7 +19,7 @@ foo:                                    # @foo
 	.type	do_sibcall,@function
 do_sibcall:                             # @do_sibcall
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	do_sibcall, .Lfunc_end1-do_sibcall

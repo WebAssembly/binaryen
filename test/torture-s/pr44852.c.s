@@ -43,7 +43,8 @@ sf:                                     # @sf
 	i32.const	$push1=, 1
 	i32.add 	$push5=, $2, $pop1
 	i32.store8	$drop=, 0($pop7), $pop5
-	return  	$0
+	copy_local	$push15=, $0
+                                        # fallthrough-return: $pop15
 	.endfunc
 .Lfunc_end0:
 	.size	sf, .Lfunc_end0-sf
@@ -56,12 +57,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push20=, __stack_pointer
-	i32.const	$push17=, __stack_pointer
-	i32.load	$push18=, 0($pop17)
+	i32.const	$push20=, 0
+	i32.const	$push17=, 0
+	i32.load	$push18=, __stack_pointer($pop17)
 	i32.const	$push19=, 16
 	i32.sub 	$push32=, $pop18, $pop19
-	i32.store	$push36=, 0($pop20), $pop32
+	i32.store	$push36=, __stack_pointer($pop20), $pop32
 	tee_local	$push35=, $0=, $pop36
 	i32.const	$push2=, 14
 	i32.add 	$push3=, $pop35, $pop2
@@ -77,18 +78,18 @@ main:                                   # @main
 	i32.load	$push7=, .Lmain.s($pop33):p2align=0
 	i32.store	$drop=, 8($0), $pop7
 	block
-	i32.const	$push24=, 8
-	i32.add 	$push25=, $0, $pop24
-	i32.const	$push8=, 2
-	i32.or  	$push9=, $pop25, $pop8
 	i32.const	$push26=, 8
 	i32.add 	$push27=, $0, $pop26
-	i32.call	$push10=, sf@FUNCTION, $pop9, $pop27
+	i32.const	$push10=, 2
+	i32.or  	$push11=, $pop27, $pop10
 	i32.const	$push28=, 8
 	i32.add 	$push29=, $0, $pop28
-	i32.const	$push11=, 1
-	i32.or  	$push12=, $pop29, $pop11
-	i32.ne  	$push13=, $pop10, $pop12
+	i32.call	$push12=, sf@FUNCTION, $pop11, $pop29
+	i32.const	$push24=, 8
+	i32.add 	$push25=, $0, $pop24
+	i32.const	$push8=, 1
+	i32.or  	$push9=, $pop25, $pop8
+	i32.ne  	$push13=, $pop12, $pop9
 	br_if   	0, $pop13       # 0: down to label3
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push30=, 8
@@ -97,10 +98,10 @@ main:                                   # @main
 	i32.call	$push15=, strcmp@FUNCTION, $pop31, $pop14
 	br_if   	0, $pop15       # 0: down to label3
 # BB#2:                                 # %if.end
-	i32.const	$push23=, __stack_pointer
+	i32.const	$push23=, 0
 	i32.const	$push21=, 16
 	i32.add 	$push22=, $0, $pop21
-	i32.store	$drop=, 0($pop23), $pop22
+	i32.store	$drop=, __stack_pointer($pop23), $pop22
 	i32.const	$push16=, 0
 	return  	$pop16
 .LBB1_3:                                # %if.then

@@ -10,7 +10,7 @@ add_input_file:                         # @add_input_file
 	i32.const	$push0=, 0
 	i32.load	$push1=, B+4($pop0)
 	i32.store	$drop=, 0($pop1), $0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	add_input_file, .Lfunc_end0-add_input_file
@@ -23,15 +23,15 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push1=, __stack_pointer
-	i32.load	$push2=, 0($pop1)
+	i32.const	$push1=, 0
+	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 16
 	i32.sub 	$push6=, $pop2, $pop3
 	i32.const	$push4=, 12
 	i32.add 	$push5=, $pop6, $pop4
 	i32.store	$drop=, B+4($pop0), $pop5
 	i32.const	$push7=, 0
-	return  	$pop7
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -9,7 +9,7 @@ g0:                                     # @g0
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x1p0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	g0, .Lfunc_end0-g0
@@ -23,7 +23,7 @@ g1:                                     # @g1
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.const	$push0=, -0x1p0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	g1, .Lfunc_end1-g1
@@ -37,7 +37,7 @@ g2:                                     # @g2
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x0p0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	g2, .Lfunc_end2-g2
@@ -49,11 +49,11 @@ g2:                                     # @g2
 xcexp:                                  # @xcexp
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	i64.const	$push0=, -4616189618054758400
-	i64.store	$drop=, 0($0), $pop0
-	i64.const	$push1=, 0
-	i64.store	$drop=, 8($0), $pop1
-	return
+	i64.const	$push0=, 0
+	i64.store	$drop=, 8($0), $pop0
+	i64.const	$push1=, -4616189618054758400
+	i64.store	$drop=, 0($0), $pop1
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	xcexp, .Lfunc_end3-xcexp

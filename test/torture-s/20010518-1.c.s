@@ -20,7 +20,7 @@ add:                                    # @add
 	i32.add 	$push9=, $pop8, $10
 	i32.add 	$push10=, $pop9, $11
 	i32.add 	$push11=, $pop10, $12
-	return  	$pop11
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	add, .Lfunc_end0-add

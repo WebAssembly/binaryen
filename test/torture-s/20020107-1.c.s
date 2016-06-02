@@ -12,7 +12,7 @@ foo:                                    # @foo
 	#NO_APP
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

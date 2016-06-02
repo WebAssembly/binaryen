@@ -10,7 +10,7 @@ baz:                                    # @baz
 	i32.const	$push1=, 0
 	i32.load	$push0=, 0($0)
 	i32.store	$drop=, c($pop1), $pop0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
@@ -23,12 +23,12 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push2=, 2
-	i32.ne  	$push3=, $0, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	i32.const	$push1=, 2
+	i32.ne  	$push2=, $0, $pop1
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push1=, 0
-	i32.load	$push0=, c($pop1)
+	i32.const	$push3=, 0
+	i32.load	$push0=, c($pop3)
 	i32.const	$push4=, 1
 	i32.ne  	$push5=, $pop0, $pop4
 	br_if   	0, $pop5        # 0: down to label0

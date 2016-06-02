@@ -7,7 +7,7 @@
 bar:                                    # @bar
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -37,7 +37,8 @@ foo:                                    # @foo
 	i32.load	$2=, 0($1)
 .LBB1_3:                                # %sw.epilog
 	end_block                       # label0:
-	return  	$2
+	copy_local	$push5=, $2
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

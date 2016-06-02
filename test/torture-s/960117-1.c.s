@@ -12,7 +12,7 @@ get_id:                                 # @get_id
 	i32.load	$push1=, curval+2($pop0):p2align=1
 	i32.store8	$drop=, 0($pop1), $0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	get_id, .Lfunc_end0-get_id
@@ -33,7 +33,7 @@ get_tok:                                # @get_tok
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
 	i32.store16	$push0=, curval($pop5), $pop4
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	get_tok, .Lfunc_end1-get_tok

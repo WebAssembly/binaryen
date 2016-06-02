@@ -25,16 +25,17 @@ checkScc2:                              # @checkScc2
 # BB#2:                                 # %lor.rhs
 	i32.load8_u	$push7=, 2($0)
 	i32.const	$push8=, 3
-	i32.ne  	$push11=, $pop7, $pop8
+	i32.ne  	$push9=, $pop7, $pop8
 	i32.const	$push15=, 3
-	i32.add 	$push9=, $0, $pop15
-	i32.load8_u	$push10=, 0($pop9)
+	i32.add 	$push10=, $0, $pop15
+	i32.load8_u	$push11=, 0($pop10)
 	i32.const	$push12=, 4
-	i32.ne  	$push13=, $pop10, $pop12
-	i32.or  	$1=, $pop11, $pop13
+	i32.ne  	$push13=, $pop11, $pop12
+	i32.or  	$1=, $pop9, $pop13
 .LBB0_3:                                # %lor.end
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push16=, $1
+                                        # fallthrough-return: $pop16
 	.endfunc
 .Lfunc_end0:
 	.size	checkScc2, .Lfunc_end0-checkScc2
@@ -64,17 +65,18 @@ main:                                   # @main
 	br_if   	0, $pop6        # 0: down to label1
 # BB#2:                                 # %lor.rhs.i
 	i32.const	$push7=, 0
-	i32.load8_u	$push8=, s+2($pop7)
-	i32.const	$push10=, 3
-	i32.ne  	$push11=, $pop8, $pop10
+	i32.load8_u	$push11=, s+2($pop7)
+	i32.const	$push12=, 3
+	i32.ne  	$push13=, $pop11, $pop12
 	i32.const	$push17=, 0
-	i32.load8_u	$push9=, s+3($pop17)
-	i32.const	$push12=, 4
-	i32.ne  	$push13=, $pop9, $pop12
-	i32.or  	$0=, $pop11, $pop13
+	i32.load8_u	$push8=, s+3($pop17)
+	i32.const	$push9=, 4
+	i32.ne  	$push10=, $pop8, $pop9
+	i32.or  	$0=, $pop13, $pop10
 .LBB1_3:                                # %checkScc2.exit
 	end_block                       # label1:
-	return  	$0
+	copy_local	$push18=, $0
+                                        # fallthrough-return: $pop18
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

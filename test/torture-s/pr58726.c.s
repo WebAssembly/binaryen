@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.shl 	$push5=, $pop3, $pop4
 	i32.const	$push7=, 16
 	i32.shr_s	$push6=, $pop5, $pop7
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -30,13 +30,13 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
-	i32.const	$push0=, 56374
-	i32.store	$drop=, b($pop1), $pop0
+	i32.const	$push0=, -9162
+	i32.store	$drop=, c($pop1), $pop0
 	i32.const	$push4=, 0
-	i32.const	$push2=, -9162
-	i32.store	$drop=, c($pop4), $pop2
+	i32.const	$push2=, 56374
+	i32.store	$drop=, b($pop4), $pop2
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

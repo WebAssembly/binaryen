@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -23,7 +23,7 @@ main:                                   # @main
 	i32.const	$push0=, 0
 	i32.load	$drop=, argp($pop0)
 	i32.const	$push1=, 0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -31,7 +31,8 @@ copysign_bug:                           # @copysign_bug
 	i32.select	$1=, $pop8, $pop7, $pop6
 .LBB0_3:                                # %return
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push11=, $1
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	copysign_bug, .Lfunc_end0-copysign_bug

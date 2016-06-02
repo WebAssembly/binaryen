@@ -21,14 +21,15 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	block
 	i32.const	$push33=, 16
 	i32.and 	$push9=, $2, $pop33
-	i32.eqz 	$push35=, $pop9
-	br_if   	0, $pop35       # 0: down to label2
+	i32.eqz 	$push41=, $pop9
+	br_if   	0, $pop41       # 0: down to label2
 # BB#2:                                 # %if.then
-	i32.const	$push34=, 16
-	i32.or  	$2=, $2, $pop34
 	i32.const	$push10=, 26
 	i32.add 	$push11=, $0, $pop10
-	i32.store16	$drop=, 0($pop11), $2
+	i32.const	$push36=, 16
+	i32.or  	$push35=, $2, $pop36
+	tee_local	$push34=, $2=, $pop35
+	i32.store16	$drop=, 0($pop11), $pop34
 .LBB0_3:                                # %if.end
 	end_block                       # label2:
 	i32.const	$push15=, 26
@@ -43,15 +44,16 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 # BB#4:                                 # %if.end
 	i32.const	$push17=, 1572864
 	i32.and 	$push12=, $2, $pop17
-	i32.eqz 	$push36=, $pop12
-	br_if   	1, $pop36       # 1: down to label0
+	i32.eqz 	$push42=, $pop12
+	br_if   	1, $pop42       # 1: down to label0
 # BB#5:                                 # %if.then39
 	i32.const	$push20=, 26
-	i32.add 	$0=, $0, $pop20
+	i32.add 	$push38=, $0, $pop20
+	tee_local	$push37=, $0=, $pop38
 	i32.load16_u	$push21=, 0($0)
 	i32.const	$push22=, 8
 	i32.or  	$push23=, $pop21, $pop22
-	i32.store16	$drop=, 0($0), $pop23
+	i32.store16	$drop=, 0($pop37), $pop23
 	return
 .LBB0_6:                                # %sw.bb
 	end_block                       # label1:
@@ -72,14 +74,15 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	br_if   	0, $pop28       # 0: down to label3
 # BB#8:                                 # %if.then55
 	i32.const	$push29=, 26
-	i32.add 	$0=, $0, $pop29
+	i32.add 	$push40=, $0, $pop29
+	tee_local	$push39=, $0=, $pop40
 	i32.load16_u	$push30=, 0($0)
 	i32.const	$push31=, 64
 	i32.or  	$push32=, $pop30, $pop31
-	i32.store16	$drop=, 0($0), $pop32
+	i32.store16	$drop=, 0($pop39), $pop32
 .LBB0_9:                                # %sw.epilog
 	end_block                       # label3:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	RenderBox_setStyle, .Lfunc_end0-RenderBox_setStyle
@@ -91,7 +94,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 RenderObject_setStyle:                  # @RenderObject_setStyle
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	RenderObject_setStyle, .Lfunc_end1-RenderObject_setStyle
@@ -103,7 +106,7 @@ RenderObject_setStyle:                  # @RenderObject_setStyle
 removeFromSpecialObjects:               # @removeFromSpecialObjects
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	removeFromSpecialObjects, .Lfunc_end2-removeFromSpecialObjects
@@ -117,7 +120,7 @@ RenderBox_isTableCell:                  # @RenderBox_isTableCell
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	RenderBox_isTableCell, .Lfunc_end3-RenderBox_isTableCell
@@ -128,29 +131,28 @@ RenderBox_isTableCell:                  # @RenderBox_isTableCell
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %RenderBox_setStyle.exit
-	i32.const	$push0=, 0
-	i32.load16_u	$0=, g_this+26($pop0)
+	i32.const	$push1=, 0
+	i32.const	$push0=, RenderBox_isTableCell@FUNCTION
+	i32.store	$drop=, g_this+28($pop1), $pop0
+	i32.const	$push16=, 0
+	i32.const	$push15=, 0
+	i32.load	$push2=, g__style($pop15)
+	i32.const	$push3=, -1966081
+	i32.and 	$push4=, $pop2, $pop3
+	i32.const	$push5=, 393216
+	i32.or  	$push6=, $pop4, $pop5
+	i32.store	$drop=, g__style($pop16), $pop6
 	i32.const	$push14=, 0
-	i32.load	$1=, g__style($pop14)
 	i32.const	$push13=, 0
-	i32.const	$push3=, RenderBox_isTableCell@FUNCTION
-	i32.store	$drop=, g_this+28($pop13), $pop3
+	i32.load16_u	$push7=, g_this+26($pop13)
+	i32.const	$push8=, 65447
+	i32.and 	$push9=, $pop7, $pop8
+	i32.const	$push10=, 16
+	i32.or  	$push11=, $pop9, $pop10
+	i32.store16	$drop=, g_this+26($pop14), $pop11
 	i32.const	$push12=, 0
-	i32.const	$push4=, -1966081
-	i32.and 	$push5=, $1, $pop4
-	i32.const	$push6=, 393216
-	i32.or  	$push7=, $pop5, $pop6
-	i32.store	$drop=, g__style($pop12), $pop7
-	i32.const	$push11=, 0
-	i32.const	$push1=, 65447
-	i32.and 	$push2=, $0, $pop1
-	i32.const	$push8=, 16
-	i32.or  	$push9=, $pop2, $pop8
-	i32.store16	$drop=, g_this+26($pop11), $pop9
-	i32.const	$push10=, 0
-	call    	exit@FUNCTION, $pop10
+	call    	exit@FUNCTION, $pop12
 	unreachable
 	.endfunc
 .Lfunc_end4:

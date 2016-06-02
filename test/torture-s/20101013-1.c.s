@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	build_ref_for_offset@FUNCTION
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -19,25 +19,25 @@ main:                                   # @main
 build_ref_for_offset:                   # @build_ref_for_offset
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, __stack_pointer
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
+	i32.const	$push6=, 0
+	i32.const	$push3=, 0
+	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
 	i32.sub 	$push12=, $pop4, $pop5
-	i32.store	$push14=, 0($pop6), $pop12
+	i32.store	$push14=, __stack_pointer($pop6), $pop12
 	tee_local	$push13=, $0=, $pop14
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $pop13, $pop10
 	call    	get_addr_base_and_unit_offset@FUNCTION, $pop11
-	i64.load	$push0=, 8($0)
-	i64.const	$push1=, 4
-	i64.add 	$push2=, $pop0, $pop1
+	i64.load	$push1=, 8($0)
+	i64.const	$push0=, 4
+	i64.add 	$push2=, $pop1, $pop0
 	call    	build_int_cst@FUNCTION, $pop2
-	i32.const	$push9=, __stack_pointer
+	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$drop=, 0($pop9), $pop8
-	return
+	i32.store	$drop=, __stack_pointer($pop9), $pop8
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	build_ref_for_offset, .Lfunc_end1-build_ref_for_offset
@@ -49,7 +49,7 @@ get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
 	i64.store	$drop=, 0($0), $pop0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	get_addr_base_and_unit_offset, .Lfunc_end2-get_addr_base_and_unit_offset

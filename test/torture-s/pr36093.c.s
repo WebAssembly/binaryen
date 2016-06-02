@@ -7,10 +7,10 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push0=, foo
-	i32.const	$push2=, 97
-	i32.const	$push1=, 129
-	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop1
+	i32.const	$push2=, foo
+	i32.const	$push1=, 97
+	i32.const	$push0=, 129
+	i32.call	$drop=, memset@FUNCTION, $pop2, $pop1, $pop0
 	i32.const	$push4=, foo+129
 	i32.const	$push3=, 98
 	i32.const	$push12=, 129
@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.const	$push10=, 129
 	i32.call	$drop=, memset@FUNCTION, $pop8, $pop7, $pop10
 	i32.const	$push9=, 0
-	return  	$pop9
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

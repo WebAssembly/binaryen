@@ -16,7 +16,7 @@ f:                                      # @f
 	i64.mul 	$push6=, $pop4, $pop5
 	i64.const	$push7=, 40
 	i64.add 	$push8=, $pop6, $pop7
-	return  	$pop8
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -29,9 +29,9 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i64.call	$push0=, f@FUNCTION
-	i64.const	$push1=, 16
-	i64.ne  	$push2=, $pop0, $pop1
+	i64.call	$push1=, f@FUNCTION
+	i64.const	$push0=, 16
+	i64.ne  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0

@@ -25,14 +25,14 @@ main:                                   # @main
 	i32.const	$push21=, 0
 	i32.load	$push20=, a($pop21)
 	tee_local	$push19=, $0=, $pop20
-	i32.const	$push3=, 16
-	i32.shl 	$push4=, $pop19, $pop3
+	i32.const	$push5=, 16
+	i32.shl 	$push6=, $pop19, $pop5
 	i32.const	$push18=, 16
-	i32.shr_s	$push5=, $pop4, $pop18
+	i32.shr_s	$push7=, $pop6, $pop18
 	i32.const	$push8=, -32768
-	i32.const	$push6=, 65535
-	i32.and 	$push7=, $0, $pop6
-	i32.select	$push9=, $pop5, $pop8, $pop7
+	i32.const	$push3=, 65535
+	i32.and 	$push4=, $0, $pop3
+	i32.select	$push9=, $pop7, $pop8, $pop4
 	i32.store16	$push0=, e($pop22), $pop9
 	i32.store	$push1=, d($pop23), $pop0
 	i32.const	$push17=, 65535

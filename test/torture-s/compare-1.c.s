@@ -109,7 +109,7 @@ ine:                                    # @ine
 	br_if   	1, $pop2        # 1: down to label11
 .LBB1_4:                                # %if.end6
 	end_block                       # label12:
-	return  	$0
+	return  	$2
 .LBB1_5:                                # %if.then2
 	end_block                       # label11:
 	call    	abort@FUNCTION
@@ -141,7 +141,7 @@ ilt:                                    # @ilt
 	br_if   	1, $2           # 1: down to label14
 .LBB2_4:                                # %if.end6
 	end_block                       # label15:
-	return  	$0
+	return  	$2
 .LBB2_5:                                # %if.then4
 	end_block                       # label14:
 	call    	abort@FUNCTION
@@ -175,7 +175,7 @@ ile:                                    # @ile
 	br_if   	1, $pop2        # 1: down to label17
 .LBB3_4:                                # %if.end6
 	end_block                       # label18:
-	return  	$0
+	return  	$2
 .LBB3_5:                                # %if.then2
 	end_block                       # label17:
 	call    	abort@FUNCTION
@@ -207,7 +207,7 @@ igt:                                    # @igt
 	br_if   	1, $2           # 1: down to label20
 .LBB4_4:                                # %if.end6
 	end_block                       # label21:
-	return  	$0
+	return  	$2
 .LBB4_5:                                # %if.then4
 	end_block                       # label20:
 	call    	abort@FUNCTION
@@ -241,7 +241,7 @@ ige:                                    # @ige
 	br_if   	1, $pop2        # 1: down to label23
 .LBB5_4:                                # %if.end6
 	end_block                       # label24:
-	return  	$0
+	return  	$2
 .LBB5_5:                                # %if.then2
 	end_block                       # label23:
 	call    	abort@FUNCTION
@@ -258,7 +258,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main

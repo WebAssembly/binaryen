@@ -8,7 +8,7 @@ f1:                                     # @f1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 306
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -21,7 +21,7 @@ f2:                                     # @f2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1577058304
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
@@ -35,7 +35,7 @@ f3:                                     # @f3
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.store	$drop=, val($pop0), $0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
@@ -46,10 +46,10 @@ f3:                                     # @f3
 	.type	f4,@function
 f4:                                     # @f4
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 1577058610
-	i32.store	$drop=, val($pop0), $pop1
-	return
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1577058610
+	i32.store	$drop=, val($pop1), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4

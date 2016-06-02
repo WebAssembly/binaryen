@@ -11,7 +11,8 @@ f:                                      # @f
 	i64.const	$push1=, 14315126007568
 	i64.store	$push0=, 0($0):p2align=2, $pop1
 	i64.store	$drop=, 8($0):p2align=2, $pop0
-	return  	$0
+	copy_local	$push2=, $0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

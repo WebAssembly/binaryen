@@ -7,7 +7,7 @@
 arg_ptr:                                # @arg_ptr
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	arg_ptr, .Lfunc_end0-arg_ptr
@@ -19,7 +19,7 @@ arg_ptr:                                # @arg_ptr
 arg_idx:                                # @arg_idx
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	arg_idx, .Lfunc_end1-arg_idx
@@ -30,7 +30,7 @@ arg_idx:                                # @arg_idx
 	.type	glob_ptr,@function
 glob_ptr:                               # @glob_ptr
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	glob_ptr, .Lfunc_end2-glob_ptr
@@ -41,7 +41,7 @@ glob_ptr:                               # @glob_ptr
 	.type	glob_idx,@function
 glob_idx:                               # @glob_idx
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	glob_idx, .Lfunc_end3-glob_idx
@@ -59,14 +59,14 @@ main:                                   # @main
 	call    	glob_ptr@FUNCTION
 	call    	glob_idx@FUNCTION
 	i32.const	$push9=, 0
+	i32.const	$push2=, 2
+	i32.store	$drop=, idx($pop9), $pop2
 	i32.const	$push8=, 0
-	i32.load	$push2=, ptr($pop8)
-	i32.const	$push3=, 1
-	i32.add 	$push4=, $pop2, $pop3
-	i32.store	$drop=, ptr($pop9), $pop4
 	i32.const	$push7=, 0
-	i32.const	$push5=, 2
-	i32.store	$drop=, idx($pop7), $pop5
+	i32.load	$push3=, ptr($pop7)
+	i32.const	$push4=, 1
+	i32.add 	$push5=, $pop3, $pop4
+	i32.store	$drop=, ptr($pop8), $pop5
 	call    	glob_ptr@FUNCTION
 	call    	glob_idx@FUNCTION
 	i32.const	$push6=, 0

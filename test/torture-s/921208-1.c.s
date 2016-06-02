@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.mul 	$push0=, $0, $0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -23,7 +23,7 @@ Int:                                    # @Int
 	.result 	f64
 # BB#0:                                 # %entry
 	f64.call_indirect	$push0=, $0, $1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	Int, .Lfunc_end1-Int

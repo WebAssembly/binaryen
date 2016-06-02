@@ -8,40 +8,41 @@ foo:                                    # @foo
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.load	$0=, p($pop7)
+	i32.load	$1=, p($pop7)
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	block
-	i32.load8_u	$push1=, 0($0)
-	i32.const	$push14=, -10
-	i32.add 	$push0=, $pop1, $pop14
-	i32.const	$push13=, 255
-	i32.and 	$push12=, $pop0, $pop13
-	tee_local	$push11=, $1=, $pop12
-	i32.const	$push10=, 49
-	i32.gt_u	$push2=, $pop11, $pop10
+	i32.load8_u	$push1=, 0($1)
+	i32.const	$push16=, -10
+	i32.add 	$push0=, $pop1, $pop16
+	i32.const	$push15=, 255
+	i32.and 	$push14=, $pop0, $pop15
+	tee_local	$push13=, $0=, $pop14
+	i32.const	$push12=, 49
+	i32.gt_u	$push2=, $pop13, $pop12
 	br_if   	0, $pop2        # 0: down to label2
 # BB#2:                                 # %is_end_of_statement.exit
                                         #   in Loop: Header=BB0_1 Depth=1
-	i64.const	$push16=, 562949961809921
-	i64.extend_u/i32	$push3=, $1
-	i64.shr_u	$push4=, $pop16, $pop3
-	i64.const	$push15=, 1
-	i64.and 	$push5=, $pop4, $pop15
+	i64.const	$push18=, 562949961809921
+	i64.extend_u/i32	$push3=, $0
+	i64.shr_u	$push4=, $pop18, $pop3
+	i64.const	$push17=, 1
+	i64.and 	$push5=, $pop4, $pop17
 	i32.wrap/i64	$push6=, $pop5
 	br_if   	2, $pop6        # 2: down to label1
 .LBB0_3:                                # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
-	i32.const	$push9=, 1
-	i32.add 	$0=, $0, $pop9
-	i32.const	$push8=, 0
-	i32.store	$drop=, p($pop8), $0
+	i32.const	$push11=, 0
+	i32.const	$push10=, 1
+	i32.add 	$push9=, $1, $pop10
+	tee_local	$push8=, $1=, $pop9
+	i32.store	$drop=, p($pop11), $pop8
 	br      	0               # 0: up to label0
 .LBB0_4:                                # %while.end
 	end_loop                        # label1:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -58,37 +59,38 @@ main:                                   # @main
 .LBB1_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.load8_u	$0=, 0($1)
-	i32.const	$push13=, 0
-	i32.store	$drop=, p($pop13), $1
 	block
-	i32.const	$push12=, -10
-	i32.add 	$push0=, $0, $pop12
-	i32.const	$push11=, 255
-	i32.and 	$push10=, $pop0, $pop11
-	tee_local	$push9=, $0=, $pop10
-	i32.const	$push8=, 49
-	i32.gt_u	$push1=, $pop9, $pop8
-	br_if   	0, $pop1        # 0: down to label5
+	i32.const	$push16=, 0
+	i32.store	$push15=, p($pop16), $1
+	tee_local	$push14=, $1=, $pop15
+	i32.load8_u	$push1=, 0($pop14)
+	i32.const	$push13=, -10
+	i32.add 	$push0=, $pop1, $pop13
+	i32.const	$push12=, 255
+	i32.and 	$push11=, $pop0, $pop12
+	tee_local	$push10=, $0=, $pop11
+	i32.const	$push9=, 49
+	i32.gt_u	$push2=, $pop10, $pop9
+	br_if   	0, $pop2        # 0: down to label5
 # BB#2:                                 # %is_end_of_statement.exit.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i64.const	$push15=, 562949961809921
-	i64.extend_u/i32	$push2=, $0
-	i64.shr_u	$push3=, $pop15, $pop2
-	i64.const	$push14=, 1
-	i64.and 	$push4=, $pop3, $pop14
-	i32.wrap/i64	$push5=, $pop4
-	br_if   	2, $pop5        # 2: down to label4
+	i64.const	$push18=, 562949961809921
+	i64.extend_u/i32	$push3=, $0
+	i64.shr_u	$push4=, $pop18, $pop3
+	i64.const	$push17=, 1
+	i64.and 	$push5=, $pop4, $pop17
+	i32.wrap/i64	$push6=, $pop5
+	br_if   	2, $pop6        # 2: down to label4
 .LBB1_3:                                # %while.body.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label5:
-	i32.const	$push7=, 1
-	i32.add 	$1=, $1, $pop7
+	i32.const	$push8=, 1
+	i32.add 	$1=, $1, $pop8
 	br      	0               # 0: up to label3
 .LBB1_4:                                # %foo.exit
 	end_loop                        # label4:
-	i32.const	$push6=, 0
-	return  	$pop6
+	i32.const	$push7=, 0
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

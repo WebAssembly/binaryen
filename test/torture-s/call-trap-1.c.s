@@ -20,7 +20,7 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

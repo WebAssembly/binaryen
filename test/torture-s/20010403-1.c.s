@@ -7,7 +7,7 @@
 a:                                      # @a
 	.param  	i32, i32
 # BB#0:                                 # %c.exit
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	a, .Lfunc_end0-a
@@ -23,7 +23,7 @@ b:                                      # @b
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$drop=, 0($0), $pop2
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	b, .Lfunc_end1-b
@@ -55,7 +55,7 @@ c:                                      # @c
 d:                                      # @d
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	d, .Lfunc_end3-d

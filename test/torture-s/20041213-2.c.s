@@ -10,8 +10,8 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	block
 	block
-	i32.eqz 	$push5=, $0
-	br_if   	0, $pop5        # 0: down to label1
+	i32.eqz 	$push9=, $0
+	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %for.cond1.preheader.preheader
 	i32.const	$2=, 0
 	i32.const	$3=, 1
@@ -20,28 +20,30 @@ foo:                                    # @foo
 	loop                            # label2:
 	block
 	block
-	i32.ge_s	$push0=, $2, $3
+	copy_local	$push4=, $3
+	tee_local	$push3=, $1=, $pop4
+	i32.ge_s	$push0=, $2, $pop3
 	br_if   	0, $pop0        # 0: down to label5
 # BB#3:                                 # %for.end.thread
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push3=, 1
-	i32.shl 	$push2=, $3, $pop3
-	i32.sub 	$1=, $pop2, $2
+	i32.const	$push5=, 1
+	i32.shl 	$push2=, $1, $pop5
+	i32.sub 	$3=, $pop2, $2
 	br      	1               # 1: down to label4
 .LBB0_4:                                # %for.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label5:
-	copy_local	$1=, $3
-	i32.ne  	$push1=, $2, $3
+	copy_local	$3=, $1
+	i32.ne  	$push1=, $2, $1
 	br_if   	4, $pop1        # 4: down to label0
 .LBB0_5:                                # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label4:
-	i32.const	$push4=, -1
-	i32.add 	$0=, $0, $pop4
-	copy_local	$2=, $3
-	copy_local	$3=, $1
-	br_if   	0, $0           # 0: up to label2
+	copy_local	$2=, $1
+	i32.const	$push8=, -1
+	i32.add 	$push7=, $0, $pop8
+	tee_local	$push6=, $0=, $pop7
+	br_if   	0, $pop6        # 0: up to label2
 .LBB0_6:                                # %for.end7
 	end_loop                        # label3:
 	end_block                       # label1:

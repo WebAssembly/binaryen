@@ -7,14 +7,14 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 10
-	i32.store	$drop=, g1($pop0), $pop1
+	i32.const	$push1=, 0
+	i32.const	$push0=, 10
+	i32.store	$drop=, g1($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push2=, 7930
 	i32.div_s	$push3=, $pop2, $0
 	i32.store	$drop=, g2($pop4), $pop3
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -29,8 +29,8 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.const	$push4=, 0
 	i32.const	$push1=, 10
-	i32.store	$push0=, g1($pop4), $pop1
-	i32.store	$drop=, g2($pop2), $pop0
+	i32.store	$push0=, g2($pop4), $pop1
+	i32.store	$drop=, g1($pop2), $pop0
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

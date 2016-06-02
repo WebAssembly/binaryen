@@ -24,7 +24,8 @@ g:                                      # @g
 	i32.const	$0=, 1
 .LBB0_4:                                # %return
 	end_block                       # label0:
-	return  	$0
+	copy_local	$push3=, $0
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -37,7 +38,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

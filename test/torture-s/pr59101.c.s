@@ -14,7 +14,7 @@ foo:                                    # @foo
 	i32.ne  	$push2=, $pop1, $pop5
 	i32.const	$push3=, 6
 	i32.or  	$push4=, $pop2, $pop3
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

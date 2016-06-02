@@ -8,7 +8,8 @@ func1:                                  # @func1
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %if.end15
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	func1, .Lfunc_end0-func1
@@ -24,7 +25,7 @@ func2:                                  # @func2
 	i64.store	$drop=, 0($0):p2align=2, $pop0
 	i64.const	$push1=, 171798691870
 	i64.store	$drop=, 8($0):p2align=2, $pop1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	func2, .Lfunc_end1-func2

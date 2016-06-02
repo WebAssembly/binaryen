@@ -9,8 +9,8 @@ test_store_ccp:                         # @test_store_ccp
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push10=, __stack_pointer
-	i32.load	$push11=, 0($pop10)
+	i32.const	$push10=, 0
+	i32.load	$push11=, __stack_pointer($pop10)
 	i32.const	$push12=, 16
 	i32.sub 	$push22=, $pop11, $pop12
 	tee_local	$push21=, $1=, $pop22
@@ -34,7 +34,7 @@ test_store_ccp:                         # @test_store_ccp
 	i32.load	$push7=, 0($0)
 	i32.const	$push8=, 2
 	i32.add 	$push9=, $pop7, $pop8
-	return  	$pop9
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	test_store_ccp, .Lfunc_end0-test_store_ccp
@@ -46,12 +46,13 @@ test_store_ccp:                         # @test_store_ccp
 test_store_copy_prop:                   # @test_store_copy_prop
 	.param  	i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push9=, __stack_pointer
-	i32.load	$push10=, 0($pop9)
+	i32.const	$push9=, 0
+	i32.load	$push10=, __stack_pointer($pop9)
 	i32.const	$push11=, 16
-	i32.sub 	$1=, $pop10, $pop11
+	i32.sub 	$push21=, $pop10, $pop11
+	tee_local	$push20=, $1=, $pop21
 	i32.const	$push16=, 12
 	i32.add 	$push17=, $1, $pop16
 	i32.const	$push12=, 8
@@ -64,13 +65,13 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	i32.const	$push1=, 5
 	i32.lt_s	$push2=, $0, $pop1
 	i32.select	$push19=, $pop17, $pop5, $pop2
-	tee_local	$push18=, $2=, $pop19
+	tee_local	$push18=, $1=, $pop19
 	i32.store	$push0=, 0($pop18), $0
 	i32.const	$push6=, 1
 	i32.add 	$push7=, $pop0, $pop6
-	i32.store	$drop=, 8($1), $pop7
-	i32.load	$push8=, 0($2)
-	return  	$pop8
+	i32.store	$drop=, 8($pop20), $pop7
+	i32.load	$push8=, 0($1)
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end1:
 	.size	test_store_copy_prop, .Lfunc_end1-test_store_copy_prop
@@ -83,7 +84,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end4
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

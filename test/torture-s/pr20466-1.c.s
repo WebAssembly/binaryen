@@ -11,15 +11,15 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.load	$5=, 0($0)
 	i32.store	$drop=, 0($0), $2
-	i32.load	$1=, 0($1)
 	i32.load	$push0=, 0($4)
 	i32.store	$drop=, 0($3), $pop0
-	i32.load	$0=, 0($0)
-	i32.store	$drop=, 0($5), $1
-	i32.const	$push1=, 99
-	i32.store	$drop=, 0($0), $pop1
-	i32.const	$push2=, 3
-	return  	$pop2
+	i32.load	$push1=, 0($1)
+	i32.store	$drop=, 0($5), $pop1
+	i32.load	$push2=, 0($0)
+	i32.const	$push3=, 99
+	i32.store	$drop=, 0($pop2), $pop3
+	i32.const	$push4=, 3
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -32,23 +32,23 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push25=, __stack_pointer
-	i32.const	$push22=, __stack_pointer
-	i32.load	$push23=, 0($pop22)
+	i32.const	$push25=, 0
+	i32.const	$push22=, 0
+	i32.load	$push23=, __stack_pointer($pop22)
 	i32.const	$push24=, 32
 	i32.sub 	$push44=, $pop23, $pop24
-	i32.store	$push46=, 0($pop25), $pop44
+	i32.store	$push46=, __stack_pointer($pop25), $pop44
 	tee_local	$push45=, $1=, $pop46
 	i32.const	$push4=, 42
 	i32.store	$drop=, 28($pop45), $pop4
+	i32.const	$push5=, 66
+	i32.store	$0=, 24($1), $pop5
 	i32.const	$push6=, 1
 	i32.store	$drop=, 20($1), $pop6
 	i32.const	$push7=, -1
 	i32.store	$drop=, 16($1), $pop7
 	i32.const	$push8=, 55
 	i32.store	$drop=, 12($1), $pop8
-	i32.const	$push5=, 66
-	i32.store	$0=, 24($1), $pop5
 	i32.const	$push26=, 28
 	i32.add 	$push27=, $1, $pop26
 	i32.store	$drop=, 8($1), $pop27

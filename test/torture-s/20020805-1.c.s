@@ -29,14 +29,14 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 2
+	i32.const	$push2=, 2
 	i32.const	$push0=, 0
 	i32.load	$push10=, n($pop0)
 	tee_local	$push9=, $0=, $pop10
-	i32.sub 	$push2=, $pop1, $pop9
+	i32.sub 	$push3=, $pop2, $pop9
 	i32.const	$push8=, 0
-	i32.sub 	$push3=, $pop8, $0
-	i32.or  	$push4=, $pop2, $pop3
+	i32.sub 	$push1=, $pop8, $0
+	i32.or  	$push4=, $pop3, $pop1
 	i32.const	$push5=, 1
 	i32.or  	$push6=, $pop4, $pop5
 	call    	check@FUNCTION, $pop6

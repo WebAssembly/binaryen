@@ -7,11 +7,11 @@
 foo:                                    # @foo
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	i64.load	$push0=, 8($1)
-	i64.load	$push1=, 8($2)
-	i64.div_s	$push2=, $pop0, $pop1
+	i64.load	$push1=, 8($1)
+	i64.load	$push0=, 8($2)
+	i64.div_s	$push2=, $pop1, $pop0
 	i64.store	$drop=, 8($0), $pop2
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -24,7 +24,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end10
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

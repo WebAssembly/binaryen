@@ -14,7 +14,7 @@ f1:                                     # @f1
 	tee_local	$push3=, $1=, $pop4
 	i32.add 	$push1=, $0, $pop3
 	i32.xor 	$push2=, $pop1, $1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -33,7 +33,7 @@ f2:                                     # @f2
 	tee_local	$push3=, $1=, $pop4
 	i32.add 	$push1=, $0, $pop3
 	i32.xor 	$push2=, $pop1, $1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
@@ -52,7 +52,7 @@ f3:                                     # @f3
 	tee_local	$push3=, $1=, $pop4
 	i64.add 	$push1=, $0, $pop3
 	i64.xor 	$push2=, $pop1, $1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
@@ -71,7 +71,7 @@ f4:                                     # @f4
 	tee_local	$push3=, $1=, $pop4
 	i64.add 	$push1=, $0, $pop3
 	i64.xor 	$push2=, $pop1, $1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4

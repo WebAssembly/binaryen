@@ -8,12 +8,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push11=, __stack_pointer
-	i32.const	$push8=, __stack_pointer
-	i32.load	$push9=, 0($pop8)
+	i32.const	$push11=, 0
+	i32.const	$push8=, 0
+	i32.load	$push9=, __stack_pointer($pop8)
 	i32.const	$push10=, 256
 	i32.sub 	$push15=, $pop9, $pop10
-	i32.store	$0=, 0($pop11), $pop15
+	i32.store	$0=, __stack_pointer($pop11), $pop15
 	i32.const	$1=, 0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
@@ -41,17 +41,18 @@ main:                                   # @main
 	br_if   	2, $pop5        # 2: down to label2
 # BB#4:                                 # %for.cond1
                                         #   in Loop: Header=BB0_3 Depth=1
-	i32.const	$push21=, 1
-	i32.add 	$1=, $1, $pop21
+	i32.const	$push23=, 1
+	i32.add 	$push22=, $1, $pop23
+	tee_local	$push21=, $1=, $pop22
 	i32.const	$push20=, 255
-	i32.le_s	$push6=, $1, $pop20
+	i32.le_s	$push6=, $pop21, $pop20
 	br_if   	0, $pop6        # 0: up to label3
 # BB#5:                                 # %for.end12
 	end_loop                        # label4:
-	i32.const	$push14=, __stack_pointer
+	i32.const	$push14=, 0
 	i32.const	$push12=, 256
 	i32.add 	$push13=, $0, $pop12
-	i32.store	$drop=, 0($pop14), $pop13
+	i32.store	$drop=, __stack_pointer($pop14), $pop13
 	i32.const	$push7=, 0
 	return  	$pop7
 .LBB0_6:                                # %if.then
@@ -67,10 +68,10 @@ main:                                   # @main
 rp:                                     # @rp
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, v
-	i32.const	$push1=, 256
-	i32.call	$drop=, memcpy@FUNCTION, $0, $pop0, $pop1
-	return
+	i32.const	$push1=, v
+	i32.const	$push0=, 256
+	i32.call	$drop=, memcpy@FUNCTION, $0, $pop1, $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	rp, .Lfunc_end1-rp

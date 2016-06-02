@@ -6,10 +6,10 @@
 	.type	g,@function
 g:                                      # @g
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 1
-	i32.store	$drop=, i($pop0), $pop1
-	return
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1
+	i32.store	$drop=, i($pop1), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -27,12 +27,12 @@ f:                                      # @f
 # BB#1:                                 # %entry
 	br_if   	0, $1           # 0: down to label0
 # BB#2:                                 # %if.then10
-	i32.const	$push0=, 0
-	i32.const	$push1=, 1
-	i32.store	$drop=, i($pop0), $pop1
+	i32.const	$push1=, 0
+	i32.const	$push0=, 1
+	i32.store	$drop=, i($pop1), $pop0
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
@@ -48,7 +48,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$drop=, i($pop1), $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

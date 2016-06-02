@@ -30,7 +30,7 @@ foo:                                    # @foo
 	i32.const	$push3=, -1
 	i32.eq  	$push4=, $0, $pop3
 	i32.select	$push5=, $2, $0, $pop4
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -43,7 +43,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end28
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

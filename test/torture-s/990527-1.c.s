@@ -12,7 +12,7 @@ g:                                      # @g
 	i32.load	$push1=, sum($pop3)
 	i32.add 	$push2=, $pop1, $0
 	i32.store	$drop=, sum($pop0), $pop2
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -31,7 +31,7 @@ f:                                      # @f
 	i32.const	$push3=, 81
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$drop=, sum($pop0), $pop4
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

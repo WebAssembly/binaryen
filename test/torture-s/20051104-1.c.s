@@ -7,13 +7,13 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push2=, .L.str
-	i32.store	$drop=, s+4($pop1), $pop2
+	i32.const	$push2=, 0
+	i32.const	$push1=, .L.str
+	i32.store	$drop=, s+4($pop2), $pop1
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
 	i32.store	$push0=, s($pop4), $pop3
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

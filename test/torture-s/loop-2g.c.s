@@ -13,14 +13,15 @@ f:                                      # @f
 	i32.gt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.add 	$push2=, $1, $0
+	i32.add 	$push4=, $1, $0
 	i32.const	$push5=, 254
-	i32.const	$push3=, 40
-	i32.sub 	$push4=, $pop3, $0
-	i32.call	$drop=, memset@FUNCTION, $pop2, $pop5, $pop4
+	i32.const	$push2=, 40
+	i32.sub 	$push3=, $pop2, $0
+	i32.call	$drop=, memset@FUNCTION, $pop4, $pop5, $pop3
 .LBB0_2:                                # %for.end
 	end_block                       # label0:
-	return  	$0
+	copy_local	$push6=, $0
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

@@ -19,8 +19,8 @@ t:                                      # @t
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	block
-	i32.eqz 	$push8=, $1
-	br_if   	0, $pop8        # 0: down to label3
+	i32.eqz 	$push10=, $1
+	br_if   	0, $pop10       # 0: down to label3
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push4=, 0
@@ -30,17 +30,19 @@ t:                                      # @t
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
-	i32.const	$push7=, 0
-	i32.store	$drop=, a($1), $pop7
-	i32.const	$push6=, 4
-	i32.add 	$1=, $1, $pop6
-	i32.const	$push5=, -1
-	i32.add 	$0=, $0, $pop5
-	br_if   	0, $0           # 0: up to label1
+	i32.const	$push9=, 0
+	i32.store	$drop=, a($1), $pop9
+	i32.const	$push8=, 4
+	i32.add 	$1=, $1, $pop8
+	i32.const	$push7=, -1
+	i32.add 	$push6=, $0, $pop7
+	tee_local	$push5=, $0=, $pop6
+	br_if   	0, $pop5        # 0: up to label1
 .LBB0_5:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push11=, $1
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t

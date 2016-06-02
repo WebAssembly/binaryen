@@ -10,7 +10,7 @@ test1:                                  # @test1
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -25,7 +25,7 @@ test1u:                                 # @test1u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	test1u, .Lfunc_end1-test1u
@@ -40,7 +40,7 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
@@ -55,7 +55,7 @@ test2u:                                 # @test2u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end3:
 	.size	test2u, .Lfunc_end3-test2u
@@ -70,7 +70,7 @@ test3:                                  # @test3
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end4:
 	.size	test3, .Lfunc_end4-test3
@@ -85,7 +85,7 @@ test3u:                                 # @test3u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end5:
 	.size	test3u, .Lfunc_end5-test3u
@@ -100,7 +100,7 @@ test4:                                  # @test4
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end6:
 	.size	test4, .Lfunc_end6-test4
@@ -115,7 +115,7 @@ test4u:                                 # @test4u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end7:
 	.size	test4u, .Lfunc_end7-test4u
@@ -130,7 +130,7 @@ test5:                                  # @test5
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end8:
 	.size	test5, .Lfunc_end8-test5
@@ -145,7 +145,7 @@ test5u:                                 # @test5u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end9:
 	.size	test5u, .Lfunc_end9-test5u
@@ -160,7 +160,7 @@ test6:                                  # @test6
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end10:
 	.size	test6, .Lfunc_end10-test6
@@ -175,7 +175,7 @@ test6u:                                 # @test6u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end11:
 	.size	test6u, .Lfunc_end11-test6u
@@ -190,7 +190,7 @@ test7:                                  # @test7
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end12:
 	.size	test7, .Lfunc_end12-test7
@@ -205,7 +205,7 @@ test7u:                                 # @test7u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end13:
 	.size	test7u, .Lfunc_end13-test7u
@@ -220,7 +220,7 @@ test8:                                  # @test8
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end14:
 	.size	test8, .Lfunc_end14-test8
@@ -235,7 +235,7 @@ test8u:                                 # @test8u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end15:
 	.size	test8u, .Lfunc_end15-test8u
@@ -250,7 +250,7 @@ test9:                                  # @test9
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end16:
 	.size	test9, .Lfunc_end16-test9
@@ -265,7 +265,7 @@ test9u:                                 # @test9u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end17:
 	.size	test9u, .Lfunc_end17-test9u
@@ -280,7 +280,7 @@ test10:                                 # @test10
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end18:
 	.size	test10, .Lfunc_end18-test10
@@ -295,7 +295,7 @@ test10u:                                # @test10u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end19:
 	.size	test10u, .Lfunc_end19-test10u
@@ -310,7 +310,7 @@ test11:                                 # @test11
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end20:
 	.size	test11, .Lfunc_end20-test11
@@ -325,7 +325,7 @@ test11u:                                # @test11u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end21:
 	.size	test11u, .Lfunc_end21-test11u
@@ -340,7 +340,7 @@ test12:                                 # @test12
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end22:
 	.size	test12, .Lfunc_end22-test12
@@ -355,7 +355,7 @@ test12u:                                # @test12u
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147478988
 	i32.xor 	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end23:
 	.size	test12u, .Lfunc_end23-test12u
@@ -412,7 +412,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end26:
 	.size	main, .Lfunc_end26-main

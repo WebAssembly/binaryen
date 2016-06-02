@@ -8,14 +8,9 @@ div:                                    # @div
 	.param  	i64
 	.result 	i64
 # BB#0:                                 # %entry
-	i64.const	$push0=, 63
-	i64.shr_s	$push1=, $0, $pop0
-	i64.const	$push2=, 49
-	i64.shr_u	$push3=, $pop1, $pop2
-	i64.add 	$push4=, $0, $pop3
-	i64.const	$push5=, 15
-	i64.shr_s	$push6=, $pop4, $pop5
-	return  	$pop6
+	i64.const	$push0=, 32768
+	i64.div_s	$push1=, $0, $pop0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	div, .Lfunc_end0-div

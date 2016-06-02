@@ -11,7 +11,7 @@ t:                                      # @t
 	f64.promote/f32	$push0=, $0
 	f64.call	$push1=, sin@FUNCTION, $pop0
 	f32.demote/f64	$push2=, $pop1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	t, .Lfunc_end0-t
@@ -24,7 +24,8 @@ sin:                                    # @sin
 	.param  	f64
 	.result 	f64
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	sin, .Lfunc_end1-sin
@@ -38,7 +39,8 @@ q:                                      # @q
 	.result 	f32
 	.local  	f32
 # BB#0:                                 # %entry
-	return  	$1
+	copy_local	$push0=, $1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	q, .Lfunc_end2-q
@@ -66,7 +68,8 @@ q1:                                     # @q1
 	.result 	f64
 	.local  	f64
 # BB#0:                                 # %entry
-	return  	$1
+	copy_local	$push0=, $1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	q1, .Lfunc_end4-q1
@@ -92,7 +95,8 @@ floorf:                                 # @floorf
 	.param  	f32
 	.result 	f32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end6:
 	.size	floorf, .Lfunc_end6-floorf

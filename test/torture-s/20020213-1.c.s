@@ -5,22 +5,23 @@
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$push1=, b($pop0)
-	i32.const	$push2=, -1
-	i32.add 	$0=, $pop1, $pop2
-	i32.const	$push8=, 0
 	i32.const	$push3=, 2241
+	i32.const	$push10=, 0
+	i32.load	$push1=, b($pop10)
+	i32.const	$push2=, -1
+	i32.add 	$push9=, $pop1, $pop2
+	tee_local	$push8=, $0=, $pop9
 	i32.const	$push7=, 2241
 	i32.gt_s	$push6=, $0, $pop7
-	tee_local	$push5=, $1=, $pop6
-	i32.select	$push4=, $pop3, $0, $pop5
-	i32.store	$drop=, a+4($pop8), $pop4
+	tee_local	$push5=, $0=, $pop6
+	i32.select	$push4=, $pop3, $pop8, $pop5
+	i32.store	$drop=, a+4($pop0), $pop4
 	block
-	i32.eqz 	$push9=, $1
-	br_if   	0, $pop9        # 0: down to label0
+	i32.eqz 	$push11=, $0
+	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -40,7 +41,7 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2241
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -53,13 +54,13 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %foo.exit
 	i32.const	$push1=, 0
-	i32.const	$push2=, 3384
-	i32.store	$drop=, b($pop1), $pop2
+	i32.const	$push0=, 3384
+	i32.store	$drop=, b($pop1), $pop0
 	i32.const	$push4=, 0
-	i64.const	$push0=, 9626087063552
-	i64.store	$drop=, a($pop4):p2align=2, $pop0
+	i64.const	$push2=, 9626087063552
+	i64.store	$drop=, a($pop4):p2align=2, $pop2
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -19,7 +19,7 @@ main:                                   # @main
 .LBB0_2:                                # %foo.exit
 	end_block                       # label0:
 	i32.const	$push5=, 0
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

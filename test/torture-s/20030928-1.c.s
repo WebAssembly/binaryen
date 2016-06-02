@@ -6,57 +6,56 @@
 	.type	get_addrs,@function
 get_addrs:                              # @get_addrs
 	.param  	i32, i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 4($1)
 	i32.load	$push0=, 0($1)
 	i32.const	$push1=, 1
 	i32.shl 	$push2=, $pop0, $pop1
 	i32.const	$push3=, .L.str-131072
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	$drop=, 0($0), $pop4
-	i32.load	$3=, 8($1)
-	i32.const	$push32=, 1
-	i32.shl 	$push5=, $2, $pop32
-	i32.const	$push6=, .L.str.1-262144
-	i32.add 	$push7=, $pop5, $pop6
-	i32.store	$drop=, 4($0), $pop7
-	i32.load	$2=, 12($1)
-	i32.const	$push31=, 1
-	i32.shl 	$push8=, $3, $pop31
-	i32.const	$push9=, .L.str.2-393216
-	i32.add 	$push10=, $pop8, $pop9
-	i32.store	$drop=, 8($0), $pop10
-	i32.load	$3=, 16($1)
-	i32.const	$push30=, 1
-	i32.shl 	$push11=, $2, $pop30
-	i32.const	$push12=, .L.str.3-524288
-	i32.add 	$push13=, $pop11, $pop12
-	i32.store	$drop=, 12($0), $pop13
-	i32.load	$2=, 20($1)
-	i32.const	$push29=, 1
-	i32.shl 	$push14=, $3, $pop29
-	i32.const	$push15=, .L.str.4-655360
+	i32.load	$push5=, 4($1)
+	i32.const	$push39=, 1
+	i32.shl 	$push6=, $pop5, $pop39
+	i32.const	$push7=, .L.str.1-262144
+	i32.add 	$push8=, $pop6, $pop7
+	i32.store	$drop=, 4($0), $pop8
+	i32.load	$push9=, 8($1)
+	i32.const	$push38=, 1
+	i32.shl 	$push10=, $pop9, $pop38
+	i32.const	$push11=, .L.str.2-393216
+	i32.add 	$push12=, $pop10, $pop11
+	i32.store	$drop=, 8($0), $pop12
+	i32.load	$push13=, 12($1)
+	i32.const	$push37=, 1
+	i32.shl 	$push14=, $pop13, $pop37
+	i32.const	$push15=, .L.str.3-524288
 	i32.add 	$push16=, $pop14, $pop15
-	i32.store	$drop=, 16($0), $pop16
-	i32.load	$3=, 24($1)
-	i32.const	$push28=, 1
-	i32.shl 	$push17=, $2, $pop28
-	i32.const	$push18=, .L.str.5-786432
-	i32.add 	$push19=, $pop17, $pop18
-	i32.store	$drop=, 20($0), $pop19
-	i32.load	$1=, 28($1)
-	i32.const	$push27=, 1
-	i32.shl 	$push20=, $3, $pop27
-	i32.const	$push21=, .L.str.6-917504
-	i32.add 	$push22=, $pop20, $pop21
-	i32.store	$drop=, 24($0), $pop22
-	i32.const	$push26=, 1
-	i32.shl 	$push23=, $1, $pop26
-	i32.const	$push24=, .L.str.7-1048576
-	i32.add 	$push25=, $pop23, $pop24
-	i32.store	$drop=, 28($0), $pop25
-	return
+	i32.store	$drop=, 12($0), $pop16
+	i32.load	$push17=, 16($1)
+	i32.const	$push36=, 1
+	i32.shl 	$push18=, $pop17, $pop36
+	i32.const	$push19=, .L.str.4-655360
+	i32.add 	$push20=, $pop18, $pop19
+	i32.store	$drop=, 16($0), $pop20
+	i32.load	$push21=, 20($1)
+	i32.const	$push35=, 1
+	i32.shl 	$push22=, $pop21, $pop35
+	i32.const	$push23=, .L.str.5-786432
+	i32.add 	$push24=, $pop22, $pop23
+	i32.store	$drop=, 20($0), $pop24
+	i32.load	$push25=, 24($1)
+	i32.const	$push34=, 1
+	i32.shl 	$push26=, $pop25, $pop34
+	i32.const	$push27=, .L.str.6-917504
+	i32.add 	$push28=, $pop26, $pop27
+	i32.store	$drop=, 24($0), $pop28
+	i32.load	$push29=, 28($1)
+	i32.const	$push33=, 1
+	i32.shl 	$push30=, $pop29, $pop33
+	i32.const	$push31=, .L.str.7-1048576
+	i32.add 	$push32=, $pop30, $pop31
+	i32.store	$drop=, 28($0), $pop32
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	get_addrs, .Lfunc_end0-get_addrs

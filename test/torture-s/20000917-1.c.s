@@ -7,11 +7,11 @@
 one:                                    # @one
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 1
-	i32.store	$drop=, 8($0), $pop1
-	i64.const	$push0=, 4294967297
-	i64.store	$drop=, 0($0):p2align=2, $pop0
-	return
+	i32.const	$push0=, 1
+	i32.store	$drop=, 8($0), $pop0
+	i64.const	$push1=, 4294967297
+	i64.store	$drop=, 0($0):p2align=2, $pop1
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	one, .Lfunc_end0-one
@@ -23,11 +23,11 @@ one:                                    # @one
 zero:                                   # @zero
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.store	$drop=, 8($0), $pop1
-	i64.const	$push0=, 0
-	i64.store	$drop=, 0($0):p2align=2, $pop0
-	return
+	i32.const	$push0=, 0
+	i32.store	$drop=, 8($0), $pop0
+	i64.const	$push1=, 0
+	i64.store	$drop=, 0($0):p2align=2, $pop1
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	zero, .Lfunc_end1-zero

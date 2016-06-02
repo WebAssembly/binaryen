@@ -21,7 +21,8 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -34,7 +35,8 @@ mpn_mul_1:                              # @mpn_mul_1
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	mpn_mul_1, .Lfunc_end2-mpn_mul_1
@@ -47,7 +49,8 @@ mpn_print:                              # @mpn_print
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	mpn_print, .Lfunc_end3-mpn_print
@@ -60,7 +63,8 @@ mpn_random2:                            # @mpn_random2
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	mpn_random2, .Lfunc_end4-mpn_random2
@@ -73,7 +77,8 @@ mpn_cmp:                                # @mpn_cmp
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end5:
 	.size	mpn_cmp, .Lfunc_end5-mpn_cmp

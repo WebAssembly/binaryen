@@ -10,7 +10,7 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push2=, 0
 	i32.store	$push0=, t+2($pop1):p2align=1, $pop2
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

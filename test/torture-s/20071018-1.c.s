@@ -10,7 +10,7 @@ bar:                                    # @bar
 	i32.const	$push0=, 8
 	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
 	i32.store	$drop=, 0($0), $pop1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -23,11 +23,11 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 16
-	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
-	i32.const	$push2=, 5
-	i32.shl 	$push3=, $0, $pop2
-	i32.add 	$push4=, $pop1, $pop3
+	i32.const	$push2=, 16
+	i32.call	$push3=, __builtin_malloc@FUNCTION, $pop2
+	i32.const	$push0=, 5
+	i32.shl 	$push1=, $0, $pop0
+	i32.add 	$push4=, $pop3, $pop1
 	i32.const	$push5=, -20
 	i32.add 	$push9=, $pop4, $pop5
 	tee_local	$push8=, $0=, $pop9
@@ -35,7 +35,7 @@ foo:                                    # @foo
 	i32.store	$drop=, 0($pop8), $pop6
 	call    	bar@FUNCTION, $0
 	i32.load	$push7=, 0($0)
-	return  	$pop7
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

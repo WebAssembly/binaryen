@@ -11,7 +11,7 @@ foo:                                    # @foo
 	i32.load8_s	$push1=, a($pop0)
 	i32.const	$push2=, 1
 	i32.shr_u	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -27,7 +27,7 @@ bar:                                    # @bar
 	i32.load8_s	$push1=, a($pop0)
 	i32.const	$push2=, 5
 	i32.rem_u	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

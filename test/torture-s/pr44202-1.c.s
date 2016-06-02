@@ -19,7 +19,8 @@ add512:                                 # @add512
 	i32.store	$drop=, 0($1), $0
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	return  	$2
+	copy_local	$push4=, $2
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	add512, .Lfunc_end0-add512
@@ -42,7 +43,8 @@ add513:                                 # @add513
 	i32.store	$drop=, 0($1), $0
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
-	return  	$2
+	copy_local	$push3=, $2
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	add513, .Lfunc_end1-add513
@@ -55,15 +57,16 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push13=, __stack_pointer
-	i32.const	$push10=, __stack_pointer
-	i32.load	$push11=, 0($pop10)
+	i32.const	$push13=, 0
+	i32.const	$push10=, 0
+	i32.load	$push11=, __stack_pointer($pop10)
 	i32.const	$push12=, 16
 	i32.sub 	$push18=, $pop11, $pop12
-	i32.store	$1=, 0($pop13), $pop18
+	i32.store	$push20=, __stack_pointer($pop13), $pop18
+	tee_local	$push19=, $1=, $pop20
 	i32.const	$push2=, -1
 	i32.store	$push0=, 12($1), $pop2
-	i32.store	$0=, 8($1), $pop0
+	i32.store	$0=, 8($pop19), $pop0
 	block
 	i32.const	$push3=, -512
 	i32.const	$push14=, 12
@@ -75,15 +78,15 @@ main:                                   # @main
 	i32.ne  	$push5=, $pop1, $0
 	br_if   	0, $pop5        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false2
-	i32.const	$push19=, -513
+	i32.const	$push21=, -513
 	i32.const	$push16=, 8
 	i32.add 	$push17=, $1, $pop16
-	i32.call	$push7=, add513@FUNCTION, $pop19, $pop17
+	i32.call	$push7=, add513@FUNCTION, $pop21, $pop17
 	br_if   	0, $pop7        # 0: down to label2
 # BB#3:                                 # %lor.lhs.false2
 	i32.load	$push6=, 8($1)
-	i32.const	$push20=, -513
-	i32.ne  	$push8=, $pop6, $pop20
+	i32.const	$push22=, -513
+	i32.ne  	$push8=, $pop6, $pop22
 	br_if   	0, $pop8        # 0: down to label2
 # BB#4:                                 # %if.end
 	i32.const	$push9=, 0

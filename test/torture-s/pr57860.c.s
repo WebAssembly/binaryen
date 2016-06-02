@@ -9,13 +9,13 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i64, i32, i32, i32
 # BB#0:                                 # %entry
-	i64.extend_s/i32	$1=, $0
 	i32.const	$push13=, 0
-	i32.load	$2=, b($pop13)
+	i32.load	$4=, f($pop13)
 	i32.const	$push12=, 0
 	i32.load	$3=, h($pop12)
 	i32.const	$push11=, 0
-	i32.load	$4=, f($pop11)
+	i32.load	$2=, b($pop11)
+	i64.extend_s/i32	$1=, $0
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
@@ -58,7 +58,7 @@ foo:                                    # @foo
 .LBB0_5:                                # %if.then
 	end_loop                        # label1:
 	i32.const	$push9=, 0
-	return  	$pop9
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -72,11 +72,11 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push15=, 0
-	i32.load	$0=, b($pop15)
+	i32.load	$2=, f($pop15)
 	i32.const	$push14=, 0
 	i32.load	$1=, h($pop14)
 	i32.const	$push13=, 0
-	i32.load	$2=, f($pop13)
+	i32.load	$0=, b($pop13)
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:

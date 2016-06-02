@@ -9,7 +9,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i64.const	$push0=, 90194313258
 	i64.store	$drop=, 4($0):p2align=2, $pop0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

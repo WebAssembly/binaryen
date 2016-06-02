@@ -10,7 +10,7 @@ ns_name_skip:                           # @ns_name_skip
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.store	$push0=, 0($0), $pop1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	ns_name_skip, .Lfunc_end0-ns_name_skip
@@ -25,7 +25,7 @@ dn_skipname:                            # @dn_skipname
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	dn_skipname, .Lfunc_end1-dn_skipname

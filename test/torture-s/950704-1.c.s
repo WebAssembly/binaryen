@@ -39,13 +39,14 @@ f:                                      # @f
 	br_if   	1, $pop4        # 1: down to label0
 .LBB0_5:                                # %if.end9
 	end_block                       # label1:
-	i32.const	$push8=, 0
-	i32.const	$push9=, 1
-	i32.store	$drop=, errflag($pop8), $pop9
+	i32.const	$push9=, 0
+	i32.const	$push8=, 1
+	i32.store	$drop=, errflag($pop9), $pop8
 	i64.const	$2=, 0
 .LBB0_6:                                # %cleanup
 	end_block                       # label0:
-	return  	$2
+	copy_local	$push14=, $2
+                                        # fallthrough-return: $pop14
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

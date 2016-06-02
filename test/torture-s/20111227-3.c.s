@@ -94,7 +94,7 @@ foo:                                    # @foo
 	i32.const	$push4=, 0
 	i32.store	$drop=, i($pop4), $2
 	call    	bar@FUNCTION, $1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -114,7 +114,7 @@ main:                                   # @main
 	i32.const	$push2=, 2
 	call    	foo@FUNCTION, $0, $pop2
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

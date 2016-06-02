@@ -9,8 +9,8 @@ check_fa_work:                          # @check_fa_work
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, __stack_pointer
-	i32.load	$push9=, 0($pop8)
+	i32.const	$push8=, 0
+	i32.load	$push9=, __stack_pointer($pop8)
 	i32.const	$push10=, 16
 	i32.sub 	$push18=, $pop9, $pop10
 	tee_local	$push17=, $2=, $pop18
@@ -35,7 +35,7 @@ check_fa_work:                          # @check_fa_work
 	i32.add 	$push16=, $2, $pop15
 	i32.le_u	$push3=, $pop16, $1
 	i32.and 	$push7=, $pop2, $pop3
-	return  	$pop7
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end0:
 	.size	check_fa_work, .Lfunc_end0-check_fa_work
@@ -49,16 +49,16 @@ check_fa_mid:                           # @check_fa_mid
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, __stack_pointer
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push5=, 0($pop3)
-	copy_local	$push7=, $pop5
-	tee_local	$push6=, $1=, $pop7
-	i32.store	$drop=, 0($pop4), $pop6
-	i32.call	$push0=, check_fa_work@FUNCTION, $0, $1
-	i32.const	$push1=, 0
-	i32.ne  	$push2=, $pop0, $pop1
-	return  	$pop2
+	i32.const	$push2=, 0
+	i32.load	$push4=, __stack_pointer($pop2)
+	copy_local	$push6=, $pop4
+	tee_local	$push5=, $1=, $pop6
+	i32.call	$0=, check_fa_work@FUNCTION, $0, $pop5
+	i32.const	$push3=, 0
+	i32.store	$drop=, __stack_pointer($pop3), $1
+	i32.const	$push0=, 0
+	i32.ne  	$push1=, $0, $pop0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	check_fa_mid, .Lfunc_end1-check_fa_mid
@@ -70,25 +70,25 @@ check_fa_mid:                           # @check_fa_mid
 check_fa:                               # @check_fa
 	.param  	i32
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push9=, __stack_pointer
-	i32.const	$push6=, __stack_pointer
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
-	i32.const	$push5=, 16
-	i32.sub 	$push12=, $pop4, $pop5
-	i32.store	$push14=, 0($pop6), $pop12
-	tee_local	$push13=, $1=, $pop14
-	i32.const	$push7=, 16
-	i32.add 	$push8=, $pop13, $pop7
-	i32.store	$drop=, 0($pop9), $pop8
-	i32.const	$push10=, 15
-	i32.add 	$push11=, $1, $pop10
-	i32.call	$push0=, check_fa_mid@FUNCTION, $pop11
-	i32.const	$push1=, 0
-	i32.ne  	$push2=, $pop0, $pop1
-	return  	$pop2
+	i32.const	$push5=, 0
+	i32.const	$push2=, 0
+	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push4=, 16
+	i32.sub 	$push11=, $pop3, $pop4
+	i32.store	$push13=, __stack_pointer($pop5), $pop11
+	tee_local	$push12=, $1=, $pop13
+	i32.const	$push9=, 15
+	i32.add 	$push10=, $pop12, $pop9
+	i32.call	$2=, check_fa_mid@FUNCTION, $pop10
+	i32.const	$push8=, 0
+	i32.const	$push6=, 16
+	i32.add 	$push7=, $1, $pop6
+	i32.store	$drop=, __stack_pointer($pop8), $pop7
+	i32.const	$push0=, 0
+	i32.ne  	$push1=, $2, $pop0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	check_fa, .Lfunc_end2-check_fa
@@ -101,7 +101,7 @@ how_much:                               # @how_much
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	how_much, .Lfunc_end3-how_much

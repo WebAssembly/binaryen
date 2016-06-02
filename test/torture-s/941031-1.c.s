@@ -14,7 +14,7 @@ f:                                      # @f
 	tee_local	$push3=, $2=, $pop4
 	i32.add 	$push1=, $1, $pop3
 	i32.xor 	$push2=, $pop1, $2
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

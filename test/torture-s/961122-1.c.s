@@ -16,7 +16,8 @@ addhi:                                  # @addhi
 	i64.shl 	$push2=, $pop0, $pop1
 	i64.add 	$push5=, $pop4, $pop2
 	i64.store	$drop=, acc($pop3), $pop5
-	return  	$0
+	copy_local	$push7=, $0
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end0:
 	.size	addhi, .Lfunc_end0-addhi
@@ -37,7 +38,8 @@ subhi:                                  # @subhi
 	i64.shl 	$push2=, $pop0, $pop1
 	i64.sub 	$push5=, $pop4, $pop2
 	i64.store	$drop=, acc($pop3), $pop5
-	return  	$0
+	copy_local	$push7=, $0
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	subhi, .Lfunc_end1-subhi

@@ -7,12 +7,12 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, foo@FUNCTION
+	i32.const	$push2=, foo@FUNCTION
 	i32.call	$push0=, __builtin_apply_args@FUNCTION
-	i32.const	$push2=, 16
-	i32.call	$drop=, __builtin_apply@FUNCTION, $pop1, $pop0, $pop2
+	i32.const	$push1=, 16
+	i32.call	$drop=, __builtin_apply@FUNCTION, $pop2, $pop0, $pop1
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

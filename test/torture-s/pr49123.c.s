@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.or  	$push3=, $pop1, $pop2
 	i32.store8	$drop=, s.0($pop0), $pop3
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

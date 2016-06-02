@@ -29,7 +29,7 @@ t2:                                     # @t2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4096
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
@@ -63,7 +63,7 @@ t4:                                     # @t4
 	.result 	i64
 # BB#0:                                 # %entry
 	i64.const	$push0=, 4096
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	t4, .Lfunc_end3-t4

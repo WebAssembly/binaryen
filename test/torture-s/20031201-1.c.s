@@ -8,15 +8,19 @@ f1:                                     # @f1
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.store	$push0=, i($pop1), $0
-	i64.const	$push2=, 137438953504
-	i64.store	$drop=, 0($pop0):p2align=2, $pop2
+	i32.const	$push2=, 0
+	i32.store	$push9=, i($pop2), $0
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push3=, 32
+	i32.store	$push0=, 4($0), $pop3
+	i32.store	$drop=, 0($pop8), $pop0
 	call    	f0@FUNCTION
-	i32.const	$push5=, 0
-	i32.load	$push3=, i($pop5)
-	i64.const	$push4=, 34359738376
-	i64.store	$drop=, 0($pop3):p2align=2, $pop4
+	i32.const	$push7=, 0
+	i32.load	$push6=, i($pop7)
+	tee_local	$push5=, $0=, $pop6
+	i32.const	$push4=, 8
+	i32.store	$push1=, 4($0), $pop4
+	i32.store	$drop=, 0($pop5), $pop1
 	call    	test@FUNCTION
 	unreachable
 	.endfunc
@@ -28,29 +32,30 @@ f1:                                     # @f1
 	.globl	f0
 	.type	f0,@function
 f0:                                     # @f0
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$0=, i($pop0)
-	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.load	$push8=, f0.washere($pop9)
-	tee_local	$push7=, $1=, $pop8
-	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop7, $pop1
-	i32.store	$drop=, f0.washere($pop10), $pop2
+	i32.const	$push8=, 0
+	i32.load	$push7=, f0.washere($pop8)
+	tee_local	$push6=, $0=, $pop7
+	i32.const	$push0=, 1
+	i32.add 	$push1=, $pop6, $pop0
+	i32.store	$drop=, f0.washere($pop9), $pop1
 	block
-	br_if   	0, $1           # 0: down to label0
+	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.load16_u	$push3=, 0($0)
-	i32.const	$push11=, 32
-	i32.ne  	$push4=, $pop3, $pop11
-	br_if   	0, $pop4        # 0: down to label0
+	i32.const	$push13=, 0
+	i32.load	$push12=, i($pop13)
+	tee_local	$push11=, $0=, $pop12
+	i32.load16_u	$push2=, 0($pop11)
+	i32.const	$push10=, 32
+	i32.ne  	$push3=, $pop2, $pop10
+	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false1
-	i32.load16_u	$push5=, 4($0)
-	i32.const	$push12=, 32
-	i32.ne  	$push6=, $pop5, $pop12
-	br_if   	0, $pop6        # 0: down to label0
+	i32.load16_u	$push4=, 4($0)
+	i32.const	$push14=, 32
+	i32.ne  	$push5=, $pop4, $pop14
+	br_if   	0, $pop5        # 0: down to label0
 # BB#3:                                 # %if.end
 	return
 .LBB1_4:                                # %if.then
@@ -100,12 +105,12 @@ test:                                   # @test
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, __stack_pointer
-	i32.const	$push1=, __stack_pointer
-	i32.load	$push2=, 0($pop1)
+	i32.const	$push4=, 0
+	i32.const	$push1=, 0
+	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 16
 	i32.sub 	$push7=, $pop2, $pop3
-	i32.store	$push0=, 0($pop4), $pop7
+	i32.store	$push0=, __stack_pointer($pop4), $pop7
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $pop0, $pop5
 	i32.call	$drop=, f1@FUNCTION, $pop6

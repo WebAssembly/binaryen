@@ -8,8 +8,8 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
 	i32.const	$push31=, 0
-	i64.const	$push32=, 1
-	i64.store	$drop=, bid_Kx192+32($pop31), $pop32
+	i64.const	$push30=, 1
+	i64.store	$drop=, bid_Kx192+32($pop31), $pop30
 	i32.const	$push64=, 0
 	i32.const	$push63=, 0
 	i32.const	$push62=, 0
@@ -41,8 +41,8 @@ main:                                   # @main
 	i32.const	$push36=, 0
 	i32.const	$push35=, 0
 	i32.const	$push34=, 0
-	i64.const	$push30=, 0
-	i64.store	$push0=, bid_Kx192+8($pop34), $pop30
+	i64.const	$push32=, 0
+	i64.store	$push0=, bid_Kx192+8($pop34), $pop32
 	i64.store	$push1=, bid_Kx192+56($pop35), $pop0
 	i64.store	$push2=, bid_Kx192+80($pop36), $pop1
 	i64.store	$push3=, bid_Kx192+104($pop37), $pop2
@@ -74,7 +74,7 @@ main:                                   # @main
 	i64.store	$push29=, bid_Kx192+728($pop63), $pop28
 	i64.store	$drop=, bid_Kx192+752($pop64), $pop29
 	i32.const	$push33=, 0
-	return  	$pop33
+                                        # fallthrough-return: $pop33
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

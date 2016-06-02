@@ -24,8 +24,8 @@ main:                                   # @main
 	loop                            # label3:
 	i32.const	$4=, u
 	block
-	i32.eqz 	$push19=, $1
-	br_if   	0, $pop19       # 0: down to label5
+	i32.eqz 	$push23=, $1
+	br_if   	0, $pop23       # 0: down to label5
 # BB#3:                                 # %for.body6.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push9=, u
@@ -36,8 +36,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label5:
 	block
-	i32.eqz 	$push20=, $3
-	br_if   	0, $pop20       # 0: down to label6
+	i32.eqz 	$push24=, $3
+	br_if   	0, $pop24       # 0: down to label6
 # BB#5:                                 # %for.body9.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push10=, 97
@@ -57,20 +57,22 @@ main:                                   # @main
 	br_if   	4, $pop2        # 4: down to label0
 # BB#7:                                 # %for.cond1
                                         #   in Loop: Header=BB0_2 Depth=2
-	i32.const	$push15=, 1
-	i32.add 	$3=, $3, $pop15
+	i32.const	$push17=, 1
+	i32.add 	$push16=, $3, $pop17
+	tee_local	$push15=, $3=, $pop16
 	i32.const	$push14=, 63
-	i32.le_u	$push3=, $3, $pop14
+	i32.le_u	$push3=, $pop15, $pop14
 	br_if   	0, $pop3        # 0: up to label3
 # BB#8:                                 # %for.inc26
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label4:
-	i32.const	$push18=, 1
-	i32.add 	$1=, $1, $pop18
-	i32.const	$push17=, 1
-	i32.add 	$2=, $2, $pop17
-	i32.const	$push16=, 8
-	i32.lt_u	$push4=, $1, $pop16
+	i32.const	$push22=, 1
+	i32.add 	$2=, $2, $pop22
+	i32.const	$push21=, 1
+	i32.add 	$push20=, $1, $pop21
+	tee_local	$push19=, $1=, $pop20
+	i32.const	$push18=, 8
+	i32.lt_u	$push4=, $pop19, $pop18
 	br_if   	0, $pop4        # 0: up to label1
 # BB#9:                                 # %for.end28
 	end_loop                        # label2:

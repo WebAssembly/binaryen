@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$drop=, cond($pop1), $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -41,7 +41,7 @@ bar_1:                                  # @bar_1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$drop=, 4($1), $pop2
 	call    	mark_cell@FUNCTION, $1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	bar_1, .Lfunc_end2-bar_1
@@ -203,7 +203,7 @@ bar_2:                                  # @bar_2
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store	$drop=, 4($1), $pop2
 	call    	mark_cell@FUNCTION, $1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end4:
 	.size	bar_2, .Lfunc_end4-bar_2

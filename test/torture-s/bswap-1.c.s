@@ -43,7 +43,7 @@ g:                                      # @g
 	i64.or  	$push6=, $pop5, $pop1
 	i64.or  	$push16=, $pop15, $pop6
 	i64.or  	$push30=, $pop29, $pop16
-	return  	$pop30
+                                        # fallthrough-return: $pop30
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -91,7 +91,7 @@ f:                                      # @f
 	i64.or  	$push6=, $pop5, $pop1
 	i64.or  	$push16=, $pop15, $pop6
 	i64.or  	$push30=, $pop29, $pop16
-	return  	$pop30
+                                        # fallthrough-return: $pop30
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f

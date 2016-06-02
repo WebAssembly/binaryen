@@ -9,7 +9,7 @@ fn2:                                    # @fn2
 # BB#0:                                 # %entry
 	i32.const	$push0=, glob
 	i32.store	$drop=, 0($0), $pop0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	fn2, .Lfunc_end0-fn2
@@ -20,10 +20,10 @@ fn2:                                    # @fn2
 	.type	test,@function
 test:                                   # @test
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push1=, 42
-	i32.store	$drop=, glob($pop0), $pop1
-	return
+	i32.const	$push1=, 0
+	i32.const	$push0=, 42
+	i32.store	$drop=, glob($pop1), $pop0
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	test, .Lfunc_end1-test

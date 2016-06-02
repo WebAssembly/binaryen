@@ -12,7 +12,7 @@ a1:                                     # @a1
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$drop=, count($pop0), $pop3
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	a1, .Lfunc_end0-a1
@@ -66,7 +66,7 @@ b:                                      # @b
 	i32.store	$drop=, count($pop14), $pop17
 .LBB1_6:                                # %if.end15
 	end_block                       # label2:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	b, .Lfunc_end1-b

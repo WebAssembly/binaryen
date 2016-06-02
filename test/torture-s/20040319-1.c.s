@@ -14,7 +14,7 @@ blah:                                   # @blah
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
 	i32.select	$push5=, $pop4, $pop3, $pop1
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	blah, .Lfunc_end0-blah

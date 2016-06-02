@@ -8,8 +8,8 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, __stack_pointer
-	i32.load	$push1=, 0($pop0)
+	i32.const	$push0=, 0
+	i32.load	$push1=, __stack_pointer($pop0)
 	i32.const	$push2=, 16
 	i32.sub 	$push5=, $pop1, $pop2
 	tee_local	$push4=, $1=, $pop5
@@ -18,7 +18,7 @@ bar:                                    # @bar
 	i32.add 	$0=, $1, $pop3
 	#APP
 	#NO_APP
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -29,25 +29,26 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i64
-	.local  	i64, i32
+	.local  	i32, i64
 # BB#0:                                 # %entry
-	i32.const	$push4=, __stack_pointer
-	i32.const	$push1=, __stack_pointer
-	i32.load	$push2=, 0($pop1)
+	i32.const	$push4=, 0
+	i32.const	$push1=, 0
+	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 16
 	i32.sub 	$push10=, $pop2, $pop3
-	i32.store	$push12=, 0($pop4), $pop10
-	tee_local	$push11=, $1=, $pop12
+	i32.store	$push12=, __stack_pointer($pop4), $pop10
+	tee_local	$push11=, $0=, $pop12
 	i32.const	$push8=, 12
 	i32.add 	$push9=, $pop11, $pop8
 	call    	bar@FUNCTION, $pop9
 	i32.const	$push0=, 0
-	i64.load	$0=, v($pop0)
-	i32.const	$push7=, __stack_pointer
+	i64.load	$1=, v($pop0)
+	i32.const	$push7=, 0
 	i32.const	$push5=, 16
-	i32.add 	$push6=, $1, $pop5
-	i32.store	$drop=, 0($pop7), $pop6
-	return  	$0
+	i32.add 	$push6=, $0, $pop5
+	i32.store	$drop=, __stack_pointer($pop7), $pop6
+	copy_local	$push13=, $1
+                                        # fallthrough-return: $pop13
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

@@ -10,7 +10,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.div_s	$push0=, $0, $1
 	i64.extend_s/i32	$push1=, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -29,7 +29,7 @@ bar:                                    # @bar
 	i32.ne  	$push2=, $pop1, $pop4
 	i32.store	$drop=, b($pop0), $pop2
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

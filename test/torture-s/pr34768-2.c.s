@@ -14,7 +14,7 @@ foo:                                    # @foo
 	i32.sub 	$push2=, $pop5, $pop1
 	i32.store	$drop=, x($pop0), $pop2
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -27,7 +27,7 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -40,17 +40,17 @@ test:                                   # @test
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push1=, x($pop0)
-	i32.const	$push3=, foo@FUNCTION
-	i32.const	$push2=, bar@FUNCTION
-	i32.select	$push4=, $pop3, $pop2, $0
-	i32.call_indirect	$push5=, $pop4
-	i32.add 	$push7=, $pop1, $pop5
+	i32.const	$push3=, 0
+	i32.load	$push4=, x($pop3)
+	i32.const	$push1=, foo@FUNCTION
+	i32.const	$push0=, bar@FUNCTION
+	i32.select	$push2=, $pop1, $pop0, $0
+	i32.call_indirect	$push5=, $pop2
+	i32.add 	$push6=, $pop4, $pop5
 	i32.const	$push9=, 0
-	i32.load	$push6=, x($pop9)
-	i32.add 	$push8=, $pop7, $pop6
-	return  	$pop8
+	i32.load	$push7=, x($pop9)
+	i32.add 	$push8=, $pop6, $pop7
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test

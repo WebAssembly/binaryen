@@ -9,7 +9,8 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$2
+	copy_local	$push0=, $2
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

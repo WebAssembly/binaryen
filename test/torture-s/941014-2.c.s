@@ -7,7 +7,7 @@
 a1:                                     # @a1
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	a1, .Lfunc_end0-a1
@@ -20,12 +20,12 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push10=, __stack_pointer
-	i32.const	$push7=, __stack_pointer
-	i32.load	$push8=, 0($pop7)
+	i32.const	$push10=, 0
+	i32.const	$push7=, 0
+	i32.load	$push8=, __stack_pointer($pop7)
 	i32.const	$push9=, 16
 	i32.sub 	$push14=, $pop8, $pop9
-	i32.store	$0=, 0($pop10), $pop14
+	i32.store	$0=, __stack_pointer($pop10), $pop14
 	block
 	i32.const	$push0=, 4
 	i32.call	$push16=, malloc@FUNCTION, $pop0
@@ -43,11 +43,12 @@ f:                                      # @f
 	end_block                       # label0:
 	i32.const	$push6=, 256
 	i32.store16	$drop=, 2($1), $pop6
-	i32.const	$push13=, __stack_pointer
+	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $0, $pop11
-	i32.store	$drop=, 0($pop13), $pop12
-	return  	$1
+	i32.store	$drop=, __stack_pointer($pop13), $pop12
+	copy_local	$push17=, $1
+                                        # fallthrough-return: $pop17
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
@@ -60,12 +61,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push14=, __stack_pointer
-	i32.const	$push11=, __stack_pointer
-	i32.load	$push12=, 0($pop11)
+	i32.const	$push14=, 0
+	i32.const	$push11=, 0
+	i32.load	$push12=, __stack_pointer($pop11)
 	i32.const	$push13=, 16
 	i32.sub 	$push15=, $pop12, $pop13
-	i32.store	$0=, 0($pop14), $pop15
+	i32.store	$0=, __stack_pointer($pop14), $pop15
 	block
 	i32.const	$push1=, 4
 	i32.call	$push17=, malloc@FUNCTION, $pop1

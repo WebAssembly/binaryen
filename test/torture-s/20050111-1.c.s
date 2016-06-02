@@ -9,12 +9,12 @@ foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push4=, 0
-	i64.const	$push1=, 32
-	i64.shr_u	$push2=, $0, $pop1
-	i32.wrap/i64	$push3=, $pop2
-	i64.eqz 	$push0=, $0
-	i32.select	$push5=, $pop4, $pop3, $pop0
-	return  	$pop5
+	i64.const	$push0=, 32
+	i64.shr_u	$push1=, $0, $pop0
+	i32.wrap/i64	$push2=, $pop1
+	i64.eqz 	$push3=, $0
+	i32.select	$push5=, $pop4, $pop2, $pop3
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -30,7 +30,7 @@ bar:                                    # @bar
 	i64.extend_u/i32	$push0=, $0
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
@@ -43,7 +43,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end16
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

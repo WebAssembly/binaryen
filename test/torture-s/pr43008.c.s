@@ -13,7 +13,8 @@ my_alloc:                               # @my_alloc
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push1=, i
 	i32.store	$drop=, 0($pop2), $pop1
-	return  	$0
+	copy_local	$push4=, $0
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	my_alloc, .Lfunc_end0-my_alloc

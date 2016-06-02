@@ -9,15 +9,15 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i32.load	$push8=, 0($1)
 	tee_local	$push7=, $1=, $pop8
-	i32.const	$push2=, 1310720
-	i32.or  	$push3=, $pop7, $pop2
-	i32.const	$push4=, -1310721
-	i32.and 	$push5=, $1, $pop4
+	i32.const	$push4=, 1310720
+	i32.or  	$push5=, $pop7, $pop4
+	i32.const	$push2=, -1310721
+	i32.and 	$push3=, $1, $pop2
 	i32.const	$push0=, 1
 	i32.and 	$push1=, $1, $pop0
-	i32.select	$push6=, $pop3, $pop5, $pop1
+	i32.select	$push6=, $pop5, $pop3, $pop1
 	i32.store	$drop=, 0($0), $pop6
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

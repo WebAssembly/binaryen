@@ -10,7 +10,7 @@ test1:                                  # @test1
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
 	i32.select	$push1=, $0, $pop0, $0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -25,7 +25,7 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
 	i32.select	$push1=, $0, $pop0, $0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
@@ -44,7 +44,7 @@ test3:                                  # @test3
 	i32.const	$push5=, 1
 	i32.and 	$push1=, $0, $pop5
 	i32.select	$push4=, $pop0, $pop3, $pop1
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3

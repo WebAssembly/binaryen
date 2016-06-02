@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -24,7 +24,7 @@ bar:                                    # @bar
 	tee_local	$push2=, $1=, $pop3
 	i32.add 	$push1=, $0, $pop2
 	i32.store8	$drop=, 0($pop1), $1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

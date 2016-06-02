@@ -9,7 +9,8 @@ w:                                      # @w
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$2
+	copy_local	$push0=, $2
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	w, .Lfunc_end0-w
@@ -90,33 +91,34 @@ gitter:                                 # @gitter
 # BB#2:                                 # %f1.exit
 	f32.load	$push5=, 8($4)
 	f32.const	$push25=, 0x1p0
-	f32.ne  	$push8=, $pop5, $pop25
-	br_if   	0, $pop8        # 0: down to label2
+	f32.ne  	$push6=, $pop5, $pop25
+	br_if   	0, $pop6        # 0: down to label2
 # BB#3:                                 # %f1.exit
-	i32.const	$push6=, 12
-	i32.add 	$push7=, $4, $pop6
-	f32.load	$push4=, 0($pop7)
+	i32.const	$push7=, 12
+	i32.add 	$push8=, $4, $pop7
+	f32.load	$push4=, 0($pop8)
 	f32.const	$push26=, 0x1p0
 	f32.ne  	$push9=, $pop4, $pop26
 	br_if   	0, $pop9        # 0: down to label2
 # BB#4:                                 # %f2.exit
-	f32.load	$6=, 0($1)
 	i32.const	$push10=, 0
 	i32.store	$drop=, 0($3), $pop10
 	block
+	f32.load	$push28=, 0($1)
+	tee_local	$push27=, $6=, $pop28
 	f32.const	$push11=, 0x0p0
-	f32.gt  	$push12=, $6, $pop11
+	f32.gt  	$push12=, $pop27, $pop11
 	f32.ne  	$push13=, $6, $6
 	i32.or  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label3
 # BB#5:                                 # %if.then
-	f64.promote/f32	$push30=, $6
-	tee_local	$push29=, $8=, $pop30
+	f64.promote/f32	$push32=, $6
+	tee_local	$push31=, $8=, $pop32
 	f64.promote/f32	$push15=, $5
 	f64.const	$push16=, 0x1p-1
-	f64.mul 	$push28=, $pop15, $pop16
-	tee_local	$push27=, $7=, $pop28
-	f64.gt  	$push17=, $pop29, $pop27
+	f64.mul 	$push30=, $pop15, $pop16
+	tee_local	$push29=, $7=, $pop30
+	f64.gt  	$push17=, $pop31, $pop29
 	f64.ne  	$push19=, $8, $8
 	f64.ne  	$push18=, $7, $7
 	i32.or  	$push20=, $pop19, $pop18
@@ -144,21 +146,21 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, pos
-	i32.const	$push7=, __stack_pointer
-	i32.const	$push4=, __stack_pointer
-	i32.load	$push5=, 0($pop4)
+	i32.const	$push2=, pos
+	i32.const	$push7=, 0
+	i32.const	$push4=, 0
+	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
 	i32.sub 	$push12=, $pop5, $pop6
-	i32.store	$push14=, 0($pop7), $pop12
+	i32.store	$push14=, __stack_pointer($pop7), $pop12
 	tee_local	$push13=, $0=, $pop14
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $pop13, $pop8
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $0, $pop10
-	i32.const	$push0=, limit
-	f32.const	$push2=, 0x1p0
-	i32.call	$drop=, gitter@FUNCTION, $0, $pop1, $pop9, $pop11, $pop0, $pop2
+	i32.const	$push1=, limit
+	f32.const	$push0=, 0x1p0
+	i32.call	$drop=, gitter@FUNCTION, $0, $pop2, $pop9, $pop11, $pop1, $pop0
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable

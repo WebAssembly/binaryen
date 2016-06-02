@@ -47,9 +47,9 @@ bug:                                    # @bug
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$3=, 0
 	i32.const	$push10=, 1
-	i32.add 	$push2=, $0, $pop10
-	i32.lt_s	$push3=, $0, $2
-	i32.select	$push9=, $pop2, $2, $pop3
+	i32.add 	$push3=, $0, $pop10
+	i32.lt_s	$push2=, $0, $2
+	i32.select	$push9=, $pop3, $2, $pop2
 	tee_local	$push8=, $0=, $pop9
 	i32.mul 	$push4=, $pop8, $1
 	i32.const	$push7=, 36863
@@ -61,7 +61,7 @@ bug:                                    # @bug
 	unreachable
 .LBB1_4:                                # %while.end
 	end_block                       # label1:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug
@@ -74,7 +74,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %bug.exit
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

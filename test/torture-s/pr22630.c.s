@@ -13,12 +13,12 @@ bla:                                    # @bla
 	i32.eq  	$push2=, $pop1, $0
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then1
-	i32.const	$push3=, 0
-	i32.const	$push4=, 1
-	i32.store	$drop=, j($pop3), $pop4
+	i32.const	$push4=, 0
+	i32.const	$push3=, 1
+	i32.store	$drop=, j($pop4), $pop3
 .LBB0_2:                                # %if.end2
 	end_block                       # label0:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	bla, .Lfunc_end0-bla
@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$push0=, 1
 	i32.store	$drop=, j($pop1), $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

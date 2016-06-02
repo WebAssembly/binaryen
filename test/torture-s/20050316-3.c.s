@@ -11,7 +11,7 @@ test1:                                  # @test1
 	i32.add 	$push1=, $0, $pop0
 	i32.store	$drop=, 0($pop1), $2
 	i32.store	$drop=, 0($0), $1
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -29,7 +29,7 @@ test2:                                  # @test2
 	i64.const	$push1=, 32
 	i64.shl 	$push2=, $pop0, $pop1
 	i64.or  	$push4=, $pop3, $pop2
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
@@ -42,7 +42,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end13
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

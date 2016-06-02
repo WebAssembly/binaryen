@@ -15,16 +15,16 @@ foo:                                    # @foo
 	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push5=, 4
-	i32.add 	$push2=, $0, $pop5
-	i32.store	$drop=, 0($pop2), $1
-	i32.const	$push1=, 8
-	i32.add 	$push3=, $0, $pop1
+	i32.add 	$push1=, $0, $pop5
+	i32.store	$drop=, 0($pop1), $1
+	i32.const	$push2=, 8
+	i32.add 	$push3=, $0, $pop2
 	return  	$pop3
 .LBB0_2:
 	end_block                       # label0:
 	i32.const	$push6=, 4
 	i32.add 	$push4=, $0, $pop6
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

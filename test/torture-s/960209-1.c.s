@@ -8,13 +8,13 @@ f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, -1
+	i32.const	$push0=, -1
 	i32.const	$push7=, 0
-	i32.select	$1=, $pop1, $pop7, $1
+	i32.select	$1=, $pop0, $pop7, $1
 	block
 	i32.const	$push6=, 0
-	i32.load	$push0=, yabba($pop6)
-	br_if   	0, $pop0        # 0: down to label0
+	i32.load	$push1=, yabba($pop6)
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end24
 	i32.const	$push8=, 0
 	i32.const	$push2=, 255
@@ -24,7 +24,8 @@ f:                                      # @f
 	i32.store	$drop=, a_ptr($pop8), $pop5
 .LBB0_2:                                # %cleanup
 	end_block                       # label0:
-	return  	$1
+	copy_local	$push9=, $1
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

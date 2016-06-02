@@ -23,7 +23,7 @@ f:                                      # @f
 .LBB0_2:                                # %return
 	end_block                       # label0:
 	i32.const	$push3=, 0
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

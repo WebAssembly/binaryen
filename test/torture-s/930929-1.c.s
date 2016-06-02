@@ -12,7 +12,7 @@ sub1:                                   # @sub1
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, -5
 	i32.add 	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	sub1, .Lfunc_end0-sub1
@@ -29,7 +29,7 @@ sub2:                                   # @sub2
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 5
 	i32.add 	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	sub2, .Lfunc_end1-sub2
@@ -43,7 +43,7 @@ sub3:                                   # @sub3
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, -5
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	sub3, .Lfunc_end2-sub3
@@ -57,7 +57,7 @@ sub4:                                   # @sub4
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 5
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	sub4, .Lfunc_end3-sub4

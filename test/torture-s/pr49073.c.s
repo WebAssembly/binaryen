@@ -29,10 +29,10 @@ main:                                   # @main
 .LBB0_3:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label4:
-	i32.const	$push14=, 3
-	i32.eq  	$2=, $0, $pop14
-	i32.const	$push13=, 4
-	i32.add 	$1=, $1, $pop13
+	i32.const	$push14=, 4
+	i32.add 	$1=, $1, $pop14
+	i32.const	$push13=, 3
+	i32.eq  	$2=, $0, $pop13
 	i32.const	$push12=, 7
 	i32.lt_s	$push2=, $0, $pop12
 	br_if   	0, $pop2        # 0: up to label2

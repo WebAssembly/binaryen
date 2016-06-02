@@ -11,7 +11,7 @@ f1:                                     # @f1
 	i32.const	$push1=, 2147483647
 	i32.const	$push0=, 2147483646
 	i32.select	$push2=, $pop1, $pop0, $0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -27,7 +27,7 @@ f2:                                     # @f2
 	i64.const	$push1=, 9223372036854775807
 	i64.const	$push0=, 9223372036854775806
 	i64.select	$push2=, $pop1, $pop0, $0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2

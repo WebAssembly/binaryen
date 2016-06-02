@@ -6,7 +6,7 @@
 	.type	bar,@function
 bar:                                    # @bar
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
@@ -86,7 +86,7 @@ f:                                      # @f
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %f.exit
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo

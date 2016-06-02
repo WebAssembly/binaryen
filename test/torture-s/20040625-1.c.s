@@ -15,7 +15,8 @@ maybe_next:                             # @maybe_next
 	i32.load	$0=, 0($0):p2align=0
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	return  	$0
+	copy_local	$push1=, $0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	maybe_next, .Lfunc_end0-maybe_next
@@ -28,20 +29,21 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push7=, __stack_pointer
-	i32.const	$push4=, __stack_pointer
-	i32.load	$push5=, 0($pop4)
+	block
+	i32.const	$push7=, 0
+	i32.const	$push4=, 0
+	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
 	i32.sub 	$push10=, $pop5, $pop6
-	i32.store	$push12=, 0($pop7), $pop10
+	i32.store	$push14=, __stack_pointer($pop7), $pop10
+	tee_local	$push13=, $0=, $pop14
+	i32.store	$push12=, 8($pop13), $0
 	tee_local	$push11=, $0=, $pop12
-	i32.store	$drop=, 8($pop11), $0
-	block
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8
 	i32.const	$push0=, 1
 	i32.call	$push1=, maybe_next@FUNCTION, $pop9, $pop0
-	i32.ne  	$push2=, $0, $pop1
+	i32.ne  	$push2=, $pop11, $pop1
 	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0

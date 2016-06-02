@@ -59,7 +59,8 @@ CallFunctionRec:                        # @CallFunctionRec
 	return  	$pop4
 .LBB1_3:                                # %return
 	end_block                       # label2:
-	return  	$1
+	copy_local	$push6=, $1
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end1:
 	.size	CallFunctionRec, .Lfunc_end1-CallFunctionRec
@@ -79,7 +80,7 @@ storemax:                               # @storemax
 	i32.store	$drop=, max($pop3), $0
 .LBB2_2:                                # %if.end
 	end_block                       # label3:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	storemax, .Lfunc_end2-storemax

@@ -10,7 +10,7 @@ simple_vol_global:                      # @simple_vol_global
 	i32.load	$drop=, glob_vol_ptr_int($pop0)
 	i32.const	$push1=, 0
 	i32.load	$drop=, glob_vol_ptr_vol_int($pop1)
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	simple_vol_global, .Lfunc_end0-simple_vol_global
@@ -25,7 +25,7 @@ simple_vol_file:                        # @simple_vol_file
 	i32.load	$drop=, stat_vol_ptr_int($pop0)
 	i32.const	$push1=, 0
 	i32.load	$drop=, stat_vol_ptr_vol_int($pop1)
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	simple_vol_file, .Lfunc_end1-simple_vol_file
@@ -92,7 +92,7 @@ expr_vol_global:                        # @expr_vol_global
 	i32.load	$drop=, glob_vol_ptr_vol_int($pop6)
 	i32.const	$push5=, 0
 	i32.load	$drop=, glob_vol_int($pop5)
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	expr_vol_global, .Lfunc_end2-expr_vol_global
@@ -109,8 +109,8 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.const	$push4=, 0
 	i32.const	$push1=, str
-	i32.store	$push0=, str+16($pop4), $pop1
-	i32.store	$drop=, vol_str+16($pop2), $pop0
+	i32.store	$push0=, vol_str+16($pop4), $pop1
+	i32.store	$drop=, str+16($pop2), $pop0
 	call    	expr_vol_global@FUNCTION
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3

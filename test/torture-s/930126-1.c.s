@@ -6,17 +6,16 @@
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32
-	.local  	i64
 # BB#0:                                 # %entry
-	i64.load8_u	$2=, 0($1)
-	i32.const	$push2=, 4
-	i32.add 	$push3=, $0, $pop2
-	i64.const	$push4=, 205
-	i64.store8	$drop=, 0($pop3), $pop4
-	i64.const	$push0=, 4010947584
-	i64.or  	$push1=, $2, $pop0
-	i64.store32	$drop=, 0($0), $pop1
-	return
+	i32.const	$push0=, 4
+	i32.add 	$push1=, $0, $pop0
+	i64.const	$push2=, 205
+	i64.store8	$drop=, 0($pop1), $pop2
+	i64.load8_u	$push3=, 0($1)
+	i64.const	$push4=, 4010947584
+	i64.or  	$push5=, $pop3, $pop4
+	i64.store32	$drop=, 0($0), $pop5
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

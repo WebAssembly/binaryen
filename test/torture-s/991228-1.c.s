@@ -7,25 +7,25 @@
 signbit:                                # @signbit
 	.param  	f64
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push8=, 0
+	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push10=, 16
+	i32.sub 	$push14=, $pop9, $pop10
+	tee_local	$push13=, $1=, $pop14
+	f64.store	$drop=, 8($pop13), $0
+	i32.const	$push11=, 8
+	i32.add 	$push12=, $1, $pop11
 	i32.const	$push0=, 0
-	i32.load	$1=, endianness_test($pop0)
-	i32.const	$push7=, __stack_pointer
-	i32.load	$push8=, 0($pop7)
-	i32.const	$push9=, 16
-	i32.sub 	$push13=, $pop8, $pop9
-	tee_local	$push12=, $2=, $pop13
-	f64.store	$drop=, 8($pop12), $0
-	i32.const	$push10=, 8
-	i32.add 	$push11=, $2, $pop10
-	i32.const	$push1=, 2
-	i32.shl 	$push2=, $1, $pop1
-	i32.add 	$push3=, $pop11, $pop2
-	i32.load	$push4=, 0($pop3)
-	i32.const	$push5=, 31
-	i32.shr_u	$push6=, $pop4, $pop5
-	return  	$pop6
+	i32.load	$push1=, endianness_test($pop0)
+	i32.const	$push2=, 2
+	i32.shl 	$push3=, $pop1, $pop2
+	i32.add 	$push4=, $pop12, $pop3
+	i32.load	$push5=, 0($pop4)
+	i32.const	$push6=, 31
+	i32.shr_u	$push7=, $pop5, $pop6
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end0:
 	.size	signbit, .Lfunc_end0-signbit
@@ -38,12 +38,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push12=, __stack_pointer
-	i32.const	$push9=, __stack_pointer
-	i32.load	$push10=, 0($pop9)
+	i32.const	$push12=, 0
+	i32.const	$push9=, 0
+	i32.load	$push10=, __stack_pointer($pop9)
 	i32.const	$push11=, 16
 	i32.sub 	$push15=, $pop10, $pop11
-	i32.store	$0=, 0($pop12), $pop15
+	i32.store	$0=, __stack_pointer($pop12), $pop15
 	block
 	i32.const	$push19=, 0
 	i32.load	$push0=, endianness_test($pop19)

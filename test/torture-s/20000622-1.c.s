@@ -39,7 +39,8 @@ bar:                                    # @bar
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	return  	$1
+	copy_local	$push0=, $1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

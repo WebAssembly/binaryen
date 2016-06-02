@@ -11,7 +11,7 @@ baz:                                    # @baz
 	#APP
 	#NO_APP
 	i32.load	$push0=, 0($0)
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
@@ -25,7 +25,7 @@ f1:                                     # @f1
 # BB#0:                                 # %entry
 	i32.call	$drop=, bar@FUNCTION
 	i32.const	$push0=, 17
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
@@ -40,7 +40,8 @@ bar:                                    # @bar
 	i32.call	$drop=, baz@FUNCTION, $pop0
 .Ltmp0:                                 # Block address taken
 # BB#1:                                 # %addr
-	return  	$0
+	copy_local	$push1=, $0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar
@@ -54,7 +55,7 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	i32.call	$drop=, bar@FUNCTION
 	i32.const	$push0=, 17
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
@@ -71,7 +72,7 @@ main:                                   # @main
 	i32.call	$drop=, f2@FUNCTION
 	i32.call	$drop=, f2@FUNCTION
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main

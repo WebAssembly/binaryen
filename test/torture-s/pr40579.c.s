@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.const	$push3=, 3
 	call    	foo@FUNCTION, $pop3
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

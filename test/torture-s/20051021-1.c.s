@@ -14,7 +14,7 @@ foo1:                                   # @foo1
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$drop=, count($pop0), $pop3
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo1, .Lfunc_end0-foo1
@@ -33,7 +33,7 @@ foo2:                                   # @foo2
 	i32.add 	$push3=, $pop1, $pop2
 	i32.store	$drop=, count($pop0), $pop3
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	foo2, .Lfunc_end1-foo2

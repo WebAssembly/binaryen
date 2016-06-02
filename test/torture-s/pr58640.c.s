@@ -19,20 +19,20 @@ main:                                   # @main
 	i32.load	$push2=, d($pop10)
 	br_if   	0, $pop2        # 0: down to label1
 # BB#2:                                 # %for.body3.i.preheader
-	i32.const	$push6=, 0
-	i32.const	$push7=, 1
-	i32.store	$drop=, b($pop6), $pop7
+	i32.const	$push7=, 0
+	i32.const	$push6=, 1
+	i32.store	$drop=, b($pop7), $pop6
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11
 	unreachable
 .LBB0_3:                                # %for.cond4.preheader.split.i
 	end_block                       # label1:
-	i32.const	$push3=, 0
-	i32.const	$push4=, 1
-	i32.store	$drop=, e($pop3), $pop4
+	i32.const	$push4=, 0
+	i32.const	$push3=, 4
+	i32.store	$drop=, c($pop4), $pop3
 	i32.const	$push12=, 0
-	i32.const	$push5=, 4
-	i32.store	$drop=, c($pop12), $pop5
+	i32.const	$push5=, 1
+	i32.store	$drop=, e($pop12), $pop5
 .LBB0_4:                                # %foo.exit
 	end_block                       # label0:
 	i32.const	$push13=, 0

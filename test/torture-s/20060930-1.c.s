@@ -50,13 +50,14 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	i32.call	$drop=, bar@FUNCTION, $1, $0
-	i32.const	$push13=, -1
-	i32.add 	$1=, $1, $pop13
-	br_if   	0, $1           # 0: up to label2
+	i32.const	$push15=, -1
+	i32.add 	$push14=, $1, $pop15
+	tee_local	$push13=, $1=, $pop14
+	br_if   	0, $pop13       # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop                        # label3:
 	end_block                       # label1:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -72,7 +73,7 @@ main:                                   # @main
 	i32.const	$push2=, 1
 	call    	foo@FUNCTION, $pop0, $pop2
 	i32.const	$push1=, 0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

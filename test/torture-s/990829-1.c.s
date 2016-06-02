@@ -13,7 +13,7 @@ test:                                   # @test
 	f64.add 	$push2=, $0, $pop1
 	f64.mul 	$push3=, $pop2, $1
 	f64.div 	$push4=, $pop0, $pop3
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test

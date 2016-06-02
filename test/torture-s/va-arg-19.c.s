@@ -8,17 +8,18 @@ vafunction:                             # @vafunction
 	.param  	i32, i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push48=, __stack_pointer
-	i32.const	$push45=, __stack_pointer
-	i32.load	$push46=, 0($pop45)
+	i32.const	$push48=, 0
+	i32.const	$push45=, 0
+	i32.load	$push46=, __stack_pointer($pop45)
 	i32.const	$push47=, 16
 	i32.sub 	$push52=, $pop46, $pop47
-	i32.store	$4=, 0($pop48), $pop52
+	i32.store	$push56=, __stack_pointer($pop48), $pop52
+	tee_local	$push55=, $4=, $pop56
 	i32.store	$push54=, 12($4), $1
 	tee_local	$push53=, $1=, $pop54
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $pop53, $pop0
-	i32.store	$2=, 12($4), $pop1
+	i32.store	$2=, 12($pop55), $pop1
 	block
 	i32.load	$push2=, 0($1)
 	i32.const	$push3=, 1
@@ -89,10 +90,10 @@ vafunction:                             # @vafunction
 	i32.ne  	$push44=, $pop42, $pop43
 	br_if   	0, $pop44       # 0: down to label0
 # BB#9:                                 # %if.end41
-	i32.const	$push51=, __stack_pointer
+	i32.const	$push51=, 0
 	i32.const	$push49=, 16
 	i32.add 	$push50=, $4, $pop49
-	i32.store	$drop=, 0($pop51), $pop50
+	i32.store	$drop=, __stack_pointer($pop51), $pop50
 	return
 .LBB0_10:                               # %if.then40
 	end_block                       # label0:
@@ -110,12 +111,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push15=, __stack_pointer
-	i32.const	$push12=, __stack_pointer
-	i32.load	$push13=, 0($pop12)
+	i32.const	$push15=, 0
+	i32.const	$push12=, 0
+	i32.load	$push13=, __stack_pointer($pop12)
 	i32.const	$push14=, 48
 	i32.sub 	$push16=, $pop13, $pop14
-	i32.store	$push18=, 0($pop15), $pop16
+	i32.store	$push18=, __stack_pointer($pop15), $pop16
 	tee_local	$push17=, $0=, $pop18
 	i32.const	$push0=, 32
 	i32.add 	$push1=, $pop17, $pop0

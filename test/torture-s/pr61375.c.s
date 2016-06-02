@@ -16,7 +16,7 @@ uint128_central_bitsi_ior:              # @uint128_central_bitsi_ior
 	i64.const	$push5=, 65535
 	i64.and 	$push6=, $pop4, $pop5
 	i64.or  	$push7=, $pop6, $2
-	return  	$pop7
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end0:
 	.size	uint128_central_bitsi_ior, .Lfunc_end0-uint128_central_bitsi_ior

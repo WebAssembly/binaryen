@@ -11,7 +11,7 @@ test:                                   # @test
 	i32.const	$push0=, .L.str-1
 	i32.add 	$push1=, $0, $pop0
 	i32.load8_s	$push2=, 0($pop1)
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test

@@ -9,7 +9,8 @@ g1:                                     # @g1
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$2
+	copy_local	$push0=, $2
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	g1, .Lfunc_end0-g1
@@ -73,16 +74,14 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %alabel.i
-	i32.const	$push1=, 0
-	i32.load	$0=, parsefile($pop1)
-	i32.const	$push4=, 0
-	i32.const	$push3=, 0
-	i32.store	$drop=, el($pop4), $pop3
-	i32.const	$push2=, -559038737
-	i32.store	$push0=, 0($0), $pop2
-	i32.call	$drop=, g2@FUNCTION, $pop0
+	i32.const	$push2=, 0
+	i32.const	$push5=, 0
+	i32.store	$push0=, el($pop2), $pop5
+	i32.load	$push3=, parsefile($pop0)
+	i32.const	$push4=, -559038737
+	i32.store	$push1=, 0($pop3), $pop4
+	i32.call	$drop=, g2@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end3:

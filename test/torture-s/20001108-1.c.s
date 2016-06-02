@@ -15,7 +15,7 @@ signed_poly:                            # @signed_poly
 	i64.extend_s/i32	$push3=, $1
 	i64.mul 	$push4=, $pop2, $pop3
 	i64.add 	$push5=, $pop4, $0
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	signed_poly, .Lfunc_end0-signed_poly
@@ -33,7 +33,7 @@ unsigned_poly:                          # @unsigned_poly
 	i64.and 	$push1=, $0, $pop0
 	i64.mul 	$push3=, $pop2, $pop1
 	i64.add 	$push4=, $pop3, $0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	unsigned_poly, .Lfunc_end1-unsigned_poly

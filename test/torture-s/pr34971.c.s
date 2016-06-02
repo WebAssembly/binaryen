@@ -14,11 +14,11 @@ test1:                                  # @test1
 	i64.const	$push2=, 1099511627775
 	i64.and 	$push10=, $pop1, $pop2
 	tee_local	$push9=, $1=, $pop10
-	i64.const	$push3=, 8
-	i64.shl 	$push4=, $pop9, $pop3
-	i64.const	$push5=, 32
-	i64.shr_u	$push6=, $1, $pop5
-	i64.or  	$push7=, $pop4, $pop6
+	i64.const	$push5=, 8
+	i64.shl 	$push6=, $pop9, $pop5
+	i64.const	$push3=, 32
+	i64.shr_u	$push4=, $1, $pop3
+	i64.or  	$push7=, $pop6, $pop4
 	i64.ne  	$push8=, $pop7, $0
 	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end

@@ -9,7 +9,7 @@ ff:                                     # @ff
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	ff, .Lfunc_end0-ff
@@ -46,7 +46,7 @@ f:                                      # @f
 	#NO_APP
 .LBB1_4:                                # %for.inc.1
 	end_block                       # label1:
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push0=, -1
 	call    	f@FUNCTION, $pop0
 	i32.const	$push1=, 0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

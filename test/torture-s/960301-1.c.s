@@ -26,7 +26,7 @@ bar:                                    # @bar
 	i32.const	$push8=, 1
 	i32.const	$push7=, 2
 	i32.select	$push9=, $pop8, $pop7, $0
-	return  	$pop9
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar

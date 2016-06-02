@@ -17,7 +17,8 @@ main:                                   # @main
 	tee_local	$push4=, $0=, $pop5
 	i32.call	$2=, foo@FUNCTION, $pop3, $pop4
 	call    	free@FUNCTION, $0
-	return  	$2
+	copy_local	$push6=, $2
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
@@ -32,7 +33,7 @@ foo:                                    # @foo
 	i32.add 	$push1=, $1, $pop0
 	i32.select	$push2=, $pop1, $1, $0
 	i32.load	$push3=, 0($pop2)
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

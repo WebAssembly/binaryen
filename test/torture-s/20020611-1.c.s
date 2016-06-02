@@ -14,7 +14,7 @@ x:                                      # @x
 	i32.lt_u	$push4=, $pop2, $pop3
 	i32.store	$push0=, p($pop6), $pop4
 	i32.store	$drop=, k($pop1), $pop0
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	x, .Lfunc_end0-x

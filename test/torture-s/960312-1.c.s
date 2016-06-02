@@ -9,25 +9,26 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.load	$push4=, 8($0)
-	tee_local	$push3=, $7=, $pop4
-	i32.load	$1=, 4($pop3)
-	i32.load	$2=, 8($7)
-	i32.load	$3=, 0($7)
 	i32.const	$push0=, 16
-	i32.add 	$push2=, $0, $pop0
+	i32.add 	$push4=, $0, $pop0
+	tee_local	$push3=, $3=, $pop4
+	i32.load	$4=, 0($pop3)
+	i32.load	$5=, 12($0)
+	i32.load	$push2=, 8($0)
 	tee_local	$push1=, $6=, $pop2
-	i32.load	$5=, 0($pop1)
-	i32.load	$4=, 12($0)
+	i32.load	$7=, 0($pop1)
+	i32.load	$2=, 8($6)
+	i32.load	$1=, 4($6)
 	#APP
 	#NO_APP
-	i32.store	$drop=, 8($7), $3
-	i32.store	$drop=, 0($7), $5
 	i32.store	$drop=, 0($6), $4
+	i32.store	$drop=, 8($6), $7
+	i32.store	$drop=, 0($0), $6
 	i32.store	$drop=, 12($0), $2
+	i32.store	$drop=, 0($3), $5
 	i32.store	$drop=, 4($0), $1
-	i32.store	$drop=, 0($0), $7
-	return  	$0
+	copy_local	$push5=, $0
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -41,11 +42,11 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.load	$0=, main.sc+4($pop8)
+	i32.load	$2=, main.sc($pop8)
 	i32.const	$push7=, 0
 	i32.load	$1=, main.sc+8($pop7)
 	i32.const	$push6=, 0
-	i32.load	$2=, main.sc($pop6)
+	i32.load	$0=, main.sc+4($pop6)
 	#APP
 	#NO_APP
 	i32.const	$push5=, 0

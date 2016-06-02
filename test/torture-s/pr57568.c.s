@@ -6,27 +6,28 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
 	block
 	i32.const	$push3=, 0
 	i32.load	$push0=, b($pop3)
-	i32.eqz 	$push8=, $pop0
-	br_if   	0, $pop8        # 0: down to label1
+	i32.eqz 	$push10=, $pop0
+	br_if   	0, $pop10       # 0: down to label1
 # BB#1:                                 # %land.lhs.true
-	i32.const	$push6=, 0
-	i32.load	$0=, c($pop6)
+	i32.const	$push8=, 0
+	i32.load	$push7=, c($pop8)
+	tee_local	$push6=, $0=, $pop7
 	i32.load	$push5=, 0($0)
-	tee_local	$push4=, $1=, $pop5
+	tee_local	$push4=, $0=, $pop5
 	i32.const	$push1=, 1
 	i32.shl 	$push2=, $pop4, $pop1
-	i32.store	$drop=, 0($0), $pop2
-	br_if   	1, $1           # 1: down to label0
+	i32.store	$drop=, 0($pop6), $pop2
+	br_if   	1, $0           # 1: down to label0
 .LBB0_2:                                # %if.end
 	end_block                       # label1:
-	i32.const	$push7=, 0
-	return  	$pop7
+	i32.const	$push9=, 0
+	return  	$pop9
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

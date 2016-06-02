@@ -9,7 +9,7 @@ compare:                                # @compare
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.ne  	$push0=, $0, $1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	compare, .Lfunc_end0-compare

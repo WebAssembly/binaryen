@@ -9,14 +9,14 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.load	$0=, dummy($pop7)
 	i32.const	$push6=, 0
-	i32.const	$push5=, 0
-	i32.load	$push4=, count($pop5)
-	tee_local	$push3=, $1=, $pop4
+	i32.load	$push5=, count($pop6)
+	tee_local	$push4=, $1=, $pop5
 	i32.const	$push0=, 1
-	i32.add 	$push1=, $pop3, $pop0
-	i32.store	$drop=, count($pop6), $pop1
+	i32.add 	$push1=, $pop4, $pop0
+	i32.store	$drop=, count($pop7), $pop1
+	i32.const	$push3=, 0
+	i32.load	$0=, dummy($pop3)
 	#APP
 	#NO_APP
 	i32.const	$push2=, 0

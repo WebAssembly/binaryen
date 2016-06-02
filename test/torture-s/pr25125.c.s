@@ -23,7 +23,7 @@ f:                                      # @f
 	end_block                       # label0:
 	i32.const	$push4=, 65535
 	i32.and 	$push5=, $1, $pop4
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

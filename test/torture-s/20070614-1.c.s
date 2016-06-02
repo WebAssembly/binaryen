@@ -8,10 +8,10 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block
-	f64.load	$push2=, 0($0)
+	f64.load	$push3=, 0($0)
 	i32.const	$push6=, 0
-	f64.load	$push3=, v($pop6)
-	f64.ne  	$push4=, $pop2, $pop3
+	f64.load	$push2=, v($pop6)
+	f64.ne  	$push4=, $pop3, $pop2
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %entry
 	f64.load	$push0=, 8($0)
@@ -35,15 +35,14 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32
-	.local  	i64
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i64.load	$2=, v+8($pop0)
-	i32.const	$push2=, 0
-	i64.load	$push1=, v($pop2)
+	i64.load	$push1=, v($pop0)
 	i64.store	$drop=, 0($0), $pop1
-	i64.store	$drop=, 8($0), $2
-	return
+	i32.const	$push3=, 0
+	i64.load	$push2=, v+8($pop3)
+	i64.store	$drop=, 8($0), $pop2
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

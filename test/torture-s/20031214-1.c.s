@@ -7,7 +7,7 @@
 b:                                      # @b
 	.param  	i32
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	b, .Lfunc_end0-b
@@ -18,24 +18,28 @@ b:                                      # @b
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$0=, k($pop0)
+	i32.const	$push17=, 0
+	i32.load	$push16=, k($pop17)
+	tee_local	$push15=, $1=, $pop16
+	i32.const	$push14=, 0
+	i32.load	$push13=, g+8($pop14)
+	tee_local	$push12=, $0=, $pop13
+	i32.gt_s	$push1=, $1, $0
+	i32.select	$push11=, $pop15, $pop12, $pop1
+	tee_local	$push10=, $1=, $pop11
 	i32.const	$push9=, 0
-	i32.load	$1=, g+8($pop9)
-	i32.const	$push8=, 0
-	i32.load	$2=, g+12($pop8)
-	i32.gt_s	$push1=, $0, $1
-	i32.select	$0=, $0, $1, $pop1
-	i32.const	$push7=, 0
-	i32.gt_s	$push2=, $0, $2
-	i32.select	$push3=, $0, $2, $pop2
+	i32.load	$push8=, g+12($pop9)
+	tee_local	$push7=, $0=, $pop8
+	i32.gt_s	$push2=, $1, $0
+	i32.select	$push3=, $pop10, $pop7, $pop2
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$drop=, k($pop7), $pop5
+	i32.store	$drop=, k($pop0), $pop5
 	i32.const	$push6=, 0
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

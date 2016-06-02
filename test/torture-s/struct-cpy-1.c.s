@@ -16,7 +16,7 @@ ini:                                    # @ini
 	i32.const	$push5=, 0
 	i64.const	$push4=, 17179869187
 	i64.store	$drop=, pty+48($pop5), $pop4
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	ini, .Lfunc_end0-ini
@@ -39,7 +39,7 @@ main:                                   # @main
 	i64.const	$push4=, 17179869187
 	i64.store	$drop=, pty+48($pop6), $pop4
 	i32.const	$push5=, 0
-	return  	$pop5
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

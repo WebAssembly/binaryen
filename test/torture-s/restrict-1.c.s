@@ -7,13 +7,13 @@
 foo:                                    # @foo
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.load	$push1=, 0($2)
-	i32.load	$push0=, 0($1)
-	i32.add 	$push2=, $pop1, $pop0
-	i32.store	$drop=, 0($0), $pop2
-	i32.const	$push3=, 0
-	i32.store	$drop=, 4($0), $pop3
-	return
+	i32.const	$push0=, 0
+	i32.store	$drop=, 4($0), $pop0
+	i32.load	$push2=, 0($2)
+	i32.load	$push1=, 0($1)
+	i32.add 	$push3=, $pop2, $pop1
+	i32.store	$drop=, 0($0), $pop3
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -54,7 +54,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %bar.exit
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

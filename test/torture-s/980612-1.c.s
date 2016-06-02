@@ -8,7 +8,7 @@ g:                                      # @g
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, f
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -21,7 +21,7 @@ h:                                      # @h
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, -1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	h, .Lfunc_end1-h
@@ -32,26 +32,25 @@ h:                                      # @h
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, 0
-	i32.load8_u	$0=, f($pop6)
-	i32.const	$push5=, 0
+	i32.const	$push7=, 0
 	i32.const	$push0=, 255
-	i32.store8	$drop=, f+1($pop5), $pop0
+	i32.store8	$drop=, f+1($pop7), $pop0
 	block
-	i32.const	$push1=, 111
-	i32.and 	$push2=, $0, $pop1
-	i32.const	$push3=, 2
-	i32.gt_u	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.const	$push6=, 0
+	i32.load8_u	$push1=, f($pop6)
+	i32.const	$push2=, 111
+	i32.and 	$push3=, $pop1, $pop2
+	i32.const	$push4=, 2
+	i32.gt_u	$push5=, $pop3, $pop4
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_2:                                # %if.end
 	end_block                       # label0:
-	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.const	$push8=, 0
+	call    	exit@FUNCTION, $pop8
 	unreachable
 	.endfunc
 .Lfunc_end2:

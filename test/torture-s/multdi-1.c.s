@@ -11,7 +11,7 @@ mpy:                                    # @mpy
 	i64.extend_s/i32	$push1=, $1
 	i64.extend_s/i32	$push0=, $0
 	i64.mul 	$push2=, $pop1, $pop0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	mpy, .Lfunc_end0-mpy
@@ -27,7 +27,7 @@ main:                                   # @main
 	i64.const	$push0=, -1
 	i64.store	$drop=, mpy_res($pop1), $pop0
 	i32.const	$push2=, 0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

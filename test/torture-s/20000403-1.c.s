@@ -10,11 +10,11 @@ main:                                   # @main
 	block
 	i32.const	$push8=, 0
 	i32.load	$push0=, aa($pop8)
-	i32.const	$push2=, 4096
-	i32.add 	$push3=, $pop0, $pop2
+	i32.const	$push1=, 4096
+	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push7=, 0
-	i32.load	$push1=, bb($pop7)
-	i32.sub 	$push4=, $pop3, $pop1
+	i32.load	$push3=, bb($pop7)
+	i32.sub 	$push4=, $pop2, $pop3
 	i32.const	$push6=, 0
 	i32.le_s	$push5=, $pop4, $pop6
 	br_if   	0, $pop5        # 0: down to label0
@@ -42,7 +42,7 @@ seqgt:                                  # @seqgt
 	i32.sub 	$push1=, $pop0, $2
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	seqgt, .Lfunc_end1-seqgt
@@ -59,7 +59,7 @@ seqgt2:                                 # @seqgt2
 	i32.sub 	$push1=, $pop0, $2
 	i32.const	$push2=, 0
 	i32.gt_s	$push3=, $pop1, $pop2
-	return  	$pop3
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end2:
 	.size	seqgt2, .Lfunc_end2-seqgt2

@@ -13,19 +13,20 @@ foo:                                    # @foo
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i32.const	$push8=, 1
-	i32.shl 	$push0=, $pop8, $2
+	i32.const	$push10=, 1
+	i32.shl 	$push0=, $pop10, $2
 	i32.eq  	$push1=, $pop0, $0
 	i32.select	$1=, $2, $1, $pop1
-	i32.const	$push7=, 1
-	i32.add 	$2=, $2, $pop7
+	i32.const	$push9=, 1
+	i32.add 	$push8=, $2, $pop9
+	tee_local	$push7=, $2=, $pop8
 	i32.const	$push6=, 9
-	i32.gt_s	$push2=, $2, $pop6
+	i32.gt_s	$push2=, $pop7, $pop6
 	br_if   	1, $pop2        # 1: down to label1
 # BB#2:                                 # %for.body
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push9=, 0
-	i32.lt_s	$push3=, $1, $pop9
+	i32.const	$push11=, 0
+	i32.lt_s	$push3=, $1, $pop11
 	br_if   	0, $pop3        # 0: up to label0
 .LBB0_3:                                # %for.end
 	end_loop                        # label1:

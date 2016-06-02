@@ -9,7 +9,8 @@ sub3:                                   # @sub3
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$1
+	copy_local	$push0=, $1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	sub3, .Lfunc_end0-sub3

@@ -8,12 +8,12 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.gt_s	$push1=, $0, $pop0
-	i32.const	$push2=, 31
-	i32.shr_u	$push3=, $0, $pop2
-	i32.sub 	$push4=, $pop1, $pop3
-	return  	$pop4
+	i32.const	$push2=, 0
+	i32.gt_s	$push3=, $0, $pop2
+	i32.const	$push0=, 31
+	i32.shr_u	$push1=, $0, $pop0
+	i32.sub 	$push4=, $pop3, $pop1
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

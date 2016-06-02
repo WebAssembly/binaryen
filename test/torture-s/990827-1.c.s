@@ -9,15 +9,15 @@ test:                                   # @test
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	i32.and 	$push1=, $1, $pop0
+	i32.and 	$push2=, $1, $pop0
 	i32.const	$push8=, 1
-	i32.add 	$push3=, $pop1, $pop8
+	i32.add 	$push3=, $pop2, $pop8
 	i32.const	$push7=, 1
 	i32.shr_u	$push4=, $pop3, $pop7
 	i32.const	$push6=, 1
-	i32.shr_u	$push2=, $0, $pop6
-	i32.add 	$push5=, $pop4, $pop2
-	return  	$pop5
+	i32.shr_u	$push1=, $0, $pop6
+	i32.add 	$push5=, $pop4, $pop1
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test

@@ -14,7 +14,7 @@ foo:                                    # @foo
 	i32.load8_u	$push1=, next_buffer($pop5)
 	i32.select	$push3=, $pop2, $pop0, $pop1
 	i32.add 	$push4=, $pop3, $0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -25,7 +25,7 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar

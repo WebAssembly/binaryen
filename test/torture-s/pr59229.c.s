@@ -51,12 +51,12 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push9=, __stack_pointer
-	i32.const	$push6=, __stack_pointer
-	i32.load	$push7=, 0($pop6)
+	i32.const	$push9=, 0
+	i32.const	$push6=, 0
+	i32.load	$push7=, __stack_pointer($pop6)
 	i32.const	$push8=, 16
 	i32.sub 	$push17=, $pop7, $pop8
-	i32.store	$2=, 0($pop9), $pop17
+	i32.store	$2=, __stack_pointer($pop9), $pop17
 	block
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
@@ -74,11 +74,11 @@ foo:                                    # @foo
 	call    	bar@FUNCTION, $pop16
 .LBB1_2:                                # %return
 	end_block                       # label1:
-	i32.const	$push12=, __stack_pointer
+	i32.const	$push12=, 0
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $2, $pop10
-	i32.store	$drop=, 0($pop12), $pop11
-	return
+	i32.store	$drop=, __stack_pointer($pop12), $pop11
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -111,7 +111,7 @@ main:                                   # @main
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	i32.const	$push4=, 0
-	return  	$pop4
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

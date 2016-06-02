@@ -6,29 +6,33 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push11=, 0
-	i32.load16_s	$0=, global_saveRect($pop11)
-	i32.const	$push10=, 0
-	i32.load16_s	$2=, global_bounds($pop10)
-	i32.const	$push9=, 0
-	i32.load16_s	$1=, global_saveRect+2($pop9)
-	i32.const	$push8=, 0
-	i32.load16_s	$3=, global_bounds+2($pop8)
 	block
-	i32.gt_s	$push2=, $1, $3
-	i32.select	$push3=, $3, $1, $pop2
-	i32.lt_s	$push0=, $0, $2
-	i32.select	$push1=, $2, $0, $pop0
+	i32.const	$push19=, 0
+	i32.load16_s	$push18=, global_bounds+2($pop19)
+	tee_local	$push17=, $0=, $pop18
+	i32.const	$push16=, 0
+	i32.load16_s	$push15=, global_saveRect+2($pop16)
+	tee_local	$push14=, $1=, $pop15
+	i32.gt_s	$push2=, $1, $0
+	i32.select	$push3=, $pop17, $pop14, $pop2
+	i32.const	$push13=, 0
+	i32.load16_s	$push12=, global_bounds($pop13)
+	tee_local	$push11=, $0=, $pop12
+	i32.const	$push10=, 0
+	i32.load16_s	$push9=, global_saveRect($pop10)
+	tee_local	$push8=, $1=, $pop9
+	i32.lt_s	$push0=, $1, $0
+	i32.select	$push1=, $pop11, $pop8, $pop0
 	i32.sub 	$push4=, $pop3, $pop1
 	i32.const	$push7=, 0
 	i32.load	$push5=, expectedwidth($pop7)
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end26
-	i32.const	$push12=, 0
-	call    	exit@FUNCTION, $pop12
+	i32.const	$push20=, 0
+	call    	exit@FUNCTION, $pop20
 	unreachable
 .LBB0_2:                                # %if.then25
 	end_block                       # label0:

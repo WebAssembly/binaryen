@@ -28,9 +28,10 @@ foo:                                    # @foo
 	br_if   	3, $pop5        # 3: down to label0
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push12=, 4
-	i32.add 	$1=, $1, $pop12
-	i32.le_u	$push6=, $1, $0
+	i32.const	$push14=, 4
+	i32.add 	$push13=, $1, $pop14
+	tee_local	$push12=, $1=, $pop13
+	i32.le_u	$push6=, $pop12, $0
 	br_if   	0, $pop6        # 0: up to label2
 .LBB0_4:                                # %for.end
 	end_loop                        # label3:

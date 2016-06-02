@@ -10,7 +10,7 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	i64.const	$push0=, 10000000000
 	i64.div_s	$push1=, $0, $pop0
-	return  	$pop1
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

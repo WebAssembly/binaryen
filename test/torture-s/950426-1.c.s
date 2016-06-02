@@ -8,11 +8,11 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.then
 	i32.const	$push1=, 0
-	i32.const	$push0=, -1
-	i32.store	$drop=, s1($pop1), $pop0
+	i32.const	$push0=, s1
+	i32.store	$drop=, p1($pop1), $pop0
 	i32.const	$push8=, 0
-	i32.const	$push2=, s1
-	i32.store	$drop=, p1($pop8), $pop2
+	i32.const	$push2=, -1
+	i32.store	$drop=, s1($pop8), $pop2
 	i32.const	$push7=, 0
 	i32.const	$push3=, 3
 	i32.store	$drop=, i($pop7), $pop3
@@ -35,7 +35,7 @@ func1:                                  # @func1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.load	$push0=, 0($0)
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	func1, .Lfunc_end1-func1
@@ -49,7 +49,8 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	return  	$1
+	copy_local	$push0=, $1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo

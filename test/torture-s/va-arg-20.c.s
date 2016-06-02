@@ -32,29 +32,30 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32, i32
-	.local  	i32, i64
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push9=, __stack_pointer
-	i32.const	$push6=, __stack_pointer
-	i32.load	$push7=, 0($pop6)
-	i32.const	$push8=, 16
-	i32.sub 	$push13=, $pop7, $pop8
-	i32.store	$3=, 0($pop9), $pop13
-	i32.const	$push0=, 7
-	i32.add 	$push1=, $2, $pop0
-	i32.const	$push2=, -8
-	i32.and 	$push3=, $pop1, $pop2
-	i64.load	$4=, 0($pop3)
-	i32.store	$drop=, 12($3), $2
 	block
-	i64.const	$push4=, 16
-	i64.ne  	$push5=, $4, $pop4
-	br_if   	0, $pop5        # 0: down to label1
-# BB#1:                                 # %foo.exit
-	i32.const	$push12=, __stack_pointer
+	i32.const	$push11=, 0
+	i32.const	$push8=, 0
+	i32.load	$push9=, __stack_pointer($pop8)
 	i32.const	$push10=, 16
-	i32.add 	$push11=, $3, $pop10
-	i32.store	$drop=, 0($pop12), $pop11
+	i32.sub 	$push15=, $pop9, $pop10
+	i32.store	$push17=, __stack_pointer($pop11), $pop15
+	tee_local	$push16=, $3=, $pop17
+	i32.store	$push0=, 12($pop16), $2
+	i32.const	$push1=, 7
+	i32.add 	$push2=, $pop0, $pop1
+	i32.const	$push3=, -8
+	i32.and 	$push4=, $pop2, $pop3
+	i64.load	$push5=, 0($pop4)
+	i64.const	$push6=, 16
+	i64.ne  	$push7=, $pop5, $pop6
+	br_if   	0, $pop7        # 0: down to label1
+# BB#1:                                 # %foo.exit
+	i32.const	$push14=, 0
+	i32.const	$push12=, 16
+	i32.add 	$push13=, $3, $pop12
+	i32.store	$drop=, __stack_pointer($pop14), $pop13
 	return
 .LBB1_2:                                # %if.then.i
 	end_block                       # label1:
@@ -72,12 +73,12 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push5=, __stack_pointer
-	i32.const	$push2=, __stack_pointer
-	i32.load	$push3=, 0($pop2)
+	i32.const	$push5=, 0
+	i32.const	$push2=, 0
+	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
 	i32.sub 	$push6=, $pop3, $pop4
-	i32.store	$push10=, 0($pop5), $pop6
+	i32.store	$push10=, __stack_pointer($pop5), $pop6
 	tee_local	$push9=, $0=, $pop10
 	i64.const	$push0=, 16
 	i64.store	$drop=, 0($pop9), $pop0

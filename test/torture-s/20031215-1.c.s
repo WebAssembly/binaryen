@@ -6,7 +6,7 @@
 	.type	test1,@function
 test1:                                  # @test1
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
@@ -17,7 +17,7 @@ test1:                                  # @test1
 	.type	test2,@function
 test2:                                  # @test2
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
@@ -28,7 +28,7 @@ test2:                                  # @test2
 	.type	test3,@function
 test3:                                  # @test3
 # BB#0:                                 # %entry
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
@@ -41,7 +41,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

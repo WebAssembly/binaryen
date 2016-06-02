@@ -22,7 +22,7 @@ g:                                      # @g
 	i64.shl 	$push10=, $pop8, $pop9
 	i64.or  	$push12=, $pop11, $pop10
 	i64.store	$drop=, 0($3), $pop12
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
@@ -35,7 +35,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

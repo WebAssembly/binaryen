@@ -8,13 +8,13 @@ sat_add:                                # @sat_add
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, -1
-	i32.const	$push0=, 1
-	i32.add 	$push1=, $0, $pop0
+	i32.const	$push0=, -1
+	i32.const	$push2=, 1
+	i32.add 	$push3=, $0, $pop2
 	i32.const	$push5=, -1
-	i32.eq  	$push3=, $0, $pop5
-	i32.select	$push4=, $pop2, $pop1, $pop3
-	return  	$pop4
+	i32.eq  	$push1=, $0, $pop5
+	i32.select	$push4=, $pop0, $pop3, $pop1
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	sat_add, .Lfunc_end0-sat_add

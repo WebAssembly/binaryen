@@ -95,20 +95,20 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 76
-	i32.call	$push8=, __builtin_malloc@FUNCTION, $pop0
-	tee_local	$push7=, $0=, $pop8
-	i32.const	$push3=, 8
-	i32.add 	$push4=, $pop7, $pop3
-	i32.const	$push5=, 1
-	i32.store	$drop=, 0($pop4), $pop5
+	i32.const	$push1=, 76
+	i32.call	$push9=, __builtin_malloc@FUNCTION, $pop1
+	tee_local	$push8=, $0=, $pop9
 	i32.const	$push2=, 2
-	i32.store	$drop=, 0($0), $pop2
-	i32.const	$push1=, 0
-	i32.store	$drop=, deferred_access_stack($pop1), $0
+	i32.store	$drop=, 0($pop8), $pop2
+	i32.const	$push3=, 0
+	i32.store	$push0=, deferred_access_stack($pop3), $0
+	i32.const	$push4=, 8
+	i32.add 	$push5=, $pop0, $pop4
+	i32.const	$push6=, 1
+	i32.store	$drop=, 0($pop5), $pop6
 	call    	pop_to_parent_deferring_access_checks@FUNCTION
-	i32.const	$push6=, 0
-	return  	$pop6
+	i32.const	$push7=, 0
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

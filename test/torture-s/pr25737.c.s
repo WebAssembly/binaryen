@@ -11,7 +11,7 @@ time_enqueue:                           # @time_enqueue
 	i32.const	$push1=, 0
 	i32.store	$push0=, 0($0), $pop1
 	i32.load	$push2=, Timer_Queue($pop0)
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	time_enqueue, .Lfunc_end0-time_enqueue
@@ -26,7 +26,7 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push2=, 0
 	i32.store	$push0=, Timer_Queue($pop1), $pop2
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

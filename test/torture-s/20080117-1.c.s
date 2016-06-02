@@ -15,7 +15,7 @@ gstate_path_memory:                     # @gstate_path_memory
 	i32.const	$push5=, 0
 	i64.load	$push4=, gstate_initial($pop5):p2align=2
 	i64.store	$drop=, 0($0):p2align=2, $pop4
-	return
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	gstate_path_memory, .Lfunc_end0-gstate_path_memory
@@ -28,7 +28,7 @@ gs_state_update_overprint:              # @gs_state_update_overprint
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	gs_state_update_overprint, .Lfunc_end1-gs_state_update_overprint
@@ -41,7 +41,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

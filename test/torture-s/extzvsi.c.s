@@ -22,7 +22,7 @@ foo:                                    # @foo
 	i32.select	$push7=, $pop0, $pop6, $pop5
 	i32.const	$push9=, 1
 	i32.select	$push8=, $pop7, $pop9, $0
-	return  	$pop8
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -43,7 +43,7 @@ main:                                   # @main
 	i64.or  	$push5=, $pop3, $pop4
 	i64.store	$drop=, x($pop0), $pop5
 	i32.const	$push6=, 0
-	return  	$pop6
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

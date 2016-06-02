@@ -8,7 +8,8 @@ sub1:                                   # @sub1
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	sub1, .Lfunc_end0-sub1
@@ -24,7 +25,7 @@ testcond:                               # @testcond
 	i32.const	$push1=, 0
 	i32.const	$push0=, 5046272
 	i32.select	$push2=, $pop1, $pop0, $0
-	return  	$pop2
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end1:
 	.size	testcond, .Lfunc_end1-testcond

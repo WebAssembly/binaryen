@@ -9,7 +9,7 @@ gt:                                     # @gt
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.gt_s	$push0=, $0, $1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	gt, .Lfunc_end0-gt
@@ -23,7 +23,7 @@ ge:                                     # @ge
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.ge_s	$push0=, $0, $1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	ge, .Lfunc_end1-ge
@@ -37,7 +37,7 @@ lt:                                     # @lt
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.lt_s	$push0=, $0, $1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	lt, .Lfunc_end2-lt
@@ -51,7 +51,7 @@ le:                                     # @le
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.le_s	$push0=, $0, $1
-	return  	$pop0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	le, .Lfunc_end3-le
@@ -103,7 +103,8 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %true.exit
-	return  	$0
+	copy_local	$push0=, $0
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end6:
 	.size	f, .Lfunc_end6-f
