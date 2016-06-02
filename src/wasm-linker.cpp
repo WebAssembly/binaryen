@@ -51,19 +51,23 @@ void Linker::placeStackPointer(Address stackAllocation) {
   }
 }
 
+void Linker::ensureImport(Name target, std::string signature) {
+  if (!out.wasm.checkImport(target)) {
+    auto import = new Import;
+    import->name = import->base = target;
+    import->module = ENV;
+    import->type = ensureFunctionType(signature, &out.wasm);
+    out.wasm.addImport(import);
+  }
+}
+
 void Linker::layout() {
   // Convert calls to undefined functions to call_imports
   for (const auto& f : out.undefinedFunctionCalls) {
     Name target = f.first;
     if (!out.symbolInfo.undefinedFunctions.count(target)) continue;
     // Create an import for the target if necessary.
-    if (!out.wasm.checkImport(target)) {
-      auto import = new Import;
-      import->name = import->base = target;
-      import->module = ENV;
-      import->type = ensureFunctionType(getSig(*f.second.begin()), &out.wasm);
-      out.wasm.addImport(import);
-    }
+    ensureImport(target, getSig(*f.second.begin()));
     // Change each call. The target is the same since it's still the name.
     // Delete and re-allocate the Expression as CallImport to avoid undefined
     // behavior.
@@ -138,9 +142,17 @@ void Linker::layout() {
       // function address
       name = out.resolveAlias(name);
       if (!out.wasm.checkFunction(name)) {
-        std::cerr << "Unknown symbol: " << name << '\n';
-        if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
-        *(relocation->data) = 0;
+        if (FunctionType* f = out.getExternType(name)) {
+          // Address of an imported function is taken, but imports do not have addresses in wasm.
+          // Generate a thunk to forward to the call_import.
+          Function* thunk = generateImportThunk(name, f);
+          ensureFunctionIndex(thunk->name);
+          *(relocation->data) = functionIndexes[thunk->name] + relocation->addend;
+        } else {
+          std::cerr << "Unknown symbol: " << name << '\n';
+          if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
+          *(relocation->data) = 0;
+        }
       } else {
         ensureFunctionIndex(name);
         *(relocation->data) = functionIndexes[name] + relocation->addend;
@@ -362,9 +374,26 @@ void Linker::makeDynCallThunks() {
     for (unsigned i = 0; i < funcType->params.size(); ++i) {
       args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
     }
-    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, std::move(args));
+    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
     f->body = call;
     out.wasm.addFunction(f);
     exportFunction(f->name, true);
   }
+}
+
+Function* Linker::generateImportThunk(Name name, const FunctionType* funcType) {
+  wasm::Builder wasmBuilder(out.wasm);
+  std::vector<NameType> params;
+  Index p = 0;
+  for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
+  Function *f = wasmBuilder.makeFunction(std::string("__importThunk_") + name.c_str(), std::move(params), funcType->result, {});
+  std::vector<Expression*> args;
+  for (Index i = 0; i < funcType->params.size(); ++i) {
+    args.push_back(wasmBuilder.makeGetLocal(i, funcType->params[i]));
+  }
+  Expression* call = wasmBuilder.makeCallImport(name, args);
+  f->body = call;
+  out.wasm.addFunction(f);
+  ensureImport(name, getSig(funcType));
+  return f;
 }

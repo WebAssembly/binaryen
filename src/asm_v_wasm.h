@@ -29,12 +29,13 @@ AsmType wasmToAsmType(WasmType type);
 
 char getSig(WasmType type);
 
-std::string getSig(FunctionType *type);
+std::string getSig(const FunctionType *type);
 
 std::string getSig(Function *func);
 
-template<typename CallBase>
-std::string getSig(CallBase *call) {
+template<typename T,
+         typename std::enable_if<std::is_base_of<Expression, T>::value>::type* = nullptr>
+std::string getSig(T *call) {
   std::string ret;
   ret += getSig(call->type);
   for (auto operand : call->operands) {

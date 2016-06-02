@@ -96,9 +96,14 @@ public:
   // Switch
   // CallBase
   // Call
-  // CallImport
   // Also do a version which takes a sig?
-  CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, std::vector<Expression*>&& args) {
+  CallImport* makeCallImport(Name target, const std::vector<Expression*>& args) {
+    auto* call = allocator.alloc<CallImport>();
+    call->target = target;
+    call->operands.set(args);
+    return call;
+  }
+  CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
     auto* call = allocator.alloc<CallIndirect>();
     call->fullType = type;
     call->type = type->result;

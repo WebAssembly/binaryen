@@ -53,7 +53,7 @@ char getSig(WasmType type) {
   }
 }
 
-std::string getSig(FunctionType *type) {
+std::string getSig(const FunctionType *type) {
   std::string ret;
   ret += getSig(type->result);
   for (auto param : type->params) {
