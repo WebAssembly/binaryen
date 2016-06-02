@@ -384,11 +384,11 @@ void Linker::makeDynCallThunks() {
 Function* Linker::generateImportThunk(Name name, const FunctionType* funcType) {
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;
-  int p = 0;
+  Index p = 0;
   for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
   Function *f = wasmBuilder.makeFunction(std::string("__importThunk_") + name.c_str(), std::move(params), funcType->result, {});
   std::vector<Expression*> args;
-  for (unsigned i = 0; i < funcType->params.size(); ++i) {
+  for (Index i = 0; i < funcType->params.size(); ++i) {
     args.push_back(wasmBuilder.makeGetLocal(i, funcType->params[i]));
   }
   Expression* call = wasmBuilder.makeCallImport(name, args);
