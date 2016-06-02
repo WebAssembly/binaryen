@@ -51,19 +51,23 @@ void Linker::placeStackPointer(Address stackAllocation) {
   }
 }
 
+void Linker::ensureImport(Name target, std::string signature) {
+  if (!out.wasm.checkImport(target)) {
+    auto import = new Import;
+    import->name = import->base = target;
+    import->module = ENV;
+    import->type = ensureFunctionType(signature, &out.wasm);
+    out.wasm.addImport(import);
+  }
+}
+
 void Linker::layout() {
   // Convert calls to undefined functions to call_imports
   for (const auto& f : out.undefinedFunctionCalls) {
     Name target = f.first;
     if (!out.symbolInfo.undefinedFunctions.count(target)) continue;
     // Create an import for the target if necessary.
-    if (!out.wasm.checkImport(target)) {
-      auto import = new Import;
-      import->name = import->base = target;
-      import->module = ENV;
-      import->type = ensureFunctionType(getSig(*f.second.begin()), &out.wasm);
-      out.wasm.addImport(import);
-    }
+    ensureImport(target, getSig(*f.second.begin()));
     // Change each call. The target is the same since it's still the name.
     // Delete and re-allocate the Expression as CallImport to avoid undefined
     // behavior.
@@ -390,5 +394,6 @@ Function* Linker::generateImportThunk(Name name, const FunctionType* funcType) {
   Expression* call = wasmBuilder.makeCallImport(name, args);
   f->body = call;
   out.wasm.addFunction(f);
+  ensureImport(name, getSig(funcType));
   return f;
 }

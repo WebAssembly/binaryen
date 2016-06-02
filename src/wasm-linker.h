@@ -244,6 +244,8 @@ class Linker {
     o << "]";
   }
 
+  void ensureImport(Name target, std::string signature);
+
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.
   void makeDynCallThunks();
