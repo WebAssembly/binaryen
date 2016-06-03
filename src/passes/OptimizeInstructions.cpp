@@ -26,7 +26,9 @@
 namespace wasm {
 
 struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions, Visitor<OptimizeInstructions>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new OptimizeInstructions; }
 
   void visitIf(If* curr) {
     // flip branches to get rid of an i32.eqz

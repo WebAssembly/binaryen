@@ -68,7 +68,9 @@
 namespace wasm {
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBlocks>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new MergeBlocks; }
 
   void visitBlock(Block *curr) {
     bool more = true;

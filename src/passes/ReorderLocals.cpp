@@ -28,7 +28,9 @@
 namespace wasm {
 
 struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<ReorderLocals>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new ReorderLocals; }
 
   std::map<Index, Index> counts; // local => times it is used
   std::map<Index, Index> firstUses; // local => index in the list of which local is first seen

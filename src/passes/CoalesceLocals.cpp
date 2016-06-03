@@ -159,7 +159,9 @@ struct Liveness {
 };
 
 struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new CoalesceLocals; }
 
   Index numLocals;
 
@@ -462,7 +464,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
 }
 
 struct CoalesceLocalsWithLearning : public CoalesceLocals {
-  virtual CoalesceLocals* create() override { return new CoalesceLocalsWithLearning; }
+  virtual Pass* create() override { return new CoalesceLocalsWithLearning; }
 
   virtual void pickIndices(std::vector<Index>& indices) override;
 };

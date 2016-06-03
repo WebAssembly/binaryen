@@ -35,7 +35,9 @@
 namespace wasm {
 
 struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, Visitor<DeadCodeElimination>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new DeadCodeElimination; }
 
   // whether the current code is actually reachable
   bool reachable = true;

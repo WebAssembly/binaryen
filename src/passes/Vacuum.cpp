@@ -26,7 +26,9 @@
 namespace wasm {
 
 struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new Vacuum; }
 
   std::vector<Expression*> expressionStack;
 
