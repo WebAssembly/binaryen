@@ -822,9 +822,15 @@ private:
   }
 
   Index getLocalIndex(Element& s) {
-    if (s.dollared()) return currFunction->getLocalIndex(s.str());
+    if (s.dollared()) {
+      auto ret = s.str();
+      if (currFunction->localIndices.count(ret) == 0) throw ParseException("bad local name", s.line, s.col);
+      return currFunction->getLocalIndex(ret);
+    }
     // this is a numeric index
-    return atoi(s.c_str());
+    Index ret = atoi(s.c_str());
+    if (ret >= currFunction->getNumLocals()) throw ParseException("bad local index", s.line, s.col);
+    return ret;
   }
 
   Expression* makeGetLocal(Element& s) {
@@ -1088,7 +1094,8 @@ private:
   Expression* makeCallIndirect(Element& s) {
     auto ret = allocator.alloc<CallIndirect>();
     IString type = s[1]->str();
-    ret->fullType = wasm.getFunctionType(type);
+    ret->fullType = wasm.checkFunctionType(type);
+    if (!ret->fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
     assert(ret->fullType);
     ret->type = ret->fullType->result;
     ret->target = parseExpression(s[2]);
@@ -1109,7 +1116,7 @@ private:
     } else {
       // offset, break to nth outside label
       uint64_t offset = std::stoll(s.c_str(), nullptr, 0);
-      if (offset >= labelStack.size()) throw ParseException("total memory must be <= 4GB", s.line, s.col);
+      if (offset >= labelStack.size()) throw ParseException("invalid label", s.line, s.col);
       return labelStack[labelStack.size() - 1 - offset];
     }
   }

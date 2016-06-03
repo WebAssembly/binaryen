@@ -93,23 +93,26 @@ public:
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
   }
   void visitCall(Call *curr) {
-    auto* target = getModule()->getFunction(curr->target);
-    shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match");
+    auto* target = getModule()->checkFunction(curr->target);
+    if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
+    if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
       shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match");
     }
   }
   void visitCallImport(CallImport *curr) {
-    auto* target = getModule()->getImport(curr->target)->type;
-    shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match");
+    auto* import = getModule()->checkImport(curr->target);
+    if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
+    auto* type = import->type;
+    if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
-      shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match");
+      shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match");
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
     auto* type = curr->fullType;
     shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
-    shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match");
+    if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
       shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match");
     }
@@ -245,7 +248,7 @@ public:
   }
   void visitMemory(Memory *curr) {
     shouldBeFalse(curr->initial > curr->max, "memory", "memory max >= initial");
-    shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "total memory must be <= 4GB");
+    shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
     size_t top = 0;
     for (auto& segment : curr->segments) {
       shouldBeFalse(segment.offset < top, "memory", "segment offset is small enough");
