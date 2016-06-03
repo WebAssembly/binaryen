@@ -248,7 +248,7 @@ public:
   }
   void visitMemory(Memory *curr) {
     shouldBeFalse(curr->initial > curr->max, "memory", "memory max >= initial");
-    shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "total memory must be <= 4GB");
+    shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
     size_t top = 0;
     for (auto& segment : curr->segments) {
       shouldBeFalse(segment.offset < top, "memory", "segment offset is small enough");
