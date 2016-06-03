@@ -1,10 +1,10 @@
 (module
   (memory 1)
   (export "memory" memory)
-  (type $FUNCSIG$ijidf (func (param i64 i32 f64 f32) (result i32)))
-  (type $FUNCSIG$v (func))
-  (type $FUNCSIG$vj (func (param i64)))
   (type $FUNCSIG$fd (func (param f64) (result f32)))
+  (type $FUNCSIG$vj (func (param i64)))
+  (type $FUNCSIG$v (func))
+  (type $FUNCSIG$ijidf (func (param i64 i32 f64 f32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
   (import $extern_ijidf "env" "extern_ijidf" (param i64 i32 f64 f32) (result i32))
   (import $extern_v "env" "extern_v")
