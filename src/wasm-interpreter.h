@@ -359,6 +359,10 @@ private:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
+        if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
+        for (size_t i = 0; i < func->getNumLocals(); i++) {
+          if (func->params[i] != arguments[i].type) trap("callIndirect: bad argument type");
+        }
         return instance.callFunctionInternal(name, arguments);
       }
 
