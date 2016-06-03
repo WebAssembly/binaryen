@@ -13,6 +13,7 @@
   (import $extern_struct "env" "extern_struct" (param i32))
   (import $extern_sret "env" "extern_sret" (param i32))
   (export "bar" $bar)
+  (export "baz" $baz)
   (export "dynCall_fd" $dynCall_fd)
   (export "dynCall_vj" $dynCall_vj)
   (export "dynCall_v" $dynCall_v)
@@ -79,6 +80,9 @@
       )
     )
     (get_local $1)
+  )
+  (func $baz (result i32)
+    (i32.const 2)
   )
   (func $__importThunk_extern_fd (type $FUNCSIG$fd) (param $0 f64) (result f32)
     (call_import $extern_fd

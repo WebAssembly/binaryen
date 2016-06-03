@@ -145,7 +145,7 @@ void Linker::layout() {
         if (FunctionType* f = out.getExternType(name)) {
           // Address of an imported function is taken, but imports do not have addresses in wasm.
           // Generate a thunk to forward to the call_import.
-          Function* thunk = generateImportThunk(name, f);
+          Function* thunk = getImportThunk(name, f);
           ensureFunctionIndex(thunk->name);
           *(relocation->data) = functionIndexes[thunk->name] + relocation->addend;
         } else {
@@ -381,12 +381,14 @@ void Linker::makeDynCallThunks() {
   }
 }
 
-Function* Linker::generateImportThunk(Name name, const FunctionType* funcType) {
+Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
+  Name thunkName = std::string("__importThunk_") + name.c_str();
+  if (Function* thunk = out.wasm.checkFunction(thunkName)) return thunk;
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;
   Index p = 0;
   for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
-  Function *f = wasmBuilder.makeFunction(std::string("__importThunk_") + name.c_str(), std::move(params), funcType->result, {});
+  Function *f = wasmBuilder.makeFunction(thunkName, std::move(params), funcType->result, {});
   std::vector<Expression*> args;
   for (Index i = 0; i < funcType->params.size(); ++i) {
     args.push_back(wasmBuilder.makeGetLocal(i, funcType->params[i]));

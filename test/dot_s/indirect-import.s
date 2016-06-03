@@ -45,8 +45,20 @@ bar:                                    # @bar
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
+	.hidden	baz
+	.globl	baz
+	.type	baz,@function
+baz:                                    # @baz
+	.result 	i32
+# BB#0:                                 # %entry
+	i32.const	$push0=, extern_v@FUNCTION
+                                        # fallthrough-return: $pop0
+	.endfunc
+.Lfunc_end1:
+	.size	baz, .Lfunc_end1-baz
 
-	.ident	"clang version 3.9.0 (trunk 271427) (llvm/trunk 271429)"
+
+	.ident	"clang version 3.9.0 (trunk 271579) (llvm/trunk 271699)"
 	.functype	extern_fd, f32, f64
 	.functype	extern_vj, void, i64
 	.functype	extern_v, void

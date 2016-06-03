@@ -23,5 +23,9 @@ intptr_t bar() {
   ijidf(1LL, 2, 3.0, 4.0f);
   void (*vs)(struct big) = &extern_struct;
   struct big (*s)(void) = &extern_sret;
-  return (intptr_t)fd;
+    return (intptr_t)fd;
+}
+
+intptr_t baz() {
+  return (intptr_t)extern_v;
 }
