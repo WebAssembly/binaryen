@@ -496,9 +496,15 @@ class S2WasmBuilder {
       decl->result = getType();
     }
     while (*s && skipComma()) decl->params.push_back(getType());
+    decl->name = "FUNCSIG$" + getSig(decl.get());
 
-    FunctionType *ty = wasm->checkFunctionType(getSig(decl.get()));
-    if (!ty) ty = decl.release();
+    FunctionType *ty = wasm->checkFunctionType(decl->name);
+    if (!ty) {
+      // The wasm module takes ownership of the FunctionType if we insert it.
+      // Otherwise it's already in the module and ours is freed.
+      ty = decl.release();
+      wasm->addFunctionType(ty);
+    }
     linkerObj->addExternType(name, ty);
   }
 
