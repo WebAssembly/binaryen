@@ -355,7 +355,7 @@ private:
         if (index >= instance.wasm.table.names.size()) trap("callIndirect: overflow");
         Name name = instance.wasm.table.names[index];
         Function *func = instance.wasm.getFunction(name);
-        if (func->type.is() && func->type != curr->fullType->name) trap("callIndirect: bad type");
+        if (func->type.is() && func->type != curr->fullType) trap("callIndirect: bad type");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;

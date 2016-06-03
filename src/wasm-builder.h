@@ -105,7 +105,7 @@ public:
   }
   CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
     auto* call = allocator.alloc<CallIndirect>();
-    call->fullType = type;
+    call->fullType = type->name;
     call->type = type->result;
     call->target = target;
     call->operands.set(args);

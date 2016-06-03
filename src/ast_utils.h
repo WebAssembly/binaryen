@@ -539,7 +539,7 @@ struct ExpressionAnalyzer {
         }
         case Expression::Id::CallIndirectId: {
           PUSH(CallIndirect, target);
-          HASH_PTR(CallIndirect, fullType);
+          HASH_NAME(CallIndirect, fullType);
           HASH(CallIndirect, operands.size());
           for (Index i = 0; i < curr->cast<CallIndirect>()->operands.size(); i++) {
             PUSH(CallIndirect, operands[i]);

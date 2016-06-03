@@ -175,7 +175,7 @@ void test_core() {
       )
     ),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, iiIfF)
+      BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, "iiIfF")
     ),
     BinaryenGetLocal(module, 0, BinaryenInt32()),
     BinaryenSetLocal(module, 0, makeInt32(module, 101)),
