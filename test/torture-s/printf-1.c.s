@@ -191,3 +191,7 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	printf, i32, i32
+	.functype	abort, void
+	.functype	puts, i32, i32
+	.functype	putchar, i32, i32

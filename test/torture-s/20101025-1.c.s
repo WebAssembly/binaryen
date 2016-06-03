@@ -80,3 +80,5 @@ g_6:
 	.lcomm	g_7,4,2
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	exit, void, i32

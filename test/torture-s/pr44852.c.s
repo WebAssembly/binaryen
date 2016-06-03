@@ -15,36 +15,36 @@ sf:                                     # @sf
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label1:
+	copy_local	$push15=, $0
+	tee_local	$push14=, $2=, $pop15
 	i32.const	$push13=, -1
-	i32.add 	$push12=, $0, $pop13
-	tee_local	$push11=, $3=, $pop12
+	i32.add 	$push12=, $pop14, $pop13
+	tee_local	$push11=, $0=, $pop12
 	i32.load8_u	$push10=, 0($pop11)
-	tee_local	$push9=, $2=, $pop10
+	tee_local	$push9=, $3=, $pop10
 	i32.const	$push8=, 57
 	i32.ne  	$push0=, $pop9, $pop8
 	br_if   	2, $pop0        # 2: down to label0
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
-	copy_local	$0=, $3
-	i32.ne  	$push2=, $1, $3
-	br_if   	0, $pop2        # 0: up to label1
+	i32.ne  	$push3=, $1, $0
+	br_if   	0, $pop3        # 0: up to label1
 # BB#3:                                 # %if.then
 	end_loop                        # label2:
-	i32.const	$push3=, 48
-	i32.store8	$drop=, 0($1), $pop3
+	i32.const	$push4=, 48
+	i32.store8	$drop=, 0($1), $pop4
 	i32.const	$push6=, 49
 	i32.store8	$drop=, 0($1), $pop6
-	i32.const	$push14=, 1
-	i32.add 	$push4=, $3, $pop14
-	return  	$pop4
+	return  	$2
 .LBB0_4:                                # %while.end.loopexit
 	end_block                       # label0:
-	copy_local	$push7=, $3
-	i32.const	$push1=, 1
-	i32.add 	$push5=, $2, $pop1
+	i32.const	$push1=, -1
+	i32.add 	$push7=, $2, $pop1
+	i32.const	$push2=, 1
+	i32.add 	$push5=, $3, $pop2
 	i32.store8	$drop=, 0($pop7), $pop5
-	copy_local	$push15=, $0
-                                        # fallthrough-return: $pop15
+	copy_local	$push16=, $2
+                                        # fallthrough-return: $pop16
 	.endfunc
 .Lfunc_end0:
 	.size	sf, .Lfunc_end0-sf
@@ -125,3 +125,5 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	strcmp, i32, i32, i32
+	.functype	abort, void

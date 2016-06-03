@@ -1121,3 +1121,6 @@ varargs9:                               # @varargs9
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	exit, void, i32
+	.functype	printf, i32, i32

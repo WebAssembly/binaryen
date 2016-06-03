@@ -40,3 +40,5 @@ foo:                                    # @foo
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	calloc, i32, i32, i32
+	.functype	free, void, i32

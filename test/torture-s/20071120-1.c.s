@@ -128,3 +128,5 @@ gt_pch_rs_gt_cp_semantics_h:
 	.lcomm	deferred_access_stack,4,2
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	__builtin_malloc, i32

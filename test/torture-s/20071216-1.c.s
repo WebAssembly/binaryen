@@ -109,3 +109,4 @@ main:                                   # @main
 	.lcomm	x,4,2
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void

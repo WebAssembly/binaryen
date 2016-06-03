@@ -366,3 +366,5 @@ simple_rand.seed:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	exit, void, i32
