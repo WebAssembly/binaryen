@@ -8,6 +8,7 @@ SET(passes_SOURCES
   MergeBlocks.cpp
   Metrics.cpp
   NameManager.cpp
+  NameList.cpp
   OptimizeInstructions.cpp
   PostEmscripten.cpp
   Print.cpp
