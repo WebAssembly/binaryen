@@ -822,9 +822,15 @@ private:
   }
 
   Index getLocalIndex(Element& s) {
-    if (s.dollared()) return currFunction->getLocalIndex(s.str());
+    if (s.dollared()) {
+      auto ret = s.str();
+      if (currFunction->localIndices.count(ret) == 0) throw ParseException("bad local name", s.line, s.col);
+      return currFunction->getLocalIndex(ret);
+    }
     // this is a numeric index
-    return atoi(s.c_str());
+    Index ret = atoi(s.c_str());
+    if (ret >= currFunction->getNumLocals()) throw ParseException("bad local index", s.line, s.col);
+    return ret;
   }
 
   Expression* makeGetLocal(Element& s) {
