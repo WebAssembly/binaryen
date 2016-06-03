@@ -1094,7 +1094,8 @@ private:
   Expression* makeCallIndirect(Element& s) {
     auto ret = allocator.alloc<CallIndirect>();
     IString type = s[1]->str();
-    ret->fullType = wasm.getFunctionType(type);
+    ret->fullType = wasm.checkFunctionType(type);
+    if (!ret->fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
     assert(ret->fullType);
     ret->type = ret->fullType->result;
     ret->target = parseExpression(s[2]);
