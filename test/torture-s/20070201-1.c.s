@@ -70,3 +70,4 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	sprintf, i32, i32, i32

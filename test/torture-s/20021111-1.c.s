@@ -63,3 +63,5 @@ main:                                   # @main
 	.lcomm	aim_callhandler.i,4,2
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	exit, void, i32

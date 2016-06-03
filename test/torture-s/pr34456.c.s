@@ -104,3 +104,4 @@ errors:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	qsort, void, i32, i32, i32, i32

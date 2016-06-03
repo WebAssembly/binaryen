@@ -37,3 +37,6 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	__builtin_isinff, i32
+	.functype	__builtin_isinfl, i32

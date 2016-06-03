@@ -63,3 +63,5 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	copysign, f64, f64, f64
+	.functype	abort, void

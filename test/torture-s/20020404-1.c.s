@@ -32,3 +32,4 @@ main:                                   # @main
 	.lcomm	bfd_make_section_anyway.foo_section,32,3
 
 	.ident	"clang version 3.9.0 "
+	.functype	exit, void, i32

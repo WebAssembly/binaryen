@@ -26,8 +26,8 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.const	$push7=, 1
 	i32.and 	$4=, $3, $pop7
 	i32.const	$3=, 0
-	i32.const	$push1=, 12
-	i32.add 	$5=, $1, $pop1
+	i32.const	$push0=, 12
+	i32.add 	$5=, $1, $pop0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
@@ -41,8 +41,8 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 .LBB1_3:                                # %cond.end
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label2:
-	i32.ge_s	$push2=, $3, $6
-	br_if   	1, $pop2        # 1: down to label1
+	i32.ge_s	$push1=, $3, $6
+	br_if   	1, $pop1        # 1: down to label1
 # BB#4:                                 # %for.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push8=, 1
@@ -50,13 +50,13 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	br      	0               # 0: up to label0
 .LBB1_5:                                # %for.end35
 	end_loop                        # label1:
-	i32.const	$push3=, 20
-	i32.add 	$push4=, $1, $pop3
-	i32.load	$push5=, 0($pop4)
-	i64.load	$push6=, 0($pop5):p2align=2
-	i64.store	$drop=, 0($2):p2align=2, $pop6
-	i32.add 	$push0=, $0, $3
-                                        # fallthrough-return: $pop0
+	i32.const	$push2=, 20
+	i32.add 	$push3=, $1, $pop2
+	i32.load	$push4=, 0($pop3)
+	i64.load	$push5=, 0($pop4):p2align=2
+	i64.store	$drop=, 0($2):p2align=2, $pop5
+	i32.add 	$push6=, $0, $3
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end1:
 	.size	__db_txnlist_lsnadd, .Lfunc_end1-__db_txnlist_lsnadd
@@ -77,3 +77,4 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	exit, void, i32

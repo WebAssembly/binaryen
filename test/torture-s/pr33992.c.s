@@ -30,55 +30,51 @@ do_test:                                # @do_test
 	.local  	i64, i64, i64, i64
 # BB#0:                                 # %entry
 	i64.load	$1=, 0($0)
+	i64.const	$4=, -4294967296
 	i64.const	$3=, 63
-	i64.const	$4=, -1
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i64.const	$push17=, 1
-	i64.add 	$4=, $4, $pop17
-	i64.const	$push16=, 4294967295
-	i64.and 	$2=, $3, $pop16
-	i64.const	$push15=, -1
-	i64.add 	$push0=, $3, $pop15
+	i64.const	$push15=, 4294967296
+	i64.add 	$4=, $4, $pop15
+	i64.const	$push14=, 4294967295
+	i64.and 	$2=, $3, $pop14
+	i64.const	$push13=, -1
+	i64.add 	$push0=, $3, $pop13
 	copy_local	$3=, $pop0
-	i64.const	$push14=, 1
-	i64.shl 	$push2=, $pop14, $2
+	i64.const	$push12=, 1
+	i64.shl 	$push2=, $pop12, $2
 	i64.and 	$push3=, $pop2, $1
 	i64.eqz 	$push4=, $pop3
 	br_if   	0, $pop4        # 0: up to label1
 # BB#2:                                 # %foo.exit
 	end_loop                        # label2:
 	i64.const	$push5=, 32
-	i64.shl 	$push6=, $4, $pop5
-	i64.const	$push18=, 32
-	i64.shr_s	$push7=, $pop6, $pop18
-	call    	bar@FUNCTION, $pop7
+	i64.shr_s	$push6=, $4, $pop5
+	call    	bar@FUNCTION, $pop6
 	i64.load	$1=, 0($0)
+	i64.const	$4=, -4294967296
 	i64.const	$3=, 63
-	i64.const	$4=, -1
 .LBB1_3:                                # %for.cond.i.1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i64.const	$push22=, 1
-	i64.add 	$4=, $4, $pop22
-	i64.const	$push21=, 4294967295
-	i64.and 	$2=, $3, $pop21
-	i64.const	$push20=, -1
-	i64.add 	$push1=, $3, $pop20
+	i64.const	$push19=, 4294967296
+	i64.add 	$4=, $4, $pop19
+	i64.const	$push18=, 4294967295
+	i64.and 	$2=, $3, $pop18
+	i64.const	$push17=, -1
+	i64.add 	$push1=, $3, $pop17
 	copy_local	$3=, $pop1
-	i64.const	$push19=, 1
-	i64.shl 	$push8=, $pop19, $2
-	i64.and 	$push9=, $pop8, $1
-	i64.eqz 	$push10=, $pop9
-	br_if   	0, $pop10       # 0: up to label3
+	i64.const	$push16=, 1
+	i64.shl 	$push7=, $pop16, $2
+	i64.and 	$push8=, $pop7, $1
+	i64.eqz 	$push9=, $pop8
+	br_if   	0, $pop9        # 0: up to label3
 # BB#4:                                 # %foo.exit.1
 	end_loop                        # label4:
-	i64.const	$push11=, 32
-	i64.shl 	$push12=, $4, $pop11
-	i64.const	$push23=, 32
-	i64.shr_s	$push13=, $pop12, $pop23
-	call    	bar@FUNCTION, $pop13
+	i64.const	$push10=, 32
+	i64.shr_s	$push11=, $4, $pop10
+	call    	bar@FUNCTION, $pop11
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -116,3 +112,4 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void

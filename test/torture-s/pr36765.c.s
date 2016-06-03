@@ -51,3 +51,5 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	__builtin_malloc, i32
+	.functype	abort, void

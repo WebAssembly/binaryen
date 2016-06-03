@@ -50,64 +50,61 @@ fetch:                                  # @fetch
 load_data:                              # @load_data
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
-	i32.const	$push26=, 404
-	i32.call	$push25=, malloc@FUNCTION, $pop26
-	tee_local	$push24=, $3=, $pop25
-	i32.store	$push0=, data_ptr($pop2), $pop24
-	i32.const	$push3=, 170
-	i32.const	$push23=, 404
-	i32.call	$drop=, memset@FUNCTION, $pop0, $pop3, $pop23
-	i32.const	$push4=, data_tmp
-	i32.const	$push22=, 85
-	i32.const	$push21=, 404
-	i32.call	$0=, memset@FUNCTION, $pop4, $pop22, $pop21
+	i32.const	$push1=, 0
+	i32.const	$push27=, 404
+	i32.call	$push26=, malloc@FUNCTION, $pop27
+	tee_local	$push25=, $3=, $pop26
+	i32.store	$push0=, data_ptr($pop1), $pop25
+	i32.const	$push2=, 170
+	i32.const	$push24=, 404
+	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop24
+	i32.const	$push3=, data_tmp
+	i32.const	$push23=, 85
+	i32.const	$push22=, 404
+	i32.call	$0=, memset@FUNCTION, $pop3, $pop23, $pop22
+	i32.const	$push21=, 0
 	i32.const	$push20=, 0
-	i32.const	$push19=, 0
-	i32.load	$push18=, fetch.fetch_count($pop19)
-	tee_local	$push17=, $2=, $pop18
-	i32.const	$push16=, 1
-	i32.add 	$push5=, $pop17, $pop16
-	i32.store	$drop=, fetch.fetch_count($pop20), $pop5
+	i32.load	$push19=, fetch.fetch_count($pop20)
+	tee_local	$push18=, $2=, $pop19
+	i32.const	$push17=, 1
+	i32.add 	$push4=, $pop18, $pop17
+	i32.store	$drop=, fetch.fetch_count($pop21), $pop4
+	i32.const	$push16=, 0
+	i32.const	$push5=, 100
 	i32.const	$push15=, 0
-	i32.const	$push6=, 100
 	i32.const	$push14=, 0
-	i32.const	$push13=, 0
-	i32.gt_s	$push12=, $2, $pop13
-	tee_local	$push11=, $1=, $pop12
-	i32.select	$push7=, $pop6, $pop14, $pop11
-	i32.store	$drop=, sqlca($pop15), $pop7
+	i32.gt_s	$push13=, $2, $pop14
+	tee_local	$push12=, $1=, $pop13
+	i32.select	$push6=, $pop5, $pop15, $pop12
+	i32.store	$drop=, sqlca($pop16), $pop6
 	block
 	br_if   	0, $1           # 0: down to label0
-# BB#1:                                 # %while.body.lr.ph
-.LBB2_2:                                # %while.body
+.LBB2_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push36=, 404
-	i32.call	$drop=, memcpy@FUNCTION, $3, $0, $pop36
-	i32.const	$push35=, 85
-	i32.const	$push34=, 404
-	i32.call	$drop=, memset@FUNCTION, $0, $pop35, $pop34
+	i32.const	$push35=, 404
+	i32.call	$drop=, memcpy@FUNCTION, $3, $0, $pop35
+	i32.const	$push34=, 85
 	i32.const	$push33=, 404
-	i32.add 	$3=, $3, $pop33
-	copy_local	$push32=, $2
-	tee_local	$push31=, $1=, $pop32
-	i32.const	$push30=, 1
-	i32.add 	$push29=, $pop31, $pop30
-	tee_local	$push28=, $2=, $pop29
-	i32.const	$push27=, 1
-	i32.lt_s	$push8=, $pop28, $pop27
-	br_if   	0, $pop8        # 0: up to label1
-# BB#3:                                 # %while.cond.while.end_crit_edge
+	i32.call	$drop=, memset@FUNCTION, $0, $pop34, $pop33
+	i32.const	$push32=, 404
+	i32.add 	$3=, $3, $pop32
+	i32.const	$push31=, 1
+	i32.add 	$push30=, $2, $pop31
+	tee_local	$push29=, $2=, $pop30
+	i32.const	$push28=, 1
+	i32.lt_s	$push7=, $pop29, $pop28
+	br_if   	0, $pop7        # 0: up to label1
+# BB#2:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
-	i32.const	$push10=, 0
-	i32.const	$push9=, 100
-	i32.store	$drop=, sqlca($pop10), $pop9
-	i32.const	$push38=, 0
-	i32.const	$push37=, 2
-	i32.add 	$push1=, $1, $pop37
-	i32.store	$drop=, fetch.fetch_count($pop38), $pop1
-.LBB2_4:                                # %while.end
+	i32.const	$push9=, 0
+	i32.const	$push8=, 100
+	i32.store	$drop=, sqlca($pop9), $pop8
+	i32.const	$push36=, 0
+	i32.const	$push10=, 1
+	i32.add 	$push11=, $2, $pop10
+	i32.store	$drop=, fetch.fetch_count($pop36), $pop11
+.LBB2_3:                                # %while.end
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -226,3 +223,6 @@ data_ptr:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	malloc, i32, i32
+	.functype	abort, void
+	.functype	exit, void, i32

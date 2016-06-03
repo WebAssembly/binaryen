@@ -83,3 +83,4 @@ i:
 	.lcomm	d,36,4
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
