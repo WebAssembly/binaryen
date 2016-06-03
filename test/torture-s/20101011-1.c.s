@@ -41,3 +41,6 @@ k:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	exit, void, i32
+	.functype	signal, i32, i32, i32
+	.functype	abort, void

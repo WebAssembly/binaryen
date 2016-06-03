@@ -56,3 +56,4 @@ p:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	exit, void, i32

@@ -420,3 +420,8 @@ fp:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	sprintf, i32, i32, i32
+	.functype	strcpy, i32, i32, i32
+	.functype	strcmp, i32, i32, i32
+	.functype	abort, void
+	.functype	exit, void, i32
