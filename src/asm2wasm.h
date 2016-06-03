@@ -1367,8 +1367,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       for (unsigned i = 0; i < args->size(); i++) {
         ret->operands.push_back(process(args[i]));
       }
-      ret->fullType = getFunctionType(astStackHelper.getParent(), ret->operands);
-      ret->type = ret->fullType->result;
+      auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands);
+      ret->fullType = fullType->name;
+      ret->type = fullType->result;
       callIndirects[ret] = target[1][1]->getIString(); // we need to fix this up later, when we know how asm function tables are layed out inside the wasm table.
       return ret;
     } else if (what == RETURN) {

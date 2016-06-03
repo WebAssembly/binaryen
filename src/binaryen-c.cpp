@@ -281,14 +281,15 @@ BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *t
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenFunctionTypeRef type) {
-  auto* ret = ((Module*)module)->allocator.alloc<CallIndirect>();
+BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, const char* type) {
+  auto* wasm = (Module*)module;
+  auto* ret = wasm->allocator.alloc<CallIndirect>();
   ret->target = (Expression*)target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
-  ret->fullType = (FunctionType*)type;
-  ret->finalize();
+  ret->fullType = type;
+  ret->type = wasm->getFunctionType(ret->fullType)->result;
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type) {

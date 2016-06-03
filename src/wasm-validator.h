@@ -110,7 +110,8 @@ public:
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
-    auto* type = curr->fullType;
+    auto* type = getModule()->checkFunctionType(curr->fullType);
+    if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) return;
     shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {

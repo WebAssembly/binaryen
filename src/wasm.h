@@ -1069,12 +1069,8 @@ public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
 
   ExpressionList operands;
-  FunctionType *fullType;
+  Name fullType;
   Expression *target;
-
-  void finalize() {
-    type = fullType->result;
-  }
 };
 
 class GetLocal : public SpecificExpression<Expression::GetLocalId> {

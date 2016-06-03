@@ -908,7 +908,7 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType->name));
+    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType));
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
@@ -1837,15 +1837,16 @@ public:
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
     auto arity = getU32LEB();
-    curr->fullType = wasm.getFunctionType(getU32LEB());
-    auto num = curr->fullType->params.size();
+    auto* fullType = wasm.getFunctionType(getU32LEB());
+    curr->fullType = fullType->name;
+    auto num = fullType->params.size();
     assert(num == arity);
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
       curr->operands[num - i - 1] = popExpression();
     }
     curr->target = popExpression();
-    curr->type = curr->fullType->result;
+    curr->type = fullType->result;
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
