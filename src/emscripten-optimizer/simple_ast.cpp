@@ -20,7 +20,7 @@ namespace cashew {
 
 // Ref methods
 
-Ref& Ref::operator[](unsigned x) {
+Ref& Ref::operator[](size_t x) {
   return (*get())[x];
 }
 

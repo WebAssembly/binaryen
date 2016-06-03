@@ -512,7 +512,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->params.size() > 0) {
       for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
-        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ")";
+        printMinorOpening(o, "param ") << printableLocal(toIndex(i)) << ' ' << printWasmType(curr->getLocalType(toIndex(i))) << ")";
       }
     }
     if (curr->result != none) {
@@ -522,7 +522,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ")";
+      printMinorOpening(o, "local ") << printableLocal(toIndex(i)) << ' ' << printWasmType(curr->getLocalType(toIndex(i))) << ")";
       o << maybeNewLine;
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our

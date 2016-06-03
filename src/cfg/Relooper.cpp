@@ -766,10 +766,10 @@ void Relooper::Calculate(Block *Entry) {
             // Find the smaller one
             BlockBlockSetMap::iterator iter = IndependentGroups.begin();
             Block *SmallEntry = iter->first;
-            int SmallSize = iter->second.size();
+            size_t SmallSize = iter->second.size();
             iter++;
             Block *LargeEntry = iter->first;
-            int LargeSize = iter->second.size();
+            size_t LargeSize = iter->second.size();
             if (SmallSize != LargeSize) { // ignore the case where they are identical - keep things symmetrical there
               if (SmallSize > LargeSize) {
                 Block *Temp = SmallEntry;

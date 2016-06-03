@@ -193,7 +193,7 @@ Archive::child_iterator Archive::child_end() const { return Child(); }
 namespace {
 struct Symbol {
   uint32_t symbolIndex;
-  uint32_t stringIndex;
+  ptrdiff_t stringIndex;
   void next(Archive::SubBuffer& symbolTable) {
     // Symbol table entries are NUL-terminated. Skip past the next NUL.
     stringIndex = strchr((char*)symbolTable.data + stringIndex, '\0') -
@@ -211,7 +211,7 @@ static uint32_t read32be(const uint8_t* buf) {
 
 void Archive::dump() const {
   printf("Archive data %p len %zu, firstRegularData %p\n", data.data(),
-         data.size(), firstRegularData);
+		 data.size(), firstRegularData);
   printf("Symbol table %p, len %u\n", symbolTable.data, symbolTable.len);
   printf("string table %p, len %u\n", stringTable.data, stringTable.len);
   const uint8_t* buf = symbolTable.data;
@@ -225,10 +225,10 @@ void Archive::dump() const {
   uint32_t symbolCount = read32be(buf);
   printf("Symbol count %u\n", symbolCount);
   buf += sizeof(uint32_t) + (symbolCount * sizeof(uint32_t));
-  uint32_t string_start_offset = buf - symbolTable.data;
+  ptrdiff_t string_start_offset = buf - symbolTable.data;
   Symbol sym = {0, string_start_offset};
   while (sym.symbolIndex != symbolCount) {
-    printf("Symbol %u, offset %u\n", sym.symbolIndex, sym.stringIndex);
+    printf("Symbol %u, offset %tu\n", sym.symbolIndex, sym.stringIndex); // %tu for ptrdiff_t
     // get the member
     uint32_t offset = read32be(symbolTable.data + sym.symbolIndex * 4);
     auto* loc = (const uint8_t*)&data[offset];
