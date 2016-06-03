@@ -36,3 +36,4 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	strcmp, i32, i32, i32

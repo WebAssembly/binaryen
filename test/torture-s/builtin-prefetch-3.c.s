@@ -249,3 +249,4 @@ stat_vol_ptr_vol_int:
 	.lcomm	stat_int_arr,400,4
 
 	.ident	"clang version 3.9.0 "
+	.functype	exit, void, i32

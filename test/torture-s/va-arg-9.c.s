@@ -1482,3 +1482,6 @@ main:                                   # @main
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	strlen, i32, i32
+	.functype	exit, void, i32

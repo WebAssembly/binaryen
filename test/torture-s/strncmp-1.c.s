@@ -291,3 +291,6 @@ main:                                   # @main
 	.lcomm	u2,80,4
 
 	.ident	"clang version 3.9.0 "
+	.functype	strncmp, i32, i32, i32, i32
+	.functype	abort, void
+	.functype	exit, void, i32

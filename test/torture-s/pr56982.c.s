@@ -86,3 +86,6 @@ main:                                   # @main
 	.lcomm	env,156,4
 
 	.ident	"clang version 3.9.0 "
+	.functype	setjmp, i32, i32
+	.functype	exit, void, i32
+	.functype	longjmp, void, i32, i32

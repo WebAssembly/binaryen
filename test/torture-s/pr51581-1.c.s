@@ -661,3 +661,4 @@ d:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void

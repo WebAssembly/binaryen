@@ -153,3 +153,7 @@ check2.r:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	strcpy, i32, i32, i32
+	.functype	abort, void
+	.functype	memcmp, i32, i32, i32, i32
+	.functype	exit, void, i32

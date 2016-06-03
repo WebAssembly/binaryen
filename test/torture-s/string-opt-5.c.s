@@ -385,3 +385,10 @@ buf:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	strlen, i32, i32
+	.functype	abort, void
+	.functype	strcmp, i32, i32, i32
+	.functype	strchr, i32, i32, i32
+	.functype	strrchr, i32, i32, i32
+	.functype	strncpy, i32, i32, i32, i32
+	.functype	memcmp, i32, i32, i32, i32

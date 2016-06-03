@@ -38,3 +38,6 @@ foo:                                    # @foo
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	__builtin_apply, i32
+	.functype	__builtin_apply_args, i32
+	.functype	abort, void

@@ -383,3 +383,6 @@ r.c.0:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	abort, void
+	.functype	exit, void, i32
+	.functype	strcmp, i32, i32, i32

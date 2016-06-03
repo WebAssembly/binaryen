@@ -1,11 +1,7 @@
 # Expected failures from running s2wasm on the linked GCC torture test output
 # files.
 
-# Unknown symbol (likely an external symbol).
-pr54937.c.s # $exit
-
 # Unknown symbol ($abort, $stdout, $stderr).
-921110-1.c.s
 fprintf-1.c.s
 gofast.c.s
 fprintf-chk-1.c.s

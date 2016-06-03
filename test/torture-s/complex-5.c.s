@@ -131,3 +131,6 @@ z:
 
 
 	.ident	"clang version 3.9.0 "
+	.functype	__divsc3, void, i32, f32, f32, f32, f32
+	.functype	abort, void
+	.functype	exit, void, i32
