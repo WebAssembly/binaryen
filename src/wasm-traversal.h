@@ -140,28 +140,6 @@ struct UnifiedExpressionVisitor : public Visitor<SubType> {
 //
 template<typename SubType, typename VisitorType>
 struct Walker : public VisitorType {
-  // Function parallelism. By default, walks are not run in parallel, but you
-  // can override this method to say that functions are parallelizable. This
-  // should always be safe *unless* you do something in the pass that makes it
-  // not thread-safe; in other words, the Module and Function objects and
-  // so forth are set up so that Functions can be processed in parallel, so
-  // if you do not ad global state that could be raced on, your pass could be
-  // function-parallel.
-  //
-  // Function-parallel passes create an instance of the Walker class per function.
-  // That means that you can't rely on Walker object properties to persist across
-  // your functions, and you can't expect a new object to be created for each
-  // function either (which could be very inefficient).
-  bool isFunctionParallel() { return false; }
-
-  // This method is used to create instances per function for a function-parallel
-  // pass. You may need to override this if you subclass a Walker, as otherwise
-  // this will create the parent class.
-  // Note that this returns nullptr, and we check if the result is nullptr and
-  // do  new SubType  later. This is important since non-function parallel
-  // passes may not be constructable via  new SubType.
-  virtual SubType* create() { return nullptr; }
-
   // Useful methods for visitor implementions
 
   // Replace the current node. You can call this in your visit*() methods.
@@ -214,49 +192,8 @@ struct Walker : public VisitorType {
     for (auto& curr : module->exports) {
       self->visitExport(curr.get());
     }
-
-    auto processFunction = [this](Module* module, SubType* instance, Function* func) {
-      std::unique_ptr<SubType> allocated;
-      if (!instance) {
-        instance = create();
-        if (!instance) instance = new SubType;
-        assert(module);
-        instance->setModule(module);
-        allocated = std::unique_ptr<SubType>(instance);
-      }
-      instance->walkFunction(func);
-    };
-
-    // if this is not a function-parallel traversal, run
-    // sequentially
-    if (!self->isFunctionParallel()) {
-      for (auto& curr : module->functions) {
-        processFunction(nullptr, self, curr.get());
-      }
-    } else {
-      // execute in parallel on helper threads
-      size_t num = ThreadPool::get()->size();
-      std::vector<std::function<ThreadWorkState ()>> doWorkers;
-      std::atomic<size_t> nextFunction;
-      nextFunction.store(0);
-      size_t numFunctions = module->functions.size();
-      for (size_t i = 0; i < num; i++) {
-        doWorkers.push_back([&nextFunction, numFunctions, &module, processFunction]() {
-          auto index = nextFunction.fetch_add(1);
-          // get the next task, if there is one
-          if (index >= numFunctions) {
-            return ThreadWorkState::Finished; // nothing left
-          }
-          Function* curr = module->functions[index].get();
-          // do the current task
-          processFunction(module, nullptr, curr);
-          if (index + 1 == numFunctions) {
-            return ThreadWorkState::Finished; // we did the last one
-          }
-          return ThreadWorkState::More;
-        });
-      }
-      ThreadPool::get()->work(doWorkers);
+    for (auto& curr : module->functions) {
+      self->walkFunction(curr.get());
     }
     self->visitTable(&module->table);
     self->visitMemory(&module->memory);

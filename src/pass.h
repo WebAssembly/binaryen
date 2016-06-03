@@ -89,7 +89,7 @@ struct PassRunner {
   }
 
   template<class P, class Arg>
-  void add(Arg& arg){
+  void add(Arg arg){
     passes.push_back(new P(arg));
   }
 
@@ -116,6 +116,9 @@ struct PassRunner {
   P* getLast();
 
   ~PassRunner();
+
+private:
+  void runPassOnFunction(Pass* pass, Function* func);
 };
 
 //
@@ -135,6 +138,25 @@ public:
   virtual void runFunction(PassRunner* runner, Module* module, Function* function) {
     WASM_UNREACHABLE(); // by default, passes cannot be run this way
   }
+
+  // Function parallelism. By default, passes are not run in parallel, but you
+  // can override this method to say that functions are parallelizable. This
+  // should always be safe *unless* you do something in the pass that makes it
+  // not thread-safe; in other words, the Module and Function objects and
+  // so forth are set up so that Functions can be processed in parallel, so
+  // if you do not ad global state that could be raced on, your pass could be
+  // function-parallel.
+  //
+  // Function-parallel passes create an instance of the Walker class per function.
+  // That means that you can't rely on Walker object properties to persist across
+  // your functions, and you can't expect a new object to be created for each
+  // function either (which could be very inefficient).
+  virtual bool isFunctionParallel() { return false; }
+
+  // This method is used to create instances per function for a function-parallel
+  // pass. You may need to override this if you subclass a Walker, as otherwise
+  // this will create the parent class.
+  virtual Pass* create() { WASM_UNREACHABLE(); }
 
   std::string name;
 
@@ -197,7 +219,7 @@ protected:
 
 public:
   Printer() : o(std::cout) {}
-  Printer(std::ostream& o) : o(o) {}
+  Printer(std::ostream* o) : o(*o) {}
 
   void run(PassRunner* runner, Module* module) override;
 };

@@ -42,7 +42,7 @@ namespace wasm {
 
 // Helper classes
 
-struct GetLocalCounter : public WalkerPass<PostWalker<GetLocalCounter, Visitor<GetLocalCounter>>> {
+struct GetLocalCounter : public PostWalker<GetLocalCounter, Visitor<GetLocalCounter>> {
   std::vector<int>* numGetLocals;
 
   void visitGetLocal(GetLocal *curr) {
@@ -50,7 +50,7 @@ struct GetLocalCounter : public WalkerPass<PostWalker<GetLocalCounter, Visitor<G
   }
 };
 
-struct SetLocalRemover : public WalkerPass<PostWalker<SetLocalRemover, Visitor<SetLocalRemover>>> {
+struct SetLocalRemover : public PostWalker<SetLocalRemover, Visitor<SetLocalRemover>> {
   std::vector<int>* numGetLocals;
 
   void visitSetLocal(SetLocal *curr) {
@@ -63,7 +63,9 @@ struct SetLocalRemover : public WalkerPass<PostWalker<SetLocalRemover, Visitor<S
 // Main class
 
 struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new SimplifyLocals; }
 
   // information for a set_local we can sink
   struct SinkableInfo {

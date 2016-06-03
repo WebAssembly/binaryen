@@ -25,7 +25,9 @@
 namespace wasm {
 
 struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<PostEmscripten>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new PostEmscripten; }
 
   // When we have a Load from a local value (typically a GetLocal) plus a constant offset,
   // we may be able to fold it in.

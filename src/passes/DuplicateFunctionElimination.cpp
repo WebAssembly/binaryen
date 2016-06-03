@@ -26,17 +26,13 @@
 
 namespace wasm {
 
-struct FunctionHasher : public PostWalker<FunctionHasher, Visitor<FunctionHasher>> {
-  bool isFunctionParallel() { return true; }
+struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher, Visitor<FunctionHasher>>> {
+  bool isFunctionParallel() override { return true; }
+
+  FunctionHasher(std::map<Function*, uint32_t>* output) : output(output) {}
 
   FunctionHasher* create() override {
-    auto* ret = new FunctionHasher;
-    ret->setOutput(output);
-    return ret;
-  }
-
-  void setOutput(std::map<Function*, uint32_t>* output_) {
-    output = output_;
+    return new FunctionHasher(output);
   }
 
   void doWalkFunction(Function* func) {
@@ -63,17 +59,13 @@ private:
   };
 };
 
-struct FunctionReplacer : public PostWalker<FunctionReplacer, Visitor<FunctionReplacer>> {
-  bool isFunctionParallel() { return true; }
+struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer, Visitor<FunctionReplacer>>> {
+  bool isFunctionParallel() override { return true; }
+
+  FunctionReplacer(std::map<Name, Name>* replacements) : replacements(replacements) {}
 
   FunctionReplacer* create() override {
-    auto* ret = new FunctionReplacer;
-    ret->setReplacements(replacements);
-    return ret;
-  }
-
-  void setReplacements(std::map<Name, Name>* replacements_) {
-    replacements = replacements_;
+    return new FunctionReplacer(replacements);
   }
 
   void visitCall(Call* curr) {
@@ -95,9 +87,9 @@ struct DuplicateFunctionElimination : public Pass {
       for (auto& func : module->functions) {
         hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
       }
-      FunctionHasher hasher;
-      hasher.setOutput(&hashes);
-      hasher.walkModule(module);
+      PassRunner hasherRunner(module);
+      hasherRunner.add<FunctionHasher>(&hashes);
+      hasherRunner.run();
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       for (auto& func : module->functions) {
@@ -127,9 +119,9 @@ struct DuplicateFunctionElimination : public Pass {
         }), v.end());
         module->updateFunctionsMap();
         // replace direct calls
-        FunctionReplacer replacer;
-        replacer.setReplacements(&replacements);
-        replacer.walkModule(module);
+        PassRunner replacerRunner(module);
+        replacerRunner.add<FunctionReplacer>(&replacements);
+        replacerRunner.run();
         // replace in table
         for (auto& name : module->table.names) {
           auto iter = replacements.find(name);

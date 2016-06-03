@@ -94,63 +94,96 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 }
 
 void PassRunner::run() {
-  std::chrono::high_resolution_clock::time_point beforeEverything;
-  size_t padding = 0;
   if (debug) {
+    // for debug logging purposes, run each pass in full before running the other
+    std::chrono::high_resolution_clock::time_point beforeEverything;
+    size_t padding = 0;
     std::cerr << "[PassRunner] running passes..." << std::endl;
     beforeEverything = std::chrono::high_resolution_clock::now();
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
-  }
-  for (auto pass : passes) {
-    currPass = pass;
-    std::chrono::high_resolution_clock::time_point before;
-    if (debug) {
+    for (auto* pass : passes) {
+      currPass = pass;
+      std::chrono::high_resolution_clock::time_point before;
       std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
       for (size_t i = 0; i < padding - pass->name.size(); i++) {
         std::cerr << ' ';
       }
       before = std::chrono::high_resolution_clock::now();
-    }
-    pass->run(this, wasm);
-    if (debug) {
+      pass->run(this, wasm);
       auto after = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
     }
-  }
-  if (debug) {
     auto after = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = after - beforeEverything;
     std::cerr << "[PassRunner] passes took " << diff.count() << " seconds." << std::endl;
+  } else {
+    // non-debug normal mode, run them in an optimal manner - for locality it is better
+    // to run as many passes as possible on a single function before moving to the next
+    std::vector<Pass*> stack;
+    auto flush = [&]() {
+      if (stack.size() > 0) {
+        // run the stack of passes on all the functions, in parallel
+        size_t num = ThreadPool::get()->size();
+        std::vector<std::function<ThreadWorkState ()>> doWorkers;
+        std::atomic<size_t> nextFunction;
+        nextFunction.store(0);
+        size_t numFunctions = wasm->functions.size();
+        for (size_t i = 0; i < num; i++) {
+          doWorkers.push_back([&]() {
+            auto index = nextFunction.fetch_add(1);
+            // get the next task, if there is one
+            if (index >= numFunctions) {
+              return ThreadWorkState::Finished; // nothing left
+            }
+            Function* func = wasm->functions[index].get();
+            // do the current task: run all passes on this function
+            for (auto* pass : stack) {
+              runPassOnFunction(pass, func);
+            }
+            if (index + 1 == numFunctions) {
+              return ThreadWorkState::Finished; // we did the last one
+            }
+            return ThreadWorkState::More;
+          });
+        }
+        ThreadPool::get()->work(doWorkers);
+      }
+      stack.clear();
+    };
+    for (auto* pass : passes) {
+      if (pass->isFunctionParallel()) {
+        stack.push_back(pass);
+      } else {
+        flush();
+        pass->run(this, wasm);
+      }
+    }
+    flush();
   }
 }
 
 void PassRunner::runFunction(Function* func) {
-  for (auto pass : passes) {
-    pass->runFunction(this, wasm, func);
+  for (auto* pass : passes) {
+    runPassOnFunction(pass, func);
   }
-}
-
-template<class P>
-P* PassRunner::getLast() {
-  bool found = false;
-  P* ret;
-  for (int i = passes.size() - 1; i >= 0; i--) {
-    if (found && (ret = dynamic_cast<P*>(passes[i]))) {
-      return ret;
-    }
-    if (passes[i] == currPass) {
-      found = true;
-    }
-  }
-  return nullptr;
 }
 
 PassRunner::~PassRunner() {
   for (auto pass : passes) {
     delete pass;
+  }
+}
+
+void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
+  // function-parallel passes get a new instance per function
+  if (pass->isFunctionParallel()) {
+    auto instance = std::unique_ptr<Pass>(pass->create());
+    instance->runFunction(this, wasm, func);
+  } else {
+    pass->runFunction(this, wasm, func);
   }
 }
 

@@ -628,9 +628,9 @@ static RegisterPass<Printer> registerPass("print", "print in s-expression format
 // Prints out a minified module
 
 class MinifiedPrinter : public Printer {
-  public:
+public:
   MinifiedPrinter() : Printer() {}
-  MinifiedPrinter(std::ostream& o) : Printer(o) {}
+  MinifiedPrinter(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
@@ -644,9 +644,9 @@ static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print
 // Prints out a module withough elision, i.e., the full ast
 
 class FullPrinter : public Printer {
-  public:
+public:
   FullPrinter() : Printer() {}
-  FullPrinter(std::ostream& o) : Printer(o) {}
+  FullPrinter(std::ostream* o) : Printer(o) {}
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);

@@ -25,7 +25,9 @@
 namespace wasm {
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new RemoveUnusedBrs; }
 
   bool anotherCycle;
 

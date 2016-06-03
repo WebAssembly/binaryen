@@ -26,7 +26,9 @@
 namespace wasm {
 
 struct DropReturnValues : public WalkerPass<PostWalker<DropReturnValues, Visitor<DropReturnValues>>> {
-  bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new DropReturnValues; }
 
   std::vector<Expression*> expressionStack;
 
