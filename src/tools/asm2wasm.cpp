@@ -92,13 +92,8 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, opts);
   asm2wasm.processAsm(asmjs);
-
-  if (opts) {
-    if (options.debug) std::cerr << "optimizing..." << std::endl;
-    asm2wasm.optimize();
-  }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);

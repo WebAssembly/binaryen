@@ -30,7 +30,8 @@
 #include "pass.h"
 #include "ast_utils.h"
 #include "wasm-builder.h"
-#include <wasm-validator.h>
+#include "wasm-validator.h"
+#include "wasm-module-building.h"
 
 namespace wasm {
 
@@ -136,6 +137,8 @@ class Asm2WasmBuilder {
 
   Builder builder;
 
+  std::unique_ptr<OptimizingIncrementalModuleBuilder> optimizingBuilder;
+
   // globals
 
   unsigned nextGlobal; // next place to put a global
@@ -156,6 +159,7 @@ class Asm2WasmBuilder {
   bool memoryGrowth;
   bool debug;
   bool imprecise;
+  bool optimize;
 
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
@@ -267,7 +271,7 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise)
+ Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, bool optimize)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
@@ -275,10 +279,10 @@ public:
        maxGlobal(1000),
        memoryGrowth(memoryGrowth),
        debug(debug),
-       imprecise(imprecise) {}
+       imprecise(imprecise),
+       optimize(optimize) {}
 
  void processAsm(Ref ast);
- void optimize();
 
 private:
   AsmType detectAsmType(Ref ast, AsmData *data) {
@@ -523,6 +527,16 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
 
+  // set up optimization
+
+  if (optimize) {
+    Index numFunctions = 0;
+    for (unsigned i = 1; i < body->size(); i++) {
+      if (body[i][0] == DEFUN) numFunctions++;
+    }
+    optimizingBuilder = std::unique_ptr<OptimizingIncrementalModuleBuilder>(new OptimizingIncrementalModuleBuilder(&wasm, numFunctions));
+  }
+
   // first pass - do almost everything, but function imports and indirect calls
 
   for (unsigned i = 1; i < body->size(); i++) {
@@ -655,7 +669,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
     } else if (curr[0] == DEFUN) {
       // function
-      wasm.addFunction(processFunction(curr));
+      auto* func = processFunction(curr);
+      if (optimize) {
+        optimizingBuilder->addFunction(func);
+      } else {
+        wasm.addFunction(func);
+      }
     } else if (curr[0] == RETURN) {
       // exports
       Ref object = curr[1];
@@ -687,6 +706,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           exported[key] = export_;
         }
       }
+    }
+  }
+
+  if (optimize) {
+    optimizingBuilder->finish();
+    if (maxGlobal < 1024) {
+      PassRunner passRunner(&wasm);
+      passRunner.add("post-emscripten");
+      passRunner.run();
     }
   }
 
@@ -1724,17 +1752,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());
   return function;
-}
-
-void Asm2WasmBuilder::optimize() {
-  PassRunner passRunner(&wasm);
-  passRunner.addDefaultOptimizationPasses();
-  if (maxGlobal < 1024) {
-    passRunner.add("post-emscripten");
-  }
-  passRunner.run();
-
-  assert(WasmValidator().validate(wasm));
 }
 
 } // namespace wasm

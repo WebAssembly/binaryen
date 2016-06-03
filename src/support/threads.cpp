@@ -116,14 +116,18 @@ void ThreadPool::initialize(size_t num) {
   DEBUG_POOL("initialize() is done\n");
 }
 
+size_t ThreadPool::getNumCores() {
+  size_t num = std::max(1U, std::thread::hardware_concurrency());
+  if (getenv("BINARYEN_CORES")) {
+    num = std::stoi(getenv("BINARYEN_CORES"));
+  }
+  return num;
+}
+
 ThreadPool* ThreadPool::get() {
   if (!pool) {
-    size_t num = std::max(1U, std::thread::hardware_concurrency());
-    if (getenv("BINARYEN_CORES")) {
-      num = std::stoi(getenv("BINARYEN_CORES"));
-    }
     pool = std::unique_ptr<ThreadPool>(new ThreadPool());
-    pool->initialize(num);
+    pool->initialize(getNumCores());
   }
   return pool.get();
 }

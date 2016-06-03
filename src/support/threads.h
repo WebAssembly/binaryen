@@ -79,6 +79,9 @@ private:
   void initialize(size_t num);
 
 public:
+  // Get the number of cores we can use.
+  static size_t getNumCores();
+
   // Get the singleton threadpool. This can return null
   // if there is just one thread available.
   static ThreadPool* get();
