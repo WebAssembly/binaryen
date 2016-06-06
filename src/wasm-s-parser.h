@@ -350,6 +350,7 @@ private:
   size_t localIndex; // params and vars
   size_t otherIndex;
   std::vector<Name> labelStack;
+  bool brokeToAutoBlock;
 
   Name getPrefixedName(std::string prefix) {
     return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
@@ -404,6 +405,7 @@ private:
     Expression* body = nullptr;
     localIndex = 0;
     otherIndex = 0;
+    brokeToAutoBlock = false;
     std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
     std::vector<NameType> params;
     std::vector<NameType> vars;
@@ -417,6 +419,13 @@ private:
         result,
         std::move(vars)
       ));
+    };
+    auto ensureAutoBlock = [&]() {
+      if (!autoBlock) {
+        autoBlock = allocator.alloc<Block>();
+        autoBlock->list.push_back(body);
+        body = autoBlock;
+      }
     };
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
@@ -470,15 +479,17 @@ private:
         if (!body) {
           body = ex;
         } else {
-          if (!autoBlock) {
-            autoBlock = allocator.alloc<Block>();
-            autoBlock->list.push_back(body);
-            body = autoBlock;
-          }
+          ensureAutoBlock();
           autoBlock->list.push_back(ex);
-          autoBlock->finalize();
         }
       }
+    }
+    if (brokeToAutoBlock) {
+      ensureAutoBlock();
+      autoBlock->name = FAKE_RETURN;
+    }
+    if (autoBlock) {
+      autoBlock->finalize();
     }
     if (!currFunction) {
       makeFunction();
@@ -1117,7 +1128,12 @@ private:
     } else {
       // offset, break to nth outside label
       uint64_t offset = std::stoll(s.c_str(), nullptr, 0);
-      if (offset >= labelStack.size()) throw ParseException("invalid label", s.line, s.col);
+      if (offset > labelStack.size()) throw ParseException("invalid label", s.line, s.col);
+      if (offset == labelStack.size()) {
+        // a break to the function's scope. this means we need an automatic block, with a name
+        brokeToAutoBlock = true;
+        return FAKE_RETURN;
+      }
       return labelStack[labelStack.size() - 1 - offset];
     }
   }
