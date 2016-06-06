@@ -724,6 +724,7 @@ class S2WasmBuilder {
       Name assign = getAssign();
       auto curr = allocator->alloc<Host>();
       curr->op = op;
+      curr->finalize();
       setOutput(curr, assign);
     };
     auto makeHost1 = [&](HostOp op) {
