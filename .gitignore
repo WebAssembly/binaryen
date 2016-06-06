@@ -22,3 +22,11 @@ cmake_install.cmake
 test/wasm-binaries-*.tbz2
 test/wasm-torture-s-*.tbz2
 test/wasm-install/
+
+.vs/
+*.vcxproj*
+*.dir/
+*.sln
+bin/
+lib/
+Win32/
