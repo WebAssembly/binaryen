@@ -384,6 +384,7 @@ void Linker::makeDynCallThunks() {
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   Name thunkName = std::string("__importThunk_") + name.c_str();
   if (Function* thunk = out.wasm.checkFunction(thunkName)) return thunk;
+  ensureImport(name, getSig(funcType));
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;
   Index p = 0;
@@ -396,6 +397,5 @@ Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   Expression* call = wasmBuilder.makeCallImport(name, args);
   f->body = call;
   out.wasm.addFunction(f);
-  ensureImport(name, getSig(funcType));
   return f;
 }

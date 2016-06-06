@@ -33,10 +33,11 @@ struct NameType {
 // General AST node builder
 
 class Builder {
+  Module& wasm;
   MixedArena &allocator;
 
 public:
-  Builder(Module& wasm) : allocator(wasm.allocator) {}
+  Builder(Module& wasm) : wasm(wasm), allocator(wasm.allocator) {}
 
   // make* functions, create nodes
 
@@ -99,6 +100,7 @@ public:
   // Also do a version which takes a sig?
   CallImport* makeCallImport(Name target, const std::vector<Expression*>& args) {
     auto* call = allocator.alloc<CallImport>();
+    call->type = wasm.getImport(target)->type->result;
     call->target = target;
     call->operands.set(args);
     return call;
