@@ -21,6 +21,7 @@
 #include <string>
 
 #include "threads.h"
+#include "compiler-support.h"
 
 
 // debugging tools
@@ -178,6 +179,7 @@ void ThreadPool::notifyThreadIsReady() {
 void ThreadPool::resetThreadsAreReady() {
   DEBUG_POOL("reset threads are ready\n";)
   auto old = ready.exchange(0);
+  WASM_UNUSED(old);
   assert(old == threads.size());
 }
 

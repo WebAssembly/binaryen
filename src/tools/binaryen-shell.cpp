@@ -131,6 +131,7 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
       // an invoke test
       assert(wasm);
       bool trapped = false;
+      WASM_UNUSED(trapped);
       Literal result;
       try {
         Invocation invocation(*curr[1], instance.get(), *builder->get());
