@@ -13,6 +13,7 @@ SET(passes_SOURCES
   PostEmscripten.cpp
   Print.cpp
   RemoveImports.cpp
+  RemoveMemory.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedFunctions.cpp
