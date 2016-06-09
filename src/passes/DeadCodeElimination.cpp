@@ -148,8 +148,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
   }
 
   static void doAfterIfElseTrue(DeadCodeElimination* self, Expression** currp) {
-    auto* curr = (*currp)->cast<If>();
-    assert(curr->ifFalse);
+    assert((*currp)->cast<If>()->ifFalse);
     bool reachableBefore = self->ifStack.back();
     self->ifStack.pop_back();
     self->ifStack.push_back(self->reachable);

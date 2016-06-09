@@ -1416,6 +1416,7 @@ public:
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new FunctionType;
       auto form = getInt8();
+      WASM_UNUSED(form);
       assert(form == BinaryConsts::TypeForms::Basic);
       size_t numParams = getU32LEB();
       if (debug) std::cerr << "num params: " << numParams << std::endl;
@@ -1638,6 +1639,7 @@ public:
     for (size_t i = 0; i < num; i++) {
       functions[i]->name = getInlineString();
       auto numLocals = getU32LEB();
+      WASM_UNUSED(numLocals);
       assert(numLocals == 0); // TODO
     }
   }
@@ -1806,6 +1808,7 @@ public:
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
     auto arity = getU32LEB();
+    WASM_UNUSED(arity);
     auto index = getU32LEB();
     assert(index < functionTypes.size());
     auto type = functionTypes[index];
@@ -1821,6 +1824,7 @@ public:
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     auto arity = getU32LEB();
+    WASM_UNUSED(arity);
     auto import = wasm.getImport(getU32LEB());
     curr->target = import->name;
     auto type = import->type;
@@ -1837,6 +1841,7 @@ public:
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
     auto arity = getU32LEB();
+    WASM_UNUSED(arity);
     auto* fullType = wasm.getFunctionType(getU32LEB());
     curr->fullType = fullType->name;
     auto num = fullType->params.size();
