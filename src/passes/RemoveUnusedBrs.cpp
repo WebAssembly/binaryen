@@ -232,6 +232,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
   }
 };
 
-static RegisterPass<RemoveUnusedBrs> registerPass("remove-unused-brs", "removes breaks from locations that are not needed");
+Pass *createRemoveUnusedBrsPass() {
+  return new RemoveUnusedBrs();
+}
 
 } // namespace wasm

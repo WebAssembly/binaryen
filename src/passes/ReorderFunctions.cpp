@@ -57,6 +57,8 @@ struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions, Visitor
   }
 };
 
-static RegisterPass<ReorderFunctions> registerPass("reorder-functions", "sorts functions by access frequency");
+Pass *createReorderFunctionsPass() {
+  return new ReorderFunctions();
+}
 
 } // namespace wasm

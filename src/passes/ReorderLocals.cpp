@@ -134,6 +134,8 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<Reord
   }
 };
 
-static RegisterPass<ReorderLocals> registerPass("reorder-locals", "sorts locals by access frequency");
+Pass *createReorderLocalsPass() {
+  return new ReorderLocals();
+}
 
 } // namespace wasm

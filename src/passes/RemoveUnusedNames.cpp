@@ -54,6 +54,8 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visit
   }
 };
 
-static RegisterPass<RemoveUnusedNames> registerPass("remove-unused-names", "removes names from locations that are never branched to");
+Pass *createRemoveUnusedNamesPass() {
+  return new RemoveUnusedNames();
+}
 
 } // namespace wasm

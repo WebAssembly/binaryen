@@ -178,7 +178,9 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
   }
 };
 
-static RegisterPass<MergeBlocks> registerPass("merge-blocks", "merges blocks to their parents");
+Pass *createMergeBlocksPass() {
+  return new MergeBlocks();
+}
 
 } // namespace wasm
 

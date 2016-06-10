@@ -27,6 +27,7 @@
 #include "mixed_arena.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "passes/passes.h"
 #include "pass.h"
 #include "ast_utils.h"
 #include "wasm-builder.h"

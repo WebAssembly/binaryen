@@ -32,7 +32,9 @@ struct NameList : public Pass {
   }
 };
 
-static RegisterPass<NameList> registerPass("nm", "name list");
+Pass *createNameListPass() {
+  return new NameList();
+}
 
 } // namespace wasm
 

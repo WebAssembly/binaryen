@@ -97,7 +97,9 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   }
 };
 
-static RegisterPass<Precompute> registerPass("precompute", "computes compile-time evaluatable expressions");
+Pass *createPrecomputePass() {
+  return new Precompute();
+}
 
 } // namespace wasm
 
