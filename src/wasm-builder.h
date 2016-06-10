@@ -33,10 +33,10 @@ struct NameType {
 // General AST node builder
 
 class Builder {
-  MixedArena &allocator;
+  Module& wasm;
 
 public:
-  Builder(Module& wasm) : allocator(wasm.allocator) {}
+  Builder(Module& wasm) : wasm(wasm) {}
 
   // make* functions, create nodes
 
@@ -65,10 +65,10 @@ public:
   }
 
   Nop* makeNop() {
-    return allocator.alloc<Nop>();
+    return wasm.allocator.alloc<Nop>();
   }
   Block* makeBlock(Expression* first = nullptr) {
-    auto* ret = allocator.alloc<Block>();
+    auto* ret = wasm.allocator.alloc<Block>();
     if (first) {
       ret->list.push_back(first);
       ret->finalize();
@@ -76,19 +76,19 @@ public:
     return ret;
   }
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse=nullptr) {
-    auto* ret = allocator.alloc<If>();
+    auto* ret = wasm.allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
     ret->finalize();
     return ret;
   }
   Loop* makeLoop(Name out, Name in, Expression* body) {
-    auto* ret = allocator.alloc<Loop>();
+    auto* ret = wasm.allocator.alloc<Loop>();
     ret->out = out; ret->in = in; ret->body = body;
     ret->finalize();
     return ret;
   }
   Break* makeBreak(Name name, Expression* value=nullptr, Expression* condition=nullptr) {
-    auto* ret = allocator.alloc<Break>();
+    auto* ret = wasm.allocator.alloc<Break>();
     ret->name = name; ret->value = value; ret->condition = condition;
     ret->finalize();
     return ret;
@@ -98,13 +98,14 @@ public:
   // Call
   // Also do a version which takes a sig?
   CallImport* makeCallImport(Name target, const std::vector<Expression*>& args) {
-    auto* call = allocator.alloc<CallImport>();
+    auto* call = wasm.allocator.alloc<CallImport>();
+    call->type = wasm.getImport(target)->type->result;
     call->target = target;
     call->operands.set(args);
     return call;
   }
   CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
-    auto* call = allocator.alloc<CallIndirect>();
+    auto* call = wasm.allocator.alloc<CallIndirect>();
     call->fullType = type->name;
     call->type = type->result;
     call->target = target;
@@ -113,13 +114,13 @@ public:
   }
   // FunctionType
   GetLocal* makeGetLocal(Index index, WasmType type) {
-    auto* ret = allocator.alloc<GetLocal>();
+    auto* ret = wasm.allocator.alloc<GetLocal>();
     ret->index = index;
     ret->type = type;
     return ret;
   }
   SetLocal* makeSetLocal(Index index, Expression* value) {
-    auto* ret = allocator.alloc<SetLocal>();
+    auto* ret = wasm.allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
     ret->type = value->type;
@@ -127,37 +128,37 @@ public:
   }
   // Load
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value) {
-    auto* ret = allocator.alloc<Store>();
+    auto* ret = wasm.allocator.alloc<Store>();
     ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value;
     ret->type = value->type;
     return ret;
   }
   Const* makeConst(Literal value) {
-    auto* ret = allocator.alloc<Const>();
+    auto* ret = wasm.allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;
     return ret;
   }
   Unary* makeUnary(UnaryOp op, Expression *value) {
-    auto* ret = allocator.alloc<Unary>();
+    auto* ret = wasm.allocator.alloc<Unary>();
     ret->op = op; ret->value = value;
     ret->finalize();
     return ret;
   }
   Binary* makeBinary(BinaryOp op, Expression *left, Expression *right) {
-    auto* ret = allocator.alloc<Binary>();
+    auto* ret = wasm.allocator.alloc<Binary>();
     ret->op = op; ret->left = left; ret->right = right;
     ret->finalize();
     return ret;
   }
   // Select
   Return* makeReturn(Expression *value) {
-    auto* ret = allocator.alloc<Return>();
+    auto* ret = wasm.allocator.alloc<Return>();
     ret->value = value;
     return ret;
   }
   Host* makeHost(HostOp op, Name nameOperand, std::vector<Expression*>&& operands) {
-    auto* ret = allocator.alloc<Host>();
+    auto* ret = wasm.allocator.alloc<Host>();
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);

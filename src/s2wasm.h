@@ -732,6 +732,7 @@ class S2WasmBuilder {
       auto curr = allocator->alloc<Host>();
       curr->op = op;
       curr->operands.push_back(getInput());
+      curr->finalize();
       setOutput(curr, assign);
     };
     auto makeLoad = [&](WasmType type) {
@@ -1028,8 +1029,12 @@ class S2WasmBuilder {
         bstack.push_back(block);
         bstack.push_back(curr);
       } else if (match("end_loop")) {
+        auto* loop = bstack.back()->cast<Loop>();
         bstack.pop_back();
+        auto* implicitBlock = bstack.back()->cast<Block>();
         bstack.pop_back();
+        implicitBlock->finalize();
+        loop->finalize();
       } else if (match("br_table")) {
         auto curr = allocator->alloc<Switch>();
         curr->condition = getInput();
@@ -1052,6 +1057,7 @@ class S2WasmBuilder {
           skipComma();
           curr->condition = getInput();
         }
+        curr->finalize();
         addToBlock(curr);
       } else if (match("call")) {
         makeCall(none);

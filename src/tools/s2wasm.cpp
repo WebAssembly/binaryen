@@ -24,6 +24,7 @@
 #include "s2wasm.h"
 #include "wasm-linker.h"
 #include "wasm-printing.h"
+#include "wasm-validator.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -31,6 +32,7 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
   bool generateEmscriptenGlue = false;
+  bool validateOutput = true;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   Options options("s2wasm", "Link .s file into .wast");
@@ -80,6 +82,11 @@ int main(int argc, const char *argv[]) {
            Options::Arguments::N,
            [&archiveLibraries](Options *o, const std::string &argument) {
              archiveLibraries.push_back(argument);
+           })
+      .add("--no-validate", "", "Disable validation of the output module",
+           Options::Arguments::Zero,
+           [&validateOutput](Options *, const std::string &) {
+            validateOutput = false;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
@@ -131,10 +138,16 @@ int main(int argc, const char *argv[]) {
     linker.emscriptenGlue(meta);
   }
 
+  if (options.debug) std::cerr << "Validating..." << std::endl;
+  if (validateOutput && !wasm::WasmValidator().validate(linker.getOutput().wasm)) {
+    Fatal() << "Error: linked module is not valid.\n";
+  }
+
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&linker.getOutput().wasm, output.getStream());
   output << meta.str();
 
   if (options.debug) std::cerr << "Done." << std::endl;
+  return 0;
 }
