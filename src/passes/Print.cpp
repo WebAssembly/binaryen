@@ -623,7 +623,9 @@ void Printer::run(PassRunner* runner, Module* module) {
   print.visitModule(module);
 }
 
-static RegisterPass<Printer> registerPass("print", "print in s-expression format");
+Pass *createPrinterPass() {
+  return new Printer();
+}
 
 // Prints out a minified module
 
@@ -639,7 +641,9 @@ public:
   }
 };
 
-static RegisterPass<MinifiedPrinter> registerMinifyPass("print-minified", "print in minified s-expression format");
+Pass *createMinifiedPrinterPass() {
+  return new MinifiedPrinter();
+}
 
 // Prints out a module withough elision, i.e., the full ast
 
@@ -655,7 +659,9 @@ public:
   }
 };
 
-static RegisterPass<FullPrinter> registerFullASTPass("print-full", "print in full s-expression format");
+Pass *createFullPrinterPass() {
+  return new FullPrinter();
+}
 
 // Print individual expressions
 

@@ -60,6 +60,8 @@ struct LowerIfElse : public WalkerPass<PostWalker<LowerIfElse, Visitor<LowerIfEl
   }
 };
 
-static RegisterPass<LowerIfElse> registerPass("lower-if-else", "lowers if-elses into ifs, blocks and branches");
+Pass *createLowerIfElsePass() {
+  return new LowerIfElse();
+}
 
 } // namespace wasm

@@ -29,6 +29,8 @@ struct RemoveMemory : public Pass {
   }
 };
 
-static RegisterPass<RemoveMemory> registerPass("remove-memory", "removes memory segments");
+Pass *createRemoveMemoryPass() {
+  return new RemoveMemory();
+}
 
 } // namespace wasm

@@ -32,6 +32,8 @@ class Pass;
 // Global registry of all passes in /passes/
 //
 struct PassRegistry {
+  PassRegistry();
+
   static PassRegistry* get();
 
   typedef std::function<Pass* ()> Creator;
@@ -42,6 +44,8 @@ struct PassRegistry {
   std::string getPassDescription(std::string name);
 
 private:
+  void registerPasses();
+
   struct PassInfo {
     std::string description;
     Creator create;
@@ -49,18 +53,6 @@ private:
     PassInfo(std::string description, Creator create) : description(description), create(create) {}
   };
   std::map<std::string, PassInfo> passInfos;
-};
-
-//
-// Utility class to register a pass. See pass files for usage.
-//
-template<class P>
-struct RegisterPass {
-  RegisterPass(const char* name, const char *description) {
-    PassRegistry::get()->registerPass(name, description, []() {
-      return new P();
-    });
-  }
 };
 
 //

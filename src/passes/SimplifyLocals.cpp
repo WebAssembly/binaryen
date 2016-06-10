@@ -434,6 +434,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   }
 };
 
-static RegisterPass<SimplifyLocals> registerPass("simplify-locals", "miscellaneous locals-related optimizations");
+Pass *createSimplifyLocalsPass() {
+  return new SimplifyLocals();
+}
 
 } // namespace wasm
