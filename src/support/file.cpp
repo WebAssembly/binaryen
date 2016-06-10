@@ -17,6 +17,7 @@
 #include "support/file.h"
 
 #include <cstdlib>
+#include <cstdint>
 #include <limits>
 
 template <typename T>

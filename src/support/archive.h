@@ -97,8 +97,8 @@ class Archive {
  private:
   void setFirstRegular(const Child& c) { firstRegularData = c.data; }
   Buffer& data;
-  SubBuffer symbolTable = {nullptr, 0};
-  SubBuffer stringTable = {nullptr, 0};
+  SubBuffer symbolTable;
+  SubBuffer stringTable;
   const uint8_t* firstRegularData;
 };
 

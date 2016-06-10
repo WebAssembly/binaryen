@@ -138,7 +138,7 @@ void PassRunner::run() {
             if (index >= numFunctions) {
               return ThreadWorkState::Finished; // nothing left
             }
-            Function* func = wasm->functions[index].get();
+            Function* func = this->wasm->functions[index].get();
             // do the current task: run all passes on this function
             for (auto* pass : stack) {
               runPassOnFunction(pass, func);

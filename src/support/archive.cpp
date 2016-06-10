@@ -60,7 +60,7 @@ uint32_t ArchiveMemberHeader::getSize() const {
   return static_cast<uint32_t>(sizeInt);
 }
 
-Archive::Archive(Buffer& b, bool& error) : data(b) {
+Archive::Archive(Buffer& b, bool& error) : data(b), symbolTable({nullptr, 0}), stringTable({nullptr, 0}) {
   error = false;
   if (data.size() < strlen(magic) ||
       memcmp(data.data(), magic, strlen(magic))) {
