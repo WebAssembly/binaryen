@@ -32,6 +32,7 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
   bool generateEmscriptenGlue = false;
+  bool validateOutput = true;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   Options options("s2wasm", "Link .s file into .wast");
@@ -82,13 +83,17 @@ int main(int argc, const char *argv[]) {
            [&archiveLibraries](Options *o, const std::string &argument) {
              archiveLibraries.push_back(argument);
            })
+      .add("--no-validate", "", "Disable validation of the output module",
+           Options::Arguments::Zero,
+           [&validateOutput](Options *, const std::string &) {
+            validateOutput = false;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
 
-  int exitStatus = 0;
   auto debugFlag = options.debug ? Flags::Debug : Flags::Release;
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, debugFlag));
 
@@ -134,9 +139,8 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.debug) std::cerr << "Validating..." << std::endl;
-  if (!wasm::WasmValidator().validate(linker.getOutput().wasm)) {
-    std::cerr << "Error: linked module is not valid.\n";
-    exitStatus = 1;
+  if (validateOutput && !wasm::WasmValidator().validate(linker.getOutput().wasm)) {
+    Fatal() << "Error: linked module is not valid.\n";
   }
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
@@ -145,5 +149,5 @@ int main(int argc, const char *argv[]) {
   output << meta.str();
 
   if (options.debug) std::cerr << "Done." << std::endl;
-  return exitStatus;
+  return 0;
 }
