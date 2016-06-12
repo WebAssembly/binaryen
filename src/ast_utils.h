@@ -105,7 +105,6 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
                  || (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
     }
-    assert(localsWritten.size() + localsRead.size() <= 1); // the code below is fast on that case, of one element vs many
     for (auto local : localsWritten) {
       if (other.localsWritten.count(local) || other.localsRead.count(local)) {
         return true;

@@ -447,12 +447,10 @@
   )
   (func $phi (result i32)
     (block $do-once$0
-      (if
+      (br_if $do-once$0
+        (i32.const 0)
         (call $lb
           (i32.const 1)
-        )
-        (br $do-once$0
-          (i32.const 0)
         )
       )
       (i32.const 1)
