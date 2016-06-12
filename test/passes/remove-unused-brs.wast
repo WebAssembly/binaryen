@@ -297,5 +297,44 @@
       )
     )
   )
+  (func $side-effects-and-order (result i32)
+    (local $x i32)
+    (block $do-once$0
+      (if
+        (call $b13)
+        (br $do-once$0
+          (i32.const 0)
+        )
+      )
+      (i32.const 1)
+    )
+    (block $do-once$0
+      (if
+        (call $b13)
+        (br $do-once$0
+          (call $b14)
+        )
+      )
+      (i32.const 1)
+    )
+    (block $do-once$0
+      (if
+        (i32.const 0)
+        (br $do-once$0
+          (call $b14)
+        )
+      )
+      (i32.const 1)
+    )
+    (block $do-once$0
+      (if
+        (set_local $x (i32.const 1))
+        (br $do-once$0
+          (set_local $x (i32.const 2))
+        )
+      )
+      (i32.const 1)
+    )
+  )
 )
 

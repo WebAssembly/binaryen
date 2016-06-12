@@ -247,6 +247,18 @@ function asm(global, env, buffer) {
     }
   }
 
+  function phi() {
+    var x = 0;
+    do {
+      if (lb(1) | 0) {
+        x = 0;
+        break;
+      }
+      x = 1;
+    } while (0);
+    return x | 0;
+  }
+
   function z() {
   }
   function w() {

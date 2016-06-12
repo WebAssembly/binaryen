@@ -721,6 +721,30 @@
       )
     )
   )
+  (func $phi (result i32)
+    (local $x i32)
+    (block $do-once$0
+      (block
+        (if
+          (call $lb
+            (i32.const 1)
+          )
+          (block
+            (set_local $x
+              (i32.const 0)
+            )
+            (br $do-once$0)
+          )
+        )
+        (set_local $x
+          (i32.const 1)
+        )
+      )
+    )
+    (return
+      (get_local $x)
+    )
+  )
   (func $z
     (nop)
   )

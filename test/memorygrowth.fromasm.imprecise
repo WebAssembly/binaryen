@@ -4750,13 +4750,11 @@
                                         )
                                       )
                                       (block
-                                        (if
+                                        (br_if $do-once$67
+                                          (i32.const 31)
                                           (i32.gt_u
                                             (get_local $0)
                                             (i32.const 16777215)
-                                          )
-                                          (br $do-once$67
-                                            (i32.const 31)
                                           )
                                         )
                                         (i32.or
@@ -8245,17 +8243,17 @@
             )
           )
           (set_local $16
-            (if
-              (i32.eq
-                (get_local $18)
-                (i32.const 2)
-              )
+            (select
               (i32.const 0)
               (i32.sub
                 (get_local $2)
                 (i32.load offset=4
                   (get_local $17)
                 )
+              )
+              (i32.eq
+                (get_local $18)
+                (i32.const 2)
               )
             )
           )
