@@ -128,6 +128,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       // if without an else. try to reduce   if (condition) br  =>  br_if (condition)
       Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
+        // if the br has a value, then if => br_if means we always execute the value, and also the order is value,condition vs condition,value
+        if (br->value) {
+          EffectAnalyzer value(br->value);
+          if (value.hasSideEffects()) return;
+          EffectAnalyzer condition(curr->condition);
+          if (condition.invalidates(value)) return;
+        }
         br->condition = curr->condition;
         replaceCurrent(br);
         anotherCycle = true;
