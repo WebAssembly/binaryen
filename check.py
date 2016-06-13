@@ -132,11 +132,11 @@ except:
 
 # utilities
 
-def run_command(cmd, stderr=None):
+def run_command(cmd, expected_status=0, stderr=None):
   print 'executing: ', ' '.join(cmd)
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
   out, err = proc.communicate()
-  if proc.returncode != 0: raise Exception(('run_command failed', err))
+  if proc.returncode != expected_status: raise Exception(('run_command failed', err))
   return out
 
 def fail(actual, expected):
@@ -544,6 +544,17 @@ output = run_command(cmd)
 # bar should be linked from the archive
 fail_if_not_contained(output, '(func $bar')
 
+print '\n[ running validation tests... ]\n'
+wasm_as = os.path.join('bin', 'wasm-as')
+# Ensure the tests validate by default
+cmd = [wasm_as, os.path.join('test', 'validator', 'invalid_export.wast')]
+run_command(cmd)
+cmd = [wasm_as, os.path.join('test', 'validator', 'invalid_import.wast')]
+run_command(cmd)
+cmd = [wasm_as, '--validate=web', os.path.join('test', 'validator', 'invalid_export.wast')]
+run_command(cmd, expected_status=1)
+cmd = [wasm_as, '--validate=web', os.path.join('test', 'validator', 'invalid_import.wast')]
+run_command(cmd, expected_status=1)
 
 if torture:
 

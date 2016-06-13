@@ -32,10 +32,10 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
   bool generateEmscriptenGlue = false;
-  bool validateOutput = true;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   Options options("s2wasm", "Link .s file into .wast");
+  options.extra["validate"] = "wasm";
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -83,10 +83,14 @@ int main(int argc, const char *argv[]) {
            [&archiveLibraries](Options *o, const std::string &argument) {
              archiveLibraries.push_back(argument);
            })
-      .add("--no-validate", "", "Disable validation of the output module",
-           Options::Arguments::Zero,
-           [&validateOutput](Options *, const std::string &) {
-            validateOutput = false;
+      .add("--validate", "-v", "Control validation of the output module",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             if (argument != "web" && argument != "none" && argument != "wasm") {
+               std::cerr << "Valid arguments for --validate flag are 'wasm', 'web' and 'none'.\n";
+               exit(1);
+             }
+             o->extra["validate"] = argument;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
@@ -138,9 +142,12 @@ int main(int argc, const char *argv[]) {
     linker.emscriptenGlue(meta);
   }
 
-  if (options.debug) std::cerr << "Validating..." << std::endl;
-  if (validateOutput && !wasm::WasmValidator().validate(linker.getOutput().wasm)) {
-    Fatal() << "Error: linked module is not valid.\n";
+  if (options.extra["validate"] != "none") {
+    if (options.debug) std::cerr << "Validating..." << std::endl;
+    if (!wasm::WasmValidator().validate(linker.getOutput().wasm,
+        options.extra["validate"] == "web")) {
+      Fatal() << "Error: linked module is not valid.\n";
+    }
   }
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
