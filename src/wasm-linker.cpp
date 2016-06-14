@@ -357,12 +357,21 @@ void Linker::emscriptenGlue(std::ostream& o) {
   o << " }\n";
 }
 
+bool hasI64ResultOrParam(FunctionType* ft) {
+  if (ft->result == i64) return true;
+  for (auto ty : ft->params) {
+    if (ty == i64) return true;
+  }
+  return false;
+}
+
 void Linker::makeDynCallThunks() {
   std::unordered_set<std::string> sigs;
   wasm::Builder wasmBuilder(out.wasm);
   for (const auto& indirectFunc : out.wasm.table.names) {
     std::string sig(getSig(out.wasm.getFunction(indirectFunc)));
     auto* funcType = ensureFunctionType(sig, &out.wasm);
+    if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
     if (!sigs.insert(sig).second) continue; // Sig is already in the set
     std::vector<NameType> params;
     params.emplace_back("fptr", i32); // function pointer param
