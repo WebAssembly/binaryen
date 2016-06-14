@@ -555,6 +555,8 @@ cmd = [wasm_as, '--validate=web', os.path.join('test', 'validator', 'invalid_exp
 run_command(cmd, expected_status=1)
 cmd = [wasm_as, '--validate=web', os.path.join('test', 'validator', 'invalid_import.wast')]
 run_command(cmd, expected_status=1)
+cmd = [wasm_as, '--validate=none', os.path.join('test', 'validator', 'invalid_return.wast')]
+run_command(cmd)
 
 if torture:
 
