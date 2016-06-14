@@ -1,7 +1,6 @@
 (module
   (memory 1)
   (export "memory" memory)
-  (export "fib" $fib)
   (func $fib (param $0 i32) (result i32)
     (local $1 i32)
     (local $2 i32)

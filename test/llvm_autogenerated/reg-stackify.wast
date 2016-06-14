@@ -31,7 +31,6 @@
   (export "no_sink_readonly_call" $no_sink_readonly_call)
   (export "stack_uses" $stack_uses)
   (export "multiple_uses" $multiple_uses)
-  (export "stackify_store_across_side_effects" $stackify_store_across_side_effects)
   (export "div_tree" $div_tree)
   (export "simple_multiple_use" $simple_multiple_use)
   (export "multiple_uses_in_same_insn" $multiple_uses_in_same_insn)

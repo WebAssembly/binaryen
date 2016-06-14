@@ -115,8 +115,17 @@ void Linker::layout() {
   if (userMaxMemory) out.wasm.memory.max = userMaxMemory / Memory::kPageSize;
   out.wasm.memory.exportName = MEMORY;
 
-  // XXX For now, export all functions marked .globl.
-  for (Name name : out.globls) exportFunction(name, false);
+  // Export all globl functions with default visibility. Since .s files usually
+  // only output visibility information if it is not default, symbols are
+  // considered to have default visibility if they are not in the visibility table.
+  // Also export main for now because emscripten and the binaryen-shell tests use it.
+  for (Name name : out.globls) {
+    if (out.visibilities.count(name) == 0 ||
+        out.visibilities.at(name) == LinkerObject::Visibility::kDefault ||
+        name == "main") {
+      exportFunction(name, false);
+    }
+  }
   for (Name name : out.initializerFunctions) exportFunction(name, true);
 
   auto ensureFunctionIndex = [this](Name name) {

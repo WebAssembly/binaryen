@@ -6,7 +6,6 @@
   (export "single_block" $single_block)
   (export "foo" $foo)
   (export "bar" $bar)
-  (export "fi_ret" $fi_ret)
   (func $single_block (param $0 i32) (result i32)
     (return
       (i32.store

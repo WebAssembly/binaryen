@@ -67,6 +67,7 @@ class LinkerObject {
                               other.aliasedFunctions.end());
     }
   };
+  enum class Visibility { kDefault, kInternal, kHidden, kProtected };
 
   LinkerObject() {}
 
@@ -75,6 +76,9 @@ class LinkerObject {
     staticObjects.emplace_back(allocSize, alignment, name);
   }
 
+  void setVisibility(Name name, Visibility vis) {
+    visibilities[name] = vis;
+  }
   void addGlobal(Name name) {
     globls.push_back(name);
   }
@@ -145,6 +149,7 @@ class LinkerObject {
         allocSize(allocSize), alignment(alignment), name(name) {}
   };
 
+  std::unordered_map<cashew::IString, LinkerObject::Visibility> visibilities;
   std::vector<Name> globls;
 
   std::vector<StaticObject> staticObjects;
