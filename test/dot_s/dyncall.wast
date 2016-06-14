@@ -6,7 +6,7 @@
   (type $FUNCSIG$vd (func (param f64)))
   (type $FUNCSIG$ffjjdi (func (param f32 i64 i64 f64 i32) (result f32)))
   (export "i" $i)
-  (export "jf" $jf)
+  (export "i_f" $i_f)
   (export "vd" $vd)
   (export "ffjjdi" $ffjjdi)
   (export "vd2" $vd2)
