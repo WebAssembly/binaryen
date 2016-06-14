@@ -27,14 +27,15 @@
 namespace wasm {
 
 struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> {
-  bool valid;
+  bool valid = true;
+  bool validateWebConstraints = false;
 
   std::map<Name, WasmType> breakTypes; // breaks to a label must all have the same type, and the right type
   WasmType returnType = unreachable; // type used in returns
 
 public:
-  bool validate(Module& module) {
-    valid = true;
+  bool validate(Module& module, bool validateWeb=false) {
+    validateWebConstraints = validateWeb;
     walkModule(&module);
     return valid;
   }
@@ -231,6 +232,23 @@ public:
       case CurrentMemory:
       case HasFeature: break;
       default: WASM_UNREACHABLE();
+    }
+  }
+
+  void visitImport(Import* curr) {
+    if (!validateWebConstraints) return;
+    shouldBeUnequal(curr->type->result, i64, curr->name, "Imported function must not have i64 return type");
+    for (WasmType param : curr->type->params) {
+      shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
+    }
+  }
+
+  void visitExport(Export* curr) {
+    if (!validateWebConstraints) return;
+    Function* f = getModule()->getFunction(curr->value);
+    shouldBeUnequal(f->result, i64, f->name, "Exported function must not have i64 return type");
+    for (auto param : f->params) {
+      shouldBeUnequal(param, i64, f->name, "Exported function must not have i64 parameters");
     }
   }
 

@@ -1243,10 +1243,6 @@ public:
     }
 
     processFunctions();
-
-    if (!WasmValidator().validate(wasm)) {
-      abort();
-    }
   }
 
   bool more() {

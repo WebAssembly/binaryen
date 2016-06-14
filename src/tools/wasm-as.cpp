@@ -29,12 +29,23 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
-  options.add("--output", "-o", "Output file (stdout if not specified)",
-              Options::Arguments::One,
-              [](Options *o, const std::string &argument) {
-                o->extra["output"] = argument;
-                Colors::disable();
-              })
+  options.extra["validate"] = "wasm";
+  options
+      .add("--output", "-o", "Output file (stdout if not specified)",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["output"] = argument;
+             Colors::disable();
+           })
+      .add("--validate", "-v", "Control validation of the output module",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             if (argument != "web" && argument != "none" && argument != "wasm") {
+               std::cerr << "Valid arguments for --validate flag are 'wasm', 'web', and 'none'.\n";
+               exit(1);
+             }
+             o->extra["validate"] = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -54,6 +65,14 @@ int main(int argc, const char *argv[]) {
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
+  }
+
+  if (options.extra["validate"] != "none") {
+    if (options.debug) std::cerr << "Validating..." << std::endl;
+    if (!wasm::WasmValidator().validate(wasm,
+        options.extra["validate"] == "web")) {
+      Fatal() << "Error: input module is not valid.\n";
+    }
   }
 
   if (options.debug) std::cerr << "binarification..." << std::endl;
