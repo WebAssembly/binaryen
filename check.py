@@ -412,7 +412,7 @@ for t in spec_tests:
     try:
       actual = run_spec_test(wast)
     except Exception, e:
-      if 'wasm-validator error' in str(e) and '.fail.' in t:
+      if ('wasm-validator error' in str(e) or 'parse exception' in str(e)) and '.fail.' in t:
         print '<< test failed as expected >>'
         continue # don't try all the binary format stuff TODO
       else:
