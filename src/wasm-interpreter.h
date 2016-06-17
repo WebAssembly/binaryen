@@ -351,14 +351,14 @@ private:
         NOTE_ENTER("CallIndirect");
         Flow target = visit(curr->target);
         if (target.breaking()) return target;
+        LiteralList arguments;
+        Flow flow = generateArguments(curr->operands, arguments);
+        if (flow.breaking()) return flow;
         size_t index = target.value.geti32();
         if (index >= instance.wasm.table.names.size()) trap("callIndirect: overflow");
         Name name = instance.wasm.table.names[index];
         Function *func = instance.wasm.getFunction(name);
         if (func->type.is() && func->type != curr->fullType) trap("callIndirect: bad type");
-        LiteralList arguments;
-        Flow flow = generateArguments(curr->operands, arguments);
-        if (flow.breaking()) return flow;
         if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
         for (size_t i = 0; i < func->getNumLocals(); i++) {
           if (func->params[i] != arguments[i].type) trap("callIndirect: bad argument type");
