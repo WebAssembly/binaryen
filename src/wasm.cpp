@@ -20,6 +20,9 @@
 
 namespace wasm {
 
+Name WASM("wasm"),
+     RETURN_FLOW("*return:)*");
+
 struct TypeSeeker : public PostWalker<TypeSeeker, Visitor<TypeSeeker>> {
   Expression* target; // look for this one
   Name targetName;

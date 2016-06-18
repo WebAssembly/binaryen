@@ -11,6 +11,7 @@ SET(passes_SOURCES
   NameList.cpp
   OptimizeInstructions.cpp
   PostEmscripten.cpp
+  Precompute.cpp
   Print.cpp
   RemoveImports.cpp
   RemoveMemory.cpp

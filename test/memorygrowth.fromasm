@@ -9289,10 +9289,7 @@
         (set_local $6
           (i32.and
             (get_local $4)
-            (i32.xor
-              (i32.const 3)
-              (i32.const -1)
-            )
+            (i32.const -4)
           )
         )
         (if

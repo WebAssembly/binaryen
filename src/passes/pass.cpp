@@ -63,6 +63,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
+  add("precompute");
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("remove-unused-brs"); // simplify-locals opens opportunities for phi optimizations
@@ -71,6 +72,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("reorder-locals");
   add("merge-blocks");
   add("optimize-instructions");
+  add("precompute");
   add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
 }
@@ -80,6 +82,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
+  add("precompute");
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("remove-unused-brs"); // simplify-locals opens opportunities for phi optimizations
@@ -88,6 +91,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("reorder-locals");
   add("merge-blocks");
   add("optimize-instructions");
+  add("precompute");
   add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
 }
 

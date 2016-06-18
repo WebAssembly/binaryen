@@ -3741,24 +3741,9 @@
                           (i32.load
                             (get_local $2)
                           )
-                          (i32.sub
-                            (i32.add
-                              (i32.const 0)
-                              (i32.const 4)
-                            )
-                            (i32.const 1)
-                          )
+                          (i32.const 3)
                         )
-                        (i32.xor
-                          (i32.sub
-                            (i32.add
-                              (i32.const 0)
-                              (i32.const 4)
-                            )
-                            (i32.const 1)
-                          )
-                          (i32.const -1)
-                        )
+                        (i32.const -4)
                       )
                     )
                   )
@@ -4156,24 +4141,9 @@
                             (i32.load
                               (get_local $2)
                             )
-                            (i32.sub
-                              (i32.add
-                                (i32.const 0)
-                                (i32.const 4)
-                              )
-                              (i32.const 1)
-                            )
+                            (i32.const 3)
                           )
-                          (i32.xor
-                            (i32.sub
-                              (i32.add
-                                (i32.const 0)
-                                (i32.const 4)
-                              )
-                              (i32.const 1)
-                            )
-                            (i32.const -1)
-                          )
+                          (i32.const -4)
                         )
                       )
                     )
@@ -5310,10 +5280,7 @@
                           (get_local $1)
                           (i32.const 2146435072)
                         )
-                        (i32.lt_s
-                          (i32.const 0)
-                          (i32.const 0)
-                        )
+                        (i32.const 0)
                       )
                     )
                     (block
@@ -7957,10 +7924,7 @@
                                 (get_local $14)
                                 (get_local $14)
                               )
-                              (f64.ne
-                                (f64.const 0)
-                                (f64.const 0)
-                              )
+                              (i32.const 0)
                             )
                           )
                         )
@@ -9031,24 +8995,9 @@
                                         (i32.load
                                           (get_local $2)
                                         )
-                                        (i32.sub
-                                          (i32.add
-                                            (i32.const 0)
-                                            (i32.const 4)
-                                          )
-                                          (i32.const 1)
-                                        )
+                                        (i32.const 3)
                                       )
-                                      (i32.xor
-                                        (i32.sub
-                                          (i32.add
-                                            (i32.const 0)
-                                            (i32.const 4)
-                                          )
-                                          (i32.const 1)
-                                        )
-                                        (i32.const -1)
-                                      )
+                                      (i32.const -4)
                                     )
                                   )
                                 )
@@ -9074,24 +9023,9 @@
                                       (i32.load
                                         (get_local $2)
                                       )
-                                      (i32.sub
-                                        (i32.add
-                                          (i32.const 0)
-                                          (i32.const 4)
-                                        )
-                                        (i32.const 1)
-                                      )
+                                      (i32.const 3)
                                     )
-                                    (i32.xor
-                                      (i32.sub
-                                        (i32.add
-                                          (i32.const 0)
-                                          (i32.const 4)
-                                        )
-                                        (i32.const 1)
-                                      )
-                                      (i32.const -1)
-                                    )
+                                    (i32.const -4)
                                   )
                                 )
                               )
@@ -9130,24 +9064,9 @@
                                     (i32.load
                                       (get_local $2)
                                     )
-                                    (i32.sub
-                                      (i32.add
-                                        (i32.const 0)
-                                        (i32.const 4)
-                                      )
-                                      (i32.const 1)
-                                    )
+                                    (i32.const 3)
                                   )
-                                  (i32.xor
-                                    (i32.sub
-                                      (i32.add
-                                        (i32.const 0)
-                                        (i32.const 4)
-                                      )
-                                      (i32.const 1)
-                                    )
-                                    (i32.const -1)
-                                  )
+                                  (i32.const -4)
                                 )
                               )
                             )
@@ -9178,24 +9097,9 @@
                                     (i32.load
                                       (get_local $2)
                                     )
-                                    (i32.sub
-                                      (i32.add
-                                        (i32.const 0)
-                                        (i32.const 8)
-                                      )
-                                      (i32.const 1)
-                                    )
+                                    (i32.const 7)
                                   )
-                                  (i32.xor
-                                    (i32.sub
-                                      (i32.add
-                                        (i32.const 0)
-                                        (i32.const 8)
-                                      )
-                                      (i32.const 1)
-                                    )
-                                    (i32.const -1)
-                                  )
+                                  (i32.const -8)
                                 )
                               )
                             )
@@ -9231,24 +9135,9 @@
                                 (i32.load
                                   (get_local $2)
                                 )
-                                (i32.sub
-                                  (i32.add
-                                    (i32.const 0)
-                                    (i32.const 4)
-                                  )
-                                  (i32.const 1)
-                                )
+                                (i32.const 3)
                               )
-                              (i32.xor
-                                (i32.sub
-                                  (i32.add
-                                    (i32.const 0)
-                                    (i32.const 4)
-                                  )
-                                  (i32.const 1)
-                                )
-                                (i32.const -1)
-                              )
+                              (i32.const -4)
                             )
                           )
                         )
@@ -9301,24 +9190,9 @@
                               (i32.load
                                 (get_local $2)
                               )
-                              (i32.sub
-                                (i32.add
-                                  (i32.const 0)
-                                  (i32.const 4)
-                                )
-                                (i32.const 1)
-                              )
+                              (i32.const 3)
                             )
-                            (i32.xor
-                              (i32.sub
-                                (i32.add
-                                  (i32.const 0)
-                                  (i32.const 4)
-                                )
-                                (i32.const 1)
-                              )
-                              (i32.const -1)
-                            )
+                            (i32.const -4)
                           )
                         )
                       )
@@ -9351,24 +9225,9 @@
                             (i32.load
                               (get_local $2)
                             )
-                            (i32.sub
-                              (i32.add
-                                (i32.const 0)
-                                (i32.const 4)
-                              )
-                              (i32.const 1)
-                            )
+                            (i32.const 3)
                           )
-                          (i32.xor
-                            (i32.sub
-                              (i32.add
-                                (i32.const 0)
-                                (i32.const 4)
-                              )
-                              (i32.const 1)
-                            )
-                            (i32.const -1)
-                          )
+                          (i32.const -4)
                         )
                       )
                     )
@@ -9421,24 +9280,9 @@
                           (i32.load
                             (get_local $2)
                           )
-                          (i32.sub
-                            (i32.add
-                              (i32.const 0)
-                              (i32.const 4)
-                            )
-                            (i32.const 1)
-                          )
+                          (i32.const 3)
                         )
-                        (i32.xor
-                          (i32.sub
-                            (i32.add
-                              (i32.const 0)
-                              (i32.const 4)
-                            )
-                            (i32.const 1)
-                          )
-                          (i32.const -1)
-                        )
+                        (i32.const -4)
                       )
                     )
                   )
@@ -9471,24 +9315,9 @@
                         (i32.load
                           (get_local $2)
                         )
-                        (i32.sub
-                          (i32.add
-                            (i32.const 0)
-                            (i32.const 8)
-                          )
-                          (i32.const 1)
-                        )
+                        (i32.const 7)
                       )
-                      (i32.xor
-                        (i32.sub
-                          (i32.add
-                            (i32.const 0)
-                            (i32.const 8)
-                          )
-                          (i32.const 1)
-                        )
-                        (i32.const -1)
-                      )
+                      (i32.const -8)
                     )
                   )
                 )
@@ -9514,24 +9343,9 @@
                       (i32.load
                         (get_local $2)
                       )
-                      (i32.sub
-                        (i32.add
-                          (i32.const 0)
-                          (i32.const 8)
-                        )
-                        (i32.const 1)
-                      )
+                      (i32.const 7)
                     )
-                    (i32.xor
-                      (i32.sub
-                        (i32.add
-                          (i32.const 0)
-                          (i32.const 8)
-                        )
-                        (i32.const 1)
-                      )
-                      (i32.const -1)
-                    )
+                    (i32.const -8)
                   )
                 )
               )
@@ -15470,20 +15284,20 @@
               )
               (i32.store offset=4
                 (get_local $4)
-                (i32.load offset=4
-                  (i32.const 624)
+                (i32.load
+                  (i32.const 628)
                 )
               )
               (i32.store offset=8
                 (get_local $4)
-                (i32.load offset=8
-                  (i32.const 624)
+                (i32.load
+                  (i32.const 632)
                 )
               )
               (i32.store offset=12
                 (get_local $4)
-                (i32.load offset=12
-                  (i32.const 624)
+                (i32.load
+                  (i32.const 636)
                 )
               )
               (i32.store
@@ -18125,10 +17939,7 @@
         (set_local $6
           (i32.and
             (get_local $4)
-            (i32.xor
-              (i32.const 3)
-              (i32.const -1)
-            )
+            (i32.const -4)
           )
         )
         (if
@@ -20025,10 +19836,7 @@
             (get_local $7)
             (i32.const 1)
           )
-          (i32.shr_u
-            (i32.const 0)
-            (i32.const 31)
-          )
+          (i32.const 0)
         )
         (i32.const -2)
       )

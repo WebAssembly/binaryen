@@ -1,0 +1,16 @@
+(module
+  (memory 0)
+  (func $x (param $x i32)
+    (i32.const 3)
+    (i32.add
+      (i32.const 1)
+      (get_local $x)
+    )
+    (i32.const 6)
+    (i32.const -1)
+    (i32.const 3)
+    (loop $loop-out0 $in
+      (br $in)
+    )
+  )
+)

@@ -41,7 +41,7 @@ using namespace wasm;
 struct Invocation {
   ModuleInstance* instance;
   IString name;
-  ModuleInstance::LiteralList arguments;
+  LiteralList arguments;
 
   Invocation(Element& invoke, ModuleInstance* instance, SExpressionWasmBuilder& builder) : instance(instance) {
     assert(invoke[0]->str() == INVOKE);
@@ -84,7 +84,7 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
       if (!function) {
         std::cerr << "Unknown entry " << entry << std::endl;
       } else {
-        ModuleInstance::LiteralList arguments;
+        LiteralList arguments;
         for (WasmType param : function->params) {
           arguments.push_back(Literal(param));
         }
