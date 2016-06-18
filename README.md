@@ -7,7 +7,10 @@ Binaryen is a compiler and toolchain infrastructure library for WebAssembly, wri
  * **Compile** asm.js to WebAssembly, which together with [Emscripten](http://emscripten.org) which compiles C and C++ to asm.js, gives you a complete compiler toolchain from C and C++ to WebAssembly. This passes all of the relevant part of Emscripten's test suite (everything but some odd Emscripten features like split memory).
  * **Polyfill** WebAssembly, by running it in the interpreter compiled to JavaScript, if the browser does not yet have native support.
 
-To provide those capabilities, Binaryen has a simple and flexible API for **representing and processing** WebAssembly modules. The interpreter, validator, pretty-printer, etc. are built on that foundation. The core of this is in [wasm.h](https://github.com/WebAssembly/binaryen/blob/master/src/wasm.h), which contains classes that define a WebAssembly module, and tools to process those. For a simple example of how to use Binaryen, see [test/example/find_div0s.cpp](https://github.com/WebAssembly/binaryen/blob/master/test/example/find_div0s.cpp), which creates a module and then searches it for a specific pattern.
+To provide those capabilities, Binaryen has a simple and flexible API for **representing and processing** WebAssembly modules. Built on that foundation are the tools mentioned above, as well as optimizations:
+
+ * **WebAssembly-specific optimizations** that shrink the code without changing what it does. You can think of this as [wasm minification](https://kripken.github.io/talks/binaryen.html#/2), parallel to minification for JavaScript, CSS, etc., all of which are language-specific. An example of such an optimization is block return value generation in SimplifyLocals.
+ * **General optimizations** like dead code elimination, constant folding, etc. These also reduce code size of course, but also improve throughput. The goal with these optimizations is for Binaryen to be powerful enough that it can be [used as a compiler backend by itself](https://kripken.github.io/talks/binaryen.html#/9).
 
 Consult the [contributing instructions](Contributing.md) if you're interested in participating.
 
