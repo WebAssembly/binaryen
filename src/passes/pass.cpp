@@ -72,6 +72,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("reorder-locals");
   add("merge-blocks");
   add("optimize-instructions");
+  add("precompute");
   add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
 }
@@ -90,6 +91,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("reorder-locals");
   add("merge-blocks");
   add("optimize-instructions");
+  add("precompute");
   add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
 }
 
