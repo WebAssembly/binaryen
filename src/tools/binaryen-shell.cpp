@@ -199,6 +199,11 @@ int main(int argc, const char* argv[]) {
 
   auto input(read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
+  std::unique_ptr<Output> output;
+  if (options.extra.count("output") > 0) {
+    output = make_unique<Output>(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
+  }
+
   bool checked = false;
 
   try {
@@ -237,6 +242,10 @@ int main(int argc, const char* argv[]) {
         }
 
         run_asserts(&i, &checked, &wasm, &root, &builder, entry);
+
+        if (output) {
+          WasmPrinter::printModule(&wasm, output->getStream());
+        }
       } else {
         run_asserts(&i, &checked, nullptr, &root, nullptr, entry);
       }
