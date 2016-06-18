@@ -24,8 +24,6 @@
     (nop)
   )
   (func $ctzzzz (result i32)
-    (i32.ctz
-      (i32.const 4660)
-    )
+    (i32.const 2)
   )
 )

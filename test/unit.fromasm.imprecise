@@ -199,13 +199,7 @@
     )
   )
   (func $big_uint_div_u (result i32)
-    (i32.and
-      (i32.div_u
-        (i32.const -1)
-        (i32.const 2)
-      )
-      (i32.const -1)
-    )
+    (i32.const 2147483647)
   )
   (func $fr (param $0 f32)
     (nop)
@@ -217,10 +211,7 @@
     (local $0 f32)
     (call_indirect $FUNCSIG$vf
       (i32.add
-        (i32.and
-          (i32.const 1)
-          (i32.const 7)
-        )
+        (i32.const 1)
         (i32.const 8)
       )
       (f32.neg
@@ -231,10 +222,7 @@
   (func $cneg (param $0 f32)
     (call_indirect $FUNCSIG$vf
       (i32.add
-        (i32.and
-          (i32.const 1)
-          (i32.const 7)
-        )
+        (i32.const 1)
         (i32.const 8)
       )
       (get_local $0)
@@ -272,10 +260,7 @@
   (func $cneg_nosemicolon
     (call_indirect $FUNCSIG$vi
       (i32.add
-        (i32.and
-          (i32.const 1)
-          (i32.const 7)
-        )
+        (i32.const 1)
         (i32.const 8)
       )
       (i32.const 1)

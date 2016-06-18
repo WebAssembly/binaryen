@@ -134,6 +134,7 @@ public:
     return ret;
   }
   Const* makeConst(Literal value) {
+    assert(isConcreteWasmType(value.type));
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;

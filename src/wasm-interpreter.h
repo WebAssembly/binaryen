@@ -39,8 +39,7 @@ using namespace cashew;
 
 // Utilities
 
-IString WASM("wasm"),
-        RETURN_FLOW("*return:)*");
+extern Name WASM, RETURN_FLOW;
 
 enum {
   maxCallDepth = 250
@@ -489,41 +488,6 @@ public:
 
   virtual void trap(const char* why) {
     WASM_UNREACHABLE();
-  }
-};
-
-// Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
-class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
-public:
-  struct NonstandaloneException {};
-
-  Flow visitCall(Call* curr) {
-    throw NonstandaloneException();
-  }
-  Flow visitCallImport(CallImport* curr) {
-    throw NonstandaloneException();
-  }
-  Flow visitCallIndirect(CallIndirect* curr) {
-    throw NonstandaloneException();
-  }
-  Flow visitGetLocal(GetLocal *curr) {
-    throw NonstandaloneException();
-  }
-  Flow visitSetLocal(SetLocal *curr) {
-    throw NonstandaloneException();
-  }
-  Flow visitLoad(Load *curr) {
-    throw NonstandaloneException();
-  }
-  Flow visitStore(Store *curr) {
-    throw NonstandaloneException();
-  }
-  Flow visitHost(Host *curr) {
-    throw NonstandaloneException();
-  }
-
-  void trap(const char* why) {
-    throw NonstandaloneException();
   }
 };
 
