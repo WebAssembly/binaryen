@@ -132,6 +132,29 @@ except:
 
 # utilities
 
+def delete_from_orbit(filename): # removes a file if it exists, using any and all ways of doing so
+  try:
+    os.unlink(filename)
+  except:
+    pass
+  if not os.path.exists(filename): return
+  try:
+    shutil.rmtree(filename, ignore_errors=True)
+  except:
+    pass
+  if not os.path.exists(filename): return
+  try:
+    os.chmod(filename, os.stat(filename).st_mode | stat.S_IWRITE)
+    def remove_readonly_and_try_again(func, path, exc_info):
+      if not (os.stat(path).st_mode & stat.S_IWRITE):
+        os.chmod(path, os.stat(path).st_mode | stat.S_IWRITE)
+        func(path)
+      else:
+        raise
+    shutil.rmtree(filename, onerror=remove_readonly_and_try_again)
+  except:
+    pass
+
 def run_command(cmd, expected_status=0, stderr=None):
   print 'executing: ', ' '.join(cmd)
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
@@ -277,6 +300,14 @@ for e in executables:
   assert len(out) == 0, 'Expected no stdout, got:\n%s' % out
   assert e in err, 'Expected help to contain program name, got:\n%s' % err
   assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
+
+print '\n[ checking binaryen-shell -o notation... ]\n'
+
+wast = os.path.join('test', 'hello_world.wast')
+delete_from_orbit('a.wast')
+cmd = [os.path.join('bin', 'binaryen-shell'), wast, '-o', 'a.wast']
+run_command(cmd)
+fail_if_not_identical(open('a.wast').read(), open(wast).read())
 
 print '\n[ checking binaryen-shell passes... ]\n'
 
