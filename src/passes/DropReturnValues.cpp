@@ -75,7 +75,9 @@ struct DropReturnValues : public WalkerPass<PostWalker<DropReturnValues, Visitor
   }
 };
 
-static RegisterPass<DropReturnValues> registerPass("drop-return-values", "stops relying on return values from set_local and store");
+Pass *createDropReturnValuesPass() {
+  return new DropReturnValues();
+}
 
 } // namespace wasm
 

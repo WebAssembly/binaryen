@@ -16,11 +16,16 @@
 
 #include <chrono>
 
+#include <passes/passes.h>
 #include <pass.h>
 
 namespace wasm {
 
 // PassRegistry
+
+PassRegistry::PassRegistry() {
+  registerPasses();
+}
 
 PassRegistry* PassRegistry::get() {
   static PassRegistry* manager = nullptr;
@@ -56,6 +61,35 @@ std::string PassRegistry::getPassDescription(std::string name) {
 }
 
 // PassRunner
+
+void PassRegistry::registerPasses() {
+  registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
+  registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
+  registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("drop-return-values", "stops relying on return values from set_local and store", createDropReturnValuesPass);
+  registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
+  registerPass("lower-if-else", "lowers if-elses into ifs, blocks and branches", createLowerIfElsePass);
+  registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
+  registerPass("metrics", "reports metrics", createMetricsPass);
+  registerPass("nm", "name list", createNameListPass);
+  registerPass("name-manager", "utility pass to manage names in modules", createNameManagerPass);
+  registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
+  registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);
+  registerPass("print", "print in s-expression format", createPrinterPass);
+  registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
+  registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
+  registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
+  registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
+  registerPass("remove-unused-brs", "removes breaks from locations that are not needed", createRemoveUnusedBrsPass);
+  registerPass("remove-unused-functions", "removes unused functions", createRemoveUnusedFunctionsPass);
+  registerPass("remove-unused-names", "removes names from locations that are never branched to", createRemoveUnusedNamesPass);
+  registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
+  registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
+  registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
+  registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
+  registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
+//  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
+}
 
 void PassRunner::addDefaultOptimizationPasses() {
   add("duplicate-function-elimination");

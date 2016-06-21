@@ -189,6 +189,8 @@ struct LowerInt64 : public Pass {
   }
 };
 
-static RegisterPass<LowerInt64> registerPass("lower-i64", "lowers i64 into pairs of i32s");
+Pass *createLowerInt64Pass() {
+  return new LowerInt64();
+}
 
 } // namespace wasm

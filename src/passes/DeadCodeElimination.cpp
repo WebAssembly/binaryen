@@ -346,7 +346,9 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
   }
 };
 
-static RegisterPass<DeadCodeElimination> registerPass("dce", "removes unreachable code");
+Pass *createDeadCodeEliminationPass() {
+  return new DeadCodeElimination();
+}
 
 } // namespace wasm
 

@@ -595,8 +595,12 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
 
 // declare passes
 
-static RegisterPass<CoalesceLocals> registerPass1("coalesce-locals", "reduce # of locals by coalescing");
+Pass *createCoalesceLocalsPass() {
+  return new CoalesceLocals();
+}
 
-static RegisterPass<CoalesceLocalsWithLearning> registerPass2("coalesce-locals-learning", "reduce # of locals by coalescing and learning");
+Pass *createCoalesceLocalsWithLearningPass() {
+  return new CoalesceLocalsWithLearning();
+}
 
 } // namespace wasm

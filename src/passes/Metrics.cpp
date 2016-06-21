@@ -87,7 +87,10 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
   }
 };
 
+Pass *createMetricsPass() {
+  return new Metrics();
+}
+
 Metrics *Metrics::lastMetricsPass;
-static RegisterPass<Metrics> registerPass("metrics", "reports metrics");
 
 } // namespace wasm

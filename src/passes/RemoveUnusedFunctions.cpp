@@ -54,6 +54,8 @@ struct RemoveUnusedFunctions : public Pass {
   }
 };
 
-static RegisterPass<RemoveUnusedFunctions> registerPass("remove-unused-functions", "removes unused functions");
+Pass *createRemoveUnusedFunctionsPass() {
+  return new RemoveUnusedFunctions();
+}
 
 } // namespace wasm

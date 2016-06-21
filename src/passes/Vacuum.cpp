@@ -228,7 +228,9 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
   }
 };
 
-static RegisterPass<Vacuum> registerPass("vacuum", "removes obviously unneeded code");
+Pass *createVacuumPass() {
+  return new Vacuum();
+}
 
 } // namespace wasm
 

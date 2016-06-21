@@ -58,6 +58,8 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports, Visitor<Remov
   }
 };
 
-static RegisterPass<RemoveImports> registerPass("remove-imports", "removes imports and replaces them with nops");
+Pass *createRemoveImportsPass() {
+  return new RemoveImports();
+}
 
 } // namespace wasm

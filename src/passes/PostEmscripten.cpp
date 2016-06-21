@@ -77,6 +77,8 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<Pos
   }
 };
 
-static RegisterPass<PostEmscripten> registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code");
+Pass *createPostEmscriptenPass() {
+  return new PostEmscripten();
+}
 
 } // namespace wasm
