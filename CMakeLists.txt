@@ -38,6 +38,8 @@ FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
 ENDFOREACH()
 
+SET(all_passes passes)
+
 IF(MSVC)
   IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled. 
     ADD_COMPILE_FLAG("/arch:sse2")
@@ -51,7 +53,6 @@ IF(MSVC)
   ENDIF()
   ADD_COMPILE_FLAG("-D_CRT_SECURE_NO_WARNINGS")
   ADD_COMPILE_FLAG("-D_SCL_SECURE_NO_WARNINGS")
-  SET(all_passes passes)
 ELSE()
   SET(THREADS_PREFER_PTHREAD_FLAG ON)
   SET(CMAKE_THREAD_PREFER_PTHREAD ON)
@@ -71,11 +72,6 @@ ELSE()
   ELSE()
     ADD_COMPILE_FLAG("-O2")
     ADD_DEFINITIONS("-UNDEBUG")  # Keep asserts.
-  ENDIF()
-  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    SET(all_passes "-force_load" passes)
-  ELSE()
-    SET(all_passes "-Wl,--whole-archive" passes "-Wl,-no-whole-archive")
   ENDIF()
 ENDIF()
 

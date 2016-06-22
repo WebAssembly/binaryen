@@ -164,7 +164,9 @@ private:
   }
 };
 
-static RegisterPass<DuplicateFunctionElimination> registerPass("duplicate-function-elimination", "removes duplicate functions");
+Pass *createDuplicateFunctionEliminationPass() {
+  return new DuplicateFunctionElimination();
+}
 
 } // namespace wasm
 

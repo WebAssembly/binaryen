@@ -86,6 +86,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
   }
 };
 
-static RegisterPass<OptimizeInstructions> registerPass("optimize-instructions", "optimizes instruction combinations");
+Pass *createOptimizeInstructionsPass() {
+  return new OptimizeInstructions();
+}
 
 } // namespace wasm
