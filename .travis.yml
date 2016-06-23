@@ -1,5 +1,4 @@
 sudo: false
-dist: trusty
 language: cpp
 python:
   - "2.7"
@@ -9,22 +8,26 @@ matrix:
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
       compiler: clang
-      addons: &stuff
+      addons: &gcc5
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'nodejs', 'libstdc++-4.8-dev']
+          packages: ['cmake', 'nodejs', 'g++-5']
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=`pwd`/ubsan.blacklist"
       compiler: clang
-      addons: *stuff
+      addons: *gcc5
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=address"
       compiler: clang
-      addons: *stuff
+      addons: *gcc5
 
     - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=thread"
       compiler: clang
-      addons: *stuff
+      addons: *gcc5
+
+    - env: CC_COMPILER="gcc-5" CXX_COMPILER="g++-5"
+      compiler: gcc
+      addons: *gcc5
 
 before_install:
   - export CC="${CC_COMPILER}"

@@ -63,7 +63,6 @@ ELSE()
   ADD_COMPILE_FLAG("-Werror")
   ADD_COMPILE_FLAG("-Wextra")
   ADD_COMPILE_FLAG("-Wno-unused-parameter")
-  ADD_COMPILE_FLAG("-Wno-mismatched-tags") # libstdc++4.8 issue on trusty
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
   ADD_COMPILE_FLAG("-fPIC")
   IF(uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
