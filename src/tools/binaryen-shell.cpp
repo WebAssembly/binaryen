@@ -77,8 +77,8 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
   std::unique_ptr<ShellExternalInterface> interface;
   std::unique_ptr<ModuleInstance> instance;
   if (wasm) {
-    interface = make_unique<ShellExternalInterface>();
-    instance = make_unique<ModuleInstance>(*wasm, interface.get());
+    interface = wasm::make_unique<ShellExternalInterface>(); // prefix make_unique to work around visual studio bugs
+    instance = wasm::make_unique<ModuleInstance>(*wasm, interface.get());
     if (entry.is()) {
       Function* function = wasm->getFunction(entry);
       if (!function) {
@@ -201,7 +201,7 @@ int main(int argc, const char* argv[]) {
 
   std::unique_ptr<Output> output;
   if (options.extra.count("output") > 0) {
-    output = make_unique<Output>(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
+    output = wasm::make_unique<Output>(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   }
 
   bool checked = false;
@@ -220,7 +220,7 @@ int main(int argc, const char* argv[]) {
         if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
         Module wasm;
         std::unique_ptr<SExpressionWasmBuilder> builder;
-        builder = make_unique<SExpressionWasmBuilder>(wasm, *root[i]);
+        builder = wasm::make_unique<SExpressionWasmBuilder>(wasm, *root[i]);
         i++;
         assert(WasmValidator().validate(wasm));
 
