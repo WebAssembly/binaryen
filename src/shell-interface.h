@@ -21,6 +21,7 @@
 #ifndef wasm_shell_interface_h
 #define wasm_shell_interface_h
 
+#include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"

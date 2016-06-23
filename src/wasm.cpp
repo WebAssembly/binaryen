@@ -20,8 +20,63 @@
 
 namespace wasm {
 
+// shared constants
+
 Name WASM("wasm"),
      RETURN_FLOW("*return:)*");
+
+namespace BinaryConsts {
+namespace Section {
+  const char* Memory = "memory";
+  const char* Signatures = "type";
+  const char* ImportTable = "import";
+  const char* FunctionSignatures = "function";
+  const char* Functions = "code";
+  const char* ExportTable = "export";
+  const char* DataSegments = "data";
+  const char* FunctionTable = "table";
+  const char* Names = "name";
+  const char* Start = "start";
+};
+};
+
+Name GROW_WASM_MEMORY("__growWasmMemory"),
+     NEW_SIZE("newSize"),
+     MODULE("module"),
+     START("start"),
+     FUNC("func"),
+     PARAM("param"),
+     RESULT("result"),
+     MEMORY("memory"),
+     SEGMENT("segment"),
+     EXPORT("export"),
+     IMPORT("import"),
+     TABLE("table"),
+     LOCAL("local"),
+     TYPE("type"),
+     CALL("call"),
+     CALL_IMPORT("call_import"),
+     CALL_INDIRECT("call_indirect"),
+     BLOCK("block"),
+     BR_IF("br_if"),
+     THEN("then"),
+     ELSE("else"),
+     _NAN("NaN"),
+     _INFINITY("Infinity"),
+     NEG_INFINITY("-infinity"),
+     NEG_NAN("-nan"),
+     CASE("case"),
+     BR("br"),
+     FAKE_RETURN("fake_return_waka123"),
+     ASSERT_RETURN("assert_return"),
+     ASSERT_TRAP("assert_trap"),
+     ASSERT_INVALID("assert_invalid"),
+     SPECTEST("spectest"),
+     PRINT("print"),
+     INVOKE("invoke"),
+     EXIT("exit");
+
+// core AST type checking
 
 struct TypeSeeker : public PostWalker<TypeSeeker, Visitor<TypeSeeker>> {
   Expression* target; // look for this one
