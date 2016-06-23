@@ -135,7 +135,7 @@ void Linker::layout() {
 
     if (relocation->kind == LinkerObject::Relocation::kData) {
       const auto& symbolAddress = staticAddresses.find(name);
-      assert(symbolAddress != staticAddresses.end());
+      if (symbolAddress == staticAddresses.end()) Fatal() << "Unknown relocation: " << name << '\n';
       *(relocation->data) = symbolAddress->second + relocation->addend;
       if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
     } else {
