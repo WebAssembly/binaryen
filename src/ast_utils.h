@@ -242,7 +242,8 @@ struct ExpressionAnalyzer {
     return func->result != none;
   }
 
-  static bool equal(Expression* left, Expression* right) {
+  template<typename T>
+  static bool flexibleEqual(Expression* left, Expression* right, T& comparer) {
     std::vector<Name> nameStack;
     std::map<Name, std::vector<Name>> rightNames; // for each name on the left, the stack of names on the right (a stack, since names are scoped and can nest duplicatively
     Nop popNameMarker;
@@ -284,6 +285,8 @@ struct ExpressionAnalyzer {
         popName();
         continue;
       }
+      if (comparer.compare(left, right)) continue; // comparison hook, before all the rest
+      // continue with normal structural comparison
       if (left->_id != right->_id) return false;
       #define PUSH(clazz, what) \
         leftStack.push_back(left->cast<clazz>()->what); \
@@ -424,6 +427,15 @@ struct ExpressionAnalyzer {
     }
     if (leftStack.size() > 0 || rightStack.size() > 0) return false;
     return true;
+  }
+
+  static bool equal(Expression* left, Expression* right) {
+    struct Comparer {
+      bool compare(Expression* left, Expression* right) {
+        return false;
+      }
+    } comparer;
+    return flexibleEqual(left, right, comparer);
   }
 
   // hash an expression, ignoring superficial details like specific internal names
