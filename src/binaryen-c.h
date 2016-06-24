@@ -288,6 +288,9 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, cons
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
 
+// Print an expression to stdout. Useful for debugging.
+void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+
 // Functions
 
 typedef void* BinaryenFunctionRef;
@@ -324,7 +327,7 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
 // ========== Module Operations ==========
 //
 
-// Print a module to stdout.
+// Print a module to stdout. Useful for debugging.
 void BinaryenModulePrint(BinaryenModuleRef module);
 
 // Validate a module, showing errors on problems.
