@@ -370,6 +370,7 @@ raw:
 (module
   (memory 0)
   (type $v (func))
+  (type $i (func (result i32)))
   (func $just-one-block (type $v)
     (local $0 i32)
     (i32.const 1337)
@@ -630,13 +631,26 @@ raw:
       )
     )
   )
+  (func $return (type $i) (result i32)
+    (local $0 i32)
+    (block $the-list
+      (i32.const 42)
+      (return
+        (i32.const 1337)
+      )
+    )
+  )
 )
 optimized:
 (module
   (memory 0)
   (type $v (func))
+  (type $i (func (result i32)))
   (func $just-one-block (type $v)
     (nop)
+  )
+  (func $return (type $i) (result i32)
+    (i32.const 1337)
   )
 )
 module loaded from binary form:

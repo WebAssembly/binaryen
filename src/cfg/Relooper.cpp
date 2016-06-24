@@ -55,6 +55,7 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block *Target, bool S
       Ret->list.push_back(Builder.makeContinue(Ancestor->Id));
     }
   }
+  Ret->finalize();
   return Ret;
 }
 
@@ -85,7 +86,10 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   }
   if (Code) Ret->list.push_back(Code);
 
-  if (!ProcessedBranchesOut.size()) return Ret;
+  if (!ProcessedBranchesOut.size()) {
+    Ret->finalize();
+    return Ret;
+  }
 
   bool SetLabel = true; // in some cases it is clear we can avoid setting label, see later
   bool ForceSetLabel = Shape::IsEmulated(Parent) != nullptr;
@@ -218,6 +222,8 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
     }
     Ret->list.push_back(Root);
   }
+
+  Ret->finalize();
 
   return Ret;
 }

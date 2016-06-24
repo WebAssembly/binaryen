@@ -378,6 +378,17 @@ void test_relooper() {
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "nontrivial-loop-plus-phi-to-head", v, localTypes, 1, body);
   }
 
+  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
+
+  { // return in a block
+    RelooperRef relooper = RelooperCreate();
+    BinaryenExpressionRef listList[] = { makeInt32(module, 42), BinaryenReturn(module, makeInt32(module, 1337)) };
+    BinaryenExpressionRef list = BinaryenBlock(module, "the-list", listList, 2);
+    RelooperBlockRef block = RelooperAddBlock(relooper, list);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "return", i, localTypes, 1, body);
+  }
+
   assert(BinaryenModuleValidate(module));
 
   printf("raw:\n");
