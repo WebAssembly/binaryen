@@ -192,6 +192,8 @@ void test_core() {
     BinaryenUnreachable(module),
   };
 
+  BinaryenExpressionPrint(valueList[3]); // test printing a standalone expression
+
   // Make the main body of the function. and one block with a return value, one without
   BinaryenExpressionRef value = BinaryenBlock(module, "the-value", valueList, sizeof(valueList) / sizeof(BinaryenExpressionRef));
   BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &value, 1);

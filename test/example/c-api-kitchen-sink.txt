@@ -3,6 +3,9 @@ BinaryenInt32: 1
 BinaryenInt64: 2
 BinaryenFloat32: 3
 BinaryenFloat64: 4
+(f32.neg
+  (f32.const -33.61199951171875)
+)
 (module
   (memory 1 256
     (segment 10 "hello, world")

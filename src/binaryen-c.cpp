@@ -364,6 +364,11 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   return static_cast<Expression*>(((Module*)module)->allocator.alloc<Unreachable>());
 }
 
+void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
+  WasmPrinter::printExpression((Expression*)expr, std::cout);
+  std::cout << '\n';
+}
+
 // Functions
 
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* localTypes, BinaryenIndex numLocalTypes, BinaryenExpressionRef body) {
