@@ -93,10 +93,20 @@ public:
     ret->finalize();
     return ret;
   }
-  // Switch
-  // CallBase
-  // Call
-  // Also do a version which takes a sig?
+  template<typename T>
+  Switch* makeSwitch(T& list, Name default_, Expression* condition, Expression* value = nullptr) {
+    auto* ret = wasm.allocator.alloc<Switch>();
+    ret->targets.set(list);
+    ret->default_ = default_; ret->value = value; ret->condition = condition;
+    return ret;
+  }
+  Call* makeCall(Name target, const std::vector<Expression*>& args, WasmType type) {
+    auto* call = wasm.allocator.alloc<Call>();
+    call->type = type; // not all functions may exist yet, so type must be provided
+    call->target = target;
+    call->operands.set(args);
+    return call;
+  }
   CallImport* makeCallImport(Name target, const std::vector<Expression*>& args) {
     auto* call = wasm.allocator.alloc<CallImport>();
     call->type = wasm.getImport(target)->type->result;
@@ -108,6 +118,14 @@ public:
     auto* call = wasm.allocator.alloc<CallIndirect>();
     call->fullType = type->name;
     call->type = type->result;
+    call->target = target;
+    call->operands.set(args);
+    return call;
+  }
+  CallIndirect* makeCallIndirect(Name fullType, Expression* target, const std::vector<Expression*>& args, WasmType type) {
+    auto* call = wasm.allocator.alloc<CallIndirect>();
+    call->fullType = fullType;
+    call->type = type;
     call->target = target;
     call->operands.set(args);
     return call;
@@ -126,7 +144,12 @@ public:
     ret->type = value->type;
     return ret;
   }
-  // Load
+  Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
+    auto* ret = wasm.allocator.alloc<Load>();
+    ret->bytes = bytes; ret->signed_ = signed_; ret->offset = offset; ret->align = align; ret->ptr = ptr;
+    ret->type = type;
+    return ret;
+  }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value) {
     auto* ret = wasm.allocator.alloc<Store>();
     ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value;
@@ -152,7 +175,12 @@ public:
     ret->finalize();
     return ret;
   }
-  // Select
+  Select* makeSelect(Expression* condition, Expression *ifTrue, Expression *ifFalse) {
+    auto* ret = wasm.allocator.alloc<Select>();
+    ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
+    ret->finalize();
+    return ret;
+  }
   Return* makeReturn(Expression *value) {
     auto* ret = wasm.allocator.alloc<Return>();
     ret->value = value;
@@ -165,7 +193,9 @@ public:
     ret->operands.set(operands);
     return ret;
   }
-  // Unreachable
+  Unreachable* makeUnreachable() {
+    return wasm.allocator.alloc<Unreachable>();
+  }
 
   // Additional utility functions for building on top of nodes
 
