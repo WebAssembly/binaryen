@@ -498,6 +498,14 @@ private:
       body = allocator.alloc<Nop>();
     }
     if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
+    /* TODO: spec in flux, https://github.com/WebAssembly/spec/pull/301
+    if (type.isNull()) {
+      // if no function type provided, generate a private one for this function
+      auto* functionType = sigToFunctionType(getSig(currFunction.get()));
+      wasm.addFunctionType(functionType);
+      type = functionType->name;
+    }
+    */
     currFunction->body = body;
     currFunction->type = type;
     wasm.addFunction(currFunction.release());
