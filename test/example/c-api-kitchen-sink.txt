@@ -664,3 +664,16 @@ module loaded from binary form:
     )
   )
 )
+(module
+  (memory 0)
+  (start $starter)
+  (type $vi (func (param i32)))
+  (type $v (func))
+  (import $print-i32 "spectest" "print" (param i32))
+  (func $starter (type $v)
+    (call_import $print-i32
+      (i32.const 1234)
+    )
+  )
+)
+(i32.const 1234)

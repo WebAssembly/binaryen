@@ -344,6 +344,11 @@ size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t output
 // Deserialize a module from binary form.
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 
+// Execute a module in the Binaryen interpreter. This will create an instance of
+// the module, run it in the interpreter - which means running the start method -
+// and then destroying the instance.
+void BinaryenModuleInterpret(BinaryenModuleRef module);
+
 //
 // ========== CFG / Relooper ==========
 //
