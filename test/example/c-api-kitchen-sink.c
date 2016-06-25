@@ -433,8 +433,29 @@ void test_binaries() {
   BinaryenModuleDispose(module);
 }
 
+void test_interpret() {
+  // create a simple module with a start method that prints a number, and interpret it, printing that number.
+  BinaryenModuleRef module = BinaryenModuleCreate();
+
+  BinaryenType iparams[2] = { BinaryenInt32() };
+  BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenNone(), iparams, 1);
+  BinaryenAddImport(module, "print-i32", "spectest", "print", vi);
+
+  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
+  BinaryenExpressionRef callOperands[] = { makeInt32(module, 1234) };
+  BinaryenExpressionRef call = BinaryenCallImport(module, "print-i32", callOperands, 1, BinaryenNone());
+  BinaryenFunctionRef starter = BinaryenAddFunction(module, "starter", v, NULL, 0, call);
+  BinaryenSetStart(module, starter);
+
+  BinaryenModulePrint(module);
+  assert(BinaryenModuleValidate(module));
+  BinaryenModuleInterpret(module);
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_core();
   test_relooper();
   test_binaries();
+  test_interpret();
 }

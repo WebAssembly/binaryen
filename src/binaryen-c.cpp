@@ -23,9 +23,11 @@
 #include "wasm.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-interpreter.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
 #include "cfg/Relooper.h"
+#include "shell-interface.h"
 
 using namespace wasm;
 
@@ -482,6 +484,12 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
     Fatal() << "error in parsing wasm binary";
   }
   return wasm;
+}
+
+void BinaryenModuleInterpret(BinaryenModuleRef module) {
+  Module* wasm = (Module*)module;
+  ShellExternalInterface interface;
+  ModuleInstance instance(*wasm, &interface);
 }
 
 //
