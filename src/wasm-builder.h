@@ -107,9 +107,9 @@ public:
     call->operands.set(args);
     return call;
   }
-  CallImport* makeCallImport(Name target, const std::vector<Expression*>& args) {
+  CallImport* makeCallImport(Name target, const std::vector<Expression*>& args, WasmType type) {
     auto* call = wasm.allocator.alloc<CallImport>();
-    call->type = wasm.getImport(target)->type->result;
+    call->type = type; // similar to makeCall, for consistency
     call->target = target;
     call->operands.set(args);
     return call;

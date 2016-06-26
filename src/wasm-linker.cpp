@@ -396,7 +396,7 @@ Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   for (Index i = 0; i < funcType->params.size(); ++i) {
     args.push_back(wasmBuilder.makeGetLocal(i, funcType->params[i]));
   }
-  Expression* call = wasmBuilder.makeCallImport(name, args);
+  Expression* call = wasmBuilder.makeCallImport(name, args, funcType->result);
   f->body = call;
   out.wasm.addFunction(f);
   return f;

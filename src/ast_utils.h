@@ -258,7 +258,7 @@ struct ExpressionManipulator {
         return ret;
       }
       Expression* visitCallImport(CallImport *curr) {
-        auto* ret = builder.makeCallImport(curr->target, {});
+        auto* ret = builder.makeCallImport(curr->target, {}, curr->type);
         for (Index i = 0; i < curr->operands.size(); i++) {
           ret->operands.push_back(copy(curr->operands[i]));
         }
