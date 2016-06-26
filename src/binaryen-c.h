@@ -23,6 +23,19 @@
 //
 // The third part of the API lets you provide a general control-flow
 //   graph (CFG) as input.
+//
+// ---------------
+//
+// Thread safety: You can create Expressions in parallel, as they do not
+//                refer to global state. BinaryenAddFunction and
+//                BinaryenAddFunctionType are also thread-safe, which means
+//                that you can create functions and their contents in multiple
+//                threads. This is important since functions are where the
+//                majority of the work is done.
+//                Other methods - creating imports, exports, etc. - are
+//                not currently thread-safe (as there is typically no need
+//                to parallelize them).
+//
 //================
 
 #ifndef binaryen_h
@@ -80,6 +93,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module);
 
 typedef void* BinaryenFunctionTypeRef;
 
+// Add a new function type. This is thread-safe.
 // Note: name can be NULL, in which case we auto-generate a name
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
 
@@ -295,6 +309,7 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 
 typedef void* BinaryenFunctionRef;
 
+// Adds a function to the module. This is thread-safe.
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* localTypes, BinaryenIndex numLocalTypes, BinaryenExpressionRef body);
 
 // Imports

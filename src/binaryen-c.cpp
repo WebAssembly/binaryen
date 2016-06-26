@@ -18,6 +18,8 @@
 // Binaryen C API implementation
 //===============================
 
+#include <mutex>
+
 #include "binaryen-c.h"
 #include "pass.h"
 #include "wasm.h"
@@ -87,7 +89,15 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
   for (BinaryenIndex i = 0; i < numParams; i++) {
     ret->params.push_back(WasmType(paramTypes[i]));
   }
-  wasm->addFunctionType(ret);
+
+  // Lock. This can be called from multiple threads at once, and is a
+  // point where they all access and modify the module.
+  static std::mutex BinaryenAddFunctionTypeMutex;
+  {
+    std::lock_guard<std::mutex> lock(BinaryenAddFunctionTypeMutex);
+    wasm->addFunctionType(ret);
+  }
+
   return ret;
 }
 
@@ -385,7 +395,15 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
     ret->vars.push_back(WasmType(localTypes[i]));
   }
   ret->body = (Expression*)body;
-  wasm->addFunction(ret);
+
+  // Lock. This can be called from multiple threads at once, and is a
+  // point where they all access and modify the module.
+  static std::mutex BinaryenAddFunctionMutex;
+  {
+    std::lock_guard<std::mutex> lock(BinaryenAddFunctionMutex);
+    wasm->addFunction(ret);
+  }
+
   return ret;
 }
 
