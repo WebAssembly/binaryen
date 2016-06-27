@@ -33,10 +33,11 @@ struct NameType {
 // General AST node builder
 
 class Builder {
-  Module& wasm;
+  MixedArena& allocator;
 
 public:
-  Builder(Module& wasm) : wasm(wasm) {}
+  Builder(MixedArena& allocator) : allocator(allocator) {}
+  Builder(Module& wasm) : allocator(wasm.allocator) {}
 
   // make* functions, create nodes
 
@@ -65,10 +66,10 @@ public:
   }
 
   Nop* makeNop() {
-    return wasm.allocator.alloc<Nop>();
+    return allocator.alloc<Nop>();
   }
   Block* makeBlock(Expression* first = nullptr) {
-    auto* ret = wasm.allocator.alloc<Block>();
+    auto* ret = allocator.alloc<Block>();
     if (first) {
       ret->list.push_back(first);
       ret->finalize();
@@ -76,46 +77,46 @@ public:
     return ret;
   }
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse=nullptr) {
-    auto* ret = wasm.allocator.alloc<If>();
+    auto* ret = allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
     ret->finalize();
     return ret;
   }
   Loop* makeLoop(Name out, Name in, Expression* body) {
-    auto* ret = wasm.allocator.alloc<Loop>();
+    auto* ret = allocator.alloc<Loop>();
     ret->out = out; ret->in = in; ret->body = body;
     ret->finalize();
     return ret;
   }
   Break* makeBreak(Name name, Expression* value=nullptr, Expression* condition=nullptr) {
-    auto* ret = wasm.allocator.alloc<Break>();
+    auto* ret = allocator.alloc<Break>();
     ret->name = name; ret->value = value; ret->condition = condition;
     ret->finalize();
     return ret;
   }
   template<typename T>
   Switch* makeSwitch(T& list, Name default_, Expression* condition, Expression* value = nullptr) {
-    auto* ret = wasm.allocator.alloc<Switch>();
+    auto* ret = allocator.alloc<Switch>();
     ret->targets.set(list);
     ret->default_ = default_; ret->value = value; ret->condition = condition;
     return ret;
   }
   Call* makeCall(Name target, const std::vector<Expression*>& args, WasmType type) {
-    auto* call = wasm.allocator.alloc<Call>();
+    auto* call = allocator.alloc<Call>();
     call->type = type; // not all functions may exist yet, so type must be provided
     call->target = target;
     call->operands.set(args);
     return call;
   }
   CallImport* makeCallImport(Name target, const std::vector<Expression*>& args, WasmType type) {
-    auto* call = wasm.allocator.alloc<CallImport>();
+    auto* call = allocator.alloc<CallImport>();
     call->type = type; // similar to makeCall, for consistency
     call->target = target;
     call->operands.set(args);
     return call;
   }
   CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
-    auto* call = wasm.allocator.alloc<CallIndirect>();
+    auto* call = allocator.alloc<CallIndirect>();
     call->fullType = type->name;
     call->type = type->result;
     call->target = target;
@@ -123,7 +124,7 @@ public:
     return call;
   }
   CallIndirect* makeCallIndirect(Name fullType, Expression* target, const std::vector<Expression*>& args, WasmType type) {
-    auto* call = wasm.allocator.alloc<CallIndirect>();
+    auto* call = allocator.alloc<CallIndirect>();
     call->fullType = fullType;
     call->type = type;
     call->target = target;
@@ -132,69 +133,69 @@ public:
   }
   // FunctionType
   GetLocal* makeGetLocal(Index index, WasmType type) {
-    auto* ret = wasm.allocator.alloc<GetLocal>();
+    auto* ret = allocator.alloc<GetLocal>();
     ret->index = index;
     ret->type = type;
     return ret;
   }
   SetLocal* makeSetLocal(Index index, Expression* value) {
-    auto* ret = wasm.allocator.alloc<SetLocal>();
+    auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
     ret->type = value->type;
     return ret;
   }
   Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
-    auto* ret = wasm.allocator.alloc<Load>();
+    auto* ret = allocator.alloc<Load>();
     ret->bytes = bytes; ret->signed_ = signed_; ret->offset = offset; ret->align = align; ret->ptr = ptr;
     ret->type = type;
     return ret;
   }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value) {
-    auto* ret = wasm.allocator.alloc<Store>();
+    auto* ret = allocator.alloc<Store>();
     ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value;
     ret->type = value->type;
     return ret;
   }
   Const* makeConst(Literal value) {
     assert(isConcreteWasmType(value.type));
-    auto* ret = wasm.allocator.alloc<Const>();
+    auto* ret = allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;
     return ret;
   }
   Unary* makeUnary(UnaryOp op, Expression *value) {
-    auto* ret = wasm.allocator.alloc<Unary>();
+    auto* ret = allocator.alloc<Unary>();
     ret->op = op; ret->value = value;
     ret->finalize();
     return ret;
   }
   Binary* makeBinary(BinaryOp op, Expression *left, Expression *right) {
-    auto* ret = wasm.allocator.alloc<Binary>();
+    auto* ret = allocator.alloc<Binary>();
     ret->op = op; ret->left = left; ret->right = right;
     ret->finalize();
     return ret;
   }
   Select* makeSelect(Expression* condition, Expression *ifTrue, Expression *ifFalse) {
-    auto* ret = wasm.allocator.alloc<Select>();
+    auto* ret = allocator.alloc<Select>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
     ret->finalize();
     return ret;
   }
   Return* makeReturn(Expression *value) {
-    auto* ret = wasm.allocator.alloc<Return>();
+    auto* ret = allocator.alloc<Return>();
     ret->value = value;
     return ret;
   }
   Host* makeHost(HostOp op, Name nameOperand, std::vector<Expression*>&& operands) {
-    auto* ret = wasm.allocator.alloc<Host>();
+    auto* ret = allocator.alloc<Host>();
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);
     return ret;
   }
   Unreachable* makeUnreachable() {
-    return wasm.allocator.alloc<Unreachable>();
+    return allocator.alloc<Unreachable>();
   }
 
   // Additional utility functions for building on top of nodes
