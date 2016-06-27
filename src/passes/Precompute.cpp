@@ -35,6 +35,8 @@
 
 namespace wasm {
 
+Name NONSTANDALONE("Binaryen|nonstandalone");
+
 // Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
 class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
 public:
@@ -43,32 +45,32 @@ public:
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
     // but we can't tell if non-infinite, since we don't have state, so loops are just impossible to optimize for now
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
 
   Flow visitCall(Call* curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
   Flow visitCallImport(CallImport* curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
   Flow visitCallIndirect(CallIndirect* curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
   Flow visitGetLocal(GetLocal *curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
   Flow visitSetLocal(SetLocal *curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
   Flow visitLoad(Load *curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
   Flow visitStore(Store *curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
   Flow visitHost(Host *curr) {
-    throw NonstandaloneException();
+    return Flow(NONSTANDALONE);
   }
 
   void trap(const char* why) override {
@@ -90,7 +92,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
       return;
     }
-    if (flow.breaking()) return; // TODO: can create a break as a replacement
+    if (flow.breaking()) return; // TODO: can create a break as a replacement in some cases (not NONSTANDALONE)
     if (isConcreteWasmType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
     }
