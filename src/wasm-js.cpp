@@ -79,11 +79,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   module->memory.max = pre.memoryGrowth ? Address(Memory::kMaxSize) : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
-  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */);
+  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */, false /* TODO: support optimizing? */);
   asm2wasm->processAsm(asmjs);
-
-  if (wasmJSDebug) std::cerr << "optimizing...\n";
-  asm2wasm->optimize();
 
   if (wasmJSDebug) std::cerr << "mapping globals...\n";
   for (auto& pair : asm2wasm->mappedGlobals) {
@@ -200,7 +197,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    Literal callImport(Import *import, ModuleInstance::LiteralList& arguments) override {
+    Literal callImport(Import *import, LiteralList& arguments) override {
       if (wasmJSDebug) std::cout << "calling import " << import->name.str << '\n';
       EM_ASM({
         Module['tempArguments'] = [];
@@ -436,7 +433,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   assert(function);
   size_t seen = EM_ASM_INT_V({ return Module['tempArguments'].length });
   size_t actual = function->params.size();
-  ModuleInstance::LiteralList arguments;
+  LiteralList arguments;
   for (size_t i = 0; i < actual; i++) {
     WasmType type = function->params[i];
     // add the parameter, with a zero value if JS did not provide it.
