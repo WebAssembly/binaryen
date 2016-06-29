@@ -650,8 +650,10 @@ private:
         Function *func = instance.wasm.getFunction(name);
         if (func->type.is() && func->type != curr->fullType) trap("callIndirect: bad type");
         if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
-        for (size_t i = 0; i < func->getNumLocals(); i++) {
-          if (func->params[i] != arguments[i].type) trap("callIndirect: bad argument type");
+        for (size_t i = 0; i < func->params.size(); i++) {
+          if (func->params[i] != arguments[i].type) {
+            trap("callIndirect: bad argument type");
+          }
         }
         return instance.callFunctionInternal(name, arguments);
       }

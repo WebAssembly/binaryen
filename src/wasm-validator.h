@@ -98,7 +98,9 @@ public:
     if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
     if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
-      shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match");
+      if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match")) {
+        std::cerr << "(on argument " << i << ")\n";
+      }
     }
   }
   void visitCallImport(CallImport *curr) {
@@ -107,7 +109,9 @@ public:
     auto* type = import->type;
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
-      shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match");
+      if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
+        std::cerr << "(on argument " << i << ")\n";
+      }
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
@@ -116,7 +120,9 @@ public:
     shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
-      shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match");
+      if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
+        std::cerr << "(on argument " << i << ")\n";
+      }
     }
   }
   void visitSetLocal(SetLocal *curr) {
