@@ -784,7 +784,7 @@ if has_emcc:
         extra = json.loads(open(emcc).read())
       if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
       for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
-        for method in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary']:
+        for method in ['interpret-asm2wasm', 'interpret-s-expr', 'interpret-binary']:
           command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', c)] + opts + extra
           command += ['-s', 'BINARYEN_METHOD="' + method + '"']
           print '....' + ' '.join(command)
