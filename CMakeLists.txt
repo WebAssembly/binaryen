@@ -11,6 +11,8 @@ IF(CMAKE_BUILD_TYPE AND
   MESSAGE(FATAL_ERROR "Invalid value for CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 ENDIF()
 
+OPTION(BUILD_STATIC_LIB "Build as a static library" OFF)
+
 # Support functionality.
 
 FUNCTION(ADD_COMPILE_FLAG value)
@@ -96,7 +98,11 @@ SET(binaryen_SOURCES
   src/cfg/Relooper.cpp
   src/wasm.cpp
 )
-ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
+IF(BUILD_STATIC_LIB)
+  ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})    
+ELSE()
+  ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
+ENDIF()
 TARGET_LINK_LIBRARIES(binaryen asmjs ${all_passes} support)
 
 SET(binaryen-shell_SOURCES
