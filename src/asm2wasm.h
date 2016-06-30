@@ -744,9 +744,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // Finalize indirect calls and import calls
 
   struct FinalizeCalls : public WalkerPass<PostWalker<FinalizeCalls, Visitor<FinalizeCalls>>> {
-    //bool isFunctionParallel() override { return true; }
+    bool isFunctionParallel() override { return true; }
 
-    //Pass* create() override { return new FinalizeCalls(parent); }
+    Pass* create() override { return new FinalizeCalls(parent); }
 
     Asm2WasmBuilder* parent;
 
@@ -754,8 +754,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
     void visitCallImport(CallImport* curr) {
       // fill out call_import - add extra params as needed. asm tolerates ffi overloading, wasm does not
-      auto type = parent->importedFunctionTypes[curr->target].get();
-      if (!type) return; // one of our fake imports for callIndirect fixups
+      auto iter = parent->importedFunctionTypes.find(curr->target);
+      if (iter == parent->importedFunctionTypes.end()) return; // one of our fake imports for callIndirect fixups
+      auto type = iter->second.get();
       for (size_t i = curr->operands.size(); i < type->params.size(); i++) {
         auto val = parent->allocator.alloc<Const>();
         val->type = val->value.type = type->params[i];
