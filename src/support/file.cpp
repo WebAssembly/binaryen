@@ -52,7 +52,7 @@ wasm::Output::Output(const std::string &filename, Flags::BinaryOption binary, Fl
     : outfile(), out([this, filename, binary, debug]() {
         std::streambuf *buffer;
         if (filename.size()) {
-          if (debug == Flags::Debug) std::cerr << "Opening '" << filename << std::endl;
+          if (debug == Flags::Debug) std::cerr << "Opening '" << filename << "'" << std::endl;
           auto flags = std::ofstream::out | std::ofstream::trunc;
           if (binary == Flags::Binary) flags |= std::ofstream::binary;
           outfile.open(filename, flags);

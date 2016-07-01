@@ -47,12 +47,19 @@ class LinkerObject {
     Relocation(Kind kind, uint32_t* data, Name symbol, int addend) :
         kind(kind), data(data), symbol(symbol), addend(addend) {}
   };
+  struct SymbolAlias {
+    Name symbol;
+    Relocation::Kind kind;
+    Offset offset;
+    SymbolAlias(Name symbol, Relocation::Kind kind, Offset offset) :
+      symbol(symbol), kind(kind), offset(offset) {}
+  };
   // Information about symbols
   struct SymbolInfo {
     std::unordered_set<cashew::IString> implementedFunctions;
     std::unordered_set<cashew::IString> undefinedFunctions;
     // TODO: it's not clear that this really belongs here.
-    std::unordered_map<cashew::IString, Name> aliasedFunctions;
+    std::unordered_map<cashew::IString, SymbolAlias> aliasedSymbols;
 
     // For now, do not support weak symbols or anything special. Just directly
     // merge the functions together, and remove any newly-defined functions
@@ -63,8 +70,8 @@ class LinkerObject {
       }
       implementedFunctions.insert(other.implementedFunctions.begin(),
                                   other.implementedFunctions.end());
-      aliasedFunctions.insert(other.aliasedFunctions.begin(),
-                              other.aliasedFunctions.end());
+      aliasedSymbols.insert(other.aliasedSymbols.begin(),
+                            other.aliasedSymbols.end());
     }
   };
 
@@ -82,20 +89,26 @@ class LinkerObject {
   void addRelocation(Relocation::Kind kind, uint32_t* target, Name name, int addend) {
     relocations.emplace_back(new Relocation(kind, target, name, addend));
   }
+
   Relocation* getCurrentRelocation() {
     return relocations.back().get();
   }
-
 
   bool isFunctionImplemented(Name name) {
     return symbolInfo.implementedFunctions.count(name) != 0;
   }
 
-  // If name is an alias, return what it points to. Otherwise return name
-  Name resolveAlias(Name name) {
-    auto aliased = symbolInfo.aliasedFunctions.find(name);
-    if (aliased != symbolInfo.aliasedFunctions.end()) return aliased->second;
+  // If name is an alias, return what it points to. Otherwise return name.
+  Name resolveAlias(Name name, Relocation::Kind kind) {
+    auto aliased = symbolInfo.aliasedSymbols.find(name);
+    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind) return aliased->second.symbol;
     return name;
+  }
+
+  SymbolAlias *getAlias(Name name, Relocation::Kind kind) {
+    auto aliased = symbolInfo.aliasedSymbols.find(name);
+    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind) return &aliased->second;
+    return nullptr;
   }
 
   // Add an initializer segment for the named static variable.

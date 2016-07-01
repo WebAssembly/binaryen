@@ -101,6 +101,14 @@ class S2WasmBuilder {
     return true;
   }
 
+  bool skipEqual() {
+    skipWhitespace();
+    if (*s != '=') return false;
+    s++;
+    skipWhitespace();
+    return true;
+  }
+
   #define abort_on(why) { \
     dump(why ":");        \
     abort();              \
@@ -370,22 +378,60 @@ class S2WasmBuilder {
     s = inputStart;
     while (*s) {
       skipWhitespace();
-      s = strstr(s, ".type");
-      if (!s) break;
-      mustMatch(".type");
-      Name name = getCommaSeparated();
-      skipComma();
-      if (!match("@function")) continue;
-      if (match(".hidden")) mustMatch(name.str);
-      mustMatch(name.str);
-      if (match(":")) {
-        info->implementedFunctions.insert(name);
-      } else if (match("=")) {
-        Name alias = getAtSeparated();
-        mustMatch("@FUNCTION");
-        info->aliasedFunctions.insert({name, alias});
+
+      // add function definitions and aliases
+      if (match(".type")) {
+        Name name = getCommaSeparated();
+        skipComma();
+        if (!match("@function")) continue;
+        if (match(".hidden")) mustMatch(name.str);
+        mustMatch(name.str);
+        if (match(":")) {
+          info->implementedFunctions.insert(name);
+        } else if (match("=")) {
+          Name alias = getAtSeparated();
+          mustMatch("@FUNCTION");
+          info->aliasedSymbols.insert({name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
+        } else {
+          abort_on("unknown directive");
+        }
+      // add data aliases
       } else {
-        abort_on("unknown directive");
+        Name lhs = getStrToSep();
+        if (!skipEqual()){
+          s = strchr(s, '\n');
+          if (!s) break;
+          continue;
+        }
+
+        // get the original name
+        Name rhs = getStrToSep();
+        assert(!isFunctionName(rhs));
+        Offset offset = 0;
+        if (*s == '+') {
+          s++;
+          offset = getInt();
+        }
+        skipWhitespace();
+
+        // get the data size
+        mustMatch(".size");
+        mustMatch(lhs.str);
+        mustMatch(",");
+        wasm::Address size = atoi(getStr().str);
+        WASM_UNUSED(size);
+        skipWhitespace();
+
+        // check if the rhs is already an alias
+        const auto alias = symbolInfo->aliasedSymbols.find(rhs);
+        if (alias != symbolInfo->aliasedSymbols.end() && alias->second.kind == LinkerObject::Relocation::kData) {
+          offset += alias->second.offset;
+          rhs = alias->second.symbol;
+        }
+
+        // add the new alias
+        symbolInfo->aliasedSymbols.insert({lhs, LinkerObject::SymbolAlias(rhs,
+          LinkerObject::Relocation::kData, offset)});
       }
     }
   }
@@ -395,7 +441,7 @@ class S2WasmBuilder {
       skipWhitespace();
       if (debug) dump("process");
       if (!*s) break;
-      if (*s != '.') break;
+      if (*s != '.') skipObjectAlias(false);
       s++;
       if (match("text")) parseText();
       else if (match("type")) parseType();
@@ -407,8 +453,29 @@ class S2WasmBuilder {
       else if (match("align") || match("p2align")) skipToEOL();
       else if (match("globl")) parseGlobl();
       else if (match("functype")) parseFuncType();
-      else abort_on("process");
+      else skipObjectAlias(true);
     }
+  }
+
+  void skipObjectAlias(bool prefix) {
+    if (debug) dump("object_alias");
+
+    // grab the dot that was consumed earlier
+    if (prefix) s--;
+    Name lhs = getStrToSep();
+    WASM_UNUSED(lhs);
+    if (!skipEqual()) abort_on("object_alias");
+
+    Name rhs = getStr();
+    WASM_UNUSED(rhs);
+    skipWhitespace();
+
+    mustMatch(".size");
+    mustMatch(lhs.str);
+    mustMatch(",");
+    Name size = getStr();
+    WASM_UNUSED(size);
+    skipWhitespace();
   }
 
   void parseToplevelSection() {
@@ -804,7 +871,7 @@ class S2WasmBuilder {
       } else {
         // non-indirect call
         Name assign = getAssign();
-        Name target = linkerObj->resolveAlias(cleanFunction(getCommaSeparated()));
+        Name target = linkerObj->resolveAlias(cleanFunction(getCommaSeparated()), LinkerObject::Relocation::kFunction);
 
         Call* curr = allocator->alloc<Call>();
         curr->target = target;

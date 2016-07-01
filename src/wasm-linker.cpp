@@ -123,8 +123,15 @@ void Linker::layout() {
     }
   };
   for (auto& relocation : out.relocations) {
+    auto *alias = out.getAlias(relocation->symbol, relocation->kind);
     Name name = relocation->symbol;
+
     if (debug) std::cerr << "fix relocation " << name << '\n';
+
+    if (alias) {
+      name = alias->symbol;
+      relocation->addend += alias->offset;
+    }
 
     if (relocation->kind == LinkerObject::Relocation::kData) {
       const auto& symbolAddress = staticAddresses.find(name);
@@ -133,7 +140,6 @@ void Linker::layout() {
       if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
     } else {
       // function address
-      name = out.resolveAlias(name);
       if (!out.wasm.checkFunction(name)) {
         if (FunctionType* f = out.getExternType(name)) {
           // Address of an imported function is taken, but imports do not have addresses in wasm.
@@ -208,11 +214,12 @@ bool Linker::linkObject(S2WasmBuilder& builder) {
   // Allow duplicate aliases only if they refer to the same name. For now we
   // do not expect aliases in compiler-rt files.
   // TODO: figure out what the semantics of merging aliases should be.
-  for (const auto& alias : newSymbols->aliasedFunctions) {
-    if (out.symbolInfo.aliasedFunctions.count(alias.first) &&
-        out.symbolInfo.aliasedFunctions[alias.first] != alias.second) {
+  for (const auto& alias : newSymbols->aliasedSymbols) {
+    if (out.symbolInfo.aliasedSymbols.count(alias.first) &&
+      (out.symbolInfo.aliasedSymbols.at(alias.first).symbol != alias.second.symbol ||
+      out.symbolInfo.aliasedSymbols.at(alias.first).kind != alias.second.kind)) {
       std::cerr << "Error: conflicting definitions for alias "
-                << alias.first.c_str() << "\n";
+                << alias.first.c_str() << "of type " << alias.second.kind << "\n";
       return false;
     }
   }
