@@ -34,7 +34,8 @@ while True:
   # Random decisions
   num = random.randint(2, 250)
   density = random.random() * random.random()
-  decisions = [random.randint(1, num * 20) for x in range(num * 3)]
+  max_decision = num * 20
+  decisions = [random.randint(1, max_decision) for x in range(num * 3)]
   branches = [0] * num
   defaults = [0] * num
   for i in range(num):
@@ -165,6 +166,8 @@ int main() {
               len(b) + 1, j, b[j])  # TODO: split range 1-n into these options
     slow += '    label = %d; break\n' % defaults[i]
 
+  use_switch = [random.random() < 0.5 for i in range(num)]
+
   for i in range(num):
     fast += '''
   RelooperBlockRef b%d;
@@ -177,14 +180,42 @@ int main() {
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenInt32()))
     };
+''' % (i, i)
+    if use_switch[i]:
+      fast += '''
+    b%d = RelooperAddBlockWithSwitch(relooper,
+      BinaryenBlock(module, NULL, list, 2),
+      BinaryenBinary(module,
+        BinaryenRemUInt32(),
+        BinaryenGetLocal(module, 0, BinaryenInt32()),
+        BinaryenConst(module, BinaryenLiteralInt32(%d))
+      )
+    );
+''' % (i, len(branches[i]) + 1)
+    else:  # non-switch
+      fast += '''
     b%d = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+''' % i
+    fast += '''
   }
-''' % (i, i, i)
+'''
 
   for i in range(num):
     b = branches[i]
     for j in range(len(b)):
-      fast += '''
+      if use_switch[i]:
+        total = len(b) + 1
+        values = ','.join([str(x) for x in range(random.randint(len(b) + 1,
+                           max_decision + 2)) if x % total == j])
+        fast += '''
+  {
+    BinaryenIndex values[] = { %s };
+    RelooperAddBranchForSwitch(b%d, b%d, values,
+                               sizeof(values) / sizeof(BinaryenIndex), NULL);
+  }
+''' % (values, i, b[j])
+      else:  # non-switch
+        fast += '''
   RelooperAddBranch(b%d, b%d, BinaryenBinary(module,
     BinaryenEqInt32(),
     BinaryenBinary(module,
@@ -195,7 +226,13 @@ int main() {
     BinaryenConst(module, BinaryenLiteralInt32(%d))
   ), NULL);
 ''' % (i, b[j], len(b) + 1, j)
-    fast += '''
+    # default branch
+    if use_switch[i]:
+      fast += '''
+  RelooperAddBranchForSwitch(b%d, b%d, NULL, 0, NULL);
+''' % (i, defaults[i])
+    else:
+      fast += '''
   RelooperAddBranch(b%d, b%d, NULL, NULL);
 ''' % (i, defaults[i])
 

@@ -27,10 +27,11 @@ added since the original academic paper [1] was published about it.
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include <map>
 #include <deque>
-#include <set>
 #include <list>
+#include <map>
+#include <memory>
+#include <set>
 
 #include "wasm.h"
 #include "wasm-builder.h"
@@ -52,10 +53,10 @@ public:
   wasm::Binary* makeCheckLabel(wasm::Index value) {
     return makeBinary(wasm::EqInt32, makeGetLabel(), makeConst(wasm::Literal(int32_t(value))));
   }
-  wasm::Break* makeBreak(int id) {
+  wasm::Break* makeShapeBreak(int id) {
     return wasm::Builder::makeBreak(getBreakName(id));
   }
-  wasm::Break* makeContinue(int id) {
+  wasm::Break* makeShapeContinue(int id) {
     return wasm::Builder::makeBreak(getContinueName(id));
   }
 
@@ -82,20 +83,19 @@ struct Branch {
   Shape *Ancestor; // If not NULL, this shape is the relevant one for purposes of getting to the target block. We break or continue on it
   Branch::FlowType Type; // If Ancestor is not NULL, this says whether to break or continue
 
-  // A branch either has a condition expression if the block ends in ifs, or if the block ends in a switch, then an index, which
-  // becomes the index in the table of the switch.
-  union {
-    wasm::Expression* Condition; // The condition for which we branch. For example, "my_var == 1". Conditions are checked one by one. One of the conditions should have NULL as the condition, in which case it is the default
-    wasm::Index Index; // The index in the table of the switch that we correspond do
-  };
+  // A branch either has a condition expression if the block ends in ifs, or if the block ends in a switch, then a list of indexes, which
+  // becomes the indexes in the table of the switch. If not a switch, the condition can be any expression.
+  wasm::Expression* Condition;
+  std::unique_ptr<std::vector<wasm::Index>> SwitchValues; // switches are rare, so have just a pointer here
 
   wasm::Expression* Code; // If provided, code that is run right before the branch is taken. This is useful for phis
 
   Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit = nullptr);
-  Branch(wasm::Index IndexInit, wasm::Expression* CodeInit = nullptr);
+
+  Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit = nullptr);
 
   // Emits code for branch
-   wasm::Expression* Render(RelooperBuilder& Builder, Block *Target, bool SetLabel);
+  wasm::Expression* Render(RelooperBuilder& Builder, Block *Target, bool SetLabel);
 };
 
 // like std::set, except that begin() -> end() iterates in the
@@ -226,8 +226,14 @@ struct Block {
   Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit = nullptr);
   ~Block();
 
+  // Add a branch: if the condition holds we branch (or if null, we branch if all others failed)
+  // Note that there can be only one branch from A to B (if you need multiple conditions for the branch,
+  // create a more interesting expression in the Condition).
   void AddBranchTo(Block *Target, wasm::Expression* Condition, wasm::Expression* Code = nullptr);
-  void AddBranchTo(Block *Target, wasm::Index Index, wasm::Expression* Code = nullptr);
+
+  // Add a switch branch: if the switch condition is one of these values, we branch (or if the list is empty, we are the default)
+  // Note that there can be only one branch from A to B (if you need multiple values for the branch, that's what the array and default are for).
+  void AddSwitchBranchTo(Block *Target, std::vector<wasm::Index>&& Values, wasm::Expression* Code = nullptr);
 
   // Emit code for the block, including its contents and branchings out
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop);

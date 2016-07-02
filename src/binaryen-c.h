@@ -386,10 +386,10 @@ RelooperBlockRef RelooperAddBlock(RelooperRef relooper, BinaryenExpressionRef co
 void RelooperAddBranch(RelooperBlockRef from, RelooperBlockRef to, BinaryenExpressionRef condition, BinaryenExpressionRef code);
 
 // Create a basic block that ends a switch on a condition
-// TODO RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper, BinaryenExpressionRef code, BinaryenExpressionRef condition);
+RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper, BinaryenExpressionRef code, BinaryenExpressionRef condition);
 
-// Create a switch-style branch to another basic block. The block's switch table will have an index for this branch
-// TODO void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, BinaryenIndex index, BinaryenExpressionRef code);
+// Create a switch-style branch to another basic block. The block's switch table will have these indexes going to that target
+void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, BinaryenIndex* indexes, BinaryenIndex numIndexes, BinaryenExpressionRef code);
 
 // Generate structed wasm control flow from the CFG of blocks and branches that were created
 // on this relooper instance. This returns the rendered output, and also disposes of the

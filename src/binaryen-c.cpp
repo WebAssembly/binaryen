@@ -538,10 +538,14 @@ RelooperBlockRef RelooperAddBlockWithSwitch(RelooperRef relooper, BinaryenExpres
   return RelooperRef(ret);
 }
 
-void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, BinaryenIndex index, BinaryenExpressionRef code) {
+void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, BinaryenIndex* indexes, BinaryenIndex numIndexes, BinaryenExpressionRef code) {
   auto* fromBlock = (CFG::Block*)from;
   auto* toBlock = (CFG::Block*)to;
-  fromBlock->AddBranchTo(toBlock, (wasm::Index)index, (Expression*)code);
+  std::vector<Index> values;
+  for (Index i = 0; i < numIndexes; i++) {
+    values.push_back(indexes[i]);
+  }
+  fromBlock->AddSwitchBranchTo(toBlock, std::move(values), (Expression*)code);
 }
 
 BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper, BinaryenModuleRef module) {

@@ -42,7 +42,12 @@ static void PrintDebug(const char *Format, ...);
 
 Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(ConditionInit), Code(CodeInit) {}
 
-Branch::Branch(wasm::Index IndexInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Index(IndexInit), Code(CodeInit) {}
+Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Code(CodeInit) {
+  if (ValuesInit.size() > 0) {
+    SwitchValues = std::unique_ptr<std::vector<wasm::Index>>(new std::vector<wasm::Index>(ValuesInit));
+  }
+  // otherwise, it is the default
+}
 
 wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block *Target, bool SetLabel) {
   auto* Ret = Builder.makeBlock();
@@ -50,9 +55,9 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block *Target, bool S
   if (SetLabel) Ret->list.push_back(Builder.makeSetLabel(Target->Id));
   if (Ancestor) {
     if (Type == Break) {
-      Ret->list.push_back(Builder.makeBreak(Ancestor->Id));
+      Ret->list.push_back(Builder.makeShapeBreak(Ancestor->Id));
     } else if (Type == Continue) {
-      Ret->list.push_back(Builder.makeContinue(Ancestor->Id));
+      Ret->list.push_back(Builder.makeShapeContinue(Ancestor->Id));
     }
   }
   Ret->finalize();
@@ -74,9 +79,9 @@ void Block::AddBranchTo(Block *Target, wasm::Expression* Condition, wasm::Expres
   BranchesOut[Target] = new Branch(Condition, Code);
 }
 
-void Block::AddBranchTo(Block *Target, wasm::Index Index, wasm::Expression* Code) {
+void Block::AddSwitchBranchTo(Block *Target, std::vector<wasm::Index>&& Values, wasm::Expression* Code) {
   assert(!contains(BranchesOut, Target)); // cannot add more than one branch to the same target
-  BranchesOut[Target] = new Branch(Index, Code);
+  BranchesOut[Target] = new Branch(std::move(Values), Code);
 }
 
 wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
@@ -123,8 +128,10 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
     Parent->Next = Parent->Next->Next;
 
     // When the Multiple has the same number of groups as we have branches,
-    // they will all be fused, so it is safe to not set the label at all
-    if (SetLabel && Fused->InnerMap.size() == ProcessedBranchesOut.size()) {
+    // they will all be fused, so it is safe to not set the label at all.
+    // If a switch, then we can have multiple branches to the same target
+    // (in different table indexes), and so this check is not sufficient TODO: optimize
+    if (SetLabel && Fused->InnerMap.size() == ProcessedBranchesOut.size() && !SwitchCondition) {
       SetLabel = false;
     }
   }
@@ -133,84 +140,146 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
 
   // Find the default target, the one without a condition
   for (BlockBranchMap::iterator iter = ProcessedBranchesOut.begin(); iter != ProcessedBranchesOut.end(); iter++) {
-    if (!iter->second->Condition) {
+    if ((!SwitchCondition && !iter->second->Condition) || (SwitchCondition && !iter->second->SwitchValues)) {
       assert(!DefaultTarget && "block has branches without a default (nullptr for the condition)"); // Must be exactly one default // nullptr
       DefaultTarget = iter->first;
     }
   }
   assert(DefaultTarget); // Since each block *must* branch somewhere, this must be set
 
-  if (SwitchCondition) {
-    abort(); // TODO: switch
-  }
+  wasm::Expression* Root = nullptr; // root of the main part, that we are about to emit
 
-  // We'll emit a chain of if-elses
-  wasm::Expression* Root = nullptr;
-  wasm::If* CurrIf = nullptr;
+  if (!SwitchCondition) {
+    // We'll emit a chain of if-elses
+    wasm::If* CurrIf = nullptr;
 
-  wasm::Expression* RemainingConditions = nullptr;
+    wasm::Expression* RemainingConditions = nullptr;
 
-  for (BlockBranchMap::iterator iter = ProcessedBranchesOut.begin();; iter++) {
-    Block *Target;
-    Branch *Details;
-    if (iter != ProcessedBranchesOut.end()) {
-      Target = iter->first;
-      if (Target == DefaultTarget) continue; // done at the end
-      Details = iter->second;
-      assert(Details->Condition); // must have a condition if this is not the default target
-    } else {
-      Target = DefaultTarget;
-      Details = ProcessedBranchesOut[DefaultTarget];
-    }
-    bool SetCurrLabel = (SetLabel && Target->IsCheckedMultipleEntry) || ForceSetLabel;
-    bool HasFusedContent = Fused && contains(Fused->InnerMap, Target->Id);
-    wasm::Expression* CurrContent = nullptr;
-    if (SetCurrLabel || Details->Type != Branch::Direct || HasFusedContent || Details->Code) {
-      CurrContent = Details->Render(Builder, Target, SetCurrLabel);
-      if (HasFusedContent) {
-        CurrContent = Builder.blockify(CurrContent, Fused->InnerMap.find(Target->Id)->second->Render(Builder, InLoop));
-      } else if (Details->Type == Branch::Nested) {
-        // Nest the parent content here, and remove it from showing up afterwards as Next
-        assert(Parent->Next);
-        CurrContent = Builder.blockify(CurrContent, Parent->Next->Render(Builder, InLoop));
-        Parent->Next = nullptr;
+    for (BlockBranchMap::iterator iter = ProcessedBranchesOut.begin();; iter++) {
+      Block *Target;
+      Branch *Details;
+      if (iter != ProcessedBranchesOut.end()) {
+        Target = iter->first;
+        if (Target == DefaultTarget) continue; // done at the end
+        Details = iter->second;
+        assert(Details->Condition); // must have a condition if this is not the default target
+      } else {
+        Target = DefaultTarget;
+        Details = ProcessedBranchesOut[DefaultTarget];
       }
-    }
-    bool isDefault = iter == ProcessedBranchesOut.end();
-    // If there is nothing to show in this branch, omit the condition
-    if (CurrContent) {
-      if (isDefault) {
-        wasm::Expression* Now;
+      bool SetCurrLabel = (SetLabel && Target->IsCheckedMultipleEntry) || ForceSetLabel;
+      bool HasFusedContent = Fused && contains(Fused->InnerMap, Target->Id);
+      wasm::Expression* CurrContent = nullptr;
+      if (SetCurrLabel || Details->Type != Branch::Direct || HasFusedContent || Details->Code) {
+        CurrContent = Details->Render(Builder, Target, SetCurrLabel);
+        if (HasFusedContent) {
+          CurrContent = Builder.blockify(CurrContent, Fused->InnerMap.find(Target->Id)->second->Render(Builder, InLoop));
+        } else if (Details->Type == Branch::Nested) {
+          // Nest the parent content here, and remove it from showing up afterwards as Next
+          assert(Parent->Next);
+          CurrContent = Builder.blockify(CurrContent, Parent->Next->Render(Builder, InLoop));
+          Parent->Next = nullptr;
+        }
+      }
+      bool isDefault = iter == ProcessedBranchesOut.end();
+      // If there is nothing to show in this branch, omit the condition
+      if (CurrContent) {
+        if (isDefault) {
+          wasm::Expression* Now;
+          if (RemainingConditions) {
+            Now = Builder.makeIf(RemainingConditions, CurrContent);
+          } else {
+            Now = CurrContent;
+          }
+          if (!CurrIf) {
+            assert(!Root);
+            Root = Now;
+          } else {
+            CurrIf->ifFalse = Now;
+          }
+        } else {
+          auto* Now = Builder.makeIf(Details->Condition, CurrContent);
+          if (!CurrIf) {
+            assert(!Root);
+            Root = CurrIf = Now;
+          } else {
+            CurrIf->ifFalse = Now;
+            CurrIf = Now;
+          }
+        }
+      } else {
+        auto* Now = Builder.makeUnary(wasm::EqZInt32, Details->Condition);
         if (RemainingConditions) {
-          Now = Builder.makeIf(RemainingConditions, CurrContent);
+          RemainingConditions = Builder.makeBinary(wasm::AndInt32, RemainingConditions, Now);
         } else {
-          Now = CurrContent;
-        }
-        if (!CurrIf) {
-          assert(!Root);
-          Root = Now;
-        } else {
-          CurrIf->ifFalse = Now;
-        }
-      } else {
-        auto* Now = Builder.makeIf(Details->Condition, CurrContent);
-        if (!CurrIf) {
-          assert(!Root);
-          Root = CurrIf = Now;
-        } else {
-          CurrIf->ifFalse = Now;
-          CurrIf = Now;
+          RemainingConditions = Now;
         }
       }
-    } else {
-      auto* Now = Builder.makeUnary(wasm::EqZInt32, Details->Condition);
-      if (RemainingConditions) {
-        RemainingConditions = Builder.makeBinary(wasm::AndInt32, RemainingConditions, Now);
+      if (isDefault) break;
+    }
+  } else {
+    // Emit a switch
+    auto Base = std::string("switch$") + std::to_string(Id);
+    auto SwitchDefault = wasm::Name(Base + "$default");
+    auto SwitchLeave = wasm::Name(Base + "$leave");
+    std::map<Block*, wasm::Name> BlockNameMap;
+    auto* Outer = Builder.makeBlock();
+    auto* Inner = Outer;
+    std::vector<wasm::Name> Table;
+    for (auto& iter : ProcessedBranchesOut) {
+      Block *Target = iter.first;
+      Branch *Details = iter.second;
+      wasm::Name CurrName;
+      if (Details->SwitchValues) {
+        CurrName = wasm::Name(Base + "$case$" + std::to_string(Target->Id));
       } else {
-        RemainingConditions = Now;
+        CurrName = SwitchDefault;
+      }
+      // generate the content for this block
+      bool SetCurrLabel = (SetLabel && Target->IsCheckedMultipleEntry) || ForceSetLabel;
+      bool HasFusedContent = Fused && contains(Fused->InnerMap, Target->Id);
+      wasm::Expression* CurrContent = nullptr;
+      if (SetCurrLabel || Details->Type != Branch::Direct || HasFusedContent || Details->Code) {
+        CurrContent = Details->Render(Builder, Target, SetCurrLabel);
+        if (HasFusedContent) {
+          CurrContent = Builder.blockify(CurrContent, Fused->InnerMap.find(Target->Id)->second->Render(Builder, InLoop));
+        } else if (Details->Type == Branch::Nested) {
+          // Nest the parent content here, and remove it from showing up afterwards as Next
+          assert(Parent->Next);
+          CurrContent = Builder.blockify(CurrContent, Parent->Next->Render(Builder, InLoop));
+          Parent->Next = nullptr;
+        }
+      }
+      // generate a block to branch to, if we have content
+      if (CurrContent) {
+        auto* NextOuter = Builder.makeBlock();
+        NextOuter->list.push_back(Outer);
+        Outer->name = CurrName; // breaking on Outer leads to the content in NextOuter
+        NextOuter->list.push_back(CurrContent);
+        NextOuter->list.push_back(Builder.makeBreak(SwitchLeave));
+        // prepare for more nesting
+        Outer = NextOuter;
+      } else {
+        CurrName = SwitchLeave; // just go out straight from the table
+        if (!Details->SwitchValues) {
+          // this is the default, and it has no content. So make the default be the leave
+          for (auto& Value : Table) {
+            if (Value == SwitchDefault) Value = SwitchLeave;
+          }
+          SwitchDefault = SwitchLeave;
+        }
+      }
+      if (Details->SwitchValues) {
+        for (auto Value : *Details->SwitchValues) {
+          while (Table.size() <= Value) Table.push_back(SwitchDefault);
+          Table[Value] = CurrName;
+        }
       }
     }
-    if (isDefault) break;
+    // finish up the whole pattern
+    Outer->name = SwitchLeave;
+    Inner->list.push_back(Builder.makeSwitch(Table, SwitchDefault, SwitchCondition));
+    Root = Outer;
   }
 
   if (Root) {

@@ -377,6 +377,20 @@ void test_relooper() {
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "nontrivial-loop-plus-phi-to-head", v, localTypes, 1, body);
   }
+  { // switch
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlockWithSwitch(relooper, makeInt32(module, 0), makeInt32(module, -99));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeInt32(module, 3));
+    BinaryenIndex to_block1[] = { 2, 5 };
+    RelooperAddBranchForSwitch(block0, block1, to_block1, 2, NULL);
+    BinaryenIndex to_block2[] = { 4 };
+    RelooperAddBranchForSwitch(block0, block2, to_block2, 1, makeInt32(module, 55));
+    RelooperAddBranchForSwitch(block0, block3, NULL, 0, NULL);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "switch", v, localTypes, 1, body);
+  }
 
   BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
 
@@ -389,10 +403,10 @@ void test_relooper() {
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "return", i, localTypes, 1, body);
   }
 
-  assert(BinaryenModuleValidate(module));
-
   printf("raw:\n");
   BinaryenModulePrint(module);
+
+  assert(BinaryenModuleValidate(module));
 
   BinaryenModuleOptimize(module);
 
