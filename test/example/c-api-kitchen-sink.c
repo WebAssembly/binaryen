@@ -166,7 +166,7 @@ void test_core() {
     BinaryenSwitch(module, switchValueNames, 1, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
     BinaryenSwitch(module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCall(module, "kitchen-sinker", callOperands4, 4, BinaryenInt32())
+      BinaryenCall(module, "kitchen()sinker", callOperands4, 4, BinaryenInt32())
     ),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenUnary(module,
@@ -202,7 +202,7 @@ void test_core() {
 
   // Create the function
   BinaryenType localTypes[] = { BinaryenInt32() };
-  BinaryenFunctionRef sinker = BinaryenAddFunction(module, "kitchen-sinker", iiIfF, localTypes, 1, body);
+  BinaryenFunctionRef sinker = BinaryenAddFunction(module, "kitchen()sinker", iiIfF, localTypes, 1, body);
 
   // Imports
 
@@ -212,7 +212,7 @@ void test_core() {
 
   // Exports
 
-  BinaryenAddExport(module, "kitchen-sinker", "kitchen_sinker");
+  BinaryenAddExport(module, "kitchen()sinker", "kitchen_sinker");
 
   // Function table. One per module
   BinaryenFunctionRef functions[] = { sinker };

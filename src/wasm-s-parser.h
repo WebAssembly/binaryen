@@ -78,6 +78,7 @@ public:
   }
 
   Element* operator[](unsigned i) {
+    if (i >= list().size()) throw ParseException("expected more elements in list", line, col);
     return list()[i];
   }
 

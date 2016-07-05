@@ -78,6 +78,16 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     return name;
   }
 
+  std::ostream& printName(Name name) {
+    // we need to quote names if they have tricky chars
+    if (strpbrk(name.str, "()")) {
+      o << '"' << name << '"';
+    } else {
+      o << name;
+    }
+    return o;
+  }
+
   void visitBlock(Block *curr) {
     // special-case Block, because Block nesting (in their first element) can be incredibly deep
     std::vector<Block*> stack;
@@ -86,7 +96,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       stack.push_back(curr);
       printOpening(o, "block");
       if (curr->name.is()) {
-        o << ' ' << curr->name;
+        o << ' ';
+        printName(curr->name);
       }
       incIndent();
       if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
@@ -157,10 +168,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitBreak(Break *curr) {
     if (curr->condition) {
-      printOpening(o, "br_if ") << curr->name;
+      printOpening(o, "br_if ");
+      printName(curr->name);
       incIndent();
     } else {
-      printOpening(o, "br ") << curr->name;
+      printOpening(o, "br ");
+      printName(curr->name);
       if (!curr->value || curr->value->is<Nop>()) {
         // avoid a new line just for the parens
         o << ")";
@@ -188,7 +201,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   template<typename CallBase>
   void printCallBody(CallBase* curr) {
-    o << curr->target;
+    printName(curr->target);
     if (curr->operands.size() > 0) {
       incIndent();
       for (auto operand : curr->operands) {
@@ -474,7 +487,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   // Module-level visitors
   void visitFunctionType(FunctionType *curr, bool full=false) {
     if (full) {
-      printOpening(o, "type") << ' ' << curr->name << " (func";
+      printOpening(o, "type") << ' ';
+      printName(curr->name) << " (func";
     }
     if (curr->params.size() > 0) {
       o << maybeSpace;
@@ -493,7 +507,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
   }
   void visitImport(Import *curr) {
-    printOpening(o, "import ") << curr->name << ' ';
+    printOpening(o, "import ");
+    printName(curr->name) << ' ';
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str);
     if (curr->type) visitFunctionType(curr->type);
@@ -501,11 +516,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitExport(Export *curr) {
     printOpening(o, "export ");
-    printText(o, curr->name.str) << ' ' << curr->value << ')';
+    printText(o, curr->name.str) << ' ';
+    printName(curr->value) << ')';
   }
   void visitFunction(Function *curr) {
     currFunction = curr;
-    printOpening(o, "func ", true) << curr->name;
+    printOpening(o, "func ", true);
+    printName(curr->name);
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';
     }
@@ -540,7 +557,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitTable(Table *curr) {
     printOpening(o, "table");
     for (auto name : curr->names) {
-      o << ' ' << name;
+      o << ' ';
+      printName(name);
     }
     o << ')';
   }
