@@ -1,10 +1,14 @@
 
+// We always need asserts here
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <binaryen-c.h>
-
 
 // kitchen sink, tests the full API
 
@@ -467,9 +471,26 @@ void test_interpret() {
   BinaryenModuleDispose(module);
 }
 
+void test_nonvalid() {
+  // create a module that fails to validate
+  BinaryenModuleRef module = BinaryenModuleCreate();
+
+  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
+  BinaryenType localTypes[] = { BinaryenInt32() };
+  BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, localTypes, 1,
+    BinaryenSetLocal(module, 0, makeInt64(module, 1234)) // wrong type!
+  );
+
+  BinaryenModulePrint(module);
+  printf("validation: %d\n", BinaryenModuleValidate(module));
+
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_core();
   test_relooper();
   test_binaries();
   test_interpret();
+  test_nonvalid();
 }
