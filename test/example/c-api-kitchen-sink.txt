@@ -713,3 +713,14 @@ module loaded from binary form:
   )
 )
 (i32.const 1234)
+(module
+  (memory 0)
+  (type $v (func))
+  (func $func (type $v)
+    (local $0 i32)
+    (set_local $0
+      (i64.const 1234)
+    )
+  )
+)
+validation: 0

@@ -126,8 +126,10 @@ public:
     }
   }
   void visitSetLocal(SetLocal *curr) {
+    shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "set_local index must be small enough");
     if (curr->value->type != unreachable) {
       shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "set_local type must be correct");
+      shouldBeEqual(getFunction()->getLocalType(curr->index), curr->value->type, curr, "set_local type must match function");
     }
   }
   void visitLoad(Load *curr) {
