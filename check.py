@@ -453,7 +453,7 @@ for t in spec_tests:
 
     # check binary format. here we can verify execution of the final result, no need for an output verification
     split_num = 0
-    if os.path.basename(wast) not in ['has_feature.wast']: # avoid some tests with things still in spec tests, but likely to be taken out soon
+    if os.path.basename(wast) not in ['call_indirect.wast']: # avoid some tests with things still being sorted out in the spec https://github.com/WebAssembly/spec/pull/301
       actual = ''
       for module, asserts in split_wast(wast):
         print '    testing split module', split_num

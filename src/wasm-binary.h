@@ -469,6 +469,7 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
       if (func->type.isNull()) {
         func->type = ensureFunctionType(getSig(func.get()), wasm)->name;
       }
+      // TODO: depending on upstream flux https://github.com/WebAssembly/spec/pull/301 might want this: assert(!func->type.isNull());
     }
   }
 
