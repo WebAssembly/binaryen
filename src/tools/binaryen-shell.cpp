@@ -105,7 +105,10 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
     Colors::green(std::cerr);
     std::cerr << " CHECKING: ";
     Colors::normal(std::cerr);
-    std::cerr << curr << '\n';
+    std::cerr << curr;
+    Colors::green(std::cerr);
+    std::cerr << " [line: " << curr.line << "]\n";
+    Colors::normal(std::cerr);
     if (id == ASSERT_INVALID) {
       // a module invalidity test
       Module wasm;
