@@ -383,7 +383,7 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 
 // Functions
 
-BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* localTypes, BinaryenIndex numLocalTypes, BinaryenExpressionRef body) {
+BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body) {
   auto* wasm = (Module*)module;
   auto* ret = new Function;
   ret->name = name;
@@ -391,8 +391,8 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
   auto* functionType = wasm->getFunctionType(ret->type);
   ret->result = functionType->result;
   ret->params = functionType->params;
-  for (BinaryenIndex i = 0; i < numLocalTypes; i++) {
-    ret->vars.push_back(WasmType(localTypes[i]));
+  for (BinaryenIndex i = 0; i < numVarTypes; i++) {
+    ret->vars.push_back(WasmType(varTypes[i]));
   }
   ret->body = (Expression*)body;
 
