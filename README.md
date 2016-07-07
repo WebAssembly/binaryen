@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/WebAssembly/binaryen.svg?branch=master)](https://travis-ci.org/WebAssembly/binaryen) [![Windows CI](https://ci.appveyor.com/api/projects/status/github/WebAssembly/binaryen?svg=true)](https://ci.appveyor.com/project/WebAssembly/binaryen/branch/master)
+
 # Binaryen
 
 Binaryen is a compiler and toolchain infrastructure library for WebAssembly, written in C++. It can:
@@ -13,8 +15,6 @@ To provide those capabilities, Binaryen has a simple and flexible API for **repr
  * **General optimizations** like dead code elimination, constant folding, etc. These also reduce code size of course, but also improve throughput. The goal with these optimizations is for Binaryen to be powerful enough that it can be [used as a compiler backend by itself](https://kripken.github.io/talks/binaryen.html#/9).
 
 Consult the [contributing instructions](Contributing.md) if you're interested in participating.
-
-Current build status: [![Build Status](https://travis-ci.org/WebAssembly/binaryen.svg?branch=master)](https://travis-ci.org/WebAssembly/binaryen)
 
 ## Tools
 
