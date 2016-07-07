@@ -285,6 +285,10 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
 //           type or their opcode, or failing that, their children. But
 //           GetLocal has no children, it is where a "stream" of type info
 //           begins.)
+//           Note also that the index of a local can refer to a param or
+//           a var, that is, either a parameter to the function or a variable
+//           declared when you call BinaryenAddFunction. See BinaryenAddFunction
+//           for more details.
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type);
 BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
 // Load: align can be 0, in which case it will be the natural alignment (equal to bytes)
@@ -310,7 +314,14 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 typedef void* BinaryenFunctionRef;
 
 // Adds a function to the module. This is thread-safe.
-BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* localTypes, BinaryenIndex numLocalTypes, BinaryenExpressionRef body);
+// @varTypes: the types of variables. In WebAssembly, vars share
+//            an index space with params. In other words, params come from
+//            the function type, and vars are provided in this call, and
+//            together they are all the locals. The order is first params
+//            and then vars, so if you have one param it will be at index
+//            0 (and written $0), and if you also have 2 vars they will be
+//            at indexes 1 and 2, etc., that is, they share an index space.
+BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body);
 
 // Imports
 

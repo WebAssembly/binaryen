@@ -667,6 +667,67 @@ raw:
       )
     )
   )
+  (func $duffs-device (type $v)
+    (local $0 i32)
+    (local $1 i32)
+    (local $2 i64)
+    (local $3 i32)
+    (local $4 f32)
+    (local $5 f64)
+    (local $6 i32)
+    (block
+      (i32.const 0)
+      (if
+        (i32.const 10)
+        (set_local $3
+          (i32.const 2)
+        )
+        (set_local $3
+          (i32.const 3)
+        )
+      )
+    )
+    (loop $shape$1$break $shape$1$continue
+      (block $shape$2$break
+        (if
+          (i32.eq
+            (get_local $3)
+            (i32.const 2)
+          )
+          (block
+            (set_local $3
+              (i32.const 0)
+            )
+            (i32.const 1)
+            (block
+              (set_local $3
+                (i32.const 3)
+              )
+              (br $shape$1$continue)
+            )
+          )
+          (if
+            (i32.eq
+              (get_local $3)
+              (i32.const 3)
+            )
+            (block
+              (set_local $3
+                (i32.const 0)
+              )
+              (i32.const 2)
+              (block
+                (set_local $3
+                  (i32.const 2)
+                )
+                (br $shape$1$continue)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
   (func $return (type $i) (result i32)
     (local $0 i32)
     (block $the-list
@@ -684,6 +745,38 @@ optimized:
   (type $i (func (result i32)))
   (func $just-one-block (type $v)
     (nop)
+  )
+  (func $duffs-device (type $v)
+    (local $0 i32)
+    (set_local $0
+      (i32.const 2)
+    )
+    (loop $shape$1$break $shape$1$continue
+      (if
+        (i32.eq
+          (get_local $0)
+          (i32.const 2)
+        )
+        (block
+          (set_local $0
+            (i32.const 3)
+          )
+          (br $shape$1$continue)
+        )
+        (if
+          (i32.eq
+            (get_local $0)
+            (i32.const 3)
+          )
+          (block
+            (set_local $0
+              (i32.const 2)
+            )
+            (br $shape$1$continue)
+          )
+        )
+      )
+    )
   )
   (func $return (type $i) (result i32)
     (i32.const 1337)

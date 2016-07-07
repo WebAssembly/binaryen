@@ -395,6 +395,19 @@ void test_relooper() {
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "switch", v, localTypes, 1, body);
   }
+  { // duff's device
+    RelooperRef relooper = RelooperCreate();
+    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
+    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
+    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
+    RelooperAddBranch(block0, block1, makeInt32(module, 10), NULL);
+    RelooperAddBranch(block0, block2, NULL, NULL);
+    RelooperAddBranch(block1, block2, NULL, NULL);
+    RelooperAddBranch(block2, block1, NULL, NULL);
+    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 3, module); // use $3 as the helper var
+    BinaryenType localTypes[] = { BinaryenInt32(), BinaryenInt32(), BinaryenInt64(), BinaryenInt32(), BinaryenFloat32(), BinaryenFloat64(), BinaryenInt32() };
+    BinaryenFunctionRef sinker = BinaryenAddFunction(module, "duffs-device", v, localTypes, sizeof(localTypes)/sizeof(BinaryenType), body);
+  }
 
   BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
 
