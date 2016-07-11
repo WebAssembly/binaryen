@@ -164,7 +164,7 @@ def run_command(cmd, expected_status=0, stderr=None):
 
 def fail(actual, expected):
   raise Exception("incorrect output, diff:\n\n%s" % (
-    ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])[-1000:]
+    ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])[:]
   ))
 
 def fail_if_not_identical(actual, expected):

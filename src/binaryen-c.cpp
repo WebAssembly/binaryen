@@ -74,6 +74,12 @@ std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 
+size_t noteExpression(BinaryenExpressionRef expression) {
+  auto id = expressions.size();
+  assert(expressions.find(expression) == expressions.end());
+  expressions[expression] = id;
+  return id;
+}
 
 extern "C" {
 
@@ -94,6 +100,8 @@ BinaryenType BinaryenFloat64(void) { return f64; }
 BinaryenModuleRef BinaryenModuleCreate(void) {
   if (tracing) {
     std::cout << "  the_module = BinaryenModuleCreate();\n";
+    std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
+    expressions[NULL] = 0;
   }
 
   return new Module();
@@ -101,6 +109,14 @@ BinaryenModuleRef BinaryenModuleCreate(void) {
 void BinaryenModuleDispose(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleDispose(the_module);\n";
+    std::cout << "  functionTypes.clear();\n";
+    std::cout << "  expressions.clear();\n";
+    std::cout << "  functions.clear();\n";
+    std::cout << "  relooperBlocks.clear();\n";
+    functionTypes.clear();
+    expressions.clear();
+    functions.clear();
+    relooperBlocks.clear();
   }
 
   delete (Module*)module;
@@ -297,8 +313,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
       std::cout << "expressions[" << expressions[children[i]] << "]";
     }
     std::cout << " };\n";
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenBlock(the_module, ";
     traceNameOrNULL(name);
     std::cout << ", children, sizeof(children) / sizeof(BinaryenExpressionRef));\n";
@@ -315,8 +330,7 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef
   ret->finalize();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenIf(the_module, expressions[" << expressions[condition] << "], expressions[" << expressions[ifTrue] << "], expressions[" << expressions[ifFalse] << "]);\n";
   }
 
@@ -327,8 +341,7 @@ BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* out, co
   auto* ret = Builder(*((Module*)module)).makeLoop(out ? Name(out) : Name(), in ? Name(in) : Name(), (Expression*)body);
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenLoop(the_module, ";
     traceNameOrNULL(out);
     std::cout << ", ";
@@ -342,8 +355,7 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, 
   auto* ret = Builder(*((Module*)module)).makeBreak(name, (Expression*)value, (Expression*)condition);
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenBreak(the_module, \"" << name << "\", expressions[" << expressions[condition] << "], expressions[" << expressions[value] << "]);\n";
   }
 
@@ -360,8 +372,7 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
       std::cout << "\"" << names[i] << "\"";
     }
     std::cout << " };\n";
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenSwitch(the_module, names, sizeof(names) / sizeof(const char *), \"" << defaultName << "\", expressions[" << expressions[condition] << "], expressions[" << expressions[value] << "]);\n";
     std::cout << "  }\n";
   }
@@ -386,8 +397,7 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target,
       std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
     std::cout << " };\n";
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenCall(the_module, \"" << target << "\", operands, " << numOperands << ", " << returnType << ");\n";
     std::cout << "  }\n";
   }
@@ -411,8 +421,7 @@ BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *t
       std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
     std::cout << " };\n";
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenCallImport(the_module, \"" << target << "\", operands, " << numOperands << ", " << returnType << ");\n";
     std::cout << "  }\n";
   }
@@ -437,8 +446,7 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
       std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
     std::cout << " };\n";
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenCallIndirect(the_module, expressions[" << expressions[target] << "], operands, " << numOperands << ", \"" << type << "\");\n";
     std::cout << "  }\n";
   }
@@ -455,8 +463,7 @@ BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex i
   auto* ret = ((Module*)module)->allocator.alloc<GetLocal>();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenGetLocal(the_module, " << index << ", " << type << ");\n";
   }
 
@@ -469,8 +476,7 @@ BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex i
   auto* ret = ((Module*)module)->allocator.alloc<SetLocal>();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenSetLocal(the_module, " << index << ", expressions[" << expressions[value] << "]);\n";
   }
 
@@ -483,8 +489,7 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int
   auto* ret = ((Module*)module)->allocator.alloc<Load>();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenLoad(the_module, " << bytes << ", " << int(signed_) << ", " << offset << ", " << align << ", " << type << ", expressions[" << expressions[ptr] << "]);\n";
   }
 
@@ -501,8 +506,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
   auto* ret = ((Module*)module)->allocator.alloc<Store>();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenStore(the_module, " << bytes << ", " << offset << ", " << align << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "]);\n";
   }
 
@@ -517,8 +521,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, BinaryenLiteral value) {
   auto* ret = Builder(*((Module*)module)).makeConst(fromBinaryenLiteral(value));
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     switch (value.type) {
       case WasmType::i32: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt32(" << value.i32 << "));\n"; break;
       case WasmType::i64: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt64(" << value.i64 << "));\n"; break;
@@ -545,8 +548,7 @@ BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, Bin
   auto* ret = Builder(*((Module*)module)).makeUnary(UnaryOp(op), (Expression*)value);
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenUnary(the_module, " << op << ", expressions[" << expressions[value] << "]);\n";
   }
 
@@ -556,8 +558,7 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module, BinaryenOp op, Bi
   auto* ret = Builder(*((Module*)module)).makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right);
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenBinary(the_module, " << op << ", expressions[" << expressions[left] << "], expressions[" << expressions[right] << "]);\n";
   }
 
@@ -567,8 +568,7 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module, BinaryenExpressio
   auto* ret = ((Module*)module)->allocator.alloc<Select>();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenSelect(the_module, expressions[" << expressions[condition] << "], expressions[" << expressions[ifTrue] << "], expressions[" << expressions[ifFalse] << "]);\n";
   }
 
@@ -582,8 +582,7 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
   auto* ret = Builder(*((Module*)module)).makeReturn((Expression*)value);
  
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenReturn(the_module, expressions[" << expressions[value] << "]);\n";
   }
 
@@ -607,8 +606,7 @@ BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
   auto* ret = ((Module*)module)->allocator.alloc<Nop>();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenNop(the_module);\n";
   }
 
@@ -618,8 +616,7 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   auto* ret = ((Module*)module)->allocator.alloc<Unreachable>();
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenUnreachable(the_module);\n";
   }
 
@@ -867,7 +864,7 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
 
 RelooperRef RelooperCreate(void) {
   if (tracing) {
-    std::cout << "  RelooperRef the_relooper = RelooperCreate();\n";
+    std::cout << "  the_relooper = RelooperCreate();\n";
   }
 
   return RelooperRef(new CFG::Relooper());
@@ -918,7 +915,7 @@ void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, Bina
       std::cout << indexes[i];
     }
     std::cout << " };\n";
-    std::cout << "    RelooperAddBranchForSwitch(relooperBlocks[" << relooperBlocks[from] << "], relooperBlocks[" << relooperBlocks[to] << "], indexes, " << numIndexes << ");\n";
+    std::cout << "    RelooperAddBranchForSwitch(relooperBlocks[" << relooperBlocks[from] << "], relooperBlocks[" << relooperBlocks[to] << "], indexes, " << numIndexes << ", expressions[" << expressions[code] << "]);\n";
     std::cout << "  }\n";
   }
 
@@ -938,9 +935,9 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlo
   auto* ret = R->Render(builder);
 
   if (tracing) {
-    auto id = expressions.size();
-    expressions[ret] = id;
+    auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = RelooperRenderAndDispose(the_relooper, relooperBlocks[" << relooperBlocks[entry] << "], " << labelHelper << ", the_module);\n";
+    relooperBlocks.clear();
   }
 
   delete R;
@@ -962,19 +959,13 @@ void BinaryenSetAPITracing(int on) {
     std::cout << "int main() {\n";
     std::cout << "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n";
     std::cout << "  std::map<size_t, BinaryenExpressionRef> expressions;\n";
-    std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
     std::cout << "  std::map<size_t, BinaryenFunctionRef> functions;\n";
     std::cout << "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n";
-    std::cout << "  BinaryenModuleRef the_module = BinaryenModuleCreate();\n";
+    std::cout << "  BinaryenModuleRef the_module = NULL;\n";
     std::cout << "  RelooperRef the_relooper = NULL;\n";
-    expressions[NULL] = 0;
   } else {
     std::cout << "  return 0;\n";
     std::cout << "}\n";
-    functionTypes.clear();
-    expressions.clear();
-    functions.clear();
-    relooperBlocks.clear();
   }
 }
 

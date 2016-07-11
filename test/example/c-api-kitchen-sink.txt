@@ -824,12 +824,12 @@ validation: 0
 int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
-  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   std::map<size_t, BinaryenFunctionRef> functions;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
-  BinaryenModuleRef the_module = BinaryenModuleCreate();
+  BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
   the_module = BinaryenModuleCreate();
+  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));
@@ -846,258 +846,258 @@ int main() {
     BinaryenIndex paramTypes[] = { 1, 2, 3, 4 };
     functionTypes[0] = BinaryenAddFunctionType(the_module, "iiIfF", 1, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
   }
-  expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[14] = BinaryenUnary(the_module, 0, expressions[13]);
-  expressions[15] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[16] = BinaryenUnary(the_module, 3, expressions[15]);
-  expressions[17] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[18] = BinaryenUnary(the_module, 4, expressions[17]);
-  expressions[19] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[20] = BinaryenUnary(the_module, 6, expressions[19]);
-  expressions[21] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[22] = BinaryenUnary(the_module, 9, expressions[21]);
-  expressions[23] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[24] = BinaryenUnary(the_module, 10, expressions[23]);
-  expressions[25] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[26] = BinaryenUnary(the_module, 13, expressions[25]);
-  expressions[27] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[28] = BinaryenUnary(the_module, 14, expressions[27]);
-  expressions[29] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[30] = BinaryenUnary(the_module, 16, expressions[29]);
-  expressions[31] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[32] = BinaryenUnary(the_module, 19, expressions[31]);
+  expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[14] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[15] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[16] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  expressions[17] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[18] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[19] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[20] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[21] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[22] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[23] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[24] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[25] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[26] = BinaryenConst(the_module, BinaryenLiteralInt32(11));
+  expressions[27] = BinaryenConst(the_module, BinaryenLiteralInt32(110));
+  expressions[28] = BinaryenConst(the_module, BinaryenLiteralInt64(111));
+  expressions[29] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[30] = BinaryenUnary(the_module, 0, expressions[29]);
+  expressions[31] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[32] = BinaryenUnary(the_module, 3, expressions[31]);
   expressions[33] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[34] = BinaryenUnary(the_module, 20, expressions[33]);
-  expressions[35] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[36] = BinaryenUnary(the_module, 22, expressions[35]);
-  expressions[37] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[38] = BinaryenUnary(the_module, 23, expressions[37]);
-  expressions[39] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[40] = BinaryenUnary(the_module, 24, expressions[39]);
-  expressions[41] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[42] = BinaryenUnary(the_module, 25, expressions[41]);
+  expressions[34] = BinaryenUnary(the_module, 4, expressions[33]);
+  expressions[35] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[36] = BinaryenUnary(the_module, 6, expressions[35]);
+  expressions[37] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[38] = BinaryenUnary(the_module, 9, expressions[37]);
+  expressions[39] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[40] = BinaryenUnary(the_module, 10, expressions[39]);
+  expressions[41] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[42] = BinaryenUnary(the_module, 13, expressions[41]);
   expressions[43] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[44] = BinaryenUnary(the_module, 26, expressions[43]);
+  expressions[44] = BinaryenUnary(the_module, 14, expressions[43]);
   expressions[45] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[46] = BinaryenUnary(the_module, 27, expressions[45]);
-  expressions[47] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[48] = BinaryenUnary(the_module, 28, expressions[47]);
-  expressions[49] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[50] = BinaryenUnary(the_module, 29, expressions[49]);
-  expressions[51] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[52] = BinaryenUnary(the_module, 30, expressions[51]);
-  expressions[53] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[54] = BinaryenUnary(the_module, 31, expressions[53]);
-  expressions[55] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[56] = BinaryenUnary(the_module, 32, expressions[55]);
+  expressions[46] = BinaryenUnary(the_module, 16, expressions[45]);
+  expressions[47] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[48] = BinaryenUnary(the_module, 19, expressions[47]);
+  expressions[49] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[50] = BinaryenUnary(the_module, 20, expressions[49]);
+  expressions[51] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[52] = BinaryenUnary(the_module, 22, expressions[51]);
+  expressions[53] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[54] = BinaryenUnary(the_module, 23, expressions[53]);
+  expressions[55] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[56] = BinaryenUnary(the_module, 24, expressions[55]);
   expressions[57] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[58] = BinaryenUnary(the_module, 33, expressions[57]);
-  expressions[59] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[60] = BinaryenUnary(the_module, 34, expressions[59]);
-  expressions[61] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[62] = BinaryenUnary(the_module, 35, expressions[61]);
-  expressions[63] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[64] = BinaryenUnary(the_module, 36, expressions[63]);
-  expressions[65] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[66] = BinaryenUnary(the_module, 37, expressions[65]);
-  expressions[67] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[68] = BinaryenUnary(the_module, 38, expressions[67]);
-  expressions[69] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[70] = BinaryenUnary(the_module, 39, expressions[69]);
-  expressions[71] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[72] = BinaryenUnary(the_module, 40, expressions[71]);
-  expressions[73] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[74] = BinaryenUnary(the_module, 41, expressions[73]);
-  expressions[75] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[76] = BinaryenUnary(the_module, 42, expressions[75]);
-  expressions[77] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[78] = BinaryenUnary(the_module, 43, expressions[77]);
-  expressions[79] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[80] = BinaryenUnary(the_module, 44, expressions[79]);
+  expressions[58] = BinaryenUnary(the_module, 25, expressions[57]);
+  expressions[59] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[60] = BinaryenUnary(the_module, 26, expressions[59]);
+  expressions[61] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[62] = BinaryenUnary(the_module, 27, expressions[61]);
+  expressions[63] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[64] = BinaryenUnary(the_module, 28, expressions[63]);
+  expressions[65] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[66] = BinaryenUnary(the_module, 29, expressions[65]);
+  expressions[67] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[68] = BinaryenUnary(the_module, 30, expressions[67]);
+  expressions[69] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[70] = BinaryenUnary(the_module, 31, expressions[69]);
+  expressions[71] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[72] = BinaryenUnary(the_module, 32, expressions[71]);
+  expressions[73] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[74] = BinaryenUnary(the_module, 33, expressions[73]);
+  expressions[75] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[76] = BinaryenUnary(the_module, 34, expressions[75]);
+  expressions[77] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[78] = BinaryenUnary(the_module, 35, expressions[77]);
+  expressions[79] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[80] = BinaryenUnary(the_module, 36, expressions[79]);
   expressions[81] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[82] = BinaryenUnary(the_module, 45, expressions[81]);
-  expressions[83] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[84] = BinaryenUnary(the_module, 46, expressions[83]);
-  expressions[85] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[86] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[87] = BinaryenBinary(the_module, 0, expressions[86], expressions[85]);
-  expressions[88] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
-  expressions[89] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[90] = BinaryenBinary(the_module, 64, expressions[89], expressions[88]);
-  expressions[91] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[92] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[93] = BinaryenBinary(the_module, 3, expressions[92], expressions[91]);
-  expressions[94] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[95] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[96] = BinaryenBinary(the_module, 29, expressions[95], expressions[94]);
-  expressions[97] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[98] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[99] = BinaryenBinary(the_module, 30, expressions[98], expressions[97]);
-  expressions[100] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[101] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[102] = BinaryenBinary(the_module, 6, expressions[101], expressions[100]);
-  expressions[103] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[104] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[105] = BinaryenBinary(the_module, 7, expressions[104], expressions[103]);
-  expressions[106] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[107] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[108] = BinaryenBinary(the_module, 33, expressions[107], expressions[106]);
-  expressions[109] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[110] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[111] = BinaryenBinary(the_module, 9, expressions[110], expressions[109]);
-  expressions[112] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[113] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[114] = BinaryenBinary(the_module, 35, expressions[113], expressions[112]);
-  expressions[115] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[116] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[117] = BinaryenBinary(the_module, 36, expressions[116], expressions[115]);
-  expressions[118] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[119] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[120] = BinaryenBinary(the_module, 12, expressions[119], expressions[118]);
-  expressions[121] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[122] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[123] = BinaryenBinary(the_module, 13, expressions[122], expressions[121]);
-  expressions[124] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[125] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[126] = BinaryenBinary(the_module, 39, expressions[125], expressions[124]);
-  expressions[127] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
-  expressions[128] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[129] = BinaryenBinary(the_module, 53, expressions[128], expressions[127]);
-  expressions[130] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
-  expressions[131] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[132] = BinaryenBinary(the_module, 67, expressions[131], expressions[130]);
-  expressions[133] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
-  expressions[134] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[135] = BinaryenBinary(the_module, 55, expressions[134], expressions[133]);
-  expressions[136] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
-  expressions[137] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[138] = BinaryenBinary(the_module, 69, expressions[137], expressions[136]);
-  expressions[139] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[140] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[141] = BinaryenBinary(the_module, 15, expressions[140], expressions[139]);
-  expressions[142] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
-  expressions[143] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[144] = BinaryenBinary(the_module, 58, expressions[143], expressions[142]);
-  expressions[145] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[146] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[147] = BinaryenBinary(the_module, 17, expressions[146], expressions[145]);
-  expressions[148] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[149] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[150] = BinaryenBinary(the_module, 43, expressions[149], expressions[148]);
-  expressions[151] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[152] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[153] = BinaryenBinary(the_module, 44, expressions[152], expressions[151]);
-  expressions[154] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[155] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[156] = BinaryenBinary(the_module, 20, expressions[155], expressions[154]);
-  expressions[157] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[158] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[159] = BinaryenBinary(the_module, 46, expressions[158], expressions[157]);
-  expressions[160] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[161] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[162] = BinaryenBinary(the_module, 22, expressions[161], expressions[160]);
-  expressions[163] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
-  expressions[164] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
-  expressions[165] = BinaryenBinary(the_module, 23, expressions[164], expressions[163]);
-  expressions[166] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
-  expressions[167] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
-  expressions[168] = BinaryenBinary(the_module, 49, expressions[167], expressions[166]);
-  expressions[169] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
-  expressions[170] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[171] = BinaryenBinary(the_module, 59, expressions[170], expressions[169]);
-  expressions[172] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
-  expressions[173] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[174] = BinaryenBinary(the_module, 73, expressions[173], expressions[172]);
-  expressions[175] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
-  expressions[176] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
-  expressions[177] = BinaryenBinary(the_module, 74, expressions[176], expressions[175]);
-  expressions[178] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
-  expressions[179] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
-  expressions[180] = BinaryenBinary(the_module, 62, expressions[179], expressions[178]);
+  expressions[82] = BinaryenUnary(the_module, 37, expressions[81]);
+  expressions[83] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[84] = BinaryenUnary(the_module, 38, expressions[83]);
+  expressions[85] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[86] = BinaryenUnary(the_module, 39, expressions[85]);
+  expressions[87] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[88] = BinaryenUnary(the_module, 40, expressions[87]);
+  expressions[89] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[90] = BinaryenUnary(the_module, 41, expressions[89]);
+  expressions[91] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[92] = BinaryenUnary(the_module, 42, expressions[91]);
+  expressions[93] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[94] = BinaryenUnary(the_module, 43, expressions[93]);
+  expressions[95] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[96] = BinaryenUnary(the_module, 44, expressions[95]);
+  expressions[97] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[98] = BinaryenUnary(the_module, 45, expressions[97]);
+  expressions[99] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[100] = BinaryenUnary(the_module, 46, expressions[99]);
+  expressions[101] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[102] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[103] = BinaryenBinary(the_module, 0, expressions[102], expressions[101]);
+  expressions[104] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[105] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[106] = BinaryenBinary(the_module, 64, expressions[105], expressions[104]);
+  expressions[107] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[108] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[109] = BinaryenBinary(the_module, 3, expressions[108], expressions[107]);
+  expressions[110] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[111] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[112] = BinaryenBinary(the_module, 29, expressions[111], expressions[110]);
+  expressions[113] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[114] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[115] = BinaryenBinary(the_module, 30, expressions[114], expressions[113]);
+  expressions[116] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[117] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[118] = BinaryenBinary(the_module, 6, expressions[117], expressions[116]);
+  expressions[119] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[120] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[121] = BinaryenBinary(the_module, 7, expressions[120], expressions[119]);
+  expressions[122] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[123] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[124] = BinaryenBinary(the_module, 33, expressions[123], expressions[122]);
+  expressions[125] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[126] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[127] = BinaryenBinary(the_module, 9, expressions[126], expressions[125]);
+  expressions[128] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[129] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[130] = BinaryenBinary(the_module, 35, expressions[129], expressions[128]);
+  expressions[131] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[132] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[133] = BinaryenBinary(the_module, 36, expressions[132], expressions[131]);
+  expressions[134] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[135] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[136] = BinaryenBinary(the_module, 12, expressions[135], expressions[134]);
+  expressions[137] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[138] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[139] = BinaryenBinary(the_module, 13, expressions[138], expressions[137]);
+  expressions[140] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[141] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[142] = BinaryenBinary(the_module, 39, expressions[141], expressions[140]);
+  expressions[143] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[144] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[145] = BinaryenBinary(the_module, 53, expressions[144], expressions[143]);
+  expressions[146] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[147] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[148] = BinaryenBinary(the_module, 67, expressions[147], expressions[146]);
+  expressions[149] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[150] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[151] = BinaryenBinary(the_module, 55, expressions[150], expressions[149]);
+  expressions[152] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[153] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[154] = BinaryenBinary(the_module, 69, expressions[153], expressions[152]);
+  expressions[155] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[156] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[157] = BinaryenBinary(the_module, 15, expressions[156], expressions[155]);
+  expressions[158] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[159] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[160] = BinaryenBinary(the_module, 58, expressions[159], expressions[158]);
+  expressions[161] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[162] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[163] = BinaryenBinary(the_module, 17, expressions[162], expressions[161]);
+  expressions[164] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[165] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[166] = BinaryenBinary(the_module, 43, expressions[165], expressions[164]);
+  expressions[167] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[168] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[169] = BinaryenBinary(the_module, 44, expressions[168], expressions[167]);
+  expressions[170] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[171] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[172] = BinaryenBinary(the_module, 20, expressions[171], expressions[170]);
+  expressions[173] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[174] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[175] = BinaryenBinary(the_module, 46, expressions[174], expressions[173]);
+  expressions[176] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[177] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[178] = BinaryenBinary(the_module, 22, expressions[177], expressions[176]);
+  expressions[179] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[180] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[181] = BinaryenBinary(the_module, 23, expressions[180], expressions[179]);
+  expressions[182] = BinaryenConst(the_module, BinaryenLiteralInt64(-23));
+  expressions[183] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[184] = BinaryenBinary(the_module, 49, expressions[183], expressions[182]);
+  expressions[185] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[186] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[187] = BinaryenBinary(the_module, 59, expressions[186], expressions[185]);
+  expressions[188] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[189] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[190] = BinaryenBinary(the_module, 73, expressions[189], expressions[188]);
+  expressions[191] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[192] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[193] = BinaryenBinary(the_module, 74, expressions[192], expressions[191]);
+  expressions[194] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[195] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[196] = BinaryenBinary(the_module, 62, expressions[195], expressions[194]);
   {
     BinaryenExpressionRef children[] = {  };
-    expressions[181] = BinaryenBlock(the_module, NULL, children, sizeof(children) / sizeof(BinaryenExpressionRef));
+    expressions[197] = BinaryenBlock(the_module, NULL, children, sizeof(children) / sizeof(BinaryenExpressionRef));
   }
-  expressions[182] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-  expressions[183] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-  expressions[184] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-    expressions[185] = BinaryenIf(the_module, expressions[184], expressions[183], expressions[182]);
-  expressions[186] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
-  expressions[187] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
-    expressions[188] = BinaryenIf(the_module, expressions[187], expressions[186], expressions[0]);
-  expressions[189] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[190] = BinaryenLoop(the_module, "out", "in", expressions[189]);
-  expressions[191] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[192] = BinaryenLoop(the_module, NULL, "in2", expressions[191]);
-  expressions[193] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[194] = BinaryenLoop(the_module, NULL, NULL, expressions[193]);
-  expressions[195] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[196] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[197] = BinaryenBreak(the_module, "the-value", expressions[196], expressions[195]);
-  expressions[198] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-    expressions[199] = BinaryenBreak(the_module, "the-nothing", expressions[198], expressions[0]);
-  expressions[200] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-    expressions[201] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[200]);
-    expressions[202] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
-  expressions[203] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+    expressions[198] = BinaryenIf(the_module, expressions[13], expressions[14], expressions[15]);
+    expressions[199] = BinaryenIf(the_module, expressions[16], expressions[17], expressions[0]);
+  expressions[200] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+    expressions[201] = BinaryenLoop(the_module, "out", "in", expressions[200]);
+  expressions[202] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+    expressions[203] = BinaryenLoop(the_module, NULL, "in2", expressions[202]);
   expressions[204] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+    expressions[205] = BinaryenLoop(the_module, NULL, NULL, expressions[204]);
+    expressions[206] = BinaryenBreak(the_module, "the-value", expressions[18], expressions[19]);
+  expressions[207] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+    expressions[208] = BinaryenBreak(the_module, "the-nothing", expressions[207], expressions[0]);
+  expressions[209] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+    expressions[210] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[209]);
+    expressions[211] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
-    expressions[205] = BinaryenSwitch(the_module, names, sizeof(names) / sizeof(const char *), "the-value", expressions[204], expressions[203]);
+    expressions[212] = BinaryenSwitch(the_module, names, sizeof(names) / sizeof(const char *), "the-value", expressions[20], expressions[21]);
   }
-  expressions[206] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[213] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   {
     const char* names[] = { "the-nothing" };
-    expressions[207] = BinaryenSwitch(the_module, names, sizeof(names) / sizeof(const char *), "the-nothing", expressions[206], expressions[0]);
+    expressions[214] = BinaryenSwitch(the_module, names, sizeof(names) / sizeof(const char *), "the-nothing", expressions[213], expressions[0]);
   }
   {
     BinaryenExpressionRef operands[] = { expressions[9], expressions[10], expressions[11], expressions[12] };
-    expressions[208] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 1);
+    expressions[215] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 1);
   }
-  expressions[209] = BinaryenUnary(the_module, 20, expressions[208]);
+  expressions[216] = BinaryenUnary(the_module, 20, expressions[215]);
   {
     BinaryenExpressionRef operands[] = { expressions[7], expressions[8] };
-    expressions[210] = BinaryenCallImport(the_module, "an-imported", operands, 2, 3);
+    expressions[217] = BinaryenCallImport(the_module, "an-imported", operands, 2, 3);
   }
-  expressions[211] = BinaryenUnary(the_module, 25, expressions[210]);
-  expressions[212] = BinaryenUnary(the_module, 20, expressions[211]);
-  expressions[213] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
+  expressions[218] = BinaryenUnary(the_module, 25, expressions[217]);
+  expressions[219] = BinaryenUnary(the_module, 20, expressions[218]);
+  expressions[220] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
   {
     BinaryenExpressionRef operands[] = { expressions[9], expressions[10], expressions[11], expressions[12] };
-    expressions[214] = BinaryenCallIndirect(the_module, expressions[213], operands, 4, "iiIfF");
+    expressions[221] = BinaryenCallIndirect(the_module, expressions[220], operands, 4, "iiIfF");
   }
-  expressions[215] = BinaryenUnary(the_module, 20, expressions[214]);
-  expressions[216] = BinaryenGetLocal(the_module, 0, 1);
-  expressions[217] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
-  expressions[218] = BinaryenSetLocal(the_module, 0, expressions[217]);
-  expressions[219] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[220] = BinaryenLoad(the_module, 4, 0, 0, 0, 1, expressions[219]);
-  expressions[221] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
-  expressions[222] = BinaryenLoad(the_module, 1, 1, 2, 4, 2, expressions[221]);
-  expressions[223] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-  expressions[224] = BinaryenLoad(the_module, 4, 0, 0, 0, 3, expressions[223]);
-  expressions[225] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
-  expressions[226] = BinaryenLoad(the_module, 8, 0, 2, 8, 4, expressions[225]);
-  expressions[227] = BinaryenConst(the_module, BinaryenLiteralInt32(11));
-  expressions[228] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
-  expressions[229] = BinaryenStore(the_module, 4, 0, 0, expressions[228], expressions[227]);
-  expressions[230] = BinaryenConst(the_module, BinaryenLiteralInt64(111));
-  expressions[231] = BinaryenConst(the_module, BinaryenLiteralInt32(110));
-  expressions[232] = BinaryenStore(the_module, 8, 2, 4, expressions[231], expressions[230]);
-  expressions[233] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
-  expressions[234] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-  expressions[235] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
-  expressions[236] = BinaryenSelect(the_module, expressions[235], expressions[234], expressions[233]);
+  expressions[222] = BinaryenUnary(the_module, 20, expressions[221]);
+  expressions[223] = BinaryenGetLocal(the_module, 0, 1);
+  expressions[224] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
+  expressions[225] = BinaryenSetLocal(the_module, 0, expressions[224]);
+  expressions[226] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[227] = BinaryenLoad(the_module, 4, 0, 0, 0, 1, expressions[226]);
+  expressions[228] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
+  expressions[229] = BinaryenLoad(the_module, 1, 1, 2, 4, 2, expressions[228]);
+  expressions[230] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[231] = BinaryenLoad(the_module, 4, 0, 0, 0, 3, expressions[230]);
+  expressions[232] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
+  expressions[233] = BinaryenLoad(the_module, 8, 0, 2, 8, 4, expressions[232]);
+  expressions[234] = BinaryenStore(the_module, 4, 0, 0, expressions[25], expressions[26]);
+  expressions[235] = BinaryenStore(the_module, 8, 2, 4, expressions[27], expressions[28]);
+  expressions[236] = BinaryenSelect(the_module, expressions[22], expressions[23], expressions[24]);
   expressions[237] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   expressions[238] = BinaryenReturn(the_module, expressions[237]);
   expressions[239] = BinaryenNop(the_module);
   expressions[240] = BinaryenUnreachable(the_module);
-  BinaryenExpressionPrint(expressions[20]);
+  BinaryenExpressionPrint(expressions[36]);
 (f32.neg
   (f32.const -33.61199951171875)
 )
   {
-    BinaryenExpressionRef children[] = { expressions[14], expressions[16], expressions[18], expressions[20], expressions[22], expressions[24], expressions[26], expressions[28], expressions[30], expressions[32], expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[87], expressions[90], expressions[93], expressions[96], expressions[99], expressions[102], expressions[105], expressions[108], expressions[111], expressions[114], expressions[117], expressions[120], expressions[123], expressions[126], expressions[129], expressions[132], expressions[135], expressions[138], expressions[141], expressions[144], expressions[147], expressions[150], expressions[153], expressions[156], expressions[159], expressions[162], expressions[165], expressions[168], expressions[171], expressions[174], expressions[177], expressions[180], expressions[181], expressions[185], expressions[188], expressions[190], expressions[192], expressions[194], expressions[197], expressions[199], expressions[201], expressions[202], expressions[205], expressions[207], expressions[209], expressions[212], expressions[215], expressions[216], expressions[218], expressions[220], expressions[222], expressions[224], expressions[226], expressions[229], expressions[232], expressions[236], expressions[238], expressions[239], expressions[240] };
+    BinaryenExpressionRef children[] = { expressions[30], expressions[32], expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[86], expressions[88], expressions[90], expressions[92], expressions[94], expressions[96], expressions[98], expressions[100], expressions[103], expressions[106], expressions[109], expressions[112], expressions[115], expressions[118], expressions[121], expressions[124], expressions[127], expressions[130], expressions[133], expressions[136], expressions[139], expressions[142], expressions[145], expressions[148], expressions[151], expressions[154], expressions[157], expressions[160], expressions[163], expressions[166], expressions[169], expressions[172], expressions[175], expressions[178], expressions[181], expressions[184], expressions[187], expressions[190], expressions[193], expressions[196], expressions[197], expressions[198], expressions[199], expressions[201], expressions[203], expressions[205], expressions[206], expressions[208], expressions[210], expressions[211], expressions[212], expressions[214], expressions[216], expressions[219], expressions[222], expressions[223], expressions[225], expressions[227], expressions[229], expressions[231], expressions[233], expressions[234], expressions[235], expressions[236], expressions[238], expressions[239], expressions[240] };
     expressions[241] = BinaryenBlock(the_module, "the-value", children, sizeof(children) / sizeof(BinaryenExpressionRef));
   }
   {
@@ -1507,5 +1507,699 @@ int main() {
   )
 )
   BinaryenModuleDispose(the_module);
+  functionTypes.clear();
+  expressions.clear();
+  functions.clear();
+  relooperBlocks.clear();
+  the_module = BinaryenModuleCreate();
+  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
+  {
+    BinaryenIndex paramTypes[] = {  };
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+  }
+  the_relooper = RelooperCreate();
+  expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[1]);
+  expressions[2] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[0] = BinaryenAddFunction(the_module, "just-one-block", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[2]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[3] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[3]);
+  expressions[4] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[4]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
+  expressions[5] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[1] = BinaryenAddFunction(the_module, "two-blocks", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[5]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[6] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[6]);
+  expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[7]);
+  expressions[8] = BinaryenConst(the_module, BinaryenLiteralInt32(77));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[8]);
+  expressions[9] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[2] = BinaryenAddFunction(the_module, "two-blocks-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[9]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[10] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[10]);
+  expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[11]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
+  expressions[12] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[3] = BinaryenAddFunction(the_module, "loop", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[12]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[13]);
+  expressions[14] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[14]);
+  expressions[15] = BinaryenConst(the_module, BinaryenLiteralInt32(33));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[15]);
+  expressions[16] = BinaryenConst(the_module, BinaryenLiteralInt32(-66));
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[16]);
+  expressions[17] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[4] = BinaryenAddFunction(the_module, "loop-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[17]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[18] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[18]);
+  expressions[19] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[19]);
+  expressions[20] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[20]);
+  expressions[21] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[21], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  expressions[22] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[5] = BinaryenAddFunction(the_module, "split", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[22]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[23] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[23]);
+  expressions[24] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[24]);
+  expressions[25] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[25]);
+  expressions[26] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[27] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[27], expressions[26]);
+  expressions[28] = BinaryenConst(the_module, BinaryenLiteralInt32(20));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[28]);
+  expressions[29] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[6] = BinaryenAddFunction(the_module, "split-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[29]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[30] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[30]);
+  expressions[31] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[31]);
+  expressions[32] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[32]);
+  expressions[33] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[33], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
+  expressions[34] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[7] = BinaryenAddFunction(the_module, "if", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[34]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[35] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[35]);
+  expressions[36] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[36]);
+  expressions[37] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[37]);
+  expressions[38] = BinaryenConst(the_module, BinaryenLiteralInt32(-1));
+  expressions[39] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[39], expressions[38]);
+  expressions[40] = BinaryenConst(the_module, BinaryenLiteralInt32(-2));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[40]);
+  expressions[41] = BinaryenConst(the_module, BinaryenLiteralInt32(-3));
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[41]);
+  expressions[42] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[8] = BinaryenAddFunction(the_module, "if-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[42]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[43] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[43]);
+  expressions[44] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[44]);
+  expressions[45] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[45]);
+  expressions[46] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[46]);
+  expressions[47] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[47], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[3], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[3], expressions[0], expressions[0]);
+  expressions[48] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[9] = BinaryenAddFunction(the_module, "if-else", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[48]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[49] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[49]);
+  expressions[50] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[50]);
+  expressions[51] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[51]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
+  expressions[52] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[52], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
+  expressions[53] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[10] = BinaryenAddFunction(the_module, "loop-tail", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[53]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[54] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[54]);
+  expressions[55] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[55]);
+  expressions[56] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[56]);
+  expressions[57] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[57]);
+  expressions[58] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  relooperBlocks[4] = RelooperAddBlock(the_relooper, expressions[58]);
+  expressions[59] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  relooperBlocks[5] = RelooperAddBlock(the_relooper, expressions[59]);
+  expressions[60] = BinaryenConst(the_module, BinaryenLiteralInt32(6));
+  relooperBlocks[6] = RelooperAddBlock(the_relooper, expressions[60]);
+  expressions[61] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[61]);
+  expressions[62] = BinaryenConst(the_module, BinaryenLiteralInt32(-2));
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[62], expressions[0]);
+  expressions[63] = BinaryenConst(the_module, BinaryenLiteralInt32(20));
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[6], expressions[0], expressions[63]);
+  expressions[64] = BinaryenConst(the_module, BinaryenLiteralInt32(-6));
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[3], expressions[64], expressions[0]);
+  expressions[65] = BinaryenConst(the_module, BinaryenLiteralInt32(30));
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[1], expressions[0], expressions[65]);
+  expressions[66] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  RelooperAddBranch(relooperBlocks[3], relooperBlocks[4], expressions[66], expressions[0]);
+  RelooperAddBranch(relooperBlocks[3], relooperBlocks[5], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[4], relooperBlocks[5], expressions[0], expressions[0]);
+  expressions[67] = BinaryenConst(the_module, BinaryenLiteralInt32(40));
+  RelooperAddBranch(relooperBlocks[5], relooperBlocks[6], expressions[0], expressions[67]);
+  expressions[68] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[11] = BinaryenAddFunction(the_module, "nontrivial-loop-plus-phi-to-head", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[68]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[69] = BinaryenConst(the_module, BinaryenLiteralInt32(-99));
+  expressions[70] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlockWithSwitch(the_relooper, expressions[70], expressions[69]);
+  expressions[71] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[71]);
+  expressions[72] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[72]);
+  expressions[73] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[73]);
+  {
+    BinaryenIndex indexes[] = { 2, 5 };
+    RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[1], indexes, 2, expressions[0]);
+  }
+  expressions[74] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  {
+    BinaryenIndex indexes[] = { 4 };
+    RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[2], indexes, 1, expressions[74]);
+  }
+  {
+    BinaryenIndex indexes[] = {  };
+    RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[3], indexes, 0, expressions[0]);
+  }
+  expressions[75] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[12] = BinaryenAddFunction(the_module, "switch", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[75]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[76] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[76]);
+  expressions[77] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[77]);
+  expressions[78] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[78]);
+  expressions[79] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[79], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[1], expressions[0], expressions[0]);
+  expressions[80] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 3, the_module);
+  {
+    BinaryenType varTypes[] = { 1, 1, 2, 1, 3, 4, 1 };
+    functions[13] = BinaryenAddFunction(the_module, "duffs-device", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[80]);
+  }
+  {
+    BinaryenIndex paramTypes[] = {  };
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "i", 1, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+  }
+  the_relooper = RelooperCreate();
+  expressions[81] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[82] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
+  expressions[83] = BinaryenReturn(the_module, expressions[82]);
+  {
+    BinaryenExpressionRef children[] = { expressions[81], expressions[83] };
+    expressions[84] = BinaryenBlock(the_module, "the-list", children, sizeof(children) / sizeof(BinaryenExpressionRef));
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[84]);
+  expressions[85] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[14] = BinaryenAddFunction(the_module, "return", functionTypes[1], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[85]);
+  }
+raw:
+  BinaryenModulePrint(the_module);
+(module
+  (memory 0)
+  (type $v (func))
+  (type $i (func (result i32)))
+  (func $just-one-block (type $v)
+    (local $0 i32)
+    (i32.const 1337)
+  )
+  (func $two-blocks (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+    )
+    (block
+      (i32.const 1)
+    )
+  )
+  (func $two-blocks-plus-code (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block
+        (i32.const 77)
+      )
+    )
+    (block
+      (i32.const 1)
+    )
+  )
+  (func $loop (type $v)
+    (local $0 i32)
+    (loop $shape$0$break $shape$0$continue
+      (block
+        (i32.const 0)
+      )
+      (block
+        (i32.const 1)
+        (block
+          (br $shape$0$continue)
+        )
+      )
+    )
+  )
+  (func $loop-plus-code (type $v)
+    (local $0 i32)
+    (loop $shape$0$break $shape$0$continue
+      (block
+        (i32.const 0)
+        (block
+          (i32.const 33)
+        )
+      )
+      (block
+        (i32.const 1)
+        (block
+          (i32.const -66)
+          (br $shape$0$continue)
+        )
+      )
+    )
+  )
+  (func $split (type $v)
+    (local $0 i32)
+    (i32.const 0)
+    (block $shape$1$break
+      (if
+        (i32.const 55)
+        (block
+          (i32.const 1)
+        )
+        (block
+          (i32.const 2)
+        )
+      )
+    )
+  )
+  (func $split-plus-code (type $v)
+    (local $0 i32)
+    (i32.const 0)
+    (block $shape$1$break
+      (if
+        (i32.const 55)
+        (block
+          (i32.const 10)
+          (block
+            (i32.const 1)
+          )
+        )
+        (block
+          (i32.const 20)
+          (block
+            (i32.const 2)
+          )
+        )
+      )
+    )
+  )
+  (func $if (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block $shape$1$break
+        (if
+          (i32.const 55)
+          (block
+            (i32.const 1)
+            (block
+              (br $shape$1$break)
+            )
+          )
+        )
+      )
+    )
+    (block
+      (i32.const 2)
+    )
+  )
+  (func $if-plus-code (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block $shape$1$break
+        (if
+          (i32.const 55)
+          (block
+            (i32.const -1)
+            (block
+              (i32.const 1)
+              (block
+                (i32.const -3)
+                (br $shape$1$break)
+              )
+            )
+          )
+          (i32.const -2)
+        )
+      )
+    )
+    (block
+      (i32.const 2)
+    )
+  )
+  (func $if-else (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block $shape$1$break
+        (if
+          (i32.const 55)
+          (block
+            (i32.const 1)
+            (block
+              (br $shape$1$break)
+            )
+          )
+          (block
+            (i32.const 2)
+            (block
+              (br $shape$1$break)
+            )
+          )
+        )
+      )
+    )
+    (block
+      (i32.const 3)
+    )
+  )
+  (func $loop-tail (type $v)
+    (local $0 i32)
+    (loop $shape$0$break $shape$0$continue
+      (block
+        (i32.const 0)
+      )
+      (block
+        (i32.const 1)
+        (if
+          (i32.const 10)
+          (br $shape$0$continue)
+          (br $shape$0$break)
+        )
+      )
+    )
+    (block
+      (i32.const 2)
+    )
+  )
+  (func $nontrivial-loop-plus-phi-to-head (type $v)
+    (local $0 i32)
+    (block
+      (i32.const 0)
+      (block
+        (i32.const 10)
+      )
+    )
+    (block
+      (loop $shape$1$break $shape$1$continue
+        (block
+          (i32.const 1)
+          (if
+            (i32.eqz
+              (i32.const -2)
+            )
+            (block
+              (i32.const 20)
+              (br $shape$1$break)
+            )
+          )
+        )
+        (block
+          (i32.const 2)
+          (if
+            (i32.const -6)
+            (block
+              (set_local $0
+                (i32.const 4)
+              )
+              (br $shape$1$break)
+            )
+            (block
+              (i32.const 30)
+              (br $shape$1$continue)
+            )
+          )
+        )
+      )
+      (block
+        (block $shape$4$break
+          (if
+            (i32.eq
+              (get_local $0)
+              (i32.const 4)
+            )
+            (block
+              (block
+                (i32.const 3)
+                (block $shape$6$break
+                  (if
+                    (i32.const -10)
+                    (block
+                      (i32.const 4)
+                      (block
+                        (br $shape$6$break)
+                      )
+                    )
+                  )
+                )
+              )
+              (block
+                (i32.const 5)
+                (block
+                  (i32.const 40)
+                  (br $shape$4$break)
+                )
+              )
+            )
+          )
+        )
+        (block
+          (i32.const 6)
+        )
+      )
+    )
+  )
+  (func $switch (type $v)
+    (local $0 i32)
+    (i32.const 0)
+    (block $shape$1$break
+      (block $switch$1$leave
+        (block $switch$1$default
+          (block $switch$1$case$3
+            (block $switch$1$case$2
+              (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
+                (i32.const -99)
+              )
+            )
+            (block
+              (block
+                (i32.const 1)
+              )
+            )
+            (br $switch$1$leave)
+          )
+          (block
+            (i32.const 55)
+            (block
+              (i32.const 2)
+            )
+          )
+          (br $switch$1$leave)
+        )
+        (block
+          (block
+            (i32.const 3)
+          )
+        )
+        (br $switch$1$leave)
+      )
+    )
+  )
+  (func $duffs-device (type $v)
+    (local $0 i32)
+    (local $1 i32)
+    (local $2 i64)
+    (local $3 i32)
+    (local $4 f32)
+    (local $5 f64)
+    (local $6 i32)
+    (block
+      (i32.const 0)
+      (if
+        (i32.const 10)
+        (set_local $3
+          (i32.const 2)
+        )
+        (set_local $3
+          (i32.const 3)
+        )
+      )
+    )
+    (loop $shape$1$break $shape$1$continue
+      (block $shape$2$break
+        (if
+          (i32.eq
+            (get_local $3)
+            (i32.const 2)
+          )
+          (block
+            (set_local $3
+              (i32.const 0)
+            )
+            (i32.const 1)
+            (block
+              (set_local $3
+                (i32.const 3)
+              )
+              (br $shape$1$continue)
+            )
+          )
+          (if
+            (i32.eq
+              (get_local $3)
+              (i32.const 3)
+            )
+            (block
+              (set_local $3
+                (i32.const 0)
+              )
+              (i32.const 2)
+              (block
+                (set_local $3
+                  (i32.const 2)
+                )
+                (br $shape$1$continue)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  (func $return (type $i) (result i32)
+    (local $0 i32)
+    (block $the-list
+      (i32.const 42)
+      (return
+        (i32.const 1337)
+      )
+    )
+  )
+)
+  BinaryenModuleValidate(the_module);
+  BinaryenModuleOptimize(the_module);
+  BinaryenModuleValidate(the_module);
+optimized:
+  BinaryenModulePrint(the_module);
+(module
+  (memory 0)
+  (type $v (func))
+  (type $i (func (result i32)))
+  (func $just-one-block (type $v)
+    (nop)
+  )
+  (func $duffs-device (type $v)
+    (local $0 i32)
+    (set_local $0
+      (i32.const 2)
+    )
+    (loop $shape$1$break $shape$1$continue
+      (if
+        (i32.eq
+          (get_local $0)
+          (i32.const 2)
+        )
+        (block
+          (set_local $0
+            (i32.const 3)
+          )
+          (br $shape$1$continue)
+        )
+        (if
+          (i32.eq
+            (get_local $0)
+            (i32.const 3)
+          )
+          (block
+            (set_local $0
+              (i32.const 2)
+            )
+            (br $shape$1$continue)
+          )
+        )
+      )
+    )
+  )
+  (func $return (type $i) (result i32)
+    (i32.const 1337)
+  )
+)
+  BinaryenModuleDispose(the_module);
+  functionTypes.clear();
+  expressions.clear();
+  functions.clear();
+  relooperBlocks.clear();
   return 0;
 }
