@@ -1,5 +1,7 @@
 (module
-  (memory 1)
+  (memory 1
+    (segment 16 "\d2\04\00\00\00\00\00\00)\t\00\00")
+  )
   (export "memory" memory)
   (type $FUNCSIG$v (func))
   (export "__exit" $__exit)
@@ -7,8 +9,16 @@
   (export "dynCall_v" $dynCall_v)
   (table $__exit)
   (func $__exit (type $FUNCSIG$v)
-    (local $0 i32)
-    (return)
+    (return
+      (i32.add
+        (i32.load
+          (i32.const 16)
+        )
+        (i32.load
+          (i32.const 24)
+        )
+      )
+    )
   )
   (func $__needs_exit (result i32)
     (call $__exit)
@@ -22,4 +32,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 28, "initializers": [] }
