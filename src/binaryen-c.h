@@ -24,6 +24,9 @@
 // The third part of the API lets you provide a general control-flow
 //   graph (CFG) as input.
 //
+// The final part of the API contains miscellaneous utilities like
+//   debugging/tracing for the API itself.
+//
 // ---------------
 //
 // Thread safety: You can create Expressions in parallel, as they do not
@@ -337,7 +340,7 @@ BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* intern
 
 // Function table. One per module
 
-void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* functions, BinaryenIndex numFunctions);
+void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* funcs, BinaryenIndex numFuncs);
 
 // Memory. One per module
 
@@ -409,6 +412,16 @@ void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, Bina
 //                      guide us to the right target label. This value should be an index of
 //                      an i32 local variable that is free for us to use.
 BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper, BinaryenModuleRef module);
+
+//
+// ========= Other APIs =========
+//
+
+// Sets whether API tracing is on or off. It is off by default. When on, each call
+// to an API method will print out C code equivalent to it, which is useful for
+// auto-generating standalone testcases from projects using the API.
+// TODO: compile-time option to enable/disable this feature entirely at build time.
+void BinaryenSetAPITracing(int on);
 
 #ifdef __cplusplus
 } // extern "C"

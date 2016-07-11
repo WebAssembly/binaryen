@@ -25,5 +25,7 @@ int main() {
 
   // Clean up the module, which owns all the objects we created above
   BinaryenModuleDispose(module);
+
+  return 0;
 }
 

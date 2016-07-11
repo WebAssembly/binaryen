@@ -500,10 +500,19 @@ void test_nonvalid() {
   BinaryenModuleDispose(module);
 }
 
+void test_tracing() {
+  BinaryenSetAPITracing(1);
+  test_core();
+  BinaryenSetAPITracing(0);
+}
+
 int main() {
   test_core();
   test_relooper();
   test_binaries();
   test_interpret();
   test_nonvalid();
+  test_tracing();
+
+  return 0;
 }
