@@ -53,15 +53,15 @@ BinaryenExpressionRef makeSomething(BinaryenModuleRef module) {
 
 // tests
 
-void test_core() {
-
-  // Core types
-
+void test_types() {
   printf("BinaryenNone: %d\n", BinaryenNone());
   printf("BinaryenInt32: %d\n", BinaryenInt32());
   printf("BinaryenInt64: %d\n", BinaryenInt64());
   printf("BinaryenFloat32: %d\n", BinaryenFloat32());
   printf("BinaryenFloat64: %d\n", BinaryenFloat64());
+}
+
+void test_core() {
 
   // Module creation
 
@@ -507,6 +507,7 @@ void test_tracing() {
 }
 
 int main() {
+  test_types();
   test_core();
   test_relooper();
   test_binaries();

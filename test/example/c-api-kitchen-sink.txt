@@ -817,11 +817,6 @@ module loaded from binary form:
   )
 )
 validation: 0
-BinaryenNone: 0
-BinaryenInt32: 1
-BinaryenInt64: 2
-BinaryenFloat32: 3
-BinaryenFloat64: 4
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>
@@ -834,6 +829,7 @@ int main() {
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = BinaryenModuleCreate();
   RelooperRef the_relooper = NULL;
+  the_module = BinaryenModuleCreate();
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));

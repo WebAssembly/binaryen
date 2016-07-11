@@ -93,19 +93,7 @@ BinaryenType BinaryenFloat64(void) { return f64; }
 
 BinaryenModuleRef BinaryenModuleCreate(void) {
   if (tracing) {
-    std::cout << "// beginning a Binaryen API trace\n";
-    std::cout << "#include <math.h>\n";
-    std::cout << "#include <map>\n";
-    std::cout << "#include \"src/binaryen-c.h\"\n";
-    std::cout << "int main() {\n";
-    std::cout << "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n";
-    std::cout << "  std::map<size_t, BinaryenExpressionRef> expressions;\n";
-    std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
-    std::cout << "  std::map<size_t, BinaryenFunctionRef> functions;\n";
-    std::cout << "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n";
-    std::cout << "  BinaryenModuleRef the_module = BinaryenModuleCreate();\n";
-    std::cout << "  RelooperRef the_relooper = NULL;\n";
-    expressions[NULL] = 0;
+    std::cout << "  the_module = BinaryenModuleCreate();\n";
   }
 
   return new Module();
@@ -113,8 +101,6 @@ BinaryenModuleRef BinaryenModuleCreate(void) {
 void BinaryenModuleDispose(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleDispose(the_module);\n";
-    std::cout << "  return 0;\n";
-    std::cout << "}\n";
   }
 
   delete (Module*)module;
@@ -967,6 +953,29 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlo
 
 void BinaryenSetAPITracing(int on) {
   tracing = on;
+
+  if (tracing) {
+    std::cout << "// beginning a Binaryen API trace\n";
+    std::cout << "#include <math.h>\n";
+    std::cout << "#include <map>\n";
+    std::cout << "#include \"src/binaryen-c.h\"\n";
+    std::cout << "int main() {\n";
+    std::cout << "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n";
+    std::cout << "  std::map<size_t, BinaryenExpressionRef> expressions;\n";
+    std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
+    std::cout << "  std::map<size_t, BinaryenFunctionRef> functions;\n";
+    std::cout << "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n";
+    std::cout << "  BinaryenModuleRef the_module = BinaryenModuleCreate();\n";
+    std::cout << "  RelooperRef the_relooper = NULL;\n";
+    expressions[NULL] = 0;
+  } else {
+    std::cout << "  return 0;\n";
+    std::cout << "}\n";
+    functionTypes.clear();
+    expressions.clear();
+    functions.clear();
+    relooperBlocks.clear();
+  }
 }
 
 } // extern "C"
