@@ -194,6 +194,8 @@ function asm(global, env, buffer) {
     abort();
     abort(55);
     abort();
+    abort(12.34);
+    abort(Math_fround(56.78));
   }
   function continues() {
     while (1) {

@@ -5,7 +5,8 @@
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
-  (import $abort "env" "abort" (param i32))
+  (type $FUNCSIG$vd (func (param f64)))
+  (import $abort "env" "abort" (param f64))
   (import $print "env" "print" (param i32))
   (import $h "env" "h" (param i32))
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
@@ -303,13 +304,23 @@
   )
   (func $aborts
     (call_import $abort
-      (i32.const 0)
+      (f64.const 0)
     )
     (call_import $abort
-      (i32.const 55)
+      (f64.convert_s/i32
+        (i32.const 55)
+      )
     )
     (call_import $abort
-      (i32.const 0)
+      (f64.const 0)
+    )
+    (call_import $abort
+      (f64.const 12.34)
+    )
+    (call_import $abort
+      (f64.promote/f32
+        (f32.const 56.779998779296875)
+      )
     )
   )
   (func $continues
