@@ -244,11 +244,15 @@ private:
       previous.print(std::cout, 0) << ".\n";
 #endif
       if (*type != *previous) {
-        // merge it in. we'll add on extra 0 parameters for ones not actually used, etc.
+        // merge it in. we'll add on extra 0 parameters for ones not actually used, and upgrade types to
+        // double where there is a conflict (which is ok since in JS, double can contain everything
+        // i32 and f32 can).
         for (size_t i = 0; i < type->params.size(); i++) {
           if (previous->params.size() > i) {
             if (previous->params[i] == none) {
               previous->params[i] = type->params[i]; // use a more concrete type
+            } else if (previous->params[i] != type->params[i]) {
+              previous->params[i] = f64; // overloaded type, make it a double
             }
           } else {
             previous->params.push_back(type->params[i]); // add a new param
@@ -753,14 +757,25 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     FinalizeCalls(Asm2WasmBuilder* parent) : parent(parent) {}
 
     void visitCallImport(CallImport* curr) {
-      // fill out call_import - add extra params as needed. asm tolerates ffi overloading, wasm does not
+      // fill out call_import - add extra params as needed, etc. asm tolerates ffi overloading, wasm does not
       auto iter = parent->importedFunctionTypes.find(curr->target);
       if (iter == parent->importedFunctionTypes.end()) return; // one of our fake imports for callIndirect fixups
       auto type = iter->second.get();
-      for (size_t i = curr->operands.size(); i < type->params.size(); i++) {
-        auto val = parent->allocator.alloc<Const>();
-        val->type = val->value.type = type->params[i];
-        curr->operands.push_back(val);
+      for (size_t i = 0; i < type->params.size(); i++) {
+        if (i >= curr->operands.size()) {
+          // add a new param
+          auto val = parent->allocator.alloc<Const>();
+          val->type = val->value.type = type->params[i];
+          curr->operands.push_back(val);
+        } else if (curr->operands[i]->type != type->params[i]) {
+          assert(type->params[i] == f64);
+          // overloaded, upgrade to f64
+          switch (curr->operands[i]->type) {
+            case i32: curr->operands[i] = parent->builder.makeUnary(ConvertSInt32ToFloat64, curr->operands[i]); break;
+            case f32: curr->operands[i] = parent->builder.makeUnary(PromoteFloat32, curr->operands[i]); break;
+            default: {} // f64, unreachable, etc., are all good
+          }
+        }
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
