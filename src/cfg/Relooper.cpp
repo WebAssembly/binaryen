@@ -72,6 +72,9 @@ Block::~Block() {
   for (BlockBranchMap::iterator iter = ProcessedBranchesOut.begin(); iter != ProcessedBranchesOut.end(); iter++) {
     delete iter->second;
   }
+  for (BlockBranchMap::iterator iter = BranchesOut.begin(); iter != BranchesOut.end(); iter++) {
+    delete iter->second;
+  }
 }
 
 void Block::AddBranchTo(Block *Target, wasm::Expression* Condition, wasm::Expression* Code) {
