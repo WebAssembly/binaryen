@@ -24,10 +24,23 @@ BinaryenExpressionRef makeUnary(BinaryenModuleRef module, BinaryenOp op, Binarye
 }
 
 BinaryenExpressionRef makeBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenType type) {
-  if (type == BinaryenInt32()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)), BinaryenConst(module, BinaryenLiteralInt32(-11)));
-  if (type == BinaryenInt64()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)), BinaryenConst(module, BinaryenLiteralInt64(-23)));
-  if (type == BinaryenFloat32()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)), BinaryenConst(module, BinaryenLiteralFloat32(-62.5f)));
-  if (type == BinaryenFloat64()) return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)), BinaryenConst(module, BinaryenLiteralFloat64(-9007.333)));
+  if (type == BinaryenInt32()) {
+    // use temp vars to ensure optimization doesn't change the order of operation in our trace recording
+    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralInt32(-11));
+    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)), temp);
+  }
+  if (type == BinaryenInt64()) {
+    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralInt64(-23));
+    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)), temp);
+  }
+  if (type == BinaryenFloat32()) {
+    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralFloat32(-62.5f));
+    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)), temp);
+  }
+  if (type == BinaryenFloat64()) {
+    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralFloat64(-9007.333));
+    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)), temp);
+  }
   abort();
 }
 
@@ -53,15 +66,15 @@ BinaryenExpressionRef makeSomething(BinaryenModuleRef module) {
 
 // tests
 
-void test_core() {
-
-  // Core types
-
+void test_types() {
   printf("BinaryenNone: %d\n", BinaryenNone());
   printf("BinaryenInt32: %d\n", BinaryenInt32());
   printf("BinaryenInt64: %d\n", BinaryenInt64());
   printf("BinaryenFloat32: %d\n", BinaryenFloat32());
   printf("BinaryenFloat64: %d\n", BinaryenFloat64());
+}
+
+void test_core() {
 
   // Module creation
 
@@ -84,6 +97,14 @@ void test_core() {
 
   BinaryenType params[4] = { BinaryenInt32(), BinaryenInt64(), BinaryenFloat32(), BinaryenFloat64() };
   BinaryenFunctionTypeRef iiIfF = BinaryenAddFunctionType(module, "iiIfF", BinaryenInt32(), params, 4);
+
+  BinaryenExpressionRef temp1 = makeInt32(module, 1), temp2 = makeInt32(module, 2), temp3 = makeInt32(module, 3),
+                        temp4 = makeInt32(module, 4), temp5 = makeInt32(module, 5),
+                        temp6 = makeInt32(module, 0), temp7 = makeInt32(module, 1),
+                        temp8 = makeInt32(module, 0), temp9 = makeInt32(module, 1),
+                        temp10 = makeInt32(module, 1), temp11 = makeInt32(module, 3), temp12 = makeInt32(module, 5),
+                        temp13 = makeInt32(module, 10), temp14 = makeInt32(module, 11),
+                        temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
 
   BinaryenExpressionRef valueList[] = {
     // Unary
@@ -158,16 +179,16 @@ void test_core() {
     makeBinary(module, BinaryenGeFloat32(), 3),
     // All the rest
     BinaryenBlock(module, NULL, NULL, 0), // block with no name
-    BinaryenIf(module, makeInt32(module, 1), makeInt32(module, 2), makeInt32(module, 3)),
-    BinaryenIf(module, makeInt32(module, 4), makeInt32(module, 5), NULL),
+    BinaryenIf(module, temp1, temp2, temp3),
+    BinaryenIf(module, temp4, temp5, NULL),
     BinaryenLoop(module, "out", "in", makeInt32(module, 0)),
     BinaryenLoop(module, NULL, "in2", makeInt32(module, 0)),
     BinaryenLoop(module, NULL, NULL, makeInt32(module, 0)),
-    BinaryenBreak(module, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
+    BinaryenBreak(module, "the-value", temp6, temp7),
     BinaryenBreak(module, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),
     BinaryenBreak(module, "the-nothing", NULL, NULL),
-    BinaryenSwitch(module, switchValueNames, 1, "the-value", makeInt32(module, 0), makeInt32(module, 1)),
+    BinaryenSwitch(module, switchValueNames, 1, "the-value", temp8, temp9),
     BinaryenSwitch(module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenCall(module, "kitchen()sinker", callOperands4, 4, BinaryenInt32())
@@ -187,9 +208,9 @@ void test_core() {
     BinaryenLoad(module, 1, 1, 2, 4, BinaryenInt64(), makeInt32(module, 8)),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenFloat32(), makeInt32(module, 2)),
     BinaryenLoad(module, 8, 0, 2, 8, BinaryenFloat64(), makeInt32(module, 9)),
-    BinaryenStore(module, 4, 0, 0, makeInt32(module, 10), makeInt32(module, 11)),
-    BinaryenStore(module, 8, 2, 4, makeInt32(module, 110), makeInt64(module, 111)),
-    BinaryenSelect(module, makeInt32(module, 1), makeInt32(module, 3), makeInt32(module, 5)),
+    BinaryenStore(module, 4, 0, 0, temp13, temp14),
+    BinaryenStore(module, 8, 2, 4, temp15, temp16),
+    BinaryenSelect(module, temp10, temp11, temp12),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // TODO: Host
     BinaryenNop(module),
@@ -309,7 +330,8 @@ void test_relooper() {
     RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
     RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
-    RelooperAddBranch(block0, block1, makeInt32(module, 55), makeInt32(module, 10));
+    BinaryenExpressionRef temp = makeInt32(module, 10);
+    RelooperAddBranch(block0, block1, makeInt32(module, 55), temp);
     RelooperAddBranch(block0, block2, NULL, makeInt32(module, 20));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "split-plus-code", v, localTypes, 1, body);
@@ -330,7 +352,8 @@ void test_relooper() {
     RelooperBlockRef block0 = RelooperAddBlock(relooper, makeInt32(module, 0));
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
     RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
-    RelooperAddBranch(block0, block1, makeInt32(module, 55), makeInt32(module, -1));
+    BinaryenExpressionRef temp = makeInt32(module, -1);
+    RelooperAddBranch(block0, block1, makeInt32(module, 55), temp);
     RelooperAddBranch(block0, block2, NULL, makeInt32(module, -2));
     RelooperAddBranch(block1, block2, NULL, makeInt32(module, -3));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
@@ -383,7 +406,8 @@ void test_relooper() {
   }
   { // switch
     RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlockWithSwitch(relooper, makeInt32(module, 0), makeInt32(module, -99));
+    BinaryenExpressionRef temp = makeInt32(module, -99);
+    RelooperBlockRef block0 = RelooperAddBlockWithSwitch(relooper, makeInt32(module, 0), temp);
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeInt32(module, 1));
     RelooperBlockRef block2 = RelooperAddBlock(relooper, makeInt32(module, 2));
     RelooperBlockRef block3 = RelooperAddBlock(relooper, makeInt32(module, 3));
@@ -500,10 +524,21 @@ void test_nonvalid() {
   BinaryenModuleDispose(module);
 }
 
+void test_tracing() {
+  BinaryenSetAPITracing(1);
+  test_core();
+  test_relooper();
+  BinaryenSetAPITracing(0);
+}
+
 int main() {
+  test_types();
   test_core();
   test_relooper();
   test_binaries();
   test_interpret();
   test_nonvalid();
+  test_tracing();
+
+  return 0;
 }
