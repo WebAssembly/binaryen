@@ -391,7 +391,8 @@ class S2WasmBuilder {
         } else if (match("=")) {
           Name alias = getAtSeparated();
           mustMatch("@FUNCTION");
-          info->aliasedSymbols.insert({name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
+          auto ret = info->aliasedSymbols.insert({name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
+          if (!ret.second) std::cerr << "Unsupported data alias redefinition: " << name << ", skipping...\n";
         } else {
           abort_on("unknown directive");
         }
@@ -412,15 +413,6 @@ class S2WasmBuilder {
           s++;
           offset = getInt();
         }
-        skipWhitespace();
-
-        // get the data size
-        mustMatch(".size");
-        mustMatch(lhs.str);
-        mustMatch(",");
-        wasm::Address size = atoi(getStr().str);
-        WASM_UNUSED(size);
-        skipWhitespace();
 
         // check if the rhs is already an alias
         const auto alias = symbolInfo->aliasedSymbols.find(rhs);
@@ -430,8 +422,9 @@ class S2WasmBuilder {
         }
 
         // add the new alias
-        symbolInfo->aliasedSymbols.insert({lhs, LinkerObject::SymbolAlias(rhs,
+        auto ret = symbolInfo->aliasedSymbols.insert({lhs, LinkerObject::SymbolAlias(rhs,
           LinkerObject::Relocation::kData, offset)});
+        if (!ret.second) std::cerr << "Unsupported function alias redefinition: " << lhs << ", skipping...\n";
       }
     }
   }
@@ -470,7 +463,9 @@ class S2WasmBuilder {
     WASM_UNUSED(rhs);
     skipWhitespace();
 
-    mustMatch(".size");
+    // if no size attribute (e.g. weak symbol), skip
+    if (!match(".size")) return;
+
     mustMatch(lhs.str);
     mustMatch(",");
     Name size = getStr();

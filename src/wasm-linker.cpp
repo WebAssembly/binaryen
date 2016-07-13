@@ -123,6 +123,7 @@ void Linker::layout() {
     }
   };
   for (auto& relocation : out.relocations) {
+    // TODO: Handle weak symbols properly, instead of always taking the weak definition.
     auto *alias = out.getAlias(relocation->symbol, relocation->kind);
     Name name = relocation->symbol;
 
