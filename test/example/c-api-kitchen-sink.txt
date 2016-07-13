@@ -844,7 +844,7 @@ int main() {
   expressions[12] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
     BinaryenIndex paramTypes[] = { 1, 2, 3, 4 };
-    functionTypes[0] = BinaryenAddFunctionType(the_module, "iiIfF", 1, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "iiIfF", 1, paramTypes, 4);
   }
   expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[14] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
@@ -1031,8 +1031,8 @@ int main() {
   expressions[195] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
   expressions[196] = BinaryenBinary(the_module, 62, expressions[195], expressions[194]);
   {
-    BinaryenExpressionRef children[] = {  };
-    expressions[197] = BinaryenBlock(the_module, NULL, children, sizeof(children) / sizeof(BinaryenExpressionRef));
+    BinaryenExpressionRef children[] = { 0 };
+    expressions[197] = BinaryenBlock(the_module, NULL, children, 0);
   }
     expressions[198] = BinaryenIf(the_module, expressions[13], expressions[14], expressions[15]);
     expressions[199] = BinaryenIf(the_module, expressions[16], expressions[17], expressions[0]);
@@ -1050,12 +1050,12 @@ int main() {
     expressions[211] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
-    expressions[212] = BinaryenSwitch(the_module, names, sizeof(names) / sizeof(const char *), "the-value", expressions[20], expressions[21]);
+    expressions[212] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[20], expressions[21]);
   }
   expressions[213] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   {
     const char* names[] = { "the-nothing" };
-    expressions[214] = BinaryenSwitch(the_module, names, sizeof(names) / sizeof(const char *), "the-nothing", expressions[213], expressions[0]);
+    expressions[214] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[213], expressions[0]);
   }
   {
     BinaryenExpressionRef operands[] = { expressions[9], expressions[10], expressions[11], expressions[12] };
@@ -1098,51 +1098,51 @@ int main() {
 )
   {
     BinaryenExpressionRef children[] = { expressions[30], expressions[32], expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[86], expressions[88], expressions[90], expressions[92], expressions[94], expressions[96], expressions[98], expressions[100], expressions[103], expressions[106], expressions[109], expressions[112], expressions[115], expressions[118], expressions[121], expressions[124], expressions[127], expressions[130], expressions[133], expressions[136], expressions[139], expressions[142], expressions[145], expressions[148], expressions[151], expressions[154], expressions[157], expressions[160], expressions[163], expressions[166], expressions[169], expressions[172], expressions[175], expressions[178], expressions[181], expressions[184], expressions[187], expressions[190], expressions[193], expressions[196], expressions[197], expressions[198], expressions[199], expressions[201], expressions[203], expressions[205], expressions[206], expressions[208], expressions[210], expressions[211], expressions[212], expressions[214], expressions[216], expressions[219], expressions[222], expressions[223], expressions[225], expressions[227], expressions[229], expressions[231], expressions[233], expressions[234], expressions[235], expressions[236], expressions[238], expressions[239], expressions[240] };
-    expressions[241] = BinaryenBlock(the_module, "the-value", children, sizeof(children) / sizeof(BinaryenExpressionRef));
+    expressions[241] = BinaryenBlock(the_module, "the-value", children, 95);
   }
   {
     BinaryenExpressionRef children[] = { expressions[241] };
-    expressions[242] = BinaryenBlock(the_module, "the-nothing", children, sizeof(children) / sizeof(BinaryenExpressionRef));
+    expressions[242] = BinaryenBlock(the_module, "the-nothing", children, 1);
   }
   expressions[243] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
     BinaryenExpressionRef children[] = { expressions[242], expressions[243] };
-    expressions[244] = BinaryenBlock(the_module, "the-body", children, sizeof(children) / sizeof(BinaryenExpressionRef));
+    expressions[244] = BinaryenBlock(the_module, "the-body", children, 2);
   }
   {
     BinaryenType varTypes[] = { 1 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[244]);
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[244]);
   }
   {
     BinaryenIndex paramTypes[] = { 1, 4 };
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
   BinaryenAddImport(the_module, "an-imported", "module", "base", functionTypes[1]);
   BinaryenAddExport(the_module, "kitchen()sinker", "kitchen_sinker");
   {
     BinaryenFunctionRef funcs[] = { functions[0] };
-    BinaryenSetFunctionTable(the_module, funcs, sizeof(funcs) / sizeof(BinaryenFunctionRef));
+    BinaryenSetFunctionTable(the_module, funcs, 1);
   }
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char* segments[] = { segment0 };
     BinaryenIndex segmentOffsets[] = { 10 };
     BinaryenIndex segmentSizes[] = { 12 };
-    BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, sizeof(segments) / sizeof(const char*));
+    BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
   }
   {
-    BinaryenIndex paramTypes[] = {  };
-    functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   expressions[245] = BinaryenNop(the_module);
   {
-    BinaryenType varTypes[] = {  };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[245]);
+    BinaryenType varTypes[] = { 0 };
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[245]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
-    BinaryenIndex paramTypes[] = {  };
-    functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
@@ -1514,8 +1514,8 @@ int main() {
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   {
-    BinaryenIndex paramTypes[] = {  };
-    functionTypes[0] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   the_relooper = RelooperCreate();
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
@@ -1523,7 +1523,7 @@ int main() {
   expressions[2] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[0] = BinaryenAddFunction(the_module, "just-one-block", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[2]);
+    functions[0] = BinaryenAddFunction(the_module, "just-one-block", functionTypes[0], varTypes, 1, expressions[2]);
   }
   the_relooper = RelooperCreate();
   expressions[3] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1534,7 +1534,7 @@ int main() {
   expressions[5] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[1] = BinaryenAddFunction(the_module, "two-blocks", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[5]);
+    functions[1] = BinaryenAddFunction(the_module, "two-blocks", functionTypes[0], varTypes, 1, expressions[5]);
   }
   the_relooper = RelooperCreate();
   expressions[6] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1546,7 +1546,7 @@ int main() {
   expressions[9] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[2] = BinaryenAddFunction(the_module, "two-blocks-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[9]);
+    functions[2] = BinaryenAddFunction(the_module, "two-blocks-plus-code", functionTypes[0], varTypes, 1, expressions[9]);
   }
   the_relooper = RelooperCreate();
   expressions[10] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1558,7 +1558,7 @@ int main() {
   expressions[12] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[3] = BinaryenAddFunction(the_module, "loop", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[12]);
+    functions[3] = BinaryenAddFunction(the_module, "loop", functionTypes[0], varTypes, 1, expressions[12]);
   }
   the_relooper = RelooperCreate();
   expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1572,7 +1572,7 @@ int main() {
   expressions[17] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[4] = BinaryenAddFunction(the_module, "loop-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[17]);
+    functions[4] = BinaryenAddFunction(the_module, "loop-plus-code", functionTypes[0], varTypes, 1, expressions[17]);
   }
   the_relooper = RelooperCreate();
   expressions[18] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1587,7 +1587,7 @@ int main() {
   expressions[22] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[5] = BinaryenAddFunction(the_module, "split", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[22]);
+    functions[5] = BinaryenAddFunction(the_module, "split", functionTypes[0], varTypes, 1, expressions[22]);
   }
   the_relooper = RelooperCreate();
   expressions[23] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1604,7 +1604,7 @@ int main() {
   expressions[29] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[6] = BinaryenAddFunction(the_module, "split-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[29]);
+    functions[6] = BinaryenAddFunction(the_module, "split-plus-code", functionTypes[0], varTypes, 1, expressions[29]);
   }
   the_relooper = RelooperCreate();
   expressions[30] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1620,7 +1620,7 @@ int main() {
   expressions[34] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[7] = BinaryenAddFunction(the_module, "if", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[34]);
+    functions[7] = BinaryenAddFunction(the_module, "if", functionTypes[0], varTypes, 1, expressions[34]);
   }
   the_relooper = RelooperCreate();
   expressions[35] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1639,7 +1639,7 @@ int main() {
   expressions[42] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[8] = BinaryenAddFunction(the_module, "if-plus-code", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[42]);
+    functions[8] = BinaryenAddFunction(the_module, "if-plus-code", functionTypes[0], varTypes, 1, expressions[42]);
   }
   the_relooper = RelooperCreate();
   expressions[43] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1658,7 +1658,7 @@ int main() {
   expressions[48] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[9] = BinaryenAddFunction(the_module, "if-else", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[48]);
+    functions[9] = BinaryenAddFunction(the_module, "if-else", functionTypes[0], varTypes, 1, expressions[48]);
   }
   the_relooper = RelooperCreate();
   expressions[49] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1674,7 +1674,7 @@ int main() {
   expressions[53] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[10] = BinaryenAddFunction(the_module, "loop-tail", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[53]);
+    functions[10] = BinaryenAddFunction(the_module, "loop-tail", functionTypes[0], varTypes, 1, expressions[53]);
   }
   the_relooper = RelooperCreate();
   expressions[54] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1710,7 +1710,7 @@ int main() {
   expressions[68] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[11] = BinaryenAddFunction(the_module, "nontrivial-loop-plus-phi-to-head", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[68]);
+    functions[11] = BinaryenAddFunction(the_module, "nontrivial-loop-plus-phi-to-head", functionTypes[0], varTypes, 1, expressions[68]);
   }
   the_relooper = RelooperCreate();
   expressions[69] = BinaryenConst(the_module, BinaryenLiteralInt32(-99));
@@ -1732,13 +1732,13 @@ int main() {
     RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[2], indexes, 1, expressions[74]);
   }
   {
-    BinaryenIndex indexes[] = {  };
+    BinaryenIndex indexes[] = { 0 };
     RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[3], indexes, 0, expressions[0]);
   }
   expressions[75] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[12] = BinaryenAddFunction(the_module, "switch", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[75]);
+    functions[12] = BinaryenAddFunction(the_module, "switch", functionTypes[0], varTypes, 1, expressions[75]);
   }
   the_relooper = RelooperCreate();
   expressions[76] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -1755,11 +1755,11 @@ int main() {
   expressions[80] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 3, the_module);
   {
     BinaryenType varTypes[] = { 1, 1, 2, 1, 3, 4, 1 };
-    functions[13] = BinaryenAddFunction(the_module, "duffs-device", functionTypes[0], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[80]);
+    functions[13] = BinaryenAddFunction(the_module, "duffs-device", functionTypes[0], varTypes, 7, expressions[80]);
   }
   {
-    BinaryenIndex paramTypes[] = {  };
-    functionTypes[1] = BinaryenAddFunctionType(the_module, "i", 1, paramTypes, sizeof(paramTypes) / sizeof(BinaryenIndex));
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "i", 1, paramTypes, 0);
   }
   the_relooper = RelooperCreate();
   expressions[81] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
@@ -1767,13 +1767,13 @@ int main() {
   expressions[83] = BinaryenReturn(the_module, expressions[82]);
   {
     BinaryenExpressionRef children[] = { expressions[81], expressions[83] };
-    expressions[84] = BinaryenBlock(the_module, "the-list", children, sizeof(children) / sizeof(BinaryenExpressionRef));
+    expressions[84] = BinaryenBlock(the_module, "the-list", children, 2);
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[84]);
   expressions[85] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
   {
     BinaryenType varTypes[] = { 1 };
-    functions[14] = BinaryenAddFunction(the_module, "return", functionTypes[1], varTypes, sizeof(varTypes) / sizeof(BinaryenType), expressions[85]);
+    functions[14] = BinaryenAddFunction(the_module, "return", functionTypes[1], varTypes, 1, expressions[85]);
   }
 raw:
   BinaryenModulePrint(the_module);
