@@ -170,7 +170,7 @@ private:
         curr = stack.back();
         assert(stack.size());
         stack.pop_back();
-        curr->list().push_back(last);   
+        curr->list().push_back(last);
       } else {
         curr->list().push_back(parseString());
       }
