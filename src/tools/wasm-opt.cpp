@@ -73,10 +73,13 @@ int main(int argc, const char* argv[]) {
     Element& root = *parser.root;
     if (options.debug) std::cerr << "w-parsing..." << std::endl;
     SExpressionWasmBuilder builder(wasm, *root[0]);
-    assert(WasmValidator().validate(wasm));
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
+  }
+
+  if (!WasmValidator().validate(wasm)) {
+    Fatal() << "error in validating input";
   }
 
   if (passes.size() > 0) {
