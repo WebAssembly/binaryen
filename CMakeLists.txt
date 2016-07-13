@@ -109,16 +109,27 @@ ELSE()
 ENDIF()
 TARGET_LINK_LIBRARIES(binaryen asmjs ${all_passes} support)
 
-SET(binaryen-shell_SOURCES
-  src/tools/binaryen-shell.cpp
+SET(wasm-shell_SOURCES
+  src/tools/wasm-shell.cpp
   src/wasm.cpp
 )
-ADD_EXECUTABLE(binaryen-shell
-               ${binaryen-shell_SOURCES})
-TARGET_LINK_LIBRARIES(binaryen-shell asmjs emscripten-optimizer ${all_passes} support)
-SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD 11)
-SET_PROPERTY(TARGET binaryen-shell PROPERTY CXX_STANDARD_REQUIRED ON)
-INSTALL(TARGETS binaryen-shell DESTINATION bin)
+ADD_EXECUTABLE(wasm-shell
+               ${wasm-shell_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-shell asmjs emscripten-optimizer ${all_passes} support)
+SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-shell DESTINATION bin)
+
+SET(wasm-opt_SOURCES
+  src/tools/wasm-opt.cpp
+  src/wasm.cpp
+)
+ADD_EXECUTABLE(wasm-opt
+               ${wasm-opt_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-opt asmjs emscripten-optimizer ${all_passes} support)
+SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-opt DESTINATION bin)
 
 SET(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp

@@ -56,7 +56,7 @@ int main(int argc, const char *argv[]) {
 
   Module wasm;
 
-  try{
+  try {
     if (options.debug) std::cerr << "s-parsing..." << std::endl;
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
