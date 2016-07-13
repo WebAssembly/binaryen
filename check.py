@@ -73,7 +73,7 @@ def fetch_waterfall():
   os.mkdir(WATERFALL_BUILD_DIR)
   subprocess.check_call(['tar', '-xf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD_DIR)
   print '(noting local revision)'
-  open(os.path.join('test', 'local-revision'), 'w').write(rev)
+  with open(os.path.join('test', 'local-revision'), 'w') as o: o.write(rev)
 
 has_vanilla_llvm = False
 
@@ -269,7 +269,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
     actual = ''
     for module, asserts in split_wast(t):
       assert len(asserts) == 0
-      open('split.wast', 'w').write(module)
+      with open('split.wast', 'w') as o: o.write(module)
       cmd = [os.path.join('bin', 'wasm-opt')] + opts + ['split.wast', '--print']
       actual += run_command(cmd)
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
@@ -412,7 +412,7 @@ for t in spec_tests:
       for module, asserts in split_wast(wast):
         print '    testing split module', split_num
         split_num += 1
-        open('split.wast', 'w').write(module + '\n' + '\n'.join(asserts))
+        with open('split.wast', 'w') as o: o.write(module + '\n' + '\n'.join(asserts))
         run_spec_test('split.wast') # before binary stuff - just check it's still ok split out
         result_wast = binary_format_check('split.wast', verify_final_result=False)
         # add the asserts, and verify that the test still passes
@@ -627,7 +627,7 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
       continue
     print '  (will check trace in ', t, ')'
     src = 'trace.cpp'
-    open(src, 'w').write(out)
+    with open(src, 'w') as o: o.write(out)
     expected = os.path.join('test', 'example', t + '.txt')
   else:
     src = os.path.join('test', 'example', t)
@@ -705,7 +705,7 @@ if has_emcc:
         asm = open('a.wasm.asm.js').read()
         asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
         asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
-        open('a.wasm.asm.js', 'w').write(asm)
+        with open('a.wasm.asm.js', 'w') as o: o.write(asm)
       if method == 'interpret-asm2wasm':
         os.unlink('a.wasm.wast') # we should not need the .wast
         if not success:
