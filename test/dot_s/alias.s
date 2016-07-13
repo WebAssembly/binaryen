@@ -5,9 +5,9 @@
 	.globl	__exit
 	.type	__exit,@function
 __exit:                           # @__exit
-	i32.const	$push0=, _A
+	i32.const	$push0=, _B
 	i32.load	$push1=, 0($pop0)
-	i32.const	$push2=, ._B
+	i32.const	$push2=, ._C
 	i32.load	$push3=, 0($pop2)
 	i32.add 	$push4=, $pop1, $pop3
 # BB#0:                                 # %entry
@@ -42,7 +42,11 @@ __exit_needed = __exit@FUNCTION
 	.int32	2345
 	.size	.L__unnamed_1, 12
 
-_A = .L__unnamed_1
-	.size	_A, 12
-._B = _A+8
-	.size	._B, 4
+	.weak	.A
+._A = .L__unname_1
+	.weak	._B
+_B = .L__unnamed_1
+	.size	_B, 12
+	.weak	._C
+._C = _B+8
+	.size	._C, 4
