@@ -254,7 +254,7 @@ def binary_format_check(wast, verify_final_result=True):
   assert os.path.exists('ab.wast')
 
   # make sure it is a valid wast
-  cmd = [os.path.join('bin', 'binaryen-shell'), 'ab.wast']
+  cmd = [os.path.join('bin', 'wasm-shell'), 'ab.wast']
   print '      ', ' '.join(cmd)
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
@@ -270,11 +270,11 @@ def minify_check(wast, verify_final_result=True):
   # checks we can parse minified output
 
   print '     (minify check)'
-  cmd = [os.path.join('bin', 'binaryen-shell'), wast, '--print-minified']
+  cmd = [os.path.join('bin', 'wasm-shell'), wast, '--print-minified']
   print '      ', ' '.join(cmd)
-  subprocess.check_call([os.path.join('bin', 'binaryen-shell'), wast, '--print-minified'], stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call([os.path.join('bin', 'wasm-shell'), wast, '--print-minified'], stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wasm')
-  subprocess.check_call([os.path.join('bin', 'binaryen-shell'), 'a.wasm', '--print-minified'], stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call([os.path.join('bin', 'wasm-shell'), 'a.wasm', '--print-minified'], stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('b.wasm')
   if verify_final_result:
     expected = open('a.wasm').read()
@@ -301,22 +301,22 @@ for e in executables:
   assert e in err, 'Expected help to contain program name, got:\n%s' % err
   assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
 
-print '\n[ checking binaryen-shell -o notation... ]\n'
+print '\n[ checking wasm-shell -o notation... ]\n'
 
 wast = os.path.join('test', 'hello_world.wast')
 delete_from_orbit('a.wast')
-cmd = [os.path.join('bin', 'binaryen-shell'), wast, '-o', 'a.wast']
+cmd = [os.path.join('bin', 'wasm-shell'), wast, '-o', 'a.wast']
 run_command(cmd)
 fail_if_not_identical(open('a.wast').read(), open(wast).read())
 
-print '\n[ checking binaryen-shell passes... ]\n'
+print '\n[ checking wasm-shell passes... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
     opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
-    cmd = [os.path.join('bin', 'binaryen-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
+    cmd = [os.path.join('bin', 'wasm-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
     actual = run_command(cmd)
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 
@@ -350,7 +350,7 @@ for asm in tests:
         # verify in wasm
         if interpreter:
           # remove imports, spec interpreter doesn't know what to do with them
-          subprocess.check_call([os.path.join('bin', 'binaryen-shell'), '--remove-imports', '--print', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
+          subprocess.check_call([os.path.join('bin', 'wasm-shell'), '--remove-imports', '--print', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
           proc = subprocess.Popen([interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
           out, err = proc.communicate()
           if proc.returncode != 0:
@@ -370,28 +370,28 @@ for asm in tests:
               raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
             raise Exception('wasm interpreter error')
 
-print '\n[ checking binaryen-shell parsing & printing... ]\n'
+print '\n[ checking wasm-shell parsing & printing... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'print'))):
   if t.endswith('.wast'):
     print '..', t
     wasm = os.path.basename(t).replace('.wast', '')
-    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print']
+    cmd = [os.path.join('bin', 'wasm-shell'), os.path.join('test', 'print', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual, open(os.path.join('test', 'print', wasm + '.txt')).read())
-    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print-minified']
+    cmd = [os.path.join('bin', 'wasm-shell'), os.path.join('test', 'print', t), '--print-minified']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual.strip(), open(os.path.join('test', 'print', wasm + '.minified.txt')).read().strip())
 
-print '\n[ checking binaryen-shell testcases... ]\n'
+print '\n[ checking wasm-shell testcases... ]\n'
 
 for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
-    cmd = [os.path.join('bin', 'binaryen-shell'), t, '--print']
+    cmd = [os.path.join('bin', 'wasm-shell'), t, '--print']
     actual = run_command(cmd)
     actual = actual.replace('printing before:\n', '')
 
@@ -402,7 +402,7 @@ for t in tests:
     binary_format_check(t)
     minify_check(t)
 
-print '\n[ checking binaryen-shell spec testcases... ]\n'
+print '\n[ checking wasm-shell spec testcases... ]\n'
 
 if len(requested) == 0:
   BLACKLIST = []
@@ -416,8 +416,8 @@ for t in spec_tests:
     wast = os.path.join('test', t)
 
     def run_spec_test(wast):
-      print '       run binaryen-shell on', wast
-      cmd = [os.path.join('bin', 'binaryen-shell'), wast]
+      print '       run wasm-shell on', wast
+      cmd = [os.path.join('bin', 'wasm-shell'), wast]
       return run_command(cmd, stderr=subprocess.PIPE)
 
     def check_expected(actual, expected):
@@ -547,8 +547,8 @@ for dot_s_dir in ['dot_s', 'llvm_autogenerated']:
     cmd = [os.path.join('bin', 's2wasm'), full, '--global-base=1024'] + stack_alloc
     run_command(cmd)
 
-    # run binaryen-shell on the .wast to verify that it parses
-    cmd = [os.path.join('bin', 'binaryen-shell'), expected_file]
+    # run wasm-shell on the .wast to verify that it parses
+    cmd = [os.path.join('bin', 'wasm-shell'), expected_file]
     run_command(cmd)
 
 print '\n[ running linker tests... ]\n'
@@ -609,7 +609,7 @@ if torture:
 
   import test.waterfall.src.execute_files as execute_files
   unexpected_result_count += execute_files.run(
-      runner=os.path.abspath(os.path.join('bin', 'binaryen-shell')),
+      runner=os.path.abspath(os.path.join('bin', 'wasm-shell')),
       files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
       fails=os.path.abspath(os.path.join('test', 's2wasm_known_binaryen_shell_test_failures.txt')),
       out='',

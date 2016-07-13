@@ -54,11 +54,11 @@ for t in sorted(os.listdir(os.path.join('test', 'print'))):
   if t.endswith('.wast'):
     print '..', t
     wasm = os.path.basename(t).replace('.wast', '')
-    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print']
+    cmd = [os.path.join('bin', 'wasm-shell'), os.path.join('test', 'print', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     open(os.path.join('test', 'print', wasm + '.txt'), 'w').write(actual)
-    cmd = [os.path.join('bin', 'binaryen-shell'), os.path.join('test', 'print', t), '--print-minified']
+    cmd = [os.path.join('bin', 'wasm-shell'), os.path.join('test', 'print', t), '--print-minified']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w').write(actual)
@@ -68,7 +68,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
     opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
-    cmd = [os.path.join('bin', 'binaryen-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
+    cmd = [os.path.join('bin', 'wasm-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     open(os.path.join('test', 'passes', passname + '.txt'), 'w').write(actual)

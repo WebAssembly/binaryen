@@ -171,7 +171,7 @@ int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
 
-  Options options("binaryen-shell", "Execute .wast files");
+  Options options("wasm-shell", "Execute .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
