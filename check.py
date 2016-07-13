@@ -17,7 +17,7 @@
 import os, shutil, sys, subprocess, difflib, json, time, urllib2
 
 import scripts.storage
-import scripts.support
+from scripts.support import run_command, split_wast
 
 interpreter = None
 requested = []
@@ -155,13 +155,6 @@ def delete_from_orbit(filename): # removes a file if it exists, using any and al
   except:
     pass
 
-def run_command(cmd, expected_status=0, stderr=None):
-  print 'executing: ', ' '.join(cmd)
-  proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
-  out, err = proc.communicate()
-  if proc.returncode != expected_status: raise Exception(('run_command failed', err))
-  return out
-
 def fail(actual, expected):
   raise Exception("incorrect output, diff:\n\n%s" % (
     ''.join([a.rstrip()+'\n' for a in difflib.unified_diff(expected.split('\n'), actual.split('\n'), fromfile='expected', tofile='actual')])[:]
@@ -192,50 +185,6 @@ if not has_vanilla_emcc:
   warn('no functional emcc submodule found')
 
 # check utilities
-
-def split_wast(wast):
-  # .wast files can contain multiple modules, and assertions for each one.
-  # this splits out a wast into [(module, assertions), ..]
-  # we ignore module invalidity tests here.
-  wast = open(wast).read()
-  ret = []
-  def to_end(j):
-    depth = 1
-    while depth > 0 and j < len(wast):
-      if wast[j] == '"':
-        j = wast.find('"', j + 1)
-      elif wast[j] == '(':
-        depth += 1
-      elif wast[j] == ')':
-        depth -= 1
-      elif wast[j] == ';' and wast[j+1] == ';':
-        j = wast.find('\n', j)
-      j += 1
-    return j
-  i = 0
-  while i >= 0:
-    start = wast.find('(', i)
-    if start >= 0 and wast[start+1] == ';':
-      # block comment
-      i = wast.find(';)', start+2)
-      assert i > 0, wast[start:]
-      i += 2
-      continue
-    skip = wast.find(';', i)
-    if skip >= 0 and skip < start and skip + 1 < len(wast):
-      if wast[skip+1] == ';':
-        i = wast.find('\n', i) + 1
-        continue
-    if start < 0: break
-    i = to_end(start + 1)
-    chunk = wast[start:i]
-    if chunk.startswith('(module'):
-      ret += [(chunk, [])]
-    elif chunk.startswith('(assert_invalid'):
-      continue
-    elif chunk.startswith(('(assert', '(invoke')):
-      ret[-1][1].append(chunk)
-  return ret
 
 def binary_format_check(wast, verify_final_result=True):
   # checks we can convert the wast to binary and back
@@ -270,11 +219,11 @@ def minify_check(wast, verify_final_result=True):
   # checks we can parse minified output
 
   print '     (minify check)'
-  cmd = [os.path.join('bin', 'wasm-shell'), wast, '--print-minified']
+  cmd = [os.path.join('bin', 'wasm-opt'), wast, '--print-minified']
   print '      ', ' '.join(cmd)
-  subprocess.check_call([os.path.join('bin', 'wasm-shell'), wast, '--print-minified'], stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call([os.path.join('bin', 'wasm-opt'), wast, '--print-minified'], stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wasm')
-  subprocess.check_call([os.path.join('bin', 'wasm-shell'), 'a.wasm', '--print-minified'], stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call([os.path.join('bin', 'wasm-opt'), 'a.wasm', '--print-minified'], stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('b.wasm')
   if verify_final_result:
     expected = open('a.wasm').read()
@@ -301,23 +250,28 @@ for e in executables:
   assert e in err, 'Expected help to contain program name, got:\n%s' % err
   assert len(err.split('\n')) > 8, 'Expected some help, got:\n%s' % err
 
-print '\n[ checking wasm-shell -o notation... ]\n'
+print '\n[ checking wasm-opt -o notation... ]\n'
 
 wast = os.path.join('test', 'hello_world.wast')
 delete_from_orbit('a.wast')
-cmd = [os.path.join('bin', 'wasm-shell'), wast, '-o', 'a.wast']
+cmd = [os.path.join('bin', 'wasm-opt'), wast, '-o', 'a.wast']
 run_command(cmd)
 fail_if_not_identical(open('a.wast').read(), open(wast).read())
 
-print '\n[ checking wasm-shell passes... ]\n'
+print '\n[ checking wasm-opt passes... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
     opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
-    cmd = [os.path.join('bin', 'wasm-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
-    actual = run_command(cmd)
+    t = os.path.join('test', 'passes', t)
+    actual = ''
+    for module, asserts in split_wast(t):
+      assert len(asserts) == 0
+      open('split.wast', 'w').write(module)
+      cmd = [os.path.join('bin', 'wasm-opt')] + opts + ['split.wast', '--print']
+      actual += run_command(cmd)
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 
 print '[ checking asm2wasm testcases... ]\n'
@@ -350,7 +304,7 @@ for asm in tests:
         # verify in wasm
         if interpreter:
           # remove imports, spec interpreter doesn't know what to do with them
-          subprocess.check_call([os.path.join('bin', 'wasm-shell'), '--remove-imports', '--print', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
+          subprocess.check_call([os.path.join('bin', 'wasm-opt'), '--remove-imports', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
           proc = subprocess.Popen([interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
           out, err = proc.communicate()
           if proc.returncode != 0:
@@ -370,28 +324,28 @@ for asm in tests:
               raise Exception('wasm interpreter error: ' + err) # failed to pretty-print
             raise Exception('wasm interpreter error')
 
-print '\n[ checking wasm-shell parsing & printing... ]\n'
+print '\n[ checking wasm-opt parsing & printing... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'print'))):
   if t.endswith('.wast'):
     print '..', t
     wasm = os.path.basename(t).replace('.wast', '')
-    cmd = [os.path.join('bin', 'wasm-shell'), os.path.join('test', 'print', t), '--print']
+    cmd = [os.path.join('bin', 'wasm-opt'), os.path.join('test', 'print', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual, open(os.path.join('test', 'print', wasm + '.txt')).read())
-    cmd = [os.path.join('bin', 'wasm-shell'), os.path.join('test', 'print', t), '--print-minified']
+    cmd = [os.path.join('bin', 'wasm-opt'), os.path.join('test', 'print', t), '--print-minified']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual.strip(), open(os.path.join('test', 'print', wasm + '.minified.txt')).read().strip())
 
-print '\n[ checking wasm-shell testcases... ]\n'
+print '\n[ checking wasm-opt testcases... ]\n'
 
 for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
-    cmd = [os.path.join('bin', 'wasm-shell'), t, '--print']
+    cmd = [os.path.join('bin', 'wasm-opt'), t, '--print']
     actual = run_command(cmd)
     actual = actual.replace('printing before:\n', '')
 

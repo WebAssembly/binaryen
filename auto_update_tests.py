@@ -2,6 +2,8 @@
 
 import os, sys, subprocess, difflib
 
+from scripts.support import run_command, split_wast
+
 print '[ processing and updating testcases... ]\n'
 
 for asm in sorted(os.listdir('test')):
@@ -68,9 +70,13 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
     opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
-    cmd = [os.path.join('bin', 'wasm-shell')] + opts + [os.path.join('test', 'passes', t), '--print']
-    print '    ', ' '.join(cmd)
-    actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    t = os.path.join('test', 'passes', t)
+    actual = ''
+    for module, asserts in split_wast(t):
+      assert len(asserts) == 0
+      open('split.wast', 'w').write(module)
+      cmd = [os.path.join('bin', 'wasm-opt')] + opts + ['split.wast', '--print']
+      actual += run_command(cmd)
     open(os.path.join('test', 'passes', passname + '.txt'), 'w').write(actual)
 
 print '\n[ checking binary format testcases... ]\n'

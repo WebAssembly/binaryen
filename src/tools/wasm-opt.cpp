@@ -15,41 +15,52 @@
  */
 
 //
-// wasm2asm console tool
+// A WebAssembly optimizer, loads code, optionally runs passes on it,
+// then writes it.
 //
 
-#include "support/colors.h"
+#include <memory>
+
+#include "pass.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-binary.h"
+#include "wasm-printing.h"
 #include "wasm-s-parser.h"
+#include "wasm-validator.h"
 
-using namespace cashew;
 using namespace wasm;
 
-int main(int argc, const char *argv[]) {
-  Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
-  options.extra["validate"] = "wasm";
+//
+// main
+//
+
+int main(int argc, const char* argv[]) {
+  Name entry;
+  std::vector<std::string> passes;
+
+  Options options("wasm-opt", "Optimize .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options* o, const std::string& argument) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      .add("--validate", "-v", "Control validation of the output module",
-           Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             if (argument != "web" && argument != "none" && argument != "wasm") {
-               std::cerr << "Valid arguments for --validate flag are 'wasm', 'web', and 'none'.\n";
-               exit(1);
-             }
-             o->extra["validate"] = argument;
+      .add("", "-O", "execute default optimization passes",
+           Options::Arguments::Zero,
+           [&passes](Options*, const std::string&) {
+             passes.push_back("O");
            })
       .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string &argument) {
+                      [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
+  for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
+    options.add(
+        std::string("--") + p, "", PassRegistry::get()->getPassDescription(p),
+        Options::Arguments::Zero,
+        [&passes, p](Options*, const std::string&) { passes.push_back(p); });
+  }
   options.parse(argc, argv);
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
@@ -62,27 +73,30 @@ int main(int argc, const char *argv[]) {
     Element& root = *parser.root;
     if (options.debug) std::cerr << "w-parsing..." << std::endl;
     SExpressionWasmBuilder builder(wasm, *root[0]);
+    assert(WasmValidator().validate(wasm));
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
   }
 
-  if (options.extra["validate"] != "none") {
-    if (options.debug) std::cerr << "Validating..." << std::endl;
-    if (!wasm::WasmValidator().validate(wasm,
-        options.extra["validate"] == "web")) {
-      Fatal() << "Error: input module is not valid.\n";
+  if (passes.size() > 0) {
+    if (options.debug) std::cerr << "running passes...\n";
+    PassRunner passRunner(&wasm);
+    if (options.debug) passRunner.setDebug(true);
+    for (auto& passName : passes) {
+      if (passName == "O") {
+        passRunner.addDefaultOptimizationPasses();
+      } else {
+        passRunner.add(passName);
+      }
     }
+    passRunner.run();
+    assert(WasmValidator().validate(wasm));
   }
 
-  if (options.debug) std::cerr << "binarification..." << std::endl;
-  BufferWithRandomAccess buffer(options.debug);
-  WasmBinaryWriter writer(&wasm, buffer, options.debug);
-  writer.write();
-
-  if (options.debug) std::cerr << "writing to output..." << std::endl;
-  Output output(options.extra["output"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release);
-  buffer.writeTo(output);
-
-  if (options.debug) std::cerr << "Done." << std::endl;
+  if (options.extra.count("output") > 0) {
+    if (options.debug) std::cerr << "writing..." << std::endl;
+    Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
+    WasmPrinter::printModule(&wasm, output.getStream());
+  }
 }

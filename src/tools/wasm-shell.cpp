@@ -169,43 +169,20 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
 
 int main(int argc, const char* argv[]) {
   Name entry;
-  std::vector<std::string> passes;
 
   Options options("wasm-shell", "Execute .wast files");
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
       .add(
           "--entry", "-e", "call the entry point after parsing the module",
           Options::Arguments::One,
           [&entry](Options*, const std::string& argument) { entry = argument; })
-      .add("", "-O", "execute default optimization passes",
-           Options::Arguments::Zero,
-           [&passes](Options*, const std::string&) {
-             passes.push_back("O");
-           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
-  for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
-    options.add(
-        std::string("--") + p, "", PassRegistry::get()->getPassDescription(p),
-        Options::Arguments::Zero,
-        [&passes, p](Options*, const std::string&) { passes.push_back(p); });
-  }
   options.parse(argc, argv);
 
   auto input(read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
-
-  std::unique_ptr<Output> output;
-  if (options.extra.count("output") > 0) {
-    output = wasm::make_unique<Output>(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  }
 
   bool checked = false;
 
@@ -226,29 +203,7 @@ int main(int argc, const char* argv[]) {
         builder = wasm::make_unique<SExpressionWasmBuilder>(wasm, *root[i]);
         i++;
         assert(WasmValidator().validate(wasm));
-
-        MixedArena moreModuleAllocations;
-
-        if (passes.size() > 0) {
-          if (options.debug) std::cerr << "running passes...\n";
-          PassRunner passRunner(&wasm);
-          if (options.debug) passRunner.setDebug(true);
-          for (auto& passName : passes) {
-            if (passName == "O") {
-              passRunner.addDefaultOptimizationPasses();
-            } else {
-              passRunner.add(passName);
-            }
-          }
-          passRunner.run();
-          assert(WasmValidator().validate(wasm));
-        }
-
         run_asserts(&i, &checked, &wasm, &root, &builder, entry);
-
-        if (output) {
-          WasmPrinter::printModule(&wasm, output->getStream());
-        }
       } else {
         run_asserts(&i, &checked, nullptr, &root, nullptr, entry);
       }

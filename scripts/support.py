@@ -87,3 +87,60 @@ def untar(tarfile, outdir):
   finally:
     if os.path.isdir(tmpdir):
       shutil.rmtree(tmpdir)
+
+
+def split_wast(wast):
+  # .wast files can contain multiple modules, and assertions for each one.
+  # this splits out a wast into [(module, assertions), ..]
+  # we ignore module invalidity tests here.
+  wast = open(wast).read()
+  ret = []
+
+  def to_end(j):
+    depth = 1
+    while depth > 0 and j < len(wast):
+      if wast[j] == '"':
+        j = wast.find('"', j + 1)
+      elif wast[j] == '(':
+        depth += 1
+      elif wast[j] == ')':
+        depth -= 1
+      elif wast[j] == ';' and wast[j + 1] == ';':
+        j = wast.find('\n', j)
+      j += 1
+    return j
+
+  i = 0
+  while i >= 0:
+    start = wast.find('(', i)
+    if start >= 0 and wast[start + 1] == ';':
+      # block comment
+      i = wast.find(';)', start + 2)
+      assert i > 0, wast[start:]
+      i += 2
+      continue
+    skip = wast.find(';', i)
+    if skip >= 0 and skip < start and skip + 1 < len(wast):
+      if wast[skip + 1] == ';':
+        i = wast.find('\n', i) + 1
+        continue
+    if start < 0:
+      break
+    i = to_end(start + 1)
+    chunk = wast[start:i]
+    if chunk.startswith('(module'):
+      ret += [(chunk, [])]
+    elif chunk.startswith('(assert_invalid'):
+      continue
+    elif chunk.startswith(('(assert', '(invoke')):
+      ret[-1][1].append(chunk)
+  return ret
+
+
+def run_command(cmd, expected_status=0, stderr=None):
+  print 'executing: ', ' '.join(cmd)
+  proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
+  out, err = proc.communicate()
+  if proc.returncode != expected_status:
+    raise Exception(('run_command failed', err))
+  return out
