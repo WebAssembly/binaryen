@@ -423,7 +423,7 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlo
 // When calling this to turn on tracing, the prelude of the full program is printed,
 // and when calling it to turn it off, the ending of the program is printed, giving
 // you the full compilable testcase.
-// TODO: compile-time option to enable/disable this feature entirely at build time.
+// TODO: compile-time option to enable/disable this feature entirely at build time?
 void BinaryenSetAPITracing(int on);
 
 #ifdef __cplusplus
