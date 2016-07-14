@@ -1403,7 +1403,7 @@ private:
 
   void parseTable(Element& s) {
     for (size_t i = 1; i < s.size(); i++) {
-      wasm.table.names.push_back(getFunctionName(*s[i]));
+      wasm.getDefaultTable()->values.push_back(getFunctionName(*s[i]));
     }
   }
 

@@ -576,7 +576,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitTable(Table *curr) {
     printOpening(o, "table");
-    for (auto name : curr->names) {
+    for (auto name : curr->values) {
       o << ' ';
       printName(name);
     }
@@ -647,9 +647,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitGlobal(child.get());
       o << maybeNewLine;
     }
-    if (curr->table.names.size() > 0) {
+    for (auto& child : curr->tables) {
       doIndent(o, indent);
-      visitTable(&curr->table);
+      visitTable(child.get());
       o << maybeNewLine;
     }
     for (auto& child : curr->functions) {

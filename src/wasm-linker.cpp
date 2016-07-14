@@ -117,22 +117,20 @@ void Linker::layout() {
 
   // Pre-assign the function indexes
   for (auto& pair : out.indirectIndexes) {
-    if (functionIndexes.count(pair.first) != 0 ||
-        functionNames.count(pair.second) != 0) {
-      Fatal() << "Function " << pair.first << " already has an index " <<
-          functionIndexes[pair.first] << " while setting index " << pair.second;
+    Index tableIndex = Table::kDefault;
+    Table *table = out.getIndirectTable(tableIndex);
+    if (functionIndexes.count(pair.second) != 0) {
+      Fatal() << "Function " << pair.second << " already has an index " <<
+          functionIndexes[pair.second].first << " while setting index " << pair.first;
     }
     if (debug) {
-      std::cerr << "pre-assigned function index: " << pair.first << ": "
-                << pair.second << '\n';
+      std::cerr << "pre-assigned function index: " << pair.second << ": "
+                << pair.first << '\n';
     }
-    functionIndexes[pair.first] = pair.second;
-    functionNames[pair.second] = pair.first;
-  }
-
-  // Emit the pre-assigned function names in sorted order
-  for (const auto& P : functionNames) {
-    out.wasm.table.names.push_back(P.second);
+    assert(table->values.size() == pair.first);
+    table->values.push_back(pair.second);
+    auto indexes = std::make_pair(tableIndex, pair.first);
+    functionIndexes[pair.second] = indexes;
   }
 
   for (auto& relocation : out.relocations) {
@@ -170,6 +168,15 @@ void Linker::layout() {
       }
     }
   }
+
+  // Create the actual tables in the underlying module. This is delayed because
+  // table references may be out of order, and the underlying object is a vector.
+  Index counter = 0;
+  for (auto& pair : out.tables) {
+    if (pair.first != counter++) Fatal() << "Tables are nonconsecutive!" << '\n';
+    out.wasm.addTable(pair.second);
+  }
+
   if (!!startFunction) {
     if (out.symbolInfo.implementedFunctions.count(startFunction) == 0) {
       Fatal() << "Unknown start function: `" << startFunction << "`\n";
@@ -206,9 +213,11 @@ void Linker::layout() {
   }
 
   // ensure an explicit function type for indirect call targets
-  for (auto& name : out.wasm.table.names) {
-    auto* func = out.wasm.getFunction(name);
-    func->type = ensureFunctionType(getSig(func), &out.wasm)->name;
+  for (auto& table : out.wasm.tables) {
+    for (auto& name : table->values) {
+      auto* func = out.wasm.getFunction(name);
+      func->type = ensureFunctionType(getSig(func), &out.wasm)->name;
+    }
   }
 }
 
@@ -371,14 +380,17 @@ void Linker::emscriptenGlue(std::ostream& o) {
 
 Index Linker::getFunctionIndex(Name name) {
   if (!functionIndexes.count(name)) {
-    functionIndexes[name] = out.wasm.table.names.size();
-    out.wasm.table.names.push_back(name);
+    Index tableIndex = Table::kDefault;
+    Table *table = out.getIndirectTable(tableIndex);
+    functionIndexes[name] = std::make_pair(tableIndex, table->values.size());
+    table->values.push_back(name);
     if (debug) {
       std::cerr << "function index: " << name << ": "
-                << functionIndexes[name] << '\n';
+                << functionIndexes[name].first << " "
+                << functionIndexes[name].second << '\n';
     }
   }
-  return functionIndexes[name];
+  return functionIndexes[name].second;
 }
 
 bool hasI64ResultOrParam(FunctionType* ft) {
@@ -390,7 +402,7 @@ bool hasI64ResultOrParam(FunctionType* ft) {
 }
 
 void Linker::makeDummyFunction() {
-  assert(out.wasm.table.names.empty());
+  assert(out.wasm.tables.empty());
   bool create = false;
   // Check if there are address-taken functions
   for (auto& relocation : out.relocations) {
@@ -410,27 +422,29 @@ void Linker::makeDummyFunction() {
 void Linker::makeDynCallThunks() {
   std::unordered_set<std::string> sigs;
   wasm::Builder wasmBuilder(out.wasm);
-  for (const auto& indirectFunc : out.wasm.table.names) {
-    // Skip generating thunks for the dummy function
-    if (indirectFunc == dummyFunction) continue;
-    std::string sig(getSig(out.wasm.getFunction(indirectFunc)));
-    auto* funcType = ensureFunctionType(sig, &out.wasm);
-    if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
-    if (!sigs.insert(sig).second) continue; // Sig is already in the set
-    std::vector<NameType> params;
-    params.emplace_back("fptr", i32); // function pointer param
-    int p = 0;
-    for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
-    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
-    Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
-    std::vector<Expression*> args;
-    for (unsigned i = 0; i < funcType->params.size(); ++i) {
-      args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
+  for (const auto& table : out.wasm.tables) {
+    for (const auto& indirectFunc : table->values) {
+      // Skip generating thunks for the dummy function
+      if (indirectFunc == dummyFunction) continue;
+      std::string sig(getSig(out.wasm.getFunction(indirectFunc)));
+      auto* funcType = ensureFunctionType(sig, &out.wasm);
+      if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
+      if (!sigs.insert(sig).second) continue; // Sig is already in the set
+      std::vector<NameType> params;
+      params.emplace_back("fptr", i32); // function pointer param
+      int p = 0;
+      for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
+      Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
+      Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
+      std::vector<Expression*> args;
+      for (unsigned i = 0; i < funcType->params.size(); ++i) {
+        args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
+      }
+      Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
+      f->body = call;
+      out.wasm.addFunction(f);
+      exportFunction(f->name, true);
     }
-    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
-    f->body = call;
-    out.wasm.addFunction(f);
-    exportFunction(f->name, true);
   }
 }
 

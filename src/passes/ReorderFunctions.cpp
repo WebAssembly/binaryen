@@ -38,8 +38,10 @@ struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions, Visitor
     for (auto& curr : module->exports) {
       counts[curr->value]++;
     }
-    for (auto& curr : module->table.names) {
-      counts[curr]++;
+    for (auto& child : module->tables) {
+      for (auto& curr : child->values) {
+        counts[curr]++;
+      }
     }
     std::sort(module->functions.begin(), module->functions.end(), [this](
       const std::unique_ptr<Function>& a,

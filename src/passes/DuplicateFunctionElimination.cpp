@@ -123,10 +123,12 @@ struct DuplicateFunctionElimination : public Pass {
         replacerRunner.add<FunctionReplacer>(&replacements);
         replacerRunner.run();
         // replace in table
-        for (auto& name : module->table.names) {
-          auto iter = replacements.find(name);
-          if (iter != replacements.end()) {
-            name = iter->second;
+        for (auto& curr : module->tables) {
+          for (auto& name : curr->values) {
+            auto iter = replacements.find(name);
+            if (iter != replacements.end()) {
+              name = iter->second;
+            }
           }
         }
         // replace in start
