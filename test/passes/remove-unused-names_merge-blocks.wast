@@ -3,7 +3,7 @@
   (type $i (func (param i32)))
   (type $ii (func (param i32) (param i32)))
   (type $iii (func (param i32) (param i32) (param i32)))
-  (table $call-i)
+  (table $0 $call-i)
   (func $call-i (param i32)
   )
   (func $call-ii (param i32) (param i32)

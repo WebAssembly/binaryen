@@ -267,7 +267,7 @@ struct ExpressionManipulator {
         return ret;
       }
       Expression* visitCallIndirect(CallIndirect *curr) {
-        auto* ret = builder.makeCallIndirect(curr->fullType, curr->target, {}, curr->type);
+        auto* ret = builder.makeCallIndirect(curr->table, curr->fullType, curr->target, {}, curr->type);
         for (Index i = 0; i < curr->operands.size(); i++) {
           ret->operands.push_back(copy(curr->operands[i]));
         }
@@ -467,6 +467,7 @@ struct ExpressionAnalyzer {
           break;
         }
         case Expression::Id::CallIndirectId: {
+          CHECK(CallIndirect, table);
           PUSH(CallIndirect, target);
           CHECK(CallIndirect, fullType);
           CHECK(CallIndirect, operands.size());
@@ -678,6 +679,7 @@ struct ExpressionAnalyzer {
           break;
         }
         case Expression::Id::CallIndirectId: {
+          HASH_NAME(CallIndirect, table);
           PUSH(CallIndirect, target);
           HASH_NAME(CallIndirect, fullType);
           HASH(CallIndirect, operands.size());

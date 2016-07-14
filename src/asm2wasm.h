@@ -1404,6 +1404,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       }
       // function pointers
       auto ret = allocator.alloc<CallIndirect>();
+      ret->table = wasm.getDefaultTable()->name;
       Ref target = ast[1];
       assert(target[0] == SUB && target[1][0] == NAME && target[2][0] == BINARY && target[2][1] == AND && target[2][3][0] == NUM); // FUNCTION_TABLE[(expr) & mask]
       ret->target = process(target[2]); // TODO: as an optimization, we could look through the mask

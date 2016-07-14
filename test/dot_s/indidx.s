@@ -2,7 +2,7 @@
 	.file	"cfi-wasm.bs.bc"
 	.type	a,@function
 a:                                      # @a
-	.indidx  	4
+	.indidx  	1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
@@ -13,7 +13,7 @@ a:                                      # @a
 
 	.type	b,@function
 b:                                      # @b
-	.indidx  	2
+	.indidx  	1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
@@ -35,7 +35,7 @@ c:                                      # @c
 
 	.type	d,@function
 d:                                      # @d
-	.indidx  	3
+	.indidx  	1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
@@ -64,7 +64,7 @@ main:                                   # @main
 	i32.ge_u	$push6=, $pop8, $pop5
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %cont
-	i32.call_indirect	$push7=, $2
+	i32.call_indirect.1	$push7=, $2
 	return  	$pop7
 .LBB4_2:                                # %trap
 	end_block                       # label0:

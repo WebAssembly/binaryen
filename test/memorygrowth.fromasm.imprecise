@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
   (export "memory" memory)
+  (type $anyfunc (func (param none)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
@@ -39,7 +40,7 @@
   (export "dynCall_iiii" $lb)
   (export "dynCall_vi" $mb)
   (export "__growWasmMemory" $__growWasmMemory)
-  (table $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
+  (table $0 default (type $anyfunc (func (param none))) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
   (func $eb (param $0 i32) (result i32)
     (local $1 i32)
     (local $2 i32)
@@ -8337,7 +8338,7 @@
             )
             (block
               (set_local $4
-                (call_indirect $FUNCSIG$iiii
+                (call_indirect $0 $FUNCSIG$iiii
                   (i32.add
                     (i32.and
                       (i32.load offset=36
@@ -8414,7 +8415,7 @@
                   )
                   (if
                     (i32.lt_u
-                      (call_indirect $FUNCSIG$iiii
+                      (call_indirect $0 $FUNCSIG$iiii
                         (i32.add
                           (i32.and
                             (i32.load offset=36
@@ -8904,7 +8905,7 @@
           (set_local $4
             (if
               (i32.eq
-                (call_indirect $FUNCSIG$iiii
+                (call_indirect $0 $FUNCSIG$iiii
                   (i32.add
                     (i32.and
                       (i32.load offset=36
@@ -8962,7 +8963,7 @@
         )
       )
       (block
-        (call_indirect $FUNCSIG$iiii
+        (call_indirect $0 $FUNCSIG$iiii
           (i32.add
             (i32.and
               (i32.load offset=36
@@ -9021,7 +9022,7 @@
               )
             )
           )
-          (call_indirect $FUNCSIG$iiii
+          (call_indirect $0 $FUNCSIG$iiii
             (i32.add
               (i32.and
                 (i32.load offset=40
@@ -9903,7 +9904,7 @@
     )
   )
   (func $lb (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-    (call_indirect $FUNCSIG$iiii
+    (call_indirect $0 $FUNCSIG$iiii
       (i32.add
         (i32.and
           (get_local $0)
@@ -9985,7 +9986,7 @@
     )
   )
   (func $kb (param $0 i32) (param $1 i32) (result i32)
-    (call_indirect $FUNCSIG$ii
+    (call_indirect $0 $FUNCSIG$ii
       (i32.add
         (i32.and
           (get_local $0)
@@ -10009,7 +10010,7 @@
     )
   )
   (func $mb (param $0 i32) (param $1 i32)
-    (call_indirect $FUNCSIG$vi
+    (call_indirect $0 $FUNCSIG$vi
       (i32.add
         (i32.and
           (get_local $0)

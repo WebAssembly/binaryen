@@ -1,8 +1,9 @@
 (module
   (memory 1)
   (export "memory" memory)
-  (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
+  (type $anyfunc (func (param none)))
+  (type $FUNCSIG$v (func))
   (type $FUNCSIG$if (func (param f32) (result i32)))
   (type $FUNCSIG$vd (func (param f64)))
   (type $FUNCSIG$ffjjdi (func (param f32 i64 i64 f64 i32) (result f32)))
@@ -15,7 +16,7 @@
   (export "dynCall_i" $dynCall_i)
   (export "dynCall_if" $dynCall_if)
   (export "dynCall_vd" $dynCall_vd)
-  (table $__wasm_nullptr $i $i_f $vd $ffjjdi $vd2)
+  (table $0 default (type $anyfunc (func (param none))) $__wasm_nullptr_0 $i $i_f $vd $ffjjdi $vd2)
   (func $i (type $FUNCSIG$i) (result i32)
     (i32.const 0)
   )
@@ -37,22 +38,22 @@
     (i32.const 5)
     (i32.const 0)
   )
-  (func $__wasm_nullptr (type $FUNCSIG$v)
+  (func $__wasm_nullptr_0 (type $FUNCSIG$v)
     (unreachable)
   )
   (func $dynCall_i (param $fptr i32) (result i32)
-    (call_indirect $FUNCSIG$i
+    (call_indirect $0 $FUNCSIG$i
       (get_local $fptr)
     )
   )
   (func $dynCall_if (param $fptr i32) (param $0 f32) (result i32)
-    (call_indirect $FUNCSIG$if
+    (call_indirect $0 $FUNCSIG$if
       (get_local $fptr)
       (get_local $0)
     )
   )
   (func $dynCall_vd (param $fptr i32) (param $0 f64)
-    (call_indirect $FUNCSIG$vd
+    (call_indirect $0 $FUNCSIG$vd
       (get_local $fptr)
       (get_local $0)
     )

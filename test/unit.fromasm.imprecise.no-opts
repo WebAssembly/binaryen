@@ -2,6 +2,7 @@
   (memory 256 256)
   (export "memory" memory)
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+  (type $anyfunc (func (param none)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$vd (func (param f64)))
@@ -11,7 +12,7 @@
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
   (export "pick" $exportMe)
-  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (table $0 default (type $anyfunc (func (param none))) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
     (set_local $temp
@@ -394,7 +395,7 @@
         (get_local $x)
       )
     )
-    (call_indirect $FUNCSIG$vf
+    (call_indirect $0 $FUNCSIG$vf
       (i32.add
         (i32.and
           (i32.const 1)
@@ -406,7 +407,7 @@
     )
   )
   (func $cneg (param $x f32)
-    (call_indirect $FUNCSIG$vf
+    (call_indirect $0 $FUNCSIG$vf
       (i32.add
         (i32.and
           (i32.const 1)
@@ -456,7 +457,7 @@
     )
   )
   (func $cneg_nosemicolon
-    (call_indirect $FUNCSIG$vi
+    (call_indirect $0 $FUNCSIG$vi
       (i32.add
         (i32.and
           (i32.const 1)

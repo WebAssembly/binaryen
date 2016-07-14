@@ -113,20 +113,25 @@ class LinkerObject {
 
   // Create a table locally, because insertion into the underlying wasm vector
   // needs to be delayed until all tables have been encountered.
-  Table *getIndirectTable(Index index) {
-    if (tables.count(index))
+  Table *getIndirectTable(Index index, FunctionType* type) {
+    Table *table;
+    if (tables.count(index)) {
       return tables[index];
-
-    // Add the first default table, if it is missing and another table is
-    // being requested.
-    if (index && !tables.count(Table::kDefault)) {
-      getIndirectTable(Table::kDefault);
     }
 
     // Otherwise, proceed and create the requested table.
-    assert(index == Table::kDefault);
-    tables[index] = Table::createDefaultTable();
-    return tables[index];
+    if (index != Table::kDefault) {
+      table = new Table();
+      table->name = Name::fromInt(index);
+      table->isDefault = false;
+      table->elementType = type;
+    } else {
+      table = Table::createDefaultTable();
+      table->elementType = wasm.getAnyFuncType();
+    }
+    tables[index] = table;
+
+    return table;
   }
 
   // Add an initializer segment for the named static variable.
@@ -160,8 +165,10 @@ class LinkerObject {
   }
 
   void addIndirectIndex(Name name, Address index) {
-    assert(!indirectIndexes.count(index));
-    indirectIndexes[index] = name;
+    if (!indirectIndexes.count(index)) {
+        indirectIndexes[index] = std::vector<Name>();
+    }
+    indirectIndexes[index].push_back(name);
   }
 
   bool isEmpty() {
@@ -198,7 +205,7 @@ class LinkerObject {
   std::map<Index, Table *> tables; // index => table index (in wasm module)
 
   // preassigned indexes for functions called indirectly
-  std::map<Address, Name> indirectIndexes;
+  std::map<Address, std::vector<Name>> indirectIndexes;
 
   std::vector<Name> initializerFunctions;
 
@@ -272,7 +279,7 @@ class Linker {
   bool linkArchive(Archive& archive);
 
   // Name of the dummy function to prevent erroneous nullptr comparisons.
-  static constexpr const char* dummyFunction = "__wasm_nullptr";
+  static constexpr const char* dummyFunction = "__wasm_nullptr_";
 
  private:
   // Allocate a static variable and return its address in linear memory
@@ -305,9 +312,9 @@ class Linker {
   // a given function.
   Index getFunctionIndex(Name name);
 
-  // Adds a dummy function in the indirect table at slot 0 to prevent NULL
+  // Adds a dummy function in the given indirect table to prevent NULL
   // pointer miscomparisons.
-  void makeDummyFunction();
+  Name makeDummyFunction(Table *table);
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.

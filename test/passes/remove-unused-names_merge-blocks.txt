@@ -4,7 +4,8 @@
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))
   (type $3 (func))
-  (table $call-i)
+  (type $anyfunc (func (param none)))
+  (table $0 default (type $anyfunc (func (param none))) $call-i)
   (func $call-i (type $i) (param $0 i32)
     (nop)
   )
@@ -405,12 +406,12 @@
     (i32.const 10)
     (i32.const 30)
     (i32.const 50)
-    (call_indirect $ii
+    (call_indirect $0 $ii
       (i32.const 20)
       (i32.const 40)
       (i32.const 60)
     )
-    (call_indirect $ii
+    (call_indirect $0 $ii
       (unreachable)
       (block
         (i32.const 30)

@@ -1065,6 +1065,8 @@ public:
 
   FunctionType() : result(none) {}
 
+  static constexpr const char* kAnyFunc = "anyfunc";
+
   bool structuralComparison(FunctionType& b) {
     if (result != b.result) return false;
     if (params.size() != b.params.size()) return false;
@@ -1081,12 +1083,24 @@ public:
   bool operator!=(FunctionType& b) {
     return !(*this == b);
   }
+
+  static FunctionType* createAnyFuncType() {
+    FunctionType *anyFunc = new FunctionType;
+    anyFunc->name = FunctionType::kAnyFunc;
+    anyFunc->params.push_back(none);
+    return anyFunc;
+  }
+
+  static bool isAnyFuncType(FunctionType *curr) {
+    return curr->params.size() == 1 && curr->params[0] == none && curr->result == none;
+  }
 };
 
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
 
+  Name table;
   ExpressionList operands;
   Name fullType;
   Expression *target;
@@ -1433,12 +1447,16 @@ public:
 class Table {
 public:
   Name name;
+  bool isDefault;
+  FunctionType* elementType;
+  Address initial, max;
   std::vector<Name> values;
 
   enum { kDefault = 0 };
 
   static Table* createDefaultTable() {
     Table *table = new Table();
+    table->isDefault = true;
     table->name = Name::fromInt(kDefault);
     return table;
   }
@@ -1589,10 +1607,19 @@ public:
     start = s;
   }
 
+  FunctionType* getAnyFuncType() {
+    FunctionType *anyFunc = checkFunctionType(FunctionType::kAnyFunc);
+    if (anyFunc) return anyFunc;
+    anyFunc = FunctionType::createAnyFuncType();
+    addFunctionType(anyFunc);
+    return anyFunc;
+  }
+
   Table* getDefaultTable() {
     Table *def = checkTable(Name::fromInt(Table::kDefault));
     if (def) return def;
     def = Table::createDefaultTable();
+    def->elementType = getAnyFuncType();
     addTable(def);
     return def;
   }

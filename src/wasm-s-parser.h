@@ -265,11 +265,13 @@ class SExpressionWasmBuilder {
   int functionCounter;
   int importCounter;
   int globalCounter;
+  int tableCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
+  std::map<Name, FunctionType*> functionFullTypes; // we need to know function full types before we parse their contents for tables
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0) {
+  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0), tableCounter(0) {
     assert(module[0]->str() == MODULE);
     if (module.size() > 1 && module[1]->isStr()) {
       // these s-expressions contain a binary module, actually
@@ -324,6 +326,7 @@ private:
         Name typeName = curr[1]->str();
         if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function");
         type = wasm.getFunctionType(typeName);
+        functionFullTypes[name] = type;
         functionTypes[name] = type->result;
       } else if (id == PARAM && curr.size() > 1) {
         Index j = 1;
@@ -354,6 +357,7 @@ private:
       if (need) {
         wasm.addFunctionType(functionType.release());
       }
+      functionFullTypes[name] = functionType.get();
     }
   }
 
@@ -1186,13 +1190,16 @@ private:
 
   Expression* makeCallIndirect(Element& s) {
     auto ret = allocator.alloc<CallIndirect>();
-    IString type = s[1]->str();
+    size_t i = 1;
+    ret->table = wasm.getDefaultTable()->name;
+    if (wasm.checkTable(s[i]->str())) ret->table = wasm.getTable(s[i++]->str())->name;
+    IString type = s[i++]->str();
     auto* fullType = wasm.checkFunctionType(type);
     if (!fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
     ret->fullType = fullType->name;
     ret->type = fullType->result;
-    ret->target = parseExpression(s[2]);
-    parseCallOperands(s, 3, ret);
+    ret->target = parseExpression(s[i++]);
+    parseCallOperands(s, i++, ret);
     return ret;
   }
 
@@ -1402,9 +1409,42 @@ private:
   }
 
   void parseTable(Element& s) {
-    for (size_t i = 1; i < s.size(); i++) {
-      wasm.getDefaultTable()->values.push_back(getFunctionName(*s[i]));
+    std::unique_ptr<Table> tab = make_unique<Table>();
+    size_t i = 1;
+    if (s.size() > i && s[i]->isStr()) {
+      tab->name = s[i++]->str();
+    } else {
+      tab->name = Name::fromInt(tableCounter);
     }
+    tab->isDefault = !tableCounter;
+    if (s.size() > i && s[i]->isStr() && s[i]->str() == "default") {
+      tab->isDefault = true;
+      i++;
+    }
+    if (tableCounter && tab->isDefault) throw ParseException("only the first table can be default");
+    tableCounter++;
+    if (s.size() > i && s[i]->isList()) {
+      Element& params = *s[i++];
+      IString id = params[0]->str();
+      if (id == TYPE) {
+        IString name = params[1]->str();
+        if (!wasm.checkFunctionType(name)) throw ParseException("bad function type for table");
+        tab->elementType = wasm.getFunctionType(name);
+      } else {
+        throw ParseException("bad table element");
+      }
+    } else {
+      tab->elementType = wasm.getAnyFuncType();
+    }
+    while (i < s.size()) {
+      Name func = getFunctionName(*s[i++]);
+      if (!functionFullTypes.count(func)) throw ParseException("unknown function");
+      if (tab->elementType->name != FunctionType::kAnyFunc && tab->elementType != functionFullTypes[func]) throw ParseException("bad element type for table");
+      tab->values.push_back(func);
+    }
+    tab->initial = tab->values.size();
+    tab->max = tab->values.size();
+    wasm.addTable(tab.release());
   }
 
   void parseType(Element& s) {
@@ -1420,12 +1460,13 @@ private:
       Element& curr = *func[i];
       if (curr[0]->str() == PARAM) {
         for (size_t j = 1; j < curr.size(); j++) {
-          type->params.push_back(stringToWasmType(curr[j]->str()));
+          type->params.push_back(stringToWasmType(curr[j]->str(), type->name == FunctionType::kAnyFunc));
         }
       } else if (curr[0]->str() == RESULT) {
         type->result = stringToWasmType(curr[1]->str());
       }
     }
+    if (type->name == FunctionType::kAnyFunc && !FunctionType::isAnyFuncType(type.get())) throw ParseException("reserved type keyword");
     wasm.addFunctionType(type.release());
   }
 };

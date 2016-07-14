@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
   (export "memory" memory)
+  (type $anyfunc (func (param none)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
@@ -40,7 +41,7 @@
   (export "dynCall_iiii" $lb)
   (export "dynCall_vi" $mb)
   (export "__growWasmMemory" $__growWasmMemory)
-  (table $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
+  (table $0 default (type $anyfunc (func (param none))) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
   (func $eb (param $a i32) (result i32)
     (local $b i32)
     (local $c i32)
@@ -9782,7 +9783,7 @@
             )
             (block
               (set_local $h
-                (call_indirect $FUNCSIG$iiii
+                (call_indirect $0 $FUNCSIG$iiii
                   (i32.add
                     (i32.and
                       (i32.load
@@ -9869,7 +9870,7 @@
                 )
                 (if
                   (i32.lt_u
-                    (call_indirect $FUNCSIG$iiii
+                    (call_indirect $0 $FUNCSIG$iiii
                       (i32.add
                         (i32.and
                           (i32.load
@@ -10488,7 +10489,7 @@
           )
           (if
             (i32.eq
-              (call_indirect $FUNCSIG$iiii
+              (call_indirect $0 $FUNCSIG$iiii
                 (i32.add
                   (i32.and
                     (i32.load
@@ -10557,7 +10558,7 @@
         )
       )
       (block
-        (call_indirect $FUNCSIG$iiii
+        (call_indirect $0 $FUNCSIG$iiii
           (i32.add
             (i32.and
               (i32.load
@@ -10625,7 +10626,7 @@
             (get_local $f)
             (get_local $h)
           )
-          (call_indirect $FUNCSIG$iiii
+          (call_indirect $0 $FUNCSIG$iiii
             (i32.add
               (i32.and
                 (i32.load
@@ -11765,7 +11766,7 @@
   )
   (func $lb (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
     (return
-      (call_indirect $FUNCSIG$iiii
+      (call_indirect $0 $FUNCSIG$iiii
         (i32.add
           (i32.and
             (get_local $a)
@@ -11855,7 +11856,7 @@
   )
   (func $kb (param $a i32) (param $b i32) (result i32)
     (return
-      (call_indirect $FUNCSIG$ii
+      (call_indirect $0 $FUNCSIG$ii
         (i32.add
           (i32.and
             (get_local $a)
@@ -11884,7 +11885,7 @@
     (return)
   )
   (func $mb (param $a i32) (param $b i32)
-    (call_indirect $FUNCSIG$vi
+    (call_indirect $0 $FUNCSIG$vi
       (i32.add
         (i32.and
           (get_local $a)

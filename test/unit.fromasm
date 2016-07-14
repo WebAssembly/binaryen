@@ -4,6 +4,7 @@
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+  (type $anyfunc (func (param none)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$vd (func (param f64)))
@@ -15,7 +16,7 @@
   (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (export "big_negative" $big_negative)
   (export "pick" $big_negative)
-  (table $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
+  (table $0 default (type $anyfunc (func (param none))) $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
   (func $big_negative
     (nop)
   )
@@ -221,7 +222,7 @@
   )
   (func $neg
     (local $0 f32)
-    (call_indirect $FUNCSIG$vf
+    (call_indirect $0 $FUNCSIG$vf
       (i32.add
         (i32.const 1)
         (i32.const 8)
@@ -232,7 +233,7 @@
     )
   )
   (func $cneg (param $0 f32)
-    (call_indirect $FUNCSIG$vf
+    (call_indirect $0 $FUNCSIG$vf
       (i32.add
         (i32.const 1)
         (i32.const 8)
@@ -270,7 +271,7 @@
     (get_local $0)
   )
   (func $cneg_nosemicolon
-    (call_indirect $FUNCSIG$vi
+    (call_indirect $0 $FUNCSIG$vi
       (i32.add
         (i32.const 1)
         (i32.const 8)

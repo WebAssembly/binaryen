@@ -1,14 +1,16 @@
 (module
   (memory 1
-    (segment 16 "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")
+    (segment 16 "\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00")
   )
   (export "memory" memory)
   (type $FUNCSIG$i (func (result i32)))
+  (type $anyfunc (func (param none)))
   (type $FUNCSIG$v (func))
   (import $getchar "env" "getchar" (result i32))
   (export "main" $main)
   (export "dynCall_i" $dynCall_i)
-  (table $__wasm_nullptr $c $b $d $a)
+  (table $0 default (type $anyfunc (func (param none))) $__wasm_nullptr_0)
+  (table $1 (type $FUNCSIG$i (func (result i32))) $__wasm_nullptr_1 $a $b $c $d)
   (func $a (type $FUNCSIG$i) (result i32)
     (i32.const 0)
   )
@@ -41,7 +43,7 @@
         )
       )
       (return
-        (call_indirect $FUNCSIG$i
+        (call_indirect $1 $FUNCSIG$i
           (get_local $2)
         )
       )
@@ -49,11 +51,14 @@
     (unreachable)
     (unreachable)
   )
-  (func $__wasm_nullptr (type $FUNCSIG$v)
+  (func $__wasm_nullptr_1 (type $FUNCSIG$i) (result i32)
+    (unreachable)
+  )
+  (func $__wasm_nullptr_0 (type $FUNCSIG$v)
     (unreachable)
   )
   (func $dynCall_i (param $fptr i32) (result i32)
-    (call_indirect $FUNCSIG$i
+    (call_indirect $1 $FUNCSIG$i
       (get_local $fptr)
     )
   )

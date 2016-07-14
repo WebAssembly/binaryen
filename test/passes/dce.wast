@@ -1,7 +1,7 @@
 (module
   (memory 10)
   (type $ii (func (param i32) (param i32)))
-  (table $call-me)
+  (table $0 $call-me)
   (func $call-me (param i32) (param i32)
   )
   (func $code-to-kill

@@ -115,16 +115,18 @@ public:
     call->operands.set(args);
     return call;
   }
-  CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
+  CallIndirect* makeCallIndirect(Name table, FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
     auto* call = allocator.alloc<CallIndirect>();
+    call->table = table;
     call->fullType = type->name;
     call->type = type->result;
     call->target = target;
     call->operands.set(args);
     return call;
   }
-  CallIndirect* makeCallIndirect(Name fullType, Expression* target, const std::vector<Expression*>& args, WasmType type) {
+  CallIndirect* makeCallIndirect(Name table, Name fullType, Expression* target, const std::vector<Expression*>& args, WasmType type) {
     auto* call = allocator.alloc<CallIndirect>();
+    call->table = table;
     call->fullType = fullType;
     call->type = type;
     call->target = target;
