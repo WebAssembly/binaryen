@@ -38,6 +38,11 @@
     (i32.eqz (f64.ge (f64.const 1) (f64.const 2)))
     (i32.eqz (f64.lt (f64.const 1) (f64.const 2)))
     (i32.eqz (f64.le (f64.const 1) (f64.const 2)))
+
+    (i32.eqz (f32.eq (f32.const 1) (f32.const 2)))
+    (i32.eqz (f32.ne (f32.const 1) (f32.const 2)))
+    (i32.eqz (f64.eq (f64.const 1) (f64.const 2)))
+    (i32.eqz (f64.ne (f64.const 1) (f64.const 2)))
   )
 )
 
