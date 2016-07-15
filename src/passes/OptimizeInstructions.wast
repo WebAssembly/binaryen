@@ -115,6 +115,22 @@
       (i32.eqz (i64.ge_u (call_import $i64.expr (i32.const 0)) (call_import $i64.expr (i32.const 1))))
       (i64.lt_u (call_import $i64.expr (i32.const 0)) (call_import $i64.expr (i32.const 1)))
     )
+    (block
+      (i32.eqz (f32.eq (call_import $f32.expr (i32.const 0)) (call_import $f32.expr (i32.const 1))))
+      (f32.ne (call_import $f32.expr (i32.const 0)) (call_import $f32.expr (i32.const 1)))
+    )
+    (block
+      (i32.eqz (f32.ne (call_import $f32.expr (i32.const 0)) (call_import $f32.expr (i32.const 1))))
+      (f32.eq (call_import $f32.expr (i32.const 0)) (call_import $f32.expr (i32.const 1)))
+    )
+    (block
+      (i32.eqz (f64.eq (call_import $f64.expr (i32.const 0)) (call_import $f64.expr (i32.const 1))))
+      (f64.ne (call_import $f64.expr (i32.const 0)) (call_import $f64.expr (i32.const 1)))
+    )
+    (block
+      (i32.eqz (f64.ne (call_import $f64.expr (i32.const 0)) (call_import $f64.expr (i32.const 1))))
+      (f64.eq (call_import $f64.expr (i32.const 0)) (call_import $f64.expr (i32.const 1)))
+    )
   )
 )
 
