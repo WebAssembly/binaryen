@@ -1075,6 +1075,31 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           wasm.addImport(import);
         }
         return call;
+      } else if (!imprecise && (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
+                                ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
+        // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
+        CallImport *call = allocator.alloc<CallImport>();
+        switch (ret->op) {
+          case BinaryOp::RemSInt32: call->target = I32S_REM; break;
+          case BinaryOp::RemUInt32: call->target = I32U_REM; break;
+          case BinaryOp::DivSInt32: call->target = I32S_DIV; break;
+          case BinaryOp::DivUInt32: call->target = I32U_DIV; break;
+          default: WASM_UNREACHABLE();
+        }
+        call->operands.push_back(ret->left);
+        call->operands.push_back(ret->right);
+        call->type = i32;
+        static std::set<Name> addedImport;
+        if (addedImport.count(call->target) == 0) {
+          addedImport.insert(call->target);
+          auto import = new Import;
+          import->name = call->target;
+          import->module = ASM2WASM;
+          import->base = call->target;
+          import->type = ensureFunctionType("iii", &wasm);
+          wasm.addImport(import);
+        }
+        return call;
       }
       return ret;
     } else if (what == NUM) {
