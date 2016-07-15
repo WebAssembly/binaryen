@@ -3,6 +3,7 @@
   (export "memory" memory)
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$vd (func (param f64)))
@@ -11,6 +12,7 @@
   (import $h "env" "h" (param i32))
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
+  (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (export "big_negative" $big_negative)
   (export "pick" $exportMe)
   (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
@@ -329,7 +331,7 @@
     (local $x i32)
     (set_local $x
       (i32.and
-        (i32.div_u
+        (call_import $i32u-div
           (i32.const -1)
           (i32.const 2)
         )
