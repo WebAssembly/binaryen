@@ -5829,19 +5829,21 @@
                           )
                         )
                         (if
-                          (f64.eq
-                            (set_local $14
-                              (f64.mul
-                                (f64.sub
-                                  (get_local $14)
-                                  (f64.convert_u/i32
-                                    (get_local $5)
+                          (i32.eqz
+                            (f64.ne
+                              (set_local $14
+                                (f64.mul
+                                  (f64.sub
+                                    (get_local $14)
+                                    (f64.convert_u/i32
+                                      (get_local $5)
+                                    )
                                   )
+                                  (f64.const 1e9)
                                 )
-                                (f64.const 1e9)
                               )
+                              (f64.const 0)
                             )
-                            (f64.const 0)
                           )
                           (block
                             (set_local $7
@@ -6643,12 +6645,14 @@
                                     )
                                   )
                                   (if
-                                    (f64.eq
-                                      (f64.add
+                                    (i32.eqz
+                                      (f64.ne
+                                        (f64.add
+                                          (get_local $14)
+                                          (get_local $29)
+                                        )
                                         (get_local $14)
-                                        (get_local $29)
                                       )
-                                      (get_local $14)
                                     )
                                     (block
                                       (set_local $5
