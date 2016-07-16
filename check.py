@@ -272,6 +272,9 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
       with open('split.wast', 'w') as o: o.write(module)
       cmd = [os.path.join('bin', 'wasm-opt')] + opts + ['split.wast', '--print']
       actual += run_command(cmd)
+      # also check debug mode output is valid
+      debugged = run_command(cmd + ['--debug'], stderr=subprocess.PIPE)
+      fail_if_not_contained(actual, debugged)
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + '.txt')).read())
 
 print '[ checking asm2wasm testcases... ]\n'

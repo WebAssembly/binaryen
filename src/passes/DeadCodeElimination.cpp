@@ -40,7 +40,12 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
   Pass* create() override { return new DeadCodeElimination; }
 
   // whether the current code is actually reachable
-  bool reachable = true;
+  bool reachable;
+
+  void doWalkFunction(Function* func) {
+    reachable = true;
+    walk(func->body);
+  }
 
   std::set<Name> reachableBreaks;
 

@@ -236,4 +236,10 @@
     )
     (i32.const 1337)
   )
+  (func $killer
+    (unreachable)
+  )
+  (func $target
+    (i32.const 2000)
+  )
 )
