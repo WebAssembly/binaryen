@@ -806,7 +806,7 @@ class S2WasmBuilder {
       curr->signed_ = match("_s");
       match("_u");
       Name assign = getAssign();
-      getRelocatableConst(&curr->offset.addr);
+      getRelocatableConst(&curr->offset.value);
       mustMatch("(");
       auto attributes = getAttributes(1);
       curr->ptr = getInput();
@@ -824,7 +824,7 @@ class S2WasmBuilder {
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       Name assign = getAssign();
-      getRelocatableConst(&curr->offset.addr);
+      getRelocatableConst(&curr->offset.value);
       mustMatch("(");
       auto attributes = getAttributes(2);
       auto inputs = getInputs(2);

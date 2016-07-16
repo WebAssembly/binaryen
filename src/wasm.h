@@ -88,25 +88,37 @@ struct Name : public cashew::IString {
   }
 };
 
-// An index in a wasm module
-typedef uint32_t Index;
-
-// An address in linear memory. For now only wasm32
-struct Address {
-  typedef uint32_t address_t;
-  address_t addr;
-  Address() : addr(0) {}
-  Address(uint64_t a) : addr(static_cast<address_t>(a)) {
-    assert(a <= std::numeric_limits<address_t>::max());
+// An index in a wasm module. This could be e.g. a local index or an index in
+// linear memory (i.e. an address).
+template <typename T>
+struct WasmIndex {
+  typedef T value_type;
+  T value;
+  WasmIndex() : value(0) {}
+  static void checkValid(uint64_t v) {
+    // Allow -1 as an invalid sentinel value
+    assert(v <= std::numeric_limits<T>::max() ||
+	   v == -1ULL);
   }
-  Address& operator=(uint64_t a) {
-    assert(a <= std::numeric_limits<address_t>::max());
-    addr = static_cast<address_t>(a);
+  WasmIndex(uint64_t a) : value(static_cast<T>(a)) {
+    checkValid(a);
+  }
+  WasmIndex& operator=(uint64_t a) {
+    checkValid(a);
+    value = static_cast<T>(a);
     return *this;
   }
-  operator address_t() const { return addr; }
-  Address& operator++() { ++addr; return *this; }
+  operator T() const { return value; }
+  WasmIndex& operator++() { ++value; return *this; }
+  WasmIndex operator++(int) {
+    WasmIndex temp(value);
+    ++(*this);
+    return temp;
+  }
 };
+// For now we just support wasm32
+using Address = WasmIndex<uint32_t>;
+using Index = WasmIndex<uint32_t>;
 
 // An offset into memory
 typedef int32_t Offset;
@@ -1408,9 +1420,9 @@ public:
 
 class Memory {
 public:
-  static const Address::address_t kPageSize = 64 * 1024;
-  static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
-  static const Address::address_t kPageMask = ~(kPageSize - 1);
+  static const Address::value_type kPageSize = 64 * 1024;
+  static const Address::value_type kMaxSize = ~Address::value_type(0) / kPageSize;
+  static const Address::value_type kPageMask = ~(kPageSize - 1);
   struct Segment {
     Address offset;
     std::vector<char> data; // TODO: optimize
@@ -1541,7 +1553,7 @@ private:
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::address_t>()(a.addr);
+    return std::hash<wasm::Address::value_type>()(a);
   }
 };
 }

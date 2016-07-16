@@ -448,7 +448,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
   auto numParams = getFunction()->getNumParams();
   Index newNumLocals = 0;
   for (auto index : indices) {
-    newNumLocals = std::max(newNumLocals, index + 1);
+    newNumLocals = std::max<Index>(newNumLocals, index + 1);
   }
   auto oldVars = getFunction()->vars;
   getFunction()->vars.resize(newNumLocals - numParams);
