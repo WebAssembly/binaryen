@@ -1318,10 +1318,10 @@ public:
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() {}
-  Unreachable(MixedArena& allocator) {
+  Unreachable() {
     type = unreachable;
   }
+  Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
 // Globals
