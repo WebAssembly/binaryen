@@ -149,7 +149,14 @@ void PassRunner::run() {
         std::cerr << ' ';
       }
       before = std::chrono::high_resolution_clock::now();
-      pass->run(this, wasm);
+      if (pass->isFunctionParallel()) {
+        // function-parallel passes should get a new instance per function
+        for (auto& func : wasm->functions) {
+          runPassOnFunction(pass, func.get());
+        }
+      } else {
+        pass->run(this, wasm);
+      }
       auto after = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
