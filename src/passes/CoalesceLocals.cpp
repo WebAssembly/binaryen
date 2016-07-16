@@ -175,6 +175,10 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
   static void doVisitSetLocal(CoalesceLocals* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
+
+    // if this is a copy, note it
+    auto* get = curr->value->dynCast<GetLocal>();
+    if (get) self->addCopy(curr->index, get->index);
   }
 
   // main entry point
@@ -217,10 +221,24 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
   bool interferes(Index i, Index j) {
     return interferences[std::min(i, j) * numLocals + std::max(i, j)];
   }
+
+  // copying state
+
+  std::vector<Index> copies; // canonicalized - accesses should check (low, high)
+
+  void addCopy(Index i, Index j) {
+    copies[std::min(i, j) * numLocals + std::max(i, j)]++;
+  }
+
+  bool getCopies(Index i, Index j) {
+    return copies[std::min(i, j) * numLocals + std::max(i, j)];
+  }
 };
 
 void CoalesceLocals::doWalkFunction(Function* func) {
   numLocals = func->getNumLocals();
+  copies.resize(numLocals * numLocals);
+  std::fill(copies.begin(), copies.end(), 0);
   // collect initial liveness info
   WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>>::doWalkFunction(func);
   // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
@@ -259,7 +277,7 @@ void CoalesceLocals::flowLiveness() {
     // do the first scan through the block, starting with nothing live at the end, and updating the liveness at the start
     scanLivenessThroughActions(curr->contents.actions, curr->contents.start);
   }
-  // at every point in time, we assume we already noted interferences between things already known alive at the end, and scanned back throught the block using that
+  // at every point in time, we assume we already noted interferences between things already known alive at the end, and scanned back through the block using that
   while (queue.size() > 0) {
     auto iter = queue.begin();
     auto* curr = *iter;
@@ -374,10 +392,13 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
   std::vector<WasmType> types;
   std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
+  std::vector<Index> newCopies; // new index * numLocals => list of all copies of locals merged to it
   indices.resize(numLocals);
   types.resize(numLocals);
   newInterferences.resize(numLocals * numLocals);
+  newCopies.resize(numLocals * numLocals);
   std::fill(newInterferences.begin(), newInterferences.end(), 0);
+  std::fill(newCopies.begin(), newCopies.end(), 0);
   Index nextFree = 0;
   // we can't reorder parameters, they are fixed in order, and cannot coalesce
   auto numParams = getFunction()->getNumParams();
@@ -388,16 +409,22 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     types[i] = getFunction()->getLocalType(i);
     for (size_t j = 0; j < numLocals; j++) {
       newInterferences[numLocals * i + j] = interferes(i, j);
+      newCopies[numLocals * i + j] = getCopies(i, j);
     }
     nextFree++;
   }
   for (; i < numLocals; i++) {
     Index actual = order[i];
     Index found = -1;
+    Index foundCopies = -1;
     for (Index j = 0; j < nextFree; j++) {
       if (!newInterferences[j * numLocals + actual] && getFunction()->getLocalType(actual) == types[j]) {
-        indices[actual] = found = j;
-        break;
+        // this does not interfere, so it might be what we want. but pick the one eliminating the most copies
+        auto currCopies = newCopies[j * numLocals + actual];
+        if (found == Index(-1) || currCopies > foundCopies) {
+          indices[actual] = found = j;
+          foundCopies = currCopies;
+        }
       }
     }
     if (found == Index(-1)) {
@@ -405,9 +432,10 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
       types[found] = getFunction()->getLocalType(actual);
       nextFree++;
     }
-    // merge new interferences for the new index
+    // merge new interferences and copies for the new index
     for (size_t j = 0; j < numLocals; j++) {
       newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(actual, j);
+      newCopies[found * numLocals + j] += getCopies(actual, j);
     }
   }
 }
