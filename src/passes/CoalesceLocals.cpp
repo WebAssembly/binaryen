@@ -79,12 +79,12 @@ struct LocalSet : std::vector<Index> {
   // TODO: binary search in all the following
 
   void insert(Index x) {
-    for (size_t i = 0; i < size(); i++) {
+    for (Index i = 0; i < size(); i++) {
       auto seen = (*this)[i];
       if (seen == x) return;
       if (seen > x) {
         resize(size() + 1);
-        for (size_t j = size() - 1; j > i; j--) {
+        for (Index j = size() - 1; j > i; j--) {
           (*this)[j] = (*this)[j - 1];
         }
         (*this)[i] = x;
@@ -96,9 +96,9 @@ struct LocalSet : std::vector<Index> {
   }
 
   bool erase(Index x) {
-    for (size_t i = 0; i < size(); i++) {
+    for (Index i = 0; i < size(); i++) {
       if ((*this)[i] == x) {
-        for (size_t j = i + 1; j < size(); j++) {
+        for (Index j = i + 1; j < size(); j++) {
           (*this)[j - 1] = (*this)[j];
         }
         resize(size() - 1);
@@ -109,14 +109,14 @@ struct LocalSet : std::vector<Index> {
   }
 
   bool has(Index x) {
-    for (size_t i = 0; i < size(); i++) {
+    for (Index i = 0; i < size(); i++) {
       if ((*this)[i] == x) return true;
     }
     return false;
   }
 
   void verify() const {
-    for (size_t i = 1; i < size(); i++) {
+    for (Index i = 1; i < size(); i++) {
       assert((*this)[i - 1] < (*this)[i]);
     }
   }
@@ -224,10 +224,11 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   // copying state
 
-  std::vector<Index> copies; // canonicalized - accesses should check (low, high)
+  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high)
 
   void addCopy(Index i, Index j) {
-    copies[std::min(i, j) * numLocals + std::max(i, j)]++;
+    auto k = std::min(i, j) * numLocals + std::max(i, j);
+    copies[k] = std::min(copies[k], uint8_t(254)) + 1;
   }
 
   bool getCopies(Index i, Index j) {
@@ -305,9 +306,9 @@ void CoalesceLocals::flowLiveness() {
 #ifdef CFG_DEBUG
   std::hash<std::vector<bool>> hasher;
   std::cout << getFunction()->name << ": interference hash: " << hasher(*(std::vector<bool>*)&interferences) << "\n";
-  for (size_t i = 0; i < numLocals; i++) {
+  for (Index i = 0; i < numLocals; i++) {
     std::cout << "int for " << getFunction()->getLocalName(i) << " [" << i << "]: ";
-    for (size_t j = 0; j < numLocals; j++) {
+    for (Index j = 0; j < numLocals; j++) {
       if (interferes(i, j)) std::cout << getFunction()->getLocalName(j) << " ";
     }
     std::cout << "\n";
@@ -322,7 +323,7 @@ bool CoalesceLocals::mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks,
   ret = blocks[0]->contents.start;
   if (blocks.size() > 1) {
     // more than one, so we must merge
-    for (size_t i = 1; i < blocks.size(); i++) {
+    for (Index i = 1; i < blocks.size(); i++) {
       ret = ret.merge(blocks[i]->contents.start);
     }
   }
@@ -376,9 +377,9 @@ void CoalesceLocals::calculateInterferences() {
 }
 
 void CoalesceLocals::calculateInterferences(const LocalSet& locals) {
-  size_t size = locals.size();
-  for (size_t i = 0; i < size; i++) {
-    for (size_t j = i + 1; j < size; j++) {
+  Index size = locals.size();
+  for (Index i = 0; i < size; i++) {
+    for (Index j = i + 1; j < size; j++) {
       interfereLowHigh(locals[i], locals[j]);
     }
   }
@@ -392,7 +393,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
   std::vector<WasmType> types;
   std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
-  std::vector<Index> newCopies; // new index * numLocals => list of all copies of locals merged to it
+  std::vector<uint8_t> newCopies; // new index * numLocals => list of all copies of locals merged to it
   indices.resize(numLocals);
   types.resize(numLocals);
   newInterferences.resize(numLocals * numLocals);
@@ -407,7 +408,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     assert(order[i] == i); // order must leave the params in place
     indices[i] = i;
     types[i] = getFunction()->getLocalType(i);
-    for (size_t j = 0; j < numLocals; j++) {
+    for (Index j = 0; j < numLocals; j++) {
       newInterferences[numLocals * i + j] = interferes(i, j);
       newCopies[numLocals * i + j] = getCopies(i, j);
     }
@@ -416,7 +417,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   for (; i < numLocals; i++) {
     Index actual = order[i];
     Index found = -1;
-    Index foundCopies = -1;
+    uint8_t foundCopies = -1;
     for (Index j = 0; j < nextFree; j++) {
       if (!newInterferences[j * numLocals + actual] && getFunction()->getLocalType(actual) == types[j]) {
         // this does not interfere, so it might be what we want. but pick the one eliminating the most copies
@@ -433,7 +434,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
       nextFree++;
     }
     // merge new interferences and copies for the new index
-    for (size_t j = 0; j < numLocals; j++) {
+    for (Index j = 0; j < numLocals; j++) {
       newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(actual, j);
       newCopies[found * numLocals + j] += getCopies(actual, j);
     }
@@ -498,7 +499,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
   }
   auto oldVars = getFunction()->vars;
   getFunction()->vars.resize(newNumLocals - numParams);
-  for (size_t index = numParams; index < numLocals; index++) {
+  for (Index index = numParams; index < numLocals; index++) {
     Index newIndex = indices[index];
     if (newIndex >= numParams) {
       getFunction()->vars[newIndex - numParams] = oldVars[index - numParams];
