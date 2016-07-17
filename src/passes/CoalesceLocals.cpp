@@ -408,7 +408,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     assert(order[i] == i); // order must leave the params in place
     indices[i] = i;
     types[i] = getFunction()->getLocalType(i);
-    for (Index j = 0; j < numLocals; j++) {
+    for (Index j = numParams; j < numLocals; j++) {
       newInterferences[numLocals * i + j] = interferes(i, j);
       newCopies[numLocals * i + j] = getCopies(i, j);
     }
@@ -434,7 +434,8 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
       nextFree++;
     }
     // merge new interferences and copies for the new index
-    for (Index j = 0; j < numLocals; j++) {
+    for (Index k = i + 1; k < numLocals; k++) {
+      auto j = order[k]; // go in the order, we only need to update for those we will see later
       newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(actual, j);
       newCopies[found * numLocals + j] += getCopies(actual, j);
     }
