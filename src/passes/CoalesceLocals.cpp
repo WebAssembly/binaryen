@@ -441,14 +441,32 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
 }
 
 void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
-  // use the natural order. this is less arbitrary than it seems, as the program
+  if (numLocals == 0) return;
+  if (numLocals == 1) {
+    indices.push_back(0);
+    return;
+  }
+  // first try the natural order. this is less arbitrary than it seems, as the program
   // may have a natural order of locals inherent in it.
   std::vector<Index> order;
   order.resize(numLocals);
-  for (size_t i = 0; i < numLocals; i++) {
+  for (Index i = 0; i < numLocals; i++) {
     order[i] = i;
   }
   pickIndicesFromOrder(order, indices);
+  auto maxIndex = *std::max_element(indices.begin(), indices.end());
+  // next try the reverse order. this both gives us anothe chance at something good,
+  // and also the very naturalness of the simple order may be quite suboptimal
+  auto numParams = getFunction()->getNumParams();
+  for (Index i = numParams; i < numLocals; i++) {
+    order[i] = numParams + numLocals - 1 - i;
+  }
+  std::vector<Index> reverseIndices;
+  pickIndicesFromOrder(order, reverseIndices);
+  auto reverseMaxIndex = *std::max_element(reverseIndices.begin(), reverseIndices.end());
+  if (reverseMaxIndex < maxIndex) {
+    indices.swap(reverseIndices);
+  }
 }
 
 void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root) {
