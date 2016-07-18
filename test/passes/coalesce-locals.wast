@@ -590,5 +590,25 @@
     )
     (get_local $x) ;; this ends up with the wrong value in the test
   )
+  (func $prefer-remove-copies1
+    (local $y i32)
+    (local $z i32)
+    (local $x i32) ;; y and z interfere, x can be with either, but has a copy which should be prefered
+    (set_local $x (i32.const 0))
+    (set_local $y (get_local $x))
+    (set_local $z (i32.const 1))
+    (get_local $y)
+    (get_local $z)
+  )
+  (func $prefer-remove-copies1
+    (local $y i32)
+    (local $z i32)
+    (local $x i32) ;; y and z interfere, x can be with either, but has a copy which should be prefered
+    (set_local $x (i32.const 0))
+    (set_local $z (get_local $x))
+    (set_local $y (i32.const 1))
+    (get_local $y)
+    (get_local $z)
+  )
 )
 
