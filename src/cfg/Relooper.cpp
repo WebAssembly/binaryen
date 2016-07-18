@@ -693,9 +693,8 @@ void Relooper::Calculate(Block *Entry) {
 #endif
     }
 
-    Shape *MakeMultiple(BlockSet &Blocks, BlockSet& Entries, BlockBlockSetMap& IndependentGroups, Shape *Prev, BlockSet &NextEntries) {
+    Shape *MakeMultiple(BlockSet &Blocks, BlockSet& Entries, BlockBlockSetMap& IndependentGroups, BlockSet &NextEntries, bool IsCheckedMultiple) {
       PrintDebug("creating multiple block with %d inner groups\n", IndependentGroups.size());
-      bool Fused = !!(Shape::IsSimple(Prev));
       MultipleShape *Multiple = new MultipleShape();
       Notice(Multiple);
       BlockSet CurrEntries;
@@ -724,8 +723,7 @@ void Relooper::Calculate(Block *Entry) {
           }
         }
         Multiple->InnerMap[CurrEntry->Id] = Process(CurrBlocks, CurrEntries);
-        // If we are not fused, then our entries will actually be checked
-        if (!Fused) {
+        if (IsCheckedMultiple) {
           CurrEntry->IsCheckedMultipleEntry = true;
         }
       }
@@ -855,7 +853,8 @@ void Relooper::Calculate(Block *Entry) {
 
           if (IndependentGroups.size() > 0) {
             // Some groups removable ==> Multiple
-            Make(MakeMultiple(Blocks, *Entries, IndependentGroups, Prev, *NextEntries));
+            //                                                                   checked multiple if prev is not simple (in which case we would be fused)
+            Make(MakeMultiple(Blocks, *Entries, IndependentGroups, *NextEntries, !(Shape::IsSimple(Prev))));
           }
         }
         // No independent groups, must be loopable ==> Loop
