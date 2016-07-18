@@ -568,7 +568,7 @@ void Relooper::Calculate(Block *Entry) {
         Solipsize(*iter, Branch::Break, Loop, InnerBlocks);
       }
       // Finish up
-      Shape *Inner = Process(InnerBlocks, Entries, nullptr);
+      Shape *Inner = Process(InnerBlocks, Entries);
       Loop->Inner = Inner;
       return Loop;
     }
@@ -723,7 +723,7 @@ void Relooper::Calculate(Block *Entry) {
             iter = Next; // increment carefully because Solipsize can remove us
           }
         }
-        Multiple->InnerMap[CurrEntry->Id] = Process(CurrBlocks, CurrEntries, nullptr);
+        Multiple->InnerMap[CurrEntry->Id] = Process(CurrBlocks, CurrEntries);
         // If we are not fused, then our entries will actually be checked
         if (!Fused) {
           CurrEntry->IsCheckedMultipleEntry = true;
@@ -745,13 +745,14 @@ void Relooper::Calculate(Block *Entry) {
     // The Make* functions receive a NextEntries. If they fill it with data, those are the entries for the
     //   ->Next block on them, and the blocks are what remains in Blocks (which Make* modify). In this way
     //   we avoid recursing on Next (imagine a long chain of Simples, if we recursed we could blow the stack).
-    Shape *Process(BlockSet &Blocks, BlockSet& InitialEntries, Shape *Prev) {
+    Shape *Process(BlockSet &Blocks, BlockSet& InitialEntries) {
       PrintDebug("Process() called\n", 0);
       BlockSet *Entries = &InitialEntries;
       BlockSet TempEntries[2];
       int CurrTempIndex = 0;
       BlockSet *NextEntries;
       Shape *Ret = nullptr;
+      Shape *Prev = nullptr;
       #define Make(call) \
         Shape *Temp = call; \
         if (Prev) Prev->Next = Temp; \
@@ -876,7 +877,7 @@ void Relooper::Calculate(Block *Entry) {
 
   BlockSet Entries;
   Entries.insert(Entry);
-  Root = Analyzer(this).Process(AllBlocks, Entries, nullptr);
+  Root = Analyzer(this).Process(AllBlocks, Entries);
   assert(Root);
 }
 
