@@ -218,7 +218,7 @@ struct Block {
   BlockBranchMap ProcessedBranchesOut;
   BlockSet ProcessedBranchesIn;
   Shape *Parent; // The shape we are directly inside
-  int Id; // A unique identifier, defined when added to relooper. Note that this uniquely identifies a *logical* block - if we split it, the two instances have the same content *and* the same Id
+  int Id; // A unique identifier, defined when added to relooper
   wasm::Expression* Code; // The code in this block. This can be arbitrary wasm code, including internal control flow, it should just not branch to the outside
   wasm::Expression* SwitchCondition; // If nullptr, then this block ends in ifs (or nothing). otherwise, this block ends in a switch, done on this condition
   bool IsCheckedMultipleEntry; // If true, we are a multiple entry, so reaching us requires setting the label variable
@@ -251,16 +251,10 @@ struct Block {
 //
 //  Loop: An infinite loop.
 //
-//  Emulated: Control flow is managed by a switch in a loop. This
-//            is necessary in some cases, for example when control
-//            flow is not known until runtime (indirect branches,
-//            setjmp returns, etc.)
-//
 
 struct SimpleShape;
 struct MultipleShape;
 struct LoopShape;
-struct EmulatedShape;
 
 struct Shape {
   int Id; // A unique identifier. Used to identify loops, labels are Lx where x is the Id. Defined when added to relooper
@@ -270,8 +264,7 @@ struct Shape {
   enum ShapeType {
     Simple,
     Multiple,
-    Loop,
-    Emulated
+    Loop
   };
   ShapeType Type;
 
@@ -283,7 +276,6 @@ struct Shape {
   static SimpleShape *IsSimple(Shape *It) { return It && It->Type == Simple ? (SimpleShape*)It : NULL; }
   static MultipleShape *IsMultiple(Shape *It) { return It && It->Type == Multiple ? (MultipleShape*)It : NULL; }
   static LoopShape *IsLoop(Shape *It) { return It && It->Type == Loop ? (LoopShape*)It : NULL; }
-  static EmulatedShape *IsEmulated(Shape *It) { return It && It->Type == Emulated ? (EmulatedShape*)It : NULL; }
 };
 
 struct SimpleShape : public Shape {
@@ -311,16 +303,6 @@ struct LoopShape : public Shape {
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
-// TODO EmulatedShape is only partially functional. Currently it can be used for the
-//      entire set of blocks being relooped, but not subsets.
-struct EmulatedShape : public Shape {
-  Block *Entry;
-  BlockSet Blocks;
-
-  EmulatedShape() : Shape(Emulated) { }
-  wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
-};
-
 // Implements the relooper algorithm for a function's blocks.
 //
 // Usage:
@@ -336,7 +318,6 @@ struct Relooper {
   std::deque<Block*> Blocks;
   std::deque<Shape*> Shapes;
   Shape *Root;
-  bool Emulate;
   bool MinSize;
   int BlockIdCounter;
   int ShapeIdCounter;
@@ -351,9 +332,6 @@ struct Relooper {
 
   // Renders the result.
   wasm::Expression* Render(RelooperBuilder& Builder);
-
-  // Sets whether we must emulate everything with switch-loop code
-  void SetEmulate(int E) { Emulate = !!E; }
 
   // Sets us to try to minimize size
   void SetMinSize(bool MinSize_) { MinSize = MinSize_; }
