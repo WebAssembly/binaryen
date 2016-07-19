@@ -53,7 +53,7 @@ Run
 bin/wasm-opt [.wast file] [options] [passes, see --help] [--help]
 ````
 
-The wasm shell receives a .wast file as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
+The wasm optimizer receives a .wast file as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
 
 ````
 bin/wasm-opt test/passes/lower-if-else.wast --print
@@ -143,7 +143,7 @@ For more details, see the [emscripten wiki](https://github.com/kripken/emscripte
 ./check.py
 ```
 
-(or `python check.py`) will run `wasm-shell`, `asm2wasm`, `wasm.js`, etc. on the testcases in `test/`, and verify their outputs.
+(or `python check.py`) will run `wasm-shell`, `wasm-opt`, `asm2wasm`, `wasm.js`, etc. on the testcases in `test/`, and verify their outputs.
 
 It will also run `s2wasm` through the last known good LLVM output from the [build waterfall][].
 
