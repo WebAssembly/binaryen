@@ -20,9 +20,10 @@ Consult the [contributing instructions](Contributing.md) if you're interested in
 
 This repository contains code that builds the following tools in `bin/`:
 
- * **binaryen-shell**: A shell that can load and interpret WebAssembly code in S-Expression format, as well as run transformation passes on it. It can also run the spec test suite.
- * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression format) into binary format (currently v8 format).
- * **wasm-dis**: Un-assembles WebAssembly in binary format (currently v8 format) into text format (currently S-Expression format).
+ * **wasm-shell**: A shell that can load and interpret WebAssembly code in S-Expression format. It can also run the spec test suite.
+ * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression format) into binary format.
+ * **wasm-dis**: Un-assembles WebAssembly in binary format into text format (currently S-Expression format).
+ * **wasm-opt**: Runs transformation passes on WebAssembly code in S-Expression format.
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
  * **s2wasm**: A compiler from the `.s` format emitted by the new WebAssembly backend being developed in LLVM. This is used by Emscripten in Binaryen mode when it integrates with the new LLVM backend.
  * **wasm.js**: wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, `asm2wasm`, the S-Expression parser, etc., which allow you to use Binaryen with Emscripten and execute code compiled to WASM even if the browser doesn't have native support yet. This can be useful as a (slow) polyfill.
@@ -44,24 +45,24 @@ If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAsse
 
 ## Running
 
-### binaryen-shell
+### wasm-opt
 
 Run
 
 ````
-bin/binaryen-shell [.wast file] [options] [passes, see --help] [--help]
+bin/wasm-opt [.wast file] [options] [passes, see --help] [--help]
 ````
 
-The binaryen shell receives a .wast file as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
+The wasm shell receives a .wast file as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
 
 ````
-bin/binaryen-shell test/passes/lower-if-else.wast --print
+bin/wasm-opt test/passes/lower-if-else.wast --print
 ````
 
 That will pretty-print out one of the test cases in the test suite. To run a transformation pass on it, try
 
 ````
-bin/binaryen-shell test/passes/lower-if-else.wast --print --lower-if-else
+bin/wasm-opt test/passes/lower-if-else.wast --print --lower-if-else
 ````
 
 The `lower-if-else` pass lowers if-else into a block and a break. You can see the change the transformation causes by comparing the output of the two print commands.
@@ -70,7 +71,7 @@ It's easy to add your own transformation passes to the shell, just add `.cpp` fi
 
 Some more notes:
 
- * See `bin/binaryen-shell --help` for the full list of options and passes.
+ * See `bin/wasm-opt --help` for the full list of options and passes.
  * Passing `--debug` will emit some debugging info.
 
 ### asm2wasm
@@ -142,7 +143,7 @@ For more details, see the [emscripten wiki](https://github.com/kripken/emscripte
 ./check.py
 ```
 
-(or `python check.py`) will run `binaryen-shell`, `asm2wasm`, `wasm.js`, etc. on the testcases in `test/`, and verify their outputs.
+(or `python check.py`) will run `wasm-shell`, `asm2wasm`, `wasm.js`, etc. on the testcases in `test/`, and verify their outputs.
 
 It will also run `s2wasm` through the last known good LLVM output from the [build waterfall][].
 

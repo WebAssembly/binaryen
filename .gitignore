@@ -1,4 +1,4 @@
-bin/binaryen-shell
+bin/wasm-shell
 bin/asm2wasm
 bin/wasm2asm
 bin/s2wasm
