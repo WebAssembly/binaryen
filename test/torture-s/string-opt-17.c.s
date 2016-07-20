@@ -152,7 +152,7 @@ check2.r:
 	.size	.L.str.2, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void
 	.functype	memcmp, i32, i32, i32, i32

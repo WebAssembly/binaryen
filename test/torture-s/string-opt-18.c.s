@@ -140,6 +140,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end7-main
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	mempcpy, i32, i32, i32, i32

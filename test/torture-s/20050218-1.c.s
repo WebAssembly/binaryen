@@ -158,7 +158,7 @@ a:
 	.size	.L.str.4, 6
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	strncmp, i32, i32, i32, i32
 	.functype	strlen, i32, i32
 	.functype	abort, void

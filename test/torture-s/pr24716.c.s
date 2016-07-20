@@ -26,10 +26,10 @@ f:                                      # @f
 	br_if   	0, $pop0        # 0: down to label3
 # BB#2:                                 # %if.end.thread
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push25=, -1
-	i32.add 	$3=, $2, $pop25
-	i32.const	$push24=, 1
-	i32.add 	$5=, $5, $pop24
+	i32.const	$push25=, 1
+	i32.add 	$5=, $5, $pop25
+	i32.const	$push24=, -1
+	i32.add 	$3=, $2, $pop24
 	br      	1               # 1: down to label2
 .LBB0_3:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -172,10 +172,10 @@ main:                                   # @main
 	br_if   	0, $pop0        # 0: down to label21
 # BB#2:                                 # %if.end.thread.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push10=, -1
-	i32.add 	$0=, $3, $pop10
-	i32.const	$push9=, 1
-	i32.add 	$2=, $2, $pop9
+	i32.const	$push10=, 1
+	i32.add 	$2=, $2, $pop10
+	i32.const	$push9=, -1
+	i32.add 	$0=, $3, $pop9
 	br      	1               # 1: down to label20
 .LBB1_3:                                # %if.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -286,5 +286,5 @@ W:
 	.size	W, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

@@ -739,8 +739,13 @@ A:
 	.size	A, 1
 
 	.type	u,@object               # @u
-	.lcomm	u,32,4
+	.section	.bss.u,"aw",@nobits
+	.p2align	4
+u:
+	.skip	32
+	.size	u, 32
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

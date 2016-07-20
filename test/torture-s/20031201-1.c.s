@@ -120,10 +120,20 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 	.type	i,@object               # @i
-	.lcomm	i,4,2
-	.type	f0.washere,@object      # @f0.washere
-	.lcomm	f0.washere,4,2
+	.section	.bss.i,"aw",@nobits
+	.p2align	2
+i:
+	.int32	0
+	.size	i, 4
 
-	.ident	"clang version 3.9.0 "
+	.type	f0.washere,@object      # @f0.washere
+	.section	.bss.f0.washere,"aw",@nobits
+	.p2align	2
+f0.washere:
+	.int32	0                       # 0x0
+	.size	f0.washere, 4
+
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

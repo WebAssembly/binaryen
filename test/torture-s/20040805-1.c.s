@@ -35,10 +35,11 @@ foo:                                    # @foo
 	i32.load	$push1=, a($pop6)
 	i32.store	$0=, a+4($pop0), $pop1
 	i32.const	$push2=, 100
-	i32.call	$push3=, bar@FUNCTION, $pop2
-	i32.call	$push4=, bar@FUNCTION, $0
-	i32.add 	$push5=, $pop3, $pop4
-                                        # fallthrough-return: $pop5
+	i32.call	$drop=, bar@FUNCTION, $pop2
+	i32.call	$push3=, bar@FUNCTION, $0
+	i32.const	$push5=, 100
+	i32.add 	$push4=, $pop3, $pop5
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -72,6 +73,6 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

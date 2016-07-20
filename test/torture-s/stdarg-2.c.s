@@ -142,7 +142,7 @@ bar:                                    # @bar
 	f64.const	$push13=, -0x1.cp3
 	f64.ne  	$push14=, $pop12, $pop13
 	br_if   	1, $pop14       # 1: down to label4
-.LBB1_3:                                # %if.end6
+.LBB1_3:                                # %if.end
 	end_block                       # label5:
 	i32.const	$push15=, 0
 	i32.store	$drop=, bar_arg($pop15), $0
@@ -1030,5 +1030,5 @@ d:
 	.size	d, 8
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

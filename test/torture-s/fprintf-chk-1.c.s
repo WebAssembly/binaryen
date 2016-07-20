@@ -422,6 +422,6 @@ should_optimize:
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	vfprintf, i32, i32, i32, i32

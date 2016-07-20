@@ -20,36 +20,9 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
-	i32.const	$push7=, 80
-	i32.sub 	$push13=, $pop6, $pop7
-	i32.store	$push17=, __stack_pointer($pop8), $pop13
-	tee_local	$push16=, $0=, $pop17
-	i32.const	$push9=, 8
-	i32.add 	$push10=, $pop16, $pop9
-	i32.const	$push1=, gs
-	i32.const	$push0=, 72
-	i32.call	$drop=, memcpy@FUNCTION, $pop10, $pop1, $pop0
-	block
-	i32.const	$push11=, 8
-	i32.add 	$push12=, $0, $pop11
-	i32.const	$push2=, 4660
-	i32.const	$push15=, 0
-	i32.call	$push3=, f@FUNCTION, $pop12, $pop2, $pop15
-	i32.const	$push14=, 4660
-	i32.ne  	$push4=, $pop3, $pop14
-	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push18=, 0
-	call    	exit@FUNCTION, $pop18
-	unreachable
-.LBB1_2:                                # %if.then
-	end_block                       # label0:
-	call    	abort@FUNCTION
+# BB#0:                                 # %if.end
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -65,6 +38,5 @@ gs:
 	.size	gs, 72
 
 
-	.ident	"clang version 3.9.0 "
-	.functype	abort, void
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

@@ -88,9 +88,14 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 	.type	u,@object               # @u
-	.lcomm	u,96,4
+	.section	.bss.u,"aw",@nobits
+	.p2align	4
+u:
+	.skip	96
+	.size	u, 96
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -89,4 +89,4 @@ bid_Kx192:
 	.size	bid_Kx192, 768
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "

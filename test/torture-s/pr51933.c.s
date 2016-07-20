@@ -81,23 +81,23 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push27=, 0
 	i32.const	$push24=, 0
-	i32.load	$push25=, __stack_pointer($pop24)
-	i32.const	$push26=, 80
-	i32.sub 	$push35=, $pop25, $pop26
-	i32.store	$1=, __stack_pointer($pop27), $pop35
+	i32.const	$push21=, 0
+	i32.load	$push22=, __stack_pointer($pop21)
+	i32.const	$push23=, 80
+	i32.sub 	$push32=, $pop22, $pop23
+	i32.store	$1=, __stack_pointer($pop24), $pop32
 	i32.const	$2=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
-	i32.const	$push37=, 1
-	i32.add 	$push0=, $2, $pop37
+	i32.const	$push34=, 1
+	i32.add 	$push0=, $2, $pop34
 	i32.store8	$0=, v3($2), $pop0
 	i32.store8	$drop=, v2($2), $2
 	copy_local	$2=, $0
-	i32.const	$push36=, 256
-	i32.ne  	$push1=, $0, $pop36
+	i32.const	$push33=, 256
+	i32.ne  	$push1=, $0, $pop33
 	br_if   	0, $pop1        # 0: up to label4
 # BB#2:                                 # %for.body6.preheader
 	end_loop                        # label5:
@@ -122,7 +122,7 @@ main:                                   # @main
 	i32.const	$push11=, 113
 	i32.store16	$drop=, 32($1), $pop11
 	i32.const	$push12=, 0
-	i32.store16	$drop=, 34($1), $pop12
+	i32.store16	$2=, 34($1), $pop12
 	i32.const	$push13=, 1638
 	i32.store16	$drop=, 10($1), $pop13
 	i32.const	$push14=, 1383
@@ -132,29 +132,24 @@ main:                                   # @main
 	i32.const	$push16=, 1392
 	i32.store16	$drop=, 30($1), $pop16
 	call    	foo@FUNCTION
-	block
 	i32.const	$push17=, 17
-	i32.const	$push31=, 48
-	i32.add 	$push32=, $1, $pop31
-	i32.call	$push18=, bar@FUNCTION, $pop17, $1, $pop32
-	i32.const	$push38=, 17
-	i32.ne  	$push19=, $pop18, $pop38
-	br_if   	0, $pop19       # 0: down to label6
-# BB#3:                                 # %lor.lhs.false
-	i32.const	$push33=, 48
-	i32.add 	$push34=, $1, $pop33
-	i32.const	$push21=, .L.str
-	i32.const	$push20=, 18
-	i32.call	$push22=, memcmp@FUNCTION, $pop34, $pop21, $pop20
-	br_if   	0, $pop22       # 0: down to label6
-# BB#4:                                 # %if.end
-	i32.const	$push30=, 0
-	i32.const	$push28=, 80
+	i32.const	$push28=, 48
 	i32.add 	$push29=, $1, $pop28
-	i32.store	$drop=, __stack_pointer($pop30), $pop29
-	i32.const	$push23=, 0
-	return  	$pop23
-.LBB2_5:                                # %if.then
+	i32.call	$drop=, bar@FUNCTION, $pop17, $1, $pop29
+	block
+	i32.const	$push30=, 48
+	i32.add 	$push31=, $1, $pop30
+	i32.const	$push19=, .L.str
+	i32.const	$push18=, 18
+	i32.call	$push20=, memcmp@FUNCTION, $pop31, $pop19, $pop18
+	br_if   	0, $pop20       # 0: down to label6
+# BB#3:                                 # %if.end
+	i32.const	$push27=, 0
+	i32.const	$push25=, 80
+	i32.add 	$push26=, $1, $pop25
+	i32.store	$drop=, __stack_pointer($pop27), $pop26
+	return  	$2
+.LBB2_4:                                # %if.then
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
@@ -163,11 +158,25 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	v1,@object              # @v1
-	.lcomm	v1,1
+	.section	.bss.v1,"aw",@nobits
+v1:
+	.int8	0                       # 0x0
+	.size	v1, 1
+
 	.type	v2,@object              # @v2
-	.lcomm	v2,256,4
+	.section	.bss.v2,"aw",@nobits
+	.p2align	4
+v2:
+	.skip	256
+	.size	v2, 256
+
 	.type	v3,@object              # @v3
-	.lcomm	v3,256,4
+	.section	.bss.v3,"aw",@nobits
+	.p2align	4
+v3:
+	.skip	256
+	.size	v3, 256
+
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -175,6 +184,6 @@ main:                                   # @main
 	.size	.L.str, 18
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

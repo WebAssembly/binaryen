@@ -35,7 +35,7 @@ strtoul1:                               # @strtoul1
 .LBB0_4:                                # %return
 	end_block                       # label1:
 	return  	$1
-.LBB0_5:                                # %if.end11
+.LBB0_5:                                # %if.end
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -224,7 +224,7 @@ result:
 	.size	.Lstr, 7
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	printf, i32, i32
 	.functype	puts, i32, i32

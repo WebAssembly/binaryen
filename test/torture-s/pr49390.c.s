@@ -172,13 +172,13 @@ test:                                   # @test
 .LBB3_10:                               # %if.end24
 	end_block                       # label5:
 	block
+	i32.const	$push29=, 1
+	i32.and 	$push30=, $4, $pop29
+	i32.eqz 	$push85=, $pop30
+	br_if   	0, $pop85       # 0: down to label7
+# BB#11:                                # %if.end24
 	i32.ne  	$push31=, $7, $0
 	br_if   	0, $pop31       # 0: down to label7
-# BB#11:                                # %if.end24
-	i32.const	$push30=, 1
-	i32.and 	$push29=, $4, $pop30
-	i32.eqz 	$push85=, $pop29
-	br_if   	0, $pop85       # 0: down to label7
 # BB#12:                                # %if.then31
 	i64.load	$push43=, 0($6):p2align=2
 	i64.store	$drop=, 0($2):p2align=2, $pop43
@@ -305,5 +305,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

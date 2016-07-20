@@ -60,5 +60,5 @@ get_kind:                               # @get_kind
 	.size	get_kind, .Lfunc_end1-get_kind
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

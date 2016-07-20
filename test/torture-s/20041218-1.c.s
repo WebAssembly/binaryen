@@ -164,8 +164,13 @@ main:                                   # @main
 	.size	.L.str, 1
 
 	.type	baz.v,@object           # @baz.v
-	.lcomm	baz.v,44,2
+	.section	.bss.baz.v,"aw",@nobits
+	.p2align	2
+baz.v:
+	.skip	44
+	.size	baz.v, 44
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32
 	.functype	abort, void

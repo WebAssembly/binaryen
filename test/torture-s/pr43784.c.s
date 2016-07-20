@@ -77,7 +77,12 @@ rp:                                     # @rp
 	.size	rp, .Lfunc_end1-rp
 
 	.type	v,@object               # @v
-	.lcomm	v,260,2
+	.section	.bss.v,"aw",@nobits
+	.p2align	2
+v:
+	.skip	260
+	.size	v, 260
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

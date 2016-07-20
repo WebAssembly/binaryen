@@ -72,7 +72,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	reg_stat,@object        # @reg_stat
-	.lcomm	reg_stat,4,2
+	.section	.bss.reg_stat,"aw",@nobits
+	.p2align	2
+reg_stat:
+	.int32	0
+	.size	reg_stat, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

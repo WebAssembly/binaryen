@@ -117,7 +117,12 @@ m:
 	.size	m, 8
 
 	.type	main.r,@object          # @main.r
-	.lcomm	main.r,512,4
+	.section	.bss.main.r,"aw",@nobits
+	.p2align	4
+main.r:
+	.skip	512
+	.size	main.r, 512
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

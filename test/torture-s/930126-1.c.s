@@ -57,8 +57,13 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	main.i,@object          # @main.i
-	.lcomm	main.i,8,3
+	.section	.bss.main.i,"aw",@nobits
+	.p2align	3
+main.i:
+	.skip	8
+	.size	main.i, 8
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

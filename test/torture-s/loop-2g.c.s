@@ -73,7 +73,7 @@ main:                                   # @main
 	.size	.L.str, 10
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	open, i32, i32, i32
 	.functype	mmap, i32, i32, i32, i32, i32, i32, i64
 	.functype	exit, void, i32

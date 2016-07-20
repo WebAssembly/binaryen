@@ -192,7 +192,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 	.type	baz1.l,@object          # @baz1.l
-	.lcomm	baz1.l,4,2
+	.section	.bss.baz1.l,"aw",@nobits
+	.p2align	2
+baz1.l:
+	.int32	0                       # 0x0
+	.size	baz1.l, 4
+
 	.hidden	bar                     # @bar
 	.type	bar,@object
 	.section	.bss.bar,"aw",@nobits
@@ -203,6 +208,6 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

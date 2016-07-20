@@ -40,9 +40,9 @@ ff:                                     # @ff
 	i32.const	$push1=, 0
 	i32.store	$drop=, f3.x($pop1), $3
 	br_if   	0, $2           # 0: down to label0
-# BB#7:                                 # %if.end16
+# BB#7:                                 # %if.end15
 	return
-.LBB0_8:                                # %if.then15
+.LBB0_8:                                # %if.then14
 	end_block                       # label0:
 	call    	f1@FUNCTION
 	unreachable
@@ -121,7 +121,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 	.type	f3.x,@object            # @f3.x
-	.lcomm	f3.x,4,2
+	.section	.bss.f3.x,"aw",@nobits
+	.p2align	2
+f3.x:
+	.int32	0                       # 0x0
+	.size	f3.x, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

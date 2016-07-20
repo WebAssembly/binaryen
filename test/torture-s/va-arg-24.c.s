@@ -1062,7 +1062,12 @@ varargs9:                               # @varargs9
 	.size	varargs9, .Lfunc_end10-varargs9
 
 	.type	errors,@object          # @errors
-	.lcomm	errors,4,2
+	.section	.bss.errors,"aw",@nobits
+	.p2align	2
+errors:
+	.int32	0                       # 0x0
+	.size	errors, 4
+
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -1120,7 +1125,7 @@ varargs9:                               # @varargs9
 	.size	.L.str.10, 9
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	printf, i32, i32

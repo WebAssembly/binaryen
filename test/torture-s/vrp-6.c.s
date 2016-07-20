@@ -51,7 +51,7 @@ test02:                                 # @test02
 	i32.const	$push5=, -17
 	i32.le_u	$push6=, $pop0, $pop5
 	br_if   	1, $pop6        # 1: down to label1
-.LBB1_3:                                # %if.end6
+.LBB1_3:                                # %if.end
 	end_block                       # label2:
 	return
 .LBB1_4:                                # %if.then4
@@ -78,6 +78,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

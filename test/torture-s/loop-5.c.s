@@ -96,10 +96,20 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 	.type	a,@object               # @a
-	.lcomm	a,16,4
-	.type	t,@object               # @t
-	.lcomm	t,4,2
+	.section	.bss.a,"aw",@nobits
+	.p2align	4
+a:
+	.skip	16
+	.size	a, 16
 
-	.ident	"clang version 3.9.0 "
+	.type	t,@object               # @t
+	.section	.bss.t,"aw",@nobits
+	.p2align	2
+t:
+	.int32	0                       # 0x0
+	.size	t, 4
+
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

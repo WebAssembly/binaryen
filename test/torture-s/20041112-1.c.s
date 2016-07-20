@@ -59,4 +59,4 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "

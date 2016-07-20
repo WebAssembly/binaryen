@@ -33,7 +33,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push303=, 26
-	i32.rem_s	$push24=, $0, $pop303
+	i32.rem_u	$push24=, $0, $pop303
 	i32.const	$push302=, 97
 	i32.add 	$push25=, $pop24, $pop302
 	i32.store8	$drop=, src($0), $pop25
@@ -1037,6 +1037,6 @@ dst:
 	.size	dst, 80
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

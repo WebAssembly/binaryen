@@ -60,8 +60,13 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	aim_callhandler.i,@object # @aim_callhandler.i
-	.lcomm	aim_callhandler.i,4,2
+	.section	.bss.aim_callhandler.i,"aw",@nobits
+	.p2align	2
+aim_callhandler.i:
+	.int32	0                       # 0x0
+	.size	aim_callhandler.i, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

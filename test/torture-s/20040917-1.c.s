@@ -43,7 +43,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	test_var,@object        # @test_var
-	.lcomm	test_var,4,2
+	.section	.bss.test_var,"aw",@nobits
+	.p2align	2
+test_var:
+	.int32	0                       # 0x0
+	.size	test_var, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

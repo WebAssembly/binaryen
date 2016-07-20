@@ -286,11 +286,21 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	u1,@object              # @u1
-	.lcomm	u1,80,4
-	.type	u2,@object              # @u2
-	.lcomm	u2,80,4
+	.section	.bss.u1,"aw",@nobits
+	.p2align	4
+u1:
+	.skip	80
+	.size	u1, 80
 
-	.ident	"clang version 3.9.0 "
+	.type	u2,@object              # @u2
+	.section	.bss.u2,"aw",@nobits
+	.p2align	4
+u2:
+	.skip	80
+	.size	u2, 80
+
+
+	.ident	"clang version 4.0.0 "
 	.functype	strncmp, i32, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

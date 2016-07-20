@@ -115,9 +115,19 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	g,@object               # @g
-	.lcomm	g,2,1
+	.section	.bss.g,"aw",@nobits
+	.p2align	1
+g:
+	.int16	0                       # 0x0
+	.size	g, 2
+
 	.type	p,@object               # @p
-	.lcomm	p,2,1
+	.section	.bss.p,"aw",@nobits
+	.p2align	1
+p:
+	.int16	0                       # 0x0
+	.size	p, 2
+
 	.hidden	e                       # @e
 	.type	e,@object
 	.section	.bss.e,"aw",@nobits
@@ -127,5 +137,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

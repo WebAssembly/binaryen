@@ -397,14 +397,14 @@ main:                                   # @main
 	i32.add 	$push12=, $pop78, $pop11
 	i64.load	$push13=, 528($0)
 	i64.store	$drop=, 0($pop12), $pop13
-	i64.load	$push14=, 520($0)
-	i64.store	$drop=, 232($0), $pop14
 	i32.const	$push79=, 216
 	i32.add 	$push80=, $0, $pop79
 	i32.const	$push179=, 8
-	i32.add 	$push15=, $pop80, $pop179
-	i64.load	$push16=, 512($0)
-	i64.store	$drop=, 0($pop15), $pop16
+	i32.add 	$push14=, $pop80, $pop179
+	i64.load	$push15=, 512($0)
+	i64.store	$drop=, 0($pop14), $pop15
+	i64.load	$push16=, 520($0)
+	i64.store	$drop=, 232($0), $pop16
 	i64.load	$push17=, 504($0)
 	i64.store	$drop=, 216($0), $pop17
 	i32.const	$push81=, 200
@@ -515,8 +515,6 @@ main:                                   # @main
 	i32.add 	$push146=, $pop104, $pop147
 	tee_local	$push145=, $44=, $pop146
 	i64.store	$drop=, 0($pop145), $36
-	i64.store	$drop=, 328($0), $34
-	i64.store	$drop=, 320($0), $33
 	i64.store	$drop=, 336($0), $35
 	i32.const	$push105=, 288
 	i32.add 	$push106=, $0, $pop105
@@ -524,6 +522,8 @@ main:                                   # @main
 	i32.add 	$push143=, $pop106, $pop144
 	tee_local	$push142=, $45=, $pop143
 	i64.store	$drop=, 0($pop142), $40
+	i64.store	$drop=, 328($0), $34
+	i64.store	$drop=, 320($0), $33
 	i64.store	$drop=, 304($0), $39
 	i64.store	$drop=, 296($0), $38
 	i64.store	$drop=, 288($0), $37
@@ -587,10 +587,10 @@ main:                                   # @main
 	i32.add 	$push49=, $pop122, $pop135
 	i64.load	$push50=, 336($0)
 	i64.store	$drop=, 0($pop49), $pop50
-	i64.load	$push51=, 320($0)
-	i64.store	$drop=, 32($0), $pop51
-	i64.load	$push52=, 328($0)
-	i64.store	$drop=, 40($0), $pop52
+	i64.load	$push51=, 328($0)
+	i64.store	$drop=, 40($0), $pop51
+	i64.load	$push52=, 320($0)
+	i64.store	$drop=, 32($0), $pop52
 	i32.const	$push134=, 24
 	i32.add 	$push53=, $0, $pop134
 	i64.load	$push54=, 0($45)
@@ -780,6 +780,6 @@ ld5:
 	.size	ld5, 32
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

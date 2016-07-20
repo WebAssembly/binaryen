@@ -7,9 +7,9 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %for.body.lr.ph.i
+# BB#0:                                 # %for.body.preheader.i
 	i32.const	$0=, 256
-.LBB0_1:                                # %for.body.i
+.LBB0_1:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i32.const	$push3=, -1
@@ -33,6 +33,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

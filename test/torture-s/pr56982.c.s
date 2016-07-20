@@ -83,9 +83,14 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	env,@object             # @env
-	.lcomm	env,156,4
+	.section	.bss.env,"aw",@nobits
+	.p2align	4
+env:
+	.skip	156
+	.size	env, 156
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	setjmp, i32, i32
 	.functype	exit, void, i32
 	.functype	longjmp, void, i32, i32

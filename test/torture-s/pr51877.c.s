@@ -215,7 +215,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 	.type	bar.n,@object           # @bar.n
-	.lcomm	bar.n,4,2
+	.section	.bss.bar.n,"aw",@nobits
+	.p2align	2
+bar.n:
+	.int32	0                       # 0x0
+	.size	bar.n, 4
+
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -235,5 +240,5 @@ b:
 	.size	b, 36
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

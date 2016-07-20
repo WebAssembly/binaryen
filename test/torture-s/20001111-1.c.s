@@ -58,8 +58,13 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	next_buffer,@object     # @next_buffer
-	.lcomm	next_buffer,1,2
+	.section	.bss.next_buffer,"aw",@nobits
+	.p2align	2
+next_buffer:
+	.int8	0                       # 0x0
+	.size	next_buffer, 1
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

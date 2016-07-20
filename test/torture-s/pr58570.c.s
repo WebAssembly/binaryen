@@ -80,7 +80,12 @@ i:
 	.size	i, 4
 
 	.type	d,@object               # @d
-	.lcomm	d,36,4
+	.section	.bss.d,"aw",@nobits
+	.p2align	4
+d:
+	.skip	36
+	.size	d, 36
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

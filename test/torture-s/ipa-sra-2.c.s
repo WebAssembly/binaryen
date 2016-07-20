@@ -39,6 +39,6 @@ foo:                                    # @foo
 	.size	foo, .Lfunc_end1-foo
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	calloc, i32, i32, i32
 	.functype	free, void, i32

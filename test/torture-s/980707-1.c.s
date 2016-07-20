@@ -185,7 +185,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	buildargv.arglist,@object # @buildargv.arglist
-	.lcomm	buildargv.arglist,1024,4
+	.section	.bss.buildargv.arglist,"aw",@nobits
+	.p2align	4
+buildargv.arglist:
+	.skip	1024
+	.size	buildargv.arglist, 1024
+
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -203,7 +208,7 @@ main:                                   # @main
 	.size	.L.str.2, 2
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -34,6 +34,6 @@ l:
 	.size	l, 8
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32
 	.functype	abort, void

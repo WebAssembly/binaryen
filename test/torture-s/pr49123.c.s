@@ -20,6 +20,11 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 	.type	s.0,@object             # @s.0
-	.lcomm	s.0,1,2
+	.section	.bss.s.0,"aw",@nobits
+	.p2align	2
+s.0:
+	.int8	0                       # 0x0
+	.size	s.0, 1
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
