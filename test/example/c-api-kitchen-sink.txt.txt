@@ -364,40 +364,56 @@
 (module
   (memory 0)
   (type $v (func))
+  (type $vi (func (param i32)))
   (type $i (func (result i32)))
+  (import $check "module" "check" (param i32))
   (func $just-one-block (type $v)
     (local $0 i32)
-    (i32.const 1337)
+    (call_import $check
+      (i32.const 1337)
+    )
   )
   (func $two-blocks (type $v)
     (local $0 i32)
     (block
-      (i32.const 0)
+      (call_import $check
+        (i32.const 0)
+      )
     )
     (block
-      (i32.const 1)
+      (call_import $check
+        (i32.const 1)
+      )
     )
   )
   (func $two-blocks-plus-code (type $v)
     (local $0 i32)
     (block
-      (i32.const 0)
+      (call_import $check
+        (i32.const 0)
+      )
       (block
         (i32.const 77)
       )
     )
     (block
-      (i32.const 1)
+      (call_import $check
+        (i32.const 1)
+      )
     )
   )
   (func $loop (type $v)
     (local $0 i32)
     (loop $shape$0$break $shape$0$continue
       (block
-        (i32.const 0)
+        (call_import $check
+          (i32.const 0)
+        )
       )
       (block
-        (i32.const 1)
+        (call_import $check
+          (i32.const 1)
+        )
         (block
           (br $shape$0$continue)
         )
@@ -408,13 +424,17 @@
     (local $0 i32)
     (loop $shape$0$break $shape$0$continue
       (block
-        (i32.const 0)
+        (call_import $check
+          (i32.const 0)
+        )
         (block
           (i32.const 33)
         )
       )
       (block
-        (i32.const 1)
+        (call_import $check
+          (i32.const 1)
+        )
         (block
           (i32.const -66)
           (br $shape$0$continue)
@@ -424,35 +444,47 @@
   )
   (func $split (type $v)
     (local $0 i32)
-    (i32.const 0)
+    (call_import $check
+      (i32.const 0)
+    )
     (block $shape$1$break
       (if
         (i32.const 55)
         (block
-          (i32.const 1)
+          (call_import $check
+            (i32.const 1)
+          )
         )
         (block
-          (i32.const 2)
+          (call_import $check
+            (i32.const 2)
+          )
         )
       )
     )
   )
   (func $split-plus-code (type $v)
     (local $0 i32)
-    (i32.const 0)
+    (call_import $check
+      (i32.const 0)
+    )
     (block $shape$1$break
       (if
         (i32.const 55)
         (block
           (i32.const 10)
           (block
-            (i32.const 1)
+            (call_import $check
+              (i32.const 1)
+            )
           )
         )
         (block
           (i32.const 20)
           (block
-            (i32.const 2)
+            (call_import $check
+              (i32.const 2)
+            )
           )
         )
       )
@@ -461,12 +493,16 @@
   (func $if (type $v)
     (local $0 i32)
     (block
-      (i32.const 0)
+      (call_import $check
+        (i32.const 0)
+      )
       (block $shape$1$break
         (if
           (i32.const 55)
           (block
-            (i32.const 1)
+            (call_import $check
+              (i32.const 1)
+            )
             (block
               (br $shape$1$break)
             )
@@ -475,20 +511,26 @@
       )
     )
     (block
-      (i32.const 2)
+      (call_import $check
+        (i32.const 2)
+      )
     )
   )
   (func $if-plus-code (type $v)
     (local $0 i32)
     (block
-      (i32.const 0)
+      (call_import $check
+        (i32.const 0)
+      )
       (block $shape$1$break
         (if
           (i32.const 55)
           (block
             (i32.const -1)
             (block
-              (i32.const 1)
+              (call_import $check
+                (i32.const 1)
+              )
               (block
                 (i32.const -3)
                 (br $shape$1$break)
@@ -500,24 +542,32 @@
       )
     )
     (block
-      (i32.const 2)
+      (call_import $check
+        (i32.const 2)
+      )
     )
   )
   (func $if-else (type $v)
     (local $0 i32)
     (block
-      (i32.const 0)
+      (call_import $check
+        (i32.const 0)
+      )
       (block $shape$1$break
         (if
           (i32.const 55)
           (block
-            (i32.const 1)
+            (call_import $check
+              (i32.const 1)
+            )
             (block
               (br $shape$1$break)
             )
           )
           (block
-            (i32.const 2)
+            (call_import $check
+              (i32.const 2)
+            )
             (block
               (br $shape$1$break)
             )
@@ -526,17 +576,23 @@
       )
     )
     (block
-      (i32.const 3)
+      (call_import $check
+        (i32.const 3)
+      )
     )
   )
   (func $loop-tail (type $v)
     (local $0 i32)
     (loop $shape$0$break $shape$0$continue
       (block
-        (i32.const 0)
+        (call_import $check
+          (i32.const 0)
+        )
       )
       (block
-        (i32.const 1)
+        (call_import $check
+          (i32.const 1)
+        )
         (if
           (i32.const 10)
           (br $shape$0$continue)
@@ -545,13 +601,17 @@
       )
     )
     (block
-      (i32.const 2)
+      (call_import $check
+        (i32.const 2)
+      )
     )
   )
   (func $nontrivial-loop-plus-phi-to-head (type $v)
     (local $0 i32)
     (block
-      (i32.const 0)
+      (call_import $check
+        (i32.const 0)
+      )
       (block
         (i32.const 10)
       )
@@ -559,7 +619,9 @@
     (block
       (loop $shape$1$break $shape$1$continue
         (block
-          (i32.const 1)
+          (call_import $check
+            (i32.const 1)
+          )
           (if
             (i32.eqz
               (i32.const -2)
@@ -571,7 +633,9 @@
           )
         )
         (block
-          (i32.const 2)
+          (call_import $check
+            (i32.const 2)
+          )
           (if
             (i32.const -6)
             (block
@@ -596,12 +660,16 @@
             )
             (block
               (block
-                (i32.const 3)
+                (call_import $check
+                  (i32.const 3)
+                )
                 (block $shape$6$break
                   (if
                     (i32.const -10)
                     (block
-                      (i32.const 4)
+                      (call_import $check
+                        (i32.const 4)
+                      )
                       (block
                         (br $shape$6$break)
                       )
@@ -610,7 +678,9 @@
                 )
               )
               (block
-                (i32.const 5)
+                (call_import $check
+                  (i32.const 5)
+                )
                 (block
                   (i32.const 40)
                   (br $shape$4$break)
@@ -620,14 +690,18 @@
           )
         )
         (block
-          (i32.const 6)
+          (call_import $check
+            (i32.const 6)
+          )
         )
       )
     )
   )
   (func $switch (type $v)
     (local $0 i32)
-    (i32.const 0)
+    (call_import $check
+      (i32.const 0)
+    )
     (block $shape$1$break
       (block $switch$1$leave
         (block $switch$1$default
@@ -639,7 +713,9 @@
             )
             (block
               (block
-                (i32.const 1)
+                (call_import $check
+                  (i32.const 1)
+                )
               )
             )
             (br $switch$1$leave)
@@ -647,14 +723,18 @@
           (block
             (i32.const 55)
             (block
-              (i32.const 2)
+              (call_import $check
+                (i32.const 2)
+              )
             )
           )
           (br $switch$1$leave)
         )
         (block
           (block
-            (i32.const 3)
+            (call_import $check
+              (i32.const 3)
+            )
           )
         )
         (br $switch$1$leave)
@@ -670,7 +750,9 @@
     (local $5 f64)
     (local $6 i32)
     (block
-      (i32.const 0)
+      (call_import $check
+        (i32.const 0)
+      )
       (if
         (i32.const 10)
         (set_local $3
@@ -692,7 +774,9 @@
             (set_local $3
               (i32.const 0)
             )
-            (i32.const 1)
+            (call_import $check
+              (i32.const 1)
+            )
             (block
               (set_local $3
                 (i32.const 3)
@@ -709,7 +793,9 @@
               (set_local $3
                 (i32.const 0)
               )
-              (i32.const 2)
+              (call_import $check
+                (i32.const 2)
+              )
               (block
                 (set_local $3
                   (i32.const 2)
@@ -725,7 +811,9 @@
   (func $return (type $i) (result i32)
     (local $0 i32)
     (block $the-list
-      (i32.const 42)
+      (call_import $check
+        (i32.const 42)
+      )
       (return
         (i32.const 1337)
       )
@@ -735,12 +823,193 @@
 (module
   (memory 0)
   (type $v (func))
+  (type $vi (func (param i32)))
   (type $i (func (result i32)))
+  (import $check "module" "check" (param i32))
   (func $just-one-block (type $v)
-    (nop)
+    (call_import $check
+      (i32.const 1337)
+    )
+  )
+  (func $two-blocks (type $v)
+    (call_import $check
+      (i32.const 0)
+    )
+    (call_import $check
+      (i32.const 1)
+    )
+  )
+  (func $loop (type $v)
+    (loop $shape$0$break $shape$0$continue
+      (call_import $check
+        (i32.const 0)
+      )
+      (call_import $check
+        (i32.const 1)
+      )
+      (br $shape$0$continue)
+    )
+  )
+  (func $split (type $v)
+    (call_import $check
+      (i32.const 0)
+    )
+    (if
+      (i32.const 55)
+      (call_import $check
+        (i32.const 1)
+      )
+      (call_import $check
+        (i32.const 2)
+      )
+    )
+  )
+  (func $if (type $v)
+    (call_import $check
+      (i32.const 0)
+    )
+    (if
+      (i32.const 55)
+      (call_import $check
+        (i32.const 1)
+      )
+    )
+    (call_import $check
+      (i32.const 2)
+    )
+  )
+  (func $if-plus-code (type $v)
+    (call_import $check
+      (i32.const 0)
+    )
+    (if
+      (i32.const 55)
+      (call_import $check
+        (i32.const 1)
+      )
+      (i32.const -2)
+    )
+    (call_import $check
+      (i32.const 2)
+    )
+  )
+  (func $if-else (type $v)
+    (call_import $check
+      (i32.const 0)
+    )
+    (if
+      (i32.const 55)
+      (call_import $check
+        (i32.const 1)
+      )
+      (call_import $check
+        (i32.const 2)
+      )
+    )
+    (call_import $check
+      (i32.const 3)
+    )
+  )
+  (func $loop-tail (type $v)
+    (loop $shape$0$break $shape$0$continue
+      (call_import $check
+        (i32.const 0)
+      )
+      (call_import $check
+        (i32.const 1)
+      )
+      (if
+        (i32.const 10)
+        (br $shape$0$continue)
+        (br $shape$0$break)
+      )
+    )
+    (call_import $check
+      (i32.const 2)
+    )
+  )
+  (func $nontrivial-loop-plus-phi-to-head (type $v)
+    (local $0 i32)
+    (call_import $check
+      (i32.const 0)
+    )
+    (loop $shape$1$break $shape$1$continue
+      (call_import $check
+        (i32.const 1)
+      )
+      (br_if $shape$1$break
+        (i32.const 0)
+      )
+      (call_import $check
+        (i32.const 2)
+      )
+      (if
+        (i32.const -6)
+        (block
+          (set_local $0
+            (i32.const 4)
+          )
+          (br $shape$1$break)
+        )
+        (br $shape$1$continue)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $0)
+        (i32.const 4)
+      )
+      (block
+        (call_import $check
+          (i32.const 3)
+        )
+        (if
+          (i32.const -10)
+          (call_import $check
+            (i32.const 4)
+          )
+        )
+        (call_import $check
+          (i32.const 5)
+        )
+      )
+    )
+    (call_import $check
+      (i32.const 6)
+    )
+  )
+  (func $switch (type $v)
+    (call_import $check
+      (i32.const 0)
+    )
+    (block $switch$1$leave
+      (block $switch$1$default
+        (block $switch$1$case$3
+          (block $switch$1$case$2
+            (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
+              (i32.const -99)
+            )
+          )
+          (call_import $check
+            (i32.const 1)
+          )
+          (br $switch$1$leave)
+        )
+        (call_import $check
+          (i32.const 2)
+        )
+        (br $switch$1$leave)
+      )
+      (call_import $check
+        (i32.const 3)
+      )
+    )
   )
   (func $duffs-device (type $v)
     (local $0 i32)
+    (call_import $check
+      (i32.const 0)
+    )
     (set_local $0
       (i32.const 2)
     )
@@ -751,6 +1020,9 @@
           (i32.const 2)
         )
         (block
+          (call_import $check
+            (i32.const 1)
+          )
           (set_local $0
             (i32.const 3)
           )
@@ -762,6 +1034,9 @@
             (i32.const 3)
           )
           (block
+            (call_import $check
+              (i32.const 2)
+            )
             (set_local $0
               (i32.const 2)
             )
@@ -772,6 +1047,9 @@
     )
   )
   (func $return (type $i) (result i32)
+    (call_import $check
+      (i32.const 42)
+    )
     (i32.const 1337)
   )
 )

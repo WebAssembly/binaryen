@@ -256,11 +256,13 @@ int main() {
   // memory
   BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, 0);
 
+  assert(BinaryenModuleValidate(module));
+
+  BinaryenModulePrint(module);
+
   BinaryenModuleOptimize(module);
 
   assert(BinaryenModuleValidate(module));
-
-  // write it out
 
   BinaryenModulePrint(module);
 
