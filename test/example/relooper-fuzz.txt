@@ -154,44 +154,49 @@
     )
     (block
       (block
-        (block
-          (call_import $print
-            (i32.const 0)
-          )
-          (set_local $0
-            (call $check)
-          )
-        )
-        (block $shape$1$break
-          (if
-            (i32.eq
-              (i32.rem_u
-                (get_local $0)
-                (i32.const 2)
-              )
-              (i32.const 0)
-            )
-            (set_local $1
-              (i32.const 6)
-            )
+        (block $block$6$break
+          (block $block$5$break
             (block
-              (block
-                (call_import $print
-                  (i32.const 8)
+              (call_import $print
+                (i32.const 0)
+              )
+              (set_local $0
+                (call $check)
+              )
+            )
+            (if
+              (i32.eq
+                (i32.rem_u
+                  (get_local $0)
+                  (i32.const 2)
                 )
-                (set_local $0
-                  (call $check)
-                )
+                (i32.const 0)
               )
               (block
-                (br $shape$1$break)
+                (set_local $1
+                  (i32.const 6)
+                )
+                (br $block$6$break)
+              )
+              (block
+                (block
+                  (call_import $print
+                    (i32.const 8)
+                  )
+                  (set_local $0
+                    (call $check)
+                  )
+                )
+                (block
+                  (br $block$5$break)
+                )
               )
             )
           )
         )
       )
-      (loop $shape$3$break $shape$3$continue
-        (block $shape$4$break
+      (loop $shape$3$continue
+        (block $block$5$break
           (if
             (i32.eq
               (get_local $1)
@@ -229,7 +234,7 @@
           )
         )
         (block
-          (block
+          (block $block$3$break
             (block
               (call_import $print
                 (i32.const 4)
@@ -261,6 +266,7 @@
                   )
                   (br $shape$3$continue)
                 )
+                (br $block$3$break)
               )
             )
           )
@@ -460,7 +466,7 @@
         (call $check)
       )
     )
-    (loop $shape$3$break $shape$3$continue
+    (loop $shape$3$continue
       (if
         (i32.eq
           (get_local $0)
