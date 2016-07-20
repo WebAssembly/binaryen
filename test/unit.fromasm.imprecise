@@ -150,12 +150,11 @@
             )
             (br $label$break$Lout)
           )
-          (loop $while-out$10 $while-in$11
-            (br $while-out$10)
+          (block $while-out$10
           )
           (br $label$break$Lout)
         )
-        (loop $while-out$13 $while-in$14
+        (loop
           (br $label$break$Lout)
         )
       )
@@ -164,25 +163,23 @@
       (loop $label$break$L3 $label$continue$L3
         (block $switch$17
           (block $switch-default$21
-            (block $switch-default$21
-              (block $switch-case$20
-                (block $switch-case$19
-                  (block $switch-case$18
-                    (br_table $switch-case$18 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$20 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$19 $switch-default$21
-                      (i32.sub
-                        (get_local $0)
-                        (i32.const -1)
-                      )
+            (block $switch-case$20
+              (block $switch-case$19
+                (block $switch-case$18
+                  (br_table $switch-case$18 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$20 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$19 $switch-default$21
+                    (i32.sub
+                      (get_local $0)
+                      (i32.const -1)
                     )
                   )
-                  (br $label$break$L1)
                 )
-                (br $switch$17)
+                (br $label$break$L1)
               )
-              (br $label$break$L3)
+              (br $switch$17)
             )
-            (br $label$break$L1)
+            (br $label$break$L3)
           )
+          (br $label$break$L1)
         )
         (br $label$continue$L3)
       )
@@ -316,11 +313,11 @@
     )
   )
   (func $continues
-    (loop $while-out$0 $while-in$1
+    (loop $while-in$1
       (call_import $print
         (i32.const 1)
       )
-      (loop $do-once$2 $unlikely-continue$3
+      (loop $unlikely-continue$3
         (call_import $print
           (i32.const 5)
         )

@@ -36,12 +36,6 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visit
     branchesSeen.insert(curr->name);
   }
 
-  void visitBlock(Block *curr) {
-    if (curr->name.is() && branchesSeen.count(curr->name) == 0) {
-      curr->name = Name();
-    }
-  }
-
   void visitSwitch(Switch *curr) {
     for (auto name : curr->targets) {
       branchesSeen.insert(name);
@@ -49,8 +43,35 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visit
     branchesSeen.insert(curr->default_);
   }
 
+  void handleBreakTarget(Name& name) {
+    if (name.is()) {
+      if (branchesSeen.find(name) == branchesSeen.end()) {
+        name = Name();
+      } else {
+        branchesSeen.erase(name);
+      }
+    }
+  }
+
+  void visitBlock(Block *curr) {
+    handleBreakTarget(curr->name);
+  }
+
+  void visitLoop(Loop *curr) {
+    handleBreakTarget(curr->in);
+    // Loops can have just 'in', but cannot have just 'out'
+    auto out = curr->out;
+    handleBreakTarget(curr->out);
+    if (curr->out.is() && !curr->in.is()) {
+      auto* block = getModule()->allocator.alloc<Block>();
+      block->name = out;
+      block->list.push_back(curr->body);
+      replaceCurrent(block);
+    }
+  }
+
   void visitFunction(Function *curr) {
-    branchesSeen.clear();
+    assert(branchesSeen.empty());
   }
 };
 
