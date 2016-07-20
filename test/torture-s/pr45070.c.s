@@ -134,5 +134,5 @@ fetch:                                  # @fetch
 	.size	fetch, .Lfunc_end2-fetch
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

@@ -222,16 +222,17 @@ bmp_iter_set_init:                      # @bmp_iter_set_init
 	.param  	i32, i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$1=, 0($1)
 	i32.const	$push2=, 0
 	i32.store	$3=, 4($0), $pop2
 	block
-	i32.store	$push0=, 0($0), $1
+	i32.load	$push10=, 0($1)
+	tee_local	$push9=, $1=, $pop10
+	i32.store	$push0=, 0($0), $pop9
 	br_if   	0, $pop0        # 0: down to label13
 # BB#1:                                 # %if.then
 	i32.const	$1=, bitmap_zero_bits
-	i32.const	$push9=, bitmap_zero_bits
-	i32.store	$drop=, 0($0), $pop9
+	i32.const	$push11=, bitmap_zero_bits
+	i32.store	$drop=, 0($0), $pop11
 .LBB2_2:                                # %while.end
 	end_block                       # label13:
 	i32.store	$drop=, 8($0), $3
@@ -269,4 +270,4 @@ bitmap_zero_bits:
 	.size	bitmap_zero_bits, 20
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "

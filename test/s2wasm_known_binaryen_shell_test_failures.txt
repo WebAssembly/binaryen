@@ -90,7 +90,6 @@ va-arg-pack-1.c.s.wast
 20011024-1.c.s.wast # strcmp
 20020406-1.c.s.wast # malloc
 20021011-1.c.s.wast # strcmp
-20030914-2.c.s.wast # memcpy
 20031204-1.c.s.wast # strcmp
 20041126-1.c.s.wast # memcpy
 20041218-1.c.s.wast # memset

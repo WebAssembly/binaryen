@@ -190,7 +190,7 @@ main:                                   # @main
 	.size	.Lstr, 6
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	printf, i32, i32
 	.functype	abort, void
 	.functype	puts, i32, i32

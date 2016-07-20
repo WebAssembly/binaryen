@@ -119,7 +119,7 @@ t:
 	.size	t, 128
 
 	.type	.Lmain.s,@object        # @main.s
-	.section	.data.rel.ro..Lmain.s,"aw",@progbits
+	.section	.rodata..Lmain.s,"a",@progbits
 	.p2align	2
 .Lmain.s:
 	.int32	t+69
@@ -127,5 +127,5 @@ t:
 	.size	.Lmain.s, 8
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

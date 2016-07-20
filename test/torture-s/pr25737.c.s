@@ -32,6 +32,11 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	Timer_Queue,@object     # @Timer_Queue
-	.lcomm	Timer_Queue,4,2
+	.section	.bss.Timer_Queue,"aw",@nobits
+	.p2align	2
+Timer_Queue:
+	.skip	4
+	.size	Timer_Queue, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "

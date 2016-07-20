@@ -194,7 +194,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 	.type	table,@object           # @table
-	.lcomm	table,128,4
+	.section	.bss.table,"aw",@nobits
+	.p2align	4
+table:
+	.skip	128
+	.size	table, 128
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

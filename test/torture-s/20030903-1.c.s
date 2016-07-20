@@ -43,7 +43,12 @@ y:                                      # @y
 	.size	y, .Lfunc_end1-y
 
 	.type	test,@object            # @test
-	.lcomm	test,4,2
+	.section	.bss.test,"aw",@nobits
+	.p2align	2
+test:
+	.int32	0                       # 0x0
+	.size	test, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

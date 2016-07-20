@@ -151,9 +151,9 @@ num_lshift:                             # @num_lshift
 	i32.and 	$push54=, $9, $pop53
 	i32.select	$8=, $pop56, $pop55, $pop54
 	i32.const	$push57=, 63
-	i32.gt_u	$push58=, $2, $pop57
-	br_if   	3, $pop58       # 3: down to label10
-	br      	1               # 1: down to label12
+	i32.le_u	$push58=, $2, $pop57
+	br_if   	1, $pop58       # 1: down to label12
+	br      	3               # 3: down to label10
 .LBB0_19:                               # %if.else3.i
 	end_block                       # label13:
 	i32.const	$push42=, -1
@@ -355,6 +355,6 @@ num:
 	.size	num, 16
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

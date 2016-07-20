@@ -110,50 +110,39 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push20=, 0
-	i32.const	$push17=, 0
-	i32.load	$push18=, __stack_pointer($pop17)
-	i32.const	$push19=, 48
-	i32.sub 	$push25=, $pop18, $pop19
-	i32.store	$push27=, __stack_pointer($pop20), $pop25
-	tee_local	$push26=, $1=, $pop27
-	i32.const	$push4=, 16
-	i32.add 	$push5=, $pop26, $pop4
-	i32.const	$push3=, 4
-	i32.store	$push0=, 36($1), $pop3
-	i32.store	$0=, 0($pop5), $pop0
-	i32.const	$push7=, 12
-	i32.add 	$push8=, $1, $pop7
-	i32.const	$push6=, 3
-	i32.store	$push1=, 32($1), $pop6
+	i32.const	$push14=, 0
+	i32.const	$push11=, 0
+	i32.load	$push12=, __stack_pointer($pop11)
+	i32.const	$push13=, 48
+	i32.sub 	$push17=, $pop12, $pop13
+	i32.store	$push19=, __stack_pointer($pop14), $pop17
+	tee_local	$push18=, $0=, $pop19
+	i32.const	$push4=, 12
+	i32.add 	$push5=, $pop18, $pop4
+	i64.const	$push3=, 17179869187
+	i64.store	$push0=, 32($0), $pop3
+	i64.store	$drop=, 0($pop5):p2align=2, $pop0
+	i32.const	$push7=, 20
+	i32.add 	$push8=, $0, $pop7
+	i32.const	$push6=, 5
+	i32.store	$push1=, 40($0), $pop6
 	i32.store	$drop=, 0($pop8), $pop1
-	i32.const	$push10=, 20
-	i32.add 	$push11=, $1, $pop10
-	i32.const	$push9=, 5
-	i32.store	$push2=, 40($1), $pop9
-	i32.store	$drop=, 0($pop11), $pop2
-	i64.const	$push12=, 8589934593
-	i64.store	$drop=, 24($1), $pop12
-	i32.const	$push21=, 4
-	i32.add 	$push22=, $1, $pop21
-	i32.add 	$push13=, $0, $pop22
-	i32.load	$push14=, 28($1)
-	i32.store	$drop=, 0($pop13), $pop14
-	i32.const	$push15=, 1
-	i32.store	$drop=, 4($1), $pop15
-	i32.const	$push23=, 4
-	i32.add 	$push24=, $1, $pop23
-	call    	foo@FUNCTION, $1, $pop24, $1
-	i32.const	$push16=, 0
-	call    	exit@FUNCTION, $pop16
+	i64.const	$push9=, 8589934593
+	i64.store	$push2=, 24($0), $pop9
+	i64.store	$drop=, 4($0):p2align=2, $pop2
+	i32.const	$push15=, 4
+	i32.add 	$push16=, $0, $pop15
+	call    	foo@FUNCTION, $0, $pop16, $0
+	i32.const	$push10=, 0
+	call    	exit@FUNCTION, $pop10
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

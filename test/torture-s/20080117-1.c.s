@@ -56,4 +56,4 @@ gstate_initial:
 	.size	gstate_initial, 12
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "

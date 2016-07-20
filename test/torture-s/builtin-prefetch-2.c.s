@@ -171,13 +171,33 @@ ptr_str:
 	.size	ptr_str, 4
 
 	.type	stat_int_arr,@object    # @stat_int_arr
-	.lcomm	stat_int_arr,400,4
-	.type	stat_int,@object        # @stat_int
-	.lcomm	stat_int,4,2
-	.type	simple_static_local.gx,@object # @simple_static_local.gx
-	.lcomm	simple_static_local.gx,400,4
-	.type	simple_static_local.ix,@object # @simple_static_local.ix
-	.lcomm	simple_static_local.ix,4,2
+	.section	.bss.stat_int_arr,"aw",@nobits
+	.p2align	4
+stat_int_arr:
+	.skip	400
+	.size	stat_int_arr, 400
 
-	.ident	"clang version 3.9.0 "
+	.type	stat_int,@object        # @stat_int
+	.section	.bss.stat_int,"aw",@nobits
+	.p2align	2
+stat_int:
+	.int32	0                       # 0x0
+	.size	stat_int, 4
+
+	.type	simple_static_local.gx,@object # @simple_static_local.gx
+	.section	.bss.simple_static_local.gx,"aw",@nobits
+	.p2align	4
+simple_static_local.gx:
+	.skip	400
+	.size	simple_static_local.gx, 400
+
+	.type	simple_static_local.ix,@object # @simple_static_local.ix
+	.section	.bss.simple_static_local.ix,"aw",@nobits
+	.p2align	2
+simple_static_local.ix:
+	.int32	0                       # 0x0
+	.size	simple_static_local.ix, 4
+
+
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

@@ -60,7 +60,7 @@ ao:
 
 	.hidden	a                       # @a
 	.type	a,@object
-	.section	.data.rel.ro.a,"aw",@progbits
+	.section	.rodata.a,"a",@progbits
 	.globl	a
 	.p2align	2
 a:
@@ -68,4 +68,4 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "

@@ -29,7 +29,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 	.type	bfd_make_section_anyway.foo_section,@object # @bfd_make_section_anyway.foo_section
-	.lcomm	bfd_make_section_anyway.foo_section,32,3
+	.section	.bss.bfd_make_section_anyway.foo_section,"aw",@nobits
+	.p2align	3
+bfd_make_section_anyway.foo_section:
+	.skip	32
+	.size	bfd_make_section_anyway.foo_section, 32
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

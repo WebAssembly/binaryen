@@ -204,8 +204,13 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 	.type	f1.beenhere,@object     # @f1.beenhere
-	.lcomm	f1.beenhere,4,2
+	.section	.bss.f1.beenhere,"aw",@nobits
+	.p2align	2
+f1.beenhere:
+	.int32	0                       # 0x0
+	.size	f1.beenhere, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

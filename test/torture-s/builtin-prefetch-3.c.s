@@ -228,7 +228,12 @@ glob_vol_int:
 	.size	glob_vol_int, 4
 
 	.type	stat_vol_int_arr,@object # @stat_vol_int_arr
-	.lcomm	stat_vol_int_arr,400,4
+	.section	.bss.stat_vol_int_arr,"aw",@nobits
+	.p2align	4
+stat_vol_int_arr:
+	.skip	400
+	.size	stat_vol_int_arr, 400
+
 	.type	stat_vol_ptr_int,@object # @stat_vol_ptr_int
 	.section	.data.stat_vol_ptr_int,"aw",@progbits
 	.p2align	2
@@ -244,9 +249,19 @@ stat_vol_ptr_vol_int:
 	.size	stat_vol_ptr_vol_int, 4
 
 	.type	stat_vol_int,@object    # @stat_vol_int
-	.lcomm	stat_vol_int,4,2
-	.type	stat_int_arr,@object    # @stat_int_arr
-	.lcomm	stat_int_arr,400,4
+	.section	.bss.stat_vol_int,"aw",@nobits
+	.p2align	2
+stat_vol_int:
+	.int32	0                       # 0x0
+	.size	stat_vol_int, 4
 
-	.ident	"clang version 3.9.0 "
+	.type	stat_int_arr,@object    # @stat_int_arr
+	.section	.bss.stat_int_arr,"aw",@nobits
+	.p2align	4
+stat_int_arr:
+	.skip	400
+	.size	stat_int_arr, 400
+
+
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

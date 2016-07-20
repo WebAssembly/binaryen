@@ -193,7 +193,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 	.type	fetch.fetch_count,@object # @fetch.fetch_count
-	.lcomm	fetch.fetch_count,4,2
+	.section	.bss.fetch.fetch_count,"aw",@nobits
+	.p2align	2
+fetch.fetch_count:
+	.int32	0                       # 0x0
+	.size	fetch.fetch_count, 4
+
 	.hidden	data_tmp                # @data_tmp
 	.type	data_tmp,@object
 	.section	.bss.data_tmp,"aw",@nobits
@@ -222,7 +227,7 @@ data_ptr:
 	.size	data_ptr, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

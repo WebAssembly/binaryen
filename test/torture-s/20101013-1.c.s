@@ -74,5 +74,5 @@ build_int_cst:                          # @build_int_cst
 	.size	build_int_cst, .Lfunc_end3-build_int_cst
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

@@ -30,7 +30,7 @@ main:                                   # @main
 # BB#1:                                 # %if.then
 	i32.const	$push9=, 0
 	i32.load	$drop=, b($pop9)
-.LBB1_2:                                # %if.end
+.LBB1_2:                                # %for.end
 	end_block                       # label0:
 	i32.const	$push18=, 0
 	i32.const	$push3=, -1
@@ -144,5 +144,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

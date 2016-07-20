@@ -103,11 +103,26 @@ w:
 	.size	.L.str.1, 2
 
 	.type	a,@object               # @a
-	.lcomm	a,1024,4
-	.type	d,@object               # @d
-	.lcomm	d,4,2
-	.type	b,@object               # @b
-	.lcomm	b,4,2
+	.section	.bss.a,"aw",@nobits
+	.p2align	4
+a:
+	.skip	1024
+	.size	a, 1024
 
-	.ident	"clang version 3.9.0 "
+	.type	d,@object               # @d
+	.section	.bss.d,"aw",@nobits
+	.p2align	2
+d:
+	.int32	0                       # 0x0
+	.size	d, 4
+
+	.type	b,@object               # @b
+	.section	.bss.b,"aw",@nobits
+	.p2align	2
+b:
+	.int32	0                       # 0x0
+	.size	b, 4
+
+
+	.ident	"clang version 4.0.0 "
 	.functype	strcmp, i32, i32, i32

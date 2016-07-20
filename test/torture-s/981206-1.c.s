@@ -36,9 +36,19 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	x,@object               # @x
-	.lcomm	x,1,1
-	.type	y,@object               # @y
-	.lcomm	y,1,1
+	.section	.bss.x,"aw",@nobits
+	.p2align	1
+x:
+	.int8	0                       # 0x0
+	.size	x, 1
 
-	.ident	"clang version 3.9.0 "
+	.type	y,@object               # @y
+	.section	.bss.y,"aw",@nobits
+	.p2align	1
+y:
+	.int8	0                       # 0x0
+	.size	y, 1
+
+
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

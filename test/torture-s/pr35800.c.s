@@ -96,7 +96,7 @@ main:                                   # @main
 	.size	.L.str.33, 10
 
 	.type	.Lswitch.table,@object  # @switch.table
-	.section	.data.rel.ro..Lswitch.table,"aw",@progbits
+	.section	.rodata..Lswitch.table,"a",@progbits
 	.p2align	4
 .Lswitch.table:
 	.int32	.L.str.2
@@ -135,5 +135,5 @@ main:                                   # @main
 	.size	.Lswitch.table, 132
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

@@ -17,6 +17,11 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 	.type	g_9,@object             # @g_9
-	.lcomm	g_9,4,2
+	.section	.bss.g_9,"aw",@nobits
+	.p2align	2
+g_9:
+	.int32	0                       # 0x0
+	.size	g_9, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "

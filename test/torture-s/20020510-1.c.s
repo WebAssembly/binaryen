@@ -25,7 +25,7 @@ testc:                                  # @testc
 .LBB0_3:                                # %if.else
 	end_block                       # label2:
 	br_if   	1, $1           # 1: down to label0
-.LBB0_4:                                # %if.end9
+.LBB0_4:                                # %if.end
 	end_block                       # label1:
 	return
 .LBB0_5:                                # %if.then7
@@ -61,7 +61,7 @@ tests:                                  # @tests
 .LBB1_3:                                # %if.else
 	end_block                       # label5:
 	br_if   	1, $1           # 1: down to label3
-.LBB1_4:                                # %if.end9
+.LBB1_4:                                # %if.end
 	end_block                       # label4:
 	return
 .LBB1_5:                                # %if.then7
@@ -93,7 +93,7 @@ testi:                                  # @testi
 .LBB2_3:                                # %if.else
 	end_block                       # label8:
 	br_if   	1, $1           # 1: down to label6
-.LBB2_4:                                # %if.end6
+.LBB2_4:                                # %if.end
 	end_block                       # label7:
 	return
 .LBB2_5:                                # %if.then4
@@ -125,7 +125,7 @@ testl:                                  # @testl
 .LBB3_3:                                # %if.else
 	end_block                       # label11:
 	br_if   	1, $1           # 1: down to label9
-.LBB3_4:                                # %if.end6
+.LBB3_4:                                # %if.end
 	end_block                       # label10:
 	return
 .LBB3_5:                                # %if.then4
@@ -150,5 +150,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

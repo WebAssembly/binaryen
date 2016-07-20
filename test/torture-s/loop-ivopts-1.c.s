@@ -48,6 +48,11 @@ foo:                                    # @foo
 	.size	foo, .Lfunc_end1-foo
 
 	.type	foo.tmp,@object         # @foo.tmp
-	.lcomm	foo.tmp,16,4
+	.section	.bss.foo.tmp,"aw",@nobits
+	.p2align	4
+foo.tmp:
+	.skip	16
+	.size	foo.tmp, 16
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "

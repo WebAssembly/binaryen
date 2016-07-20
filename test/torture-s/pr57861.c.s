@@ -16,23 +16,23 @@ main:                                   # @main
 	tee_local	$push19=, $1=, $pop20
 	copy_local	$2=, $pop19
 	block
-	i32.load	$push8=, e($0)
-	i32.const	$push5=, 24
-	i32.shl 	$push6=, $1, $pop5
+	i32.load	$push4=, e($0)
+	i32.const	$push1=, 24
+	i32.shl 	$push2=, $1, $pop1
 	i32.const	$push18=, 24
-	i32.shr_s	$push7=, $pop6, $pop18
-	i32.ge_u	$push9=, $pop8, $pop7
-	br_if   	0, $pop9        # 0: down to label0
-# BB#1:                                 # %if.then.i.1
-	i32.load	$push3=, d($0)
-	i32.ne  	$push4=, $pop3, $0
-	i32.load	$push1=, h($0)
-	i32.ne  	$push2=, $pop1, $0
-	i32.and 	$push25=, $pop4, $pop2
+	i32.shr_s	$push3=, $pop2, $pop18
+	i32.ge_u	$push5=, $pop4, $pop3
+	br_if   	0, $pop5        # 0: down to label0
+# BB#1:                                 # %if.then.1.i
+	i32.load	$push8=, d($0)
+	i32.ne  	$push9=, $pop8, $0
+	i32.load	$push6=, h($0)
+	i32.ne  	$push7=, $pop6, $0
+	i32.and 	$push25=, $pop9, $pop7
 	tee_local	$push24=, $2=, $pop25
 	i32.store16	$drop=, a($0), $pop24
 	i32.store16	$drop=, f($0), $0
-.LBB0_2:                                # %for.inc.i.1
+.LBB0_2:                                # %foo.exit
 	end_block                       # label0:
 	i32.const	$push10=, 2
 	i32.store	$drop=, c($0), $pop10
@@ -150,5 +150,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

@@ -859,30 +859,30 @@ main:                                   # @main
 	f64.ne  	$push131=, $pop94, $pop130
 	br_if   	0, $pop131      # 0: down to label24
 # BB#14:                                # %if.end32
+	i64.const	$push133=, 4625196817309499392
+	i64.store	$drop=, 672($2), $pop133
+	i32.const	$push134=, 138
+	i32.store	$drop=, 680($2), $pop134
+	i64.const	$push135=, 4640396466051874816
+	i64.store	$drop=, 656($2), $pop135
+	i32.const	$push136=, 257
+	i32.store	$3=, 664($2), $pop136
 	i32.const	$push332=, 288
 	i32.add 	$push333=, $2, $pop332
-	i32.const	$push133=, 12
-	i32.add 	$push134=, $pop333, $pop133
+	i32.const	$push137=, 12
+	i32.add 	$push138=, $pop333, $pop137
 	i32.const	$push334=, 672
 	i32.add 	$push335=, $2, $pop334
 	i32.const	$push479=, 12
-	i32.add 	$push135=, $pop335, $pop479
-	i32.load	$push136=, 0($pop135)
-	i32.store	$drop=, 0($pop134), $pop136
-	i32.const	$push137=, 138
-	i32.store	$drop=, 680($2), $pop137
-	i32.const	$push138=, 257
-	i32.store	$3=, 664($2), $pop138
+	i32.add 	$push139=, $pop335, $pop479
+	i32.load	$push140=, 0($pop139)
+	i32.store	$drop=, 0($pop138), $pop140
 	i32.const	$push336=, 288
 	i32.add 	$push337=, $2, $pop336
-	i32.const	$push139=, 8
-	i32.add 	$push140=, $pop337, $pop139
-	i32.load	$push141=, 680($2)
-	i32.store	$drop=, 0($pop140), $pop141
-	i64.const	$push142=, 4625196817309499392
-	i64.store	$drop=, 672($2), $pop142
-	i64.const	$push143=, 4640396466051874816
-	i64.store	$drop=, 656($2), $pop143
+	i32.const	$push141=, 8
+	i32.add 	$push142=, $pop337, $pop141
+	i32.load	$push143=, 680($2)
+	i32.store	$drop=, 0($pop142), $pop143
 	i32.load	$push144=, 676($2)
 	i32.store	$drop=, 292($2), $pop144
 	i32.load	$push145=, 672($2)
@@ -1258,5 +1258,5 @@ gap:
 	.size	gap, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

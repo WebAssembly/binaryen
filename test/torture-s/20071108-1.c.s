@@ -103,7 +103,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 	.type	foo.s,@object           # @foo.s
-	.lcomm	foo.s,12,2
+	.section	.bss.foo.s,"aw",@nobits
+	.p2align	2
+foo.s:
+	.skip	12
+	.size	foo.s, 12
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

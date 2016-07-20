@@ -86,7 +86,12 @@ storemax:                               # @storemax
 	.size	storemax, .Lfunc_end2-storemax
 
 	.type	max,@object             # @max
-	.lcomm	max,4,2
+	.section	.bss.max,"aw",@nobits
+	.p2align	2
+max:
+	.int32	0                       # 0x0
+	.size	max, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

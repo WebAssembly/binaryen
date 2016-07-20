@@ -67,7 +67,7 @@ doit:                                   # @doit
 	.size	.L.str.1, 13
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32
 	.functype	malloc, i32, i32
 	.functype	vprintf, i32, i32, i32

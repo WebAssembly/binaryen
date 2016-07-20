@@ -345,7 +345,7 @@ o:
 	.size	.L.str.4, 2
 
 	.type	.Lmain.args,@object     # @main.args
-	.section	.data.rel.ro..Lmain.args,"aw",@progbits
+	.section	.rodata..Lmain.args,"a",@progbits
 	.p2align	4
 .Lmain.args:
 	.int32	.L.str
@@ -374,7 +374,12 @@ u:
 	.size	u, 4
 
 	.type	r.cnt,@object           # @r.cnt
-	.lcomm	r.cnt,4,2
+	.section	.bss.r.cnt,"aw",@nobits
+	.p2align	2
+r.cnt:
+	.int32	0                       # 0x0
+	.size	r.cnt, 4
+
 	.type	r.c.0,@object           # @r.c.0
 	.section	.data.r.c.0,"aw",@progbits
 r.c.0:
@@ -382,7 +387,7 @@ r.c.0:
 	.size	r.c.0, 1
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	strcmp, i32, i32, i32

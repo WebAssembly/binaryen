@@ -53,6 +53,11 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	ok,@object              # @ok
-	.lcomm	ok,1,2
+	.section	.bss.ok,"aw",@nobits
+	.p2align	2
+ok:
+	.int8	0                       # 0x0
+	.size	ok, 1
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "

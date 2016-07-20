@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.add 	$push16=, $pop85, $pop208
 	i64.load	$push207=, 0($pop16)
 	tee_local	$push206=, $9=, $pop207
-	call    	__addtf3@FUNCTION, $pop87, $pop209, $pop206, $8, $7
+	call    	__addtf3@FUNCTION, $pop87, $8, $7, $pop209, $pop206
 	i32.const	$push88=, 128
 	i32.add 	$push89=, $6, $pop88
 	i32.const	$push205=, 0
@@ -97,13 +97,13 @@ main:                                   # @main
 	i32.add 	$push17=, $pop95, $pop191
 	i64.load	$push190=, 0($pop17)
 	tee_local	$push189=, $15=, $pop190
-	call    	__multf3@FUNCTION, $pop97, $pop192, $pop189, $14, $13
+	call    	__multf3@FUNCTION, $pop97, $14, $13, $pop192, $pop189
 	i32.const	$push98=, 208
 	i32.add 	$push99=, $6, $pop98
 	call    	__subtf3@FUNCTION, $pop99, $8, $7, $16, $15
 	i32.const	$push100=, 160
 	i32.add 	$push101=, $6, $pop100
-	call    	__multf3@FUNCTION, $pop101, $10, $9, $12, $11
+	call    	__multf3@FUNCTION, $pop101, $12, $11, $10, $9
 	i32.const	$push104=, 256
 	i32.add 	$push105=, $6, $pop104
 	i64.load	$push188=, 272($6)
@@ -410,6 +410,6 @@ S:
 	.size	S, 16
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

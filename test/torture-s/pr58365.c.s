@@ -115,7 +115,12 @@ i:
 	.size	i, 4
 
 	.type	h,@object               # @h
-	.lcomm	h,20,2
+	.section	.bss.h,"aw",@nobits
+	.p2align	2
+h:
+	.skip	20
+	.size	h, 20
+
 	.hidden	f                       # @f
 	.type	f,@object
 	.section	.bss.f,"aw",@nobits
@@ -126,5 +131,5 @@ f:
 	.size	f, 20
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

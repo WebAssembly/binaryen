@@ -29,7 +29,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 	.type	b,@object               # @b
-	.lcomm	b,4,2
+	.section	.bss.b,"aw",@nobits
+	.p2align	2
+b:
+	.int32	0                       # 0x0
+	.size	b, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

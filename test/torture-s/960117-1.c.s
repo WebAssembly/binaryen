@@ -63,7 +63,12 @@ curval:
 	.size	curval, 6
 
 	.type	id_space,@object        # @id_space
-	.lcomm	id_space,66,4
+	.section	.bss.id_space,"aw",@nobits
+	.p2align	4
+id_space:
+	.skip	66
+	.size	id_space, 66
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

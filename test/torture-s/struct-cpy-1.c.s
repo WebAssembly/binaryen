@@ -45,6 +45,11 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 	.type	pty,@object             # @pty
-	.lcomm	pty,88,3
+	.section	.bss.pty,"aw",@nobits
+	.p2align	3
+pty:
+	.skip	88
+	.size	pty, 88
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "

@@ -41,4 +41,4 @@ buf:
 	.size	.L.str.2, 13
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "

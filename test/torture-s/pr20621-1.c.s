@@ -44,4 +44,4 @@ gb:
 	.size	gb, 65536
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "

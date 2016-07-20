@@ -122,7 +122,7 @@ bar:                                    # @bar
 	i32.const	$push28=, 17
 	i32.ne  	$push29=, $pop27, $pop28
 	br_if   	1, $pop29       # 1: down to label1
-.LBB1_8:                                # %if.end22
+.LBB1_8:                                # %if.end
 	end_block                       # label2:
 	i32.const	$push44=, 0
 	i32.store	$drop=, bar_arg($pop44), $0
@@ -630,5 +630,5 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

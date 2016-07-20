@@ -114,10 +114,15 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 	.type	deferred_access_no_check,@object # @deferred_access_no_check
-	.lcomm	deferred_access_no_check,4,2
+	.section	.bss.deferred_access_no_check,"aw",@nobits
+	.p2align	2
+deferred_access_no_check:
+	.int32	0                       # 0x0
+	.size	deferred_access_no_check, 4
+
 	.hidden	gt_pch_rs_gt_cp_semantics_h # @gt_pch_rs_gt_cp_semantics_h
 	.type	gt_pch_rs_gt_cp_semantics_h,@object
-	.section	.data.rel.ro.gt_pch_rs_gt_cp_semantics_h,"aw",@progbits
+	.section	.rodata.gt_pch_rs_gt_cp_semantics_h,"a",@progbits
 	.globl	gt_pch_rs_gt_cp_semantics_h
 	.p2align	2
 gt_pch_rs_gt_cp_semantics_h:
@@ -125,8 +130,13 @@ gt_pch_rs_gt_cp_semantics_h:
 	.size	gt_pch_rs_gt_cp_semantics_h, 4
 
 	.type	deferred_access_stack,@object # @deferred_access_stack
-	.lcomm	deferred_access_stack,4,2
+	.section	.bss.deferred_access_stack,"aw",@nobits
+	.p2align	2
+deferred_access_stack:
+	.int32	0
+	.size	deferred_access_stack, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	__builtin_malloc, i32

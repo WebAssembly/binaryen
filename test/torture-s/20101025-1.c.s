@@ -77,8 +77,13 @@ g_6:
 	.size	g_6, 4
 
 	.type	g_7,@object             # @g_7
-	.lcomm	g_7,4,2
+	.section	.bss.g_7,"aw",@nobits
+	.p2align	2
+g_7:
+	.int32	0                       # 0x0
+	.size	g_7, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

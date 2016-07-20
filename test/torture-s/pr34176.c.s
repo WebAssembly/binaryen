@@ -110,7 +110,12 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 	.type	foo.count,@object       # @foo.count
-	.lcomm	foo.count,4,2
+	.section	.bss.foo.count,"aw",@nobits
+	.p2align	2
+foo.count:
+	.int32	0                       # 0x0
+	.size	foo.count, 4
 
-	.ident	"clang version 3.9.0 "
+
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

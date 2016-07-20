@@ -158,7 +158,7 @@ cons2:
 	.size	cons2, 16
 
 	.type	.Lmain.y,@object        # @main.y
-	.section	.data.rel.ro..Lmain.y,"aw",@progbits
+	.section	.rodata..Lmain.y,"a",@progbits
 	.p2align	3
 .Lmain.y:
 	.int32	nil
@@ -166,5 +166,5 @@ cons2:
 	.size	.Lmain.y, 8
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

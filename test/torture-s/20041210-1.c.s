@@ -32,7 +32,7 @@ main:                                   # @main
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_3:                                # %if.end3
+.LBB0_3:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push17=, 0
 	call    	exit@FUNCTION, $pop17
@@ -54,6 +54,6 @@ x:
 	.size	x, 16
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

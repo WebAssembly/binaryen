@@ -19,7 +19,7 @@ g:                                      # @g
 # BB#2:                                 # %if.then2
 	i32.const	$0=, 0
 	br_if   	1, $1           # 1: down to label0
-.LBB0_3:                                # %if.end9
+.LBB0_3:                                # %if.end
 	end_block                       # label1:
 	i32.const	$0=, 1
 .LBB0_4:                                # %return
@@ -44,4 +44,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 3.9.0 "
+	.ident	"clang version 4.0.0 "
