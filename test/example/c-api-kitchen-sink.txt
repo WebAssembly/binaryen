@@ -904,19 +904,17 @@ optimized:
     )
   )
   (func $loop-tail (type $v)
-    (block $block$3$break
-      (loop $shape$0$continue
-        (call_import $check
-          (i32.const 0)
-        )
-        (call_import $check
-          (i32.const 1)
-        )
-        (if
-          (i32.const 10)
-          (br $shape$0$continue)
-          (br $block$3$break)
-        )
+    (loop $block$3$break $shape$0$continue
+      (call_import $check
+        (i32.const 0)
+      )
+      (call_import $check
+        (i32.const 1)
+      )
+      (if
+        (i32.const 10)
+        (br $shape$0$continue)
+        (br $block$3$break)
       )
     )
     (call_import $check
@@ -928,22 +926,20 @@ optimized:
       (i32.const 0)
     )
     (block $block$7$break
-      (block $block$4$break
-        (loop $shape$1$continue
-          (call_import $check
-            (i32.const 1)
-          )
-          (br_if $block$7$break
-            (i32.const 0)
-          )
-          (call_import $check
-            (i32.const 2)
-          )
-          (if
-            (i32.const -6)
-            (br $block$4$break)
-            (br $shape$1$continue)
-          )
+      (loop $block$4$break $shape$1$continue
+        (call_import $check
+          (i32.const 1)
+        )
+        (br_if $block$7$break
+          (i32.const 0)
+        )
+        (call_import $check
+          (i32.const 2)
+        )
+        (if
+          (i32.const -6)
+          (br $block$4$break)
+          (br $shape$1$continue)
         )
       )
       (call_import $check
@@ -2751,19 +2747,17 @@ optimized:
     )
   )
   (func $loop-tail (type $v)
-    (block $block$3$break
-      (loop $shape$0$continue
-        (call_import $check
-          (i32.const 0)
-        )
-        (call_import $check
-          (i32.const 1)
-        )
-        (if
-          (i32.const 10)
-          (br $shape$0$continue)
-          (br $block$3$break)
-        )
+    (loop $block$3$break $shape$0$continue
+      (call_import $check
+        (i32.const 0)
+      )
+      (call_import $check
+        (i32.const 1)
+      )
+      (if
+        (i32.const 10)
+        (br $shape$0$continue)
+        (br $block$3$break)
       )
     )
     (call_import $check
@@ -2775,22 +2769,20 @@ optimized:
       (i32.const 0)
     )
     (block $block$7$break
-      (block $block$4$break
-        (loop $shape$1$continue
-          (call_import $check
-            (i32.const 1)
-          )
-          (br_if $block$7$break
-            (i32.const 0)
-          )
-          (call_import $check
-            (i32.const 2)
-          )
-          (if
-            (i32.const -6)
-            (br $block$4$break)
-            (br $shape$1$continue)
-          )
+      (loop $block$4$break $shape$1$continue
+        (call_import $check
+          (i32.const 1)
+        )
+        (br_if $block$7$break
+          (i32.const 0)
+        )
+        (call_import $check
+          (i32.const 2)
+        )
+        (if
+          (i32.const -6)
+          (br $block$4$break)
+          (br $shape$1$continue)
         )
       )
       (call_import $check

@@ -29,10 +29,32 @@
         (br $in)
       )
     )
-    (loop $in
-      (block $out
-        (br $out)
-        (br $in)
+    (loop $out $in
+      (br $out)
+      (br $in)
+    )
+    (loop $out $in
+      (br $out)
+      (br $in)
+    )
+    (loop $out $in
+      (br $out)
+      (br $in)
+    )
+  )
+  (func $merges
+    (block $b
+      (br $b)
+      (br $b)
+    )
+    (block $b
+      (br_table $b $b
+        (i32.const 3)
+      )
+    )
+    (block $b
+      (br_table $b $b
+        (i32.const 3)
       )
     )
   )
