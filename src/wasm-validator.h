@@ -260,6 +260,11 @@ public:
     }
   }
 
+  void visitGlobal(Global* curr) {
+    shouldBeTrue(curr->init->is<Const>(), curr->name, "global init must be valid");
+    shouldBeEqual(curr->type, curr->init->type, curr, "global init must have correct type");
+  }
+
   void visitFunction(Function *curr) {
     // if function has no result, it is ignored
     // if body is unreachable, it might be e.g. a return

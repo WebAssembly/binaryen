@@ -160,6 +160,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitSetLocal(SetLocal *curr) {
     localsWritten.insert(curr->index);
   }
+  void visitGetGlobal(GetGlobal *curr) { readsMemory = true; }  // TODO: global-specific
+  void visitSetGlobal(SetGlobal *curr) { writesMemory = true; } //       stuff?
   void visitLoad(Load *curr) { readsMemory = true; }
   void visitStore(Store *curr) { writesMemory = true; }
   void visitReturn(Return *curr) { branches = true; }
@@ -276,6 +278,12 @@ struct ExpressionManipulator {
       }
       Expression* visitSetLocal(SetLocal *curr) {
         return builder.makeSetLocal(curr->index, copy(curr->value));
+      }
+      Expression* visitGetGlobal(GetGlobal *curr) {
+        return builder.makeGetGlobal(curr->index, curr->type);
+      }
+      Expression* visitSetGlobal(SetGlobal *curr) {
+        return builder.makeSetGlobal(curr->index, copy(curr->value));
       }
       Expression* visitLoad(Load *curr) {
         return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
@@ -474,6 +482,15 @@ struct ExpressionAnalyzer {
         case Expression::Id::SetLocalId: {
           CHECK(SetLocal, index);
           PUSH(SetLocal, value);
+          break;
+        }
+        case Expression::Id::GetGlobalId: {
+          CHECK(GetGlobal, index);
+          break;
+        }
+        case Expression::Id::SetGlobalId: {
+          CHECK(SetGlobal, index);
+          PUSH(SetGlobal, value);
           break;
         }
         case Expression::Id::LoadId: {
@@ -676,6 +693,15 @@ struct ExpressionAnalyzer {
         case Expression::Id::SetLocalId: {
           HASH(SetLocal, index);
           PUSH(SetLocal, value);
+          break;
+        }
+        case Expression::Id::GetGlobalId: {
+          HASH(GetGlobal, index);
+          break;
+        }
+        case Expression::Id::SetGlobalId: {
+          HASH(SetGlobal, index);
+          PUSH(SetGlobal, value);
           break;
         }
         case Expression::Id::LoadId: {

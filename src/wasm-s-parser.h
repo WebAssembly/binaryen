@@ -264,11 +264,12 @@ class SExpressionWasmBuilder {
   std::vector<Name> functionNames;
   int functionCounter;
   int importCounter;
+  int globalCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm), allocator(wasm.allocator), importCounter(0) {
+  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0) {
     assert(module[0]->str() == MODULE);
     if (module.size() > 1 && module[1]->isStr()) {
       // these s-expressions contain a binary module, actually
@@ -340,6 +341,7 @@ private:
     if (id == MEMORY) return parseMemory(curr);
     if (id == EXPORT) return parseExport(curr);
     if (id == IMPORT) return; // already done
+    if (id == GLOBAL) return parseGlobal(curr);
     if (id == TABLE) return parseTable(curr);
     if (id == TYPE) return; // already done
     std::cerr << "bad module element " << id.str << '\n';
@@ -703,7 +705,10 @@ public:
           abort_on(str);
         }
         case 'g': {
-          if (str[1] == 'e') return makeGetLocal(s);
+          if (str[1] == 'e') {
+            if (str[4] == 'l') return makeGetLocal(s);
+            if (str[4] == 'g') return makeGetGlobal(s);
+          }
           if (str[1] == 'r') return makeHost(s, HostOp::GrowMemory);
           abort_on(str);
         }
@@ -728,7 +733,10 @@ public:
           abort_on(str);
         }
         case 's': {
-          if (str[1] == 'e' && str[2] == 't') return makeSetLocal(s);
+          if (str[1] == 'e' && str[2] == 't') {
+            if (str[4] == 'l') return makeSetLocal(s);
+            if (str[4] == 'g') return makeSetGlobal(s);
+          }
           if (str[1] == 'e' && str[2] == 'l') return makeSelect(s);
           abort_on(str);
         }
@@ -844,6 +852,7 @@ private:
   }
 
   Index getLocalIndex(Element& s) {
+    if (!currFunction) throw ParseException("local access in non-function scope", s.line, s.col);
     if (s.dollared()) {
       auto ret = s.str();
       if (currFunction->localIndices.count(ret) == 0) throw ParseException("bad local name", s.line, s.col);
@@ -867,6 +876,35 @@ private:
     ret->index = getLocalIndex(*s[1]);
     ret->value = parseExpression(s[2]);
     ret->type = currFunction->getLocalType(ret->index);
+    return ret;
+  }
+
+  Index getGlobalIndex(Element& s) {
+    if (s.dollared()) {
+      auto name = s.str();
+      for (Index i = 0; i < wasm.globals.size(); i++) {
+        if (wasm.globals[i]->name == name) return i;
+      }
+      throw ParseException("bad global name", s.line, s.col);
+    }
+    // this is a numeric index
+    Index ret = atoi(s.c_str());
+    if (!wasm.checkGlobal(ret)) throw ParseException("bad global index", s.line, s.col);
+    return ret;
+  }
+
+  Expression* makeGetGlobal(Element& s) {
+    auto ret = allocator.alloc<GetGlobal>();
+    ret->index = getGlobalIndex(*s[1]);
+    ret->type = wasm.getGlobal(ret->index)->type;
+    return ret;
+  }
+
+  Expression* makeSetGlobal(Element& s) {
+    auto ret = allocator.alloc<SetGlobal>();
+    ret->index = getGlobalIndex(*s[1]);
+    ret->value = parseExpression(s[2]);
+    ret->type = wasm.getGlobal(ret->index)->type;
     return ret;
   }
 
@@ -1313,6 +1351,21 @@ private:
     }
     im->type = ensureFunctionType(getSig(type.get()), &wasm);
     wasm.addImport(im.release());
+  }
+
+  void parseGlobal(Element& s) {
+    std::unique_ptr<Global> global = make_unique<Global>();
+    size_t i = 1;
+    if (s.size() == 4) {
+      global->name = s[i++]->str();
+    } else {
+      global->name = Name::fromInt(globalCounter);
+    }
+    globalCounter++;
+    global->type = stringToWasmType(s[i++]->str());
+    global->init = parseExpression(s[i++]);
+    assert(i == s.size());
+    wasm.addGlobal(global.release());
   }
 
   void parseTable(Element& s) {

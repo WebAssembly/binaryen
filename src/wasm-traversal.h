@@ -45,6 +45,8 @@ struct Visitor {
   ReturnType visitCallIndirect(CallIndirect *curr) {}
   ReturnType visitGetLocal(GetLocal *curr) {}
   ReturnType visitSetLocal(SetLocal *curr) {}
+  ReturnType visitGetGlobal(GetGlobal *curr) {}
+  ReturnType visitSetGlobal(SetGlobal *curr) {}
   ReturnType visitLoad(Load *curr) {}
   ReturnType visitStore(Store *curr) {}
   ReturnType visitConst(Const *curr) {}
@@ -59,6 +61,7 @@ struct Visitor {
   ReturnType visitFunctionType(FunctionType *curr) {}
   ReturnType visitImport(Import *curr) {}
   ReturnType visitExport(Export *curr) {}
+  ReturnType visitGlobal(Global *curr) {}
   ReturnType visitFunction(Function *curr) {}
   ReturnType visitTable(Table *curr) {}
   ReturnType visitMemory(Memory *curr) {}
@@ -82,6 +85,8 @@ struct Visitor {
       case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
       case Expression::Id::GetLocalId: DELEGATE(GetLocal);
       case Expression::Id::SetLocalId: DELEGATE(SetLocal);
+      case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
+      case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
       case Expression::Id::LoadId: DELEGATE(Load);
       case Expression::Id::StoreId: DELEGATE(Store);
       case Expression::Id::ConstId: DELEGATE(Const);
@@ -119,6 +124,8 @@ struct UnifiedExpressionVisitor : public Visitor<SubType> {
   ReturnType visitCallIndirect(CallIndirect *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitGetLocal(GetLocal *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSetLocal(SetLocal *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitGetGlobal(GetGlobal *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitSetGlobal(SetGlobal *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitLoad(Load *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitStore(Store *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitConst(Const *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -192,6 +199,9 @@ struct Walker : public VisitorType {
     for (auto& curr : module->exports) {
       self->visitExport(curr.get());
     }
+    for (auto& curr : module->globals) {
+      self->visitGlobal(curr.get());
+    }
     for (auto& curr : module->functions) {
       self->walkFunction(curr.get());
     }
@@ -254,6 +264,8 @@ struct Walker : public VisitorType {
   static void doVisitCallIndirect(SubType* self, Expression** currp) { self->visitCallIndirect((*currp)->cast<CallIndirect>()); }
   static void doVisitGetLocal(SubType* self, Expression** currp)     { self->visitGetLocal((*currp)->cast<GetLocal>()); }
   static void doVisitSetLocal(SubType* self, Expression** currp)     { self->visitSetLocal((*currp)->cast<SetLocal>()); }
+  static void doVisitGetGlobal(SubType* self, Expression** currp)     { self->visitGetGlobal((*currp)->cast<GetGlobal>()); }
+  static void doVisitSetGlobal(SubType* self, Expression** currp)     { self->visitSetGlobal((*currp)->cast<SetGlobal>()); }
   static void doVisitLoad(SubType* self, Expression** currp)         { self->visitLoad((*currp)->cast<Load>()); }
   static void doVisitStore(SubType* self, Expression** currp)        { self->visitStore((*currp)->cast<Store>()); }
   static void doVisitConst(SubType* self, Expression** currp)        { self->visitConst((*currp)->cast<Const>()); }
@@ -355,6 +367,15 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       case Expression::Id::SetLocalId: {
         self->pushTask(SubType::doVisitSetLocal, currp);
         self->pushTask(SubType::scan, &curr->cast<SetLocal>()->value);
+        break;
+      }
+      case Expression::Id::GetGlobalId: {
+        self->pushTask(SubType::doVisitGetGlobal, currp);
+        break;
+      }
+      case Expression::Id::SetGlobalId: {
+        self->pushTask(SubType::doVisitSetGlobal, currp);
+        self->pushTask(SubType::scan, &curr->cast<SetGlobal>()->value);
         break;
       }
       case Expression::Id::LoadId: {

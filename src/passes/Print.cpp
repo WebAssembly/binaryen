@@ -35,6 +35,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   bool fullAST = false; // whether to not elide nodes in output when possible
                         // (like implicit blocks)
 
+  Module* currModule = nullptr;
   Function* currFunction = nullptr;
 
   PrintSExpression(std::ostream& o) : o(o) {
@@ -76,6 +77,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       name = Name::fromInt(index);
     }
     return name;
+  }
+
+  Name printableGlobal(Index index) {
+    return currModule->getGlobal(index)->name;
   }
 
   std::ostream& printName(Name name) {
@@ -235,6 +240,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitSetLocal(SetLocal *curr) {
     printOpening(o, "set_local ") << printableLocal(curr->index);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitGetGlobal(GetGlobal *curr) {
+    printOpening(o, "get_global ") << printableGlobal(curr->index) << ')';
+  }
+  void visitSetGlobal(SetGlobal *curr) {
+    printOpening(o, "set_global ") << printableGlobal(curr->index);
     incIndent();
     printFullLine(curr->value);
     decIndent();
@@ -519,6 +533,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printText(o, curr->name.str) << ' ';
     printName(curr->value) << ')';
   }
+  void visitGlobal(Global *curr) {
+    printOpening(o, "global ");
+    printName(curr->name) << ' ' << printWasmType(curr->type);
+    printFullLine(curr->init);
+    o << ')';
+  }
   void visitFunction(Function *curr) {
     currFunction = curr;
     printOpening(o, "func ", true);
@@ -563,6 +583,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << ')';
   }
   void visitModule(Module *curr) {
+    currModule = curr;
     printOpening(o, "module", true);
     incIndent();
     doIndent(o, indent);
@@ -621,6 +642,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitExport(child.get());
       o << maybeNewLine;
     }
+    for (auto& child : curr->globals) {
+      doIndent(o, indent);
+      visitGlobal(child.get());
+      o << maybeNewLine;
+    }
     if (curr->table.names.size() > 0) {
       doIndent(o, indent);
       visitTable(&curr->table);
@@ -633,6 +659,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     decIndent();
     o << maybeNewLine;
+    currModule = nullptr;
   }
 };
 
