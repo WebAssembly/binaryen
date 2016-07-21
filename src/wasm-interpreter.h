@@ -491,6 +491,22 @@ public:
   }
 };
 
+// Execute an expression in global init
+class GlobalInitRunner : public ExpressionRunner<GlobalInitRunner> {
+public:
+  Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
+  Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
+  Flow visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
+  Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
+  Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
+  Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
+  Flow visitGetGlobal(GetGlobal *curr) { WASM_UNREACHABLE(); }
+  Flow visitSetGlobal(SetGlobal *curr) { WASM_UNREACHABLE(); }
+  Flow visitLoad(Load *curr) { WASM_UNREACHABLE(); }
+  Flow visitStore(Store *curr) { WASM_UNREACHABLE(); }
+  Flow visitHost(Host *curr) { WASM_UNREACHABLE(); }
+};
+
 //
 // An instance of a WebAssembly module, which can execute it via AST interpretation.
 //
@@ -519,8 +535,14 @@ public:
 
   Module& wasm;
 
+  // Values of globals
+  std::vector<Literal> globals;
+
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     memorySize = wasm.memory.initial;
+    for (Index i = 0; i < wasm.globals.size(); i++) {
+      globals.push_back(GlobalInitRunner().visit(wasm.globals[i]->init).value);
+    }
     externalInterface->init(wasm);
     if (wasm.start.is()) {
       LiteralList arguments;
@@ -676,6 +698,26 @@ private:
         scope.locals[index] = flow.value;
         return flow;
       }
+
+      Flow visitGetGlobal(GetGlobal *curr) {
+        NOTE_ENTER("GetGlobal");
+        auto index = curr->index;
+        NOTE_EVAL1(index);
+        NOTE_EVAL1(instance.globals[index]);
+        return instance.globals[index];
+      }
+      Flow visitSetGlobal(SetGlobal *curr) {
+        NOTE_ENTER("SetGlobal");
+        auto index = curr->index;
+        Flow flow = visit(curr->value);
+        if (flow.breaking()) return flow;
+        NOTE_EVAL1(index);
+        NOTE_EVAL1(flow.value);
+        assert(flow.value.type == curr->type);
+        instance.globals[index] = flow.value;
+        return flow;
+      }
+
       Flow visitLoad(Load *curr) {
         NOTE_ENTER("Load");
         Flow flow = visit(curr->ptr);

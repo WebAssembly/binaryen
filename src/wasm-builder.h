@@ -145,6 +145,19 @@ public:
     ret->type = value->type;
     return ret;
   }
+  GetGlobal* makeGetGlobal(Index index, WasmType type) {
+    auto* ret = allocator.alloc<GetGlobal>();
+    ret->index = index;
+    ret->type = type;
+    return ret;
+  }
+  SetGlobal* makeSetGlobal(Index index, Expression* value) {
+    auto* ret = allocator.alloc<SetGlobal>();
+    ret->index = index;
+    ret->value = value;
+    ret->type = value->type;
+    return ret;
+  }
   Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
     auto* ret = allocator.alloc<Load>();
     ret->bytes = bytes; ret->signed_ = signed_; ret->offset = offset; ret->align = align; ret->ptr = ptr;

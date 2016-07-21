@@ -63,6 +63,12 @@ public:
   Flow visitSetLocal(SetLocal *curr) {
     return Flow(NONSTANDALONE);
   }
+  Flow visitGetGlobal(GetGlobal *curr) {
+    return Flow(NONSTANDALONE);
+  }
+  Flow visitSetGlobal(SetGlobal *curr) {
+    return Flow(NONSTANDALONE);
+  }
   Flow visitLoad(Load *curr) {
     return Flow(NONSTANDALONE);
   }

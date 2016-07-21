@@ -869,6 +869,8 @@ public:
     CallIndirectId,
     GetLocalId,
     SetLocalId,
+    GetGlobalId,
+    SetGlobalId,
     LoadId,
     StoreId,
     ConstId,
@@ -919,6 +921,8 @@ inline const char *getExpressionName(Expression *curr) {
     case Expression::Id::CallIndirectId: return "call_indirect";
     case Expression::Id::GetLocalId: return "get_local";
     case Expression::Id::SetLocalId: return "set_local";
+    case Expression::Id::GetGlobalId: return "get_global";
+    case Expression::Id::SetGlobalId: return "set_global";
     case Expression::Id::LoadId: return "load";
     case Expression::Id::StoreId: return "store";
     case Expression::Id::ConstId: return "const";
@@ -1096,6 +1100,27 @@ class SetLocal : public SpecificExpression<Expression::SetLocalId> {
 public:
   SetLocal() {}
   SetLocal(MixedArena& allocator) {}
+
+  Index index;
+  Expression *value;
+
+  void finalize() {
+    type = value->type;
+  }
+};
+
+class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
+public:
+  GetGlobal() {}
+  GetGlobal(MixedArena& allocator) {}
+
+  Index index;
+};
+
+class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
+public:
+  SetGlobal() {}
+  SetGlobal(MixedArena& allocator) {}
 
   Index index;
   Expression *value;
@@ -1431,6 +1456,13 @@ public:
   Memory() : initial(0), max(kMaxSize) {}
 };
 
+class Global {
+public:
+  Name name;
+  WasmType type;
+  Expression* init;
+};
+
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
@@ -1438,6 +1470,7 @@ public:
   std::vector<std::unique_ptr<Import>> imports;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
+  std::vector<std::unique_ptr<Global>> globals;
 
   Table table;
   Memory memory;
@@ -1451,24 +1484,34 @@ private:
   std::map<Name, Import*> importsMap;
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
+  std::map<Name, Global*> globalsMap;
 
 public:
-  Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0) {}
+  Module() : functionTypeIndex(0), importIndex(0), exportIndex(0), functionIndex(0), globalIndex(0) {}
 
-  FunctionType* getFunctionType(size_t i) { assert(i < functionTypes.size()); return functionTypes[i].get(); }
-  Import* getImport(size_t i) { assert(i < imports.size()); return imports[i].get(); }
-  Export* getExport(size_t i) { assert(i < exports.size()); return exports[i].get(); }
-  Function* getFunction(size_t i) { assert(i < functions.size()); return functions[i].get(); }
+  FunctionType* getFunctionType(Index i) { assert(i < functionTypes.size()); return functionTypes[i].get(); }
+  Import* getImport(Index i) { assert(i < imports.size()); return imports[i].get(); }
+  Export* getExport(Index i) { assert(i < exports.size()); return exports[i].get(); }
+  Function* getFunction(Index i) { assert(i < functions.size()); return functions[i].get(); }
+  Global* getGlobal(Index i) { assert(i < globals.size()); return globals[i].get(); }
 
   FunctionType* getFunctionType(Name name) { assert(functionTypesMap[name]); return functionTypesMap[name]; }
   Import* getImport(Name name) { assert(importsMap[name]); return importsMap[name]; }
   Export* getExport(Name name) { assert(exportsMap[name]); return exportsMap[name]; }
   Function* getFunction(Name name) { assert(functionsMap[name]); return functionsMap[name]; }
+  Global* getGlobal(Name name) { assert(globalsMap[name]); return globalsMap[name]; }
 
   FunctionType* checkFunctionType(Name name) { if (functionTypesMap.find(name) == functionTypesMap.end()) return nullptr; return functionTypesMap[name]; }
   Import* checkImport(Name name) { if (importsMap.find(name) == importsMap.end()) return nullptr; return importsMap[name]; }
   Export* checkExport(Name name) { if (exportsMap.find(name) == exportsMap.end()) return nullptr; return exportsMap[name]; }
   Function* checkFunction(Name name) { if (functionsMap.find(name) == functionsMap.end()) return nullptr; return functionsMap[name]; }
+  Global* checkGlobal(Name name) { if (globalsMap.find(name) == globalsMap.end()) return nullptr; return globalsMap[name]; }
+
+  FunctionType* checkFunctionType(Index i) { if (i >= functionTypes.size()) return nullptr; return functionTypes[i].get(); }
+  Import* checkImport(Index i) { if (i >= imports.size()) return nullptr; return imports[i].get(); }
+  Export* checkExport(Index i) { if (i >= exports.size()) return nullptr; return exports[i].get(); }
+  Function* checkFunction(Index i) { if (i >= functions.size()) return nullptr; return functions[i].get(); }
+  Global* checkGlobal(Index i) { if (i >= globals.size()) return nullptr; return globals[i].get(); }
 
   void addFunctionType(FunctionType* curr) {
     Name numericName = Name::fromInt(functionTypeIndex); // TODO: remove all these, assert on names already existing, do numeric stuff in wasm-s-parser etc.
@@ -1510,6 +1553,17 @@ public:
     functionsMap[numericName] = curr;
     functionIndex++;
   }
+  void addGlobal(Global* curr) {
+    Name numericName = Name::fromInt(globalIndex);
+    if (curr->name.isNull()) {
+      curr->name = numericName;
+    }
+    globals.push_back(std::unique_ptr<Global>(curr));
+    globalsMap[curr->name] = curr;
+    globalsMap[numericName] = curr;
+    globalIndex++;
+  }
+
   void addStart(const Name &s) {
     start = s;
   }
@@ -1533,7 +1587,7 @@ public:
   }
 
 private:
-  size_t functionTypeIndex, importIndex, exportIndex, functionIndex;
+  size_t functionTypeIndex, importIndex, exportIndex, functionIndex, globalIndex;
 };
 
 } // namespace wasm
