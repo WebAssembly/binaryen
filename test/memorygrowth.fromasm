@@ -5312,7 +5312,7 @@
                   (i32.const 24)
                 )
               )
-              (loop $do-out$73 $do-in$74
+              (loop $do-in$74
                 (i32.store
                   (set_local $1
                     (i32.add
@@ -5852,7 +5852,7 @@
               (set_local $4
                 (i32.const 0)
               )
-              (loop $do-out$44 $do-in$45
+              (loop $do-in$45
                 (i32.store offset=12
                   (set_local $15
                     (i32.add

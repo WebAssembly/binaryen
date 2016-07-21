@@ -53,17 +53,21 @@ public:
   wasm::Binary* makeCheckLabel(wasm::Index value) {
     return makeBinary(wasm::EqInt32, makeGetLabel(), makeConst(wasm::Literal(int32_t(value))));
   }
-  wasm::Break* makeShapeBreak(int id) {
-    return wasm::Builder::makeBreak(getBreakName(id));
+
+  // breaks are on blocks, as they can be specific, we make one wasm block per basic block
+  wasm::Break* makeBlockBreak(int id) {
+    return wasm::Builder::makeBreak(getBlockBreakName(id));
   }
+  // continues are on shapes, as there is one per loop, and if we have more than one
+  // going there, it is irreducible control flow anyhow
   wasm::Break* makeShapeContinue(int id) {
-    return wasm::Builder::makeBreak(getContinueName(id));
+    return wasm::Builder::makeBreak(getShapeContinueName(id));
   }
 
-  wasm::Name getBreakName(int id) {
-    return wasm::Name(std::string("shape$") + std::to_string(id) + "$break");
+  wasm::Name getBlockBreakName(int id) {
+    return wasm::Name(std::string("block$") + std::to_string(id) + "$break");
   }
-  wasm::Name getContinueName(int id) {
+  wasm::Name getShapeContinueName(int id) {
     return wasm::Name(std::string("shape$") + std::to_string(id) + "$continue");
   }
 };
@@ -76,9 +80,7 @@ struct Branch {
   enum FlowType {
     Direct = 0,   // We will directly reach the right location through other means, no need for continue or break
     Break = 1,
-    Continue = 2,
-    Nested = 3    // This code is directly reached, but we must be careful to ensure it is nested in an if - it is not reached
-                  // unconditionally, other code paths exist alongside it that we need to make sure do not intertwine
+    Continue = 2
   };
   Shape *Ancestor; // If not NULL, this shape is the relevant one for purposes of getting to the target block. We break or continue on it
   Branch::FlowType Type; // If Ancestor is not NULL, this says whether to break or continue
@@ -144,12 +146,14 @@ struct InsertOrderedSet
 
   InsertOrderedSet() {}
   InsertOrderedSet(const InsertOrderedSet& other) {
+    *this = other;
+  }
+  InsertOrderedSet& operator=(const InsertOrderedSet& other) {
+    clear();
     for (auto i : other.List) {
       insert(i); // inserting manually creates proper iterators
     }
-  }
-  InsertOrderedSet& operator=(const InsertOrderedSet& other) {
-    abort(); // TODO, watch out for iterators
+    return *this;
   }
 };
 
@@ -218,7 +222,7 @@ struct Block {
   BlockBranchMap ProcessedBranchesOut;
   BlockSet ProcessedBranchesIn;
   Shape *Parent; // The shape we are directly inside
-  int Id; // A unique identifier, defined when added to relooper. Note that this uniquely identifies a *logical* block - if we split it, the two instances have the same content *and* the same Id
+  int Id; // A unique identifier, defined when added to relooper
   wasm::Expression* Code; // The code in this block. This can be arbitrary wasm code, including internal control flow, it should just not branch to the outside
   wasm::Expression* SwitchCondition; // If nullptr, then this block ends in ifs (or nothing). otherwise, this block ends in a switch, done on this condition
   bool IsCheckedMultipleEntry; // If true, we are a multiple entry, so reaching us requires setting the label variable
@@ -241,26 +245,25 @@ struct Block {
 
 // Represents a structured control flow shape, one of
 //
-//  Simple: No control flow at all, just instructions. If several
-//          blocks, then 
+//  Simple: No control flow at all, just instructions in a single
+//          basic block.
 //
-//  Multiple: A shape with more than one entry. If the next block to
-//            be entered is among them, we run it and continue to
-//            the next shape, otherwise we continue immediately to the
-//            next shape.
+//  Multiple: A shape with at least one entry. We may visit one of
+//            the entries, or none, before continuing to the next
+//            shape after this.
 //
-//  Loop: An infinite loop.
-//
-//  Emulated: Control flow is managed by a switch in a loop. This
-//            is necessary in some cases, for example when control
-//            flow is not known until runtime (indirect branches,
-//            setjmp returns, etc.)
+//  Loop: An infinite loop. We assume the property that a loop
+//        will always visit one of its entries, and so for example
+//        we cannot have a loop containing a multiple and nothing
+//        else (since we might not visit any of the multiple's
+//        blocks). Multiple entries are possible for the block,
+//        however, which is necessary for irreducible control
+//        flow, of course.
 //
 
 struct SimpleShape;
 struct MultipleShape;
 struct LoopShape;
-struct EmulatedShape;
 
 struct Shape {
   int Id; // A unique identifier. Used to identify loops, labels are Lx where x is the Id. Defined when added to relooper
@@ -270,8 +273,7 @@ struct Shape {
   enum ShapeType {
     Simple,
     Multiple,
-    Loop,
-    Emulated
+    Loop
   };
   ShapeType Type;
 
@@ -283,7 +285,6 @@ struct Shape {
   static SimpleShape *IsSimple(Shape *It) { return It && It->Type == Simple ? (SimpleShape*)It : NULL; }
   static MultipleShape *IsMultiple(Shape *It) { return It && It->Type == Multiple ? (MultipleShape*)It : NULL; }
   static LoopShape *IsLoop(Shape *It) { return It && It->Type == Loop ? (LoopShape*)It : NULL; }
-  static EmulatedShape *IsEmulated(Shape *It) { return It && It->Type == Emulated ? (EmulatedShape*)It : NULL; }
 };
 
 struct SimpleShape : public Shape {
@@ -293,7 +294,6 @@ struct SimpleShape : public Shape {
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
-// Blocks with the same id were split and are identical, so we just care about ids in Multiple entries
 typedef std::map<int, Shape*> IdShapeMap;
 
 struct MultipleShape : public Shape {
@@ -307,17 +307,9 @@ struct MultipleShape : public Shape {
 struct LoopShape : public Shape {
   Shape *Inner;
 
+  BlockSet Entries; // we must visit at least one of these
+
   LoopShape() : Shape(Loop), Inner(NULL) {}
-  wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
-};
-
-// TODO EmulatedShape is only partially functional. Currently it can be used for the
-//      entire set of blocks being relooped, but not subsets.
-struct EmulatedShape : public Shape {
-  Block *Entry;
-  BlockSet Blocks;
-
-  EmulatedShape() : Shape(Emulated) { }
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
@@ -336,7 +328,6 @@ struct Relooper {
   std::deque<Block*> Blocks;
   std::deque<Shape*> Shapes;
   Shape *Root;
-  bool Emulate;
   bool MinSize;
   int BlockIdCounter;
   int ShapeIdCounter;
@@ -351,9 +342,6 @@ struct Relooper {
 
   // Renders the result.
   wasm::Expression* Render(RelooperBuilder& Builder);
-
-  // Sets whether we must emulate everything with switch-loop code
-  void SetEmulate(int E) { Emulate = !!E; }
 
   // Sets us to try to minimize size
   void SetMinSize(bool MinSize_) { MinSize = MinSize_; }

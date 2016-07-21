@@ -308,7 +308,7 @@ int main() {
   print '^'
   subprocess.check_call(['./fuzz'], stdout=open('fuzz.wast', 'w'))
   print '*'
-  fast_out = subprocess.Popen(['bin/binaryen-shell', 'fuzz.wast'],
+  fast_out = subprocess.Popen(['bin/wasm-shell', 'fuzz.wast'],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE).communicate()[0]
   print '-'

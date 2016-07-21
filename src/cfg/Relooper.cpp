@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+
 #include <list>
 #include <stack>
 #include <string>
@@ -38,6 +39,59 @@ static void PrintDebug(const char *Format, ...);
 #define DebugDump(x, ...)
 #endif
 
+// Rendering utilities
+
+static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* Parent, RelooperBuilder& Builder, bool InLoop) {
+  if (!Parent->Next) return Ret;
+
+  auto* Curr = Ret->dynCast<wasm::Block>();
+  if (!Curr || Curr->name.is()) {
+    Curr = Builder.makeBlock(Ret);
+  }
+  // for each multiple after us, we create a block target for breaks to reach
+  while (Parent->Next) {
+    auto* Multiple = Shape::IsMultiple(Parent->Next);
+    if (!Multiple) break;
+    for (auto& iter : Multiple->InnerMap) {
+      int Id = iter.first;
+      Shape* Body = iter.second;
+      Curr->name = Builder.getBlockBreakName(Id);
+      auto* Outer = Builder.makeBlock(Curr);
+      Outer->list.push_back(Body->Render(Builder, InLoop));
+      Outer->finalize(); // TODO: not really necessary
+      Curr = Outer;
+    }
+    Parent->Next = Parent->Next->Next;
+  }
+  // after the multiples is a simple or a loop, in both cases we must hit an entry
+  // block, and so this is the last one we need to take into account now (this
+  // is why we require that loops hit an entry).
+  if (Parent->Next) {
+    auto* Simple = Shape::IsSimple(Parent->Next);
+    if (Simple) {
+      // breaking on the next block's id takes us out, where we
+      // will reach its rendering
+      Curr->name = Builder.getBlockBreakName(Simple->Inner->Id);
+    } else {
+      // add one break target per entry for the loop
+      auto* Loop = Shape::IsLoop(Parent->Next);
+      assert(Loop);
+      assert(Loop->Entries.size() > 0);
+      if (Loop->Entries.size() == 1) {
+        Curr->name = Builder.getBlockBreakName((*Loop->Entries.begin())->Id);
+      } else {
+        for (auto* Entry : Loop->Entries) {
+          Curr->name = Builder.getBlockBreakName(Entry->Id);
+          auto* Outer = Builder.makeBlock(Curr);
+          Outer->finalize(); // TODO: not really necessary
+          Curr = Outer;
+        }
+      }
+    }
+  }
+  return Curr;
+}
+
 // Branch
 
 Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(ConditionInit), Code(CodeInit) {}
@@ -53,12 +107,11 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block *Target, bool S
   auto* Ret = Builder.makeBlock();
   if (Code) Ret->list.push_back(Code);
   if (SetLabel) Ret->list.push_back(Builder.makeSetLabel(Target->Id));
-  if (Ancestor) {
-    if (Type == Break) {
-      Ret->list.push_back(Builder.makeShapeBreak(Ancestor->Id));
-    } else if (Type == Continue) {
-      Ret->list.push_back(Builder.makeShapeContinue(Ancestor->Id));
-    }
+  if (Type == Break) {
+    Ret->list.push_back(Builder.makeBlockBreak(Target->Id));
+  } else if (Type == Continue) {
+    assert(Ancestor);
+    Ret->list.push_back(Builder.makeShapeContinue(Ancestor->Id));
   }
   Ret->finalize();
   return Ret;
@@ -100,7 +153,6 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   }
 
   bool SetLabel = true; // in some cases it is clear we can avoid setting label, see later
-  bool ForceSetLabel = Shape::IsEmulated(Parent) != nullptr;
 
   // A setting of the label variable (label = x) is necessary if it can
   // cause an impact. The main case is where we set label to x, then elsewhere
@@ -129,7 +181,6 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   if (Fused) {
     PrintDebug("Fusing Multiple to Simple\n", 0);
     Parent->Next = Parent->Next->Next;
-
     // When the Multiple has the same number of groups as we have branches,
     // they will all be fused, so it is safe to not set the label at all.
     // If a switch, then we can have multiple branches to the same target
@@ -170,24 +221,23 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
         Target = DefaultTarget;
         Details = ProcessedBranchesOut[DefaultTarget];
       }
-      bool SetCurrLabel = (SetLabel && Target->IsCheckedMultipleEntry) || ForceSetLabel;
+      bool SetCurrLabel = SetLabel && Target->IsCheckedMultipleEntry;
       bool HasFusedContent = Fused && contains(Fused->InnerMap, Target->Id);
+      if (HasFusedContent) {
+        assert(Details->Type == Branch::Break);
+        Details->Type = Branch::Direct;
+      }
       wasm::Expression* CurrContent = nullptr;
+      bool IsDefault = iter == ProcessedBranchesOut.end();
       if (SetCurrLabel || Details->Type != Branch::Direct || HasFusedContent || Details->Code) {
         CurrContent = Details->Render(Builder, Target, SetCurrLabel);
         if (HasFusedContent) {
           CurrContent = Builder.blockify(CurrContent, Fused->InnerMap.find(Target->Id)->second->Render(Builder, InLoop));
-        } else if (Details->Type == Branch::Nested) {
-          // Nest the parent content here, and remove it from showing up afterwards as Next
-          assert(Parent->Next);
-          CurrContent = Builder.blockify(CurrContent, Parent->Next->Render(Builder, InLoop));
-          Parent->Next = nullptr;
         }
       }
-      bool isDefault = iter == ProcessedBranchesOut.end();
       // If there is nothing to show in this branch, omit the condition
       if (CurrContent) {
-        if (isDefault) {
+        if (IsDefault) {
           wasm::Expression* Now;
           if (RemainingConditions) {
             Now = Builder.makeIf(RemainingConditions, CurrContent);
@@ -218,7 +268,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
           RemainingConditions = Now;
         }
       }
-      if (isDefault) break;
+      if (IsDefault) break;
     }
   } else {
     // Emit a switch
@@ -239,18 +289,17 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
         CurrName = SwitchDefault;
       }
       // generate the content for this block
-      bool SetCurrLabel = (SetLabel && Target->IsCheckedMultipleEntry) || ForceSetLabel;
+      bool SetCurrLabel = SetLabel && Target->IsCheckedMultipleEntry;
       bool HasFusedContent = Fused && contains(Fused->InnerMap, Target->Id);
+      if (HasFusedContent) {
+        assert(Details->Type == Branch::Break);
+        Details->Type = Branch::Direct;
+      }
       wasm::Expression* CurrContent = nullptr;
       if (SetCurrLabel || Details->Type != Branch::Direct || HasFusedContent || Details->Code) {
         CurrContent = Details->Render(Builder, Target, SetCurrLabel);
         if (HasFusedContent) {
           CurrContent = Builder.blockify(CurrContent, Fused->InnerMap.find(Target->Id)->second->Render(Builder, InLoop));
-        } else if (Details->Type == Branch::Nested) {
-          // Nest the parent content here, and remove it from showing up afterwards as Next
-          assert(Parent->Next);
-          CurrContent = Builder.blockify(CurrContent, Parent->Next->Render(Builder, InLoop));
-          Parent->Next = nullptr;
         }
       }
       // generate a block to branch to, if we have content
@@ -286,15 +335,8 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   }
 
   if (Root) {
-    if (Fused) {
-      // We are fusing a multiple into this simple
-      auto* Block = Builder.makeBlock(Root);
-      Block->name = Builder.getBreakName(Fused->Id);
-      Root = Block;
-    }
     Ret->list.push_back(Root);
   }
-
   Ret->finalize();
 
   return Ret;
@@ -304,6 +346,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
 
 wasm::Expression* SimpleShape::Render(RelooperBuilder& Builder, bool InLoop) {
   auto* Ret = Inner->Render(Builder, InLoop);
+  Ret = HandleFollowupMultiples(Ret, this, Builder, InLoop);
   if (Next) {
     Ret = Builder.makeSequence(Ret, Next->Render(Builder, InLoop));
   }
@@ -329,8 +372,8 @@ wasm::Expression* MultipleShape::Render(RelooperBuilder& Builder, bool InLoop) {
       CurrIf = Now;
     }
   }
-  auto* Ret = Builder.makeBlock(FirstIf);
-  Ret->name = Builder.getBreakName(Id);
+  wasm::Expression* Ret = Builder.makeBlock(FirstIf);
+  Ret = HandleFollowupMultiples(Ret, this, Builder, InLoop);
   if (Next) {
     Ret = Builder.makeSequence(Ret, Next->Render(Builder, InLoop));
   }
@@ -340,22 +383,17 @@ wasm::Expression* MultipleShape::Render(RelooperBuilder& Builder, bool InLoop) {
 // LoopShape
 
 wasm::Expression* LoopShape::Render(RelooperBuilder& Builder, bool InLoop) {
-  wasm::Expression* Ret = Builder.makeLoop(Builder.getBreakName(Id), Builder.getContinueName(Id), Inner->Render(Builder, true));
+  wasm::Expression* Ret = Builder.makeLoop(wasm::Name(), Builder.getShapeContinueName(Id), Inner->Render(Builder, true));
+  Ret = HandleFollowupMultiples(Ret, this, Builder, InLoop);
   if (Next) {
     Ret = Builder.makeSequence(Ret, Next->Render(Builder, InLoop));
   }
   return Ret;
 }
 
-// EmulatedShape
-
-wasm::Expression* EmulatedShape::Render(RelooperBuilder& Builder, bool InLoop) {
-  abort(); // TODO
-}
-
 // Relooper
 
-Relooper::Relooper() : Root(nullptr), Emulate(false), MinSize(false), BlockIdCounter(1), ShapeIdCounter(0) { // block ID 0 is reserved for clearings
+Relooper::Relooper() : Root(nullptr), MinSize(false), BlockIdCounter(1), ShapeIdCounter(0) { // block ID 0 is reserved for clearings
 }
 
 Relooper::~Relooper() {
@@ -462,25 +500,10 @@ void Relooper::Calculate(Block *Entry) {
         BlockSet JustInner;
         JustInner.insert(Inner);
         for (BlockSet::iterator iter = NextEntries.begin(); iter != NextEntries.end(); iter++) {
-          Solipsize(*iter, Branch::Direct, Simple, JustInner);
+          Solipsize(*iter, Branch::Break, Simple, JustInner);
         }
       }
       return Simple;
-    }
-
-    Shape *MakeEmulated(BlockSet &Blocks, Block *Entry, BlockSet &NextEntries) {
-      PrintDebug("creating emulated block with entry #%d and everything it can reach, %d blocks\n", Entry->Id, Blocks.size());
-      EmulatedShape *Emulated = new EmulatedShape;
-      Notice(Emulated);
-      Emulated->Entry = Entry;
-      for (BlockSet::iterator iter = Blocks.begin(); iter != Blocks.end(); iter++) {
-        Block *Curr = *iter;
-        Emulated->Blocks.insert(Curr);
-        Curr->Parent = Emulated;
-        Solipsize(Curr, Branch::Continue, Emulated, Blocks);
-      }
-      Blocks.clear();
-      return Emulated;
     }
 
     Shape *MakeLoop(BlockSet &Blocks, BlockSet& Entries, BlockSet &NextEntries) {
@@ -590,8 +613,9 @@ void Relooper::Calculate(Block *Entry) {
         Solipsize(*iter, Branch::Break, Loop, InnerBlocks);
       }
       // Finish up
-      Shape *Inner = Process(InnerBlocks, Entries, nullptr);
+      Shape *Inner = Process(InnerBlocks, Entries);
       Loop->Inner = Inner;
+      Loop->Entries = Entries;
       return Loop;
     }
 
@@ -715,9 +739,8 @@ void Relooper::Calculate(Block *Entry) {
 #endif
     }
 
-    Shape *MakeMultiple(BlockSet &Blocks, BlockSet& Entries, BlockBlockSetMap& IndependentGroups, Shape *Prev, BlockSet &NextEntries) {
+    Shape *MakeMultiple(BlockSet &Blocks, BlockSet& Entries, BlockBlockSetMap& IndependentGroups, BlockSet &NextEntries, bool IsCheckedMultiple) {
       PrintDebug("creating multiple block with %d inner groups\n", IndependentGroups.size());
-      bool Fused = !!(Shape::IsSimple(Prev));
       MultipleShape *Multiple = new MultipleShape();
       Notice(Multiple);
       BlockSet CurrEntries;
@@ -745,9 +768,8 @@ void Relooper::Calculate(Block *Entry) {
             iter = Next; // increment carefully because Solipsize can remove us
           }
         }
-        Multiple->InnerMap[CurrEntry->Id] = Process(CurrBlocks, CurrEntries, nullptr);
-        // If we are not fused, then our entries will actually be checked
-        if (!Fused) {
+        Multiple->InnerMap[CurrEntry->Id] = Process(CurrBlocks, CurrEntries);
+        if (IsCheckedMultiple) {
           CurrEntry->IsCheckedMultipleEntry = true;
         }
       }
@@ -767,13 +789,14 @@ void Relooper::Calculate(Block *Entry) {
     // The Make* functions receive a NextEntries. If they fill it with data, those are the entries for the
     //   ->Next block on them, and the blocks are what remains in Blocks (which Make* modify). In this way
     //   we avoid recursing on Next (imagine a long chain of Simples, if we recursed we could blow the stack).
-    Shape *Process(BlockSet &Blocks, BlockSet& InitialEntries, Shape *Prev) {
+    Shape *Process(BlockSet &Blocks, BlockSet& InitialEntries) {
       PrintDebug("Process() called\n", 0);
       BlockSet *Entries = &InitialEntries;
       BlockSet TempEntries[2];
       int CurrTempIndex = 0;
       BlockSet *NextEntries;
       Shape *Ret = nullptr;
+      Shape *Prev = nullptr;
       #define Make(call) \
         Shape *Temp = call; \
         if (Prev) Prev->Next = Temp; \
@@ -794,9 +817,6 @@ void Relooper::Calculate(Block *Entry) {
         if (Entries->size() == 0) return Ret;
         if (Entries->size() == 1) {
           Block *Curr = *(Entries->begin());
-          if (Parent->Emulate) {
-            Make(MakeEmulated(Blocks, Curr, *NextEntries));
-          }
           if (Curr->BranchesIn.size() == 0) {
             // One entry, no looping ==> Simple
             Make(MakeSimple(Blocks, Curr, *NextEntries));
@@ -816,7 +836,8 @@ void Relooper::Calculate(Block *Entry) {
         if (IndependentGroups.size() > 0) {
           // We can handle a group in a multiple if its entry cannot be reached by another group.
           // Note that it might be reachable by itself - a loop. But that is fine, we will create
-          // a loop inside the multiple block (which is the performant order to do it).
+          // a loop inside the multiple block, which is both the performant order to do it, and
+          // preserves the property that a loop will always reach an entry.
           for (BlockBlockSetMap::iterator iter = IndependentGroups.begin(); iter != IndependentGroups.end();) {
             Block *Entry = iter->first;
             BlockSet &Group = iter->second;
@@ -879,7 +900,18 @@ void Relooper::Calculate(Block *Entry) {
 
           if (IndependentGroups.size() > 0) {
             // Some groups removable ==> Multiple
-            Make(MakeMultiple(Blocks, *Entries, IndependentGroups, Prev, *NextEntries));
+            // This is a checked multiple if it has an entry that is an entry to this Process call, that is,
+            // if we can reach it from outside this set of blocks, then we must check the label variable
+            // to do so. Otherwise, if it is just internal blocks, those can always be jumped to forward,
+            // without using the label variable
+            bool Checked = false;
+            for (auto* Entry : *Entries) {
+              if (InitialEntries.count(Entry)) {
+                Checked = true;
+                break;
+              }
+            }
+            Make(MakeMultiple(Blocks, *Entries, IndependentGroups, *NextEntries, Checked));
           }
         }
         // No independent groups, must be loopable ==> Loop
@@ -901,7 +933,7 @@ void Relooper::Calculate(Block *Entry) {
 
   BlockSet Entries;
   Entries.insert(Entry);
-  Root = Analyzer(this).Process(AllBlocks, Entries, nullptr);
+  Root = Analyzer(this).Process(AllBlocks, Entries);
   assert(Root);
 }
 

@@ -3,4 +3,59 @@
   (func $b0 (param $i1 i32) (result i32)
     (i32.const 0)
   )
+  (func $loops
+    (loop $out $in
+      (br $out)
+      (br $in)
+    )
+    (block $out
+      (br $out)
+    )
+    (loop $in
+      (br $in)
+    )
+    (loop
+      (nop)
+    )
+    (loop
+      (loop $out $in
+        (br $out)
+        (br $in)
+      )
+    )
+    (block
+      (loop $out $in
+        (br $out)
+        (br $in)
+      )
+    )
+    (loop $out $in
+      (br $out)
+      (br $in)
+    )
+    (loop $out $in
+      (br $out)
+      (br $in)
+    )
+    (loop $out $in
+      (br $out)
+      (br $in)
+    )
+  )
+  (func $merges
+    (block $b
+      (br $b)
+      (br $b)
+    )
+    (block $b
+      (br_table $b $b
+        (i32.const 3)
+      )
+    )
+    (block $b
+      (br_table $b $b
+        (i32.const 3)
+      )
+    )
+  )
 )
