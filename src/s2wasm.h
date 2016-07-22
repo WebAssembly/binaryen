@@ -862,7 +862,6 @@ class S2WasmBuilder {
         assert(type == funcType->result);
         auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
         setOutput(indirect, assign);
-
       } else {
         // non-indirect call
         Name assign = getAssign();

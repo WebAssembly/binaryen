@@ -181,7 +181,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printName(curr->name);
       if (!curr->value || curr->value->is<Nop>()) {
         // avoid a new line just for the parens
-        o << ")";
+        o << ')';
         return;
       }
       incIndent();
@@ -195,9 +195,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitSwitch(Switch *curr) {
     printOpening(o, "br_table");
     for (auto& t : curr->targets) {
-      o << " " << t;
+      o << ' ' << t;
     }
-    o << " " << curr->default_;
+    o << ' ' << curr->default_;
     incIndent();
     if (curr->value && !curr->value->is<Nop>()) printFullLine(curr->value);
     printFullLine(curr->condition);
@@ -470,7 +470,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printOpening(o, "return");
     if (!curr->value || curr->value->is<Nop>()) {
       // avoid a new line just for the parens
-      o << ")";
+      o << ')';
       return;
     }
     incIndent();
@@ -549,17 +549,17 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->params.size() > 0) {
       for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
-        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ")";
+        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ')';
       }
     }
     if (curr->result != none) {
       o << maybeSpace;
-      printMinorOpening(o, "result ") << printWasmType(curr->result) << ")";
+      printMinorOpening(o, "result ") << printWasmType(curr->result) << ')';
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ")";
+      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
@@ -587,8 +587,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printOpening(o, "module", true);
     incIndent();
     doIndent(o, indent);
-    printOpening(o, "memory") << " " << curr->memory.initial;
-    if (curr->memory.max && curr->memory.max != Memory::kMaxSize) o << " " << curr->memory.max;
+    printOpening(o, "memory") << ' ' << curr->memory.initial;
+    if (curr->memory.max && curr->memory.max != Memory::kMaxSize) o << ' ' << curr->memory.max;
     for (auto segment : curr->memory.segments) {
       o << maybeNewLine;
       o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";
@@ -614,7 +614,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       o << "\")";
     }
-    o << ((curr->memory.segments.size() > 0 && !minify) ? "\n  " : "") << ")";
+    o << ((curr->memory.segments.size() > 0 && !minify) ? "\n  " : "") << ')';
     o << maybeNewLine;
     if (curr->memory.exportName.is()) {
       doIndent(o, indent);
@@ -624,7 +624,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     if (curr->start.is()) {
       doIndent(o, indent);
-      printOpening(o, "start") << " " << curr->start << ")";
+      printOpening(o, "start") << ' ' << curr->start << ')';
       o << maybeNewLine;
     }
     for (auto& child : curr->functionTypes) {
