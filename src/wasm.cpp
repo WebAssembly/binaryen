@@ -33,6 +33,7 @@ namespace Section {
   const char* FunctionSignatures = "function";
   const char* Functions = "code";
   const char* ExportTable = "export";
+  const char* Globals = "global";
   const char* DataSegments = "data";
   const char* FunctionTable = "table";
   const char* Names = "name";

@@ -244,17 +244,11 @@ namespace Section {
   extern const char* FunctionSignatures;
   extern const char* Functions;
   extern const char* ExportTable;
+  extern const char* Globals;
   extern const char* DataSegments;
   extern const char* FunctionTable;
   extern const char* Names;
   extern const char* Start;
-};
-
-enum FunctionEntry {
-  Named = 1,
-  Import = 2,
-  Locals = 4,
-  Export = 8
 };
 
 enum ASTNodes {
@@ -418,6 +412,8 @@ enum ASTNodes {
   CallFunction = 0x16,
   CallIndirect = 0x17,
   CallImport = 0x18,
+  GetGlobal = 0x1a,
+  SetGlobal = 0x1b,
 
   Nop = 0x00,
   Block = 0x01,
@@ -486,6 +482,7 @@ public:
     writeFunctionSignatures();
     writeFunctionTable();
     writeMemory();
+    writeGlobals();
     writeExports();
     writeStart();
     writeFunctions();
@@ -632,6 +629,12 @@ public:
     finishSection(start);
   }
 
+  void writeExpression(Expression* curr) {
+    assert(depth == 0);
+    recurse(curr);
+    assert(depth == 0);
+  }
+
   void writeFunctions() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctions" << std::endl;
@@ -657,13 +660,25 @@ public:
       if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
       if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
-      depth = 0;
-      recurse(function->body);
-      assert(depth == 0);
+      writeExpression(function->body);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
       if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
       o.writeAt(sizePos, U32LEB(size));
+    }
+    finishSection(start);
+  }
+
+  void writeGlobals() {
+    if (wasm->globals.size() == 0) return;
+    if (debug) std::cerr << "== writeglobals" << std::endl;
+    auto start = startSection(BinaryConsts::Section::Globals);
+    o << U32LEB(wasm->globals.size());
+    for (auto& curr : wasm->globals) {
+      if (debug) std::cerr << "write one" << std::endl;
+      o << binaryWasmType(curr->type);
+      writeExpression(curr->init);
+      o << int8_t(BinaryConsts::End);
     }
     finishSection(start);
   }
@@ -797,7 +812,7 @@ public:
 
   // AST writing via visitors
 
-  int depth; // only for debugging
+  int depth = 0; // only for debugging
 
   void recurse(Expression*& curr) {
     if (debug) std::cerr << "zz recurse into " << ++depth << " at " << o.size() << std::endl;
@@ -919,6 +934,15 @@ public:
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     recurse(curr->value);
     o << int8_t(BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
+  }
+  void visitGetGlobal(GetGlobal *curr) {
+    if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << std::endl;
+    o << int8_t(BinaryConsts::GetGlobal) << U32LEB(curr->index);
+  }
+  void visitSetGlobal(SetGlobal *curr) {
+    if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
+    recurse(curr->value);
+    o << int8_t(BinaryConsts::SetGlobal) << U32LEB(curr->index);
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
@@ -1230,6 +1254,7 @@ public:
       else if (match(BinaryConsts::Section::FunctionSignatures)) readFunctionSignatures();
       else if (match(BinaryConsts::Section::Functions)) readFunctions();
       else if (match(BinaryConsts::Section::ExportTable)) readExports();
+      else if (match(BinaryConsts::Section::Globals)) readGlobals();
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
       else if (match(BinaryConsts::Section::Names)) readNames();
@@ -1519,7 +1544,7 @@ public:
         // process body
         assert(breakStack.empty());
         assert(expressionStack.empty());
-        depth = 0;
+        assert(depth == 0);
         func->body = getMaybeBlock();
         assert(depth == 0);
         assert(breakStack.empty());
@@ -1544,6 +1569,23 @@ public:
       assert(index < functionTypes.size());
       curr->name = getInlineString();
       exportIndexes[curr] = index;
+    }
+  }
+
+  void readGlobals() {
+    if (debug) std::cerr << "== readGlobals" << std::endl;
+    size_t num = getU32LEB();
+    if (debug) std::cerr << "num: " << num << std::endl;
+    for (size_t i = 0; i < num; i++) {
+      if (debug) std::cerr << "read one" << std::endl;
+      auto curr = new Global;
+      curr->type = getWasmType();
+      assert(depth == 0);
+      processExpressions();
+      assert(expressionStack.size() == 1);
+      curr->init = popExpression();
+      assert(depth == 0);
+      wasm.addGlobal(curr);
     }
   }
 
@@ -1643,7 +1685,7 @@ public:
 
   // AST reading
 
-  int depth; // only for debugging
+  int depth = 0; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr) {
     if (pos == endOfFunction) {
@@ -1665,6 +1707,8 @@ public:
       case BinaryConsts::CallIndirect: visitCallIndirect((curr = allocator.alloc<CallIndirect>())->cast<CallIndirect>()); break;
       case BinaryConsts::GetLocal:     visitGetLocal((curr = allocator.alloc<GetLocal>())->cast<GetLocal>()); break;
       case BinaryConsts::SetLocal:     visitSetLocal((curr = allocator.alloc<SetLocal>())->cast<SetLocal>()); break;
+      case BinaryConsts::GetGlobal:    visitGetGlobal((curr = allocator.alloc<GetGlobal>())->cast<GetGlobal>()); break;
+      case BinaryConsts::SetGlobal:    visitSetGlobal((curr = allocator.alloc<SetGlobal>())->cast<SetGlobal>()); break;
       case BinaryConsts::Select:       visitSelect((curr = allocator.alloc<Select>())->cast<Select>()); break;
       case BinaryConsts::Return:       visitReturn((curr = allocator.alloc<Return>())->cast<Return>()); break;
       case BinaryConsts::Nop:          visitNop((curr = allocator.alloc<Nop>())->cast<Nop>()); break;
@@ -1860,6 +1904,19 @@ public:
     if (debug) std::cerr << "zz node: SetLocal" << std::endl;
     curr->index = getU32LEB();
     assert(curr->index < currFunction->getNumLocals());
+    curr->value = popExpression();
+    curr->type = curr->value->type;
+  }
+  void visitGetGlobal(GetGlobal *curr) {
+    if (debug) std::cerr << "zz node: GetGlobal " << pos << std::endl;
+    curr->index = getU32LEB();
+    assert(curr->index < wasm.globals.size());
+    curr->type = wasm.globals[curr->index]->type;
+  }
+  void visitSetGlobal(SetGlobal *curr) {
+    if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
+    curr->index = getU32LEB();
+    assert(curr->index < wasm.globals.size());
     curr->value = popExpression();
     curr->type = curr->value->type;
   }
