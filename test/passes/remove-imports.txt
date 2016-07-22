@@ -3,7 +3,7 @@
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$d (func (result f64)))
-  (func $nada
+  (func $nada (type $FUNCSIG$v)
     (nop)
     (i32.const 0)
     (f64.const 0)

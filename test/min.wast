@@ -1,14 +1,18 @@
 (module
   (memory 256 256)
+  (type $0 (func (param f32) (result f32)))
+  (type $1 (func (param i32 i32) (result f32)))
+  (type $2 (func (param i32) (result i32)))
+  (type $3 (func (param i32 i32 i32) (result i32)))
   (export "floats" $floats)
-  (func $floats (param $f f32) (result f32)
+  (func $floats (type $0) (param $f f32) (result f32)
     (local $t f32)
     (f32.add
       (get_local $t)
       (get_local $f)
     )
   )
-  (func $neg (param $k i32) (param $p i32) (result f32)
+  (func $neg (type $1) (param $k i32) (param $p i32) (result f32)
     (local $n f32)
     (set_local $n
       (f32.neg
@@ -24,7 +28,7 @@
       )
     )
   )
-  (func $littleswitch (param $x i32) (result i32)
+  (func $littleswitch (type $2) (param $x i32) (result i32)
     (block $topmost
       (block $switch-case$2
         (block $switch-case$1
@@ -45,7 +49,7 @@
       (i32.const 0)
     )
   )
-  (func $f1 (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
+  (func $f1 (type $3) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
     (block $topmost
       (get_local $i3)
     )

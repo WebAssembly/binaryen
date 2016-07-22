@@ -1,48 +1,51 @@
 (module
   (memory 256 256)
-  (func $b0-yes (param $i1 i32)
+  (type $0 (func (param i32)))
+  (type $1 (func))
+  (type $2 (func (result i32)))
+  (func $b0-yes (type $0) (param $i1 i32)
     (block $topmost
     )
   )
-  (func $b1 (param $i1 i32)
+  (func $b1 (type $0) (param $i1 i32)
     (block $topmost
       (i32.const 0)
     )
   )
-  (func $b2 (param $i1 i32)
+  (func $b2 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
       )
     )
   )
-  (func $b3-yes (param $i1 i32)
+  (func $b3-yes (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
       )
     )
   )
-  (func $b4 (param $i1 i32)
-    (block $topmost
-      (block $inner
-        (i32.const 0)
-      )
-    )
-  )
-  (func $b5 (param $i1 i32)
+  (func $b4 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
         (i32.const 0)
       )
     )
   )
-  (func $b6 (param $i1 i32)
+  (func $b5 (type $0) (param $i1 i32)
+    (block $topmost
+      (block $inner
+        (i32.const 0)
+      )
+    )
+  )
+  (func $b6 (type $0) (param $i1 i32)
     (block $topmost
       (br_if $topmost
         (i32.const 1)
       )
     )
   )
-  (func $b7 (param $i1 i32)
+  (func $b7 (type $0) (param $i1 i32)
     (block $topmost
       (br_if $topmost
         (i32.const 0)
@@ -50,7 +53,7 @@
       )
     )
   )
-  (func $b8 (param $i1 i32)
+  (func $b8 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
         (br_if $topmost
@@ -59,7 +62,7 @@
       )
     )
   )
-  (func $b9 (param $i1 i32)
+  (func $b9 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
         (br_if $topmost
@@ -68,7 +71,7 @@
       )
     )
   )
-  (func $b10 (param $i1 i32)
+  (func $b10 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
         (br_if $topmost
@@ -78,7 +81,7 @@
       )
     )
   )
-  (func $b11 (param $i1 i32)
+  (func $b11 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
         (br_if $inner
@@ -88,7 +91,7 @@
       )
     )
   )
-  (func $b12-yes
+  (func $b12-yes (type $1)
     (block $topmost
       (select
         (block $block1
@@ -103,7 +106,7 @@
       )
     )
   )
-  (func $b13 (result i32)
+  (func $b13 (type $2) (result i32)
     (block $topmost
       (if
         (i32.const 1)
@@ -124,7 +127,7 @@
       (i32.const 3)
     )
   )
-  (func $b14 (result i32)
+  (func $b14 (type $2) (result i32)
     (block $topmost
       (select
         (block $block1
@@ -137,14 +140,14 @@
       )
     )
   )
-  (func $b15
+  (func $b15 (type $1)
     (block $topmost
       (br_if $topmost
         (i32.const 17)
       )
     )
   )
-  (func $b15
+  (func $b15 (type $1)
     (block $topmost
       (br_if $topmost
         (i32.const 0)
@@ -152,7 +155,7 @@
       )
     )
   )
-  (func $b16
+  (func $b16 (type $1)
     (block $a
       (block $b
         (block $c
@@ -172,7 +175,7 @@
       )
     )
   )
-  (func $b17
+  (func $b17 (type $1)
     (block $a
       (select
         (block $block1
@@ -210,16 +213,16 @@
       )
     )
   )
-  (func $ret-1
+  (func $ret-1 (type $1)
     (nop)
   )
-  (func $ret-2
+  (func $ret-2 (type $1)
     (block $block0
       (block $block1
       )
     )
   )
-  (func $ret-3
+  (func $ret-3 (type $1)
     (block $block0
       (select
         (nop)
@@ -229,14 +232,14 @@
       )
     )
   )
-  (func $ret-value (result i32)
+  (func $ret-value (type $2) (result i32)
     (block $block0
       (block $block1
         (i32.const 1)
       )
     )
   )
-  (func $no-select-but-the-last
+  (func $no-select-but-the-last (type $1)
     (block $a
       (if
         (i32.const 0)
@@ -281,7 +284,7 @@
       )
     )
   )
-  (func $side-effects-and-order (result i32)
+  (func $side-effects-and-order (type $2) (result i32)
     (local $x i32)
     (block $do-once$0
       (br_if $do-once$0

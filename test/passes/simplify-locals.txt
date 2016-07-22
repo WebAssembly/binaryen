@@ -4,11 +4,14 @@
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
   (type $FUNCSIG$iiiiii (func (param i32 i32 i32 i32 i32) (result i32)))
+  (type $4 (func (param i32)))
+  (type $5 (func (param i32) (result i32)))
+  (type $6 (func (param i32 i32 i32 i32 i32 i32)))
   (import $waka "env" "waka")
   (import $waka_int "env" "waka_int" (result i32))
   (import $_i64Subtract "env" "i64sub" (param i32 i32 i32 i32) (result i32))
   (import $___udivmoddi4 "env" "moddi" (param i32 i32 i32 i32 i32) (result i32))
-  (func $b0-yes (param $i1 i32)
+  (func $b0-yes (type $4) (param $i1 i32)
     (local $x i32)
     (local $y i32)
     (local $a i32)
@@ -206,7 +209,7 @@
       (get_local $a)
     )
   )
-  (func $Ia (param $a i32) (result i32)
+  (func $Ia (type $5) (param $a i32) (result i32)
     (local $b i32)
     (block $switch$0
       (block $switch-default$6
@@ -217,7 +220,7 @@
       (i32.const 60)
     )
   )
-  (func $memories (param $i2 i32) (param $i3 i32) (param $bi2 i32) (param $bi3 i32) (param $ci3 i32) (param $di3 i32)
+  (func $memories (type $6) (param $i2 i32) (param $i3 i32) (param $bi2 i32) (param $bi3 i32) (param $ci3 i32) (param $di3 i32)
     (local $set_with_no_get i32)
     (nop)
     (i32.store8
@@ -247,7 +250,7 @@
     )
     (i32.const 456)
   )
-  (func $___remdi3 (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
+  (func $___remdi3 (type $FUNCSIG$iiiii) (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
     (local $$1$1 i32)
     (local $$1$0 i32)
     (local $$rem i32)
@@ -438,7 +441,7 @@
       )
     )
   )
-  (func $block-returns
+  (func $block-returns (type $FUNCSIG$v)
     (local $x i32)
     (set_local $x
       (block $out
@@ -494,7 +497,7 @@
       )
     )
   )
-  (func $multiple (param $s i32) (param $r i32) (param $f i32) (param $p i32) (param $t i32) (param $m i32)
+  (func $multiple (type $6) (param $s i32) (param $r i32) (param $f i32) (param $p i32) (param $t i32) (param $m i32)
     (nop)
     (set_local $r
       (i32.add
@@ -517,7 +520,7 @@
     (get_local $m)
     (get_local $t)
   )
-  (func $switch-def (param $i3 i32) (result i32)
+  (func $switch-def (type $5) (param $i3 i32) (result i32)
     (local $i1 i32)
     (set_local $i1
       (i32.const 10)

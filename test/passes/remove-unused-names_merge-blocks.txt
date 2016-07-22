@@ -3,20 +3,21 @@
   (type $i (func (param i32)))
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))
+  (type $3 (func))
   (table $call-i)
-  (func $call-i (param $0 i32)
+  (func $call-i (type $i) (param $0 i32)
     (nop)
   )
-  (func $call-ii (param $0 i32) (param $1 i32)
+  (func $call-ii (type $ii) (param $0 i32) (param $1 i32)
     (nop)
   )
-  (func $call-iii (param $0 i32) (param $1 i32) (param $2 i32)
+  (func $call-iii (type $iii) (param $0 i32) (param $1 i32) (param $2 i32)
     (nop)
   )
-  (func $b0-yes (param $i1 i32)
+  (func $b0-yes (type $i) (param $i1 i32)
     (i32.const 10)
   )
-  (func $b0-no (param $i1 i32)
+  (func $b0-no (type $i) (param $i1 i32)
     (block $topmost
       (block $block0
         (br $block0)
@@ -24,33 +25,33 @@
       (br $topmost)
     )
   )
-  (func $b0-br-but-ok (param $i1 i32)
+  (func $b0-br-but-ok (type $i) (param $i1 i32)
     (block $topmost
       (br $topmost)
     )
   )
-  (func $b1-yes (param $i1 i32)
+  (func $b1-yes (type $i) (param $i1 i32)
     (i32.const 10)
   )
-  (func $b2-yes (param $i1 i32)
+  (func $b2-yes (type $i) (param $i1 i32)
     (i32.const 5)
     (i32.const 10)
     (i32.const 15)
   )
-  (func $b3-yes (param $i1 i32)
+  (func $b3-yes (type $i) (param $i1 i32)
     (i32.const 3)
     (i32.const 6)
     (i32.const 10)
     (i32.const 15)
     (i32.const 20)
   )
-  (func $b4 (param $i1 i32)
+  (func $b4 (type $i) (param $i1 i32)
     (block $inner
       (i32.const 10)
       (br $inner)
     )
   )
-  (func $b5 (param $i1 i32)
+  (func $b5 (type $i) (param $i1 i32)
     (block $middle
       (block $inner
         (i32.const 10)
@@ -59,7 +60,7 @@
       (br $middle)
     )
   )
-  (func $b6 (param $i1 i32)
+  (func $b6 (type $i) (param $i1 i32)
     (i32.const 5)
     (block $inner
       (i32.const 10)
@@ -67,7 +68,7 @@
     )
     (i32.const 15)
   )
-  (func $b7 (param $i1 i32)
+  (func $b7 (type $i) (param $i1 i32)
     (i32.const 3)
     (block $middle
       (i32.const 6)
@@ -80,7 +81,7 @@
     )
     (i32.const 20)
   )
-  (func $unary
+  (func $unary (type $3)
     (local $x i32)
     (i32.eqz
       (block
@@ -109,7 +110,7 @@
       (unreachable)
     )
   )
-  (func $binary
+  (func $binary (type $3)
     (i32.add
       (block
         (i32.const 10)
@@ -190,7 +191,7 @@
       (i32.const 30)
     )
   )
-  (func $trinary
+  (func $trinary (type $3)
     (i32.const 10)
     (i32.const 30)
     (i32.const 50)
@@ -311,7 +312,7 @@
       (unreachable)
     )
   )
-  (func $breaks
+  (func $breaks (type $3)
     (block $out
       (i32.const 10)
       (br $out
@@ -339,7 +340,7 @@
       )
     )
   )
-  (func $calls
+  (func $calls (type $3)
     (call $call-i
       (block
         (i32.const 10)
@@ -421,7 +422,7 @@
       )
     )
   )
-  (func $block-type-change
+  (func $block-type-change (type $3)
     (local $0 f64)
     (local $1 f64)
     (if

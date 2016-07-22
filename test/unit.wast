@@ -6,12 +6,16 @@
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+  (type $4 (func (result f64)))
+  (type $5 (func (result i32)))
+  (type $6 (func (param i32) (result i32)))
+  (type $7 (func (param f64) (result f64)))
   (import $_emscripten_asm_const_vi "env" "_emscripten_asm_const_vi")
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
   (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
-  (func $big_negative
+  (func $big_negative (type $FUNCSIG$v)
     (local $temp f64)
     (block $block0
       (set_local $temp
@@ -31,7 +35,7 @@
       )
     )
   )
-  (func $importedDoubles (result f64)
+  (func $importedDoubles (type $4) (result f64)
     (local $temp f64)
     (block $topmost
       (set_local $temp
@@ -83,7 +87,7 @@
       (f64.const 1.2)
     )
   )
-  (func $doubleCompares (param $x f64) (param $y f64) (result f64)
+  (func $doubleCompares (type $FUNCSIG$ddd) (param $x f64) (param $y f64) (result f64)
     (local $t f64)
     (local $Int f64)
     (local $Double i32)
@@ -127,14 +131,14 @@
       (get_local $y)
     )
   )
-  (func $intOps (result i32)
+  (func $intOps (type $5) (result i32)
     (local $x i32)
     (i32.eq
       (get_local $x)
       (i32.const 0)
     )
   )
-  (func $hexLiterals
+  (func $hexLiterals (type $FUNCSIG$v)
     (i32.add
       (i32.add
         (i32.const 0)
@@ -143,7 +147,7 @@
       (i32.const -19088752)
     )
   )
-  (func $conversions
+  (func $conversions (type $FUNCSIG$v)
     (local $i i32)
     (local $d f64)
     (block $block0
@@ -167,7 +171,7 @@
       )
     )
   )
-  (func $seq
+  (func $seq (type $FUNCSIG$v)
     (local $J f64)
     (set_local $J
       (f64.sub
@@ -182,7 +186,7 @@
       )
     )
   )
-  (func $switcher (param $x i32) (result i32)
+  (func $switcher (type $6) (param $x i32) (result i32)
     (block $topmost
       (block $switch$0
         (block $switch-default$3
@@ -268,18 +272,18 @@
       (i32.const 0)
     )
   )
-  (func $blocker
+  (func $blocker (type $FUNCSIG$v)
     (block $label$break$L
       (br $label$break$L)
     )
   )
-  (func $frem (result f64)
+  (func $frem (type $4) (result f64)
     (call_import $f64-rem
       (f64.const 5.5)
       (f64.const 1.2)
     )
   )
-  (func $big_uint_div_u (result i32)
+  (func $big_uint_div_u (type $5) (result i32)
     (local $x i32)
     (block $topmost
       (set_local $x
@@ -294,7 +298,7 @@
       (get_local $x)
     )
   )
-  (func $fr (param $x f32)
+  (func $fr (type $FUNCSIG$vf) (param $x f32)
     (local $y f32)
     (local $z f64)
     (block $block0
@@ -308,10 +312,10 @@
       (f32.const 0)
     )
   )
-  (func $negZero (result f64)
+  (func $negZero (type $4) (result f64)
     (f64.const -0)
   )
-  (func $abs
+  (func $abs (type $FUNCSIG$v)
     (local $x i32)
     (local $y f64)
     (local $z f32)
@@ -347,7 +351,7 @@
       )
     )
   )
-  (func $neg
+  (func $neg (type $FUNCSIG$v)
     (local $x f32)
     (block $block0
       (set_local $x
@@ -367,7 +371,7 @@
       )
     )
   )
-  (func $cneg (param $x f32)
+  (func $cneg (type $FUNCSIG$vf) (param $x f32)
     (call_indirect $FUNCSIG$vf
       (i32.add
         (i32.and
@@ -379,7 +383,7 @@
       (get_local $x)
     )
   )
-  (func $___syscall_ret
+  (func $___syscall_ret (type $FUNCSIG$v)
     (local $$0 i32)
     (i32.gt_u
       (i32.shr_u
@@ -389,20 +393,20 @@
       (i32.const -4096)
     )
   )
-  (func $z
+  (func $z (type $FUNCSIG$v)
     (nop)
   )
-  (func $w
+  (func $w (type $FUNCSIG$v)
     (nop)
   )
-  (func $block_and_after (result i32)
+  (func $block_and_after (type $5) (result i32)
     (block $waka
       (i32.const 1)
       (br $waka)
     )
     (i32.const 0)
   )
-  (func $loop-roundtrip (param $0 f64) (result f64)
+  (func $loop-roundtrip (type $7) (param $0 f64) (result f64)
     (loop $loop-out0 $loop-in1
       (get_local $0)
       (get_local $0)

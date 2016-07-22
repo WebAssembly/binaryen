@@ -79,6 +79,13 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
       actual += run_command(cmd)
     with open(os.path.join('test', 'passes', passname + '.txt'), 'w') as o: o.write(actual)
 
+print '\n[ checking wasm-opt -o notation... ]\n'
+
+wast = os.path.join('test', 'hello_world.wast')
+cmd = [os.path.join('bin', 'wasm-opt'), wast, '-o', 'a.wast']
+run_command(cmd)
+open(wast, 'w').write(open('a.wast').read())
+
 print '\n[ checking binary format testcases... ]\n'
 
 for wast in sorted(os.listdir('test')):
@@ -144,5 +151,16 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
     if sys.platform == 'darwin':
       # Also removes debug directory produced on Mac OS
       shutil.rmtree(output_file + '.dSYM')
+
+print '\n[ checking wasm-opt testcases... ]\n'
+
+for t in os.listdir('test'):
+  if t.endswith('.wast') and not t.startswith('spec'):
+    print '..', t
+    t = os.path.join('test', t)
+    cmd = [os.path.join('bin', 'wasm-opt'), t, '--print']
+    actual = run_command(cmd)
+    actual = actual.replace('printing before:\n', '')
+    open(t, 'w').write(actual)
 
 print '\n[ success! ]'

@@ -8,7 +8,8 @@ Counts
  if             : 4       
 (module
   (memory 256 256)
-  (func $ifs (param $x i32)
+  (type $0 (func (param i32)))
+  (func $ifs (type $0) (param $x i32)
     (local $y f32)
     (block $block0
       (if
