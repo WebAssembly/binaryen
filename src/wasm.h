@@ -1065,14 +1065,18 @@ public:
 
   FunctionType() : result(none) {}
 
-  bool operator==(FunctionType& b) {
-    if (name != b.name) return false; // XXX
+  bool structuralComparison(FunctionType& b) {
     if (result != b.result) return false;
     if (params.size() != b.params.size()) return false;
     for (size_t i = 0; i < params.size(); i++) {
       if (params[i] != b.params[i]) return false;
     }
     return true;
+  }
+
+  bool operator==(FunctionType& b) {
+    if (name != b.name) return false;
+    return structuralComparison(b);
   }
   bool operator!=(FunctionType& b) {
     return !(*this == b);
