@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
-  (func $ifs
+  (type $0 (func))
+  (func $ifs (type $0)
     (block $block0
       (if
         (i32.const 0)

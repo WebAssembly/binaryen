@@ -3,16 +3,17 @@
     $c : 11
 (module
   (memory 0)
-  (func $a
+  (type $0 (func))
+  (func $a (type $0)
     (nop)
   )
-  (func $b
+  (func $b (type $0)
     (loop $loop-out0 $loop-in1
       (nop)
       (i32.const 1000)
     )
   )
-  (func $c
+  (func $c (type $0)
     (block $top
       (nop)
       (i32.const 1000)

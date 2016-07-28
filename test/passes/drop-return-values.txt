@@ -1,6 +1,7 @@
 (module
   (memory 10)
-  (func $0
+  (type $0 (func))
+  (func $0 (type $0)
     (local $x i32)
     (local $1 i32)
     (i32.add

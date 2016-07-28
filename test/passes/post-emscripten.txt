@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
-  (func $b0 (param $x i32)
+  (type $0 (func (param i32)))
+  (func $b0 (type $0) (param $x i32)
     (i32.load offset=1
       (get_local $x)
     )

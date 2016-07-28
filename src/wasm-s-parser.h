@@ -312,21 +312,49 @@ private:
     }
     functionNames.push_back(name);
     functionCounter++;
+    FunctionType* type = nullptr;
+    functionTypes[name] = none;
+    std::vector<WasmType> params;
     for (;i < s.size(); i++) {
       Element& curr = *s[i];
       IString id = curr[0]->str();
       if (id == RESULT) {
         functionTypes[name] = stringToWasmType(curr[1]->str());
-        return;
       } else if (id == TYPE) {
         Name typeName = curr[1]->str();
         if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function");
-        FunctionType* type = wasm.getFunctionType(typeName);
+        type = wasm.getFunctionType(typeName);
         functionTypes[name] = type->result;
-        return;
+      } else if (id == PARAM && curr.size() > 1) {
+        Index j = 1;
+        if (curr[j]->dollared()) {
+          // dollared input symbols cannot be types
+          params.push_back(stringToWasmType(curr[j + 1]->str(), true));
+        } else {
+          while (j < curr.size()) {
+            params.push_back(stringToWasmType(curr[j++]->str(), true));
+          }
+        }
       }
     }
-    functionTypes[name] = none;
+    if (!type) {
+      // if no function type provided, generate one, but reuse a previous one with the
+      // right structure if there is one.
+      // see https://github.com/WebAssembly/spec/pull/301
+      bool need = true;
+      std::unique_ptr<FunctionType> functionType = make_unique<FunctionType>();
+      functionType->result = functionTypes[name];
+      functionType->params = std::move(params);
+      for (auto& existing : wasm.functionTypes) {
+        if (existing->structuralComparison(*functionType)) {
+          need = false;
+          break;
+        }
+      }
+      if (need) {
+        wasm.addFunctionType(functionType.release());
+      }
+    }
   }
 
   void preParseImports(Element& curr) {
@@ -500,16 +528,21 @@ private:
       body = allocator.alloc<Nop>();
     }
     if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
-    /* TODO: spec in flux, https://github.com/WebAssembly/spec/pull/301
+    // see https://github.com/WebAssembly/spec/pull/301
     if (type.isNull()) {
-      // if no function type provided, generate a private one for this function
-      auto* functionType = sigToFunctionType(getSig(currFunction.get()));
-      wasm.addFunctionType(functionType);
-      type = functionType->name;
+      // if no function type name provided, then we generated one
+      std::unique_ptr<FunctionType> functionType = std::unique_ptr<FunctionType>(sigToFunctionType(getSig(currFunction.get())));
+      for (auto& existing : wasm.functionTypes) {
+        if (existing->structuralComparison(*functionType)) {
+          type = existing->name;
+          break;
+        }
+      }
+      if (!type.is()) throw ParseException("no function type [internal error?]", s.line, s.col);
     }
-    */
     currFunction->body = body;
     currFunction->type = type;
+
     wasm.addFunction(currFunction.release());
     currLocalTypes.clear();
     labelStack.clear();

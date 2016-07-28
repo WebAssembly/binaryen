@@ -1,6 +1,7 @@
 (module
   (memory 0)
-  (func $x (param $x i32)
+  (type $0 (func (param i32)))
+  (func $x (type $0) (param $x i32)
     (i32.const 3)
     (i32.add
       (i32.const 1)

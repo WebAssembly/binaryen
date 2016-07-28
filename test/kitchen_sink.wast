@@ -2,7 +2,8 @@
   (memory 4096 4096
     (segment 1026 "\14\00")
   )
-  (func $kitchensink (result i32)
+  (type $0 (func (result i32)))
+  (func $kitchensink (type $0) (result i32)
     (block $block0
       (i32.add
         (i32.const 10)

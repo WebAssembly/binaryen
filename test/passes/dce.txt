@@ -1,11 +1,12 @@
 (module
   (memory 10)
   (type $ii (func (param i32 i32)))
+  (type $1 (func))
   (table $call-me)
-  (func $call-me (param $0 i32) (param $1 i32)
+  (func $call-me (type $ii) (param $0 i32) (param $1 i32)
     (nop)
   )
-  (func $code-to-kill
+  (func $code-to-kill (type $1)
     (local $x i32)
     (block $out
       (br $out)
@@ -236,10 +237,10 @@
     )
     (i32.const 1337)
   )
-  (func $killer
+  (func $killer (type $1)
     (unreachable)
   )
-  (func $target
+  (func $target (type $1)
     (i32.const 2000)
   )
 )

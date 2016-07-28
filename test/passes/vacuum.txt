@@ -1,9 +1,14 @@
 (module
   (memory 256 256)
-  (func $b
+  (type $0 (func))
+  (type $1 (func (param i32)))
+  (type $2 (func (result f32)))
+  (type $3 (func (result i32)))
+  (type $4 (func (param i32 f64 i32 i32)))
+  (func $b (type $0)
     (nop)
   )
-  (func $l
+  (func $l (type $0)
     (local $x i32)
     (local $y i32)
     (set_local $x
@@ -24,16 +29,16 @@
       )
     )
   )
-  (func $loopy (param $0 i32)
+  (func $loopy (type $1) (param $0 i32)
     (nop)
   )
-  (func $unary (result f32)
+  (func $unary (type $2) (result f32)
     (unreachable)
     (f32.abs
       (f32.const 2)
     )
   )
-  (func $binary (result f32)
+  (func $binary (type $2) (result f32)
     (unreachable)
     (unreachable)
     (f32.add
@@ -45,7 +50,7 @@
       (f32.const 6)
     )
   )
-  (func $select (result i32)
+  (func $select (type $3) (result i32)
     (unreachable)
     (unreachable)
     (unreachable)
@@ -75,7 +80,7 @@
       (i32.const 15)
     )
   )
-  (func $block-to-one
+  (func $block-to-one (type $0)
     (block $block0
     )
     (block $block1
@@ -91,13 +96,13 @@
       (unreachable)
     )
   )
-  (func $recurse
+  (func $recurse (type $0)
     (nop)
   )
-  (func $func-block
+  (func $func-block (type $0)
     (nop)
   )
-  (func $Gu (param $b i32) (param $e f64) (param $l i32) (param $d i32)
+  (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
     (if
       (if
         (get_local $d)
