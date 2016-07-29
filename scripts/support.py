@@ -100,7 +100,12 @@ def split_wast(wast):
     depth = 1
     while depth > 0 and j < len(wast):
       if wast[j] == '"':
-        j = wast.find('"', j + 1)
+        while 1:
+          j = wast.find('"', j + 1)
+          if wast[j - 1] == '\\':
+            continue
+          break
+        assert j > 0
       elif wast[j] == '(':
         depth += 1
       elif wast[j] == ')':
