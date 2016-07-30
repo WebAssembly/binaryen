@@ -387,7 +387,11 @@ private:
   bool brokeToAutoBlock;
 
   Name getPrefixedName(std::string prefix) {
-    return IString((prefix + std::to_string(otherIndex++)).c_str(), false);
+    // make sure to return a unique name not already on the stack
+    while (1) {
+      Name ret = IString((prefix + std::to_string(otherIndex++)).c_str(), false);
+      if (std::find(labelStack.begin(), labelStack.end(), ret) == labelStack.end()) return ret;
+    }
   }
 
   Name getFunctionName(Element& s) {
