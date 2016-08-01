@@ -64,6 +64,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void printFullLine(Expression *expression) {
     !minify && doIndent(o, indent);
+    //o << "[" << printWasmType(expression->type) << "] "; // debugging tool
     visit(expression);
     o << maybeNewLine;
   }
@@ -721,6 +722,7 @@ Pass *createFullPrinterPass() {
 std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify) {
   PrintSExpression print(o);
   print.setMinify(minify);
+  //o << "[" << printWasmType(expression->type) << "] "; // debugging tool
   print.visit(expression);
   return o;
 }
