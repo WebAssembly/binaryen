@@ -7,7 +7,7 @@
   (export "__exit" $__exit)
   (export "__needs_exit" $__needs_exit)
   (export "dynCall_v" $dynCall_v)
-  (table $__exit)
+  (table $__wasm_nullptr $__exit)
   (func $__exit (type $FUNCSIG$v)
     (return
       (i32.add
@@ -23,8 +23,11 @@
   (func $__needs_exit (result i32)
     (call $__exit)
     (return
-      (i32.const 0)
+      (i32.const 1)
     )
+  )
+  (func $__wasm_nullptr (type $FUNCSIG$v)
+    (unreachable)
   )
   (func $dynCall_v (param $fptr i32)
     (call_indirect $FUNCSIG$v

@@ -252,6 +252,9 @@ class Linker {
   // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
 
+  // Name of the dummy function to prevent erroneous nullptr comparisons.
+  static constexpr const char* dummyFunction = "__wasm_nullptr";
+
  private:
   // Allocate a static variable and return its address in linear memory
   Address allocateStatic(Address allocSize, Address alignment, Name name) {
@@ -278,6 +281,14 @@ class Linker {
   }
 
   void ensureImport(Name target, std::string signature);
+
+  // Retrieves (and assigns) an entry index in the indirect function table for
+  // a given function.
+  Index getFunctionIndex(Name name);
+
+  // Adds a dummy function in the indirect table at slot 0 to prevent NULL
+  // pointer miscomparisons.
+  void makeDummyFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.

@@ -1,6 +1,6 @@
 print: argc : 1
-print: addr of something : 0
-print: addr of more : 1
+print: addr of something : 1
+print: addr of more : 2
 print: i : 0
 print: something : 12
 print: i : 1
