@@ -234,45 +234,46 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
   }
 
   template<typename T>
-  void handleCall(T* curr, Expression* initial) {
+  Expression* handleCall(T* curr) {
     for (Index i = 0; i < curr->operands.size(); i++) {
       if (isDead(curr->operands[i])) {
-        if (i > 0 || initial != nullptr) {
+        if (i > 0) {
           auto* block = getModule()->allocator.alloc<Block>();
-          Index newSize = i + 1 + (initial ? 1 : 0);
+          Index newSize = i + 1;
           block->list.resize(newSize);
           Index j = 0;
-          if (initial) {
-            block->list[j] = drop(initial);
-            j++;
-          }
           for (; j < newSize; j++) {
-            block->list[j] = drop(curr->operands[j - (initial ? 1 : 0)]);
+            block->list[j] = drop(curr->operands[j]);
           }
           block->finalize();
-          replaceCurrent(block);
+          return replaceCurrent(block);
         } else {
-          replaceCurrent(curr->operands[i]);
+          return replaceCurrent(curr->operands[i]);
         }
-        return;
       }
     }
+    return curr;
   }
 
   void visitCall(Call* curr) {
-    handleCall(curr, nullptr);
+    handleCall(curr);
   }
 
   void visitCallImport(CallImport* curr) {
-    handleCall(curr, nullptr);
+    handleCall(curr);
   }
 
   void visitCallIndirect(CallIndirect* curr) {
+    if (handleCall(curr) != curr) return;
     if (isDead(curr->target)) {
-      replaceCurrent(curr->target);
-      return;
+      auto* block = getModule()->allocator.alloc<Block>();
+      for (auto* operand : curr->operands) {
+        block->list.push_back(drop(operand));
+      }
+      block->list.push_back(curr->target);
+      block->finalize();
+      replaceCurrent(block);
     }
-    handleCall(curr, curr->target);
   }
 
   void visitSetLocal(SetLocal* curr) {

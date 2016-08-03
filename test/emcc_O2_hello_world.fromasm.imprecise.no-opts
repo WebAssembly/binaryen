@@ -9726,6 +9726,9 @@
             (block
               (set_local $i8
                 (call_indirect $FUNCSIG$iiii
+                  (get_local $i3)
+                  (get_local $i1)
+                  (get_local $i2)
                   (i32.add
                     (i32.and
                       (i32.load
@@ -9738,9 +9741,6 @@
                     )
                     (i32.const 2)
                   )
-                  (get_local $i3)
-                  (get_local $i1)
-                  (get_local $i2)
                 )
               )
               (br $label$break$L5)
@@ -9813,6 +9813,9 @@
                 (if
                   (i32.lt_u
                     (call_indirect $FUNCSIG$iiii
+                      (get_local $i3)
+                      (get_local $i1)
+                      (get_local $i15)
                       (i32.add
                         (i32.and
                           (i32.load
@@ -9825,9 +9828,6 @@
                         )
                         (i32.const 2)
                       )
-                      (get_local $i3)
-                      (get_local $i1)
-                      (get_local $i15)
                     )
                     (get_local $i15)
                   )
@@ -10433,6 +10433,9 @@
           (if
             (i32.eq
               (call_indirect $FUNCSIG$iiii
+                (get_local $i1)
+                (get_local $i4)
+                (i32.const 1)
                 (i32.add
                   (i32.and
                     (i32.load
@@ -10445,9 +10448,6 @@
                   )
                   (i32.const 2)
                 )
-                (get_local $i1)
-                (get_local $i4)
-                (i32.const 1)
               )
               (i32.const 1)
             )
@@ -10504,6 +10504,9 @@
         (block
           (drop
             (call_indirect $FUNCSIG$iiii
+              (get_local $i1)
+              (i32.const 0)
+              (i32.const 0)
               (i32.add
                 (i32.and
                   (i32.load
@@ -10516,9 +10519,6 @@
                 )
                 (i32.const 2)
               )
-              (get_local $i1)
-              (i32.const 0)
-              (i32.const 0)
             )
           )
           (i32.eq
@@ -10562,6 +10562,12 @@
             (get_local $i8)
           )
           (call_indirect $FUNCSIG$iiii
+            (get_local $i1)
+            (i32.sub
+              (get_local $i6)
+              (get_local $i8)
+            )
+            (i32.const 1)
             (i32.add
               (i32.and
                 (i32.load
@@ -10574,12 +10580,6 @@
               )
               (i32.const 2)
             )
-            (get_local $i1)
-            (i32.sub
-              (get_local $i6)
-              (get_local $i8)
-            )
-            (i32.const 1)
           )
         )
         (i32.store
@@ -11680,6 +11680,9 @@
   (func $dynCall_iiii (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
     (return
       (call_indirect $FUNCSIG$iiii
+        (get_local $i2)
+        (get_local $i3)
+        (get_local $i4)
         (i32.add
           (i32.and
             (get_local $i1)
@@ -11687,9 +11690,6 @@
           )
           (i32.const 2)
         )
-        (get_local $i2)
-        (get_local $i3)
-        (get_local $i4)
       )
     )
   )
@@ -11786,6 +11786,7 @@
   (func $dynCall_ii (param $i1 i32) (param $i2 i32) (result i32)
     (return
       (call_indirect $FUNCSIG$ii
+        (get_local $i2)
         (i32.add
           (i32.and
             (get_local $i1)
@@ -11793,7 +11794,6 @@
           )
           (i32.const 0)
         )
-        (get_local $i2)
       )
     )
   )
@@ -11825,6 +11825,7 @@
   )
   (func $dynCall_vi (param $i1 i32) (param $i2 i32)
     (call_indirect $FUNCSIG$vi
+      (get_local $i2)
       (i32.add
         (i32.and
           (get_local $i1)
@@ -11832,7 +11833,6 @@
         )
         (i32.const 10)
       )
-      (get_local $i2)
     )
   )
   (func $b1 (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)

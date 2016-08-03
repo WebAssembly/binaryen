@@ -156,8 +156,8 @@ struct Walker : public VisitorType {
   // Note that the visit*() for the result node is not called for you (i.e.,
   // just one visit*() method is called by the traversal; if you replace a node,
   // and you want to process the output, you must do that explicitly).
-  void replaceCurrent(Expression *expression) {
-    replace = expression;
+  Expression* replaceCurrent(Expression *expression) {
+    return replace = expression;
   }
 
   // Get the current module
@@ -358,10 +358,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       case Expression::Id::CallIndirectId: {
         self->pushTask(SubType::doVisitCallIndirect, currp);
         auto& list = curr->cast<CallIndirect>()->operands;
+        self->pushTask(SubType::scan, &curr->cast<CallIndirect>()->target);
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
         }
-        self->pushTask(SubType::scan, &curr->cast<CallIndirect>()->target);
         break;
       }
       case Expression::Id::GetLocalId: {

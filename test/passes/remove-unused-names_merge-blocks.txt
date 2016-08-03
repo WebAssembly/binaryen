@@ -702,18 +702,21 @@
       (i32.const 50)
     )
     (drop
+      (i32.const 50)
+    )
+    (drop
       (i32.const 10)
     )
     (drop
       (i32.const 30)
     )
-    (drop
-      (i32.const 50)
-    )
     (call_indirect $ii
       (i32.const 20)
       (i32.const 40)
       (i32.const 60)
+    )
+    (drop
+      (i32.const 50)
     )
     (call_indirect $ii
       (unreachable)
@@ -723,12 +726,7 @@
         )
         (i32.const 40)
       )
-      (block
-        (drop
-          (i32.const 50)
-        )
-        (i32.const 60)
-      )
+      (i32.const 60)
     )
   )
   (func $block-type-change (type $3)

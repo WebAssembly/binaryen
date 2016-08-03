@@ -895,7 +895,7 @@ private:
     if (op == HostOp::HasFeature) {
       ret->nameOperand = s[1]->str();
     } else {
-      parseCallOperands(s, 1, ret);
+      parseCallOperands(s, 1, s.size(), ret);
     }
     ret->finalize();
     return ret;
@@ -1196,7 +1196,7 @@ private:
     auto ret = allocator.alloc<Call>();
     ret->target = s[1]->str();
     ret->type = functionTypes[ret->target];
-    parseCallOperands(s, 2, ret);
+    parseCallOperands(s, 2, s.size(), ret);
     return ret;
   }
 
@@ -1205,7 +1205,7 @@ private:
     ret->target = s[1]->str();
     Import* import = wasm.getImport(ret->target);
     ret->type = import->type->result;
-    parseCallOperands(s, 2, ret);
+    parseCallOperands(s, 2, s.size(), ret);
     return ret;
   }
 
@@ -1216,14 +1216,14 @@ private:
     if (!fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
     ret->fullType = fullType->name;
     ret->type = fullType->result;
-    ret->target = parseExpression(s[2]);
-    parseCallOperands(s, 3, ret);
+    parseCallOperands(s, 2, s.size() - 1, ret);
+    ret->target = parseExpression(s[s.size() - 1]);
     return ret;
   }
 
   template<class T>
-  void parseCallOperands(Element& s, size_t i, T* call) {
-    while (i < s.size()) {
+  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+    while (i < j) {
       call->operands.push_back(parseExpression(s[i]));
       i++;
     }

@@ -230,10 +230,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitCallIndirect(CallIndirect *curr) {
     printOpening(o, "call_indirect ") << curr->fullType;
     incIndent();
-    printFullLine(curr->target);
     for (auto operand : curr->operands) {
       printFullLine(operand);
     }
+    printFullLine(curr->target);
     decIndent();
   }
   void visitGetLocal(GetLocal *curr) {

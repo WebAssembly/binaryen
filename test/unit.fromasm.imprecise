@@ -211,22 +211,22 @@
   (func $neg
     (local $0 f32)
     (call_indirect $FUNCSIG$vf
+      (f32.neg
+        (get_local $0)
+      )
       (i32.add
         (i32.const 1)
         (i32.const 8)
-      )
-      (f32.neg
-        (get_local $0)
       )
     )
   )
   (func $cneg (param $0 f32)
     (call_indirect $FUNCSIG$vf
+      (get_local $0)
       (i32.add
         (i32.const 1)
         (i32.const 8)
       )
-      (get_local $0)
     )
   )
   (func $smallCompare (result i32)
@@ -260,11 +260,11 @@
   )
   (func $cneg_nosemicolon
     (call_indirect $FUNCSIG$vi
+      (i32.const 1)
       (i32.add
         (i32.const 1)
         (i32.const 8)
       )
-      (i32.const 1)
     )
   )
   (func $forLoop

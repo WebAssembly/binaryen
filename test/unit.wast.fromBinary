@@ -386,6 +386,7 @@
         )
       )
       (call_indirect $0
+        (get_local $var$0)
         (i32.add
           (i32.and
             (i32.const 1)
@@ -393,12 +394,12 @@
           )
           (i32.const 8)
         )
-        (get_local $var$0)
       )
     )
   )
   (func $cneg (type $0) (param $var$0 f32)
     (call_indirect $0
+      (get_local $var$0)
       (i32.add
         (i32.and
           (i32.const 1)
@@ -406,7 +407,6 @@
         )
         (i32.const 8)
       )
-      (get_local $var$0)
     )
   )
   (func $___syscall_ret (type $1)

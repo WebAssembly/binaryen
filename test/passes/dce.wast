@@ -90,6 +90,7 @@
         (drop
           (i32.const 0)
         )
+        (unreachable)
       )
     )
     (if
@@ -102,6 +103,7 @@
         (drop
           (i32.const 0)
         )
+        (unreachable)
       )
     )
     (if
@@ -114,6 +116,7 @@
         (drop
           (i32.const 0)
         )
+        (unreachable)
       )
     )
     (block $out

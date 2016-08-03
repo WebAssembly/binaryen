@@ -1635,6 +1635,9 @@
                     (block
                       (drop
                         (call_indirect $FUNCSIG$iiii
+                          (get_local $0)
+                          (i32.const 0)
+                          (i32.const 0)
                           (i32.add
                             (i32.and
                               (i32.load offset=36
@@ -1644,9 +1647,6 @@
                             )
                             (i32.const 2)
                           )
-                          (get_local $0)
-                          (i32.const 0)
-                          (i32.const 0)
                         )
                       )
                       (set_local $1
@@ -1813,6 +1813,9 @@
             (block
               (set_local $4
                 (call_indirect $FUNCSIG$iiii
+                  (get_local $2)
+                  (get_local $0)
+                  (get_local $1)
                   (i32.add
                     (i32.and
                       (i32.load offset=36
@@ -1822,9 +1825,6 @@
                     )
                     (i32.const 2)
                   )
-                  (get_local $2)
-                  (get_local $0)
-                  (get_local $1)
                 )
               )
               (br $label$break$L5)
@@ -1896,6 +1896,9 @@
                     (if
                       (i32.lt_u
                         (call_indirect $FUNCSIG$iiii
+                          (get_local $2)
+                          (get_local $0)
+                          (get_local $3)
                           (i32.add
                             (i32.and
                               (i32.load offset=36
@@ -1905,9 +1908,6 @@
                             )
                             (i32.const 2)
                           )
-                          (get_local $2)
-                          (get_local $0)
-                          (get_local $3)
                         )
                         (get_local $3)
                       )
@@ -2748,6 +2748,9 @@
       (block
         (drop
           (call_indirect $FUNCSIG$iiii
+            (get_local $0)
+            (i32.const 0)
+            (i32.const 0)
             (i32.add
               (i32.and
                 (i32.load offset=36
@@ -2757,9 +2760,6 @@
               )
               (i32.const 2)
             )
-            (get_local $0)
-            (i32.const 0)
-            (i32.const 0)
           )
         )
         (if
@@ -2811,6 +2811,12 @@
             )
           )
           (call_indirect $FUNCSIG$iiii
+            (get_local $0)
+            (i32.sub
+              (get_local $1)
+              (get_local $2)
+            )
+            (i32.const 1)
             (i32.add
               (i32.and
                 (i32.load offset=40
@@ -2820,12 +2826,6 @@
               )
               (i32.const 2)
             )
-            (get_local $0)
-            (i32.sub
-              (get_local $1)
-              (get_local $2)
-            )
-            (i32.const 1)
           )
         )
         (i32.store offset=16
@@ -19397,6 +19397,7 @@
   )
   (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)
     (call_indirect $FUNCSIG$ii
+      (get_local $1)
       (i32.add
         (i32.and
           (get_local $0)
@@ -19404,11 +19405,13 @@
         )
         (i32.const 0)
       )
-      (get_local $1)
     )
   )
   (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
     (call_indirect $FUNCSIG$iiii
+      (get_local $1)
+      (get_local $2)
+      (get_local $3)
       (i32.add
         (i32.and
           (get_local $0)
@@ -19416,13 +19419,11 @@
         )
         (i32.const 2)
       )
-      (get_local $1)
-      (get_local $2)
-      (get_local $3)
     )
   )
   (func $dynCall_vi (param $0 i32) (param $1 i32)
     (call_indirect $FUNCSIG$vi
+      (get_local $1)
       (i32.add
         (i32.and
           (get_local $0)
@@ -19430,7 +19431,6 @@
         )
         (i32.const 10)
       )
-      (get_local $1)
     )
   )
   (func $b0 (param $0 i32) (result i32)

@@ -9785,6 +9785,9 @@
             (block
               (set_local $h
                 (call_indirect $FUNCSIG$iiii
+                  (get_local $c)
+                  (get_local $a)
+                  (get_local $b)
                   (i32.add
                     (i32.and
                       (i32.load
@@ -9797,9 +9800,6 @@
                     )
                     (i32.const 2)
                   )
-                  (get_local $c)
-                  (get_local $a)
-                  (get_local $b)
                 )
               )
               (br $label$break$a)
@@ -9872,6 +9872,9 @@
                 (if
                   (i32.lt_u
                     (call_indirect $FUNCSIG$iiii
+                      (get_local $c)
+                      (get_local $a)
+                      (get_local $q)
                       (i32.add
                         (i32.and
                           (i32.load
@@ -9884,9 +9887,6 @@
                         )
                         (i32.const 2)
                       )
-                      (get_local $c)
-                      (get_local $a)
-                      (get_local $q)
                     )
                     (get_local $q)
                   )
@@ -10493,6 +10493,9 @@
           (if
             (i32.eq
               (call_indirect $FUNCSIG$iiii
+                (get_local $a)
+                (get_local $d)
+                (i32.const 1)
                 (i32.add
                   (i32.and
                     (i32.load
@@ -10505,9 +10508,6 @@
                   )
                   (i32.const 2)
                 )
-                (get_local $a)
-                (get_local $d)
-                (i32.const 1)
               )
               (i32.const 1)
             )
@@ -10563,6 +10563,9 @@
       (block
         (drop
           (call_indirect $FUNCSIG$iiii
+            (get_local $a)
+            (i32.const 0)
+            (i32.const 0)
             (i32.add
               (i32.and
                 (i32.load
@@ -10575,9 +10578,6 @@
               )
               (i32.const 2)
             )
-            (get_local $a)
-            (i32.const 0)
-            (i32.const 0)
           )
         )
         (if
@@ -10632,6 +10632,12 @@
             (get_local $h)
           )
           (call_indirect $FUNCSIG$iiii
+            (get_local $a)
+            (i32.sub
+              (get_local $f)
+              (get_local $h)
+            )
+            (i32.const 1)
             (i32.add
               (i32.and
                 (i32.load
@@ -10644,12 +10650,6 @@
               )
               (i32.const 2)
             )
-            (get_local $a)
-            (i32.sub
-              (get_local $f)
-              (get_local $h)
-            )
-            (i32.const 1)
           )
         )
         (i32.store
@@ -11772,6 +11772,9 @@
   (func $lb (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
     (return
       (call_indirect $FUNCSIG$iiii
+        (get_local $b)
+        (get_local $c)
+        (get_local $d)
         (i32.add
           (i32.and
             (get_local $a)
@@ -11779,9 +11782,6 @@
           )
           (i32.const 2)
         )
-        (get_local $b)
-        (get_local $c)
-        (get_local $d)
       )
     )
   )
@@ -11862,6 +11862,7 @@
   (func $kb (param $a i32) (param $b i32) (result i32)
     (return
       (call_indirect $FUNCSIG$ii
+        (get_local $b)
         (i32.add
           (i32.and
             (get_local $a)
@@ -11869,7 +11870,6 @@
           )
           (i32.const 0)
         )
-        (get_local $b)
       )
     )
   )
@@ -11891,6 +11891,7 @@
   )
   (func $mb (param $a i32) (param $b i32)
     (call_indirect $FUNCSIG$vi
+      (get_local $b)
       (i32.add
         (i32.and
           (get_local $a)
@@ -11898,7 +11899,6 @@
         )
         (i32.const 6)
       )
-      (get_local $b)
     )
   )
   (func $Ha (param $a i32) (param $b i32)

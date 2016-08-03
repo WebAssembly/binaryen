@@ -378,6 +378,7 @@
         )
       )
       (call_indirect $FUNCSIG$vf
+        (get_local $x)
         (i32.add
           (i32.and
             (i32.const 1)
@@ -385,12 +386,12 @@
           )
           (i32.const 8)
         )
-        (get_local $x)
       )
     )
   )
   (func $cneg (type $FUNCSIG$vf) (param $x f32)
     (call_indirect $FUNCSIG$vf
+      (get_local $x)
       (i32.add
         (i32.and
           (i32.const 1)
@@ -398,7 +399,6 @@
         )
         (i32.const 8)
       )
-      (get_local $x)
     )
   )
   (func $___syscall_ret (type $FUNCSIG$v)

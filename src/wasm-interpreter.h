@@ -676,11 +676,11 @@ public:
       }
       Flow visitCallIndirect(CallIndirect *curr) {
         NOTE_ENTER("CallIndirect");
-        Flow target = visit(curr->target);
-        if (target.breaking()) return target;
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
+        Flow target = visit(curr->target);
+        if (target.breaking()) return target;
         Index index = target.value.geti32();
         return instance.externalInterface->callTable(index, curr->fullType, arguments, instance);
       }
