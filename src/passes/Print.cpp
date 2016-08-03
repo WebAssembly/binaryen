@@ -481,7 +481,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitReturn(Return *curr) {
     printOpening(o, "return");
-    if (!curr->value || curr->value->is<Nop>()) {
+    if (!curr->value) {
       // avoid a new line just for the parens
       o << ')';
       return;

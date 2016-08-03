@@ -283,6 +283,7 @@ public:
 
   void visitReturn(Return* curr) {
     if (curr->value) {
+      shouldBeFalse(curr->value->is<Nop>(), curr, "cannot return a nop");
       if (returnType == unreachable) {
         returnType = curr->value->type;
       } else if (curr->value->type != unreachable && returnType != curr->value->type) {
