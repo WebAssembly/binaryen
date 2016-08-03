@@ -639,6 +639,13 @@ class S2WasmBuilder {
         }
       } else if (match(".result")) {
         resultType = getType();
+      } else if (match(".indidx")) {
+        int64_t indirectIndex = getInt64();
+        skipWhitespace();
+        if (indirectIndex < 0) {
+          abort_on("indidx");
+        }
+        linkerObj->addIndirectIndex(name, indirectIndex);
       } else if (match(".local")) {
         while (1) {
           Name name = getNextId();

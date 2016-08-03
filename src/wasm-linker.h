@@ -141,6 +141,11 @@ class LinkerObject {
     return f->second;
   }
 
+  void addIndirectIndex(Name name, Address index) {
+    assert(!indirectIndexes.count(name));
+    indirectIndexes[name] = index;
+  }
+
   bool isEmpty() {
     return wasm.functions.empty();
   }
@@ -172,6 +177,9 @@ class LinkerObject {
   std::unordered_map<cashew::IString, FunctionType*> externTypesMap;
 
   std::map<Name, Address> segments; // name => segment index (in wasm module)
+
+  // preassigned indexes for functions called indirectly
+  std::map<Name, Address> indirectIndexes;
 
   std::vector<Name> initializerFunctions;
 
@@ -309,8 +317,8 @@ class Linker {
 
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
-  std::unordered_map<cashew::IString, size_t> functionIndexes;
-
+  std::unordered_map<cashew::IString, Address> functionIndexes;
+  std::map<Address, cashew::IString> functionNames;
 };
 
 

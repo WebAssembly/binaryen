@@ -112,9 +112,30 @@ void Linker::layout() {
   for (Name name : out.globls) exportFunction(name, false);
   for (Name name : out.initializerFunctions) exportFunction(name, true);
 
+  // Pre-assign the function indexes
+  for (auto& pair : out.indirectIndexes) {
+    if (functionIndexes.count(pair.first) != 0 ||
+        functionNames.count(pair.second) != 0) {
+      Fatal() << "Function " << pair.first << " already has an index " <<
+          functionIndexes[pair.first] << " while setting index " << pair.second;
+    }
+    if (debug) {
+      std::cerr << "pre-assigned function index: " << pair.first << ": "
+                << pair.second << '\n';
+    }
+    functionIndexes[pair.first] = pair.second;
+    functionNames[pair.second] = pair.first;
+  }
+
+  // Emit the pre-assigned function names in sorted order
+  for (const auto& P : functionNames) {
+    out.wasm.table.names.push_back(P.second);
+  }
+
   auto ensureFunctionIndex = [this](Name name) {
     if (functionIndexes.count(name) == 0) {
       functionIndexes[name] = out.wasm.table.names.size();
+      functionNames[functionIndexes[name]] = name;
       out.wasm.table.names.push_back(name);
       if (debug) {
         std::cerr << "function index: " << name << ": "
