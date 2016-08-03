@@ -17,7 +17,7 @@
   (export "dynCall_fd" $dynCall_fd)
   (export "dynCall_v" $dynCall_v)
   (export "dynCall_vi" $dynCall_vi)
-  (table $__importThunk_extern_fd $__importThunk_extern_vj $__importThunk_extern_v $__importThunk_extern_ijidf $__importThunk_extern_struct $__importThunk_extern_sret)
+  (table $__wasm_nullptr $__importThunk_extern_fd $__importThunk_extern_vj $__importThunk_extern_v $__importThunk_extern_ijidf $__importThunk_extern_struct $__importThunk_extern_sret)
   (func $bar (result i32)
     (local $0 i32)
     (local $1 i32)
@@ -33,23 +33,23 @@
           )
         )
       )
-      (i32.const 0)
+      (i32.const 1)
     )
     (i32.store offset=24
       (get_local $0)
-      (i32.const 1)
+      (i32.const 2)
     )
     (call_import $extern_vj
       (i64.const 1)
     )
     (i32.store offset=20
       (get_local $0)
-      (i32.const 2)
+      (i32.const 3)
     )
     (call_import $extern_v)
     (i32.store offset=16
       (get_local $0)
-      (i32.const 3)
+      (i32.const 4)
     )
     (call_import $extern_ijidf
       (i64.const 1)
@@ -59,11 +59,11 @@
     )
     (i32.store offset=12
       (get_local $0)
-      (i32.const 4)
+      (i32.const 5)
     )
     (i32.store offset=8
       (get_local $0)
-      (i32.const 5)
+      (i32.const 6)
     )
     (set_local $1
       (i32.load offset=28
@@ -80,7 +80,10 @@
     (get_local $1)
   )
   (func $baz (result i32)
-    (i32.const 2)
+    (i32.const 3)
+  )
+  (func $__wasm_nullptr (type $FUNCSIG$v)
+    (unreachable)
   )
   (func $__importThunk_extern_fd (type $FUNCSIG$fd) (param $0 f64) (result f32)
     (call_import $extern_fd

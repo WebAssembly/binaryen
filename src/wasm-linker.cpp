@@ -39,7 +39,7 @@ void Linker::placeStackPointer(Address stackAllocation) {
     std::vector<char> raw;
     raw.resize(pointerSize);
     out.addRelocation(LinkerObject::Relocation::kData, (uint32_t*)&raw[0], ".stack", stackAllocation);
-    assert(out.wasm.memory.segments.size() == 0);
+    assert(out.wasm.memory.segments.empty());
     out.addSegment("__stack_pointer", raw);
   }
 }
@@ -112,6 +112,9 @@ void Linker::layout() {
   for (Name name : out.globls) exportFunction(name, false);
   for (Name name : out.initializerFunctions) exportFunction(name, true);
 
+  // Pad the indirect function table with a dummy function
+  makeDummyFunction();
+
   // Pre-assign the function indexes
   for (auto& pair : out.indirectIndexes) {
     if (functionIndexes.count(pair.first) != 0 ||
@@ -132,17 +135,6 @@ void Linker::layout() {
     out.wasm.table.names.push_back(P.second);
   }
 
-  auto ensureFunctionIndex = [this](Name name) {
-    if (functionIndexes.count(name) == 0) {
-      functionIndexes[name] = out.wasm.table.names.size();
-      functionNames[functionIndexes[name]] = name;
-      out.wasm.table.names.push_back(name);
-      if (debug) {
-        std::cerr << "function index: " << name << ": "
-                  << functionIndexes[name] << '\n';
-      }
-    }
-  };
   for (auto& relocation : out.relocations) {
     // TODO: Handle weak symbols properly, instead of always taking the weak definition.
     auto *alias = out.getAlias(relocation->symbol, relocation->kind);
@@ -167,16 +159,14 @@ void Linker::layout() {
           // Address of an imported function is taken, but imports do not have addresses in wasm.
           // Generate a thunk to forward to the call_import.
           Function* thunk = getImportThunk(name, f);
-          ensureFunctionIndex(thunk->name);
-          *(relocation->data) = functionIndexes[thunk->name] + relocation->addend;
+          *(relocation->data) = getFunctionIndex(thunk->name) + relocation->addend;
         } else {
           std::cerr << "Unknown symbol: " << name << '\n';
           if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
           *(relocation->data) = 0;
         }
       } else {
-        ensureFunctionIndex(name);
-        *(relocation->data) = functionIndexes[name] + relocation->addend;
+        *(relocation->data) = getFunctionIndex(name) + relocation->addend;
       }
     }
   }
@@ -379,6 +369,18 @@ void Linker::emscriptenGlue(std::ostream& o) {
   o << " }\n";
 }
 
+Index Linker::getFunctionIndex(Name name) {
+  if (!functionIndexes.count(name)) {
+    functionIndexes[name] = out.wasm.table.names.size();
+    out.wasm.table.names.push_back(name);
+    if (debug) {
+      std::cerr << "function index: " << name << ": "
+                << functionIndexes[name] << '\n';
+    }
+  }
+  return functionIndexes[name];
+}
+
 bool hasI64ResultOrParam(FunctionType* ft) {
   if (ft->result == i64) return true;
   for (auto ty : ft->params) {
@@ -387,10 +389,30 @@ bool hasI64ResultOrParam(FunctionType* ft) {
   return false;
 }
 
+void Linker::makeDummyFunction() {
+  assert(out.wasm.table.names.empty());
+  bool create = false;
+  // Check if there are address-taken functions
+  for (auto& relocation : out.relocations) {
+    if (relocation->kind == LinkerObject::Relocation::kFunction) {
+      create = true;
+      break;
+    }
+  }
+  if (!create) return;
+  wasm::Builder wasmBuilder(out.wasm);
+  Expression *unreachable = wasmBuilder.makeUnreachable();
+  Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, WasmType::none, {}, unreachable);
+  out.wasm.addFunction(dummy);
+  getFunctionIndex(dummy->name);
+}
+
 void Linker::makeDynCallThunks() {
   std::unordered_set<std::string> sigs;
   wasm::Builder wasmBuilder(out.wasm);
   for (const auto& indirectFunc : out.wasm.table.names) {
+    // Skip generating thunks for the dummy function
+    if (indirectFunc == dummyFunction) continue;
     std::string sig(getSig(out.wasm.getFunction(indirectFunc)));
     auto* funcType = ensureFunctionType(sig, &out.wasm);
     if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
