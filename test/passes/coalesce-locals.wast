@@ -384,7 +384,7 @@
   (func $loop (type $2)
     (local $x i32)
     (local $y i32)
-    (loop $out $in
+    (loop $in
       (drop
         (get_local $x)
       )
@@ -733,129 +733,135 @@
         )
       )
       (block $block2
-        (loop $while-out$0 $while-in$1
-          (if
-            (i32.eqz
-              (i32.and
-                (get_local $i1)
-                (i32.const 3)
-              )
-            )
-            (br $while-out$0)
-          )
-          (block $block4
+        (block $while-out$0
+          (loop $while-in$1
             (if
               (i32.eqz
-                (get_local $i3)
+                (i32.and
+                  (get_local $i1)
+                  (i32.const 3)
+                )
               )
-              (return
-                (get_local $i4)
-              )
+              (br $while-out$0)
             )
-            (i32.store8
-              (get_local $i1)
-              (i32.load8_s
-                (get_local $i2)
+            (block $block4
+              (if
+                (i32.eqz
+                  (get_local $i3)
+                )
+                (return
+                  (get_local $i4)
+                )
               )
-            )
-            (set_local $i1
-              (i32.add
+              (i32.store8
                 (get_local $i1)
-                (i32.const 1)
+                (i32.load8_s
+                  (get_local $i2)
+                )
+              )
+              (set_local $i1
+                (i32.add
+                  (get_local $i1)
+                  (i32.const 1)
+                )
+              )
+              (set_local $i2
+                (i32.add
+                  (get_local $i2)
+                  (i32.const 1)
+                )
+              )
+              (set_local $i3
+                (i32.sub
+                  (get_local $i3)
+                  (i32.const 1)
+                )
               )
             )
-            (set_local $i2
-              (i32.add
-                (get_local $i2)
-                (i32.const 1)
-              )
-            )
-            (set_local $i3
-              (i32.sub
-                (get_local $i3)
-                (i32.const 1)
-              )
-            )
+            (br $while-in$1)
           )
-          (br $while-in$1)
         )
-        (loop $while-out$2 $while-in$3
-          (if
-            (i32.eqz
-              (i32.ge_s
-                (get_local $i3)
-                (i32.const 4)
+        (block $while-out$2
+          (loop $while-in$3
+            (if
+              (i32.eqz
+                (i32.ge_s
+                  (get_local $i3)
+                  (i32.const 4)
+                )
               )
+              (br $while-out$2)
             )
-            (br $while-out$2)
-          )
-          (block $block7
-            (i32.store
-              (get_local $i1)
-              (i32.load
-                (get_local $i2)
-              )
-            )
-            (set_local $i1
-              (i32.add
+            (block $block7
+              (i32.store
                 (get_local $i1)
-                (i32.const 4)
+                (i32.load
+                  (get_local $i2)
+                )
+              )
+              (set_local $i1
+                (i32.add
+                  (get_local $i1)
+                  (i32.const 4)
+                )
+              )
+              (set_local $i2
+                (i32.add
+                  (get_local $i2)
+                  (i32.const 4)
+                )
+              )
+              (set_local $i3
+                (i32.sub
+                  (get_local $i3)
+                  (i32.const 4)
+                )
               )
             )
-            (set_local $i2
-              (i32.add
-                (get_local $i2)
-                (i32.const 4)
-              )
-            )
-            (set_local $i3
-              (i32.sub
-                (get_local $i3)
-                (i32.const 4)
-              )
-            )
+            (br $while-in$3)
           )
-          (br $while-in$3)
         )
       )
     )
-    (loop $while-out$4 $while-in$5
-      (if
-        (i32.eqz
-          (i32.gt_s
-            (get_local $i3)
-            (i32.const 0)
+    (block $while-out$4
+      (loop $while-in$5
+        (if
+          (i32.eqz
+            (i32.gt_s
+              (get_local $i3)
+              (i32.const 0)
+            )
           )
+          (br $while-out$4)
         )
-        (br $while-out$4)
-      )
-      (block $block9
-        (i32.store8
-          (get_local $i1)
-          (i32.load8_s
-            (get_local $i2)
-          )
-        )
-        (set_local $i1
-          (i32.add
+        (block $block9
+          (i32.store8
             (get_local $i1)
-            (i32.const 1)
+            (i32.load8_s
+              (get_local $i2)
+            )
+          )
+          (set_local $i1
+            (i32.add
+              (get_local $i1)
+              (i32.const 1)
+            )
+          )
+          (set_local $i2
+            (i32.add
+              (get_local $i2)
+              (i32.const 1)
+            )
+          )
+          (set_local $i3
+            (i32.sub
+              (get_local $i3)
+              (i32.const 1)
+            )
           )
         )
-        (set_local $i2
-          (i32.add
-            (get_local $i2)
-            (i32.const 1)
-          )
-        )
-        (set_local $i3
-          (i32.sub
-            (get_local $i3)
-            (i32.const 1)
-          )
-        )
+        (br $while-in$5)
       )
-      (br $while-in$5)
     )
     (return
       (get_local $i4)

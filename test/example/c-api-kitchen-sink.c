@@ -185,9 +185,8 @@ void test_core() {
     BinaryenBlock(module, NULL, NULL, 0), // block with no name
     BinaryenIf(module, temp1, temp2, temp3),
     BinaryenIf(module, temp4, temp5, NULL),
-    BinaryenLoop(module, "out", "in", makeInt32(module, 0)),
-    BinaryenLoop(module, NULL, "in2", makeInt32(module, 0)),
-    BinaryenLoop(module, NULL, NULL, makeInt32(module, 0)),
+    BinaryenLoop(module, "in", makeInt32(module, 0)),
+    BinaryenLoop(module, NULL, makeInt32(module, 0)),
     BinaryenBreak(module, "the-value", temp6, temp7),
     BinaryenBreak(module, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),

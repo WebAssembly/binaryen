@@ -1064,7 +1064,7 @@ class S2WasmBuilder {
       if (target->is<Block>()) {
         return target->cast<Block>()->name;
       } else {
-        return target->cast<Loop>()->in;
+        return target->cast<Loop>()->name;
       }
     };
     // fixups
@@ -1099,10 +1099,9 @@ class S2WasmBuilder {
       } else if (match("loop")) {
         auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
-        curr->in = getNextLabel();
-        curr->out = getNextLabel();
+        curr->name = getNextLabel();
         auto block = allocator->alloc<Block>();
-        block->name = curr->out; // temporary, fake - this way, on bstack we have the right label at the right offset for a br
+        block->name = getNextLabel();
         curr->body = block;
         loopBlocks.push_back(block);
         bstack.push_back(block);

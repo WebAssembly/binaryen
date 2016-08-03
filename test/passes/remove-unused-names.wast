@@ -8,45 +8,48 @@
     )
   )
   (func $loops (type $1)
-    (loop $out $in
-      (br $out)
+    (block $out
+      (loop $in
+        (br $out)
+        (br $in)
+      )
+    )
+    (loop $in
       (br $in)
     )
-    (loop $out $in
-      (br $out)
-    )
-    (loop $out $in
-      (br $in)
-    )
-    (loop $out $in
+    (loop $in
       (nop)
     )
-    (loop $out $in
-      (loop $out $in
-        (br $out)
-        (br $in)
+    (block $out
+      (loop $in
+        (block $out
+          (loop $in
+            (br $out)
+            (br $in)
+          )
+        )
       )
     )
     (block $out
-      (loop $out $in
+      (loop $in
         (br $out)
         (br $in)
       )
     )
-    (loop $out $in
+    (loop $in
       (block $out
         (br $out)
         (br $in)
       )
     )
-    (loop $loop-out0 $in
+    (loop $in
       (block $out
         (br $out)
         (br $in)
       )
     )
     (block $out
-      (loop $loop-out1 $in
+      (loop $in
         (br $out)
         (br $in)
       )

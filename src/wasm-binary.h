@@ -875,10 +875,8 @@ public:
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
     o << int8_t(BinaryConsts::Loop);
-    breakStack.push_back(curr->out);
-    breakStack.push_back(curr->in);
+    breakStack.push_back(curr->name);
     recursePossibleBlockContents(curr->body);
-    breakStack.pop_back();
     breakStack.pop_back();
     o << int8_t(BinaryConsts::End);
   }
@@ -1841,12 +1839,9 @@ public:
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
-    curr->out = getNextLabel();
-    curr->in = getNextLabel();
-    breakStack.push_back(curr->out);
-    breakStack.push_back(curr->in);
+    curr->name = getNextLabel();
+    breakStack.push_back(curr->name);
     curr->body = getMaybeBlock();
-    breakStack.pop_back();
     breakStack.pop_back();
     curr->finalize();
   }

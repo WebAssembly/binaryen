@@ -82,9 +82,9 @@ public:
     ret->finalize();
     return ret;
   }
-  Loop* makeLoop(Name out, Name in, Expression* body) {
+  Loop* makeLoop(Name name, Expression* body) {
     auto* ret = allocator.alloc<Loop>();
-    ret->out = out; ret->in = in; ret->body = body;
+    ret->name = name; ret->body = body;
     ret->finalize();
     return ret;
   }
@@ -265,7 +265,21 @@ public:
     if (!block) block = makeBlock(any);
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(); // TODO: move out of if
+    }
+    return block;
+  }
+
+  // ensure a node is a block, if it isn't already, and optionally append to the block
+  // this variant sets a name for the block, so it will not reuse a block already named
+  Block* blockifyWithName(Expression* any, Name name, Expression* append = nullptr) {
+    Block* block = nullptr;
+    if (any) block = any->dynCast<Block>();
+    if (!block || block->name.is()) block = makeBlock(any);
+    block->name = name;
+    if (append) {
+      block->list.push_back(append);
+      block->finalize(); // TODO: move out of if
     }
     return block;
   }

@@ -130,23 +130,15 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     auto* last = self->currBasicBlock;
     doStartBasicBlock(self, currp);
     self->link(last, self->currBasicBlock); // fallthrough
-    // branches to the new one
     auto* curr = (*currp)->cast<Loop>();
-    if (curr->out.is()) {
-      auto& origins = self->branches[curr->out];
-      for (auto* origin : origins) {
-        self->link(origin, self->currBasicBlock);
-      }
-      self->branches.erase(curr->out);
-    }
     // branches to the top of the loop
-    if (curr->in.is()) {
+    if (curr->name.is()) {
       auto* loopStart = self->loopStack.back();
-      auto& origins = self->branches[curr->in];
+      auto& origins = self->branches[curr->name];
       for (auto* origin : origins) {
         self->link(origin, loopStart);
       }
-      self->branches.erase(curr->in);
+      self->branches.erase(curr->name);
     }
     self->loopStack.pop_back();
   }

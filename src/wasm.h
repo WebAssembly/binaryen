@@ -1001,7 +1001,7 @@ public:
   Loop() {}
   Loop(MixedArena& allocator) {}
 
-  Name out, in;
+  Name name;
   Expression *body;
 
   // set the type of a loop if you already know it

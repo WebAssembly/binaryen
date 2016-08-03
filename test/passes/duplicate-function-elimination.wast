@@ -335,12 +335,12 @@
   (memory 0)
   (type $0 (func))
   (func $erase (type $0)
-    (loop $foo $bar
+    (loop $bar
       (nop)
     )
   )
   (func $other (type $0)
-    (loop $sfo $sjc
+    (loop $sjc
       (nop)
     )
   )

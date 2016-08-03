@@ -253,8 +253,8 @@
               )
               (br $label$break$Lout)
             )
-            (block $block0
-              (loop $while-out$10 $while-in$11
+            (block $while-out$10
+              (loop $while-in$11
                 (block $block1
                   (br $while-out$10)
                   (br $while-in$11)
@@ -263,8 +263,8 @@
               (br $label$break$Lout)
             )
           )
-          (block $block2
-            (loop $while-out$13 $while-in$14
+          (block $while-out$13
+            (loop $while-in$14
               (block $block3
                 (br $label$break$Lout)
                 (br $while-in$14)
@@ -429,7 +429,7 @@
     (i32.const 0)
   )
   (func $loop-roundtrip (type $7) (param $0 f64) (result f64)
-    (loop $loop-out0 $loop-in1
+    (loop $loop-in1
       (drop
         (get_local $0)
       )

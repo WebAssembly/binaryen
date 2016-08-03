@@ -148,8 +148,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
     if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
   }
   void visitLoop(Loop* curr) {
-    if (curr->in.is()) breakNames.erase(curr->in); // these were internal breaks
-    if (curr->out.is()) breakNames.erase(curr->out); // these were internal breaks
+    if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
   }
 
   void visitCall(Call *curr) { calls = true; }
@@ -245,7 +244,7 @@ struct ExpressionManipulator {
         return builder.makeIf(copy(curr->condition), copy(curr->ifTrue), copy(curr->ifFalse));
       }
       Expression* visitLoop(Loop *curr) {
-        return builder.makeLoop(curr->out, curr->in, copy(curr->body));
+        return builder.makeLoop(curr->name, copy(curr->body));
       }
       Expression* visitBreak(Break *curr) {
         return builder.makeBreak(curr->name, copy(curr->value), copy(curr->condition));
@@ -438,8 +437,7 @@ struct ExpressionAnalyzer {
           break;
         }
         case Expression::Id::LoopId: {
-          if (!noteNames(left->cast<Loop>()->out, right->cast<Loop>()->out)) return false;
-          if (!noteNames(left->cast<Loop>()->in, right->cast<Loop>()->in)) return false;
+          if (!noteNames(left->cast<Loop>()->name, right->cast<Loop>()->name)) return false;
           PUSH(Loop, body);
           break;
         }
@@ -655,8 +653,7 @@ struct ExpressionAnalyzer {
           break;
         }
         case Expression::Id::LoopId: {
-          noteName(curr->cast<Loop>()->out);
-          noteName(curr->cast<Loop>()->in);
+          noteName(curr->cast<Loop>()->name);
           PUSH(Loop, body);
           break;
         }

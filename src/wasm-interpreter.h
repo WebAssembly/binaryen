@@ -170,8 +170,7 @@ public:
     while (1) {
       Flow flow = visit(curr->body);
       if (flow.breaking()) {
-        if (flow.breakTo == curr->in) continue; // lol
-        flow.clearIf(curr->out);
+        if (flow.breakTo == curr->name) continue; // lol
       }
       return flow; // loop does not loop automatically, only continue achieves that
     }

@@ -132,12 +132,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
   }
 
   void visitLoop(Loop* curr) {
-    if (curr->in.is()) {
-      reachableBreaks.erase(curr->in);
-    }
-    if (curr->out.is()) {
-      reachable = reachable || reachableBreaks.count(curr->out);
-      reachableBreaks.erase(curr->out);
+    if (curr->name.is()) {
+      reachableBreaks.erase(curr->name);
     }
     if (isDead(curr->body)) {
       replaceCurrent(curr->body);

@@ -338,16 +338,13 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* out, const char* in, BinaryenExpressionRef body) {
-  if (out && !in) abort();
-  auto* ret = Builder(*((Module*)module)).makeLoop(out ? Name(out) : Name(), in ? Name(in) : Name(), (Expression*)body);
+BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* name, BinaryenExpressionRef body) {
+  auto* ret = Builder(*((Module*)module)).makeLoop(name ? Name(name) : Name(), (Expression*)body);
 
   if (tracing) {
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenLoop(the_module, ";
-    traceNameOrNULL(out);
-    std::cout << ", ";
-    traceNameOrNULL(in);
+    traceNameOrNULL(name);
     std::cout << ", expressions[" << expressions[body] << "]);\n";
   }
 

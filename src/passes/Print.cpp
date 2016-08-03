@@ -64,7 +64,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void printFullLine(Expression *expression) {
     !minify && doIndent(o, indent);
-    //o << "[" << printWasmType(expression->type) << "] "; // debugging tool
+#ifdef DEBUG_TYPES
+    o << "[" << printWasmType(expression->type) << "] ";
+#endif
     visit(expression);
     o << maybeNewLine;
   }
@@ -152,12 +154,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitLoop(Loop *curr) {
     printOpening(o, "loop");
-    if (curr->out.is()) {
-      o << ' ' << curr->out;
-      assert(curr->in.is()); // if just one is printed, it must be the in
-    }
-    if (curr->in.is()) {
-      o << ' ' << curr->in;
+    if (curr->name.is()) {
+      o << ' ' << curr->name;
     }
     incIndent();
     auto block = curr->body->dynCast<Block>();
@@ -734,7 +732,9 @@ Pass *createFullPrinterPass() {
 std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify) {
   PrintSExpression print(o);
   print.setMinify(minify);
-  //o << "[" << printWasmType(expression->type) << "] "; // debugging tool
+#ifdef DEBUG_TYPES
+  o << "[" << printWasmType(expression->type) << "] ";
+#endif
   print.visit(expression);
   return o;
 }

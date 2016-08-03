@@ -99,15 +99,15 @@
     )
   )
   (func $loopy (type $1) (param $0 i32)
-    (loop $loop-out0 $loop-in1
+    (loop $loop-in1
       (nop)
     )
-    (loop $loop-out2 $loop-in3
+    (loop $loop-in3
       (nop)
       (nop)
     )
     (drop
-      (loop $loop-out4 $loop-in5
+      (loop $loop-in5
         (drop
           (get_local $0)
         )

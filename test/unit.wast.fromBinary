@@ -266,17 +266,17 @@
               (br $label$9)
             )
             (block $label$15
-              (loop $label$16 $label$17
+              (loop $label$16
+                (br $label$15)
                 (br $label$16)
-                (br $label$17)
               )
               (br $label$9)
             )
           )
-          (block $label$18
-            (loop $label$19 $label$20
+          (block $label$17
+            (loop $label$18
               (br $label$9)
-              (br $label$20)
+              (br $label$18)
             )
             (br $label$9)
           )
@@ -439,7 +439,7 @@
     )
   )
   (func $loop-roundtrip (type $7) (param $var$0 f64) (result f64)
-    (loop $label$0 $label$1
+    (loop $label$0
       (drop
         (get_local $var$0)
       )

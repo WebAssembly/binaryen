@@ -76,34 +76,12 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visit
       }
     }
     handleBreakTarget(curr->name);
-    if (curr->name.is() && curr->list.size() == 1) {
-      auto* child = curr->list[0]->dynCast<Loop>();
-      if (child && !child->out.is()) {
-        // we have just one child, this loop, and it lacks an out label. So this block's name is doing just that!
-        child->out = curr->name;
-        replaceCurrent(child);
-      }
-    }
   }
 
   void visitLoop(Loop *curr) {
-    handleBreakTarget(curr->in);
-    // Loops can have just 'in', but cannot have just 'out'
-    auto out = curr->out;
-    handleBreakTarget(curr->out);
-    if (curr->out.is() && !curr->in.is()) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->name = out;
-      block->list.push_back(curr->body);
-      replaceCurrent(block);
-    }
-    if (curr->in.is() && !curr->out.is()) {
-      auto* child = curr->body->dynCast<Block>();
-      if (child && child->name.is()) {
-        // we have just one child, this block, and we lack an out label. So we can take the block's!
-        curr->out = child->name;
-        child->name = Name();
-      }
+    handleBreakTarget(curr->name);
+    if (!curr->name.is()) {
+      replaceCurrent(curr->body);
     }
   }
 

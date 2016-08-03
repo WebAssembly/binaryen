@@ -20,7 +20,7 @@
     (drop
       (i32.const 3)
     )
-    (loop $loop-out0 $in
+    (loop $in
       (br $in)
     )
   )

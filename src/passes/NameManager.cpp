@@ -37,8 +37,7 @@ void NameManager::visitBlock(Block* curr) {
   names.insert(curr->name);
 }
 void NameManager::visitLoop(Loop* curr) {
-  names.insert(curr->out);
-  names.insert(curr->in);
+  names.insert(curr->name);
 }
 void NameManager::visitBreak(Break* curr) {
   names.insert(curr->name);

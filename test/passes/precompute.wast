@@ -38,7 +38,7 @@
         (i32.const 1)
       )
     )
-    (loop $loop-out0 $in
+    (loop $in
       (br $in)
     )
   )

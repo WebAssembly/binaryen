@@ -123,16 +123,18 @@
       (i32.const 0)
       (unreachable)
     )
-    (loop $out $in
-      (br_if $out
-        (i32.const 1)
+    (block $out
+      (loop $in
+        (br_if $out
+          (i32.const 1)
+        )
+        (unreachable)
       )
-      (unreachable)
     )
     (if
       (i32.const 0)
       (block $block20
-        (loop $out $in
+        (loop $in
           (br_if $in
             (i32.const 1)
           )

@@ -162,46 +162,42 @@
                 )
               )
             )
-            (br $switch-default$16)
           )
-          (br $switch-default$16)
         )
-        (block $while-out$10
-        )
-        (br $switch-default$16)
-      )
-      (loop
-        (br $switch-default$16)
       )
     )
-    (loop $label$break$L1 $label$continue$L1
-      (loop $label$break$L3 $label$continue$L3
-        (block $switch$17
-          (block $switch-default$21
-            (block $switch-case$20
-              (block $switch-case$19
-                (block $switch-case$18
-                  (br_table $switch-case$18 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$20 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$19 $switch-default$21
-                    (i32.sub
-                      (get_local $0)
-                      (i32.const -1)
+    (loop $label$continue$L1
+      (block $label$break$L1
+        (loop $label$continue$L3
+          (block $label$break$L3
+            (block $switch$17
+              (block $switch-default$21
+                (block $switch-case$20
+                  (block $switch-case$19
+                    (block $switch-case$18
+                      (br_table $switch-case$18 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$20 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$19 $switch-default$21
+                        (i32.sub
+                          (get_local $0)
+                          (i32.const -1)
+                        )
+                      )
                     )
+                    (br $label$break$L1)
                   )
+                  (br $switch$17)
                 )
-                (br $label$break$L1)
+                (br $label$break$L3)
               )
-              (br $switch$17)
+              (br $label$break$L1)
             )
-            (br $label$break$L3)
+            (br $label$continue$L3)
           )
-          (br $label$break$L1)
         )
-        (br $label$continue$L3)
+        (call_import $h
+          (i32.const 120)
+        )
+        (br $label$continue$L1)
       )
-      (call_import $h
-        (i32.const 120)
-      )
-      (br $label$continue$L1)
     )
     (i32.const 0)
   )
@@ -290,23 +286,25 @@
     (set_local $0
       (i32.const 1)
     )
-    (loop $for-out$0 $for-in$1
-      (br_if $for-out$0
-        (i32.ge_s
-          (get_local $0)
-          (i32.const 200)
+    (loop $for-in$1
+      (block $for-out$0
+        (br_if $for-out$0
+          (i32.ge_s
+            (get_local $0)
+            (i32.const 200)
+          )
         )
-      )
-      (call_import $h
-        (get_local $0)
-      )
-      (set_local $0
-        (i32.add
+        (call_import $h
           (get_local $0)
-          (i32.const 1)
         )
+        (set_local $0
+          (i32.add
+            (get_local $0)
+            (i32.const 1)
+          )
+        )
+        (br $for-in$1)
       )
-      (br $for-in$1)
     )
   )
   (func $ceiling_32_64 (param $0 f32) (param $1 f64)
