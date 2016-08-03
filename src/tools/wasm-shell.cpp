@@ -125,7 +125,13 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
         // maybe parsed ok, but otherwise incorrect
         invalid = !WasmValidator().validate(wasm);
       }
-      assert(invalid);
+      if (!invalid) {
+        Colors::red(std::cerr);
+        std::cerr << "[should have been invalid]\n";
+        Colors::normal(std::cerr);
+        std::cerr << &wasm << '\n';
+        abort();
+      }
     } else if (id == INVOKE) {
       assert(wasm);
       Invocation invocation(curr, instance.get(), *builder->get());
