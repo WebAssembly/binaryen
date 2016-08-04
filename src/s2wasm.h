@@ -399,6 +399,10 @@ class S2WasmBuilder {
       // add data aliases
       } else {
         Name lhs = getStrToSep();
+        // When the current line contains only one word, e.g.".text"
+        if (match("\n"))
+          continue;
+        // When the current line contains more than one word
         if (!skipEqual()){
           s = strchr(s, '\n');
           if (!s) break;
