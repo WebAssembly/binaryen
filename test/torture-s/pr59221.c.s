@@ -9,40 +9,38 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push14=, 0
-	i32.load	$push2=, b($pop14)
-	i32.eqz 	$push24=, $pop2
-	br_if   	0, $pop24       # 0: down to label0
+	i32.const	$push13=, 0
+	i32.load	$push2=, b($pop13)
+	i32.eqz 	$push22=, $pop2
+	br_if   	0, $pop22       # 0: down to label0
 # BB#1:                                 # %for.inc.preheader
-	i32.const	$push16=, 0
 	i32.const	$push15=, 0
-	i32.store	$drop=, b($pop16), $pop15
+	i32.const	$push14=, 0
+	i32.store	$drop=, b($pop15), $pop14
 .LBB0_2:                                # %for.end
 	end_block                       # label0:
 	block
-	i32.const	$push23=, 0
-	i32.const	$push22=, 0
 	i32.const	$push21=, 0
-	i32.load	$push20=, a($pop21)
-	tee_local	$push19=, $0=, $pop20
+	i32.const	$push20=, 0
+	i32.const	$push19=, 0
+	i32.load	$push18=, a($pop19)
+	tee_local	$push17=, $0=, $pop18
 	i32.const	$push5=, 16
-	i32.shl 	$push6=, $pop19, $pop5
-	i32.const	$push18=, 16
-	i32.shr_s	$push7=, $pop6, $pop18
+	i32.shl 	$push6=, $pop17, $pop5
+	i32.const	$push16=, 16
+	i32.shr_s	$push7=, $pop6, $pop16
 	i32.const	$push8=, -32768
 	i32.const	$push3=, 65535
 	i32.and 	$push4=, $0, $pop3
 	i32.select	$push9=, $pop7, $pop8, $pop4
-	i32.store16	$push0=, e($pop22), $pop9
-	i32.store	$push1=, d($pop23), $pop0
-	i32.const	$push17=, 65535
-	i32.and 	$push10=, $pop1, $pop17
-	i32.const	$push11=, 1
-	i32.ne  	$push12=, $pop10, $pop11
-	br_if   	0, $pop12       # 0: down to label1
+	i32.store16	$push0=, e($pop20), $pop9
+	i32.store	$push1=, d($pop21), $pop0
+	i32.const	$push10=, 1
+	i32.ne  	$push11=, $pop1, $pop10
+	br_if   	0, $pop11       # 0: down to label1
 # BB#3:                                 # %if.end
-	i32.const	$push13=, 0
-	return  	$pop13
+	i32.const	$push12=, 0
+	return  	$pop12
 .LBB0_4:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION

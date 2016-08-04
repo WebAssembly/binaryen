@@ -38,14 +38,12 @@ main:                                   # @main
 	i32.call	$push1=, malloc@FUNCTION, $pop0
 	i32.const	$push2=, 8
 	i32.call	$push3=, foo@FUNCTION, $pop1, $pop2
-	i32.const	$push4=, 65535
-	i32.and 	$push5=, $pop3, $pop4
-	i32.const	$push6=, 1
-	i32.ne  	$push7=, $pop5, $pop6
-	br_if   	0, $pop7        # 0: down to label0
+	i32.const	$push4=, 1
+	i32.ne  	$push5=, $pop3, $pop4
+	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

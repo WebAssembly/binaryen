@@ -8,51 +8,47 @@ invalidate_memory:                      # @invalidate_memory
 	.param  	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
+	i32.load8_u	$push9=, 0($0)
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push2=, 8
+	i32.and 	$1=, $pop8, $pop2
 	i32.const	$4=, 0
-	i32.load8_u	$push13=, 0($0)
-	tee_local	$push12=, $0=, $pop13
-	i32.const	$push2=, 4
-	i32.and 	$push1=, $pop12, $pop2
-	i32.const	$push11=, 255
-	i32.and 	$push8=, $pop1, $pop11
-	i32.eqz 	$2=, $pop8
-	i32.const	$push3=, 8
-	i32.and 	$push0=, $0, $pop3
-	i32.const	$push10=, 255
-	i32.and 	$3=, $pop0, $pop10
+	i32.const	$push1=, 4
+	i32.and 	$push0=, $0, $pop1
+	i32.eqz 	$3=, $pop0
 .LBB0_1:                                # %for.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
 	block
 	loop                            # label1:
 	block
-	i32.const	$push16=, 2
-	i32.shl 	$push4=, $4, $pop16
-	i32.load	$push15=, table($pop4)
-	tee_local	$push14=, $0=, $pop15
-	i32.eqz 	$push23=, $pop14
-	br_if   	0, $pop23       # 0: down to label3
+	i32.const	$push12=, 2
+	i32.shl 	$push3=, $4, $pop12
+	i32.load	$push11=, table($pop3)
+	tee_local	$push10=, $0=, $pop11
+	i32.eqz 	$push19=, $pop10
+	br_if   	0, $pop19       # 0: down to label3
 .LBB0_2:                                # %for.body6
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label4:
-	i32.load16_u	$1=, 36($0)
+	i32.load16_u	$2=, 36($0)
 	i32.load	$0=, 4($0)
 	block
-	i32.const	$push17=, 255
-	i32.and 	$push5=, $1, $pop17
-	i32.eqz 	$push24=, $pop5
-	br_if   	0, $pop24       # 0: down to label6
+	i32.const	$push13=, 255
+	i32.and 	$push4=, $2, $pop13
+	i32.eqz 	$push20=, $pop4
+	br_if   	0, $pop20       # 0: down to label6
 # BB#3:                                 # %land.lhs.true
                                         #   in Loop: Header=BB0_2 Depth=2
-	br_if   	6, $3           # 6: down to label0
+	br_if   	6, $1           # 6: down to label0
 # BB#4:                                 # %land.lhs.true
                                         #   in Loop: Header=BB0_2 Depth=2
-	i32.const	$push18=, 256
-	i32.lt_u	$push7=, $1, $pop18
-	i32.or  	$push6=, $2, $pop7
-	i32.eqz 	$push25=, $pop6
-	br_if   	6, $pop25       # 6: down to label0
+	i32.const	$push14=, 256
+	i32.lt_u	$push6=, $2, $pop14
+	i32.or  	$push5=, $3, $pop6
+	i32.eqz 	$push21=, $pop5
+	br_if   	6, $pop21       # 6: down to label0
 .LBB0_5:                                # %for.cond5.backedge
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label6:
@@ -61,12 +57,12 @@ invalidate_memory:                      # @invalidate_memory
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label5:
 	end_block                       # label3:
-	i32.const	$push22=, 1
-	i32.add 	$push21=, $4, $pop22
-	tee_local	$push20=, $4=, $pop21
-	i32.const	$push19=, 31
-	i32.lt_s	$push9=, $pop20, $pop19
-	br_if   	0, $pop9        # 0: up to label1
+	i32.const	$push18=, 1
+	i32.add 	$push17=, $4, $pop18
+	tee_local	$push16=, $4=, $pop17
+	i32.const	$push15=, 31
+	i32.lt_s	$push7=, $pop16, $pop15
+	br_if   	0, $pop7        # 0: up to label1
 # BB#7:                                 # %for.end16
 	end_loop                        # label2:
 	return

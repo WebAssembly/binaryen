@@ -7,9 +7,9 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %for.body.preheader.i
+# BB#0:                                 # %for.body.lr.ph.i
 	i32.const	$0=, 256
-.LBB0_1:                                # %if.end.i
+.LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i32.const	$push3=, -1

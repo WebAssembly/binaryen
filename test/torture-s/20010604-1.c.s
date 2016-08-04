@@ -9,27 +9,25 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push3=, 255
-	i32.and 	$push4=, $6, $pop3
-	i32.const	$push8=, 1
-	i32.ne  	$push5=, $pop4, $pop8
-	br_if   	0, $pop5        # 0: down to label0
+	i32.const	$push6=, 1
+	i32.ne  	$push3=, $6, $pop6
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push9=, 1
-	i32.xor 	$push0=, $3, $pop9
+	i32.const	$push7=, 1
+	i32.xor 	$push0=, $3, $pop7
 	br_if   	0, $pop0        # 0: down to label0
 # BB#2:                                 # %entry
-	i32.const	$push10=, 1
-	i32.xor 	$push1=, $4, $pop10
+	i32.const	$push8=, 1
+	i32.xor 	$push1=, $4, $pop8
 	br_if   	0, $pop1        # 0: down to label0
 # BB#3:                                 # %entry
-	i32.const	$push11=, 1
-	i32.xor 	$push2=, $5, $pop11
+	i32.const	$push9=, 1
+	i32.xor 	$push2=, $5, $pop9
 	br_if   	0, $pop2        # 0: down to label0
 # BB#4:                                 # %if.end
-	i32.add 	$push6=, $1, $0
-	i32.add 	$push7=, $pop6, $2
-	return  	$pop7
+	i32.add 	$push4=, $1, $0
+	i32.add 	$push5=, $pop4, $2
+	return  	$pop5
 .LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

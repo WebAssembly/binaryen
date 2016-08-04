@@ -23,7 +23,7 @@ test1:                                  # @test1
 	end_block                       # label2:
 	i32.eqz 	$push3=, $1
 	br_if   	1, $pop3        # 1: down to label0
-.LBB0_4:                                # %if.end43
+.LBB0_4:                                # %if.end45
 	end_block                       # label1:
 	return
 .LBB0_5:                                # %if.then4
@@ -61,7 +61,7 @@ test2:                                  # @test2
 	end_block                       # label5:
 	i32.eqz 	$push7=, $1
 	br_if   	1, $pop7        # 1: down to label3
-.LBB1_4:                                # %if.end43
+.LBB1_4:                                # %if.end45
 	end_block                       # label4:
 	return
 .LBB1_5:                                # %if.then4
@@ -95,7 +95,7 @@ test3:                                  # @test3
 	end_block                       # label8:
 	i32.eqz 	$push3=, $1
 	br_if   	1, $pop3        # 1: down to label6
-.LBB2_4:                                # %if.end43
+.LBB2_4:                                # %if.end45
 	end_block                       # label7:
 	return
 .LBB2_5:                                # %if.then4
@@ -133,7 +133,7 @@ test4:                                  # @test4
 	end_block                       # label11:
 	i32.eqz 	$push7=, $1
 	br_if   	1, $pop7        # 1: down to label9
-.LBB3_4:                                # %if.end43
+.LBB3_4:                                # %if.end45
 	end_block                       # label10:
 	return
 .LBB3_5:                                # %if.then4
@@ -167,7 +167,7 @@ test5:                                  # @test5
 	end_block                       # label14:
 	i32.eqz 	$push3=, $1
 	br_if   	1, $pop3        # 1: down to label12
-.LBB4_4:                                # %if.end36
+.LBB4_4:                                # %if.end38
 	end_block                       # label13:
 	return
 .LBB4_5:                                # %if.then3
@@ -201,7 +201,7 @@ test6:                                  # @test6
 	end_block                       # label17:
 	i32.eqz 	$push3=, $1
 	br_if   	1, $pop3        # 1: down to label15
-.LBB5_4:                                # %if.end36
+.LBB5_4:                                # %if.end38
 	end_block                       # label16:
 	return
 .LBB5_5:                                # %if.then3
@@ -235,7 +235,7 @@ test7:                                  # @test7
 	end_block                       # label20:
 	i32.eqz 	$push3=, $1
 	br_if   	1, $pop3        # 1: down to label18
-.LBB6_4:                                # %if.end36
+.LBB6_4:                                # %if.end38
 	end_block                       # label19:
 	return
 .LBB6_5:                                # %if.then3
@@ -269,7 +269,7 @@ test8:                                  # @test8
 	end_block                       # label23:
 	i32.eqz 	$push3=, $1
 	br_if   	1, $pop3        # 1: down to label21
-.LBB7_4:                                # %if.end36
+.LBB7_4:                                # %if.end38
 	end_block                       # label22:
 	return
 .LBB7_5:                                # %if.then3

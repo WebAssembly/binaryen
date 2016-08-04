@@ -47,7 +47,6 @@ pr60960.c.s.wast
 stdarg-1.c.s.wast
 stdarg-2.c.s.wast
 string-opt-17.c.s.wast
-string-opt-18.c.s.wast
 struct-ret-1.c.s.wast
 va-arg-2.c.s.wast
 va-arg-5.c.s.wast
@@ -152,7 +151,6 @@ strcpy-1.c.s.wast # memset
 string-opt-5.c.s.wast # strlen
 strlen-1.c.s.wast # strlen
 strncmp-1.c.s.wast # strcmp
-struct-cpy-1.c.s.wast # memset
 va-arg-10.c.s.wast # strlen
 va-arg-22.c.s.wast # memcpy
 va-arg-21.c.s.wast # malloc

@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.add 	$push3=, $pop70, $pop192
 	i64.load	$push191=, 0($pop3)
 	tee_local	$push190=, $3=, $pop191
-	call    	__addtf3@FUNCTION, $pop72, $2, $1, $pop193, $pop190
+	call    	__addtf3@FUNCTION, $pop72, $pop193, $pop190, $2, $1
 	i32.const	$push73=, 128
 	i32.add 	$push74=, $0, $pop73
 	i32.const	$push189=, 0
@@ -97,13 +97,13 @@ main:                                   # @main
 	i32.add 	$push4=, $pop80, $pop175
 	i64.load	$push174=, 0($pop4)
 	tee_local	$push173=, $9=, $pop174
-	call    	__multf3@FUNCTION, $pop82, $8, $7, $pop176, $pop173
+	call    	__multf3@FUNCTION, $pop82, $pop176, $pop173, $8, $7
 	i32.const	$push83=, 208
 	i32.add 	$push84=, $0, $pop83
 	call    	__subtf3@FUNCTION, $pop84, $2, $1, $10, $9
 	i32.const	$push85=, 160
 	i32.add 	$push86=, $0, $pop85
-	call    	__multf3@FUNCTION, $pop86, $6, $5, $4, $3
+	call    	__multf3@FUNCTION, $pop86, $4, $3, $6, $5
 	i32.const	$push89=, 256
 	i32.add 	$push90=, $0, $pop89
 	i64.load	$push172=, 272($0)

@@ -46,13 +46,13 @@ regrename_optimize:                     # @regrename_optimize
 	i64.store	$drop=, 8($pop30):p2align=2, $pop0
 	block
 	i32.load	$push29=, 0($0)
-	tee_local	$push28=, $6=, $pop29
+	tee_local	$push28=, $4=, $pop29
 	i32.eqz 	$push47=, $pop28
 	br_if   	0, $pop47       # 0: down to label1
 # BB#1:                                 # %for.body.preheader
-	i32.const	$4=, 0
-	i32.const	$3=, -1
 	i32.const	$5=, 0
+	i32.const	$3=, -1
+	i32.const	$6=, 0
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -65,24 +65,24 @@ regrename_optimize:                     # @regrename_optimize
 	i32.load	$push2=, reg_class_contents+4($pop38)
 	i32.const	$push37=, -1
 	i32.xor 	$push3=, $pop2, $pop37
-	i32.or  	$4=, $4, $pop3
+	i32.or  	$5=, $5, $pop3
 	i32.load	$push4=, reg_class_contents($0)
 	i32.const	$push36=, -1
 	i32.xor 	$push5=, $pop4, $pop36
-	i32.or  	$5=, $5, $pop5
-	copy_local	$push35=, $6
+	i32.or  	$6=, $6, $pop5
+	copy_local	$push35=, $4
 	tee_local	$push34=, $2=, $pop35
 	copy_local	$0=, $pop34
 	i32.load	$push33=, 0($2)
-	tee_local	$push32=, $6=, $pop33
+	tee_local	$push32=, $4=, $pop33
 	br_if   	0, $pop32       # 0: up to label2
 # BB#3:                                 # %for.end
 	end_loop                        # label3:
 	i32.const	$push6=, 12
 	i32.add 	$push43=, $1, $pop6
 	tee_local	$push42=, $0=, $pop43
-	i32.store	$drop=, 0($pop42), $4
-	i32.store	$drop=, 8($1), $5
+	i32.store	$drop=, 0($pop42), $5
+	i32.store	$drop=, 8($1), $6
 	i32.const	$push7=, 0
 	i32.lt_s	$push8=, $3, $pop7
 	br_if   	0, $pop8        # 0: down to label1
@@ -94,12 +94,12 @@ regrename_optimize:                     # @regrename_optimize
 	i32.load	$push11=, reg_class_contents+4($pop45)
 	i32.const	$push12=, -1
 	i32.xor 	$push13=, $pop11, $pop12
-	i32.or  	$push14=, $4, $pop13
+	i32.or  	$push14=, $5, $pop13
 	i32.store	$drop=, 0($0), $pop14
 	i32.load	$push15=, reg_class_contents($3)
 	i32.const	$push44=, -1
 	i32.xor 	$push16=, $pop15, $pop44
-	i32.or  	$push17=, $5, $pop16
+	i32.or  	$push17=, $6, $pop16
 	i32.store	$drop=, 8($1), $pop17
 	i32.const	$push25=, 8
 	i32.add 	$push26=, $1, $pop25

@@ -60,43 +60,41 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push17=, 0
-	i32.const	$push14=, 0
-	i32.load	$push15=, __stack_pointer($pop14)
-	i32.const	$push16=, 16
-	i32.sub 	$push24=, $pop15, $pop16
-	i32.store	$push26=, __stack_pointer($pop17), $pop24
-	tee_local	$push25=, $0=, $pop26
+	i32.const	$push15=, 0
+	i32.const	$push12=, 0
+	i32.load	$push13=, __stack_pointer($pop12)
+	i32.const	$push14=, 16
+	i32.sub 	$push22=, $pop13, $pop14
+	i32.store	$push24=, __stack_pointer($pop15), $pop22
+	tee_local	$push23=, $0=, $pop24
 	i64.const	$push0=, 68723771703295
-	i64.store	$drop=, 8($pop25), $pop0
+	i64.store	$drop=, 8($pop23), $pop0
 	i32.const	$push1=, 1048641535
 	i32.store	$drop=, 4($0), $pop1
 	block
-	i32.const	$push18=, 8
-	i32.add 	$push19=, $0, $pop18
-	i32.call	$push3=, xb@FUNCTION, $pop19
+	i32.const	$push16=, 8
+	i32.add 	$push17=, $0, $pop16
+	i32.call	$push3=, xb@FUNCTION, $pop17
 	i32.const	$push2=, 16255
 	i32.ne  	$push4=, $pop3, $pop2
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
-	i32.const	$push20=, 8
-	i32.add 	$push21=, $0, $pop20
-	i32.call	$push6=, xw@FUNCTION, $pop21
+	i32.const	$push18=, 8
+	i32.add 	$push19=, $0, $pop18
+	i32.call	$push6=, xw@FUNCTION, $pop19
 	i32.const	$push5=, 81535
 	i32.ne  	$push7=, $pop6, $pop5
 	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %lor.lhs.false4
-	i32.const	$push22=, 4
-	i32.add 	$push23=, $0, $pop22
-	i32.call	$push9=, yb@FUNCTION, $pop23
-	i32.const	$push8=, 65535
-	i32.and 	$push10=, $pop9, $pop8
-	i32.const	$push11=, 16255
-	i32.ne  	$push12=, $pop10, $pop11
-	br_if   	0, $pop12       # 0: down to label0
+	i32.const	$push20=, 4
+	i32.add 	$push21=, $0, $pop20
+	i32.call	$push9=, yb@FUNCTION, $pop21
+	i32.const	$push8=, 16255
+	i32.ne  	$push10=, $pop9, $pop8
+	br_if   	0, $pop10       # 0: down to label0
 # BB#3:                                 # %if.end
-	i32.const	$push13=, 0
-	call    	exit@FUNCTION, $pop13
+	i32.const	$push11=, 0
+	call    	exit@FUNCTION, $pop11
 	unreachable
 .LBB3_4:                                # %if.then
 	end_block                       # label0:
