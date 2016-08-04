@@ -115,7 +115,7 @@ foo:                                    # @foo
 	i32.xor 	$push55=, $pop54, $pop630
 	i32.ne  	$push56=, $pop55, $1
 	br_if   	0, $pop56       # 0: down to label10
-# BB#5:                                 # %if.then.i314
+# BB#5:                                 # %if.then.i312
 	i32.const	$push633=, 0
 	i32.const	$push57=, 1
 	i32.add 	$push58=, $0, $pop57
@@ -124,7 +124,7 @@ foo:                                    # @foo
 	i32.add 	$push3=, $2, $pop632
 	i32.store	$1=, 4($6), $pop3
 	br_if   	0, $0           # 0: down to label10
-# BB#6:                                 # %if.end3.i321
+# BB#6:                                 # %if.end3.i319
 	i32.const	$push59=, 4
 	i32.add 	$push60=, $2, $pop59
 	i32.load16_u	$0=, 0($pop60):p2align=0
@@ -139,7 +139,7 @@ foo:                                    # @foo
 	i32.const	$push64=, 16
 	i32.ne  	$push65=, $pop63, $pop64
 	br_if   	0, $pop65       # 0: down to label10
-# BB#7:                                 # %if.end3.i321.1
+# BB#7:                                 # %if.end3.i319.1
 	i32.const	$push637=, 0
 	i32.const	$push66=, 1
 	i32.store	$drop=, bar.lastc($pop637), $pop66
@@ -148,7 +148,7 @@ foo:                                    # @foo
 	i32.const	$push69=, 4352
 	i32.ne  	$push70=, $pop68, $pop69
 	br_if   	0, $pop70       # 0: down to label10
-# BB#8:                                 # %if.end3.i335
+# BB#8:                                 # %if.end3.i333
 	i32.const	$push71=, 12
 	i32.add 	$push72=, $2, $pop71
 	i32.store	$drop=, 4($6), $pop72
@@ -167,7 +167,7 @@ foo:                                    # @foo
 	i32.const	$push78=, 24
 	i32.ne  	$push79=, $0, $pop78
 	br_if   	8, $pop79       # 8: down to label2
-# BB#9:                                 # %if.end3.i335.1
+# BB#9:                                 # %if.end3.i333.1
 	i32.const	$push640=, 0
 	i32.const	$push80=, 1
 	i32.store	$drop=, bar.lastc($pop640), $pop80
@@ -175,7 +175,7 @@ foo:                                    # @foo
 	i32.const	$push81=, 25
 	i32.ne  	$push83=, $pop82, $pop81
 	br_if   	8, $pop83       # 8: down to label2
-# BB#10:                                # %if.end3.i335.2
+# BB#10:                                # %if.end3.i333.2
 	i32.const	$push641=, 0
 	i32.const	$push84=, 2
 	i32.store	$drop=, bar.lastc($pop641), $pop84
@@ -183,7 +183,7 @@ foo:                                    # @foo
 	i32.const	$push85=, 26
 	i32.ne  	$push87=, $pop86, $pop85
 	br_if   	8, $pop87       # 8: down to label2
-# BB#11:                                # %if.end3.i349
+# BB#11:                                # %if.end3.i347
 	i32.const	$push88=, 16
 	i32.add 	$push4=, $2, $pop88
 	i32.store	$1=, 4($6), $pop4
@@ -201,7 +201,7 @@ foo:                                    # @foo
 	i32.const	$push95=, 32
 	i32.ne  	$push96=, $pop94, $pop95
 	br_if   	7, $pop96       # 7: down to label3
-# BB#12:                                # %if.end3.i349.1
+# BB#12:                                # %if.end3.i347.1
 	i32.const	$push97=, 1
 	i32.store	$drop=, bar.lastc($7), $pop97
 	i32.const	$push98=, 65280
@@ -209,7 +209,7 @@ foo:                                    # @foo
 	i32.const	$push100=, 8448
 	i32.ne  	$push101=, $pop99, $pop100
 	br_if   	7, $pop101      # 7: down to label3
-# BB#13:                                # %if.end3.i349.2
+# BB#13:                                # %if.end3.i347.2
 	i32.const	$push644=, 0
 	i32.const	$push102=, 2
 	i32.store	$drop=, bar.lastc($pop644), $pop102
@@ -218,7 +218,7 @@ foo:                                    # @foo
 	i32.const	$push105=, 2228224
 	i32.ne  	$push106=, $pop104, $pop105
 	br_if   	7, $pop106      # 7: down to label3
-# BB#14:                                # %if.end3.i349.3
+# BB#14:                                # %if.end3.i347.3
 	i32.const	$push645=, 0
 	i32.const	$push107=, 3
 	i32.store	$drop=, bar.lastc($pop645), $pop107
@@ -227,7 +227,7 @@ foo:                                    # @foo
 	i32.const	$push110=, 587202560
 	i32.ne  	$push111=, $pop109, $pop110
 	br_if   	7, $pop111      # 7: down to label3
-# BB#15:                                # %if.end3.i363
+# BB#15:                                # %if.end3.i361
 	i32.const	$push112=, 24
 	i32.add 	$push5=, $2, $pop112
 	i32.store	$7=, 4($6), $pop5
@@ -247,14 +247,14 @@ foo:                                    # @foo
 	i32.const	$push119=, 40
 	i32.ne  	$push120=, $0, $pop119
 	br_if   	6, $pop120      # 6: down to label4
-# BB#16:                                # %if.end3.i363.1
+# BB#16:                                # %if.end3.i361.1
 	i32.const	$push121=, 1
 	i32.store	$drop=, bar.lastc($1), $pop121
 	i32.load8_u	$push123=, 337($6)
 	i32.const	$push122=, 41
 	i32.ne  	$push124=, $pop123, $pop122
 	br_if   	6, $pop124      # 6: down to label4
-# BB#17:                                # %if.end3.i363.2
+# BB#17:                                # %if.end3.i361.2
 	i32.const	$push649=, 0
 	i32.const	$push125=, 2
 	i32.store	$drop=, bar.lastc($pop649), $pop125
@@ -262,7 +262,7 @@ foo:                                    # @foo
 	i32.const	$push126=, 42
 	i32.ne  	$push128=, $pop127, $pop126
 	br_if   	6, $pop128      # 6: down to label4
-# BB#18:                                # %if.end3.i363.3
+# BB#18:                                # %if.end3.i361.3
 	i32.const	$push650=, 0
 	i32.const	$push129=, 3
 	i32.store	$drop=, bar.lastc($pop650), $pop129
@@ -270,7 +270,7 @@ foo:                                    # @foo
 	i32.const	$push130=, 43
 	i32.ne  	$push132=, $pop131, $pop130
 	br_if   	6, $pop132      # 6: down to label4
-# BB#19:                                # %if.end3.i363.4
+# BB#19:                                # %if.end3.i361.4
 	i32.const	$push651=, 0
 	i32.const	$push133=, 4
 	i32.store	$1=, bar.lastc($pop651), $pop133
@@ -278,7 +278,7 @@ foo:                                    # @foo
 	i32.const	$push134=, 44
 	i32.ne  	$push136=, $pop135, $pop134
 	br_if   	6, $pop136      # 6: down to label4
-# BB#20:                                # %if.end3.i377
+# BB#20:                                # %if.end3.i375
 	i32.const	$push137=, 32
 	i32.add 	$push6=, $2, $pop137
 	i32.store	$0=, 4($6), $pop6
@@ -296,7 +296,7 @@ foo:                                    # @foo
 	i32.const	$push142=, 48
 	i32.ne  	$push143=, $1, $pop142
 	br_if   	5, $pop143      # 5: down to label5
-# BB#21:                                # %if.end3.i377.1
+# BB#21:                                # %if.end3.i375.1
 	i32.const	$push654=, 0
 	i32.const	$push144=, 1
 	i32.store	$drop=, bar.lastc($pop654), $pop144
@@ -304,7 +304,7 @@ foo:                                    # @foo
 	i32.const	$push145=, 49
 	i32.ne  	$push147=, $pop146, $pop145
 	br_if   	5, $pop147      # 5: down to label5
-# BB#22:                                # %if.end3.i377.2
+# BB#22:                                # %if.end3.i375.2
 	i32.const	$push655=, 0
 	i32.const	$push148=, 2
 	i32.store	$drop=, bar.lastc($pop655), $pop148
@@ -312,7 +312,7 @@ foo:                                    # @foo
 	i32.const	$push149=, 50
 	i32.ne  	$push151=, $pop150, $pop149
 	br_if   	5, $pop151      # 5: down to label5
-# BB#23:                                # %if.end3.i377.3
+# BB#23:                                # %if.end3.i375.3
 	i32.const	$push656=, 0
 	i32.const	$push152=, 3
 	i32.store	$drop=, bar.lastc($pop656), $pop152
@@ -320,7 +320,7 @@ foo:                                    # @foo
 	i32.const	$push153=, 51
 	i32.ne  	$push155=, $pop154, $pop153
 	br_if   	5, $pop155      # 5: down to label5
-# BB#24:                                # %if.end3.i377.4
+# BB#24:                                # %if.end3.i375.4
 	i32.const	$push657=, 0
 	i32.const	$push156=, 4
 	i32.store	$drop=, bar.lastc($pop657), $pop156
@@ -328,7 +328,7 @@ foo:                                    # @foo
 	i32.const	$push157=, 52
 	i32.ne  	$push159=, $pop158, $pop157
 	br_if   	5, $pop159      # 5: down to label5
-# BB#25:                                # %if.end3.i377.5
+# BB#25:                                # %if.end3.i375.5
 	i32.const	$push658=, 0
 	i32.const	$push160=, 5
 	i32.store	$drop=, bar.lastc($pop658), $pop160
@@ -336,7 +336,7 @@ foo:                                    # @foo
 	i32.const	$push161=, 53
 	i32.ne  	$push163=, $pop162, $pop161
 	br_if   	5, $pop163      # 5: down to label5
-# BB#26:                                # %if.end3.i391
+# BB#26:                                # %if.end3.i389
 	i32.const	$push164=, 40
 	i32.add 	$push165=, $2, $pop164
 	i32.store	$drop=, 4($6), $pop165
@@ -359,7 +359,7 @@ foo:                                    # @foo
 	i32.const	$push174=, 56
 	i32.ne  	$push175=, $0, $pop174
 	br_if   	4, $pop175      # 4: down to label6
-# BB#27:                                # %if.end3.i391.1
+# BB#27:                                # %if.end3.i389.1
 	i32.const	$push661=, 0
 	i32.const	$push176=, 1
 	i32.store	$drop=, bar.lastc($pop661), $pop176
@@ -367,7 +367,7 @@ foo:                                    # @foo
 	i32.const	$push177=, 57
 	i32.ne  	$push179=, $pop178, $pop177
 	br_if   	4, $pop179      # 4: down to label6
-# BB#28:                                # %if.end3.i391.2
+# BB#28:                                # %if.end3.i389.2
 	i32.const	$push662=, 0
 	i32.const	$push180=, 2
 	i32.store	$drop=, bar.lastc($pop662), $pop180
@@ -375,7 +375,7 @@ foo:                                    # @foo
 	i32.const	$push181=, 58
 	i32.ne  	$push183=, $pop182, $pop181
 	br_if   	4, $pop183      # 4: down to label6
-# BB#29:                                # %if.end3.i391.3
+# BB#29:                                # %if.end3.i389.3
 	i32.const	$push663=, 0
 	i32.const	$push184=, 3
 	i32.store	$drop=, bar.lastc($pop663), $pop184
@@ -383,7 +383,7 @@ foo:                                    # @foo
 	i32.const	$push185=, 59
 	i32.ne  	$push187=, $pop186, $pop185
 	br_if   	4, $pop187      # 4: down to label6
-# BB#30:                                # %if.end3.i391.4
+# BB#30:                                # %if.end3.i389.4
 	i32.const	$push664=, 0
 	i32.const	$push188=, 4
 	i32.store	$drop=, bar.lastc($pop664), $pop188
@@ -391,7 +391,7 @@ foo:                                    # @foo
 	i32.const	$push189=, 60
 	i32.ne  	$push191=, $pop190, $pop189
 	br_if   	4, $pop191      # 4: down to label6
-# BB#31:                                # %if.end3.i391.5
+# BB#31:                                # %if.end3.i389.5
 	i32.const	$push665=, 0
 	i32.const	$push192=, 5
 	i32.store	$drop=, bar.lastc($pop665), $pop192
@@ -399,7 +399,7 @@ foo:                                    # @foo
 	i32.const	$push193=, 61
 	i32.ne  	$push195=, $pop194, $pop193
 	br_if   	4, $pop195      # 4: down to label6
-# BB#32:                                # %if.end3.i391.6
+# BB#32:                                # %if.end3.i389.6
 	i32.const	$push666=, 0
 	i32.const	$push196=, 6
 	i32.store	$drop=, bar.lastc($pop666), $pop196
@@ -407,7 +407,7 @@ foo:                                    # @foo
 	i32.const	$push197=, 62
 	i32.ne  	$push199=, $pop198, $pop197
 	br_if   	4, $pop199      # 4: down to label6
-# BB#33:                                # %if.end3.i405
+# BB#33:                                # %if.end3.i403
 	i32.const	$push201=, 0
 	i32.const	$push200=, 7
 	i32.store	$drop=, bar.lastc($pop201), $pop200
@@ -428,14 +428,14 @@ foo:                                    # @foo
 	i32.const	$push207=, 64
 	i32.ne  	$push209=, $pop208, $pop207
 	br_if   	3, $pop209      # 3: down to label7
-# BB#34:                                # %if.end3.i405.1
+# BB#34:                                # %if.end3.i403.1
 	i32.const	$push36=, 1
 	i32.store	$1=, bar.lastc($1), $pop36
 	i32.load8_s	$push211=, 313($6)
 	i32.const	$push210=, 65
 	i32.ne  	$push212=, $pop211, $pop210
 	br_if   	3, $pop212      # 3: down to label7
-# BB#35:                                # %if.end3.i405.2
+# BB#35:                                # %if.end3.i403.2
 	i32.const	$push673=, 0
 	i32.add 	$push37=, $1, $1
 	i32.store	$push672=, bar.lastc($pop673), $pop37
@@ -445,7 +445,7 @@ foo:                                    # @foo
 	i32.load8_s	$push214=, 314($6)
 	i32.ne  	$push215=, $pop213, $pop214
 	br_if   	3, $pop215      # 3: down to label7
-# BB#36:                                # %if.end3.i405.3
+# BB#36:                                # %if.end3.i403.3
 	i32.const	$push680=, 0
 	i32.const	$push679=, 1
 	i32.add 	$push38=, $1, $pop679
@@ -460,7 +460,7 @@ foo:                                    # @foo
 	i32.load8_s	$push219=, 315($6)
 	i32.ne  	$push220=, $pop218, $pop219
 	br_if   	3, $pop220      # 3: down to label7
-# BB#37:                                # %if.end3.i405.4
+# BB#37:                                # %if.end3.i403.4
 	i32.const	$push687=, 0
 	i32.const	$push686=, 1
 	i32.add 	$push39=, $1, $pop686
@@ -475,7 +475,7 @@ foo:                                    # @foo
 	i32.load8_s	$push224=, 316($6)
 	i32.ne  	$push225=, $pop223, $pop224
 	br_if   	3, $pop225      # 3: down to label7
-# BB#38:                                # %if.end3.i405.5
+# BB#38:                                # %if.end3.i403.5
 	i32.const	$push694=, 0
 	i32.const	$push693=, 1
 	i32.add 	$push40=, $1, $pop693
@@ -490,7 +490,7 @@ foo:                                    # @foo
 	i32.load8_s	$push229=, 317($6)
 	i32.ne  	$push230=, $pop228, $pop229
 	br_if   	3, $pop230      # 3: down to label7
-# BB#39:                                # %if.end3.i405.6
+# BB#39:                                # %if.end3.i403.6
 	i32.const	$push701=, 0
 	i32.const	$push700=, 1
 	i32.add 	$push41=, $1, $pop700
@@ -505,7 +505,7 @@ foo:                                    # @foo
 	i32.load8_s	$push234=, 318($6)
 	i32.ne  	$push235=, $pop233, $pop234
 	br_if   	3, $pop235      # 3: down to label7
-# BB#40:                                # %if.end3.i405.7
+# BB#40:                                # %if.end3.i403.7
 	i32.const	$push707=, 0
 	i32.const	$push706=, 1
 	i32.add 	$push42=, $1, $pop706
@@ -548,11 +548,11 @@ foo:                                    # @foo
 	block
 	i32.const	$push708=, 0
 	br_if   	0, $pop708      # 0: down to label12
-# BB#42:                                # %if.then.i412
+# BB#42:                                # %if.then.i410
 	i32.const	$push251=, 8
 	i32.ne  	$push252=, $8, $pop251
 	br_if   	1, $pop252      # 1: down to label10
-# BB#43:                                # %if.end.i414
+# BB#43:                                # %if.end.i412
 	i32.const	$1=, 9
 	i32.const	$7=, 0
 	i32.const	$push717=, 0
@@ -561,7 +561,7 @@ foo:                                    # @foo
 	i32.const	$push715=, 0
 	i32.const	$push714=, 0
 	i32.store	$drop=, bar.lastc($pop715), $pop714
-.LBB1_44:                               # %if.end3.i419
+.LBB1_44:                               # %if.end3.i417
 	end_block                       # label12:
 	i32.const	$push720=, 24
 	i32.shl 	$push253=, $7, $pop720
@@ -571,7 +571,7 @@ foo:                                    # @foo
 	i32.xor 	$push255=, $pop254, $pop718
 	i32.ne  	$push256=, $pop255, $0
 	br_if   	2, $pop256      # 2: down to label8
-# BB#45:                                # %if.end3.i419.1
+# BB#45:                                # %if.end3.i417.1
 	i32.const	$push727=, 0
 	i32.const	$push726=, 1
 	i32.add 	$push28=, $7, $pop726
@@ -586,7 +586,7 @@ foo:                                    # @foo
 	i32.load8_s	$push260=, 297($6)
 	i32.ne  	$push261=, $pop259, $pop260
 	br_if   	2, $pop261      # 2: down to label8
-# BB#46:                                # %if.end3.i419.2
+# BB#46:                                # %if.end3.i417.2
 	i32.const	$push734=, 0
 	i32.const	$push733=, 1
 	i32.add 	$push29=, $0, $pop733
@@ -601,7 +601,7 @@ foo:                                    # @foo
 	i32.load8_s	$push265=, 298($6)
 	i32.ne  	$push266=, $pop264, $pop265
 	br_if   	2, $pop266      # 2: down to label8
-# BB#47:                                # %if.end3.i419.3
+# BB#47:                                # %if.end3.i417.3
 	i32.const	$push741=, 0
 	i32.const	$push740=, 1
 	i32.add 	$push30=, $0, $pop740
@@ -616,7 +616,7 @@ foo:                                    # @foo
 	i32.load8_s	$push270=, 299($6)
 	i32.ne  	$push271=, $pop269, $pop270
 	br_if   	2, $pop271      # 2: down to label8
-# BB#48:                                # %if.end3.i419.4
+# BB#48:                                # %if.end3.i417.4
 	i32.const	$push748=, 0
 	i32.const	$push747=, 1
 	i32.add 	$push31=, $0, $pop747
@@ -631,7 +631,7 @@ foo:                                    # @foo
 	i32.load8_s	$push275=, 300($6)
 	i32.ne  	$push276=, $pop274, $pop275
 	br_if   	2, $pop276      # 2: down to label8
-# BB#49:                                # %if.end3.i419.5
+# BB#49:                                # %if.end3.i417.5
 	i32.const	$push755=, 0
 	i32.const	$push754=, 1
 	i32.add 	$push32=, $0, $pop754
@@ -646,7 +646,7 @@ foo:                                    # @foo
 	i32.load8_s	$push280=, 301($6)
 	i32.ne  	$push281=, $pop279, $pop280
 	br_if   	2, $pop281      # 2: down to label8
-# BB#50:                                # %if.end3.i419.6
+# BB#50:                                # %if.end3.i417.6
 	i32.const	$push762=, 0
 	i32.const	$push761=, 1
 	i32.add 	$push33=, $0, $pop761
@@ -661,7 +661,7 @@ foo:                                    # @foo
 	i32.load8_s	$push285=, 302($6)
 	i32.ne  	$push286=, $pop284, $pop285
 	br_if   	2, $pop286      # 2: down to label8
-# BB#51:                                # %if.end3.i419.7
+# BB#51:                                # %if.end3.i417.7
 	i32.const	$push769=, 0
 	i32.const	$push768=, 1
 	i32.add 	$push34=, $0, $pop768
@@ -676,7 +676,7 @@ foo:                                    # @foo
 	i32.load8_s	$push290=, 303($6)
 	i32.ne  	$push291=, $pop289, $pop290
 	br_if   	2, $pop291      # 2: down to label8
-# BB#52:                                # %if.end3.i419.8
+# BB#52:                                # %if.end3.i417.8
 	i32.const	$push775=, 0
 	i32.const	$push774=, 1
 	i32.add 	$push35=, $0, $pop774
@@ -719,10 +719,10 @@ foo:                                    # @foo
 	i32.const	$push308=, 10
 	i32.eq  	$push309=, $1, $pop308
 	br_if   	0, $pop309      # 0: down to label13
-# BB#54:                                # %if.then.i426
+# BB#54:                                # %if.then.i424
 	i32.ne  	$push310=, $8, $1
 	br_if   	1, $pop310      # 1: down to label10
-# BB#55:                                # %if.end.i428
+# BB#55:                                # %if.end.i426
 	i32.const	$1=, 10
 	i32.const	$0=, 0
 	i32.const	$push783=, 0
@@ -731,7 +731,7 @@ foo:                                    # @foo
 	i32.const	$push781=, 0
 	i32.const	$push780=, 0
 	i32.store	$drop=, bar.lastc($pop781), $pop780
-.LBB1_56:                               # %if.end3.i433
+.LBB1_56:                               # %if.end3.i431
 	end_block                       # label13:
 	i32.const	$push786=, 24
 	i32.shl 	$push311=, $0, $pop786
@@ -741,7 +741,7 @@ foo:                                    # @foo
 	i32.xor 	$push313=, $pop312, $pop784
 	i32.ne  	$push314=, $pop313, $9
 	br_if   	1, $pop314      # 1: down to label9
-# BB#57:                                # %if.end3.i433.1
+# BB#57:                                # %if.end3.i431.1
 	i32.const	$push793=, 0
 	i32.const	$push792=, 1
 	i32.add 	$push18=, $0, $pop792
@@ -756,7 +756,7 @@ foo:                                    # @foo
 	i32.load8_s	$push318=, 281($6)
 	i32.ne  	$push319=, $pop317, $pop318
 	br_if   	1, $pop319      # 1: down to label9
-# BB#58:                                # %if.end3.i433.2
+# BB#58:                                # %if.end3.i431.2
 	i32.const	$push800=, 0
 	i32.const	$push799=, 1
 	i32.add 	$push19=, $0, $pop799
@@ -771,7 +771,7 @@ foo:                                    # @foo
 	i32.load8_s	$push323=, 282($6)
 	i32.ne  	$push324=, $pop322, $pop323
 	br_if   	1, $pop324      # 1: down to label9
-# BB#59:                                # %if.end3.i433.3
+# BB#59:                                # %if.end3.i431.3
 	i32.const	$push807=, 0
 	i32.const	$push806=, 1
 	i32.add 	$push20=, $0, $pop806
@@ -786,7 +786,7 @@ foo:                                    # @foo
 	i32.load8_s	$push328=, 283($6)
 	i32.ne  	$push329=, $pop327, $pop328
 	br_if   	1, $pop329      # 1: down to label9
-# BB#60:                                # %if.end3.i433.4
+# BB#60:                                # %if.end3.i431.4
 	i32.const	$push814=, 0
 	i32.const	$push813=, 1
 	i32.add 	$push21=, $0, $pop813
@@ -801,7 +801,7 @@ foo:                                    # @foo
 	i32.load8_s	$push333=, 284($6)
 	i32.ne  	$push334=, $pop332, $pop333
 	br_if   	1, $pop334      # 1: down to label9
-# BB#61:                                # %if.end3.i433.5
+# BB#61:                                # %if.end3.i431.5
 	i32.const	$push821=, 0
 	i32.const	$push820=, 1
 	i32.add 	$push22=, $0, $pop820
@@ -816,7 +816,7 @@ foo:                                    # @foo
 	i32.load8_s	$push338=, 285($6)
 	i32.ne  	$push339=, $pop337, $pop338
 	br_if   	1, $pop339      # 1: down to label9
-# BB#62:                                # %if.end3.i433.6
+# BB#62:                                # %if.end3.i431.6
 	i32.const	$push828=, 0
 	i32.const	$push827=, 1
 	i32.add 	$push23=, $0, $pop827
@@ -831,7 +831,7 @@ foo:                                    # @foo
 	i32.load8_s	$push343=, 286($6)
 	i32.ne  	$push344=, $pop342, $pop343
 	br_if   	1, $pop344      # 1: down to label9
-# BB#63:                                # %if.end3.i433.7
+# BB#63:                                # %if.end3.i431.7
 	i32.const	$push835=, 0
 	i32.const	$push834=, 1
 	i32.add 	$push24=, $0, $pop834
@@ -846,7 +846,7 @@ foo:                                    # @foo
 	i32.load8_s	$push348=, 287($6)
 	i32.ne  	$push349=, $pop347, $pop348
 	br_if   	1, $pop349      # 1: down to label9
-# BB#64:                                # %if.end3.i433.8
+# BB#64:                                # %if.end3.i431.8
 	i32.const	$push842=, 0
 	i32.const	$push841=, 1
 	i32.add 	$push25=, $0, $pop841
@@ -861,7 +861,7 @@ foo:                                    # @foo
 	i32.load8_s	$push353=, 288($6)
 	i32.ne  	$push354=, $pop352, $pop353
 	br_if   	1, $pop354      # 1: down to label9
-# BB#65:                                # %if.end3.i433.9
+# BB#65:                                # %if.end3.i431.9
 	i32.const	$push849=, 0
 	i32.const	$push848=, 1
 	i32.add 	$push26=, $0, $pop848
@@ -876,7 +876,7 @@ foo:                                    # @foo
 	i32.load8_s	$push358=, 289($6)
 	i32.ne  	$push359=, $pop357, $pop358
 	br_if   	1, $pop359      # 1: down to label9
-# BB#66:                                # %bar.exit436.9
+# BB#66:                                # %bar.exit434.9
 	i32.const	$push855=, 0
 	i32.const	$push854=, 1
 	i32.add 	$push853=, $0, $pop854
@@ -920,11 +920,11 @@ foo:                                    # @foo
 	i32.const	$push856=, 11
 	i32.eq  	$push373=, $9, $pop856
 	br_if   	0, $pop373      # 0: down to label16
-# BB#68:                                # %if.then.i440
+# BB#68:                                # %if.then.i438
                                         #   in Loop: Header=BB1_67 Depth=1
 	i32.ne  	$push375=, $0, $9
 	br_if   	3, $pop375      # 3: down to label10
-# BB#69:                                # %if.end.i442
+# BB#69:                                # %if.end.i440
                                         #   in Loop: Header=BB1_67 Depth=1
 	i32.const	$1=, 11
 	i32.const	$0=, 0
@@ -934,7 +934,7 @@ foo:                                    # @foo
 	i32.const	$push858=, 0
 	i32.const	$push857=, 0
 	i32.store	$drop=, bar.lastc($pop858), $pop857
-.LBB1_70:                               # %if.end3.i447
+.LBB1_70:                               # %if.end3.i445
                                         #   in Loop: Header=BB1_67 Depth=1
 	end_block                       # label16:
 	i32.const	$push863=, 24
@@ -945,7 +945,7 @@ foo:                                    # @foo
 	i32.xor 	$push378=, $pop377, $pop861
 	i32.ne  	$push379=, $pop378, $8
 	br_if   	2, $pop379      # 2: down to label10
-# BB#71:                                # %bar.exit450
+# BB#71:                                # %bar.exit448
                                         #   in Loop: Header=BB1_67 Depth=1
 	i32.const	$push871=, 0
 	i32.const	$push870=, 1
@@ -991,11 +991,11 @@ foo:                                    # @foo
 	i32.const	$push874=, 12
 	i32.eq  	$push389=, $9, $pop874
 	br_if   	0, $pop389      # 0: down to label19
-# BB#74:                                # %if.then.i454
+# BB#74:                                # %if.then.i452
                                         #   in Loop: Header=BB1_73 Depth=1
 	i32.ne  	$push391=, $0, $9
 	br_if   	3, $pop391      # 3: down to label10
-# BB#75:                                # %if.end.i456
+# BB#75:                                # %if.end.i454
                                         #   in Loop: Header=BB1_73 Depth=1
 	i32.const	$1=, 12
 	i32.const	$0=, 0
@@ -1005,7 +1005,7 @@ foo:                                    # @foo
 	i32.const	$push876=, 0
 	i32.const	$push875=, 0
 	i32.store	$drop=, bar.lastc($pop876), $pop875
-.LBB1_76:                               # %if.end3.i461
+.LBB1_76:                               # %if.end3.i459
                                         #   in Loop: Header=BB1_73 Depth=1
 	end_block                       # label19:
 	i32.const	$push881=, 24
@@ -1016,7 +1016,7 @@ foo:                                    # @foo
 	i32.xor 	$push394=, $pop393, $pop879
 	i32.ne  	$push395=, $pop394, $8
 	br_if   	2, $pop395      # 2: down to label10
-# BB#77:                                # %bar.exit464
+# BB#77:                                # %bar.exit462
                                         #   in Loop: Header=BB1_73 Depth=1
 	i32.const	$push889=, 0
 	i32.const	$push888=, 1
@@ -1070,11 +1070,11 @@ foo:                                    # @foo
 	i32.const	$push892=, 13
 	i32.eq  	$push410=, $9, $pop892
 	br_if   	0, $pop410      # 0: down to label22
-# BB#80:                                # %if.then.i468
+# BB#80:                                # %if.then.i466
                                         #   in Loop: Header=BB1_79 Depth=1
 	i32.ne  	$push412=, $0, $9
 	br_if   	3, $pop412      # 3: down to label10
-# BB#81:                                # %if.end.i470
+# BB#81:                                # %if.end.i468
                                         #   in Loop: Header=BB1_79 Depth=1
 	i32.const	$1=, 13
 	i32.const	$0=, 0
@@ -1084,7 +1084,7 @@ foo:                                    # @foo
 	i32.const	$push894=, 0
 	i32.const	$push893=, 0
 	i32.store	$drop=, bar.lastc($pop894), $pop893
-.LBB1_82:                               # %if.end3.i475
+.LBB1_82:                               # %if.end3.i473
                                         #   in Loop: Header=BB1_79 Depth=1
 	end_block                       # label22:
 	i32.const	$push899=, 24
@@ -1095,7 +1095,7 @@ foo:                                    # @foo
 	i32.xor 	$push415=, $pop414, $pop897
 	i32.ne  	$push416=, $pop415, $8
 	br_if   	2, $pop416      # 2: down to label10
-# BB#83:                                # %bar.exit478
+# BB#83:                                # %bar.exit476
                                         #   in Loop: Header=BB1_79 Depth=1
 	i32.const	$push907=, 0
 	i32.const	$push906=, 1
@@ -1149,11 +1149,11 @@ foo:                                    # @foo
 	i32.const	$push910=, 14
 	i32.eq  	$push431=, $9, $pop910
 	br_if   	0, $pop431      # 0: down to label25
-# BB#86:                                # %if.then.i482
+# BB#86:                                # %if.then.i480
                                         #   in Loop: Header=BB1_85 Depth=1
 	i32.ne  	$push433=, $0, $9
 	br_if   	3, $pop433      # 3: down to label10
-# BB#87:                                # %if.end.i484
+# BB#87:                                # %if.end.i482
                                         #   in Loop: Header=BB1_85 Depth=1
 	i32.const	$1=, 14
 	i32.const	$0=, 0
@@ -1163,7 +1163,7 @@ foo:                                    # @foo
 	i32.const	$push912=, 0
 	i32.const	$push911=, 0
 	i32.store	$drop=, bar.lastc($pop912), $pop911
-.LBB1_88:                               # %if.end3.i489
+.LBB1_88:                               # %if.end3.i487
                                         #   in Loop: Header=BB1_85 Depth=1
 	end_block                       # label25:
 	i32.const	$push917=, 24
@@ -1174,7 +1174,7 @@ foo:                                    # @foo
 	i32.xor 	$push436=, $pop435, $pop915
 	i32.ne  	$push437=, $pop436, $8
 	br_if   	2, $pop437      # 2: down to label10
-# BB#89:                                # %bar.exit492
+# BB#89:                                # %bar.exit490
                                         #   in Loop: Header=BB1_85 Depth=1
 	i32.const	$push925=, 0
 	i32.const	$push924=, 1
@@ -1236,11 +1236,11 @@ foo:                                    # @foo
 	i32.const	$push929=, 15
 	i32.eq  	$push456=, $9, $pop929
 	br_if   	0, $pop456      # 0: down to label28
-# BB#92:                                # %if.then.i496
+# BB#92:                                # %if.then.i494
                                         #   in Loop: Header=BB1_91 Depth=1
 	i32.ne  	$push458=, $0, $9
 	br_if   	3, $pop458      # 3: down to label10
-# BB#93:                                # %if.end.i498
+# BB#93:                                # %if.end.i496
                                         #   in Loop: Header=BB1_91 Depth=1
 	i32.const	$1=, 15
 	i32.const	$0=, 0
@@ -1250,7 +1250,7 @@ foo:                                    # @foo
 	i32.const	$push931=, 0
 	i32.const	$push930=, 0
 	i32.store	$drop=, bar.lastc($pop931), $pop930
-.LBB1_94:                               # %if.end3.i503
+.LBB1_94:                               # %if.end3.i501
                                         #   in Loop: Header=BB1_91 Depth=1
 	end_block                       # label28:
 	i32.const	$push936=, 24
@@ -1261,7 +1261,7 @@ foo:                                    # @foo
 	i32.xor 	$push461=, $pop460, $pop934
 	i32.ne  	$push462=, $pop461, $8
 	br_if   	2, $pop462      # 2: down to label10
-# BB#95:                                # %bar.exit506
+# BB#95:                                # %bar.exit504
                                         #   in Loop: Header=BB1_91 Depth=1
 	i32.const	$push944=, 0
 	i32.const	$push943=, 1
@@ -1315,11 +1315,11 @@ foo:                                    # @foo
 	i32.const	$push947=, 16
 	i32.eq  	$push477=, $9, $pop947
 	br_if   	0, $pop477      # 0: down to label31
-# BB#98:                                # %if.then.i510
+# BB#98:                                # %if.then.i508
                                         #   in Loop: Header=BB1_97 Depth=1
 	i32.ne  	$push479=, $0, $9
 	br_if   	3, $pop479      # 3: down to label10
-# BB#99:                                # %if.end.i512
+# BB#99:                                # %if.end.i510
                                         #   in Loop: Header=BB1_97 Depth=1
 	i32.const	$1=, 16
 	i32.const	$0=, 0
@@ -1329,7 +1329,7 @@ foo:                                    # @foo
 	i32.const	$push949=, 0
 	i32.const	$push948=, 0
 	i32.store	$drop=, bar.lastc($pop949), $pop948
-.LBB1_100:                              # %if.end3.i517
+.LBB1_100:                              # %if.end3.i515
                                         #   in Loop: Header=BB1_97 Depth=1
 	end_block                       # label31:
 	i32.const	$push954=, 24
@@ -1340,7 +1340,7 @@ foo:                                    # @foo
 	i32.shr_s	$push482=, $pop481, $pop952
 	i32.ne  	$push483=, $pop482, $8
 	br_if   	2, $pop483      # 2: down to label10
-# BB#101:                               # %bar.exit520
+# BB#101:                               # %bar.exit518
                                         #   in Loop: Header=BB1_97 Depth=1
 	i32.const	$push962=, 0
 	i32.const	$push961=, 1
@@ -1376,11 +1376,11 @@ foo:                                    # @foo
 	i32.const	$push964=, 31
 	i32.eq  	$push486=, $9, $pop964
 	br_if   	0, $pop486      # 0: down to label34
-# BB#104:                               # %if.then.i524
+# BB#104:                               # %if.then.i522
                                         #   in Loop: Header=BB1_103 Depth=1
 	i32.ne  	$push488=, $0, $9
 	br_if   	3, $pop488      # 3: down to label10
-# BB#105:                               # %if.end.i526
+# BB#105:                               # %if.end.i524
                                         #   in Loop: Header=BB1_103 Depth=1
 	i32.const	$1=, 31
 	i32.const	$0=, 0
@@ -1390,7 +1390,7 @@ foo:                                    # @foo
 	i32.const	$push966=, 0
 	i32.const	$push965=, 0
 	i32.store	$drop=, bar.lastc($pop966), $pop965
-.LBB1_106:                              # %if.end3.i531
+.LBB1_106:                              # %if.end3.i529
                                         #   in Loop: Header=BB1_103 Depth=1
 	end_block                       # label34:
 	i32.const	$push971=, 24
@@ -1401,7 +1401,7 @@ foo:                                    # @foo
 	i32.shr_s	$push491=, $pop490, $pop969
 	i32.ne  	$push492=, $pop491, $8
 	br_if   	2, $pop492      # 2: down to label10
-# BB#107:                               # %bar.exit534
+# BB#107:                               # %bar.exit532
                                         #   in Loop: Header=BB1_103 Depth=1
 	i32.const	$push979=, 0
 	i32.const	$push978=, 1
@@ -1487,11 +1487,11 @@ foo:                                    # @foo
 	i32.const	$push987=, 32
 	i32.eq  	$push522=, $9, $pop987
 	br_if   	0, $pop522      # 0: down to label37
-# BB#110:                               # %if.then.i538
+# BB#110:                               # %if.then.i536
                                         #   in Loop: Header=BB1_109 Depth=1
 	i32.ne  	$push524=, $0, $9
 	br_if   	3, $pop524      # 3: down to label10
-# BB#111:                               # %if.end.i540
+# BB#111:                               # %if.end.i538
                                         #   in Loop: Header=BB1_109 Depth=1
 	i32.const	$1=, 32
 	i32.const	$0=, 0
@@ -1501,7 +1501,7 @@ foo:                                    # @foo
 	i32.const	$push989=, 0
 	i32.const	$push988=, 0
 	i32.store	$drop=, bar.lastc($pop989), $pop988
-.LBB1_112:                              # %if.end3.i545
+.LBB1_112:                              # %if.end3.i543
                                         #   in Loop: Header=BB1_109 Depth=1
 	end_block                       # label37:
 	i32.const	$push993=, 24
@@ -1510,7 +1510,7 @@ foo:                                    # @foo
 	i32.shr_s	$push526=, $pop525, $pop992
 	i32.ne  	$push527=, $pop526, $8
 	br_if   	2, $pop527      # 2: down to label10
-# BB#113:                               # %bar.exit548
+# BB#113:                               # %bar.exit546
                                         #   in Loop: Header=BB1_109 Depth=1
 	i32.const	$push1001=, 0
 	i32.const	$push1000=, 1
@@ -1546,11 +1546,11 @@ foo:                                    # @foo
 	i32.const	$push1003=, 35
 	i32.eq  	$push530=, $9, $pop1003
 	br_if   	0, $pop530      # 0: down to label40
-# BB#116:                               # %if.then.i552
+# BB#116:                               # %if.then.i550
                                         #   in Loop: Header=BB1_115 Depth=1
 	i32.ne  	$push532=, $0, $9
 	br_if   	3, $pop532      # 3: down to label10
-# BB#117:                               # %if.end.i554
+# BB#117:                               # %if.end.i552
                                         #   in Loop: Header=BB1_115 Depth=1
 	i32.const	$1=, 35
 	i32.const	$0=, 0
@@ -1560,7 +1560,7 @@ foo:                                    # @foo
 	i32.const	$push1005=, 0
 	i32.const	$push1004=, 0
 	i32.store	$drop=, bar.lastc($pop1005), $pop1004
-.LBB1_118:                              # %if.end3.i559
+.LBB1_118:                              # %if.end3.i557
                                         #   in Loop: Header=BB1_115 Depth=1
 	end_block                       # label40:
 	i32.const	$push1010=, 24
@@ -1571,7 +1571,7 @@ foo:                                    # @foo
 	i32.xor 	$push535=, $pop534, $pop1008
 	i32.ne  	$push536=, $pop535, $8
 	br_if   	2, $pop536      # 2: down to label10
-# BB#119:                               # %bar.exit562
+# BB#119:                               # %bar.exit560
                                         #   in Loop: Header=BB1_115 Depth=1
 	i32.const	$push1018=, 0
 	i32.const	$push1017=, 1
@@ -1606,11 +1606,11 @@ foo:                                    # @foo
 	i32.const	$push1020=, 72
 	i32.eq  	$push540=, $1, $pop1020
 	br_if   	0, $pop540      # 0: down to label43
-# BB#122:                               # %if.then.i566
+# BB#122:                               # %if.then.i564
                                         #   in Loop: Header=BB1_121 Depth=1
 	i32.ne  	$push542=, $0, $1
 	br_if   	3, $pop542      # 3: down to label10
-# BB#123:                               # %if.end.i568
+# BB#123:                               # %if.end.i566
                                         #   in Loop: Header=BB1_121 Depth=1
 	i32.const	$0=, 0
 	i32.const	$push1024=, 0
@@ -1619,7 +1619,7 @@ foo:                                    # @foo
 	i32.const	$push1022=, 0
 	i32.const	$push1021=, 0
 	i32.store	$drop=, bar.lastc($pop1022), $pop1021
-.LBB1_124:                              # %if.end3.i573
+.LBB1_124:                              # %if.end3.i571
                                         #   in Loop: Header=BB1_121 Depth=1
 	end_block                       # label43:
 	i32.const	$push1027=, 24
@@ -1630,7 +1630,7 @@ foo:                                    # @foo
 	i32.xor 	$push545=, $pop544, $pop1025
 	i32.ne  	$push546=, $pop545, $9
 	br_if   	2, $pop546      # 2: down to label10
-# BB#125:                               # %bar.exit576
+# BB#125:                               # %bar.exit574
                                         #   in Loop: Header=BB1_121 Depth=1
 	i32.const	$push1035=, 0
 	i32.const	$push1034=, 1
@@ -1651,39 +1651,39 @@ foo:                                    # @foo
 	i32.add 	$push553=, $6, $pop552
 	i32.store	$drop=, __stack_pointer($pop554), $pop553
 	return
-.LBB1_127:                              # %if.then7.i322
+.LBB1_127:                              # %if.then7.i320
 	end_block                       # label10:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_128:                              # %if.then7.i434
+.LBB1_128:                              # %if.then7.i432
 	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_129:                              # %if.then7.i420
+.LBB1_129:                              # %if.then7.i418
 	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_130:                              # %if.then7.i406
+.LBB1_130:                              # %if.then7.i404
 	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_131:                              # %if.then7.i392
+.LBB1_131:                              # %if.then7.i390
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_132:                              # %if.then7.i378
+.LBB1_132:                              # %if.then7.i376
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_133:                              # %if.then7.i364
+.LBB1_133:                              # %if.then7.i362
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_134:                              # %if.then7.i350
+.LBB1_134:                              # %if.then7.i348
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
-.LBB1_135:                              # %if.then7.i336
+.LBB1_135:                              # %if.then7.i334
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable

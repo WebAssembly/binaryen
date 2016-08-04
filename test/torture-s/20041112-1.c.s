@@ -6,29 +6,30 @@
 	.type	bar,@function
 bar:                                    # @bar
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, 0
-	i32.const	$push18=, 0
-	i32.load	$push17=, global($pop18)
-	tee_local	$push16=, $0=, $pop17
-	i32.const	$push5=, 1
-	i32.add 	$push6=, $pop16, $pop5
-	i32.const	$push7=, 2
-	i32.select	$push8=, $pop6, $pop7, $0
-	i32.const	$push15=, 1
-	i32.const	$push14=, 0
-	i32.ne  	$push4=, $0, $pop14
-	i32.const	$push1=, global
-	i32.const	$push0=, -1
-	i32.eq  	$push2=, $pop1, $pop0
-	i32.or  	$push13=, $pop4, $pop2
-	tee_local	$push12=, $0=, $pop13
-	i32.select	$push9=, $pop8, $pop15, $pop12
-	i32.store	$drop=, global($pop3), $pop9
-	i32.const	$push11=, 1
-	i32.xor 	$push10=, $0, $pop11
-                                        # fallthrough-return: $pop10
+	i32.const	$push0=, 0
+	i32.const	$push19=, 0
+	i32.load	$push18=, global($pop19)
+	tee_local	$push17=, $0=, $pop18
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $pop17, $pop1
+	i32.const	$push3=, 2
+	i32.select	$push16=, $pop2, $pop3, $0
+	tee_local	$push15=, $1=, $pop16
+	i32.const	$push14=, 1
+	i32.const	$push5=, global
+	i32.const	$push4=, -1
+	i32.eq  	$push6=, $pop5, $pop4
+	i32.select	$push7=, $1, $pop14, $pop6
+	i32.select	$push8=, $pop15, $pop7, $0
+	i32.store	$drop=, global($pop0), $pop8
+	i32.eqz 	$push10=, $0
+	i32.const	$push13=, global
+	i32.const	$push12=, -1
+	i32.ne  	$push9=, $pop13, $pop12
+	i32.and 	$push11=, $pop10, $pop9
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar

@@ -31,37 +31,34 @@ main:                                   # @main
 	.local  	i32, i64
 # BB#0:                                 # %entry
 	call    	init@FUNCTION
-	i32.const	$push19=, 0
-	i32.const	$push0=, 32
-	i32.store8	$0=, headline+17($pop19), $pop0
-	i32.const	$push18=, 0
-	i64.const	$push1=, 2314885530818453536
-	i64.store	$drop=, headline+9($pop18):p2align=0, $pop1
 	i32.const	$push17=, 0
+	i32.const	$push0=, 32
+	i32.store8	$0=, headline+9($pop17), $pop0
 	i32.const	$push16=, 0
-	i32.load8_u	$push2=, p+8($pop16)
-	i32.store8	$drop=, headline+8($pop17), $pop2
 	i32.const	$push15=, 0
+	i32.load8_u	$push1=, p+8($pop15)
+	i32.store8	$drop=, headline+8($pop16), $pop1
 	i32.const	$push14=, 0
-	i64.load	$push3=, p($pop14):p2align=0
-	i64.store	$drop=, headline($pop15), $pop3
 	i32.const	$push13=, 0
+	i64.load	$push2=, p($pop13):p2align=0
+	i64.store	$drop=, headline($pop14), $pop2
 	i32.const	$push12=, 0
-	i64.load	$push4=, p+9($pop12):p2align=0
-	i64.store	$1=, headline+10($pop13):p2align=1, $pop4
-	i32.const	$push6=, headline+18
-	i32.const	$push5=, 238
-	i32.call	$drop=, memset@FUNCTION, $pop6, $0, $pop5
+	i32.const	$push11=, 0
+	i64.load	$push3=, p+9($pop11):p2align=0
+	i64.store	$1=, headline+10($pop12):p2align=1, $pop3
+	i32.const	$push5=, headline+18
+	i32.const	$push4=, 238
+	i32.call	$drop=, memset@FUNCTION, $pop5, $0, $pop4
 	block
-	i32.wrap/i64	$push7=, $1
-	i32.const	$push8=, 255
-	i32.and 	$push9=, $pop7, $pop8
-	i32.const	$push10=, 83
-	i32.ne  	$push11=, $pop9, $pop10
-	br_if   	0, $pop11       # 0: down to label0
+	i32.wrap/i64	$push6=, $1
+	i32.const	$push7=, 255
+	i32.and 	$push8=, $pop6, $pop7
+	i32.const	$push9=, 83
+	i32.ne  	$push10=, $pop8, $pop9
+	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push20=, 0
-	return  	$pop20
+	i32.const	$push18=, 0
+	return  	$pop18
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

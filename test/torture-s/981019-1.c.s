@@ -40,9 +40,9 @@ ff:                                     # @ff
 	i32.const	$push1=, 0
 	i32.store	$drop=, f3.x($pop1), $3
 	br_if   	0, $2           # 0: down to label0
-# BB#7:                                 # %if.end15
+# BB#7:                                 # %if.end16
 	return
-.LBB0_8:                                # %if.then14
+.LBB0_8:                                # %if.then15
 	end_block                       # label0:
 	call    	f1@FUNCTION
 	unreachable

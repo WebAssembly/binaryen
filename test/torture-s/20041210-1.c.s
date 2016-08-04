@@ -32,7 +32,7 @@ main:                                   # @main
 # BB#2:                                 # %if.then2
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_3:                                # %if.end
+.LBB0_3:                                # %if.end3
 	end_block                       # label0:
 	i32.const	$push17=, 0
 	call    	exit@FUNCTION, $pop17

@@ -25,50 +25,50 @@ ieq:                                    # @ieq
 	end_block                       # label4:
 	i32.eqz 	$push4=, $2
 	br_if   	2, $pop4        # 2: down to label1
-.LBB0_3:                                # %if.end
+.LBB0_3:                                # %if.end6
 	end_block                       # label3:
 	block
 	block
 	br_if   	0, $0           # 0: down to label6
-# BB#4:                                 # %if.then8
+# BB#4:                                 # %if.then10
 	br_if   	1, $2           # 1: down to label5
-# BB#5:                                 # %if.then10
+# BB#5:                                 # %if.then12
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_6:                                # %if.else12
+.LBB0_6:                                # %if.else14
 	end_block                       # label6:
 	br_if   	1, $2           # 1: down to label2
-.LBB0_7:                                # %if.end16
+.LBB0_7:                                # %if.end18
 	end_block                       # label5:
 	block
 	block
 	i32.eqz 	$push5=, $0
 	br_if   	0, $pop5        # 0: down to label8
-# BB#8:                                 # %if.else24
+# BB#8:                                 # %if.else26
 	i32.eqz 	$push6=, $2
 	br_if   	1, $pop6        # 1: down to label7
 	br      	2               # 2: down to label2
-.LBB0_9:                                # %if.then20
+.LBB0_9:                                # %if.then22
 	end_block                       # label8:
 	i32.eqz 	$push7=, $2
 	br_if   	3, $pop7        # 3: down to label0
-.LBB0_10:                               # %if.end28
+.LBB0_10:                               # %if.end30
 	end_block                       # label7:
 	block
 	block
 	br_if   	0, $0           # 0: down to label10
-# BB#11:                                # %if.then32
+# BB#11:                                # %if.then34
 	br_if   	1, $2           # 1: down to label9
-# BB#12:                                # %if.then34
+# BB#12:                                # %if.then36
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_13:                               # %if.else36
+.LBB0_13:                               # %if.else38
 	end_block                       # label10:
 	br_if   	1, $2           # 1: down to label2
-.LBB0_14:                               # %if.end40
+.LBB0_14:                               # %if.end42
 	end_block                       # label9:
 	return  	$2
-.LBB0_15:                               # %if.then38
+.LBB0_15:                               # %if.then40
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -76,7 +76,7 @@ ieq:                                    # @ieq
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
-.LBB0_17:                               # %if.then22
+.LBB0_17:                               # %if.then24
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -107,7 +107,7 @@ ine:                                    # @ine
 	end_block                       # label13:
 	i32.eqz 	$push2=, $2
 	br_if   	1, $pop2        # 1: down to label11
-.LBB1_4:                                # %if.end
+.LBB1_4:                                # %if.end6
 	end_block                       # label12:
 	return  	$2
 .LBB1_5:                                # %if.then2
@@ -139,7 +139,7 @@ ilt:                                    # @ilt
 .LBB2_3:                                # %if.else
 	end_block                       # label16:
 	br_if   	1, $2           # 1: down to label14
-.LBB2_4:                                # %if.end
+.LBB2_4:                                # %if.end6
 	end_block                       # label15:
 	return  	$2
 .LBB2_5:                                # %if.then4
@@ -173,7 +173,7 @@ ile:                                    # @ile
 	end_block                       # label19:
 	i32.eqz 	$push2=, $2
 	br_if   	1, $pop2        # 1: down to label17
-.LBB3_4:                                # %if.end
+.LBB3_4:                                # %if.end6
 	end_block                       # label18:
 	return  	$2
 .LBB3_5:                                # %if.then2
@@ -205,7 +205,7 @@ igt:                                    # @igt
 .LBB4_3:                                # %if.else
 	end_block                       # label22:
 	br_if   	1, $2           # 1: down to label20
-.LBB4_4:                                # %if.end
+.LBB4_4:                                # %if.end6
 	end_block                       # label21:
 	return  	$2
 .LBB4_5:                                # %if.then4
@@ -239,7 +239,7 @@ ige:                                    # @ige
 	end_block                       # label25:
 	i32.eqz 	$push2=, $2
 	br_if   	1, $pop2        # 1: down to label23
-.LBB5_4:                                # %if.end
+.LBB5_4:                                # %if.end6
 	end_block                       # label24:
 	return  	$2
 .LBB5_5:                                # %if.then2

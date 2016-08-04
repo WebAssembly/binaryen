@@ -19,7 +19,7 @@ g:                                      # @g
 # BB#2:                                 # %if.then2
 	i32.const	$0=, 0
 	br_if   	1, $1           # 1: down to label0
-.LBB0_3:                                # %if.end
+.LBB0_3:                                # %if.end9
 	end_block                       # label1:
 	i32.const	$0=, 1
 .LBB0_4:                                # %return

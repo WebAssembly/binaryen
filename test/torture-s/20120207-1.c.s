@@ -26,14 +26,12 @@ main:                                   # @main
 	block
 	i32.const	$push0=, 2
 	i32.call	$push1=, test@FUNCTION, $pop0
-	i32.const	$push2=, 255
-	i32.and 	$push3=, $pop1, $pop2
-	i32.const	$push4=, 49
-	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.const	$push2=, 49
+	i32.ne  	$push3=, $pop1, $pop2
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push6=, 0
-	return  	$pop6
+	i32.const	$push4=, 0
+	return  	$pop4
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

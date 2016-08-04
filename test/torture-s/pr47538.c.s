@@ -12,49 +12,53 @@ foo:                                    # @foo
 	f64.store	$11=, 0($0), $pop1
 	f64.load	$push2=, 8($1)
 	f64.store	$10=, 8($0), $pop2
-	i32.load	$6=, 16($0)
 	block
 	block
-	i32.load	$push36=, 20($1)
-	tee_local	$push35=, $3=, $pop36
-	i32.eqz 	$push53=, $pop35
-	br_if   	0, $pop53       # 0: down to label1
+	i32.load	$push38=, 20($1)
+	tee_local	$push37=, $3=, $pop38
+	i32.eqz 	$push57=, $pop37
+	br_if   	0, $pop57       # 0: down to label1
 # BB#1:                                 # %if.else
 	f64.sub 	$push4=, $10, $11
 	f64.const	$push5=, 0x1p-2
 	f64.mul 	$5=, $pop4, $pop5
-	i32.load	$7=, 16($1)
 	i32.const	$push3=, 1
-	i32.add 	$push38=, $3, $pop3
-	tee_local	$push37=, $4=, $pop38
+	i32.add 	$push40=, $3, $pop3
+	tee_local	$push39=, $4=, $pop40
 	i32.const	$push6=, 2
-	i32.ne  	$push7=, $pop37, $pop6
+	i32.ne  	$push7=, $pop39, $pop6
 	br_if   	1, $pop7        # 1: down to label0
 # BB#2:                                 # %if.then6
-	f64.load	$push31=, 0($7)
-	f64.mul 	$push32=, $5, $pop31
-	f64.store	$push40=, 8($6), $pop32
-	tee_local	$push39=, $11=, $pop40
-	f64.add 	$push33=, $pop39, $11
-	f64.store	$drop=, 0($6), $pop33
+	i32.load	$push44=, 16($0)
+	tee_local	$push43=, $0=, $pop44
+	i32.load	$push31=, 16($1)
+	f64.load	$push32=, 0($pop31)
+	f64.mul 	$push33=, $5, $pop32
+	f64.store	$push42=, 8($0), $pop33
+	tee_local	$push41=, $11=, $pop42
+	f64.add 	$push34=, $pop41, $11
+	f64.store	$drop=, 0($pop43), $pop34
 	return
 .LBB0_3:                                # %if.then
 	end_block                       # label1:
-	i64.const	$push34=, 0
-	i64.store	$drop=, 0($6), $pop34
+	i32.load	$push35=, 16($0)
+	i64.const	$push36=, 0
+	i64.store	$drop=, 0($pop35), $pop36
 	return
 .LBB0_4:                                # %for.cond.preheader
 	end_block                       # label0:
+	i32.load	$8=, 16($0)
+	i32.load	$7=, 16($1)
 	block
 	block
 	i32.const	$push8=, -1
-	i32.add 	$push42=, $3, $pop8
-	tee_local	$push41=, $8=, $pop42
-	i32.eqz 	$push54=, $pop41
-	br_if   	0, $pop54       # 0: down to label3
+	i32.add 	$push46=, $3, $pop8
+	tee_local	$push45=, $6=, $pop46
+	i32.eqz 	$push58=, $pop45
+	br_if   	0, $pop58       # 0: down to label3
 # BB#5:                                 # %for.body.preheader
-	i32.const	$push43=, 8
-	i32.add 	$0=, $6, $pop43
+	i32.const	$push47=, 8
+	i32.add 	$0=, $8, $pop47
 	f64.const	$10=, 0x0p0
 	f64.const	$11=, 0x1p0
 	copy_local	$1=, $7
@@ -63,25 +67,25 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
 	f64.load	$push11=, 0($1)
-	i32.const	$push49=, 16
-	i32.add 	$push9=, $1, $pop49
+	i32.const	$push53=, 16
+	i32.add 	$push9=, $1, $pop53
 	f64.load	$push10=, 0($pop9)
 	f64.sub 	$push12=, $pop11, $pop10
 	f64.mul 	$push13=, $5, $pop12
 	f64.convert_u/i32	$push14=, $9
 	f64.div 	$push15=, $pop13, $pop14
 	f64.store	$2=, 0($0), $pop15
-	i32.const	$push48=, 8
-	i32.add 	$0=, $0, $pop48
-	i32.const	$push47=, 8
-	i32.add 	$1=, $1, $pop47
+	i32.const	$push52=, 8
+	i32.add 	$0=, $0, $pop52
+	i32.const	$push51=, 8
+	i32.add 	$1=, $1, $pop51
 	f64.mul 	$push16=, $11, $2
 	f64.add 	$10=, $10, $pop16
 	f64.neg 	$11=, $11
-	i32.const	$push46=, 1
-	i32.add 	$push45=, $9, $pop46
-	tee_local	$push44=, $9=, $pop45
-	i32.le_u	$push17=, $pop44, $8
+	i32.const	$push50=, 1
+	i32.add 	$push49=, $9, $pop50
+	tee_local	$push48=, $9=, $pop49
+	i32.le_u	$push17=, $pop48, $6
 	br_if   	0, $pop17       # 0: up to label4
 	br      	3               # 3: down to label2
 .LBB0_7:
@@ -93,9 +97,9 @@ foo:                                    # @foo
 	end_block                       # label2:
 	i32.const	$push21=, 3
 	i32.shl 	$push27=, $3, $pop21
-	i32.add 	$push28=, $6, $pop27
-	i32.const	$push52=, 3
-	i32.shl 	$push22=, $8, $pop52
+	i32.add 	$push28=, $8, $pop27
+	i32.const	$push56=, 3
+	i32.shl 	$push22=, $6, $pop56
 	i32.add 	$push23=, $7, $pop22
 	f64.load	$push24=, 0($pop23)
 	f64.mul 	$push25=, $5, $pop24
@@ -105,10 +109,10 @@ foo:                                    # @foo
 	f64.div 	$push26=, $pop25, $pop20
 	f64.store	$push0=, 0($pop28), $pop26
 	f64.mul 	$push29=, $11, $pop0
-	f64.add 	$push51=, $10, $pop29
-	tee_local	$push50=, $11=, $pop51
-	f64.add 	$push30=, $pop50, $11
-	f64.store	$drop=, 0($6), $pop30
+	f64.add 	$push55=, $10, $pop29
+	tee_local	$push54=, $11=, $pop55
+	f64.add 	$push30=, $pop54, $11
+	f64.store	$drop=, 0($8), $pop30
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
