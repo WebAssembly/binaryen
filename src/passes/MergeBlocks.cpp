@@ -64,8 +64,39 @@
 #include <wasm.h>
 #include <pass.h>
 #include <ast_utils.h>
+#include <wasm-builder.h>
 
 namespace wasm {
+
+struct SwitchFinder : public ControlFlowWalker<SwitchFinder, Visitor<SwitchFinder>> {
+  Expression* origin;
+  bool found = false;
+
+  void visitSwitch(Switch* curr) {
+    if (findBreakTarget(curr->default_) == origin) {
+      found = true;
+      return;
+    }
+    for (auto& target : curr->targets) {
+      if (findBreakTarget(target) == origin) {
+        found = true;
+        return;
+      }
+    }
+  }
+};
+
+struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper, Visitor<BreakValueDropper>> {
+  Expression* origin;
+
+  void visitBreak(Break* curr) {
+    if (curr->value && findBreakTarget(curr->name) == origin) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value), curr));
+      curr->value = nullptr;
+    }
+  }
+};
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
@@ -80,20 +111,39 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
       for (size_t i = 0; i < curr->list.size(); i++) {
         Block* child = curr->list[i]->dynCast<Block>();
         if (!child) {
-          // TODO: if we have a child that is (drop (block ..)) then we can move the drop into the block, allowing more merging,
-          // but we must also drop values from brs
-          /*
+          // if we have a child that is (drop (block ..)) then we can move the drop into the block, and remove br values. this allows more merging,
           auto* drop = curr->list[i]->dynCast<Drop>();
           if (drop) {
             child = drop->value->dynCast<Block>();
             if (child) {
-              // reuse the drop
-              drop->value = child->list.back();
-              child->list.back() = drop;
-              curr->list[i] = child;
+              if (child->name.is()) {
+                Expression* expression = child;
+                // if there is a switch targeting us, we can't do it - we can't remove the value from other targets too
+                SwitchFinder finder;
+                finder.origin = child;
+                finder.walk(expression);
+                if (finder.found) {
+                  child = nullptr;
+                } else {
+                  // fix up breaks
+                  BreakValueDropper fixer;
+                  fixer.origin = child;
+                  fixer.setModule(getModule());
+                  fixer.walk(expression);
+                }
+              }
+              if (child) {
+                // we can do it!
+                // reuse the drop
+                drop->value = child->list.back();
+                child->list.back() = drop;
+                child->finalize();
+                curr->list[i] = child;
+                more = true;
+                changed = true;
+              }
             }
           }
-          */
         }
         if (!child) continue;
         if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)

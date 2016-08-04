@@ -446,6 +446,68 @@ struct PostWalker : public Walker<SubType, VisitorType> {
   }
 };
 
+// Traversal with a control-flow stack.
+
+template<typename SubType, typename VisitorType>
+struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
+  ControlFlowWalker() {}
+
+  std::vector<Expression*> controlFlowStack; // contains blocks, loops, and ifs
+
+  // Uses the control flow stack to find the target of a break to a name
+  Expression* findBreakTarget(Name name) {
+    assert(!controlFlowStack.empty());
+    Index i = controlFlowStack.size() - 1;
+    while (1) {
+      auto* curr = controlFlowStack[i];
+      if (Block* block = curr->dynCast<Block>()) {
+        if (name == block->name) return curr;
+      } else if (Loop* loop = curr->dynCast<Loop>()) {
+        if (name == loop->name) return curr;
+      } else {
+        WASM_UNREACHABLE();
+      }
+      if (i == 0) return nullptr;
+      i--;
+    }
+  }
+
+  static void doPreVisitControlFlow(SubType* self, Expression** currp) {
+    self->controlFlowStack.push_back(*currp);
+  }
+
+  static void doPostVisitControlFlow(SubType* self, Expression** currp) {
+    assert(self->controlFlowStack.back() == *currp);
+    self->controlFlowStack.pop_back();
+  }
+
+  static void scan(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+
+    switch (curr->_id) {
+      case Expression::Id::BlockId:
+      case Expression::Id::IfId:
+      case Expression::Id::LoopId: {
+        self->pushTask(SubType::doPostVisitControlFlow, currp);
+        break;
+      }
+      default: {}
+    }
+
+    PostWalker<SubType, VisitorType>::scan(self, currp);
+
+    switch (curr->_id) {
+      case Expression::Id::BlockId:
+      case Expression::Id::IfId:
+      case Expression::Id::LoopId: {
+        self->pushTask(SubType::doPreVisitControlFlow, currp);
+        break;
+      }
+      default: {}
+    }
+  }
+};
+
 // Traversal in the order of execution. This is quick and simple, but
 // does not provide the same comprehensive information that a full
 // conversion to basic blocks would. What it does give is a quick

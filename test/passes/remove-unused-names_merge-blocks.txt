@@ -132,26 +132,22 @@
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (i32.eqz
-          (i32.const 20)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.eqz
+        (i32.const 20)
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 20)
-        )
-        (i32.eqz
-          (i32.const 30)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (i32.eqz
+        (i32.const 30)
       )
     )
     (drop
@@ -161,13 +157,11 @@
       (i32.const 20)
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (i32.load
-          (i32.const 20)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.load
+        (i32.const 20)
       )
     )
     (drop
@@ -187,28 +181,24 @@
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (i32.add
-          (i32.const 20)
-          (i32.const 30)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.add
+        (i32.const 20)
+        (i32.const 30)
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 20)
-        )
-        (i32.add
-          (i32.const 30)
-          (i32.const 40)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (i32.add
+        (i32.const 30)
+        (i32.const 40)
       )
     )
     (drop
@@ -220,28 +210,24 @@
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 20)
-        )
-        (i32.add
-          (i32.const 10)
-          (i32.const 30)
-        )
+      (i32.const 20)
+    )
+    (drop
+      (i32.add
+        (i32.const 10)
+        (i32.const 30)
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 20)
-        )
-        (drop
-          (i32.const 30)
-        )
-        (i32.add
-          (i32.const 10)
-          (i32.const 40)
-        )
+      (i32.const 20)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.add
+        (i32.const 10)
+        (i32.const 40)
       )
     )
     (drop
@@ -255,37 +241,33 @@
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 30)
-        )
-        (i32.add
-          (i32.const 20)
-          (i32.const 40)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.add
+        (i32.const 20)
+        (i32.const 40)
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 20)
-        )
-        (drop
-          (i32.const 40)
-        )
-        (drop
-          (i32.const 50)
-        )
-        (i32.add
-          (i32.const 30)
-          (i32.const 60)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (i32.const 40)
+    )
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (i32.add
+        (i32.const 30)
+        (i32.const 60)
       )
     )
     (drop
@@ -313,255 +295,225 @@
         )
       )
     )
+    (unreachable)
     (drop
-      (block
-        (unreachable)
-        (drop
-          (i32.const 20)
-        )
-        (i32.add
-          (i32.const 10)
-          (i32.const 30)
-        )
+      (i32.const 20)
+    )
+    (drop
+      (i32.add
+        (i32.const 10)
+        (i32.const 30)
       )
     )
   )
   (func $trinary (type $3)
     (drop
-      (block
-        (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (i32.const 40)
+    )
+    (drop
+      (select
+        (block
           (i32.const 10)
         )
-        (drop
+        (i32.const 30)
+        (i32.const 50)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 40)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (block
           (i32.const 30)
         )
-        (drop
+        (i32.const 50)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (block
           (i32.const 50)
-        )
-        (select
-          (i32.const 20)
-          (i32.const 40)
-          (i32.const 60)
         )
       )
     )
     (drop
-      (block
-        (drop
+      (i32.const 30)
+    )
+    (drop
+      (select
+        (block
+          (i32.const 10)
+        )
+        (block
           (i32.const 20)
         )
-        (drop
-          (i32.const 40)
+        (i32.const 40)
+      )
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (select
+        (block
+          (i32.const 10)
         )
-        (select
-          (block
-            (i32.const 10)
-          )
-          (i32.const 30)
-          (i32.const 50)
+        (i32.const 30)
+        (block
+          (i32.const 40)
         )
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
+      (i32.const 10)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (block
+          (i32.const 30)
         )
-        (drop
+        (block
           (i32.const 40)
         )
-        (select
-          (i32.const 20)
-          (block
+      )
+    )
+    (unreachable)
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (select
+        (unreachable)
+        (block
+          (drop
             (i32.const 30)
           )
-          (i32.const 50)
-        )
-      )
-    )
-    (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 30)
-        )
-        (select
-          (i32.const 20)
           (i32.const 40)
-          (block
+        )
+        (block
+          (drop
             (i32.const 50)
           )
-        )
-      )
-    )
-    (drop
-      (block
-        (drop
-          (i32.const 30)
-        )
-        (select
-          (block
-            (i32.const 10)
-          )
-          (block
-            (i32.const 20)
-          )
-          (i32.const 40)
-        )
-      )
-    )
-    (drop
-      (block
-        (drop
-          (i32.const 20)
-        )
-        (select
-          (block
-            (i32.const 10)
-          )
-          (i32.const 30)
-          (block
-            (i32.const 40)
-          )
-        )
-      )
-    )
-    (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (select
-          (i32.const 20)
-          (block
-            (i32.const 30)
-          )
-          (block
-            (i32.const 40)
-          )
-        )
-      )
-    )
-    (drop
-      (block
-        (unreachable)
-        (drop
-          (i32.const 30)
-        )
-        (drop
-          (i32.const 50)
-        )
-        (select
-          (i32.const 20)
-          (i32.const 40)
           (i32.const 60)
         )
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (select
-          (unreachable)
-          (block
-            (drop
-              (i32.const 30)
-            )
-            (i32.const 40)
-          )
-          (block
-            (drop
-              (i32.const 50)
-            )
-            (i32.const 60)
-          )
-        )
+      (i32.const 10)
+    )
+    (unreachable)
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (select
+        (i32.const 20)
         (unreachable)
-        (drop
-          (i32.const 50)
-        )
-        (select
-          (i32.const 20)
-          (i32.const 40)
+        (block
+          (drop
+            (i32.const 50)
+          )
           (i32.const 60)
         )
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 30)
-        )
-        (select
-          (i32.const 20)
-          (unreachable)
-          (block
-            (drop
-              (i32.const 50)
-            )
-            (i32.const 60)
-          )
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (unreachable)
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
       )
     )
     (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 30)
-        )
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
         (unreachable)
-        (select
-          (i32.const 20)
-          (i32.const 40)
-          (i32.const 60)
-        )
-      )
-    )
-    (drop
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 30)
-        )
-        (drop
-          (i32.const 50)
-        )
-        (select
-          (i32.const 20)
-          (i32.const 40)
-          (unreachable)
-        )
       )
     )
   )
   (func $breaks (type $3)
     (block $out
       (drop
-        (block
-          (drop
-            (i32.const 10)
-          )
-          (i32.const 20)
-        )
+        (i32.const 10)
+      )
+      (drop
+        (i32.const 20)
       )
       (br $out)
       (drop
@@ -571,12 +523,10 @@
         (i32.const 20)
       )
       (drop
-        (block
-          (drop
-            (i32.const 10)
-          )
-          (i32.const 20)
-        )
+        (i32.const 10)
+      )
+      (drop
+        (i32.const 20)
       )
       (drop
         (i32.const 30)
