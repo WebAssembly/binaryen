@@ -117,7 +117,8 @@
   )
   (func $b12-yes (type $1)
     (block $topmost
-      (select
+      (if
+        (i32.const 1)
         (block $block1
           (drop
             (i32.const 12)
@@ -138,7 +139,6 @@
             )
           )
         )
-        (i32.const 1)
       )
     )
   )
@@ -221,42 +221,42 @@
   )
   (func $b17 (type $1)
     (block $a
-      (select
+      (if
+        (i32.const 0)
         (block $block1
         )
         (block $block3
         )
-        (i32.const 0)
       )
     )
     (block $a
-      (select
+      (if
+        (i32.const 0)
         (drop
           (i32.const 1)
         )
         (block $block6
         )
-        (i32.const 0)
       )
     )
     (block $a
-      (select
+      (if
+        (i32.const 0)
         (block $block8
         )
         (drop
           (i32.const 1)
         )
-        (i32.const 0)
       )
     )
     (block $c
       (block $b
-        (select
+        (if
+          (i32.const 0)
           (block $block11
           )
           (block $block13
           )
-          (i32.const 0)
         )
       )
     )
@@ -272,11 +272,11 @@
   )
   (func $ret-3 (type $1)
     (block $block0
-      (select
+      (if
+        (i32.const 0)
         (nop)
         (block $block3
         )
-        (i32.const 0)
       )
     )
   )
@@ -340,7 +340,10 @@
           (i32.const 1)
         )
       )
-      (select
+      (if
+        (block $a
+          (i32.const 0)
+        )
         (block $a
           (block $block11
             (drop
@@ -354,9 +357,6 @@
               (i32.const 2)
             )
           )
-        )
-        (block $a
-          (i32.const 0)
         )
       )
     )

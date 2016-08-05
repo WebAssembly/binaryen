@@ -280,6 +280,10 @@ public:
       default: abort();
     }
   }
+  void visitSelect(Select* curr) {
+    shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
+    shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
+  }
 
   void visitReturn(Return* curr) {
     if (curr->value) {
