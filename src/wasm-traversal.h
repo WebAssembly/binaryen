@@ -460,9 +460,9 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     Index i = controlFlowStack.size() - 1;
     while (1) {
       auto* curr = controlFlowStack[i];
-      if (Block* block = curr->dynCast<Block>()) {
+      if (Block* block = curr->template dynCast<Block>()) {
         if (name == block->name) return curr;
-      } else if (Loop* loop = curr->dynCast<Loop>()) {
+      } else if (Loop* loop = curr->template dynCast<Loop>()) {
         if (name == loop->name) return curr;
       } else {
         WASM_UNREACHABLE();
