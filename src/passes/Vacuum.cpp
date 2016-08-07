@@ -41,6 +41,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
         case Expression::Id::BlockId: return curr; // not always needed, but handled in visitBlock()
         case Expression::Id::IfId: return curr; // not always needed, but handled in visitIf()
         case Expression::Id::LoopId: return curr; // not always needed, but handled in visitLoop()
+        case Expression::Id::DropId: return curr; // not always needed, but handled in visitDrop()
 
         case Expression::Id::BreakId:
         case Expression::Id::SwitchId:
@@ -196,6 +197,13 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
 
   void visitLoop(Loop* curr) {
     if (curr->body->is<Nop>()) ExpressionManipulator::nop(curr);
+  }
+
+  void visitDrop(Drop* curr) {
+    // if the drop input has no side effects, it can be wiped out
+    if (!EffectAnalyzer(curr->value).hasSideEffects()) {
+      ExpressionManipulator::nop(curr);
+    }
   }
 
   static void visitPre(Vacuum* self, Expression** currp) {

@@ -753,6 +753,7 @@ class S2WasmBuilder {
         set->index = func->getLocalIndex(assign);
         set->value = curr;
         set->type = curr->type;
+        set->setTee(false);
         addToBlock(set);
       }
     };
@@ -834,7 +835,7 @@ class S2WasmBuilder {
     auto makeStore = [&](WasmType type) {
       skipComma();
       auto curr = allocator->alloc<Store>();
-      curr->type = type;
+      curr->valueType = type;
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       Name assign = getAssign();
@@ -849,6 +850,7 @@ class S2WasmBuilder {
         curr->align = 1U << getInt(attributes[0] + 8);
       }
       curr->value = inputs[1];
+      curr->finalize();
       setOutput(curr, assign);
     };
     auto makeSelect = [&](WasmType type) {
@@ -1146,6 +1148,7 @@ class S2WasmBuilder {
         Name assign = getAssign();
         skipComma();
         auto curr = allocator->alloc<SetLocal>();
+        curr->setTee(true);
         curr->index = func->getLocalIndex(getAssign());
         skipComma();
         curr->value = getInput();

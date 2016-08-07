@@ -53,6 +53,7 @@ struct Visitor {
   ReturnType visitUnary(Unary *curr) {}
   ReturnType visitBinary(Binary *curr) {}
   ReturnType visitSelect(Select *curr) {}
+  ReturnType visitDrop(Drop *curr) {}
   ReturnType visitReturn(Return *curr) {}
   ReturnType visitHost(Host *curr) {}
   ReturnType visitNop(Nop *curr) {}
@@ -93,6 +94,7 @@ struct Visitor {
       case Expression::Id::UnaryId: DELEGATE(Unary);
       case Expression::Id::BinaryId: DELEGATE(Binary);
       case Expression::Id::SelectId: DELEGATE(Select);
+      case Expression::Id::DropId: DELEGATE(Drop);
       case Expression::Id::ReturnId: DELEGATE(Return);
       case Expression::Id::HostId: DELEGATE(Host);
       case Expression::Id::NopId: DELEGATE(Nop);
@@ -132,6 +134,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType> {
   ReturnType visitUnary(Unary *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitBinary(Binary *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSelect(Select *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitDrop(Drop *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitReturn(Return *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitHost(Host *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitNop(Nop *curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -264,14 +267,15 @@ struct Walker : public VisitorType {
   static void doVisitCallIndirect(SubType* self, Expression** currp) { self->visitCallIndirect((*currp)->cast<CallIndirect>()); }
   static void doVisitGetLocal(SubType* self, Expression** currp)     { self->visitGetLocal((*currp)->cast<GetLocal>()); }
   static void doVisitSetLocal(SubType* self, Expression** currp)     { self->visitSetLocal((*currp)->cast<SetLocal>()); }
-  static void doVisitGetGlobal(SubType* self, Expression** currp)     { self->visitGetGlobal((*currp)->cast<GetGlobal>()); }
-  static void doVisitSetGlobal(SubType* self, Expression** currp)     { self->visitSetGlobal((*currp)->cast<SetGlobal>()); }
+  static void doVisitGetGlobal(SubType* self, Expression** currp)    { self->visitGetGlobal((*currp)->cast<GetGlobal>()); }
+  static void doVisitSetGlobal(SubType* self, Expression** currp)    { self->visitSetGlobal((*currp)->cast<SetGlobal>()); }
   static void doVisitLoad(SubType* self, Expression** currp)         { self->visitLoad((*currp)->cast<Load>()); }
   static void doVisitStore(SubType* self, Expression** currp)        { self->visitStore((*currp)->cast<Store>()); }
   static void doVisitConst(SubType* self, Expression** currp)        { self->visitConst((*currp)->cast<Const>()); }
   static void doVisitUnary(SubType* self, Expression** currp)        { self->visitUnary((*currp)->cast<Unary>()); }
   static void doVisitBinary(SubType* self, Expression** currp)       { self->visitBinary((*currp)->cast<Binary>()); }
   static void doVisitSelect(SubType* self, Expression** currp)       { self->visitSelect((*currp)->cast<Select>()); }
+  static void doVisitDrop(SubType* self, Expression** currp)         { self->visitDrop((*currp)->cast<Drop>()); }
   static void doVisitReturn(SubType* self, Expression** currp)       { self->visitReturn((*currp)->cast<Return>()); }
   static void doVisitHost(SubType* self, Expression** currp)         { self->visitHost((*currp)->cast<Host>()); }
   static void doVisitNop(SubType* self, Expression** currp)          { self->visitNop((*currp)->cast<Nop>()); }
@@ -409,6 +413,11 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<Select>()->condition);
         self->pushTask(SubType::scan, &curr->cast<Select>()->ifFalse);
         self->pushTask(SubType::scan, &curr->cast<Select>()->ifTrue);
+        break;
+      }
+      case Expression::Id::DropId: {
+        self->pushTask(SubType::doVisitDrop, currp);
+        self->pushTask(SubType::scan, &curr->cast<Drop>()->value);
         break;
       }
       case Expression::Id::ReturnId: {

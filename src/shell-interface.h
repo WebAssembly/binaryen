@@ -167,7 +167,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void store(Store* store, Address addr, Literal value) override {
-    switch (store->type) {
+    switch (store->valueType) {
       case i32: {
         switch (store->bytes) {
           case 1: memory.set<int8_t>(addr, value.geti32()); break;

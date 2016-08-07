@@ -151,12 +151,14 @@
     )
   )
   (func $hexLiterals (type $1)
-    (i32.add
+    (drop
       (i32.add
-        (i32.const 0)
-        (i32.const 313249263)
+        (i32.add
+          (i32.const 0)
+          (i32.const 313249263)
+        )
+        (i32.const -19088752)
       )
-      (i32.const -19088752)
     )
   )
   (func $conversions (type $1)
@@ -188,11 +190,15 @@
     (set_local $var$0
       (f64.sub
         (block $label$0
-          (f64.const 0.1)
+          (drop
+            (f64.const 0.1)
+          )
           (f64.const 5.1)
         )
         (block $label$1
-          (f64.const 3.2)
+          (drop
+            (f64.const 3.2)
+          )
           (f64.const 4.2)
         )
       )
@@ -310,14 +316,26 @@
     (local $var$1 f32)
     (local $var$2 f64)
     (block $label$0
-      (f32.demote/f64
-        (get_local $var$2)
+      (drop
+        (f32.demote/f64
+          (get_local $var$2)
+        )
       )
-      (get_local $var$1)
-      (f32.const 5)
-      (f32.const 0)
-      (f32.const 5)
-      (f32.const 0)
+      (drop
+        (get_local $var$1)
+      )
+      (drop
+        (f32.const 5)
+      )
+      (drop
+        (f32.const 0)
+      )
+      (drop
+        (f32.const 5)
+      )
+      (drop
+        (f32.const 0)
+      )
     )
   )
   (func $negZero (type $4) (result f64)
@@ -393,12 +411,14 @@
   )
   (func $___syscall_ret (type $1)
     (local $var$0 i32)
-    (i32.gt_u
-      (i32.shr_u
-        (get_local $var$0)
-        (i32.const 0)
+    (drop
+      (i32.gt_u
+        (i32.shr_u
+          (get_local $var$0)
+          (i32.const 0)
+        )
+        (i32.const -4096)
       )
-      (i32.const -4096)
     )
   )
   (func $z (type $1)
@@ -410,7 +430,9 @@
   (func $block_and_after (type $5) (result i32)
     (block $label$0
       (block $label$1
-        (i32.const 1)
+        (drop
+          (i32.const 1)
+        )
         (br $label$1)
       )
       (i32.const 0)
@@ -418,7 +440,9 @@
   )
   (func $loop-roundtrip (type $7) (param $var$0 f64) (result f64)
     (loop $label$0 $label$1
-      (get_local $var$0)
+      (drop
+        (get_local $var$0)
+      )
       (get_local $var$0)
     )
   )

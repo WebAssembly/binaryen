@@ -488,6 +488,21 @@ BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex i
 
   ret->index = index;
   ret->value = (Expression*)value;
+  ret->setTee(false);
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value) {
+  auto* ret = ((Module*)module)->allocator.alloc<SetLocal>();
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenTeeLocal(the_module, " << index << ", expressions[" << expressions[value] << "]);\n";
+  }
+
+  ret->index = index;
+  ret->value = (Expression*)value;
+  ret->setTee(true);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -508,12 +523,12 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, uint32_t align, BinaryenExpressionRef ptr, BinaryenExpressionRef value) {
+BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, uint32_t align, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<Store>();
 
   if (tracing) {
     auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenStore(the_module, " << bytes << ", " << offset << ", " << align << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "]);\n";
+    std::cout << "  expressions[" << id << "] = BinaryenStore(the_module, " << bytes << ", " << offset << ", " << align << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
   }
 
   ret->bytes = bytes;
@@ -521,6 +536,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
   ret->align = align ? align : bytes;
   ret->ptr = (Expression*)ptr;
   ret->value = (Expression*)value;
+  ret->valueType = WasmType(type);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -581,6 +597,18 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module, BinaryenExpressio
   ret->condition = (Expression*)condition;
   ret->ifTrue = (Expression*)ifTrue;
   ret->ifFalse = (Expression*)ifFalse;
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module, BinaryenExpressionRef value) {
+  auto* ret = ((Module*)module)->allocator.alloc<Drop>();
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenDrop(the_module, expressions[" << expressions[value] << "]);\n";
+  }
+
+  ret->value = (Expression*)value;
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -826,6 +854,17 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.addDefaultOptimizationPasses();
+  passRunner.run();
+}
+
+void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenModuleAutoDrop(the_module);\n";
+  }
+
+  Module* wasm = (Module*)module;
+  PassRunner passRunner(wasm);
+  passRunner.add<AutoDrop>();
   passRunner.run();
 }
 

@@ -14,7 +14,7 @@
   )
   (func $neg (type $1) (param $k i32) (param $p i32) (result f32)
     (local $n f32)
-    (set_local $n
+    (tee_local $n
       (f32.neg
         (block $block0
           (i32.store

@@ -139,12 +139,14 @@
     )
   )
   (func $hexLiterals (type $FUNCSIG$v)
-    (i32.add
+    (drop
       (i32.add
-        (i32.const 0)
-        (i32.const 313249263)
+        (i32.add
+          (i32.const 0)
+          (i32.const 313249263)
+        )
+        (i32.const -19088752)
       )
-      (i32.const -19088752)
     )
   )
   (func $conversions (type $FUNCSIG$v)
@@ -176,11 +178,15 @@
     (set_local $J
       (f64.sub
         (block $block0
-          (f64.const 0.1)
+          (drop
+            (f64.const 0.1)
+          )
           (f64.const 5.1)
         )
         (block $block1
-          (f64.const 3.2)
+          (drop
+            (f64.const 3.2)
+          )
           (f64.const 4.2)
         )
       )
@@ -302,14 +308,26 @@
     (local $y f32)
     (local $z f64)
     (block $block0
-      (f32.demote/f64
-        (get_local $z)
+      (drop
+        (f32.demote/f64
+          (get_local $z)
+        )
       )
-      (get_local $y)
-      (f32.const 5)
-      (f32.const 0)
-      (f32.const 5)
-      (f32.const 0)
+      (drop
+        (get_local $y)
+      )
+      (drop
+        (f32.const 5)
+      )
+      (drop
+        (f32.const 0)
+      )
+      (drop
+        (f32.const 5)
+      )
+      (drop
+        (f32.const 0)
+      )
     )
   )
   (func $negZero (type $4) (result f64)
@@ -385,12 +403,14 @@
   )
   (func $___syscall_ret (type $FUNCSIG$v)
     (local $$0 i32)
-    (i32.gt_u
-      (i32.shr_u
-        (get_local $$0)
-        (i32.const 0)
+    (drop
+      (i32.gt_u
+        (i32.shr_u
+          (get_local $$0)
+          (i32.const 0)
+        )
+        (i32.const -4096)
       )
-      (i32.const -4096)
     )
   )
   (func $z (type $FUNCSIG$v)
@@ -401,14 +421,18 @@
   )
   (func $block_and_after (type $5) (result i32)
     (block $waka
-      (i32.const 1)
+      (drop
+        (i32.const 1)
+      )
       (br $waka)
     )
     (i32.const 0)
   )
   (func $loop-roundtrip (type $7) (param $0 f64) (result f64)
     (loop $loop-out0 $loop-in1
-      (get_local $0)
+      (drop
+        (get_local $0)
+      )
       (get_local $0)
     )
   )

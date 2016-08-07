@@ -49,7 +49,7 @@
       )
       (br_if $label$0
         (i32.lt_s
-          (set_local $4
+          (tee_local $4
             (i32.add
               (get_local $4)
               (i32.const 1)

@@ -793,6 +793,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   };
   PassRunner passRunner(&wasm);
   passRunner.add<FinalizeCalls>(this);
+  passRunner.add<AutoDrop>();
   passRunner.run();
 
   // apply memory growth, if relevant
@@ -802,7 +803,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.addFunction(builder.makeFunction(
       GROW_WASM_MEMORY,
       { { NEW_SIZE, i32 } },
-      none,
+      i32,
       {},
       builder.makeHost(
         GrowMemory,
@@ -1009,7 +1010,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto ret = allocator.alloc<SetLocal>();
           ret->index = function->getLocalIndex(ast[2][1]->getIString());
           ret->value = process(ast[3]);
-          ret->type = ret->value->type;
+          ret->setTee(false);
+          ret->finalize();
           return ret;
         }
         // global var, do a store to memory
@@ -1021,7 +1023,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->align = ret->bytes;
         ret->ptr = builder.makeConst(Literal(int32_t(global.address)));
         ret->value = process(ast[3]);
-        ret->type = global.type;
+        ret->valueType = global.type;
+        ret->finalize();
         return ret;
       } else if (ast[2][0] == SUB) {
         Ref target = ast[2];
@@ -1035,10 +1038,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->align = view.bytes;
         ret->ptr = processUnshifted(target[2], view.bytes);
         ret->value = process(ast[3]);
-        ret->type = asmToWasmType(view.type);
-        if (ret->type != ret->value->type) {
+        ret->valueType = asmToWasmType(view.type);
+        ret->finalize();
+        if (ret->valueType != ret->value->type) {
           // in asm.js we have some implicit coercions that we must do explicitly here
-          if (ret->type == f32 && ret->value->type == f64) {
+          if (ret->valueType == f32 && ret->value->type == f64) {
             auto conv = allocator.alloc<Unary>();
             conv->op = DemoteFloat64;
             conv->value = ret->value;
@@ -1273,11 +1277,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       }
       abort_on("bad unary", ast);
     } else if (what == IF) {
-      auto ret = allocator.alloc<If>();
-      ret->condition = process(ast[1]);
-      ret->ifTrue = process(ast[2]);
-      ret->ifFalse = !!ast[3] ? process(ast[3]) : nullptr;
-      return ret;
+      return builder.makeIf(process(ast[1]), process(ast[2]), !!ast[3] ? process(ast[3]) : nullptr);
     } else if (what == CALL) {
       if (ast[1][0] == NAME) {
         IString name = ast[1][1]->getIString();
@@ -1330,9 +1330,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             // No wasm support, so use a temp local
             ensureI32Temp();
             auto set = allocator.alloc<SetLocal>();
+            set->setTee(false);
             set->index = function->getLocalIndex(I32_TEMP);
             set->value = value;
-            set->type = i32;
+            set->finalize();
             auto get = [&]() {
               auto ret = allocator.alloc<GetLocal>();
               ret->index = function->getLocalIndex(I32_TEMP);
@@ -1526,6 +1527,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (breakSeeker.found == 0) {
           auto block = allocator.alloc<Block>();
           block->list.push_back(child);
+          if (isConcreteWasmType(child->type)) {
+            block->list.push_back(builder.makeNop()); // ensure a nop at the end, so the block has guaranteed none type and no values fall through
+          }
           block->name = stop;
           block->finalize();
           return block;

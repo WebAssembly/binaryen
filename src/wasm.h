@@ -802,7 +802,7 @@ enum UnaryOp {
   ConvertSInt32ToFloat32, ConvertSInt32ToFloat64, ConvertUInt32ToFloat32, ConvertUInt32ToFloat64, ConvertSInt64ToFloat32, ConvertSInt64ToFloat64, ConvertUInt64ToFloat32, ConvertUInt64ToFloat64, // int to float
   PromoteFloat32, // f32 to f64
   DemoteFloat64, // f64 to f32
-  ReinterpretInt32, ReinterpretInt64 // reinterpret bits to float
+  ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
 };
 
 enum BinaryOp {
@@ -877,6 +877,7 @@ public:
     UnaryId,
     BinaryId,
     SelectId,
+    DropId,
     ReturnId,
     HostId,
     NopId,
@@ -929,6 +930,7 @@ inline const char *getExpressionName(Expression *curr) {
     case Expression::Id::UnaryId: return "unary";
     case Expression::Id::BinaryId: return "binary";
     case Expression::Id::SelectId: return "select";
+    case Expression::Id::DropId: return "drop";
     case Expression::Id::ReturnId: return "return";
     case Expression::Id::HostId: return "host";
     case Expression::Id::NopId: return "nop";
@@ -1108,8 +1110,13 @@ public:
   Index index;
   Expression *value;
 
-  void finalize() {
-    type = value->type;
+  bool isTee() {
+    return type != none;
+  }
+
+  void setTee(bool is) {
+    if (is) type = value->type;
+    else type = none;
   }
 };
 
@@ -1150,16 +1157,17 @@ public:
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
-  Store() {}
-  Store(MixedArena& allocator) {}
+  Store() : valueType(none) {}
+  Store(MixedArena& allocator) : Store() {}
 
   uint8_t bytes;
   Address offset;
   Address align;
   Expression *ptr, *value;
+  WasmType valueType; // the store never returns a value
 
   void finalize() {
-    type = value->type;
+    assert(valueType != none); // must be set
   }
 };
 
@@ -1310,6 +1318,14 @@ public:
     assert(ifTrue && ifFalse);
     type = getReachableWasmType(ifTrue->type, ifFalse->type);
   }
+};
+
+class Drop : public SpecificExpression<Expression::DropId> {
+public:
+  Drop() {}
+  Drop(MixedArena& allocator) {}
+
+  Expression *value;
 };
 
 class Return : public SpecificExpression<Expression::ReturnId> {

@@ -177,11 +177,15 @@
     (set_local $J
       (f64.sub
         (block
-          (f64.const 0.1)
+          (drop
+            (f64.const 0.1)
+          )
           (f64.const 5.1)
         )
         (block
-          (f64.const 3.2)
+          (drop
+            (f64.const 3.2)
+          )
           (f64.const 4.2)
         )
       )
@@ -340,14 +344,28 @@
   (func $fr (param $x f32)
     (local $y f32)
     (local $z f64)
-    (f32.demote/f64
-      (get_local $z)
+    (drop
+      (block
+        (drop
+          (f32.demote/f64
+            (get_local $z)
+          )
+        )
+        (drop
+          (get_local $y)
+        )
+        (drop
+          (f32.const 5)
+        )
+        (drop
+          (f32.const 0)
+        )
+        (drop
+          (f32.const 5)
+        )
+        (f32.const 0)
+      )
     )
-    (get_local $y)
-    (f32.const 5)
-    (f32.const 0)
-    (f32.const 5)
-    (f32.const 0)
   )
   (func $negZero (result f64)
     (return
@@ -420,9 +438,11 @@
   )
   (func $___syscall_ret
     (local $$0 i32)
-    (i32.gt_u
-      (get_local $$0)
-      (i32.const -4096)
+    (drop
+      (i32.gt_u
+        (get_local $$0)
+        (i32.const -4096)
+      )
     )
   )
   (func $smallCompare (result i32)
@@ -558,57 +578,87 @@
   )
   (func $bitcasts (param $i i32) (param $f f32)
     (local $d f64)
-    (f32.reinterpret/i32
-      (get_local $i)
-    )
-    (f64.promote/f32
-      (f32.reinterpret/i32
-        (get_local $i)
-      )
-    )
-    (i32.reinterpret/f32
-      (get_local $f)
-    )
-    (i32.reinterpret/f32
-      (f32.demote/f64
-        (get_local $d)
+    (drop
+      (block
+        (drop
+          (f32.reinterpret/i32
+            (get_local $i)
+          )
+        )
+        (drop
+          (f64.promote/f32
+            (f32.reinterpret/i32
+              (get_local $i)
+            )
+          )
+        )
+        (drop
+          (i32.reinterpret/f32
+            (get_local $f)
+          )
+        )
+        (i32.reinterpret/f32
+          (f32.demote/f64
+            (get_local $d)
+          )
+        )
       )
     )
   )
   (func $recursiveBlockMerging (param $x i32) (result i32)
-    (call $lb
-      (i32.add
+    (drop
+      (call $lb
         (i32.add
           (i32.add
-            (block
-              (i32.const 1)
-              (get_local $x)
-            )
-            (block
-              (i32.const 2)
-              (i32.const 3)
-            )
-          )
-          (block
-            (block
+            (i32.add
               (block
-                (i32.const 4)
-                (i32.const 5)
+                (drop
+                  (i32.const 1)
+                )
+                (get_local $x)
               )
-              (i32.const 6)
-            )
-            (i32.const 7)
-          )
-        )
-        (block
-          (i32.const 8)
-          (block
-            (i32.const 9)
-            (block
-              (i32.const 10)
               (block
-                (i32.const 11)
-                (i32.const 12)
+                (drop
+                  (i32.const 2)
+                )
+                (i32.const 3)
+              )
+            )
+            (block
+              (drop
+                (block
+                  (drop
+                    (block
+                      (drop
+                        (i32.const 4)
+                      )
+                      (i32.const 5)
+                    )
+                  )
+                  (i32.const 6)
+                )
+              )
+              (i32.const 7)
+            )
+          )
+          (block
+            (drop
+              (i32.const 8)
+            )
+            (block
+              (drop
+                (i32.const 9)
+              )
+              (block
+                (drop
+                  (i32.const 10)
+                )
+                (block
+                  (drop
+                    (i32.const 11)
+                  )
+                  (i32.const 12)
+                )
               )
             )
           )
@@ -620,14 +670,18 @@
         (i32.add
           (i32.add
             (block
-              (call $lb
-                (i32.const 1)
+              (drop
+                (call $lb
+                  (i32.const 1)
+                )
               )
               (get_local $x)
             )
             (block
-              (call $lb
-                (i32.const 2)
+              (drop
+                (call $lb
+                  (i32.const 2)
+                )
               )
               (call $lb
                 (i32.const 3)
@@ -635,17 +689,23 @@
             )
           )
           (block
-            (block
+            (drop
               (block
-                (call $lb
-                  (i32.const 4)
+                (drop
+                  (block
+                    (drop
+                      (call $lb
+                        (i32.const 4)
+                      )
+                    )
+                    (call $lb
+                      (i32.const 5)
+                    )
+                  )
                 )
                 (call $lb
-                  (i32.const 5)
+                  (i32.const 6)
                 )
-              )
-              (call $lb
-                (i32.const 6)
               )
             )
             (call $lb
@@ -654,20 +714,28 @@
           )
         )
         (block
-          (call $lb
-            (i32.const 8)
+          (drop
+            (call $lb
+              (i32.const 8)
+            )
           )
           (block
-            (call $lb
-              (i32.const 9)
+            (drop
+              (call $lb
+                (i32.const 9)
+              )
             )
             (block
-              (call $lb
-                (i32.const 10)
+              (drop
+                (call $lb
+                  (i32.const 10)
+                )
               )
               (block
-                (call $lb
-                  (i32.const 11)
+                (drop
+                  (call $lb
+                    (i32.const 11)
+                  )
                 )
                 (call $lb
                   (i32.const 12)
@@ -700,10 +768,14 @@
     )
   )
   (func $forgetMe
-    (f64.const 123.456)
+    (drop
+      (f64.const 123.456)
+    )
   )
   (func $exportMe
-    (f64.const -3.14159)
+    (drop
+      (f64.const -3.14159)
+    )
   )
   (func $zeroInit (param $x i32)
     (local $y i32)
@@ -755,6 +827,20 @@
     )
     (return
       (get_local $x)
+    )
+  )
+  (func $smallIf
+    (block $do-once$0
+      (drop
+        (if
+          (i32.const 2)
+          (call $lb
+            (i32.const 3)
+          )
+          (br $do-once$0)
+        )
+      )
+      (nop)
     )
   )
   (func $z

@@ -411,11 +411,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             Module["info"].parent["HEAPU8"][addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
-        }, (uint32_t)addr, store_->bytes, isWasmTypeFloat(store_->type), isWasmTypeFloat(store_->type) ? value.getFloat() : (double)value.getInteger());
+        }, (uint32_t)addr, store_->bytes, isWasmTypeFloat(store_->valueType), isWasmTypeFloat(store_->valueType) ? value.getFloat() : (double)value.getInteger());
         return;
       }
       // nicely aligned
-      if (!isWasmTypeFloat(store_->type)) {
+      if (!isWasmTypeFloat(store_->valueType)) {
         if (store_->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
         } else if (store_->bytes == 2) {

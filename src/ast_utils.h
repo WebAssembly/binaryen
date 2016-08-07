@@ -21,6 +21,7 @@
 #include "wasm.h"
 #include "wasm-traversal.h"
 #include "wasm-builder.h"
+#include "pass.h"
 
 namespace wasm {
 
@@ -277,7 +278,11 @@ struct ExpressionManipulator {
         return builder.makeGetLocal(curr->index, curr->type);
       }
       Expression* visitSetLocal(SetLocal *curr) {
-        return builder.makeSetLocal(curr->index, copy(curr->value));
+        if (curr->isTee()) {
+          return builder.makeTeeLocal(curr->index, copy(curr->value));
+        } else {
+          return builder.makeSetLocal(curr->index, copy(curr->value));
+        }
       }
       Expression* visitGetGlobal(GetGlobal *curr) {
         return builder.makeGetGlobal(curr->index, curr->type);
@@ -289,7 +294,7 @@ struct ExpressionManipulator {
         return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
       }
       Expression* visitStore(Store *curr) {
-        return builder.makeStore(curr->bytes, curr->offset, curr->align, copy(curr->ptr), copy(curr->value));
+        return builder.makeStore(curr->bytes, curr->offset, curr->align, copy(curr->ptr), copy(curr->value), curr->valueType);
       }
       Expression* visitConst(Const *curr) {
         return builder.makeConst(curr->value);
@@ -302,6 +307,9 @@ struct ExpressionManipulator {
       }
       Expression* visitSelect(Select *curr) {
         return builder.makeSelect(copy(curr->condition), copy(curr->ifTrue), copy(curr->ifFalse));
+      }
+      Expression* visitDrop(Drop *curr) {
+        return builder.makeDrop(copy(curr->value));
       }
       Expression* visitReturn(Return *curr) {
         return builder.makeReturn(copy(curr->value));
@@ -340,7 +348,7 @@ struct ExpressionAnalyzer {
     for (int i = int(stack.size()) - 2; i >= 0; i--) {
       auto* curr = stack[i];
       auto* above = stack[i + 1];
-      // only if and block can drop values
+      // only if and block can drop values (pre-drop expression was added) FIXME
       if (curr->is<Block>()) {
         auto* block = curr->cast<Block>();
         for (size_t j = 0; j < block->list.size() - 1; j++) {
@@ -355,6 +363,7 @@ struct ExpressionAnalyzer {
         assert(above == iff->ifTrue || above == iff->ifFalse);
         // continue down
       } else {
+        if (curr->is<Drop>()) return false;
         return true; // all other node types use the result
       }
     }
@@ -481,6 +490,7 @@ struct ExpressionAnalyzer {
         }
         case Expression::Id::SetLocalId: {
           CHECK(SetLocal, index);
+          CHECK(SetLocal, type); // for tee/set
           PUSH(SetLocal, value);
           break;
         }
@@ -505,6 +515,7 @@ struct ExpressionAnalyzer {
           CHECK(Store, bytes);
           CHECK(Store, offset);
           CHECK(Store, align);
+          CHECK(Store, valueType);
           PUSH(Store, ptr);
           PUSH(Store, value);
           break;
@@ -528,6 +539,10 @@ struct ExpressionAnalyzer {
           PUSH(Select, ifTrue);
           PUSH(Select, ifFalse);
           PUSH(Select, condition);
+          break;
+        }
+        case Expression::Id::DropId: {
+          PUSH(Drop, value);
           break;
         }
         case Expression::Id::ReturnId: {
@@ -716,6 +731,7 @@ struct ExpressionAnalyzer {
           HASH(Store, bytes);
           HASH(Store, offset);
           HASH(Store, align);
+          HASH(Store, valueType);
           PUSH(Store, ptr);
           PUSH(Store, value);
           break;
@@ -740,6 +756,10 @@ struct ExpressionAnalyzer {
           PUSH(Select, ifTrue);
           PUSH(Select, ifFalse);
           PUSH(Select, condition);
+          break;
+        }
+        case Expression::Id::DropId: {
+          PUSH(Drop, value);
           break;
         }
         case Expression::Id::ReturnId: {
@@ -767,6 +787,30 @@ struct ExpressionAnalyzer {
       #undef PUSH
     }
     return digest;
+  }
+};
+
+// Adds drop() operations where necessary. This lets you not worry about adding drop when
+// generating code.
+struct AutoDrop : public WalkerPass<PostWalker<AutoDrop, Visitor<AutoDrop>>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new AutoDrop; }
+
+  void visitBlock(Block* curr) {
+    if (curr->list.size() <= 1) return;
+    for (Index i = 0; i < curr->list.size() - 1; i++) {
+      auto* child = curr->list[i];
+      if (isConcreteWasmType(child->type)) {
+        curr->list[i] = Builder(*getModule()).makeDrop(child);
+      }
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (curr->result == none && isConcreteWasmType(curr->body->type)) {
+      curr->body = Builder(*getModule()).makeDrop(curr->body);
+    }
   }
 };
 

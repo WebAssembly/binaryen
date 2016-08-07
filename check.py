@@ -424,7 +424,6 @@ for t in spec_tests:
       # compare all the outputs to the expected output
       check_expected(actual, os.path.join('test', 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
-
 if has_node:
   print '\n[ checking binaryen.js testcases... ]\n'
 
@@ -636,7 +635,7 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
 
 if has_emcc:
 
-  if has_mozjs:
+  if has_mozjs and 0:
 
     print '\n[ checking native wasm support ]\n'
 

@@ -9,7 +9,11 @@
   )
   (func $b1 (type $0) (param $i1 i32)
     (block $topmost
-      (i32.const 0)
+      (block $block0
+        (drop
+          (i32.const 0)
+        )
+      )
     )
   )
   (func $b2 (type $0) (param $i1 i32)
@@ -27,14 +31,22 @@
   (func $b4 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
-        (i32.const 0)
+        (block $block0
+          (drop
+            (i32.const 0)
+          )
+        )
       )
     )
   )
   (func $b5 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
-        (i32.const 0)
+        (block $block0
+          (drop
+            (i32.const 0)
+          )
+        )
       )
     )
   )
@@ -47,9 +59,13 @@
   )
   (func $b7 (type $0) (param $i1 i32)
     (block $topmost
-      (br_if $topmost
-        (i32.const 0)
-        (i32.const 1)
+      (block $block0
+        (drop
+          (i32.const 0)
+        )
+        (br_if $topmost
+          (i32.const 1)
+        )
       )
     )
   )
@@ -74,9 +90,13 @@
   (func $b10 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
-        (br_if $topmost
-          (i32.const 0)
-          (i32.const 1)
+        (block $block0
+          (drop
+            (i32.const 0)
+          )
+          (br_if $topmost
+            (i32.const 1)
+          )
         )
       )
     )
@@ -84,9 +104,13 @@
   (func $b11 (type $0) (param $i1 i32)
     (block $topmost
       (block $inner
-        (br_if $inner
-          (i32.const 0)
-          (i32.const 1)
+        (block $block0
+          (drop
+            (i32.const 0)
+          )
+          (br_if $inner
+            (i32.const 1)
+          )
         )
       )
     )
@@ -95,12 +119,24 @@
     (block $topmost
       (select
         (block $block1
-          (i32.const 12)
-          (i32.const 1)
+          (drop
+            (i32.const 12)
+          )
+          (block $block2
+            (drop
+              (i32.const 1)
+            )
+          )
         )
         (block $block3
-          (i32.const 27)
-          (i32.const 2)
+          (drop
+            (i32.const 27)
+          )
+          (block $block4
+            (drop
+              (i32.const 2)
+            )
+          )
         )
         (i32.const 1)
       )
@@ -111,14 +147,18 @@
       (if
         (i32.const 1)
         (block $block1
-          (i32.const 12)
+          (drop
+            (i32.const 12)
+          )
           (br_if $topmost
             (i32.const 1)
             (i32.const 1)
           )
         )
         (block $block3
-          (i32.const 27)
+          (drop
+            (i32.const 27)
+          )
           (br $topmost
             (i32.const 2)
           )
@@ -149,9 +189,13 @@
   )
   (func $b15 (type $1)
     (block $topmost
-      (br_if $topmost
-        (i32.const 0)
+      (if
         (i32.const 18)
+        (block $block1
+          (drop
+            (i32.const 0)
+          )
+        )
       )
     )
   )
@@ -187,7 +231,9 @@
     )
     (block $a
       (select
-        (i32.const 1)
+        (drop
+          (i32.const 1)
+        )
         (block $block6
         )
         (i32.const 0)
@@ -197,7 +243,9 @@
       (select
         (block $block8
         )
-        (i32.const 1)
+        (drop
+          (i32.const 1)
+        )
         (i32.const 0)
       )
     )
@@ -243,40 +291,69 @@
     (block $a
       (if
         (i32.const 0)
-        (i32.const 1)
+        (drop
+          (i32.const 1)
+        )
         (block $block2
-          (br $a
-            (i32.const 2)
+          (block $block3
+            (drop
+              (i32.const 2)
+            )
+            (br $a)
           )
-          (i32.const 3)
+          (drop
+            (i32.const 3)
+          )
         )
       )
       (if
         (i32.const 0)
         (block $block4
-          (br $a
-            (i32.const 2)
+          (block $block5
+            (drop
+              (i32.const 2)
+            )
+            (br $a)
           )
-          (i32.const 3)
+          (drop
+            (i32.const 3)
+          )
         )
-        (i32.const 1)
+        (drop
+          (i32.const 1)
+        )
       )
       (if
         (block $block6
-          (br $a
-            (i32.const 2)
+          (block $block7
+            (drop
+              (i32.const 2)
+            )
+            (br $a)
           )
           (i32.const 3)
         )
-        (i32.const 0)
-        (i32.const 1)
+        (drop
+          (i32.const 0)
+        )
+        (drop
+          (i32.const 1)
+        )
       )
       (select
         (block $a
-          (i32.const 1)
+          (block $block11
+            (drop
+              (i32.const 1)
+            )
+          )
         )
         (block $a
-          (i32.const 2)
+          (block $block13
+            (drop
+              (i32.const 2)
+            )
+          )
         )
         (block $a
           (i32.const 0)
@@ -287,37 +364,54 @@
   (func $side-effects-and-order (type $2) (result i32)
     (local $x i32)
     (block $do-once$0
-      (br_if $do-once$0
-        (i32.const 0)
-        (call $b13)
-      )
-      (i32.const 1)
-    )
-    (block $do-once$0
       (if
         (call $b13)
-        (br $do-once$0
-          (call $b14)
+        (block $block1
+          (drop
+            (i32.const 0)
+          )
+          (br $do-once$0)
         )
       )
-      (i32.const 1)
+      (drop
+        (i32.const 1)
+      )
+    )
+    (block $do-once$0
+      (if
+        (call $b13)
+        (block $block3
+          (drop
+            (call $b14)
+          )
+          (br $do-once$0)
+        )
+      )
+      (drop
+        (i32.const 1)
+      )
     )
     (block $do-once$0
       (if
         (i32.const 0)
-        (br $do-once$0
-          (call $b14)
+        (block $block5
+          (drop
+            (call $b14)
+          )
+          (br $do-once$0)
         )
       )
-      (i32.const 1)
+      (drop
+        (i32.const 1)
+      )
     )
     (block $do-once$0
       (if
-        (set_local $x
+        (tee_local $x
           (i32.const 1)
         )
         (br $do-once$0
-          (set_local $x
+          (tee_local $x
             (i32.const 2)
           )
         )

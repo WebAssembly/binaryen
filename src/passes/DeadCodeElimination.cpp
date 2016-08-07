@@ -31,6 +31,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <ast_utils.h>
+#include <wasm-builder.h>
 
 namespace wasm {
 
@@ -191,6 +192,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
         case Expression::Id::UnaryId: DELEGATE(Unary);
         case Expression::Id::BinaryId: DELEGATE(Binary);
         case Expression::Id::SelectId: DELEGATE(Select);
+        case Expression::Id::DropId: DELEGATE(Drop);
         case Expression::Id::ReturnId: DELEGATE(Return);
         case Expression::Id::HostId: DELEGATE(Host);
         case Expression::Id::NopId: DELEGATE(Nop);
@@ -226,6 +228,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
 
   // other things
 
+  Expression* drop(Expression* toDrop) {
+    if (toDrop->is<Unreachable>()) return toDrop;
+    return Builder(*getModule()).makeDrop(toDrop);
+  }
+
   template<typename T>
   void handleCall(T* curr, Expression* initial) {
     for (Index i = 0; i < curr->operands.size(); i++) {
@@ -236,11 +243,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
           block->list.resize(newSize);
           Index j = 0;
           if (initial) {
-            block->list[j] = initial;
+            block->list[j] = drop(initial);
             j++;
           }
           for (; j < newSize; j++) {
-            block->list[j] = curr->operands[j - (initial ? 1 : 0)];
+            block->list[j] = drop(curr->operands[j - (initial ? 1 : 0)]);
           }
           block->finalize();
           replaceCurrent(block);
@@ -288,7 +295,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
     if (isDead(curr->value)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(2);
-      block->list[0] = curr->ptr;
+      block->list[0] = drop(curr->ptr);
       block->list[1] = curr->value;
       block->finalize();
       replaceCurrent(block);
@@ -309,7 +316,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
     if (isDead(curr->right)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(2);
-      block->list[0] = curr->left;
+      block->list[0] = drop(curr->left);
       block->list[1] = curr->right;
       block->finalize();
       replaceCurrent(block);
@@ -324,7 +331,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
     if (isDead(curr->ifFalse)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(2);
-      block->list[0] = curr->ifTrue;
+      block->list[0] = drop(curr->ifTrue);
       block->list[1] = curr->ifFalse;
       block->finalize();
       replaceCurrent(block);
@@ -333,8 +340,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
     if (isDead(curr->condition)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(3);
-      block->list[0] = curr->ifTrue;
-      block->list[1] = curr->ifFalse;
+      block->list[0] = drop(curr->ifTrue);
+      block->list[1] = drop(curr->ifFalse);
       block->list[2] = curr->condition;
       block->finalize();
       replaceCurrent(block);

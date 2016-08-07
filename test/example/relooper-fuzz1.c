@@ -33,7 +33,8 @@ int main() {
       BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4))
-    )
+    ),
+    BinaryenInt32()
   );
 
   // optionally, print the return value
@@ -288,7 +289,8 @@ int main() {
       full[i] = BinaryenStore(module,
         4, 0, 0,
         BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
-        BinaryenConst(module, BinaryenLiteralInt32(decisions[i]))
+        BinaryenConst(module, BinaryenLiteralInt32(decisions[i])),
+        BinaryenInt32()
       );
     }
   }

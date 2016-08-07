@@ -31,7 +31,9 @@
       (br_if $out
         (i32.const 3)
       )
-      (i32.const 0)
+      (drop
+        (i32.const 0)
+      )
     )
     (if
       (i32.const 0)
@@ -108,8 +110,12 @@
     (if
       (i32.const 0)
       (block $block15
-        (i32.const 10)
-        (i32.const 42)
+        (drop
+          (i32.const 10)
+        )
+        (drop
+          (i32.const 42)
+        )
         (unreachable)
       )
     )
@@ -137,7 +143,9 @@
     (if
       (i32.const 1)
       (block
-        (i32.const 123)
+        (drop
+          (i32.const 123)
+        )
         (unreachable)
       )
     )
@@ -152,22 +160,30 @@
     (if
       (i32.const -1)
       (block
-        (i32.const 123)
-        (i32.const 456)
+        (drop
+          (i32.const 123)
+        )
+        (drop
+          (i32.const 456)
+        )
         (unreachable)
       )
     )
     (if
       (i32.const -2)
       (block
-        (i32.const 139)
+        (drop
+          (i32.const 139)
+        )
         (unreachable)
       )
     )
     (if
       (i32.const -3)
       (block
-        (i32.const 246)
+        (drop
+          (i32.const 246)
+        )
         (unreachable)
       )
     )
@@ -181,12 +197,16 @@
     )
     (if
       (i32.const 22)
-      (unreachable)
+      (drop
+        (unreachable)
+      )
     )
     (if
       (i32.const 33)
       (block
-        (i32.const 0)
+        (drop
+          (i32.const 0)
+        )
         (unreachable)
       )
     )
@@ -200,17 +220,25 @@
     )
     (if
       (i32.const 66)
-      (unreachable)
+      (drop
+        (unreachable)
+      )
     )
     (if
       (i32.const 77)
-      (unreachable)
+      (drop
+        (unreachable)
+      )
     )
     (if
       (i32.const 88)
-      (block
-        (i32.const 0)
-        (unreachable)
+      (drop
+        (block
+          (drop
+            (i32.const 0)
+          )
+          (unreachable)
+        )
       )
     )
     (if
@@ -219,29 +247,45 @@
     )
     (if
       (i32.const 100)
-      (block
-        (i32.const 123)
-        (i32.const 456)
-        (unreachable)
+      (drop
+        (block
+          (drop
+            (i32.const 123)
+          )
+          (drop
+            (i32.const 456)
+          )
+          (unreachable)
+        )
       )
     )
     (if
       (i32.const 101)
-      (block
-        (i32.const 123)
-        (unreachable)
+      (drop
+        (block
+          (drop
+            (i32.const 123)
+          )
+          (unreachable)
+        )
       )
     )
     (if
       (i32.const 102)
-      (unreachable)
+      (drop
+        (unreachable)
+      )
     )
-    (i32.const 1337)
+    (drop
+      (i32.const 1337)
+    )
   )
   (func $killer (type $1)
     (unreachable)
   )
   (func $target (type $1)
-    (i32.const 2000)
+    (drop
+      (i32.const 2000)
+    )
   )
 )

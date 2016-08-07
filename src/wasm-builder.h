@@ -142,6 +142,13 @@ public:
     auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
+    ret->type = none;
+    return ret;
+  }
+  SetLocal* makeTeeLocal(Index index, Expression* value) {
+    auto* ret = allocator.alloc<SetLocal>();
+    ret->index = index;
+    ret->value = value;
     ret->type = value->type;
     return ret;
   }
@@ -164,10 +171,11 @@ public:
     ret->type = type;
     return ret;
   }
-  Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value) {
+  Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();
-    ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value;
-    ret->type = value->type;
+    ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value; ret->valueType = type;
+    ret->finalize();
+    assert(isConcreteWasmType(ret->value->type) ? ret->value->type == type : true);
     return ret;
   }
   Const* makeConst(Literal value) {
@@ -205,10 +213,20 @@ public:
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);
+    ret->finalize();
     return ret;
   }
   Unreachable* makeUnreachable() {
     return allocator.alloc<Unreachable>();
+  }
+
+  // Additional helpers
+
+  Drop* makeDrop(Expression *value) {
+    auto* ret = allocator.alloc<Drop>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
   }
 
   // Additional utility functions for building on top of nodes

@@ -14,7 +14,7 @@
             (f64.convert_s/i32
               (get_local $2)
             )
-            (set_local $5
+            (tee_local $5
               (f64.convert_s/i32
                 (i32.mul
                   (get_local $1)
@@ -37,7 +37,7 @@
             (f64.convert_s/i32
               (get_local $2)
             )
-            (set_local $5
+            (tee_local $5
               (f64.convert_s/i32
                 (i32.mul
                   (get_local $3)

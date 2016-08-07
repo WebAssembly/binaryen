@@ -435,6 +435,12 @@ public:
     NOTE_EVAL1(condition.value);
     return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
   }
+  Flow visitDrop(Drop *curr) {
+    NOTE_ENTER("Drop");
+    Flow value = visit(curr->value);
+    if (value.breaking()) return value;
+    return Flow();
+  }
   Flow visitReturn(Return *curr) {
     NOTE_ENTER("Return");
     Flow flow;
@@ -693,9 +699,9 @@ public:
         if (flow.breaking()) return flow;
         NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
-        assert(flow.value.type == curr->type);
+        assert(curr->isTee() ? flow.value.type == curr->type : true);
         scope.locals[index] = flow.value;
-        return flow;
+        return curr->isTee() ? flow : Flow();
       }
 
       Flow visitGetGlobal(GetGlobal *curr) {
@@ -730,7 +736,7 @@ public:
         Flow value = visit(curr->value);
         if (value.breaking()) return value;
         instance.externalInterface->store(curr, instance.getFinalAddress(curr, ptr.value), value.value);
-        return value;
+        return Flow();
       }
 
       Flow visitHost(Host *curr) {

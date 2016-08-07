@@ -568,7 +568,6 @@ private:
       if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) return f64;
     }
     if (allowError) return none;
-    throw ParseException("unknown type");
     abort();
   }
 
@@ -621,7 +620,7 @@ public:
             if (op[3] == '_') return makeBinary(s, op[4] == 'u' ? BINARY_INT(DivU) : BINARY_INT(DivS), type);
             if (op[3] == 0) return makeBinary(s, BINARY_FLOAT(Div), type);
           }
-          if (op[1] == 'e') return makeUnary(s,  UnaryOp::DemoteFloat64, type);
+          if (op[1] == 'e') return makeUnary(s, UnaryOp::DemoteFloat64, type);
           abort_on(op);
         }
         case 'e': {
@@ -739,6 +738,10 @@ public:
           } else if (str[1] == 'u') return makeHost(s, HostOp::CurrentMemory);
           abort_on(str);
         }
+        case 'd': {
+          if (str[1] == 'r') return makeDrop(s);
+          abort_on(str);
+        }
         case 'e': {
           if (str[1] == 'l') return makeThenOrElse(s);
           abort_on(str);
@@ -785,6 +788,7 @@ public:
         }
         case 't': {
           if (str[1] == 'h') return makeThenOrElse(s);
+          if (str[1] == 'e' && str[2] == 'e') return makeTeeLocal(s);
           abort_on(str);
         }
         case 'u': {
@@ -878,6 +882,13 @@ private:
     return ret;
   }
 
+  Expression* makeDrop(Element& s) {
+    auto ret = allocator.alloc<Drop>();
+    ret->value = parseExpression(s[1]);
+    ret->finalize();
+    return ret;
+  }
+
   Expression* makeHost(Element& s, HostOp op) {
     auto ret = allocator.alloc<Host>();
     ret->op = op;
@@ -910,11 +921,18 @@ private:
     return ret;
   }
 
+  Expression* makeTeeLocal(Element& s) {
+    auto ret = allocator.alloc<SetLocal>();
+    ret->index = getLocalIndex(*s[1]);
+    ret->value = parseExpression(s[2]);
+    ret->setTee(true);
+    return ret;
+  }
   Expression* makeSetLocal(Element& s) {
     auto ret = allocator.alloc<SetLocal>();
     ret->index = getLocalIndex(*s[1]);
     ret->value = parseExpression(s[2]);
-    ret->type = currFunction->getLocalType(ret->index);
+    ret->setTee(false);
     return ret;
   }
 
@@ -1061,7 +1079,7 @@ private:
   Expression* makeStore(Element& s, WasmType type) {
     const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
     auto ret = allocator.alloc<Store>();
-    ret->type = type;
+    ret->valueType = type;
     ret->bytes = getWasmTypeSize(type);
     if (extra[0] == '8') {
       ret->bytes = 1;
@@ -1092,6 +1110,7 @@ private:
     }
     ret->ptr = parseExpression(s[i]);
     ret->value = parseExpression(s[i+1]);
+    ret->finalize();
     return ret;
   }
 

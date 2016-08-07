@@ -91,9 +91,13 @@
   (func $conversions
     (local $0 f32)
     (local $1 i32)
-    (set_local $1
-      (i32.trunc_s/f32
-        (get_local $0)
+    (drop
+      (f64.convert_s/i32
+        (tee_local $1
+          (i32.trunc_s/f32
+            (get_local $0)
+          )
+        )
       )
     )
   )
@@ -334,23 +338,29 @@
     (nop)
   )
   (func $recursiveBlockMerging (param $0 i32) (result i32)
-    (call $lb
-      (i32.add
+    (drop
+      (call $lb
         (i32.add
           (i32.add
-            (get_local $0)
-            (i32.const 3)
+            (i32.add
+              (get_local $0)
+              (i32.const 3)
+            )
+            (i32.const 7)
           )
-          (i32.const 7)
+          (i32.const 12)
         )
-        (i32.const 12)
       )
     )
-    (call $lb
-      (i32.const 1)
+    (drop
+      (call $lb
+        (i32.const 1)
+      )
     )
-    (call $lb
-      (i32.const 2)
+    (drop
+      (call $lb
+        (i32.const 2)
+      )
     )
     (i32.add
       (i32.add
@@ -361,14 +371,20 @@
           )
         )
         (block
-          (call $lb
-            (i32.const 4)
+          (drop
+            (call $lb
+              (i32.const 4)
+            )
           )
-          (call $lb
-            (i32.const 5)
+          (drop
+            (call $lb
+              (i32.const 5)
+            )
           )
-          (call $lb
-            (i32.const 6)
+          (drop
+            (call $lb
+              (i32.const 6)
+            )
           )
           (call $lb
             (i32.const 7)
@@ -376,17 +392,25 @@
         )
       )
       (block
-        (call $lb
-          (i32.const 8)
+        (drop
+          (call $lb
+            (i32.const 8)
+          )
         )
-        (call $lb
-          (i32.const 9)
+        (drop
+          (call $lb
+            (i32.const 9)
+          )
         )
-        (call $lb
-          (i32.const 10)
+        (drop
+          (call $lb
+            (i32.const 10)
+          )
         )
-        (call $lb
-          (i32.const 11)
+        (drop
+          (call $lb
+            (i32.const 11)
+          )
         )
         (call $lb
           (i32.const 12)
@@ -446,6 +470,14 @@
         )
       )
       (i32.const 1)
+    )
+  )
+  (func $smallIf
+    (if
+      (i32.const 2)
+      (call $lb
+        (i32.const 3)
+      )
     )
   )
 )

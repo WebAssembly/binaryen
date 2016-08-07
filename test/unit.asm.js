@@ -261,6 +261,16 @@ function asm(global, env, buffer) {
     return x | 0;
   }
 
+  function smallIf() {
+    do {
+      if (2) {
+        lb(3) | 0;
+      } else {
+        break;
+      }
+    } while (0);
+  }
+
   function z() {
   }
   function w() {

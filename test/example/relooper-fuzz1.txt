@@ -440,7 +440,7 @@
         (if
           (i32.ne
             (i32.rem_u
-              (set_local $0
+              (tee_local $0
                 (call $check)
               )
               (i32.const 4)
@@ -489,13 +489,17 @@
         (call_import $print
           (i32.const 3)
         )
-        (call $check)
+        (drop
+          (call $check)
+        )
         (br $shape$6$continue)
       )
     )
     (call_import $print
       (i32.const 9)
     )
-    (call $check)
+    (drop
+      (call $check)
+    )
   )
 )
