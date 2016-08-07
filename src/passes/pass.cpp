@@ -64,7 +64,6 @@ void PassRegistry::registerPasses() {
   registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
-  registerPass("drop-return-values", "stops relying on return values from set_local and store", createDropReturnValuesPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("lower-if-else", "lowers if-elses into ifs, blocks and branches", createLowerIfElsePass);
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
