@@ -227,7 +227,7 @@
                   (get_local $i10)
                 )
               )
-              (block $do-once$19
+              (block $do-once$2
                 (if
                   (i32.ne
                     (get_local $i7)
@@ -265,7 +265,7 @@
                           (get_local $i8)
                           (get_local $i11)
                         )
-                        (br $do-once$19)
+                        (br $do-once$2)
                       )
                       (call_import $_abort)
                     )
@@ -498,7 +498,7 @@
                       (get_local $i12)
                     )
                   )
-                  (block $do-once$21
+                  (block $do-once$4
                     (if
                       (i32.ne
                         (get_local $i15)
@@ -541,7 +541,7 @@
                                 (i32.const 184)
                               )
                             )
-                            (br $do-once$21)
+                            (br $do-once$4)
                           )
                           (call_import $_abort)
                         )
@@ -880,8 +880,8 @@
                   (set_local $i7
                     (get_local $i10)
                   )
-                  (loop $while-in$24
-                    (block $while-out$23
+                  (loop $while-in$7
+                    (block $while-out$6
                       (set_local $i10
                         (i32.load
                           (i32.add
@@ -914,7 +914,7 @@
                               (set_local $i22
                                 (get_local $i7)
                               )
-                              (br $while-out$23)
+                              (br $while-out$6)
                             )
                             (set_local $i23
                               (get_local $i15)
@@ -962,7 +962,7 @@
                           (get_local $i7)
                         )
                       )
-                      (br $while-in$24)
+                      (br $while-in$7)
                     )
                   )
                   (set_local $i7
@@ -1006,7 +1006,7 @@
                       )
                     )
                   )
-                  (block $do-once$25
+                  (block $do-once$8
                     (if
                       (i32.eq
                         (get_local $i12)
@@ -1048,7 +1048,7 @@
                                 (set_local $i24
                                   (i32.const 0)
                                 )
-                                (br $do-once$25)
+                                (br $do-once$8)
                               )
                               (block
                                 (set_local $i25
@@ -1069,8 +1069,8 @@
                             )
                           )
                         )
-                        (loop $while-in$28
-                          (block $while-out$27
+                        (loop $while-in$11
+                          (block $while-out$10
                             (set_local $i14
                               (i32.add
                                 (get_local $i25)
@@ -1091,7 +1091,7 @@
                                 (set_local $i26
                                   (get_local $i14)
                                 )
-                                (br $while-in$28)
+                                (br $while-in$11)
                               )
                             )
                             (set_local $i14
@@ -1116,7 +1116,7 @@
                                 (set_local $i28
                                   (get_local $i26)
                                 )
-                                (br $while-out$27)
+                                (br $while-out$10)
                               )
                               (block
                                 (set_local $i25
@@ -1127,7 +1127,7 @@
                                 )
                               )
                             )
-                            (br $while-in$28)
+                            (br $while-in$11)
                           )
                         )
                         (if
@@ -1144,7 +1144,7 @@
                             (set_local $i24
                               (get_local $i27)
                             )
-                            (br $do-once$25)
+                            (br $do-once$8)
                           )
                         )
                       )
@@ -1204,14 +1204,14 @@
                             (set_local $i24
                               (get_local $i12)
                             )
-                            (br $do-once$25)
+                            (br $do-once$8)
                           )
                           (call_import $_abort)
                         )
                       )
                     )
                   )
-                  (block $do-once$29
+                  (block $do-once$12
                     (if
                       (get_local $i5)
                       (block
@@ -1264,7 +1264,7 @@
                                     )
                                   )
                                 )
-                                (br $do-once$29)
+                                (br $do-once$12)
                               )
                             )
                           )
@@ -1307,7 +1307,7 @@
                               (i32.eqz
                                 (get_local $i24)
                               )
-                              (br $do-once$29)
+                              (br $do-once$12)
                             )
                           )
                         )
@@ -1338,7 +1338,7 @@
                             )
                           )
                         )
-                        (block $do-once$31
+                        (block $do-once$14
                           (if
                             (get_local $i7)
                             (if
@@ -1362,7 +1362,7 @@
                                   )
                                   (get_local $i24)
                                 )
-                                (br $do-once$31)
+                                (br $do-once$14)
                               )
                             )
                           )
@@ -1400,7 +1400,7 @@
                                 )
                                 (get_local $i24)
                               )
-                              (br $do-once$29)
+                              (br $do-once$12)
                             )
                           )
                         )
@@ -1833,8 +1833,8 @@
                       (set_local $i8
                         (i32.const 0)
                       )
-                      (loop $while-in$4
-                        (block $while-out$3
+                      (loop $while-in$18
+                        (block $while-out$17
                           (set_local $i16
                             (i32.and
                               (i32.load
@@ -1957,7 +1957,7 @@
                               (set_local $i36
                                 (i32.const 86)
                               )
-                              (br $while-out$3)
+                              (br $while-out$17)
                             )
                             (block
                               (set_local $i12
@@ -1983,7 +1983,7 @@
                               )
                             )
                           )
-                          (br $while-in$4)
+                          (br $while-in$18)
                         )
                       )
                     )
@@ -2185,8 +2185,8 @@
                     (get_local $i36)
                     (i32.const 90)
                   )
-                  (loop $while-in$6
-                    (block $while-out$5
+                  (loop $while-in$20
+                    (block $while-out$19
                       (set_local $i36
                         (i32.const 0)
                       )
@@ -2247,7 +2247,7 @@
                           (set_local $i36
                             (i32.const 90)
                           )
-                          (br $while-in$6)
+                          (br $while-in$20)
                         )
                       )
                       (set_local $i38
@@ -2269,7 +2269,7 @@
                           (set_local $i44
                             (get_local $i8)
                           )
-                          (br $while-out$5)
+                          (br $while-out$19)
                         )
                         (block
                           (set_local $i37
@@ -2283,7 +2283,7 @@
                           )
                         )
                       )
-                      (br $while-in$6)
+                      (br $while-in$20)
                     )
                   )
                 )
@@ -2346,7 +2346,7 @@
                         )
                       )
                     )
-                    (block $do-once$7
+                    (block $do-once$21
                       (if
                         (i32.eq
                           (get_local $i7)
@@ -2388,7 +2388,7 @@
                                   (set_local $i45
                                     (i32.const 0)
                                   )
-                                  (br $do-once$7)
+                                  (br $do-once$21)
                                 )
                                 (block
                                   (set_local $i46
@@ -2409,8 +2409,8 @@
                               )
                             )
                           )
-                          (loop $while-in$10
-                            (block $while-out$9
+                          (loop $while-in$24
+                            (block $while-out$23
                               (set_local $i2
                                 (i32.add
                                   (get_local $i46)
@@ -2431,7 +2431,7 @@
                                   (set_local $i47
                                     (get_local $i2)
                                   )
-                                  (br $while-in$10)
+                                  (br $while-in$24)
                                 )
                               )
                               (set_local $i2
@@ -2456,7 +2456,7 @@
                                   (set_local $i49
                                     (get_local $i47)
                                   )
-                                  (br $while-out$9)
+                                  (br $while-out$23)
                                 )
                                 (block
                                   (set_local $i46
@@ -2467,7 +2467,7 @@
                                   )
                                 )
                               )
-                              (br $while-in$10)
+                              (br $while-in$24)
                             )
                           )
                           (if
@@ -2484,7 +2484,7 @@
                               (set_local $i45
                                 (get_local $i48)
                               )
-                              (br $do-once$7)
+                              (br $do-once$21)
                             )
                           )
                         )
@@ -2544,14 +2544,14 @@
                               (set_local $i45
                                 (get_local $i7)
                               )
-                              (br $do-once$7)
+                              (br $do-once$21)
                             )
                             (call_import $_abort)
                           )
                         )
                       )
                     )
-                    (block $do-once$11
+                    (block $do-once$25
                       (if
                         (get_local $i3)
                         (block
@@ -2604,7 +2604,7 @@
                                       )
                                     )
                                   )
-                                  (br $do-once$11)
+                                  (br $do-once$25)
                                 )
                               )
                             )
@@ -2647,7 +2647,7 @@
                                 (i32.eqz
                                   (get_local $i45)
                                 )
-                                (br $do-once$11)
+                                (br $do-once$25)
                               )
                             )
                           )
@@ -2678,7 +2678,7 @@
                               )
                             )
                           )
-                          (block $do-once$13
+                          (block $do-once$27
                             (if
                               (get_local $i15)
                               (if
@@ -2702,7 +2702,7 @@
                                     )
                                     (get_local $i45)
                                   )
-                                  (br $do-once$13)
+                                  (br $do-once$27)
                                 )
                               )
                             )
@@ -2740,14 +2740,14 @@
                                   )
                                   (get_local $i45)
                                 )
-                                (br $do-once$11)
+                                (br $do-once$25)
                               )
                             )
                           )
                         )
                       )
                     )
-                    (block $do-once$15
+                    (block $do-once$29
                       (if
                         (i32.ge_u
                           (get_local $i43)
@@ -2895,7 +2895,7 @@
                                 )
                                 (get_local $i15)
                               )
-                              (br $do-once$15)
+                              (br $do-once$29)
                             )
                           )
                           (set_local $i15
@@ -3092,7 +3092,7 @@
                                 )
                                 (get_local $i8)
                               )
-                              (br $do-once$15)
+                              (br $do-once$29)
                             )
                           )
                           (set_local $i4
@@ -3119,8 +3119,8 @@
                               (get_local $i3)
                             )
                           )
-                          (loop $while-in$18
-                            (block $while-out$17
+                          (loop $while-in$32
+                            (block $while-out$31
                               (if
                                 (i32.eq
                                   (i32.and
@@ -3141,7 +3141,7 @@
                                   (set_local $i36
                                     (i32.const 148)
                                   )
-                                  (br $while-out$17)
+                                  (br $while-out$31)
                                 )
                               )
                               (set_local $i3
@@ -3178,7 +3178,7 @@
                                   (set_local $i36
                                     (i32.const 145)
                                   )
-                                  (br $while-out$17)
+                                  (br $while-out$31)
                                 )
                                 (block
                                   (set_local $i4
@@ -3192,7 +3192,7 @@
                                   )
                                 )
                               )
-                              (br $while-in$18)
+                              (br $while-in$32)
                             )
                           )
                           (if
@@ -3234,7 +3234,7 @@
                                   )
                                   (get_local $i8)
                                 )
-                                (br $do-once$15)
+                                (br $do-once$29)
                               )
                             )
                             (if
@@ -3303,7 +3303,7 @@
                                       )
                                       (i32.const 0)
                                     )
-                                    (br $do-once$15)
+                                    (br $do-once$29)
                                   )
                                   (call_import $_abort)
                                 )
@@ -4283,8 +4283,8 @@
               (set_local $i63
                 (i32.const 624)
               )
-              (loop $do-in$49
-                (block $do-out$48
+              (loop $do-in$47
+                (block $do-out$46
                   (set_local $i43
                     (i32.load
                       (get_local $i63)
@@ -4325,7 +4325,7 @@
                       (set_local $i36
                         (i32.const 203)
                       )
-                      (br $do-out$48)
+                      (br $do-out$46)
                     )
                   )
                   (set_local $i63
@@ -4336,7 +4336,7 @@
                       )
                     )
                   )
-                  (br_if $do-in$49
+                  (br_if $do-in$47
                     (i32.ne
                       (get_local $i63)
                       (i32.const 0)
@@ -4496,8 +4496,8 @@
               (set_local $i63
                 (i32.const 624)
               )
-              (loop $while-in$51
-                (block $while-out$50
+              (loop $while-in$49
+                (block $while-out$48
                   (if
                     (i32.eq
                       (i32.load
@@ -4515,7 +4515,7 @@
                       (set_local $i36
                         (i32.const 211)
                       )
-                      (br $while-out$50)
+                      (br $while-out$48)
                     )
                   )
                   (set_local $i63
@@ -4534,10 +4534,10 @@
                       (set_local $i71
                         (i32.const 624)
                       )
-                      (br $while-out$50)
+                      (br $while-out$48)
                     )
                   )
-                  (br $while-in$51)
+                  (br $while-in$49)
                 )
               )
               (if
@@ -4658,7 +4658,7 @@
                         (i32.const 3)
                       )
                     )
-                    (block $do-once$52
+                    (block $do-once$50
                       (if
                         (i32.ne
                           (get_local $i43)
@@ -4706,7 +4706,7 @@
                                 )
                                 (get_local $i62)
                               )
-                              (br $do-once$52)
+                              (br $do-once$50)
                             )
                           )
                           (set_local $i62
@@ -4761,7 +4761,7 @@
                                         )
                                       )
                                     )
-                                    (block $do-once$59
+                                    (block $do-once$53
                                       (if
                                         (i32.eq
                                           (get_local $i55)
@@ -4803,7 +4803,7 @@
                                                   (set_local $i72
                                                     (i32.const 0)
                                                   )
-                                                  (br $do-once$59)
+                                                  (br $do-once$53)
                                                 )
                                                 (block
                                                   (set_local $i73
@@ -4824,8 +4824,8 @@
                                               )
                                             )
                                           )
-                                          (loop $while-in$62
-                                            (block $while-out$61
+                                          (loop $while-in$56
+                                            (block $while-out$55
                                               (set_local $i5
                                                 (i32.add
                                                   (get_local $i73)
@@ -4846,7 +4846,7 @@
                                                   (set_local $i74
                                                     (get_local $i5)
                                                   )
-                                                  (br $while-in$62)
+                                                  (br $while-in$56)
                                                 )
                                               )
                                               (set_local $i5
@@ -4871,7 +4871,7 @@
                                                   (set_local $i76
                                                     (get_local $i74)
                                                   )
-                                                  (br $while-out$61)
+                                                  (br $while-out$55)
                                                 )
                                                 (block
                                                   (set_local $i73
@@ -4882,7 +4882,7 @@
                                                   )
                                                 )
                                               )
-                                              (br $while-in$62)
+                                              (br $while-in$56)
                                             )
                                           )
                                           (if
@@ -4899,7 +4899,7 @@
                                               (set_local $i72
                                                 (get_local $i75)
                                               )
-                                              (br $do-once$59)
+                                              (br $do-once$53)
                                             )
                                           )
                                         )
@@ -4959,7 +4959,7 @@
                                               (set_local $i72
                                                 (get_local $i55)
                                               )
-                                              (br $do-once$59)
+                                              (br $do-once$53)
                                             )
                                             (call_import $_abort)
                                           )
@@ -4989,7 +4989,7 @@
                                         )
                                       )
                                     )
-                                    (block $do-once$63
+                                    (block $do-once$57
                                       (if
                                         (i32.ne
                                           (get_local $i43)
@@ -5046,7 +5046,7 @@
                                           )
                                           (if
                                             (get_local $i72)
-                                            (br $do-once$63)
+                                            (br $do-once$57)
                                           )
                                           (i32.store
                                             (i32.const 180)
@@ -5097,7 +5097,7 @@
                                         (get_local $i5)
                                       )
                                     )
-                                    (block $do-once$65
+                                    (block $do-once$59
                                       (if
                                         (get_local $i45)
                                         (if
@@ -5121,7 +5121,7 @@
                                               )
                                               (get_local $i72)
                                             )
-                                            (br $do-once$65)
+                                            (br $do-once$59)
                                           )
                                         )
                                       )
@@ -5196,7 +5196,7 @@
                                         )
                                       )
                                     )
-                                    (block $do-once$55
+                                    (block $do-once$61
                                       (if
                                         (i32.ne
                                           (get_local $i45)
@@ -5220,7 +5220,7 @@
                                               )
                                               (get_local $i43)
                                             )
-                                            (br $do-once$55)
+                                            (br $do-once$61)
                                           )
                                           (call_import $_abort)
                                         )
@@ -5250,7 +5250,7 @@
                                         (br $label$break$L331)
                                       )
                                     )
-                                    (block $do-once$57
+                                    (block $do-once$63
                                       (if
                                         (i32.eq
                                           (get_local $i55)
@@ -5287,7 +5287,7 @@
                                               (set_local $i77
                                                 (get_local $i5)
                                               )
-                                              (br $do-once$57)
+                                              (br $do-once$63)
                                             )
                                           )
                                           (call_import $_abort)
@@ -5397,7 +5397,7 @@
                                   (get_local $i56)
                                 )
                               )
-                              (block $do-once$67
+                              (block $do-once$65
                                 (if
                                   (i32.eqz
                                     (i32.and
@@ -5449,7 +5449,7 @@
                                         (set_local $i81
                                           (get_local $i52)
                                         )
-                                        (br $do-once$67)
+                                        (br $do-once$65)
                                       )
                                     )
                                     (call_import $_abort)
@@ -5481,7 +5481,7 @@
                                 )
                                 (get_local $i62)
                               )
-                              (br $do-once$52)
+                              (br $do-once$50)
                             )
                           )
                           (set_local $i5
@@ -5490,7 +5490,7 @@
                               (i32.const 8)
                             )
                           )
-                          (block $do-once$69
+                          (block $do-once$67
                             (if
                               (i32.eqz
                                 (get_local $i5)
@@ -5508,7 +5508,7 @@
                                     (set_local $i82
                                       (i32.const 31)
                                     )
-                                    (br $do-once$69)
+                                    (br $do-once$67)
                                   )
                                 )
                                 (set_local $i54
@@ -5685,7 +5685,7 @@
                                 )
                                 (get_local $i63)
                               )
-                              (br $do-once$52)
+                              (br $do-once$50)
                             )
                           )
                           (set_local $i50
@@ -5712,8 +5712,8 @@
                               (get_local $i5)
                             )
                           )
-                          (loop $while-in$72
-                            (block $while-out$71
+                          (loop $while-in$70
+                            (block $while-out$69
                               (if
                                 (i32.eq
                                   (i32.and
@@ -5734,7 +5734,7 @@
                                   (set_local $i36
                                     (i32.const 281)
                                   )
-                                  (br $while-out$71)
+                                  (br $while-out$69)
                                 )
                               )
                               (set_local $i5
@@ -5771,7 +5771,7 @@
                                   (set_local $i36
                                     (i32.const 278)
                                   )
-                                  (br $while-out$71)
+                                  (br $while-out$69)
                                 )
                                 (block
                                   (set_local $i50
@@ -5785,7 +5785,7 @@
                                   )
                                 )
                               )
-                              (br $while-in$72)
+                              (br $while-in$70)
                             )
                           )
                           (if
@@ -5827,7 +5827,7 @@
                                   )
                                   (get_local $i63)
                                 )
-                                (br $do-once$52)
+                                (br $do-once$50)
                               )
                             )
                             (if
@@ -5896,7 +5896,7 @@
                                       )
                                       (i32.const 0)
                                     )
-                                    (br $do-once$52)
+                                    (br $do-once$50)
                                   )
                                   (call_import $_abort)
                                 )
@@ -5949,8 +5949,8 @@
                   )
                 )
               )
-              (loop $while-in$74
-                (block $while-out$73
+              (loop $while-in$72
+                (block $while-out$71
                   (set_local $i63
                     (i32.load
                       (get_local $i71)
@@ -5985,7 +5985,7 @@
                       (set_local $i86
                         (get_local $i53)
                       )
-                      (br $while-out$73)
+                      (br $while-out$71)
                     )
                   )
                   (set_local $i71
@@ -5996,7 +5996,7 @@
                       )
                     )
                   )
-                  (br $while-in$74)
+                  (br $while-in$72)
                 )
               )
               (set_local $i44
@@ -6194,8 +6194,8 @@
                   (i32.const 24)
                 )
               )
-              (loop $do-in$76
-                (block $do-out$75
+              (loop $do-in$74
+                (block $do-out$73
                   (set_local $i63
                     (i32.add
                       (get_local $i63)
@@ -6206,7 +6206,7 @@
                     (get_local $i63)
                     (i32.const 7)
                   )
-                  (br_if $do-in$76
+                  (br_if $do-in$74
                     (i32.lt_u
                       (i32.add
                         (get_local $i63)
@@ -6584,8 +6584,8 @@
                       (get_local $i43)
                     )
                   )
-                  (loop $while-in$78
-                    (block $while-out$77
+                  (loop $while-in$76
+                    (block $while-out$75
                       (if
                         (i32.eq
                           (i32.and
@@ -6606,7 +6606,7 @@
                           (set_local $i36
                             (i32.const 307)
                           )
-                          (br $while-out$77)
+                          (br $while-out$75)
                         )
                       )
                       (set_local $i43
@@ -6643,7 +6643,7 @@
                           (set_local $i36
                             (i32.const 304)
                           )
-                          (br $while-out$77)
+                          (br $while-out$75)
                         )
                         (block
                           (set_local $i5
@@ -6657,7 +6657,7 @@
                           )
                         )
                       )
-                      (br $while-in$78)
+                      (br $while-in$76)
                     )
                   )
                   (if
@@ -6825,8 +6825,8 @@
               (set_local $i5
                 (i32.const 0)
               )
-              (loop $do-in$47
-                (block $do-out$46
+              (loop $do-in$78
+                (block $do-out$77
                   (set_local $i62
                     (i32.add
                       (i32.const 216)
@@ -6859,7 +6859,7 @@
                       (i32.const 1)
                     )
                   )
-                  (br_if $do-in$47
+                  (br_if $do-in$78
                     (i32.ne
                       (get_local $i5)
                       (i32.const 32)

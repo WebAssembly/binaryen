@@ -1277,7 +1277,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       }
       abort_on("bad unary", ast);
     } else if (what == IF) {
-      return builder.makeIf(process(ast[1]), process(ast[2]), !!ast[3] ? process(ast[3]) : nullptr);
+      auto* condition = process(ast[1]);
+      auto* ifTrue = process(ast[2]);
+      return builder.makeIf(condition, ifTrue, !!ast[3] ? process(ast[3]) : nullptr);
     } else if (what == CALL) {
       if (ast[1][0] == NAME) {
         IString name = ast[1][1]->getIString();
