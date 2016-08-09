@@ -339,8 +339,10 @@ public:
     if (curr->body->type != unreachable) {
       shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
     }
-    if (returnType != unreachable) {
-      shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function returns");
+    if (curr->result != none) { // TODO: over previous too?
+      if (returnType != unreachable) {
+        shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function returns");
+      }
     }
     returnType = unreachable;
   }
