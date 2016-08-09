@@ -730,6 +730,10 @@ Pass *createFullPrinterPass() {
 // Print individual expressions
 
 std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full) {
+  if (!expression) {
+    o << "(null expression)";
+    return o;
+  }
   PrintSExpression print(o);
   print.setMinify(minify);
   if (full) {

@@ -203,7 +203,7 @@ public:
     validateAlignment(curr->align);
     shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
     shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
-    // TODO: enable a check that replaces this, for type being none shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "store value type must match");
+    shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
   }
   void visitBinary(Binary *curr) {
     if (curr->left->type != unreachable && curr->right->type != unreachable) {
@@ -330,7 +330,7 @@ public:
 
   void visitGlobal(Global* curr) {
     shouldBeTrue(curr->init->is<Const>(), curr->name, "global init must be valid");
-    shouldBeEqual(curr->type, curr->init->type, curr, "global init must have correct type");
+    shouldBeEqual(curr->type, curr->init->type, nullptr, "global init must have correct type");
   }
 
   void visitFunction(Function *curr) {
@@ -422,7 +422,8 @@ private:
   template<typename T, typename S>
   bool shouldBeEqual(S left, S right, T curr, const char* text) {
     if (left != right) {
-      fail() << "" << left << " != " << right << ": " << text << ", on \n" << curr << std::endl;
+      fail() << "" << left << " != " << right << ": " << text << ", on \n";
+      WasmPrinter::printExpression(curr, std::cerr, false, true) << std::endl;
       valid = false;
       return false;
     }
@@ -441,7 +442,8 @@ private:
   template<typename T, typename S>
   bool shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
     if (left != unreachable && left != right) {
-      fail() << "" << left << " != " << right << ": " << text << ", on \n" << curr << std::endl;
+      fail() << "" << left << " != " << right << ": " << text << ", on \n";
+      WasmPrinter::printExpression(curr, std::cerr, false, true) << std::endl;
       valid = false;
       return false;
     }
