@@ -288,6 +288,12 @@ public:
           double val = value.getFloat();
           if (std::isnan(val)) return Literal(float(val));
           if (std::isinf(val)) return Literal(float(val));
+          // when close to the limit, but still truncatable to a valid value, do that
+          // see https://github.com/WebAssembly/sexpr-wasm-prototype/blob/2d375e8d502327e814d62a08f22da9d9b6b675dc/src/wasm-interpreter.c#L247
+          uint64_t bits = value.reinterpreti64();
+          if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL) return Literal(std::numeric_limits<float>::max());
+          if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL) return Literal(-std::numeric_limits<float>::max());
+          // when we must convert to infinity, do that
           if (val < -std::numeric_limits<float>::max()) return Literal(-std::numeric_limits<float>::infinity());
           if (val > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
           return value.truncateToF32();
