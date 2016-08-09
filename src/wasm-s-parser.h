@@ -319,10 +319,11 @@ private:
       Element& curr = *s[i];
       IString id = curr[0]->str();
       if (id == RESULT) {
+        if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
         functionTypes[name] = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
         Name typeName = curr[1]->str();
-        if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function");
+        if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function", curr.line, curr.col);
         type = wasm.getFunctionType(typeName);
         functionTypes[name] = type->result;
       } else if (id == PARAM && curr.size() > 1) {
@@ -494,6 +495,7 @@ private:
           currLocalTypes[name] = type;
         }
       } else if (id == RESULT) {
+        if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
         result = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
         Name name = curr[1]->str();
@@ -1505,6 +1507,7 @@ private:
           type->params.push_back(stringToWasmType(curr[j]->str()));
         }
       } else if (curr[0]->str() == RESULT) {
+        if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
         type->result = stringToWasmType(curr[1]->str());
       }
     }
