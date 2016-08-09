@@ -554,7 +554,7 @@ class S2WasmBuilder {
 
   void parseFuncType() {
     auto decl = make_unique<FunctionType>();
-    Name raw_name = getCommaSeparated();
+    Name rawName = getCommaSeparated();
     skipComma();
     if(match("void")) {
       decl->result = none;
@@ -566,7 +566,7 @@ class S2WasmBuilder {
     decl->name = "FUNCSIG$" + sig;
 
     FunctionType *ty = wasm->checkFunctionType(decl->name);
-    Name name = fixInvokeWrapper(raw_name, sig);
+    Name name = fixInvokeWrapper(rawName, sig);
     if (!ty) {
       // The wasm module takes ownership of the FunctionType if we insert it.
       // Otherwise it's already in the module and ours is freed.
@@ -878,7 +878,7 @@ class S2WasmBuilder {
       } else {
         // non-indirect call
         Name assign = getAssign();
-        Name raw_target = cleanFunction(getCommaSeparated());
+        Name rawTarget = cleanFunction(getCommaSeparated());
         Call* curr = allocator->alloc<Call>();
         curr->type = type;
         skipWhitespace();
@@ -891,7 +891,7 @@ class S2WasmBuilder {
           }
         }
         Name target = linkerObj->resolveAlias(
-            fixInvokeWrapper(raw_target, curr->type, curr->operands),
+            fixInvokeWrapper(rawTarget, curr->type, curr->operands),
             LinkerObject::Relocation::kFunction);
         curr->target = target;
         if (!linkerObj->isFunctionImplemented(target)) {
@@ -1372,13 +1372,15 @@ class S2WasmBuilder {
   }
 
   Name fixInvokeWrapper(const Name &name, const std::string &sig) {
-    std::string name_str = name.c_str();
-    if (name_str.front() == '"' and name_str.back() == '"')
-      name_str = name_str.substr(1, name_str.size() - 2);
-    if (name_str.find("__invoke_") != 0)
+    std::string nameStr = name.c_str();
+    if (nameStr.front() == '"' && nameStr.back() == '"') {
+      nameStr = nameStr.substr(1, nameStr.size() - 2);
+    }
+    if (nameStr.find("__invoke_") != 0) {
       return name;
-    std::string sig_wo_orig_func = sig.front() + sig.substr(2, sig.size() - 2);
-    return Name("invoke_" + sig_wo_orig_func);
+    }
+    std::string sigWoOrigFunc = sig.front() + sig.substr(2, sig.size() - 2);
+    return Name("invoke_" + sigWoOrigFunc);
   }
 
 };
