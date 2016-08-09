@@ -60,6 +60,7 @@ class Element {
   List list_;
   IString str_;
   bool dollared_;
+  bool quoted_;
 
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
@@ -67,6 +68,7 @@ public:
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
   bool dollared() { return dollared_; }
+  bool quoted() { return quoted_; }
 
   size_t line, col;
 
@@ -98,10 +100,11 @@ public:
     return str_.str;
   }
 
-  Element* setString(IString str__, bool dollared__) {
+  Element* setString(IString str__, bool dollared__, bool quoted__) {
     isList_ = false;
     str_ = str__;
     dollared_ = dollared__;
+    quoted_ = quoted__;
     return this;
   }
 
@@ -242,13 +245,13 @@ private:
         input++;
       }
       input++;
-      return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared)->setMetadata(line, start - lineStart);
+      return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared, true)->setMetadata(line, start - lineStart);
     }
     while (input[0] && !isspace(input[0]) && input[0] != ')' && input[0] != '(' && input[0] != ';') input++;
     if (start == input) throw ParseException("expected string", line, input - lineStart);
     char temp = input[0];
     input[0] = 0;
-    auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared)->setMetadata(line, start - lineStart);
+    auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared, false)->setMetadata(line, start - lineStart);
     input[0] = temp;
     return ret;
   }
@@ -413,14 +416,16 @@ private:
   // returns the next index in s
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName) {
     size_t i = 1;
-    while (i < s.size() && s[i]->isStr()) {
-      if (!s[i]->dollared()) {
+    while (i < s.size() && i < 3 && s[i]->isStr()) {
+      if (s[i]->quoted()) {
         // an export name
         exportName = s[i]->str();
         i++;
-      } else {
+      } else if (s[i]->dollared()) {
         name = s[i]->str();
         i++;
+      } else {
+        break;
       }
     }
     return i;
@@ -581,6 +586,7 @@ public:
   #define abort_on(str) { throw ParseException(std::string("abort_on ") + str); }
 
   Expression* parseExpression(Element& s) {
+    if (!s.isList()) throw ParseException("invalid node for parseExpression, needed list", s.line, s.col);
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
