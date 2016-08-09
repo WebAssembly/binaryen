@@ -136,9 +136,8 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
       assert(wasm);
       Invocation invocation(curr, instance.get(), *builder->get());
       invocation.invoke();
-    } else {
+    } else if (wasm) { // if no wasm, we skipped the module
       // an invoke test
-      assert(wasm);
       bool trapped = false;
       WASM_UNUSED(trapped);
       Literal result;
@@ -175,6 +174,7 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
 
 int main(int argc, const char* argv[]) {
   Name entry;
+  std::set<size_t> skipped;
 
   Options options("wasm-shell", "Execute .wast files");
   options
@@ -182,6 +182,21 @@ int main(int argc, const char* argv[]) {
           "--entry", "-e", "call the entry point after parsing the module",
           Options::Arguments::One,
           [&entry](Options*, const std::string& argument) { entry = argument; })
+      .add(
+          "--skip", "-s", "skip input on certain lines (comma-separated-list)",
+          Options::Arguments::One,
+          [&skipped](Options*, const std::string& argument) {
+            size_t i = 0;
+            while (i < argument.size()) {
+              auto ending = argument.find(',', i);
+              if (ending == std::string::npos) {
+                ending = argument.size();
+              }
+              auto sub = argument.substr(i, ending - i);
+              skipped.insert(atoi(sub.c_str()));
+              i = ending + 1;
+            }
+          })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -201,9 +216,19 @@ int main(int argc, const char* argv[]) {
     size_t i = 0;
     while (i < root.size()) {
       Element& curr = *root[i];
+      if (skipped.count(curr.line) > 0) {
+        Colors::green(std::cerr);
+        std::cerr << "SKIPPING [line: " << curr.line << "]\n";
+        Colors::normal(std::cerr);
+        i++;
+        continue;
+      }
       IString id = curr[0]->str();
       if (id == MODULE) {
         if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
+        Colors::green(std::cerr);
+        std::cerr << "BUILDING MODULE [line: " << curr.line << "]\n";
+        Colors::normal(std::cerr);
         Module wasm;
         std::unique_ptr<SExpressionWasmBuilder> builder;
         builder = wasm::make_unique<SExpressionWasmBuilder>(wasm, *root[i]);
