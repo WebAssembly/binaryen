@@ -1,0 +1,16 @@
+(module
+  (memory 1)
+  (export "memory" memory)
+  (export "main" $main)
+  (export "malloc" $malloc)
+  (export "free" $free)
+  (func $main (result i32)
+    (i32.const 0)
+  )
+  (func $malloc (param $0 i32) (result i32)
+    (i32.const 0)
+  )
+  (func $free (param $0 i32)
+  )
+)
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }
