@@ -210,6 +210,15 @@ void Linker::layout() {
     auto* func = out.wasm.getFunction(name);
     func->type = ensureFunctionType(getSig(func), &out.wasm)->name;
   }
+
+  // Export malloc and free whenever availble. JavsScript version of malloc has
+  // some issues and it cannot be called once _sbrk() is called.
+  if (out.symbolInfo.implementedFunctions.count("malloc")) {
+    exportFunction("malloc", true);
+  }
+  if (out.symbolInfo.implementedFunctions.count("free")) {
+    exportFunction("free", true);
+  }
 }
 
 bool Linker::linkObject(S2WasmBuilder& builder) {
