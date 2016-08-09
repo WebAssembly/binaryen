@@ -566,7 +566,7 @@ class S2WasmBuilder {
     decl->name = "FUNCSIG$" + sig;
 
     FunctionType *ty = wasm->checkFunctionType(decl->name);
-    Name name = fixInvokeWrapper(rawName, sig);
+    Name name = fixEmExceptionInvoke(rawName, sig);
     if (!ty) {
       // The wasm module takes ownership of the FunctionType if we insert it.
       // Otherwise it's already in the module and ours is freed.
@@ -891,7 +891,7 @@ class S2WasmBuilder {
           }
         }
         Name target = linkerObj->resolveAlias(
-            fixInvokeWrapper(rawTarget, curr->type, curr->operands),
+            fixEmExceptionInvoke(rawTarget, curr->type, curr->operands),
             LinkerObject::Relocation::kFunction);
         curr->target = target;
         if (!linkerObj->isFunctionImplemented(target)) {
@@ -1366,12 +1366,12 @@ class S2WasmBuilder {
   // argument types and a return type. In the example above, the resulting new
   // wrapper name becomes "invoke_vii".
   template<typename ListType>
-  Name fixInvokeWrapper(const Name &name, WasmType result,
+  Name fixEmExceptionInvoke(const Name &name, WasmType result,
                         const ListType &operands) {
-    return fixInvokeWrapper(name, getSig(result, operands));
+    return fixEmExceptionInvoke(name, getSig(result, operands));
   }
 
-  Name fixInvokeWrapper(const Name &name, const std::string &sig) {
+  Name fixEmExceptionInvoke(const Name &name, const std::string &sig) {
     std::string nameStr = name.c_str();
     if (nameStr.front() == '"' && nameStr.back() == '"') {
       nameStr = nameStr.substr(1, nameStr.size() - 2);
