@@ -32,8 +32,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   const char *maybeSpace;
   const char *maybeNewLine;
 
-  bool fullAST = false; // whether to not elide nodes in output when possible
-                        // (like implicit blocks)
+  bool full = false; // whether to not elide nodes in output when possible
+                     // (like implicit blocks) and to emit types
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
@@ -48,7 +48,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     maybeNewLine = minify ? "" : "\n";
   }
 
-  void setFullAST(bool fullAST_) { fullAST = fullAST_; }
+  void setFull(bool full_) { full = full_; }
 
   void incIndent() {
     if (minify) return;
@@ -64,9 +64,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void printFullLine(Expression *expression) {
     !minify && doIndent(o, indent);
-#ifdef DEBUG_TYPES
-    o << "[" << printWasmType(expression->type) << "] ";
-#endif
+    if (full) {
+      o << "[" << printWasmType(expression->type) << "] ";
+    }
     visit(expression);
     o << maybeNewLine;
   }
@@ -138,13 +138,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->condition);
     // ifTrue and False have implict blocks, avoid printing them if possible
-    if (!fullAST && curr->ifTrue->is<Block>() && curr->ifTrue->dynCast<Block>()->name.isNull() && curr->ifTrue->dynCast<Block>()->list.size() == 1) {
+    if (!full && curr->ifTrue->is<Block>() && curr->ifTrue->dynCast<Block>()->name.isNull() && curr->ifTrue->dynCast<Block>()->list.size() == 1) {
       printFullLine(curr->ifTrue->dynCast<Block>()->list.back());
     } else {
       printFullLine(curr->ifTrue);
     }
     if (curr->ifFalse) {
-      if (!fullAST && curr->ifFalse->is<Block>() && curr->ifFalse->dynCast<Block>()->name.isNull() && curr->ifFalse->dynCast<Block>()->list.size() == 1) {
+      if (!full && curr->ifFalse->is<Block>() && curr->ifFalse->dynCast<Block>()->name.isNull() && curr->ifFalse->dynCast<Block>()->list.size() == 1) {
         printFullLine(curr->ifFalse->dynCast<Block>()->list.back());
       } else {
         printFullLine(curr->ifFalse);
@@ -159,7 +159,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     incIndent();
     auto block = curr->body->dynCast<Block>();
-    if (!fullAST && block && block->name.isNull()) {
+    if (!full && block && block->name.isNull()) {
       // wasm spec has loops containing children directly, while our ast
       // has a single child for simplicity. print out the optimal form.
       for (auto expression : block->list) {
@@ -575,7 +575,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
     // ast avoids that for simplicity. We can just do that optimization here..
-    if (!fullAST && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
+    if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
       Block* block = curr->body->cast<Block>();
       for (auto item : block->list) {
         printFullLine(item);
@@ -718,7 +718,7 @@ public:
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
-    print.setFullAST(true);
+    print.setFull(true);
     print.visitModule(module);
   }
 };
@@ -729,12 +729,13 @@ Pass *createFullPrinterPass() {
 
 // Print individual expressions
 
-std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify) {
+std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full) {
   PrintSExpression print(o);
   print.setMinify(minify);
-#ifdef DEBUG_TYPES
-  o << "[" << printWasmType(expression->type) << "] ";
-#endif
+  if (full) {
+    print.setFull(true);
+    o << "[" << printWasmType(expression->type) << "] ";
+  }
   print.visit(expression);
   return o;
 }

@@ -36,7 +36,7 @@ struct WasmPrinter {
     return printModule(module, std::cout);
   }
 
-  static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false);
+  static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false, bool full = false);
 };
 
 }
