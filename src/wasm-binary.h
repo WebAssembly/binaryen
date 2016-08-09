@@ -234,7 +234,7 @@ namespace BinaryConsts {
 
 enum Meta {
   Magic = 0x6d736100,
-  Version = 11
+  Version = 0x0c
 };
 
 namespace Section {
