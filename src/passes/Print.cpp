@@ -575,7 +575,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitTable(Table *curr) {
-    printOpening(o, "table");
+    printOpening(o, "table") << ' ' << curr->initial;
+    if (curr->max && curr->max != Table::kMaxSize) o << ' ' << curr->max;
+    o << " anyfunc)\n";
+    doIndent(o, indent);
+    printOpening(o, "elem", true);
     for (auto name : curr->names) {
       o << ' ';
       printName(name);

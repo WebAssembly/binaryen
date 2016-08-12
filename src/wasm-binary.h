@@ -1648,6 +1648,7 @@ public:
       assert(index < wasm.functions.size());
       wasm.table.names.push_back(wasm.functions[index]->name);
     }
+    wasm.table.initial = wasm.table.max = wasm.table.names.size();
   }
 
   void readDataSegments() {

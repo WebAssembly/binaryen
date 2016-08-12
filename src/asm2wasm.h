@@ -666,6 +666,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             IString curr = contents[k][1]->getIString();
             wasm.table.names.push_back(curr);
           }
+          wasm.table.initial = wasm.table.max = wasm.table.names.size();
         } else {
           abort_on("invalid var element", pair);
         }

@@ -223,6 +223,9 @@ void Linker::layout() {
   if (out.symbolInfo.implementedFunctions.count("free")) {
     exportFunction("free", true);
   }
+
+  // finalize function table
+  out.wasm.table.initial = out.wasm.table.max = out.wasm.table.names.size();
 }
 
 bool Linker::linkObject(S2WasmBuilder& builder) {

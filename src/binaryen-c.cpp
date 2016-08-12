@@ -732,6 +732,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
   for (BinaryenIndex i = 0; i < numFuncs; i++) {
     wasm->table.names.push_back(((Function*)funcs[i])->name);
   }
+  wasm->table.initial = wasm->table.max = wasm->table.names.size();
 }
 
 // Memory. One per module

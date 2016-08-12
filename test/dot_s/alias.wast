@@ -6,7 +6,8 @@
   (export "__exit" $__exit)
   (export "__needs_exit" $__needs_exit)
   (export "dynCall_v" $dynCall_v)
-  (table $__wasm_nullptr $__exit)
+  (table 2 2 anyfunc)
+  (elem $__wasm_nullptr $__exit)
   (func $__exit (type $FUNCSIG$v)
     (return
       (i32.add

@@ -13,7 +13,8 @@
   (import $f64-to-int "asm2wasm" "f64-to-int" (param f64) (result i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
-  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (table 10 anyfunc)
+  (elem $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative (type $FUNCSIG$v)
     (local $temp f64)
     (block $block0

@@ -372,6 +372,7 @@ private:
     if (id == IMPORT) return; // already done
     if (id == GLOBAL) return parseGlobal(curr);
     if (id == TABLE) return parseTable(curr);
+    if (id == ELEM) return parseElem(curr);
     if (id == TYPE) return; // already done
     std::cerr << "bad module element " << id.str << '\n';
     throw ParseException("unknown module element", curr.line, curr.col);
@@ -1424,7 +1425,29 @@ private:
   }
 
   void parseTable(Element& s) {
-    for (size_t i = 1; i < s.size(); i++) {
+    if (s.size() == 1) return; // empty table in old notation
+    if (!s[1]->dollared()) {
+      if (s[1]->str() == ANYFUNC) {
+        // (table type (elem ..))
+        parseElem(*s[2]);
+        wasm.table.initial = wasm.table.max = wasm.table.names.size();
+        return;
+      }
+      // first element isn't dollared, and isn't anyfunc. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
+      if (s[s.size() - 1]->str() == ANYFUNC) {
+        // (table initial max? type)
+        wasm.table.initial = atoi(s[1]->c_str());
+        wasm.table.max = atoi(s[2]->c_str());
+        return;
+      }
+    }
+    // old notation (table func1 func2 ..)
+    parseElem(s);
+    wasm.table.initial = wasm.table.max = wasm.table.names.size();
+  }
+
+  void parseElem(Element& s) {
+    for (Index i = 1; i < s.size(); i++) {
       wasm.table.names.push_back(getFunctionName(*s[i]));
     }
   }

@@ -1432,7 +1432,12 @@ public:
 
 class Table {
 public:
+  static const Index kMaxSize = Index(-1);
+
+  Address initial, max;
   std::vector<Name> names;
+
+  Table() : initial(0), max(kMaxSize) {}
 };
 
 class Memory {
