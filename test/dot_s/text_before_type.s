@@ -1,5 +1,5 @@
 	.text
-	.file	"/tmp/tmpGckQku/foo.bc"
+	.file	"text_before_type.bc"
 	.hidden	main
 	.globl	main
 	.type	main,@function
