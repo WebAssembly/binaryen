@@ -213,6 +213,10 @@ void Linker::layout() {
 
   // Export malloc and free whenever availble. JavsScript version of malloc has
   // some issues and it cannot be called once _sbrk() is called.
+  // TODO This should get the list of exported functions from emcc.py - it has
+  // EXPORTED_FUNCTION metadata to keep track of this. Get the list of exported
+  // functions using a command-line argument from emcc.py and export all of
+  // them.
   if (out.symbolInfo.implementedFunctions.count("malloc")) {
     exportFunction("malloc", true);
   }
