@@ -1,7 +1,6 @@
 (module
-  (memory 4096 4096
-    (segment 1026 "\14\00")
-  )
+  (memory 4096 4096)
+  (data (i32.const 1026) "\14\00")
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$id (func (param f64) (result i32)))

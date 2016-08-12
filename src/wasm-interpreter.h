@@ -497,8 +497,8 @@ public:
   }
 };
 
-// Execute an expression in global init
-class GlobalInitRunner : public ExpressionRunner<GlobalInitRunner> {
+// Execute an constant expression in a global init or memory offset
+class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner> {
 public:
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
   Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
@@ -547,7 +547,7 @@ public:
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     memorySize = wasm.memory.initial;
     for (Index i = 0; i < wasm.globals.size(); i++) {
-      globals.push_back(GlobalInitRunner().visit(wasm.globals[i]->init).value);
+      globals.push_back(ConstantExpressionRunner().visit(wasm.globals[i]->init).value);
     }
     externalInterface->init(wasm);
     if (wasm.start.is()) {

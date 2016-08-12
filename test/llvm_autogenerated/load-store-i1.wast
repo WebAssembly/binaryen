@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 4 "\10\04\00\00")
-  )
+  (memory 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" memory)
   (export "load_u_i1_i32" $load_u_i1_i32)
   (export "load_s_i1_i32" $load_s_i1_i32)

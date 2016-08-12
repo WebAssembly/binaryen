@@ -2,9 +2,8 @@
   (f32.const -33.61199951171875)
 )
 (module
-  (memory 1 256
-    (segment 10 "hello, world")
-  )
+  (memory 1 256)
+  (data (i32.const 10) "hello, world")
   (export "mem" memory)
   (start $starter)
   (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))

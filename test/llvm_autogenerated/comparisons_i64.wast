@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 4 "\10\04\00\00")
-  )
+  (memory 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" memory)
   (export "eq_i64" $eq_i64)
   (export "ne_i64" $ne_i64)

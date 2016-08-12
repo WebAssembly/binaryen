@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 16 "Hello, World!\00")
-  )
+  (memory 1)
+  (data (i32.const 16) "Hello, World!\00")
   (export "memory" memory)
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (import $puts "env" "puts" (param i32) (result i32))

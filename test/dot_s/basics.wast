@@ -1,9 +1,8 @@
 (module
-  (memory 1
-    (segment 16 "hello, world!\n\00")
-    (segment 32 "vcq")
-    (segment 48 "\16\00\00\00")
-  )
+  (memory 1)
+  (data (i32.const 16) "hello, world!\n\00")
+  (data (i32.const 32) "vcq")
+  (data (i32.const 48) "\16\00\00\00")
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$v (func))

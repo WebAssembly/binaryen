@@ -736,7 +736,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 
 // Memory. One per module
 
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenIndex* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
   if (tracing) {
     std::cout << "  {\n";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
@@ -754,10 +754,10 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     }
     if (numSegments == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
     std::cout << " };\n";
-    std::cout << "    BinaryenIndex segmentOffsets[] = { ";
+    std::cout << "    BinaryenExpressionRef segmentOffsets[] = { ";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
       if (i > 0) std::cout << ", ";
-      std::cout << segmentOffsets[i];
+      std::cout << "expressions[" << expressions[segmentOffsets[i]] << "]";
     }
     if (numSegments == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
     std::cout << " };\n";
@@ -779,7 +779,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   wasm->memory.max = maximum;
   if (exportName) wasm->memory.exportName = exportName;
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    wasm->memory.segments.emplace_back(segmentOffsets[i], segments[i], segmentSizes[i]);
+    wasm->memory.segments.emplace_back((Expression*)segmentOffsets[i], segments[i], segmentSizes[i]);
   }
 }
 

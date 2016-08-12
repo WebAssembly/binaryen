@@ -83,7 +83,7 @@ void Linker::layout() {
   // Update the segments with their addresses now that they have been allocated.
   for (const auto& seg : out.segments) {
     Address address = staticAddresses[seg.first];
-    out.wasm.memory.segments[seg.second].offset = address;
+    out.wasm.memory.segments[seg.second].offset = out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(address)));
     segmentsByAddress[address] = seg.second;
   }
 

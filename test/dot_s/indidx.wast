@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 16 "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")
-  )
+  (memory 1)
+  (data (i32.const 16) "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")
   (export "memory" memory)
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$v (func))

@@ -367,13 +367,14 @@ private:
     if (id == START) return parseStart(curr);
     if (id == FUNC) return parseFunction(curr);
     if (id == MEMORY) return parseMemory(curr);
+    if (id == DATA) return parseData(curr);
     if (id == EXPORT) return parseExport(curr);
     if (id == IMPORT) return; // already done
     if (id == GLOBAL) return parseGlobal(curr);
     if (id == TABLE) return parseTable(curr);
     if (id == TYPE) return; // already done
     std::cerr << "bad module element " << id.str << '\n';
-    throw ParseException("unknown module element");
+    throw ParseException("unknown module element", curr.line, curr.col);
   }
 
   // function parsing state
@@ -1321,16 +1322,37 @@ private:
     }
     while (i < s.size()) {
       Element& curr = *s[i];
-      assert(curr[0]->str() == SEGMENT);
-      const char *input = curr[2]->c_str();
+      size_t j = 1;
+      Address offsetValue;
+      if (curr[0]->str() == DATA) {
+        offsetValue = 0;
+      } else {
+        offsetValue = atoi(curr[j++]->c_str());
+      }
+      const char *input = curr[j]->c_str();
+      auto* offset = allocator.alloc<Const>();
+      offset->type = i32;
+      offset->value = Literal(int32_t(offsetValue));
       if (auto size = strlen(input)) {
         std::vector<char> data;
         stringToBinary(input, size, data);
-        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), data.data(), data.size());
+        wasm.memory.segments.emplace_back(offset, data.data(), data.size());
       } else {
-        wasm.memory.segments.emplace_back(atoi(curr[1]->c_str()), "", 0);
+        wasm.memory.segments.emplace_back(offset, "", 0);
       }
       i++;
+    }
+  }
+
+  void parseData(Element& s) {
+    auto* offset = parseExpression(s[1]);
+    const char *input = s[2]->c_str();
+    if (auto size = strlen(input)) {
+      std::vector<char> data;
+      stringToBinary(input, size, data);
+      wasm.memory.segments.emplace_back(offset, data.data(), data.size());
+    } else {
+      wasm.memory.segments.emplace_back(offset, "", 0);
     }
   }
 

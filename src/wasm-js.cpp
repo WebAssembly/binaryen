@@ -193,7 +193,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           var source = Module['HEAP8'].subarray($1, $1 + $2);
           var target = new Int8Array(Module['outside']['newBuffer']);
           target.set(source, $0);
-        }, (uint32_t)segment.offset, &segment.data[0], segment.data.size());
+        }, ConstantExpressionRunner().visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
       }
     }
 

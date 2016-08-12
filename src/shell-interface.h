@@ -92,9 +92,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
     for (auto& segment : wasm.memory.segments) {
-      assert(segment.offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
+      Address offset = ConstantExpressionRunner().visit(segment.offset).value.geti32();
+      assert(offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
       for (size_t i = 0; i != segment.data.size(); ++i) {
-        memory.set(segment.offset + i, segment.data[i]);
+        memory.set(offset + i, segment.data[i]);
       }
     }
   }

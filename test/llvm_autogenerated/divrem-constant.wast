@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 4 "\10\04\00\00")
-  )
+  (memory 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" memory)
   (export "test_udiv_2" $test_udiv_2)
   (export "test_udiv_5" $test_udiv_5)

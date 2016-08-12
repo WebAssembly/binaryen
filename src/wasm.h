@@ -1441,14 +1441,14 @@ public:
   static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
   static const Address::address_t kPageMask = ~(kPageSize - 1);
   struct Segment {
-    Address offset;
+    Expression* offset;
     std::vector<char> data; // TODO: optimize
     Segment() {}
-    Segment(Address offset, const char *init, Address size) : offset(offset) {
+    Segment(Expression* offset, const char *init, Address size) : offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }
-    Segment(Address offset, std::vector<char>& init) : offset(offset) {
+    Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
     }
   };

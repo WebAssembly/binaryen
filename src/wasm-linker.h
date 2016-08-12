@@ -114,12 +114,12 @@ class LinkerObject {
   // Add an initializer segment for the named static variable.
   void addSegment(Name name, const char* data, Address size) {
     segments[name] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(0, data, size);
+    wasm.memory.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data, size);
   }
 
   void addSegment(Name name, std::vector<char>& data) {
     segments[name] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(0, data);
+    wasm.memory.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data);
   }
 
   void addInitializerFunction(Name name) {

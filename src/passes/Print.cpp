@@ -589,9 +589,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     doIndent(o, indent);
     printOpening(o, "memory") << ' ' << curr->memory.initial;
     if (curr->memory.max && curr->memory.max != Memory::kMaxSize) o << ' ' << curr->memory.max;
+    o << ")\n";
     for (auto segment : curr->memory.segments) {
-      o << maybeNewLine;
-      o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";
+      doIndent(o, indent);
+      printOpening(o, "data ", true);
+      visit(segment.offset);
+      o << " \"";
       for (size_t i = 0; i < segment.data.size(); i++) {
         unsigned char c = segment.data[i];
         switch (c) {
@@ -612,10 +615,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
           }
         }
       }
-      o << "\")";
+      o << "\")\n";
     }
-    o << ((curr->memory.segments.size() > 0 && !minify) ? "\n  " : "") << ')';
-    o << maybeNewLine;
     if (curr->memory.exportName.is()) {
       doIndent(o, indent);
       printOpening(o, "export ");

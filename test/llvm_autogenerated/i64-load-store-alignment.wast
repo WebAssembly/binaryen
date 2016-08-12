@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 4 "\10\04\00\00")
-  )
+  (memory 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" memory)
   (export "ldi64_a1" $ldi64_a1)
   (export "ldi64_a2" $ldi64_a2)

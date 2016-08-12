@@ -1,8 +1,7 @@
 (module
-  (memory 1
-    (segment 12 "\10\00\00\00")
-    (segment 16 "\0c\00\00\00")
-  )
+  (memory 1)
+  (data (i32.const 12) "\10\00\00\00")
+  (data (i32.const 16) "\0c\00\00\00")
   (export "memory" memory)
   (export "main" $main)
   (func $main (result i32)
