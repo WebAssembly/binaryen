@@ -442,7 +442,10 @@ class S2WasmBuilder {
       s++;
       if (match("text")) parseText();
       else if (match("type")) parseType();
-      else if (match("weak") || match("hidden") || match("protected") || match("internal")) getStr(); // contents are in the content that follows
+      else if (match("weak")) getStr(); // contents are in the content that follows
+      else if (match("hidden")) parseVisibility(LinkerObject::Visibility::kHidden);
+      else if (match("internal")) parseVisibility(LinkerObject::Visibility::kInternal);
+      else if (match("protected")) parseVisibility(LinkerObject::Visibility::kProtected);
       else if (match("imports")) skipImports();
       else if (match("data")) {}
       else if (match("ident")) skipToEOL();
@@ -547,6 +550,10 @@ class S2WasmBuilder {
     WASM_UNUSED(filename); // TODO: use the filename
   }
 
+  void parseVisibility(LinkerObject::Visibility vis) {
+    linkerObj->setVisibility(getStr(), vis);
+    skipWhitespace();
+  }
   void parseGlobl() {
     linkerObj->addGlobal(getStr());
     skipWhitespace();

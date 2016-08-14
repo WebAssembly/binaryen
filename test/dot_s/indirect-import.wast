@@ -12,8 +12,6 @@
   (import $extern_fd "env" "extern_fd" (param f64) (result f32))
   (import $extern_struct "env" "extern_struct" (param i32))
   (import $extern_sret "env" "extern_sret" (param i32))
-  (export "bar" $bar)
-  (export "baz" $baz)
   (export "dynCall_fd" $dynCall_fd)
   (export "dynCall_v" $dynCall_v)
   (export "dynCall_vi" $dynCall_vi)

@@ -4,8 +4,6 @@
   )
   (export "memory" memory)
   (type $FUNCSIG$v (func))
-  (export "__exit" $__exit)
-  (export "__needs_exit" $__needs_exit)
   (export "dynCall_v" $dynCall_v)
   (table $__wasm_nullptr $__exit)
   (func $__exit (type $FUNCSIG$v)
