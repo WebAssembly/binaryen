@@ -12,7 +12,7 @@
   (export "big_negative" $big_negative)
   (export "pick" $exportMe)
   (table 10 10 anyfunc)
-  (elem $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
     (set_local $temp

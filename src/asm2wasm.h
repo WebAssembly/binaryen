@@ -660,13 +660,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           // TODO: when not using aliasing function pointers, we could merge them by noticing that
           //       index 0 in each table is the null func, and each other index should only have one
           //       non-null func. However, that breaks down when function pointer casts are emulated.
-          functionTableStarts[name] = wasm.table.names.size(); // this table starts here
+          if (wasm.table.segments.size() == 0) {
+            wasm.table.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))));
+          }
+          auto& segment = wasm.table.segments[0];
+          functionTableStarts[name] = segment.data.size(); // this table starts here
           Ref contents = value[1];
           for (unsigned k = 0; k < contents->size(); k++) {
             IString curr = contents[k][1]->getIString();
-            wasm.table.names.push_back(curr);
+            segment.data.push_back(curr);
           }
-          wasm.table.initial = wasm.table.max = wasm.table.names.size();
+          wasm.table.initial = wasm.table.max = segment.data.size();
         } else {
           abort_on("invalid var element", pair);
         }

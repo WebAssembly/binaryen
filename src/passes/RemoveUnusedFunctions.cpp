@@ -39,8 +39,10 @@ struct RemoveUnusedFunctions : public Pass {
       root.push_back(module->getFunction(curr->value));
     }
     // For now, all functions that can be called indirectly are marked as roots.
-    for (auto& curr : module->table.names) {
-      root.push_back(module->getFunction(curr));
+    for (auto& segment : module->table.segments) {
+      for (auto& curr : segment.data) {
+        root.push_back(module->getFunction(curr));
+      }
     }
     // Compute function reachability starting from the root set.
     DirectCallGraphAnalyzer analyzer(module, root);

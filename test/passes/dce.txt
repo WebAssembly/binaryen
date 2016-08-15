@@ -3,7 +3,7 @@
   (type $ii (func (param i32 i32)))
   (type $1 (func))
   (table 1 1 anyfunc)
-  (elem $call-me)
+  (elem (i32.const 0) $call-me)
   (func $call-me (type $ii) (param $0 i32) (param $1 i32)
     (nop)
   )

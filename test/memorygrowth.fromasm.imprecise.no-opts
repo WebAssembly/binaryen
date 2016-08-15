@@ -40,7 +40,7 @@
   (export "dynCall_vi" $mb)
   (export "__growWasmMemory" $__growWasmMemory)
   (table 8 8 anyfunc)
-  (elem $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
+  (elem (i32.const 0) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
   (func $eb (param $a i32) (result i32)
     (local $b i32)
     (local $c i32)

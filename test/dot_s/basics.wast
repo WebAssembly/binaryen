@@ -11,7 +11,7 @@
   (export "main" $main)
   (export "dynCall_iii" $dynCall_iii)
   (table 2 2 anyfunc)
-  (elem $__wasm_nullptr $main)
+  (elem (i32.const 0) $__wasm_nullptr $main)
   (func $main (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
     (call_import $puts
       (i32.const 16)

@@ -86,6 +86,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   } memory;
 
+  std::vector<Name> table;
+
   ShellExternalInterface() : memory() {}
 
   void init(Module& wasm) override {
@@ -96,6 +98,15 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       assert(offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
       for (size_t i = 0; i != segment.data.size(); ++i) {
         memory.set(offset + i, segment.data[i]);
+      }
+    }
+
+    table.resize(wasm.table.initial);
+    for (auto& segment : wasm.table.segments) {
+      Address offset = ConstantExpressionRunner().visit(segment.offset).value.geti32();
+      assert(offset + segment.data.size() <= wasm.table.initial);
+      for (size_t i = 0; i != segment.data.size(); ++i) {
+        table[offset + i] = segment.data[i];
       }
     }
   }
@@ -113,6 +124,19 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
     std::cout << "callImport " << import->name.str << "\n";
     abort();
+  }
+
+  Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) override {
+    if (index >= table.size()) trap("callTable overflow");
+    auto* func = instance.wasm.getFunction(table[index]);
+    if (func->type.is() && func->type != type) trap("callIndirect: bad type");
+    if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
+    for (size_t i = 0; i < func->params.size(); i++) {
+      if (func->params[i] != arguments[i].type) {
+        trap("callIndirect: bad argument type");
+      }
+    }
+    return instance.callFunctionInternal(func->name, arguments);
   }
 
   Literal load(Load* load, Address addr) override {

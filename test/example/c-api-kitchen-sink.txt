@@ -18,7 +18,7 @@ BinaryenFloat64: 4
   (import $an-imported "module" "base" (param i32 f64) (result f32))
   (export "kitchen_sinker" "$kitchen()sinker")
   (table 1 1 anyfunc)
-  (elem "$kitchen()sinker")
+  (elem (i32.const 0) "$kitchen()sinker")
   (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
     (local $4 i32)
     (block $the-body
@@ -1411,7 +1411,7 @@ int main() {
   (import $an-imported "module" "base" (param i32 f64) (result f32))
   (export "kitchen_sinker" "$kitchen()sinker")
   (table 1 1 anyfunc)
-  (elem "$kitchen()sinker")
+  (elem (i32.const 0) "$kitchen()sinker")
   (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
     (local $4 i32)
     (block $the-body

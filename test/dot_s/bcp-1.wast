@@ -35,7 +35,7 @@
   (export "dynCall_i" $dynCall_i)
   (export "dynCall_ii" $dynCall_ii)
   (table 18 18 anyfunc)
-  (elem $__wasm_nullptr $bad0 $bad1 $bad5 $bad7 $bad8 $bad10 $bad2 $bad3 $bad6 $bad4 $bad9 $good0 $good1 $good2 $opt0 $opt1 $opt2)
+  (elem (i32.const 0) $__wasm_nullptr $bad0 $bad1 $bad5 $bad7 $bad8 $bad10 $bad2 $bad3 $bad6 $bad4 $bad9 $good0 $good1 $good2 $opt0 $opt1 $opt2)
   (func $bad0 (type $FUNCSIG$i) (result i32)
     (return
       (i32.const 0)

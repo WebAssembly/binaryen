@@ -18,7 +18,7 @@
   (export "dynCall_ffd" $dynCall_ffd)
   (export "dynCall_iii" $dynCall_iii)
   (table 5 5 anyfunc)
-  (elem $__wasm_nullptr $_Z5func1v $_Z5func2iii $_Z5func3fd $_Z5func4P8mystructS_)
+  (elem (i32.const 0) $__wasm_nullptr $_Z5func1v $_Z5func2iii $_Z5func3fd $_Z5func4P8mystructS_)
   (func $_Z5func1v (type $FUNCSIG$v)
   )
   (func $_Z5func2iii (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)

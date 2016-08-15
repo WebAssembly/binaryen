@@ -50,7 +50,7 @@
   (export "dynCall_vi" $dynCall_vi)
   (export "___udivmoddi4" $___udivmoddi4)
   (table 18 18 anyfunc)
-  (elem $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
+  (elem (i32.const 0) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
   (func $stackAlloc (param $size i32) (result i32)
     (local $ret i32)
     (set_local $ret

@@ -195,10 +195,23 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           target.set(source, $0);
         }, ConstantExpressionRunner().visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
       }
+      // Table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
+      // TODO: make them all JS methods, wrapping a dynCall where necessary?
+      EM_ASM_({
+        Module['outside']['wasmTable'] = new Array($0);
+      }, wasm.table.initial);
+      for (auto segment : wasm.table.segments) {
+        Address offset = ConstantExpressionRunner().visit(segment.offset).value.geti32();
+        assert(offset + segment.data.size() <= wasm.table.initial);
+        for (size_t i = 0; i != segment.data.size(); ++i) {
+          EM_ASM_({
+            Module['outside']['wasmTable'][$0] = $1;
+          }, offset + i, wasm.getFunction(segment.data[i]));
+        }
+      }
     }
 
-    Literal callImport(Import *import, LiteralList& arguments) override {
-      if (wasmJSDebug) std::cout << "calling import " << import->name.str << '\n';
+    void prepareTempArgments(LiteralList& arguments) {
       EM_ASM({
         Module['tempArguments'] = [];
       });
@@ -213,6 +226,21 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           abort();
         }
       }
+    }
+
+    Literal getResultFromJS(double ret, WasmType type) {
+      switch (type) {
+        case none: return Literal(0);
+        case i32: return Literal((int32_t)ret);
+        case f32: return Literal((float)ret);
+        case f64: return Literal((double)ret);
+        default: abort();
+      }
+    }
+
+    Literal callImport(Import *import, LiteralList& arguments) override {
+      if (wasmJSDebug) std::cout << "calling import " << import->name.str << '\n';
+      prepareTempArgments(arguments);
       double ret = EM_ASM_DOUBLE({
         var mod = Pointer_stringify($0);
         var base = Pointer_stringify($1);
@@ -224,12 +252,36 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
       if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
 
-      switch (import->type->result) {
-        case none: return Literal(0);
-        case i32: return Literal((int32_t)ret);
-        case f32: return Literal((float)ret);
-        case f64: return Literal((double)ret);
-        default: abort();
+      return getResultFromJS(ret, import->type->result);
+    }
+
+    Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) override {
+      void* ptr = (void*)EM_ASM_INT({
+        var value = Module['outside']['wasmTable'][$0];
+        return typeof value === "number" ? value : -1;
+      }, index);
+      if (ptr == nullptr) trap("callTable overflow");
+      if (ptr != (void*)-1) {
+        // a Function we can call
+        Function* func = (Function*)ptr;
+        if (func->type.is() && func->type != type) trap("callIndirect: bad type");
+        if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
+        for (size_t i = 0; i < func->params.size(); i++) {
+          if (func->params[i] != arguments[i].type) {
+            trap("callIndirect: bad argument type");
+          }
+        }
+        return instance.callFunctionInternal(func->name, arguments);
+      } else {
+        // A JS function JS can call
+        prepareTempArgments(arguments);
+        double ret = EM_ASM_DOUBLE({
+          var func = Module['outside']['wasmTable'][$0];
+          var tempArguments = Module['tempArguments'];
+          Module['tempArguments'] = null;
+          return func.apply(null, tempArguments);
+        }, index);
+        return getResultFromJS(ret, instance.wasm.getFunctionType(type)->result);
       }
     }
 

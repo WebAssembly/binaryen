@@ -729,10 +729,12 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
   }
 
   auto* wasm = (Module*)module;
+  Table::Segment segment(wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
   for (BinaryenIndex i = 0; i < numFuncs; i++) {
-    wasm->table.names.push_back(((Function*)funcs[i])->name);
+    segment.data.push_back(((Function*)funcs[i])->name);
   }
-  wasm->table.initial = wasm->table.max = wasm->table.names.size();
+  wasm->table.segments.push_back(segment);
+  wasm->table.initial = wasm->table.max = numFuncs;
 }
 
 // Memory. One per module

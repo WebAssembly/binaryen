@@ -1434,8 +1434,19 @@ class Table {
 public:
   static const Index kMaxSize = Index(-1);
 
+  struct Segment {
+    Expression* offset;
+    std::vector<Name> data;
+    Segment() {}
+    Segment(Expression* offset) : offset(offset) {
+    }
+    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
+      data.swap(init);
+    }
+  };
+
   Address initial, max;
-  std::vector<Name> names;
+  std::vector<Segment> segments;
 
   Table() : initial(0), max(kMaxSize) {}
 };
@@ -1445,6 +1456,7 @@ public:
   static const Address::address_t kPageSize = 64 * 1024;
   static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
   static const Address::address_t kPageMask = ~(kPageSize - 1);
+
   struct Segment {
     Expression* offset;
     std::vector<char> data; // TODO: optimize

@@ -14,7 +14,7 @@
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
   (table 10 anyfunc)
-  (elem $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative (type $FUNCSIG$v)
     (local $temp f64)
     (block $block0

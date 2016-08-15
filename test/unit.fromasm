@@ -16,7 +16,7 @@
   (export "big_negative" $big_negative)
   (export "pick" $big_negative)
   (table 10 10 anyfunc)
-  (elem $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
+  (elem (i32.const 0) $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
   (func $big_negative
     (nop)
   )

@@ -16,7 +16,7 @@
   (export "dynCall_if" $dynCall_if)
   (export "dynCall_vd" $dynCall_vd)
   (table 6 6 anyfunc)
-  (elem $__wasm_nullptr $i $i_f $vd $ffjjdi $vd2)
+  (elem (i32.const 0) $__wasm_nullptr $i $i_f $vd $ffjjdi $vd2)
   (func $i (type $FUNCSIG$i) (result i32)
     (i32.const 0)
   )

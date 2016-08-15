@@ -282,6 +282,10 @@ class Linker {
 
   void ensureImport(Name target, std::string signature);
 
+  // Makes sure the table has a single segment, with offset 0,
+  // to which we can add content.
+  Table::Segment& getTableSegment();
+
   // Retrieves (and assigns) an entry index in the indirect function table for
   // a given function.
   Index getFunctionIndex(Name name);

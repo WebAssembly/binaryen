@@ -8,7 +8,7 @@
   (export "main" $main)
   (export "dynCall_i" $dynCall_i)
   (table 5 5 anyfunc)
-  (elem $__wasm_nullptr $c $b $d $a)
+  (elem (i32.const 0) $__wasm_nullptr $c $b $d $a)
   (func $a (type $FUNCSIG$i) (result i32)
     (i32.const 0)
   )

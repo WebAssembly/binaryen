@@ -579,12 +579,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->max && curr->max != Table::kMaxSize) o << ' ' << curr->max;
     o << " anyfunc)\n";
     doIndent(o, indent);
-    printOpening(o, "elem", true);
-    for (auto name : curr->names) {
-      o << ' ';
-      printName(name);
+    for (auto& segment : curr->segments) {
+      printOpening(o, "elem ", true);
+      visit(segment.offset);
+      for (auto name : segment.data) {
+        o << ' ';
+        printName(name);
+      }
+      o << ')';
     }
-    o << ')';
   }
   void visitModule(Module *curr) {
     currModule = curr;
@@ -652,7 +655,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitGlobal(child.get());
       o << maybeNewLine;
     }
-    if (curr->table.names.size() > 0) {
+    if (curr->table.segments.size() > 0 || curr->table.initial > 0 || curr->table.max != Table::kMaxSize) {
       doIndent(o, indent);
       visitTable(&curr->table);
       o << maybeNewLine;

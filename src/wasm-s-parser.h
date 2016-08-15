@@ -1430,7 +1430,7 @@ private:
       if (s[1]->str() == ANYFUNC) {
         // (table type (elem ..))
         parseElem(*s[2]);
-        wasm.table.initial = wasm.table.max = wasm.table.names.size();
+        wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
         return;
       }
       // first element isn't dollared, and isn't anyfunc. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
@@ -1443,13 +1443,23 @@ private:
     }
     // old notation (table func1 func2 ..)
     parseElem(s);
-    wasm.table.initial = wasm.table.max = wasm.table.names.size();
+    wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
   }
 
   void parseElem(Element& s) {
-    for (Index i = 1; i < s.size(); i++) {
-      wasm.table.names.push_back(getFunctionName(*s[i]));
+    Index i = 1;
+    Expression* offset;
+    if (s[i]->isList()) {
+      // there is an init expression
+      offset = parseExpression(s[i++]);
+    } else {
+      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     }
+    Table::Segment segment(offset);
+    for (; i < s.size(); i++) {
+      segment.data.push_back(getFunctionName(*s[i]));
+    }
+    wasm.table.segments.push_back(segment);
   }
 
   void parseType(Element& s) {

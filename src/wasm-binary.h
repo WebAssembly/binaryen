@@ -740,12 +740,19 @@ public:
   }
 
   void writeFunctionTable() {
-    if (wasm->table.names.size() == 0) return;
+    if (wasm->table.segments.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionTable" << std::endl;
     auto start = startSection(BinaryConsts::Section::FunctionTable);
-    o << U32LEB(wasm->table.names.size());
-    for (auto name : wasm->table.names) {
-      o << U32LEB(getFunctionIndex(name));
+    o << U32LEB(wasm->table.initial);
+    o << U32LEB(wasm->table.max);
+    o << U32LEB(wasm->table.segments.size());
+    for (auto& segment : wasm->table.segments) {
+      writeExpression(segment.offset);
+      o << int8_t(BinaryConsts::End);
+      o << U32LEB(segment.data.size());
+      for (auto name : segment.data) {
+        o << U32LEB(getFunctionIndex(name));
+      }
     }
     finishSection(start);
   }
@@ -1644,11 +1651,13 @@ public:
       }
     }
 
-    for (size_t index : functionTable) {
-      assert(index < wasm.functions.size());
-      wasm.table.names.push_back(wasm.functions[index]->name);
+    for (auto& pair : functionTable) {
+      auto i = pair.first;
+      auto& indexes = pair.second;
+      for (auto j : indexes) {
+        wasm.table.segments[i].data.push_back(wasm.functions[j]->name);
+      }
     }
-    wasm.table.initial = wasm.table.max = wasm.table.names.size();
   }
 
   void readDataSegments() {
@@ -1667,14 +1676,20 @@ public:
     }
   }
 
-  std::vector<size_t> functionTable;
+  std::map<Index, std::vector<Index>> functionTable;
 
   void readFunctionTable() {
     if (debug) std::cerr << "== readFunctionTable" << std::endl;
+    wasm.table.initial = getU32LEB();
+    wasm.table.max = getU32LEB();
     auto num = getU32LEB();
     for (size_t i = 0; i < num; i++) {
-      auto index = getU32LEB();
-      functionTable.push_back(index);
+      wasm.table.segments.emplace_back(readExpression());
+      auto& temporary = functionTable[i];
+      auto size = getU32LEB();
+      for (Index j = 0; j < size; j++) {
+        temporary.push_back(getU32LEB());
+      }
     }
   }
 
