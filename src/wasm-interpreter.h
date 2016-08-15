@@ -96,10 +96,10 @@ struct IndentHandler {
     std::cout << "exit " << name << '\n';
   }
 };
-#define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x, curr);
-#define NOTE_NAME(p0) { doIndent(std::cout, instance.indent); std::cout << "name in " << indentHandler.name << '('  << Name(p0) << ")\n"; }
-#define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
-#define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
+#define NOTE_ENTER(x) IndentHandler indentHandler(indent, x, curr);
+#define NOTE_NAME(p0) { doIndent(std::cout, indent); std::cout << "name in " << indentHandler.name << '('  << Name(p0) << ")\n"; }
+#define NOTE_EVAL1(p0) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
+#define NOTE_EVAL2(p0, p1) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
 #else // WASM_INTERPRETER_DEBUG
 #define NOTE_ENTER(x)
 #define NOTE_NAME(p0)
@@ -110,6 +110,11 @@ struct IndentHandler {
 // Execute an expression
 template<typename SubType>
 class ExpressionRunner : public Visitor<SubType, Flow> {
+protected:
+#ifdef WASM_INTERPRETER_DEBUG
+  int indent = 0;
+#endif
+
 public:
   Flow visit(Expression *curr) {
     return Visitor<SubType, Flow>::visit(curr);
@@ -572,10 +577,6 @@ private:
   // Function name stack. We maintain this explicitly to allow printing of
   // stack traces.
   std::vector<Name> functionStack;
-
-#ifdef WASM_INTERPRETER_DEBUG
-  int indent = 0;
-#endif
 
   // Call a function, starting an invocation.
   Literal callFunction(IString name, LiteralList& arguments) {
