@@ -83,7 +83,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 
   Name printableGlobal(Index index) {
-    return currModule->getGlobal(index)->name;
+    if (currModule) return currModule->getGlobal(index)->name;
+    return Name::fromInt(index);
   }
 
   std::ostream& printName(Name name) {
