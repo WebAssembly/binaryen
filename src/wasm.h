@@ -1135,10 +1135,6 @@ public:
 
   Index index;
   Expression *value;
-
-  void finalize() {
-    type = value->type;
-  }
 };
 
 class Load : public SpecificExpression<Expression::LoadId> {

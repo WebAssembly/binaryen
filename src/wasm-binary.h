@@ -1945,7 +1945,6 @@ public:
     curr->index = getU32LEB();
     assert(curr->index < wasm.globals.size());
     curr->value = popExpression();
-    curr->type = curr->value->type;
   }
 
   void readMemoryAccess(Address& alignment, size_t bytes, Address& offset) {

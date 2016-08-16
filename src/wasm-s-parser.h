@@ -969,7 +969,6 @@ private:
     auto ret = allocator.alloc<SetGlobal>();
     ret->index = getGlobalIndex(*s[1]);
     ret->value = parseExpression(s[2]);
-    ret->type = wasm.getGlobal(ret->index)->type;
     return ret;
   }
 

@@ -719,7 +719,7 @@ public:
         NOTE_EVAL1(flow.value);
         assert(flow.value.type == curr->type);
         instance.globals[index] = flow.value;
-        return flow;
+        return Flow();
       }
 
       Flow visitLoad(Load *curr) {
