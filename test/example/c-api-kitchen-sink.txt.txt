@@ -2,9 +2,8 @@
   (f32.const -33.61199951171875)
 )
 (module
-  (memory 1 256
-    (segment 10 "hello, world")
-  )
+  (memory 1 256)
+  (data (i32.const 10) "hello, world")
   (export "mem" memory)
   (start $starter)
   (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
@@ -13,7 +12,8 @@
   (type $3 (func))
   (import $an-imported "module" "base" (param i32 f64) (result f32))
   (export "kitchen_sinker" "$kitchen()sinker")
-  (table "$kitchen()sinker")
+  (table 1 1 anyfunc)
+  (elem (i32.const 0) "$kitchen()sinker")
   (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
     (local $4 i32)
     (block $the-body

@@ -1,7 +1,6 @@
 (module
-  (memory 4096 4096
-    (segment 1026 "\14\00")
-  )
+  (memory 4096 4096)
+  (data (i32.const 1026) "\14\00")
   (type $0 (func (result i32)))
   (func $kitchensink (type $0) (result i32)
     (block $label$0

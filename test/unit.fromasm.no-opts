@@ -15,7 +15,8 @@
   (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (export "big_negative" $big_negative)
   (export "pick" $exportMe)
-  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (table 10 10 anyfunc)
+  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
     (set_local $temp

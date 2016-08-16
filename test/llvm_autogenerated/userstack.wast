@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 4 "\10\04\00\00")
-  )
+  (memory 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
   (import $ext_func "env" "ext_func" (param i32))

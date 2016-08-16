@@ -1,14 +1,14 @@
 (module
-  (memory 1
-    (segment 16 "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")
-  )
+  (memory 1)
+  (data (i32.const 16) "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")
   (export "memory" memory)
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$v (func))
   (import $getchar "env" "getchar" (result i32))
   (export "main" $main)
   (export "dynCall_i" $dynCall_i)
-  (table $__wasm_nullptr $c $b $d $a)
+  (table 5 5 anyfunc)
+  (elem (i32.const 0) $__wasm_nullptr $c $b $d $a)
   (func $a (type $FUNCSIG$i) (result i32)
     (i32.const 0)
   )

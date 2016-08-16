@@ -11,7 +11,8 @@
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (export "big_negative" $big_negative)
   (export "pick" $exportMe)
-  (table $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (table 10 10 anyfunc)
+  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
     (set_local $temp

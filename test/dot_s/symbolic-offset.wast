@@ -1,7 +1,6 @@
 (module
-  (memory 1
-    (segment 12 "\01\00\00\00\00\00\00\00\00\00\00\00")
-  )
+  (memory 1)
+  (data (i32.const 12) "\01\00\00\00\00\00\00\00\00\00\00\00")
   (export "memory" memory)
   (export "f" $f)
   (func $f (param $0 i32) (param $1 i32)

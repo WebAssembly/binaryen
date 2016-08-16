@@ -501,8 +501,8 @@ public:
   }
 };
 
-// Execute an expression in global init
-class GlobalInitRunner : public ExpressionRunner<GlobalInitRunner> {
+// Execute an constant expression in a global init or memory offset
+class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner> {
 public:
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
   Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
@@ -537,6 +537,7 @@ public:
   struct ExternalInterface {
     virtual void init(Module& wasm) {}
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
+    virtual Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) = 0;
     virtual Literal load(Load* load, Address addr) = 0;
     virtual void store(Store* store, Address addr, Literal value) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
@@ -551,7 +552,7 @@ public:
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     memorySize = wasm.memory.initial;
     for (Index i = 0; i < wasm.globals.size(); i++) {
-      globals.push_back(GlobalInitRunner().visit(wasm.globals[i]->init).value);
+      globals.push_back(ConstantExpressionRunner().visit(wasm.globals[i]->init).value);
     }
     externalInterface->init(wasm);
     if (wasm.start.is()) {
@@ -591,8 +592,8 @@ private:
     return callFunctionInternal(name, arguments);
   }
 
-private:
-  // Internal function call.
+public:
+  // Internal function call. Must be public so that callTable implementations can use it (refactor?)
   Literal callFunctionInternal(IString name, LiteralList& arguments) {
 
     class FunctionScope {
@@ -674,18 +675,8 @@ private:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        size_t index = target.value.geti32();
-        if (index >= instance.wasm.table.names.size()) trap("callIndirect: overflow");
-        Name name = instance.wasm.table.names[index];
-        Function *func = instance.wasm.getFunction(name);
-        if (func->type.is() && func->type != curr->fullType) trap("callIndirect: bad type");
-        if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
-        for (size_t i = 0; i < func->params.size(); i++) {
-          if (func->params[i] != arguments[i].type) {
-            trap("callIndirect: bad argument type");
-          }
-        }
-        return instance.callFunctionInternal(name, arguments);
+        Index index = target.value.geti32();
+        return instance.externalInterface->callTable(index, curr->fullType, arguments, instance);
       }
 
       Flow visitGetLocal(GetLocal *curr) {
@@ -803,6 +794,8 @@ private:
 #endif
     return ret;
   }
+
+private:
 
   Address memorySize; // in pages
 

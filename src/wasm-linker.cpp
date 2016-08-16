@@ -83,7 +83,7 @@ void Linker::layout() {
   // Update the segments with their addresses now that they have been allocated.
   for (const auto& seg : out.segments) {
     Address address = staticAddresses[seg.first];
-    out.wasm.memory.segments[seg.second].offset = address;
+    out.wasm.memory.segments[seg.second].offset = out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(address)));
     segmentsByAddress[address] = seg.second;
   }
 
@@ -132,7 +132,7 @@ void Linker::layout() {
 
   // Emit the pre-assigned function names in sorted order
   for (const auto& P : functionNames) {
-    out.wasm.table.names.push_back(P.second);
+    getTableSegment().data.push_back(P.second);
   }
 
   for (auto& relocation : out.relocations) {
@@ -206,9 +206,11 @@ void Linker::layout() {
   }
 
   // ensure an explicit function type for indirect call targets
-  for (auto& name : out.wasm.table.names) {
-    auto* func = out.wasm.getFunction(name);
-    func->type = ensureFunctionType(getSig(func), &out.wasm)->name;
+  for (auto& segment : out.wasm.table.segments) {
+    for (auto& name : segment.data) {
+      auto* func = out.wasm.getFunction(name);
+      func->type = ensureFunctionType(getSig(func), &out.wasm)->name;
+    }
   }
 
   // Export malloc and free whenever availble. JavsScript version of malloc has
@@ -222,6 +224,11 @@ void Linker::layout() {
   }
   if (out.symbolInfo.implementedFunctions.count("free")) {
     exportFunction("free", true);
+  }
+
+  // finalize function table
+  if (out.wasm.table.segments.size() > 0) {
+    out.wasm.table.initial = out.wasm.table.max = getTableSegment().data.size();
   }
 }
 
@@ -382,10 +389,19 @@ void Linker::emscriptenGlue(std::ostream& o) {
   o << " }\n";
 }
 
+Table::Segment& Linker::getTableSegment() {
+  if (out.wasm.table.segments.size() == 0) {
+    out.wasm.table.segments.emplace_back(out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))));
+  } else {
+    assert(out.wasm.table.segments.size() == 1);
+  }
+  return out.wasm.table.segments[0];
+}
+
 Index Linker::getFunctionIndex(Name name) {
   if (!functionIndexes.count(name)) {
-    functionIndexes[name] = out.wasm.table.names.size();
-    out.wasm.table.names.push_back(name);
+    functionIndexes[name] = getTableSegment().data.size();
+    getTableSegment().data.push_back(name);
     if (debug) {
       std::cerr << "function index: " << name << ": "
                 << functionIndexes[name] << '\n';
@@ -403,7 +419,6 @@ bool hasI64ResultOrParam(FunctionType* ft) {
 }
 
 void Linker::makeDummyFunction() {
-  assert(out.wasm.table.names.empty());
   bool create = false;
   // Check if there are address-taken functions
   for (auto& relocation : out.relocations) {
@@ -421,9 +436,10 @@ void Linker::makeDummyFunction() {
 }
 
 void Linker::makeDynCallThunks() {
+  if (out.wasm.table.segments.size() == 0) return;
   std::unordered_set<std::string> sigs;
   wasm::Builder wasmBuilder(out.wasm);
-  for (const auto& indirectFunc : out.wasm.table.names) {
+  for (const auto& indirectFunc : getTableSegment().data) {
     // Skip generating thunks for the dummy function
     if (indirectFunc == dummyFunction) continue;
     std::string sig(getSig(out.wasm.getFunction(indirectFunc)));

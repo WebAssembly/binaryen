@@ -1432,7 +1432,23 @@ public:
 
 class Table {
 public:
-  std::vector<Name> names;
+  static const Index kMaxSize = Index(-1);
+
+  struct Segment {
+    Expression* offset;
+    std::vector<Name> data;
+    Segment() {}
+    Segment(Expression* offset) : offset(offset) {
+    }
+    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
+      data.swap(init);
+    }
+  };
+
+  Address initial, max;
+  std::vector<Segment> segments;
+
+  Table() : initial(0), max(kMaxSize) {}
 };
 
 class Memory {
@@ -1440,15 +1456,16 @@ public:
   static const Address::address_t kPageSize = 64 * 1024;
   static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
   static const Address::address_t kPageMask = ~(kPageSize - 1);
+
   struct Segment {
-    Address offset;
+    Expression* offset;
     std::vector<char> data; // TODO: optimize
     Segment() {}
-    Segment(Address offset, const char *init, Address size) : offset(offset) {
+    Segment(Expression* offset, const char *init, Address size) : offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }
-    Segment(Address offset, std::vector<char>& init) : offset(offset) {
+    Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
     }
   };

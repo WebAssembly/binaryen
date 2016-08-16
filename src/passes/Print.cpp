@@ -575,12 +575,19 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitTable(Table *curr) {
-    printOpening(o, "table");
-    for (auto name : curr->names) {
-      o << ' ';
-      printName(name);
+    printOpening(o, "table") << ' ' << curr->initial;
+    if (curr->max && curr->max != Table::kMaxSize) o << ' ' << curr->max;
+    o << " anyfunc)\n";
+    doIndent(o, indent);
+    for (auto& segment : curr->segments) {
+      printOpening(o, "elem ", true);
+      visit(segment.offset);
+      for (auto name : segment.data) {
+        o << ' ';
+        printName(name);
+      }
+      o << ')';
     }
-    o << ')';
   }
   void visitModule(Module *curr) {
     currModule = curr;
@@ -589,9 +596,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     doIndent(o, indent);
     printOpening(o, "memory") << ' ' << curr->memory.initial;
     if (curr->memory.max && curr->memory.max != Memory::kMaxSize) o << ' ' << curr->memory.max;
+    o << ")\n";
     for (auto segment : curr->memory.segments) {
-      o << maybeNewLine;
-      o << (minify ? "" : "    ") << "(segment " << segment.offset << " \"";
+      doIndent(o, indent);
+      printOpening(o, "data ", true);
+      visit(segment.offset);
+      o << " \"";
       for (size_t i = 0; i < segment.data.size(); i++) {
         unsigned char c = segment.data[i];
         switch (c) {
@@ -612,10 +622,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
           }
         }
       }
-      o << "\")";
+      o << "\")\n";
     }
-    o << ((curr->memory.segments.size() > 0 && !minify) ? "\n  " : "") << ')';
-    o << maybeNewLine;
     if (curr->memory.exportName.is()) {
       doIndent(o, indent);
       printOpening(o, "export ");
@@ -647,7 +655,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitGlobal(child.get());
       o << maybeNewLine;
     }
-    if (curr->table.names.size() > 0) {
+    if (curr->table.segments.size() > 0 || curr->table.initial > 0 || curr->table.max != Table::kMaxSize) {
       doIndent(o, indent);
       visitTable(&curr->table);
       o << maybeNewLine;

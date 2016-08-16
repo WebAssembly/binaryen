@@ -1,9 +1,8 @@
 (module
-  (memory 1
-    (segment 16 "hello, world!\n\00")
-    (segment 32 "vcq")
-    (segment 48 "\16\00\00\00")
-  )
+  (memory 1)
+  (data (i32.const 16) "hello, world!\n\00")
+  (data (i32.const 32) "vcq")
+  (data (i32.const 48) "\16\00\00\00")
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$v (func))
@@ -11,7 +10,8 @@
   (import $puts "env" "puts" (param i32))
   (export "main" $main)
   (export "dynCall_iii" $dynCall_iii)
-  (table $__wasm_nullptr $main)
+  (table 2 2 anyfunc)
+  (elem (i32.const 0) $__wasm_nullptr $main)
   (func $main (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
     (call_import $puts
       (i32.const 16)
