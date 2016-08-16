@@ -31,7 +31,10 @@
 
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
+
+int indent = 0;
 #endif
+
 
 namespace wasm {
 
@@ -75,15 +78,14 @@ typedef std::vector<Literal> LiteralList;
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
 struct IndentHandler {
-  int& indent;
   const char *name;
-  IndentHandler(int& indent, const char *name, Expression *expression) : indent(indent), name(name) {
+  IndentHandler(const char *name, Expression *expression) : name(name) {
     doIndent(std::cout, indent);
     std::cout << "visit " << name << " :\n";
     indent++;
 #if WASM_INTERPRETER_DEBUG == 2
     doIndent(std::cout, indent);
-    std::cout << "\n" << expression << '\n';
+    if (expression) std::cout << "\n" << expression << '\n';
     indent++;
 #endif
   }
@@ -96,12 +98,14 @@ struct IndentHandler {
     std::cout << "exit " << name << '\n';
   }
 };
-#define NOTE_ENTER(x) IndentHandler indentHandler(instance.indent, x, curr);
-#define NOTE_NAME(p0) { doIndent(std::cout, instance.indent); std::cout << "name in " << indentHandler.name << '('  << Name(p0) << ")\n"; }
-#define NOTE_EVAL1(p0) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
-#define NOTE_EVAL2(p0, p1) { doIndent(std::cout, instance.indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
+#define NOTE_ENTER(x) IndentHandler indentHandler(x, curr);
+#define NOTE_ENTER_(x) IndentHandler indentHandler(x, nullptr);
+#define NOTE_NAME(p0) { doIndent(std::cout, indent); std::cout << "name in " << indentHandler.name << '('  << Name(p0) << ")\n"; }
+#define NOTE_EVAL1(p0) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
+#define NOTE_EVAL2(p0, p1) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
 #else // WASM_INTERPRETER_DEBUG
 #define NOTE_ENTER(x)
+#define NOTE_ENTER_(x)
 #define NOTE_NAME(p0)
 #define NOTE_EVAL1(p0)
 #define NOTE_EVAL2(p0, p1)
@@ -579,10 +583,6 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
-#ifdef WASM_INTERPRETER_DEBUG
-  int indent = 0;
-#endif
-
   // Call a function, starting an invocation.
   Literal callFunction(IString name, LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
@@ -637,10 +637,12 @@ private:
       RuntimeExpressionRunner(ModuleInstance& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
 
       Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
+        NOTE_ENTER_("generateArguments");
         arguments.reserve(operands.size());
         for (auto expression : operands) {
           Flow flow = visit(expression);
           if (flow.breaking()) return flow;
+          NOTE_EVAL1(flow.value);
           arguments.push_back(flow.value);
         }
         return Flow();
