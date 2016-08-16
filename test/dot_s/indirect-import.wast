@@ -6,6 +6,7 @@
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$ijidf (func (param i64 i32 f64 f32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
+  (type $anyfunc (func (param none)))
   (import $extern_ijidf "env" "extern_ijidf" (param i64 i32 f64 f32) (result i32))
   (import $extern_v "env" "extern_v")
   (import $extern_vj "env" "extern_vj" (param i64))
@@ -17,7 +18,7 @@
   (export "dynCall_fd" $dynCall_fd)
   (export "dynCall_v" $dynCall_v)
   (export "dynCall_vi" $dynCall_vi)
-  (table $__wasm_nullptr $__importThunk_extern_fd $__importThunk_extern_vj $__importThunk_extern_v $__importThunk_extern_ijidf $__importThunk_extern_struct $__importThunk_extern_sret)
+  (table $0 default (type $anyfunc (func (param none))) $__wasm_nullptr_0 $__importThunk_extern_fd $__importThunk_extern_vj $__importThunk_extern_v $__importThunk_extern_ijidf $__importThunk_extern_struct $__importThunk_extern_sret)
   (func $bar (result i32)
     (local $0 i32)
     (local $1 i32)
@@ -82,13 +83,13 @@
   (func $baz (result i32)
     (i32.const 3)
   )
-  (func $__wasm_nullptr (type $FUNCSIG$v)
-    (unreachable)
-  )
   (func $__importThunk_extern_fd (type $FUNCSIG$fd) (param $0 f64) (result f32)
     (call_import $extern_fd
       (get_local $0)
     )
+  )
+  (func $__wasm_nullptr_0 (type $FUNCSIG$v)
+    (unreachable)
   )
   (func $__importThunk_extern_vj (type $FUNCSIG$vj) (param $0 i64)
     (call_import $extern_vj
@@ -117,18 +118,18 @@
     )
   )
   (func $dynCall_fd (param $fptr i32) (param $0 f64) (result f32)
-    (call_indirect $FUNCSIG$fd
+    (call_indirect $0 $FUNCSIG$fd
       (get_local $fptr)
       (get_local $0)
     )
   )
   (func $dynCall_v (param $fptr i32)
-    (call_indirect $FUNCSIG$v
+    (call_indirect $0 $FUNCSIG$v
       (get_local $fptr)
     )
   )
   (func $dynCall_vi (param $fptr i32) (param $0 i32)
-    (call_indirect $FUNCSIG$vi
+    (call_indirect $0 $FUNCSIG$vi
       (get_local $fptr)
       (get_local $0)
     )

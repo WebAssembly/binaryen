@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
   (export "memory" memory)
+  (type $anyfunc (func (param none)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
@@ -55,7 +56,7 @@
   (export "dynCall_iiii" $dynCall_iiii)
   (export "dynCall_vi" $dynCall_vi)
   (export "___udivmoddi4" $___udivmoddi4)
-  (table $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
+  (table $0 default (type $anyfunc (func (param none))) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
   (func $stackAlloc (param $size i32) (result i32)
     (local $ret i32)
     (set_local $ret
@@ -2647,7 +2648,7 @@
                     (get_local $$write)
                   )
                 )
-                (call_indirect $FUNCSIG$iiii
+                (call_indirect $0 $FUNCSIG$iiii
                   (i32.add
                     (i32.and
                       (get_local $$5)
@@ -2939,7 +2940,7 @@
                 )
               )
               (set_local $$call4
-                (call_indirect $FUNCSIG$iiii
+                (call_indirect $0 $FUNCSIG$iiii
                   (i32.add
                     (i32.and
                       (get_local $$5)
@@ -3068,7 +3069,7 @@
                   )
                 )
                 (set_local $$call16
-                  (call_indirect $FUNCSIG$iiii
+                  (call_indirect $0 $FUNCSIG$iiii
                     (i32.add
                       (i32.and
                         (get_local $$8)
@@ -4550,7 +4551,7 @@
             (get_local $$write)
           )
         )
-        (call_indirect $FUNCSIG$iiii
+        (call_indirect $0 $FUNCSIG$iiii
           (i32.add
             (i32.and
               (get_local $$2)
@@ -4647,7 +4648,7 @@
                 (get_local $$sub$ptr$rhs$cast)
               )
             )
-            (call_indirect $FUNCSIG$iiii
+            (call_indirect $0 $FUNCSIG$iiii
               (i32.add
                 (i32.and
                   (get_local $$6)
@@ -32698,7 +32699,7 @@
   )
   (func $dynCall_ii (param $index i32) (param $a1 i32) (result i32)
     (return
-      (call_indirect $FUNCSIG$ii
+      (call_indirect $0 $FUNCSIG$ii
         (i32.add
           (i32.and
             (get_local $index)
@@ -32712,7 +32713,7 @@
   )
   (func $dynCall_iiii (param $index i32) (param $a1 i32) (param $a2 i32) (param $a3 i32) (result i32)
     (return
-      (call_indirect $FUNCSIG$iiii
+      (call_indirect $0 $FUNCSIG$iiii
         (i32.add
           (i32.and
             (get_local $index)
@@ -32727,7 +32728,7 @@
     )
   )
   (func $dynCall_vi (param $index i32) (param $a1 i32)
-    (call_indirect $FUNCSIG$vi
+    (call_indirect $0 $FUNCSIG$vi
       (i32.add
         (i32.and
           (get_local $index)

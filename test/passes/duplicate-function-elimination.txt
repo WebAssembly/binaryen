@@ -36,9 +36,10 @@
   (memory 0)
   (start $keep2)
   (type $0 (func))
+  (type $anyfunc (func (param none)))
   (export "keep2" $keep2)
   (export "other" $keep2)
-  (table $keep2 $keep2 $caller)
+  (table $0 default (type $anyfunc (func (param none))) $keep2 $keep2 $caller)
   (func $keep2 (type $0)
     (nop)
   )
@@ -363,9 +364,10 @@
 (module
   (memory 0)
   (type $T (func))
-  (table $erase $erase)
+  (type $anyfunc (func (param none)))
+  (table $0 default (type $anyfunc (func (param none))) $erase $erase)
   (func $erase (type $T)
-    (call_indirect $T
+    (call_indirect $0 $T
       (i32.const 0)
     )
   )
@@ -373,14 +375,15 @@
 (module
   (memory 0)
   (type $T (func))
-  (table $keep2 $other)
+  (type $anyfunc (func (param none)))
+  (table $0 default (type $anyfunc (func (param none))) $keep2 $other)
   (func $keep2 (type $T)
-    (call_indirect $T
+    (call_indirect $0 $T
       (i32.const 0)
     )
   )
   (func $other (type $T)
-    (call_indirect $T
+    (call_indirect $0 $T
       (i32.const 1)
     )
   )
@@ -389,14 +392,15 @@
   (memory 0)
   (type $T (func))
   (type $S (func))
-  (table $keep2 $other)
+  (type $anyfunc (func (param none)))
+  (table $0 default (type $anyfunc (func (param none))) $keep2 $other)
   (func $keep2 (type $T)
-    (call_indirect $T
+    (call_indirect $0 $T
       (i32.const 0)
     )
   )
   (func $other (type $T)
-    (call_indirect $S
+    (call_indirect $0 $S
       (i32.const 0)
     )
   )

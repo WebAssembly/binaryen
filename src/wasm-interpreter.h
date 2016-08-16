@@ -674,11 +674,12 @@ private:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
+        Table *table = instance.wasm.getTable(curr->table);
+        if (table->elementType->name != FunctionType::kAnyFunc && table->elementType->name != curr->fullType) trap("callIndirect: bad type");
         size_t index = target.value.geti32();
-        if (index >= instance.wasm.table.names.size()) trap("callIndirect: overflow");
-        Name name = instance.wasm.table.names[index];
+        if (index >= table->values.size()) trap("callIndirect: overflow");
+        Name name = table->values[index];
         Function *func = instance.wasm.getFunction(name);
-        if (func->type.is() && func->type != curr->fullType) trap("callIndirect: bad type");
         if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
         for (size_t i = 0; i < func->params.size(); i++) {
           if (func->params[i] != arguments[i].type) {

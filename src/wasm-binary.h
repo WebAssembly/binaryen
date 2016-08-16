@@ -480,7 +480,7 @@ public:
     writeSignatures();
     writeImports();
     writeFunctionSignatures();
-    writeFunctionTable();
+    writeFunctionTables();
     writeMemory();
     writeGlobals();
     writeExports();
@@ -556,10 +556,18 @@ public:
     finishSection(start);
   }
 
-  int32_t getFunctionTypeIndex(Name type) {
+  Index getFunctionTypeIndex(Name type) {
     // TODO: optimize
     for (size_t i = 0; i < wasm->functionTypes.size(); i++) {
       if (wasm->functionTypes[i]->name == type) return i;
+    }
+    abort();
+  }
+
+  Index getFunctionTableIndex(Name type) {
+    // TODO: optimize
+    for (size_t i = 0; i < wasm->tables.size(); i++) {
+      if (wasm->tables[i]->name == type) return i;
     }
     abort();
   }
@@ -685,7 +693,7 @@ public:
 
   void writeExports() {
     if (wasm->exports.size() == 0) return;
-    if (debug) std::cerr << "== writeexports" << std::endl;
+    if (debug) std::cerr << "== writeExports" << std::endl;
     auto start = startSection(BinaryConsts::Section::ExportTable);
     o << U32LEB(wasm->exports.size());
     for (auto& curr : wasm->exports) {
@@ -724,8 +732,8 @@ public:
     assert(mappedImports.count(name));
     return mappedImports[name];
   }
-  
-  std::map<Name, uint32_t> mappedFunctions; // name of the Function => index 
+
+  std::map<Name, uint32_t> mappedFunctions; // name of the Function => entry index
   uint32_t getFunctionIndex(Name name) {
     if (!mappedFunctions.size()) {
       // Create name => index mapping.
@@ -738,13 +746,21 @@ public:
     return mappedFunctions[name];
   }
 
-  void writeFunctionTable() {
-    if (wasm->table.names.size() == 0) return;
-    if (debug) std::cerr << "== writeFunctionTable" << std::endl;
+  void writeFunctionTables() {
+    if (wasm->tables.size() == 0) return;
+    if (debug) std::cerr << "== writeFunctionTables" << std::endl;
     auto start = startSection(BinaryConsts::Section::FunctionTable);
-    o << U32LEB(wasm->table.names.size());
-    for (auto name : wasm->table.names) {
-      o << U32LEB(getFunctionIndex(name));
+    o << U32LEB(wasm->tables.size());
+    for (auto& curr : wasm->tables) {
+      if (debug) std::cerr << "write one" << std::endl;
+      o << int8_t(curr->isDefault);
+      o << U32LEB(getFunctionTypeIndex(curr->elementType->name));
+      assert(curr->initial == curr->values.size() && curr->initial == curr->max);
+      o << U32LEB(curr->initial);
+      o << U32LEB(curr->max);
+      for (auto name : curr->values) {
+        o << U32LEB(getFunctionIndex(name));
+      }
     }
     finishSection(start);
   }
@@ -924,7 +940,7 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType));
+    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType)) << U32LEB(getFunctionTableIndex(curr->table));
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
@@ -1256,7 +1272,7 @@ public:
       else if (match(BinaryConsts::Section::ExportTable)) readExports();
       else if (match(BinaryConsts::Section::Globals)) readGlobals();
       else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
-      else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
+      else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTables();
       else if (match(BinaryConsts::Section::Names)) readNames();
       else {
         std::cerr << "unfamiliar section: ";
@@ -1452,6 +1468,11 @@ public:
         assert(numResults == 1);
         curr->result = getWasmType();
       }
+      // TODO: Handle "anyfunc" properly. This sets the name to "anyfunc" if
+      // it does not already exist, and matches the expected type signature.
+      if (!wasm.checkFunctionType(FunctionType::kAnyFunc) && FunctionType::isAnyFuncType(curr)) {
+        curr->name = FunctionType::kAnyFunc;
+      }
       wasm.addFunctionType(curr);
     }
   }
@@ -1466,7 +1487,7 @@ public:
       curr->name = Name(std::string("import$") + std::to_string(i));
       auto index = getU32LEB();
       assert(index < wasm.functionTypes.size());
-      curr->type = wasm.getFunctionType(index);
+      curr->type = wasm.functionTypes[index].get();
       assert(curr->type->name.is());
       curr->module = getInlineString();
       curr->base = getInlineString();
@@ -1638,9 +1659,12 @@ public:
       }
     }
 
-    for (size_t index : functionTable) {
-      assert(index < wasm.functions.size());
-      wasm.table.names.push_back(wasm.functions[index]->name);
+    for (auto& pair : functionTable) {
+      assert(pair.first < wasm.tables.size());
+      assert(pair.second < wasm.functions.size());
+      assert(wasm.tables[pair.first]->values.size() <= wasm.tables[pair.first]->max);
+      assert(wasm.tables[pair.first]->elementType->name == FunctionType::kAnyFunc || wasm.tables[pair.first]->elementType == wasm.getFunctionType(wasm.functions[pair.second]->type));
+      wasm.tables[pair.first]->values.push_back(wasm.functions[pair.second]->name);
     }
   }
 
@@ -1660,14 +1684,28 @@ public:
     }
   }
 
-  std::vector<size_t> functionTable;
+  std::vector<std::pair<size_t, size_t>> functionTable;
 
-  void readFunctionTable() {
-    if (debug) std::cerr << "== readFunctionTable" << std::endl;
-    auto num = getU32LEB();
-    for (size_t i = 0; i < num; i++) {
+  void readFunctionTables() {
+    if (debug) std::cerr << "== readFunctionTables" << std::endl;
+    size_t numTables = getU32LEB();
+    for (size_t i = 0; i < numTables; i++) {
+      if (debug) std::cerr << "read one" << std::endl;
+      auto curr = new Table;
+      auto flag = getInt8();
+      assert((!i && flag) || (i && !flag));
+      curr->isDefault = flag;
       auto index = getU32LEB();
-      functionTable.push_back(index);
+      assert(index < functionTypes.size());
+      curr->elementType = wasm.getFunctionType(index);
+      curr->initial = getU32LEB();
+      curr->max = getU32LEB();
+      assert(curr->initial == curr->max);
+      for (size_t j = 0; j < curr->initial; j++) {
+        auto index = getU32LEB();
+        functionTable.push_back(std::make_pair<>(i, index));
+      }
+      wasm.addTable(curr);
     }
   }
 
@@ -1887,6 +1925,7 @@ public:
     curr->fullType = fullType->name;
     auto num = fullType->params.size();
     assert(num == arity);
+    curr->table = wasm.getTable(getU32LEB())->name;
     curr->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
       curr->operands[num - i - 1] = popExpression();

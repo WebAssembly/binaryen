@@ -318,6 +318,11 @@ class S2WasmBuilder {
     return cashew::IString(str.c_str(), false);
   }
 
+  uint32_t getTable() {
+    if (!match(".")) return 0;
+    return getInt();
+  }
+
   std::vector<char> getQuoted() {
     assert(*s == '"');
     s++;
@@ -865,6 +870,7 @@ class S2WasmBuilder {
     auto makeCall = [&](WasmType type) {
       if (match("_indirect")) {
         // indirect call
+        uint32_t table = getTable();
         Name assign = getAssign();
         int num = getNumInputs();
         auto inputs = getInputs(num);
@@ -873,7 +879,7 @@ class S2WasmBuilder {
         std::vector<Expression*> operands(++input, inputs.end());
         auto* funcType = ensureFunctionType(getSig(type, operands), wasm);
         assert(type == funcType->result);
-        auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
+        auto* indirect = builder.makeCallIndirect(linkerObj->getIndirectTable(table, funcType)->name, funcType, target, std::move(operands));
         setOutput(indirect, assign);
       } else {
         // non-indirect call

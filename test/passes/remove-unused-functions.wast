@@ -1,7 +1,7 @@
 (module
   (start $start)
   (export "exported" $exported)
-  (table $called_indirect)
+  (table $0 $called_indirect)
   (func $start
     (call $called0)
   )

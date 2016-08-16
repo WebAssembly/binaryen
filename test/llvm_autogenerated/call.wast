@@ -4,6 +4,7 @@
   )
   (export "memory" memory)
   (type $FUNCSIG$v (func))
+  (type $anyfunc (func (param none)))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$d (func (result f64)))
   (type $FUNCSIG$f (func (result f32)))
@@ -29,6 +30,7 @@
   (export "tail_call_void_nullary" $tail_call_void_nullary)
   (export "fastcc_tail_call_void_nullary" $fastcc_tail_call_void_nullary)
   (export "coldcc_tail_call_void_nullary" $coldcc_tail_call_void_nullary)
+  (table $0 default (type $anyfunc (func (param none))))
   (func $call_i32_nullary (result i32)
     (return
       (call_import $i32_nullary)
@@ -69,14 +71,14 @@
     )
   )
   (func $call_indirect_void (param $0 i32)
-    (call_indirect $FUNCSIG$v
+    (call_indirect $0 $FUNCSIG$v
       (get_local $0)
     )
     (return)
   )
   (func $call_indirect_i32 (param $0 i32) (result i32)
     (return
-      (call_indirect $FUNCSIG$i
+      (call_indirect $0 $FUNCSIG$i
         (get_local $0)
       )
     )

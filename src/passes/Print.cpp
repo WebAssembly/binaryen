@@ -227,7 +227,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printCallBody(curr);
   }
   void visitCallIndirect(CallIndirect *curr) {
-    printOpening(o, "call_indirect ") << curr->fullType;
+    printOpening(o, "call_indirect ");
+    printName(curr->table);
+    o << ' ' << curr->fullType;
     incIndent();
     printFullLine(curr->target);
     for (auto operand : curr->operands) {
@@ -575,8 +577,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitTable(Table *curr) {
-    printOpening(o, "table");
-    for (auto name : curr->names) {
+    printOpening(o, "table ");
+    printName(curr->name) << ' ';
+    if (curr->isDefault)
+      o << "default" << ' ';
+    visitFunctionType(curr->elementType, true);
+    for (auto name : curr->values) {
       o << ' ';
       printName(name);
     }
@@ -647,9 +653,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitGlobal(child.get());
       o << maybeNewLine;
     }
-    if (curr->table.names.size() > 0) {
+    for (auto& child : curr->tables) {
       doIndent(o, indent);
-      visitTable(&curr->table);
+      visitTable(child.get());
       o << maybeNewLine;
     }
     for (auto& child : curr->functions) {

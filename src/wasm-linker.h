@@ -111,6 +111,29 @@ class LinkerObject {
     return nullptr;
   }
 
+  // Create a table locally, because insertion into the underlying wasm vector
+  // needs to be delayed until all tables have been encountered.
+  Table *getIndirectTable(Index index, FunctionType* type) {
+    Table *table;
+    if (tables.count(index)) {
+      return tables[index];
+    }
+
+    // Otherwise, proceed and create the requested table.
+    if (index != Table::kDefault) {
+      table = new Table();
+      table->name = Name::fromInt(index);
+      table->isDefault = false;
+      table->elementType = type;
+    } else {
+      table = Table::createDefaultTable();
+      table->elementType = wasm.getAnyFuncType();
+    }
+    tables[index] = table;
+
+    return table;
+  }
+
   // Add an initializer segment for the named static variable.
   void addSegment(Name name, const char* data, Address size) {
     segments[name] = wasm.memory.segments.size();
@@ -142,8 +165,10 @@ class LinkerObject {
   }
 
   void addIndirectIndex(Name name, Address index) {
-    assert(!indirectIndexes.count(name));
-    indirectIndexes[name] = index;
+    if (!indirectIndexes.count(index)) {
+        indirectIndexes[index] = std::vector<Name>();
+    }
+    indirectIndexes[index].push_back(name);
   }
 
   bool isEmpty() {
@@ -177,9 +202,10 @@ class LinkerObject {
   std::unordered_map<cashew::IString, FunctionType*> externTypesMap;
 
   std::map<Name, Address> segments; // name => segment index (in wasm module)
+  std::map<Index, Table *> tables; // index => table index (in wasm module)
 
   // preassigned indexes for functions called indirectly
-  std::map<Name, Address> indirectIndexes;
+  std::map<Address, std::vector<Name>> indirectIndexes;
 
   std::vector<Name> initializerFunctions;
 
@@ -253,7 +279,7 @@ class Linker {
   bool linkArchive(Archive& archive);
 
   // Name of the dummy function to prevent erroneous nullptr comparisons.
-  static constexpr const char* dummyFunction = "__wasm_nullptr";
+  static constexpr const char* dummyFunction = "__wasm_nullptr_";
 
  private:
   // Allocate a static variable and return its address in linear memory
@@ -286,9 +312,9 @@ class Linker {
   // a given function.
   Index getFunctionIndex(Name name);
 
-  // Adds a dummy function in the indirect table at slot 0 to prevent NULL
+  // Adds a dummy function in the given indirect table to prevent NULL
   // pointer miscomparisons.
-  void makeDummyFunction();
+  Name makeDummyFunction(Table *table);
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.
@@ -328,8 +354,7 @@ class Linker {
 
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
-  std::unordered_map<cashew::IString, Address> functionIndexes;
-  std::map<Address, cashew::IString> functionNames;
+  std::unordered_map<cashew::IString, std::pair<Address, Address>> functionIndexes; // name => table, entry indexes
 };
 
 
