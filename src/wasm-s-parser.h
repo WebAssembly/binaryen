@@ -1347,6 +1347,12 @@ private:
   void parseMemory(Element& s) {
     hasMemory = true;
 
+    if (s[1]->isList()) {
+      // (memory (data ..)) format
+      parseData(*s[1]);
+      wasm.memory.initial = wasm.memory.segments[0].data.size();
+      return;
+    }
     wasm.memory.initial = atoi(s[1]->c_str());
     if (s.size() == 2) return;
     size_t i = 2;
@@ -1381,8 +1387,15 @@ private:
   }
 
   void parseData(Element& s) {
-    auto* offset = parseExpression(s[1]);
-    const char *input = s[2]->c_str();
+    Index i = 1;
+    Expression* offset;
+    if (s[i]->isList()) {
+      // there is an init expression
+      offset = parseExpression(s[i++]);
+    } else {
+      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+    }
+    const char *input = s[i]->c_str();
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
