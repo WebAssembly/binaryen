@@ -586,7 +586,7 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module, BinaryenExpressio
 }
 BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressionRef value) {
   auto* ret = Builder(*((Module*)module)).makeReturn((Expression*)value);
- 
+
   if (tracing) {
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenReturn(the_module, expressions[" << expressions[value] << "]);\n";
@@ -730,7 +730,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 
   auto* wasm = (Module*)module;
   for (BinaryenIndex i = 0; i < numFuncs; i++) {
-    wasm->table.names.push_back(((Function*)funcs[i])->name);
+    wasm->getDefaultTable()->values.push_back(((Function*)funcs[i])->name);
   }
 }
 

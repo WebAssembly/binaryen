@@ -205,7 +205,9 @@ struct Walker : public VisitorType {
     for (auto& curr : module->functions) {
       self->walkFunction(curr.get());
     }
-    self->visitTable(&module->table);
+    for (auto &curr : module->tables) {
+      self->visitTable(curr.get());
+    }
     self->visitMemory(&module->memory);
   }
 

@@ -1432,7 +1432,16 @@ public:
 
 class Table {
 public:
-  std::vector<Name> names;
+  Name name;
+  std::vector<Name> values;
+
+  enum { kDefault = 0 };
+
+  static Table* createDefaultTable() {
+    Table *table = new Table();
+    table->name = Name::fromInt(kDefault);
+    return table;
+  }
 };
 
 class Memory {
@@ -1475,8 +1484,8 @@ public:
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
+  std::vector<std::unique_ptr<Table>> tables;
 
-  Table table;
   Memory memory;
   Name start;
 
@@ -1489,6 +1498,7 @@ private:
   std::map<Name, Export*> exportsMap;
   std::map<Name, Function*> functionsMap;
   std::map<Name, Global*> globalsMap;
+  std::map<Name, Table*> tablesMap;
 
 public:
   Module() {};
@@ -1498,24 +1508,28 @@ public:
   Export* getExport(Index i) { assert(i < exports.size()); return exports[i].get(); }
   Function* getFunction(Index i) { assert(i < functions.size()); return functions[i].get(); }
   Global* getGlobal(Index i) { assert(i < globals.size()); return globals[i].get(); }
+  Table* getTable(Index i) { assert(i < tables.size()); return tables[i].get(); }
 
   FunctionType* getFunctionType(Name name) { assert(functionTypesMap.count(name)); return functionTypesMap[name]; }
   Import* getImport(Name name) { assert(importsMap.count(name)); return importsMap[name]; }
   Export* getExport(Name name) { assert(exportsMap.count(name)); return exportsMap[name]; }
   Function* getFunction(Name name) { assert(functionsMap.count(name)); return functionsMap[name]; }
   Global* getGlobal(Name name) { assert(globalsMap.count(name)); return globalsMap[name]; }
+  Table* getTable(Name name) { assert(tablesMap.count(name)); return tablesMap[name]; }
 
   FunctionType* checkFunctionType(Name name) { if (!functionTypesMap.count(name)) return nullptr; return functionTypesMap[name]; }
   Import* checkImport(Name name) { if (!importsMap.count(name)) return nullptr; return importsMap[name]; }
   Export* checkExport(Name name) { if (!exportsMap.count(name)) return nullptr; return exportsMap[name]; }
   Function* checkFunction(Name name) { if (!functionsMap.count(name)) return nullptr; return functionsMap[name]; }
   Global* checkGlobal(Name name) { if (!globalsMap.count(name)) return nullptr; return globalsMap[name]; }
+  Table* checkTable(Name name) { if (!tablesMap.count(name)) return nullptr; return tablesMap[name]; }
 
   FunctionType* checkFunctionType(Index i) { if (i >= functionTypes.size()) return nullptr; return functionTypes[i].get(); }
   Import* checkImport(Index i) { if (i >= imports.size()) return nullptr; return imports[i].get(); }
   Export* checkExport(Index i) { if (i >= exports.size()) return nullptr; return exports[i].get(); }
   Function* checkFunction(Index i) { if (i >= functions.size()) return nullptr; return functions[i].get(); }
   Global* checkGlobal(Index i) { if (i >= globals.size()) return nullptr; return globals[i].get(); }
+  Table* checkTable(Index i) { if (i >= tables.size()) return nullptr; return tables[i].get(); }
 
   void addFunctionType(FunctionType* curr) {
     Name numericName = Name::fromInt(functionTypes.size()); // TODO: remove all these, assert on names already existing, do numeric stuff in wasm-s-parser etc.
@@ -1562,9 +1576,25 @@ public:
     globalsMap[curr->name] = curr;
     globalsMap[numericName] = curr;
   }
-
+  void addTable(Table *curr) {
+    Name numericName = Name::fromInt(tables.size());
+    if (curr->name.isNull()) {
+      curr->name = numericName;
+    }
+    tables.push_back(std::unique_ptr<Table>(curr));
+    tablesMap[curr->name] = curr;
+    tablesMap[numericName] = curr;
+  }
   void addStart(const Name &s) {
     start = s;
+  }
+
+  Table* getDefaultTable() {
+    Table *def = checkTable(Name::fromInt(Table::kDefault));
+    if (def) return def;
+    def = Table::createDefaultTable();
+    addTable(def);
+    return def;
   }
 
   void removeImport(Name name) {

@@ -111,6 +111,24 @@ class LinkerObject {
     return nullptr;
   }
 
+  // Create a table locally, because insertion into the underlying wasm vector
+  // needs to be delayed until all tables have been encountered.
+  Table *getIndirectTable(Index index) {
+    if (tables.count(index))
+      return tables[index];
+
+    // Add the first default table, if it is missing and another table is
+    // being requested.
+    if (index && !tables.count(Table::kDefault)) {
+      getIndirectTable(Table::kDefault);
+    }
+
+    // Otherwise, proceed and create the requested table.
+    assert(index == Table::kDefault);
+    tables[index] = Table::createDefaultTable();
+    return tables[index];
+  }
+
   // Add an initializer segment for the named static variable.
   void addSegment(Name name, const char* data, Address size) {
     segments[name] = wasm.memory.segments.size();
@@ -142,8 +160,8 @@ class LinkerObject {
   }
 
   void addIndirectIndex(Name name, Address index) {
-    assert(!indirectIndexes.count(name));
-    indirectIndexes[name] = index;
+    assert(!indirectIndexes.count(index));
+    indirectIndexes[index] = name;
   }
 
   bool isEmpty() {
@@ -177,9 +195,10 @@ class LinkerObject {
   std::unordered_map<cashew::IString, FunctionType*> externTypesMap;
 
   std::map<Name, Address> segments; // name => segment index (in wasm module)
+  std::map<Index, Table *> tables; // index => table index (in wasm module)
 
   // preassigned indexes for functions called indirectly
-  std::map<Name, Address> indirectIndexes;
+  std::map<Address, Name> indirectIndexes;
 
   std::vector<Name> initializerFunctions;
 
@@ -328,8 +347,7 @@ class Linker {
 
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
-  std::unordered_map<cashew::IString, Address> functionIndexes;
-  std::map<Address, cashew::IString> functionNames;
+  std::unordered_map<cashew::IString, std::pair<Address, Address>> functionIndexes; // name => table, entry indexes
 };
 
 
