@@ -183,6 +183,8 @@ class LinkerObject {
 
   std::vector<Name> initializerFunctions;
 
+  std::unordered_set<cashew::IString> unknownData;
+
   LinkerObject(const LinkerObject&) = delete;
   LinkerObject& operator=(const LinkerObject&) = delete;
 
