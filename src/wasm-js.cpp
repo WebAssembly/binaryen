@@ -255,7 +255,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       return getResultFromJS(ret, import->type->result);
     }
 
-    Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) override {
+    Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
       void* ptr = (void*)EM_ASM_INT({
         var value = Module['outside']['wasmTable'][$0];
         return typeof value === "number" ? value : -1;
@@ -264,7 +264,6 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       if (ptr != (void*)-1) {
         // a Function we can call
         Function* func = (Function*)ptr;
-        if (func->type.is() && func->type != type) trap("callIndirect: bad type");
         if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
         for (size_t i = 0; i < func->params.size(); i++) {
           if (func->params[i] != arguments[i].type) {
@@ -281,7 +280,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           Module['tempArguments'] = null;
           return func.apply(null, tempArguments);
         }, index);
-        return getResultFromJS(ret, instance.wasm.getFunctionType(type)->result);
+        return getResultFromJS(ret, result);
       }
     }
 

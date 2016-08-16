@@ -542,7 +542,7 @@ public:
   struct ExternalInterface {
     virtual void init(Module& wasm) {}
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) = 0;
     virtual Literal load(Load* load, Address addr) = 0;
     virtual void store(Store* store, Address addr, Literal value) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
@@ -681,7 +681,7 @@ public:
         Flow target = visit(curr->target);
         if (target.breaking()) return target;
         Index index = target.value.geti32();
-        return instance.externalInterface->callTable(index, curr->fullType, arguments, instance);
+        return instance.externalInterface->callTable(index, arguments, curr->type, instance);
       }
 
       Flow visitGetLocal(GetLocal *curr) {

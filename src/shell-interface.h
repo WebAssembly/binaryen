@@ -126,10 +126,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     abort();
   }
 
-  Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) override {
+  Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
     if (index >= table.size()) trap("callTable overflow");
     auto* func = instance.wasm.getFunction(table[index]);
-    if (func->type.is() && func->type != type) trap("callIndirect: bad type");
     if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
     for (size_t i = 0; i < func->params.size(); i++) {
       if (func->params[i] != arguments[i].type) {
