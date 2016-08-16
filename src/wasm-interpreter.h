@@ -31,8 +31,6 @@
 
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
-
-int indent = 0;
 #endif
 
 
@@ -77,32 +75,11 @@ typedef std::vector<Literal> LiteralList;
 
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
-struct IndentHandler {
-  const char *name;
-  IndentHandler(const char *name, Expression *expression) : name(name) {
-    doIndent(std::cout, indent);
-    std::cout << "visit " << name << " :\n";
-    indent++;
-#if WASM_INTERPRETER_DEBUG == 2
-    doIndent(std::cout, indent);
-    if (expression) std::cout << "\n" << expression << '\n';
-    indent++;
-#endif
-  }
-  ~IndentHandler() {
-#if WASM_INTERPRETER_DEBUG == 2
-    indent--;
-#endif
-    indent--;
-    doIndent(std::cout, indent);
-    std::cout << "exit " << name << '\n';
-  }
-};
-#define NOTE_ENTER(x) IndentHandler indentHandler(x, curr);
-#define NOTE_ENTER_(x) IndentHandler indentHandler(x, nullptr);
-#define NOTE_NAME(p0) { doIndent(std::cout, indent); std::cout << "name in " << indentHandler.name << '('  << Name(p0) << ")\n"; }
-#define NOTE_EVAL1(p0) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
-#define NOTE_EVAL2(p0, p1) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
+#define NOTE_ENTER(x) { std::cout << "visit " << x << " : " << curr << "\n"; }
+#define NOTE_ENTER_(x) { std::cout << "visit " << x << "\n"; }
+#define NOTE_NAME(p0) { std::cout << "name " << '('  << Name(p0) << ")\n"; }
+#define NOTE_EVAL1(p0) { std::cout << "eval " << '('  << p0 << ")\n"; }
+#define NOTE_EVAL2(p0, p1) { std::cout << "eval " << '('  << p0 << ", " << p1 << ")\n"; }
 #else // WASM_INTERPRETER_DEBUG
 #define NOTE_ENTER(x)
 #define NOTE_ENTER_(x)
@@ -717,7 +694,6 @@ public:
         if (flow.breaking()) return flow;
         NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
-        assert(flow.value.type == curr->type);
         instance.globals[index] = flow.value;
         return Flow();
       }
