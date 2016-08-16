@@ -1472,7 +1472,11 @@ private:
     wasm.addGlobal(global.release());
   }
 
+  bool seenTable = false;
+
   void parseTable(Element& s) {
+    seenTable = true;
+
     if (s.size() == 1) return; // empty table in old notation
     if (!s[1]->dollared()) {
       if (s[1]->str() == ANYFUNC) {
@@ -1495,6 +1499,7 @@ private:
   }
 
   void parseElem(Element& s) {
+    if (!seenTable) throw ParseException("elem without table", s.line, s.col);
     Index i = 1;
     Expression* offset;
     if (s[i]->isList()) {

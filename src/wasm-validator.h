@@ -347,9 +347,20 @@ public:
     }
     returnType = unreachable;
   }
+
+  bool isConstant(Expression* curr) {
+    return curr->is<Const>();
+  }
+
   void visitMemory(Memory *curr) {
     shouldBeFalse(curr->initial > curr->max, "memory", "memory max >= initial");
     shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
+  }
+  void visitTable(Table* curr) {
+    for (auto& segment : curr->segments) {
+      shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32");
+      shouldBeTrue(isConstant(segment.offset), segment.offset, "segment offset should be constant");
+    }
   }
   void visitModule(Module *curr) {
     // exports
