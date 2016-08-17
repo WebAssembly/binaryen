@@ -508,6 +508,49 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   }
 };
 
+// Traversal with an expression stack.
+
+template<typename SubType, typename VisitorType>
+struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
+  ExpressionStackWalker() {}
+
+  std::vector<Expression*> expressionStack;
+
+  // Uses the control flow stack to find the target of a break to a name
+  Expression* findBreakTarget(Name name) {
+    assert(!expressionStack.empty());
+    Index i = expressionStack.size() - 1;
+    while (1) {
+      auto* curr = expressionStack[i];
+      if (Block* block = curr->template dynCast<Block>()) {
+        if (name == block->name) return curr;
+      } else if (Loop* loop = curr->template dynCast<Loop>()) {
+        if (name == loop->name) return curr;
+      } else {
+        WASM_UNREACHABLE();
+      }
+      if (i == 0) return nullptr;
+      i--;
+    }
+  }
+
+  static void doPreVisit(SubType* self, Expression** currp) {
+    self->expressionStack.push_back(*currp);
+  }
+
+  static void doPostVisit(SubType* self, Expression** currp) {
+    self->expressionStack.pop_back();
+  }
+
+  static void scan(SubType* self, Expression** currp) {
+    self->pushTask(SubType::doPostVisit, currp);
+
+    PostWalker<SubType, VisitorType>::scan(self, currp);
+
+    self->pushTask(SubType::doPreVisit, currp);
+  }
+};
+
 // Traversal in the order of execution. This is quick and simple, but
 // does not provide the same comprehensive information that a full
 // conversion to basic blocks would. What it does give is a quick

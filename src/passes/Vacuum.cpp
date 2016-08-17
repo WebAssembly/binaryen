@@ -25,12 +25,10 @@
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
+struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Vacuum; }
-
-  std::vector<Expression*> expressionStack;
 
   // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
@@ -204,23 +202,6 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
     if (!EffectAnalyzer(curr->value).hasSideEffects()) {
       ExpressionManipulator::nop(curr);
     }
-  }
-
-  static void visitPre(Vacuum* self, Expression** currp) {
-    self->expressionStack.push_back(*currp);
-  }
-
-  static void visitPost(Vacuum* self, Expression** currp) {
-    self->expressionStack.pop_back();
-  }
-
-  // override scan to add a pre and a post check task to all nodes
-  static void scan(Vacuum* self, Expression** currp) {
-    self->pushTask(visitPost, currp);
-
-    WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>>::scan(self, currp);
-
-    self->pushTask(visitPre, currp);
   }
 
   void visitFunction(Function* curr) {
