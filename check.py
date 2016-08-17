@@ -377,7 +377,7 @@ for t in spec_tests:
       # we must skip the stack machine portions of spec tests or apply other extra args
       extra = {
         'call.wast': ['--skip=207'],
-        'call_indirect.wast': ['--skip=263'],
+        'call_indirect.wast': ['--skip=302'],
         'nop.wast': ['--skip=3'],
         'stack.wast': ['--skip=0'],
       }
