@@ -45,8 +45,10 @@
             )
           )
         )
-        (i32.reinterpret/f32
-          (get_local $f)
+        (drop
+          (i32.reinterpret/f32
+            (get_local $f)
+          )
         )
       )
     )

@@ -789,7 +789,7 @@ struct ExpressionAnalyzer {
 
 // Adds drop() operations where necessary. This lets you not worry about adding drop when
 // generating code.
-struct AutoDrop : public WalkerPass<PostWalker<AutoDrop, Visitor<AutoDrop>>> {
+struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<AutoDrop>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new AutoDrop; }
@@ -802,6 +802,12 @@ struct AutoDrop : public WalkerPass<PostWalker<AutoDrop, Visitor<AutoDrop>>> {
         curr->list[i] = Builder(*getModule()).makeDrop(child);
       }
     }
+    auto* last = curr->list.back();
+    expressionStack.push_back(last);
+    if (isConcreteWasmType(last->type) && !ExpressionAnalyzer::isResultUsed(expressionStack, getFunction())) {
+      curr->list.back() = Builder(*getModule()).makeDrop(last);
+    }
+    expressionStack.pop_back();
   }
 
   void visitFunction(Function* curr) {

@@ -371,7 +371,9 @@
         (drop
           (f32.const 5)
         )
-        (f32.const 0)
+        (drop
+          (f32.const 0)
+        )
       )
     )
   )
@@ -611,9 +613,11 @@
             (get_local $f)
           )
         )
-        (i32.reinterpret/f32
-          (f32.demote/f64
-            (get_local $d)
+        (drop
+          (i32.reinterpret/f32
+            (f32.demote/f64
+              (get_local $d)
+            )
           )
         )
       )
@@ -646,10 +650,14 @@
                       (drop
                         (i32.const 4)
                       )
-                      (i32.const 5)
+                      (drop
+                        (i32.const 5)
+                      )
                     )
                   )
-                  (i32.const 6)
+                  (drop
+                    (i32.const 6)
+                  )
                 )
               )
               (i32.const 7)
@@ -712,13 +720,17 @@
                         (i32.const 4)
                       )
                     )
-                    (call $lb
-                      (i32.const 5)
+                    (drop
+                      (call $lb
+                        (i32.const 5)
+                      )
                     )
                   )
                 )
-                (call $lb
-                  (i32.const 6)
+                (drop
+                  (call $lb
+                    (i32.const 6)
+                  )
                 )
               )
             )

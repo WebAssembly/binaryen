@@ -7290,10 +7290,12 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (call $___fwritex
-                                  (i32.const 4143)
-                                  (i32.const 1)
-                                  (get_local $0)
+                                (drop
+                                  (call $___fwritex
+                                    (i32.const 4143)
+                                    (i32.const 1)
+                                    (get_local $0)
+                                  )
                                 )
                               )
                             )
@@ -7519,10 +7521,12 @@
                                           )
                                           (br $do-once$122)
                                         )
-                                        (call $___fwritex
-                                          (i32.const 4143)
-                                          (i32.const 1)
-                                          (get_local $0)
+                                        (drop
+                                          (call $___fwritex
+                                            (i32.const 4143)
+                                            (i32.const 1)
+                                            (get_local $0)
+                                          )
                                         )
                                       )
                                       (block
@@ -7645,13 +7649,15 @@
                               (i32.const 0)
                             )
                           )
-                          (call $___fwritex
-                            (get_local $13)
-                            (i32.sub
-                              (get_local $40)
+                          (drop
+                            (call $___fwritex
                               (get_local $13)
+                              (i32.sub
+                                (get_local $40)
+                                (get_local $13)
+                              )
+                              (get_local $0)
                             )
-                            (get_local $0)
                           )
                         )
                       )
@@ -9446,10 +9452,12 @@
               (br $do-once$0)
             )
           )
-          (call $___fwritex
-            (get_local $6)
-            (get_local $1)
-            (get_local $0)
+          (drop
+            (call $___fwritex
+              (get_local $6)
+              (get_local $1)
+              (get_local $0)
+            )
           )
         )
       )

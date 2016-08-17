@@ -4676,16 +4676,18 @@
                 (get_local $$sub$ptr$rhs$cast)
               )
             )
-            (call_indirect $FUNCSIG$iiii
-              (get_local $$f)
-              (get_local $$sub$ptr$sub)
-              (i32.const 1)
-              (i32.add
-                (i32.and
-                  (get_local $$6)
-                  (i32.const 7)
+            (drop
+              (call_indirect $FUNCSIG$iiii
+                (get_local $$f)
+                (get_local $$sub$ptr$sub)
+                (i32.const 1)
+                (i32.add
+                  (i32.and
+                    (get_local $$6)
+                    (i32.const 7)
+                  )
+                  (i32.const 2)
                 )
-                (i32.const 2)
               )
             )
           )
@@ -12427,10 +12429,12 @@
                                           (get_local $$sub$ptr$rhs$cast695$i)
                                         )
                                       )
-                                      (call $___fwritex
-                                        (get_local $$s668$1$i)
-                                        (get_local $$sub$ptr$sub696$i)
-                                        (get_local $$f)
+                                      (drop
+                                        (call $___fwritex
+                                          (get_local $$s668$1$i)
+                                          (get_local $$sub$ptr$sub696$i)
+                                          (get_local $$f)
+                                        )
                                       )
                                     )
                                   )
@@ -12496,10 +12500,12 @@
                                       )
                                       (br $do-once$114)
                                     )
-                                    (call $___fwritex
-                                      (i32.const 4143)
-                                      (i32.const 1)
-                                      (get_local $$f)
+                                    (drop
+                                      (call $___fwritex
+                                        (i32.const 4143)
+                                        (i32.const 1)
+                                        (get_local $$f)
+                                      )
                                     )
                                   )
                                 )
@@ -12628,10 +12634,12 @@
                                               (get_local $$p$addr$4489$i)
                                             )
                                           )
-                                          (call $___fwritex
-                                            (get_local $$s715$0$lcssa$i)
-                                            (get_local $$cond732$i)
-                                            (get_local $$f)
+                                          (drop
+                                            (call $___fwritex
+                                              (get_local $$s715$0$lcssa$i)
+                                              (get_local $$cond732$i)
+                                              (get_local $$f)
+                                            )
                                           )
                                         )
                                       )
@@ -12972,10 +12980,12 @@
                                               (get_local $$p$addr$5501$i)
                                             )
                                           )
-                                          (call $___fwritex
-                                            (get_local $$s753$2$i)
-                                            (get_local $$cond800$i)
-                                            (get_local $$f)
+                                          (drop
+                                            (call $___fwritex
+                                              (get_local $$s753$2$i)
+                                              (get_local $$cond800$i)
+                                              (get_local $$f)
+                                            )
                                           )
                                         )
                                       )
@@ -13079,10 +13089,12 @@
                                   (get_local $$sub$ptr$rhs$cast812$i)
                                 )
                               )
-                              (call $___fwritex
-                                (get_local $$estr$2$i)
-                                (get_local $$sub$ptr$sub813$i)
-                                (get_local $$f)
+                              (drop
+                                (call $___fwritex
+                                  (get_local $$estr$2$i)
+                                  (get_local $$sub$ptr$sub813$i)
+                                  (get_local $$f)
+                                )
                               )
                             )
                           )
@@ -16449,10 +16461,12 @@
               (br $do-once$0)
             )
           )
-          (call $___fwritex
-            (get_local $$pad)
-            (get_local $$l$addr$0$lcssa21)
-            (get_local $$f)
+          (drop
+            (call $___fwritex
+              (get_local $$pad)
+              (get_local $$l$addr$0$lcssa21)
+              (get_local $$f)
+            )
           )
         )
       )
