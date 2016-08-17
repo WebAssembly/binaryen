@@ -1572,11 +1572,11 @@ int main() {
     BinaryenFunctionRef funcs[] = { functions[0] };
     BinaryenSetFunctionTable(the_module, funcs, 1);
   }
-  expressions[245] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[248] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char* segments[] = { segment0 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[245] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[248] };
     BinaryenIndex segmentSizes[] = { 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
   }
@@ -1584,10 +1584,10 @@ int main() {
     BinaryenIndex paramTypes[] = { 0 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[246] = BinaryenNop(the_module);
+  expressions[249] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[246]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[249]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
