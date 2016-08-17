@@ -1394,14 +1394,14 @@ private:
     } else {
       offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     }
-    const char *input = s[i]->c_str();
-    if (auto size = strlen(input)) {
-      std::vector<char> data;
-      stringToBinary(input, size, data);
-      wasm.memory.segments.emplace_back(offset, data.data(), data.size());
-    } else {
-      wasm.memory.segments.emplace_back(offset, "", 0);
+    std::vector<char> data;
+    while (i < s.size()) {
+      const char *input = s[i++]->c_str();
+      if (auto size = strlen(input)) {
+        stringToBinary(input, size, data);
+      }
     }
+    wasm.memory.segments.emplace_back(offset, data.data(), data.size());
   }
 
   void parseExport(Element& s) {
