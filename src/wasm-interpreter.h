@@ -720,14 +720,15 @@ public:
           case PageSize:   return Literal((int32_t)Memory::kPageSize);
           case CurrentMemory: return Literal(int32_t(instance.memorySize));
           case GrowMemory: {
+            auto fail = Literal(int32_t(-1));
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
             int32_t ret = instance.memorySize;
             uint32_t delta = flow.value.geti32();
-            if (delta > uint32_t(-1) /Memory::kPageSize) trap("growMemory: delta relatively too big");
-            if (instance.memorySize >= uint32_t(-1) - delta) trap("growMemory: delta objectively too big");
+            if (delta > uint32_t(-1) /Memory::kPageSize) return fail;
+            if (instance.memorySize >= uint32_t(-1) - delta) return fail;
             uint32_t newSize = instance.memorySize + delta;
-            if (newSize > instance.wasm.memory.max) trap("growMemory: exceeds max");
+            if (newSize > instance.wasm.memory.max) return fail;
             instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
             return Literal(int32_t(ret));
