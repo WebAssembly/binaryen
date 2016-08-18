@@ -710,6 +710,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           auto* export_ = new Export;
           export_->name = key;
           export_->value = value;
+          export_->kind = Export::Function;
           wasm.addExport(export_);
           exported[key] = export_;
         }
@@ -813,10 +814,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     ));
     auto export_ = new Export;
     export_->name = export_->value = GROW_WASM_MEMORY;
+    export_->kind = Export::Function;
     wasm.addExport(export_);
   }
 
-  wasm.memory.exportName = MEMORY;
+  auto memoryExport = make_unique<Export>();
+  memoryExport->name = MEMORY;
+  memoryExport->value = Name::fromInt(0);
+  memoryExport->kind = Export::Memory;
+  wasm.addExport(memoryExport.release());
 
 #if 0 // enable asm2wasm i64 optimizations when browsers have consistent i64 support in wasm
   if (udivmoddi4.is() && getTempRet0.is()) {

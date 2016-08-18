@@ -1,6 +1,5 @@
 (module
   (memory 256 256)
-  (export "memory" memory)
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
@@ -39,6 +38,7 @@
   (export "dynCall_iiii" $lb)
   (export "dynCall_vi" $mb)
   (export "__growWasmMemory" $__growWasmMemory)
+  (export "memory" memory)
   (table 8 8 anyfunc)
   (elem (i32.const 0) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
   (func $eb (param $0 i32) (result i32)

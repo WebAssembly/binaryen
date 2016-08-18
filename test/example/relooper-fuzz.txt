@@ -1,11 +1,11 @@
 (module
   (memory 1 1)
-  (export "mem" memory)
   (start $main)
   (type $i (func (result i32)))
   (type $v (func))
   (type $vi (func (param i32)))
   (import $print "spectest" "print" (param i32))
+  (export "mem" memory)
   (func $check (type $i) (result i32)
     (if
       (i32.eq
@@ -293,12 +293,12 @@
 )
 (module
   (memory 1 1)
-  (export "mem" memory)
   (start $main)
   (type $i (func (result i32)))
   (type $v (func))
   (type $vi (func (param i32)))
   (import $print "spectest" "print" (param i32))
+  (export "mem" memory)
   (func $check (type $i) (result i32)
     (if
       (i32.eq

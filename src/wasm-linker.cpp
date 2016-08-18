@@ -106,7 +106,12 @@ void Linker::layout() {
   }
 
   if (userMaxMemory) out.wasm.memory.max = userMaxMemory / Memory::kPageSize;
-  out.wasm.memory.exportName = MEMORY;
+
+  auto memoryExport = make_unique<Export>();
+  memoryExport->name = MEMORY;
+  memoryExport->value = Name::fromInt(0);
+  memoryExport->kind = Export::Memory;
+  out.wasm.addExport(memoryExport.release());
 
   // XXX For now, export all functions marked .globl.
   for (Name name : out.globls) exportFunction(name, false);

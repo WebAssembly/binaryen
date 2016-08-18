@@ -1438,8 +1438,16 @@ public:
 
 class Export {
 public:
+  enum Kind {
+    Function = 0,
+    Table = 1,
+    Memory = 2,
+    Global = 3,
+  };
+
   Name name;  // exported name
   Name value; // internal name
+  Kind kind;
 };
 
 class Table {
@@ -1484,7 +1492,6 @@ public:
 
   Address initial, max; // sizes are in pages
   std::vector<Segment> segments;
-  Name exportName;
 
   Memory() : initial(0), max(kMaxSize) {}
 };

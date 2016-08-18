@@ -443,6 +443,7 @@ private:
       auto ex = make_unique<Export>();
       ex->name = exportName;
       ex->value = name;
+      ex->kind = Export::Function;
       wasm.addExport(ex.release());
     }
     functionCounter++;
@@ -1405,15 +1406,28 @@ private:
   }
 
   void parseExport(Element& s) {
-    if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
-      assert(s[2]->str() == MEMORY);
-      if (!hasMemory) throw ParseException("memory exported but no memory");
-      wasm.memory.exportName = s[1]->str();
-      return;
-    }
     std::unique_ptr<Export> ex = make_unique<Export>();
-    ex->name = s[1]->str();
-    ex->value = s[2]->str();
+    if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
+      ex->name = s[1]->str();
+      if (s[2]->str() == MEMORY) {
+        if (!hasMemory) throw ParseException("memory exported but no memory");
+        ex->value = Name::fromInt(0);
+        ex->kind = Export::Memory;
+      } else if (s[2]->str() == TABLE) {
+        ex->value = Name::fromInt(0);
+        ex->kind = Export::Table;
+      } else if (s[2]->str() == GLOBAL) {
+        ex->value = s[3]->str();
+        ex->kind = Export::Table;
+      } else {
+        WASM_UNREACHABLE();
+      }
+    } else {
+      // function
+      ex->name = s[1]->str();
+      ex->value = s[2]->str();
+      ex->kind = Export::Function;
+    }
     wasm.addExport(ex.release());
   }
 

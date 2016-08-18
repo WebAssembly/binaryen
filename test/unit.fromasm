@@ -1,6 +1,5 @@
 (module
   (memory 256 256)
-  (export "memory" memory)
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
@@ -15,6 +14,7 @@
   (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (export "big_negative" $big_negative)
   (export "pick" $big_negative)
+  (export "memory" memory)
   (table 10 10 anyfunc)
   (elem (i32.const 0) $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
   (func $big_negative

@@ -531,8 +531,7 @@ public:
     if (debug) std::cerr << "== writeMemory" << std::endl;
     auto start = startSection(BinaryConsts::Section::Memory);
     o << U32LEB(wasm->memory.initial)
-      << U32LEB(wasm->memory.max)
-      << int8_t(wasm->memory.exportName.is()); // export memory
+      << U32LEB(wasm->memory.max);
     finishSection(start);
   }
 
@@ -692,7 +691,14 @@ public:
     o << U32LEB(wasm->exports.size());
     for (auto& curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << U32LEB(getFunctionIndex(curr->value));
+      o << U32LEB(curr->kind);
+      switch (curr->kind) {
+        case Export::Function: o << U32LEB(getFunctionIndex(curr->value)); break;
+        case Export::Table: o << U32LEB(0); break;
+        case Export::Memory: o << U32LEB(0); break;
+        case Export::Global: o << U32LEB(getGlobalIndex(curr->value)); break;
+        default: WASM_UNREACHABLE();
+      }
       writeInlineString(curr->name.str);
     }
     finishSection(start);
@@ -739,6 +745,19 @@ public:
     }
     assert(mappedFunctions.count(name));
     return mappedFunctions[name];
+  }
+
+  std::map<Name, uint32_t> mappedGlobals; // name of the Global => index 
+  uint32_t getGlobalIndex(Name name) {
+    if (!mappedGlobals.size()) {
+      // Create name => index mapping.
+      for (size_t i = 0; i < wasm->globals.size(); i++) {
+        assert(mappedGlobals.count(wasm->globals[i]->name) == 0);
+        mappedGlobals[wasm->globals[i]->name] = i;
+      }
+    }
+    assert(mappedGlobals.count(name));
+    return mappedGlobals[name];
   }
 
   void writeFunctionTable() {
@@ -1437,10 +1456,6 @@ public:
     if (debug) std::cerr << "== readMemory" << std::endl;
     wasm.memory.initial = getU32LEB();
     wasm.memory.max = getU32LEB();
-    auto exportMemory = getInt8();
-    if (exportMemory) {
-      wasm.memory.exportName = Name("memory");
-    }
   }
 
   void readSignatures() {
@@ -1578,8 +1593,8 @@ public:
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Export;
+      curr->kind = (Export::Kind)getU32LEB();
       auto index = getU32LEB();
-      assert(index < functionTypes.size());
       curr->name = getInlineString();
       exportIndexes[curr] = index;
     }
@@ -1644,7 +1659,13 @@ public:
 
     for (auto& iter : exportIndexes) {
       Export* curr = iter.first;
-      curr->value = wasm.functions[iter.second]->name;
+      switch (curr->kind) {
+        case Export::Function: curr->value = wasm.functions[iter.second]->name; break;
+        case Export::Table: curr->value = Name::fromInt(0); break;
+        case Export::Memory: curr->value = Name::fromInt(0); break;
+        case Export::Global: curr->value = wasm.globals[iter.second]->name; break;
+        default: WASM_UNREACHABLE();
+      }
       wasm.addExport(curr);
     }
 

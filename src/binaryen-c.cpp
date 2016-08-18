@@ -805,7 +805,13 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   auto* wasm = (Module*)module;
   wasm->memory.initial = initial;
   wasm->memory.max = maximum;
-  if (exportName) wasm->memory.exportName = exportName;
+  if (exportName) {
+    auto memoryExport = make_unique<Export>();
+    memoryExport->name = exportName;
+    memoryExport->value = Name::fromInt(0);
+    memoryExport->kind = Export::Memory;
+    wasm->addExport(memoryExport.release());
+  }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     wasm->memory.segments.emplace_back((Expression*)segmentOffsets[i], segments[i], segmentSizes[i]);
   }

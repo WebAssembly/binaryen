@@ -543,7 +543,14 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitExport(Export *curr) {
     printOpening(o, "export ");
     printText(o, curr->name.str) << ' ';
-    printName(curr->value) << ')';
+    switch (curr->kind) {
+      case Export::Function: printName(curr->value); break;
+      case Export::Table: o << "table"; break;
+      case Export::Memory: o << "memory"; break;
+      case Export::Global: o << "global "; printName(curr->value); break;
+      default: WASM_UNREACHABLE();
+    }
+    o << ')';
   }
   void visitGlobal(Global *curr) {
     printOpening(o, "global ");
@@ -635,12 +642,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         }
       }
       o << "\")\n";
-    }
-    if (curr->memory.exportName.is()) {
-      doIndent(o, indent);
-      printOpening(o, "export ");
-      printText(o, curr->memory.exportName.str) << " memory)";
-      o << maybeNewLine;
     }
     if (curr->start.is()) {
       doIndent(o, indent);

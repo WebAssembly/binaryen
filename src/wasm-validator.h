@@ -367,14 +367,16 @@ public:
     std::set<Name> exportNames;
     for (auto& exp : curr->exports) {
       Name name = exp->value;
-      bool found = false;
-      for (auto& func : curr->functions) {
-        if (func->name == name) {
-          found = true;
-          break;
+      if (exp->kind == Export::Function) {
+        bool found = false;
+        for (auto& func : curr->functions) {
+          if (func->name == name) {
+            found = true;
+            break;
+          }
         }
+        shouldBeTrue(found, name, "module exports must be found");
       }
-      shouldBeTrue(found, name, "module exports must be found");
       Name exportName = exp->name;
       shouldBeFalse(exportNames.count(exportName) > 0, exportName, "module exports must be unique");
       exportNames.insert(exportName);
