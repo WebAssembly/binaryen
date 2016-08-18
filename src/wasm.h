@@ -1430,10 +1430,18 @@ public:
 
 class Import {
 public:
+  enum Kind {
+    Function = 0,
+    Table = 1,
+    Memory = 2,
+    Global = 3,
+  };
+
   Import() : type(nullptr) {}
 
   Name name, module, base; // name = module.base
-  FunctionType* type;
+  Kind kind;
+  FunctionType* type; // for Function imports
 };
 
 class Export {

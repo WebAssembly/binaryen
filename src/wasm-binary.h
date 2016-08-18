@@ -572,7 +572,14 @@ public:
     o << U32LEB(wasm->imports.size());
     for (auto& import : wasm->imports) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << U32LEB(getFunctionTypeIndex(import->type->name));
+      o << U32LEB(import->kind);
+      switch (import->kind) {
+        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->type->name));
+        case Export::Table: break;
+        case Export::Memory: break;
+        case Export::Global: break;
+        default: WASM_UNREACHABLE();
+      }
       writeInlineString(import->module.str);
       writeInlineString(import->base.str);
     }
@@ -1492,10 +1499,20 @@ public:
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Import;
       curr->name = Name(std::string("import$") + std::to_string(i));
-      auto index = getU32LEB();
-      assert(index < wasm.functionTypes.size());
-      curr->type = wasm.getFunctionType(index);
-      assert(curr->type->name.is());
+      curr->kind = (Import::Kind)getU32LEB();
+      switch (curr->kind) {
+        case Export::Function: {
+          auto index = getU32LEB();
+          assert(index < wasm.functionTypes.size());
+          curr->type = wasm.getFunctionType(index);
+          assert(curr->type->name.is());
+          break;
+        }
+        case Export::Table: break;
+        case Export::Memory: break;
+        case Export::Global: break;
+        default: WASM_UNREACHABLE();
+      }
       curr->module = getInlineString();
       curr->base = getInlineString();
       wasm.addImport(curr);

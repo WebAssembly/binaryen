@@ -718,6 +718,7 @@ BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* intern
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->type = (FunctionType*)type;
+  ret->kind = Import::Function;
   wasm->addImport(ret);
   return ret;
 }

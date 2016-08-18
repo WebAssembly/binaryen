@@ -50,6 +50,7 @@ void Linker::ensureImport(Name target, std::string signature) {
     import->name = import->base = target;
     import->module = ENV;
     import->type = ensureFunctionType(signature, &out.wasm);
+    import->kind = Import::Function;
     out.wasm.addImport(import);
   }
 }
@@ -339,6 +340,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
           import->name = import->base = curr->target;
           import->module = ENV;
           import->type = ensureFunctionType(getSig(curr), &parent->out.wasm);
+          import->kind = Import::Function;
           parent->out.wasm.addImport(import);
         }
       }

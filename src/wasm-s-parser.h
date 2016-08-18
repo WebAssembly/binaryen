@@ -1440,33 +1440,49 @@ private:
       im->name = Name::fromInt(importCounter);
     }
     importCounter++;
+    if (!s[i]->quoted()) {
+      if (s[i]->str() == MEMORY) {
+        im->kind = Import::Memory;
+      } else if (s[2]->str() == TABLE) {
+        im->kind = Import::Table;
+      } else if (s[2]->str() == GLOBAL) {
+        im->kind = Import::Table;
+      } else {
+        WASM_UNREACHABLE();
+      }
+      i++;
+    } else {
+      im->kind = Import::Function;
+    }
     im->module = s[i++]->str();
     if (!s[i]->isStr()) throw ParseException("no name for import");
     im->base = s[i++]->str();
-    std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
-    if (s.size() > i) {
-      Element& params = *s[i];
-      IString id = params[0]->str();
-      if (id == PARAM) {
-        for (size_t i = 1; i < params.size(); i++) {
-          type->params.push_back(stringToWasmType(params[i]->str()));
+    if (im->kind == Import::Function) {
+      std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
+      if (s.size() > i) {
+        Element& params = *s[i];
+        IString id = params[0]->str();
+        if (id == PARAM) {
+          for (size_t i = 1; i < params.size(); i++) {
+            type->params.push_back(stringToWasmType(params[i]->str()));
+          }
+        } else if (id == RESULT) {
+          type->result = stringToWasmType(params[1]->str());
+        } else if (id == TYPE) {
+          IString name = params[1]->str();
+          if (!wasm.checkFunctionType(name)) throw ParseException("bad function type for import");
+          *type = *wasm.getFunctionType(name);
+        } else {
+          throw ParseException("bad import element");
         }
-      } else if (id == RESULT) {
-        type->result = stringToWasmType(params[1]->str());
-      } else if (id == TYPE) {
-        IString name = params[1]->str();
-        if (!wasm.checkFunctionType(name)) throw ParseException("bad function type for import");
-        *type = *wasm.getFunctionType(name);
-      } else {
-        throw ParseException("bad import element");
+        if (s.size() > i+1) {
+          Element& result = *s[i+1];
+          assert(result[0]->str() == RESULT);
+          type->result = stringToWasmType(result[1]->str());
+        }
       }
-      if (s.size() > i+1) {
-        Element& result = *s[i+1];
-        assert(result[0]->str() == RESULT);
-        type->result = stringToWasmType(result[1]->str());
-      }
+      im->type = ensureFunctionType(getSig(type.get()), &wasm);
     }
-    im->type = ensureFunctionType(getSig(type.get()), &wasm);
     wasm.addImport(im.release());
   }
 

@@ -524,6 +524,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       allocateGlobal(name, type, true, import->module, import->base);
       delete import;
     } else {
+      import->kind = Import::Function;
       wasm.addImport(import);
     }
   };
@@ -1087,6 +1088,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->module = ASM2WASM;
           import->base = F64_REM;
           import->type = ensureFunctionType("ddd", &wasm);
+          import->kind = Import::Function;
           wasm.addImport(import);
         }
         return call;
@@ -1112,6 +1114,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->module = ASM2WASM;
           import->base = call->target;
           import->type = ensureFunctionType("iii", &wasm);
+          import->kind = Import::Function;
           wasm.addImport(import);
         }
         return call;
@@ -1150,6 +1153,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->module = ASM2WASM;
           import->base = DEBUGGER;
           import->type = ensureFunctionType("v", &wasm);
+          import->kind = Import::Function;
           wasm.addImport(import);
         }
         return call;
@@ -1262,6 +1266,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               import->module = ASM2WASM;
               import->base = F64_TO_INT;
               import->type = ensureFunctionType("id", &wasm);
+              import->kind = Import::Function;
               wasm.addImport(import);
             }
             return ret;

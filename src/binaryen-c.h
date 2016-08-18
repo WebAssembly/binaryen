@@ -373,7 +373,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module);
 void BinaryenModuleAutoDrop(BinaryenModuleRef module);
 
 // Serialize a module into binary form.
-// @return how many bytes were written. This will be less than or equal to bufferSize
+// @return how many bytes were written. This will be less than or equal to outputSize
 size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize);
 
 // Deserialize a module from binary form.

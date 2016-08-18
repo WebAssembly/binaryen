@@ -534,6 +534,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitImport(Import *curr) {
     printOpening(o, "import ");
+    switch (curr->kind) {
+      case Export::Function: break;
+      case Export::Table: o << "table "; break;
+      case Export::Memory: o << "memory "; break;
+      case Export::Global: o << "global "; break;
+      default: WASM_UNREACHABLE();
+    }
     printName(curr->name) << ' ';
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str);
