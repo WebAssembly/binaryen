@@ -6,6 +6,12 @@
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$vii (func (param i32 i32)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+  (import $r global "env" "STACKTOP" i32)
+  (import $s global "env" "STACK_MAX" i32)
+  (import $t global "env" "tempDoublePtr" i32)
+  (import $u global "env" "ABORT" i32)
+  (import $z global "global" "NaN" f64)
+  (import $A global "global" "Infinity" f64)
   (import $ja "env" "abort" (param i32))
   (import $oa "env" "_pthread_cleanup_pop" (param i32))
   (import $pa "env" "___lock" (param i32))
@@ -39,6 +45,30 @@
   (export "dynCall_vi" $mb)
   (export "__growWasmMemory" $__growWasmMemory)
   (export "memory" memory)
+  (global $v i32 (i32.const 0))
+  (global $w i32 (i32.const 0))
+  (global $x i32 (i32.const 0))
+  (global $y i32 (i32.const 0))
+  (global $B i32 (i32.const 0))
+  (global $C i32 (i32.const 0))
+  (global $D i32 (i32.const 0))
+  (global $E i32 (i32.const 0))
+  (global $F f64 (f64.const 0))
+  (global $G i32 (i32.const 0))
+  (global $H i32 (i32.const 0))
+  (global $I i32 (i32.const 0))
+  (global $J f64 (f64.const 0))
+  (global $K i32 (i32.const 0))
+  (global $L i32 (i32.const 0))
+  (global $M i32 (i32.const 0))
+  (global $N i32 (i32.const 0))
+  (global $O i32 (i32.const 0))
+  (global $P i32 (i32.const 0))
+  (global $Q i32 (i32.const 0))
+  (global $R i32 (i32.const 0))
+  (global $S i32 (i32.const 0))
+  (global $T i32 (i32.const 0))
+  (global $za f64 (f64.const 0))
   (table 8 8 anyfunc)
   (elem (i32.const 0) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
   (func $eb (param $a i32) (result i32)
@@ -136,16 +166,11 @@
     (local $Ra i32)
     (local $Sa i32)
     (set_local $b
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $r)
         (i32.const 16)
       )
     )
@@ -339,8 +364,7 @@
               (set_local $p
                 (get_local $m)
               )
-              (i32.store
-                (i32.const 8)
+              (set_global $r
                 (get_local $b)
               )
               (return
@@ -760,8 +784,7 @@
                   (set_local $p
                     (get_local $o)
                   )
-                  (i32.store
-                    (i32.const 8)
+                  (set_global $r
                     (get_local $b)
                   )
                   (return
@@ -1649,8 +1672,7 @@
                       (i32.const 8)
                     )
                   )
-                  (i32.store
-                    (i32.const 8)
+                  (set_global $r
                     (get_local $b)
                   )
                   (return
@@ -3404,8 +3426,7 @@
                           (i32.const 8)
                         )
                       )
-                      (i32.store
-                        (i32.const 8)
+                      (set_global $r
                         (get_local $b)
                       )
                       (return
@@ -3538,8 +3559,7 @@
             (i32.const 8)
           )
         )
-        (i32.store
-          (i32.const 8)
+        (set_global $r
           (get_local $b)
         )
         (return
@@ -3609,8 +3629,7 @@
             (i32.const 8)
           )
         )
-        (i32.store
-          (i32.const 8)
+        (set_global $r
           (get_local $b)
         )
         (return
@@ -3712,8 +3731,7 @@
         (set_local $p
           (i32.const 0)
         )
-        (i32.store
-          (i32.const 8)
+        (set_global $r
           (get_local $b)
         )
         (return
@@ -3755,8 +3773,7 @@
             (set_local $p
               (i32.const 0)
             )
-            (i32.store
-              (i32.const 8)
+            (set_global $r
               (get_local $b)
             )
             (return
@@ -6135,8 +6152,7 @@
                         (i32.const 8)
                       )
                     )
-                    (i32.store
-                      (i32.const 8)
+                    (set_global $r
                       (get_local $b)
                     )
                     (return
@@ -7044,8 +7060,7 @@
                 (i32.const 8)
               )
             )
-            (i32.store
-              (i32.const 8)
+            (set_global $r
               (get_local $b)
             )
             (return
@@ -7065,8 +7080,7 @@
     (set_local $p
       (i32.const 0)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $b)
     )
     (return
@@ -9288,16 +9302,11 @@
     (local $y i32)
     (local $z i32)
     (set_local $d
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $r)
         (i32.const 48)
       )
     )
@@ -9728,8 +9737,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $d)
     )
     (return
@@ -10410,16 +10418,11 @@
     (local $m i32)
     (local $n i32)
     (set_local $c
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $r)
         (i32.const 16)
       )
     )
@@ -10573,8 +10576,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $c)
     )
     (return
@@ -11380,16 +11382,11 @@
     (local $f i32)
     (local $g i32)
     (set_local $d
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $r)
         (i32.const 32)
       )
     )
@@ -11464,8 +11461,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $d)
     )
     (return
@@ -11476,16 +11472,11 @@
     (local $d i32)
     (local $e i32)
     (set_local $d
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $r)
         (i32.const 80)
       )
     )
@@ -11557,8 +11548,7 @@
         (get_local $c)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $d)
     )
     (return
@@ -11567,18 +11557,14 @@
   )
   (func $Ka (param $a i32)
     (i32.store8
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $t)
       (i32.load8_s
         (get_local $a)
       )
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 1)
       )
       (i32.load8_s
@@ -11590,9 +11576,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 2)
       )
       (i32.load8_s
@@ -11604,9 +11588,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 3)
       )
       (i32.load8_s
@@ -11618,9 +11600,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 4)
       )
       (i32.load8_s
@@ -11632,9 +11612,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 5)
       )
       (i32.load8_s
@@ -11646,9 +11624,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 6)
       )
       (i32.load8_s
@@ -11660,9 +11636,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 7)
       )
       (i32.load8_s
@@ -11677,16 +11651,11 @@
     (local $b i32)
     (local $c i32)
     (set_local $b
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $r)
         (i32.const 16)
       )
     )
@@ -11710,8 +11679,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $b)
     )
     (return
@@ -11751,18 +11719,14 @@
   )
   (func $Ja (param $a i32)
     (i32.store8
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $t)
       (i32.load8_s
         (get_local $a)
       )
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 1)
       )
       (i32.load8_s
@@ -11774,9 +11738,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 2)
       )
       (i32.load8_s
@@ -11788,9 +11750,7 @@
     )
     (i32.store8
       (i32.add
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $t)
         (i32.const 3)
       )
       (i32.load8_s
@@ -11850,26 +11810,18 @@
   (func $Ea (param $a i32) (result i32)
     (local $b i32)
     (set_local $b
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $r)
         (get_local $a)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (i32.and
         (i32.add
-          (i32.load
-            (i32.const 8)
-          )
+          (get_global $r)
           (i32.const 15)
         )
         (i32.const -16)
@@ -11905,17 +11857,13 @@
   (func $Ia (param $a i32) (param $b i32)
     (if
       (i32.eqz
-        (i32.load
-          (i32.const 40)
-        )
+        (get_global $v)
       )
       (block
-        (i32.store
-          (i32.const 40)
+        (set_global $v
           (get_local $a)
         )
-        (i32.store
-          (i32.const 48)
+        (set_global $w
           (get_local $b)
         )
       )
@@ -11964,12 +11912,10 @@
     )
   )
   (func $Ha (param $a i32) (param $b i32)
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $a)
     )
-    (i32.store
-      (i32.const 16)
+    (set_global $s
       (get_local $b)
     )
   )
@@ -12005,29 +11951,23 @@
     )
   )
   (func $La (param $a i32)
-    (i32.store
-      (i32.const 160)
+    (set_global $K
       (get_local $a)
     )
   )
   (func $Ga (param $a i32)
-    (i32.store
-      (i32.const 8)
+    (set_global $r
       (get_local $a)
     )
   )
   (func $Ma (result i32)
     (return
-      (i32.load
-        (i32.const 160)
-      )
+      (get_global $K)
     )
   )
   (func $Fa (result i32)
     (return
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $r)
     )
   )
   (func $ib (result i32)

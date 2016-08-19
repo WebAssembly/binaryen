@@ -143,15 +143,13 @@ class Asm2WasmBuilder {
 
   // globals
 
-  unsigned nextGlobal; // next place to put a global
-  unsigned maxGlobal; // highest address we can put a global
   struct MappedGlobal {
-    unsigned address;
     WasmType type;
     bool import; // if true, this is an import - we should read the value, not just set a zero
     IString module, base;
-    MappedGlobal() : address(0), type(none), import(false) {}
-    MappedGlobal(unsigned address, WasmType type, bool import, IString module, IString base) : address(address), type(type), import(import), module(module), base(base) {}
+    MappedGlobal() : type(none), import(false) {}
+    MappedGlobal(WasmType type) : type(type), import(false) {}
+    MappedGlobal(WasmType type, bool import, IString module, IString base) : type(type), import(import), module(module), base(base) {}
   };
 
   // function table
@@ -165,31 +163,20 @@ class Asm2WasmBuilder {
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
 
-  // the global mapping info is not present in the output wasm. We need to save it on the side
-  // if we intend to load and run this module's wasm.
-  void serializeMappedGlobals(const char *filename) {
-    FILE *f = fopen(filename, "w");
-    assert(f);
-    fprintf(f, "{\n");
-    bool first = true;
-    for (auto& pair : mappedGlobals) {
-      auto name = pair.first;
-      auto& global = pair.second;
-      if (first) first = false;
-      else fprintf(f, ",");
-      fprintf(f, "\"%s\": { \"address\": %d, \"type\": %d, \"import\": %d, \"module\": \"%s\", \"base\": \"%s\" }\n",
-                 name.str, global.address, global.type, global.import, global.module.str, global.base.str);
-    }
-    fprintf(f, "}");
-    fclose(f);
-  }
-
 private:
-  void allocateGlobal(IString name, WasmType type, bool import, IString module = IString(), IString base = IString()) {
+  void allocateGlobal(IString name, WasmType type) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
-    mappedGlobals.emplace(name, MappedGlobal(nextGlobal, type, import, module, base));
-    nextGlobal += 8;
-    assert(nextGlobal < maxGlobal);
+    mappedGlobals.emplace(name, MappedGlobal(type));
+    auto global = new Global();
+    global->name = name;
+    global->type = type;
+    Literal value;
+    if (type == i32) value = Literal(uint32_t(0));
+    else if (type == f32) value = Literal(float(0));
+    else if (type == f64) value = Literal(double(0));
+    else WASM_UNREACHABLE();
+    global->init = wasm.allocator.alloc<Const>()->set(value);
+    wasm.addGlobal(global);
   }
 
   struct View {
@@ -278,8 +265,6 @@ public:
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
-       nextGlobal(8),
-       maxGlobal(1000),
        memoryGrowth(memoryGrowth),
        debug(debug),
        imprecise(imprecise),
@@ -520,13 +505,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       type = WasmType::f64;
     }
     if (type != WasmType::none) {
-      // wasm has no imported constants, so allocate a global, and we need to write the value into that
-      allocateGlobal(name, type, true, import->module, import->base);
-      delete import;
+      import->kind = Import::Global;
+      import->globalType = type;
+      mappedGlobals.emplace(name, type);
     } else {
       import->kind = Import::Function;
-      wasm.addImport(import);
     }
+    wasm.addImport(import);
   };
 
   IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
@@ -554,7 +539,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         if (value[0] == NUM) {
           // global int
           assert(value[1]->getNumber() == 0);
-          allocateGlobal(name, WasmType::i32, false);
+          allocateGlobal(name, WasmType::i32);
         } else if (value[0] == BINARY) {
           // int import
           assert(value[1] == OR && value[3][0] == NUM && value[3][1]->getNumber() == 0);
@@ -567,14 +552,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           if (import[0] == NUM) {
             // global
             assert(import[1]->getNumber() == 0);
-            allocateGlobal(name, WasmType::f64, false);
+            allocateGlobal(name, WasmType::f64);
           } else {
             // import
             addImport(name, import, WasmType::f64);
           }
         } else if (value[0] == CALL) {
           assert(value[1][0] == NAME && value[1][1] == Math_fround && value[2][0][0] == NUM && value[2][0][1]->getNumber() == 0);
-          allocateGlobal(name, WasmType::f32, false);
+          allocateGlobal(name, WasmType::f32);
         } else if (value[0] == DOT) {
           // simple module.base import. can be a view, or a function.
           if (value[1][0] == NAME) {
@@ -721,11 +706,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   if (optimize) {
     optimizingBuilder->finish();
-    if (maxGlobal < 1024) {
-      PassRunner passRunner(&wasm);
-      passRunner.add("post-emscripten");
-      passRunner.run();
-    }
+    PassRunner passRunner(&wasm);
+    passRunner.add("post-emscripten");
+    passRunner.run();
   }
 
   // second pass. first, function imports
@@ -733,6 +716,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   std::vector<IString> toErase;
 
   for (auto& import : wasm.imports) {
+    if (import->kind != Import::Function) continue;
     IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
@@ -1021,18 +1005,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->finalize();
           return ret;
         }
-        // global var, do a store to memory
+        // global var
         assert(mappedGlobals.find(name) != mappedGlobals.end());
-        MappedGlobal global = mappedGlobals[name];
-        auto ret = allocator.alloc<Store>();
-        ret->bytes = getWasmTypeSize(global.type);
-        ret->offset = 0;
-        ret->align = ret->bytes;
-        ret->ptr = builder.makeConst(Literal(int32_t(global.address)));
-        ret->value = process(ast[3]);
-        ret->valueType = global.type;
-        ret->finalize();
-        return ret;
+        return builder.makeSetGlobal(name, process(ast[3]));
       } else if (ast[2][0] == SUB) {
         Ref target = ast[2];
         assert(target[1][0] == NAME);
@@ -1158,17 +1133,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         return call;
       }
-      // global var, do a load from memory
+      // global var
       assert(mappedGlobals.find(name) != mappedGlobals.end());
-      MappedGlobal global = mappedGlobals[name];
-      auto ret = allocator.alloc<Load>();
-      ret->bytes = getWasmTypeSize(global.type);
-      ret->signed_ = true; // but doesn't matter
-      ret->offset = 0;
-      ret->align = ret->bytes;
-      ret->ptr = builder.makeConst(Literal(int32_t(global.address)));
-      ret->type = global.type;
-      return ret;
+      MappedGlobal& global = mappedGlobals[name];
+      return builder.makeGetGlobal(name, global.type);
     } else if (what == SUB) {
       Ref target = ast[1];
       assert(target[0] == NAME);

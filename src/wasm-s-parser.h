@@ -949,9 +949,16 @@ private:
     auto ret = allocator.alloc<GetGlobal>();
     ret->name = s[1]->str();
     auto* global = wasm.checkGlobal(ret->name);
-    if (!global) throw ParseException("bad get_global name", s.line, s.col);
-    ret->type = global->type;
-    return ret;
+    if (global) {
+      ret->type = global->type;
+      return ret;
+    }
+    auto* import = wasm.checkImport(ret->name);
+    if (import && import->kind == Import::Global) {
+      ret->type = import->globalType;
+      return ret;
+    }
+    throw ParseException("bad get_global name", s.line, s.col);
   }
 
   Expression* makeSetGlobal(Element& s) {
@@ -1434,7 +1441,7 @@ private:
       } else if (s[2]->str() == TABLE) {
         im->kind = Import::Table;
       } else if (s[2]->str() == GLOBAL) {
-        im->kind = Import::Table;
+        im->kind = Import::Global;
       } else {
         WASM_UNREACHABLE();
       }

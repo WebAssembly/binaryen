@@ -741,7 +741,7 @@ public:
     return mappedImports[name];
   }
   
-  std::map<Name, uint32_t> mappedFunctions; // name of the Function => index 
+  std::map<Name, uint32_t> mappedFunctions; // name of the Function => index
   uint32_t getFunctionIndex(Name name) {
     if (!mappedFunctions.size()) {
       // Create name => index mapping.
@@ -754,13 +754,20 @@ public:
     return mappedFunctions[name];
   }
 
-  std::map<Name, uint32_t> mappedGlobals; // name of the Global => index 
+  std::map<Name, uint32_t> mappedGlobals; // name of the Global => index. first imported globals, then internal globals
   uint32_t getGlobalIndex(Name name) {
     if (!mappedGlobals.size()) {
       // Create name => index mapping.
+      for (auto& import : wasm->imports) {
+        if (import->kind != Import::Global) continue;
+        assert(mappedGlobals.count(import->name) == 0);
+        auto index = mappedGlobals.size();
+        mappedGlobals[import->name] = index;
+      }
       for (size_t i = 0; i < wasm->globals.size(); i++) {
         assert(mappedGlobals.count(wasm->globals[i]->name) == 0);
-        mappedGlobals[wasm->globals[i]->name] = i;
+        auto index = mappedGlobals.size();
+        mappedGlobals[wasm->globals[i]->name] = index;
       }
     }
     assert(mappedGlobals.count(name));
@@ -1664,6 +1671,24 @@ public:
     return ret;
   }
 
+  std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
+  Name getGlobalName(Index index) {
+    if (!mappedGlobals.size()) {
+      // Create name => index mapping.
+      for (auto& import : wasm.imports) {
+        if (import->kind != Import::Global) continue;
+        auto index = mappedGlobals.size();
+        mappedGlobals[index] = import->name;
+      }
+      for (size_t i = 0; i < wasm.globals.size(); i++) {
+        auto index = mappedGlobals.size();
+        mappedGlobals[index] = wasm.globals[i]->name;
+      }
+    }
+    assert(mappedGlobals.count(index));
+    return mappedGlobals[index];
+  }
+
   void processFunctions() {
     for (auto& func : functions) {
       wasm.addFunction(func);
@@ -1680,7 +1705,7 @@ public:
         case Export::Function: curr->value = wasm.functions[iter.second]->name; break;
         case Export::Table: curr->value = Name::fromInt(0); break;
         case Export::Memory: curr->value = Name::fromInt(0); break;
-        case Export::Global: curr->value = wasm.globals[iter.second]->name; break;
+        case Export::Global: curr->value = getGlobalName(iter.second); break;
         default: WASM_UNREACHABLE();
       }
       wasm.addExport(curr);
@@ -1975,13 +2000,23 @@ public:
   void visitGetGlobal(GetGlobal *curr) {
     if (debug) std::cerr << "zz node: GetGlobal " << pos << std::endl;
     auto index = getU32LEB();
-    curr->name = wasm.getGlobal(index)->name;
-    curr->type = wasm.getGlobal(index)->type;
+    curr->name = getGlobalName(index);
+    auto* global = wasm.checkGlobal(curr->name);
+    if (global) {
+      curr->type = global->type;
+      return;
+    }
+    auto* import = wasm.checkImport(curr->name);
+    if (import && import->kind == Import::Global) {
+      curr->type = import->globalType;
+      return;
+    }
+    throw ParseException("bad get_global");
   }
   void visitSetGlobal(SetGlobal *curr) {
     if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
     auto index = getU32LEB();
-    curr->name = wasm.getGlobal(index)->name;
+    curr->name = getGlobalName(index);
     curr->value = popExpression();
   }
 

@@ -7,6 +7,13 @@
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$vii (func (param i32 i32)))
+  (import $STACKTOP global "env" "STACKTOP" i32)
+  (import $STACK_MAX global "env" "STACK_MAX" i32)
+  (import $tempDoublePtr global "env" "tempDoublePtr" i32)
+  (import $ABORT global "env" "ABORT" i32)
+  (import $cttz_i8 global "env" "cttz_i8" i32)
+  (import $nan global "global" "NaN" f64)
+  (import $inf global "global" "Infinity" f64)
   (import $abort "env" "abort")
   (import $nullFunc_ii "env" "nullFunc_ii" (param i32))
   (import $nullFunc_iiii "env" "nullFunc_iiii" (param i32))
@@ -49,31 +56,47 @@
   (export "dynCall_vi" $dynCall_vi)
   (export "___udivmoddi4" $___udivmoddi4)
   (export "memory" memory)
+  (global $__THREW__ i32 (i32.const 0))
+  (global $threwValue i32 (i32.const 0))
+  (global $setjmpId i32 (i32.const 0))
+  (global $undef i32 (i32.const 0))
+  (global $tempInt i32 (i32.const 0))
+  (global $tempBigInt i32 (i32.const 0))
+  (global $tempBigIntP i32 (i32.const 0))
+  (global $tempBigIntS i32 (i32.const 0))
+  (global $tempBigIntR f64 (f64.const 0))
+  (global $tempBigIntI i32 (i32.const 0))
+  (global $tempBigIntD i32 (i32.const 0))
+  (global $tempValue i32 (i32.const 0))
+  (global $tempDouble f64 (f64.const 0))
+  (global $tempRet0 i32 (i32.const 0))
+  (global $tempRet1 i32 (i32.const 0))
+  (global $tempRet2 i32 (i32.const 0))
+  (global $tempRet3 i32 (i32.const 0))
+  (global $tempRet4 i32 (i32.const 0))
+  (global $tempRet5 i32 (i32.const 0))
+  (global $tempRet6 i32 (i32.const 0))
+  (global $tempRet7 i32 (i32.const 0))
+  (global $tempRet8 i32 (i32.const 0))
+  (global $tempRet9 i32 (i32.const 0))
+  (global $tempFloat f64 (f64.const 0))
   (table 18 18 anyfunc)
   (elem (i32.const 0) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
   (func $stackAlloc (param $0 i32) (result i32)
     (local $1 i32)
     (set_local $1
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (get_local $0)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.and
         (i32.add
-          (i32.load
-            (i32.const 8)
-          )
+          (get_global $STACKTOP)
           (i32.const 15)
         )
         (i32.const -16)
@@ -81,53 +104,40 @@
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
     (get_local $1)
   )
   (func $stackSave (result i32)
-    (i32.load
-      (i32.const 8)
-    )
+    (get_global $STACKTOP)
   )
   (func $stackRestore (param $0 i32)
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $0)
     )
   )
   (func $establishStackSpace (param $0 i32) (param $1 i32)
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $0)
     )
-    (i32.store
-      (i32.const 16)
+    (set_global $STACK_MAX
       (get_local $1)
     )
   )
   (func $setThrew (param $0 i32) (param $1 i32)
     (if
       (i32.eq
-        (i32.load
-          (i32.const 48)
-        )
+        (get_global $__THREW__)
         (i32.const 0)
       )
       (block
-        (i32.store
-          (i32.const 48)
+        (set_global $__THREW__
           (get_local $0)
         )
-        (i32.store
-          (i32.const 56)
+        (set_global $threwValue
           (get_local $1)
         )
       )
@@ -135,33 +145,25 @@
   )
   (func $copyTempFloat (param $0 i32)
     (i32.store8
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s
         (get_local $0)
       )
     )
     (i32.store8 offset=1
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=1
         (get_local $0)
       )
     )
     (i32.store8 offset=2
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=2
         (get_local $0)
       )
     )
     (i32.store8 offset=3
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=3
         (get_local $0)
       )
@@ -169,105 +171,77 @@
   )
   (func $copyTempDouble (param $0 i32)
     (i32.store8
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s
         (get_local $0)
       )
     )
     (i32.store8 offset=1
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=1
         (get_local $0)
       )
     )
     (i32.store8 offset=2
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=2
         (get_local $0)
       )
     )
     (i32.store8 offset=3
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=3
         (get_local $0)
       )
     )
     (i32.store8 offset=4
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=4
         (get_local $0)
       )
     )
     (i32.store8 offset=5
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=5
         (get_local $0)
       )
     )
     (i32.store8 offset=6
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=6
         (get_local $0)
       )
     )
     (i32.store8 offset=7
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=7
         (get_local $0)
       )
     )
   )
   (func $setTempRet0 (param $0 i32)
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (get_local $0)
     )
   )
   (func $getTempRet0 (result i32)
-    (i32.load
-      (i32.const 168)
-    )
+    (get_global $tempRet0)
   )
   (func $_main (result i32)
     (local $0 i32)
     (set_local $0
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 16)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -277,8 +251,7 @@
         (get_local $0)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $0)
     )
     (i32.const 0)
@@ -288,25 +261,19 @@
     (local $3 i32)
     (local $4 i32)
     (f64.store
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (get_local $0)
     )
     (set_local $2
       (call $_bitshift64Lshr
         (tee_local $3
           (i32.load
-            (i32.load
-              (i32.const 24)
-            )
+            (get_global $tempDoublePtr)
           )
         )
         (tee_local $4
           (i32.load offset=4
-            (i32.load
-              (i32.const 24)
-            )
+            (get_global $tempDoublePtr)
           )
         )
         (i32.const 52)
@@ -371,15 +338,11 @@
         )
       )
       (i32.store
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $tempDoublePtr)
         (get_local $3)
       )
       (i32.store offset=4
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $tempDoublePtr)
         (i32.or
           (i32.and
             (get_local $4)
@@ -389,9 +352,7 @@
         )
       )
       (f64.load
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $tempDoublePtr)
       )
     )
   )
@@ -574,27 +535,18 @@
     (local $1 i32)
     (local $2 i32)
     (set_local $1
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 16)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -614,8 +566,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $1)
     )
     (get_local $0)
@@ -625,27 +576,18 @@
     (local $4 i32)
     (local $5 i32)
     (set_local $4
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 80)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -709,8 +651,7 @@
         (get_local $2)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $4)
     )
     (get_local $0)
@@ -719,27 +660,18 @@
     (local $3 i32)
     (local $4 i32)
     (set_local $4
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 32)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -795,8 +727,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $4)
     )
     (get_local $0)
@@ -961,27 +892,18 @@
     (local $2 i32)
     (local $3 i32)
     (set_local $2
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 16)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -1000,8 +922,7 @@
         (get_local $3)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $2)
     )
     (get_local $0)
@@ -1029,27 +950,18 @@
     (local $16 i32)
     (local $17 i32)
     (set_local $8
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 48)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -1404,8 +1316,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $8)
     )
     (get_local $14)
@@ -1424,27 +1335,18 @@
     (local $13 i32)
     (local $14 i32)
     (set_local $3
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 224)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -1731,8 +1633,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $3)
     )
     (get_local $0)
@@ -2961,27 +2862,18 @@
     (local $82 i32)
     (local $83 i32)
     (set_local $31
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 624)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -4675,9 +4567,7 @@
                                         )
                                         (i32.eq
                                           (tee_local $1
-                                            (i32.load
-                                              (i32.const 168)
-                                            )
+                                            (get_global $tempRet0)
                                           )
                                           (i32.const 0)
                                         )
@@ -4782,9 +4672,7 @@
                                 )
                               )
                               (set_local $5
-                                (i32.load
-                                  (i32.const 168)
-                                )
+                                (get_global $tempRet0)
                               )
                               (i32.store
                                 (tee_local $33
@@ -5025,18 +4913,14 @@
               (i32.const 0)
             )
             (f64.store
-              (i32.load
-                (i32.const 24)
-              )
+              (get_global $tempDoublePtr)
               (get_local $14)
             )
             (set_local $51
               (if
                 (i32.lt_s
                   (i32.load offset=4
-                    (i32.load
-                      (i32.const 24)
-                    )
+                    (get_global $tempDoublePtr)
                   )
                   (i32.const 0)
                 )
@@ -5087,9 +4971,7 @@
               )
             )
             (f64.store
-              (i32.load
-                (i32.const 24)
-              )
+              (get_global $tempDoublePtr)
               (get_local $14)
             )
             (set_local $20
@@ -5103,9 +4985,7 @@
                       (tee_local $1
                         (i32.and
                           (i32.load offset=4
-                            (i32.load
-                              (i32.const 24)
-                            )
+                            (get_global $tempDoublePtr)
                           )
                           (i32.const 2146435072)
                         )
@@ -5758,17 +5638,13 @@
                                                   (i32.const 0)
                                                   (get_local $11)
                                                 )
-                                                (i32.load
-                                                  (i32.const 168)
-                                                )
+                                                (get_global $tempRet0)
                                                 (get_local $5)
                                                 (i32.const 0)
                                               )
                                             )
                                             (tee_local $7
-                                              (i32.load
-                                                (i32.const 168)
-                                              )
+                                              (get_global $tempRet0)
                                             )
                                             (i32.const 1000000000)
                                             (i32.const 0)
@@ -7913,9 +7789,7 @@
                             )
                             (i32.eq
                               (tee_local $1
-                                (i32.load
-                                  (i32.const 168)
-                                )
+                                (get_global $tempRet0)
                               )
                               (i32.const 0)
                             )
@@ -8700,8 +8574,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $31)
     )
     (get_local $24)
@@ -9174,9 +9047,7 @@
                 )
               )
               (set_local $1
-                (i32.load
-                  (i32.const 168)
-                )
+                (get_global $tempRet0)
               )
               (if
                 (i32.or
@@ -9289,27 +9160,18 @@
     (local $6 i32)
     (local $7 i32)
     (set_local $7
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 256)
       )
     )
     (if
       (i32.ge_s
-        (i32.load
-          (i32.const 8)
-        )
-        (i32.load
-          (i32.const 16)
-        )
+        (get_global $STACKTOP)
+        (get_global $STACK_MAX)
       )
       (call_import $abort)
     )
@@ -9456,8 +9318,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $7)
     )
   )
@@ -17557,8 +17418,7 @@
     (nop)
   )
   (func $_i64Subtract (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.sub
         (i32.sub
           (get_local $1)
@@ -17576,8 +17436,7 @@
     )
   )
   (func $_i64Add (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.add
         (i32.add
           (get_local $1)
@@ -17741,8 +17600,7 @@
         (i32.const 32)
       )
       (block
-        (i32.store
-          (i32.const 168)
+        (set_global $tempRet0
           (i32.shr_u
             (get_local $1)
             (get_local $2)
@@ -17774,8 +17632,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.const 0)
     )
     (i32.shr_u
@@ -17793,8 +17650,7 @@
         (i32.const 32)
       )
       (block
-        (i32.store
-          (i32.const 168)
+        (set_global $tempRet0
           (i32.or
             (i32.shl
               (get_local $1)
@@ -17832,8 +17688,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.shl
         (get_local $0)
         (i32.sub
@@ -18001,8 +17856,7 @@
         (i32.const 32)
       )
       (block
-        (i32.store
-          (i32.const 168)
+        (set_global $tempRet0
           (i32.shr_s
             (get_local $1)
             (get_local $2)
@@ -18034,8 +17888,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (select
         (i32.const -1)
         (i32.const 0)
@@ -18100,8 +17953,7 @@
         (get_local $3)
       )
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.add
         (i32.add
           (i32.shr_u
@@ -18202,9 +18054,7 @@
             (get_local $4)
             (get_local $0)
           )
-          (i32.load
-            (i32.const 168)
-          )
+          (get_global $tempRet0)
           (call $_i64Subtract
             (i32.xor
               (tee_local $1
@@ -18260,9 +18110,7 @@
             (get_local $1)
             (get_local $2)
           )
-          (i32.load
-            (i32.const 168)
-          )
+          (get_global $tempRet0)
           (i32.const 0)
         )
         (tee_local $1
@@ -18273,9 +18121,7 @@
         )
       )
       (i32.xor
-        (i32.load
-          (i32.const 168)
-        )
+        (get_global $tempRet0)
         (tee_local $0
           (i32.xor
             (get_local $2)
@@ -18292,16 +18138,11 @@
     (local $5 i32)
     (local $6 i32)
     (set_local $6
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 16)
       )
     )
@@ -18362,9 +18203,7 @@
           (get_local $4)
           (get_local $5)
         )
-        (i32.load
-          (i32.const 168)
-        )
+        (get_global $tempRet0)
         (call $_i64Subtract
           (i32.xor
             (tee_local $0
@@ -18420,9 +18259,7 @@
           (get_local $0)
           (get_local $1)
         )
-        (i32.load
-          (i32.const 168)
-        )
+        (get_global $tempRet0)
         (tee_local $0
           (get_local $6)
         )
@@ -18447,16 +18284,12 @@
       )
     )
     (set_local $1
-      (i32.load
-        (i32.const 168)
-      )
+      (get_global $tempRet0)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $6)
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (get_local $1)
     )
     (get_local $0)
@@ -18469,8 +18302,7 @@
         (get_local $2)
       )
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.or
         (i32.add
           (i32.add
@@ -18484,9 +18316,7 @@
             )
           )
           (tee_local $0
-            (i32.load
-              (i32.const 168)
-            )
+            (get_global $tempRet0)
           )
         )
         (i32.and
@@ -18515,16 +18345,11 @@
   (func $___uremdi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
     (local $4 i32)
     (set_local $4
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 16)
       )
     )
@@ -18539,12 +18364,10 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $4)
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.load offset=4
         (get_local $0)
       )
@@ -18613,8 +18436,7 @@
                 )
               )
             )
-            (i32.store
-              (i32.const 168)
+            (set_global $tempRet0
               (i32.const 0)
             )
             (return
@@ -18630,8 +18452,7 @@
                 (get_local $2)
               )
               (block
-                (i32.store
-                  (i32.const 168)
+                (set_global $tempRet0
                   (i32.const 0)
                 )
                 (return
@@ -18653,8 +18474,7 @@
                 (i32.const 0)
               )
             )
-            (i32.store
-              (i32.const 168)
+            (set_global $tempRet0
               (i32.const 0)
             )
             (return
@@ -18699,8 +18519,7 @@
                   )
                 )
               )
-              (i32.store
-                (i32.const 168)
+              (set_global $tempRet0
                 (i32.const 0)
               )
               (return
@@ -18736,8 +18555,7 @@
                   )
                 )
               )
-              (i32.store
-                (i32.const 168)
+              (set_global $tempRet0
                 (i32.const 0)
               )
               (return
@@ -18793,8 +18611,7 @@
                   )
                 )
               )
-              (i32.store
-                (i32.const 168)
+              (set_global $tempRet0
                 (i32.const 0)
               )
               (return
@@ -18871,8 +18688,7 @@
               (i32.const 0)
             )
             (block
-              (i32.store
-                (i32.const 168)
+              (set_global $tempRet0
                 (i32.const 0)
               )
               (return
@@ -18900,8 +18716,7 @@
               )
             )
           )
-          (i32.store
-            (i32.const 168)
+          (set_global $tempRet0
             (i32.const 0)
           )
           (return
@@ -18992,8 +18807,7 @@
                   (i32.const 0)
                 )
                 (block
-                  (i32.store
-                    (i32.const 168)
+                  (set_global $tempRet0
                     (i32.const 0)
                   )
                   (return
@@ -19021,8 +18835,7 @@
                   )
                 )
               )
-              (i32.store
-                (i32.const 168)
+              (set_global $tempRet0
                 (i32.const 0)
               )
               (return
@@ -19193,8 +19006,7 @@
               (i32.const 1)
             )
             (block
-              (i32.store
-                (i32.const 168)
+              (set_global $tempRet0
                 (i32.or
                   (get_local $9)
                   (i32.and
@@ -19214,8 +19026,7 @@
               )
             )
             (block
-              (i32.store
-                (i32.const 168)
+              (set_global $tempRet0
                 (i32.or
                   (i32.const 0)
                   (i32.shr_u
@@ -19289,9 +19100,7 @@
             )
           )
           (set_local $8
-            (i32.load
-              (i32.const 168)
-            )
+            (get_global $tempRet0)
           )
           (set_local $9
             (get_local $0)
@@ -19361,9 +19170,7 @@
                     (i32.or
                       (i32.shr_s
                         (tee_local $5
-                          (i32.load
-                            (i32.const 168)
-                          )
+                          (get_global $tempRet0)
                         )
                         (i32.const 31)
                       )
@@ -19421,9 +19228,7 @@
                 )
               )
               (set_local $13
-                (i32.load
-                  (i32.const 168)
-                )
+                (get_global $tempRet0)
               )
               (if
                 (i32.eq
@@ -19482,8 +19287,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 168)
+    (set_global $tempRet0
       (i32.or
         (i32.or
           (i32.or

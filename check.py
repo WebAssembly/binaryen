@@ -701,7 +701,7 @@ if has_emcc:
       elif method == 'interpret-s-expr':
         os.unlink('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
-          os.unlink('a.wasm.wast.mappedGlobals')
+          os.unlink('a.wasm.wast')
       elif method == 'asmjs':
         os.unlink('a.wasm.wast') # we should not need the .wast
         break_cashew() # we don't use cashew, so ok to break it

@@ -531,6 +531,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitImport(Import *curr) {
     printOpening(o, "import ");
+    printName(curr->name) << ' ';
     switch (curr->kind) {
       case Export::Function: break;
       case Export::Table: o << "table "; break;
@@ -538,14 +539,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case Export::Global: o << "global "; break;
       default: WASM_UNREACHABLE();
     }
-    printName(curr->name) << ' ';
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str);
     switch (curr->kind) {
       case Export::Function: if (curr->functionType) visitFunctionType(curr->functionType); break;
       case Export::Table: break;
       case Export::Memory: break;
-      case Export::Global: o << printWasmType(curr->globalType); break;
+      case Export::Global: o << ' ' << printWasmType(curr->globalType); break;
       default: WASM_UNREACHABLE();
     }
     o << ')';
@@ -564,7 +564,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitGlobal(Global *curr) {
     printOpening(o, "global ");
-    printName(curr->name) << ' ' << printWasmType(curr->type);
+    printName(curr->name) << ' ' << printWasmType(curr->type) << ' ';
     visit(curr->init);
     o << ')';
   }

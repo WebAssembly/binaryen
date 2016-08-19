@@ -485,14 +485,17 @@ public:
 
 // Execute an constant expression in a global init or memory offset
 class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner> {
+  std::map<Name, Literal>& globals;
 public:
+  ConstantExpressionRunner(std::map<Name, Literal>& globals) : globals(globals) {}
+
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
   Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
   Flow visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
   Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
-  Flow visitGetGlobal(GetGlobal *curr) { WASM_UNREACHABLE(); }
+  Flow visitGetGlobal(GetGlobal *curr) { return Flow(globals[curr->name]); }
   Flow visitSetGlobal(SetGlobal *curr) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load *curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store *curr) { WASM_UNREACHABLE(); }
@@ -517,7 +520,8 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
-    virtual void init(Module& wasm) {}
+    virtual void init(Module& wasm, ModuleInstance& instance) {}
+    virtual void importGlobals(std::map<Name, Literal>& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) = 0;
     virtual Literal load(Load* load, Address addr) = 0;
@@ -532,11 +536,17 @@ public:
   std::map<Name, Literal> globals;
 
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
+    // import globals from the outside
+    externalInterface->importGlobals(globals, wasm);
+    // prepare memory
     memorySize = wasm.memory.initial;
+    // generate internal (non-imported) globals
     for (auto& global : wasm.globals) {
-      globals[global->name] = ConstantExpressionRunner().visit(global->init).value;
+      globals[global->name] = ConstantExpressionRunner(globals).visit(global->init).value;
     }
-    externalInterface->init(wasm);
+    // initialize the rest of the external interface
+    externalInterface->init(wasm, *this);
+    // run start, if present
     if (wasm.start.is()) {
       LiteralList arguments;
       callFunction(wasm.start, arguments);

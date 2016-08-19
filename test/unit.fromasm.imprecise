@@ -4,6 +4,10 @@
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$vd (func (param f64)))
+  (import $t global "global" "NaN" f64)
+  (import $u global "global" "Infinity" f64)
+  (import $tempDoublePtr global "env" "tempDoublePtr" i32)
+  (import $n global "env" "gb" i32)
   (import $abort "env" "abort" (param f64))
   (import $print "env" "print" (param i32))
   (import $h "env" "h" (param i32))
@@ -11,6 +15,8 @@
   (export "big_negative" $big_negative)
   (export "pick" $big_negative)
   (export "memory" memory)
+  (global $Int i32 (i32.const 0))
+  (global $Double f64 (f64.const 0))
   (table 10 10 anyfunc)
   (elem (i32.const 0) $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
   (func $big_negative
@@ -19,9 +25,7 @@
   (func $importedDoubles (result f64)
     (if
       (i32.gt_s
-        (i32.load
-          (i32.const 24)
-        )
+        (get_global $Int)
         (i32.const 0)
       )
       (return
@@ -30,9 +34,7 @@
     )
     (if
       (f64.gt
-        (f64.load
-          (i32.const 32)
-        )
+        (get_global $Double)
         (f64.const 0)
       )
       (return
@@ -421,9 +423,7 @@
       (get_local $0)
       (i32.add
         (i32.add
-          (i32.load
-            (i32.const 48)
-          )
+          (get_global $n)
           (i32.const 136)
         )
         (i32.const 8)

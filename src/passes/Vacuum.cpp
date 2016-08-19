@@ -50,6 +50,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         case Expression::Id::LoadId:
         case Expression::Id::StoreId:
         case Expression::Id::ReturnId:
+        case Expression::Id::GetGlobalId:
+        case Expression::Id::SetGlobalId:
         case Expression::Id::HostId:
         case Expression::Id::UnreachableId: return curr; // always needed
 

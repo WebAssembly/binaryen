@@ -7,6 +7,12 @@
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$vii (func (param i32 i32)))
+  (import $STACKTOP global "env" "STACKTOP" i32)
+  (import $STACK_MAX global "env" "STACK_MAX" i32)
+  (import $tempDoublePtr global "env" "tempDoublePtr" i32)
+  (import $ABORT global "env" "ABORT" i32)
+  (import $nan global "global" "NaN" f64)
+  (import $inf global "global" "Infinity" f64)
   (import $abort "env" "abort" (param i32))
   (import $_pthread_cleanup_pop "env" "_pthread_cleanup_pop" (param i32))
   (import $_pthread_self "env" "_pthread_self" (result i32))
@@ -41,6 +47,30 @@
   (export "dynCall_iiii" $dynCall_iiii)
   (export "dynCall_vi" $dynCall_vi)
   (export "memory" memory)
+  (global $__THREW__ i32 (i32.const 0))
+  (global $threwValue i32 (i32.const 0))
+  (global $setjmpId i32 (i32.const 0))
+  (global $undef i32 (i32.const 0))
+  (global $tempInt i32 (i32.const 0))
+  (global $tempBigInt i32 (i32.const 0))
+  (global $tempBigIntP i32 (i32.const 0))
+  (global $tempBigIntS i32 (i32.const 0))
+  (global $tempBigIntR f64 (f64.const 0))
+  (global $tempBigIntI i32 (i32.const 0))
+  (global $tempBigIntD i32 (i32.const 0))
+  (global $tempValue i32 (i32.const 0))
+  (global $tempDouble f64 (f64.const 0))
+  (global $tempRet0 i32 (i32.const 0))
+  (global $tempRet1 i32 (i32.const 0))
+  (global $tempRet2 i32 (i32.const 0))
+  (global $tempRet3 i32 (i32.const 0))
+  (global $tempRet4 i32 (i32.const 0))
+  (global $tempRet5 i32 (i32.const 0))
+  (global $tempRet6 i32 (i32.const 0))
+  (global $tempRet7 i32 (i32.const 0))
+  (global $tempRet8 i32 (i32.const 0))
+  (global $tempRet9 i32 (i32.const 0))
+  (global $tempFloat f64 (f64.const 0))
   (table 18 18 anyfunc)
   (elem (i32.const 0) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $b1 $___stdio_write $b1 $b1 $b2 $b2 $b2 $b2 $_cleanup_418 $b2 $b2 $b2)
   (func $_malloc (param $0 i32) (result i32)
@@ -7840,16 +7870,11 @@
     (local $17 i32)
     (local $18 i32)
     (set_local $11
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 48)
       )
     )
@@ -8212,8 +8237,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $11)
     )
     (get_local $16)
@@ -8757,16 +8781,11 @@
     (local $9 i32)
     (local $10 i32)
     (set_local $5
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 16)
       )
     )
@@ -8900,8 +8919,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $5)
     )
     (get_local $4)
@@ -9422,16 +9440,11 @@
     (local $3 i32)
     (local $4 i32)
     (set_local $4
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 32)
       )
     )
@@ -9487,8 +9500,7 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $4)
     )
     (get_local $0)
@@ -9635,16 +9647,11 @@
     (local $3 i32)
     (local $4 i32)
     (set_local $4
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 80)
       )
     )
@@ -9706,73 +9713,56 @@
         (get_local $2)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $4)
     )
     (get_local $3)
   )
   (func $copyTempDouble (param $0 i32)
     (i32.store8
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s
         (get_local $0)
       )
     )
     (i32.store8 offset=1
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=1
         (get_local $0)
       )
     )
     (i32.store8 offset=2
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=2
         (get_local $0)
       )
     )
     (i32.store8 offset=3
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=3
         (get_local $0)
       )
     )
     (i32.store8 offset=4
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=4
         (get_local $0)
       )
     )
     (i32.store8 offset=5
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=5
         (get_local $0)
       )
     )
     (i32.store8 offset=6
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=6
         (get_local $0)
       )
     )
     (i32.store8 offset=7
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=7
         (get_local $0)
       )
@@ -9782,16 +9772,11 @@
     (local $1 i32)
     (local $2 i32)
     (set_local $1
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (i32.const 16)
       )
     )
@@ -9811,41 +9796,32 @@
         )
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $1)
     )
     (get_local $0)
   )
   (func $copyTempFloat (param $0 i32)
     (i32.store8
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s
         (get_local $0)
       )
     )
     (i32.store8 offset=1
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=1
         (get_local $0)
       )
     )
     (i32.store8 offset=2
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=2
         (get_local $0)
       )
     )
     (i32.store8 offset=3
-      (i32.load
-        (i32.const 24)
-      )
+      (get_global $tempDoublePtr)
       (i32.load8_s offset=3
         (get_local $0)
       )
@@ -9887,26 +9863,18 @@
   (func $stackAlloc (param $0 i32) (result i32)
     (local $1 i32)
     (set_local $1
-      (i32.load
-        (i32.const 8)
-      )
+      (get_global $STACKTOP)
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.add
-        (i32.load
-          (i32.const 8)
-        )
+        (get_global $STACKTOP)
         (get_local $0)
       )
     )
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (i32.and
         (i32.add
-          (i32.load
-            (i32.const 8)
-          )
+          (get_global $STACKTOP)
           (i32.const 15)
         )
         (i32.const -16)
@@ -9928,17 +9896,13 @@
   (func $setThrew (param $0 i32) (param $1 i32)
     (if
       (i32.eqz
-        (i32.load
-          (i32.const 40)
-        )
+        (get_global $__THREW__)
       )
       (block
-        (i32.store
-          (i32.const 40)
+        (set_global $__THREW__
           (get_local $0)
         )
-        (i32.store
-          (i32.const 48)
+        (set_global $threwValue
           (get_local $1)
         )
       )
@@ -9982,12 +9946,10 @@
     )
   )
   (func $establishStackSpace (param $0 i32) (param $1 i32)
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $0)
     )
-    (i32.store
-      (i32.const 16)
+    (set_global $STACK_MAX
       (get_local $1)
     )
   )
@@ -10010,14 +9972,12 @@
     (i32.const 0)
   )
   (func $stackRestore (param $0 i32)
-    (i32.store
-      (i32.const 8)
+    (set_global $STACKTOP
       (get_local $0)
     )
   )
   (func $setTempRet0 (param $0 i32)
-    (i32.store
-      (i32.const 160)
+    (set_global $tempRet0
       (get_local $0)
     )
   )
@@ -10034,9 +9994,7 @@
     (i32.const 0)
   )
   (func $getTempRet0 (result i32)
-    (i32.load
-      (i32.const 160)
-    )
+    (get_global $tempRet0)
   )
   (func $_main (result i32)
     (drop
@@ -10047,9 +10005,7 @@
     (i32.const 0)
   )
   (func $stackSave (result i32)
-    (i32.load
-      (i32.const 8)
-    )
+    (get_global $STACKTOP)
   )
   (func $b2 (param $0 i32)
     (call_import $abort

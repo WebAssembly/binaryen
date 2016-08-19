@@ -42,7 +42,7 @@ int main(int argc, const char *argv[]) {
            })
       .add("--mapped-globals", "-m", "Mapped globals", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
-             o->extra["mapped globals"] = argument;
+             std::cerr << "warning: the --mapped-globals/-m option is deprecated (a mapped globals file is no longer needed as we use wasm globals)" << std::endl;
            })
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
@@ -61,10 +61,6 @@ int main(int argc, const char *argv[]) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
-
-  const auto &mg_it = options.extra.find("mapped globals");
-  const char *mappedGlobals =
-      mg_it == options.extra.end() ? nullptr : mg_it->second.c_str();
 
   const auto &tm_it = options.extra.find("total memory");
   size_t totalMemory =
@@ -98,12 +94,6 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
-
-  if (mappedGlobals) {
-    if (options.debug)
-      std::cerr << "serializing mapped globals..." << std::endl;
-    asm2wasm.serializeMappedGlobals(mappedGlobals);
-  }
 
   if (options.debug) std::cerr << "done." << std::endl;
 }

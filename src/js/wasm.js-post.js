@@ -123,26 +123,6 @@ function integrateWasmJS(Module) {
     f64: 4
   };
 
-  // wasm lacks globals, so asm2wasm maps them into locations in memory. that information cannot
-  // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
-  // output, either generated ahead of time or on the client, we need to apply those mapped
-  // globals after loading the module.
-  function applyMappedGlobals(globalsFileBase) {
-    var mappedGlobals = JSON.parse(Module['read'](globalsFileBase + '.mappedGlobals'));
-    for (var name in mappedGlobals) {
-      var global = mappedGlobals[name];
-      if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
-      var value = lookupImport(global.module, global.base);
-      var address = global.address;
-      switch (global.type) {
-        case WasmTypes.i32: Module['HEAP32'][address >> 2] = value; break;
-        case WasmTypes.f32: Module['HEAPF32'][address >> 2] = value; break;
-        case WasmTypes.f64: Module['HEAPF64'][address >> 3] = value; break;
-        default: abort();
-      }
-    }
-  }
-
   function fixImports(imports) {
     if (!{{{ WASM_BACKEND }}}) return imports;
     var ret = {};
@@ -208,8 +188,6 @@ function integrateWasmJS(Module) {
     exports = instance.exports;
     mergeMemory(exports.memory);
 
-    applyMappedGlobals(wasmBinaryFile);
-
     Module["usingWasm"] = true;
 
     return exports;
@@ -269,12 +247,6 @@ function integrateWasmJS(Module) {
     if (Module['newBuffer']) {
       mergeMemory(Module['newBuffer']);
       Module['newBuffer'] = null;
-    }
-
-    if (method == 'interpret-s-expr') {
-      applyMappedGlobals(wasmTextFile);
-    } else if (method == 'interpret-binary') {
-      applyMappedGlobals(wasmBinaryFile);
     }
 
     exports = wasmJS['asmExports'];
