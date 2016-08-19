@@ -574,10 +574,10 @@ public:
       if (debug) std::cerr << "write one" << std::endl;
       o << U32LEB(import->kind);
       switch (import->kind) {
-        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->type->name));
+        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name));
         case Export::Table: break;
         case Export::Memory: break;
-        case Export::Global: break;
+        case Export::Global: o << binaryWasmType(import->globalType);break;
         default: WASM_UNREACHABLE();
       }
       writeInlineString(import->module.str);
@@ -1504,13 +1504,13 @@ public:
         case Export::Function: {
           auto index = getU32LEB();
           assert(index < wasm.functionTypes.size());
-          curr->type = wasm.getFunctionType(index);
-          assert(curr->type->name.is());
+          curr->functionType = wasm.getFunctionType(index);
+          assert(curr->functionType->name.is());
           break;
         }
         case Export::Table: break;
         case Export::Memory: break;
-        case Export::Global: break;
+        case Export::Global: curr->globalType = getWasmType(); break;
         default: WASM_UNREACHABLE();
       }
       curr->module = getInlineString();
@@ -1932,7 +1932,7 @@ public:
     WASM_UNUSED(arity);
     auto import = wasm.getImport(getU32LEB());
     curr->target = import->name;
-    auto type = import->type;
+    auto type = import->functionType;
     assert(type);
     auto num = type->params.size();
     assert(num == arity);

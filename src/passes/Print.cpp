@@ -544,7 +544,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printName(curr->name) << ' ';
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str);
-    if (curr->type) visitFunctionType(curr->type);
+    switch (curr->kind) {
+      case Export::Function: if (curr->functionType) visitFunctionType(curr->functionType); break;
+      case Export::Table: break;
+      case Export::Memory: break;
+      case Export::Global: o << printWasmType(curr->globalType); break;
+      default: WASM_UNREACHABLE();
+    }
     o << ')';
   }
   void visitExport(Export *curr) {

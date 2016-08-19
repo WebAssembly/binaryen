@@ -1437,11 +1437,12 @@ public:
     Global = 3,
   };
 
-  Import() : type(nullptr) {}
+  Import() : functionType(nullptr), globalType(none) {}
 
   Name name, module, base; // name = module.base
   Kind kind;
-  FunctionType* type; // for Function imports
+  FunctionType* functionType; // for Function imports
+  WasmType globalType; // for Global imports
 };
 
 class Export {

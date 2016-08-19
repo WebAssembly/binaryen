@@ -167,7 +167,7 @@ public:
   void visitCallImport(CallImport *curr) {
     auto* import = getModule()->checkImport(curr->target);
     if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
-    auto* type = import->type;
+    auto* type = import->functionType;
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
       if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
@@ -314,9 +314,11 @@ public:
 
   void visitImport(Import* curr) {
     if (!validateWebConstraints) return;
-    shouldBeUnequal(curr->type->result, i64, curr->name, "Imported function must not have i64 return type");
-    for (WasmType param : curr->type->params) {
-      shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
+    if (curr->kind == Import::Function) {
+      shouldBeUnequal(curr->functionType->result, i64, curr->name, "Imported function must not have i64 return type");
+      for (WasmType param : curr->functionType->params) {
+        shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
+      }
     }
   }
 

@@ -1216,7 +1216,7 @@ private:
     auto ret = allocator.alloc<CallImport>();
     ret->target = s[1]->str();
     Import* import = wasm.getImport(ret->target);
-    ret->type = import->type->result;
+    ret->type = import->functionType->result;
     parseCallOperands(s, 2, s.size(), ret);
     return ret;
   }
@@ -1481,7 +1481,9 @@ private:
           type->result = stringToWasmType(result[1]->str());
         }
       }
-      im->type = ensureFunctionType(getSig(type.get()), &wasm);
+      im->functionType = ensureFunctionType(getSig(type.get()), &wasm);
+    } else if (im->kind == Import::Global) {
+      im->globalType = stringToWasmType(s[i]->str());
     }
     wasm.addImport(im.release());
   }

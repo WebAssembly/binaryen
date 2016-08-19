@@ -738,10 +738,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       // special math builtins
       FunctionType* builtin = getBuiltinFunctionType(import->module, import->base);
       if (builtin) {
-        import->type = builtin;
+        import->functionType = builtin;
         continue;
       }
-      import->type = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm);
+      import->functionType = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm);
     } else if (import->module != ASM2WASM) { // special-case the special module
       // never actually used
       toErase.push_back(name);
@@ -1087,7 +1087,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
-          import->type = ensureFunctionType("ddd", &wasm);
+          import->functionType = ensureFunctionType("ddd", &wasm);
           import->kind = Import::Function;
           wasm.addImport(import);
         }
@@ -1113,7 +1113,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = call->target;
           import->module = ASM2WASM;
           import->base = call->target;
-          import->type = ensureFunctionType("iii", &wasm);
+          import->functionType = ensureFunctionType("iii", &wasm);
           import->kind = Import::Function;
           wasm.addImport(import);
         }
@@ -1152,7 +1152,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = DEBUGGER;
           import->module = ASM2WASM;
           import->base = DEBUGGER;
-          import->type = ensureFunctionType("v", &wasm);
+          import->functionType = ensureFunctionType("v", &wasm);
           import->kind = Import::Function;
           wasm.addImport(import);
         }
@@ -1265,7 +1265,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               import->name = F64_TO_INT;
               import->module = ASM2WASM;
               import->base = F64_TO_INT;
-              import->type = ensureFunctionType("id", &wasm);
+              import->functionType = ensureFunctionType("id", &wasm);
               import->kind = Import::Function;
               wasm.addImport(import);
             }
