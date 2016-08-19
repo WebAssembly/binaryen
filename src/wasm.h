@@ -1125,7 +1125,7 @@ public:
   GetGlobal() {}
   GetGlobal(MixedArena& allocator) {}
 
-  Index index;
+  Name name;
 };
 
 class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
@@ -1133,7 +1133,7 @@ public:
   SetGlobal() {}
   SetGlobal(MixedArena& allocator) {}
 
-  Index index;
+  Name name;
   Expression *value;
 };
 

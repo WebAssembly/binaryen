@@ -971,12 +971,12 @@ public:
   }
   void visitGetGlobal(GetGlobal *curr) {
     if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << std::endl;
-    o << int8_t(BinaryConsts::GetGlobal) << U32LEB(curr->index);
+    o << int8_t(BinaryConsts::GetGlobal) << U32LEB(getGlobalIndex(curr->name));
   }
   void visitSetGlobal(SetGlobal *curr) {
     if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
     recurse(curr->value);
-    o << int8_t(BinaryConsts::SetGlobal) << U32LEB(curr->index);
+    o << int8_t(BinaryConsts::SetGlobal) << U32LEB(getGlobalIndex(curr->name));
   }
 
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
@@ -1974,14 +1974,14 @@ public:
   }
   void visitGetGlobal(GetGlobal *curr) {
     if (debug) std::cerr << "zz node: GetGlobal " << pos << std::endl;
-    curr->index = getU32LEB();
-    assert(curr->index < wasm.globals.size());
-    curr->type = wasm.globals[curr->index]->type;
+    auto index = getU32LEB();
+    curr->name = wasm.getGlobal(index)->name;
+    curr->type = wasm.getGlobal(index)->type;
   }
   void visitSetGlobal(SetGlobal *curr) {
     if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
-    curr->index = getU32LEB();
-    assert(curr->index < wasm.globals.size());
+    auto index = getU32LEB();
+    curr->name = wasm.getGlobal(index)->name;
     curr->value = popExpression();
   }
 

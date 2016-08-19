@@ -152,15 +152,15 @@ public:
     ret->type = value->type;
     return ret;
   }
-  GetGlobal* makeGetGlobal(Index index, WasmType type) {
+  GetGlobal* makeGetGlobal(Name name, WasmType type) {
     auto* ret = allocator.alloc<GetGlobal>();
-    ret->index = index;
+    ret->name = name;
     ret->type = type;
     return ret;
   }
-  SetGlobal* makeSetGlobal(Index index, Expression* value) {
+  SetGlobal* makeSetGlobal(Name name, Expression* value) {
     auto* ret = allocator.alloc<SetGlobal>();
-    ret->index = index;
+    ret->name = name;
     ret->value = value;
     return ret;
   }

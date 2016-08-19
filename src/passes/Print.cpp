@@ -82,11 +82,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     return name;
   }
 
-  Name printableGlobal(Index index) {
-    if (currModule) return currModule->getGlobal(index)->name;
-    return Name::fromInt(index);
-  }
-
   std::ostream& printName(Name name) {
     // we need to quote names if they have tricky chars
     if (strpbrk(name.str, "()")) {
@@ -250,10 +245,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitGetGlobal(GetGlobal *curr) {
-    printOpening(o, "get_global ") << printableGlobal(curr->index) << ')';
+    printOpening(o, "get_global ");
+    printName(curr->name) << ')';
   }
   void visitSetGlobal(SetGlobal *curr) {
-    printOpening(o, "set_global ") << printableGlobal(curr->index);
+    printOpening(o, "set_global ");
+    printName(curr->name);
     incIndent();
     printFullLine(curr->value);
     decIndent();
@@ -568,7 +565,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitGlobal(Global *curr) {
     printOpening(o, "global ");
     printName(curr->name) << ' ' << printWasmType(curr->type);
-    printFullLine(curr->init);
+    visit(curr->init);
     o << ')';
   }
   void visitFunction(Function *curr) {

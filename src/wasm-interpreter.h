@@ -529,12 +529,12 @@ public:
   Module& wasm;
 
   // Values of globals
-  std::vector<Literal> globals;
+  std::map<Name, Literal> globals;
 
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     memorySize = wasm.memory.initial;
-    for (Index i = 0; i < wasm.globals.size(); i++) {
-      globals.push_back(ConstantExpressionRunner().visit(wasm.globals[i]->init).value);
+    for (auto& global : wasm.globals) {
+      globals[global->name] = ConstantExpressionRunner().visit(global->init).value;
     }
     externalInterface->init(wasm);
     if (wasm.start.is()) {
@@ -682,19 +682,19 @@ public:
 
       Flow visitGetGlobal(GetGlobal *curr) {
         NOTE_ENTER("GetGlobal");
-        auto index = curr->index;
-        NOTE_EVAL1(index);
-        NOTE_EVAL1(instance.globals[index]);
-        return instance.globals[index];
+        auto name = curr->name;
+        NOTE_EVAL1(name);
+        NOTE_EVAL1(instance.globals[name]);
+        return instance.globals[name];
       }
       Flow visitSetGlobal(SetGlobal *curr) {
         NOTE_ENTER("SetGlobal");
-        auto index = curr->index;
+        auto name = curr->name;
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
-        NOTE_EVAL1(index);
+        NOTE_EVAL1(name);
         NOTE_EVAL1(flow.value);
-        instance.globals[index] = flow.value;
+        instance.globals[name] = flow.value;
         return Flow();
       }
 

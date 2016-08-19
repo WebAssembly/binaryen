@@ -284,10 +284,10 @@ struct ExpressionManipulator {
         }
       }
       Expression* visitGetGlobal(GetGlobal *curr) {
-        return builder.makeGetGlobal(curr->index, curr->type);
+        return builder.makeGetGlobal(curr->name, curr->type);
       }
       Expression* visitSetGlobal(SetGlobal *curr) {
-        return builder.makeSetGlobal(curr->index, copy(curr->value));
+        return builder.makeSetGlobal(curr->name, copy(curr->value));
       }
       Expression* visitLoad(Load *curr) {
         return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
@@ -493,11 +493,11 @@ struct ExpressionAnalyzer {
           break;
         }
         case Expression::Id::GetGlobalId: {
-          CHECK(GetGlobal, index);
+          CHECK(GetGlobal, name);
           break;
         }
         case Expression::Id::SetGlobalId: {
-          CHECK(SetGlobal, index);
+          CHECK(SetGlobal, name);
           PUSH(SetGlobal, value);
           break;
         }
@@ -708,11 +708,11 @@ struct ExpressionAnalyzer {
           break;
         }
         case Expression::Id::GetGlobalId: {
-          HASH(GetGlobal, index);
+          HASH_NAME(GetGlobal, name);
           break;
         }
         case Expression::Id::SetGlobalId: {
-          HASH(SetGlobal, index);
+          HASH_NAME(SetGlobal, name);
           PUSH(SetGlobal, value);
           break;
         }

@@ -945,30 +945,18 @@ private:
     return ret;
   }
 
-  Index getGlobalIndex(Element& s) {
-    if (s.dollared()) {
-      auto name = s.str();
-      for (Index i = 0; i < wasm.globals.size(); i++) {
-        if (wasm.globals[i]->name == name) return i;
-      }
-      throw ParseException("bad global name", s.line, s.col);
-    }
-    // this is a numeric index
-    Index ret = atoi(s.c_str());
-    if (!wasm.checkGlobal(ret)) throw ParseException("bad global index", s.line, s.col);
-    return ret;
-  }
-
   Expression* makeGetGlobal(Element& s) {
     auto ret = allocator.alloc<GetGlobal>();
-    ret->index = getGlobalIndex(*s[1]);
-    ret->type = wasm.getGlobal(ret->index)->type;
+    ret->name = s[1]->str();
+    auto* global = wasm.checkGlobal(ret->name);
+    if (!global) throw ParseException("bad get_global name", s.line, s.col);
+    ret->type = global->type;
     return ret;
   }
 
   Expression* makeSetGlobal(Element& s) {
     auto ret = allocator.alloc<SetGlobal>();
-    ret->index = getGlobalIndex(*s[1]);
+    ret->name = s[1]->str();
     ret->value = parseExpression(s[2]);
     return ret;
   }
