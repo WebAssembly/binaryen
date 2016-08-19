@@ -301,8 +301,6 @@ function integrateWasmJS(Module) {
     for (var i = 0; i < methods.length; i++) {
       var curr = methods[i];
 
-      Module['printErr']('trying binaryen method: ' + curr);
-
       if (curr === 'native-wasm') {
         if (exports = doNativeWasm(global, env, providedBuffer)) break;
       } else if (curr === 'asmjs') {
@@ -315,8 +313,6 @@ function integrateWasmJS(Module) {
     }
 
     if (!exports) throw 'no binaryen method succeeded';
-
-    Module['printErr']('binaryen method succeeded.');
 
     return exports;
   };
