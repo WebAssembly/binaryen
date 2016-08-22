@@ -98,6 +98,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     while (1) {
       if (stack.size() > 0) doIndent(o, indent);
       stack.push_back(curr);
+      if (full) {
+        o << "[" << printWasmType(curr->type) << "] ";
+      }
       printOpening(o, "block");
       if (curr->name.is()) {
         o << ' ';
