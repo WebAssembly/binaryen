@@ -748,6 +748,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     FinalizeCalls(Asm2WasmBuilder* parent) : parent(parent) {}
 
     void visitCall(Call* curr) {
+      assert(getModule()->checkFunction(curr->target) ? true : (std::cerr << curr->target << '\n', false));
       curr->type = getModule()->getFunction(curr->target)->result;
     }
 
@@ -1140,7 +1141,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return call;
       }
       // global var
-      assert(mappedGlobals.find(name) != mappedGlobals.end());
+      assert(mappedGlobals.find(name) != mappedGlobals.end() ? true : (std::cerr << name.str << '\n', false));
       MappedGlobal& global = mappedGlobals[name];
       return builder.makeGetGlobal(name, global.type);
     } else if (what == SUB) {
