@@ -808,6 +808,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
       curr->list.back() = Builder(*getModule()).makeDrop(last);
     }
     expressionStack.pop_back();
+    curr->finalize(); // we may have changed our type
   }
 
   void visitFunction(Function* curr) {

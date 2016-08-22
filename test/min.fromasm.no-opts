@@ -33,24 +33,20 @@
   )
   (func $bitcasts (param $i i32) (param $f f32)
     (drop
-      (block
-        (drop
-          (f32.reinterpret/i32
-            (get_local $i)
-          )
+      (f32.reinterpret/i32
+        (get_local $i)
+      )
+    )
+    (drop
+      (f64.promote/f32
+        (f32.reinterpret/i32
+          (get_local $i)
         )
-        (drop
-          (f64.promote/f32
-            (f32.reinterpret/i32
-              (get_local $i)
-            )
-          )
-        )
-        (drop
-          (i32.reinterpret/f32
-            (get_local $f)
-          )
-        )
+      )
+    )
+    (drop
+      (i32.reinterpret/f32
+        (get_local $f)
       )
     )
   )

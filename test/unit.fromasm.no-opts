@@ -355,28 +355,24 @@
     (local $y f32)
     (local $z f64)
     (drop
-      (block
-        (drop
-          (f32.demote/f64
-            (get_local $z)
-          )
-        )
-        (drop
-          (get_local $y)
-        )
-        (drop
-          (f32.const 5)
-        )
-        (drop
-          (f32.const 0)
-        )
-        (drop
-          (f32.const 5)
-        )
-        (drop
-          (f32.const 0)
-        )
+      (f32.demote/f64
+        (get_local $z)
       )
+    )
+    (drop
+      (get_local $y)
+    )
+    (drop
+      (f32.const 5)
+    )
+    (drop
+      (f32.const 0)
+    )
+    (drop
+      (f32.const 5)
+    )
+    (drop
+      (f32.const 0)
     )
   )
   (func $negZero (result f64)
@@ -597,30 +593,26 @@
   (func $bitcasts (param $i i32) (param $f f32)
     (local $d f64)
     (drop
-      (block
-        (drop
-          (f32.reinterpret/i32
-            (get_local $i)
-          )
+      (f32.reinterpret/i32
+        (get_local $i)
+      )
+    )
+    (drop
+      (f64.promote/f32
+        (f32.reinterpret/i32
+          (get_local $i)
         )
-        (drop
-          (f64.promote/f32
-            (f32.reinterpret/i32
-              (get_local $i)
-            )
-          )
-        )
-        (drop
-          (i32.reinterpret/f32
-            (get_local $f)
-          )
-        )
-        (drop
-          (i32.reinterpret/f32
-            (f32.demote/f64
-              (get_local $d)
-            )
-          )
+      )
+    )
+    (drop
+      (i32.reinterpret/f32
+        (get_local $f)
+      )
+    )
+    (drop
+      (i32.reinterpret/f32
+        (f32.demote/f64
+          (get_local $d)
         )
       )
     )
@@ -645,21 +637,17 @@
               )
             )
             (block
-              (drop
+              (block
                 (block
                   (drop
-                    (block
-                      (drop
-                        (i32.const 4)
-                      )
-                      (drop
-                        (i32.const 5)
-                      )
-                    )
+                    (i32.const 4)
                   )
                   (drop
-                    (i32.const 6)
+                    (i32.const 5)
                   )
+                )
+                (drop
+                  (i32.const 6)
                 )
               )
               (i32.const 7)
@@ -713,26 +701,22 @@
             )
           )
           (block
-            (drop
+            (block
               (block
                 (drop
-                  (block
-                    (drop
-                      (call $lb
-                        (i32.const 4)
-                      )
-                    )
-                    (drop
-                      (call $lb
-                        (i32.const 5)
-                      )
-                    )
+                  (call $lb
+                    (i32.const 4)
                   )
                 )
                 (drop
                   (call $lb
-                    (i32.const 6)
+                    (i32.const 5)
                   )
+                )
+              )
+              (drop
+                (call $lb
+                  (i32.const 6)
                 )
               )
             )
