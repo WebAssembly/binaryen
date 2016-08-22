@@ -465,7 +465,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
       } else if (Loop* loop = curr->template dynCast<Loop>()) {
         if (name == loop->name) return curr;
       } else {
-        WASM_UNREACHABLE();
+        // an if, ignorable
+        assert(curr->template is<If>());
       }
       if (i == 0) return nullptr;
       i--;
