@@ -5,11 +5,13 @@
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
+  (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$vd (func (param f64)))
   (import $t global "global" "NaN" f64)
   (import $u global "global" "Infinity" f64)
   (import $tempDoublePtr global "env" "tempDoublePtr" i32)
   (import $n global "env" "gb" i32)
+  (import $setTempRet0 "env" "setTempRet0" (param i32) (result i32))
   (import $abort "env" "abort" (param f64))
   (import $print "env" "print" (param i32))
   (import $h "env" "h" (param i32))
@@ -495,5 +497,26 @@
         (i32.const 3)
       )
     )
+  )
+  (func $dropCall (result i32)
+    (if
+      (i32.const 0)
+      (block
+        (drop
+          (call $phi)
+        )
+        (drop
+          (call_import $setTempRet0
+            (i32.const 10)
+          )
+        )
+        (call $zeroInit
+          (call_import $setTempRet0
+            (i32.const 10)
+          )
+        )
+      )
+    )
+    (call $phi)
   )
 )

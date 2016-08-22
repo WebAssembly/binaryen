@@ -9,6 +9,7 @@ function asm(global, env, buffer) {
   var Math_ceil = global.Math.ceil;
   var tempDoublePtr = env.tempDoublePtr | 0;
   var n = env.gb | 0;
+  var setTempRet0=env.setTempRet0;
 
   var abort = env.abort;
   var print = env.print;
@@ -269,6 +270,15 @@ function asm(global, env, buffer) {
         break;
       }
     } while (0);
+  }
+
+  function dropCall() {
+    if (0) {
+      phi(); // drop this
+      setTempRet0(10); // this too
+      zeroInit(setTempRet0(10) | 0);
+    }
+    return phi() | 0;
   }
 
   function z() {

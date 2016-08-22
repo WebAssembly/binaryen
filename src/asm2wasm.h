@@ -401,9 +401,9 @@ private:
   }
 
   void fixCallType(Expression* call, WasmType type) {
-    if (call->is<Call>()) call->type = type;
-    if (call->is<CallImport>()) call->type = type;
-    else if (call->is<CallIndirect>()) call->type = type;
+    if (call->is<Call>()) call->cast<Call>()->type = type;
+    if (call->is<CallImport>()) call->cast<CallImport>()->type = type;
+    else if (call->is<CallIndirect>()) call->cast<CallIndirect>()->type = type;
   }
 
   FunctionType* getBuiltinFunctionType(Name module, Name base, ExpressionList* operands = nullptr) {
@@ -736,7 +736,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.removeImport(curr);
   }
 
-  // Finalize indirect calls and import calls
+  // Finalize calls now that everything is known and generated
 
   struct FinalizeCalls : public WalkerPass<PostWalker<FinalizeCalls, Visitor<FinalizeCalls>>> {
     bool isFunctionParallel() override { return true; }
@@ -746,6 +746,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     Asm2WasmBuilder* parent;
 
     FinalizeCalls(Asm2WasmBuilder* parent) : parent(parent) {}
+
+    void visitCall(Call* curr) {
+      curr->type = getModule()->getFunction(curr->target)->result;
+    }
 
     void visitCallImport(CallImport* curr) {
       // fill out call_import - add extra params as needed, etc. asm tolerates ffi overloading, wasm does not
@@ -768,6 +772,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           }
         }
       }
+
+      curr->type = getModule()->getImport(curr->target)->functionType->result;
     }
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
