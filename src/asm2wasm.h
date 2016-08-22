@@ -1014,7 +1014,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         // global var
         assert(mappedGlobals.find(name) != mappedGlobals.end());
-        return builder.makeSetGlobal(name, process(ast[3]));
+        auto* ret = builder.makeSetGlobal(name, process(ast[3]));
+        // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
+        if (astStackHelper.getParent()[0] == STAT) return ret;
+        return builder.makeSequence(ret, builder.makeGetGlobal(name, ret->value->type));
       } else if (ast[2][0] == SUB) {
         Ref target = ast[2];
         assert(target[1][0] == NAME);

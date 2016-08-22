@@ -281,6 +281,17 @@ function asm(global, env, buffer) {
     return phi() | 0;
   }
 
+  function useSetGlobal() {
+    var x = 0;
+    x = (Int = 10);
+    Int = 20;
+    return (Int = 30) | 0;
+  }
+
+  function usesSetGlobal2() {
+    return (Int = 40, 50) | 0;
+  }
+
   function z() {
   }
   function w() {
