@@ -30280,8 +30280,13 @@
     )
     (return
       (block
-        (set_global $tempRet0
-          (get_local $h)
+        (block
+          (set_global $tempRet0
+            (get_local $h)
+          )
+          (drop
+            (get_global $tempRet0)
+          )
         )
         (get_local $l)
       )
@@ -30310,8 +30315,13 @@
     )
     (return
       (block
-        (set_global $tempRet0
-          (get_local $h)
+        (block
+          (set_global $tempRet0
+            (get_local $h)
+          )
+          (drop
+            (get_global $tempRet0)
+          )
         )
         (get_local $l)
       )
@@ -30881,28 +30891,33 @@
     )
     (return
       (block
-        (set_global $tempRet0
-          (i32.add
+        (block
+          (set_global $tempRet0
             (i32.add
+              (i32.add
+                (i32.shr_u
+                  (get_local $$8)
+                  (i32.const 16)
+                )
+                (i32.mul
+                  (get_local $$11)
+                  (get_local $$6)
+                )
+              )
               (i32.shr_u
-                (get_local $$8)
+                (i32.add
+                  (i32.and
+                    (get_local $$8)
+                    (i32.const 65535)
+                  )
+                  (get_local $$12)
+                )
                 (i32.const 16)
               )
-              (i32.mul
-                (get_local $$11)
-                (get_local $$6)
-              )
             )
-            (i32.shr_u
-              (i32.add
-                (i32.and
-                  (get_local $$8)
-                  (i32.const 65535)
-                )
-                (get_local $$12)
-              )
-              (i32.const 16)
-            )
+          )
+          (drop
+            (get_global $tempRet0)
           )
         )
         (i32.or
@@ -31279,8 +31294,13 @@
     )
     (return
       (block
-        (set_global $tempRet0
-          (get_local $$10$1)
+        (block
+          (set_global $tempRet0
+            (get_local $$10$1)
+          )
+          (drop
+            (get_global $tempRet0)
+          )
         )
         (get_local $$10$0)
       )
@@ -31315,22 +31335,27 @@
     )
     (return
       (block
-        (set_global $tempRet0
-          (i32.or
-            (i32.add
+        (block
+          (set_global $tempRet0
+            (i32.or
               (i32.add
-                (i32.mul
-                  (get_local $$b$1)
-                  (get_local $$x_sroa_0_0_extract_trunc)
+                (i32.add
+                  (i32.mul
+                    (get_local $$b$1)
+                    (get_local $$x_sroa_0_0_extract_trunc)
+                  )
+                  (get_local $$2)
                 )
-                (get_local $$2)
+                (get_local $$1$1)
               )
-              (get_local $$1$1)
+              (i32.and
+                (get_local $$1$1)
+                (i32.const 0)
+              )
             )
-            (i32.and
-              (get_local $$1$1)
-              (i32.const 0)
-            )
+          )
+          (drop
+            (get_global $tempRet0)
           )
         )
         (i32.or
@@ -31387,12 +31412,17 @@
     )
     (return
       (block
-        (set_global $tempRet0
-          (i32.load
-            (i32.add
-              (get_local $$rem)
-              (i32.const 4)
+        (block
+          (set_global $tempRet0
+            (i32.load
+              (i32.add
+                (get_local $$rem)
+                (i32.const 4)
+              )
             )
+          )
+          (drop
+            (get_global $tempRet0)
           )
         )
         (i32.load
@@ -31532,8 +31562,13 @@
             )
             (return
               (block
-                (set_global $tempRet0
-                  (get_local $$_0$1)
+                (block
+                  (set_global $tempRet0
+                    (get_local $$_0$1)
+                  )
+                  (drop
+                    (get_global $tempRet0)
+                  )
                 )
                 (get_local $$_0$0)
               )
@@ -31553,8 +31588,13 @@
                 )
                 (return
                   (block
-                    (set_global $tempRet0
-                      (get_local $$_0$1)
+                    (block
+                      (set_global $tempRet0
+                        (get_local $$_0$1)
+                      )
+                      (drop
+                        (get_global $tempRet0)
+                      )
                     )
                     (get_local $$_0$0)
                   )
@@ -31586,8 +31626,13 @@
             )
             (return
               (block
-                (set_global $tempRet0
-                  (get_local $$_0$1)
+                (block
+                  (set_global $tempRet0
+                    (get_local $$_0$1)
+                  )
+                  (drop
+                    (get_global $tempRet0)
+                  )
                 )
                 (get_local $$_0$0)
               )
@@ -31645,8 +31690,13 @@
               )
               (return
                 (block
-                  (set_global $tempRet0
-                    (get_local $$_0$1)
+                  (block
+                    (set_global $tempRet0
+                      (get_local $$_0$1)
+                    )
+                    (drop
+                      (get_global $tempRet0)
+                    )
                   )
                   (get_local $$_0$0)
                 )
@@ -31692,8 +31742,13 @@
               )
               (return
                 (block
-                  (set_global $tempRet0
-                    (get_local $$_0$1)
+                  (block
+                    (set_global $tempRet0
+                      (get_local $$_0$1)
+                    )
+                    (drop
+                      (get_global $tempRet0)
+                    )
                   )
                   (get_local $$_0$0)
                 )
@@ -31762,8 +31817,13 @@
               )
               (return
                 (block
-                  (set_global $tempRet0
-                    (get_local $$_0$1)
+                  (block
+                    (set_global $tempRet0
+                      (get_local $$_0$1)
+                    )
+                    (drop
+                      (get_global $tempRet0)
+                    )
                   )
                   (get_local $$_0$0)
                 )
@@ -31848,8 +31908,13 @@
               )
               (return
                 (block
-                  (set_global $tempRet0
-                    (get_local $$_0$1)
+                  (block
+                    (set_global $tempRet0
+                      (get_local $$_0$1)
+                    )
+                    (drop
+                      (get_global $tempRet0)
+                    )
                   )
                   (get_local $$_0$0)
                 )
@@ -31887,8 +31952,13 @@
           )
           (return
             (block
-              (set_global $tempRet0
-                (get_local $$_0$1)
+              (block
+                (set_global $tempRet0
+                  (get_local $$_0$1)
+                )
+                (drop
+                  (get_global $tempRet0)
+                )
               )
               (get_local $$_0$0)
             )
@@ -31993,8 +32063,13 @@
                   )
                   (return
                     (block
-                      (set_global $tempRet0
-                        (get_local $$_0$1)
+                      (block
+                        (set_global $tempRet0
+                          (get_local $$_0$1)
+                        )
+                        (drop
+                          (get_global $tempRet0)
+                        )
                       )
                       (get_local $$_0$0)
                     )
@@ -32032,8 +32107,13 @@
               )
               (return
                 (block
-                  (set_global $tempRet0
-                    (get_local $$_0$1)
+                  (block
+                    (set_global $tempRet0
+                      (get_local $$_0$1)
+                    )
+                    (drop
+                      (get_global $tempRet0)
+                    )
                   )
                   (get_local $$_0$0)
                 )
@@ -32233,8 +32313,13 @@
               )
               (return
                 (block
-                  (set_global $tempRet0
-                    (get_local $$_0$1)
+                  (block
+                    (set_global $tempRet0
+                      (get_local $$_0$1)
+                    )
+                    (drop
+                      (get_global $tempRet0)
+                    )
                   )
                   (get_local $$_0$0)
                 )
@@ -32272,8 +32357,13 @@
               )
               (return
                 (block
-                  (set_global $tempRet0
-                    (get_local $$_0$1)
+                  (block
+                    (set_global $tempRet0
+                      (get_local $$_0$1)
+                    )
+                    (drop
+                      (get_global $tempRet0)
+                    )
                   )
                   (get_local $$_0$0)
                 )
@@ -32628,8 +32718,13 @@
     )
     (return
       (block
-        (set_global $tempRet0
-          (get_local $$_0$1)
+        (block
+          (set_global $tempRet0
+            (get_local $$_0$1)
+          )
+          (drop
+            (get_global $tempRet0)
+          )
         )
         (get_local $$_0$0)
       )

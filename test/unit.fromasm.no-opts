@@ -876,6 +876,43 @@
       (call $phi)
     )
   )
+  (func $useSetGlobal (result i32)
+    (local $x i32)
+    (set_local $x
+      (block
+        (set_global $Int
+          (i32.const 10)
+        )
+        (get_global $Int)
+      )
+    )
+    (set_global $Int
+      (i32.const 20)
+    )
+    (return
+      (block
+        (set_global $Int
+          (i32.const 30)
+        )
+        (get_global $Int)
+      )
+    )
+  )
+  (func $usesSetGlobal2 (result i32)
+    (return
+      (block
+        (block
+          (set_global $Int
+            (i32.const 40)
+          )
+          (drop
+            (get_global $Int)
+          )
+        )
+        (i32.const 50)
+      )
+    )
+  )
   (func $z
     (nop)
   )

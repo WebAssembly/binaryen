@@ -501,4 +501,22 @@
     )
     (call $phi)
   )
+  (func $useSetGlobal (result i32)
+    (set_global $Int
+      (i32.const 10)
+    )
+    (set_global $Int
+      (i32.const 20)
+    )
+    (set_global $Int
+      (i32.const 30)
+    )
+    (get_global $Int)
+  )
+  (func $usesSetGlobal2 (result i32)
+    (set_global $Int
+      (i32.const 40)
+    )
+    (i32.const 50)
+  )
 )
