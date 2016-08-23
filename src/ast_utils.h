@@ -795,7 +795,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
   Pass* create() override { return new AutoDrop; }
 
   void visitBlock(Block* curr) {
-    if (curr->list.size() <= 1) return;
+    if (curr->list.size() == 0) return;
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
       if (isConcreteWasmType(child->type)) {
