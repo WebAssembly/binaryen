@@ -40,6 +40,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
+    if (getenv("BINARYEN_PRINT_FULL")) {
+      full = std::stoi(getenv("BINARYEN_PRINT_FULL"));
+    }
   }
 
   void setMinify(bool minify_) {
