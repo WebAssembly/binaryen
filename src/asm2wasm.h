@@ -1492,7 +1492,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto continuer = allocator.alloc<Break>();
       continuer->name = ret->name;
       block->list.push_back(continuer);
+      block->finalize();
       ret->body = block;
+      ret->finalize();
       continueStack.pop_back();
       breakStack.pop_back();
       return ret;
@@ -1528,6 +1530,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto loop = allocator.alloc<Loop>();
           loop->body = child;
           loop->name = more;
+          loop->finalize();
           return builder.blockifyWithName(loop, stop);
         }
       }
@@ -1553,6 +1556,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       continuer->condition = process(ast[1]);
       Block *block = builder.blockifyWithName(loop->body, out, continuer);
       loop->body = block;
+      loop->finalize();
       return loop;
     } else if (what == FOR) {
       Ref finit = ast[1],
@@ -1588,6 +1592,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       continuer->name = ret->name;
       Block* block = builder.blockifyWithName(ret->body, out, continuer);
       ret->body = block;
+      ret->finalize();
       continueStack.pop_back();
       breakStack.pop_back();
       Block *outer = allocator.alloc<Block>();
