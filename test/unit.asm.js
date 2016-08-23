@@ -292,6 +292,22 @@ function asm(global, env, buffer) {
     return (Int = 40, 50) | 0;
   }
 
+  function breakThroughMany($s) {
+   $s = $s|0;
+   L1: do {
+    if ($s) {
+     while(1) {
+      if (!($s)) {
+       break L1;
+      }
+      zeroInit(0);
+     }
+    } else {
+     1337;
+    }
+   } while(0);
+  }
+
   function z() {
   }
   function w() {

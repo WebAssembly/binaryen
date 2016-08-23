@@ -907,6 +907,31 @@
       )
     )
   )
+  (func $breakThroughMany (param $$s i32)
+    (block $label$break$L1
+      (drop
+        (if
+          (get_local $$s)
+          (loop $while-in$2
+            (block $while-out$1
+              (if
+                (i32.eqz
+                  (get_local $$s)
+                )
+                (br $label$break$L1)
+              )
+              (call $zeroInit
+                (i32.const 0)
+              )
+              (br $while-in$2)
+            )
+          )
+          (i32.const 1337)
+        )
+      )
+      (nop)
+    )
+  )
   (func $z
     (nop)
   )

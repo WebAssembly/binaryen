@@ -537,4 +537,25 @@
     )
     (i32.const 50)
   )
+  (func $breakThroughMany (param $0 i32)
+    (block $label$break$L1
+      (drop
+        (if
+          (get_local $0)
+          (loop $while-in$2
+            (br_if $label$break$L1
+              (i32.eqz
+                (get_local $0)
+              )
+            )
+            (call $zeroInit
+              (i32.const 0)
+            )
+            (br $while-in$2)
+          )
+          (i32.const 1337)
+        )
+      )
+    )
+  )
 )
