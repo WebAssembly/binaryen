@@ -130,6 +130,9 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
 
   bool checkPost(Expression* curr) {
     visit(curr);
+    if (curr->is<Loop>()) {
+      branches = true;
+    }
     return hasAnything();
   }
 

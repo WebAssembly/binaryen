@@ -731,4 +731,24 @@
       (get_local $i1)
     )
   )
+  (func $no-out-of-label (param $x i32) (param $y i32)
+    (loop $moar
+      (set_local $x
+        (block
+          (br_if $moar (get_local $x))
+          (i32.const 0)
+        )
+      )
+    )
+    (drop (get_local $x))
+    (block $moar
+      (set_local $y
+        (block
+          (br_if $moar (get_local $y))
+          (i32.const 0)
+        )
+      )
+    )
+    (drop (get_local $y))
+  )
 )

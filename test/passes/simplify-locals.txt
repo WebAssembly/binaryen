@@ -7,6 +7,7 @@
   (type $4 (func (param i32)))
   (type $5 (func (param i32) (result i32)))
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
+  (type $7 (func (param i32 i32)))
   (import $waka "env" "waka")
   (import $waka_int "env" "waka_int" (result i32))
   (import $_i64Subtract "env" "i64sub" (param i32 i32 i32 i32) (result i32))
@@ -671,6 +672,34 @@
     )
     (return
       (get_local $i1)
+    )
+  )
+  (func $no-out-of-label (type $7) (param $x i32) (param $y i32)
+    (loop $moar
+      (set_local $x
+        (block $block0
+          (br_if $moar
+            (get_local $x)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (get_local $x)
+    )
+    (block $moar
+      (set_local $y
+        (block $block1
+          (br_if $moar
+            (get_local $y)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (get_local $y)
     )
   )
 )
