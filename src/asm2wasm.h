@@ -1481,6 +1481,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         If *condition = allocator.alloc<If>();
         condition->condition = builder.makeUnary(EqZInt32, process(ast[1]));
         condition->ifTrue = breakOut;
+        condition->finalize();
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
@@ -1581,6 +1582,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       If *condition = allocator.alloc<If>();
       condition->condition = builder.makeUnary(EqZInt32, process(fcond));
       condition->ifTrue = breakOut;
+      condition->finalize();
       auto body = allocator.alloc<Block>();
       body->list.push_back(condition);
       body->list.push_back(process(fbody));
@@ -1610,7 +1612,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->condition = process(ast[1]);
       ret->ifTrue = process(ast[2]);
       ret->ifFalse = process(ast[3]);
-      ret->type = ret->ifTrue->type;
+      ret->finalize();
       return ret;
     } else if (what == SEQ) {
       // Some (x, y) patterns can be optimized, like bitcasts,
