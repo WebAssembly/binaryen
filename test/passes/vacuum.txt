@@ -5,6 +5,8 @@
   (type $2 (func (result f32)))
   (type $3 (func (result i32)))
   (type $4 (func (param i32 f64 i32 i32)))
+  (type $FUNCSIG$i (func (result i32)))
+  (import $int "env" "int" (result i32))
   (func $b (type $0)
     (nop)
   )
@@ -156,6 +158,24 @@
         (i32.const 0)
       )
       (unreachable)
+    )
+  )
+  (func $if-drop (type $0)
+    (block $out
+      (if
+        (i32.const 0)
+        (drop
+          (call_import $int)
+        )
+        (br $out)
+      )
+      (if
+        (i32.const 1)
+        (br $out)
+        (drop
+          (call_import $int)
+        )
+      )
     )
   )
 )

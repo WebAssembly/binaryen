@@ -492,13 +492,12 @@
   )
   (func $smallIf
     (block $do-once$0
-      (drop
-        (if
-          (i32.const 2)
+      (if
+        (i32.const 2)
+        (drop
           (call $lb
             (i32.const 3)
           )
-          (br $do-once$0)
         )
       )
     )
@@ -544,21 +543,18 @@
   )
   (func $breakThroughMany (param $0 i32)
     (block $label$break$L1
-      (drop
-        (if
-          (get_local $0)
-          (loop $while-in$2
-            (br_if $label$break$L1
-              (i32.eqz
-                (get_local $0)
-              )
+      (if
+        (get_local $0)
+        (loop $while-in$2
+          (br_if $label$break$L1
+            (i32.eqz
+              (get_local $0)
             )
-            (call $zeroInit
-              (i32.const 0)
-            )
-            (br $while-in$2)
           )
-          (i32.const 1337)
+          (call $zeroInit
+            (i32.const 0)
+          )
+          (br $while-in$2)
         )
       )
     )

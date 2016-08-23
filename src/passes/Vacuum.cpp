@@ -203,6 +203,25 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
     // if the drop input has no side effects, it can be wiped out
     if (!EffectAnalyzer(curr->value).hasSideEffects()) {
       ExpressionManipulator::nop(curr);
+      return;
+    }
+    // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a branch, this can make that branch optimizable and more vaccuming possible
+    auto* iff = curr->value->dynCast<If>();
+    if (iff && iff->ifFalse && isConcreteWasmType(iff->type)) {
+      // reuse the drop in both cases
+      if (iff->ifTrue->type == unreachable) {
+        assert(isConcreteWasmType(iff->ifFalse->type));
+        curr->value = iff->ifFalse;
+        iff->ifFalse = curr;
+        iff->type = none;
+        replaceCurrent(iff);
+      } else if (iff->ifFalse->type == unreachable) {
+        assert(isConcreteWasmType(iff->ifTrue->type));
+        curr->value = iff->ifTrue;
+        iff->ifTrue = curr;
+        iff->type = none;
+        replaceCurrent(iff);
+      }
     }
   }
 

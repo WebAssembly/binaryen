@@ -5,6 +5,7 @@
   (type $2 (func (result f32)))
   (type $3 (func (result i32)))
   (type $4 (func (param i32 f64 i32 i32)))
+  (import $int "env" "int" (result i32))
   (func $b (type $0)
     (drop
       (i32.const 50)
@@ -295,6 +296,22 @@
         (i32.const 0)
       )
       (unreachable)
+    )
+  )
+  (func $if-drop
+    (block $out
+      (drop
+        (if (i32.const 0)
+          (call_import $int)
+          (br $out)
+        )
+      )
+      (drop
+        (if (i32.const 1)
+          (br $out)
+          (call_import $int)
+        )
+      )
     )
   )
 )
