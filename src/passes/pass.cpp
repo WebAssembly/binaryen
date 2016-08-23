@@ -209,6 +209,9 @@ void PassRunner::run() {
 }
 
 void PassRunner::runFunction(Function* func) {
+  if (debug) {
+    std::cerr << "[PassRunner] running passes on function " << func->name << std::endl;
+  }
   for (auto* pass : passes) {
     runPassOnFunction(pass, func);
   }

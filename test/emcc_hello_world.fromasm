@@ -2729,21 +2729,23 @@
               )
             )
           )
-          (call_indirect $FUNCSIG$iiii
-            (get_local $0)
-            (i32.sub
-              (get_local $1)
-              (get_local $2)
-            )
-            (i32.const 1)
-            (i32.add
-              (i32.and
-                (i32.load offset=40
-                  (get_local $0)
-                )
-                (i32.const 7)
+          (drop
+            (call_indirect $FUNCSIG$iiii
+              (get_local $0)
+              (i32.sub
+                (get_local $1)
+                (get_local $2)
               )
-              (i32.const 2)
+              (i32.const 1)
+              (i32.add
+                (i32.and
+                  (i32.load offset=40
+                    (get_local $0)
+                  )
+                  (i32.const 7)
+                )
+                (i32.const 2)
+              )
             )
           )
         )
@@ -7119,13 +7121,15 @@
                                   )
                                   (i32.const 0)
                                 )
-                                (call $___fwritex
-                                  (get_local $5)
-                                  (i32.sub
-                                    (get_local $75)
+                                (drop
+                                  (call $___fwritex
                                     (get_local $5)
+                                    (i32.sub
+                                      (get_local $75)
+                                      (get_local $5)
+                                    )
+                                    (get_local $0)
                                   )
-                                  (get_local $0)
                                 )
                               )
                               (if
@@ -7234,17 +7238,19 @@
                                     )
                                     (i32.const 0)
                                   )
-                                  (call $___fwritex
-                                    (get_local $1)
-                                    (select
-                                      (i32.const 9)
-                                      (get_local $15)
-                                      (i32.gt_s
-                                        (get_local $15)
+                                  (drop
+                                    (call $___fwritex
+                                      (get_local $1)
+                                      (select
                                         (i32.const 9)
+                                        (get_local $15)
+                                        (i32.gt_s
+                                          (get_local $15)
+                                          (i32.const 9)
+                                        )
                                       )
+                                      (get_local $0)
                                     )
-                                    (get_local $0)
                                   )
                                 )
                                 (set_local $1
@@ -7461,17 +7467,19 @@
                                       )
                                       (i32.const 0)
                                     )
-                                    (call $___fwritex
-                                      (get_local $1)
-                                      (select
-                                        (get_local $8)
-                                        (get_local $15)
-                                        (i32.gt_s
-                                          (get_local $15)
+                                    (drop
+                                      (call $___fwritex
+                                        (get_local $1)
+                                        (select
                                           (get_local $8)
+                                          (get_local $15)
+                                          (i32.gt_s
+                                            (get_local $15)
+                                            (get_local $8)
+                                          )
                                         )
+                                        (get_local $0)
                                       )
-                                      (get_local $0)
                                     )
                                   )
                                   (if

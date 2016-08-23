@@ -473,10 +473,15 @@
     )
   )
   (func $smallIf
-    (if
-      (i32.const 2)
-      (call $lb
-        (i32.const 3)
+    (block $do-once$0
+      (drop
+        (if
+          (i32.const 2)
+          (call $lb
+            (i32.const 3)
+          )
+          (br $do-once$0)
+        )
       )
     )
   )
