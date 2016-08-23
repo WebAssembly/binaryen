@@ -36,7 +36,7 @@
 namespace wasm {
 
 template<typename SubType, typename VisitorType, typename Contents>
-struct CFGWalker : public PostWalker<SubType, VisitorType> {
+struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   // public interface
 
@@ -57,7 +57,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   // traversal state
   BasicBlock* currBasicBlock; // the current block in play during traversal
-  std::map<Name, std::vector<BasicBlock*>> branches;
+  std::map<Expression*, std::vector<BasicBlock*>> branches; // a block or loop => its branches
   std::vector<BasicBlock*> ifStack;
   std::vector<BasicBlock*> loopStack;
 
@@ -74,7 +74,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   static void doEndBlock(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
     if (!curr->name.is()) return;
-    auto iter = self->branches.find(curr->name);
+    auto iter = self->branches.find(curr);
     if (iter == self->branches.end()) return;
     auto& origins = iter->second;
     if (origins.size() == 0) return;
@@ -83,12 +83,10 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     doStartBasicBlock(self, currp);
     self->link(last, self->currBasicBlock); // fallthrough
     // branches to the new one
-    if (curr->name.is()) {
-      for (auto* origin : origins) {
-        self->link(origin, self->currBasicBlock);
-      }
-      self->branches.erase(curr->name);
+    for (auto* origin : origins) {
+      self->link(origin, self->currBasicBlock);
     }
+    self->branches.erase(curr);
   }
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
@@ -134,18 +132,18 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     // branches to the top of the loop
     if (curr->name.is()) {
       auto* loopStart = self->loopStack.back();
-      auto& origins = self->branches[curr->name];
+      auto& origins = self->branches[curr];
       for (auto* origin : origins) {
         self->link(origin, loopStart);
       }
-      self->branches.erase(curr->name);
+      self->branches.erase(curr);
     }
     self->loopStack.pop_back();
   }
 
   static void doEndBreak(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Break>();
-    self->branches[curr->name].push_back(self->currBasicBlock); // branch to the target
+    self->branches[self->findBreakTarget(curr->name)].push_back(self->currBasicBlock); // branch to the target
     auto* last = self->currBasicBlock;
     doStartBasicBlock(self, currp);
     if (curr->condition) {
@@ -158,12 +156,12 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     std::set<Name> seen; // we might see the same label more than once; do not spam branches
     for (Name target : curr->targets) {
       if (!seen.count(target)) {
-        self->branches[target].push_back(self->currBasicBlock); // branch to the target
+        self->branches[self->findBreakTarget(target)].push_back(self->currBasicBlock); // branch to the target
         seen.insert(target);
       }
     }
     if (!seen.count(curr->default_)) {
-      self->branches[curr->default_].push_back(self->currBasicBlock); // branch to the target
+      self->branches[self->findBreakTarget(curr->default_)].push_back(self->currBasicBlock); // branch to the target
     }
     doStartBasicBlock(self, currp);
   }
@@ -174,14 +172,10 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     switch (curr->_id) {
       case Expression::Id::BlockId: {
         self->pushTask(SubType::doEndBlock, currp);
-        self->pushTask(SubType::doVisitBlock, currp);
-        auto& list = curr->cast<Block>()->list;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
         break;
       }
       case Expression::Id::IfId: {
+        self->pushTask(SubType::doPostVisitControlFlow, currp);
         self->pushTask(SubType::doEndIf, currp);
         self->pushTask(SubType::doVisitIf, currp);
         auto* ifFalse = curr->cast<If>()->ifFalse;
@@ -192,44 +186,40 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
         self->pushTask(SubType::doStartIfTrue, currp);
         self->pushTask(SubType::scan, &curr->cast<If>()->condition);
-        break;
+        self->pushTask(SubType::doPreVisitControlFlow, currp);
+        return; // don't do anything else
       }
       case Expression::Id::LoopId: {
         self->pushTask(SubType::doEndLoop, currp);
-        self->pushTask(SubType::doVisitLoop, currp);
-        self->pushTask(SubType::scan, &curr->cast<Loop>()->body);
-        self->pushTask(SubType::doStartLoop, currp);
         break;
       }
       case Expression::Id::BreakId: {
         self->pushTask(SubType::doEndBreak, currp);
-        self->pushTask(SubType::doVisitBreak, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->condition);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->value);
         break;
       }
       case Expression::Id::SwitchId: {
         self->pushTask(SubType::doEndSwitch, currp);
-        self->pushTask(SubType::doVisitSwitch, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
-        self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
         break;
       }
       case Expression::Id::ReturnId: {
         self->pushTask(SubType::doStartBasicBlock, currp);
-        self->pushTask(SubType::doVisitReturn, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
         break;
       }
       case Expression::Id::UnreachableId: {
         self->pushTask(SubType::doStartBasicBlock, currp);
-        self->pushTask(SubType::doVisitUnreachable, currp);
         break;
       }
-      default: {
-        // other node types do not have control flow, use regular post-order
-        PostWalker<SubType, VisitorType>::scan(self, currp);
+      default: {}
+    }
+
+    ControlFlowWalker<SubType, VisitorType>::scan(self, currp);
+
+    switch (curr->_id) {
+      case Expression::Id::LoopId: {
+        self->pushTask(SubType::doStartLoop, currp);
+        break;
       }
+      default: {}
     }
   }
 
@@ -238,7 +228,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
     doStartBasicBlock(static_cast<SubType*>(this), nullptr);
     entry = currBasicBlock;
-    PostWalker<SubType, VisitorType>::doWalkFunction(func);
+    ControlFlowWalker<SubType, VisitorType>::doWalkFunction(func);
 
     assert(branches.size() == 0);
     assert(ifStack.size() == 0);
