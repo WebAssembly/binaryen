@@ -8462,7 +8462,7 @@
                       (br $while-in$3)
                     )
                   )
-                  (if
+                  (br_if $label$break$a
                     (i32.lt_u
                       (call_indirect $FUNCSIG$iiii
                         (get_local $2)
@@ -8480,7 +8480,6 @@
                       )
                       (get_local $4)
                     )
-                    (br $label$break$a)
                   )
                   (set_local $2
                     (i32.add
