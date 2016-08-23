@@ -308,6 +308,17 @@ function asm(global, env, buffer) {
    } while(0);
   }
 
+  function ifChainEmpty(label) {
+    label = label | 0;
+    if ((label|0) == 4) {
+      return 0;
+    }
+    else if ((label|0) == 7) {
+      // unreachable;
+    }
+    return 0;
+  }
+
   function z() {
   }
   function w() {

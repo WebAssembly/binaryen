@@ -938,6 +938,27 @@
       (nop)
     )
   )
+  (func $ifChainEmpty (param $label i32) (result i32)
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 4)
+      )
+      (return
+        (i32.const 0)
+      )
+      (if
+        (i32.eq
+          (get_local $label)
+          (i32.const 7)
+        )
+        (nop)
+      )
+    )
+    (return
+      (i32.const 0)
+    )
+  )
   (func $z
     (nop)
   )

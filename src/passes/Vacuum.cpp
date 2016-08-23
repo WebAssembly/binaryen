@@ -190,7 +190,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
       // no else
       if (curr->ifTrue->is<Nop>()) {
         // no nothing
-        replaceCurrent(curr->condition);
+        replaceCurrent(Builder(*getModule()).makeDrop(curr->condition));
       }
     }
   }
