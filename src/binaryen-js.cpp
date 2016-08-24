@@ -27,5 +27,6 @@
 
 using namespace wasm;
 
+#include "js/webidl.h"
 #include "../glue.cpp"
 
