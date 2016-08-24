@@ -3,34 +3,31 @@
 # to run this, as the builds are bundled in the repo in bin/. Running this is
 # useful if you are a developer and want to update those builds.
 #
-# The first comman-line argument is expected to be the path to a directory
-# containing em++ as well as tools/webidl_binder.py
-# e.g. ./build-js.sh ~/src/emsdk_portable/emscripten/incoming
+# Usage: build-js.sh
+# Usage: EMSCRIPTEN=path/to/emscripten build-js.sh  # explicit emscripten dir
+#
+# Emscripten's em++ and tools/webidl_binder.py will be accessed through the
+# env var EMSCRIPTEN, e.g. ${EMSCRIPTEN}/em++
 #
 # You can get emscripten from
 # http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
 #
 set -e
-EMDIR=$1
 
-if [ "$EMDIR" == "" ]; then
-  echo "usage: $0 <emscripten-dir>" >&2
+if [ "$EMSCRIPTEN" == "" ]; then
+  echo "usage: $0 [<emscripten-dir>]" >&2
+  echo "EMSCRIPTEN environment variable is not set" >&2
   exit 1
 fi
 
-if [ ! -d "$EMDIR" ]; then
-  echo "$0: $EMDIR is not a directory" >&2
-  exit 1
-fi
-
-if [ ! -f "$EMDIR/em++" ]; then
-  echo "$0: em++ not found in $EMDIR" >&2
+if [ ! -d "$EMSCRIPTEN" ]; then
+  echo "$0: $EMSCRIPTEN is not a directory" >&2
   exit 1
 fi
 
 echo "building wasm.js"
 
-"$EMDIR/em++" \
+"$EMSCRIPTEN/em++" \
   -std=c++11 \
   src/wasm-js.cpp \
   src/passes/pass.cpp \
@@ -59,9 +56,9 @@ echo "building wasm.js"
 
 echo "building binaryen.js"
 
-python "$EMDIR/tools/webidl_binder.py" src/js/binaryen.idl glue
+python "$EMSCRIPTEN/tools/webidl_binder.py" src/js/binaryen.idl glue
 
-"$EMDIR/em++" \
+"$EMSCRIPTEN/em++" \
   -std=c++11 \
   src/binaryen-js.cpp \
   src/passes/pass.cpp \
