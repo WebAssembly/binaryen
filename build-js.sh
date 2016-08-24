@@ -15,8 +15,7 @@
 set -e
 
 if [ "$EMSCRIPTEN" == "" ]; then
-  echo "usage: $0 [<emscripten-dir>]" >&2
-  echo "EMSCRIPTEN environment variable is not set" >&2
+  echo "$0: EMSCRIPTEN environment variable is not set" >&2
   exit 1
 fi
 
