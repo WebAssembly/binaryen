@@ -30,7 +30,18 @@ interface ModuleInstance {
   [Value] Literal callExport([Ref] Name name, [Ref] LiteralList arguments);
 };
 
-[Prefix="ModuleInstance::"]
+
+interface BufferWithRandomAccess {
+  void BufferWithRandomAccess(boolean debug);
+  unsigned long size();
+  [Operator="[]"] octet at(unsigned long index);
+};
+
+interface WasmBinaryWriter {
+  void WasmBinaryWriter([Ref] Module m, [Ref] BufferWithRandomAccess outbuf, boolean debug);
+  void write();
+};
+
 interface LiteralList {
   void LiteralList();
 
