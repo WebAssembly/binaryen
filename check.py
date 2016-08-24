@@ -203,7 +203,7 @@ def binary_format_check(wast, verify_final_result=True):
   assert os.path.exists('ab.wast')
 
   # make sure it is a valid wast
-  cmd = [os.path.join('bin', 'wasm-shell'), 'ab.wast']
+  cmd = [os.path.join('bin', 'wasm-opt'), 'ab.wast']
   print '      ', ' '.join(cmd)
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
@@ -291,6 +291,10 @@ for asm in tests:
         if not opts:
           cmd += ['--no-opts']
           wasm += '.no-opts'
+        if precise and opts:
+          # test mem init importing
+          open('a.mem', 'wb').write(asm)
+          cmd += ['--mem-init=a.mem']
         wasm = os.path.join('test', wasm)
         print '..', asm, wasm
         actual = run_command(cmd)
@@ -676,8 +680,9 @@ if has_emcc:
 
   print '\n[ checking wasm.js methods... ]\n'
 
-  for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary']:
-    for success in [1, 0]:
+  for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary', 'asmjs,interpret-binary', 'interpret-binary,asmjs']:
+    # check success and failure for simple modes, only success for combined/fallback ones
+    for success in [1, 0] if ',' not in method_init else [1]:
       method = method_init
       command = ['emcc', '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join('test', 'hello_world.c') ]
       command += ['-s', 'BINARYEN_METHOD="' + method + '"']
@@ -696,20 +701,20 @@ if has_emcc:
         asm = asm.replace('"almost asm"', '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
         asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
         with open('a.wasm.asm.js', 'w') as o: o.write(asm)
-      if method == 'interpret-asm2wasm':
+      if method.startswith('interpret-asm2wasm'):
         os.unlink('a.wasm.wast') # we should not need the .wast
         if not success:
           break_cashew() # we need cashew
-      elif method == 'interpret-s-expr':
+      elif method.startswith('interpret-s-expr'):
         os.unlink('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
           os.unlink('a.wasm.wast')
-      elif method == 'asmjs':
+      elif method.startswith('asmjs'):
         os.unlink('a.wasm.wast') # we should not need the .wast
         break_cashew() # we don't use cashew, so ok to break it
         if not success:
           os.unlink('a.wasm.js')
-      elif method == 'interpret-binary':
+      elif method.startswith('interpret-binary'):
         os.unlink('a.wasm.wast') # we should not need the .wast
         os.unlink('a.wasm.asm.js') # we should not need the .asm.js
         if not success:

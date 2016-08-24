@@ -21,6 +21,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "wasm-builder.h"
 #include "wasm-printing.h"
 
 #include "asm2wasm.h"
@@ -40,9 +41,13 @@ int main(int argc, const char *argv[]) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      .add("--mapped-globals", "-m", "Mapped globals", Options::Arguments::One,
+      .add("--mapped-globals", "-n", "Mapped globals", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              std::cerr << "warning: the --mapped-globals/-m option is deprecated (a mapped globals file is no longer needed as we use wasm globals)" << std::endl;
+           })
+      .add("--mem-init", "-t", "Import a memory initialization file into the output module", Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["mem init"] = argument;
            })
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
@@ -90,6 +95,23 @@ int main(int argc, const char *argv[]) {
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
   Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, opts);
   asm2wasm.processAsm(asmjs);
+
+  // import mem init file, if provided
+  const auto &memInit = options.extra.find("mem init");
+  if (memInit != options.extra.end()) {
+    auto filename = memInit->second.c_str();
+    auto data(read_file<std::vector<char>>(filename, Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
+    // the mem init's base is imported
+    auto* import = new Import;
+    import->name = Name("memInitBase");
+    import->module = Name("env");
+    import->base = Name("memInitBase");
+    import->kind = Import::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+    // create the memory segment
+    wasm.memory.segments.emplace_back(Builder(wasm).makeGetGlobal(import->name, import->globalType), data);
+  }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);

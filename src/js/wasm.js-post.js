@@ -29,6 +29,7 @@ function integrateWasmJS(Module) {
   // inputs
 
   var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,interpret-s-expr'; // by default, try native and then .wast
+  Module['wasmJSMethod'] = method;
 
   var wasmTextFile = Module['wasmTextFile'] || {{{ wasmTextFile }}};
   var wasmBinaryFile = Module['wasmBinaryFile'] || {{{ wasmBinaryFile }}};
@@ -100,10 +101,12 @@ function integrateWasmJS(Module) {
     }
     var oldView = new Int8Array(oldBuffer);
     var newView = new Int8Array(newBuffer);
-    if ({{{ WASM_BACKEND }}}) {
-      // memory segments arrived in the wast, do not trample them
+
+    // If we have a mem init file, do not trample it
+    if (!memoryInitializer) {
       oldView.set(newView.subarray(STATIC_BASE, STATIC_BASE + STATIC_BUMP), STATIC_BASE);
     }
+
     newView.set(oldView);
     updateGlobalBuffer(newBuffer);
     updateGlobalBufferViews();
@@ -214,6 +217,10 @@ function integrateWasmJS(Module) {
 
     info.global = global;
     info.env = env;
+
+    if (!('memInitBase' in env)) {
+      env['memInitBase'] = STATIC_BASE; // tell the memory segments where to place themselves
+    }
 
     wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 

@@ -18,6 +18,10 @@ for asm in sorted(os.listdir('test')):
         if not opts:
           cmd += ['--no-opts']
           wasm += '.no-opts'
+        if precise and opts:
+          # test mem init importing
+          open('a.mem', 'wb').write(asm)
+          cmd += ['--mem-init=a.mem']
         print '..', asm, wasm
         print '    ', ' '.join(cmd)
         actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
