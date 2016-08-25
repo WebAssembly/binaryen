@@ -86,7 +86,15 @@ class OptimizingIncrementalModuleBuilder {
 public:
   // numFunctions must be equal to the number of functions allocated, or higher. Knowing
   // this bounds helps avoid locking.
-  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions) : wasm(wasm), numFunctions(numFunctions), nextFunction(0), finishing(false) {
+  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions)
+      : wasm(wasm), numFunctions(numFunctions), endMarker(nullptr), list(nullptr), nextFunction(0),
+        numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
+        finishing(false) {
+    if (numFunctions == 0) {
+      // special case: no functions to be optimized.  Don't create any threads.
+      return;
+    }
+
     // prepare work list
     endMarker = new Function();
     list = new std::atomic<Function*>[numFunctions];
