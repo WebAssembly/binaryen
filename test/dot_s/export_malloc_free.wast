@@ -4,6 +4,7 @@
   (export "main" $main)
   (export "malloc" $malloc)
   (export "free" $free)
+  (export "realloc" $realloc)
   (func $main (result i32)
     (i32.const 0)
   )
@@ -11,6 +12,9 @@
     (i32.const 0)
   )
   (func $free (param $0 i32)
+  )
+  (func $realloc (param $0 i32) (param $1 i32) (result i32)
+    (i32.const 0)
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }

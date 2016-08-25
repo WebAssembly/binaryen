@@ -27,3 +27,13 @@ free:
 	.endfunc
 .Lfunc_end21:
 	.size	free, .Lfunc_end21-free
+
+	.weak	realloc
+	.type	realloc,@function
+realloc:
+	.param  	i32, i32
+	.result 	i32
+	i32.const	$push0=, 0
+	.endfunc
+.Lfunc_end22:
+	.size	realloc, .Lfunc_end22-free
