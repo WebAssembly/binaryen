@@ -197,9 +197,8 @@ private:
     passRunner.runFunction(func);
   }
 
-  static void workerMain(void* param) {
+  static void workerMain(OptimizingIncrementalModuleBuilder* self) {
     DEBUG_THREAD("workerMain");
-    OptimizingIncrementalModuleBuilder* self = (OptimizingIncrementalModuleBuilder*)param;
     {
       std::lock_guard<std::mutex> lock(self->mutex);
       self->liveWorkers++;
