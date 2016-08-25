@@ -139,7 +139,7 @@ public:
 private:
   void createWorker() {
     DEBUG_THREAD("create a worker");
-    threads.emplace_back(std::unique_ptr<std::thread>(new std::thread(workerMain, this)));
+    threads.emplace_back(make_unique<std::thread>(workerMain, this));
   }
 
   void wakeWorker() {
