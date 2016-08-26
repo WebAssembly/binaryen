@@ -35,7 +35,7 @@ struct LowerInt64 : public Pass {
 
   void prepare(PassRunner* runner, Module *module) override {
     allocator = runner->allocator;
-    namer = std::unique_ptr<NameManager>(new NameManager());
+    namer = make_unique<NameManager>();
     namer->run(runner, module);
   }
 

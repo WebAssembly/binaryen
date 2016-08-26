@@ -1,0 +1,4 @@
+(module
+  (memory 256 256)
+  (export "memory" memory)
+)

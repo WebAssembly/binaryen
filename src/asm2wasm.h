@@ -537,7 +537,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     for (unsigned i = 1; i < body->size(); i++) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
-    optimizingBuilder = std::unique_ptr<OptimizingIncrementalModuleBuilder>(new OptimizingIncrementalModuleBuilder(&wasm, numFunctions));
+    optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions);
   }
 
   // first pass - do almost everything, but function imports and indirect calls

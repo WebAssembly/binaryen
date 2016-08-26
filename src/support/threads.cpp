@@ -22,6 +22,7 @@
 
 #include "threads.h"
 #include "compiler-support.h"
+#include "utilities.h"
 
 
 // debugging tools
@@ -47,7 +48,7 @@ static std::unique_ptr<ThreadPool> pool;
 
 Thread::Thread() {
   assert(!ThreadPool::get()->isRunning());
-  thread = std::unique_ptr<std::thread>(new std::thread(mainLoop, this));
+  thread = make_unique<std::thread>(mainLoop, this);
 }
 
 Thread::~Thread() {
@@ -110,7 +111,7 @@ void ThreadPool::initialize(size_t num) {
   ready.store(threads.size()); // initial state before first resetThreadsAreReady()
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
-    threads.emplace_back(std::unique_ptr<Thread>(new Thread()));
+    threads.emplace_back(make_unique<Thread>());
   }
   DEBUG_POOL("initialize() waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });
@@ -127,7 +128,7 @@ size_t ThreadPool::getNumCores() {
 
 ThreadPool* ThreadPool::get() {
   if (!pool) {
-    pool = std::unique_ptr<ThreadPool>(new ThreadPool());
+    pool = make_unique<ThreadPool>();
     pool->initialize(getNumCores());
   }
   return pool.get();
