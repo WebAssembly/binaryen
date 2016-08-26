@@ -1328,11 +1328,12 @@ class S2WasmBuilder {
     mustMatch(name.str);
     skipComma();
     Address size = getInt();
+    Address localAlign = 1;
     if (*s == ',') {
       skipComma();
-      getInt();
+      localAlign = 1 << getInt();
     }
-    linkerObj->addStatic(size, align, name);
+    linkerObj->addStatic(size, std::max(align, localAlign), name);
   }
 
   void skipImports() {
