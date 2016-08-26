@@ -473,9 +473,6 @@ public:
   WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : wasm(input), o(o), debug(debug) {
     prepare();
   }
-  WasmBinaryWriter(Module& input, BufferWithRandomAccess& o, bool debug) : wasm(&input), o(o), debug(debug) {
-    prepare();
-  }
 
   void write() {
     writeHeader();

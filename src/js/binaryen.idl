@@ -38,7 +38,7 @@ interface BufferWithRandomAccess {
 };
 
 interface WasmBinaryWriter {
-  void WasmBinaryWriter([Ref] Module m, [Ref] BufferWithRandomAccess outbuf, boolean debug);
+  void WasmBinaryWriter(Module m, [Ref] BufferWithRandomAccess outbuf, boolean debug);
   void write();
 };
 
