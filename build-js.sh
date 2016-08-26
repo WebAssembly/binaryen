@@ -14,6 +14,12 @@
 #
 set -e
 
+if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "-help" ]; then
+  echo "usage: $0 [-g]" >&2
+  echo "-g  produce debug build" >&2
+  exit 1
+fi
+
 if [ "$EMSCRIPTEN" == "" ]; then
   echo "$0: EMSCRIPTEN environment variable is not set" >&2
   exit 1
@@ -24,10 +30,27 @@ if [ ! -d "$EMSCRIPTEN" ]; then
   exit 1
 fi
 
+EMCC_ARGS="-std=c++11 --memory-init-file 0"
+EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
+EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
+OUT_FILE_SUFFIX=
+
+if [ "$1" == "-g" ]; then
+  EMCC_ARGS="$EMCC_ARGS -O0"
+  EMCC_ARGS="$EMCC_ARGS --llvm-opts 0 --llvm-lto 0"
+  EMCC_ARGS="$EMCC_ARGS -profiling"
+  OUT_FILE_SUFFIX=-g
+else
+  EMCC_ARGS="$EMCC_ARGS -Oz"
+  EMCC_ARGS="$EMCC_ARGS --llvm-opts 2 --llvm-lto 1"
+  EMCC_ARGS="$EMCC_ARGS -s ELIMINATE_DUPLICATE_FUNCTIONS=1"
+  EMCC_ARGS="$EMCC_ARGS -s ELIMINATE_DUPLICATE_FUNCTIONS_PASSES=3"
+fi
+
 echo "building wasm.js"
 
 "$EMSCRIPTEN/em++" \
-  -std=c++11 \
+  $EMCC_ARGS \
   src/wasm-js.cpp \
   src/passes/pass.cpp \
   src/passes/Print.cpp \
@@ -42,22 +65,22 @@ echo "building wasm.js"
   src/asmjs/shared-constants.cpp \
   src/wasm.cpp \
   -Isrc/ \
-  -o bin/wasm.js \
+  -o bin/wasm${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE=1 \
-  -s 'EXPORT_NAME="WasmJS"' \
-  --memory-init-file 0 \
-  -Oz \
-  -s ALLOW_MEMORY_GROWTH=1 \
-  -profiling \
-  -s DEMANGLE_SUPPORT=1
+  -s 'EXPORT_NAME="WasmJS"'
   #-DWASM_JS_DEBUG
   #-DWASM_INTERPRETER_DEBUG=2
 
 echo "building binaryen.js"
 
+if [ "$1" != "-g" ]; then
+  EMCC_ARGS="$EMCC_ARGS --closure 1"
+fi
+
 python "$EMSCRIPTEN/tools/webidl_binder.py" src/js/binaryen.idl glue
 
 "$EMSCRIPTEN/em++" \
+  $EMCC_ARGS \
   -std=c++11 \
   src/binaryen-js.cpp \
   src/passes/pass.cpp \
@@ -82,13 +105,11 @@ python "$EMSCRIPTEN/tools/webidl_binder.py" src/js/binaryen.idl glue
   src/asmjs/shared-constants.cpp \
   src/wasm.cpp \
   -Isrc/ \
-  -o bin/binaryen.js \
-  -s MODULARIZE=1 \
+  -o bin/binaryen${OUT_FILE_SUFFIX}.js \
   -s 'EXPORT_NAME="Binaryen"' \
   --memory-init-file 0 \
-  -Oz \
-  -s ALLOW_MEMORY_GROWTH=1 \
-  -profiling \
-  -s DEMANGLE_SUPPORT=1 \
   -s INVOKE_RUN=0 \
-  --post-js glue.js
+  --pre-js src/js/binaryen.js-pre.js \
+  --post-js glue.js \
+  --post-js src/js/binaryen.js-extended.js \
+  --post-js src/js/binaryen.js-post.js
