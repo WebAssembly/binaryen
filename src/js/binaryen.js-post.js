@@ -12,4 +12,7 @@ if (typeof exports != 'undefined') {
     }
   })();
 }
-this['Binaryen'] = Binaryen;
+(typeof window !== 'undefined' ? window :
+ typeof global !== undefined ? global :
+ this
+)['Binaryen'] = Binaryen;
