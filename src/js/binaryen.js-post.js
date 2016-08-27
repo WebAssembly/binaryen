@@ -13,6 +13,17 @@ if (typeof exports != 'undefined') {
   })();
 }
 (typeof window !== 'undefined' ? window :
- typeof global !== undefined ? global :
+ typeof global !== 'undefined' && (
+  typeof process === 'undefined' ||
+  
+  // Note: We must export "Binaryen" even inside a CommonJS/AMD/UMD module
+  // space because check.py generates a.js which requires Binaryen global var
+  ( process.argv &&
+    Array.isArray(process.argv) &&
+    process.argv[1] &&
+    process.argv[1].substr(-5) === '/a.js'
+  )
+
+ ) ? global :
  this
 )['Binaryen'] = Binaryen;
