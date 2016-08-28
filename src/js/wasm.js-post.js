@@ -110,12 +110,6 @@ function integrateWasmJS(Module) {
     newView.set(oldView);
     updateGlobalBuffer(newBuffer);
     updateGlobalBufferViews();
-    Module['reallocBuffer'] = function(size) {
-      size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
-      var old = Module['buffer'];
-      exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
-      return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
-    };
   }
 
   var WasmTypes = {
@@ -263,6 +257,14 @@ function integrateWasmJS(Module) {
 
   // We may have a preloaded value in Module.asm, save it
   Module['asmPreload'] = Module['asm'];
+
+  // Memory growth integration code
+  Module['reallocBuffer'] = function(size) {
+    size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
+    var old = Module['buffer'];
+    exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
+    return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+  };
 
   // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
   // the wasm module at that time, and it receives imports and provides exports and so forth, the app
