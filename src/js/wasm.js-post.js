@@ -212,8 +212,11 @@ function integrateWasmJS(Module) {
     info.global = global;
     info.env = env;
 
-    if (!('memInitBase' in env)) {
-      env['memInitBase'] = STATIC_BASE; // tell the memory segments where to place themselves
+    if (!('memoryBase' in env)) {
+      env['memoryBase'] = STATIC_BASE; // tell the memory segments where to place themselves
+    }
+    if (!('tableBase' in env)) {
+      env['tableBase'] = 0; // tell the memory segments where to place themselves
     }
 
     wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;

@@ -840,6 +840,29 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   tableImport->base = TABLE;
   tableImport->kind = Import::Table;
   wasm.addImport(tableImport.release());
+
+  // Import memory offset
+  {
+    auto* import = new Import;
+    import->name = Name("memoryBase");
+    import->module = Name("env");
+    import->base = Name("memoryBase");
+    import->kind = Import::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+  }
+
+  // Import table offset
+  {
+    auto* import = new Import;
+    import->name = Name("tableBase");
+    import->module = Name("env");
+    import->base = Name("tableBase");
+    import->kind = Import::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+  }
+
 #endif
 
 #if 0 // enable asm2wasm i64 optimizations when browsers have consistent i64 support in wasm

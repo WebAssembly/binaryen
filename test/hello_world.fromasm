@@ -1,9 +1,10 @@
 (module
   (memory 256 256)
-  (data (get_global $memInitBase) "hello_world.asm.js")
+  (data (get_global $memoryBase) "hello_world.asm.js")
   (import $memory memory "env" "memory")
   (import $table table "env" "table")
-  (import $memInitBase global "env" "memInitBase" i32)
+  (import $memoryBase global "env" "memoryBase" i32)
+  (import $tableBase global "env" "tableBase" i32)
   (export "add" $add)
   (func $add (param $0 i32) (param $1 i32) (result i32)
     (i32.add

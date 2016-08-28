@@ -101,16 +101,8 @@ int main(int argc, const char *argv[]) {
   if (memInit != options.extra.end()) {
     auto filename = memInit->second.c_str();
     auto data(read_file<std::vector<char>>(filename, Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
-    // the mem init's base is imported
-    auto* import = new Import;
-    import->name = Name("memInitBase");
-    import->module = Name("env");
-    import->base = Name("memInitBase");
-    import->kind = Import::Global;
-    import->globalType = i32;
-    wasm.addImport(import);
     // create the memory segment
-    wasm.memory.segments.emplace_back(Builder(wasm).makeGetGlobal(import->name, import->globalType), data);
+    wasm.memory.segments.emplace_back(Builder(wasm).makeGetGlobal(Name("memoryBase"), i32), data);
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;

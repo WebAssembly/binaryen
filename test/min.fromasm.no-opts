@@ -3,6 +3,8 @@
   (import $tDP global "env" "tempDoublePtr" i32)
   (import $memory memory "env" "memory")
   (import $table table "env" "table")
+  (import $memoryBase global "env" "memoryBase" i32)
+  (import $tableBase global "env" "tableBase" i32)
   (export "floats" $floats)
   (func $floats (param $f f32) (result f32)
     (local $t f32)

@@ -20,6 +20,8 @@
   (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (import $memory memory "env" "memory")
   (import $table table "env" "table")
+  (import $memoryBase global "env" "memoryBase" i32)
+  (import $tableBase global "env" "tableBase" i32)
   (export "big_negative" $big_negative)
   (export "pick" $exportMe)
   (global $Int i32 (i32.const 0))

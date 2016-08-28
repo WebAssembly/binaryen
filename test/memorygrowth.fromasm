@@ -1,6 +1,6 @@
 (module
   (memory 256 256)
-  (data (get_global $memInitBase) "memorygrowth.asm.js")
+  (data (get_global $memoryBase) "memorygrowth.asm.js")
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
@@ -28,7 +28,8 @@
   (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (import $memory memory "env" "memory")
   (import $table table "env" "table")
-  (import $memInitBase global "env" "memInitBase" i32)
+  (import $memoryBase global "env" "memoryBase" i32)
+  (import $tableBase global "env" "tableBase" i32)
   (export "_free" $fb)
   (export "_main" $Na)
   (export "_pthread_self" $ib)

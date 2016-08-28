@@ -1,6 +1,6 @@
 (module
   (memory 256 256)
-  (data (get_global $memInitBase) "unit.asm.js")
+  (data (get_global $memoryBase) "unit.asm.js")
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
@@ -21,7 +21,8 @@
   (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (import $memory memory "env" "memory")
   (import $table table "env" "table")
-  (import $memInitBase global "env" "memInitBase" i32)
+  (import $memoryBase global "env" "memoryBase" i32)
+  (import $tableBase global "env" "tableBase" i32)
   (export "big_negative" $big_negative)
   (export "pick" $big_negative)
   (global $Int i32 (i32.const 0))
