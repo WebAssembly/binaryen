@@ -817,11 +817,22 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.addExport(export_);
   }
 
+#if 0
+  // export memory
   auto memoryExport = make_unique<Export>();
   memoryExport->name = MEMORY;
   memoryExport->value = Name::fromInt(0);
   memoryExport->kind = Export::Memory;
   wasm.addExport(memoryExport.release());
+#else
+  // import memory
+  auto memoryImport = make_unique<Import>();
+  memoryImport->name = MEMORY;
+  memoryImport->module = ENV;
+  memoryImport->base = MEMORY;
+  memoryImport->kind = Import::Memory;
+  wasm.addImport(memoryImport.release());
+#endif
 
 #if 0 // enable asm2wasm i64 optimizations when browsers have consistent i64 support in wasm
   if (udivmoddi4.is() && getTempRet0.is()) {

@@ -169,17 +169,36 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
     void init(Module& wasm, ModuleInstance& instance) override {
-      // create a new buffer here, just like native wasm support would.
-      EM_ASM_({
-        Module['outside']['newBuffer'] = new ArrayBuffer($0);
-      }, wasm.memory.initial * Memory::kPageSize);
+      // look for imported memory
+      {
+        bool found = false;
+        for (auto& import : wasm.imports) {
+          if (import->module == ENV && import->base == MEMORY) {
+            assert(import->kind == Import::Memory);
+            // memory is imported
+            EM_ASM({
+              Module['outside']['tempBuffer'] = Module['lookupImport']('env', 'memory');
+            });
+            found = true;
+          }
+        }
+        if (!found) {
+          // no memory import; create a new buffer here, just like native wasm support would.
+          EM_ASM_({
+            Module['outside']['tempBuffer'] = Module['outside']['newBuffer'] = new ArrayBuffer($0);
+          }, wasm.memory.initial * Memory::kPageSize);
+        }
+      }
       for (auto segment : wasm.memory.segments) {
         EM_ASM_({
           var source = Module['HEAP8'].subarray($1, $1 + $2);
-          var target = new Int8Array(Module['outside']['newBuffer']);
+          var target = new Int8Array(Module['outside']['tempBuffer']);
           target.set(source, $0);
         }, ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
       }
+      EM_ASM({
+        Module['outside']['tempBuffer'] = null;
+      });
       // Table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
       // TODO: make them all JS methods, wrapping a dynCall where necessary?
       EM_ASM_({

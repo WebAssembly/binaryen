@@ -1,8 +1,8 @@
 (module
   (memory 256 256)
   (import $tDP global "env" "tempDoublePtr" i32)
+  (import $memory memory "env" "memory")
   (export "floats" $floats)
-  (export "memory" memory)
   (func $floats (param $0 f32) (result f32)
     (local $1 f32)
     (f32.add

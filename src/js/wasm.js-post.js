@@ -183,7 +183,7 @@ function integrateWasmJS(Module) {
       return false;
     }
     exports = instance.exports;
-    mergeMemory(exports.memory);
+    if (exports.memory) mergeMemory(exports.memory);
 
     Module["usingWasm"] = true;
 
@@ -274,6 +274,11 @@ function integrateWasmJS(Module) {
     global = fixImports(global);
     env = fixImports(env);
 
+    // import memory
+    if (!env['memory']) {
+      env['memory'] = providedBuffer;
+    }
+    
     // try the methods. each should return the exports if it succeeded
 
     var exports;
