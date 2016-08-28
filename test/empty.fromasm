@@ -2,5 +2,6 @@
   (memory 256 256)
   (data (get_global $memInitBase) "empty.asm.js")
   (import $memory memory "env" "memory")
+  (import $table table "env" "table")
   (import $memInitBase global "env" "memInitBase" i32)
 )

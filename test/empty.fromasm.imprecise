@@ -1,4 +1,5 @@
 (module
   (memory 256 256)
   (import $memory memory "env" "memory")
+  (import $table table "env" "table")
 )

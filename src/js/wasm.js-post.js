@@ -274,9 +274,12 @@ function integrateWasmJS(Module) {
     global = fixImports(global);
     env = fixImports(env);
 
-    // import memory
+    // import memory and table
     if (!env['memory']) {
       env['memory'] = providedBuffer;
+    }
+    if (!env['table']) {
+      env['table'] = new Array(1024);
     }
     
     // try the methods. each should return the exports if it succeeded

@@ -832,6 +832,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   memoryImport->base = MEMORY;
   memoryImport->kind = Import::Memory;
   wasm.addImport(memoryImport.release());
+
+  // import table
+  auto tableImport = make_unique<Import>();
+  tableImport->name = TABLE;
+  tableImport->module = ENV;
+  tableImport->base = TABLE;
+  tableImport->kind = Import::Table;
+  wasm.addImport(tableImport.release());
 #endif
 
 #if 0 // enable asm2wasm i64 optimizations when browsers have consistent i64 support in wasm

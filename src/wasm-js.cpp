@@ -145,14 +145,16 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     Module['asmExports'] = {};
   });
   for (auto& curr : module->exports) {
-    EM_ASM_({
-      var name = Pointer_stringify($0);
-      Module['asmExports'][name] = function() {
-        Module['tempArguments'] = Array.prototype.slice.call(arguments);
-        Module['_call_from_js']($0);
-        return Module['tempReturn'];
-      };
-    }, curr->name.str);
+    if (curr->kind == Export::Function) {
+      EM_ASM_({
+        var name = Pointer_stringify($0);
+        Module['asmExports'][name] = function() {
+          Module['tempArguments'] = Array.prototype.slice.call(arguments);
+          Module['_call_from_js']($0);
+          return Module['tempReturn'];
+        };
+      }, curr->name.str);
+    }
   }
 
   // verify imports are provided
@@ -177,7 +179,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             assert(import->kind == Import::Memory);
             // memory is imported
             EM_ASM({
-              Module['outside']['tempBuffer'] = Module['lookupImport']('env', 'memory');
+              Module['asmExports']['memory'] = Module['lookupImport']('env', 'memory');
             });
             found = true;
           }
@@ -185,25 +187,42 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         if (!found) {
           // no memory import; create a new buffer here, just like native wasm support would.
           EM_ASM_({
-            Module['outside']['tempBuffer'] = Module['outside']['newBuffer'] = new ArrayBuffer($0);
+            Module['asmExports']['memory'] = Module['outside']['newBuffer'] = new ArrayBuffer($0);
           }, wasm.memory.initial * Memory::kPageSize);
         }
       }
       for (auto segment : wasm.memory.segments) {
         EM_ASM_({
           var source = Module['HEAP8'].subarray($1, $1 + $2);
-          var target = new Int8Array(Module['outside']['tempBuffer']);
+          var target = new Int8Array(Module['asmExports']['memory']);
           target.set(source, $0);
         }, ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
       }
+      // look for imported table
+      {
+        bool found = false;
+        for (auto& import : wasm.imports) {
+          if (import->module == ENV && import->base == TABLE) {
+            assert(import->kind == Import::Table);
+            // table is imported
+            EM_ASM({
+              Module['outside']['wasmTable'] = Module['lookupImport']('env', 'table');
+            });
+            found = true;
+          }
+        }
+        if (!found) {
+          // no table import; create a new one here, just like native wasm support would.
+          EM_ASM_({
+            Module['outside']['wasmTable'] = new Array($0);
+          }, wasm.table.initial);
+        }
+      }
       EM_ASM({
-        Module['outside']['tempBuffer'] = null;
+        Module['asmExports']['table'] = Module['outside']['wasmTable'];
       });
-      // Table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
+      // Emulated table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
       // TODO: make them all JS methods, wrapping a dynCall where necessary?
-      EM_ASM_({
-        Module['outside']['wasmTable'] = new Array($0);
-      }, wasm.table.initial);
       for (auto segment : wasm.table.segments) {
         Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
         assert(offset + segment.data.size() <= wasm.table.initial);

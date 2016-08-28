@@ -2,6 +2,7 @@
   (memory 256 256)
   (import $tDP global "env" "tempDoublePtr" i32)
   (import $memory memory "env" "memory")
+  (import $table table "env" "table")
   (export "floats" $floats)
   (func $floats (param $0 f32) (result f32)
     (local $1 f32)

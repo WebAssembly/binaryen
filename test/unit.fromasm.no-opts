@@ -19,6 +19,7 @@
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (import $i32u-div "asm2wasm" "i32u-div" (param i32 i32) (result i32))
   (import $memory memory "env" "memory")
+  (import $table table "env" "table")
   (export "big_negative" $big_negative)
   (export "pick" $exportMe)
   (global $Int i32 (i32.const 0))

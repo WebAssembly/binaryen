@@ -15,6 +15,7 @@
   (import $h "env" "h" (param i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
   (import $memory memory "env" "memory")
+  (import $table table "env" "table")
   (export "big_negative" $big_negative)
   (export "pick" $big_negative)
   (global $Int i32 (i32.const 0))

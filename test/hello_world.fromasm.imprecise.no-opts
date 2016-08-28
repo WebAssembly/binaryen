@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
   (import $memory memory "env" "memory")
+  (import $table table "env" "table")
   (export "add" $add)
   (func $add (param $x i32) (param $y i32) (result i32)
     (return
