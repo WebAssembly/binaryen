@@ -821,6 +821,34 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
   }
 };
 
+// Finalizes a node
+
+struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, Visitor<ReFinalize>>> {
+  void visitBlock(Block *curr) { curr->finalize(); }
+  void visitIf(If *curr) { curr->finalize(); }
+  void visitLoop(Loop *curr) { curr->finalize(); }
+  void visitBreak(Break *curr) { curr->finalize(); }
+  void visitSwitch(Switch *curr) { curr->finalize(); }
+  void visitCall(Call *curr) { curr->finalize(); }
+  void visitCallImport(CallImport *curr) { curr->finalize(); }
+  void visitCallIndirect(CallIndirect *curr) { curr->finalize(); }
+  void visitGetLocal(GetLocal *curr) { curr->finalize(); }
+  void visitSetLocal(SetLocal *curr) { curr->finalize(); }
+  void visitGetGlobal(GetGlobal *curr) { curr->finalize(); }
+  void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
+  void visitLoad(Load *curr) { curr->finalize(); }
+  void visitStore(Store *curr) { curr->finalize(); }
+  void visitConst(Const *curr) { curr->finalize(); }
+  void visitUnary(Unary *curr) { curr->finalize(); }
+  void visitBinary(Binary *curr) { curr->finalize(); }
+  void visitSelect(Select *curr) { curr->finalize(); }
+  void visitDrop(Drop *curr) { curr->finalize(); }
+  void visitReturn(Return *curr) { curr->finalize(); }
+  void visitHost(Host *curr) { curr->finalize(); }
+  void visitNop(Nop *curr) { curr->finalize(); }
+  void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+};
+
 } // namespace wasm
 
 #endif // wasm_ast_utils_h

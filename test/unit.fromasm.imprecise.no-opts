@@ -4,13 +4,13 @@
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
-  (type $FUNCSIG$vd (func (param f64)))
+  (type $FUNCSIG$dd (func (param f64) (result f64)))
   (import $t global "global" "NaN" f64)
   (import $u global "global" "Infinity" f64)
   (import $tempDoublePtr global "env" "tempDoublePtr" i32)
   (import $n global "env" "gb" i32)
   (import $setTempRet0 "env" "setTempRet0" (param i32) (result i32))
-  (import $abort "env" "abort" (param f64))
+  (import $abort "env" "abort" (param f64) (result f64))
   (import $print "env" "print" (param i32))
   (import $h "env" "h" (param i32))
   (import $f64-rem "asm2wasm" "f64-rem" (param f64 f64) (result f64))
@@ -543,23 +543,33 @@
     )
   )
   (func $aborts
-    (call_import $abort
-      (f64.const 0)
-    )
-    (call_import $abort
-      (f64.convert_s/i32
-        (i32.const 55)
+    (drop
+      (call_import $abort
+        (f64.const 0)
       )
     )
-    (call_import $abort
-      (f64.const 0)
+    (drop
+      (call_import $abort
+        (f64.convert_s/i32
+          (i32.const 55)
+        )
+      )
     )
-    (call_import $abort
-      (f64.const 12.34)
+    (drop
+      (call_import $abort
+        (f64.const 0)
+      )
     )
-    (call_import $abort
-      (f64.promote/f32
-        (f32.const 56.779998779296875)
+    (drop
+      (call_import $abort
+        (f64.const 12.34)
+      )
+    )
+    (drop
+      (call_import $abort
+        (f64.promote/f32
+          (f32.const 56.779998779296875)
+        )
       )
     )
   )
@@ -960,6 +970,34 @@
     (return
       (i32.load8_s
         (get_local $x)
+      )
+    )
+  )
+  (func $conditionalTypeFun
+    (local $x i32)
+    (local $y f64)
+    (set_local $x
+      (if
+        (i32.const 1)
+        (i32.trunc_s/f64
+          (call_import $abort
+            (f64.convert_s/i32
+              (i32.const 5)
+            )
+          )
+        )
+        (i32.const 2)
+      )
+    )
+    (set_local $y
+      (if
+        (i32.const 3)
+        (call_import $abort
+          (f64.convert_s/i32
+            (i32.const 7)
+          )
+        )
+        (f64.const 4.5)
       )
     )
   )

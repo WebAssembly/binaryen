@@ -324,6 +324,12 @@ function asm(global, env, buffer) {
     return HEAP8[x | 0] | 0;
   }
 
+  function conditionalTypeFun() {
+    var x = 0, y = +0;
+    x = 1 ? abort(5) | 0 : 2;
+    y = 3 ? +abort(7) : 4.5;
+  }
+
   function z() {
   }
   function w() {

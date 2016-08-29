@@ -224,12 +224,6 @@ private:
     // if we already saw this signature, verify it's the same (or else handle that)
     if (importedFunctionTypes.find(importName) != importedFunctionTypes.end()) {
       FunctionType* previous = importedFunctionTypes[importName].get();
-#if 0
-      std::cout << "compare " << importName.str << "\nfirst: ";
-      type.print(std::cout, 0);
-      std::cout << "\nsecond: ";
-      previous.print(std::cout, 0) << ".\n";
-#endif
       if (*type != *previous) {
         // merge it in. we'll add on extra 0 parameters for ones not actually used, and upgrade types to
         // double where there is a conflict (which is ok since in JS, double can contain everything
@@ -247,6 +241,8 @@ private:
         }
         if (previous->result == none) {
           previous->result = type->result; // use a more concrete type
+        } else if (previous->result != type->result) {
+          previous->result = f64; // overloaded return type, make it a double
         }
       }
     } else {
@@ -752,7 +748,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
     void visitCall(Call* curr) {
       assert(getModule()->checkFunction(curr->target) ? true : (std::cerr << curr->target << '\n', false));
-      curr->type = getModule()->getFunction(curr->target)->result;
+      auto result = getModule()->getFunction(curr->target)->result;
+      if (curr->type != result) {
+        curr->type = result;
+      }
     }
 
     void visitCallImport(CallImport* curr) {
@@ -776,9 +775,25 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           }
         }
       }
-
-      curr->type = getModule()->getImport(curr->target)->functionType->result;
+      auto importResult = getModule()->getImport(curr->target)->functionType->result;
+      if (curr->type != importResult) {
+        if (importResult == f64) {
+          // we use a JS f64 value which is the most general, and convert to it
+          switch (curr->type) {
+            case i32: replaceCurrent(parent->builder.makeUnary(TruncSFloat64ToInt32, curr)); break;
+            case f32: replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr)); break;
+            case none: replaceCurrent(parent->builder.makeDrop(curr)); break;
+            default: WASM_UNREACHABLE();
+          }
+        } else {
+          assert(curr->type == none);
+          // we don't want a return value here, but the import does provide one
+          replaceCurrent(parent->builder.makeDrop(curr));
+        }
+        curr->type = importResult;
+      }
     }
+
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
       auto add = curr->target->cast<Binary>();
@@ -789,6 +804,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   };
   PassRunner passRunner(&wasm);
   passRunner.add<FinalizeCalls>(this);
+  passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
   if (optimize) {
     passRunner.add("vacuum"); // autodrop can add some garbage
