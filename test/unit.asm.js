@@ -319,6 +319,11 @@ function asm(global, env, buffer) {
     return 0;
   }
 
+  function heap8NoShift(x) {
+    x = x | 0;
+    return HEAP8[x | 0] | 0;
+  }
+
   function z() {
   }
   function w() {

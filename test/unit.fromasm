@@ -575,4 +575,9 @@
     )
     (i32.const 0)
   )
+  (func $heap8NoShift (param $0 i32) (result i32)
+    (i32.load8_s
+      (get_local $0)
+    )
+  )
 )

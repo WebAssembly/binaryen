@@ -1819,7 +1819,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // if there is a shift, we can just look through it, etc.
   processUnshifted = [&](Ref ptr, unsigned bytes) {
     auto shifts = bytesToShift(bytes);
-    if (ptr[0] == BINARY && ptr[1] == RSHIFT && ptr[3][0] == NUM && ptr[3][1]->getInteger() == shifts) {
+    // HEAP?[addr >> ?], or HEAP8[x | 0]
+    if ((ptr[0] == BINARY && ptr[1] == RSHIFT && ptr[3][0] == NUM && ptr[3][1]->getInteger() == shifts) ||
+        (bytes == 1 && ptr[0] == BINARY && ptr[1] == OR && ptr[3][0] == NUM && ptr[3][1]->getInteger() == 0)) {
       return process(ptr[2]); // look through it
     } else if (ptr[0] == NUM) {
       // constant, apply a shift (e.g. HEAP32[1] is address 4)
