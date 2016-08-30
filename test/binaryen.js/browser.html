@@ -13,16 +13,23 @@ body {
   font:14px monospace;
   white-space: pre;
 }
+p {
+  white-space: normal;
+  font-family:sans-serif;
+}
 
     </style>
     <script type="text/javascript" src="../../bin/binaryen.js"></script>
-    <!-- <script type="text/javascript" src="../../bin/binaryen-g.js"></script> -->
   </head>
   <body><script type="text/javascript">
-
+// Separate javascript tag to support <=ES3 browser (the other block uses ES5 and ES6 features)
 if (!window.Wasm) {
-  document.write('No WASM support. Did you enable it via chrome://flags/#enable-webassembly ?')
-} else {
+  var e = document.createElement('p');
+  e.innerHTML = 'No WASM support detected.<br>Please see <a href="https://github.com/kripken/emscripten/wiki/WebAssembly#testing-native-webassembly-in-browsers">https://github.com/kripken/emscripten/wiki/WebAssembly#testing-native-webassembly-in-browsers</a> for instructions on how to enable it.';
+  document.body.appendChild(e);
+}
+</script><script type="text/javascript">
+if (window.Wasm) {
   try {
     let startTime = new Date;
     document.write("Start at "+startTime.toLocaleTimeString()+"\n");
