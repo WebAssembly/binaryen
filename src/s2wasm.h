@@ -249,7 +249,7 @@ class S2WasmBuilder {
         offset = -getInt();
       }
       linkerObj->addRelocation(kind, target,
-                               fixEmEHSjLjNames(cleanFunction(name)), offset);
+                               fixEmLongjmp(cleanFunction(name)), offset);
       return true;
     }
   }
@@ -1388,7 +1388,7 @@ class S2WasmBuilder {
   // This version only converts emscripten_longjmp_jmpbuf and does not deal
   // with invoke wrappers. This is used when we only have a function name as
   // relocatable constant.
-  Name fixEmEHSjLjNames(const Name &name) {
+  Name fixEmLongjmp(const Name &name) {
     if (name == "emscripten_longjmp_jmpbuf")
       return "emscripten_longjmp";
     return name;
