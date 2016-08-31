@@ -514,11 +514,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printMinorOpening(o, "unreachable") << ')';
   }
   // Module-level visitors
-  void visitFunctionType(FunctionType *curr, bool full=false) {
-    if (full) {
-      printOpening(o, "type") << ' ';
-      printName(curr->name) << " (func";
-    }
+  void visitFunctionType(FunctionType *curr, Name* internalName = nullptr) {
+    o << "(func";
+    if (internalName) o << ' ' << *internalName;
     if (curr->params.size() > 0) {
       o << maybeSpace;
       printMinorOpening(o, "param");
@@ -531,27 +529,17 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << maybeSpace;
       printMinorOpening(o, "result ") << printWasmType(curr->result) << ')';
     }
-    if (full) {
-      o << "))";
-    }
+    o << ")";
   }
   void visitImport(Import *curr) {
     printOpening(o, "import ");
-    printName(curr->name) << ' ';
-    switch (curr->kind) {
-      case Export::Function: break;
-      case Export::Table: o << "table "; break;
-      case Export::Memory: o << "memory "; break;
-      case Export::Global: o << "global "; break;
-      default: WASM_UNREACHABLE();
-    }
     printText(o, curr->module.str) << ' ';
-    printText(o, curr->base.str);
+    printText(o, curr->base.str) << ' ';
     switch (curr->kind) {
-      case Export::Function: if (curr->functionType) visitFunctionType(curr->functionType); break;
-      case Export::Table: break;
-      case Export::Memory: break;
-      case Export::Global: o << ' ' << printWasmType(curr->globalType); break;
+      case Export::Function: if (curr->functionType) visitFunctionType(curr->functionType, &curr->name); break;
+      case Export::Table:    o << "(table "  << curr->name << ")"; break;
+      case Export::Memory:   o << "(memory " << curr->name << ")"; break;
+      case Export::Global:   o << "(global " << curr->name << ' ' << printWasmType(curr->globalType) << ")"; break;
       default: WASM_UNREACHABLE();
     }
     o << ')';
@@ -666,8 +654,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
-      visitFunctionType(child.get(), true);
-      o << maybeNewLine;
+      printOpening(o, "type") << ' ';
+      printName(child->name) << ' ';
+      visitFunctionType(child.get());
+      o << ")" << maybeNewLine;
     }
     for (auto& child : curr->imports) {
       doIndent(o, indent);

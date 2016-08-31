@@ -1429,8 +1429,24 @@ private:
   void parseImport(Element& s) {
     std::unique_ptr<Import> im = make_unique<Import>();
     size_t i = 1;
+    bool newStyle = s.size() == 4 && s[3]->isList(); // (import "env" "STACKTOP" (global $stackTop i32))
+    if (newStyle) {
+      if ((*s[3])[0]->str() == FUNC) {
+        im->kind = Import::Function;
+      } else if ((*s[3])[0]->str() == MEMORY) {
+        im->kind = Import::Memory;
+      } else if ((*s[3])[0]->str() == TABLE) {
+        im->kind = Import::Table;
+      } else if ((*s[3])[0]->str() == GLOBAL) {
+        im->kind = Import::Global;
+      } else {
+        newStyle = false; // either (param..) or (result..)
+      }
+    }
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
+    } else if (newStyle) {
+      im->name = (*s[3])[1]->str();
     } else {
       im->name = Name::fromInt(importCounter);
     }
@@ -1438,24 +1454,27 @@ private:
     if (!s[i]->quoted()) {
       if (s[i]->str() == MEMORY) {
         im->kind = Import::Memory;
-      } else if (s[2]->str() == TABLE) {
+      } else if (s[i]->str() == TABLE) {
         im->kind = Import::Table;
-      } else if (s[2]->str() == GLOBAL) {
+      } else if (s[i]->str() == GLOBAL) {
         im->kind = Import::Global;
       } else {
         WASM_UNREACHABLE();
       }
       i++;
-    } else {
+    } else if (!newStyle) {
       im->kind = Import::Function;
     }
     im->module = s[i++]->str();
     if (!s[i]->isStr()) throw ParseException("no name for import");
     im->base = s[i++]->str();
+    // parse internals
+    Element& inner = newStyle ? *s[3] : s;
+    Index j = newStyle ? 2 : i;
     if (im->kind == Import::Function) {
       std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
-      if (s.size() > i) {
-        Element& params = *s[i];
+      if (inner.size() > j) {
+        Element& params = *inner[j];
         IString id = params[0]->str();
         if (id == PARAM) {
           for (size_t i = 1; i < params.size(); i++) {
@@ -1470,15 +1489,15 @@ private:
         } else {
           throw ParseException("bad import element");
         }
-        if (s.size() > i+1) {
-          Element& result = *s[i+1];
+        if (inner.size() > j+1) {
+          Element& result = *inner[j+1];
           assert(result[0]->str() == RESULT);
           type->result = stringToWasmType(result[1]->str());
         }
       }
       im->functionType = ensureFunctionType(getSig(type.get()), &wasm);
     } else if (im->kind == Import::Global) {
-      im->globalType = stringToWasmType(s[i]->str());
+      im->globalType = stringToWasmType(inner[j]->str());
     }
     wasm.addImport(im.release());
   }

@@ -5,7 +5,7 @@
   (type $2 (func))
   (type $3 (func (param i32 f32)))
   (type $4 (func (param i32)))
-  (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
+  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
   (func $nothing-to-do (type $2)
     (local $0 i32)
     (nop)

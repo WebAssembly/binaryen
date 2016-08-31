@@ -14,7 +14,7 @@ BinaryenFloat64: 4
   (type $fiF (func (param i32 f64) (result f32)))
   (type $v (func))
   (type $3 (func))
-  (import $an-imported "module" "base" (param i32 f64) (result f32))
+  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
   (export "kitchen_sinker" "$kitchen()sinker")
   (export "mem" memory)
   (table 1 1 anyfunc)
@@ -536,7 +536,7 @@ raw:
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
-  (import $check "module" "check" (param i32))
+  (import "module" "check" (func $check (param i32)))
   (func $just-one-block (type $v)
     (local $0 i32)
     (call_import $check
@@ -1023,7 +1023,7 @@ optimized:
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
-  (import $check "module" "check" (param i32))
+  (import "module" "check" (func $check (param i32)))
   (func $just-one-block (type $v)
     (call_import $check
       (i32.const 1337)
@@ -1244,7 +1244,7 @@ module loaded from binary form:
   (start $starter)
   (type $vi (func (param i32)))
   (type $v (func))
-  (import $print-i32 "spectest" "print" (param i32))
+  (import "spectest" "print" (func $print-i32 (param i32)))
   (func $starter (type $v)
     (call_import $print-i32
       (i32.const 1234)
@@ -1605,7 +1605,7 @@ int main() {
   (type $fiF (func (param i32 f64) (result f32)))
   (type $v (func))
   (type $3 (func))
-  (import $an-imported "module" "base" (param i32 f64) (result f32))
+  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
   (export "kitchen_sinker" "$kitchen()sinker")
   (export "mem" memory)
   (table 1 1 anyfunc)
@@ -2587,7 +2587,7 @@ raw:
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
-  (import $check "module" "check" (param i32))
+  (import "module" "check" (func $check (param i32)))
   (func $just-one-block (type $v)
     (local $0 i32)
     (call_import $check
@@ -3078,7 +3078,7 @@ optimized:
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
-  (import $check "module" "check" (param i32))
+  (import "module" "check" (func $check (param i32)))
   (func $just-one-block (type $v)
     (call_import $check
       (i32.const 1337)
