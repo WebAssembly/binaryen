@@ -27,27 +27,27 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	i32.load	$push11=, __stack_pointer($pop10)
 	i32.const	$push12=, 16
-	i32.sub 	$push16=, $pop11, $pop12
-	i32.store	$push21=, __stack_pointer($pop13), $pop16
-	tee_local	$push20=, $0=, $pop21
+	i32.sub 	$push20=, $pop11, $pop12
+	tee_local	$push19=, $1=, $pop20
+	i32.store	$drop=, __stack_pointer($pop13), $pop19
 	i32.const	$push14=, 8
-	i32.add 	$push15=, $pop20, $pop14
+	i32.add 	$push15=, $1, $pop14
 	call    	foo@FUNCTION, $pop15
 	block
-	i32.load16_u	$push5=, 8($0)
+	i32.load16_u	$push5=, 8($1)
 	i32.const	$push2=, 0
-	i32.load	$push19=, gs($pop2)
-	tee_local	$push18=, $1=, $pop19
-	i32.const	$push17=, 65535
-	i32.and 	$push4=, $pop18, $pop17
+	i32.load	$push18=, gs($pop2)
+	tee_local	$push17=, $0=, $pop18
+	i32.const	$push16=, 65535
+	i32.and 	$push4=, $pop17, $pop16
 	i32.ne  	$push6=, $pop5, $pop4
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.load16_u	$push0=, 10($0)
-	i32.const	$push22=, 65535
-	i32.and 	$push7=, $pop0, $pop22
+	i32.load16_u	$push0=, 10($1)
+	i32.const	$push21=, 65535
+	i32.and 	$push7=, $pop0, $pop21
 	i32.const	$push3=, 16
-	i32.shr_u	$push1=, $1, $pop3
+	i32.shr_u	$push1=, $0, $pop3
 	i32.ne  	$push8=, $pop7, $pop1
 	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end

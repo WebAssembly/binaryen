@@ -45,18 +45,18 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push13=, 0
-	i32.load	$push3=, b($pop13)
 	i32.const	$push12=, 0
-	i32.gt_s	$push4=, $pop3, $pop12
+	i32.load	$push2=, b($pop12)
 	i32.const	$push11=, 0
-	i32.load	$push10=, a($pop11)
-	tee_local	$push9=, $0=, $pop10
-	i32.const	$push1=, 1
-	i32.and 	$push2=, $pop9, $pop1
-	i32.or  	$push5=, $pop4, $pop2
-	i32.eqz 	$push15=, $pop5
-	br_if   	0, $pop15       # 0: down to label3
+	i32.gt_s	$push3=, $pop2, $pop11
+	i32.const	$push10=, 0
+	i32.load	$push9=, a($pop10)
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push0=, 1
+	i32.and 	$push1=, $pop8, $pop0
+	i32.or  	$push4=, $pop3, $pop1
+	i32.eqz 	$push14=, $pop4
+	br_if   	0, $pop14       # 0: down to label3
 .LBB1_1:                                # %for.inc.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
@@ -64,15 +64,15 @@ main:                                   # @main
 .LBB1_2:                                # %foo.exit
 	end_loop                        # label5:
 	end_block                       # label3:
+	i32.const	$push13=, 0
+	i32.store	$drop=, d($pop13), $0
 	block
-	i32.const	$push14=, 0
-	i32.store	$push0=, d($pop14), $0
-	i32.const	$push6=, 2
-	i32.ne  	$push7=, $pop0, $pop6
-	br_if   	0, $pop7        # 0: down to label6
+	i32.const	$push5=, 2
+	i32.ne  	$push6=, $0, $pop5
+	br_if   	0, $pop6        # 0: down to label6
 # BB#3:                                 # %if.end
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_4:                                # %if.then
 	end_block                       # label6:
 	call    	abort@FUNCTION

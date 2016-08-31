@@ -59,11 +59,10 @@ main:                                   # @main
 .LBB1_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
+	i32.const	$push14=, 0
+	i32.store	$drop=, p($pop14), $1
 	block
-	i32.const	$push16=, 0
-	i32.store	$push15=, p($pop16), $1
-	tee_local	$push14=, $1=, $pop15
-	i32.load8_u	$push1=, 0($pop14)
+	i32.load8_u	$push1=, 0($1)
 	i32.const	$push13=, -10
 	i32.add 	$push0=, $pop1, $pop13
 	i32.const	$push12=, 255
@@ -74,11 +73,11 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label5
 # BB#2:                                 # %is_end_of_statement.exit.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i64.const	$push18=, 562949961809921
+	i64.const	$push16=, 562949961809921
 	i64.extend_u/i32	$push3=, $0
-	i64.shr_u	$push4=, $pop18, $pop3
-	i64.const	$push17=, 1
-	i64.and 	$push5=, $pop4, $pop17
+	i64.shr_u	$push4=, $pop16, $pop3
+	i64.const	$push15=, 1
+	i64.and 	$push5=, $pop4, $pop15
 	i32.wrap/i64	$push6=, $pop5
 	br_if   	2, $pop6        # 2: down to label4
 .LBB1_3:                                # %while.body.i

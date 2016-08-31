@@ -55,25 +55,25 @@ main:                                   # @main
 	i32.const	$push34=, 0
 	i32.load	$push35=, __stack_pointer($pop34)
 	i32.const	$push36=, 48
-	i32.sub 	$push38=, $pop35, $pop36
-	i32.store	$push42=, __stack_pointer($pop37), $pop38
-	tee_local	$push41=, $0=, $pop42
+	i32.sub 	$push41=, $pop35, $pop36
+	tee_local	$push40=, $0=, $pop41
+	i32.store	$drop=, __stack_pointer($pop37), $pop40
 	i32.const	$push4=, 2
 	i32.const	$push3=, 100
-	i32.const	$push40=, 200
+	i32.const	$push39=, 200
 	i32.const	$push2=, 300
 	i32.const	$push1=, 400
 	i32.const	$push0=, 500
-	call    	foo@FUNCTION, $pop41, $0, $0, $0, $pop4, $pop3, $pop40, $pop2, $pop1, $pop0
+	call    	foo@FUNCTION, $0, $0, $0, $0, $pop4, $pop3, $pop39, $pop2, $pop1, $pop0
 	block
 	i32.load	$push5=, 0($0)
-	i32.const	$push39=, 100
-	i32.ne  	$push6=, $pop5, $pop39
+	i32.const	$push38=, 100
+	i32.ne  	$push6=, $pop5, $pop38
 	br_if   	0, $pop6        # 0: down to label3
 # BB#1:                                 # %for.cond
 	i32.load	$push7=, 4($0)
-	i32.const	$push43=, 200
-	i32.ne  	$push8=, $pop7, $pop43
+	i32.const	$push42=, 200
+	i32.ne  	$push8=, $pop7, $pop42
 	br_if   	0, $pop8        # 0: down to label3
 # BB#2:                                 # %for.cond.1
 	i32.load	$push10=, 8($0)

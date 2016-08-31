@@ -72,93 +72,97 @@ main:                                   # @main
 	.result 	i32
 	.local  	i64, i64, i64, i64
 # BB#0:                                 # %entry
-	i32.const	$push3=, 0
+	i32.const	$push1=, 0
 	i32.const	$push51=, 0
 	i64.load	$push50=, tmp($pop51)
-	tee_local	$push49=, $3=, $pop50
-	i64.const	$push4=, -8690468286197432320
-	i64.xor 	$push5=, $pop49, $pop4
-	i64.store	$0=, tmp($pop3), $pop5
-	i32.const	$push48=, 0
-	i32.const	$push47=, 0
-	i64.load	$push46=, tmp2($pop47)
-	tee_local	$push45=, $2=, $pop46
-	i64.const	$push6=, 2381903268435576
-	i64.xor 	$push0=, $pop45, $pop6
-	i64.store	$1=, tmp2($pop48), $pop0
+	tee_local	$push49=, $2=, $pop50
+	i64.const	$push2=, -8690468286197432320
+	i64.xor 	$push48=, $pop49, $pop2
+	tee_local	$push47=, $3=, $pop48
+	i64.store	$drop=, tmp($pop1), $pop47
+	i32.const	$push46=, 0
+	i32.const	$push45=, 0
+	i64.load	$push44=, tmp2($pop45)
+	tee_local	$push43=, $0=, $pop44
+	i64.const	$push3=, 2381903268435576
+	i64.xor 	$push42=, $pop43, $pop3
+	tee_local	$push41=, $1=, $pop42
+	i64.store	$drop=, tmp2($pop46), $pop41
 	block
-	i64.const	$push7=, -4096
-	i64.and 	$push8=, $0, $pop7
-	i64.const	$push9=, -7687337405579571200
-	i64.ne  	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i64.const	$push4=, -4096
+	i64.and 	$push5=, $3, $pop4
+	i64.const	$push6=, -7687337405579571200
+	i64.ne  	$push7=, $pop5, $pop6
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %entry
-	i64.const	$push11=, 52
-	i64.shl 	$push12=, $3, $pop11
+	i64.const	$push8=, 52
+	i64.shl 	$push9=, $2, $pop8
 	i64.const	$push53=, 52
-	i64.shr_s	$push13=, $pop12, $pop53
-	i32.wrap/i64	$push2=, $pop13
+	i64.shr_s	$push10=, $pop9, $pop53
+	i32.wrap/i64	$push0=, $pop10
 	i32.const	$push52=, 291
-	i32.ne  	$push14=, $pop2, $pop52
-	br_if   	0, $pop14       # 0: down to label0
+	i32.ne  	$push11=, $pop0, $pop52
+	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.end
-	i64.const	$push17=, 52
-	i64.shr_s	$push18=, $2, $pop17
-	i32.wrap/i64	$push19=, $pop18
+	i64.const	$push14=, 52
+	i64.shr_s	$push15=, $0, $pop14
+	i32.wrap/i64	$push16=, $pop15
 	i32.const	$push54=, 291
-	i32.ne  	$push20=, $pop19, $pop54
-	br_if   	0, $pop20       # 0: down to label0
+	i32.ne  	$push17=, $pop16, $pop54
+	br_if   	0, $pop17       # 0: down to label0
 # BB#3:                                 # %if.end
-	i64.const	$push16=, 4503599627370495
-	i64.and 	$push15=, $1, $pop16
-	i64.const	$push21=, 2626808268586421
-	i64.ne  	$push22=, $pop15, $pop21
-	br_if   	0, $pop22       # 0: down to label0
+	i64.const	$push13=, 4503599627370495
+	i64.and 	$push12=, $1, $pop13
+	i64.const	$push18=, 2626808268586421
+	i64.ne  	$push19=, $pop12, $pop18
+	br_if   	0, $pop19       # 0: down to label0
 # BB#4:                                 # %if.end19
-	i32.const	$push24=, 0
-	i32.const	$push61=, 0
-	i64.load	$push60=, tmp3($pop61)
-	tee_local	$push59=, $3=, $pop60
-	i64.const	$push25=, -4345234143098716160
-	i64.xor 	$push26=, $pop59, $pop25
-	i64.store	$0=, tmp3($pop24), $pop26
-	i32.const	$push58=, 0
-	i32.const	$push57=, 0
-	i64.load	$push56=, tmp4($pop57)
-	tee_local	$push55=, $2=, $pop56
-	i64.const	$push27=, 6885502895806072
-	i64.xor 	$push1=, $pop55, $pop27
-	i64.store	$1=, tmp4($pop58), $pop1
-	i64.const	$push28=, -2048
-	i64.and 	$push29=, $0, $pop28
-	i64.const	$push30=, -3725223934242340864
-	i64.ne  	$push31=, $pop29, $pop30
-	br_if   	0, $pop31       # 0: down to label0
+	i32.const	$push21=, 0
+	i32.const	$push65=, 0
+	i64.load	$push64=, tmp3($pop65)
+	tee_local	$push63=, $2=, $pop64
+	i64.const	$push22=, -4345234143098716160
+	i64.xor 	$push62=, $pop63, $pop22
+	tee_local	$push61=, $3=, $pop62
+	i64.store	$drop=, tmp3($pop21), $pop61
+	i32.const	$push60=, 0
+	i32.const	$push59=, 0
+	i64.load	$push58=, tmp4($pop59)
+	tee_local	$push57=, $0=, $pop58
+	i64.const	$push23=, 6885502895806072
+	i64.xor 	$push56=, $pop57, $pop23
+	tee_local	$push55=, $1=, $pop56
+	i64.store	$drop=, tmp4($pop60), $pop55
+	i64.const	$push24=, -2048
+	i64.and 	$push25=, $3, $pop24
+	i64.const	$push26=, -3725223934242340864
+	i64.ne  	$push27=, $pop25, $pop26
+	br_if   	0, $pop27       # 0: down to label0
 # BB#5:                                 # %if.end19
-	i64.const	$push32=, 53
-	i64.shl 	$push33=, $3, $pop32
-	i64.const	$push63=, 53
-	i64.shr_s	$push34=, $pop33, $pop63
-	i32.wrap/i64	$push23=, $pop34
-	i32.const	$push62=, 291
-	i32.ne  	$push35=, $pop23, $pop62
-	br_if   	0, $pop35       # 0: down to label0
+	i64.const	$push28=, 53
+	i64.shl 	$push29=, $2, $pop28
+	i64.const	$push67=, 53
+	i64.shr_s	$push30=, $pop29, $pop67
+	i32.wrap/i64	$push20=, $pop30
+	i32.const	$push66=, 291
+	i32.ne  	$push31=, $pop20, $pop66
+	br_if   	0, $pop31       # 0: down to label0
 # BB#6:                                 # %if.end34
-	i64.const	$push38=, 53
-	i64.shr_s	$push39=, $2, $pop38
-	i32.wrap/i64	$push40=, $pop39
-	i32.const	$push64=, 291
-	i32.ne  	$push41=, $pop40, $pop64
-	br_if   	0, $pop41       # 0: down to label0
+	i64.const	$push34=, 53
+	i64.shr_s	$push35=, $0, $pop34
+	i32.wrap/i64	$push36=, $pop35
+	i32.const	$push68=, 291
+	i32.ne  	$push37=, $pop36, $pop68
+	br_if   	0, $pop37       # 0: down to label0
 # BB#7:                                 # %if.end34
-	i64.const	$push37=, 9007199254740991
-	i64.and 	$push36=, $1, $pop37
-	i64.const	$push42=, 7188242255599224
-	i64.ne  	$push43=, $pop36, $pop42
-	br_if   	0, $pop43       # 0: down to label0
+	i64.const	$push33=, 9007199254740991
+	i64.and 	$push32=, $1, $pop33
+	i64.const	$push38=, 7188242255599224
+	i64.ne  	$push39=, $pop32, $pop38
+	br_if   	0, $pop39       # 0: down to label0
 # BB#8:                                 # %if.end47
-	i32.const	$push44=, 0
-	call    	exit@FUNCTION, $pop44
+	i32.const	$push40=, 0
+	call    	exit@FUNCTION, $pop40
 	unreachable
 .LBB4_9:                                # %if.then46
 	end_block                       # label0:

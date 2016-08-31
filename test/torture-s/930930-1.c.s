@@ -9,19 +9,27 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
+	i32.const	$push9=, 0
+	i32.const	$push6=, 0
+	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push8=, 16
+	i32.sub 	$push14=, $pop7, $pop8
+	tee_local	$push13=, $6=, $pop14
+	i32.store	$drop=, __stack_pointer($pop9), $pop13
+	i32.store	$drop=, 12($6), $3
+	i32.store	$drop=, 8($6), $0
 	block
 	block
 	i32.lt_u	$push0=, $3, $4
 	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %if.end.preheader
-	copy_local	$6=, $0
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	block
-	i32.load	$push6=, 0($3)
-	tee_local	$push5=, $5=, $pop6
-	i32.ge_u	$push1=, $pop5, $2
+	i32.load	$push16=, 0($3)
+	tee_local	$push15=, $5=, $pop16
+	i32.ge_u	$push1=, $pop15, $2
 	br_if   	0, $pop1        # 0: down to label4
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
@@ -29,24 +37,31 @@ f:                                      # @f
 	br_if   	0, $pop2        # 0: down to label4
 # BB#4:                                 # %if.then3
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push9=, -4
-	i32.add 	$push8=, $6, $pop9
-	tee_local	$push7=, $6=, $pop8
-	i32.store	$drop=, 0($pop7), $5
+	i32.const	$push19=, -4
+	i32.add 	$push18=, $0, $pop19
+	tee_local	$push17=, $0=, $pop18
+	i32.store	$drop=, 0($pop17), $5
+	i32.load	$3=, 12($6)
 .LBB0_5:                                # %if.end4
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label4:
-	i32.const	$push12=, -4
-	i32.add 	$push11=, $3, $pop12
-	tee_local	$push10=, $3=, $pop11
-	i32.ge_u	$push3=, $pop10, $4
+	i32.const	$push22=, -4
+	i32.add 	$push21=, $3, $pop22
+	tee_local	$push20=, $3=, $pop21
+	i32.store	$drop=, 12($6), $pop20
+	i32.ge_u	$push3=, $3, $4
 	br_if   	0, $pop3        # 0: up to label2
 # BB#6:                                 # %out
 	end_loop                        # label3:
-	i32.ne  	$push4=, $6, $0
-	br_if   	1, $pop4        # 1: down to label0
+	i32.load	$push4=, 8($6)
+	i32.ne  	$push5=, $pop4, $0
+	br_if   	1, $pop5        # 1: down to label0
 .LBB0_7:                                # %if.end8
 	end_block                       # label1:
+	i32.const	$push12=, 0
+	i32.const	$push10=, 16
+	i32.add 	$push11=, $6, $pop10
+	i32.store	$drop=, __stack_pointer($pop12), $pop11
 	return  	$3
 .LBB0_8:                                # %if.then7
 	end_block                       # label0:

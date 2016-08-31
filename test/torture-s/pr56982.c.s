@@ -64,11 +64,11 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push11=, $pop3, $pop4
-	i32.store	$push13=, __stack_pointer($pop5), $pop11
-	tee_local	$push12=, $2=, $pop13
+	i32.sub 	$push12=, $pop3, $pop4
+	tee_local	$push11=, $2=, $pop12
+	i32.store	$drop=, __stack_pointer($pop5), $pop11
 	i32.const	$push0=, 0
-	i32.store	$drop=, 12($pop12), $pop0
+	i32.store	$drop=, 12($2), $pop0
 	i32.const	$push9=, 12
 	i32.add 	$push10=, $2, $pop9
 	i32.call	$drop=, f@FUNCTION, $pop10

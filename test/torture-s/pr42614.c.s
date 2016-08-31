@@ -43,27 +43,27 @@ expect_func:                            # @expect_func
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push11=, $pop3, $pop4
-	i32.store	$push13=, __stack_pointer($pop5), $pop11
-	tee_local	$push12=, $1=, $pop13
+	i32.sub 	$push13=, $pop3, $pop4
+	tee_local	$push12=, $0=, $pop13
+	i32.store	$drop=, __stack_pointer($pop5), $pop12
 	i32.const	$push0=, 0
-	i32.store8	$0=, 15($pop12), $pop0
+	i32.store8	$drop=, 15($0), $pop0
 	i32.const	$push1=, 1
 	i32.const	$push9=, 15
-	i32.add 	$push10=, $1, $pop9
+	i32.add 	$push10=, $0, $pop9
 	call    	expect_func@FUNCTION, $pop1, $pop10
 	i32.const	$push8=, 0
 	i32.const	$push6=, 16
-	i32.add 	$push7=, $1, $pop6
+	i32.add 	$push7=, $0, $pop6
 	i32.store	$drop=, __stack_pointer($pop8), $pop7
-	copy_local	$push14=, $0
-                                        # fallthrough-return: $pop14
+	i32.const	$push11=, 0
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

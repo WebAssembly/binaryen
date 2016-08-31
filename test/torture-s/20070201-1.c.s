@@ -13,10 +13,10 @@ foo:                                    # @foo
 	i32.const	$push3=, 0
 	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$push10=, $pop4, $pop5
-	i32.store	$push12=, __stack_pointer($pop6), $pop10
-	tee_local	$push11=, $2=, $pop12
-	i32.store	$drop=, 0($pop11), $1
+	i32.sub 	$push11=, $pop4, $pop5
+	tee_local	$push10=, $2=, $pop11
+	i32.store	$drop=, __stack_pointer($pop6), $pop10
+	i32.store	$drop=, 0($2), $1
 	i32.const	$push0=, .L.str
 	i32.call	$drop=, sprintf@FUNCTION, $0, $pop0, $2
 	i32.const	$push9=, 0
@@ -42,12 +42,12 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$push13=, $pop5, $pop6
-	i32.store	$push15=, __stack_pointer($pop7), $pop13
-	tee_local	$push14=, $0=, $pop15
+	i32.sub 	$push14=, $pop5, $pop6
+	tee_local	$push13=, $0=, $pop14
+	i32.store	$drop=, __stack_pointer($pop7), $pop13
 	i32.const	$push0=, 12
 	i32.add 	$push1=, $0, $pop0
-	i32.store	$drop=, 0($pop14), $pop1
+	i32.store	$drop=, 0($0), $pop1
 	i32.const	$push11=, 10
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push2=, .L.str

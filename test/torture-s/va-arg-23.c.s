@@ -12,14 +12,13 @@ foo:                                    # @foo
 	i32.const	$push7=, 0
 	i32.load	$push8=, __stack_pointer($pop7)
 	i32.const	$push9=, 16
-	i32.sub 	$push14=, $pop8, $pop9
-	i32.store	$push18=, __stack_pointer($pop10), $pop14
-	tee_local	$push17=, $8=, $pop18
-	i32.store	$push16=, 12($8), $7
-	tee_local	$push15=, $7=, $pop16
+	i32.sub 	$push15=, $pop8, $pop9
+	tee_local	$push14=, $8=, $pop15
+	i32.store	$drop=, __stack_pointer($pop10), $pop14
+	i32.store	$drop=, 12($8), $7
 	i32.const	$push1=, 4
-	i32.add 	$push2=, $pop15, $pop1
-	i32.store	$drop=, 12($pop17), $pop2
+	i32.add 	$push2=, $7, $pop1
+	i32.store	$drop=, 12($8), $pop2
 	block
 	i32.const	$push3=, 1
 	i32.ne  	$push4=, $6, $pop3
@@ -55,11 +54,11 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 32
-	i32.sub 	$push13=, $pop5, $pop6
-	i32.store	$push15=, __stack_pointer($pop7), $pop13
-	tee_local	$push14=, $0=, $pop15
+	i32.sub 	$push14=, $pop5, $pop6
+	tee_local	$push13=, $0=, $pop14
+	i32.store	$drop=, __stack_pointer($pop7), $pop13
 	i64.load	$push0=, 24($0)
-	i64.store	$drop=, 16($pop14):p2align=2, $pop0
+	i64.store	$drop=, 16($0):p2align=2, $pop0
 	i32.const	$push1=, 2
 	i32.store	$drop=, 0($0), $pop1
 	i32.const	$push11=, 16

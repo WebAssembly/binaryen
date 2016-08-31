@@ -31,31 +31,32 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
-	i32.const	$push6=, 16
-	i32.sub 	$push13=, $pop5, $pop6
-	i32.store	$push16=, __stack_pointer($pop7), $pop13
-	tee_local	$push15=, $1=, $pop16
-	i32.const	$push0=, 0
-	i32.store	$0=, 12($pop15), $pop0
+	i32.const	$push6=, 0
+	i32.const	$push3=, 0
+	i32.load	$push4=, __stack_pointer($pop3)
+	i32.const	$push5=, 16
+	i32.sub 	$push15=, $pop4, $pop5
+	tee_local	$push14=, $0=, $pop15
+	i32.store	$drop=, __stack_pointer($pop6), $pop14
+	i32.const	$push13=, 0
+	i32.store	$drop=, 12($0), $pop13
 	block
-	i32.const	$push11=, 12
-	i32.add 	$push12=, $1, $pop11
-	i32.const	$push1=, 1
-	i32.call	$push2=, foo@FUNCTION, $pop12, $pop1
-	i32.const	$push14=, 1
-	i32.ne  	$push3=, $pop2, $pop14
-	br_if   	0, $pop3        # 0: down to label0
+	i32.const	$push10=, 12
+	i32.add 	$push11=, $0, $pop10
+	i32.const	$push0=, 1
+	i32.call	$push1=, foo@FUNCTION, $pop11, $pop0
+	i32.const	$push12=, 1
+	i32.ne  	$push2=, $pop1, $pop12
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push10=, 0
-	i32.const	$push8=, 16
-	i32.add 	$push9=, $1, $pop8
-	i32.store	$drop=, __stack_pointer($pop10), $pop9
-	return  	$0
+	i32.const	$push9=, 0
+	i32.const	$push7=, 16
+	i32.add 	$push8=, $0, $pop7
+	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.const	$push16=, 0
+	return  	$pop16
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

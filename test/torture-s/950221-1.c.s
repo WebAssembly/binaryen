@@ -75,13 +75,15 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %alabel.i
-	i32.const	$push2=, 0
+	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.store	$push0=, el($pop2), $pop5
-	i32.load	$push3=, parsefile($pop0)
-	i32.const	$push4=, -559038737
-	i32.store	$push1=, 0($pop3), $pop4
-	i32.call	$drop=, g2@FUNCTION, $pop1
+	i32.store	$drop=, el($pop0), $pop5
+	i32.const	$push4=, 0
+	i32.load	$push1=, parsefile($pop4)
+	i32.const	$push2=, -559038737
+	i32.store	$drop=, 0($pop1), $pop2
+	i32.const	$push3=, -559038737
+	i32.call	$drop=, g2@FUNCTION, $pop3
 	unreachable
 	.endfunc
 .Lfunc_end3:

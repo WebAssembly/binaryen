@@ -27,14 +27,15 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push5=, 0
-	i32.const	$push1=, 1
-	i32.store	$push0=, a($pop5), $pop1
-	i32.const	$push2=, a
-	i32.call	$push3=, foo@FUNCTION, $pop2
-	i32.ne  	$push4=, $pop0, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.const	$push0=, 1
+	i32.store	$drop=, a($pop5), $pop0
+	block
+	i32.const	$push1=, a
+	i32.call	$push2=, foo@FUNCTION, $pop1
+	i32.const	$push4=, 1
+	i32.ne  	$push3=, $pop2, $pop4
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	return  	$pop6

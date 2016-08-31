@@ -33,42 +33,42 @@ bar:                                    # @bar
 	.param  	i32, i32, i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
+	i32.call	$push2=, foo@FUNCTION, $1
+	tee_local	$push1=, $1=, $pop2
+	i32.store	$drop=, 0($0), $pop1
 	block
-	i32.call	$push4=, foo@FUNCTION, $1
-	tee_local	$push3=, $1=, $pop4
-	i32.store	$push0=, 0($0), $pop3
-	i32.eqz 	$push11=, $pop0
-	br_if   	0, $pop11       # 0: down to label0
+	i32.eqz 	$push9=, $1
+	br_if   	0, $pop9        # 0: down to label0
 .LBB1_1:                                # %while.cond.while.cond_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	copy_local	$0=, $1
-	i32.load	$push6=, 0($1)
-	tee_local	$push5=, $4=, $pop6
-	copy_local	$1=, $pop5
+	i32.load	$push4=, 0($1)
+	tee_local	$push3=, $4=, $pop4
+	copy_local	$1=, $pop3
 	br_if   	0, $4           # 0: up to label1
 .LBB1_2:                                # %while.end
 	end_loop                        # label2:
 	end_block                       # label0:
+	i32.call	$push6=, foo@FUNCTION, $2
+	tee_local	$push5=, $1=, $pop6
+	i32.store	$drop=, 0($0), $pop5
 	block
-	i32.call	$push8=, foo@FUNCTION, $2
-	tee_local	$push7=, $1=, $pop8
-	i32.store	$push1=, 0($0), $pop7
-	i32.eqz 	$push12=, $pop1
-	br_if   	0, $pop12       # 0: down to label3
+	i32.eqz 	$push10=, $1
+	br_if   	0, $pop10       # 0: down to label3
 .LBB1_3:                                # %while.cond2.while.cond2_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
 	copy_local	$0=, $1
-	i32.load	$push10=, 0($1)
-	tee_local	$push9=, $4=, $pop10
-	copy_local	$1=, $pop9
+	i32.load	$push8=, 0($1)
+	tee_local	$push7=, $4=, $pop8
+	copy_local	$1=, $pop7
 	br_if   	0, $4           # 0: up to label4
 .LBB1_4:                                # %while.end6
 	end_loop                        # label5:
 	end_block                       # label3:
-	i32.call	$push2=, foo@FUNCTION, $3
-	i32.store	$drop=, 0($0), $pop2
+	i32.call	$push0=, foo@FUNCTION, $3
+	i32.store	$drop=, 0($0), $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:

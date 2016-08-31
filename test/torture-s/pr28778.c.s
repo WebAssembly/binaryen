@@ -12,8 +12,9 @@ find:                                   # @find
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 128
-	i32.sub 	$push11=, $pop5, $pop6
-	i32.store	$1=, __stack_pointer($pop7), $pop11
+	i32.sub 	$push12=, $pop5, $pop6
+	tee_local	$push11=, $1=, $pop12
+	i32.store	$drop=, __stack_pointer($pop7), $pop11
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.else

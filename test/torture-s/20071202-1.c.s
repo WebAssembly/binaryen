@@ -9,17 +9,19 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$1=, 0($0)
-	i32.load	$push2=, 4($0)
-	i32.store	$drop=, 0($0), $pop2
+	i32.load	$push0=, 4($0)
+	i32.store	$drop=, 0($0), $pop0
 	i32.store	$drop=, 4($0), $1
-	i32.const	$push6=, 16
-	i32.add 	$push7=, $0, $pop6
-	i32.const	$push4=, 24
+	i64.const	$push1=, 0
+	i64.store	$drop=, 8($0):p2align=2, $pop1
+	i32.const	$push2=, 24
+	i32.add 	$push3=, $0, $pop2
+	i64.const	$push7=, 0
+	i64.store	$drop=, 0($pop3):p2align=2, $pop7
+	i32.const	$push4=, 16
 	i32.add 	$push5=, $0, $pop4
-	i64.const	$push3=, 0
-	i64.store	$push0=, 8($0):p2align=2, $pop3
-	i64.store	$push1=, 0($pop5):p2align=2, $pop0
-	i64.store	$drop=, 0($pop7):p2align=2, $pop1
+	i64.const	$push6=, 0
+	i64.store	$drop=, 0($pop5):p2align=2, $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -37,11 +39,11 @@ main:                                   # @main
 	i32.const	$push68=, 0
 	i32.load	$push69=, __stack_pointer($pop68)
 	i32.const	$push70=, 80
-	i32.sub 	$push79=, $pop69, $pop70
-	i32.store	$push81=, __stack_pointer($pop71), $pop79
-	tee_local	$push80=, $0=, $pop81
+	i32.sub 	$push80=, $pop69, $pop70
+	tee_local	$push79=, $0=, $pop80
+	i32.store	$drop=, __stack_pointer($pop71), $pop79
 	i32.const	$push75=, 8
-	i32.add 	$push76=, $pop80, $pop75
+	i32.add 	$push76=, $0, $pop75
 	i32.const	$push1=, .Lmain.s
 	i32.const	$push0=, 68
 	i32.call	$drop=, memcpy@FUNCTION, $pop76, $pop1, $pop0

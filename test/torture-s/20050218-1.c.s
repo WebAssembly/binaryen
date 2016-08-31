@@ -21,7 +21,7 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$7=, 2
-	i32.add 	$push0=, $0, $5
+	i32.add 	$push0=, $0, $6
 	i32.load	$push7=, 0($4)
 	tee_local	$push6=, $3=, $pop7
 	i32.call	$push5=, strlen@FUNCTION, $3
@@ -30,14 +30,14 @@ foo:                                    # @foo
 	br_if   	1, $pop1        # 1: down to label2
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.add 	$5=, $3, $5
+	i32.add 	$6=, $3, $6
 	block
 	i32.eqz 	$push13=, $1
 	br_if   	0, $pop13       # 0: down to label3
 # BB#4:                                 # %if.then6
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.call	$push2=, strlen@FUNCTION, $1
-	i32.add 	$5=, $pop2, $5
+	i32.add 	$6=, $pop2, $6
 .LBB0_5:                                # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
@@ -45,8 +45,8 @@ foo:                                    # @foo
 	i32.add 	$4=, $4, $pop11
 	i32.const	$7=, 0
 	i32.const	$push10=, 1
-	i32.add 	$push9=, $6, $pop10
-	tee_local	$push8=, $6=, $pop9
+	i32.add 	$push9=, $5, $pop10
+	tee_local	$push8=, $5=, $pop9
 	i32.lt_u	$push3=, $pop8, $2
 	br_if   	0, $pop3        # 0: up to label1
 .LBB0_6:                                # %cleanup

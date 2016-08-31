@@ -29,21 +29,20 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push7=, 0
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$push10=, $pop5, $pop6
-	i32.store	$push14=, __stack_pointer($pop7), $pop10
-	tee_local	$push13=, $0=, $pop14
-	i32.store	$push12=, 8($pop13), $0
-	tee_local	$push11=, $0=, $pop12
+	i32.sub 	$push11=, $pop5, $pop6
+	tee_local	$push10=, $0=, $pop11
+	i32.store	$drop=, __stack_pointer($pop7), $pop10
+	i32.store	$drop=, 8($0), $0
+	block
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8
 	i32.const	$push0=, 1
 	i32.call	$push1=, maybe_next@FUNCTION, $pop9, $pop0
-	i32.ne  	$push2=, $pop11, $pop1
+	i32.ne  	$push2=, $pop1, $0
 	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 0

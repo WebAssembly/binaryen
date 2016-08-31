@@ -102,16 +102,16 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.load	$push9=, __stack_pointer($pop8)
 	i32.const	$push10=, 16
-	i32.sub 	$push14=, $pop9, $pop10
-	i32.store	$push18=, __stack_pointer($pop11), $pop14
-	tee_local	$push17=, $0=, $pop18
+	i32.sub 	$push17=, $pop9, $pop10
+	tee_local	$push16=, $0=, $pop17
+	i32.store	$drop=, __stack_pointer($pop11), $pop16
 	i32.const	$push2=, 12
-	i32.add 	$push3=, $pop17, $pop2
+	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.t+8($pop0)
 	i32.store	$drop=, 0($pop3), $pop1
-	i32.const	$push16=, 0
-	i64.load	$push4=, .Lmain.t($pop16):p2align=2
+	i32.const	$push15=, 0
+	i64.load	$push4=, .Lmain.t($pop15):p2align=2
 	i64.store	$drop=, 4($0):p2align=2, $pop4
 	i32.const	$push12=, 4
 	i32.add 	$push13=, $0, $pop12
@@ -119,8 +119,8 @@ main:                                   # @main
 	i32.const	$push6=, 5
 	i32.const	$push5=, 6
 	i32.call	$drop=, foo@FUNCTION, $pop13, $pop7, $pop6, $pop5
-	i32.const	$push15=, 0
-	call    	exit@FUNCTION, $pop15
+	i32.const	$push14=, 0
+	call    	exit@FUNCTION, $pop14
 	unreachable
 	.endfunc
 .Lfunc_end2:

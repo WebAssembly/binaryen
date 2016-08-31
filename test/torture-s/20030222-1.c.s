@@ -21,28 +21,29 @@ ll_to_int:                              # @ll_to_int
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64, i32
+	.local  	i64, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push6=, $pop3, $pop4
-	i32.store	$0=, __stack_pointer($pop5), $pop6
-	i32.const	$push9=, 0
-	i32.load	$push8=, val($pop9)
-	tee_local	$push7=, $2=, $pop8
-	i64.extend_s/i32	$1=, $pop7
+	i32.sub 	$push10=, $pop3, $pop4
+	tee_local	$push9=, $2=, $pop10
+	i32.store	$drop=, __stack_pointer($pop5), $pop9
+	i32.const	$push8=, 0
+	i32.load	$push7=, val($pop8)
+	tee_local	$push6=, $1=, $pop7
+	i64.extend_s/i32	$0=, $pop6
 	#APP
 	#NO_APP
-	i64.store32	$drop=, 12($0), $1
+	i64.store32	$drop=, 12($2), $0
 	block
-	i32.load	$push0=, 12($0)
-	i32.ne  	$push1=, $2, $pop0
+	i32.load	$push0=, 12($2)
+	i32.ne  	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push10=, 0
-	call    	exit@FUNCTION, $pop10
+	i32.const	$push11=, 0
+	call    	exit@FUNCTION, $pop11
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

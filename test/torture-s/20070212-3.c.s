@@ -11,20 +11,15 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $0, $pop0
-	i32.select	$push5=, $0, $pop1, $2
-	tee_local	$push4=, $4=, $pop5
-	i32.load	$2=, 0($pop4)
+	i32.select	$push7=, $0, $pop1, $2
+	tee_local	$push6=, $2=, $pop7
+	i32.load	$4=, 0($pop6)
 	i32.const	$push2=, 1
 	i32.store	$drop=, 0($0), $pop2
-	block
-	i32.eqz 	$push6=, $3
-	br_if   	0, $pop6        # 0: down to label0
-# BB#1:                                 # %if.then3
-	i32.load	$1=, 0($4)
-.LBB0_2:                                # %if.end5
-	end_block                       # label0:
-	i32.add 	$push3=, $1, $2
-                                        # fallthrough-return: $pop3
+	i32.load	$push3=, 0($2)
+	i32.select	$push4=, $pop3, $1, $3
+	i32.add 	$push5=, $4, $pop4
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar

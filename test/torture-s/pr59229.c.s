@@ -55,8 +55,9 @@ foo:                                    # @foo
 	i32.const	$push6=, 0
 	i32.load	$push7=, __stack_pointer($pop6)
 	i32.const	$push8=, 16
-	i32.sub 	$push17=, $pop7, $pop8
-	i32.store	$2=, __stack_pointer($pop9), $pop17
+	i32.sub 	$push18=, $pop7, $pop8
+	tee_local	$push17=, $2=, $pop18
+	i32.store	$drop=, __stack_pointer($pop9), $pop17
 	block
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
@@ -89,29 +90,31 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push5=, 0
-	i32.store	$0=, i($pop1), $pop5
-	i32.const	$1=, 0
+	i32.const	$push4=, 0
+	i32.const	$push3=, 0
+	i32.store	$drop=, i($pop4), $pop3
+	i32.const	$0=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.const	$push10=, .L.str.1
-	call    	foo@FUNCTION, $pop10, $1
-	i32.load	$push2=, i($0)
-	i32.const	$push9=, 1
-	i32.add 	$push8=, $pop2, $pop9
-	tee_local	$push7=, $1=, $pop8
-	i32.store	$push0=, i($0), $pop7
-	i32.const	$push6=, 16
-	i32.lt_s	$push3=, $pop0, $pop6
-	br_if   	0, $pop3        # 0: up to label2
+	i32.const	$push11=, .L.str.1
+	call    	foo@FUNCTION, $pop11, $0
+	i32.const	$push10=, 0
+	i32.const	$push9=, 0
+	i32.load	$push0=, i($pop9)
+	i32.const	$push8=, 1
+	i32.add 	$push7=, $pop0, $pop8
+	tee_local	$push6=, $0=, $pop7
+	i32.store	$drop=, i($pop10), $pop6
+	i32.const	$push5=, 16
+	i32.lt_s	$push1=, $0, $pop5
+	br_if   	0, $pop1        # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
-	i32.const	$push4=, 0
-                                        # fallthrough-return: $pop4
+	i32.const	$push2=, 0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

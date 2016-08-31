@@ -32,10 +32,10 @@ f:                                      # @f
 	br_if   	1, $pop6        # 1: down to label2
 # BB#3:                                 # %for.body
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push12=, -1
-	i32.add 	$2=, $1, $pop12
-	i32.const	$push11=, 4
-	i32.add 	$0=, $0, $pop11
+	i32.const	$push12=, 4
+	i32.add 	$0=, $0, $pop12
+	i32.const	$push11=, -1
+	i32.add 	$2=, $1, $pop11
 	br_if   	0, $1           # 0: up to label1
 .LBB0_4:                                # %for.end
 	end_loop                        # label2:

@@ -12,11 +12,11 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push6=, $pop3, $pop4
-	i32.store	$push8=, __stack_pointer($pop5), $pop6
-	tee_local	$push7=, $0=, $pop8
+	i32.sub 	$push7=, $pop3, $pop4
+	tee_local	$push6=, $0=, $pop7
+	i32.store	$drop=, __stack_pointer($pop5), $pop6
 	i32.const	$push0=, .L.str.1
-	i32.store	$drop=, 0($pop7), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	call    	doit@FUNCTION, $0, $0
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
@@ -31,20 +31,19 @@ doit:                                   # @doit
 	.param  	i32, i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 4
-	i32.call	$2=, malloc@FUNCTION, $pop1
-	i32.const	$push6=, 4
-	i32.call	$3=, malloc@FUNCTION, $pop6
+	i32.const	$push0=, 4
+	i32.call	$2=, malloc@FUNCTION, $pop0
+	i32.const	$push3=, 4
+	i32.call	$3=, malloc@FUNCTION, $pop3
+	i32.store	$drop=, 0($2), $1
+	i32.const	$push1=, .L.str
+	i32.call	$drop=, vprintf@FUNCTION, $pop1, $1
+	i32.store	$drop=, 0($3), $1
 	i32.const	$push2=, .L.str
-	i32.store	$push5=, 0($2), $1
-	tee_local	$push4=, $1=, $pop5
-	i32.call	$drop=, vprintf@FUNCTION, $pop2, $pop4
-	i32.const	$push3=, .L.str
-	i32.store	$push0=, 0($3), $1
-	i32.call	$drop=, vprintf@FUNCTION, $pop3, $pop0
+	i32.call	$drop=, vprintf@FUNCTION, $pop2, $1
 	block
-	i32.eqz 	$push7=, $3
-	br_if   	0, $pop7        # 0: down to label0
+	i32.eqz 	$push4=, $3
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then

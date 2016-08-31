@@ -7,21 +7,22 @@
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	i32.load	$push1=, 0($1)
-	i32.store	$drop=, 0($0), $pop1
-	i32.const	$push2=, 8
-	i32.add 	$push3=, $0, $pop2
+	i32.load	$push0=, 0($1)
+	i32.store	$drop=, 0($0), $pop0
+	i32.const	$push1=, 8
+	i32.add 	$push2=, $0, $pop1
 	i32.const	$push11=, 8
-	i32.add 	$push4=, $1, $pop11
-	i32.load	$push5=, 0($pop4)
-	i32.store	$drop=, 0($pop3), $pop5
-	i32.const	$push6=, 4
-	i32.add 	$push7=, $0, $pop6
-	i32.load	$push8=, 4($1)
-	i32.const	$push9=, 1
-	i32.add 	$push10=, $pop8, $pop9
-	i32.store	$push0=, 0($pop7), $pop10
-	i32.store	$drop=, 4($1), $pop0
+	i32.add 	$push3=, $1, $pop11
+	i32.load	$push4=, 0($pop3)
+	i32.store	$drop=, 0($pop2), $pop4
+	i32.const	$push5=, 4
+	i32.add 	$push6=, $0, $pop5
+	i32.load	$push7=, 4($1)
+	i32.const	$push8=, 1
+	i32.add 	$push10=, $pop7, $pop8
+	tee_local	$push9=, $0=, $pop10
+	i32.store	$drop=, 0($pop6), $pop9
+	i32.store	$drop=, 4($1), $0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:

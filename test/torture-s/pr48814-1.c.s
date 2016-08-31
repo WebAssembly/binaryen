@@ -6,14 +6,17 @@
 	.type	incr,@function
 incr:                                   # @incr
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.load	$push2=, count($pop5)
-	i32.const	$push3=, 1
-	i32.add 	$push4=, $pop2, $pop3
-	i32.store	$push0=, count($pop1), $pop4
-                                        # fallthrough-return: $pop0
+	i32.load	$push1=, count($pop5)
+	i32.const	$push2=, 1
+	i32.add 	$push4=, $pop1, $pop2
+	tee_local	$push3=, $0=, $pop4
+	i32.store	$drop=, count($pop0), $pop3
+	copy_local	$push6=, $0
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	incr, .Lfunc_end0-incr
@@ -27,25 +30,28 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.call	$0=, incr@FUNCTION
-	i32.const	$push14=, 0
-	i32.load	$push13=, count($pop14)
-	tee_local	$push12=, $1=, $pop13
-	i32.const	$push2=, 2
-	i32.shl 	$push3=, $pop12, $pop2
-	i32.store	$drop=, arr($pop3), $0
+	i32.const	$push16=, 0
+	i32.load	$push15=, count($pop16)
+	tee_local	$push14=, $1=, $pop15
+	i32.const	$push1=, 2
+	i32.shl 	$push2=, $pop14, $pop1
+	i32.const	$push3=, arr
+	i32.add 	$push4=, $pop2, $pop3
+	i32.store	$drop=, 0($pop4), $0
+	i32.const	$push13=, 0
+	i32.const	$push5=, 1
+	i32.add 	$push12=, $1, $pop5
+	tee_local	$push11=, $0=, $pop12
+	i32.store	$drop=, count($pop13), $pop11
 	block
-	i32.const	$push11=, 0
-	i32.const	$push4=, 1
-	i32.add 	$push5=, $1, $pop4
-	i32.store	$push0=, count($pop11), $pop5
 	i32.const	$push10=, 2
-	i32.ne  	$push6=, $pop0, $pop10
+	i32.ne  	$push6=, $0, $pop10
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$push15=, 0
-	i32.load	$push1=, arr+8($pop15)
+	i32.const	$push17=, 0
+	i32.load	$push0=, arr+8($pop17)
 	i32.const	$push7=, 3
-	i32.ne  	$push8=, $pop1, $pop7
+	i32.ne  	$push8=, $pop0, $pop7
 	br_if   	0, $pop8        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.const	$push9=, 0

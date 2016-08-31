@@ -29,26 +29,26 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i64
-	.local  	i32, i64
+	.local  	i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push4=, 0
 	i32.const	$push1=, 0
 	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 16
-	i32.sub 	$push10=, $pop2, $pop3
-	i32.store	$push12=, __stack_pointer($pop4), $pop10
-	tee_local	$push11=, $0=, $pop12
+	i32.sub 	$push11=, $pop2, $pop3
+	tee_local	$push10=, $1=, $pop11
+	i32.store	$drop=, __stack_pointer($pop4), $pop10
 	i32.const	$push8=, 12
-	i32.add 	$push9=, $pop11, $pop8
+	i32.add 	$push9=, $1, $pop8
 	call    	bar@FUNCTION, $pop9
 	i32.const	$push0=, 0
-	i64.load	$1=, v($pop0)
+	i64.load	$0=, v($pop0)
 	i32.const	$push7=, 0
 	i32.const	$push5=, 16
-	i32.add 	$push6=, $0, $pop5
+	i32.add 	$push6=, $1, $pop5
 	i32.store	$drop=, __stack_pointer($pop7), $pop6
-	copy_local	$push13=, $1
-                                        # fallthrough-return: $pop13
+	copy_local	$push12=, $0
+                                        # fallthrough-return: $pop12
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

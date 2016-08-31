@@ -63,12 +63,12 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 48
-	i32.sub 	$push6=, $pop3, $pop4
-	i32.store	$push8=, __stack_pointer($pop5), $pop6
-	tee_local	$push7=, $0=, $pop8
+	i32.sub 	$push7=, $pop3, $pop4
+	tee_local	$push6=, $0=, $pop7
+	i32.store	$drop=, __stack_pointer($pop5), $pop6
 	i32.const	$push0=, 48
 	i32.add 	$push1=, $0, $pop0
-	call    	find@FUNCTION, $pop7, $pop1
+	call    	find@FUNCTION, $0, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end2:

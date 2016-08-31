@@ -6,35 +6,40 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$push7=, 0
+	i32.const	$push6=, 0
+	i32.store8	$drop=, n($pop7), $pop6
 	block
 	block
-	i32.const	$push1=, 0
-	i32.const	$push9=, 0
-	i32.store8	$push8=, n($pop1), $pop9
-	tee_local	$push7=, $0=, $pop8
-	i32.load	$push2=, g($pop7)
-	i32.eqz 	$push13=, $pop2
-	br_if   	0, $pop13       # 0: down to label1
+	i32.const	$push5=, 0
+	i32.load	$push0=, g($pop5)
+	i32.eqz 	$push16=, $pop0
+	br_if   	0, $pop16       # 0: down to label1
 # BB#1:                                 # %fn2.exit.thread.i
-	i32.load	$drop=, d($0)
+	i32.const	$push8=, 0
+	i32.load	$drop=, d($pop8)
 	br      	1               # 1: down to label0
-.LBB0_2:                                # %if.end.loopexit.i
+.LBB0_2:                                # %for.body4.preheader.i
 	end_block                       # label1:
-	i32.const	$push3=, 1
-	i32.store8	$drop=, n($0), $pop3
-	i32.load	$push4=, h($0)
-	i32.store	$drop=, 0($pop4), $0
+	i32.const	$push11=, 0
+	i32.const	$push1=, 1
+	i32.store8	$drop=, n($pop11), $pop1
+	i32.const	$push10=, 0
+	i32.load	$push2=, h($pop10)
+	i32.const	$push9=, 0
+	i32.store	$drop=, 0($pop2), $pop9
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
-	i32.const	$push5=, 0
-	i32.load	$push6=, s($pop5)
+	i32.const	$push3=, 0
+	i32.load	$push4=, s($pop3)
+	i32.const	$push15=, 0
+	i32.store	$drop=, 0($pop4), $pop15
+	i32.const	$push14=, 0
+	i32.const	$push13=, 0
+	i32.store8	$drop=, n($pop14), $pop13
 	i32.const	$push12=, 0
-	i32.store	$push11=, 0($pop6), $pop12
-	tee_local	$push10=, $0=, $pop11
-	i32.store8	$push0=, n($pop10), $0
-                                        # fallthrough-return: $pop0
+                                        # fallthrough-return: $pop12
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

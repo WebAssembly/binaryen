@@ -27,28 +27,27 @@ foo:                                    # @foo
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push13=, $pop3, $pop4
-	i32.store	$push17=, __stack_pointer($pop5), $pop13
-	tee_local	$push16=, $0=, $pop17
+	i32.sub 	$push14=, $pop3, $pop4
+	tee_local	$push13=, $1=, $pop14
+	i32.store	$drop=, __stack_pointer($pop5), $pop13
 	i32.const	$push0=, 1
-	i32.store	$drop=, 4($pop16), $pop0
+	i32.store	$drop=, 4($1), $pop0
 	i32.const	$push1=, 2
-	i32.store	$drop=, 0($0), $pop1
-	i32.store	$push15=, 12($0), $0
-	tee_local	$push14=, $0=, $pop15
+	i32.store	$drop=, 0($1), $pop1
+	i32.store	$drop=, 12($1), $1
 	i32.const	$push9=, 4
-	i32.add 	$push10=, $0, $pop9
-	i32.store	$drop=, 8($pop14), $pop10
+	i32.add 	$push10=, $1, $pop9
+	i32.store	$drop=, 8($1), $pop10
 	i32.const	$push11=, 8
-	i32.add 	$push12=, $0, $pop11
+	i32.add 	$push12=, $1, $pop11
 	call    	bar@FUNCTION, $pop12
-	i32.load	$1=, 0($0)
+	i32.load	$0=, 0($1)
 	i32.const	$push8=, 0
 	i32.const	$push6=, 16
-	i32.add 	$push7=, $0, $pop6
+	i32.add 	$push7=, $1, $pop6
 	i32.store	$drop=, __stack_pointer($pop8), $pop7
-	copy_local	$push18=, $1
-                                        # fallthrough-return: $pop18
+	copy_local	$push15=, $0
+                                        # fallthrough-return: $pop15
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -65,18 +64,17 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$push15=, $pop5, $pop6
-	i32.store	$push19=, __stack_pointer($pop7), $pop15
-	tee_local	$push18=, $0=, $pop19
+	i32.sub 	$push16=, $pop5, $pop6
+	tee_local	$push15=, $0=, $pop16
+	i32.store	$drop=, __stack_pointer($pop7), $pop15
 	i32.const	$push0=, 1
-	i32.store	$drop=, 4($pop18), $pop0
+	i32.store	$drop=, 4($0), $pop0
 	i32.const	$push1=, 2
 	i32.store	$drop=, 0($0), $pop1
-	i32.store	$push17=, 12($0), $0
-	tee_local	$push16=, $0=, $pop17
+	i32.store	$drop=, 12($0), $0
 	i32.const	$push11=, 4
 	i32.add 	$push12=, $0, $pop11
-	i32.store	$drop=, 8($pop16), $pop12
+	i32.store	$drop=, 8($0), $pop12
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $0, $pop13
 	call    	bar@FUNCTION, $pop14

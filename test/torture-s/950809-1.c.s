@@ -39,20 +39,21 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push6=, 0
-	i32.const	$push5=, 0
-	i32.load	$push0=, main.sc($pop5)
-	i32.store	$0=, main.sc+8($pop6), $pop0
-	i32.const	$push4=, 0
-	i32.const	$push1=, 11
-	i32.store	$drop=, main.sc($pop4), $pop1
-	block
-	i32.const	$push2=, 2
-	i32.ne  	$push3=, $0, $pop2
-	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %if.end
 	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.const	$push6=, 0
+	i32.load	$push5=, main.sc($pop6)
+	tee_local	$push4=, $0=, $pop5
+	i32.store	$drop=, main.sc+8($pop7), $pop4
+	i32.const	$push3=, 0
+	i32.const	$push0=, 11
+	i32.store	$drop=, main.sc($pop3), $pop0
+	block
+	i32.const	$push1=, 2
+	i32.ne  	$push2=, $0, $pop1
+	br_if   	0, $pop2        # 0: down to label0
+# BB#1:                                 # %if.end
+	i32.const	$push8=, 0
+	call    	exit@FUNCTION, $pop8
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

@@ -71,28 +71,29 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.load	$push7=, __stack_pointer($pop6)
 	i32.const	$push8=, 16
-	i32.sub 	$push12=, $pop7, $pop8
-	i32.store	$0=, __stack_pointer($pop9), $pop12
+	i32.sub 	$push18=, $pop7, $pop8
+	tee_local	$push17=, $0=, $pop18
+	i32.store	$drop=, __stack_pointer($pop9), $pop17
 	i32.const	$push1=, 0
 	i64.const	$push0=, 47
 	i64.store	$drop=, main.r+32($pop1), $pop0
-	i32.const	$push17=, 0
-	i64.const	$push2=, 11
-	i64.store	$drop=, main.r+64($pop17), $pop2
 	i32.const	$push16=, 0
-	i64.const	$push3=, 58
-	i64.store	$drop=, m($pop16), $pop3
+	i64.const	$push2=, 11
+	i64.store	$drop=, main.r+64($pop16), $pop2
 	i32.const	$push15=, 0
-	i64.const	$push4=, 1
-	i64.store	$drop=, main.r+120($pop15), $pop4
+	i64.const	$push3=, 58
+	i64.store	$drop=, m($pop15), $pop3
 	i32.const	$push14=, 0
+	i64.const	$push4=, 1
+	i64.store	$drop=, main.r+120($pop14), $pop4
+	i32.const	$push13=, 0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$drop=, cp($pop14), $pop11
+	i32.store	$drop=, cp($pop13), $pop11
 	i64.const	$push5=, 2
 	i64.store	$drop=, 8($0), $pop5
-	i32.const	$push13=, 0
-	call    	exit@FUNCTION, $pop13
+	i32.const	$push12=, 0
+	call    	exit@FUNCTION, $pop12
 	unreachable
 	.endfunc
 .Lfunc_end2:

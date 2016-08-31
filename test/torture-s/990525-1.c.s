@@ -34,17 +34,17 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push8=, $pop3, $pop4
-	i32.store	$push11=, __stack_pointer($pop5), $pop8
-	tee_local	$push10=, $0=, $pop11
+	i32.sub 	$push10=, $pop3, $pop4
+	tee_local	$push9=, $0=, $pop10
+	i32.store	$drop=, __stack_pointer($pop5), $pop9
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0):p2align=2
-	i64.store	$drop=, 8($pop10):p2align=2, $pop1
+	i64.store	$drop=, 8($0):p2align=2, $pop1
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
 	call    	die@FUNCTION, $pop7
-	i32.const	$push9=, 0
-	call    	exit@FUNCTION, $pop9
+	i32.const	$push8=, 0
+	call    	exit@FUNCTION, $pop8
 	unreachable
 	.endfunc
 .Lfunc_end1:

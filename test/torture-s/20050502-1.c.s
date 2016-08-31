@@ -124,11 +124,11 @@ main:                                   # @main
 	i32.const	$push38=, 0
 	i32.load	$push39=, __stack_pointer($pop38)
 	i32.const	$push40=, 80
-	i32.sub 	$push75=, $pop39, $pop40
-	i32.store	$push77=, __stack_pointer($pop41), $pop75
-	tee_local	$push76=, $0=, $pop77
+	i32.sub 	$push76=, $pop39, $pop40
+	tee_local	$push75=, $0=, $pop76
+	i32.store	$drop=, __stack_pointer($pop41), $pop75
 	i32.const	$push0=, .L.str
-	i32.store	$drop=, 12($pop76), $pop0
+	i32.store	$drop=, 12($0), $pop0
 	i32.const	$push45=, 12
 	i32.add 	$push46=, $0, $pop45
 	i32.const	$push47=, 16
@@ -175,8 +175,8 @@ main:                                   # @main
 	i32.const	$push59=, 16
 	i32.add 	$push60=, $0, $pop59
 	i32.const	$push17=, 1
-	i32.const	$push78=, 1
-	call    	foo@FUNCTION, $pop58, $pop60, $pop17, $pop78
+	i32.const	$push77=, 1
+	call    	foo@FUNCTION, $pop58, $pop60, $pop17, $pop77
 	i32.load	$push19=, 12($0)
 	i32.const	$push18=, .L.str.7
 	i32.call	$push20=, strcmp@FUNCTION, $pop19, $pop18
@@ -195,8 +195,8 @@ main:                                   # @main
 	i32.const	$push65=, 16
 	i32.add 	$push66=, $0, $pop65
 	i32.const	$push24=, 1
-	i32.const	$push79=, 1
-	call    	foo@FUNCTION, $pop64, $pop66, $pop24, $pop79
+	i32.const	$push78=, 1
+	call    	foo@FUNCTION, $pop64, $pop66, $pop24, $pop78
 	i32.load	$push26=, 12($0)
 	i32.const	$push25=, .L.str.10
 	i32.call	$push27=, strcmp@FUNCTION, $pop26, $pop25
@@ -215,8 +215,8 @@ main:                                   # @main
 	i32.const	$push71=, 16
 	i32.add 	$push72=, $0, $pop71
 	i32.const	$push31=, 0
-	i32.const	$push80=, 0
-	call    	foo@FUNCTION, $pop70, $pop72, $pop31, $pop80
+	i32.const	$push79=, 0
+	call    	foo@FUNCTION, $pop70, $pop72, $pop31, $pop79
 	i32.load	$push33=, 12($0)
 	i32.const	$push32=, .L.str.13
 	i32.call	$push34=, strcmp@FUNCTION, $pop33, $pop32

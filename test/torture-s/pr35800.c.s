@@ -18,22 +18,24 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 	i32.const	$1=, .L.str
 	block
 	i32.const	$push2=, -2
-	i32.sub 	$push8=, $pop2, $0
-	tee_local	$push7=, $0=, $pop8
+	i32.sub 	$push10=, $pop2, $0
+	tee_local	$push9=, $0=, $pop10
 	i32.const	$push3=, 32
-	i32.gt_u	$push4=, $pop7, $pop3
+	i32.gt_u	$push4=, $pop9, $pop3
 	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %switch.lookup
 	i32.const	$push5=, 2
 	i32.shl 	$push6=, $0, $pop5
-	i32.load	$1=, .Lswitch.table($pop6)
+	i32.const	$push7=, .Lswitch.table
+	i32.add 	$push8=, $pop6, $pop7
+	i32.load	$1=, 0($pop8)
 .LBB0_3:                                # %sw.epilog
 	end_block                       # label1:
 	i32.load8_s	$1=, 0($1)
 .LBB0_4:                                # %cleanup
 	end_block                       # label0:
-	copy_local	$push9=, $1
-                                        # fallthrough-return: $pop9
+	copy_local	$push11=, $1
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	stab_xcoff_builtin_type, .Lfunc_end0-stab_xcoff_builtin_type

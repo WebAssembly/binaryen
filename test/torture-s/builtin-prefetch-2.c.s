@@ -38,17 +38,19 @@ simple_static_local:                    # @simple_static_local
 	.globl	simple_local
 	.type	simple_local,@function
 simple_local:                           # @simple_local
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.const	$push1=, 0
-	i32.load	$push2=, __stack_pointer($pop1)
-	i32.const	$push3=, 416
-	i32.sub 	$push8=, $pop2, $pop3
-	i32.store	$push0=, __stack_pointer($pop4), $pop8
-	i32.const	$push5=, 416
-	i32.add 	$push6=, $pop0, $pop5
-	i32.store	$drop=, __stack_pointer($pop7), $pop6
+	i32.const	$push3=, 0
+	i32.const	$push0=, 0
+	i32.load	$push1=, __stack_pointer($pop0)
+	i32.const	$push2=, 416
+	i32.sub 	$push8=, $pop1, $pop2
+	tee_local	$push7=, $0=, $pop8
+	i32.store	$drop=, __stack_pointer($pop3), $pop7
+	i32.const	$push6=, 0
+	i32.const	$push4=, 416
+	i32.add 	$push5=, $0, $pop4
+	i32.store	$drop=, __stack_pointer($pop6), $pop5
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:

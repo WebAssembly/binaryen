@@ -34,10 +34,12 @@ g:                                      # @g
 	i32.and 	$push3=, $pop1, $pop2
 	i32.const	$push4=, 2
 	i32.shl 	$push5=, $pop3, $pop4
-	i32.load	$push6=, a($pop5)
-	i32.const	$push7=, 1
-	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	0, $pop8        # 0: down to label1
+	i32.const	$push6=, a
+	i32.add 	$push7=, $pop5, $pop6
+	i32.load	$push8=, 0($pop7)
+	i32.const	$push9=, 1
+	i32.ne  	$push10=, $pop8, $pop9
+	br_if   	0, $pop10       # 0: down to label1
 # BB#1:                                 # %f.exit
 	return
 .LBB1_2:                                # %if.then.i

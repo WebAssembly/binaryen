@@ -5,15 +5,17 @@
 	.globl	x
 	.type	x,@function
 x:                                      # @x
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push6=, 0
-	i32.const	$push5=, 0
-	i32.load	$push2=, n($pop5)
-	i32.const	$push3=, 31
-	i32.lt_u	$push4=, $pop2, $pop3
-	i32.store	$push0=, p($pop6), $pop4
-	i32.store	$drop=, k($pop1), $pop0
+	i32.load	$push1=, n($pop6)
+	i32.const	$push2=, 31
+	i32.lt_u	$push5=, $pop1, $pop2
+	tee_local	$push4=, $0=, $pop5
+	i32.store	$drop=, p($pop0), $pop4
+	i32.const	$push3=, 0
+	i32.store	$drop=, k($pop3), $0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -25,21 +27,23 @@ x:                                      # @x
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	block
-	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
-	i32.load	$push2=, n($pop5)
-	i32.const	$push3=, 31
-	i32.lt_u	$push4=, $pop2, $pop3
-	i32.store	$push0=, p($pop6), $pop4
-	i32.store	$push1=, k($pop7), $pop0
-	i32.eqz 	$push9=, $pop1
-	br_if   	0, $pop9        # 0: down to label0
+	i32.load	$push0=, n($pop5)
+	i32.const	$push1=, 31
+	i32.lt_u	$push4=, $pop0, $pop1
+	tee_local	$push3=, $0=, $pop4
+	i32.store	$drop=, p($pop6), $pop3
+	i32.const	$push2=, 0
+	i32.store	$drop=, k($pop2), $0
+	block
+	i32.eqz 	$push8=, $0
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push8=, 0
-	call    	exit@FUNCTION, $pop8
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:

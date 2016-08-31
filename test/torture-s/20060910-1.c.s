@@ -99,13 +99,14 @@ check_header:                           # @check_header
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end2
-	i32.const	$push2=, 0
+	i32.const	$push1=, 0
+	i32.const	$push0=, b+6
+	i32.store	$drop=, s($pop1), $pop0
 	i32.const	$push4=, 0
-	i32.const	$push1=, b+6
-	i32.store	$push0=, s($pop4), $pop1
-	i32.store	$drop=, s+4($pop2), $pop0
-	i32.const	$push3=, 0
-                                        # fallthrough-return: $pop3
+	i32.const	$push3=, b+6
+	i32.store	$drop=, s+4($pop4), $pop3
+	i32.const	$push2=, 0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -37,13 +37,14 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push2=, 0
-	i32.const	$push1=, 2
-	i32.store	$drop=, j($pop2), $pop1
+	i32.const	$push1=, 0
+	i32.const	$push0=, 2
+	i32.store	$drop=, j($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push3=, 0
-	i32.store	$push0=, i($pop4), $pop3
-	call    	exit@FUNCTION, $pop0
+	i32.store	$drop=, i($pop4), $pop3
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:

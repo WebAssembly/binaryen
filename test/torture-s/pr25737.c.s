@@ -8,10 +8,11 @@ time_enqueue:                           # @time_enqueue
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.store	$push0=, 0($0), $pop1
-	i32.load	$push2=, Timer_Queue($pop0)
-                                        # fallthrough-return: $pop2
+	i32.const	$push0=, 0
+	i32.store	$drop=, 0($0), $pop0
+	i32.const	$push2=, 0
+	i32.load	$push1=, Timer_Queue($pop2)
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	time_enqueue, .Lfunc_end0-time_enqueue
@@ -23,10 +24,11 @@ time_enqueue:                           # @time_enqueue
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store	$push0=, Timer_Queue($pop1), $pop2
-                                        # fallthrough-return: $pop0
+	i32.store	$drop=, Timer_Queue($pop0), $pop2
+	i32.const	$push1=, 0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

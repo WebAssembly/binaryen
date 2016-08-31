@@ -78,38 +78,39 @@ print_longlong:                         # @print_longlong
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 32
-	i32.sub 	$push13=, $pop5, $pop6
-	i32.store	$2=, __stack_pointer($pop7), $pop13
-	i32.wrap/i64	$4=, $0
+	i32.sub 	$push16=, $pop5, $pop6
+	tee_local	$push15=, $4=, $pop16
+	i32.store	$drop=, __stack_pointer($pop7), $pop15
+	i32.wrap/i64	$3=, $0
 	block
 	block
 	i64.const	$push0=, 32
 	i64.shr_u	$push1=, $0, $pop0
-	i32.wrap/i64	$push15=, $pop1
-	tee_local	$push14=, $3=, $pop15
-	i32.eqz 	$push16=, $pop14
-	br_if   	0, $pop16       # 0: down to label1
+	i32.wrap/i64	$push14=, $pop1
+	tee_local	$push13=, $2=, $pop14
+	i32.eqz 	$push17=, $pop13
+	br_if   	0, $pop17       # 0: down to label1
 # BB#1:                                 # %if.then
-	i32.store	$drop=, 20($2), $4
-	i32.store	$drop=, 16($2), $3
+	i32.store	$drop=, 20($4), $3
+	i32.store	$drop=, 16($4), $2
 	i32.const	$push2=, .L.str
 	i32.const	$push11=, 16
-	i32.add 	$push12=, $2, $pop11
+	i32.add 	$push12=, $4, $pop11
 	i32.call	$drop=, sprintf@FUNCTION, $1, $pop2, $pop12
 	br      	1               # 1: down to label0
 .LBB5_2:                                # %if.else
 	end_block                       # label1:
-	i32.store	$drop=, 0($2), $4
+	i32.store	$drop=, 0($4), $3
 	i32.const	$push3=, .L.str.1
-	i32.call	$drop=, sprintf@FUNCTION, $1, $pop3, $2
+	i32.call	$drop=, sprintf@FUNCTION, $1, $pop3, $4
 .LBB5_3:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push10=, 0
 	i32.const	$push8=, 32
-	i32.add 	$push9=, $2, $pop8
+	i32.add 	$push9=, $4, $pop8
 	i32.store	$drop=, __stack_pointer($pop10), $pop9
-	copy_local	$push17=, $2
-                                        # fallthrough-return: $pop17
+	copy_local	$push18=, $4
+                                        # fallthrough-return: $pop18
 	.endfunc
 .Lfunc_end5:
 	.size	print_longlong, .Lfunc_end5-print_longlong
@@ -126,17 +127,17 @@ main:                                   # @main
 	i32.const	$push17=, 0
 	i32.load	$push18=, __stack_pointer($pop17)
 	i32.const	$push19=, 192
-	i32.sub 	$push49=, $pop18, $pop19
-	i32.store	$push52=, __stack_pointer($pop20), $pop49
-	tee_local	$push51=, $0=, $pop52
+	i32.sub 	$push51=, $pop18, $pop19
+	tee_local	$push50=, $0=, $pop51
+	i32.store	$drop=, __stack_pointer($pop20), $pop50
 	i32.const	$push0=, 1
-	i32.store	$drop=, 64($pop51), $pop0
+	i32.store	$drop=, 64($0), $pop0
 	i32.const	$push21=, 80
 	i32.add 	$push22=, $0, $pop21
-	i32.const	$push50=, .L.str.1
+	i32.const	$push49=, .L.str.1
 	i32.const	$push23=, 64
 	i32.add 	$push24=, $0, $pop23
-	i32.call	$drop=, sprintf@FUNCTION, $pop22, $pop50, $pop24
+	i32.call	$drop=, sprintf@FUNCTION, $pop22, $pop49, $pop24
 	block
 	i32.const	$push1=, .L.str.2
 	i32.const	$push25=, 80
@@ -148,10 +149,10 @@ main:                                   # @main
 	i32.store	$drop=, 48($0), $pop3
 	i32.const	$push27=, 80
 	i32.add 	$push28=, $0, $pop27
-	i32.const	$push53=, .L.str.1
+	i32.const	$push52=, .L.str.1
 	i32.const	$push29=, 48
 	i32.add 	$push30=, $0, $pop29
-	i32.call	$drop=, sprintf@FUNCTION, $pop28, $pop53, $pop30
+	i32.call	$drop=, sprintf@FUNCTION, $pop28, $pop52, $pop30
 	i32.const	$push4=, .L.str.3
 	i32.const	$push31=, 80
 	i32.add 	$push32=, $0, $pop31
@@ -162,10 +163,10 @@ main:                                   # @main
 	i64.store	$drop=, 32($0), $pop6
 	i32.const	$push33=, 80
 	i32.add 	$push34=, $0, $pop33
-	i32.const	$push54=, .L.str
+	i32.const	$push53=, .L.str
 	i32.const	$push35=, 32
 	i32.add 	$push36=, $0, $pop35
-	i32.call	$drop=, sprintf@FUNCTION, $pop34, $pop54, $pop36
+	i32.call	$drop=, sprintf@FUNCTION, $pop34, $pop53, $pop36
 	i32.const	$push7=, .L.str.4
 	i32.const	$push37=, 80
 	i32.add 	$push38=, $0, $pop37
@@ -176,10 +177,10 @@ main:                                   # @main
 	i64.store	$drop=, 16($0), $pop9
 	i32.const	$push39=, 80
 	i32.add 	$push40=, $0, $pop39
-	i32.const	$push55=, .L.str
+	i32.const	$push54=, .L.str
 	i32.const	$push41=, 16
 	i32.add 	$push42=, $0, $pop41
-	i32.call	$drop=, sprintf@FUNCTION, $pop40, $pop55, $pop42
+	i32.call	$drop=, sprintf@FUNCTION, $pop40, $pop54, $pop42
 	i32.const	$push10=, .L.str.5
 	i32.const	$push43=, 80
 	i32.add 	$push44=, $0, $pop43

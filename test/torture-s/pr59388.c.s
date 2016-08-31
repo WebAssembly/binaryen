@@ -6,14 +6,17 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.load8_u	$push2=, b($pop5)
-	i32.const	$push3=, 1
-	i32.and 	$push4=, $pop2, $pop3
-	i32.store	$push0=, a($pop1), $pop4
-                                        # fallthrough-return: $pop0
+	i32.load8_u	$push1=, b($pop5)
+	i32.const	$push2=, 1
+	i32.and 	$push4=, $pop1, $pop2
+	tee_local	$push3=, $0=, $pop4
+	i32.store	$drop=, a($pop0), $pop3
+	copy_local	$push6=, $0
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

@@ -42,7 +42,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.eqz 	$push26=, $0
 	br_if   	3, $pop26       # 3: down to label1
-.LBB1_3:                                # %for.inc36.1.1
+.LBB1_3:                                # %if.end.1.1
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label4:
 	i32.const	$push9=, -64
@@ -67,7 +67,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_5 Depth=1
 	i32.eqz 	$push28=, $0
 	br_if   	3, $pop28       # 3: down to label1
-.LBB1_7:                                # %for.inc36.1.1.1
+.LBB1_7:                                # %if.end.1.1.1
                                         #   in Loop: Header=BB1_5 Depth=1
 	end_block                       # label7:
 	i32.const	$push14=, -64
@@ -92,7 +92,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_9 Depth=1
 	i32.eqz 	$push30=, $0
 	br_if   	3, $pop30       # 3: down to label1
-.LBB1_11:                               # %for.inc36.1.1.2
+.LBB1_11:                               # %if.end.1.1.2
                                         #   in Loop: Header=BB1_9 Depth=1
 	end_block                       # label10:
 	i32.const	$push19=, -64
@@ -117,7 +117,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_13 Depth=1
 	i32.eqz 	$push32=, $0
 	br_if   	3, $pop32       # 3: down to label1
-.LBB1_15:                               # %for.inc36.1.1.3
+.LBB1_15:                               # %if.end.1.1.3
                                         #   in Loop: Header=BB1_13 Depth=1
 	end_block                       # label13:
 	i32.const	$push24=, -64

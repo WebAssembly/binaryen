@@ -60,11 +60,11 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$push7=, $pop4, $pop5
-	i32.store	$push9=, __stack_pointer($pop6), $pop7
-	tee_local	$push8=, $0=, $pop9
+	i32.sub 	$push8=, $pop4, $pop5
+	tee_local	$push7=, $0=, $pop8
+	i32.store	$drop=, __stack_pointer($pop6), $pop7
 	i32.const	$push0=, 31
-	i32.store	$drop=, 8($pop8), $pop0
+	i32.store	$drop=, 8($0), $pop0
 	i64.const	$push1=, 223338299568
 	i64.store	$drop=, 0($0), $pop1
 	call    	baz@FUNCTION, $0

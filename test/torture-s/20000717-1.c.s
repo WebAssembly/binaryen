@@ -70,22 +70,22 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	i32.load	$push6=, __stack_pointer($pop5)
 	i32.const	$push7=, 16
-	i32.sub 	$push11=, $pop6, $pop7
-	i32.store	$push15=, __stack_pointer($pop8), $pop11
-	tee_local	$push14=, $0=, $pop15
+	i32.sub 	$push14=, $pop6, $pop7
+	tee_local	$push13=, $0=, $pop14
+	i32.store	$drop=, __stack_pointer($pop8), $pop13
 	i32.const	$push2=, 12
-	i32.add 	$push3=, $pop14, $pop2
+	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.t+8($pop0)
 	i32.store	$drop=, 0($pop3), $pop1
-	i32.const	$push13=, 0
-	i64.load	$push4=, .Lmain.t($pop13):p2align=2
+	i32.const	$push12=, 0
+	i64.load	$push4=, .Lmain.t($pop12):p2align=2
 	i64.store	$drop=, 4($0):p2align=2, $pop4
 	i32.const	$push9=, 4
 	i32.add 	$push10=, $0, $pop9
 	i32.call	$drop=, foo@FUNCTION, $pop10, $0
-	i32.const	$push12=, 0
-	call    	exit@FUNCTION, $pop12
+	i32.const	$push11=, 0
+	call    	exit@FUNCTION, $pop11
 	unreachable
 	.endfunc
 .Lfunc_end2:

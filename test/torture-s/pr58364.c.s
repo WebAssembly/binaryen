@@ -23,19 +23,20 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	block
-	i32.const	$push0=, 0
 	i32.const	$push6=, 0
-	i32.store	$push5=, b($pop0), $pop6
-	tee_local	$push4=, $0=, $pop5
-	i32.load	$push2=, a($pop4)
-	i32.load	$push1=, c($0)
-	i32.le_s	$push3=, $pop2, $pop1
-	br_if   	0, $pop3        # 0: down to label0
+	i32.const	$push5=, 0
+	i32.store	$drop=, b($pop6), $pop5
+	block
+	i32.const	$push4=, 0
+	i32.load	$push1=, a($pop4)
+	i32.const	$push3=, 0
+	i32.load	$push0=, c($pop3)
+	i32.le_s	$push2=, $pop1, $pop0
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
-	return  	$0
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

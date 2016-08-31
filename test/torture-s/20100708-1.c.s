@@ -29,11 +29,11 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 208
-	i32.sub 	$push10=, $pop2, $pop3
-	i32.store	$push12=, __stack_pointer($pop4), $pop10
-	tee_local	$push11=, $0=, $pop12
+	i32.sub 	$push11=, $pop2, $pop3
+	tee_local	$push10=, $0=, $pop11
+	i32.store	$drop=, __stack_pointer($pop4), $pop10
 	i32.const	$push8=, 8
-	i32.add 	$push9=, $pop11, $pop8
+	i32.add 	$push9=, $0, $pop8
 	call    	f@FUNCTION, $pop9
 	i32.const	$push7=, 0
 	i32.const	$push5=, 208

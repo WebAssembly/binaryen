@@ -62,12 +62,13 @@ test:                                   # @test
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push3=, 0
-	i32.const	$push1=, 1
-	i32.store	$push0=, x($pop3), $pop1
-	i32.call	$push2=, test@FUNCTION, $pop0
-	br_if   	0, $pop2        # 0: down to label0
+	i32.const	$push0=, 1
+	i32.store	$drop=, x($pop3), $pop0
+	block
+	i32.const	$push2=, 1
+	i32.call	$push1=, test@FUNCTION, $pop2
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4

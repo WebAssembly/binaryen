@@ -54,18 +54,18 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	i32.load	$push6=, __stack_pointer($pop5)
 	i32.const	$push7=, 16
-	i32.sub 	$push14=, $pop6, $pop7
-	i32.store	$push18=, __stack_pointer($pop8), $pop14
-	tee_local	$push17=, $0=, $pop18
+	i32.sub 	$push17=, $pop6, $pop7
+	tee_local	$push16=, $0=, $pop17
+	i32.store	$drop=, __stack_pointer($pop8), $pop16
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0)
-	i64.store	$drop=, 8($pop17), $pop1
+	i64.store	$drop=, 8($0), $pop1
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $0, $pop12
 	i64.const	$push2=, 10
 	call    	f@FUNCTION, $pop13, $pop2
-	i32.const	$push16=, 0
-	i64.load	$push3=, .Lmain.t($pop16)
+	i32.const	$push15=, 0
+	i64.load	$push3=, .Lmain.t($pop15)
 	i64.store	$drop=, 0($0), $pop3
 	i64.const	$push4=, 1099511627778
 	call    	f@FUNCTION, $0, $pop4
@@ -73,8 +73,8 @@ main:                                   # @main
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $0, $pop9
 	i32.store	$drop=, __stack_pointer($pop11), $pop10
-	i32.const	$push15=, 0
-                                        # fallthrough-return: $pop15
+	i32.const	$push14=, 0
+                                        # fallthrough-return: $pop14
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

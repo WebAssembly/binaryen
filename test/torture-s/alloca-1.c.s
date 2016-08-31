@@ -27,16 +27,16 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push6=, 0
 	i32.const	$push3=, 0
 	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 32
-	i32.sub 	$push10=, $pop4, $pop5
-	i32.store	$push12=, __stack_pointer($pop6), $pop10
-	tee_local	$push11=, $0=, $pop12
+	i32.sub 	$push11=, $pop4, $pop5
+	tee_local	$push10=, $0=, $pop11
+	i32.store	$drop=, __stack_pointer($pop6), $pop10
+	block
 	i32.const	$push0=, 15
-	i32.and 	$push1=, $pop11, $pop0
+	i32.and 	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0

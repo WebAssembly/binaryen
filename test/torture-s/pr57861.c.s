@@ -6,51 +6,65 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
 	i32.const	$push23=, 0
-	i32.store	$push22=, c($pop0), $pop23
-	tee_local	$push21=, $0=, $pop22
+	i32.const	$push22=, 0
+	i32.store	$drop=, c($pop23), $pop22
+	i32.const	$push21=, 0
 	i32.load16_u	$push20=, a($pop21)
-	tee_local	$push19=, $1=, $pop20
-	copy_local	$2=, $pop19
+	tee_local	$push19=, $0=, $pop20
+	copy_local	$1=, $pop19
 	block
-	i32.load	$push8=, e($0)
-	i32.const	$push5=, 24
-	i32.shl 	$push6=, $1, $pop5
-	i32.const	$push18=, 24
-	i32.shr_s	$push7=, $pop6, $pop18
-	i32.ge_u	$push9=, $pop8, $pop7
-	br_if   	0, $pop9        # 0: down to label0
+	i32.const	$push18=, 0
+	i32.load	$push7=, e($pop18)
+	i32.const	$push4=, 24
+	i32.shl 	$push5=, $0, $pop4
+	i32.const	$push17=, 24
+	i32.shr_s	$push6=, $pop5, $pop17
+	i32.ge_u	$push8=, $pop7, $pop6
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.then.i.1
-	i32.load	$push3=, d($0)
-	i32.ne  	$push4=, $pop3, $0
-	i32.load	$push1=, h($0)
-	i32.ne  	$push2=, $pop1, $0
-	i32.and 	$push25=, $pop4, $pop2
-	tee_local	$push24=, $2=, $pop25
-	i32.store16	$drop=, a($0), $pop24
-	i32.store16	$drop=, f($0), $0
+	i32.const	$push32=, 0
+	i32.const	$push31=, 0
+	i32.load	$push2=, d($pop31)
+	i32.const	$push30=, 0
+	i32.ne  	$push3=, $pop2, $pop30
+	i32.const	$push29=, 0
+	i32.load	$push0=, h($pop29)
+	i32.const	$push28=, 0
+	i32.ne  	$push1=, $pop0, $pop28
+	i32.and 	$push27=, $pop3, $pop1
+	tee_local	$push26=, $1=, $pop27
+	i32.store16	$drop=, a($pop32), $pop26
+	i32.const	$push25=, 0
+	i32.const	$push24=, 0
+	i32.store16	$drop=, f($pop25), $pop24
 .LBB0_2:                                # %for.inc.i.1
 	end_block                       # label0:
-	i32.const	$push10=, 2
-	i32.store	$drop=, c($0), $pop10
-	i32.const	$push11=, 255
-	i32.and 	$push12=, $1, $pop11
-	i32.ne  	$push13=, $pop12, $0
-	i32.store	$drop=, i($0), $pop13
-	i32.store	$push27=, j($0), $0
-	tee_local	$push26=, $0=, $pop27
-	i32.load	$push14=, g($pop26)
-	i32.store	$drop=, 0($pop14), $0
+	i32.const	$push39=, 0
+	i32.const	$push9=, 2
+	i32.store	$drop=, c($pop39), $pop9
+	i32.const	$push38=, 0
+	i32.const	$push10=, 255
+	i32.and 	$push11=, $0, $pop10
+	i32.const	$push37=, 0
+	i32.ne  	$push12=, $pop11, $pop37
+	i32.store	$drop=, i($pop38), $pop12
+	i32.const	$push36=, 0
+	i32.const	$push35=, 0
+	i32.store	$drop=, j($pop36), $pop35
+	i32.const	$push34=, 0
+	i32.load	$push13=, g($pop34)
+	i32.const	$push33=, 0
+	i32.store	$drop=, 0($pop13), $pop33
 	block
-	i32.const	$push15=, 65535
-	i32.and 	$push16=, $2, $pop15
-	br_if   	0, $pop16       # 0: down to label1
+	i32.const	$push14=, 65535
+	i32.and 	$push15=, $1, $pop14
+	br_if   	0, $pop15       # 0: down to label1
 # BB#3:                                 # %if.end
-	i32.const	$push17=, 0
-	return  	$pop17
+	i32.const	$push16=, 0
+	return  	$pop16
 .LBB0_4:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
