@@ -30,30 +30,34 @@ fn1:                                    # @fn1
 	.globl	fn2
 	.type	fn2,@function
 fn2:                                    # @fn2
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push15=, 0
-	i32.load16_u	$push1=, c+12($pop15):p2align=0
+	i32.const	$push19=, 0
+	i32.load16_u	$push1=, c+12($pop19):p2align=0
 	i32.store16	$drop=, b+12($pop0):p2align=0, $pop1
+	i32.const	$push18=, 0
+	i32.const	$push17=, 0
+	i32.load	$push2=, c+8($pop17):p2align=0
+	i32.store	$drop=, b+8($pop18):p2align=0, $pop2
+	i32.const	$push16=, 0
+	i32.const	$push15=, 0
+	i64.load	$push3=, c($pop15):p2align=0
+	i64.store	$drop=, b($pop16):p2align=0, $pop3
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
-	i32.load	$push2=, c+8($pop13):p2align=0
-	i32.store	$drop=, b+8($pop14):p2align=0, $pop2
+	i32.store16	$drop=, a($pop14), $pop13
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
-	i64.load	$push3=, c($pop11):p2align=0
-	i64.store	$drop=, b($pop12):p2align=0, $pop3
+	i32.load16_u	$push4=, e+12($pop11):p2align=0
+	i32.store16	$drop=, d+12($pop12):p2align=0, $pop4
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.store16	$push8=, a($pop10), $pop9
-	tee_local	$push7=, $0=, $pop8
-	i32.load16_u	$push4=, e+12($0):p2align=0
-	i32.store16	$drop=, d+12($pop7):p2align=0, $pop4
-	i32.load	$push5=, e+8($0):p2align=0
-	i32.store	$drop=, d+8($0):p2align=0, $pop5
-	i64.load	$push6=, e($0):p2align=0
-	i64.store	$drop=, d($0):p2align=0, $pop6
+	i32.load	$push5=, e+8($pop9):p2align=0
+	i32.store	$drop=, d+8($pop10):p2align=0, $pop5
+	i32.const	$push8=, 0
+	i32.const	$push7=, 0
+	i64.load	$push6=, e($pop7):p2align=0
+	i64.store	$drop=, d($pop8):p2align=0, $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -65,32 +69,36 @@ fn2:                                    # @fn2
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push15=, 0
-	i32.load16_u	$push1=, c+12($pop15):p2align=0
+	i32.const	$push20=, 0
+	i32.load16_u	$push1=, c+12($pop20):p2align=0
 	i32.store16	$drop=, b+12($pop0):p2align=0, $pop1
+	i32.const	$push19=, 0
+	i32.const	$push18=, 0
+	i32.load	$push2=, c+8($pop18):p2align=0
+	i32.store	$drop=, b+8($pop19):p2align=0, $pop2
+	i32.const	$push17=, 0
+	i32.const	$push16=, 0
+	i64.load	$push3=, c($pop16):p2align=0
+	i64.store	$drop=, b($pop17):p2align=0, $pop3
+	i32.const	$push15=, 0
 	i32.const	$push14=, 0
+	i32.store16	$drop=, a($pop15), $pop14
 	i32.const	$push13=, 0
-	i32.load	$push2=, c+8($pop13):p2align=0
-	i32.store	$drop=, b+8($pop14):p2align=0, $pop2
 	i32.const	$push12=, 0
+	i32.load16_u	$push4=, e+12($pop12):p2align=0
+	i32.store16	$drop=, d+12($pop13):p2align=0, $pop4
 	i32.const	$push11=, 0
-	i64.load	$push3=, c($pop11):p2align=0
-	i64.store	$drop=, b($pop12):p2align=0, $pop3
 	i32.const	$push10=, 0
+	i32.load	$push5=, e+8($pop10):p2align=0
+	i32.store	$drop=, d+8($pop11):p2align=0, $pop5
 	i32.const	$push9=, 0
-	i32.store16	$push8=, a($pop10), $pop9
-	tee_local	$push7=, $0=, $pop8
-	i32.load16_u	$push4=, e+12($0):p2align=0
-	i32.store16	$drop=, d+12($pop7):p2align=0, $pop4
-	i32.load	$push5=, e+8($0):p2align=0
-	i32.store	$drop=, d+8($0):p2align=0, $pop5
-	i64.load	$push6=, e($0):p2align=0
-	i64.store	$drop=, d($0):p2align=0, $pop6
-	copy_local	$push16=, $0
-                                        # fallthrough-return: $pop16
+	i32.const	$push8=, 0
+	i64.load	$push6=, e($pop8):p2align=0
+	i64.store	$drop=, d($pop9):p2align=0, $pop6
+	i32.const	$push7=, 0
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

@@ -6,18 +6,20 @@
 	.type	simple_rand,@function
 simple_rand:                            # @simple_rand
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push9=, 0
-	i32.load	$push2=, simple_rand.seed($pop9)
-	i32.const	$push3=, 1103515245
-	i32.mul 	$push4=, $pop2, $pop3
-	i32.const	$push5=, 12345
-	i32.add 	$push6=, $pop4, $pop5
-	i32.store	$push0=, simple_rand.seed($pop1), $pop6
-	i32.const	$push7=, 8
-	i32.shr_u	$push8=, $pop0, $pop7
-                                        # fallthrough-return: $pop8
+	i32.load	$push1=, simple_rand.seed($pop9)
+	i32.const	$push2=, 1103515245
+	i32.mul 	$push3=, $pop1, $pop2
+	i32.const	$push4=, 12345
+	i32.add 	$push8=, $pop3, $pop4
+	tee_local	$push7=, $0=, $pop8
+	i32.store	$drop=, simple_rand.seed($pop0), $pop7
+	i32.const	$push5=, 8
+	i32.shr_u	$push6=, $0, $pop5
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	simple_rand, .Lfunc_end0-simple_rand
@@ -51,8 +53,8 @@ random_bitstring:                       # @random_bitstring
 	br_if   	1, $pop20       # 1: down to label1
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.add 	$3=, $0, $3
-	i32.shl 	$2=, $2, $0
+	i32.add 	$2=, $0, $2
+	i32.shl 	$3=, $3, $0
 	block
 	i32.const	$push16=, 256
 	i32.and 	$push2=, $1, $pop16
@@ -64,18 +66,18 @@ random_bitstring:                       # @random_bitstring
 	i32.shl 	$push3=, $pop18, $0
 	i32.const	$push17=, -1
 	i32.add 	$push4=, $pop3, $pop17
-	i32.or  	$2=, $pop4, $2
+	i32.or  	$3=, $pop4, $3
 .LBB1_4:                                # %if.end
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label2:
 	i32.const	$push19=, 39
-	i32.lt_u	$push5=, $3, $pop19
+	i32.lt_u	$push5=, $2, $pop19
 	br_if   	0, $pop5        # 0: up to label0
 .LBB1_5:                                # %cleanup
 	end_loop                        # label1:
 	i32.const	$push6=, 0
 	i32.store	$drop=, simple_rand.seed($pop6), $1
-	copy_local	$push22=, $2
+	copy_local	$push22=, $3
                                         # fallthrough-return: $pop22
 	.endfunc
 .Lfunc_end1:
@@ -100,8 +102,8 @@ main:                                   # @main
 	block
 	block
 	loop                            # label6:
+	i32.const	$8=, 0
 	i32.const	$6=, 0
-	i32.const	$7=, 0
 .LBB2_2:                                # %for.cond.i
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
@@ -120,7 +122,7 @@ main:                                   # @main
 	br_if   	1, $pop146      # 1: down to label9
 # BB#3:                                 # %if.else.i
                                         #   in Loop: Header=BB2_2 Depth=2
-	i32.add 	$7=, $1, $7
+	i32.add 	$8=, $1, $8
 	i32.shl 	$6=, $6, $1
 	block
 	i32.const	$push67=, 256
@@ -138,7 +140,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_2 Depth=2
 	end_block                       # label10:
 	i32.const	$push70=, 39
-	i32.lt_u	$push5=, $7, $pop70
+	i32.lt_u	$push5=, $8, $pop70
 	br_if   	0, $pop5        # 0: up to label8
 .LBB2_6:                                # %random_bitstring.exit
                                         #   in Loop: Header=BB2_1 Depth=1
@@ -163,8 +165,8 @@ main:                                   # @main
 	br_if   	1, $pop148      # 1: down to label12
 # BB#8:                                 # %if.else.i343
                                         #   in Loop: Header=BB2_7 Depth=2
-	i32.add 	$8=, $1, $8
-	i32.shl 	$7=, $7, $1
+	i32.add 	$7=, $1, $7
+	i32.shl 	$8=, $8, $1
 	block
 	i32.const	$push79=, 256
 	i32.and 	$push8=, $2, $pop79
@@ -176,34 +178,34 @@ main:                                   # @main
 	i32.shl 	$push9=, $pop81, $1
 	i32.const	$push80=, -1
 	i32.add 	$push10=, $pop9, $pop80
-	i32.or  	$7=, $pop10, $7
+	i32.or  	$8=, $pop10, $8
 .LBB2_10:                               # %if.end.i350
                                         #   in Loop: Header=BB2_7 Depth=2
 	end_block                       # label13:
 	i32.const	$push82=, 39
-	i32.lt_u	$push11=, $8, $pop82
+	i32.lt_u	$push11=, $7, $pop82
 	br_if   	0, $pop11       # 0: up to label11
 .LBB2_11:                               # %random_bitstring.exit352
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop                        # label12:
 	block
-	i32.eqz 	$push150=, $7
+	i32.eqz 	$push150=, $8
 	br_if   	0, $pop150      # 0: down to label14
-# BB#12:                                # %cleanup.cont
+# BB#12:                                # %cleanup.cont.critedge
                                         #   in Loop: Header=BB2_1 Depth=1
 	block
 	i32.const	$push83=, 2147483647
 	i32.and 	$push12=, $6, $pop83
 	br_if   	0, $pop12       # 0: down to label15
-# BB#13:                                # %cleanup.cont
+# BB#13:                                # %cleanup.cont.critedge
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push84=, -1
-	i32.eq  	$push13=, $7, $pop84
+	i32.eq  	$push13=, $8, $pop84
 	br_if   	1, $pop13       # 1: down to label14
 .LBB2_14:                               # %if.end25
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label15:
-	i32.rem_s	$push92=, $6, $7
+	i32.rem_s	$push92=, $6, $8
 	tee_local	$push91=, $1=, $pop92
 	i32.const	$push90=, 31
 	i32.shr_s	$push89=, $1, $pop90
@@ -211,19 +213,19 @@ main:                                   # @main
 	i32.add 	$push16=, $pop91, $pop88
 	i32.xor 	$push17=, $pop16, $1
 	i32.const	$push87=, 31
-	i32.shr_s	$push86=, $7, $pop87
+	i32.shr_s	$push86=, $8, $pop87
 	tee_local	$push85=, $1=, $pop86
-	i32.add 	$push14=, $7, $pop85
+	i32.add 	$push14=, $8, $pop85
 	i32.xor 	$push15=, $pop14, $1
 	i32.ge_u	$push18=, $pop17, $pop15
 	br_if   	4, $pop18       # 4: down to label4
-# BB#15:                                # %cleanup.cont47
+# BB#15:                                # %cleanup.cont47.critedge
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push93=, 65535
-	i32.and 	$push20=, $7, $pop93
+	i32.and 	$push20=, $8, $pop93
 	i32.eqz 	$push151=, $pop20
 	br_if   	0, $pop151      # 0: down to label14
-# BB#16:                                # %cleanup.cont86
+# BB#16:                                # %cleanup.cont86.critedge
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push114=, 16
 	i32.shl 	$push21=, $6, $pop114
@@ -231,7 +233,7 @@ main:                                   # @main
 	i32.shr_s	$push112=, $pop21, $pop113
 	tee_local	$push111=, $3=, $pop112
 	i32.const	$push110=, 16
-	i32.shl 	$push109=, $7, $pop110
+	i32.shl 	$push109=, $8, $pop110
 	tee_local	$push108=, $4=, $pop109
 	i32.const	$push107=, 16
 	i32.shr_s	$push106=, $pop108, $pop107
@@ -242,9 +244,9 @@ main:                                   # @main
 	tee_local	$push102=, $5=, $pop103
 	i32.const	$push101=, 16
 	i32.shr_s	$push100=, $pop102, $pop101
-	tee_local	$push99=, $8=, $pop100
+	tee_local	$push99=, $7=, $pop100
 	i32.const	$push98=, 0
-	i32.sub 	$push24=, $pop98, $8
+	i32.sub 	$push24=, $pop98, $7
 	i32.const	$push97=, -65536
 	i32.gt_s	$push23=, $5, $pop97
 	i32.select	$push25=, $pop99, $pop24, $pop23
@@ -261,7 +263,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.div_s	$push31=, $3, $1
 	i32.mul 	$push32=, $pop31, $1
-	i32.add 	$push33=, $pop32, $8
+	i32.add 	$push33=, $pop32, $7
 	i32.const	$push116=, 16
 	i32.shl 	$push34=, $pop33, $pop116
 	i32.const	$push115=, 16
@@ -271,10 +273,10 @@ main:                                   # @main
 # BB#18:                                # %if.end137
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push117=, 255
-	i32.and 	$push38=, $7, $pop117
+	i32.and 	$push38=, $8, $pop117
 	i32.eqz 	$push152=, $pop38
 	br_if   	0, $pop152      # 0: down to label14
-# BB#19:                                # %cleanup.cont177
+# BB#19:                                # %cleanup.cont177.critedge
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push138=, 24
 	i32.shl 	$push39=, $6, $pop138
@@ -282,8 +284,8 @@ main:                                   # @main
 	i32.shr_s	$push136=, $pop39, $pop137
 	tee_local	$push135=, $6=, $pop136
 	i32.const	$push134=, 24
-	i32.shl 	$push133=, $7, $pop134
-	tee_local	$push132=, $8=, $pop133
+	i32.shl 	$push133=, $8, $pop134
+	tee_local	$push132=, $7=, $pop133
 	i32.const	$push131=, 24
 	i32.shr_s	$push130=, $pop132, $pop131
 	tee_local	$push129=, $1=, $pop130
@@ -293,16 +295,16 @@ main:                                   # @main
 	tee_local	$push126=, $3=, $pop127
 	i32.const	$push125=, 24
 	i32.shr_s	$push124=, $pop126, $pop125
-	tee_local	$push123=, $7=, $pop124
+	tee_local	$push123=, $8=, $pop124
 	i32.const	$push122=, 0
-	i32.sub 	$push42=, $pop122, $7
+	i32.sub 	$push42=, $pop122, $8
 	i32.const	$push121=, -16777216
 	i32.gt_s	$push41=, $3, $pop121
 	i32.select	$push43=, $pop123, $pop42, $pop41
 	i32.const	$push120=, 0
 	i32.sub 	$push45=, $pop120, $1
 	i32.const	$push119=, -16777216
-	i32.gt_s	$push44=, $8, $pop119
+	i32.gt_s	$push44=, $7, $pop119
 	i32.select	$push46=, $1, $pop45, $pop44
 	i32.const	$push118=, 255
 	i32.and 	$push47=, $pop46, $pop118
@@ -312,7 +314,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.div_s	$push49=, $6, $1
 	i32.mul 	$push50=, $pop49, $1
-	i32.add 	$push51=, $pop50, $7
+	i32.add 	$push51=, $pop50, $8
 	i32.const	$push140=, 24
 	i32.shl 	$push52=, $pop51, $pop140
 	i32.const	$push139=, 24

@@ -41,41 +41,43 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push13=, 0
-	i32.const	$push10=, 0
-	i32.load	$push11=, __stack_pointer($pop10)
-	i32.const	$push12=, 48
-	i32.sub 	$push21=, $pop11, $pop12
-	i32.store	$push26=, __stack_pointer($pop13), $pop21
-	tee_local	$push25=, $0=, $pop26
+	i32.const	$push11=, 0
+	i32.const	$push8=, 0
+	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push10=, 48
+	i32.sub 	$push25=, $pop9, $pop10
+	tee_local	$push24=, $0=, $pop25
+	i32.store	$drop=, __stack_pointer($pop11), $pop24
+	i32.const	$push15=, 16
+	i32.add 	$push16=, $0, $pop15
+	i32.const	$push2=, 8
+	i32.add 	$push3=, $pop16, $pop2
+	i32.const	$push0=, 0
+	i64.load	$push1=, .Lmain.r+8($pop0):p2align=2
+	i64.store	$drop=, 0($pop3):p2align=2, $pop1
+	i32.const	$push23=, 0
+	i64.load	$push4=, .Lmain.r($pop23):p2align=2
+	i64.store	$drop=, 16($0):p2align=2, $pop4
 	i32.const	$push17=, 16
-	i32.add 	$push18=, $pop25, $pop17
-	i32.const	$push4=, 8
-	i32.add 	$push5=, $pop18, $pop4
-	i32.const	$push2=, 0
-	i64.load	$push3=, .Lmain.r+8($pop2):p2align=2
-	i64.store	$drop=, 0($pop5):p2align=2, $pop3
-	i32.const	$push24=, 0
-	i64.load	$push6=, .Lmain.r($pop24):p2align=2
-	i64.store	$drop=, 16($0):p2align=2, $pop6
-	i32.const	$push19=, 16
-	i32.add 	$push20=, $0, $pop19
-	call    	foo@FUNCTION, $pop20
-	i32.const	$push23=, 8
-	i32.add 	$push8=, $0, $pop23
-	i64.const	$push7=, 12884901887
-	i64.store	$push0=, 40($0), $pop7
-	i64.store	$drop=, 0($pop8):p2align=2, $pop0
-	i64.const	$push9=, 8589934592
-	i64.store	$push1=, 32($0), $pop9
-	i64.store	$drop=, 0($0):p2align=2, $pop1
+	i32.add 	$push18=, $0, $pop17
+	call    	foo@FUNCTION, $pop18
+	i64.const	$push5=, 12884901887
+	i64.store	$drop=, 40($0), $pop5
+	i32.const	$push22=, 8
+	i32.add 	$push6=, $0, $pop22
+	i64.const	$push21=, 12884901887
+	i64.store	$drop=, 0($pop6):p2align=2, $pop21
+	i64.const	$push7=, 8589934592
+	i64.store	$drop=, 32($0), $pop7
+	i64.const	$push20=, 8589934592
+	i64.store	$drop=, 0($0):p2align=2, $pop20
 	call    	foo@FUNCTION, $0
-	i32.const	$push16=, 0
-	i32.const	$push14=, 48
-	i32.add 	$push15=, $0, $pop14
-	i32.store	$drop=, __stack_pointer($pop16), $pop15
-	i32.const	$push22=, 0
-                                        # fallthrough-return: $pop22
+	i32.const	$push14=, 0
+	i32.const	$push12=, 48
+	i32.add 	$push13=, $0, $pop12
+	i32.store	$drop=, __stack_pointer($pop14), $pop13
+	i32.const	$push19=, 0
+                                        # fallthrough-return: $pop19
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

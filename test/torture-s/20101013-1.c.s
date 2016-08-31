@@ -23,11 +23,11 @@ build_ref_for_offset:                   # @build_ref_for_offset
 	i32.const	$push3=, 0
 	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$push12=, $pop4, $pop5
-	i32.store	$push14=, __stack_pointer($pop6), $pop12
-	tee_local	$push13=, $0=, $pop14
+	i32.sub 	$push13=, $pop4, $pop5
+	tee_local	$push12=, $0=, $pop13
+	i32.store	$drop=, __stack_pointer($pop6), $pop12
 	i32.const	$push10=, 8
-	i32.add 	$push11=, $pop13, $pop10
+	i32.add 	$push11=, $0, $pop10
 	call    	get_addr_base_and_unit_offset@FUNCTION, $pop11
 	i64.load	$push1=, 8($0)
 	i64.const	$push0=, 4

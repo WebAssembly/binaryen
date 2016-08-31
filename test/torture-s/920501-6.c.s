@@ -229,133 +229,133 @@ plist:                                  # @plist
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i64, i64, i64, i32
+	.local  	i32, i64, i32, i64, i64, i32, i32
 # BB#0:                                 # %for.cond.i.preheader.i.preheader
-	i64.const	$5=, 1234111111
 	i32.const	$push30=, 0
 	i32.const	$push27=, 0
 	i32.load	$push28=, __stack_pointer($pop27)
 	i32.const	$push29=, 80
-	i32.sub 	$push31=, $pop28, $pop29
-	i32.store	$push33=, __stack_pointer($pop30), $pop31
-	tee_local	$push32=, $2=, $pop33
-	copy_local	$4=, $pop32
+	i32.sub 	$push32=, $pop28, $pop29
+	tee_local	$push31=, $8=, $pop32
+	i32.store	$drop=, __stack_pointer($pop30), $pop31
+	i64.const	$3=, 1234111111
+	copy_local	$4=, $8
 .LBB3_1:                                # %for.cond.i.preheader.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB3_2 Depth 2
                                         #     Child Loop BB3_4 Depth 2
                                         #     Child Loop BB3_7 Depth 2
 	loop                            # label18:
-	copy_local	$6=, $5
-	i64.const	$7=, 0
+	copy_local	$5=, $3
+	i64.const	$6=, 0
 .LBB3_2:                                # %for.cond.i.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label20:
-	i64.const	$push38=, 1
-	i64.add 	$7=, $7, $pop38
 	i64.const	$push37=, 1
-	i64.shr_u	$push36=, $6, $pop37
-	tee_local	$push35=, $6=, $pop36
-	i64.const	$push34=, 0
-	i64.ne  	$push0=, $pop35, $pop34
+	i64.add 	$6=, $6, $pop37
+	i64.const	$push36=, 1
+	i64.shr_u	$push35=, $5, $pop36
+	tee_local	$push34=, $5=, $pop35
+	i64.const	$push33=, 0
+	i64.ne  	$push0=, $pop34, $pop33
 	br_if   	0, $pop0        # 0: up to label20
 # BB#3:                                 # %for.end.i.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop                        # label21:
-	i64.const	$push45=, 63
-	i64.shl 	$push1=, $7, $pop45
 	i64.const	$push44=, 63
-	i64.shr_s	$push2=, $pop1, $pop44
-	i64.const	$push43=, 1
+	i64.shl 	$push1=, $6, $pop44
+	i64.const	$push43=, 63
+	i64.shr_s	$push2=, $pop1, $pop43
 	i64.const	$push42=, 1
-	i64.shr_u	$push3=, $7, $pop42
-	i64.shl 	$push41=, $pop43, $pop3
-	tee_local	$push40=, $7=, $pop41
-	i64.const	$push39=, 1
-	i64.shr_u	$push4=, $pop40, $pop39
+	i64.const	$push41=, 1
+	i64.shr_u	$push3=, $6, $pop41
+	i64.shl 	$push40=, $pop42, $pop3
+	tee_local	$push39=, $6=, $pop40
+	i64.const	$push38=, 1
+	i64.shr_u	$push4=, $pop39, $pop38
 	i64.and 	$push5=, $pop2, $pop4
-	i64.add 	$7=, $pop5, $7
+	i64.add 	$6=, $pop5, $6
 .LBB3_4:                                # %do.body.i.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label22:
-	i64.div_u	$push50=, $5, $7
-	tee_local	$push49=, $6=, $pop50
-	i64.add 	$push6=, $6, $7
-	i64.const	$push48=, 1
-	i64.shr_u	$push47=, $pop6, $pop48
-	tee_local	$push46=, $7=, $pop47
-	i64.lt_u	$push7=, $pop49, $pop46
+	i64.div_u	$push49=, $3, $6
+	tee_local	$push48=, $5=, $pop49
+	i64.add 	$push6=, $5, $6
+	i64.const	$push47=, 1
+	i64.shr_u	$push46=, $pop6, $pop47
+	tee_local	$push45=, $6=, $pop46
+	i64.lt_u	$push7=, $pop48, $pop45
 	br_if   	0, $pop7        # 0: up to label22
 # BB#5:                                 # %sqrtllu.exit.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop                        # label23:
 	block
 	block
-	i32.wrap/i64	$push53=, $7
-	tee_local	$push52=, $3=, $pop53
-	i32.const	$push51=, 3
-	i32.lt_u	$push8=, $pop52, $pop51
+	i32.wrap/i64	$push52=, $6
+	tee_local	$push51=, $2=, $pop52
+	i32.const	$push50=, 3
+	i32.lt_u	$push8=, $pop51, $pop50
 	br_if   	0, $pop8        # 0: down to label25
 # BB#6:                                 # %for.body3.i.preheader
                                         #   in Loop: Header=BB3_1 Depth=1
-	i32.const	$8=, 3
+	i32.const	$7=, 3
 .LBB3_7:                                # %for.body3.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label26:
-	i64.extend_u/i32	$push9=, $8
-	i64.rem_u	$push10=, $5, $pop9
+	i64.extend_u/i32	$push9=, $7
+	i64.rem_u	$push10=, $3, $pop9
 	i64.eqz 	$push11=, $pop10
 	br_if   	3, $pop11       # 3: down to label24
 # BB#8:                                 # %for.cond1.i
                                         #   in Loop: Header=BB3_7 Depth=2
-	i32.const	$push56=, 2
-	i32.add 	$push55=, $8, $pop56
-	tee_local	$push54=, $8=, $pop55
-	i32.le_u	$push12=, $pop54, $3
+	i32.const	$push55=, 2
+	i32.add 	$push54=, $7, $pop55
+	tee_local	$push53=, $7=, $pop54
+	i32.le_u	$push12=, $pop53, $2
 	br_if   	0, $pop12       # 0: up to label26
 .LBB3_9:                                # %for.end.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop                        # label27:
 	end_block                       # label25:
-	i64.store	$drop=, 0($4), $5
-	i32.const	$push57=, 8
-	i32.add 	$4=, $4, $pop57
+	i64.store	$drop=, 0($4), $3
+	i32.const	$push56=, 8
+	i32.add 	$4=, $4, $pop56
 .LBB3_10:                               # %for.inc6.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_block                       # label24:
-	i64.const	$push61=, 2
-	i64.add 	$push60=, $5, $pop61
-	tee_local	$push59=, $5=, $pop60
-	i64.const	$push58=, 1234111128
-	i64.lt_u	$push13=, $pop59, $pop58
+	i64.const	$push60=, 2
+	i64.add 	$push59=, $3, $pop60
+	tee_local	$push58=, $3=, $pop59
+	i64.const	$push57=, 1234111128
+	i64.lt_u	$push13=, $pop58, $pop57
 	br_if   	0, $pop13       # 0: up to label18
 # BB#11:                                # %plist.exit
 	end_loop                        # label19:
 	i64.const	$push14=, 0
 	i64.store	$drop=, 0($4), $pop14
 	block
-	i64.load	$push16=, 0($2)
+	i64.load	$push16=, 0($8)
 	i64.const	$push15=, 1234111117
 	i64.ne  	$push17=, $pop16, $pop15
 	br_if   	0, $pop17       # 0: down to label28
 # BB#12:                                # %lor.lhs.false
-	i64.load	$push19=, 8($2)
+	i64.load	$push19=, 8($8)
 	i64.const	$push18=, 1234111121
 	i64.ne  	$push20=, $pop19, $pop18
 	br_if   	0, $pop20       # 0: down to label28
 # BB#13:                                # %lor.lhs.false5
-	i64.load	$push22=, 16($2)
+	i64.load	$push22=, 16($8)
 	i64.const	$push21=, 1234111127
 	i64.ne  	$push23=, $pop22, $pop21
 	br_if   	0, $pop23       # 0: down to label28
 # BB#14:                                # %lor.lhs.false8
-	i64.load	$push24=, 24($2)
+	i64.load	$push24=, 24($8)
 	i64.eqz 	$push25=, $pop24
-	i32.eqz 	$push62=, $pop25
-	br_if   	0, $pop62       # 0: down to label28
+	i32.eqz 	$push61=, $pop25
+	br_if   	0, $pop61       # 0: down to label28
 # BB#15:                                # %if.end
 	i32.const	$push26=, 0
 	call    	exit@FUNCTION, $pop26

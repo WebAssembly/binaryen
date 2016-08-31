@@ -33,27 +33,28 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$push10=, $pop5, $pop6
-	i32.store	$push12=, __stack_pointer($pop7), $pop10
-	tee_local	$push11=, $1=, $pop12
+	i32.sub 	$push12=, $pop5, $pop6
+	tee_local	$push11=, $0=, $pop12
+	i32.store	$drop=, __stack_pointer($pop7), $pop11
 	i32.const	$push0=, 50462977
-	i32.store	$drop=, 8($pop11), $pop0
+	i32.store	$drop=, 8($0), $pop0
 	i32.const	$push1=, 3
-	i32.store8	$drop=, 12($1), $pop1
+	i32.store8	$drop=, 12($0), $pop1
 	i32.const	$push2=, 258
-	i32.store16	$drop=, 13($1):p2align=0, $pop2
+	i32.store16	$drop=, 13($0):p2align=0, $pop2
 	i32.const	$push3=, 0
-	i32.store8	$0=, 15($1), $pop3
+	i32.store8	$drop=, 15($0), $pop3
 	i32.const	$push8=, 8
-	i32.add 	$push9=, $1, $pop8
+	i32.add 	$push9=, $0, $pop8
 	call    	foo@FUNCTION, $pop9
-	call    	exit@FUNCTION, $0
+	i32.const	$push10=, 0
+	call    	exit@FUNCTION, $pop10
 	unreachable
 	.endfunc
 .Lfunc_end1:

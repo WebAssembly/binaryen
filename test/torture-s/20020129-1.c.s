@@ -6,9 +6,9 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.load	$3=, 28($1)
+	i32.load	$2=, 28($1)
 	block
 	block
 	block
@@ -16,14 +16,14 @@ foo:                                    # @foo
 	i32.eqz 	$push20=, $pop0
 	br_if   	0, $pop20       # 0: down to label2
 # BB#1:                                 # %if.end
-	i32.eqz 	$push21=, $3
+	i32.eqz 	$push21=, $2
 	br_if   	1, $pop21       # 1: down to label1
 	br      	2               # 2: down to label0
 .LBB0_2:                                # %if.then
 	end_block                       # label2:
 	i32.const	$push1=, 28
 	i32.add 	$push2=, $0, $pop1
-	i32.store	$2=, 0($pop2), $3
+	i32.store	$drop=, 0($pop2), $2
 	i32.const	$push13=, 28
 	i32.add 	$push3=, $1, $pop13
 	i32.const	$push4=, 0
@@ -33,14 +33,14 @@ foo:                                    # @foo
 .LBB0_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.store	$drop=, 4($3), $0
-	i32.load	$push15=, 0($3)
-	tee_local	$push14=, $3=, $pop15
+	i32.store	$drop=, 4($2), $0
+	i32.load	$push15=, 0($2)
+	tee_local	$push14=, $2=, $pop15
 	br_if   	0, $pop14       # 0: up to label3
 .LBB0_4:                                # %if.end7
 	end_loop                        # label4:
 	end_block                       # label1:
-	i32.load	$3=, 12($1)
+	i32.load	$2=, 12($1)
 	block
 	i32.load	$push5=, 12($0)
 	i32.const	$push16=, -1
@@ -48,7 +48,7 @@ foo:                                    # @foo
 	br_if   	0, $pop6        # 0: down to label5
 # BB#5:                                 # %if.end22
 	i32.const	$push17=, -1
-	i32.ne  	$push7=, $3, $pop17
+	i32.ne  	$push7=, $2, $pop17
 	br_if   	1, $pop7        # 1: down to label0
 # BB#6:                                 # %if.end27
 	return
@@ -58,7 +58,7 @@ foo:                                    # @foo
 	i32.store	$drop=, 16($0), $pop8
 	i32.const	$push9=, 12
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$drop=, 0($pop10), $3
+	i32.store	$drop=, 0($pop10), $2
 	i32.const	$push11=, 0
 	i32.store	$drop=, 16($1), $pop11
 	i32.const	$push19=, 12

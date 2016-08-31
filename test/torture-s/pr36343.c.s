@@ -21,46 +21,46 @@ bar:                                    # @bar
 foo:                                    # @foo
 	.param  	i32
 	.result 	f32
-	.local  	i32, i32, f32
+	.local  	i32, f32, i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$push15=, $pop5, $pop6
-	i32.store	$push19=, __stack_pointer($pop7), $pop15
-	tee_local	$push18=, $1=, $pop19
+	i32.sub 	$push18=, $pop5, $pop6
+	tee_local	$push17=, $3=, $pop18
+	i32.store	$drop=, __stack_pointer($pop7), $pop17
 	i32.const	$push0=, 0
-	i32.store	$drop=, 12($pop18), $pop0
+	i32.store	$drop=, 12($3), $pop0
 	i32.const	$push1=, 1065353216
-	i32.store	$drop=, 8($1), $pop1
+	i32.store	$drop=, 8($3), $pop1
 	i32.const	$push11=, 12
-	i32.add 	$push12=, $1, $pop11
+	i32.add 	$push12=, $3, $pop11
 	i32.const	$push13=, 8
-	i32.add 	$push14=, $1, $pop13
-	i32.select	$push17=, $pop12, $pop14, $0
-	tee_local	$push16=, $2=, $pop17
-	call    	bar@FUNCTION, $pop16
+	i32.add 	$push14=, $3, $pop13
+	i32.select	$push16=, $pop12, $pop14, $0
+	tee_local	$push15=, $1=, $pop16
+	call    	bar@FUNCTION, $pop15
 	block
 	block
-	i32.eqz 	$push20=, $0
-	br_if   	0, $pop20       # 0: down to label1
+	i32.eqz 	$push19=, $0
+	br_if   	0, $pop19       # 0: down to label1
 # BB#1:                                 # %if.then2
-	i32.load	$push2=, 0($2)
+	i32.load	$push2=, 0($1)
 	i32.load	$push3=, 0($pop2)
-	f32.convert_s/i32	$3=, $pop3
+	f32.convert_s/i32	$2=, $pop3
 	br      	1               # 1: down to label0
 .LBB1_2:                                # %if.end3
 	end_block                       # label1:
-	f32.load	$3=, 8($1)
+	f32.load	$2=, 8($3)
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
 	i32.const	$push10=, 0
 	i32.const	$push8=, 16
-	i32.add 	$push9=, $1, $pop8
+	i32.add 	$push9=, $3, $pop8
 	i32.store	$drop=, __stack_pointer($pop10), $pop9
-	copy_local	$push21=, $3
-                                        # fallthrough-return: $pop21
+	copy_local	$push20=, $2
+                                        # fallthrough-return: $pop20
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

@@ -55,38 +55,38 @@ getval:                                 # @getval
 f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push14=, 0
-	i32.const	$push11=, 0
-	i32.load	$push12=, __stack_pointer($pop11)
-	i32.const	$push13=, 16
-	i32.sub 	$push18=, $pop12, $pop13
-	i32.store	$0=, __stack_pointer($pop14), $pop18
+	i32.const	$push12=, 0
+	i32.const	$push9=, 0
+	i32.load	$push10=, __stack_pointer($pop9)
+	i32.const	$push11=, 16
+	i32.sub 	$push23=, $pop10, $pop11
+	tee_local	$push22=, $1=, $pop23
+	i32.store	$drop=, __stack_pointer($pop12), $pop22
 	i32.const	$push0=, 0
-	i32.const	$push23=, 0
-	i32.load	$push22=, x($pop23)
-	tee_local	$push21=, $1=, $pop22
+	i32.const	$push21=, 0
+	i32.load	$push20=, x($pop21)
+	tee_local	$push19=, $0=, $pop20
 	i32.const	$push1=, 20
-	i32.add 	$push2=, $pop21, $pop1
+	i32.add 	$push2=, $pop19, $pop1
 	i32.store	$drop=, x($pop0), $pop2
-	i32.const	$push3=, 10
-	i32.mul 	$push20=, $1, $pop3
-	tee_local	$push19=, $1=, $pop20
-	i32.add 	$push4=, $pop19, $1
-	i32.const	$push5=, 207
-	i32.add 	$push6=, $pop4, $pop5
-	i32.store	$1=, 0($0), $pop6
-	i32.const	$push8=, buf
-	i32.const	$push7=, .L.str
-	i32.call	$drop=, sprintf@FUNCTION, $pop8, $pop7, $0
+	i32.const	$push18=, 20
+	i32.mul 	$push3=, $0, $pop18
+	i32.const	$push4=, 207
+	i32.add 	$push17=, $pop3, $pop4
+	tee_local	$push16=, $0=, $pop17
+	i32.store	$drop=, 0($1), $pop16
+	i32.const	$push6=, buf
+	i32.const	$push5=, .L.str
+	i32.call	$drop=, sprintf@FUNCTION, $pop6, $pop5, $1
 	block
-	i32.const	$push9=, 227
-	i32.ne  	$push10=, $1, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i32.const	$push7=, 227
+	i32.ne  	$push8=, $0, $pop7
+	br_if   	0, $pop8        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push17=, 0
-	i32.const	$push15=, 16
-	i32.add 	$push16=, $0, $pop15
-	i32.store	$drop=, __stack_pointer($pop17), $pop16
+	i32.const	$push15=, 0
+	i32.const	$push13=, 16
+	i32.add 	$push14=, $1, $pop13
+	i32.store	$drop=, __stack_pointer($pop15), $pop14
 	return
 .LBB2_2:                                # %if.then
 	end_block                       # label0:

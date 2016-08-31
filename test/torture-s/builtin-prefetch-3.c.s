@@ -106,14 +106,15 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	call    	simple_vol_global@FUNCTION
 	call    	simple_vol_file@FUNCTION
-	i32.const	$push2=, 0
+	i32.const	$push1=, 0
+	i32.const	$push0=, str
+	i32.store	$drop=, vol_str+16($pop1), $pop0
 	i32.const	$push4=, 0
-	i32.const	$push1=, str
-	i32.store	$push0=, vol_str+16($pop4), $pop1
-	i32.store	$drop=, str+16($pop2), $pop0
+	i32.const	$push3=, str
+	i32.store	$drop=, str+16($pop4), $pop3
 	call    	expr_vol_global@FUNCTION
-	i32.const	$push3=, 0
-	call    	exit@FUNCTION, $pop3
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end3:

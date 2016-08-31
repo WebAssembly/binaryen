@@ -73,15 +73,17 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push0=, a
 	i32.store	$drop=, d($pop1), $pop0
-	i32.const	$push8=, 0
-	i32.const	$push7=, 0
-	i32.store	$0=, d+4($pop8), $pop7
+	i32.const	$push10=, 0
+	i32.const	$push9=, 0
+	i32.store	$drop=, d+4($pop10), $pop9
 	i32.const	$push3=, .L.str
 	i32.const	$push2=, 200
 	call    	foo@FUNCTION, $0, $pop3, $pop2
+	i32.const	$push8=, 0
 	i32.const	$push5=, 65536
-	i32.load	$push4=, b($0)
-	i32.select	$push6=, $0, $pop5, $pop4
+	i32.const	$push7=, 0
+	i32.load	$push4=, b($pop7)
+	i32.select	$push6=, $pop8, $pop5, $pop4
 	i32.call	$drop=, bar@FUNCTION, $0, $pop6, $0, $0, $0
 	unreachable
 	.endfunc

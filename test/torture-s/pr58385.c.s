@@ -7,10 +7,11 @@
 foo:                                    # @foo
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store	$push0=, b($pop1), $pop2
-                                        # fallthrough-return: $pop0
+	i32.store	$drop=, b($pop0), $pop2
+	i32.const	$push1=, 0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -22,10 +23,11 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store	$push0=, b($pop1), $pop2
-                                        # fallthrough-return: $pop0
+	i32.store	$drop=, b($pop0), $pop2
+	i32.const	$push1=, 0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

@@ -55,47 +55,49 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %for.body.lr.ph.i
 	i32.const	$4=, 0
+	i32.const	$push18=, 0
+	i32.const	$push0=, 130560
+	i32.store	$drop=, n($pop18), $pop0
 	i32.const	$push17=, 0
-	i32.const	$push1=, 130560
-	i32.store	$drop=, n($pop17), $pop1
-	i32.const	$push16=, 0
-	i32.const	$push2=, 522240
-	i32.call	$push15=, malloc@FUNCTION, $pop2
-	tee_local	$push14=, $3=, $pop15
-	i32.store	$drop=, a($pop16), $pop14
-	i32.const	$push13=, 522240
-	i32.call	$push12=, malloc@FUNCTION, $pop13
-	tee_local	$push11=, $1=, $pop12
+	i32.const	$push1=, 522240
+	i32.call	$push16=, malloc@FUNCTION, $pop1
+	tee_local	$push15=, $3=, $pop16
+	i32.store	$drop=, a($pop17), $pop15
+	i32.const	$push14=, 522240
+	i32.call	$push13=, malloc@FUNCTION, $pop14
+	tee_local	$push12=, $0=, $pop13
+	i32.const	$push11=, 0
+	i32.store	$drop=, 0($pop12), $pop11
 	i32.const	$push10=, 0
-	i32.store	$push9=, 0($pop11), $pop10
-	tee_local	$push8=, $2=, $pop9
-	i32.const	$push7=, 4
-	i32.add 	$push0=, $1, $pop7
-	i32.store	$0=, b($pop8), $pop0
-	i32.load	$2=, n($2)
+	i32.const	$push9=, 4
+	i32.add 	$push8=, $0, $pop9
+	tee_local	$push7=, $1=, $pop8
+	i32.store	$drop=, b($pop10), $pop7
+	i32.const	$push6=, 0
+	i32.load	$2=, n($pop6)
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.const	$push22=, -1
-	i32.store	$drop=, 0($3), $pop22
-	i32.const	$push21=, 4
-	i32.add 	$3=, $3, $pop21
-	i32.const	$push20=, 1
-	i32.add 	$push19=, $4, $pop20
-	tee_local	$push18=, $4=, $pop19
-	i32.lt_s	$push3=, $pop18, $2
-	br_if   	0, $pop3        # 0: up to label3
+	i32.const	$push23=, -1
+	i32.store	$drop=, 0($3), $pop23
+	i32.const	$push22=, 4
+	i32.add 	$3=, $3, $pop22
+	i32.const	$push21=, 1
+	i32.add 	$push20=, $4, $pop21
+	tee_local	$push19=, $4=, $pop20
+	i32.lt_s	$push2=, $pop19, $2
+	br_if   	0, $pop2        # 0: up to label3
 # BB#2:                                 # %foo.exit
 	end_loop                        # label4:
-	i32.load	$3=, 0($1)
-	i32.const	$push5=, 255
-	i32.const	$push4=, 522236
-	i32.call	$drop=, memset@FUNCTION, $0, $pop5, $pop4
+	i32.load	$3=, 0($0)
+	i32.const	$push4=, 255
+	i32.const	$push3=, 522236
+	i32.call	$drop=, memset@FUNCTION, $1, $pop4, $pop3
 	block
 	br_if   	0, $3           # 0: down to label5
 # BB#3:                                 # %if.end
-	i32.const	$push6=, 0
-	call    	exit@FUNCTION, $pop6
+	i32.const	$push5=, 0
+	call    	exit@FUNCTION, $pop5
 	unreachable
 .LBB1_4:                                # %if.then
 	end_block                       # label5:

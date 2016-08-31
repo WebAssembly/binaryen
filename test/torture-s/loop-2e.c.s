@@ -7,10 +7,9 @@
 f:                                      # @f
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	i32.store	$push79=, 0($1), $0
-	tee_local	$push78=, $0=, $pop79
+	i32.store	$drop=, 0($1), $0
 	i32.const	$push0=, 4
-	i32.add 	$push1=, $pop78, $pop0
+	i32.add 	$push1=, $0, $pop0
 	i32.store	$drop=, 4($1), $pop1
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $0, $pop2

@@ -8,19 +8,20 @@ f1:                                     # @f1
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
-	i32.store	$push9=, i($pop2), $0
-	tee_local	$push8=, $0=, $pop9
-	i32.const	$push3=, 32
-	i32.store	$push0=, 4($0), $pop3
-	i32.store	$drop=, 0($pop8), $pop0
+	i32.const	$push0=, 0
+	i32.store	$drop=, i($pop0), $0
+	i32.const	$push1=, 32
+	i32.store	$drop=, 4($0), $pop1
+	i32.const	$push7=, 32
+	i32.store	$drop=, 0($0), $pop7
 	call    	f0@FUNCTION
-	i32.const	$push7=, 0
-	i32.load	$push6=, i($pop7)
-	tee_local	$push5=, $0=, $pop6
-	i32.const	$push4=, 8
-	i32.store	$push1=, 4($0), $pop4
-	i32.store	$drop=, 0($pop5), $pop1
+	i32.const	$push6=, 0
+	i32.load	$push5=, i($pop6)
+	tee_local	$push4=, $0=, $pop5
+	i32.const	$push2=, 8
+	i32.store	$drop=, 4($pop4), $pop2
+	i32.const	$push3=, 8
+	i32.store	$drop=, 0($0), $pop3
 	call    	test@FUNCTION
 	unreachable
 	.endfunc
@@ -104,16 +105,18 @@ test:                                   # @test
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, 0
-	i32.const	$push1=, 0
-	i32.load	$push2=, __stack_pointer($pop1)
-	i32.const	$push3=, 16
-	i32.sub 	$push7=, $pop2, $pop3
-	i32.store	$push0=, __stack_pointer($pop4), $pop7
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $pop0, $pop5
-	i32.call	$drop=, f1@FUNCTION, $pop6
+	i32.const	$push3=, 0
+	i32.const	$push0=, 0
+	i32.load	$push1=, __stack_pointer($pop0)
+	i32.const	$push2=, 16
+	i32.sub 	$push7=, $pop1, $pop2
+	tee_local	$push6=, $0=, $pop7
+	i32.store	$drop=, __stack_pointer($pop3), $pop6
+	i32.const	$push4=, 8
+	i32.add 	$push5=, $0, $pop4
+	i32.call	$drop=, f1@FUNCTION, $pop5
 	unreachable
 	.endfunc
 .Lfunc_end3:

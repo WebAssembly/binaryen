@@ -6,38 +6,32 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$3=, 512
-	i32.const	$2=, buf
+	i32.const	$1=, buf
+	i32.const	$0=, 512
 .LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	copy_local	$push16=, $3
-	tee_local	$push15=, $0=, $pop16
-	i32.const	$push14=, 65535
-	i32.and 	$push0=, $pop15, $pop14
-	i32.load16_u	$push13=, 0($2)
-	tee_local	$push12=, $1=, $pop13
-	i32.sub 	$3=, $pop0, $pop12
-	i32.const	$push11=, 2
-	i32.add 	$push10=, $2, $pop11
-	tee_local	$push9=, $2=, $pop10
-	i32.const	$push8=, buf+6
-	i32.lt_u	$push1=, $pop9, $pop8
-	br_if   	0, $pop1        # 0: up to label0
+	i32.load16_u	$push0=, 0($1)
+	i32.sub 	$push1=, $0, $pop0
+	i32.const	$push10=, 65535
+	i32.and 	$0=, $pop1, $pop10
+	i32.const	$push9=, 2
+	i32.add 	$push8=, $1, $pop9
+	tee_local	$push7=, $1=, $pop8
+	i32.const	$push6=, buf+6
+	i32.lt_u	$push2=, $pop7, $pop6
+	br_if   	0, $pop2        # 0: up to label0
 # BB#2:                                 # %bug.exit
 	end_loop                        # label1:
 	block
-	i32.sub 	$push2=, $0, $1
-	i32.const	$push3=, 65535
-	i32.and 	$push4=, $pop2, $pop3
-	i32.const	$push5=, 491
-	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	0, $pop6        # 0: down to label2
+	i32.const	$push3=, 491
+	i32.ne  	$push4=, $0, $pop3
+	br_if   	0, $pop4        # 0: down to label2
 # BB#3:                                 # %if.end
-	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.const	$push5=, 0
+	call    	exit@FUNCTION, $pop5
 	unreachable
 .LBB0_4:                                # %if.then
 	end_block                       # label2:
@@ -62,21 +56,20 @@ bug:                                    # @bug
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label4:
-	i32.const	$push9=, 65535
-	i32.and 	$push1=, $0, $pop9
-	i32.load16_u	$push2=, 0($1)
-	i32.sub 	$0=, $pop1, $pop2
-	i32.const	$push8=, 2
-	i32.add 	$push7=, $1, $pop8
-	tee_local	$push6=, $1=, $pop7
-	i32.lt_u	$push3=, $pop6, $2
+	i32.load16_u	$push1=, 0($1)
+	i32.sub 	$push2=, $0, $pop1
+	i32.const	$push7=, 65535
+	i32.and 	$0=, $pop2, $pop7
+	i32.const	$push6=, 2
+	i32.add 	$push5=, $1, $pop6
+	tee_local	$push4=, $1=, $pop5
+	i32.lt_u	$push3=, $pop4, $2
 	br_if   	0, $pop3        # 0: up to label4
 .LBB1_3:                                # %for.end
 	end_loop                        # label5:
 	end_block                       # label3:
-	i32.const	$push4=, 65535
-	i32.and 	$push5=, $0, $pop4
-                                        # fallthrough-return: $pop5
+	copy_local	$push8=, $0
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug

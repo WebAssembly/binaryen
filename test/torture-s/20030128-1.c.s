@@ -10,17 +10,18 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
 	i32.load16_s	$0=, y($pop9)
-	block
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
-	i32.load8_u	$push1=, x($pop7)
-	i32.div_s	$push2=, $pop1, $0
-	i32.store8	$push0=, x($pop8), $pop2
-	i32.const	$push3=, 255
-	i32.and 	$push4=, $pop0, $pop3
-	i32.const	$push5=, 246
-	i32.ne  	$push6=, $pop4, $pop5
-	br_if   	0, $pop6        # 0: down to label0
+	i32.load8_u	$push0=, x($pop7)
+	i32.div_s	$push6=, $pop0, $0
+	tee_local	$push5=, $0=, $pop6
+	i32.store8	$drop=, x($pop8), $pop5
+	block
+	i32.const	$push1=, 255
+	i32.and 	$push2=, $0, $pop1
+	i32.const	$push3=, 246
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push10=, 0
 	call    	exit@FUNCTION, $pop10

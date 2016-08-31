@@ -64,12 +64,12 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push10=, $pop3, $pop4
-	i32.store	$push12=, __stack_pointer($pop5), $pop10
-	tee_local	$push11=, $0=, $pop12
+	i32.sub 	$push11=, $pop3, $pop4
+	tee_local	$push10=, $0=, $pop11
+	i32.store	$drop=, __stack_pointer($pop5), $pop10
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$drop=, 12($pop11), $pop7
+	i32.store	$drop=, 12($0), $pop7
 	i32.const	$push0=, 0
 	i32.store	$drop=, 8($0), $pop0
 	i32.const	$push8=, 12
@@ -78,9 +78,9 @@ main:                                   # @main
 .LBB3_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
-	i32.load	$push14=, 0($0)
-	tee_local	$push13=, $0=, $pop14
-	br_if   	0, $pop13       # 0: up to label3
+	i32.load	$push13=, 0($0)
+	tee_local	$push12=, $0=, $pop13
+	br_if   	0, $pop12       # 0: up to label3
 # BB#2:                                 # %if.end
 	end_loop                        # label4:
 	i32.const	$push1=, 0

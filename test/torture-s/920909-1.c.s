@@ -10,16 +10,18 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.const	$push0=, -1026
-	i32.add 	$push8=, $0, $pop0
-	tee_local	$push7=, $0=, $pop8
+	i32.add 	$push10=, $0, $pop0
+	tee_local	$push9=, $0=, $pop10
 	i32.const	$push1=, 5
-	i32.gt_u	$push2=, $pop7, $pop1
+	i32.gt_u	$push2=, $pop9, $pop1
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %switch.lookup
 	i32.const	$push4=, 2
 	i32.shl 	$push5=, $0, $pop4
-	i32.load	$push6=, .Lswitch.table($pop5)
-	return  	$pop6
+	i32.const	$push6=, .Lswitch.table
+	i32.add 	$push7=, $pop5, $pop6
+	i32.load	$push8=, 0($pop7)
+	return  	$pop8
 .LBB0_2:                                # %return
 	end_block                       # label0:
 	i32.const	$push3=, 0

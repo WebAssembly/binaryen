@@ -8,17 +8,18 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push1=, 1
-	i32.store	$drop=, x($pop8), $pop1
-	block
+	i32.const	$push0=, 1
+	i32.store	$drop=, x($pop8), $pop0
 	i32.const	$push7=, 0
-	i32.load	$push2=, p($pop7)
-	i32.const	$push3=, 2
-	i32.store	$push0=, 0($pop2), $pop3
+	i32.load	$push1=, p($pop7)
+	i32.const	$push2=, 2
+	i32.store	$drop=, 0($pop1), $pop2
+	block
 	i32.const	$push6=, 0
-	i32.load	$push4=, x($pop6)
-	i32.ne  	$push5=, $pop0, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.load	$push3=, x($pop6)
+	i32.const	$push5=, 2
+	i32.ne  	$push4=, $pop3, $pop5
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9

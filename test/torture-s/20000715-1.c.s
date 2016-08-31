@@ -5,7 +5,7 @@
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.end8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -16,7 +16,7 @@ test1:                                  # @test1
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.end8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -39,11 +39,12 @@ test3:                                  # @test3
 	.type	test4,@function
 test4:                                  # @test4
 # BB#0:                                 # %if.end8
-	i32.const	$push2=, 0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 3
+	i32.store	$drop=, y($pop1), $pop0
 	i32.const	$push3=, 0
-	i32.const	$push1=, 3
-	i32.store	$push0=, y($pop3), $pop1
-	i32.store	$drop=, x($pop2), $pop0
+	i32.const	$push2=, 3
+	i32.store	$drop=, x($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -55,11 +56,12 @@ test4:                                  # @test4
 	.type	test5,@function
 test5:                                  # @test5
 # BB#0:                                 # %if.end8
-	i32.const	$push2=, 0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 3
+	i32.store	$drop=, y($pop1), $pop0
 	i32.const	$push3=, 0
-	i32.const	$push1=, 3
-	i32.store	$push0=, y($pop3), $pop1
-	i32.store	$drop=, x($pop2), $pop0
+	i32.const	$push2=, 3
+	i32.store	$drop=, x($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end4:
@@ -71,11 +73,12 @@ test5:                                  # @test5
 	.type	test6,@function
 test6:                                  # @test6
 # BB#0:                                 # %if.end8
-	i32.const	$push2=, 0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 3
+	i32.store	$drop=, y($pop1), $pop0
 	i32.const	$push3=, 0
-	i32.const	$push1=, 3
-	i32.store	$push0=, y($pop3), $pop1
-	i32.store	$drop=, x($pop2), $pop0
+	i32.const	$push2=, 3
+	i32.store	$drop=, x($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end5:

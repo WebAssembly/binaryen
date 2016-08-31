@@ -28,37 +28,39 @@ init:                                   # @init
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i64
+	.local  	i64
 # BB#0:                                 # %entry
 	call    	init@FUNCTION
-	i32.const	$push17=, 0
+	i32.const	$push19=, 0
 	i32.const	$push0=, 32
-	i32.store8	$0=, headline+9($pop17), $pop0
+	i32.store8	$drop=, headline+9($pop19), $pop0
+	i32.const	$push18=, 0
+	i32.const	$push17=, 0
+	i32.load8_u	$push1=, p+8($pop17)
+	i32.store8	$drop=, headline+8($pop18), $pop1
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
-	i32.load8_u	$push1=, p+8($pop15)
-	i32.store8	$drop=, headline+8($pop16), $pop1
+	i64.load	$push2=, p($pop15):p2align=0
+	i64.store	$drop=, headline($pop16), $pop2
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
-	i64.load	$push2=, p($pop13):p2align=0
-	i64.store	$drop=, headline($pop14), $pop2
-	i32.const	$push12=, 0
-	i32.const	$push11=, 0
-	i64.load	$push3=, p+9($pop11):p2align=0
-	i64.store	$1=, headline+10($pop12):p2align=1, $pop3
-	i32.const	$push5=, headline+18
-	i32.const	$push4=, 238
-	i32.call	$drop=, memset@FUNCTION, $pop5, $0, $pop4
+	i64.load	$push12=, p+9($pop13):p2align=0
+	tee_local	$push11=, $0=, $pop12
+	i64.store	$drop=, headline+10($pop14):p2align=1, $pop11
+	i32.const	$push4=, headline+18
+	i32.const	$push10=, 32
+	i32.const	$push3=, 238
+	i32.call	$drop=, memset@FUNCTION, $pop4, $pop10, $pop3
 	block
-	i32.wrap/i64	$push6=, $1
-	i32.const	$push7=, 255
-	i32.and 	$push8=, $pop6, $pop7
-	i32.const	$push9=, 83
-	i32.ne  	$push10=, $pop8, $pop9
-	br_if   	0, $pop10       # 0: down to label0
+	i32.wrap/i64	$push5=, $0
+	i32.const	$push6=, 255
+	i32.and 	$push7=, $pop5, $pop6
+	i32.const	$push8=, 83
+	i32.ne  	$push9=, $pop7, $pop8
+	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push18=, 0
-	return  	$pop18
+	i32.const	$push20=, 0
+	return  	$pop20
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION

@@ -50,60 +50,60 @@ fetch:                                  # @fetch
 load_data:                              # @load_data
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push27=, 404
-	i32.call	$push26=, malloc@FUNCTION, $pop27
-	tee_local	$push25=, $3=, $pop26
-	i32.store	$push0=, data_ptr($pop1), $pop25
-	i32.const	$push2=, 170
-	i32.const	$push24=, 404
-	i32.call	$drop=, memset@FUNCTION, $pop0, $pop2, $pop24
-	i32.const	$push3=, data_tmp
-	i32.const	$push23=, 85
-	i32.const	$push22=, 404
-	i32.call	$0=, memset@FUNCTION, $pop3, $pop23, $pop22
-	i32.const	$push21=, 0
+	i32.const	$push0=, 0
+	i32.const	$push26=, 404
+	i32.call	$push25=, malloc@FUNCTION, $pop26
+	tee_local	$push24=, $3=, $pop25
+	i32.store	$drop=, data_ptr($pop0), $pop24
+	i32.const	$push1=, 170
+	i32.const	$push23=, 404
+	i32.call	$drop=, memset@FUNCTION, $3, $pop1, $pop23
+	i32.const	$push2=, data_tmp
+	i32.const	$push22=, 85
+	i32.const	$push21=, 404
+	i32.call	$0=, memset@FUNCTION, $pop2, $pop22, $pop21
 	i32.const	$push20=, 0
-	i32.load	$push19=, fetch.fetch_count($pop20)
-	tee_local	$push18=, $2=, $pop19
-	i32.const	$push17=, 1
-	i32.add 	$push4=, $pop18, $pop17
-	i32.store	$drop=, fetch.fetch_count($pop21), $pop4
-	i32.const	$push16=, 0
-	i32.const	$push5=, 100
+	i32.const	$push19=, 0
+	i32.load	$push18=, fetch.fetch_count($pop19)
+	tee_local	$push17=, $2=, $pop18
+	i32.const	$push16=, 1
+	i32.add 	$push3=, $pop17, $pop16
+	i32.store	$drop=, fetch.fetch_count($pop20), $pop3
 	i32.const	$push15=, 0
+	i32.const	$push4=, 100
 	i32.const	$push14=, 0
-	i32.gt_s	$push13=, $2, $pop14
-	tee_local	$push12=, $1=, $pop13
-	i32.select	$push6=, $pop5, $pop15, $pop12
-	i32.store	$drop=, sqlca($pop16), $pop6
+	i32.const	$push13=, 0
+	i32.gt_s	$push12=, $2, $pop13
+	tee_local	$push11=, $1=, $pop12
+	i32.select	$push5=, $pop4, $pop14, $pop11
+	i32.store	$drop=, sqlca($pop15), $pop5
 	block
 	br_if   	0, $1           # 0: down to label0
 .LBB2_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push35=, 404
-	i32.call	$drop=, memcpy@FUNCTION, $3, $0, $pop35
-	i32.const	$push34=, 85
-	i32.const	$push33=, 404
-	i32.call	$drop=, memset@FUNCTION, $0, $pop34, $pop33
+	i32.const	$push34=, 404
+	i32.call	$drop=, memcpy@FUNCTION, $3, $0, $pop34
+	i32.const	$push33=, 85
 	i32.const	$push32=, 404
-	i32.add 	$3=, $3, $pop32
-	i32.const	$push31=, 1
-	i32.add 	$push30=, $2, $pop31
-	tee_local	$push29=, $2=, $pop30
-	i32.const	$push28=, 1
-	i32.lt_s	$push7=, $pop29, $pop28
-	br_if   	0, $pop7        # 0: up to label1
+	i32.call	$drop=, memset@FUNCTION, $0, $pop33, $pop32
+	i32.const	$push31=, 404
+	i32.add 	$3=, $3, $pop31
+	i32.const	$push30=, 1
+	i32.add 	$push29=, $2, $pop30
+	tee_local	$push28=, $2=, $pop29
+	i32.const	$push27=, 1
+	i32.lt_s	$push6=, $pop28, $pop27
+	br_if   	0, $pop6        # 0: up to label1
 # BB#2:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
-	i32.const	$push9=, 0
-	i32.const	$push8=, 100
-	i32.store	$drop=, sqlca($pop9), $pop8
-	i32.const	$push36=, 0
-	i32.const	$push10=, 1
-	i32.add 	$push11=, $2, $pop10
-	i32.store	$drop=, fetch.fetch_count($pop36), $pop11
+	i32.const	$push8=, 0
+	i32.const	$push7=, 100
+	i32.store	$drop=, sqlca($pop8), $pop7
+	i32.const	$push35=, 0
+	i32.const	$push9=, 1
+	i32.add 	$push10=, $2, $pop9
+	i32.store	$drop=, fetch.fetch_count($pop35), $pop10
 .LBB2_3:                                # %while.end
 	end_block                       # label0:
                                         # fallthrough-return
@@ -119,32 +119,33 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
+	i32.const	$push0=, 0
 	i32.const	$push29=, 404
-	i32.call	$push1=, malloc@FUNCTION, $pop29
-	i32.store	$push0=, data_ptr($pop2), $pop1
-	i32.const	$push3=, 170
-	i32.const	$push28=, 404
-	i32.call	$0=, memset@FUNCTION, $pop0, $pop3, $pop28
-	i32.const	$push4=, data_tmp
-	i32.const	$push27=, 85
+	i32.call	$push28=, malloc@FUNCTION, $pop29
+	tee_local	$push27=, $2=, $pop28
+	i32.store	$drop=, data_ptr($pop0), $pop27
+	i32.const	$push1=, 170
 	i32.const	$push26=, 404
-	i32.call	$1=, memset@FUNCTION, $pop4, $pop27, $pop26
-	i32.const	$push25=, 0
-	i32.const	$push24=, 0
-	i32.load	$push23=, fetch.fetch_count($pop24)
-	tee_local	$push22=, $2=, $pop23
-	i32.const	$push21=, 1
-	i32.add 	$push5=, $pop22, $pop21
-	i32.store	$drop=, fetch.fetch_count($pop25), $pop5
-	i32.const	$push20=, 0
-	i32.const	$push6=, 100
-	i32.const	$push19=, 0
+	i32.call	$0=, memset@FUNCTION, $2, $pop1, $pop26
+	i32.const	$push2=, data_tmp
+	i32.const	$push25=, 85
+	i32.const	$push24=, 404
+	i32.call	$1=, memset@FUNCTION, $pop2, $pop25, $pop24
+	i32.const	$push23=, 0
+	i32.const	$push22=, 0
+	i32.load	$push21=, fetch.fetch_count($pop22)
+	tee_local	$push20=, $2=, $pop21
+	i32.const	$push19=, 1
+	i32.add 	$push3=, $pop20, $pop19
+	i32.store	$drop=, fetch.fetch_count($pop23), $pop3
 	i32.const	$push18=, 0
-	i32.gt_s	$push17=, $2, $pop18
-	tee_local	$push16=, $3=, $pop17
-	i32.select	$push7=, $pop6, $pop19, $pop16
-	i32.store	$drop=, sqlca($pop20), $pop7
+	i32.const	$push4=, 100
+	i32.const	$push17=, 0
+	i32.const	$push16=, 0
+	i32.gt_s	$push15=, $2, $pop16
+	tee_local	$push14=, $3=, $pop15
+	i32.select	$push5=, $pop4, $pop17, $pop14
+	i32.store	$drop=, sqlca($pop18), $pop5
 	block
 	br_if   	0, $3           # 0: down to label3
 # BB#1:                                 # %while.body.lr.ph.i
@@ -163,26 +164,26 @@ main:                                   # @main
 	i32.add 	$push32=, $2, $pop33
 	tee_local	$push31=, $2=, $pop32
 	i32.const	$push30=, 1
-	i32.lt_s	$push8=, $pop31, $pop30
-	br_if   	0, $pop8        # 0: up to label4
+	i32.lt_s	$push6=, $pop31, $pop30
+	br_if   	0, $pop6        # 0: up to label4
 # BB#3:                                 # %while.cond.while.end_crit_edge.i
 	end_loop                        # label5:
-	i32.const	$push10=, 0
-	i32.const	$push9=, 100
-	i32.store	$drop=, sqlca($pop10), $pop9
+	i32.const	$push8=, 0
+	i32.const	$push7=, 100
+	i32.store	$drop=, sqlca($pop8), $pop7
 	i32.const	$push38=, 0
-	i32.const	$push11=, 2
-	i32.store	$drop=, fetch.fetch_count($pop38), $pop11
+	i32.const	$push9=, 2
+	i32.store	$drop=, fetch.fetch_count($pop38), $pop9
 .LBB3_4:                                # %load_data.exit
 	end_block                       # label3:
 	block
-	i32.load	$push12=, 0($0)
-	i32.const	$push13=, 1431655765
-	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	0, $pop14       # 0: down to label6
+	i32.load	$push10=, 0($0)
+	i32.const	$push11=, 1431655765
+	i32.ne  	$push12=, $pop10, $pop11
+	br_if   	0, $pop12       # 0: down to label6
 # BB#5:                                 # %if.end
-	i32.const	$push15=, 0
-	call    	exit@FUNCTION, $pop15
+	i32.const	$push13=, 0
+	call    	exit@FUNCTION, $pop13
 	unreachable
 .LBB3_6:                                # %if.then
 	end_block                       # label6:

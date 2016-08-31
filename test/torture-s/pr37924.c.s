@@ -38,13 +38,14 @@ test2:                                  # @test2
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end21
-	i32.const	$push2=, 0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 255
+	i32.store8	$drop=, b($pop1), $pop0
 	i32.const	$push4=, 0
-	i32.const	$push1=, 255
-	i32.store8	$push0=, b($pop4), $pop1
-	i32.store8	$drop=, a($pop2), $pop0
-	i32.const	$push3=, 0
-                                        # fallthrough-return: $pop3
+	i32.const	$push3=, 255
+	i32.store8	$drop=, a($pop4), $pop3
+	i32.const	$push2=, 0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

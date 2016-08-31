@@ -53,43 +53,43 @@ add:                                    # @add
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, f64
+	.local  	i32, f64, i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
 	i32.const	$push6=, 0
 	i32.load	$push7=, __stack_pointer($pop6)
 	i32.const	$push8=, 16
-	i32.sub 	$push13=, $pop7, $pop8
-	i32.store	$push16=, __stack_pointer($pop9), $pop13
-	tee_local	$push15=, $0=, $pop16
+	i32.sub 	$push15=, $pop7, $pop8
+	tee_local	$push14=, $2=, $pop15
+	i32.store	$drop=, __stack_pointer($pop9), $pop14
 	i64.const	$push1=, 4627167142146473984
-	i64.store	$drop=, 8($pop15), $pop1
+	i64.store	$drop=, 8($2), $pop1
 	i64.const	$push2=, 9218868437227405312
-	i64.store	$drop=, 0($0), $pop2
-	i32.const	$push14=, 8
-	i32.or  	$1=, $0, $pop14
-	f64.const	$2=, infinity
+	i64.store	$drop=, 0($2), $pop2
+	i32.const	$push13=, 8
+	i32.or  	$0=, $2, $pop13
+	f64.const	$1=, infinity
 .LBB1_1:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
-	f64.const	$push17=, infinity
-	f64.ne  	$push3=, $2, $pop17
+	f64.const	$push16=, infinity
+	f64.ne  	$push3=, $1, $pop16
 	br_if   	2, $pop3        # 2: down to label4
 # BB#2:                                 # %while.cond.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	f64.load	$2=, 0($1)
-	i32.const	$push19=, 8
-	i32.add 	$push0=, $1, $pop19
-	copy_local	$1=, $pop0
-	f64.const	$push18=, 0x1.7p4
-	f64.ne  	$push4=, $2, $pop18
+	f64.load	$1=, 0($0)
+	i32.const	$push18=, 8
+	i32.add 	$push0=, $0, $pop18
+	copy_local	$0=, $pop0
+	f64.const	$push17=, 0x1.7p4
+	f64.ne  	$push4=, $1, $pop17
 	br_if   	0, $pop4        # 0: up to label5
 # BB#3:                                 # %add.exit
 	end_loop                        # label6:
 	i32.const	$push12=, 0
 	i32.const	$push10=, 16
-	i32.add 	$push11=, $0, $pop10
+	i32.add 	$push11=, $2, $pop10
 	i32.store	$drop=, __stack_pointer($pop12), $pop11
 	i32.const	$push5=, 0
 	return  	$pop5

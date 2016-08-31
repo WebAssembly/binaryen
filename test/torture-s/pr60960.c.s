@@ -130,45 +130,45 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	i32.load	$push11=, __stack_pointer($pop10)
 	i32.const	$push12=, 16
-	i32.sub 	$push23=, $pop11, $pop12
-	i32.store	$push30=, __stack_pointer($pop13), $pop23
-	tee_local	$push29=, $0=, $pop30
+	i32.sub 	$push29=, $pop11, $pop12
+	tee_local	$push28=, $0=, $pop29
+	i32.store	$drop=, __stack_pointer($pop13), $pop28
 	i32.const	$push17=, 12
-	i32.add 	$push18=, $pop29, $pop17
-	i32.const	$push28=, 5
+	i32.add 	$push18=, $0, $pop17
 	i32.const	$push27=, 5
 	i32.const	$push26=, 5
 	i32.const	$push25=, 5
-	call    	f1@FUNCTION, $pop18, $pop28, $pop27, $pop26, $pop25
+	i32.const	$push24=, 5
+	call    	f1@FUNCTION, $pop18, $pop27, $pop26, $pop25, $pop24
 	block
 	i32.load	$push0=, 12($0)
-	i32.const	$push24=, 33686018
-	i32.ne  	$push1=, $pop0, $pop24
+	i32.const	$push23=, 33686018
+	i32.ne  	$push1=, $pop0, $pop23
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push19=, 8
 	i32.add 	$push20=, $0, $pop19
-	i32.const	$push35=, 5
 	i32.const	$push34=, 5
 	i32.const	$push33=, 5
 	i32.const	$push32=, 5
-	call    	f2@FUNCTION, $pop20, $pop35, $pop34, $pop33, $pop32
+	i32.const	$push31=, 5
+	call    	f2@FUNCTION, $pop20, $pop34, $pop33, $pop32, $pop31
 	i32.load	$push2=, 8($0)
-	i32.const	$push31=, 33686018
-	i32.ne  	$push3=, $pop2, $pop31
+	i32.const	$push30=, 33686018
+	i32.ne  	$push3=, $pop2, $pop30
 	br_if   	0, $pop3        # 0: down to label0
 # BB#2:                                 # %if.end6
 	i32.const	$push21=, 4
 	i32.add 	$push22=, $0, $pop21
 	i32.const	$push5=, 5
-	i32.const	$push41=, 5
 	i32.const	$push40=, 5
 	i32.const	$push39=, 5
+	i32.const	$push38=, 5
 	i32.const	$push4=, 2
-	i32.const	$push38=, 2
 	i32.const	$push37=, 2
 	i32.const	$push36=, 2
-	call    	f3@FUNCTION, $pop22, $pop5, $pop41, $pop40, $pop39, $pop4, $pop38, $pop37, $pop36
+	i32.const	$push35=, 2
+	call    	f3@FUNCTION, $pop22, $pop5, $pop40, $pop39, $pop38, $pop4, $pop37, $pop36, $pop35
 	i32.load	$push7=, 4($0)
 	i32.const	$push6=, 33686018
 	i32.ne  	$push8=, $pop7, $pop6

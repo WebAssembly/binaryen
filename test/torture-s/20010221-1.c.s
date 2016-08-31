@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
+	i32.const	$1=, 0
 	block
 	i32.const	$push8=, 0
 	i32.load	$push7=, n($pop8)
@@ -17,20 +17,20 @@ main:                                   # @main
 	i32.lt_s	$push0=, $pop6, $pop5
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$1=, 45
+	i32.const	$2=, 45
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.select	$1=, $2, $1, $2
+	i32.select	$2=, $1, $2, $1
 	i32.const	$push11=, 1
-	i32.add 	$push10=, $2, $pop11
-	tee_local	$push9=, $2=, $pop10
+	i32.add 	$push10=, $1, $pop11
+	tee_local	$push9=, $1=, $pop10
 	i32.lt_s	$push1=, $pop9, $0
 	br_if   	0, $pop1        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop                        # label2:
 	i32.const	$push2=, 1
-	i32.ne  	$push3=, $1, $pop2
+	i32.ne  	$push3=, $2, $pop2
 	br_if   	0, $pop3        # 0: down to label0
 # BB#4:                                 # %if.end5
 	i32.const	$push4=, 0

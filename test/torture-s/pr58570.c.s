@@ -17,14 +17,14 @@ main:                                   # @main
 	i32.const	$push30=, 0
 	i32.load	$push1=, i($pop30)
 	i32.const	$push2=, 6
-	i32.mul 	$push29=, $pop1, $pop2
-	tee_local	$push28=, $0=, $pop29
-	i64.const	$push3=, 32769
-	i64.store32	$drop=, d($pop28):p2align=1, $pop3
+	i32.mul 	$push3=, $pop1, $pop2
 	i32.const	$push4=, d
-	i32.add 	$push5=, $0, $pop4
+	i32.add 	$push29=, $pop3, $pop4
+	tee_local	$push28=, $0=, $pop29
+	i64.const	$push5=, 32769
+	i64.store32	$drop=, 0($pop28):p2align=1, $pop5
 	i32.const	$push6=, 4
-	i32.add 	$push27=, $pop5, $pop6
+	i32.add 	$push27=, $0, $pop6
 	tee_local	$push26=, $0=, $pop27
 	i64.load16_u	$push7=, 0($0)
 	i64.const	$push8=, 61440

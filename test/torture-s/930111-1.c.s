@@ -23,22 +23,22 @@ wwrite:                                 # @wwrite
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	i32.const	$1=, 123
 	block
 	i64.const	$push1=, -3
 	i64.add 	$push5=, $0, $pop1
 	tee_local	$push4=, $0=, $pop5
 	i64.const	$push2=, 44
 	i64.gt_u	$push3=, $pop4, $pop2
-	br_if   	0, $pop3        # 0: down to label1
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %entry
-	i32.const	$1=, 0
+	block
 	i32.wrap/i64	$push0=, $0
-	br_table 	$pop0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 # 1: down to label0
-                                        # 0: down to label1
-.LBB1_2:                                # %sw.default
+	br_table 	$pop0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0 # 0: down to label1
+                                        # 1: down to label0
+.LBB1_2:                                # %sw.bb
 	end_block                       # label1:
-	i32.const	$1=, 123
+	i32.const	$1=, 0
 .LBB1_3:                                # %return
 	end_block                       # label0:
 	copy_local	$push6=, $1

@@ -107,15 +107,15 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$push10=, $pop4, $pop5
-	i32.store	$push12=, __stack_pointer($pop6), $pop10
-	tee_local	$push11=, $0=, $pop12
+	i32.sub 	$push11=, $pop4, $pop5
+	tee_local	$push10=, $0=, $pop11
+	i32.store	$drop=, __stack_pointer($pop6), $pop10
 	i64.load	$push0=, 4($0):p2align=2
-	i64.store	$drop=, 4($pop11):p2align=2, $pop0
+	i64.store	$drop=, 4($0):p2align=2, $pop0
 	block
 	i32.const	$push1=, 1
-	i32.eqz 	$push13=, $pop1
-	br_if   	0, $pop13       # 0: down to label1
+	i32.eqz 	$push12=, $pop1
+	br_if   	0, $pop12       # 0: down to label1
 # BB#1:                                 # %test2.exit
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16

@@ -170,23 +170,24 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.const	$push3=, 0
 	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$push9=, $pop4, $pop5
-	i32.store	$push12=, __stack_pointer($pop6), $pop9
+	i32.sub 	$push12=, $pop4, $pop5
 	tee_local	$push11=, $0=, $pop12
+	i32.store	$drop=, __stack_pointer($pop6), $pop11
+	i32.const	$push0=, 0
 	i32.const	$push7=, 12
-	i32.add 	$push8=, $pop11, $pop7
+	i32.add 	$push8=, $0, $pop7
 	i32.store	$drop=, bar($pop0), $pop8
 	i32.const	$push10=, 0
-	i32.store	$0=, 12($0), $pop10
+	i32.store	$drop=, 12($0), $pop10
 	i32.const	$push2=, 1
 	i32.const	$push1=, 51217
 	i32.call	$drop=, foo@FUNCTION, $0, $pop2, $pop1
-	call    	exit@FUNCTION, $0
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 	.endfunc
 .Lfunc_end4:

@@ -30,19 +30,18 @@ test:                                   # @test
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push10=, 0
 	i32.const	$push7=, 0
 	i32.load	$push8=, __stack_pointer($pop7)
 	i32.const	$push9=, 16
-	i32.sub 	$push14=, $pop8, $pop9
-	i32.store	$push19=, __stack_pointer($pop10), $pop14
-	tee_local	$push18=, $2=, $pop19
-	i32.store	$push17=, 4($pop18), $1
-	tee_local	$push16=, $1=, $pop17
-	i32.load	$push1=, 0($pop16)
-	i32.const	$push15=, 1234
-	i32.ne  	$push2=, $pop1, $pop15
+	i32.sub 	$push16=, $pop8, $pop9
+	tee_local	$push15=, $2=, $pop16
+	i32.store	$drop=, __stack_pointer($pop10), $pop15
+	i32.store	$drop=, 4($2), $1
+	block
+	i32.load	$push1=, 0($1)
+	i32.const	$push14=, 1234
+	i32.ne  	$push2=, $pop1, $pop14
 	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %dummy.exit
 	i32.const	$push3=, 4
@@ -50,8 +49,8 @@ test:                                   # @test
 	i32.store	$drop=, 0($pop0), $1
 	i32.load	$push4=, 4($2)
 	i32.load	$push5=, 0($pop4)
-	i32.const	$push20=, 1234
-	i32.ne  	$push6=, $pop5, $pop20
+	i32.const	$push17=, 1234
+	i32.ne  	$push6=, $pop5, $pop17
 	br_if   	0, $pop6        # 0: down to label1
 # BB#2:                                 # %dummy.exit15
 	i32.const	$push13=, 0
@@ -79,11 +78,11 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push6=, $pop3, $pop4
-	i32.store	$push8=, __stack_pointer($pop5), $pop6
-	tee_local	$push7=, $0=, $pop8
+	i32.sub 	$push7=, $pop3, $pop4
+	tee_local	$push6=, $0=, $pop7
+	i32.store	$drop=, __stack_pointer($pop5), $pop6
 	i32.const	$push0=, 1234
-	i32.store	$drop=, 0($pop7), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	call    	test@FUNCTION, $0, $0
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1

@@ -28,14 +28,16 @@ check:                                  # @check
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i64
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i64.load	$push2=, s2($pop5)
-	i64.store	$push0=, s1($pop1), $pop2
-	i32.wrap/i64	$push3=, $pop0
-	i32.const	$push4=, 1
-	call    	check@FUNCTION, $pop3, $pop4
+	i64.load	$push4=, s2($pop5)
+	tee_local	$push3=, $0=, $pop4
+	i64.store	$drop=, s1($pop0), $pop3
+	i32.wrap/i64	$push1=, $0
+	i32.const	$push2=, 1
+	call    	check@FUNCTION, $pop1, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end1:

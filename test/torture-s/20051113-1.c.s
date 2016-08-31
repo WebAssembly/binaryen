@@ -92,36 +92,39 @@ Sum2:                                   # @Sum2
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i64, i64, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 94
-	i32.call	$push16=, malloc@FUNCTION, $pop0
-	tee_local	$push15=, $3=, $pop16
+	i32.call	$push19=, malloc@FUNCTION, $pop0
+	tee_local	$push18=, $0=, $pop19
 	i32.const	$push1=, 4
-	i32.add 	$push2=, $pop15, $pop1
+	i32.add 	$push2=, $pop18, $pop1
 	i32.const	$push4=, 0
 	i32.const	$push3=, 90
 	i32.call	$drop=, memset@FUNCTION, $pop2, $pop4, $pop3
 	i64.const	$push5=, 555
-	i64.store	$0=, 10($3):p2align=0, $pop5
+	i64.store	$drop=, 10($0):p2align=0, $pop5
 	i32.const	$push6=, 3
-	i32.store	$drop=, 0($3):p2align=0, $pop6
+	i32.store	$drop=, 0($0):p2align=0, $pop6
 	i64.const	$push7=, 999
-	i64.store	$1=, 40($3):p2align=0, $pop7
+	i64.store	$drop=, 40($0):p2align=0, $pop7
 	i64.const	$push8=, 4311810305
-	i64.store	$2=, 70($3):p2align=0, $pop8
-	i64.store	$drop=, 18($3):p2align=0, $0
-	i64.store	$drop=, 48($3):p2align=0, $1
-	i64.store	$drop=, 78($3):p2align=0, $2
+	i64.store	$drop=, 70($0):p2align=0, $pop8
+	i64.const	$push17=, 555
+	i64.store	$drop=, 18($0):p2align=0, $pop17
+	i64.const	$push16=, 999
+	i64.store	$drop=, 48($0):p2align=0, $pop16
+	i64.const	$push15=, 4311810305
+	i64.store	$drop=, 78($0):p2align=0, $pop15
 	block
-	i64.call	$push9=, Sum@FUNCTION, $3
+	i64.call	$push9=, Sum@FUNCTION, $0
 	i64.const	$push14=, 4311811859
 	i64.ne  	$push10=, $pop9, $pop14
 	br_if   	0, $pop10       # 0: down to label6
 # BB#1:                                 # %if.end
-	i64.call	$push11=, Sum2@FUNCTION, $3
-	i64.const	$push17=, 4311811859
-	i64.ne  	$push12=, $pop11, $pop17
+	i64.call	$push11=, Sum2@FUNCTION, $0
+	i64.const	$push20=, 4311811859
+	i64.ne  	$push12=, $pop11, $pop20
 	br_if   	0, $pop12       # 0: down to label6
 # BB#2:                                 # %if.end25
 	i32.const	$push13=, 0

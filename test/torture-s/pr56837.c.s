@@ -11,12 +11,14 @@ foo:                                    # @foo
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
-	i64.const	$push3=, 4294967295
-	i64.store	$drop=, a+8192($0), $pop3
-	i32.const	$push2=, 8
-	i32.add 	$push1=, $0, $pop2
-	tee_local	$push0=, $0=, $pop1
-	br_if   	0, $pop0        # 0: up to label0
+	i32.const	$push5=, a+8192
+	i32.add 	$push0=, $0, $pop5
+	i64.const	$push4=, 4294967295
+	i64.store	$drop=, 0($pop0), $pop4
+	i32.const	$push3=, 8
+	i32.add 	$push2=, $0, $pop3
+	tee_local	$push1=, $0=, $pop2
+	br_if   	0, $pop1        # 0: up to label0
 # BB#2:                                 # %for.end
 	end_loop                        # label1:
                                         # fallthrough-return

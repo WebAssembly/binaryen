@@ -47,11 +47,11 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push8=, $pop3, $pop4
-	i32.store	$push10=, __stack_pointer($pop5), $pop8
-	tee_local	$push9=, $0=, $pop10
+	i32.sub 	$push9=, $pop3, $pop4
+	tee_local	$push8=, $0=, $pop9
+	i32.store	$drop=, __stack_pointer($pop5), $pop8
 	i32.const	$push0=, 53
-	i32.store	$drop=, 8($pop9), $pop0
+	i32.store	$drop=, 8($0), $pop0
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
 	call    	gcc_crash@FUNCTION, $pop7

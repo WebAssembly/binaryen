@@ -7,22 +7,23 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, 0
+	i32.const	$push1=, 0
+	i64.const	$push0=, 3735928559
+	i64.store	$drop=, bfd_make_section_anyway.foo_section+8($pop1), $pop0
 	i32.const	$push11=, 0
-	i64.const	$push1=, 3735928559
-	i64.store	$push0=, bfd_make_section_anyway.foo_section+8($pop11), $pop1
-	i64.store	$drop=, bfd_make_section_anyway.foo_section+16($pop2), $pop0
-	i32.const	$push10=, 0
-	i64.const	$push3=, 0
-	i64.store	$drop=, bfd_make_section_anyway.foo_section+24($pop10), $pop3
+	i64.const	$push10=, 3735928559
+	i64.store	$drop=, bfd_make_section_anyway.foo_section+16($pop11), $pop10
 	i32.const	$push9=, 0
+	i64.const	$push2=, 0
+	i64.store	$drop=, bfd_make_section_anyway.foo_section+24($pop9), $pop2
 	i32.const	$push8=, 0
-	i32.load8_u	$push4=, bfd_make_section_anyway.foo_section($pop8)
-	i32.const	$push5=, 1
-	i32.or  	$push6=, $pop4, $pop5
-	i32.store8	$drop=, bfd_make_section_anyway.foo_section($pop9), $pop6
 	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.load8_u	$push3=, bfd_make_section_anyway.foo_section($pop7)
+	i32.const	$push4=, 1
+	i32.or  	$push5=, $pop3, $pop4
+	i32.store8	$drop=, bfd_make_section_anyway.foo_section($pop8), $pop5
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end0:

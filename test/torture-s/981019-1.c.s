@@ -68,13 +68,16 @@ f1:                                     # @f1
 	.type	f3,@function
 f3:                                     # @f3
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push4=, 0
-	i32.load	$push2=, f3.x($pop4)
-	i32.eqz 	$push3=, $pop2
-	i32.store	$push0=, f3.x($pop1), $pop3
-                                        # fallthrough-return: $pop0
+	i32.load	$push1=, f3.x($pop4)
+	i32.eqz 	$push3=, $pop1
+	tee_local	$push2=, $0=, $pop3
+	i32.store	$drop=, f3.x($pop0), $pop2
+	copy_local	$push5=, $0
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3

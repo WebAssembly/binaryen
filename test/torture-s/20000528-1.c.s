@@ -6,15 +6,17 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.load16_u	$push1=, l($pop4)
-	i32.store16	$push0=, s($pop5), $pop1
-	i32.const	$push2=, 65534
-	i32.ne  	$push3=, $pop0, $pop2
-	br_if   	0, $pop3        # 0: down to label0
+	i32.load16_u	$push3=, l($pop4)
+	tee_local	$push2=, $0=, $pop3
+	i32.store16	$drop=, s($pop5), $pop2
+	block
+	i32.const	$push0=, 65534
+	i32.ne  	$push1=, $0, $pop0
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6

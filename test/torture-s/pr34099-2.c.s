@@ -50,9 +50,9 @@ test4:                                  # @test4
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
+	i32.eqz 	$push1=, $0
 	i32.eqz 	$push0=, $1
-	i32.const	$push1=, 1
-	i32.select	$push2=, $pop0, $pop1, $0
+	i32.or  	$push2=, $pop1, $pop0
                                         # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end3:

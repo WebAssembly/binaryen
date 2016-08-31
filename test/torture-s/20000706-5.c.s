@@ -47,11 +47,10 @@ bar:                                    # @bar
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push0=, 0
-	i32.store	$push13=, c($pop0), $0
-	tee_local	$push12=, $0=, $pop13
-	i32.load	$push1=, 0($pop12)
+	i32.store	$drop=, c($pop0), $0
+	block
+	i32.load	$push1=, 0($0)
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label1
@@ -87,27 +86,29 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
-	i32.const	$push10=, 32
-	i32.sub 	$push14=, $pop9, $pop10
-	i32.store	$push16=, __stack_pointer($pop11), $pop14
-	tee_local	$push15=, $0=, $pop16
-	i32.const	$push3=, 12
-	i32.add 	$push4=, $pop15, $pop3
-	i32.const	$push2=, 3
-	i32.store	$push0=, 24($0), $pop2
-	i32.store	$drop=, 0($pop4), $pop0
-	i64.const	$push5=, 8589934593
-	i64.store	$push1=, 16($0), $pop5
-	i64.store	$drop=, 4($0):p2align=2, $pop1
-	i32.const	$push12=, 4
-	i32.add 	$push13=, $0, $pop12
-	i32.const	$push6=, 4
-	call    	foo@FUNCTION, $pop13, $pop6
-	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.const	$push9=, 0
+	i32.const	$push6=, 0
+	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push8=, 32
+	i32.sub 	$push15=, $pop7, $pop8
+	tee_local	$push14=, $0=, $pop15
+	i32.store	$drop=, __stack_pointer($pop9), $pop14
+	i32.const	$push0=, 3
+	i32.store	$drop=, 24($0), $pop0
+	i32.const	$push1=, 12
+	i32.add 	$push2=, $0, $pop1
+	i32.const	$push13=, 3
+	i32.store	$drop=, 0($pop2), $pop13
+	i64.const	$push3=, 8589934593
+	i64.store	$drop=, 16($0), $pop3
+	i64.const	$push12=, 8589934593
+	i64.store	$drop=, 4($0):p2align=2, $pop12
+	i32.const	$push10=, 4
+	i32.add 	$push11=, $0, $pop10
+	i32.const	$push4=, 4
+	call    	foo@FUNCTION, $pop11, $pop4
+	i32.const	$push5=, 0
+	call    	exit@FUNCTION, $pop5
 	unreachable
 	.endfunc
 .Lfunc_end2:

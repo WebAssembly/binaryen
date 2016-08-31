@@ -10,11 +10,12 @@ buggy:                                  # @buggy
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$1=, 0($0)
-	i32.const	$push2=, -1
-	i32.const	$push1=, 0
-	i32.store	$push0=, 0($0), $pop1
-	i32.select	$push3=, $pop2, $pop0, $1
-                                        # fallthrough-return: $pop3
+	i32.const	$push0=, 0
+	i32.store	$drop=, 0($0), $pop0
+	i32.const	$push1=, -1
+	i32.const	$push3=, 0
+	i32.select	$push2=, $pop1, $pop3, $1
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	buggy, .Lfunc_end0-buggy

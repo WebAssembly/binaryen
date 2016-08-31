@@ -61,21 +61,21 @@ main:                                   # @main
 	i32.const	$push17=, 0
 	i32.load	$push18=, __stack_pointer($pop17)
 	i32.const	$push19=, 16
-	i32.sub 	$push32=, $pop18, $pop19
-	i32.store	$push36=, __stack_pointer($pop20), $pop32
-	tee_local	$push35=, $0=, $pop36
+	i32.sub 	$push35=, $pop18, $pop19
+	tee_local	$push34=, $0=, $pop35
+	i32.store	$drop=, __stack_pointer($pop20), $pop34
 	i32.const	$push2=, 14
-	i32.add 	$push3=, $pop35, $pop2
+	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, .Lmain.s+6($pop0)
 	i32.store8	$drop=, 0($pop3), $pop1
 	i32.const	$push5=, 12
 	i32.add 	$push6=, $0, $pop5
-	i32.const	$push34=, 0
-	i32.load16_u	$push4=, .Lmain.s+4($pop34):p2align=0
-	i32.store16	$drop=, 0($pop6), $pop4
 	i32.const	$push33=, 0
-	i32.load	$push7=, .Lmain.s($pop33):p2align=0
+	i32.load16_u	$push4=, .Lmain.s+4($pop33):p2align=0
+	i32.store16	$drop=, 0($pop6), $pop4
+	i32.const	$push32=, 0
+	i32.load	$push7=, .Lmain.s($pop32):p2align=0
 	i32.store	$drop=, 8($0), $pop7
 	block
 	i32.const	$push26=, 8

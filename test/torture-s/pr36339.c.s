@@ -13,11 +13,11 @@ try_a:                                  # @try_a
 	i32.const	$push3=, 0
 	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 16
-	i32.sub 	$push12=, $pop4, $pop5
-	i32.store	$push14=, __stack_pointer($pop6), $pop12
-	tee_local	$push13=, $1=, $pop14
+	i32.sub 	$push13=, $pop4, $pop5
+	tee_local	$push12=, $1=, $pop13
+	i32.store	$drop=, __stack_pointer($pop6), $pop12
 	i32.const	$push0=, 0
-	i32.store	$drop=, 12($pop13), $pop0
+	i32.store	$drop=, 12($1), $pop0
 	i32.store	$drop=, 8($1), $0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $1, $pop10
@@ -28,8 +28,8 @@ try_a:                                  # @try_a
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $1, $pop7
 	i32.store	$drop=, __stack_pointer($pop9), $pop8
-	copy_local	$push15=, $0
-                                        # fallthrough-return: $pop15
+	copy_local	$push14=, $0
+                                        # fallthrough-return: $pop14
 	.endfunc
 .Lfunc_end0:
 	.size	try_a, .Lfunc_end0-try_a
@@ -43,26 +43,23 @@ check_a:                                # @check_a
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
-	i32.const	$push0=, -1
-	i32.add 	$push1=, $0, $pop0
-	i32.load	$push2=, 0($pop1)
-	i32.const	$push3=, 42
-	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label1
-# BB#1:                                 # %land.lhs.true
-	i32.const	$1=, 0
-	i32.load	$push5=, 3($0)
-	i32.eqz 	$push6=, $pop5
-	br_if   	1, $pop6        # 1: down to label0
-.LBB1_2:                                # %if.end
-	end_block                       # label1:
 	i32.const	$1=, -1
-.LBB1_3:                                # %cleanup
+	block
+	i32.const	$push7=, -1
+	i32.add 	$push0=, $0, $pop7
+	i32.load	$push1=, 0($pop0)
+	i32.const	$push2=, 42
+	i32.ne  	$push3=, $pop1, $pop2
+	br_if   	0, $pop3        # 0: down to label0
+# BB#1:                                 # %land.lhs.true
+	i32.const	$push6=, -1
+	i32.const	$push5=, 0
+	i32.load	$push4=, 3($0)
+	i32.select	$1=, $pop6, $pop5, $pop4
+.LBB1_2:                                # %cleanup
 	end_block                       # label0:
-	copy_local	$push7=, $1
-                                        # fallthrough-return: $pop7
+	copy_local	$push8=, $1
+                                        # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end1:
 	.size	check_a, .Lfunc_end1-check_a
@@ -79,12 +76,12 @@ main:                                   # @main
 	i32.call	$push1=, try_a@FUNCTION, $pop0
 	i32.const	$push2=, -1
 	i32.le_s	$push3=, $pop1, $pop2
-	br_if   	0, $pop3        # 0: down to label2
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB2_2:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc

@@ -25,17 +25,19 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	block
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
-	i32.load	$push1=, x($pop6)
-	i32.const	$push2=, 129
-	i32.or  	$push3=, $pop1, $pop2
-	i32.store	$push0=, x($pop7), $pop3
-	i32.const	$push4=, 131
-	i32.ne  	$push5=, $pop0, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.load	$push0=, x($pop6)
+	i32.const	$push1=, 129
+	i32.or  	$push5=, $pop0, $pop1
+	tee_local	$push4=, $0=, $pop5
+	i32.store	$drop=, x($pop7), $pop4
+	block
+	i32.const	$push2=, 131
+	i32.ne  	$push3=, $0, $pop2
+	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0
 	return  	$pop8

@@ -35,12 +35,12 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.load	$push9=, __stack_pointer($pop8)
 	i32.const	$push10=, 16
-	i32.sub 	$push15=, $pop9, $pop10
-	i32.store	$push17=, __stack_pointer($pop11), $pop15
-	tee_local	$push16=, $0=, $pop17
+	i32.sub 	$push16=, $pop9, $pop10
+	tee_local	$push15=, $0=, $pop16
+	i32.store	$drop=, __stack_pointer($pop11), $pop15
 	i64.const	$push1=, 0
 	i64.const	$push0=, -4611967493404098560
-	call    	foo@FUNCTION, $pop16, $pop1, $pop0
+	call    	foo@FUNCTION, $0, $pop1, $pop0
 	block
 	i64.load	$push5=, 0($0)
 	i64.load	$push4=, 8($0)

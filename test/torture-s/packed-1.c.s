@@ -8,14 +8,15 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.load16_u	$push2=, x1($pop5)
-	i32.store16	$push0=, t($pop1), $pop2
-	i32.const	$push3=, 17
-	i32.ne  	$push4=, $pop0, $pop3
-	br_if   	0, $pop4        # 0: down to label0
+	i32.load16_u	$push4=, x1($pop5)
+	tee_local	$push3=, $0=, $pop4
+	i32.store16	$drop=, t($pop0), $pop3
+	block
+	i32.const	$push1=, 17
+	i32.ne  	$push2=, $0, $pop1
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB0_2:                                # %if.then

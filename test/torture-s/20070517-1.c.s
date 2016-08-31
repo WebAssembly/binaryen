@@ -12,21 +12,21 @@ main:                                   # @main
 	block
 	i32.call	$push12=, get_kind@FUNCTION
 	tee_local	$push11=, $0=, $pop12
-	i32.const	$push1=, 10
-	i32.gt_u	$push2=, $pop11, $pop1
-	br_if   	0, $pop2        # 0: down to label1
+	i32.const	$push0=, 10
+	i32.gt_u	$push1=, $pop11, $pop0
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
-	i32.const	$push4=, 1
-	i32.shl 	$push5=, $pop4, $0
-	i32.const	$push6=, 1568
-	i32.and 	$push7=, $pop5, $pop6
-	i32.eqz 	$push13=, $pop7
+	i32.const	$push2=, 1
+	i32.shl 	$push3=, $pop2, $0
+	i32.const	$push4=, 1568
+	i32.and 	$push5=, $pop3, $pop4
+	i32.eqz 	$push13=, $pop5
 	br_if   	0, $pop13       # 0: down to label1
 # BB#2:                                 # %if.then.i
-	i32.const	$push3=, -9
-	i32.add 	$push0=, $0, $pop3
+	i32.const	$push6=, -9
+	i32.add 	$push7=, $0, $pop6
 	i32.const	$push8=, 2
-	i32.ge_u	$push9=, $pop0, $pop8
+	i32.ge_u	$push9=, $pop7, $pop8
 	br_if   	1, $pop9        # 1: down to label0
 .LBB0_3:                                # %example.exit
 	end_block                       # label1:

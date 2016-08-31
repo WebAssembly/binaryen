@@ -9,17 +9,19 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push6=, 2
-	i32.add 	$push5=, $0, $pop6
-	tee_local	$push4=, $0=, $pop5
+	i32.const	$push8=, 2
+	i32.add 	$push7=, $0, $pop8
+	tee_local	$push6=, $0=, $pop7
 	i32.const	$push0=, 7
-	i32.ge_u	$push1=, $pop4, $pop0
+	i32.ge_u	$push1=, $pop6, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %switch.lookup
-	i32.const	$push7=, 2
-	i32.shl 	$push2=, $0, $pop7
-	i32.load	$push3=, .Lswitch.table($pop2)
-	return  	$pop3
+	i32.const	$push9=, 2
+	i32.shl 	$push2=, $0, $pop9
+	i32.const	$push3=, .Lswitch.table
+	i32.add 	$push4=, $pop2, $pop3
+	i32.load	$push5=, 0($pop4)
+	return  	$pop5
 .LBB0_2:                                # %sw.default
 	end_block                       # label0:
 	call    	abort@FUNCTION

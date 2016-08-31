@@ -49,16 +49,16 @@ bar:                                    # @bar
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
+	i32.const	$push0=, 0
+	i32.store	$drop=, c($pop0), $0
 	block
-	i32.const	$push1=, 0
-	i32.store	$push0=, c($pop1), $0
-	i32.const	$push2=, 1
-	i32.ne  	$push3=, $pop0, $pop2
-	br_if   	0, $pop3        # 0: down to label1
+	i32.const	$push1=, 1
+	i32.ne  	$push2=, $0, $pop1
+	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %entry
-	i32.const	$push4=, 2
-	i32.ne  	$push5=, $1, $pop4
-	br_if   	0, $pop5        # 0: down to label1
+	i32.const	$push3=, 2
+	i32.ne  	$push4=, $1, $pop3
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %bar.exit
 	return
 .LBB2_3:                                # %if.then.i

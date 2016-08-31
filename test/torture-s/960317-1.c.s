@@ -7,27 +7,31 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push8=, 0
+	block
+	i32.const	$push0=, 0
 	i32.const	$push7=, -1
 	i32.shl 	$push6=, $pop7, $0
-	tee_local	$push5=, $0=, $pop6
-	i32.sub 	$push0=, $pop8, $pop5
-	i32.and 	$push1=, $1, $pop0
-	i32.eqz 	$push12=, $pop1
-	br_if   	0, $pop12       # 0: down to label0
+	tee_local	$push5=, $2=, $pop6
+	i32.sub 	$push1=, $pop0, $pop5
+	i32.and 	$push2=, $1, $pop1
+	i32.eqz 	$push9=, $pop2
+	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %if.end
-	i32.const	$push10=, -1
-	i32.xor 	$push2=, $0, $pop10
-	i32.and 	$push3=, $1, $pop2
-	i32.const	$push9=, 0
-	i32.ne  	$push4=, $pop3, $pop9
-	return  	$pop4
-.LBB0_2:                                # %cleanup
+	i32.const	$0=, 1
+	i32.const	$push8=, -1
+	i32.xor 	$push3=, $2, $pop8
+	i32.and 	$push4=, $1, $pop3
+	br_if   	1, $pop4        # 1: down to label0
+.LBB0_2:                                # %ab
+	end_block                       # label1:
+	i32.const	$0=, 0
+.LBB0_3:                                # %cleanup
 	end_block                       # label0:
-	i32.const	$push11=, 0
-                                        # fallthrough-return: $pop11
+	copy_local	$push10=, $0
+                                        # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

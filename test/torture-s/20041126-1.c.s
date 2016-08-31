@@ -66,54 +66,56 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %for.cond1.i.preheader
-	i32.const	$push17=, 0
-	i32.const	$push14=, 0
-	i32.load	$push15=, __stack_pointer($pop14)
-	i32.const	$push16=, 48
-	i32.sub 	$push21=, $pop15, $pop16
-	i32.store	$push1=, __stack_pointer($pop17), $pop21
-	i32.const	$push3=, .Lmain.a
-	i32.const	$push2=, 40
-	i32.call	$push23=, memcpy@FUNCTION, $pop1, $pop3, $pop2
-	tee_local	$push22=, $0=, $pop23
-	i32.const	$push4=, 16
-	i32.add 	$push5=, $pop22, $pop4
-	i32.const	$push6=, 0
-	i32.store	$drop=, 0($pop5), $pop6
-	i64.const	$push7=, 0
-	i64.store	$push0=, 8($0), $pop7
-	i64.store	$drop=, 0($0), $pop0
+	i32.const	$push15=, 0
+	i32.const	$push12=, 0
+	i32.load	$push13=, __stack_pointer($pop12)
+	i32.const	$push14=, 48
+	i32.sub 	$push23=, $pop13, $pop14
+	tee_local	$push22=, $1=, $pop23
+	i32.store	$drop=, __stack_pointer($pop15), $pop22
+	i32.const	$push1=, .Lmain.a
+	i32.const	$push0=, 40
+	i32.call	$push21=, memcpy@FUNCTION, $1, $pop1, $pop0
+	tee_local	$push20=, $0=, $pop21
+	i32.const	$push2=, 16
+	i32.add 	$push3=, $pop20, $pop2
+	i32.const	$push4=, 0
+	i32.store	$drop=, 0($pop3), $pop4
+	i64.const	$push5=, 0
+	i64.store	$drop=, 8($0), $pop5
+	i64.const	$push19=, 0
+	i64.store	$drop=, 0($0), $pop19
 	i32.const	$1=, 5
 .LBB1_1:                                # %for.cond1.i
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
 	i32.const	$push24=, 9
-	i32.gt_s	$push8=, $1, $pop24
-	br_if   	2, $pop8        # 2: down to label4
+	i32.gt_s	$push6=, $1, $pop24
+	br_if   	2, $pop6        # 2: down to label4
 # BB#2:                                 # %for.body3.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push28=, 1
-	i32.add 	$push10=, $1, $pop28
+	i32.add 	$push8=, $1, $pop28
 	i32.const	$push27=, 2
-	i32.shl 	$push11=, $1, $pop27
-	i32.add 	$push12=, $0, $pop11
-	i32.load	$push26=, 0($pop12)
+	i32.shl 	$push9=, $1, $pop27
+	i32.add 	$push10=, $0, $pop9
+	i32.load	$push26=, 0($pop10)
 	tee_local	$push25=, $1=, $pop26
-	i32.eq  	$push13=, $pop10, $pop25
-	br_if   	0, $pop13       # 0: up to label5
+	i32.eq  	$push11=, $pop8, $pop25
+	br_if   	0, $pop11       # 0: up to label5
 # BB#3:                                 # %if.then6.i
 	end_loop                        # label6:
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %check.exit
 	end_block                       # label4:
-	i32.const	$push20=, 0
-	i32.const	$push18=, 48
-	i32.add 	$push19=, $0, $pop18
-	i32.store	$drop=, __stack_pointer($pop20), $pop19
-	i32.const	$push9=, 0
-                                        # fallthrough-return: $pop9
+	i32.const	$push18=, 0
+	i32.const	$push16=, 48
+	i32.add 	$push17=, $0, $pop16
+	i32.store	$drop=, __stack_pointer($pop18), $pop17
+	i32.const	$push7=, 0
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

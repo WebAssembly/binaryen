@@ -9,22 +9,19 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 1
-	block
-	block
-	i32.const	$push2=, 1
-	i32.and 	$push0=, $0, $pop2
-	br_if   	0, $pop0        # 0: down to label1
-# BB#1:                                 # %land.lhs.true
-	i32.load	$push1=, 0($0)
-	br_if   	1, $pop1        # 1: down to label0
-.LBB0_2:                                # %if.end
-	end_block                       # label1:
 	i32.const	$1=, 0
-.LBB0_3:                                # %return
+	block
+	i32.const	$push0=, 1
+	i32.and 	$push1=, $0, $pop0
+	br_if   	0, $pop1        # 0: down to label0
+# BB#1:                                 # %land.lhs.true
+	i32.load	$push2=, 0($0)
+	i32.const	$push3=, 0
+	i32.ne  	$1=, $pop2, $pop3
+.LBB0_2:                                # %return
 	end_block                       # label0:
-	copy_local	$push3=, $1
-                                        # fallthrough-return: $pop3
+	copy_local	$push4=, $1
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f

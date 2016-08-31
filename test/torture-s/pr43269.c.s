@@ -29,14 +29,15 @@ main:                                   # @main
 	.type	func_32,@function
 func_32:                                # @func_32
 # BB#0:                                 # %entry
+	i32.const	$push1=, 0
+	i32.const	$push0=, -1
+	i32.store	$drop=, g_261($pop1), $pop0
 	block
-	i32.const	$push2=, 0
-	i32.const	$push1=, -1
-	i32.store	$push0=, g_261($pop2), $pop1
 	i32.const	$push5=, 0
-	i32.load	$push3=, g_211($pop5)
-	i32.eq  	$push4=, $pop0, $pop3
-	br_if   	0, $pop4        # 0: down to label1
+	i32.load	$push2=, g_211($pop5)
+	i32.const	$push4=, -1
+	i32.eq  	$push3=, $pop2, $pop4
+	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %for.end
 	return
 .LBB1_2:                                # %if.else

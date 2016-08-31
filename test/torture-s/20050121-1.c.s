@@ -108,12 +108,12 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i32.const	$push14=, 0
 	i32.load	$push15=, __stack_pointer($pop14)
 	i32.const	$push16=, 32
-	i32.sub 	$push25=, $pop15, $pop16
-	i32.store	$push29=, __stack_pointer($pop17), $pop25
-	tee_local	$push28=, $2=, $pop29
+	i32.sub 	$push28=, $pop15, $pop16
+	tee_local	$push27=, $2=, $pop28
+	i32.store	$drop=, __stack_pointer($pop17), $pop27
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
-	call    	__floatsitf@FUNCTION, $pop28, $pop1
+	call    	__floatsitf@FUNCTION, $2, $pop1
 	i32.const	$push2=, 24
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push4=, 8
@@ -127,12 +127,12 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i32.const	$push8=, 1
 	i32.add 	$push9=, $1, $pop8
 	call    	__floatsitf@FUNCTION, $pop22, $pop9
-	i32.const	$push27=, 8
-	i32.add 	$push10=, $0, $pop27
+	i32.const	$push26=, 8
+	i32.add 	$push10=, $0, $pop26
 	i32.const	$push23=, 16
 	i32.add 	$push24=, $2, $pop23
-	i32.const	$push26=, 8
-	i32.add 	$push11=, $pop24, $pop26
+	i32.const	$push25=, 8
+	i32.add 	$push11=, $pop24, $pop25
 	i64.load	$push12=, 0($pop11)
 	i64.store	$drop=, 0($pop10), $pop12
 	i64.load	$push13=, 16($2)

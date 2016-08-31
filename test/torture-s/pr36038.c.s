@@ -61,49 +61,49 @@ doit:                                   # @doit
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64
 # BB#0:                                 # %entry
-	i32.const	$push30=, 0
+	i32.const	$push31=, 0
 	i64.const	$push0=, 1
-	i64.store	$drop=, list+8($pop30), $pop0
-	i32.const	$push29=, 0
+	i64.store	$drop=, list+8($pop31), $pop0
+	i32.const	$push30=, 0
 	i64.const	$push1=, 0
-	i64.store	$drop=, list($pop29), $pop1
-	i32.const	$push28=, 0
+	i64.store	$drop=, list($pop30), $pop1
+	i32.const	$push29=, 0
 	i64.const	$push2=, 2
-	i64.store	$drop=, list+16($pop28), $pop2
-	i32.const	$push27=, 0
+	i64.store	$drop=, list+16($pop29), $pop2
+	i32.const	$push28=, 0
 	i64.const	$push3=, 3
-	i64.store	$drop=, list+24($pop27), $pop3
-	i32.const	$push26=, 0
+	i64.store	$drop=, list+24($pop28), $pop3
+	i32.const	$push27=, 0
 	i64.const	$push4=, 4
-	i64.store	$0=, list+32($pop26), $pop4
-	i32.const	$push25=, 0
+	i64.store	$drop=, list+32($pop27), $pop4
+	i32.const	$push26=, 0
 	i64.const	$push5=, 9
-	i64.store	$drop=, list+72($pop25), $pop5
-	i32.const	$push24=, 0
+	i64.store	$drop=, list+72($pop26), $pop5
+	i32.const	$push25=, 0
 	i32.const	$push6=, indices+36
-	i32.store	$drop=, markstack_ptr($pop24), $pop6
-	i32.const	$push23=, 0
+	i32.store	$drop=, markstack_ptr($pop25), $pop6
+	i32.const	$push24=, 0
 	i32.const	$push7=, 2
-	i32.store	$drop=, indices+32($pop23), $pop7
-	i32.const	$push22=, 0
+	i32.store	$drop=, indices+32($pop24), $pop7
+	i32.const	$push23=, 0
 	i32.const	$push8=, 1
-	i32.store	$drop=, indices+28($pop22), $pop8
-	i32.const	$push21=, 0
+	i32.store	$drop=, indices+28($pop23), $pop8
+	i32.const	$push22=, 0
 	i32.const	$push9=, list+16
-	i32.store	$drop=, stack_base($pop21), $pop9
-	i32.const	$push20=, 0
+	i32.store	$drop=, stack_base($pop22), $pop9
+	i32.const	$push21=, 0
 	i64.const	$push10=, 7
-	i64.store	$drop=, list+64($pop20), $pop10
-	i32.const	$push19=, 0
+	i64.store	$drop=, list+64($pop21), $pop10
+	i32.const	$push20=, 0
 	i64.const	$push11=, 6
-	i64.store	$drop=, list+56($pop19), $pop11
-	i32.const	$push18=, 0
+	i64.store	$drop=, list+56($pop20), $pop11
+	i32.const	$push19=, 0
 	i64.const	$push12=, 5
-	i64.store	$drop=, list+48($pop18), $pop12
-	i32.const	$push17=, 0
-	i64.store	$drop=, list+40($pop17), $0
+	i64.store	$drop=, list+48($pop19), $pop12
+	i32.const	$push18=, 0
+	i64.const	$push17=, 4
+	i64.store	$drop=, list+40($pop18), $pop17
 	block
 	i32.const	$push15=, expect
 	i32.const	$push14=, list
@@ -111,8 +111,8 @@ main:                                   # @main
 	i32.call	$push16=, memcmp@FUNCTION, $pop15, $pop14, $pop13
 	br_if   	0, $pop16       # 0: down to label3
 # BB#1:                                 # %if.end
-	i32.const	$push31=, 0
-	return  	$pop31
+	i32.const	$push32=, 0
+	return  	$pop32
 .LBB1_2:                                # %if.then
 	end_block                       # label3:
 	call    	abort@FUNCTION

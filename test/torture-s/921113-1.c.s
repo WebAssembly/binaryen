@@ -146,16 +146,16 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push2=, pos
 	i32.const	$push7=, 0
 	i32.const	$push4=, 0
 	i32.load	$push5=, __stack_pointer($pop4)
 	i32.const	$push6=, 16
-	i32.sub 	$push12=, $pop5, $pop6
-	i32.store	$push14=, __stack_pointer($pop7), $pop12
-	tee_local	$push13=, $0=, $pop14
+	i32.sub 	$push13=, $pop5, $pop6
+	tee_local	$push12=, $0=, $pop13
+	i32.store	$drop=, __stack_pointer($pop7), $pop12
+	i32.const	$push2=, pos
 	i32.const	$push8=, 8
-	i32.add 	$push9=, $pop13, $pop8
+	i32.add 	$push9=, $0, $pop8
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $0, $pop10
 	i32.const	$push1=, limit

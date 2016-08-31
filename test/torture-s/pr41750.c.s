@@ -26,31 +26,31 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	block
-	i32.load	$push8=, 0($1)
-	tee_local	$push7=, $2=, $pop8
-	i32.load	$push6=, 8($pop7)
-	tee_local	$push5=, $3=, $pop6
-	br_if   	0, $pop5        # 0: down to label0
+	i32.load	$push7=, 0($1)
+	tee_local	$push6=, $2=, $pop7
+	i32.load	$push5=, 8($pop6)
+	tee_local	$push4=, $3=, $pop5
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then.i
 	block
-	i32.load	$push10=, 4($2)
-	tee_local	$push9=, $3=, $pop10
-	br_if   	0, $pop9        # 0: down to label1
+	i32.load	$push9=, 4($2)
+	tee_local	$push8=, $3=, $pop9
+	br_if   	0, $pop8        # 0: down to label1
 # BB#2:                                 # %if.then3.i
-	i32.const	$push1=, 4
-	i32.add 	$push2=, $2, $pop1
-	i32.store	$push0=, 0($pop2), $0
-	copy_local	$3=, $pop0
+	i32.const	$push0=, 4
+	i32.add 	$push1=, $2, $pop0
+	i32.store	$drop=, 0($pop1), $0
+	copy_local	$3=, $0
 .LBB1_3:                                # %if.end.i
 	end_block                       # label1:
 	i32.call	$drop=, foo_create_got_section@FUNCTION, $3, $1
-	i32.const	$push3=, 8
-	i32.add 	$push4=, $2, $pop3
-	i32.load	$3=, 0($pop4)
+	i32.const	$push2=, 8
+	i32.add 	$push3=, $2, $pop2
+	i32.load	$3=, 0($pop3)
 .LBB1_4:                                # %get_got.exit
 	end_block                       # label0:
-	copy_local	$push11=, $3
-                                        # fallthrough-return: $pop11
+	copy_local	$push10=, $3
+                                        # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end1:
 	.size	elf64_ia64_check_relocs, .Lfunc_end1-elf64_ia64_check_relocs

@@ -7,19 +7,24 @@
 build:                                  # @build
 	.param  	i32, i32
 	.result 	i64
+	.local  	i64, i64
 # BB#0:                                 # %entry
-	i32.const	$push4=, 0
-	i32.const	$push10=, 0
-	i64.extend_u/i32	$push3=, $1
-	i64.store	$push0=, lpart($pop10), $pop3
-	i32.const	$push9=, 0
-	i64.extend_u/i32	$push5=, $0
-	i64.const	$push6=, 32
-	i64.shl 	$push7=, $pop5, $pop6
-	i64.store	$push1=, hpart($pop9), $pop7
-	i64.or  	$push8=, $pop0, $pop1
-	i64.store	$push2=, back($pop4), $pop8
-                                        # fallthrough-return: $pop2
+	i32.const	$push0=, 0
+	i64.extend_u/i32	$push10=, $1
+	tee_local	$push9=, $2=, $pop10
+	i64.store	$drop=, lpart($pop0), $pop9
+	i32.const	$push8=, 0
+	i64.extend_u/i32	$push1=, $0
+	i64.const	$push2=, 32
+	i64.shl 	$push7=, $pop1, $pop2
+	tee_local	$push6=, $3=, $pop7
+	i64.store	$drop=, hpart($pop8), $pop6
+	i32.const	$push5=, 0
+	i64.or  	$push4=, $3, $2
+	tee_local	$push3=, $2=, $pop4
+	i64.store	$drop=, back($pop5), $pop3
+	copy_local	$push11=, $2
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	build, .Lfunc_end0-build

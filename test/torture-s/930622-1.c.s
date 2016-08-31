@@ -35,10 +35,11 @@ h:                                      # @h
 f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store	$push0=, a($pop1), $pop2
-                                        # fallthrough-return: $pop0
+	i32.store	$drop=, a($pop0), $pop2
+	i32.const	$push1=, 0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	f, .Lfunc_end2-f
@@ -50,10 +51,11 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end
-	i32.const	$push1=, 0
+	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store	$push0=, a($pop1), $pop2
-	call    	exit@FUNCTION, $pop0
+	i32.store	$drop=, a($pop0), $pop2
+	i32.const	$push1=, 0
+	call    	exit@FUNCTION, $pop1
 	unreachable
 	.endfunc
 .Lfunc_end3:

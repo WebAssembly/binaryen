@@ -38,13 +38,9 @@ test3:                                  # @test3
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 1
-	i32.const	$push2=, 0
-	i32.ne  	$push3=, $0, $pop2
-	i32.const	$push5=, 1
-	i32.and 	$push1=, $0, $pop5
-	i32.select	$push4=, $pop0, $pop3, $pop1
-                                        # fallthrough-return: $pop4
+	i32.const	$push0=, 0
+	i32.ne  	$push1=, $0, $pop0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3

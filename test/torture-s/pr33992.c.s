@@ -92,11 +92,11 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push11=, $pop3, $pop4
-	i32.store	$push13=, __stack_pointer($pop5), $pop11
-	tee_local	$push12=, $0=, $pop13
+	i32.sub 	$push12=, $pop3, $pop4
+	tee_local	$push11=, $0=, $pop12
+	i32.store	$drop=, __stack_pointer($pop5), $pop11
 	i64.const	$push0=, -9223372036854775807
-	i64.store	$drop=, 8($pop12), $pop0
+	i64.store	$drop=, 8($0), $pop0
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
 	call    	do_test@FUNCTION, $pop10

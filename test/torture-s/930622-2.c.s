@@ -12,14 +12,14 @@ ll_to_ld:                               # @ll_to_ld
 	i32.const	$push5=, 0
 	i32.load	$push6=, __stack_pointer($pop5)
 	i32.const	$push7=, 16
-	i32.sub 	$push12=, $pop6, $pop7
-	i32.store	$push15=, __stack_pointer($pop8), $pop12
-	tee_local	$push14=, $2=, $pop15
-	call    	__floatditf@FUNCTION, $pop14, $1
+	i32.sub 	$push14=, $pop6, $pop7
+	tee_local	$push13=, $2=, $pop14
+	i32.store	$drop=, __stack_pointer($pop8), $pop13
+	call    	__floatditf@FUNCTION, $2, $1
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
-	i32.const	$push13=, 8
-	i32.add 	$push2=, $2, $pop13
+	i32.const	$push12=, 8
+	i32.add 	$push2=, $2, $pop12
 	i64.load	$push3=, 0($pop2)
 	i64.store	$drop=, 0($pop1), $pop3
 	i64.load	$push4=, 0($2)

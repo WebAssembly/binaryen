@@ -8,12 +8,14 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.shl 	$push5=, $0, $pop0
-	tee_local	$push4=, $0=, $pop5
-	i32.load8_u	$push1=, arr($0)
-	i32.const	$push3=, 2
-	i32.add 	$push2=, $pop1, $pop3
-	i32.store8	$drop=, arr($pop4), $pop2
+	i32.shl 	$push1=, $0, $pop0
+	i32.const	$push2=, arr
+	i32.add 	$push7=, $pop1, $pop2
+	tee_local	$push6=, $0=, $pop7
+	i32.load8_u	$push3=, 0($0)
+	i32.const	$push5=, 2
+	i32.add 	$push4=, $pop3, $pop5
+	i32.store8	$drop=, 0($pop6), $pop4
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:

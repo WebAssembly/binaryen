@@ -41,11 +41,11 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.load	$push2=, __stack_pointer($pop1)
 	i32.const	$push3=, 16
-	i32.sub 	$push5=, $pop2, $pop3
-	i32.store	$push7=, __stack_pointer($pop4), $pop5
-	tee_local	$push6=, $0=, $pop7
+	i32.sub 	$push6=, $pop2, $pop3
+	tee_local	$push5=, $0=, $pop6
+	i32.store	$drop=, __stack_pointer($pop4), $pop5
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($pop6), $pop0
+	i32.store	$drop=, 0($0), $pop0
 	call    	bar@FUNCTION, $0, $0
 	unreachable
 	.endfunc
