@@ -801,11 +801,10 @@ private:
 
   template <class LS>
   Address getFinalAddress(LS* curr, Literal ptr) {
-    auto trapIfGt = [this, curr](uint64_t lhs, uint64_t rhs, const char* msg) {
+    auto trapIfGt = [this](uint64_t lhs, uint64_t rhs, const char* msg) {
       if (lhs > rhs) {
         std::stringstream ss;
         ss << msg << ": " << lhs << " > " << rhs;
-        ss << curr;
         externalInterface->trap(ss.str().c_str());
       }
     };
