@@ -26,7 +26,7 @@ if [ "$EMSCRIPTEN" == "" ]; then
 fi
 
 if [ ! -d "$EMSCRIPTEN" ]; then
-  echo "$0: $EMSCRIPTEN is not a directory" >&2
+  echo "$0: \"$EMSCRIPTEN\" (\$EMSCRIPTEN) is not a directory" >&2
   exit 1
 fi
 
