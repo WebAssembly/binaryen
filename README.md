@@ -2,29 +2,47 @@
 
 # Binaryen
 
-Binaryen is a compiler and toolchain infrastructure library for WebAssembly, written in C++. It can:
+Binaryen is a compiler and toolchain infrastructure library for WebAssembly, written in C++. It aims to make [compiling to WebAssembly](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen) **easy, fast, and effective**:
 
- * **Parse** and **emit** WebAssembly, supporting the current S-Expression format.
- * **Interpret** WebAssembly. The interpreter passes 100% of the spec test suite.
- * **Compile** asm.js to WebAssembly, which together with [Emscripten](http://emscripten.org) which compiles C and C++ to asm.js, gives you a complete compiler toolchain from C and C++ to WebAssembly. This passes all of the relevant part of Emscripten's test suite (everything but some odd Emscripten features like split memory).
- * **Polyfill** WebAssembly, by running it in the interpreter compiled to JavaScript, if the browser does not yet have native support.
+ * **Easy**: Binaryen has a simple [C API](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api-1) in a single header. It accepts input in [WebAssembly-like form](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#what-do-i-need-to-have-in-order-to-use-binaryen-to-compile-to-webassembly) but also accepts a general [control flow graph](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api) for compilers that prefer that.
+ * **Fast**: Binaryen's internal IR uses compact data structures and is designed for completely parallel codegen and optimization, using all available CPU cores. Binaryen's IR also compiles down to WebAssembly extremely easily and quickly because it is essentially a subset of WebAssembly.
+ * **Effective**: Binaryen's optimizer has [many useful passes](https://github.com/WebAssembly/binaryen/tree/master/src/passes) that generate very good code (e.g. local coloring to coalesce local variables; dead code elimination; precomputing expressions when possible at compile time; etc.). The goal with these optimizations is for Binaryen to be powerful enough that it can be [used as a compiler backend by itself](https://kripken.github.io/talks/binaryen.html#/9), as well as to do WebAssembly-specific optimizations that general-purpose compilers might not (you can think of this as [wasm minification](https://kripken.github.io/talks/binaryen.html#/2), parallel to minification for JavaScript, CSS, etc., all of which are language-specific; an example of such an optimization is block return value generation in SimplifyLocals).
 
-To provide those capabilities, Binaryen has a simple and flexible API for **representing and processing** WebAssembly modules. Built on that foundation are the tools mentioned above, as well as optimizations:
+Compilers built using Binaryen include
 
- * **WebAssembly-specific optimizations** that shrink the code without changing what it does. You can think of this as [wasm minification](https://kripken.github.io/talks/binaryen.html#/2), parallel to minification for JavaScript, CSS, etc., all of which are language-specific. An example of such an optimization is block return value generation in SimplifyLocals.
- * **General optimizations** like dead code elimination, constant folding, etc. These also reduce code size of course, but also improve throughput. The goal with these optimizations is for Binaryen to be powerful enough that it can be [used as a compiler backend by itself](https://kripken.github.io/talks/binaryen.html#/9).
+ * [`asm2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/asm2wasm.h) which compiles asm.js
+ * [`s2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/s2wasm.h) which compiles the LLVM WebAssembly's backend `.s` output format
+ * [`mir2wasm`](https://github.com/brson/mir2wasm/) which compiles Rust MIR
+
+Those compilers generate Binaryen IR which can then be optimized and emitted as WebAssembly (the first two use the internal C++ API, the last the C API).
+
+Binaryen also provides a set of **toolchain utilities** that can
+
+ * **Parse** and **emit** WebAssembly. In particular this lets you load WebAssembly, optimize it using Binaryen, and re-emit it, thus implementing a wasm-to-wasm optimizer.
+ * **Interpret** WebAssembly as well as run the WebAssembly spec tests.
+ * Integrate with **[Emscripten](http://emscripten.org)** in order to provide a complete compiler toolchain from C and C++ to WebAssembly.
+ * **Polyfill** WebAssembly by running it in the interpreter compiled to JavaScript, if the browser does not yet have native support (useful for testing).
 
 Consult the [contributing instructions](Contributing.md) if you're interested in participating.
+
+## Binaryen IR
+
+Binaryen's internal IR is an AST, designed to be
+
+ * **Flexible and fast** for optimization.
+ * **As close as possible to WebAssembly** so it is simple and fast to convert it to and from WebAssembly.
+
+Binaryen IR is essentially a subset of WebAssembly, [everything but some stack machine specific things that are cumbersome to represent in an AST](https://github.com/WebAssembly/binaryen/issues/663). (In particular, that means that if you use Binaryen to load WebAssembly that contains such stack machine specific code, it might be transformed a little, and when emitted you will not necessarily get the same thing you started out with.)
 
 ## Tools
 
 This repository contains code that builds the following tools in `bin/`:
 
- * **wasm-shell**: A shell that can load and interpret WebAssembly code in S-Expression format. It can also run the spec test suite.
- * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression format) into binary format.
- * **wasm-dis**: Un-assembles WebAssembly in binary format into text format (currently S-Expression format).
- * **wasm-opt**: Runs transformation passes on WebAssembly code in S-Expression format.
- * **asm2wasm**: An asm.js-to-WebAssembly compiler, built on Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
+ * **wasm-shell**: A shell that can load and interpret WebAssembly code. It can also run the spec test suite.
+ * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression format) into binary format (going through Binaryen IR).
+ * **wasm-dis**: Un-assembles WebAssembly in binary format into text format (going through Binaryen IR).
+ * **wasm-opt**: Loads WebAssembly and runs Binaryen IR passes on it.
+ * **asm2wasm**: An asm.js-to-WebAssembly compiler, using Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
  * **s2wasm**: A compiler from the `.s` format emitted by the new WebAssembly backend being developed in LLVM. This is used by Emscripten in Binaryen mode when it integrates with the new LLVM backend.
  * **wasm.js**: wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, `asm2wasm`, the S-Expression parser, etc., which allow you to use Binaryen with Emscripten and execute code compiled to WASM even if the browser doesn't have native support yet. This can be useful as a (slow) polyfill.
  * **binaryen.js**: A stand alone library that exposes Binaryen methods for [parsing s-expressions and instantiating WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/test.js) in JavaScript.
