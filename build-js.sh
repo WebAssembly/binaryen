@@ -42,10 +42,12 @@ if [ "$1" == "-g" ]; then
   OUT_FILE_SUFFIX=-g
 else
   EMCC_ARGS="$EMCC_ARGS -Oz"
-  EMCC_ARGS="$EMCC_ARGS --llvm-opts 2 --llvm-lto 1"
+  EMCC_ARGS="$EMCC_ARGS --llvm-lto 1"
   EMCC_ARGS="$EMCC_ARGS -s ELIMINATE_DUPLICATE_FUNCTIONS=1"
-  EMCC_ARGS="$EMCC_ARGS -s ELIMINATE_DUPLICATE_FUNCTIONS_PASSES=3"
+  # Why these settings?
+  # See https://gist.github.com/rsms/e33c61a25a31c08260161a087be03169
 fi
+
 
 echo "building wasm.js"
 
