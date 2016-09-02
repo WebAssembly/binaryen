@@ -16,16 +16,23 @@ set -e
 
 if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "-help" ]; then
   echo "usage: $0 [-g]" >&2
-  echo "-g  produce debug build" >&2
+  echo "  -g  produce debug build" >&2
+  echo ""
+  echo "If EMSCRIPTEN is set in the envionment, emscripten will be loaded"
+  echo "from that directory. Otherwise the location of emscripten is resolved"
+  echo "through PATH."
   exit 1
 fi
 
-if [ "$EMSCRIPTEN" == "" ]; then
-  echo "$0: EMSCRIPTEN environment variable is not set" >&2
-  exit 1
-fi
-
-if [ ! -d "$EMSCRIPTEN" ]; then
+if [ -z $EMSCRIPTEN ]; then
+  if (which emcc >/dev/null); then
+    # Found emcc in PATH -- set EMSCRIPTEN (we need this to access webidl_binder.py)
+    EMSCRIPTEN=$(dirname "$(which emcc)")
+  else
+    echo "$0: EMSCRIPTEN environment variable is not set and emcc was not found in PATH" >&2
+    exit 1
+  fi
+elif [ ! -d "$EMSCRIPTEN" ]; then
   echo "$0: \"$EMSCRIPTEN\" (\$EMSCRIPTEN) is not a directory" >&2
   exit 1
 fi
