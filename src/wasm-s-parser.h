@@ -67,8 +67,8 @@ public:
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
-  bool dollared() { return dollared_; }
-  bool quoted() { return quoted_; }
+  bool dollared() { return isStr() && dollared_; }
+  bool quoted() { return isStr() && quoted_; }
 
   size_t line, col;
 
@@ -426,6 +426,13 @@ private:
         i++;
       } else {
         break;
+      }
+    }
+    if (i < s.size() && s[i]->isList()) {
+      auto& inner = *s[i];
+      if (inner.size() > 0 && inner[0]->str() == EXPORT) {
+        exportName = inner[1]->str();
+        i++;
       }
     }
     return i;
@@ -1341,16 +1348,29 @@ private:
 
   void parseMemory(Element& s) {
     hasMemory = true;
-
-    if (s[1]->isList()) {
-      // (memory (data ..)) format
-      parseData(*s[1]);
-      wasm.memory.initial = wasm.memory.segments[0].data.size();
-      return;
+    Index i = 1;
+    if (s[i]->dollared()) {
+      wasm.memory.name = s[i++]->str();
     }
-    wasm.memory.initial = atoi(s[1]->c_str());
-    if (s.size() == 2) return;
-    size_t i = 2;
+    if (s[i]->isList()) {
+      auto& inner = *s[i];
+      if (inner[0]->str() == EXPORT) {
+        auto ex = make_unique<Export>();
+        ex->name = inner[1]->str();
+        ex->value = wasm.memory.name;
+        ex->kind = Export::Memory;
+        wasm.addExport(ex.release());
+        i++;
+      } else {
+        assert(inner.size() > 0 ? inner[0]->str() != IMPORT : true);
+        // (memory (data ..)) format
+        parseData(*s[i]);
+        wasm.memory.initial = wasm.memory.segments[0].data.size();
+        return;
+      }
+    }
+    wasm.memory.initial = atoi(s[i++]->c_str());
+    if (i == s.size()) return;
     if (s[i]->isStr()) {
       uint64_t max = atoll(s[i]->c_str());
       if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
@@ -1522,12 +1542,25 @@ private:
   void parseGlobal(Element& s) {
     std::unique_ptr<Global> global = make_unique<Global>();
     size_t i = 1;
-    if (s.size() == 4) {
+    if (s[i]->dollared()) {
       global->name = s[i++]->str();
     } else {
       global->name = Name::fromInt(globalCounter);
     }
     globalCounter++;
+    if (s[i]->isList()) {
+      auto& inner = *s[i];
+      if (inner[0]->str() == EXPORT) {
+        auto ex = make_unique<Export>();
+        ex->name = inner[1]->str();
+        ex->value = global->name;
+        ex->kind = Export::Global;
+        wasm.addExport(ex.release());
+        i++;
+      } else {
+        WASM_UNREACHABLE();
+      }
+    }
     global->type = stringToWasmType(s[i++]->str());
     global->init = parseExpression(s[i++]);
     assert(i == s.size());
@@ -1538,31 +1571,50 @@ private:
 
   void parseTable(Element& s) {
     seenTable = true;
-
-    if (s.size() == 1) return; // empty table in old notation
-    if (!s[1]->dollared()) {
-      if (s[1]->str() == ANYFUNC) {
+    Index i = 1;
+    if (i == s.size()) return; // empty table in old notation
+#if 0 // TODO: new table notation
+    if (s[i]->dollared()) {
+      wasm.table.name = s[i++]->str();
+    }
+#endif
+    if (i == s.size()) return;
+    if (s[i]->isList()) {
+      auto& inner = *s[i];
+      if (inner[0]->str() == EXPORT) {
+        auto ex = make_unique<Export>();
+        ex->name = inner[1]->str();
+        ex->value = wasm.table.name;
+        ex->kind = Export::Table;
+        wasm.addExport(ex.release());
+        i++;
+      } else {
+        WASM_UNREACHABLE();
+      }
+    }
+    if (i == s.size()) return;
+    if (!s[i]->dollared()) {
+      if (s[i]->str() == ANYFUNC) {
         // (table type (elem ..))
-        parseElem(*s[2]);
+        parseElem(*s[i + 1]);
         wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
         return;
       }
       // first element isn't dollared, and isn't anyfunc. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
       if (s[s.size() - 1]->str() == ANYFUNC) {
         // (table initial max? type)
-        wasm.table.initial = atoi(s[1]->c_str());
-        wasm.table.max = atoi(s[2]->c_str());
+        wasm.table.initial = atoi(s[i]->c_str());
+        wasm.table.max = atoi(s[i + 1]->c_str());
         return;
       }
     }
     // old notation (table func1 func2 ..)
-    parseElem(s);
+    parseElem(s, i);
     wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
   }
 
-  void parseElem(Element& s) {
+  void parseElem(Element& s, Index i = 1) {
     if (!seenTable) throw ParseException("elem without table", s.line, s.col);
-    Index i = 1;
     Expression* offset;
     if (s[i]->isList()) {
       // there is an init expression
