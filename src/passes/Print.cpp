@@ -546,19 +546,21 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitExport(Export *curr) {
     printOpening(o, "export ");
-    printText(o, curr->name.str) << ' ';
+    printText(o, curr->name.str) << " (";
     switch (curr->kind) {
-      case Export::Function: printName(curr->value); break;
-      case Export::Table: o << "table"; break;
-      case Export::Memory: o << "memory"; break;
-      case Export::Global: o << "global "; printName(curr->value); break;
+      case Export::Function: o << "func"; break;
+      case Export::Table:    o << "table"; break;
+      case Export::Memory:   o << "memory"; break;
+      case Export::Global:   o << "global"; break;
       default: WASM_UNREACHABLE();
     }
-    o << ')';
+    o << ' ';
+    printName(curr->value) << "))";
   }
   void visitGlobal(Global *curr) {
     printOpening(o, "global ");
-    printName(curr->name) << ' ' << printWasmType(curr->type) << ' ';
+    printName(curr->name) << ' ';
+    o << printWasmType(curr->type) << ' ';
     visit(curr->init);
     o << ')';
   }
@@ -598,7 +600,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitTable(Table *curr) {
-    printOpening(o, "table") << ' ' << curr->initial;
+    printOpening(o, "table") << ' ';
+    o << curr->initial;
     if (curr->max && curr->max != Table::kMaxSize) o << ' ' << curr->max;
     o << " anyfunc)\n";
     doIndent(o, indent);
@@ -612,15 +615,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ')';
     }
   }
-  void visitModule(Module *curr) {
-    currModule = curr;
-    printOpening(o, "module", true);
-    incIndent();
-    doIndent(o, indent);
-    printOpening(o, "memory") << ' ' << curr->memory.initial;
-    if (curr->memory.max && curr->memory.max != Memory::kMaxSize) o << ' ' << curr->memory.max;
+  void visitMemory(Memory* curr) {
+    printOpening(o, "memory") << ' ';
+    o << curr->initial;
+    if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
     o << ")\n";
-    for (auto segment : curr->memory.segments) {
+    for (auto segment : curr->segments) {
       doIndent(o, indent);
       printOpening(o, "data ", true);
       visit(segment.offset);
@@ -647,6 +647,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       o << "\")\n";
     }
+  }
+  void visitModule(Module *curr) {
+    currModule = curr;
+    printOpening(o, "module", true);
+    incIndent();
+    doIndent(o, indent);
+    visitMemory(&curr->memory);
     if (curr->start.is()) {
       doIndent(o, indent);
       printOpening(o, "start") << ' ' << curr->start << ')';

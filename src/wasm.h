@@ -1454,7 +1454,7 @@ public:
     Global = 3,
   };
 
-  Name name;  // exported name
+  Name name;  // exported name - note that this is the key, as the internal name is non-unique (can have multiple exports for an internal, also over kinds)
   Name value; // internal name
   Kind kind;
 };
@@ -1474,10 +1474,13 @@ public:
     }
   };
 
+  Name name;
   Address initial, max;
   std::vector<Segment> segments;
 
-  Table() : initial(0), max(kMaxSize) {}
+  Table() : initial(0), max(kMaxSize) {
+    name = Name::fromInt(0);
+  }
 };
 
 class Memory {
@@ -1499,10 +1502,13 @@ public:
     }
   };
 
+  Name name;
   Address initial, max; // sizes are in pages
   std::vector<Segment> segments;
 
-  Memory() : initial(0), max(kMaxSize) {}
+  Memory() : initial(0), max(kMaxSize) {
+    name = Name::fromInt(0);
+  }
 };
 
 class Global {
@@ -1531,7 +1537,7 @@ private:
   // TODO: add a build option where Names are just indices, and then these methods are not needed
   std::map<Name, FunctionType*> functionTypesMap;
   std::map<Name, Import*> importsMap;
-  std::map<Name, Export*> exportsMap;
+  std::map<Name, Export*> exportsMap; // exports map is by the *exported* name, which is unique
   std::map<Name, Function*> functionsMap;
   std::map<Name, Global*> globalsMap;
 

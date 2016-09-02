@@ -12,7 +12,7 @@
   (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
   (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
   (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
-  (export "big_negative" $big_negative)
+  (export "big_negative" (func $big_negative))
   (table 10 anyfunc)
   (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative (type $FUNCSIG$v)

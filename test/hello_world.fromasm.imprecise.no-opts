@@ -4,7 +4,7 @@
   (import "env" "table" (table $table))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (export "add" $add)
+  (export "add" (func $add))
   (func $add (param $x i32) (param $y i32) (result i32)
     (return
       (i32.add

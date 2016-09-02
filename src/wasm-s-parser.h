@@ -1402,8 +1402,26 @@ private:
 
   void parseExport(Element& s) {
     std::unique_ptr<Export> ex = make_unique<Export>();
-    if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
-      ex->name = s[1]->str();
+    ex->name = s[1]->str();
+    if (s[2]->isList()) {
+      auto& inner = *s[2];
+      if (inner[0]->str() == FUNC) {
+        ex->value = inner[1]->str();
+        ex->kind = Export::Function;
+      } else if (inner[0]->str() == MEMORY) {
+        if (!hasMemory) throw ParseException("memory exported but no memory");
+        ex->value = Name::fromInt(0);
+        ex->kind = Export::Memory;
+      } else if (inner[0]->str() == TABLE) {
+        ex->value = Name::fromInt(0);
+        ex->kind = Export::Table;
+      } else if (inner[0]->str() == GLOBAL) {
+        ex->value = inner[1]->str();
+        ex->kind = Export::Table;
+      } else {
+        WASM_UNREACHABLE();
+      }
+    } else if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
       if (s[2]->str() == MEMORY) {
         if (!hasMemory) throw ParseException("memory exported but no memory");
         ex->value = Name::fromInt(0);
@@ -1419,7 +1437,6 @@ private:
       }
     } else {
       // function
-      ex->name = s[1]->str();
       ex->value = s[2]->str();
       ex->kind = Export::Function;
     }
