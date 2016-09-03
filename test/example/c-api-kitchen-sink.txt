@@ -486,7 +486,7 @@ BinaryenFloat64: 4
               )
             )
             (drop
-              (i64.load8_s offset=2 align=4
+              (i64.load16_s offset=2 align=1
                 (i32.const 8)
               )
             )
@@ -1528,7 +1528,7 @@ int main() {
   expressions[228] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[229] = BinaryenLoad(the_module, 4, 0, 0, 0, 1, expressions[228]);
   expressions[230] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
-  expressions[231] = BinaryenLoad(the_module, 1, 1, 2, 4, 2, expressions[230]);
+  expressions[231] = BinaryenLoad(the_module, 2, 1, 2, 1, 2, expressions[230]);
   expressions[232] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   expressions[233] = BinaryenLoad(the_module, 4, 0, 0, 0, 3, expressions[232]);
   expressions[234] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
@@ -2077,7 +2077,7 @@ int main() {
               )
             )
             (drop
-              (i64.load8_s offset=2 align=4
+              (i64.load16_s offset=2 align=1
                 (i32.const 8)
               )
             )

@@ -481,7 +481,7 @@
               )
             )
             (drop
-              (i64.load8_s offset=2 align=4
+              (i64.load16_s offset=2 align=1
                 (i32.const 8)
               )
             )

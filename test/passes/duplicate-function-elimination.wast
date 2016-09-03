@@ -593,7 +593,7 @@
       )
     )
     (drop
-      (i32.load8_s offset=3 align=2
+      (i32.load16_s offset=3 align=2
         (i32.const 0)
       )
     )
@@ -605,7 +605,25 @@
       )
     )
     (drop
-      (i32.load8_s offset=3 align=2
+      (i32.load16_s offset=3 align=2
+        (i32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.load offset=3
+        (i32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (i32.load16_s offset=3 align=2
         (i32.const 0)
       )
     )
@@ -623,7 +641,7 @@
   )
   (func $other (type $0)
     (drop
-      (i32.load8_s offset=3 align=2
+      (i32.load16_s offset=3 align=1
         (i32.const 0)
       )
     )
@@ -634,14 +652,14 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (drop
-      (i32.load8_s offset=3
+      (i32.load16_s align=2
         (i32.const 0)
       )
     )
   )
   (func $other (type $0)
     (drop
-      (i32.load8_s offset=3 align=2
+      (i32.load16_s offset=3 align=2
         (i32.const 0)
       )
     )
@@ -652,32 +670,14 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (drop
-      (i32.load8_s align=2
+      (i32.load16_s offset=3 align=2
         (i32.const 0)
       )
     )
   )
   (func $other (type $0)
     (drop
-      (i32.load8_s offset=3 align=2
-        (i32.const 0)
-      )
-    )
-  )
-)
-(module
-  (memory 10)
-  (type $0 (func))
-  (func $keep2 (type $0)
-    (drop
-      (i32.load8_s offset=3 align=2
-        (i32.const 0)
-      )
-    )
-  )
-  (func $other (type $0)
-    (drop
-      (i32.load8_s offset=3 align=2
+      (i32.load16_s offset=3 align=2
         (i32.const 1)
       )
     )
@@ -688,14 +688,14 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (drop
-      (i32.load8_u offset=3 align=2
+      (i32.load16_u offset=3 align=2
         (i32.const 0)
       )
     )
   )
   (func $other (type $0)
     (drop
-      (i32.load8_s offset=3 align=2
+      (i32.load16_s offset=3 align=2
         (i32.const 0)
       )
     )
@@ -709,7 +709,7 @@
       (i32.const 0)
       (i32.const 100)
     )
-    (i32.store8 offset=3 align=2
+    (i32.store16 offset=3 align=2
       (i32.const 0)
       (i32.const 100)
     )
@@ -719,7 +719,23 @@
       (i32.const 0)
       (i32.const 100)
     )
-    (i32.store8 offset=3 align=2
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
+  )
+)
+(module
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (i32.store32 offset=3
+      (i32.const 0)
+      (i32.const 100)
+    )
+  )
+  (func $other (type $0)
+    (i32.store16 offset=3 align=2
       (i32.const 0)
       (i32.const 100)
     )
@@ -735,7 +751,7 @@
     )
   )
   (func $other (type $0)
-    (i32.store8 offset=3 align=2
+    (i32.store16 offset=3 align=1
       (i32.const 0)
       (i32.const 100)
     )
@@ -745,13 +761,13 @@
   (memory 10)
   (type $0 (func))
   (func $keep2 (type $0)
-    (i32.store8 offset=3
+    (i32.store16 align=2
       (i32.const 0)
       (i32.const 100)
     )
   )
   (func $other (type $0)
-    (i32.store8 offset=3 align=2
+    (i32.store16 offset=3 align=2
       (i32.const 0)
       (i32.const 100)
     )
@@ -761,29 +777,13 @@
   (memory 10)
   (type $0 (func))
   (func $keep2 (type $0)
-    (i32.store8 align=2
+    (i32.store16 offset=3 align=2
       (i32.const 0)
       (i32.const 100)
     )
   )
   (func $other (type $0)
-    (i32.store8 offset=3 align=2
-      (i32.const 0)
-      (i32.const 100)
-    )
-  )
-)
-(module
-  (memory 10)
-  (type $0 (func))
-  (func $keep2 (type $0)
-    (i32.store8 offset=3 align=2
-      (i32.const 0)
-      (i32.const 100)
-    )
-  )
-  (func $other (type $0)
-    (i32.store8 offset=3 align=2
+    (i32.store16 offset=3 align=2
       (i32.const 1)
       (i32.const 100)
     )
@@ -793,13 +793,13 @@
   (memory 10)
   (type $0 (func))
   (func $keep2 (type $0)
-    (i32.store8 offset=3 align=2
+    (i32.store16 offset=3 align=2
       (i32.const 0)
       (i32.const 100)
     )
   )
   (func $other (type $0)
-    (i32.store8 offset=3 align=2
+    (i32.store16 offset=3 align=2
       (i32.const 0)
       (i32.const 101)
     )

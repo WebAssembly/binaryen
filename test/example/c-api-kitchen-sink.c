@@ -209,7 +209,7 @@ void test_core() {
     BinaryenSetLocal(module, 0, makeInt32(module, 101)),
     BinaryenDrop(module, BinaryenTeeLocal(module, 0, makeInt32(module, 102))),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(), makeInt32(module, 1)),
-    BinaryenLoad(module, 1, 1, 2, 4, BinaryenInt64(), makeInt32(module, 8)),
+    BinaryenLoad(module, 2, 1, 2, 1, BinaryenInt64(), makeInt32(module, 8)),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenFloat32(), makeInt32(module, 2)),
     BinaryenLoad(module, 8, 0, 2, 8, BinaryenFloat64(), makeInt32(module, 9)),
     BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenInt32()),

@@ -1402,9 +1402,10 @@ private:
   }
 
   void parseData(Element& s) {
+    if (!hasMemory) throw ParseException("data but no memory");
     Index i = 1;
     Expression* offset;
-    if (s[i]->isList()) {
+    if (i < s.size() && s[i]->isList()) {
       // there is an init expression
       offset = parseExpression(s[i++]);
     } else {

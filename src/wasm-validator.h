@@ -197,11 +197,11 @@ public:
     }
   }
   void visitLoad(Load *curr) {
-    validateAlignment(curr->align);
+    validateAlignment(curr->align, curr->type, curr->bytes);
     shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
   }
   void visitStore(Store *curr) {
-    validateAlignment(curr->align);
+    validateAlignment(curr->align, curr->type, curr->bytes);
     shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
     shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
     shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
@@ -351,12 +351,26 @@ public:
   }
 
   bool isConstant(Expression* curr) {
-    return curr->is<Const>();
+    return curr->is<Const>() || curr->is<GetGlobal>();
   }
 
   void visitMemory(Memory *curr) {
     shouldBeFalse(curr->initial > curr->max, "memory", "memory max >= initial");
     shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
+    Index mustBeGreaterOrEqual = 0;
+    for (auto& segment : curr->segments) {
+      if (!shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;
+      shouldBeTrue(isConstant(segment.offset), segment.offset, "segment offset should be constant");
+      Index size = segment.data.size();
+      shouldBeTrue(size <= curr->initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory");
+      if (segment.offset->is<Const>()) {
+        Index start = segment.offset->cast<Const>()->value.geti32();
+        Index end = start + size;
+        shouldBeTrue(end <= curr->initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory");
+        shouldBeTrue(start >= mustBeGreaterOrEqual, segment.data.size(), "segment size should fit in memory");
+        mustBeGreaterOrEqual = end;
+      }
+    }
   }
   void visitTable(Table* curr) {
     for (auto& segment : curr->segments) {
@@ -476,7 +490,7 @@ private:
     return true;
   }
 
-  void validateAlignment(size_t align) {
+  void validateAlignment(size_t align, WasmType type, Index bytes) {
     switch (align) {
       case 1:
       case 2:
@@ -487,6 +501,20 @@ private:
         valid = false;
         break;
       }
+    }
+    shouldBeTrue(align <= bytes, align, "alignment must not exceed natural");
+    switch (type) {
+      case i32:
+      case f32: {
+        shouldBeTrue(align <= 4, align, "alignment must not exceed natural");
+        break;
+      }
+      case i64:
+      case f64: {
+        shouldBeTrue(align <= 8, align, "alignment must not exceed natural");
+        break;
+      }
+      default: {}
     }
   }
 };
