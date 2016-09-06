@@ -25,8 +25,6 @@
 
 using namespace wasm;
 
-cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
-
 void Linker::placeStackPointer(Address stackAllocation) {
   // ensure this is the first allocation
   assert(nextStatic == globalBase || nextStatic == 1);
@@ -302,72 +300,11 @@ void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
     generateMemoryGrowthFunction(out.wasm);
   }
 
-  out.wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
-
   makeDynCallThunks();
 
   o << ";; METADATA: { ";
   // find asmConst calls, and emit their metadata
-  struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
-    Linker* parent;
-
-    std::map<std::string, std::set<std::string>> sigsForCode;
-    std::map<std::string, Address> ids;
-    std::set<std::string> allSigs;
-
-    void visitCallImport(CallImport* curr) {
-      if (curr->target == EMSCRIPTEN_ASM_CONST) {
-        auto arg = curr->operands[0]->cast<Const>();
-        Address segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
-        std::string code = escape(&parent->out.wasm.memory.segments[segmentIndex].data[0]);
-        int32_t id;
-        if (ids.count(code) == 0) {
-          id = ids.size();
-          ids[code] = id;
-        } else {
-          id = ids[code];
-        }
-        std::string sig = getSig(curr);
-        sigsForCode[code].insert(sig);
-        std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
-        curr->target = cashew::IString(fixedTarget.c_str(), false);
-        arg->value = Literal(id);
-        // add import, if necessary
-        if (allSigs.count(sig) == 0) {
-          allSigs.insert(sig);
-          auto import = new Import;
-          import->name = import->base = curr->target;
-          import->module = ENV;
-          import->type = ensureFunctionType(getSig(curr), &parent->out.wasm);
-          parent->out.wasm.addImport(import);
-        }
-      }
-    }
-
-    std::string escape(const char *input) {
-      std::string code = input;
-      // replace newlines quotes with escaped newlines
-      size_t curr = 0;
-      while ((curr = code.find("\\n", curr)) != std::string::npos) {
-        code = code.replace(curr, 2, "\\\\n");
-        curr += 3; // skip this one
-      }
-      // replace double quotes with escaped single quotes
-      curr = 0;
-      while ((curr = code.find('"', curr)) != std::string::npos) {
-        if (curr == 0 || code[curr-1] != '\\') {
-          code = code.replace(curr, 1, "\\" "\"");
-          curr += 2; // skip this one
-        } else { // already escaped, escape the slash as well
-          code = code.replace(curr, 1, "\\" "\\" "\"");
-          curr += 3; // skip this one
-        }
-      }
-      return code;
-    }
-  };
-  AsmConstWalker walker;
-  walker.parent = this;
+  AsmConstWalker walker(out.wasm, segmentsByAddress);
   walker.walkModule(&out.wasm);
   // print
   o << "\"asmConsts\": {";
@@ -444,6 +381,11 @@ void Linker::makeDummyFunction() {
 }
 
 void Linker::makeDynCallThunks() {
+  // TEMP: add local EMSCRIPTEN_ASM_CONST to let this method compile.
+  // Move this method to wasm-emscripten.cpp too.
+  cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+  out.wasm.removeImport(EMSCRIPTEN_ASM_CONST);
+
   if (out.wasm.table.segments.size() == 0) return;
   std::unordered_set<std::string> sigs;
   wasm::Builder wasmBuilder(out.wasm);
