@@ -168,6 +168,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
   void visitExpression(Expression* curr) {
     // we may be able to apply multiple patterns, one may open opportunities that look deeper NB: patterns must not have cycles
     while (1) {
+      auto* handOptimized = handOptimize(curr);
+      if (handOptimized) {
+        curr = handOptimized;
+        replaceCurrent(curr);
+        continue;
+      }
       auto iter = database->patternMap.find(curr->_id);
       if (iter == database->patternMap.end()) return;
       auto& patterns = iter->second;
@@ -183,6 +189,27 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       }
       if (!more) break;
     }
+  }
+
+  // Optimizations that don't yet fit in the pattern DSL, but could be eventually maybe
+  Expression* handOptimize(Expression* curr) {
+    if (auto* binary = curr->dynCast<Binary>()) {
+      // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
+      if (binary->op == BinaryOp::ShrSInt32 && binary->right->is<Const>()) {
+        auto shifts = binary->right->cast<Const>()->value.geti32();
+        if (shifts == 24 || shifts == 16) {
+          auto* left = binary->left->dynCast<Binary>();
+          if (left && left->op == ShlInt32 && left->right->is<Const>() && left->right->cast<Const>()->value.geti32() == shifts) {
+            auto* load = left->left->dynCast<Load>();
+            if (load && ((load->bytes == 1 && shifts == 24) || (load->bytes == 2 && shifts == 16))) {
+              load->signed_ = true;
+              return load;
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
   }
 };
 

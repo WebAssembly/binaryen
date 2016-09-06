@@ -616,4 +616,70 @@
       )
     )
   )
+  (func $loadSigned (param $0 i32)
+    (call $loadSigned
+      (i32.load8_s
+        (get_local $0)
+      )
+    )
+    (call $loadSigned
+      (i32.load8_s
+        (get_local $0)
+      )
+    )
+    (call $loadSigned
+      (i32.load16_s
+        (get_local $0)
+      )
+    )
+    (call $loadSigned
+      (i32.load16_s
+        (get_local $0)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_s
+            (get_local $0)
+          )
+          (i32.const 24)
+        )
+        (i32.const 16)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_u
+            (get_local $0)
+          )
+          (i32.const 16)
+        )
+        (i32.const 24)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_s
+            (get_local $0)
+          )
+          (i32.const 16)
+        )
+        (i32.const 24)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_u
+            (get_local $0)
+          )
+          (i32.const 24)
+        )
+        (i32.const 16)
+      )
+    )
+  )
 )

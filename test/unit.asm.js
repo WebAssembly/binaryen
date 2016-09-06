@@ -330,6 +330,18 @@ function asm(global, env, buffer) {
     y = 3 ? +abort(7) : 4.5;
   }
 
+  function loadSigned(x) {
+    x = x | 0;
+    loadSigned(HEAP8[x >> 0] << 24 >> 24);
+    loadSigned(HEAPU8[x >> 0] << 24 >> 24);
+    loadSigned(HEAP16[x >> 1] << 16 >> 16);
+    loadSigned(HEAPU16[x >> 1] << 16 >> 16);
+    loadSigned(HEAP8[x >> 0] << 24 >> 16);
+    loadSigned(HEAPU8[x >> 0] << 16 >> 24);
+    loadSigned(HEAP16[x >> 1] << 16 >> 24);
+    loadSigned(HEAPU16[x >> 1] << 24 >> 16);
+  }
+
   function z() {
   }
   function w() {
