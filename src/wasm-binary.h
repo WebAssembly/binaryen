@@ -1328,19 +1328,22 @@ public:
   }
   uint16_t getInt16() {
     if (debug) std::cerr << "<==" << std::endl;
-    auto ret = uint16_t(getInt8()) | (uint16_t(getInt8()) << 8);
+    auto ret = uint16_t(getInt8());
+    ret |= uint16_t(getInt8()) << 8;
     if (debug) std::cerr << "getInt16: " << ret << " ==>" << std::endl;
     return ret;
   }
   uint32_t getInt32() {
     if (debug) std::cerr << "<==" << std::endl;
-    auto ret = uint32_t(getInt16()) | (uint32_t(getInt16()) << 16);
+    auto ret = uint32_t(getInt16());
+    ret |= uint32_t(getInt16()) << 16;
     if (debug) std::cerr << "getInt32: " << ret << " ==>" << std::endl;
     return ret;
   }
   uint64_t getInt64() {
     if (debug) std::cerr << "<==" << std::endl;
-    auto ret = uint64_t(getInt32()) | (uint64_t(getInt32()) << 32);
+    auto ret = uint64_t(getInt32());
+    ret |= uint64_t(getInt32()) << 32;
     if (debug) std::cerr << "getInt64: " << ret << " ==>" << std::endl;
     return ret;
   }
