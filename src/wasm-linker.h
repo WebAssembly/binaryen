@@ -241,7 +241,7 @@ class Linker {
 
   // Support for emscripten integration: generates dyncall thunks, emits
   // metadata for asmConsts, staticBump and initializer functions.
-  void emscriptenGlue(std::ostream& o);
+  void emscriptenGlue(std::ostream& o, bool allowMemoryGrowth);
 
   // Add an object to the link by constructing it in-place with a builder.
   // Returns false if an error occurred.

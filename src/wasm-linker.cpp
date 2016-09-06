@@ -20,6 +20,7 @@
 #include "s2wasm.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-emscripten.h"
 #include "wasm-printing.h"
 
 using namespace wasm;
@@ -292,9 +293,13 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
-void Linker::emscriptenGlue(std::ostream& o) {
+void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
   if (debug) {
     WasmPrinter::printModule(&out.wasm, std::cerr);
+  }
+
+  if (allowMemoryGrowth) {
+    generateMemoryGrowthFunction(out.wasm);
   }
 
   out.wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions

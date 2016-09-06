@@ -32,6 +32,7 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool ignoreUnknownSymbols = false;
   bool generateEmscriptenGlue = false;
+  bool allowMemoryGrowth = false;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   Options options("s2wasm", "Link .s file into .wast");
@@ -73,6 +74,11 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["max-memory"] = argument;
            })
+      .add("--allow-memory-growth", "", "Allow linear memory to grow at runtime",
+           Options::Arguments::Zero,
+           [&allowMemoryGrowth](Options *, const std::string &) {
+             allowMemoryGrowth = true;
+           })
       .add("--emscripten-glue", "-e", "Generate emscripten glue",
            Options::Arguments::Zero,
            [&generateEmscriptenGlue](Options *, const std::string &) {
@@ -97,6 +103,11 @@ int main(int argc, const char *argv[]) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
+
+  if (allowMemoryGrowth && !generateEmscriptenGlue) {
+    Fatal() << "Error: adding memory growth code without Emscripten glue. "
+      "This doesn't do anything.\n";
+  }
 
   auto debugFlag = options.debug ? Flags::Debug : Flags::Release;
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, debugFlag));
@@ -139,7 +150,7 @@ int main(int argc, const char *argv[]) {
   if (generateEmscriptenGlue) {
     if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
     // dyncall thunks
-    linker.emscriptenGlue(meta);
+    linker.emscriptenGlue(meta, allowMemoryGrowth);
   }
 
   if (options.extra["validate"] != "none") {
