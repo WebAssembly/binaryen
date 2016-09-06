@@ -210,5 +210,13 @@
         (i32.const 0)
       )
     )
+    (if
+      (i32.eqz
+        (i32.eqz
+          (i32.const 123)
+        )
+      )
+      (nop)
+    )
   )
 )
