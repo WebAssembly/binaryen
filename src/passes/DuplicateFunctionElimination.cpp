@@ -102,7 +102,17 @@ struct DuplicateFunctionElimination : public Pass {
         auto& group = pair.second;
         if (group.size() == 1) continue;
         // pick a base for each group, and try to replace everyone else to it. TODO: multiple bases per hash group, for collisions
+#if 0
+        // for comparison purposes, pick in a deterministic way based on the names
+        Function* base = nullptr;
+        for (auto* func : group) {
+          if (!base || strcmp(func->name.str, base->name.str) < 0) {
+            base = func;
+          }
+        }
+#else
         Function* base = group[0];
+#endif
         for (auto* func : group) {
           if (func != base && equal(func, base)) {
             replacements[func->name] = base->name;
