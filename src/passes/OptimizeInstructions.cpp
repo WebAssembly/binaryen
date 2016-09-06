@@ -24,6 +24,7 @@
 #include <pass.h>
 #include <wasm-s-parser.h>
 #include <support/threads.h>
+#include <ast_utils.h>
 
 namespace wasm {
 
@@ -207,6 +208,13 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
+      }
+    } else if (auto* set = curr->dynCast<SetGlobal>()) {
+      // optimize out a set of a get
+      auto* get = set->value->dynCast<GetGlobal>();
+      if (get && get->name == set->name) {
+        ExpressionManipulator::nop(curr);
+        return curr;
       }
     }
     return nullptr;

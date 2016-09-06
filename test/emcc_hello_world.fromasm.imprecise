@@ -17675,9 +17675,6 @@
     (set_global $STACKTOP
       (get_local $6)
     )
-    (set_global $tempRet0
-      (get_global $tempRet0)
-    )
     (get_local $0)
   )
   (func $___muldi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)

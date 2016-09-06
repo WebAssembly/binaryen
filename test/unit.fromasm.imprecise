@@ -671,12 +671,6 @@
         (i32.const 12)
       )
     )
-    (set_global $Double
-      (get_global $Double)
-    )
-    (set_global $Int
-      (get_global $Int)
-    )
     (call $globalOpts)
     (set_local $0
       (get_global $Int)
