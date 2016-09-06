@@ -1097,4 +1097,39 @@
   (func $w
     (nop)
   )
+  (func $globalOpts
+    (local $x i32)
+    (local $y f64)
+    (set_local $x
+      (get_global $Int)
+    )
+    (set_local $y
+      (get_global $Double)
+    )
+    (i32.store8
+      (i32.const 13)
+      (i32.load
+        (i32.const 12)
+      )
+    )
+    (set_global $Double
+      (get_local $y)
+    )
+    (set_global $Int
+      (get_local $x)
+    )
+    (call $globalOpts)
+    (set_local $x
+      (get_global $Int)
+    )
+    (if
+      (i32.const 1)
+      (set_global $Int
+        (i32.const 20)
+      )
+    )
+    (set_global $Int
+      (get_local $x)
+    )
+  )
 )

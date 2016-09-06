@@ -92,13 +92,16 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
+  std::set<Name> globalsRead;
+  std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
+  bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches; }
-  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory; }
+  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0; }
+  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
@@ -114,6 +117,17 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
     }
     for (auto local : localsRead) {
       if (other.localsWritten.count(local)) return true;
+    }
+    if ((accessesGlobal() && other.calls) || (other.accessesGlobal() && calls)) {
+      return true;
+    }
+    for (auto global : globalsWritten) {
+      if (other.globalsWritten.count(global) || other.globalsRead.count(global)) {
+        return true;
+      }
+    }
+    for (auto global : globalsRead) {
+      if (other.globalsWritten.count(global)) return true;
     }
     return false;
   }
@@ -163,8 +177,12 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitSetLocal(SetLocal *curr) {
     localsWritten.insert(curr->index);
   }
-  void visitGetGlobal(GetGlobal *curr) { readsMemory = true; }  // TODO: global-specific
-  void visitSetGlobal(SetGlobal *curr) { writesMemory = true; } //       stuff?
+  void visitGetGlobal(GetGlobal *curr) {
+    globalsRead.insert(curr->name);
+  }
+  void visitSetGlobal(SetGlobal *curr) {
+    globalsWritten.insert(curr->name);
+  }
   void visitLoad(Load *curr) { readsMemory = true; }
   void visitStore(Store *curr) { writesMemory = true; }
   void visitReturn(Return *curr) { branches = true; }

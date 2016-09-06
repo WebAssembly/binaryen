@@ -663,4 +663,32 @@
       )
     )
   )
+  (func $globalOpts
+    (local $0 i32)
+    (i32.store8
+      (i32.const 13)
+      (i32.load
+        (i32.const 12)
+      )
+    )
+    (set_global $Double
+      (get_global $Double)
+    )
+    (set_global $Int
+      (get_global $Int)
+    )
+    (call $globalOpts)
+    (set_local $0
+      (get_global $Int)
+    )
+    (if
+      (i32.const 1)
+      (set_global $Int
+        (i32.const 20)
+      )
+    )
+    (set_global $Int
+      (get_local $0)
+    )
+  )
 )

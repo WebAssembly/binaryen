@@ -347,6 +347,19 @@ function asm(global, env, buffer) {
   function w() {
   }
 
+  function globalOpts() {
+    var x = 0, y = +0;
+    x = Int;
+    y = Double;
+    HEAP8[13] = HEAP32[3]; // access memory, should not confuse the global writes
+    Double = y;
+    Int = x;
+    globalOpts();
+    x = Int;
+    if (1) Int = 20;
+    Int = x;
+  }
+
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg ];
