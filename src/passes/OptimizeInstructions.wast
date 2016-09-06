@@ -19,8 +19,8 @@
 
   ;; main function. each block here is a pattern pair of input => output
   (func $patterns
+    ;; flip if-else arms to get rid of an eqz
     (block
-      ;; flip if-else arms to get rid of an eqz
       (if
         (i32.eqz
           (call_import $i32.expr (i32.const 0))
@@ -32,6 +32,25 @@
         (call_import $i32.expr (i32.const 0))
         (call_import $any.expr (i32.const 2))
         (call_import $any.expr (i32.const 1))
+      )
+    )
+    ;; equal 0 => eqz
+    (block
+      (i32.eq
+        (call_import $any.expr (i32.const 0))
+        (i32.const 0)
+      )
+      (i32.eqz
+        (call_import $any.expr (i32.const 0))
+      )
+    )
+    (block
+      (i32.eq
+        (i32.const 0)
+        (call_import $any.expr (i32.const 0))
+      )
+      (i32.eqz
+        (call_import $any.expr (i32.const 0))
       )
     )
     ;; De Morgans Laws

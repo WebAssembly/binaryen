@@ -166,5 +166,20 @@
         (f64.const 2)
       )
     )
+    (drop
+      (i32.eqz
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.const 0)
+      )
+    )
   )
 )

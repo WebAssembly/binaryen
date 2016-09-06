@@ -192,5 +192,23 @@
         )
       )
     )
+    (drop
+      (i32.eq
+        (i32.const 100)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.const 0)
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
   )
 )
