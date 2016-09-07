@@ -291,6 +291,45 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
+bool hasI64ResultOrParam(FunctionType* ft) {
+  if (ft->result == i64) return true;
+  for (auto ty : ft->params) {
+    if (ty == i64) return true;
+  }
+  return false;
+}
+
+// Create thunks for use with emscripten Runtime.dynCall. Creates one for each
+// signature in the indirect function table.
+std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name>& tableSegmentData) {
+  std::vector<Function*> generatedFunctions;
+  std::unordered_set<std::string> sigs;
+  wasm::Builder wasmBuilder(wasm);
+  for (const auto& indirectFunc : tableSegmentData) {
+    // Skip generating thunks for the dummy function
+    if (indirectFunc == dummyFunction) continue;
+    std::string sig(getSig(wasm.getFunction(indirectFunc)));
+    auto* funcType = ensureFunctionType(sig, &wasm);
+    if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
+    if (!sigs.insert(sig).second) continue; // Sig is already in the set
+    std::vector<NameType> params;
+    params.emplace_back("fptr", i32); // function pointer param
+    int p = 0;
+    for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
+    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
+    Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
+    std::vector<Expression*> args;
+    for (unsigned i = 0; i < funcType->params.size(); ++i) {
+      args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
+    }
+    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
+    f->body = call;
+    wasm.addFunction(f);
+    generatedFunctions.push_back(f);
+  }
+  return generatedFunctions;
+}
+
 void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
   if (debug) {
     WasmPrinter::printModule(&out.wasm, std::cerr);
@@ -300,7 +339,14 @@ void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
     generateMemoryGrowthFunction(out.wasm);
   }
 
-  makeDynCallThunks();
+  cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+  out.wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+
+  if (out.wasm.table.segments.size() != 0) {
+    for (auto f : makeDynCallThunks(out.wasm, getTableSegment().data)) {
+      exportFunction(f->name, true);
+    }
+  }
 
   o << ";; METADATA: { ";
   // find asmConst calls, and emit their metadata
@@ -355,14 +401,6 @@ Index Linker::getFunctionIndex(Name name) {
   return functionIndexes[name];
 }
 
-bool hasI64ResultOrParam(FunctionType* ft) {
-  if (ft->result == i64) return true;
-  for (auto ty : ft->params) {
-    if (ty == i64) return true;
-  }
-  return false;
-}
-
 void Linker::makeDummyFunction() {
   bool create = false;
   // Check if there are address-taken functions
@@ -378,39 +416,6 @@ void Linker::makeDummyFunction() {
   Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, WasmType::none, {}, unreachable);
   out.wasm.addFunction(dummy);
   getFunctionIndex(dummy->name);
-}
-
-void Linker::makeDynCallThunks() {
-  // TEMP: add local EMSCRIPTEN_ASM_CONST to let this method compile.
-  // Move this method to wasm-emscripten.cpp too.
-  cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
-  out.wasm.removeImport(EMSCRIPTEN_ASM_CONST);
-
-  if (out.wasm.table.segments.size() == 0) return;
-  std::unordered_set<std::string> sigs;
-  wasm::Builder wasmBuilder(out.wasm);
-  for (const auto& indirectFunc : getTableSegment().data) {
-    // Skip generating thunks for the dummy function
-    if (indirectFunc == dummyFunction) continue;
-    std::string sig(getSig(out.wasm.getFunction(indirectFunc)));
-    auto* funcType = ensureFunctionType(sig, &out.wasm);
-    if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
-    if (!sigs.insert(sig).second) continue; // Sig is already in the set
-    std::vector<NameType> params;
-    params.emplace_back("fptr", i32); // function pointer param
-    int p = 0;
-    for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
-    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
-    Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
-    std::vector<Expression*> args;
-    for (unsigned i = 0; i < funcType->params.size(); ++i) {
-      args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
-    }
-    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
-    f->body = call;
-    out.wasm.addFunction(f);
-    exportFunction(f->name, true);
-  }
 }
 
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {

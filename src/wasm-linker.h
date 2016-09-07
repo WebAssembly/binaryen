@@ -32,6 +32,9 @@ namespace wasm {
 
 class S2WasmBuilder;
 
+// Name of the dummy function to prevent erroneous nullptr comparisons.
+static constexpr const char* dummyFunction = "__wasm_nullptr";
+
 // An "object file" for linking. Contains a wasm module, plus the associated
 // information needed for linking/layout.
 class LinkerObject {
@@ -252,9 +255,6 @@ class Linker {
   // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
 
-  // Name of the dummy function to prevent erroneous nullptr comparisons.
-  static constexpr const char* dummyFunction = "__wasm_nullptr";
-
  private:
   // Allocate a static variable and return its address in linear memory
   Address allocateStatic(Address allocSize, Address alignment, Name name) {
@@ -293,10 +293,6 @@ class Linker {
   // Adds a dummy function in the indirect table at slot 0 to prevent NULL
   // pointer miscomparisons.
   void makeDummyFunction();
-
-  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-  // signature in the indirect function table.
-  void makeDynCallThunks();
 
   static Address roundUpToPageSize(Address size) {
     return (size + Memory::kPageSize - 1) & Memory::kPageMask;
