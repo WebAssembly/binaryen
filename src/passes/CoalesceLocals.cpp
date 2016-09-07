@@ -485,9 +485,19 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
         // in addition, we can optimize out redundant copies and ineffective sets
         GetLocal* get;
         if ((get = set->value->dynCast<GetLocal>()) && get->index == set->index) {
-          *action.origin = get; // further optimizations may get rid of the get, if this is in a place where the output does not matter
+          if (set->isTee()) {
+            *action.origin = get;
+          } else {
+            ExpressionManipulator::nop(set);
+          }
         } else if (!action.effective) {
           *action.origin = set->value; // value may have no side effects, further optimizations can eliminate it
+          if (!set->isTee()) {
+            // we need to drop it
+            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(set);
+            drop->value = *action.origin;
+            *action.origin = drop;
+          }
         }
       }
     }

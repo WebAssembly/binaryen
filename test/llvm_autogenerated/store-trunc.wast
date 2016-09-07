@@ -32,7 +32,7 @@
     )
   )
   (func $trunc_i32_i64 (param $0 i32) (param $1 i64)
-    (i64.store32
+    (i64.store
       (get_local $0)
       (get_local $1)
     )

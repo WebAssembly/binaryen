@@ -4,6 +4,8 @@
   (export "memory" memory)
   (type $FUNCSIG$vijji (func (param i32 i64 i64 i32)))
   (type $FUNCSIG$vijjjj (func (param i32 i64 i64 i64 i64)))
+  (type $2 (func (param i32 i64 i64)))
+  (type $3 (func (param i64 i64) (result i32)))
   (import $__ashlti3 "env" "__ashlti3" (param i32 i64 i64 i32))
   (import $__ashrti3 "env" "__ashrti3" (param i32 i64 i64 i32))
   (import $__divti3 "env" "__divti3" (param i32 i64 i64 i64 i64))
@@ -35,7 +37,8 @@
   (export "masked_rotl" $masked_rotl)
   (export "rotr" $rotr)
   (export "masked_rotr" $masked_rotr)
-  (func $add128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $add128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+    (local $5 i64)
     (i64.store
       (i32.add
         (get_local $0)
@@ -50,13 +53,21 @@
           (i64.const 1)
           (i64.extend_u/i32
             (i64.lt_u
-              (set_local $2
-                (i64.store
-                  (get_local $0)
-                  (i64.add
-                    (get_local $1)
-                    (get_local $3)
+              (tee_local $2
+                (block
+                  (block
+                    (set_local $5
+                      (i64.add
+                        (get_local $1)
+                        (get_local $3)
+                      )
+                    )
+                    (i64.store
+                      (get_local $0)
+                      (get_local $5)
+                    )
                   )
+                  (get_local $5)
                 )
               )
               (get_local $1)
@@ -71,7 +82,7 @@
     )
     (return)
   )
-  (func $sub128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $sub128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (i64.store
       (get_local $0)
       (i64.sub
@@ -99,18 +110,27 @@
     )
     (return)
   )
-  (func $mul128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $mul128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__multi3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -145,18 +165,27 @@
     )
     (return)
   )
-  (func $sdiv128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $sdiv128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__divti3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -191,18 +220,27 @@
     )
     (return)
   )
-  (func $udiv128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $udiv128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__udivti3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -237,18 +275,27 @@
     )
     (return)
   )
-  (func $srem128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $srem128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__modti3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -283,18 +330,27 @@
     )
     (return)
   )
-  (func $urem128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $urem128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__umodti3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -329,7 +385,7 @@
     )
     (return)
   )
-  (func $and128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $and128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (i64.store
       (i32.add
         (get_local $0)
@@ -349,7 +405,7 @@
     )
     (return)
   )
-  (func $or128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $or128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (i64.store
       (i32.add
         (get_local $0)
@@ -369,7 +425,7 @@
     )
     (return)
   )
-  (func $xor128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $xor128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (i64.store
       (i32.add
         (get_local $0)
@@ -389,18 +445,27 @@
     )
     (return)
   )
-  (func $shl128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $shl128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__ashlti3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -436,18 +501,27 @@
     )
     (return)
   )
-  (func $shr128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $shr128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__lshrti3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -483,18 +557,27 @@
     )
     (return)
   )
-  (func $sar128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $sar128 (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__ashrti3
-      (set_local $5
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $5
+        (block
+          (block
+            (set_local $6
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $6)
+            )
           )
+          (get_local $6)
         )
       )
       (get_local $1)
@@ -530,7 +613,8 @@
     )
     (return)
   )
-  (func $clz128 (param $0 i32) (param $1 i64) (param $2 i64)
+  (func $clz128 (type $2) (param $0 i32) (param $1 i64) (param $2 i64)
+    (local $3 i64)
     (i64.store
       (get_local $0)
       (select
@@ -545,19 +629,28 @@
         )
         (i64.ne
           (get_local $2)
-          (i64.store
-            (i32.add
-              (get_local $0)
-              (i32.const 8)
+          (block
+            (block
+              (set_local $3
+                (i64.const 0)
+              )
+              (i64.store
+                (i32.add
+                  (get_local $0)
+                  (i32.const 8)
+                )
+                (get_local $3)
+              )
             )
-            (i64.const 0)
+            (get_local $3)
           )
         )
       )
     )
     (return)
   )
-  (func $clz128_zero_undef (param $0 i32) (param $1 i64) (param $2 i64)
+  (func $clz128_zero_undef (type $2) (param $0 i32) (param $1 i64) (param $2 i64)
+    (local $3 i64)
     (i64.store
       (get_local $0)
       (select
@@ -572,19 +665,28 @@
         )
         (i64.ne
           (get_local $2)
-          (i64.store
-            (i32.add
-              (get_local $0)
-              (i32.const 8)
+          (block
+            (block
+              (set_local $3
+                (i64.const 0)
+              )
+              (i64.store
+                (i32.add
+                  (get_local $0)
+                  (i32.const 8)
+                )
+                (get_local $3)
+              )
             )
-            (i64.const 0)
+            (get_local $3)
           )
         )
       )
     )
     (return)
   )
-  (func $ctz128 (param $0 i32) (param $1 i64) (param $2 i64)
+  (func $ctz128 (type $2) (param $0 i32) (param $1 i64) (param $2 i64)
+    (local $3 i64)
     (i64.store
       (get_local $0)
       (select
@@ -599,19 +701,28 @@
         )
         (i64.ne
           (get_local $1)
-          (i64.store
-            (i32.add
-              (get_local $0)
-              (i32.const 8)
+          (block
+            (block
+              (set_local $3
+                (i64.const 0)
+              )
+              (i64.store
+                (i32.add
+                  (get_local $0)
+                  (i32.const 8)
+                )
+                (get_local $3)
+              )
             )
-            (i64.const 0)
+            (get_local $3)
           )
         )
       )
     )
     (return)
   )
-  (func $ctz128_zero_undef (param $0 i32) (param $1 i64) (param $2 i64)
+  (func $ctz128_zero_undef (type $2) (param $0 i32) (param $1 i64) (param $2 i64)
+    (local $3 i64)
     (i64.store
       (get_local $0)
       (select
@@ -626,19 +737,27 @@
         )
         (i64.ne
           (get_local $1)
-          (i64.store
-            (i32.add
-              (get_local $0)
-              (i32.const 8)
+          (block
+            (block
+              (set_local $3
+                (i64.const 0)
+              )
+              (i64.store
+                (i32.add
+                  (get_local $0)
+                  (i32.const 8)
+                )
+                (get_local $3)
+              )
             )
-            (i64.const 0)
+            (get_local $3)
           )
         )
       )
     )
     (return)
   )
-  (func $popcnt128 (param $0 i32) (param $1 i64) (param $2 i64)
+  (func $popcnt128 (type $2) (param $0 i32) (param $1 i64) (param $2 i64)
     (i64.store
       (i32.add
         (get_local $0)
@@ -659,7 +778,7 @@
     )
     (return)
   )
-  (func $eqz128 (param $0 i64) (param $1 i64) (result i32)
+  (func $eqz128 (type $3) (param $0 i64) (param $1 i64) (result i32)
     (return
       (i64.eqz
         (i64.or
@@ -669,19 +788,28 @@
       )
     )
   )
-  (func $rotl (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $rotl (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__ashlti3
       (i32.add
-        (set_local $5
-          (i32.store
-            (i32.const 4)
-            (i32.sub
-              (i32.load
-                (i32.const 4)
+        (tee_local $5
+          (block
+            (block
+              (set_local $6
+                (i32.sub
+                  (i32.load
+                    (i32.const 4)
+                  )
+                  (i32.const 32)
+                )
               )
-              (i32.const 32)
+              (i32.store
+                (i32.const 4)
+                (get_local $6)
+              )
             )
+            (get_local $6)
           )
         )
         (i32.const 16)
@@ -746,19 +874,28 @@
     )
     (return)
   )
-  (func $masked_rotl (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $masked_rotl (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__ashlti3
       (i32.add
-        (set_local $5
-          (i32.store
-            (i32.const 4)
-            (i32.sub
-              (i32.load
-                (i32.const 4)
+        (tee_local $5
+          (block
+            (block
+              (set_local $6
+                (i32.sub
+                  (i32.load
+                    (i32.const 4)
+                  )
+                  (i32.const 32)
+                )
               )
-              (i32.const 32)
+              (i32.store
+                (i32.const 4)
+                (get_local $6)
+              )
             )
+            (get_local $6)
           )
         )
         (i32.const 16)
@@ -766,7 +903,7 @@
       (get_local $1)
       (get_local $2)
       (i32.wrap/i64
-        (set_local $3
+        (tee_local $3
           (i64.and
             (get_local $3)
             (i64.const 127)
@@ -828,19 +965,28 @@
     )
     (return)
   )
-  (func $rotr (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $rotr (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__lshrti3
       (i32.add
-        (set_local $5
-          (i32.store
-            (i32.const 4)
-            (i32.sub
-              (i32.load
-                (i32.const 4)
+        (tee_local $5
+          (block
+            (block
+              (set_local $6
+                (i32.sub
+                  (i32.load
+                    (i32.const 4)
+                  )
+                  (i32.const 32)
+                )
               )
-              (i32.const 32)
+              (i32.store
+                (i32.const 4)
+                (get_local $6)
+              )
             )
+            (get_local $6)
           )
         )
         (i32.const 16)
@@ -905,19 +1051,28 @@
     )
     (return)
   )
-  (func $masked_rotr (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
+  (func $masked_rotr (type $FUNCSIG$vijjjj) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
+    (local $6 i32)
     (call_import $__lshrti3
       (i32.add
-        (set_local $5
-          (i32.store
-            (i32.const 4)
-            (i32.sub
-              (i32.load
-                (i32.const 4)
+        (tee_local $5
+          (block
+            (block
+              (set_local $6
+                (i32.sub
+                  (i32.load
+                    (i32.const 4)
+                  )
+                  (i32.const 32)
+                )
               )
-              (i32.const 32)
+              (i32.store
+                (i32.const 4)
+                (get_local $6)
+              )
             )
+            (get_local $6)
           )
         )
         (i32.const 16)
@@ -925,7 +1080,7 @@
       (get_local $1)
       (get_local $2)
       (i32.wrap/i64
-        (set_local $3
+        (tee_local $3
           (i64.and
             (get_local $3)
             (i64.const 127)

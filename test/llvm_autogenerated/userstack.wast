@@ -3,6 +3,8 @@
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
+  (type $1 (func))
+  (type $2 (func (param i32 i32)))
   (import $ext_func "env" "ext_func" (param i32))
   (import $ext_func_i32 "env" "ext_func_i32" (param i32))
   (import $use_i8_star "env" "use_i8_star" (param i32))
@@ -18,18 +20,27 @@
   (export "frameaddress_0" $frameaddress_0)
   (export "frameaddress_1" $frameaddress_1)
   (export "inline_asm" $inline_asm)
-  (func $alloca32
+  (func $alloca32 (type $1)
     (local $0 i32)
+    (local $1 i32)
     (i32.store offset=12
-      (set_local $0
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $0
+        (block
+          (block
+            (set_local $1
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $1)
+            )
           )
+          (get_local $1)
         )
       )
       (i32.const 0)
@@ -43,10 +54,10 @@
     )
     (return)
   )
-  (func $alloca3264
+  (func $alloca3264 (type $1)
     (local $0 i32)
     (i32.store offset=12
-      (set_local $0
+      (tee_local $0
         (i32.sub
           (i32.load
             (i32.const 4)
@@ -62,26 +73,44 @@
     )
     (return)
   )
-  (func $allocarray
+  (func $allocarray (type $1)
     (local $0 i32)
+    (local $1 i32)
+    (local $2 i32)
     (i32.store offset=12
-      (set_local $0
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $0
+        (block
+          (block
+            (set_local $1
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 144)
+              )
             )
-            (i32.const 144)
+            (i32.store
+              (i32.const 4)
+              (get_local $1)
+            )
           )
+          (get_local $1)
         )
       )
-      (i32.store
-        (i32.add
-          (get_local $0)
-          (i32.const 24)
+      (block
+        (block
+          (set_local $2
+            (i32.const 1)
+          )
+          (i32.store
+            (i32.add
+              (get_local $0)
+              (i32.const 24)
+            )
+            (get_local $2)
+          )
         )
-        (i32.const 1)
+        (get_local $2)
       )
     )
     (i32.store
@@ -93,19 +122,28 @@
     )
     (return)
   )
-  (func $non_mem_use (param $0 i32)
+  (func $non_mem_use (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i32)
+    (local $2 i32)
     (call_import $ext_func
       (i32.add
-        (set_local $1
-          (i32.store
-            (i32.const 4)
-            (i32.sub
-              (i32.load
-                (i32.const 4)
+        (tee_local $1
+          (block
+            (block
+              (set_local $2
+                (i32.sub
+                  (i32.load
+                    (i32.const 4)
+                  )
+                  (i32.const 48)
+                )
               )
-              (i32.const 48)
+              (i32.store
+                (i32.const 4)
+                (get_local $2)
+              )
             )
+            (get_local $2)
           )
         )
         (i32.const 8)
@@ -130,23 +168,41 @@
     )
     (return)
   )
-  (func $allocarray_inbounds
+  (func $allocarray_inbounds (type $1)
     (local $0 i32)
+    (local $1 i32)
+    (local $2 i32)
     (i32.store offset=12
-      (set_local $0
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $0
+        (block
+          (block
+            (set_local $1
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 32)
+              )
             )
-            (i32.const 32)
+            (i32.store
+              (i32.const 4)
+              (get_local $1)
+            )
           )
+          (get_local $1)
         )
       )
-      (i32.store offset=24
-        (get_local $0)
-        (i32.const 1)
+      (block
+        (block
+          (set_local $2
+            (i32.const 1)
+          )
+          (i32.store offset=24
+            (get_local $0)
+            (get_local $2)
+          )
+        )
+        (get_local $2)
       )
     )
     (call_import $ext_func
@@ -161,13 +217,13 @@
     )
     (return)
   )
-  (func $dynamic_alloca (param $0 i32)
+  (func $dynamic_alloca (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i32)
     (i32.store
       (i32.const 4)
-      (set_local $0
+      (tee_local $0
         (i32.sub
-          (set_local $1
+          (tee_local $1
             (i32.load
               (i32.const 4)
             )
@@ -194,7 +250,7 @@
     )
     (return)
   )
-  (func $dynamic_alloca_redzone (param $0 i32)
+  (func $dynamic_alloca_redzone (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i32)
     (set_local $1
       (i32.load
@@ -222,22 +278,31 @@
     )
     (return)
   )
-  (func $dynamic_static_alloca (param $0 i32)
+  (func $dynamic_static_alloca (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i32)
+    (local $2 i32)
     (i32.store
       (i32.const 4)
-      (set_local $0
+      (tee_local $0
         (i32.sub
-          (i32.store
-            (i32.const 4)
-            (set_local $1
-              (i32.sub
-                (i32.load
-                  (i32.const 4)
+          (block
+            (block
+              (set_local $2
+                (tee_local $1
+                  (i32.sub
+                    (i32.load
+                      (i32.const 4)
+                    )
+                    (i32.const 16)
+                  )
                 )
-                (i32.const 16)
+              )
+              (i32.store
+                (i32.const 4)
+                (get_local $2)
               )
             )
+            (get_local $2)
           )
           (i32.and
             (i32.add
@@ -265,7 +330,7 @@
     )
     (return)
   )
-  (func $copytoreg_fi (param $0 i32) (param $1 i32)
+  (func $copytoreg_fi (type $2) (param $0 i32) (param $1 i32)
     (local $2 i32)
     (set_local $2
       (i32.add
@@ -298,10 +363,10 @@
     )
     (return)
   )
-  (func $frameaddress_0
+  (func $frameaddress_0 (type $1)
     (local $0 i32)
     (call_import $use_i8_star
-      (set_local $0
+      (tee_local $0
         (i32.load
           (i32.const 4)
         )
@@ -313,13 +378,13 @@
     )
     (return)
   )
-  (func $frameaddress_1
+  (func $frameaddress_1 (type $1)
     (call_import $use_i8_star
       (i32.const 0)
     )
     (return)
   )
-  (func $inline_asm
+  (func $inline_asm (type $1)
     (local $0 i32)
     (set_local $0
       (i32.add

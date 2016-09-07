@@ -42,6 +42,15 @@ inline void grey(std::ostream& stream) { outputColorCode(stream, 0x08); }
 inline void green(std::ostream& stream) { outputColorCode(stream, 0x02); }
 inline void blue(std::ostream& stream) { outputColorCode(stream, 0x09); }
 inline void bold(std::ostream& stream) { /* Do nothing */ }
+#else
+inline void normal(std::ostream& stream) {}
+inline void red(std::ostream& stream) {}
+inline void magenta(std::ostream& stream) {}
+inline void orange(std::ostream& stream) {}
+inline void grey(std::ostream& stream) {}
+inline void green(std::ostream& stream) {}
+inline void blue(std::ostream& stream) {}
+inline void bold(std::ostream& stream) {}
 #endif
 };
 

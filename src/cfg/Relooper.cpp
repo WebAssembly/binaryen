@@ -383,7 +383,7 @@ wasm::Expression* MultipleShape::Render(RelooperBuilder& Builder, bool InLoop) {
 // LoopShape
 
 wasm::Expression* LoopShape::Render(RelooperBuilder& Builder, bool InLoop) {
-  wasm::Expression* Ret = Builder.makeLoop(wasm::Name(), Builder.getShapeContinueName(Id), Inner->Render(Builder, true));
+  wasm::Expression* Ret = Builder.makeLoop(Builder.getShapeContinueName(Id), Inner->Render(Builder, true));
   Ret = HandleFollowupMultiples(Ret, this, Builder, InLoop);
   if (Next) {
     Ret = Builder.makeSequence(Ret, Next->Render(Builder, InLoop));

@@ -1,10 +1,11 @@
 Counts
  [funcs]        : 1       
- [total]        : 18      
+ [total]        : 24      
  [vars]         : 1       
  binary         : 1       
  block          : 1       
  const          : 12      
+ drop           : 6       
  if             : 4       
 (module
   (memory 256 256)
@@ -14,25 +15,37 @@ Counts
     (block $block0
       (if
         (i32.const 0)
-        (i32.const 1)
+        (drop
+          (i32.const 1)
+        )
       )
       (if
         (i32.const 0)
-        (i32.const 1)
-        (i32.const 2)
+        (drop
+          (i32.const 1)
+        )
+        (drop
+          (i32.const 2)
+        )
       )
       (if
         (i32.const 4)
-        (i32.const 5)
-        (i32.const 6)
-      )
-      (i32.eq
-        (if
-          (i32.const 4)
+        (drop
           (i32.const 5)
+        )
+        (drop
           (i32.const 6)
         )
-        (i32.const 177)
+      )
+      (drop
+        (i32.eq
+          (if
+            (i32.const 4)
+            (i32.const 5)
+            (i32.const 6)
+          )
+          (i32.const 177)
+        )
       )
     )
   )

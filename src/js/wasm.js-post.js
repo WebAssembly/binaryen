@@ -29,6 +29,7 @@ function integrateWasmJS(Module) {
   // inputs
 
   var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,interpret-s-expr'; // by default, try native and then .wast
+  Module['wasmJSMethod'] = method;
 
   var wasmTextFile = Module['wasmTextFile'] || {{{ wasmTextFile }}};
   var wasmBinaryFile = Module['wasmBinaryFile'] || {{{ wasmBinaryFile }}};
@@ -100,19 +101,15 @@ function integrateWasmJS(Module) {
     }
     var oldView = new Int8Array(oldBuffer);
     var newView = new Int8Array(newBuffer);
-    if ({{{ WASM_BACKEND }}}) {
-      // memory segments arrived in the wast, do not trample them
+
+    // If we have a mem init file, do not trample it
+    if (!memoryInitializer) {
       oldView.set(newView.subarray(STATIC_BASE, STATIC_BASE + STATIC_BUMP), STATIC_BASE);
     }
+
     newView.set(oldView);
     updateGlobalBuffer(newBuffer);
     updateGlobalBufferViews();
-    Module['reallocBuffer'] = function(size) {
-      size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
-      var old = Module['buffer'];
-      exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
-      return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
-    };
   }
 
   var WasmTypes = {
@@ -122,26 +119,6 @@ function integrateWasmJS(Module) {
     f32: 3,
     f64: 4
   };
-
-  // wasm lacks globals, so asm2wasm maps them into locations in memory. that information cannot
-  // be present in the wasm output of asm2wasm, so we store it in a side file. If we load asm2wasm
-  // output, either generated ahead of time or on the client, we need to apply those mapped
-  // globals after loading the module.
-  function applyMappedGlobals(globalsFileBase) {
-    var mappedGlobals = JSON.parse(Module['read'](globalsFileBase + '.mappedGlobals'));
-    for (var name in mappedGlobals) {
-      var global = mappedGlobals[name];
-      if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
-      var value = lookupImport(global.module, global.base);
-      var address = global.address;
-      switch (global.type) {
-        case WasmTypes.i32: Module['HEAP32'][address >> 2] = value; break;
-        case WasmTypes.f32: Module['HEAPF32'][address >> 2] = value; break;
-        case WasmTypes.f64: Module['HEAPF64'][address >> 3] = value; break;
-        default: abort();
-      }
-    }
-  }
 
   function fixImports(imports) {
     if (!{{{ WASM_BACKEND }}}) return imports;
@@ -206,9 +183,7 @@ function integrateWasmJS(Module) {
       return false;
     }
     exports = instance.exports;
-    mergeMemory(exports.memory);
-
-    applyMappedGlobals(wasmBinaryFile);
+    if (exports.memory) mergeMemory(exports.memory);
 
     Module["usingWasm"] = true;
 
@@ -236,6 +211,13 @@ function integrateWasmJS(Module) {
 
     info.global = global;
     info.env = env;
+
+    if (!('memoryBase' in env)) {
+      env['memoryBase'] = STATIC_BASE; // tell the memory segments where to place themselves
+    }
+    if (!('tableBase' in env)) {
+      env['tableBase'] = 0; // tell the memory segments where to place themselves
+    }
 
     wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
@@ -271,12 +253,6 @@ function integrateWasmJS(Module) {
       Module['newBuffer'] = null;
     }
 
-    if (method == 'interpret-s-expr') {
-      applyMappedGlobals(wasmTextFile);
-    } else if (method == 'interpret-binary') {
-      applyMappedGlobals(wasmBinaryFile);
-    }
-
     exports = wasmJS['asmExports'];
 
     return exports;
@@ -284,6 +260,14 @@ function integrateWasmJS(Module) {
 
   // We may have a preloaded value in Module.asm, save it
   Module['asmPreload'] = Module['asm'];
+
+  // Memory growth integration code
+  Module['reallocBuffer'] = function(size) {
+    size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
+    var old = Module['buffer'];
+    exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
+    return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+  };
 
   // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
   // the wasm module at that time, and it receives imports and provides exports and so forth, the app
@@ -293,6 +277,14 @@ function integrateWasmJS(Module) {
     global = fixImports(global);
     env = fixImports(env);
 
+    // import memory and table
+    if (!env['memory']) {
+      env['memory'] = providedBuffer;
+    }
+    if (!env['table']) {
+      env['table'] = new Array(1024);
+    }
+    
     // try the methods. each should return the exports if it succeeded
 
     var exports;

@@ -16,7 +16,9 @@
     (nop)
   )
   (func $b0-yes (type $i) (param $i1 i32)
-    (i32.const 10)
+    (drop
+      (i32.const 10)
+    )
   )
   (func $b0-no (type $i) (param $i1 i32)
     (block $topmost
@@ -32,313 +34,527 @@
     )
   )
   (func $b1-yes (type $i) (param $i1 i32)
-    (i32.const 10)
+    (drop
+      (i32.const 10)
+    )
   )
   (func $b2-yes (type $i) (param $i1 i32)
-    (i32.const 5)
-    (i32.const 10)
-    (i32.const 15)
+    (drop
+      (i32.const 5)
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 15)
+    )
   )
   (func $b3-yes (type $i) (param $i1 i32)
-    (i32.const 3)
-    (i32.const 6)
-    (i32.const 10)
-    (i32.const 15)
-    (i32.const 20)
+    (drop
+      (i32.const 3)
+    )
+    (drop
+      (i32.const 6)
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 15)
+    )
+    (drop
+      (i32.const 20)
+    )
   )
   (func $b4 (type $i) (param $i1 i32)
     (block $inner
-      (i32.const 10)
+      (drop
+        (i32.const 10)
+      )
       (br $inner)
     )
   )
   (func $b5 (type $i) (param $i1 i32)
     (block $middle
       (block $inner
-        (i32.const 10)
+        (drop
+          (i32.const 10)
+        )
         (br $inner)
       )
       (br $middle)
     )
   )
   (func $b6 (type $i) (param $i1 i32)
-    (i32.const 5)
+    (drop
+      (i32.const 5)
+    )
     (block $inner
-      (i32.const 10)
+      (drop
+        (i32.const 10)
+      )
       (br $inner)
     )
-    (i32.const 15)
+    (drop
+      (i32.const 15)
+    )
   )
   (func $b7 (type $i) (param $i1 i32)
-    (i32.const 3)
+    (drop
+      (i32.const 3)
+    )
     (block $middle
-      (i32.const 6)
+      (drop
+        (i32.const 6)
+      )
       (block $inner
-        (i32.const 10)
+        (drop
+          (i32.const 10)
+        )
         (br $inner)
       )
-      (i32.const 15)
+      (drop
+        (i32.const 15)
+      )
       (br $middle)
     )
-    (i32.const 20)
+    (drop
+      (i32.const 20)
+    )
   )
   (func $unary (type $3)
     (local $x i32)
-    (i32.eqz
-      (block
-        (i32.const 10)
+    (drop
+      (i32.eqz
+        (block
+          (i32.const 10)
+        )
       )
     )
-    (i32.const 10)
-    (i32.eqz
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.eqz
+        (i32.const 20)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
       (i32.const 20)
     )
-    (i32.const 10)
-    (i32.const 20)
-    (i32.eqz
-      (i32.const 30)
+    (drop
+      (i32.eqz
+        (i32.const 30)
+      )
     )
-    (i32.const 10)
+    (drop
+      (i32.const 10)
+    )
     (set_local $x
       (i32.const 20)
     )
-    (i32.const 10)
-    (i32.load
-      (i32.const 20)
+    (drop
+      (i32.const 10)
     )
-    (i32.const 10)
+    (drop
+      (i32.load
+        (i32.const 20)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
     (return
       (unreachable)
     )
   )
   (func $binary (type $3)
-    (i32.add
-      (block
-        (i32.const 10)
-      )
-      (i32.const 20)
-    )
-    (i32.const 10)
-    (i32.add
-      (i32.const 20)
-      (i32.const 30)
-    )
-    (i32.const 10)
-    (i32.const 20)
-    (i32.add
-      (i32.const 30)
-      (i32.const 40)
-    )
-    (i32.add
-      (i32.const 10)
-      (block
+    (drop
+      (i32.add
+        (block
+          (i32.const 10)
+        )
         (i32.const 20)
       )
     )
-    (i32.const 20)
-    (i32.add
+    (drop
       (i32.const 10)
-      (i32.const 30)
     )
-    (i32.const 20)
-    (i32.const 30)
-    (i32.add
-      (i32.const 10)
-      (i32.const 40)
-    )
-    (i32.add
-      (block
-        (i32.const 10)
-      )
-      (block
+    (drop
+      (i32.add
         (i32.const 20)
+        (i32.const 30)
       )
     )
-    (i32.const 10)
-    (i32.const 30)
-    (i32.add
+    (drop
+      (i32.const 10)
+    )
+    (drop
       (i32.const 20)
+    )
+    (drop
+      (i32.add
+        (i32.const 30)
+        (i32.const 40)
+      )
+    )
+    (drop
+      (i32.add
+        (i32.const 10)
+        (block
+          (i32.const 20)
+        )
+      )
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (i32.add
+        (i32.const 10)
+        (i32.const 30)
+      )
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.add
+        (i32.const 10)
+        (i32.const 40)
+      )
+    )
+    (drop
+      (i32.add
+        (block
+          (i32.const 10)
+        )
+        (block
+          (i32.const 20)
+        )
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.add
+        (i32.const 20)
+        (i32.const 40)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
       (i32.const 40)
     )
-    (i32.const 10)
-    (i32.const 20)
-    (i32.const 40)
-    (i32.const 50)
-    (i32.add
-      (i32.const 30)
-      (i32.const 60)
+    (drop
+      (i32.const 50)
     )
-    (i32.const 20)
+    (drop
+      (i32.add
+        (i32.const 30)
+        (i32.const 60)
+      )
+    )
+    (drop
+      (i32.const 20)
+    )
     (i32.store
       (i32.const 10)
       (i32.const 30)
     )
-    (i32.const 10)
+    (drop
+      (i32.const 10)
+    )
     (i32.store
       (i32.const 20)
       (i32.const 30)
     )
-    (i32.add
-      (unreachable)
-      (block
-        (i32.const 10)
-        (i32.const 20)
+    (drop
+      (i32.add
+        (unreachable)
+        (block
+          (drop
+            (i32.const 10)
+          )
+          (i32.const 20)
+        )
       )
     )
     (unreachable)
-    (i32.const 20)
-    (i32.add
-      (i32.const 10)
-      (i32.const 30)
+    (drop
+      (i32.const 20)
+    )
+    (drop
+      (i32.add
+        (i32.const 10)
+        (i32.const 30)
+      )
     )
   )
   (func $trinary (type $3)
-    (i32.const 10)
-    (i32.const 30)
-    (i32.const 50)
-    (select
-      (i32.const 20)
-      (i32.const 40)
-      (i32.const 60)
+    (drop
+      (i32.const 10)
     )
-    (i32.const 20)
-    (i32.const 40)
-    (select
-      (block
-        (i32.const 10)
-      )
+    (drop
       (i32.const 30)
+    )
+    (drop
       (i32.const 50)
     )
-    (i32.const 10)
-    (i32.const 40)
-    (select
-      (i32.const 20)
-      (block
-        (i32.const 30)
-      )
-      (i32.const 50)
-    )
-    (i32.const 10)
-    (i32.const 30)
-    (select
-      (i32.const 20)
-      (i32.const 40)
-      (block
-        (i32.const 50)
-      )
-    )
-    (i32.const 30)
-    (select
-      (block
-        (i32.const 10)
-      )
-      (block
+    (drop
+      (select
         (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
       )
+    )
+    (drop
+      (i32.const 20)
+    )
+    (drop
       (i32.const 40)
     )
-    (i32.const 20)
-    (select
-      (block
-        (i32.const 10)
+    (drop
+      (select
+        (block
+          (i32.const 10)
+        )
+        (i32.const 30)
+        (i32.const 50)
       )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 40)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (block
+          (i32.const 30)
+        )
+        (i32.const 50)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
       (i32.const 30)
-      (block
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (block
+          (i32.const 50)
+        )
+      )
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (select
+        (block
+          (i32.const 10)
+        )
+        (block
+          (i32.const 20)
+        )
         (i32.const 40)
       )
     )
-    (i32.const 10)
-    (select
+    (drop
       (i32.const 20)
-      (block
+    )
+    (drop
+      (select
+        (block
+          (i32.const 10)
+        )
         (i32.const 30)
+        (block
+          (i32.const 40)
+        )
       )
-      (block
-        (i32.const 40)
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (block
+          (i32.const 30)
+        )
+        (block
+          (i32.const 40)
+        )
       )
     )
     (unreachable)
-    (i32.const 30)
-    (i32.const 50)
-    (select
-      (i32.const 20)
-      (i32.const 40)
-      (i32.const 60)
+    (drop
+      (i32.const 30)
     )
-    (i32.const 10)
-    (select
-      (unreachable)
-      (block
-        (i32.const 30)
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (select
+        (i32.const 20)
         (i32.const 40)
-      )
-      (block
-        (i32.const 50)
         (i32.const 60)
       )
     )
-    (i32.const 10)
-    (unreachable)
-    (i32.const 50)
-    (select
-      (i32.const 20)
-      (i32.const 40)
-      (i32.const 60)
+    (drop
+      (i32.const 10)
     )
-    (i32.const 10)
-    (i32.const 30)
-    (select
-      (i32.const 20)
-      (unreachable)
-      (block
-        (i32.const 50)
+    (drop
+      (select
+        (unreachable)
+        (block
+          (drop
+            (i32.const 30)
+          )
+          (i32.const 40)
+        )
+        (block
+          (drop
+            (i32.const 50)
+          )
+          (i32.const 60)
+        )
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (unreachable)
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
         (i32.const 60)
       )
     )
-    (i32.const 10)
-    (i32.const 30)
-    (unreachable)
-    (select
-      (i32.const 20)
-      (i32.const 40)
-      (i32.const 60)
+    (drop
+      (i32.const 10)
     )
-    (i32.const 10)
-    (i32.const 30)
-    (i32.const 50)
-    (select
-      (i32.const 20)
-      (i32.const 40)
-      (unreachable)
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (unreachable)
+        (block
+          (drop
+            (i32.const 50)
+          )
+          (i32.const 60)
+        )
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (unreachable)
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (i32.const 60)
+      )
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (select
+        (i32.const 20)
+        (i32.const 40)
+        (unreachable)
+      )
     )
   )
   (func $breaks (type $3)
     (block $out
-      (i32.const 10)
-      (br $out
+      (drop
+        (i32.const 10)
+      )
+      (drop
         (i32.const 20)
       )
-      (i32.const 10)
+      (br $out)
+      (drop
+        (i32.const 10)
+      )
       (br_if $out
         (i32.const 20)
       )
-      (i32.const 10)
-      (i32.const 30)
+      (drop
+        (i32.const 10)
+      )
+      (drop
+        (i32.const 20)
+      )
+      (drop
+        (i32.const 30)
+      )
       (br_if $out
-        (i32.const 20)
         (i32.const 40)
       )
-      (i32.const 10)
+      (drop
+        (i32.const 10)
+      )
       (br_table $out $out
         (i32.const 20)
       )
-      (i32.const 10)
-      (i32.const 30)
-      (br_table $out $out
-        (i32.const 20)
-        (i32.const 40)
+      (drop
+        (block $out2
+          (drop
+            (i32.const 10)
+          )
+          (drop
+            (i32.const 30)
+          )
+          (br_table $out2 $out2
+            (i32.const 20)
+            (i32.const 40)
+          )
+        )
       )
+      (unreachable)
     )
   )
   (func $calls (type $3)
@@ -347,80 +563,120 @@
         (i32.const 10)
       )
     )
-    (i32.const 10)
+    (drop
+      (i32.const 10)
+    )
     (call $call-i
       (i32.const 20)
     )
-    (i32.const 10)
-    (i32.const 20)
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 20)
+    )
     (call $call-i
       (i32.const 30)
     )
-    (i32.const 10)
-    (i32.const 30)
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
     (call $call-ii
       (i32.const 20)
       (i32.const 40)
     )
     (unreachable)
-    (i32.const 20)
+    (drop
+      (i32.const 20)
+    )
     (call $call-ii
       (i32.const 10)
       (i32.const 30)
     )
-    (i32.const 10)
+    (drop
+      (i32.const 10)
+    )
     (call $call-ii
       (unreachable)
       (block
-        (i32.const 20)
+        (drop
+          (i32.const 20)
+        )
         (i32.const 30)
       )
     )
-    (i32.const 10)
+    (drop
+      (i32.const 10)
+    )
     (unreachable)
     (call $call-ii
       (i32.const 20)
       (i32.const 30)
     )
-    (i32.const 10)
-    (i32.const 30)
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
     (call $call-ii
       (i32.const 20)
       (unreachable)
     )
-    (i32.const 10)
-    (i32.const 30)
-    (i32.const 50)
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
+    (drop
+      (i32.const 50)
+    )
     (call $call-iii
       (i32.const 20)
       (i32.const 40)
       (i32.const 60)
     )
-    (i32.const 10)
-    (i32.const 40)
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 40)
+    )
     (call $call-iii
       (i32.const 20)
       (i32.const 30)
       (i32.const 50)
     )
-    (i32.const 10)
-    (i32.const 30)
-    (i32.const 50)
+    (drop
+      (i32.const 50)
+    )
+    (drop
+      (i32.const 10)
+    )
+    (drop
+      (i32.const 30)
+    )
     (call_indirect $ii
       (i32.const 20)
       (i32.const 40)
       (i32.const 60)
     )
+    (drop
+      (i32.const 50)
+    )
     (call_indirect $ii
       (unreachable)
       (block
-        (i32.const 30)
+        (drop
+          (i32.const 30)
+        )
         (i32.const 40)
       )
-      (block
-        (i32.const 50)
-        (i32.const 60)
-      )
+      (i32.const 60)
     )
   )
   (func $block-type-change (type $3)

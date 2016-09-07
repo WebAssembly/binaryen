@@ -9,6 +9,11 @@
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$vii (func (param i32 i32)))
   (type $FUNCSIG$vi (func (param i32)))
+  (type $6 (func (param i32 i32 i32) (result i32)))
+  (type $7 (func (param i32 i32 i32 i32) (result i32)))
+  (type $8 (func (param i32 i32 i32)))
+  (type $9 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)))
+  (type $10 (func (param i32 i32 i32 i32 i32)))
   (import $blue "env" "blue" (result i32))
   (import $callee "env" "callee" (param i32) (result i32))
   (import $evoke_side_effects "env" "evoke_side_effects")
@@ -45,7 +50,7 @@
   (export "no_stackify_past_epilogue" $no_stackify_past_epilogue)
   (export "stackify_indvar" $stackify_indvar)
   (export "stackpointer_dependency" $stackpointer_dependency)
-  (func $no0 (param $0 i32) (param $1 i32) (result i32)
+  (func $no0 (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
     (set_local $1
       (i32.load
         (get_local $1)
@@ -59,7 +64,7 @@
       (get_local $1)
     )
   )
-  (func $no1 (param $0 i32) (param $1 i32) (result i32)
+  (func $no1 (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
     (set_local $1
       (i32.load
         (get_local $1)
@@ -73,7 +78,7 @@
       (get_local $1)
     )
   )
-  (func $yes0 (param $0 i32) (param $1 i32) (result i32)
+  (func $yes0 (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
     (i32.store
       (get_local $0)
       (i32.const 0)
@@ -84,14 +89,14 @@
       )
     )
   )
-  (func $yes1 (param $0 i32) (result i32)
+  (func $yes1 (type $FUNCSIG$ii) (param $0 i32) (result i32)
     (return
       (i32.load
         (get_local $0)
       )
     )
   )
-  (func $sink_trap (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (func $sink_trap (type $6) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (i32.store
       (get_local $2)
       (i32.const 0)
@@ -103,7 +108,7 @@
       )
     )
   )
-  (func $sink_readnone_call (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (func $sink_readnone_call (type $6) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (i32.store
       (get_local $2)
       (i32.const 0)
@@ -112,7 +117,7 @@
       (call_import $readnone_callee)
     )
   )
-  (func $no_sink_readonly_call (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (func $no_sink_readonly_call (type $6) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (local $3 i32)
     (set_local $3
       (call_import $readonly_callee)
@@ -125,7 +130,7 @@
       (get_local $3)
     )
   )
-  (func $stack_uses (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+  (func $stack_uses (type $7) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
     (block $label$0
       (br_if $label$0
         (i32.ne
@@ -162,12 +167,12 @@
       (i32.const 1)
     )
   )
-  (func $multiple_uses (param $0 i32) (param $1 i32) (param $2 i32)
+  (func $multiple_uses (type $8) (param $0 i32) (param $1 i32) (param $2 i32)
     (local $3 i32)
     (block $label$0
       (br_if $label$0
         (i32.ge_u
-          (set_local $3
+          (tee_local $3
             (i32.load
               (get_local $2)
             )
@@ -188,12 +193,21 @@
     )
     (return)
   )
-  (func $stackify_store_across_side_effects (param $0 i32)
+  (func $stackify_store_across_side_effects (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i64)
+    (local $2 i64)
     (set_local $1
-      (i64.store
-        (get_local $0)
-        (i64.const 4611686018427387904)
+      (block
+        (block
+          (set_local $2
+            (i64.const 4611686018427387904)
+          )
+          (i64.store
+            (get_local $0)
+            (get_local $2)
+          )
+        )
+        (get_local $2)
       )
     )
     (call_import $evoke_side_effects)
@@ -204,7 +218,7 @@
     (call_import $evoke_side_effects)
     (return)
   )
-  (func $div_tree (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (result i32)
+  (func $div_tree (type $9) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (result i32)
     (return
       (i32.div_s
         (i32.div_s
@@ -254,9 +268,9 @@
       )
     )
   )
-  (func $simple_multiple_use (param $0 i32) (param $1 i32)
+  (func $simple_multiple_use (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
     (call_import $use_a
-      (set_local $1
+      (tee_local $1
         (i32.mul
           (get_local $1)
           (get_local $0)
@@ -268,9 +282,9 @@
     )
     (return)
   )
-  (func $multiple_uses_in_same_insn (param $0 i32) (param $1 i32)
+  (func $multiple_uses_in_same_insn (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
     (call_import $use_2
-      (set_local $1
+      (tee_local $1
         (i32.mul
           (get_local $1)
           (get_local $0)
@@ -280,7 +294,7 @@
     )
     (return)
   )
-  (func $commute (result i32)
+  (func $commute (type $FUNCSIG$i) (result i32)
     (return
       (i32.add
         (i32.add
@@ -291,7 +305,7 @@
       )
     )
   )
-  (func $no_stackify_past_use (param $0 i32) (result i32)
+  (func $no_stackify_past_use (type $FUNCSIG$ii) (param $0 i32) (result i32)
     (local $1 i32)
     (set_local $1
       (call_import $callee
@@ -313,11 +327,11 @@
       )
     )
   )
-  (func $commute_to_fix_ordering (param $0 i32) (result i32)
+  (func $commute_to_fix_ordering (type $FUNCSIG$ii) (param $0 i32) (result i32)
     (local $1 i32)
     (return
       (i32.mul
-        (set_local $1
+        (tee_local $1
           (call_import $callee
             (get_local $0)
           )
@@ -334,7 +348,7 @@
       )
     )
   )
-  (func $multiple_defs (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  (func $multiple_defs (type $10) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
     (local $5 f64)
     (local $6 f64)
     (local $7 f64)
@@ -393,7 +407,7 @@
             (f64.add
               (select
                 (f64.const -11353.57)
-                (set_local $9
+                (tee_local $9
                   (f64.add
                     (get_local $7)
                     (f64.const -1)
@@ -401,7 +415,7 @@
                 )
                 (get_local $2)
               )
-              (set_local $6
+              (tee_local $6
                 (get_local $8)
               )
             )
@@ -437,7 +451,7 @@
       (br $label$0)
     )
   )
-  (func $no_stackify_call_past_load (result i32)
+  (func $no_stackify_call_past_load (type $FUNCSIG$i) (result i32)
     (local $0 i32)
     (local $1 i32)
     (set_local $0
@@ -448,18 +462,29 @@
         (i32.const 0)
       )
     )
-    (call_import $callee
-      (get_local $0)
+    (drop
+      (call_import $callee
+        (get_local $0)
+      )
     )
     (return
       (get_local $1)
     )
   )
-  (func $no_stackify_store_past_load (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (func $no_stackify_store_past_load (type $6) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+    (local $3 i32)
     (set_local $1
-      (i32.store
-        (get_local $1)
-        (get_local $0)
+      (block
+        (block
+          (set_local $3
+            (get_local $0)
+          )
+          (i32.store
+            (get_local $1)
+            (get_local $3)
+          )
+        )
+        (get_local $3)
       )
     )
     (set_local $2
@@ -467,18 +492,31 @@
         (get_local $2)
       )
     )
-    (call_import $callee
-      (get_local $1)
+    (drop
+      (call_import $callee
+        (get_local $1)
+      )
     )
     (return
       (get_local $2)
     )
   )
-  (func $store_past_invar_load (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (call_import $callee
-      (i32.store
-        (get_local $1)
-        (get_local $0)
+  (func $store_past_invar_load (type $6) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+    (local $3 i32)
+    (drop
+      (call_import $callee
+        (block
+          (block
+            (set_local $3
+              (get_local $0)
+            )
+            (i32.store
+              (get_local $1)
+              (get_local $3)
+            )
+          )
+          (get_local $3)
+        )
       )
     )
     (return
@@ -487,24 +525,33 @@
       )
     )
   )
-  (func $ignore_dbg_value
+  (func $ignore_dbg_value (type $FUNCSIG$v)
     (unreachable)
   )
-  (func $no_stackify_past_epilogue (result i32)
+  (func $no_stackify_past_epilogue (type $FUNCSIG$i) (result i32)
     (local $0 i32)
     (local $1 i32)
+    (local $2 i32)
     (set_local $1
       (call_import $use_memory
         (i32.add
-          (set_local $0
-            (i32.store
-              (i32.const 4)
-              (i32.sub
-                (i32.load
-                  (i32.const 4)
+          (tee_local $0
+            (block
+              (block
+                (set_local $2
+                  (i32.sub
+                    (i32.load
+                      (i32.const 4)
+                    )
+                    (i32.const 16)
+                  )
                 )
-                (i32.const 16)
+                (i32.store
+                  (i32.const 4)
+                  (get_local $2)
+                )
               )
+              (get_local $2)
             )
           )
           (i32.const 12)
@@ -522,7 +569,7 @@
       (get_local $1)
     )
   )
-  (func $stackify_indvar (param $0 i32) (param $1 i32)
+  (func $stackify_indvar (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
     (local $2 i32)
     (set_local $2
       (i32.const 0)
@@ -540,7 +587,7 @@
       (br_if $label$0
         (i32.ne
           (get_local $0)
-          (set_local $2
+          (tee_local $2
             (i32.add
               (get_local $2)
               (i32.const 1)
@@ -551,12 +598,12 @@
     )
     (return)
   )
-  (func $stackpointer_dependency (param $0 i32) (result i32)
+  (func $stackpointer_dependency (type $FUNCSIG$ii) (param $0 i32) (result i32)
     (local $1 i32)
     (set_local $0
       (call_import $stackpointer_callee
         (get_local $0)
-        (set_local $1
+        (tee_local $1
           (i32.load
             (i32.const 4)
           )

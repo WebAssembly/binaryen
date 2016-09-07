@@ -120,7 +120,7 @@ struct TypeSeeker : public PostWalker<TypeSeeker, Visitor<TypeSeeker>> {
   void visitLoop(Loop* curr) {
     if (curr == target) {
       types.push_back(curr->body->type);
-    } else if (curr->in == targetName || curr->out == targetName) {
+    } else if (curr->name == targetName) {
       types.clear(); // ignore all breaks til now, they were captured by someone with the same name
     }
   }
@@ -162,13 +162,7 @@ void Block::finalize() {
 }
 
 void Loop::finalize() {
-  if (!out.is()) {
-    type = body->type;
-    return;
-  }
-
-  TypeSeeker seeker(this, this->out);
-  type = mergeTypes(seeker.types);
+  type = body->type;
 }
 
 } // namespace wasm

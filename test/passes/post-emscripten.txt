@@ -2,29 +2,41 @@
   (memory 256 256)
   (type $0 (func (param i32)))
   (func $b0 (type $0) (param $x i32)
-    (i32.load offset=1
-      (get_local $x)
-    )
-    (i32.load offset=8
-      (get_local $x)
-    )
-    (i32.load offset=1023
-      (get_local $x)
-    )
-    (i32.load
-      (i32.add
+    (drop
+      (i32.load offset=1
         (get_local $x)
-        (i32.const 1024)
       )
     )
-    (i32.load
-      (i32.add
+    (drop
+      (i32.load offset=8
         (get_local $x)
-        (i32.const 2048)
       )
     )
-    (i32.load offset=4
-      (get_local $x)
+    (drop
+      (i32.load offset=1023
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.load
+        (i32.add
+          (get_local $x)
+          (i32.const 1024)
+        )
+      )
+    )
+    (drop
+      (i32.load
+        (i32.add
+          (get_local $x)
+          (i32.const 2048)
+        )
+      )
+    )
+    (drop
+      (i32.load offset=4
+        (get_local $x)
+      )
     )
   )
 )

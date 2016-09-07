@@ -31,8 +31,6 @@
 
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
-
-int indent = 0;
 #endif
 
 
@@ -77,32 +75,11 @@ typedef std::vector<Literal> LiteralList;
 
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
-struct IndentHandler {
-  const char *name;
-  IndentHandler(const char *name, Expression *expression) : name(name) {
-    doIndent(std::cout, indent);
-    std::cout << "visit " << name << " :\n";
-    indent++;
-#if WASM_INTERPRETER_DEBUG == 2
-    doIndent(std::cout, indent);
-    if (expression) std::cout << "\n" << expression << '\n';
-    indent++;
-#endif
-  }
-  ~IndentHandler() {
-#if WASM_INTERPRETER_DEBUG == 2
-    indent--;
-#endif
-    indent--;
-    doIndent(std::cout, indent);
-    std::cout << "exit " << name << '\n';
-  }
-};
-#define NOTE_ENTER(x) IndentHandler indentHandler(x, curr);
-#define NOTE_ENTER_(x) IndentHandler indentHandler(x, nullptr);
-#define NOTE_NAME(p0) { doIndent(std::cout, indent); std::cout << "name in " << indentHandler.name << '('  << Name(p0) << ")\n"; }
-#define NOTE_EVAL1(p0) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ")\n"; }
-#define NOTE_EVAL2(p0, p1) { doIndent(std::cout, indent); std::cout << "eval in " << indentHandler.name << '('  << p0 << ", " << p1 << ")\n"; }
+#define NOTE_ENTER(x) { std::cout << "visit " << x << " : " << curr << "\n"; }
+#define NOTE_ENTER_(x) { std::cout << "visit " << x << "\n"; }
+#define NOTE_NAME(p0) { std::cout << "name " << '('  << Name(p0) << ")\n"; }
+#define NOTE_EVAL1(p0) { std::cout << "eval " << '('  << p0 << ")\n"; }
+#define NOTE_EVAL2(p0, p1) { std::cout << "eval " << '('  << p0 << ", " << p1 << ")\n"; }
 #else // WASM_INTERPRETER_DEBUG
 #define NOTE_ENTER(x)
 #define NOTE_ENTER_(x)
@@ -170,8 +147,7 @@ public:
     while (1) {
       Flow flow = visit(curr->body);
       if (flow.breaking()) {
-        if (flow.breakTo == curr->in) continue; // lol
-        flow.clearIf(curr->out);
+        if (flow.breakTo == curr->name) continue; // lol
       }
       return flow; // loop does not loop automatically, only continue achieves that
     }
@@ -435,6 +411,12 @@ public:
     NOTE_EVAL1(condition.value);
     return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
   }
+  Flow visitDrop(Drop *curr) {
+    NOTE_ENTER("Drop");
+    Flow value = visit(curr->value);
+    if (value.breaking()) return value;
+    return Flow();
+  }
   Flow visitReturn(Return *curr) {
     NOTE_ENTER("Return");
     Flow flow;
@@ -503,14 +485,17 @@ public:
 
 // Execute an constant expression in a global init or memory offset
 class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner> {
+  std::map<Name, Literal>& globals;
 public:
+  ConstantExpressionRunner(std::map<Name, Literal>& globals) : globals(globals) {}
+
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
   Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
   Flow visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
   Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
-  Flow visitGetGlobal(GetGlobal *curr) { WASM_UNREACHABLE(); }
+  Flow visitGetGlobal(GetGlobal *curr) { return Flow(globals[curr->name]); }
   Flow visitSetGlobal(SetGlobal *curr) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load *curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store *curr) { WASM_UNREACHABLE(); }
@@ -535,9 +520,10 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
-    virtual void init(Module& wasm) {}
+    virtual void init(Module& wasm, ModuleInstance& instance) {}
+    virtual void importGlobals(std::map<Name, Literal>& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) = 0;
     virtual Literal load(Load* load, Address addr) = 0;
     virtual void store(Store* store, Address addr, Literal value) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
@@ -547,14 +533,20 @@ public:
   Module& wasm;
 
   // Values of globals
-  std::vector<Literal> globals;
+  std::map<Name, Literal> globals;
 
   ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
+    // import globals from the outside
+    externalInterface->importGlobals(globals, wasm);
+    // prepare memory
     memorySize = wasm.memory.initial;
-    for (Index i = 0; i < wasm.globals.size(); i++) {
-      globals.push_back(ConstantExpressionRunner().visit(wasm.globals[i]->init).value);
+    // generate internal (non-imported) globals
+    for (auto& global : wasm.globals) {
+      globals[global->name] = ConstantExpressionRunner(globals).visit(global->init).value;
     }
-    externalInterface->init(wasm);
+    // initialize the rest of the external interface
+    externalInterface->init(wasm, *this);
+    // run start, if present
     if (wasm.start.is()) {
       LiteralList arguments;
       callFunction(wasm.start, arguments);
@@ -670,13 +662,13 @@ public:
       }
       Flow visitCallIndirect(CallIndirect *curr) {
         NOTE_ENTER("CallIndirect");
-        Flow target = visit(curr->target);
-        if (target.breaking()) return target;
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
+        Flow target = visit(curr->target);
+        if (target.breaking()) return target;
         Index index = target.value.geti32();
-        return instance.externalInterface->callTable(index, curr->fullType, arguments, instance);
+        return instance.externalInterface->callTable(index, arguments, curr->type, instance);
       }
 
       Flow visitGetLocal(GetLocal *curr) {
@@ -693,28 +685,27 @@ public:
         if (flow.breaking()) return flow;
         NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
-        assert(flow.value.type == curr->type);
+        assert(curr->isTee() ? flow.value.type == curr->type : true);
         scope.locals[index] = flow.value;
-        return flow;
+        return curr->isTee() ? flow : Flow();
       }
 
       Flow visitGetGlobal(GetGlobal *curr) {
         NOTE_ENTER("GetGlobal");
-        auto index = curr->index;
-        NOTE_EVAL1(index);
-        NOTE_EVAL1(instance.globals[index]);
-        return instance.globals[index];
+        auto name = curr->name;
+        NOTE_EVAL1(name);
+        NOTE_EVAL1(instance.globals[name]);
+        return instance.globals[name];
       }
       Flow visitSetGlobal(SetGlobal *curr) {
         NOTE_ENTER("SetGlobal");
-        auto index = curr->index;
+        auto name = curr->name;
         Flow flow = visit(curr->value);
         if (flow.breaking()) return flow;
-        NOTE_EVAL1(index);
+        NOTE_EVAL1(name);
         NOTE_EVAL1(flow.value);
-        assert(flow.value.type == curr->type);
-        instance.globals[index] = flow.value;
-        return flow;
+        instance.globals[name] = flow.value;
+        return Flow();
       }
 
       Flow visitLoad(Load *curr) {
@@ -730,7 +721,7 @@ public:
         Flow value = visit(curr->value);
         if (value.breaking()) return value;
         instance.externalInterface->store(curr, instance.getFinalAddress(curr, ptr.value), value.value);
-        return value;
+        return Flow();
       }
 
       Flow visitHost(Host *curr) {
@@ -739,14 +730,15 @@ public:
           case PageSize:   return Literal((int32_t)Memory::kPageSize);
           case CurrentMemory: return Literal(int32_t(instance.memorySize));
           case GrowMemory: {
+            auto fail = Literal(int32_t(-1));
             Flow flow = visit(curr->operands[0]);
             if (flow.breaking()) return flow;
             int32_t ret = instance.memorySize;
             uint32_t delta = flow.value.geti32();
-            if (delta > uint32_t(-1) /Memory::kPageSize) trap("growMemory: delta relatively too big");
-            if (instance.memorySize >= uint32_t(-1) - delta) trap("growMemory: delta objectively too big");
+            if (delta > uint32_t(-1) /Memory::kPageSize) return fail;
+            if (instance.memorySize >= uint32_t(-1) - delta) return fail;
             uint32_t newSize = instance.memorySize + delta;
-            if (newSize > instance.wasm.memory.max) trap("growMemory: exceeds max");
+            if (newSize > instance.wasm.memory.max) return fail;
             instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
             return Literal(int32_t(ret));

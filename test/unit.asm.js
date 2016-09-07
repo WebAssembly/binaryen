@@ -9,6 +9,7 @@ function asm(global, env, buffer) {
   var Math_ceil = global.Math.ceil;
   var tempDoublePtr = env.tempDoublePtr | 0;
   var n = env.gb | 0;
+  var setTempRet0=env.setTempRet0;
 
   var abort = env.abort;
   var print = env.print;
@@ -259,6 +260,74 @@ function asm(global, env, buffer) {
       x = 1;
     } while (0);
     return x | 0;
+  }
+
+  function smallIf() {
+    do {
+      if (2) {
+        lb(3) | 0;
+      } else {
+        break;
+      }
+    } while (0);
+  }
+
+  function dropCall() {
+    if (0) {
+      phi(); // drop this
+      setTempRet0(10); // this too
+      zeroInit(setTempRet0(10) | 0);
+    }
+    return phi() | 0;
+  }
+
+  function useSetGlobal() {
+    var x = 0;
+    x = (Int = 10);
+    Int = 20;
+    return (Int = 30) | 0;
+  }
+
+  function usesSetGlobal2() {
+    return (Int = 40, 50) | 0;
+  }
+
+  function breakThroughMany($s) {
+   $s = $s|0;
+   L1: do {
+    if ($s) {
+     while(1) {
+      if (!($s)) {
+       break L1;
+      }
+      zeroInit(0);
+     }
+    } else {
+     1337;
+    }
+   } while(0);
+  }
+
+  function ifChainEmpty(label) {
+    label = label | 0;
+    if ((label|0) == 4) {
+      return 0;
+    }
+    else if ((label|0) == 7) {
+      // unreachable;
+    }
+    return 0;
+  }
+
+  function heap8NoShift(x) {
+    x = x | 0;
+    return HEAP8[x | 0] | 0;
+  }
+
+  function conditionalTypeFun() {
+    var x = 0, y = +0;
+    x = 1 ? abort(5) | 0 : 2;
+    y = 3 ? +abort(7) : 4.5;
   }
 
   function z() {

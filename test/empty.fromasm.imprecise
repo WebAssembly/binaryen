@@ -1,4 +1,7 @@
 (module
   (memory 256 256)
-  (export "memory" memory)
+  (import "env" "memory" (memory $memory))
+  (import "env" "table" (table $table))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
 )

@@ -6,42 +6,45 @@
     (i32.const 0)
   )
   (func $loops (type $1)
-    (loop $out $in
-      (br $out)
-      (br $in)
-    )
     (block $out
-      (br $out)
+      (loop $in
+        (br $out)
+        (br $in)
+      )
     )
     (loop $in
       (br $in)
     )
-    (loop
-      (nop)
-    )
-    (loop
-      (loop $out $in
+    (nop)
+    (block $out
+      (loop $in
         (br $out)
         (br $in)
       )
     )
-    (block
-      (loop $out $in
+    (block $out
+      (loop $in
         (br $out)
         (br $in)
       )
     )
-    (loop $out $in
-      (br $out)
-      (br $in)
+    (loop $in
+      (block $out
+        (br $out)
+        (br $in)
+      )
     )
-    (loop $out $in
-      (br $out)
-      (br $in)
+    (loop $in
+      (block $out
+        (br $out)
+        (br $in)
+      )
     )
-    (loop $out $in
-      (br $out)
-      (br $in)
+    (block $out
+      (loop $in
+        (br $out)
+        (br $in)
+      )
     )
   )
   (func $merges (type $1)
