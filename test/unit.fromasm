@@ -534,10 +534,8 @@
     (call $phi)
   )
   (func $useSetGlobal (result i32)
-    (drop
-      (set_global $Int
-        (i32.const 10)
-      )
+    (set_global $Int
+      (i32.const 10)
     )
     (set_global $Int
       (i32.const 20)

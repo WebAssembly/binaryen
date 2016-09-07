@@ -6,6 +6,7 @@
   (type $3 (func (result i32)))
   (type $4 (func (param i32 f64 i32 i32)))
   (import $int "env" "int" (result i32))
+  (global $Int i32 (i32.const 0))
   (func $b (type $0)
     (drop
       (i32.const 50)
@@ -351,6 +352,14 @@
       (i32.add
         (call_import $int)
         (call_import $int)
+      )
+    )
+  )
+  (func $drop-get-global
+    (drop
+      (block
+        (call $drop-get-global)
+        (get_global $Int) ;; this is not needed due to the block being drop'd, but make sure the call is not then dropped either
       )
     )
   )

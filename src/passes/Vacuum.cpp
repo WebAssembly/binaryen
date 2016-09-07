@@ -137,13 +137,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
 
   void visitBlock(Block *curr) {
     // compress out nops and other dead code
-    bool resultUsed = ExpressionAnalyzer::isResultUsed(expressionStack, getFunction());
     int skip = 0;
     auto& list = curr->list;
     size_t size = list.size();
     bool needResize = false;
     for (size_t z = 0; z < size; z++) {
-      auto* optimized = optimize(list[z], z == size - 1 && resultUsed);
+      auto* optimized = optimize(list[z], z == size - 1 && isConcreteWasmType(curr->type));
       if (!optimized) {
         skip++;
         needResize = true;
@@ -170,7 +169,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
     if (!curr->name.is()) {
       if (list.size() == 1) {
         // just one element. replace the block, either with it or with a nop if it's not needed
-        if (resultUsed || EffectAnalyzer(list[0]).hasSideEffects()) {
+        if (isConcreteWasmType(curr->type) || EffectAnalyzer(list[0]).hasSideEffects()) {
           replaceCurrent(list[0]);
         } else {
           ExpressionManipulator::nop(curr);
@@ -217,6 +216,26 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
       set->setTee(false);
       replaceCurrent(set);
       return;
+    }
+    // if we are dropping a block's return value, we might be able to remove it entirely
+    if (auto* block = curr->value->dynCast<Block>()) {
+      auto* last = block->list.back();
+      if (isConcreteWasmType(last->type)) {
+        assert(block->type == last->type);
+        block->list.back() = last = optimize(last, false);
+        if (!last) {
+          block->list.pop_back();
+          // we don't need the drop anymore, let's see what we have left in the block
+          if (block->list.size() > 1) {
+            replaceCurrent(block);
+          } else if (block->list.size() == 1) {
+            replaceCurrent(block->list[0]);
+          } else {
+            ExpressionManipulator::nop(curr);
+          }
+          return;
+        }
+      }
     }
     // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a branch, this can make that branch optimizable and more vaccuming possible
     auto* iff = curr->value->dynCast<If>();
