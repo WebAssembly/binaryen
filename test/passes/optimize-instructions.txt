@@ -185,5 +185,25 @@
       (i32.const 123)
       (nop)
     )
+    (drop
+      (select
+        (i32.const 102)
+        (i32.const 101)
+        (get_local $i1)
+      )
+    )
+    (drop
+      (select
+        (tee_local $i1
+          (i32.const 103)
+        )
+        (tee_local $i1
+          (i32.const 104)
+        )
+        (i32.eqz
+          (get_local $i1)
+        )
+      )
+    )
   )
 )

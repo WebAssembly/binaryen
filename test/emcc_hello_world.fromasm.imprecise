@@ -1417,6 +1417,7 @@
           )
           (set_local $2
             (select
+              (i32.const -1)
               (if
                 (i32.load
                   (tee_local $10
@@ -1512,12 +1513,10 @@
                       )
                       (set_local $1
                         (select
-                          (i32.const -1)
                           (get_local $1)
-                          (i32.eqz
-                            (i32.load
-                              (get_local $11)
-                            )
+                          (i32.const -1)
+                          (i32.load
+                            (get_local $11)
                           )
                         )
                       )
@@ -1547,16 +1546,13 @@
                   )
                 )
               )
-              (i32.const -1)
-              (i32.eqz
-                (i32.and
-                  (tee_local $1
-                    (i32.load
-                      (get_local $0)
-                    )
+              (i32.and
+                (tee_local $1
+                  (i32.load
+                    (get_local $0)
                   )
-                  (i32.const 32)
                 )
+                (i32.const 32)
               )
             )
           )
@@ -4022,18 +4018,16 @@
         )
         (set_local $18
           (select
-            (get_local $8)
             (tee_local $7
               (i32.and
                 (get_local $8)
                 (i32.const -65537)
               )
             )
-            (i32.eqz
-              (i32.and
-                (get_local $8)
-                (i32.const 8192)
-              )
+            (get_local $8)
+            (i32.and
+              (get_local $8)
+              (i32.const 8192)
             )
           )
         )
@@ -4497,14 +4491,12 @@
                               (block
                                 (set_local $1
                                   (select
-                                    (i32.const 4091)
                                     (i32.const 4093)
-                                    (i32.eqz
-                                      (tee_local $6
-                                        (i32.and
-                                          (get_local $18)
-                                          (i32.const 1)
-                                        )
+                                    (i32.const 4091)
+                                    (tee_local $6
+                                      (i32.and
+                                        (get_local $18)
+                                        (i32.const 1)
                                       )
                                     )
                                   )
@@ -4713,14 +4705,12 @@
                   (block
                     (set_local $39
                       (select
-                        (i32.const 4109)
                         (i32.const 4114)
-                        (i32.eqz
-                          (tee_local $1
-                            (i32.and
-                              (get_local $18)
-                              (i32.const 1)
-                            )
+                        (i32.const 4109)
+                        (tee_local $1
+                          (i32.and
+                            (get_local $18)
+                            (i32.const 1)
                           )
                         )
                       )
@@ -4799,17 +4789,15 @@
                       (block
                         (set_local $9
                           (select
-                            (get_local $39)
                             (i32.add
                               (get_local $39)
                               (i32.const 9)
                             )
-                            (i32.eqz
-                              (tee_local $6
-                                (i32.and
-                                  (get_local $26)
-                                  (i32.const 32)
-                                )
+                            (get_local $39)
+                            (tee_local $6
+                              (i32.and
+                                (get_local $26)
+                                (i32.const 32)
                               )
                             )
                           )
@@ -5628,15 +5616,13 @@
                                     )
                                     (set_local $5
                                       (select
+                                        (get_local $7)
                                         (i32.add
                                           (get_local $7)
                                           (i32.const 4)
                                         )
-                                        (get_local $7)
-                                        (i32.eqz
-                                          (i32.load
-                                            (get_local $7)
-                                          )
+                                        (i32.load
+                                          (get_local $7)
                                         )
                                       )
                                     )
@@ -5659,15 +5645,13 @@
                                     (get_local $5)
                                   )
                                   (select
+                                    (get_local $7)
                                     (i32.add
                                       (get_local $7)
                                       (i32.const 4)
                                     )
-                                    (get_local $7)
-                                    (i32.eqz
-                                      (i32.load
-                                        (get_local $7)
-                                      )
+                                    (i32.load
+                                      (get_local $7)
                                     )
                                   )
                                 )
@@ -5983,19 +5967,17 @@
                               (block
                                 (set_local $14
                                   (select
-                                    (f64.const 9007199254740992)
                                     (f64.const 9007199254740994)
-                                    (i32.eqz
+                                    (f64.const 9007199254740992)
+                                    (i32.and
                                       (i32.and
-                                        (i32.and
-                                          (i32.div_u
-                                            (get_local $5)
-                                            (get_local $17)
-                                          )
-                                          (i32.const -1)
+                                        (i32.div_u
+                                          (get_local $5)
+                                          (get_local $17)
                                         )
-                                        (i32.const 1)
+                                        (i32.const -1)
                                       )
+                                      (i32.const 1)
                                     )
                                   )
                                 )

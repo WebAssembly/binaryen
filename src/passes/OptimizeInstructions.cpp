@@ -173,7 +173,6 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (handOptimized) {
         curr = handOptimized;
         replaceCurrent(curr);
-        continue;
       }
       auto iter = database->patternMap.find(curr->_id);
       if (iter == database->patternMap.end()) return;
@@ -214,10 +213,22 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       auto* get = set->value->dynCast<GetGlobal>();
       if (get && get->name == set->name) {
         ExpressionManipulator::nop(curr);
-        return curr;
+      }
+    } else if (auto* select = curr->dynCast<Select>()) {
+      // flip select if eqz input and flippable
+      auto* condition = select->condition->dynCast<Unary>();
+      if (condition && condition->op == EqZInt32) {
+        EffectAnalyzer ifTrue(select->ifTrue);
+        EffectAnalyzer ifFalse(select->ifFalse);
+        if (!ifTrue.invalidates(ifFalse)) {
+          select->condition = condition->value;
+          std::swap(select->ifTrue, select->ifFalse);
+        }
       }
     }
     return nullptr;
+    // TODO:
+    //       * eqz^2 can be removed if flowing into a boolean context (we handle if, but need also br_if and select)
   }
 };
 

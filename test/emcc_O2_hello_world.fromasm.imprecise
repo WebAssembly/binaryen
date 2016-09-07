@@ -3759,7 +3759,6 @@
                       (get_local $13)
                       (tee_local $12
                         (select
-                          (i32.const 0)
                           (i32.and
                             (i32.sub
                               (i32.const 0)
@@ -3772,11 +3771,10 @@
                             )
                             (i32.const 7)
                           )
-                          (i32.eqz
-                            (i32.and
-                              (get_local $3)
-                              (i32.const 7)
-                            )
+                          (i32.const 0)
+                          (i32.and
+                            (get_local $3)
+                            (i32.const 7)
                           )
                         )
                       )
@@ -3931,7 +3929,6 @@
                       (i32.add
                         (get_local $20)
                         (select
-                          (i32.const 0)
                           (i32.and
                             (i32.sub
                               (i32.const 0)
@@ -3944,11 +3941,10 @@
                             )
                             (i32.const 7)
                           )
-                          (i32.eqz
-                            (i32.and
-                              (get_local $3)
-                              (i32.const 7)
-                            )
+                          (i32.const 0)
+                          (i32.and
+                            (get_local $3)
+                            (i32.const 7)
                           )
                         )
                       )
@@ -3957,7 +3953,6 @@
                       (i32.add
                         (get_local $17)
                         (select
-                          (i32.const 0)
                           (i32.and
                             (i32.sub
                               (i32.const 0)
@@ -3970,11 +3965,10 @@
                             )
                             (i32.const 7)
                           )
-                          (i32.eqz
-                            (i32.and
-                              (get_local $3)
-                              (i32.const 7)
-                            )
+                          (i32.const 0)
+                          (i32.and
+                            (get_local $3)
+                            (i32.const 7)
                           )
                         )
                       )
@@ -5135,7 +5129,6 @@
                         (i32.add
                           (get_local $12)
                           (select
-                            (i32.const 0)
                             (i32.and
                               (i32.sub
                                 (i32.const 0)
@@ -5143,11 +5136,10 @@
                               )
                               (i32.const 7)
                             )
-                            (i32.eqz
-                              (i32.and
-                                (get_local $15)
-                                (i32.const 7)
-                              )
+                            (i32.const 0)
+                            (i32.and
+                              (get_local $15)
+                              (i32.const 7)
                             )
                           )
                         )
@@ -5173,7 +5165,6 @@
                     (get_local $20)
                     (tee_local $17
                       (select
-                        (i32.const 0)
                         (i32.and
                           (i32.sub
                             (i32.const 0)
@@ -5186,11 +5177,10 @@
                           )
                           (i32.const 7)
                         )
-                        (i32.eqz
-                          (i32.and
-                            (get_local $6)
-                            (i32.const 7)
-                          )
+                        (i32.const 0)
+                        (i32.and
+                          (get_local $6)
+                          (i32.const 7)
                         )
                       )
                     )
@@ -5864,7 +5854,6 @@
                     (get_local $20)
                     (tee_local $1
                       (select
-                        (i32.const 0)
                         (i32.and
                           (i32.sub
                             (i32.const 0)
@@ -5877,11 +5866,10 @@
                           )
                           (i32.const 7)
                         )
-                        (i32.eqz
-                          (i32.and
-                            (get_local $2)
-                            (i32.const 7)
-                          )
+                        (i32.const 0)
+                        (i32.and
+                          (get_local $2)
+                          (i32.const 7)
                         )
                       )
                     )

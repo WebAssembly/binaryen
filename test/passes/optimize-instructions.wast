@@ -218,5 +218,27 @@
       )
       (nop)
     )
+    (drop
+      (select
+        (i32.const 101)
+        (i32.const 102)
+        (i32.eqz
+          (get_local $i1)
+        )
+      )
+    )
+    (drop
+      (select
+        (tee_local $i1
+          (i32.const 103)
+        ) ;; these conflict
+        (tee_local $i1
+          (i32.const 104)
+        )
+        (i32.eqz
+          (get_local $i1)
+        )
+      )
+    )
   )
 )
