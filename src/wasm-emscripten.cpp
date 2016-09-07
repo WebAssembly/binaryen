@@ -38,7 +38,9 @@ bool hasI64ResultOrParam(FunctionType* ft) {
   return false;
 }
 
-std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name>& tableSegmentData) {
+std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData) {
+  wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+
   std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
   wasm::Builder wasmBuilder(wasm);

@@ -131,7 +131,8 @@ void Linker::layout() {
 
   // Emit the pre-assigned function names in sorted order
   for (const auto& P : functionNames) {
-    getTableSegment().data.push_back(P.second);
+    ensureTableIsPopulated();
+    getTableDataRef().push_back(P.second);
   }
 
   for (auto& relocation : out.relocations) {
@@ -229,8 +230,9 @@ void Linker::layout() {
   }
 
   // finalize function table
-  if (out.wasm.table.segments.size() > 0) {
-    out.wasm.table.initial = out.wasm.table.max = getTableSegment().data.size();
+  unsigned int tableSize = getTableData().size();
+  if (tableSize > 0) {
+    out.wasm.table.initial = out.wasm.table.max = tableSize;
   }
 }
 
@@ -300,13 +302,8 @@ void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
     generateMemoryGrowthFunction(out.wasm);
   }
 
-  cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
-  out.wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
-
-  if (out.wasm.table.segments.size() != 0) {
-    for (auto f : makeDynCallThunks(out.wasm, getTableSegment().data)) {
-      exportFunction(f->name, true);
-    }
+  for (auto f : makeDynCallThunks(out.wasm, getTableData())) {
+    exportFunction(f->name, true);
   }
 
   o << ";; METADATA: { ";
@@ -341,19 +338,30 @@ void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
   o << " }\n";
 }
 
-Table::Segment& Linker::getTableSegment() {
+void Linker::ensureTableIsPopulated() {
   if (out.wasm.table.segments.size() == 0) {
-    out.wasm.table.segments.emplace_back(out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))));
-  } else {
-    assert(out.wasm.table.segments.size() == 1);
+    auto emptySegment = out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0)));
+    out.wasm.table.segments.emplace_back(emptySegment);
   }
-  return out.wasm.table.segments[0];
+}
+
+std::vector<Name>& Linker::getTableDataRef() {
+  assert(out.wasm.table.segments.size() == 1);
+  return out.wasm.table.segments[0].data;
+}
+
+std::vector<Name> Linker::getTableData() {
+  if (out.wasm.table.segments.size() > 0) {
+    return getTableDataRef();
+  }
+  return {};
 }
 
 Index Linker::getFunctionIndex(Name name) {
   if (!functionIndexes.count(name)) {
-    functionIndexes[name] = getTableSegment().data.size();
-    getTableSegment().data.push_back(name);
+    ensureTableIsPopulated();
+    functionIndexes[name] = getTableData().size();
+    getTableDataRef().push_back(name);
     if (debug) {
       std::cerr << "function index: " << name << ": "
                 << functionIndexes[name] << '\n';

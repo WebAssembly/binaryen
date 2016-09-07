@@ -11,7 +11,7 @@ void generateMemoryGrowthFunction(Module&);
 
 // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
 // signature in the indirect function table.
-std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name>& tableSegmentData);
+std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData);
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
   Module& wasm;

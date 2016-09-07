@@ -284,7 +284,10 @@ class Linker {
 
   // Makes sure the table has a single segment, with offset 0,
   // to which we can add content.
-  Table::Segment& getTableSegment();
+  void ensureTableIsPopulated();
+
+  std::vector<Name>& getTableDataRef();
+  std::vector<Name> getTableData();
 
   // Retrieves (and assigns) an entry index in the indirect function table for
   // a given function.
