@@ -47,25 +47,30 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         case Expression::Id::CallImportId:
         case Expression::Id::CallIndirectId:
         case Expression::Id::SetLocalId:
-        case Expression::Id::LoadId:
         case Expression::Id::StoreId:
         case Expression::Id::ReturnId:
-        case Expression::Id::GetGlobalId:
         case Expression::Id::SetGlobalId:
         case Expression::Id::HostId:
         case Expression::Id::UnreachableId: return curr; // always needed
 
+        case Expression::Id::LoadId: {
+          if (!resultUsed) {
+            return curr->cast<Load>()->ptr;
+          }
+          return curr;
+        }
         case Expression::Id::ConstId:
         case Expression::Id::GetLocalId:
+        case Expression::Id::GetGlobalId: {
+          if (!resultUsed) return nullptr;
+          return curr;
+        }
+
         case Expression::Id::UnaryId:
         case Expression::Id::BinaryId:
         case Expression::Id::SelectId: {
           if (resultUsed) {
             return curr; // used, keep it
-          }
-          // result is not used, perhaps it is dead
-          if (curr->is<Const>() || curr->is<GetLocal>()) {
-            return nullptr;
           }
           // for unary, binary, and select, we need to check their arguments for side effects
           if (auto* unary = curr->dynCast<Unary>()) {
@@ -200,9 +205,17 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
   }
 
   void visitDrop(Drop* curr) {
-    // if the drop input has no side effects, it can be wiped out
-    if (!EffectAnalyzer(curr->value).hasSideEffects()) {
+    // optimize the dropped value, maybe leaving nothing
+    curr->value = optimize(curr->value, false);
+    if (curr->value == nullptr) {
       ExpressionManipulator::nop(curr);
+      return;
+    }
+    // a drop of a tee is a set
+    if (auto* set = curr->value->dynCast<SetLocal>()) {
+      assert(set->isTee());
+      set->setTee(false);
+      replaceCurrent(set);
       return;
     }
     // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a branch, this can make that branch optimizable and more vaccuming possible

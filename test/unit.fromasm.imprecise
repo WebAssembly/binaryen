@@ -98,13 +98,9 @@
   (func $conversions
     (local $0 f32)
     (local $1 i32)
-    (drop
-      (f64.convert_s/i32
-        (tee_local $1
-          (i32.trunc_s/f32
-            (get_local $0)
-          )
-        )
+    (set_local $1
+      (i32.trunc_s/f32
+        (get_local $0)
       )
     )
   )
@@ -519,8 +515,10 @@
     (call $phi)
   )
   (func $useSetGlobal (result i32)
-    (set_global $Int
-      (i32.const 10)
+    (drop
+      (set_global $Int
+        (i32.const 10)
+      )
     )
     (set_global $Int
       (i32.const 20)

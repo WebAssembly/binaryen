@@ -42,16 +42,10 @@
   )
   (func $binary (type $2) (result f32)
     (drop
-      (f32.add
-        (unreachable)
-        (f32.const 3)
-      )
+      (unreachable)
     )
     (drop
-      (f32.add
-        (f32.const 4)
-        (unreachable)
-      )
+      (unreachable)
     )
     (f32.add
       (unreachable)
@@ -64,25 +58,13 @@
   )
   (func $select (type $3) (result i32)
     (drop
-      (select
-        (unreachable)
-        (i32.const 4)
-        (i32.const 5)
-      )
+      (unreachable)
     )
     (drop
-      (select
-        (i32.const 6)
-        (unreachable)
-        (i32.const 7)
-      )
+      (unreachable)
     )
     (drop
-      (select
-        (i32.const 8)
-        (i32.const 9)
-        (unreachable)
-      )
+      (unreachable)
     )
     (select
       (unreachable)
@@ -175,6 +157,23 @@
         (drop
           (call_import $int)
         )
+      )
+    )
+  )
+  (func $drop-silly (type $0)
+    (drop
+      (call_import $int)
+    )
+    (drop
+      (call_import $int)
+    )
+    (drop
+      (call_import $int)
+    )
+    (drop
+      (i32.add
+        (call_import $int)
+        (call_import $int)
       )
     )
   )

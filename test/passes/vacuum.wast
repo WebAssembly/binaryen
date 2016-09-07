@@ -314,4 +314,44 @@
       )
     )
   )
+  (func $drop-silly
+    (drop
+      (i32.eqz
+        (i32.eqz
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.eqz
+          (call_import $int)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.const 2)
+        (i32.const 3)
+      )
+    )
+    (drop
+      (i32.add
+        (i32.const 4)
+        (call_import $int)
+      )
+    )
+    (drop
+      (i32.add
+        (call_import $int)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (i32.add
+        (call_import $int)
+        (call_import $int)
+      )
+    )
+  )
 )

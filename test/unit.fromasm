@@ -109,14 +109,10 @@
         (get_local $0)
       )
     )
-    (drop
-      (f64.convert_s/i32
-        (tee_local $2
-          (call_import $f64-to-int
-            (f64.promote/f32
-              (get_local $1)
-            )
-          )
+    (set_local $2
+      (call_import $f64-to-int
+        (f64.promote/f32
+          (get_local $1)
         )
       )
     )
@@ -538,8 +534,10 @@
     (call $phi)
   )
   (func $useSetGlobal (result i32)
-    (set_global $Int
-      (i32.const 10)
+    (drop
+      (set_global $Int
+        (i32.const 10)
+      )
     )
     (set_global $Int
       (i32.const 20)
