@@ -32,9 +32,7 @@ inline void grey(std::ostream& stream) { outputColorCode(stream,"\033[37m"); }
 inline void green(std::ostream& stream) { outputColorCode(stream,"\033[32m"); }
 inline void blue(std::ostream& stream) { outputColorCode(stream,"\033[34m"); }
 inline void bold(std::ostream& stream) { outputColorCode(stream,"\033[1m"); }
-#endif
-
-#if defined(_WIN32)
+#elif defined(_WIN32)
 void outputColorCode(std::ostream& stream, const unsigned short &colorCode);
 inline void normal(std::ostream& stream) { outputColorCode(stream, 0x07); }
 inline void red(std::ostream& stream) { outputColorCode(stream, 0x0c); }
