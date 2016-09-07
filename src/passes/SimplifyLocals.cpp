@@ -43,7 +43,7 @@ namespace wasm {
 // Helper classes
 
 struct GetLocalCounter : public PostWalker<GetLocalCounter, Visitor<GetLocalCounter>> {
-  std::vector<int>* numGetLocals;
+  std::vector<Index>* numGetLocals;
 
   void visitGetLocal(GetLocal *curr) {
     (*numGetLocals)[curr->index]++;
@@ -51,7 +51,7 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter, Visitor<GetLocalCoun
 };
 
 struct SetLocalRemover : public PostWalker<SetLocalRemover, Visitor<SetLocalRemover>> {
-  std::vector<int>* numGetLocals;
+  std::vector<Index>* numGetLocals;
 
   void visitSetLocal(SetLocal *curr) {
     if ((*numGetLocals)[curr->index] == 0) {
@@ -113,6 +113,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
 
   // whether we need to run an additional cycle
   bool anotherCycle;
+
+  // whether this is the first cycle
+  bool firstCycle;
+
+  // local => # of get_locals for it
+  std::vector<Index> numGetLocals;
 
   static void doNoteNonLinear(SimplifyLocals* self, Expression** currp) {
     auto* curr = *currp;
@@ -187,9 +193,15 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     if (found != sinkables.end()) {
       // sink it, and nop the origin
       auto* set = (*found->second.item)->cast<SetLocal>();
-      replaceCurrent(set);
-      assert(!set->isTee());
-      set->setTee(true);
+      if (firstCycle) {
+        // just one get_local of this, so just sink the value
+        assert(numGetLocals[curr->index] == 1);
+        replaceCurrent(set->value);
+      } else {
+        replaceCurrent(set);
+        assert(!set->isTee());
+        set->setTee(true);
+      }
       // reuse the getlocal that is dying
       *found->second.item = curr;
       ExpressionManipulator::nop(curr);
@@ -259,7 +271,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       self->checkInvalidations(effects);
     }
 
-    if (set && !set->isTee()) {
+    if (set && !set->isTee() && (!self->firstCycle || self->numGetLocals[set->index] == 1)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
       self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp)));
@@ -397,11 +409,22 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   }
 
   void doWalkFunction(Function* func) {
+    // scan get_locals
+    numGetLocals.resize(func->getNumLocals());
+    std::fill(numGetLocals.begin(), numGetLocals.end(), 0);
+    GetLocalCounter counter;
+    counter.numGetLocals = &numGetLocals;
+    counter.walkFunction(func);
     // multiple passes may be required per function, consider this:
     //    x = load
     //    y = store
     //    c(x, y)
-    // the load cannot cross the store, but y can be sunk, after which so can x
+    // the load cannot cross the store, but y can be sunk, after which so can x.
+    //
+    // we start with a cycle focusing on single-use locals, which are easy to
+    // sink (we don't need to put a set), and a good match for common compiler
+    // output patterns. further cycles do fully general sinking.
+    firstCycle = true;
     do {
       anotherCycle = false;
       // main operation
@@ -435,15 +458,16 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       sinkables.clear();
       blockBreaks.clear();
       unoptimizableBlocks.clear();
+      if (firstCycle) {
+        firstCycle = false;
+        anotherCycle = true;
+      }
     } while (anotherCycle);
     // Finally, after optimizing a function, we can see if we have set_locals
     // for a local with no remaining gets, in which case, we can
     // remove the set.
-    // First, count get_locals
-    std::vector<int> numGetLocals; // local => # of get_locals for it
-    numGetLocals.resize(func->getNumLocals());
-    GetLocalCounter counter;
-    counter.numGetLocals = &numGetLocals;
+    // First, recount get_locals
+    std::fill(numGetLocals.begin(), numGetLocals.end(), 0);
     counter.walkFunction(func);
     // Second, remove unneeded sets
     SetLocalRemover remover;
