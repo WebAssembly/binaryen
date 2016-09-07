@@ -23,6 +23,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-s-parser.h>
+#include <support/threads.h>
 
 namespace wasm {
 
@@ -71,7 +72,16 @@ struct PatternDatabase {
   };
 };
 
-static PatternDatabase database;
+static PatternDatabase* database = nullptr;
+
+static void ensureDatabase() {
+  if (!database) {
+    // we must only ever create one database
+    static OnlyOnce onlyOnce;
+    onlyOnce.verify();
+    database = new PatternDatabase;
+  }
+}
 
 // Check for matches and apply them
 struct Match {
@@ -151,11 +161,15 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
 
   Pass* create() override { return new OptimizeInstructions; }
 
+  OptimizeInstructions() {
+    ensureDatabase();
+  }
+
   void visitExpression(Expression* curr) {
     // we may be able to apply multiple patterns, one may open opportunities that look deeper NB: patterns must not have cycles
     while (1) {
-      auto iter = database.patternMap.find(curr->_id);
-      if (iter == database.patternMap.end()) return;
+      auto iter = database->patternMap.find(curr->_id);
+      if (iter == database->patternMap.end()) return;
       auto& patterns = iter->second;
       bool more = false;
       for (auto& pattern : patterns) {

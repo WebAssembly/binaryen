@@ -96,6 +96,14 @@ public:
       return;
     }
 
+    // Before parallelism, create all passes on the main thread here, to ensure
+    // constructors run at least once on the main thread, for one-time init things.
+    {
+      PassRunner passRunner(wasm);
+      addPrePasses(passRunner);
+      passRunner.addDefaultFunctionOptimizationPasses();
+    }
+
     // prepare work list
     endMarker = new Function();
     list = new std::atomic<Function*>[numFunctions];
