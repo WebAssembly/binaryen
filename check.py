@@ -532,6 +532,12 @@ output = run_command(cmd)
 # bar should be linked from the archive
 fail_if_not_contained(output, '(func $bar')
 
+# Test exporting memory growth function
+cmd = [s2wasm, os.path.join('test', 'linker', 'main.s'), '--emscripten-glue', '--allow-memory-growth']
+output = run_command(cmd)
+fail_if_not_contained(output, '(export "__growWasmMemory" $__growWasmMemory)')
+fail_if_not_contained(output, '(func $__growWasmMemory (param $newSize i32)')
+
 print '\n[ running validation tests... ]\n'
 wasm_as = os.path.join('bin', 'wasm-as')
 # Ensure the tests validate by default
