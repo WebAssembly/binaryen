@@ -684,5 +684,13 @@
     (set_global $Int
       (get_local $0)
     )
+    (call $globalOpts)
+    (set_local $0
+      (get_global $Int)
+    )
+    (call $globalOpts)
+    (set_global $Int
+      (get_local $0)
+    )
   )
 )

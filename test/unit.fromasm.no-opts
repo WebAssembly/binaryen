@@ -1137,5 +1137,13 @@
     (set_global $Int
       (get_local $x)
     )
+    (call $globalOpts)
+    (set_local $x
+      (get_global $Int)
+    )
+    (call $globalOpts)
+    (set_global $Int
+      (get_local $x)
+    )
   )
 )

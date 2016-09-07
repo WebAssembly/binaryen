@@ -356,7 +356,11 @@ function asm(global, env, buffer) {
     Int = x;
     globalOpts();
     x = Int;
-    if (1) Int = 20;
+    if (1) Int = 20; // but this does interfere
+    Int = x;
+    globalOpts();
+    x = Int;
+    globalOpts(); // this too
     Int = x;
   }
 
