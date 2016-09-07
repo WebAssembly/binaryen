@@ -268,18 +268,6 @@ class Linker {
   // relocation for it to point to the top of the stack.
   void placeStackPointer(Address stackAllocation);
 
-  template<class C>
-  void printSet(std::ostream& o, C& c) {
-    o << "[";
-    bool first = true;
-    for (auto& item : c) {
-      if (first) first = false;
-      else o << ",";
-      o << '"' << item << '"';
-    }
-    o << "]";
-  }
-
   void ensureImport(Name target, std::string signature);
 
   // Makes sure the table has a single segment, with offset 0,

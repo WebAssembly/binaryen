@@ -69,6 +69,22 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
   return generatedFunctions;
 }
 
+struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
+  Module& wasm;
+  std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
+
+  std::map<std::string, std::set<std::string>> sigsForCode;
+  std::map<std::string, Address> ids;
+  std::set<std::string> allSigs;
+
+  AsmConstWalker(Module& _wasm, std::unordered_map<Address, Address> _segmentsByAddress) :
+    wasm(_wasm), segmentsByAddress(_segmentsByAddress) { }
+
+  void visitCallImport(CallImport* curr);
+
+  std::string escape(const char *input);
+};
+
 void AsmConstWalker::visitCallImport(CallImport* curr) {
   if (curr->target == EMSCRIPTEN_ASM_CONST) {
     auto arg = curr->operands[0]->cast<Const>();
@@ -118,6 +134,55 @@ std::string AsmConstWalker::escape(const char *input) {
     }
   }
   return code;
+}
+
+template<class C>
+void printSet(std::ostream& o, C& c) {
+  o << "[";
+  bool first = true;
+  for (auto& item : c) {
+    if (first) first = false;
+    else o << ",";
+    o << '"' << item << '"';
+  }
+  o << "]";
+}
+
+void generateEmscriptenMetadata(std::ostream& o,
+                                Module& wasm,
+                                std::unordered_map<Address, Address> segmentsByAddress,
+                                Address staticBump,
+                                std::vector<Name> const& initializerFunctions) {
+  o << ";; METADATA: { ";
+  // find asmConst calls, and emit their metadata
+  AsmConstWalker walker(wasm, segmentsByAddress);
+  walker.walkModule(&wasm);
+  // print
+  o << "\"asmConsts\": {";
+  bool first = true;
+  for (auto& pair : walker.sigsForCode) {
+    auto& code = pair.first;
+    auto& sigs = pair.second;
+    if (first) first = false;
+    else o << ",";
+    o << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
+    printSet(o, sigs);
+    o << "]";
+  }
+  o << "}";
+  o << ",";
+  o << "\"staticBump\": " << staticBump << ", ";
+
+  o << "\"initializers\": [";
+  first = true;
+  for (const auto& func : initializerFunctions) {
+    if (first) first = false;
+    else o << ", ";
+    o << "\"" << func.c_str() << "\"";
+  }
+  o << "]";
+
+  o << " }\n";
 }
 
 } // namespace wasm

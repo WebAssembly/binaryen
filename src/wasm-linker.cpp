@@ -306,36 +306,8 @@ void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
     exportFunction(f->name, true);
   }
 
-  o << ";; METADATA: { ";
-  // find asmConst calls, and emit their metadata
-  AsmConstWalker walker(out.wasm, segmentsByAddress);
-  walker.walkModule(&out.wasm);
-  // print
-  o << "\"asmConsts\": {";
-  bool first = true;
-  for (auto& pair : walker.sigsForCode) {
-    auto& code = pair.first;
-    auto& sigs = pair.second;
-    if (first) first = false;
-    else o << ",";
-    o << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
-    printSet(o, sigs);
-    o << "]";
-  }
-  o << "}";
-  o << ",";
-  o << "\"staticBump\": " << (nextStatic - globalBase) << ", ";
-
-  o << "\"initializers\": [";
-  first = true;
-  for (const auto& func : out.initializerFunctions) {
-    if (first) first = false;
-    else o << ", ";
-    o << "\"" << func.c_str() << "\"";
-  }
-  o << "]";
-
-  o << " }\n";
+  auto staticBump = nextStatic - globalBase;
+  generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
 }
 
 void Linker::ensureTableIsPopulated() {
