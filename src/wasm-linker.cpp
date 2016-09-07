@@ -155,8 +155,13 @@ void Linker::layout() {
 
     if (relocation->kind == LinkerObject::Relocation::kData) {
       const auto& symbolAddress = staticAddresses.find(name);
-      if (symbolAddress == staticAddresses.end()) Fatal() << "Unknown relocation: " << name << '\n';
-      *(relocation->data) = symbolAddress->second + relocation->addend;
+      if (symbolAddress == staticAddresses.end()) {
+        if (debug) std::cerr << "Unknown relocation: " << name << '\n';
+        out.unknownData.insert(name);
+        *(relocation->data) = 0;
+      } else {
+        *(relocation->data) = symbolAddress->second + relocation->addend;
+      }
       if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
     } else {
       // function address
@@ -393,6 +398,16 @@ void Linker::emscriptenGlue(std::ostream& o) {
     if (first) first = false;
     else o << ", ";
     o << "\"" << func.c_str() << "\"";
+  }
+  o << "]";
+  o << ",";
+
+  o << "\"externs\": [";
+  first = true;
+  for (auto& name : out.unknownData) {
+    if (first) first = false;
+    else o << ", ";
+    o << "\"" << name.c_str() << "\"";
   }
   o << "]";
 
