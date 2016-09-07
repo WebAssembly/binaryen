@@ -6162,10 +6162,12 @@
             )
             (if
               (get_local $$tobool$i)
-              (call $___fwritex
-                (get_local $$incdec$ptr169275)
-                (get_local $$sub$ptr$sub)
-                (get_local $$f)
+              (drop
+                (call $___fwritex
+                  (get_local $$incdec$ptr169275)
+                  (get_local $$sub$ptr$sub)
+                  (get_local $$f)
+                )
               )
             )
           )
@@ -9629,10 +9631,12 @@
                             )
                             (if
                               (get_local $$tobool$i$419$i)
-                              (call $___fwritex
-                                (get_local $$prefix$0$add$ptr65$i)
-                                (get_local $$add67$i)
-                                (get_local $$f)
+                              (drop
+                                (call $___fwritex
+                                  (get_local $$prefix$0$add$ptr65$i)
+                                  (get_local $$add67$i)
+                                  (get_local $$f)
+                                )
                               )
                             )
                             (set_local $$xor167$i
@@ -9673,10 +9677,12 @@
                             )
                             (if
                               (get_local $$tobool$i$425$i)
-                              (call $___fwritex
-                                (get_local $$buf$i)
-                                (get_local $$sub$ptr$sub172$i)
-                                (get_local $$f)
+                              (drop
+                                (call $___fwritex
+                                  (get_local $$buf$i)
+                                  (get_local $$sub$ptr$sub172$i)
+                                  (get_local $$f)
+                                )
                               )
                             )
                             (set_local $$sub$ptr$rhs$cast174$i
@@ -9726,10 +9732,12 @@
                             )
                             (if
                               (get_local $$tobool$i$431$i)
-                              (call $___fwritex
-                                (get_local $$incdec$ptr115$i)
-                                (get_local $$sub$ptr$sub175$i)
-                                (get_local $$f)
+                              (drop
+                                (call $___fwritex
+                                  (get_local $$incdec$ptr115$i)
+                                  (get_local $$sub$ptr$sub175$i)
+                                  (get_local $$f)
+                                )
                               )
                             )
                             (set_local $$xor186$i
@@ -12096,10 +12104,12 @@
                         )
                         (if
                           (get_local $$tobool$i$437$i)
-                          (call $___fwritex
-                            (get_local $$prefix$0$i)
-                            (get_local $$pl$0$i)
-                            (get_local $$f)
+                          (drop
+                            (call $___fwritex
+                              (get_local $$prefix$0$i)
+                              (get_local $$pl$0$i)
+                              (get_local $$f)
+                            )
                           )
                         )
                         (set_local $$xor655$i
@@ -12656,10 +12666,12 @@
                                             )
                                             (if
                                               (get_local $$tobool$i$461$i)
-                                              (call $___fwritex
-                                                (get_local $$s753$0$i)
-                                                (i32.const 1)
-                                                (get_local $$f)
+                                              (drop
+                                                (call $___fwritex
+                                                  (get_local $$s753$0$i)
+                                                  (i32.const 1)
+                                                  (get_local $$f)
+                                                )
                                               )
                                             )
                                             (set_local $$cmp777$i
@@ -13088,10 +13100,12 @@
                         )
                         (if
                           (get_local $$tobool$i$413$i)
-                          (call $___fwritex
-                            (get_local $$s35$0$i)
-                            (i32.const 3)
-                            (get_local $$f)
+                          (drop
+                            (call $___fwritex
+                              (get_local $$s35$0$i)
+                              (i32.const 3)
+                              (get_local $$f)
+                            )
                           )
                         )
                         (set_local $$xor$i
@@ -13845,10 +13859,12 @@
                             )
                             (if
                               (get_local $$tobool$i$232)
-                              (call $___fwritex
-                                (get_local $$mb)
-                                (get_local $$call411)
-                                (get_local $$f)
+                              (drop
+                                (call $___fwritex
+                                  (get_local $$mb)
+                                  (get_local $$call411)
+                                  (get_local $$f)
+                                )
                               )
                             )
                             (set_local $$cmp404
@@ -14176,10 +14192,12 @@
         )
         (if
           (get_local $$tobool$i$245)
-          (call $___fwritex
-            (get_local $$prefix$2)
-            (get_local $$pl$2)
-            (get_local $$f)
+          (drop
+            (call $___fwritex
+              (get_local $$prefix$2)
+              (get_local $$pl$2)
+              (get_local $$f)
+            )
           )
         )
         (set_local $$xor449
@@ -14221,10 +14239,12 @@
         )
         (if
           (get_local $$tobool$i$217)
-          (call $___fwritex
-            (get_local $$a$2)
-            (get_local $$sub$ptr$sub433)
-            (get_local $$f)
+          (drop
+            (call $___fwritex
+              (get_local $$a$2)
+              (get_local $$sub$ptr$sub433)
+              (get_local $$f)
+            )
           )
         )
         (set_local $$xor457

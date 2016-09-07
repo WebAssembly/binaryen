@@ -10632,24 +10632,26 @@
             (get_local $i6)
             (get_local $i8)
           )
-          (call_indirect $FUNCSIG$iiii
-            (get_local $i1)
-            (i32.sub
-              (get_local $i6)
-              (get_local $i8)
-            )
-            (i32.const 1)
-            (i32.add
-              (i32.and
-                (i32.load
-                  (i32.add
-                    (get_local $i1)
-                    (i32.const 40)
-                  )
-                )
-                (i32.const 7)
+          (drop
+            (call_indirect $FUNCSIG$iiii
+              (get_local $i1)
+              (i32.sub
+                (get_local $i6)
+                (get_local $i8)
               )
-              (i32.const 2)
+              (i32.const 1)
+              (i32.add
+                (i32.and
+                  (i32.load
+                    (i32.add
+                      (get_local $i1)
+                      (i32.const 40)
+                    )
+                  )
+                  (i32.const 7)
+                )
+                (i32.const 2)
+              )
             )
           )
         )

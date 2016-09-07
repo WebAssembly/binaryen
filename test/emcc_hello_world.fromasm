@@ -3081,10 +3081,12 @@
                 (i32.const 32)
               )
             )
-            (call $___fwritex
-              (get_local $20)
-              (get_local $12)
-              (get_local $0)
+            (drop
+              (call $___fwritex
+                (get_local $20)
+                (get_local $12)
+                (get_local $0)
+              )
             )
           )
         )
@@ -5105,10 +5107,12 @@
                               (i32.const 32)
                             )
                           )
-                          (call $___fwritex
-                            (get_local $10)
-                            (get_local $7)
-                            (get_local $0)
+                          (drop
+                            (call $___fwritex
+                              (get_local $10)
+                              (get_local $7)
+                              (get_local $0)
+                            )
                           )
                         )
                         (call $_pad
@@ -5136,10 +5140,12 @@
                               (i32.const 32)
                             )
                           )
-                          (call $___fwritex
-                            (get_local $27)
-                            (get_local $1)
-                            (get_local $0)
+                          (drop
+                            (call $___fwritex
+                              (get_local $27)
+                              (get_local $1)
+                              (get_local $0)
+                            )
                           )
                         )
                         (call $_pad
@@ -5169,10 +5175,12 @@
                               (i32.const 32)
                             )
                           )
-                          (call $___fwritex
-                            (get_local $8)
-                            (get_local $1)
-                            (get_local $0)
+                          (drop
+                            (call $___fwritex
+                              (get_local $8)
+                              (get_local $1)
+                              (get_local $0)
+                            )
                           )
                         )
                         (call $_pad
@@ -6633,10 +6641,12 @@
                           (i32.const 32)
                         )
                       )
-                      (call $___fwritex
-                        (get_local $50)
-                        (get_local $37)
-                        (get_local $0)
+                      (drop
+                        (call $___fwritex
+                          (get_local $50)
+                          (get_local $37)
+                          (get_local $0)
+                        )
                       )
                     )
                     (call $_pad
@@ -6984,10 +6994,12 @@
                                               (i32.const 32)
                                             )
                                           )
-                                          (call $___fwritex
-                                            (get_local $8)
-                                            (i32.const 1)
-                                            (get_local $0)
+                                          (drop
+                                            (call $___fwritex
+                                              (get_local $8)
+                                              (i32.const 1)
+                                              (get_local $0)
+                                            )
                                           )
                                         )
                                         (br_if $do-once$122
@@ -7247,10 +7259,12 @@
                           (i32.const 32)
                         )
                       )
-                      (call $___fwritex
-                        (get_local $8)
-                        (i32.const 3)
-                        (get_local $0)
+                      (drop
+                        (call $___fwritex
+                          (get_local $8)
+                          (i32.const 3)
+                          (get_local $0)
+                        )
                       )
                     )
                     (call $_pad
@@ -7725,10 +7739,12 @@
                                   (i32.const 32)
                                 )
                               )
-                              (call $___fwritex
-                                (get_local $62)
-                                (get_local $5)
-                                (get_local $0)
+                              (drop
+                                (call $___fwritex
+                                  (get_local $62)
+                                  (get_local $5)
+                                  (get_local $0)
+                                )
                               )
                             )
                             (if
@@ -7959,10 +7975,12 @@
               (i32.const 32)
             )
           )
-          (call $___fwritex
-            (get_local $47)
-            (get_local $41)
-            (get_local $0)
+          (drop
+            (call $___fwritex
+              (get_local $47)
+              (get_local $41)
+              (get_local $0)
+            )
           )
         )
         (call $_pad
@@ -7991,10 +8009,12 @@
               (i32.const 32)
             )
           )
-          (call $___fwritex
-            (get_local $46)
-            (get_local $5)
-            (get_local $0)
+          (drop
+            (call $___fwritex
+              (get_local $46)
+              (get_local $5)
+              (get_local $0)
+            )
           )
         )
         (call $_pad

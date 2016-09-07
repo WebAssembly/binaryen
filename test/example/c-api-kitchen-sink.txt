@@ -408,7 +408,9 @@ BinaryenFloat64: 4
             )
             (if
               (i32.const 4)
-              (i32.const 5)
+              (drop
+                (i32.const 5)
+              )
             )
             (drop
               (loop $in
@@ -1999,7 +2001,9 @@ int main() {
             )
             (if
               (i32.const 4)
-              (i32.const 5)
+              (drop
+                (i32.const 5)
+              )
             )
             (drop
               (loop $in

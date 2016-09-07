@@ -832,6 +832,13 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
     curr->finalize(); // we may have changed our type
   }
 
+  void visitIf(If* curr) {
+    // if without else does not return a value, so the body must be dropped if it is concrete
+    if (!curr->ifFalse && isConcreteWasmType(curr->ifTrue->type)) {
+      curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
+    }
+  }
+
   void visitFunction(Function* curr) {
     if (curr->result == none && isConcreteWasmType(curr->body->type)) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);

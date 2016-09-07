@@ -9056,21 +9056,23 @@
               )
             )
           )
-          (call_indirect $FUNCSIG$iiii
-            (get_local $0)
-            (i32.sub
-              (get_local $2)
-              (get_local $6)
-            )
-            (i32.const 1)
-            (i32.add
-              (i32.and
-                (i32.load offset=40
-                  (get_local $0)
-                )
-                (i32.const 3)
+          (drop
+            (call_indirect $FUNCSIG$iiii
+              (get_local $0)
+              (i32.sub
+                (get_local $2)
+                (get_local $6)
               )
-              (i32.const 2)
+              (i32.const 1)
+              (i32.add
+                (i32.and
+                  (i32.load offset=40
+                    (get_local $0)
+                  )
+                  (i32.const 3)
+                )
+                (i32.const 2)
+              )
             )
           )
         )

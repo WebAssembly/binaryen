@@ -14,6 +14,7 @@ function asm(global, env, buffer) {
   var abort = env.abort;
   var print = env.print;
   var h = env.h;
+  var return_int = env.return_int;
 
   var HEAP8 = new global.Int8Array(buffer);
   var HEAP16 = new global.Int16Array(buffer);
@@ -362,6 +363,10 @@ function asm(global, env, buffer) {
     x = Int;
     globalOpts(); // this too
     Int = x;
+  }
+
+  function dropCallImport() {
+    if (1) return_int() | 0;
   }
 
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
