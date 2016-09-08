@@ -293,21 +293,17 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
-void Linker::emscriptenGlue(std::ostream& o, bool allowMemoryGrowth) {
+void Linker::emscriptenGlue(std::ostream& o) {
   if (debug) {
     WasmPrinter::printModule(&out.wasm, std::cerr);
   }
 
-  if (allowMemoryGrowth) {
-    generateMemoryGrowthFunction(out.wasm);
-  }
-
-  for (auto f : makeDynCallThunks(out.wasm, getTableData())) {
+  for (auto f : emscripten::makeDynCallThunks(out.wasm, getTableData())) {
     exportFunction(f->name, true);
   }
 
   auto staticBump = nextStatic - globalBase;
-  generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
+  emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
 }
 
 void Linker::ensureTableIsPopulated() {

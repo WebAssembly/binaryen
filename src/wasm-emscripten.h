@@ -17,11 +17,11 @@
 #ifndef wasm_emscripten_h
 #define wasm_emscripten_h
 
-#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
-class Module;
+namespace emscripten {
 
 void generateMemoryGrowthFunction(Module&);
 
@@ -34,6 +34,8 @@ void generateEmscriptenMetadata(std::ostream& o,
                                 std::unordered_map<Address, Address> segmentsByAddress,
                                 Address staticBump,
                                 std::vector<Name> const& initializerFunctions);
+
+} // namespace emscripten
 
 } // namespace wasm
 

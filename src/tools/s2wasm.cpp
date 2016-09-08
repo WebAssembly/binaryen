@@ -22,6 +22,7 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "s2wasm.h"
+#include "wasm-emscripten.h"
 #include "wasm-linker.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
@@ -149,8 +150,12 @@ int main(int argc, const char *argv[]) {
   std::stringstream meta;
   if (generateEmscriptenGlue) {
     if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
+    if (allowMemoryGrowth) {
+      emscripten::generateMemoryGrowthFunction(linker.getOutput().wasm);
+    }
+
     // dyncall thunks
-    linker.emscriptenGlue(meta, allowMemoryGrowth);
+    linker.emscriptenGlue(meta);
   }
 
   if (options.extra["validate"] != "none") {

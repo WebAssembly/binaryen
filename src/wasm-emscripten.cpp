@@ -21,9 +21,12 @@
 #include "shared-constants.h"
 #include "wasm-builder.h"
 #include "wasm-linker.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
+
+namespace emscripten {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
@@ -200,5 +203,7 @@ void generateEmscriptenMetadata(std::ostream& o,
 
   o << " }\n";
 }
+
+} // namespace emscripten
 
 } // namespace wasm

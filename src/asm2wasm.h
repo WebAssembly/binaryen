@@ -798,7 +798,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // apply memory growth, if relevant
   if (memoryGrowth) {
-    generateMemoryGrowthFunction(wasm);
+    emscripten::generateMemoryGrowthFunction(wasm);
   }
 
   wasm.memory.exportName = MEMORY;
