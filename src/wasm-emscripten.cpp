@@ -20,7 +20,6 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
-#include "wasm-linker.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -62,10 +61,8 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
 
   std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
-  wasm::Builder wasmBuilder(wasm);
+  Builder wasmBuilder(wasm);
   for (const auto& indirectFunc : tableSegmentData) {
-    // Skip generating thunks for the dummy function
-    if (indirectFunc == dummyFunction) continue;
     std::string sig(getSig(wasm.getFunction(indirectFunc)));
     auto* funcType = ensureFunctionType(sig, &wasm);
     if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.

@@ -32,9 +32,6 @@ namespace wasm {
 
 class S2WasmBuilder;
 
-// Name of the dummy function to prevent erroneous nullptr comparisons.
-static constexpr const char* dummyFunction = "__wasm_nullptr";
-
 // An "object file" for linking. Contains a wasm module, plus the associated
 // information needed for linking/layout.
 class LinkerObject {

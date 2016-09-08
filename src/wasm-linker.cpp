@@ -25,6 +25,9 @@
 
 using namespace wasm;
 
+// Name of the dummy function to prevent erroneous nullptr comparisons.
+static constexpr const char* dummyFunction = "__wasm_nullptr";
+
 void Linker::placeStackPointer(Address stackAllocation) {
   // ensure this is the first allocation
   assert(nextStatic == globalBase || nextStatic == 1);
@@ -298,7 +301,9 @@ void Linker::emscriptenGlue(std::ostream& o) {
     WasmPrinter::printModule(&out.wasm, std::cerr);
   }
 
-  for (auto f : emscripten::makeDynCallThunks(out.wasm, getTableData())) {
+  auto functionsToThunk = getTableData();
+  std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
+  for (auto f : emscripten::makeDynCallThunks(out.wasm, functionsToThunk)) {
     exportFunction(f->name, true);
   }
 
