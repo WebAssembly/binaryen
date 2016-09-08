@@ -49,7 +49,7 @@ void generateMemoryGrowthFunction(Module& wasm) {
   wasm.addExport(export_);
 }
 
-bool hasI64ResultOrParam(FunctionType* ft) {
+static bool hasI64ResultOrParam(FunctionType* ft) {
   if (ft->result == i64) return true;
   for (auto ty : ft->params) {
     if (ty == i64) return true;
