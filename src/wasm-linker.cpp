@@ -20,11 +20,13 @@
 #include "s2wasm.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-emscripten.h"
 #include "wasm-printing.h"
 
 using namespace wasm;
 
-cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+// Name of the dummy function to prevent erroneous nullptr comparisons.
+static constexpr const char* dummyFunction = "__wasm_nullptr";
 
 void Linker::placeStackPointer(Address stackAllocation) {
   // ensure this is the first allocation
@@ -138,7 +140,8 @@ void Linker::layout() {
 
   // Emit the pre-assigned function names in sorted order
   for (const auto& P : functionNames) {
-    getTableSegment().data.push_back(P.second);
+    ensureTableIsPopulated();
+    getTableDataRef().push_back(P.second);
   }
 
   for (auto& relocation : out.relocations) {
@@ -236,8 +239,9 @@ void Linker::layout() {
   }
 
   // finalize function table
-  if (out.wasm.table.segments.size() > 0) {
-    out.wasm.table.initial = out.wasm.table.max = getTableSegment().data.size();
+  unsigned int tableSize = getTableData().size();
+  if (tableSize > 0) {
+    out.wasm.table.initial = out.wasm.table.max = tableSize;
   }
 }
 
@@ -303,129 +307,46 @@ void Linker::emscriptenGlue(std::ostream& o) {
     WasmPrinter::printModule(&out.wasm, std::cerr);
   }
 
-  out.wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
-
-  makeDynCallThunks();
-
-  o << ";; METADATA: { ";
-  // find asmConst calls, and emit their metadata
-  struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
-    Linker* parent;
-
-    std::map<std::string, std::set<std::string>> sigsForCode;
-    std::map<std::string, Address> ids;
-    std::set<std::string> allSigs;
-
-    void visitCallImport(CallImport* curr) {
-      if (curr->target == EMSCRIPTEN_ASM_CONST) {
-        auto arg = curr->operands[0]->cast<Const>();
-        Address segmentIndex = parent->segmentsByAddress[arg->value.geti32()];
-        std::string code = escape(&parent->out.wasm.memory.segments[segmentIndex].data[0]);
-        int32_t id;
-        if (ids.count(code) == 0) {
-          id = ids.size();
-          ids[code] = id;
-        } else {
-          id = ids[code];
-        }
-        std::string sig = getSig(curr);
-        sigsForCode[code].insert(sig);
-        std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
-        curr->target = cashew::IString(fixedTarget.c_str(), false);
-        arg->value = Literal(id);
-        // add import, if necessary
-        if (allSigs.count(sig) == 0) {
-          allSigs.insert(sig);
-          auto import = new Import;
-          import->name = import->base = curr->target;
-          import->module = ENV;
-          import->functionType = ensureFunctionType(getSig(curr), &parent->out.wasm);
-          import->kind = Import::Function;
-          parent->out.wasm.addImport(import);
-        }
-      }
-    }
-
-    std::string escape(const char *input) {
-      std::string code = input;
-      // replace newlines quotes with escaped newlines
-      size_t curr = 0;
-      while ((curr = code.find("\\n", curr)) != std::string::npos) {
-        code = code.replace(curr, 2, "\\\\n");
-        curr += 3; // skip this one
-      }
-      // replace double quotes with escaped single quotes
-      curr = 0;
-      while ((curr = code.find('"', curr)) != std::string::npos) {
-        if (curr == 0 || code[curr-1] != '\\') {
-          code = code.replace(curr, 1, "\\" "\"");
-          curr += 2; // skip this one
-        } else { // already escaped, escape the slash as well
-          code = code.replace(curr, 1, "\\" "\\" "\"");
-          curr += 3; // skip this one
-        }
-      }
-      return code;
-    }
-  };
-  AsmConstWalker walker;
-  walker.parent = this;
-  walker.walkModule(&out.wasm);
-  // print
-  o << "\"asmConsts\": {";
-  bool first = true;
-  for (auto& pair : walker.sigsForCode) {
-    auto& code = pair.first;
-    auto& sigs = pair.second;
-    if (first) first = false;
-    else o << ",";
-    o << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
-    printSet(o, sigs);
-    o << "]";
+  auto functionsToThunk = getTableData();
+  std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
+  for (auto f : emscripten::makeDynCallThunks(out.wasm, functionsToThunk)) {
+    exportFunction(f->name, true);
   }
-  o << "}";
-  o << ",";
-  o << "\"staticBump\": " << (nextStatic - globalBase) << ", ";
 
-  o << "\"initializers\": [";
-  first = true;
-  for (const auto& func : out.initializerFunctions) {
-    if (first) first = false;
-    else o << ", ";
-    o << "\"" << func.c_str() << "\"";
-  }
-  o << "]";
-
-  o << " }\n";
+  auto staticBump = nextStatic - globalBase;
+  emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
 }
 
-Table::Segment& Linker::getTableSegment() {
+void Linker::ensureTableIsPopulated() {
   if (out.wasm.table.segments.size() == 0) {
-    out.wasm.table.segments.emplace_back(out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))));
-  } else {
-    assert(out.wasm.table.segments.size() == 1);
+    auto emptySegment = out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0)));
+    out.wasm.table.segments.emplace_back(emptySegment);
   }
-  return out.wasm.table.segments[0];
+}
+
+std::vector<Name>& Linker::getTableDataRef() {
+  assert(out.wasm.table.segments.size() == 1);
+  return out.wasm.table.segments[0].data;
+}
+
+std::vector<Name> Linker::getTableData() {
+  if (out.wasm.table.segments.size() > 0) {
+    return getTableDataRef();
+  }
+  return {};
 }
 
 Index Linker::getFunctionIndex(Name name) {
   if (!functionIndexes.count(name)) {
-    functionIndexes[name] = getTableSegment().data.size();
-    getTableSegment().data.push_back(name);
+    ensureTableIsPopulated();
+    functionIndexes[name] = getTableData().size();
+    getTableDataRef().push_back(name);
     if (debug) {
       std::cerr << "function index: " << name << ": "
                 << functionIndexes[name] << '\n';
     }
   }
   return functionIndexes[name];
-}
-
-bool hasI64ResultOrParam(FunctionType* ft) {
-  if (ft->result == i64) return true;
-  for (auto ty : ft->params) {
-    if (ty == i64) return true;
-  }
-  return false;
 }
 
 void Linker::makeDummyFunction() {
@@ -443,34 +364,6 @@ void Linker::makeDummyFunction() {
   Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, WasmType::none, {}, unreachable);
   out.wasm.addFunction(dummy);
   getFunctionIndex(dummy->name);
-}
-
-void Linker::makeDynCallThunks() {
-  if (out.wasm.table.segments.size() == 0) return;
-  std::unordered_set<std::string> sigs;
-  wasm::Builder wasmBuilder(out.wasm);
-  for (const auto& indirectFunc : getTableSegment().data) {
-    // Skip generating thunks for the dummy function
-    if (indirectFunc == dummyFunction) continue;
-    std::string sig(getSig(out.wasm.getFunction(indirectFunc)));
-    auto* funcType = ensureFunctionType(sig, &out.wasm);
-    if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
-    if (!sigs.insert(sig).second) continue; // Sig is already in the set
-    std::vector<NameType> params;
-    params.emplace_back("fptr", i32); // function pointer param
-    int p = 0;
-    for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
-    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
-    Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
-    std::vector<Expression*> args;
-    for (unsigned i = 0; i < funcType->params.size(); ++i) {
-      args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
-    }
-    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
-    f->body = call;
-    out.wasm.addFunction(f);
-    exportFunction(f->name, true);
-  }
 }
 
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {

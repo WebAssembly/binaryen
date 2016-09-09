@@ -252,9 +252,6 @@ class Linker {
   // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
 
-  // Name of the dummy function to prevent erroneous nullptr comparisons.
-  static constexpr const char* dummyFunction = "__wasm_nullptr";
-
  private:
   // Allocate a static variable and return its address in linear memory
   Address allocateStatic(Address allocSize, Address alignment, Name name) {
@@ -268,23 +265,14 @@ class Linker {
   // relocation for it to point to the top of the stack.
   void placeStackPointer(Address stackAllocation);
 
-  template<class C>
-  void printSet(std::ostream& o, C& c) {
-    o << "[";
-    bool first = true;
-    for (auto& item : c) {
-      if (first) first = false;
-      else o << ",";
-      o << '"' << item << '"';
-    }
-    o << "]";
-  }
-
   void ensureImport(Name target, std::string signature);
 
   // Makes sure the table has a single segment, with offset 0,
   // to which we can add content.
-  Table::Segment& getTableSegment();
+  void ensureTableIsPopulated();
+
+  std::vector<Name>& getTableDataRef();
+  std::vector<Name> getTableData();
 
   // Retrieves (and assigns) an entry index in the indirect function table for
   // a given function.
@@ -293,10 +281,6 @@ class Linker {
   // Adds a dummy function in the indirect table at slot 0 to prevent NULL
   // pointer miscomparisons.
   void makeDummyFunction();
-
-  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-  // signature in the indirect function table.
-  void makeDynCallThunks();
 
   static Address roundUpToPageSize(Address size) {
     return (size + Memory::kPageSize - 1) & Memory::kPageMask;

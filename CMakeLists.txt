@@ -133,6 +133,7 @@ INSTALL(TARGETS wasm-opt DESTINATION bin)
 
 SET(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp
+  src/wasm-emscripten.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(asm2wasm
@@ -144,6 +145,7 @@ INSTALL(TARGETS asm2wasm DESTINATION bin)
 
 SET(s2wasm_SOURCES
   src/tools/s2wasm.cpp
+  src/wasm-emscripten.cpp
   src/wasm-linker.cpp
   src/wasm.cpp
 )

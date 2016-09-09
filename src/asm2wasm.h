@@ -32,6 +32,7 @@
 #include "pass.h"
 #include "ast_utils.h"
 #include "wasm-builder.h"
+#include "wasm-emscripten.h"
 #include "wasm-validator.h"
 #include "wasm-module-building.h"
 
@@ -814,23 +815,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // apply memory growth, if relevant
   if (memoryGrowth) {
-    // create and export a function that just calls memory growth
-    Builder builder(wasm);
-    wasm.addFunction(builder.makeFunction(
-      GROW_WASM_MEMORY,
-      { { NEW_SIZE, i32 } },
-      i32,
-      {},
-      builder.makeHost(
-        GrowMemory,
-        Name(),
-        { builder.makeGetLocal(0, i32) }
-      )
-    ));
-    auto export_ = new Export;
-    export_->name = export_->value = GROW_WASM_MEMORY;
-    export_->kind = Export::Function;
-    wasm.addExport(export_);
+    emscripten::generateMemoryGrowthFunction(wasm);
   }
 
 #if 0
