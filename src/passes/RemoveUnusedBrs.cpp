@@ -21,6 +21,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <ast_utils.h>
+#include <wasm-builder.h>
 
 namespace wasm {
 
@@ -43,6 +44,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
 
   // a stack for if-else contents, we merge their outputs
   std::vector<Flows> ifStack;
+
+  // list of all loops, so we can optimize them
+  std::vector<Loop*> loops;
 
   static void visitAny(RemoveUnusedBrs* self, Expression** currp) {
     auto* curr = *currp;
@@ -109,7 +113,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       // ignore (could be result of a previous cycle)
       self->valueCanFlow = false;
     } else {
-      // anything else stops the flow TODO: optimize loops?
+      // anything else stops the flow
       flows.clear();
       self->valueCanFlow = false;
     }
@@ -121,6 +125,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
 
   static void saveIfTrue(RemoveUnusedBrs* self, Expression** currp) {
     self->ifStack.push_back(std::move(self->flows));
+  }
+
+  void visitLoop(Loop* curr) {
+    loops.push_back(curr);
   }
 
   void visitIf(If* curr) {
@@ -140,6 +148,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         anotherCycle = true;
       }
     }
+    // TODO: if-else can be turned into a br_if as well, if one of the sides is a dead end
   }
 
   // override scan to add a pre and a post check task to all nodes
@@ -160,6 +169,99 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       self->pushTask(scan, &iff->condition);
     } else {
       WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::scan(self, currp);
+    }
+  }
+
+  // optimizes a loop. returns true if we made changes
+  bool optimizeLoop(Loop* loop) {
+    // if a loop ends in
+    // (loop $in
+    //   (block $out
+    //     if (..) br $in; else br $out;
+    //   )
+    // )
+    // then our normal opts can remove the break out since it flows directly out
+    // (and later passes make the if one-armed). however, the simple analysis
+    // fails on patterns like
+    //     if (..) br $out;
+    //     br $in;
+    // which is a common way to do a while (1) loop (end it with a jump to the
+    // top), so we handle that here. Specifically we want to conditionalize
+    // breaks to the loop top, i.e., put them behind a condition, so that other
+    // code can flow directly out and thus brs out can be removed. (even if
+    // the change is to let a break somewhere else flow out, that can still be
+    // helpful, as it shortens the logical loop. it is also good to generate
+    // an if-else instead of an if, as it might allow an eqz to be removed
+    // by flipping arms)
+    if (!loop->name.is()) return false;
+    auto* block = loop->body->dynCast<Block>();
+    if (!block) return false;
+    // does the last element break to the top of the loop?
+    auto& list = block->list;
+    if (list.size() <= 1) return false;
+    auto* last = list.back()->dynCast<Break>();
+    if (!last || !ExpressionAnalyzer::isSimple(last) || last->name != loop->name) return false;
+    // last is a simple break to the top of the loop. if we can conditionalize it,
+    // it won't block things from flowing out and not needing breaks to do so.
+    Index i = list.size() - 2;
+    Builder builder(*getModule());
+    while (1) {
+      auto* curr = list[i];
+      if (auto* iff = curr->dynCast<If>()) {
+        // let's try to move the code going to the top of the loop into the if-else
+        if (!iff->ifFalse) {
+          // we need the ifTrue to break, so it cannot reach the code we want to move
+          if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifTrue)) {
+            iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            return true;
+          }
+        } else {
+          // this is already an if-else. if one side is a dead end, we can append to the other, if
+          // there is no returned value to concern us
+          assert(!isConcreteWasmType(iff->type)); // can't be, since in the middle of a block
+          if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifTrue)) {
+            iff->ifFalse = builder.blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            return true;
+          } else if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifFalse)) {
+            iff->ifTrue = builder.blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            return true;
+          }
+        }
+        return false;
+      } else if (auto* brIf = curr->dynCast<Break>()) {
+        // br_if is similar to if.
+        if (brIf->condition && !brIf->value && brIf->name != loop->name) {
+          if (i == list.size() - 2) {
+            // there is the br_if, and then the br to the top, so just flip them and the condition
+            brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
+            last->name = brIf->name;
+            brIf->name = loop->name;
+            return true;
+          } else {
+            // there are elements in the middle,
+            //   br_if $somewhere (condition)
+            //   (..more..)
+            //   br $in
+            // we can convert the br_if to an if. this has a cost, though,
+            // so only do it if it looks useful, which it definitely is if
+            //  (a) $somewhere is straight out (so the br out vanishes), and
+            //  (b) this br_if is the only branch to that block (so the block will vanish)
+            if (brIf->name == block->name && BreakSeeker::count(block, block->name) == 1) {
+              // note that we could drop the last element here, it is a br we know for sure is removable,
+              // but telling stealSlice to steal all to the end is more efficient, it can just truncate.
+              list[i] = builder.makeIf(brIf->condition, builder.makeBreak(brIf->name), builder.stealSlice(block, i + 1, list.size()));
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+      // if there is control flow, we must stop looking
+      if (EffectAnalyzer(curr).branches) {
+        return false;
+      }
+      if (i == 0) return false;
+      i--;
     }
   }
 
@@ -184,6 +286,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
       }
       flows.clear();
+      // optimize loops (we don't do it while tracking flows, as they can interfere)
+      for (auto* loop : loops) {
+        anotherCycle |= optimizeLoop(loop);
+      }
+      loops.clear();
       if (anotherCycle) worked = true;
     } while (anotherCycle);
     // finally, we may have simplified ifs enough to turn them into selects

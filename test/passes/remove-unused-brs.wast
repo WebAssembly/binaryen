@@ -452,4 +452,205 @@
       (i32.const 1)
     )
   )
+  (func $loops
+    (loop $in
+      (block $out
+        (if (i32.const 0) (br $out))
+        (br $in) ;; we can conditionalize this, and then the br out can vanish
+      )
+    )
+    (loop $in
+      (br $in)
+    )
+    (loop
+      (block $out
+        (if (i32.const 0) (br $out))
+        (br $out)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0) (br $out))
+        (br $out)
+      )
+    )
+    (loop $in)
+    (loop $in
+      (block $out)
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0) (br $out))
+        (br_if $in (i32.const 1))
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0) (br $in))
+        (br $out)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0) (unreachable))
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (block
+            (call $loops)
+            (br $out)
+          )
+        )
+        (br $in)
+      )
+    )
+    (loop $in-todo ;; br_if into if
+      (block $out-todo
+        (if (i32.const 0) (br $out-todo))
+        (call $loops)
+        (br $in-todo)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (br $out)
+          (call $loops)
+        )
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (call $loops)
+          (br $out)
+        )
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (block
+            (drop (i32.const 1))
+            (call $loops)
+          )
+          (br $out)
+        )
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (br $out)
+          (call $loops)
+        )
+        (drop (i32.const 100))
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (call $loops)
+          (br $out)
+        )
+        (drop (i32.const 101))
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (block
+            (drop (i32.const 1))
+            (call $loops)
+          )
+          (br $out)
+        )
+        (drop (i32.const 102))
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (br $out)
+          (call $loops)
+        )
+        (return)
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (br $out)
+          (call $loops)
+        )
+        (br $out)
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if (i32.const 0)
+          (br $out)
+          (call $loops)
+        )
+        (drop
+          (block $out2
+            (br $out2 (i32.const 1))
+          )
+        )
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (br_if $out (i32.const 0))
+        (br $in)
+      )
+    )
+    (loop $in-todo2 ;; if-ify
+      (block $out-todo2
+        (br_if $out-todo2 (i32.const 0))
+        (call $loops)
+        (br $in-todo2)
+      )
+    )
+    (loop $in
+      (block $out
+        (br $out)
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (br_if $in (i32.const 0))
+        (br $in)
+      )
+    )
+    (loop $in-not ;; do NOT if-ify, the block can't be removed
+      (block $out-not
+        (br_if $out-not (i32.const -1))
+        (br_if $out-not (i32.const 0))
+        (call $loops)
+        (br $in-not)
+      )
+    )
+    (loop $in-todo2 ;; if-ify a slice with 2 things
+      (block $out-todo2
+        (br_if $out-todo2 (i32.const 0))
+        (call $loops)
+        (drop (i32.const 1))
+        (br $in-todo2)
+      )
+    )
+  )
 )

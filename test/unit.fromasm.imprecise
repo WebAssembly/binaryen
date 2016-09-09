@@ -274,23 +274,23 @@
       (i32.const 1)
     )
     (loop $for-in$1
-      (block $for-out$0
-        (br_if $for-out$0
-          (i32.ge_s
-            (get_local $0)
-            (i32.const 200)
-          )
-        )
-        (call_import $h
+      (if
+        (i32.lt_s
           (get_local $0)
+          (i32.const 200)
         )
-        (set_local $0
-          (i32.add
+        (block
+          (call_import $h
             (get_local $0)
-            (i32.const 1)
           )
+          (set_local $0
+            (i32.add
+              (get_local $0)
+              (i32.const 1)
+            )
+          )
+          (br $for-in$1)
         )
-        (br $for-in$1)
       )
     )
   )

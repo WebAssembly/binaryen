@@ -419,4 +419,276 @@
       (i32.const 1)
     )
   )
+  (func $loops (type $1)
+    (loop $in
+      (block $out
+        (br_if $in
+          (i32.eqz
+            (i32.const 0)
+          )
+        )
+      )
+    )
+    (loop $in
+      (br $in)
+    )
+    (loop $loop-in1
+      (block $out
+        (br_if $out
+          (i32.const 0)
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (br_if $out
+          (i32.const 0)
+        )
+      )
+    )
+    (loop $in
+      (nop)
+    )
+    (loop $in
+      (block $out
+      )
+    )
+    (loop $in
+      (block $out
+        (br_if $out
+          (i32.const 0)
+        )
+        (br_if $in
+          (i32.const 1)
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (br_if $in
+          (i32.const 0)
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (unreachable)
+        )
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (block $block8
+            (call $loops)
+          )
+          (br $in)
+        )
+      )
+    )
+    (loop $in-todo
+      (block $out-todo
+        (if
+          (i32.const 0)
+          (nop)
+          (block
+            (call $loops)
+            (br $in-todo)
+          )
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (nop)
+          (block
+            (call $loops)
+            (br $in)
+          )
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (block
+            (call $loops)
+            (br $in)
+          )
+          (nop)
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (block $block15
+            (drop
+              (i32.const 1)
+            )
+            (call $loops)
+            (br $in)
+          )
+          (nop)
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (nop)
+          (block
+            (call $loops)
+            (drop
+              (i32.const 100)
+            )
+            (br $in)
+          )
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (block
+            (call $loops)
+            (drop
+              (i32.const 101)
+            )
+            (br $in)
+          )
+          (nop)
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (block $block22
+            (drop
+              (i32.const 1)
+            )
+            (call $loops)
+            (drop
+              (i32.const 102)
+            )
+            (br $in)
+          )
+          (nop)
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (br $out)
+          (call $loops)
+        )
+        (return)
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (br $out)
+          (call $loops)
+        )
+        (br $out)
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (if
+          (i32.const 0)
+          (nop)
+          (block
+            (call $loops)
+            (drop
+              (block $out2
+                (i32.const 1)
+              )
+            )
+            (br $in)
+          )
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (br_if $in
+          (i32.eqz
+            (i32.const 0)
+          )
+        )
+      )
+    )
+    (loop $in-todo2
+      (block $out-todo2
+        (if
+          (i32.const 0)
+          (nop)
+          (block
+            (call $loops)
+            (br $in-todo2)
+          )
+        )
+      )
+    )
+    (loop $in
+      (block $out
+        (br $out)
+        (br $in)
+      )
+    )
+    (loop $in
+      (block $out
+        (br_if $in
+          (i32.const 0)
+        )
+        (br $in)
+      )
+    )
+    (loop $in-not
+      (block $out-not
+        (br_if $out-not
+          (i32.const -1)
+        )
+        (br_if $out-not
+          (i32.const 0)
+        )
+        (call $loops)
+        (br $in-not)
+      )
+    )
+    (loop $in-todo2
+      (block $out-todo2
+        (if
+          (i32.const 0)
+          (nop)
+          (block
+            (call $loops)
+            (drop
+              (i32.const 1)
+            )
+            (br $in-todo2)
+          )
+        )
+      )
+    )
+  )
 )

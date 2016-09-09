@@ -27,7 +27,7 @@ namespace wasm {
 
 struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
   Name target; // look for this one XXX looking by name may fall prey to duplicate names
-  size_t found;
+  Index found;
 
   BreakSeeker(Name target) : target(target), found(false) {}
 
@@ -46,6 +46,12 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
     BreakSeeker breakSeeker(target);
     breakSeeker.walk(tree);
     return breakSeeker.found > 0;
+  }
+
+  static Index count(Expression* tree, Name target) {
+    BreakSeeker breakSeeker(target);
+    breakSeeker.walk(tree);
+    return breakSeeker.found;
   }
 };
 
@@ -389,6 +395,25 @@ struct ExpressionAnalyzer {
     }
     // The value might be used, so it depends on if the function returns
     return func->result != none;
+  }
+
+  // Checks if a break is a simple - no condition, no value, just a plain branching
+  static bool isSimple(Break* curr) {
+    return !curr->condition && !curr->value;
+  }
+
+  // Checks if an expression ends with a simple break,
+  // and returns a pointer to it if so.
+  // (It might also have other internal branches.)
+  static Expression* getEndingSimpleBreak(Expression* curr) {
+    if (auto* br = curr->dynCast<Break>()) {
+      if (isSimple(br)) return br;
+      return nullptr;
+    }
+    if (auto* block = curr->dynCast<Block>()) {
+      if (block->list.size() > 0) return getEndingSimpleBreak(block->list.back());
+    }
+    return nullptr;
   }
 
   template<typename T>
