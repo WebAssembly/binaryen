@@ -720,4 +720,34 @@
       )
     )
   )
+  (func $loophi (param $0 i32) (param $1 i32)
+    (local $2 i32)
+    (loop $while-in$1
+      (block $while-out$0
+        (call $loophi
+          (get_local $0)
+          (i32.const 0)
+        )
+        (if
+          (tee_local $2
+            (get_local $0)
+          )
+          (br_if $while-out$0
+            (get_local $2)
+          )
+        )
+        (br_if $while-in$1
+          (i32.eq
+            (tee_local $0
+              (i32.add
+                (get_local $0)
+                (i32.const 1)
+              )
+            )
+            (get_local $1)
+          )
+        )
+      )
+    )
+  )
 )

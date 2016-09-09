@@ -369,6 +369,28 @@ function asm(global, env, buffer) {
     if (1) return_int() | 0;
   }
 
+  function loophi(x, y) {
+   x = x | 0;
+   y = y | 0;
+   var temp = 0, inc = 0, loopvar = 0; // this order matters
+   loopvar = x;
+   while(1) {
+    loophi(loopvar | 0, 0);
+    temp = loopvar;
+    if (temp) {
+     if (temp) {
+      break;
+     }
+    }
+    inc = loopvar + 1 | 0;
+    if (inc == y) {
+     loopvar = inc;
+    } else {
+     break;
+    }
+   }
+  }
+
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg ];

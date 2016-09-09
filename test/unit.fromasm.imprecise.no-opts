@@ -1152,4 +1152,47 @@
       )
     )
   )
+  (func $loophi (param $x i32) (param $y i32)
+    (local $temp i32)
+    (local $inc i32)
+    (local $loopvar i32)
+    (set_local $loopvar
+      (get_local $x)
+    )
+    (loop $while-in$1
+      (block $while-out$0
+        (call $loophi
+          (get_local $loopvar)
+          (i32.const 0)
+        )
+        (set_local $temp
+          (get_local $loopvar)
+        )
+        (if
+          (get_local $temp)
+          (if
+            (get_local $temp)
+            (br $while-out$0)
+          )
+        )
+        (set_local $inc
+          (i32.add
+            (get_local $loopvar)
+            (i32.const 1)
+          )
+        )
+        (if
+          (i32.eq
+            (get_local $inc)
+            (get_local $y)
+          )
+          (set_local $loopvar
+            (get_local $inc)
+          )
+          (br $while-out$0)
+        )
+        (br $while-in$1)
+      )
+    )
+  )
 )
