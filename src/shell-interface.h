@@ -90,11 +90,11 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   ShellExternalInterface() : memory() {}
 
-  void init(Module& wasm) override {
+  void init(Module& wasm, ModuleInstance& instance) override {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
     for (auto& segment : wasm.memory.segments) {
-      Address offset = ConstantExpressionRunner().visit(segment.offset).value.geti32();
+      Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
       assert(offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
       for (size_t i = 0; i != segment.data.size(); ++i) {
         memory.set(offset + i, segment.data[i]);
@@ -103,13 +103,15 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
     table.resize(wasm.table.initial);
     for (auto& segment : wasm.table.segments) {
-      Address offset = ConstantExpressionRunner().visit(segment.offset).value.geti32();
+      Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
       assert(offset + segment.data.size() <= wasm.table.initial);
       for (size_t i = 0; i != segment.data.size(); ++i) {
         table[offset + i] = segment.data[i];
       }
     }
   }
+
+  void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {}
 
   Literal callImport(Import *import, LiteralList& arguments) override {
     if (import->module == SPECTEST && import->base == PRINT) {
@@ -126,10 +128,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     abort();
   }
 
-  Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) override {
+  Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
     if (index >= table.size()) trap("callTable overflow");
     auto* func = instance.wasm.getFunction(table[index]);
-    if (func->type.is() && func->type != type) trap("callIndirect: bad type");
     if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
     for (size_t i = 0; i < func->params.size(); i++) {
       if (func->params[i] != arguments[i].type) {
@@ -167,7 +168,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void store(Store* store, Address addr, Literal value) override {
-    switch (store->type) {
+    switch (store->valueType) {
       case i32: {
         switch (store->bytes) {
           case 1: memory.set<int8_t>(addr, value.geti32()); break;

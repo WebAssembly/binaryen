@@ -7,75 +7,138 @@
   (type $4 (func (param i32)))
   (type $5 (func (param i32) (result i32)))
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
-  (import $waka "env" "waka")
-  (import $waka_int "env" "waka_int" (result i32))
-  (import $_i64Subtract "env" "i64sub" (param i32 i32 i32 i32) (result i32))
-  (import $___udivmoddi4 "env" "moddi" (param i32 i32 i32 i32 i32) (result i32))
+  (type $7 (func (param i32 i32)))
+  (import "env" "waka" (func $waka))
+  (import "env" "waka_int" (func $waka_int (result i32)))
+  (import "env" "i64sub" (func $_i64Subtract (param i32 i32 i32 i32) (result i32)))
+  (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
   (func $b0-yes (type $4) (param $i1 i32)
     (local $x i32)
     (local $y i32)
     (local $a i32)
     (local $b i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
     (nop)
-    (i32.const 5)
+    (drop
+      (i32.const 5)
+    )
     (block $block0
       (nop)
-      (i32.const 7)
+      (drop
+        (i32.const 7)
+      )
     )
     (nop)
-    (i32.const 11)
-    (i32.const 9)
-    (get_local $y)
-    (block $block1
-      (i32.const 8)
+    (drop
+      (i32.const 11)
+    )
+    (drop
+      (i32.const 9)
+    )
+    (drop
       (get_local $y)
     )
-    (i32.const 11)
-    (get_local $y)
+    (block $block1
+      (drop
+        (i32.const 8)
+      )
+      (drop
+        (get_local $y)
+      )
+    )
+    (drop
+      (i32.const 11)
+    )
+    (drop
+      (get_local $y)
+    )
     (nop)
     (nop)
     (nop)
     (nop)
     (nop)
     (nop)
-    (i32.const 17)
+    (drop
+      (i32.const 17)
+    )
     (block $block2
       (nop)
       (nop)
-      (i32.const 1)
-      (i32.const 2)
-      (i32.const 3)
-      (i32.const 4)
+      (drop
+        (i32.const 1)
+      )
+      (drop
+        (i32.const 2)
+      )
+      (drop
+        (i32.const 3)
+      )
+      (drop
+        (i32.const 4)
+      )
       (nop)
       (nop)
-      (i32.const 6)
-      (i32.const 5)
-      (i32.const 7)
-      (i32.const 8)
+      (drop
+        (i32.const 6)
+      )
+      (drop
+        (i32.const 5)
+      )
+      (drop
+        (i32.const 7)
+      )
+      (drop
+        (i32.const 8)
+      )
       (nop)
       (nop)
       (call_import $waka)
-      (i32.const 9)
-      (i32.const 10)
-      (i32.const 11)
-      (i32.const 12)
-      (nop)
-      (nop)
-      (i32.load
-        (i32.const 24)
+      (drop
+        (i32.const 9)
       )
-      (i32.const 13)
-      (i32.const 14)
-      (i32.const 15)
-      (i32.const 16)
+      (drop
+        (i32.const 10)
+      )
+      (drop
+        (i32.const 11)
+      )
+      (drop
+        (i32.const 12)
+      )
+      (nop)
+      (nop)
+      (drop
+        (i32.load
+          (i32.const 24)
+        )
+      )
+      (drop
+        (i32.const 13)
+      )
+      (drop
+        (i32.const 14)
+      )
+      (drop
+        (i32.const 15)
+      )
+      (drop
+        (i32.const 16)
+      )
       (nop)
       (nop)
       (i32.store
         (i32.const 48)
         (i32.const 96)
       )
-      (i32.const 17)
-      (i32.const 18)
+      (drop
+        (i32.const 17)
+      )
+      (drop
+        (i32.const 18)
+      )
     )
     (block $block3
       (nop)
@@ -87,15 +150,21 @@
         (call_import $waka_int)
       )
       (call_import $waka)
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
       (set_local $a
         (call_import $waka_int)
       )
-      (i32.load
-        (i32.const 1)
+      (drop
+        (i32.load
+          (i32.const 1)
+        )
       )
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
       (set_local $a
         (call_import $waka_int)
@@ -104,7 +173,9 @@
         (i32.const 1)
         (i32.const 2)
       )
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
       (nop)
       (set_local $a
@@ -114,8 +185,10 @@
       )
       (call_import $waka)
       (nop)
-      (i32.load
-        (i32.const 1)
+      (drop
+        (i32.load
+          (i32.const 1)
+        )
       )
       (set_local $a
         (i32.load
@@ -129,7 +202,9 @@
         )
       )
       (call_import $waka)
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
       (set_local $a
         (i32.load
@@ -140,73 +215,123 @@
         (i32.const 1)
         (i32.const 2)
       )
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
       (nop)
       (set_local $a
-        (i32.store
-          (i32.const 104)
-          (i32.const 105)
+        (block $block0
+          (block $block1
+            (nop)
+            (i32.store
+              (i32.const 104)
+              (tee_local $5
+                (i32.const 105)
+              )
+            )
+          )
+          (get_local $5)
         )
       )
       (call_import $waka)
       (set_local $a
-        (i32.store
-          (i32.const 106)
-          (i32.const 107)
+        (block $block2
+          (block $block4
+            (nop)
+            (i32.store
+              (i32.const 106)
+              (tee_local $6
+                (i32.const 107)
+              )
+            )
+          )
+          (get_local $6)
         )
       )
       (call_import $waka)
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
       (set_local $a
-        (i32.store
-          (i32.const 108)
-          (i32.const 109)
+        (block $block5
+          (block $block6
+            (nop)
+            (i32.store
+              (i32.const 108)
+              (tee_local $7
+                (i32.const 109)
+              )
+            )
+          )
+          (get_local $7)
         )
       )
-      (i32.load
-        (i32.const 1)
+      (drop
+        (i32.load
+          (i32.const 1)
+        )
       )
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
       (set_local $a
-        (i32.store
-          (i32.const 110)
-          (i32.const 111)
+        (block $block7
+          (block $block8
+            (nop)
+            (i32.store
+              (i32.const 110)
+              (tee_local $8
+                (i32.const 111)
+              )
+            )
+          )
+          (get_local $8)
         )
       )
       (i32.store
         (i32.const 1)
         (i32.const 2)
       )
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
       (call_import $waka)
     )
     (block $out-of-block
       (nop)
       (nop)
-      (block $b
-        (block $c
-          (br $b
-            (i32.const 1337)
+      (drop
+        (block $b
+          (block $c
+            (br $b
+              (i32.const 1337)
+            )
           )
+          (nop)
+          (i32.const 9876)
         )
-        (nop)
-        (i32.const 9876)
       )
     )
     (block $loopey
       (set_local $a
         (i32.const 1337)
       )
-      (loop $loop-out4 $loop-in5
-        (get_local $a)
-        (set_local $a
-          (i32.const 9876)
+      (drop
+        (loop $loop-in5
+          (drop
+            (get_local $a)
+          )
+          (tee_local $a
+            (i32.const 9876)
+          )
         )
       )
-      (get_local $a)
+      (drop
+        (get_local $a)
+      )
     )
   )
   (func $Ia (type $5) (param $a i32) (result i32)
@@ -229,7 +354,7 @@
     )
     (nop)
     (i32.store8
-      (set_local $bi3
+      (tee_local $bi3
         (i32.const 1)
       )
       (get_local $bi3)
@@ -240,7 +365,7 @@
       (get_local $bi3)
     )
     (set_local $di3
-      (set_local $bi3
+      (tee_local $bi3
         (i32.const 123)
       )
     )
@@ -248,7 +373,9 @@
       (get_local $bi3)
       (get_local $di3)
     )
-    (i32.const 456)
+    (drop
+      (i32.const 456)
+    )
   )
   (func $___remdi3 (type $FUNCSIG$iiiii) (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
     (local $$1$1 i32)
@@ -285,124 +412,126 @@
     (nop)
     (nop)
     (nop)
-    (call_import $___udivmoddi4
-      (call_import $_i64Subtract
-        (i32.xor
-          (set_local $$1$0
-            (i32.or
-              (i32.shr_s
-                (get_local $$a$1)
-                (i32.const 31)
-              )
-              (i32.shl
-                (if
-                  (i32.lt_s
-                    (get_local $$a$1)
+    (drop
+      (call_import $___udivmoddi4
+        (call_import $_i64Subtract
+          (i32.xor
+            (tee_local $$1$0
+              (i32.or
+                (i32.shr_s
+                  (get_local $$a$1)
+                  (i32.const 31)
+                )
+                (i32.shl
+                  (if
+                    (i32.lt_s
+                      (get_local $$a$1)
+                      (i32.const 0)
+                    )
+                    (i32.const -1)
                     (i32.const 0)
                   )
-                  (i32.const -1)
-                  (i32.const 0)
+                  (i32.const 1)
                 )
-                (i32.const 1)
               )
             )
+            (get_local $$a$0)
           )
-          (get_local $$a$0)
-        )
-        (i32.xor
-          (set_local $$1$1
-            (i32.or
-              (i32.shr_s
-                (if
-                  (i32.lt_s
-                    (get_local $$a$1)
+          (i32.xor
+            (tee_local $$1$1
+              (i32.or
+                (i32.shr_s
+                  (if
+                    (i32.lt_s
+                      (get_local $$a$1)
+                      (i32.const 0)
+                    )
+                    (i32.const -1)
                     (i32.const 0)
                   )
-                  (i32.const -1)
-                  (i32.const 0)
+                  (i32.const 31)
                 )
-                (i32.const 31)
-              )
-              (i32.shl
-                (if
-                  (i32.lt_s
-                    (get_local $$a$1)
+                (i32.shl
+                  (if
+                    (i32.lt_s
+                      (get_local $$a$1)
+                      (i32.const 0)
+                    )
+                    (i32.const -1)
                     (i32.const 0)
                   )
-                  (i32.const -1)
-                  (i32.const 0)
+                  (i32.const 1)
                 )
-                (i32.const 1)
               )
             )
+            (get_local $$a$1)
           )
-          (get_local $$a$1)
+          (get_local $$1$0)
+          (get_local $$1$1)
         )
-        (get_local $$1$0)
-        (get_local $$1$1)
-      )
-      (i32.load
-        (i32.const 168)
-      )
-      (call_import $_i64Subtract
-        (i32.xor
-          (set_local $$2$0
-            (i32.or
-              (i32.shr_s
-                (get_local $$b$1)
-                (i32.const 31)
-              )
-              (i32.shl
-                (if
-                  (i32.lt_s
-                    (get_local $$b$1)
+        (i32.load
+          (i32.const 168)
+        )
+        (call_import $_i64Subtract
+          (i32.xor
+            (tee_local $$2$0
+              (i32.or
+                (i32.shr_s
+                  (get_local $$b$1)
+                  (i32.const 31)
+                )
+                (i32.shl
+                  (if
+                    (i32.lt_s
+                      (get_local $$b$1)
+                      (i32.const 0)
+                    )
+                    (i32.const -1)
                     (i32.const 0)
                   )
-                  (i32.const -1)
-                  (i32.const 0)
+                  (i32.const 1)
                 )
-                (i32.const 1)
               )
             )
+            (get_local $$b$0)
           )
-          (get_local $$b$0)
-        )
-        (i32.xor
-          (set_local $$2$1
-            (i32.or
-              (i32.shr_s
-                (if
-                  (i32.lt_s
-                    (get_local $$b$1)
+          (i32.xor
+            (tee_local $$2$1
+              (i32.or
+                (i32.shr_s
+                  (if
+                    (i32.lt_s
+                      (get_local $$b$1)
+                      (i32.const 0)
+                    )
+                    (i32.const -1)
                     (i32.const 0)
                   )
-                  (i32.const -1)
-                  (i32.const 0)
+                  (i32.const 31)
                 )
-                (i32.const 31)
-              )
-              (i32.shl
-                (if
-                  (i32.lt_s
-                    (get_local $$b$1)
+                (i32.shl
+                  (if
+                    (i32.lt_s
+                      (get_local $$b$1)
+                      (i32.const 0)
+                    )
+                    (i32.const -1)
                     (i32.const 0)
                   )
-                  (i32.const -1)
-                  (i32.const 0)
+                  (i32.const 1)
                 )
-                (i32.const 1)
               )
             )
+            (get_local $$b$1)
           )
-          (get_local $$b$1)
+          (get_local $$2$0)
+          (get_local $$2$1)
         )
-        (get_local $$2$0)
-        (get_local $$2$1)
+        (i32.load
+          (i32.const 168)
+        )
+        (get_local $$rem)
       )
-      (i32.load
-        (i32.const 168)
-      )
-      (get_local $$rem)
     )
     (set_local $$10$0
       (call_import $_i64Subtract
@@ -458,7 +587,9 @@
           )
           (i32.const 1)
         )
-        (get_local $x)
+        (drop
+          (get_local $x)
+        )
         (block $waka2
           (set_local $x
             (if
@@ -517,8 +648,12 @@
       (get_local $r)
       (get_local $t)
     )
-    (get_local $m)
-    (get_local $t)
+    (drop
+      (get_local $m)
+    )
+    (drop
+      (get_local $t)
+    )
   )
   (func $switch-def (type $5) (param $i3 i32) (result i32)
     (local $i1 i32)
@@ -537,6 +672,34 @@
     )
     (return
       (get_local $i1)
+    )
+  )
+  (func $no-out-of-label (type $7) (param $x i32) (param $y i32)
+    (loop $moar
+      (set_local $x
+        (block $block0
+          (br_if $moar
+            (get_local $x)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (get_local $x)
+    )
+    (block $moar
+      (set_local $y
+        (block $block1
+          (br_if $moar
+            (get_local $y)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (get_local $y)
     )
   )
 )

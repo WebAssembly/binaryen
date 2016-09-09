@@ -753,6 +753,7 @@ class S2WasmBuilder {
         set->index = func->getLocalIndex(assign);
         set->value = curr;
         set->type = curr->type;
+        set->setTee(false);
         addToBlock(set);
       }
     };
@@ -834,7 +835,7 @@ class S2WasmBuilder {
     auto makeStore = [&](WasmType type) {
       skipComma();
       auto curr = allocator->alloc<Store>();
-      curr->type = type;
+      curr->valueType = type;
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
       Name assign = getAssign();
@@ -849,6 +850,7 @@ class S2WasmBuilder {
         curr->align = 1U << getInt(attributes[0] + 8);
       }
       curr->value = inputs[1];
+      curr->finalize();
       setOutput(curr, assign);
     };
     auto makeSelect = [&](WasmType type) {
@@ -1062,7 +1064,7 @@ class S2WasmBuilder {
       if (target->is<Block>()) {
         return target->cast<Block>()->name;
       } else {
-        return target->cast<Loop>()->in;
+        return target->cast<Loop>()->name;
       }
     };
     // fixups
@@ -1097,10 +1099,9 @@ class S2WasmBuilder {
       } else if (match("loop")) {
         auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
-        curr->in = getNextLabel();
-        curr->out = getNextLabel();
+        curr->name = getNextLabel();
         auto block = allocator->alloc<Block>();
-        block->name = curr->out; // temporary, fake - this way, on bstack we have the right label at the right offset for a br
+        block->name = getNextLabel();
         curr->body = block;
         loopBlocks.push_back(block);
         bstack.push_back(block);
@@ -1146,6 +1147,7 @@ class S2WasmBuilder {
         Name assign = getAssign();
         skipComma();
         auto curr = allocator->alloc<SetLocal>();
+        curr->setTee(true);
         curr->index = func->getLocalIndex(getAssign());
         skipComma();
         curr->value = getInput();

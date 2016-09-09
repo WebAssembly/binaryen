@@ -25,7 +25,6 @@ class Pass;
 Pass *createCoalesceLocalsPass();
 Pass *createCoalesceLocalsWithLearningPass();
 Pass *createDeadCodeEliminationPass();
-Pass *createDropReturnValuesPass();
 Pass *createDuplicateFunctionEliminationPass();
 Pass *createLowerIfElsePass();
 Pass *createMergeBlocksPass();

@@ -34,7 +34,7 @@ void generateMemoryGrowthFunction(Module& wasm) {
   Name name(GROW_WASM_MEMORY);
   std::vector<NameType> params { { NEW_SIZE, i32 } };
   Function* growFunction = wasmBuilder.makeFunction(
-    name, std::move(params), none, {}
+    name, std::move(params), i32, {}
   );
   growFunction->body = wasmBuilder.makeHost(
     GrowMemory,
@@ -45,6 +45,7 @@ void generateMemoryGrowthFunction(Module& wasm) {
   wasm.addFunction(growFunction);
   auto export_ = new Export;
   export_->name = export_->value = name;
+  export_->kind = Export::Function;
   wasm.addExport(export_);
 }
 
@@ -124,7 +125,8 @@ void AsmConstWalker::visitCallImport(CallImport* curr) {
       auto import = new Import;
       import->name = import->base = curr->target;
       import->module = ENV;
-      import->type = ensureFunctionType(getSig(curr), &wasm);
+      import->functionType = ensureFunctionType(getSig(curr), &wasm);
+      import->kind = Import::Function;
       wasm.addImport(import);
     }
   }

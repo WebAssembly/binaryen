@@ -1,7 +1,11 @@
 (module
   (memory 256 256)
-  (export "memory" memory)
-  (export "floats" $floats)
+  (import "env" "tempDoublePtr" (global $tDP i32))
+  (import "env" "memory" (memory $memory))
+  (import "env" "table" (table $table))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (export "floats" (func $floats))
   (func $floats (param $0 f32) (result f32)
     (local $1 f32)
     (f32.add

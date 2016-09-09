@@ -6,115 +6,165 @@
       (i32.eqz
         (get_local $i1)
       )
-      (i32.const 10)
+      (drop
+        (i32.const 10)
+      )
     )
     (if
       (get_local $i1)
-      (i32.const 12)
-      (i32.const 11)
+      (drop
+        (i32.const 12)
+      )
+      (drop
+        (i32.const 11)
+      )
     )
     (if
       (i64.eqz
         (get_local $i2)
       )
-      (i32.const 11)
-      (i32.const 12)
+      (drop
+        (i32.const 11)
+      )
+      (drop
+        (i32.const 12)
+      )
     )
-    (i32.le_s
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.le_s
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.lt_s
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.lt_s
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.ge_s
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.ge_s
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.gt_s
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.gt_s
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.le_u
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.le_u
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.lt_u
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.lt_u
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.ge_u
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.ge_u
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.gt_u
-      (i32.const 1)
-      (i32.const 2)
+    (drop
+      (i32.gt_u
+        (i32.const 1)
+        (i32.const 2)
+      )
     )
-    (i32.eqz
-      (f32.gt
+    (drop
+      (i32.eqz
+        (f32.gt
+          (f32.const 1)
+          (f32.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (f32.ge
+          (f32.const 1)
+          (f32.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (f32.lt
+          (f32.const 1)
+          (f32.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (f32.le
+          (f32.const 1)
+          (f32.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (f64.gt
+          (f64.const 1)
+          (f64.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (f64.ge
+          (f64.const 1)
+          (f64.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (f64.lt
+          (f64.const 1)
+          (f64.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (f64.le
+          (f64.const 1)
+          (f64.const 2)
+        )
+      )
+    )
+    (drop
+      (f32.ne
         (f32.const 1)
         (f32.const 2)
       )
     )
-    (i32.eqz
-      (f32.ge
+    (drop
+      (f32.eq
         (f32.const 1)
         (f32.const 2)
       )
     )
-    (i32.eqz
-      (f32.lt
-        (f32.const 1)
-        (f32.const 2)
-      )
-    )
-    (i32.eqz
-      (f32.le
-        (f32.const 1)
-        (f32.const 2)
-      )
-    )
-    (i32.eqz
-      (f64.gt
+    (drop
+      (f64.ne
         (f64.const 1)
         (f64.const 2)
       )
     )
-    (i32.eqz
-      (f64.ge
+    (drop
+      (f64.eq
         (f64.const 1)
         (f64.const 2)
       )
-    )
-    (i32.eqz
-      (f64.lt
-        (f64.const 1)
-        (f64.const 2)
-      )
-    )
-    (i32.eqz
-      (f64.le
-        (f64.const 1)
-        (f64.const 2)
-      )
-    )
-    (f32.ne
-      (f32.const 1)
-      (f32.const 2)
-    )
-    (f32.eq
-      (f32.const 1)
-      (f32.const 2)
-    )
-    (f64.ne
-      (f64.const 1)
-      (f64.const 2)
-    )
-    (f64.eq
-      (f64.const 1)
-      (f64.const 2)
     )
   )
 )

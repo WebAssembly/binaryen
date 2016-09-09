@@ -81,21 +81,6 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   if (wasmJSDebug) std::cerr << "wasming...\n";
   asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */, false /* TODO: support optimizing? */);
   asm2wasm->processAsm(asmjs);
-
-  if (wasmJSDebug) std::cerr << "mapping globals...\n";
-  for (auto& pair : asm2wasm->mappedGlobals) {
-    auto name = pair.first;
-    auto& global = pair.second;
-    if (!global.import) continue; // non-imports are initialized to zero in the typed array anyhow, so nothing to do here
-    double value = EM_ASM_DOUBLE({ return Module['lookupImport'](Pointer_stringify($0), Pointer_stringify($1)) }, global.module.str, global.base.str);
-    uint32_t address = global.address;
-    switch (global.type) {
-      case i32: EM_ASM_({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, address, value); break;
-      case f32: EM_ASM_({ Module['info'].parent['HEAPF32'][$0 >> 2] = $1 }, address, value); break;
-      case f64: EM_ASM_({ Module['info'].parent['HEAPF64'][$0 >> 3] = $1 }, address, value); break;
-      default: abort();
-    }
-  }
 }
 
 void finalizeModule() {
@@ -160,14 +145,16 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     Module['asmExports'] = {};
   });
   for (auto& curr : module->exports) {
-    EM_ASM_({
-      var name = Pointer_stringify($0);
-      Module['asmExports'][name] = function() {
-        Module['tempArguments'] = Array.prototype.slice.call(arguments);
-        Module['_call_from_js']($0);
-        return Module['tempReturn'];
-      };
-    }, curr->name.str);
+    if (curr->kind == Export::Function) {
+      EM_ASM_({
+        var name = Pointer_stringify($0);
+        Module['asmExports'][name] = function() {
+          Module['tempArguments'] = Array.prototype.slice.call(arguments);
+          Module['_call_from_js']($0);
+          return Module['tempReturn'];
+        };
+      }, curr->name.str);
+    }
   }
 
   // verify imports are provided
@@ -176,32 +163,68 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       var mod = Pointer_stringify($0);
       var base = Pointer_stringify($1);
       var name = Pointer_stringify($2);
-      assert(Module['lookupImport'](mod, base), 'checking import ' + name + ' = ' + mod + '.' + base);
+      assert(Module['lookupImport'](mod, base) !== undefined, 'checking import ' + name + ' = ' + mod + '.' + base);
     }, import->module.str, import->base.str, import->name.str);
   }
 
   if (wasmJSDebug) std::cerr << "creating instance...\n";
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
-    void init(Module& wasm) override {
-      // create a new buffer here, just like native wasm support would.
-      EM_ASM_({
-        Module['outside']['newBuffer'] = new ArrayBuffer($0);
-      }, wasm.memory.initial * Memory::kPageSize);
+    void init(Module& wasm, ModuleInstance& instance) override {
+      // look for imported memory
+      {
+        bool found = false;
+        for (auto& import : wasm.imports) {
+          if (import->module == ENV && import->base == MEMORY) {
+            assert(import->kind == Import::Memory);
+            // memory is imported
+            EM_ASM({
+              Module['asmExports']['memory'] = Module['lookupImport']('env', 'memory');
+            });
+            found = true;
+          }
+        }
+        if (!found) {
+          // no memory import; create a new buffer here, just like native wasm support would.
+          EM_ASM_({
+            Module['asmExports']['memory'] = Module['outside']['newBuffer'] = new ArrayBuffer($0);
+          }, wasm.memory.initial * Memory::kPageSize);
+        }
+      }
       for (auto segment : wasm.memory.segments) {
         EM_ASM_({
           var source = Module['HEAP8'].subarray($1, $1 + $2);
-          var target = new Int8Array(Module['outside']['newBuffer']);
+          var target = new Int8Array(Module['asmExports']['memory']);
           target.set(source, $0);
-        }, ConstantExpressionRunner().visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
+        }, ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
       }
-      // Table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
+      // look for imported table
+      {
+        bool found = false;
+        for (auto& import : wasm.imports) {
+          if (import->module == ENV && import->base == TABLE) {
+            assert(import->kind == Import::Table);
+            // table is imported
+            EM_ASM({
+              Module['outside']['wasmTable'] = Module['lookupImport']('env', 'table');
+            });
+            found = true;
+          }
+        }
+        if (!found) {
+          // no table import; create a new one here, just like native wasm support would.
+          EM_ASM_({
+            Module['outside']['wasmTable'] = new Array($0);
+          }, wasm.table.initial);
+        }
+      }
+      EM_ASM({
+        Module['asmExports']['table'] = Module['outside']['wasmTable'];
+      });
+      // Emulated table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
       // TODO: make them all JS methods, wrapping a dynCall where necessary?
-      EM_ASM_({
-        Module['outside']['wasmTable'] = new Array($0);
-      }, wasm.table.initial);
       for (auto segment : wasm.table.segments) {
-        Address offset = ConstantExpressionRunner().visit(segment.offset).value.geti32();
+        Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
         assert(offset + segment.data.size() <= wasm.table.initial);
         for (size_t i = 0; i != segment.data.size(); ++i) {
           EM_ASM_({
@@ -238,6 +261,23 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
+    void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
+      for (auto& import : wasm.imports) {
+        if (import->kind == Import::Global) {
+          double ret = EM_ASM_DOUBLE({
+            var mod = Pointer_stringify($0);
+            var base = Pointer_stringify($1);
+            var lookup = Module['lookupImport'](mod, base);
+            return lookup;
+          }, import->module.str, import->base.str);
+
+          if (wasmJSDebug) std::cout << "calling importGlobal for " << import->name << " returning " << ret << '\n';
+
+          globals[import->name] = getResultFromJS(ret, import->globalType);
+        }
+      }
+    }
+
     Literal callImport(Import *import, LiteralList& arguments) override {
       if (wasmJSDebug) std::cout << "calling import " << import->name.str << '\n';
       prepareTempArgments(arguments);
@@ -252,10 +292,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
       if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
 
-      return getResultFromJS(ret, import->type->result);
+      return getResultFromJS(ret, import->functionType->result);
     }
 
-    Literal callTable(Index index, Name type, LiteralList& arguments, ModuleInstance& instance) override {
+    Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
       void* ptr = (void*)EM_ASM_INT({
         var value = Module['outside']['wasmTable'][$0];
         return typeof value === "number" ? value : -1;
@@ -264,7 +304,6 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       if (ptr != (void*)-1) {
         // a Function we can call
         Function* func = (Function*)ptr;
-        if (func->type.is() && func->type != type) trap("callIndirect: bad type");
         if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
         for (size_t i = 0; i < func->params.size(); i++) {
           if (func->params[i] != arguments[i].type) {
@@ -281,7 +320,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           Module['tempArguments'] = null;
           return func.apply(null, tempArguments);
         }, index);
-        return getResultFromJS(ret, instance.wasm.getFunctionType(type)->result);
+        return getResultFromJS(ret, result);
       }
     }
 
@@ -411,11 +450,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             Module["info"].parent["HEAPU8"][addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
-        }, (uint32_t)addr, store_->bytes, isWasmTypeFloat(store_->type), isWasmTypeFloat(store_->type) ? value.getFloat() : (double)value.getInteger());
+        }, (uint32_t)addr, store_->bytes, isWasmTypeFloat(store_->valueType), isWasmTypeFloat(store_->valueType) ? value.getFloat() : (double)value.getInteger());
         return;
       }
       // nicely aligned
-      if (!isWasmTypeFloat(store_->type)) {
+      if (!isWasmTypeFloat(store_->valueType)) {
         if (store_->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
         } else if (store_->bytes == 2) {

@@ -82,9 +82,9 @@ public:
     ret->finalize();
     return ret;
   }
-  Loop* makeLoop(Name out, Name in, Expression* body) {
+  Loop* makeLoop(Name name, Expression* body) {
     auto* ret = allocator.alloc<Loop>();
-    ret->out = out; ret->in = in; ret->body = body;
+    ret->name = name; ret->body = body;
     ret->finalize();
     return ret;
   }
@@ -142,20 +142,26 @@ public:
     auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
-    ret->type = value->type;
+    ret->type = none;
     return ret;
   }
-  GetGlobal* makeGetGlobal(Index index, WasmType type) {
-    auto* ret = allocator.alloc<GetGlobal>();
-    ret->index = index;
-    ret->type = type;
-    return ret;
-  }
-  SetGlobal* makeSetGlobal(Index index, Expression* value) {
-    auto* ret = allocator.alloc<SetGlobal>();
+  SetLocal* makeTeeLocal(Index index, Expression* value) {
+    auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
     ret->type = value->type;
+    return ret;
+  }
+  GetGlobal* makeGetGlobal(Name name, WasmType type) {
+    auto* ret = allocator.alloc<GetGlobal>();
+    ret->name = name;
+    ret->type = type;
+    return ret;
+  }
+  SetGlobal* makeSetGlobal(Name name, Expression* value) {
+    auto* ret = allocator.alloc<SetGlobal>();
+    ret->name = name;
+    ret->value = value;
     return ret;
   }
   Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
@@ -164,10 +170,11 @@ public:
     ret->type = type;
     return ret;
   }
-  Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value) {
+  Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();
-    ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value;
-    ret->type = value->type;
+    ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value; ret->valueType = type;
+    ret->finalize();
+    assert(isConcreteWasmType(ret->value->type) ? ret->value->type == type : true);
     return ret;
   }
   Const* makeConst(Literal value) {
@@ -205,10 +212,20 @@ public:
     ret->op = op;
     ret->nameOperand = nameOperand;
     ret->operands.set(operands);
+    ret->finalize();
     return ret;
   }
   Unreachable* makeUnreachable() {
     return allocator.alloc<Unreachable>();
+  }
+
+  // Additional helpers
+
+  Drop* makeDrop(Expression *value) {
+    auto* ret = allocator.alloc<Drop>();
+    ret->value = value;
+    ret->finalize();
+    return ret;
   }
 
   // Additional utility functions for building on top of nodes
@@ -247,7 +264,21 @@ public:
     if (!block) block = makeBlock(any);
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(); // TODO: move out of if
+    }
+    return block;
+  }
+
+  // ensure a node is a block, if it isn't already, and optionally append to the block
+  // this variant sets a name for the block, so it will not reuse a block already named
+  Block* blockifyWithName(Expression* any, Name name, Expression* append = nullptr) {
+    Block* block = nullptr;
+    if (any) block = any->dynCast<Block>();
+    if (!block || block->name.is()) block = makeBlock(any);
+    block->name = name;
+    if (append) {
+      block->list.push_back(append);
+      block->finalize(); // TODO: move out of if
     }
     return block;
   }

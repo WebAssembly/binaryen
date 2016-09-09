@@ -37,7 +37,7 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports, Visitor<Remov
   }
 
   void visitCallImport(CallImport *curr) {
-    WasmType type = module->getImport(curr->target)->type->result;
+    WasmType type = module->getImport(curr->target)->functionType->result;
     if (type == none) {
       replaceCurrent(allocator->alloc<Nop>());
     } else {

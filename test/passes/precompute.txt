@@ -2,15 +2,25 @@
   (memory 0)
   (type $0 (func (param i32)))
   (func $x (type $0) (param $x i32)
-    (i32.const 3)
-    (i32.add
-      (i32.const 1)
-      (get_local $x)
+    (drop
+      (i32.const 3)
     )
-    (i32.const 6)
-    (i32.const -1)
-    (i32.const 3)
-    (loop $loop-out0 $in
+    (drop
+      (i32.add
+        (i32.const 1)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.const 6)
+    )
+    (drop
+      (i32.const -1)
+    )
+    (drop
+      (i32.const 3)
+    )
+    (loop $in
       (br $in)
     )
   )

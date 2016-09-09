@@ -1,11 +1,11 @@
 (module
   (memory 1 1)
-  (export "mem" memory)
   (start $main)
   (type $i (func (result i32)))
   (type $v (func))
   (type $vi (func (param i32)))
-  (import $print "spectest" "print" (param i32))
+  (import "spectest" "print" (func $print (param i32)))
+  (export "mem" (memory $0))
   (func $check (type $i) (result i32)
     (if
       (i32.eq
@@ -293,12 +293,12 @@
 )
 (module
   (memory 1 1)
-  (export "mem" memory)
   (start $main)
   (type $i (func (result i32)))
   (type $v (func))
   (type $vi (func (param i32)))
-  (import $print "spectest" "print" (param i32))
+  (import "spectest" "print" (func $print (param i32)))
+  (export "mem" (memory $0))
   (func $check (type $i) (result i32)
     (if
       (i32.eq
@@ -463,7 +463,9 @@
         (call_import $print
           (i32.const 8)
         )
-        (call $check)
+        (drop
+          (call $check)
+        )
       )
     )
     (loop $shape$3$continue
@@ -503,7 +505,7 @@
       (if
         (i32.eq
           (i32.rem_u
-            (set_local $1
+            (tee_local $1
               (call $check)
             )
             (i32.const 3)
@@ -530,7 +532,9 @@
       (call_import $print
         (i32.const 2)
       )
-      (call $check)
+      (drop
+        (call $check)
+      )
       (set_local $0
         (i32.const 6)
       )

@@ -45,7 +45,9 @@
   )
   (func $zero (type $1)
     (local $b i32)
-    (get_local $b)
+    (drop
+      (get_local $b)
+    )
   )
   (func $null (type $1)
     (nop)

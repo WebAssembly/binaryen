@@ -215,28 +215,28 @@
     (return)
   )
   (func $sti32_a1 (param $0 i32) (param $1 i64)
-    (i64.store32 align=1
+    (i64.store align=1
       (get_local $0)
       (get_local $1)
     )
     (return)
   )
   (func $sti32_a2 (param $0 i32) (param $1 i64)
-    (i64.store32 align=2
+    (i64.store align=2
       (get_local $0)
       (get_local $1)
     )
     (return)
   )
   (func $sti32_a4 (param $0 i32) (param $1 i64)
-    (i64.store32
+    (i64.store
       (get_local $0)
       (get_local $1)
     )
     (return)
   )
   (func $sti32_a8 (param $0 i32) (param $1 i64)
-    (i64.store32
+    (i64.store
       (get_local $0)
       (get_local $1)
     )

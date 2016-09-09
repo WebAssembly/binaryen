@@ -25,12 +25,10 @@
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
+struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Vacuum; }
-
-  std::vector<Expression*> expressionStack;
 
   // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
@@ -41,6 +39,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
         case Expression::Id::BlockId: return curr; // not always needed, but handled in visitBlock()
         case Expression::Id::IfId: return curr; // not always needed, but handled in visitIf()
         case Expression::Id::LoopId: return curr; // not always needed, but handled in visitLoop()
+        case Expression::Id::DropId: return curr; // not always needed, but handled in visitDrop()
 
         case Expression::Id::BreakId:
         case Expression::Id::SwitchId:
@@ -51,6 +50,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
         case Expression::Id::LoadId:
         case Expression::Id::StoreId:
         case Expression::Id::ReturnId:
+        case Expression::Id::GetGlobalId:
+        case Expression::Id::SetGlobalId:
         case Expression::Id::HostId:
         case Expression::Id::UnreachableId: return curr; // always needed
 
@@ -189,7 +190,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
       // no else
       if (curr->ifTrue->is<Nop>()) {
         // no nothing
-        replaceCurrent(curr->condition);
+        replaceCurrent(Builder(*getModule()).makeDrop(curr->condition));
       }
     }
   }
@@ -198,21 +199,30 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>> {
     if (curr->body->is<Nop>()) ExpressionManipulator::nop(curr);
   }
 
-  static void visitPre(Vacuum* self, Expression** currp) {
-    self->expressionStack.push_back(*currp);
-  }
-
-  static void visitPost(Vacuum* self, Expression** currp) {
-    self->expressionStack.pop_back();
-  }
-
-  // override scan to add a pre and a post check task to all nodes
-  static void scan(Vacuum* self, Expression** currp) {
-    self->pushTask(visitPost, currp);
-
-    WalkerPass<PostWalker<Vacuum, Visitor<Vacuum>>>::scan(self, currp);
-
-    self->pushTask(visitPre, currp);
+  void visitDrop(Drop* curr) {
+    // if the drop input has no side effects, it can be wiped out
+    if (!EffectAnalyzer(curr->value).hasSideEffects()) {
+      ExpressionManipulator::nop(curr);
+      return;
+    }
+    // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a branch, this can make that branch optimizable and more vaccuming possible
+    auto* iff = curr->value->dynCast<If>();
+    if (iff && iff->ifFalse && isConcreteWasmType(iff->type)) {
+      // reuse the drop in both cases
+      if (iff->ifTrue->type == unreachable) {
+        assert(isConcreteWasmType(iff->ifFalse->type));
+        curr->value = iff->ifFalse;
+        iff->ifFalse = curr;
+        iff->type = none;
+        replaceCurrent(iff);
+      } else if (iff->ifFalse->type == unreachable) {
+        assert(isConcreteWasmType(iff->ifTrue->type));
+        curr->value = iff->ifTrue;
+        iff->ifTrue = curr;
+        iff->type = none;
+        replaceCurrent(iff);
+      }
+    }
   }
 
   void visitFunction(Function* curr) {

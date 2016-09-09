@@ -802,7 +802,7 @@ enum UnaryOp {
   ConvertSInt32ToFloat32, ConvertSInt32ToFloat64, ConvertUInt32ToFloat32, ConvertUInt32ToFloat64, ConvertSInt64ToFloat32, ConvertSInt64ToFloat64, ConvertUInt64ToFloat32, ConvertUInt64ToFloat64, // int to float
   PromoteFloat32, // f32 to f64
   DemoteFloat64, // f64 to f32
-  ReinterpretInt32, ReinterpretInt64 // reinterpret bits to float
+  ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
 };
 
 enum BinaryOp {
@@ -877,6 +877,7 @@ public:
     UnaryId,
     BinaryId,
     SelectId,
+    DropId,
     ReturnId,
     HostId,
     NopId,
@@ -929,6 +930,7 @@ inline const char *getExpressionName(Expression *curr) {
     case Expression::Id::UnaryId: return "unary";
     case Expression::Id::BinaryId: return "binary";
     case Expression::Id::SelectId: return "select";
+    case Expression::Id::DropId: return "drop";
     case Expression::Id::ReturnId: return "return";
     case Expression::Id::HostId: return "host";
     case Expression::Id::NopId: return "nop";
@@ -999,7 +1001,7 @@ public:
   Loop() {}
   Loop(MixedArena& allocator) {}
 
-  Name out, in;
+  Name name;
   Expression *body;
 
   // set the type of a loop if you already know it
@@ -1108,8 +1110,13 @@ public:
   Index index;
   Expression *value;
 
-  void finalize() {
-    type = value->type;
+  bool isTee() {
+    return type != none;
+  }
+
+  void setTee(bool is) {
+    if (is) type = value->type;
+    else type = none;
   }
 };
 
@@ -1118,7 +1125,7 @@ public:
   GetGlobal() {}
   GetGlobal(MixedArena& allocator) {}
 
-  Index index;
+  Name name;
 };
 
 class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
@@ -1126,12 +1133,8 @@ public:
   SetGlobal() {}
   SetGlobal(MixedArena& allocator) {}
 
-  Index index;
+  Name name;
   Expression *value;
-
-  void finalize() {
-    type = value->type;
-  }
 };
 
 class Load : public SpecificExpression<Expression::LoadId> {
@@ -1150,16 +1153,17 @@ public:
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
-  Store() {}
-  Store(MixedArena& allocator) {}
+  Store() : valueType(none) {}
+  Store(MixedArena& allocator) : Store() {}
 
   uint8_t bytes;
   Address offset;
   Address align;
   Expression *ptr, *value;
+  WasmType valueType; // the store never returns a value
 
   void finalize() {
-    type = value->type;
+    assert(valueType != none); // must be set
   }
 };
 
@@ -1312,6 +1316,14 @@ public:
   }
 };
 
+class Drop : public SpecificExpression<Expression::DropId> {
+public:
+  Drop() {}
+  Drop(MixedArena& allocator) {}
+
+  Expression *value;
+};
+
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
   Return() : value(nullptr) {
@@ -1418,16 +1430,33 @@ public:
 
 class Import {
 public:
-  Import() : type(nullptr) {}
+  enum Kind {
+    Function = 0,
+    Table = 1,
+    Memory = 2,
+    Global = 3,
+  };
+
+  Import() : functionType(nullptr), globalType(none) {}
 
   Name name, module, base; // name = module.base
-  FunctionType* type;
+  Kind kind;
+  FunctionType* functionType; // for Function imports
+  WasmType globalType; // for Global imports
 };
 
 class Export {
 public:
-  Name name;  // exported name
+  enum Kind {
+    Function = 0,
+    Table = 1,
+    Memory = 2,
+    Global = 3,
+  };
+
+  Name name;  // exported name - note that this is the key, as the internal name is non-unique (can have multiple exports for an internal, also over kinds)
   Name value; // internal name
+  Kind kind;
 };
 
 class Table {
@@ -1445,10 +1474,13 @@ public:
     }
   };
 
+  Name name;
   Address initial, max;
   std::vector<Segment> segments;
 
-  Table() : initial(0), max(kMaxSize) {}
+  Table() : initial(0), max(kMaxSize) {
+    name = Name::fromInt(0);
+  }
 };
 
 class Memory {
@@ -1470,11 +1502,13 @@ public:
     }
   };
 
+  Name name;
   Address initial, max; // sizes are in pages
   std::vector<Segment> segments;
-  Name exportName;
 
-  Memory() : initial(0), max(kMaxSize) {}
+  Memory() : initial(0), max(kMaxSize) {
+    name = Name::fromInt(0);
+  }
 };
 
 class Global {
@@ -1503,7 +1537,7 @@ private:
   // TODO: add a build option where Names are just indices, and then these methods are not needed
   std::map<Name, FunctionType*> functionTypesMap;
   std::map<Name, Import*> importsMap;
-  std::map<Name, Export*> exportsMap;
+  std::map<Name, Export*> exportsMap; // exports map is by the *exported* name, which is unique
   std::map<Name, Function*> functionsMap;
   std::map<Name, Global*> globalsMap;
 

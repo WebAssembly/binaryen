@@ -294,6 +294,7 @@ class Linker {
     if (out.wasm.checkExport(name)) return; // Already exported
     auto exp = new Export;
     exp->name = exp->value = name;
+    exp->kind = Export::Function;
     out.wasm.addExport(exp);
   }
 

@@ -1,7 +1,11 @@
 (module
   (memory 256 256)
-  (export "memory" memory)
-  (export "floats" $floats)
+  (import "env" "tempDoublePtr" (global $tDP i32))
+  (import "env" "memory" (memory $memory))
+  (import "env" "table" (table $table))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (export "floats" (func $floats))
   (func $floats (param $f f32) (result f32)
     (local $t f32)
     (return
@@ -31,16 +35,22 @@
     )
   )
   (func $bitcasts (param $i i32) (param $f f32)
-    (f32.reinterpret/i32
-      (get_local $i)
-    )
-    (f64.promote/f32
+    (drop
       (f32.reinterpret/i32
         (get_local $i)
       )
     )
-    (i32.reinterpret/f32
-      (get_local $f)
+    (drop
+      (f64.promote/f32
+        (f32.reinterpret/i32
+          (get_local $i)
+        )
+      )
+    )
+    (drop
+      (i32.reinterpret/f32
+        (get_local $f)
+      )
     )
   )
   (func $ctzzzz (result i32)

@@ -19,18 +19,27 @@
   (export "byval_empty_caller" $byval_empty_caller)
   (export "byval_empty_callee" $byval_empty_callee)
   (export "big_byval" $big_byval)
-  (func $byval_arg (param $0 i32)
+  (func $byval_arg (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i32)
+    (local $2 i32)
     (i32.store offset=12
-      (set_local $1
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $1
+        (block
+          (block
+            (set_local $2
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $2)
+            )
           )
+          (get_local $2)
         )
       )
       (i32.load
@@ -52,18 +61,27 @@
     )
     (return)
   )
-  (func $byval_arg_align8 (param $0 i32)
+  (func $byval_arg_align8 (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i32)
+    (local $2 i32)
     (i32.store offset=8
-      (set_local $1
-        (i32.store
-          (i32.const 4)
-          (i32.sub
-            (i32.load
-              (i32.const 4)
+      (tee_local $1
+        (block
+          (block
+            (set_local $2
+              (i32.sub
+                (i32.load
+                  (i32.const 4)
+                )
+                (i32.const 16)
+              )
             )
-            (i32.const 16)
+            (i32.store
+              (i32.const 4)
+              (get_local $2)
+            )
           )
+          (get_local $2)
         )
       )
       (i32.load
@@ -85,19 +103,28 @@
     )
     (return)
   )
-  (func $byval_arg_double (param $0 i32)
+  (func $byval_arg_double (type $FUNCSIG$vi) (param $0 i32)
     (local $1 i32)
+    (local $2 i32)
     (i64.store
       (i32.add
-        (set_local $1
-          (i32.store
-            (i32.const 4)
-            (i32.sub
-              (i32.load
-                (i32.const 4)
+        (tee_local $1
+          (block
+            (block
+              (set_local $2
+                (i32.sub
+                  (i32.load
+                    (i32.const 4)
+                  )
+                  (i32.const 16)
+                )
               )
-              (i32.const 16)
+              (i32.store
+                (i32.const 4)
+                (get_local $2)
+              )
             )
+            (get_local $2)
           )
         )
         (i32.const 8)
@@ -127,36 +154,45 @@
     )
     (return)
   )
-  (func $byval_param (param $0 i32)
+  (func $byval_param (type $FUNCSIG$vi) (param $0 i32)
     (call_import $ext_func
       (get_local $0)
     )
     (return)
   )
-  (func $byval_empty_caller (param $0 i32)
+  (func $byval_empty_caller (type $FUNCSIG$vi) (param $0 i32)
     (call_import $ext_byval_func_empty
       (get_local $0)
     )
     (return)
   )
-  (func $byval_empty_callee (param $0 i32)
+  (func $byval_empty_callee (type $FUNCSIG$vi) (param $0 i32)
     (call_import $ext_func_empty
       (get_local $0)
     )
     (return)
   )
-  (func $big_byval (param $0 i32)
+  (func $big_byval (type $FUNCSIG$vi) (param $0 i32)
+    (local $1 i32)
     (call_import $big_byval_callee
-      (set_local $0
+      (tee_local $0
         (call_import $memcpy
-          (i32.store
-            (i32.const 4)
-            (i32.sub
-              (i32.load
-                (i32.const 4)
+          (block
+            (block
+              (set_local $1
+                (i32.sub
+                  (i32.load
+                    (i32.const 4)
+                  )
+                  (i32.const 131072)
+                )
               )
-              (i32.const 131072)
+              (i32.store
+                (i32.const 4)
+                (get_local $1)
+              )
             )
+            (get_local $1)
           )
           (get_local $0)
           (i32.const 131072)

@@ -1,87 +1,118 @@
 (module
-  (func $erase
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
     (nop)
   )
-  (func $other
-    (nop)
-  )
-)
-(module
-  (func $keep2
-    (i32.const 0)
-  )
-  (func $other
+  (func $other (type $0)
     (nop)
   )
 )
 (module
-  (func $erase
-    (i32.const 0)
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.const 0)
+    )
   )
-  (func $other
-    (i32.const 0)
-  )
-)
-(module
-  (func $keep2
-    (i32.const 0)
-  )
-  (func $other
-    (i32.const 1)
+  (func $other (type $0)
+    (nop)
   )
 )
 (module
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (drop
+      (i32.const 0)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (i32.const 0)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.const 0)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (i32.const 1)
+    )
+  )
+)
+(module
+  (memory 0)
+  (start $other)
+  (type $0 (func))
   (export "keep2" $keep2)
   (export "other" $other)
-  (start $other)
   (table $keep2 $other $caller)
-  (func $keep2
+  (func $keep2 (type $0)
     (nop)
   )
-  (func $other
+  (func $other (type $0)
     (nop)
   )
-  (func $caller
+  (func $caller (type $0)
     (call $keep2)
     (call $other)
   )
 )
 (module
-  (func $keep2-after-two-passes
+  (memory 0)
+  (type $0 (func))
+  (func $keep2-after-two-passes (type $0)
     (nop)
   )
-  (func $other
+  (func $other (type $0)
     (nop)
   )
-  (func $keep-caller
+  (func $keep-caller (type $0)
     (call $keep2-after-two-passes)
   )
-  (func $other-caller
+  (func $other-caller (type $0)
     (call $other)
   )
 )
 (module
-  (func $keep-4
+  (memory 0)
+  (type $0 (func))
+  (func $keep-4 (type $0)
     (nop)
   )
-  (func $other
+  (func $other (type $0)
     (unreachable)
   )
-  (func $keep-caller
+  (func $keep-caller (type $0)
     (call $keep-4)
   )
-  (func $other-caller
+  (func $other-caller (type $0)
     (call $other)
   )
 )
 (module
-  (type T (func (result i32)))
-  (type S (func (result i32)))
-  (func $keep4-similar-but-func-sig-differs
-    (i32.const 0)
+  (memory 0)
+  (type $T (func (result i32)))
+  (type $S (func (result i32)))
+  (type $2 (func))
+  (type $3 (func (param i32)))
+  (func $keep4-similar-but-func-sig-differs (type $2)
+    (drop
+      (i32.const 0)
+    )
   )
-  (func $other1 (param $i i32)
-    (i32.const 0)
+  (func $other1 (type $3) (param $i i32)
+    (drop
+      (i32.const 0)
+    )
   )
   (func $other2 (type $T) (result i32)
     (i32.const 0)
@@ -91,12 +122,18 @@
   )
 )
 (module
-  (type S (func (result i32)))
-  (func $keep2-similar-but-func-sig-differs (param $i i32)
-    (i32.const 0)
+  (memory 0)
+  (type $S (func (result i32)))
+  (type $1 (func (param i32)))
+  (func $keep2-similar-but-func-sig-differs (type $1) (param $i i32)
+    (drop
+      (i32.const 0)
+    )
   )
-  (func $other1 (param $i i32)
-    (i32.const 0)
+  (func $other1 (type $1) (param $i i32)
+    (drop
+      (i32.const 0)
+    )
   )
   (func $other2 (type $S) (result i32)
     (i32.const 0)
@@ -105,598 +142,1076 @@
     (i32.const 0)
   )
 )
-;; hashing tests for expressions
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (nop)
   )
-  (func $other
+  (func $other (type $0)
     (nop)
     (nop)
   )
 )
 (module
-  (func $erase
-    (block)
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (block $block0
+    )
   )
-  (func $other
-    (block)
-  )
-)
-(module
-  (func $keep2
-    (block)
-  )
-  (func $other
-    (block (nop))
+  (func $other (type $0)
+    (block $block0
+    )
   )
 )
 (module
-  (func $erase
-    (block (nop))
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (block $block0
+    )
   )
-  (func $other
-    (block (nop))
-  )
-)
-(module
-  (func $keep2
-    (block (nop))
-  )
-  (func $other
-    (block (nop) (unreachable))
+  (func $other (type $0)
+    (block $block0
+      (nop)
+    )
   )
 )
 (module
-  (func $keep2
-    (block (nop))
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (block $block0
+      (nop)
+    )
   )
-  (func $other
-    (block (unreachable))
-  )
-)
-(module
-  (func $erase-since-block-names-do-not-matter
-    (block $foo)
-  )
-  (func $other
-    (block $bar)
+  (func $other (type $0)
+    (block $block0
+      (nop)
+    )
   )
 )
 (module
-  (func $erase-since-block-names-do-not-matter
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (block $block0
+      (nop)
+    )
+  )
+  (func $other (type $0)
+    (block $block0
+      (nop)
+      (unreachable)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (block $block0
+      (nop)
+    )
+  )
+  (func $other (type $0)
+    (block $block0
+      (unreachable)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $erase-since-block-names-do-not-matter (type $0)
+    (block $foo
+    )
+  )
+  (func $other (type $0)
+    (block $bar
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $erase-since-block-names-do-not-matter (type $0)
     (block $foo
       (br $foo)
-      (br_table $foo $foo (i32.const 0))
+      (br_table $foo $foo
+        (i32.const 0)
+      )
     )
   )
-  (func $other
+  (func $other (type $0)
     (block $bar
       (br $bar)
-      (br_table $bar $bar (i32.const 0))
+      (br_table $bar $bar
+        (i32.const 0)
+      )
     )
   )
 )
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (block $foo
-      (br $foo (i32.const 0))
+      (block
+        (drop
+          (i32.const 0)
+        )
+        (br $foo)
+      )
     )
   )
-  (func $other
+  (func $other (type $0)
     (block $bar
-      (br $bar (i32.const 1))
+      (block
+        (drop
+          (i32.const 1)
+        )
+        (br $bar)
+      )
     )
   )
 )
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (block $foo
-      (br_if $foo (i32.const 0))
+      (br_if $foo
+        (i32.const 0)
+      )
     )
   )
-  (func $other
+  (func $other (type $0)
     (block $bar
-      (br_if $bar (i32.const 1))
+      (br_if $bar
+        (i32.const 1)
+      )
     )
   )
 )
 (module
-  (func $erase
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
     (block $foo
-      (br_if $foo (i32.const 0))
+      (br_if $foo
+        (i32.const 0)
+      )
     )
   )
-  (func $other
+  (func $other (type $0)
     (block $bar
-      (br_if $bar (i32.const 0))
+      (br_if $bar
+        (i32.const 0)
+      )
     )
   )
 )
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (block $foo
-      (br_table $foo $foo (i32.const 0))
+      (br_table $foo $foo
+        (i32.const 0)
+      )
     )
   )
-  (func $other
+  (func $other (type $0)
     (block $bar
-      (br_table $bar $bar (i32.const 1))
+      (br_table $bar $bar
+        (i32.const 1)
+      )
     )
   )
 )
 (module
-  (func $erase
-    (loop $foo $bar)
-  )
-  (func $other
-    (loop $sfo $sjc)
-  )
-)
-(module
-  (func $keep2
-    (block $foo
-      (br_table $foo $foo (i32.const 0) (i32.const 0))
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (loop $bar
+      (nop)
     )
   )
-  (func $other
-    (block $bar
-      (br_table $bar $bar (i32.const 0) (i32.const 1))
+  (func $other (type $0)
+    (loop $sjc
+      (nop)
     )
   )
 )
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (block $foo
+        (br_table $foo $foo
+          (i32.const 0)
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (block $bar
+        (br_table $bar $bar
+          (i32.const 0)
+          (i32.const 1)
+        )
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (block $foo
       (block $bar
-        (br_table $foo $bar (i32.const 0))
+        (br_table $foo $bar
+          (i32.const 0)
+        )
       )
     )
   )
-  (func $other
+  (func $other (type $0)
     (block $bar
       (block $foo
-        (br_table $bar $foo (i32.const 0))
+        (br_table $bar $foo
+          (i32.const 0)
+        )
       )
     )
   )
 )
 (module
-  (func $erase
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
     (block $foo
       (block $bar
-        (br_table $foo $bar (i32.const 0))
+        (br_table $foo $bar
+          (i32.const 0)
+        )
       )
     )
   )
-  (func $other
+  (func $other (type $0)
     (block $bar
       (block $foo
-        (br_table $foo $bar (i32.const 0))
+        (br_table $foo $bar
+          (i32.const 0)
+        )
       )
     )
   )
 )
 (module
-  (func $erase
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
     (call $erase)
   )
-  (func $other
+  (func $other (type $0)
     (call $erase)
   )
 )
 (module
-  (func $keep2-but-in-theory-we-could-erase ;; TODO FIXME
+  (memory 0)
+  (type $0 (func))
+  (func $keep2-but-in-theory-we-could-erase (type $0)
     (call $keep2-but-in-theory-we-could-erase)
   )
-  (func $other
+  (func $other (type $0)
     (call $other)
   )
 )
 (module
+  (memory 0)
+  (type $FUNCSIG$v (func))
   (import $i "env" "i")
   (import $i "env" "j")
-  (func $erase
+  (func $erase (type $FUNCSIG$v)
     (call_import $i)
   )
-  (func $other
+  (func $other (type $FUNCSIG$v)
     (call_import $i)
   )
 )
 (module
+  (memory 0)
+  (type $FUNCSIG$v (func))
   (import $i "env" "i")
   (import $j "env" "j")
-  (func $keep2
+  (func $keep2 (type $FUNCSIG$v)
     (call_import $i)
   )
-  (func $other
+  (func $other (type $FUNCSIG$v)
     (call_import $j)
   )
 )
 (module
-  (type T (func))
+  (memory 0)
+  (type $T (func))
   (table $erase $other)
-  (func $erase
-    (call_indirect $T (i32.const 0))
+  (func $erase (type $T)
+    (call_indirect $T
+      (i32.const 0)
+    )
   )
-  (func $other
-    (call_indirect $T (i32.const 0))
+  (func $other (type $T)
+    (call_indirect $T
+      (i32.const 0)
+    )
   )
 )
 (module
-  (type T (func))
+  (memory 0)
+  (type $T (func))
   (table $keep2 $other)
-  (func $keep2
-    (call_indirect $T (i32.const 0))
+  (func $keep2 (type $T)
+    (call_indirect $T
+      (i32.const 0)
+    )
   )
-  (func $other
-    (call_indirect $T (i32.const 1))
+  (func $other (type $T)
+    (call_indirect $T
+      (i32.const 1)
+    )
   )
 )
 (module
-  (type T (func))
-  (type S (func))
+  (memory 0)
+  (type $T (func))
+  (type $S (func))
   (table $keep2 $other)
-  (func $keep2
-    (call_indirect $T (i32.const 0))
+  (func $keep2 (type $T)
+    (call_indirect $T
+      (i32.const 0)
+    )
   )
-  (func $other
-    (call_indirect $S (i32.const 0))
+  (func $other (type $T)
+    (call_indirect $S
+      (i32.const 0)
+    )
   )
 )
 (module
-  (func $erase-even-locals-with-different-names
+  (memory 0)
+  (type $0 (func))
+  (func $erase-even-locals-with-different-names (type $0)
     (local $i i32)
-    (get_local $i)
+    (drop
+      (get_local $i)
+    )
   )
-  (func $other
+  (func $other (type $0)
     (local $j i32)
-    (get_local $j)
+    (drop
+      (get_local $j)
+    )
   )
 )
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (local $i i32)
-    (get_local $i)
+    (drop
+      (get_local $i)
+    )
   )
-  (func $other
+  (func $other (type $0)
     (local $j i64)
-    (get_local $j)
+    (drop
+      (get_local $j)
+    )
   )
 )
 (module
-  (func $erase-even-locals-with-different-names
+  (memory 0)
+  (type $0 (func))
+  (func $erase-even-locals-with-different-names (type $0)
     (local $i i32)
-    (set_local $i (i32.const 0))
+    (set_local $i
+      (i32.const 0)
+    )
   )
-  (func $other
+  (func $other (type $0)
     (local $j i32)
-    (set_local $j (i32.const 0))
+    (set_local $j
+      (i32.const 0)
+    )
   )
 )
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (local $i i32)
-    (set_local $i (i32.const 0))
+    (set_local $i
+      (i32.const 0)
+    )
   )
-  (func $other
+  (func $other (type $0)
     (local $j i64)
-    (set_local $j (i64.const 0))
+    (set_local $j
+      (i64.const 0)
+    )
   )
 )
 (module
-  (func $keep2
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
     (local $i i32)
-    (set_local $i (i32.const 0))
+    (set_local $i
+      (i32.const 0)
+    )
   )
-  (func $other
+  (func $other (type $0)
     (local $j i32)
-    (set_local $j (i32.const 1))
+    (set_local $j
+      (i32.const 1)
+    )
   )
 )
 (module
   (memory 10)
-  (func $erase
-    (i32.load (i32.const 0))
-    (i32.load8_s align=2 offset=3 (i32.const 0))
+  (type $0 (func))
+  (func $erase (type $0)
+    (drop
+      (i32.load
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.load16_s offset=3 align=2
+        (i32.const 0)
+      )
+    )
   )
-  (func $other
-    (i32.load (i32.const 0))
-    (i32.load8_s align=2 offset=3 (i32.const 0))
-  )
-)
-(module
-  (memory 10)
-  (func $keep2
-    (i32.load16_s align=2 offset=3 (i32.const 0))
-  )
-  (func $other
-    (i32.load8_s align=2 offset=3 (i32.const 0))
-  )
-)
-(module
-  (memory 10)
-  (func $keep2
-    (i32.load8_s offset=3 (i32.const 0))
-  )
-  (func $other
-    (i32.load8_s align=2 offset=3 (i32.const 0))
-  )
-)
-(module
-  (memory 10)
-  (func $keep2
-    (i32.load8_s align=2 (i32.const 0))
-  )
-  (func $other
-    (i32.load8_s align=2 offset=3 (i32.const 0))
+  (func $other (type $0)
+    (drop
+      (i32.load
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.load16_s offset=3 align=2
+        (i32.const 0)
+      )
+    )
   )
 )
 (module
   (memory 10)
-  (func $keep2
-    (i32.load8_s align=2 offset=3 (i32.const 0))
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.load offset=3
+        (i32.const 0)
+      )
+    )
   )
-  (func $other
-    (i32.load8_s align=2 offset=3 (i32.const 1))
-  )
-)
-(module
-  (memory 10)
-  (func $keep2
-    (i32.load8_u align=2 offset=3 (i32.const 0))
-  )
-  (func $other
-    (i32.load8_s align=2 offset=3 (i32.const 0))
-  )
-)
-
-(module
-  (memory 10)
-  (func $erase
-    (i32.store (i32.const 0) (i32.const 100))
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 100))
-  )
-  (func $other
-    (i32.store (i32.const 0) (i32.const 100))
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 100))
+  (func $other (type $0)
+    (drop
+      (i32.load16_s offset=3 align=2
+        (i32.const 0)
+      )
+    )
   )
 )
 (module
   (memory 10)
-  (func $keep2
-    (i32.store16 align=2 offset=3 (i32.const 0) (i32.const 100))
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.load16_s offset=3
+        (i32.const 0)
+      )
+    )
   )
-  (func $other
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 100))
-  )
-)
-(module
-  (memory 10)
-  (func $keep2
-    (i32.store8 offset=3 (i32.const 0) (i32.const 100))
-  )
-  (func $other
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 100))
-  )
-)
-(module
-  (memory 10)
-  (func $keep2
-    (i32.store8 align=2 (i32.const 0) (i32.const 100))
-  )
-  (func $other
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 100))
+  (func $other (type $0)
+    (drop
+      (i32.load16_s offset=3 align=1
+        (i32.const 0)
+      )
+    )
   )
 )
 (module
   (memory 10)
-  (func $keep2
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 100))
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.load16_s align=2
+        (i32.const 0)
+      )
+    )
   )
-  (func $other
-    (i32.store8 align=2 offset=3 (i32.const 1) (i32.const 100))
+  (func $other (type $0)
+    (drop
+      (i32.load16_s offset=3 align=2
+        (i32.const 0)
+      )
+    )
   )
 )
 (module
   (memory 10)
-  (func $keep2
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 100))
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.load16_s offset=3 align=2
+        (i32.const 0)
+      )
+    )
   )
-  (func $other
-    (i32.store8 align=2 offset=3 (i32.const 0) (i32.const 101))
-  )
-)
-(module
-  (func $keep2
-    (i32.const 0)
-  )
-  (func $other
-    (i64.const 0)
-  )
-)
-(module
-  (func $keep2
-    (i32.const 0)
-  )
-  (func $other
-    (f32.const 0)
+  (func $other (type $0)
+    (drop
+      (i32.load16_s offset=3 align=2
+        (i32.const 1)
+      )
+    )
   )
 )
 (module
-  (func $keep2
-    (i32.const 0)
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.load16_u offset=3 align=2
+        (i32.const 0)
+      )
+    )
   )
-  (func $other
-    (f64.const 0)
-  )
-)
-(module
-  (func $keep2
-    (i64.const 0)
-  )
-  (func $other
-    (i64.const 1)
-  )
-)
-(module
-  (func $keep2
-    (f32.const 0.1)
-  )
-  (func $other
-    (f32.const -0.1)
+  (func $other (type $0)
+    (drop
+      (i32.load16_s offset=3 align=2
+        (i32.const 0)
+      )
+    )
   )
 )
 (module
-  (func $keep2
-    (f64.const 0.1)
+  (memory 10)
+  (type $0 (func))
+  (func $erase (type $0)
+    (i32.store
+      (i32.const 0)
+      (i32.const 100)
+    )
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
-  (func $other
-    (f64.const 0.2)
-  )
-)
-(module
-  (func $erase
-    (f32.abs (f32.const 0))
-  )
-  (func $other
-    (f32.abs (f32.const 0))
-  )
-)
-(module
-  (func $keep2
-    (f32.abs (f32.const 0))
-  )
-  (func $other
-    (f32.abs (f32.const 1))
-  )
-)
-(module
-  (func $keep2
-    (f32.abs (f32.const 0))
-  )
-  (func $other
-    (f32.neg (f32.const 0))
+  (func $other (type $0)
+    (i32.store
+      (i32.const 0)
+      (i32.const 100)
+    )
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
 )
 (module
-  (func $erase
-    (f32.add (f32.const 0) (f32.const 0))
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (i32.store32 offset=3
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
-  (func $other
-    (f32.add (f32.const 0) (f32.const 0))
-  )
-)
-(module
-  (func $keep2
-    (f32.add (f32.const 0) (f32.const 0))
-  )
-  (func $other
-    (f32.add (f32.const 0) (f32.const 1))
-  )
-)
-(module
-  (func $keep2
-    (f32.add (f32.const 0) (f32.const 0))
-  )
-  (func $other
-    (f32.add (f32.const 1) (f32.const 0))
+  (func $other (type $0)
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
 )
 (module
-  (func $keep2
-    (f32.add (f32.const 0) (f32.const 0))
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (i32.store16 offset=3
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
-  (func $other
-    (f32.sub (f32.const 0) (f32.const 0))
-  )
-)
-(module
-  (func $erase
-    (select (i32.const 0) (i32.const 0) (i32.const 0))
-  )
-  (func $other
-    (select (i32.const 0) (i32.const 0) (i32.const 0))
-  )
-)
-(module
-  (func $keep
-    (select (i32.const 0) (i32.const 0) (i32.const 0))
-  )
-  (func $other
-    (select (i32.const 1) (i32.const 0) (i32.const 0))
+  (func $other (type $0)
+    (i32.store16 offset=3 align=1
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
 )
 (module
-  (func $keep
-    (select (i32.const 0) (i32.const 0) (i32.const 0))
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (i32.store16 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
-  (func $other
-    (select (i32.const 0) (i32.const 2) (i32.const 0))
+  (func $other (type $0)
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
 )
 (module
-  (func $keep
-    (select (i32.const 0) (i32.const 0) (i32.const 0))
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
   )
-  (func $other
-    (select (i32.const 0) (i32.const 0) (i32.const 3))
+  (func $other (type $0)
+    (i32.store16 offset=3 align=2
+      (i32.const 1)
+      (i32.const 100)
+    )
   )
 )
 (module
-  (func $erase
+  (memory 10)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 100)
+    )
+  )
+  (func $other (type $0)
+    (i32.store16 offset=3 align=2
+      (i32.const 0)
+      (i32.const 101)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.const 0)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (i64.const 0)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.const 0)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.const 0)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i32.const 0)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f64.const 0)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (i64.const 0)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (i64.const 1)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (f32.const 0.10000000149011612)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.const -0.10000000149011612)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (f64.const 0.1)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f64.const 0.2)
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (drop
+      (f32.abs
+        (f32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.abs
+        (f32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (f32.abs
+        (f32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.abs
+        (f32.const 1)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (f32.abs
+        (f32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.neg
+        (f32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (drop
+      (f32.add
+        (f32.const 0)
+        (f32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.add
+        (f32.const 0)
+        (f32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (f32.add
+        (f32.const 0)
+        (f32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.add
+        (f32.const 0)
+        (f32.const 1)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (f32.add
+        (f32.const 0)
+        (f32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.add
+        (f32.const 1)
+        (f32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep2 (type $0)
+    (drop
+      (f32.add
+        (f32.const 0)
+        (f32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (f32.sub
+        (f32.const 0)
+        (f32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep (type $0)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (select
+        (i32.const 1)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep (type $0)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 2)
+        (i32.const 0)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep (type $0)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 0)
+        (i32.const 3)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
     (return)
   )
-  (func $other
+  (func $other (type $0)
     (return)
   )
 )
 (module
-  (func $erase (result i32)
-    (return (i32.const 0))
+  (memory 0)
+  (type $0 (func (result i32)))
+  (func $erase (type $0) (result i32)
+    (return
+      (i32.const 0)
+    )
   )
-  (func $other (result i32)
-    (return (i32.const 0))
-  )
-)
-(module
-  (func $keep (result i32)
-    (return (i32.const 0))
-  )
-  (func $other (result i32)
-    (return (i32.const 1))
+  (func $other (type $0) (result i32)
+    (return
+      (i32.const 0)
+    )
   )
 )
 (module
-  (func $erase
-    (current_memory)
+  (memory 0)
+  (type $0 (func (result i32)))
+  (func $keep (type $0) (result i32)
+    (return
+      (i32.const 0)
+    )
   )
-  (func $other
-    (current_memory)
-  )
-)
-(module
-  (func $erase
-    (grow_memory (i32.const 10))
-  )
-  (func $other
-    (grow_memory (i32.const 10))
+  (func $other (type $0) (result i32)
+    (return
+      (i32.const 1)
+    )
   )
 )
 (module
-  (func $keep
-    (grow_memory (i32.const 10))
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (drop
+      (current_memory)
+    )
   )
-  (func $other
-    (grow_memory (i32.const 11))
+  (func $other (type $0)
+    (drop
+      (current_memory)
+    )
   )
 )
 (module
-  (func $keep
-    (current_memory)
+  (memory 0)
+  (type $0 (func))
+  (func $erase (type $0)
+    (drop
+      (grow_memory
+        (i32.const 10)
+      )
+    )
   )
-  (func $other
-    (grow_memory (i32.const 10))
+  (func $other (type $0)
+    (drop
+      (grow_memory
+        (i32.const 10)
+      )
+    )
   )
 )
-
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep (type $0)
+    (drop
+      (grow_memory
+        (i32.const 10)
+      )
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (grow_memory
+        (i32.const 11)
+      )
+    )
+  )
+)
+(module
+  (memory 0)
+  (type $0 (func))
+  (func $keep (type $0)
+    (drop
+      (current_memory)
+    )
+  )
+  (func $other (type $0)
+    (drop
+      (grow_memory
+        (i32.const 10)
+      )
+    )
+  )
+)

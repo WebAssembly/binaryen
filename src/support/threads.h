@@ -105,6 +105,24 @@ private:
   bool areThreadsReady();
 };
 
+// Verify a code segment is only entered once. Usage:
+//    static OnlyOnce onlyOnce;
+//    onlyOnce.verify();
+
+class OnlyOnce {
+  std::atomic<int> created;
+
+public:
+  OnlyOnce() {
+    created.store(0);
+  }
+
+  void verify() {
+    auto before = created.fetch_add(1);
+    assert(before == 0);
+  }
+};
+
 } // namespace wasm
 
 #endif  // wasm_support_threads_h

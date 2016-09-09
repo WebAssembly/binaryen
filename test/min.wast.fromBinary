@@ -4,7 +4,7 @@
   (type $1 (func (param i32 i32) (result f32)))
   (type $2 (func (param i32) (result i32)))
   (type $3 (func (param i32 i32 i32) (result i32)))
-  (export "floats" $floats)
+  (export "floats" (func $floats))
   (func $floats (type $0) (param $var$0 f32) (result f32)
     (local $var$1 f32)
     (f32.add
@@ -14,7 +14,7 @@
   )
   (func $neg (type $1) (param $var$0 i32) (param $var$1 i32) (result f32)
     (local $var$2 f32)
-    (set_local $var$2
+    (tee_local $var$2
       (f32.neg
         (block $label$0
           (i32.store

@@ -64,6 +64,10 @@ BinaryenExpressionRef makeSomething(BinaryenModuleRef module) {
   return makeInt32(module, 1337);
 }
 
+BinaryenExpressionRef makeDroppedInt32(BinaryenModuleRef module, int x) {
+  return BinaryenDrop(module, BinaryenConst(module, BinaryenLiteralInt32(x)));
+}
+
 // tests
 
 void test_types() {
@@ -181,9 +185,8 @@ void test_core() {
     BinaryenBlock(module, NULL, NULL, 0), // block with no name
     BinaryenIf(module, temp1, temp2, temp3),
     BinaryenIf(module, temp4, temp5, NULL),
-    BinaryenLoop(module, "out", "in", makeInt32(module, 0)),
-    BinaryenLoop(module, NULL, "in2", makeInt32(module, 0)),
-    BinaryenLoop(module, NULL, NULL, makeInt32(module, 0)),
+    BinaryenLoop(module, "in", makeInt32(module, 0)),
+    BinaryenLoop(module, NULL, makeInt32(module, 0)),
     BinaryenBreak(module, "the-value", temp6, temp7),
     BinaryenBreak(module, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),
@@ -202,14 +205,15 @@ void test_core() {
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, "iiIfF")
     ),
-    BinaryenGetLocal(module, 0, BinaryenInt32()),
+    BinaryenDrop(module, BinaryenGetLocal(module, 0, BinaryenInt32())),
     BinaryenSetLocal(module, 0, makeInt32(module, 101)),
+    BinaryenDrop(module, BinaryenTeeLocal(module, 0, makeInt32(module, 102))),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(), makeInt32(module, 1)),
-    BinaryenLoad(module, 1, 1, 2, 4, BinaryenInt64(), makeInt32(module, 8)),
+    BinaryenLoad(module, 2, 1, 2, 1, BinaryenInt64(), makeInt32(module, 8)),
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenFloat32(), makeInt32(module, 2)),
     BinaryenLoad(module, 8, 0, 2, 8, BinaryenFloat64(), makeInt32(module, 9)),
-    BinaryenStore(module, 4, 0, 0, temp13, temp14),
-    BinaryenStore(module, 8, 2, 4, temp15, temp16),
+    BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenInt32()),
+    BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenInt64()),
     BinaryenSelect(module, temp10, temp11, temp12),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // TODO: Host
@@ -221,7 +225,8 @@ void test_core() {
 
   // Make the main body of the function. and one block with a return value, one without
   BinaryenExpressionRef value = BinaryenBlock(module, "the-value", valueList, sizeof(valueList) / sizeof(BinaryenExpressionRef));
-  BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &value, 1);
+  BinaryenExpressionRef droppedValue = BinaryenDrop(module, value);
+  BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &droppedValue, 1);
   BinaryenExpressionRef bodyList[] = { nothing, makeInt32(module, 42) };
   BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, 2);
 
@@ -259,6 +264,9 @@ void test_core() {
   // Unnamed function type
 
   BinaryenFunctionTypeRef noname = BinaryenAddFunctionType(module, NULL, BinaryenNone(), NULL, 0);
+
+  // A bunch of our code needs drop(), auto-add it
+  BinaryenModuleAutoDrop(module);
 
   // Verify it validates
   assert(BinaryenModuleValidate(module));
@@ -304,7 +312,7 @@ void test_relooper() {
     RelooperRef relooper = RelooperCreate();
     RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperAddBranch(block0, block1, NULL, makeInt32(module, 77)); // code on branch
+    RelooperAddBranch(block0, block1, NULL, makeDroppedInt32(module, 77)); // code on branch
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "two-blocks-plus-code", v, localTypes, 1, body);
   }
@@ -321,8 +329,8 @@ void test_relooper() {
     RelooperRef relooper = RelooperCreate();
     RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperAddBranch(block0, block1, NULL, makeInt32(module, 33));
-    RelooperAddBranch(block1, block0, NULL, makeInt32(module, -66));
+    RelooperAddBranch(block0, block1, NULL, makeDroppedInt32(module, 33));
+    RelooperAddBranch(block1, block0, NULL, makeDroppedInt32(module, -66));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "loop-plus-code", v, localTypes, 1, body);
   }
@@ -341,9 +349,9 @@ void test_relooper() {
     RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
     RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
-    BinaryenExpressionRef temp = makeInt32(module, 10);
+    BinaryenExpressionRef temp = makeDroppedInt32(module, 10);
     RelooperAddBranch(block0, block1, makeInt32(module, 55), temp);
-    RelooperAddBranch(block0, block2, NULL, makeInt32(module, 20));
+    RelooperAddBranch(block0, block2, NULL, makeDroppedInt32(module, 20));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "split-plus-code", v, localTypes, 1, body);
   }
@@ -363,10 +371,10 @@ void test_relooper() {
     RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
     RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
-    BinaryenExpressionRef temp = makeInt32(module, -1);
+    BinaryenExpressionRef temp = makeDroppedInt32(module, -1);
     RelooperAddBranch(block0, block1, makeInt32(module, 55), temp);
-    RelooperAddBranch(block0, block2, NULL, makeInt32(module, -2));
-    RelooperAddBranch(block1, block2, NULL, makeInt32(module, -3));
+    RelooperAddBranch(block0, block2, NULL, makeDroppedInt32(module, -2));
+    RelooperAddBranch(block1, block2, NULL, makeDroppedInt32(module, -3));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "if-plus-code", v, localTypes, 1, body);
   }
@@ -403,15 +411,15 @@ void test_relooper() {
     RelooperBlockRef block4 = RelooperAddBlock(relooper, makeCallCheck(module,  4));
     RelooperBlockRef block5 = RelooperAddBlock(relooper, makeCallCheck(module,  5));
     RelooperBlockRef block6 = RelooperAddBlock(relooper, makeCallCheck(module,  6));
-    RelooperAddBranch(block0, block1, NULL, makeInt32(module, 10));
+    RelooperAddBranch(block0, block1, NULL, makeDroppedInt32(module, 10));
     RelooperAddBranch(block1, block2, makeInt32(module, -2), NULL);
-    RelooperAddBranch(block1, block6, NULL, makeInt32(module, 20));
+    RelooperAddBranch(block1, block6, NULL, makeDroppedInt32(module, 20));
     RelooperAddBranch(block2, block3, makeInt32(module, -6), NULL);
-    RelooperAddBranch(block2, block1, NULL, makeInt32(module, 30));
+    RelooperAddBranch(block2, block1, NULL, makeDroppedInt32(module, 30));
     RelooperAddBranch(block3, block4, makeInt32(module, -10), NULL);
     RelooperAddBranch(block3, block5, NULL, NULL);
     RelooperAddBranch(block4, block5, NULL, NULL);
-    RelooperAddBranch(block5, block6, NULL, makeInt32(module, 40));
+    RelooperAddBranch(block5, block6, NULL, makeDroppedInt32(module, 40));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "nontrivial-loop-plus-phi-to-head", v, localTypes, 1, body);
   }
@@ -425,7 +433,7 @@ void test_relooper() {
     BinaryenIndex to_block1[] = { 2, 5 };
     RelooperAddBranchForSwitch(block0, block1, to_block1, 2, NULL);
     BinaryenIndex to_block2[] = { 4 };
-    RelooperAddBranchForSwitch(block0, block2, to_block2, 1, makeInt32(module, 55));
+    RelooperAddBranchForSwitch(block0, block2, to_block2, 1, makeDroppedInt32(module, 55));
     RelooperAddBranchForSwitch(block0, block3, NULL, 0, NULL);
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "switch", v, localTypes, 1, body);

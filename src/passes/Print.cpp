@@ -32,14 +32,17 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   const char *maybeSpace;
   const char *maybeNewLine;
 
-  bool fullAST = false; // whether to not elide nodes in output when possible
-                        // (like implicit blocks)
+  bool full = false; // whether to not elide nodes in output when possible
+                     // (like implicit blocks) and to emit types
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
+    if (getenv("BINARYEN_PRINT_FULL")) {
+      full = std::stoi(getenv("BINARYEN_PRINT_FULL"));
+    }
   }
 
   void setMinify(bool minify_) {
@@ -48,7 +51,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     maybeNewLine = minify ? "" : "\n";
   }
 
-  void setFullAST(bool fullAST_) { fullAST = fullAST_; }
+  void setFull(bool full_) { full = full_; }
 
   void incIndent() {
     if (minify) return;
@@ -64,6 +67,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void printFullLine(Expression *expression) {
     !minify && doIndent(o, indent);
+    if (full) {
+      o << "[" << printWasmType(expression->type) << "] ";
+    }
     visit(expression);
     o << maybeNewLine;
   }
@@ -77,10 +83,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       name = Name::fromInt(index);
     }
     return name;
-  }
-
-  Name printableGlobal(Index index) {
-    return currModule->getGlobal(index)->name;
   }
 
   std::ostream& printName(Name name) {
@@ -99,6 +101,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     while (1) {
       if (stack.size() > 0) doIndent(o, indent);
       stack.push_back(curr);
+      if (full) {
+        o << "[" << printWasmType(curr->type) << "] ";
+      }
       printOpening(o, "block");
       if (curr->name.is()) {
         o << ' ';
@@ -135,13 +140,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->condition);
     // ifTrue and False have implict blocks, avoid printing them if possible
-    if (!fullAST && curr->ifTrue->is<Block>() && curr->ifTrue->dynCast<Block>()->name.isNull() && curr->ifTrue->dynCast<Block>()->list.size() == 1) {
+    if (!full && curr->ifTrue->is<Block>() && curr->ifTrue->dynCast<Block>()->name.isNull() && curr->ifTrue->dynCast<Block>()->list.size() == 1) {
       printFullLine(curr->ifTrue->dynCast<Block>()->list.back());
     } else {
       printFullLine(curr->ifTrue);
     }
     if (curr->ifFalse) {
-      if (!fullAST && curr->ifFalse->is<Block>() && curr->ifFalse->dynCast<Block>()->name.isNull() && curr->ifFalse->dynCast<Block>()->list.size() == 1) {
+      if (!full && curr->ifFalse->is<Block>() && curr->ifFalse->dynCast<Block>()->name.isNull() && curr->ifFalse->dynCast<Block>()->list.size() == 1) {
         printFullLine(curr->ifFalse->dynCast<Block>()->list.back());
       } else {
         printFullLine(curr->ifFalse);
@@ -151,16 +156,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitLoop(Loop *curr) {
     printOpening(o, "loop");
-    if (curr->out.is()) {
-      o << ' ' << curr->out;
-      assert(curr->in.is()); // if just one is printed, it must be the in
-    }
-    if (curr->in.is()) {
-      o << ' ' << curr->in;
+    if (curr->name.is()) {
+      o << ' ' << curr->name;
     }
     incIndent();
     auto block = curr->body->dynCast<Block>();
-    if (!fullAST && block && block->name.isNull()) {
+    if (!full && block && block->name.isNull()) {
       // wasm spec has loops containing children directly, while our ast
       // has a single child for simplicity. print out the optimal form.
       for (auto expression : block->list) {
@@ -229,26 +230,33 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitCallIndirect(CallIndirect *curr) {
     printOpening(o, "call_indirect ") << curr->fullType;
     incIndent();
-    printFullLine(curr->target);
     for (auto operand : curr->operands) {
       printFullLine(operand);
     }
+    printFullLine(curr->target);
     decIndent();
   }
   void visitGetLocal(GetLocal *curr) {
     printOpening(o, "get_local ") << printableLocal(curr->index) << ')';
   }
   void visitSetLocal(SetLocal *curr) {
-    printOpening(o, "set_local ") << printableLocal(curr->index);
+    if (curr->isTee()) {
+      printOpening(o, "tee_local ");
+    } else {
+      printOpening(o, "set_local ");
+    }
+    o << printableLocal(curr->index);
     incIndent();
     printFullLine(curr->value);
     decIndent();
   }
   void visitGetGlobal(GetGlobal *curr) {
-    printOpening(o, "get_global ") << printableGlobal(curr->index) << ')';
+    printOpening(o, "get_global ");
+    printName(curr->name) << ')';
   }
   void visitSetGlobal(SetGlobal *curr) {
-    printOpening(o, "set_global ") << printableGlobal(curr->index);
+    printOpening(o, "set_global ");
+    printName(curr->name);
     incIndent();
     printFullLine(curr->value);
     decIndent();
@@ -281,7 +289,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitStore(Store *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->type) << ".store";
+    prepareColor(o) << printWasmType(curr->valueType) << ".store";
     if (curr->bytes < 4 || (curr->type == i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
@@ -466,9 +474,16 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->condition);
     decIndent();
   }
+  void visitDrop(Drop *curr) {
+    o << '(';
+    prepareColor(o) << "drop";
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
   void visitReturn(Return *curr) {
     printOpening(o, "return");
-    if (!curr->value || curr->value->is<Nop>()) {
+    if (!curr->value) {
       // avoid a new line just for the parens
       o << ')';
       return;
@@ -499,11 +514,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printMinorOpening(o, "unreachable") << ')';
   }
   // Module-level visitors
-  void visitFunctionType(FunctionType *curr, bool full=false) {
-    if (full) {
-      printOpening(o, "type") << ' ';
-      printName(curr->name) << " (func";
-    }
+  void visitFunctionType(FunctionType *curr, Name* internalName = nullptr) {
+    o << "(func";
+    if (internalName) o << ' ' << *internalName;
     if (curr->params.size() > 0) {
       o << maybeSpace;
       printMinorOpening(o, "param");
@@ -516,27 +529,39 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << maybeSpace;
       printMinorOpening(o, "result ") << printWasmType(curr->result) << ')';
     }
-    if (full) {
-      o << "))";
-    }
+    o << ")";
   }
   void visitImport(Import *curr) {
     printOpening(o, "import ");
-    printName(curr->name) << ' ';
     printText(o, curr->module.str) << ' ';
-    printText(o, curr->base.str);
-    if (curr->type) visitFunctionType(curr->type);
+    printText(o, curr->base.str) << ' ';
+    switch (curr->kind) {
+      case Export::Function: if (curr->functionType) visitFunctionType(curr->functionType, &curr->name); break;
+      case Export::Table:    o << "(table "  << curr->name << ")"; break;
+      case Export::Memory:   o << "(memory " << curr->name << ")"; break;
+      case Export::Global:   o << "(global " << curr->name << ' ' << printWasmType(curr->globalType) << ")"; break;
+      default: WASM_UNREACHABLE();
+    }
     o << ')';
   }
   void visitExport(Export *curr) {
     printOpening(o, "export ");
-    printText(o, curr->name.str) << ' ';
-    printName(curr->value) << ')';
+    printText(o, curr->name.str) << " (";
+    switch (curr->kind) {
+      case Export::Function: o << "func"; break;
+      case Export::Table:    o << "table"; break;
+      case Export::Memory:   o << "memory"; break;
+      case Export::Global:   o << "global"; break;
+      default: WASM_UNREACHABLE();
+    }
+    o << ' ';
+    printName(curr->value) << "))";
   }
   void visitGlobal(Global *curr) {
     printOpening(o, "global ");
-    printName(curr->name) << ' ' << printWasmType(curr->type);
-    printFullLine(curr->init);
+    printName(curr->name) << ' ';
+    o << printWasmType(curr->type) << ' ';
+    visit(curr->init);
     o << ')';
   }
   void visitFunction(Function *curr) {
@@ -564,7 +589,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
     // ast avoids that for simplicity. We can just do that optimization here..
-    if (!fullAST && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
+    if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
       Block* block = curr->body->cast<Block>();
       for (auto item : block->list) {
         printFullLine(item);
@@ -575,7 +600,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitTable(Table *curr) {
-    printOpening(o, "table") << ' ' << curr->initial;
+    printOpening(o, "table") << ' ';
+    o << curr->initial;
     if (curr->max && curr->max != Table::kMaxSize) o << ' ' << curr->max;
     o << " anyfunc)\n";
     doIndent(o, indent);
@@ -589,15 +615,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ')';
     }
   }
-  void visitModule(Module *curr) {
-    currModule = curr;
-    printOpening(o, "module", true);
-    incIndent();
-    doIndent(o, indent);
-    printOpening(o, "memory") << ' ' << curr->memory.initial;
-    if (curr->memory.max && curr->memory.max != Memory::kMaxSize) o << ' ' << curr->memory.max;
+  void visitMemory(Memory* curr) {
+    printOpening(o, "memory") << ' ';
+    o << curr->initial;
+    if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
     o << ")\n";
-    for (auto segment : curr->memory.segments) {
+    for (auto segment : curr->segments) {
       doIndent(o, indent);
       printOpening(o, "data ", true);
       visit(segment.offset);
@@ -624,12 +647,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       o << "\")\n";
     }
-    if (curr->memory.exportName.is()) {
-      doIndent(o, indent);
-      printOpening(o, "export ");
-      printText(o, curr->memory.exportName.str) << " memory)";
-      o << maybeNewLine;
-    }
+  }
+  void visitModule(Module *curr) {
+    currModule = curr;
+    printOpening(o, "module", true);
+    incIndent();
+    doIndent(o, indent);
+    visitMemory(&curr->memory);
     if (curr->start.is()) {
       doIndent(o, indent);
       printOpening(o, "start") << ' ' << curr->start << ')';
@@ -637,8 +661,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
-      visitFunctionType(child.get(), true);
-      o << maybeNewLine;
+      printOpening(o, "type") << ' ';
+      printName(child->name) << ' ';
+      visitFunctionType(child.get());
+      o << ")" << maybeNewLine;
     }
     for (auto& child : curr->imports) {
       doIndent(o, indent);
@@ -707,7 +733,7 @@ public:
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
-    print.setFullAST(true);
+    print.setFull(true);
     print.visitModule(module);
   }
 };
@@ -718,9 +744,17 @@ Pass *createFullPrinterPass() {
 
 // Print individual expressions
 
-std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify) {
+std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full) {
+  if (!expression) {
+    o << "(null expression)";
+    return o;
+  }
   PrintSExpression print(o);
   print.setMinify(minify);
+  if (full) {
+    print.setFull(true);
+    o << "[" << printWasmType(expression->type) << "] ";
+  }
   print.visit(expression);
   return o;
 }

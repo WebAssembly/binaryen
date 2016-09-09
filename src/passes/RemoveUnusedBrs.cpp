@@ -189,7 +189,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     // finally, we may have simplified ifs enough to turn them into selects
     struct Selectifier : public WalkerPass<PostWalker<Selectifier, Visitor<Selectifier>>> {
       void visitIf(If* curr) {
-        if (curr->ifFalse) {
+        if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
           // TODO: estimate cost
           EffectAnalyzer condition(curr->condition);

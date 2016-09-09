@@ -55,7 +55,13 @@ struct SetLocalRemover : public PostWalker<SetLocalRemover, Visitor<SetLocalRemo
 
   void visitSetLocal(SetLocal *curr) {
     if ((*numGetLocals)[curr->index] == 0) {
-      replaceCurrent(curr->value);
+      auto* value = curr->value;
+      if (curr->isTee()) {
+        replaceCurrent(value);
+      } else {
+        Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
+        drop->value = value;
+      }
     }
   }
 };
@@ -180,12 +186,25 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       // sink it, and nop the origin
-      replaceCurrent(*found->second.item);
+      auto* set = (*found->second.item)->cast<SetLocal>();
+      replaceCurrent(set);
+      assert(!set->isTee());
+      set->setTee(true);
       // reuse the getlocal that is dying
       *found->second.item = curr;
       ExpressionManipulator::nop(curr);
       sinkables.erase(found);
       anotherCycle = true;
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    // collapse drop-tee into set, which can occur if a get was sunk into a tee
+    auto* set = curr->value->dynCast<SetLocal>();
+    if (set) {
+      assert(set->isTee());
+      set->setTee(false);
+      replaceCurrent(set);
     }
   }
 
@@ -225,7 +244,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       // store is dead, leave just the value
       auto found = self->sinkables.find(set->index);
       if (found != self->sinkables.end()) {
-        *found->second.item = (*found->second.item)->cast<SetLocal>()->value;
+        auto* previous = (*found->second.item)->cast<SetLocal>();
+        assert(!previous->isTee());
+        auto* previousValue = previous->value;
+        Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(previous);
+        drop->value = previousValue;
         self->sinkables.erase(found);
         self->anotherCycle = true;
       }
@@ -236,15 +259,10 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       self->checkInvalidations(effects);
     }
 
-    if (set) {
-      // we may be a replacement for the current node, update the stack
-      self->expressionStack.pop_back();
-      self->expressionStack.push_back(set);
-      if (!ExpressionAnalyzer::isResultUsed(self->expressionStack, self->getFunction())) {
-        Index index = set->index;
-        assert(self->sinkables.count(index) == 0);
-        self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp)));
-      }
+    if (set && !set->isTee()) {
+      Index index = set->index;
+      assert(self->sinkables.count(index) == 0);
+      self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp)));
     }
 
     self->expressionStack.pop_back();
