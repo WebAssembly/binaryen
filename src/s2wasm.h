@@ -745,7 +745,7 @@ class S2WasmBuilder {
     };
     auto setOutput = [&](Expression* curr, Name assign) {
       if (assign.isNull() || assign.str[0] == 'd') { // drop
-        addToBlock(curr);
+        addToBlock(builder.makeDrop(curr));
       } else if (assign.str[0] == 'p') { // push
         push(curr);
       } else { // set to a local

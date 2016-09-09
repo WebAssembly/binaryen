@@ -1,20 +1,23 @@
 (module
   (memory 1)
+  (data (i32.const 4) "@\04\00\00")
   (data (i32.const 16) "hello, world!\n\00")
   (data (i32.const 32) "vcq")
   (data (i32.const 48) "\16\00\00\00")
-  (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
-  (import $puts "env" "puts" (param i32))
-  (export "main" $main)
-  (export "dynCall_iii" $dynCall_iii)
+  (import "env" "puts" (func $puts (param i32)))
+  (export "memory" (memory $0))
+  (export "main" (func $main))
+  (export "dynCall_iii" (func $dynCall_iii))
   (table 2 2 anyfunc)
   (elem (i32.const 0) $__wasm_nullptr $main)
   (func $main (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
-    (call_import $puts
-      (i32.const 16)
+    (drop
+      (call_import $puts
+        (i32.const 16)
+      )
     )
     (block $label$0
       (block $label$1
@@ -39,7 +42,7 @@
             (i32.const 1)
           )
         )
-        (loop $label$3 $label$2
+        (loop $label$2
           (set_local $0
             (i32.add
               (i32.gt_s
@@ -87,7 +90,9 @@
           (i32.const -12)
         )
       )
-      (i32.const 1)
+      (drop
+        (i32.const 1)
+      )
     )
     (get_local $0)
   )
@@ -96,10 +101,10 @@
   )
   (func $dynCall_iii (param $fptr i32) (param $0 i32) (param $1 i32) (result i32)
     (call_indirect $FUNCSIG$iii
-      (get_local $fptr)
       (get_local $0)
       (get_local $1)
+      (get_local $fptr)
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 52, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1088, "initializers": [] }
