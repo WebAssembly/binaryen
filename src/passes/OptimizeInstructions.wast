@@ -34,21 +34,6 @@
         (call_import $any.expr (i32.const 1))
       )
     )
-    ;; eqz^2 is eliminatable if the output is boolean (note that for if-else, the above rule handles it in two operations)
-    (block
-      (if
-        (i32.eqz
-          (i32.eqz
-            (call_import $i32.expr (i32.const 0))
-          )
-        )
-        (call_import $any.expr (i32.const 1))
-      )
-      (if
-        (call_import $i32.expr (i32.const 0))
-        (call_import $any.expr (i32.const 1))
-      )
-    )
     ;; equal 0 => eqz
     (block
       (i32.eq
