@@ -463,7 +463,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     for (Index j = 0; j < nextFree; j++) {
       if (!newInterferences[j * numLocals + actual] && getFunction()->getLocalType(actual) == types[j]) {
         // this does not interfere, so it might be what we want. but pick the one eliminating the most copies
-        // TODO: stop looking forward when there are no more items that have copies anyhow
+        // (we could stop looking forward when there are no more items that have copies anyhow, but it doesn't seem to help)
         auto currCopies = newCopies[j * numLocals + actual];
         if (found == Index(-1) || currCopies > foundCopies) {
           indices[actual] = found = j;
