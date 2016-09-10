@@ -731,4 +731,40 @@
       )
     )
   )
+  (func $loophi2 (result i32)
+    (local $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (set_local $1
+      (i32.const 0)
+    )
+    (loop $label$continue$L7
+      (block $label$break$L7
+        (set_local $0
+          (i32.const 0)
+        )
+        (loop $while-in$1
+          (set_local $2
+            (get_local $0)
+          )
+          (if
+            (i32.const 1)
+            (br_if $label$break$L7
+              (get_local $2)
+            )
+          )
+          (br_if $while-in$1
+            (tee_local $0
+              (i32.add
+                (get_local $0)
+                (i32.const 1)
+              )
+            )
+          )
+        )
+        (br $label$continue$L7)
+      )
+    )
+    (get_local $1)
+  )
 )

@@ -391,6 +391,30 @@ function asm(global, env, buffer) {
    }
   }
 
+  function loophi2() {
+   var jnc = 0, i = 0, i$lcssa = 0, temp = 0, j = 0;
+   i = 0;
+   L7: while(1) {
+    j = 0;
+    while(1) {
+     temp = j;
+     if (1) {
+      if (temp) {
+       i$lcssa = i;
+       break L7;
+      }
+     }
+     jnc = j + 1 | 0;
+     if (jnc) {
+      j = jnc;
+     } else {
+      break;
+     }
+    }
+   }
+   return i$lcssa | 0
+  }
+
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg ];

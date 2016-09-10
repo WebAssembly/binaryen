@@ -1201,4 +1201,58 @@
       )
     )
   )
+  (func $loophi2 (result i32)
+    (local $jnc i32)
+    (local $i i32)
+    (local $i$lcssa i32)
+    (local $temp i32)
+    (local $j i32)
+    (set_local $i
+      (i32.const 0)
+    )
+    (loop $label$continue$L7
+      (block $label$break$L7
+        (set_local $j
+          (i32.const 0)
+        )
+        (loop $while-in$1
+          (block $while-out$0
+            (set_local $temp
+              (get_local $j)
+            )
+            (if
+              (i32.const 1)
+              (if
+                (get_local $temp)
+                (block
+                  (set_local $i$lcssa
+                    (get_local $i)
+                  )
+                  (br $label$break$L7)
+                )
+              )
+            )
+            (set_local $jnc
+              (i32.add
+                (get_local $j)
+                (i32.const 1)
+              )
+            )
+            (if
+              (get_local $jnc)
+              (set_local $j
+                (get_local $jnc)
+              )
+              (br $while-out$0)
+            )
+            (br $while-in$1)
+          )
+        )
+        (br $label$continue$L7)
+      )
+    )
+    (return
+      (get_local $i$lcssa)
+    )
+  )
 )
