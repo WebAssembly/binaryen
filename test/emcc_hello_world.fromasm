@@ -6601,15 +6601,11 @@
                               (get_local $41)
                               (block
                                 (br_if $do-once$114
-                                  (i32.eqz
-                                    (i32.eqz
-                                      (i32.and
-                                        (i32.load
-                                          (get_local $0)
-                                        )
-                                        (i32.const 32)
-                                      )
+                                  (i32.and
+                                    (i32.load
+                                      (get_local $0)
                                     )
+                                    (i32.const 32)
                                   )
                                 )
                                 (drop
@@ -6955,15 +6951,11 @@
                             (i32.const 0)
                           )
                           (br_if $do-once$106
-                            (i32.eqz
-                              (i32.eqz
-                                (i32.and
-                                  (i32.load
-                                    (get_local $0)
-                                  )
-                                  (i32.const 32)
-                                )
+                            (i32.and
+                              (i32.load
+                                (get_local $0)
                               )
+                              (i32.const 32)
                             )
                           )
                           (drop
@@ -12923,11 +12915,7 @@
                                                   (get_local $16)
                                                 )
                                                 (br_if $do-once$63
-                                                  (i32.eqz
-                                                    (i32.eqz
-                                                      (get_local $16)
-                                                    )
-                                                  )
+                                                  (get_local $16)
                                                 )
                                                 (i32.store
                                                   (i32.const 180)

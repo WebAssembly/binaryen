@@ -240,5 +240,16 @@
         )
       )
     )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.eqz
+          (i32.eqz
+            (i32.const 2)
+          )
+        )
+      )
+    )
   )
 )

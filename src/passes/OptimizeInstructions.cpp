@@ -215,20 +215,35 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         ExpressionManipulator::nop(curr);
       }
     } else if (auto* select = curr->dynCast<Select>()) {
-      // flip select if eqz input and flippable
       auto* condition = select->condition->dynCast<Unary>();
       if (condition && condition->op == EqZInt32) {
-        EffectAnalyzer ifTrue(select->ifTrue);
-        EffectAnalyzer ifFalse(select->ifFalse);
-        if (!ifTrue.invalidates(ifFalse)) {
-          select->condition = condition->value;
-          std::swap(select->ifTrue, select->ifFalse);
+        auto* condition2 = condition->value->dynCast<Unary>();
+        if (condition2 && condition2->op == EqZInt32) {
+          // double eqz
+          select->condition = condition2->value;
+        } else {
+          // flip select, eqz input and flippable
+          EffectAnalyzer ifTrue(select->ifTrue);
+          EffectAnalyzer ifFalse(select->ifFalse);
+          if (!ifTrue.invalidates(ifFalse)) {
+            select->condition = condition->value;
+            std::swap(select->ifTrue, select->ifFalse);
+          }
+        }
+      }
+    } else if (auto* br = curr->dynCast<Break>()) {
+      if (br->condition) {
+        auto* condition = br->condition->dynCast<Unary>();
+        if (condition && condition->op == EqZInt32) {
+          auto* condition2 = condition->value->dynCast<Unary>();
+          if (condition2 && condition2->op == EqZInt32) {
+            // double eqz
+            br->condition = condition2->value;
+          }
         }
       }
     }
     return nullptr;
-    // TODO:
-    //       * eqz^2 can be removed if flowing into a boolean context (we handle if, but need also br_if and select)
   }
 };
 
