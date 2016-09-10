@@ -9,6 +9,7 @@ function asm(global, env, buffer) {
   var Math_ceil = global.Math.ceil;
   var tempDoublePtr = env.tempDoublePtr | 0;
   var n = env.gb | 0;
+  var STACKTOP = env.STACKTOP | 0;
   var setTempRet0=env.setTempRet0;
 
   var abort = env.abort;
@@ -413,6 +414,26 @@ function asm(global, env, buffer) {
     }
    }
    return i$lcssa | 0
+  }
+
+  function optimize_exprs_at_end($e) {
+   $e = $e|0;
+   var $0 = 0, $1 = 0, $arrayidx = 0, $cmp = 0, $conv = 0, $dec = 0, $i$012 = 0, $i$012$lcssa = 0, $i$111 = 0, $inc = 0, $incdec$ptr = 0, $incdec$ptr$lcssa = 0, $s$0$lcssa = 0, $s$010 = 0, $s$1 = 0, $tobool = 0, $tobool5 = 0, $tobool5$9 = 0, $tobool8 = 0, label = 0;
+   while(1) {
+    if ($cmp) {
+     break;
+    }
+    $inc = $i$012;
+    $tobool = ($inc|0)==1;
+    if ($tobool) {
+     label = 5;
+     break;
+    } else {
+     $i$012 = $inc;
+    }
+   }
+   if ((label|0) == 2) {
+   }
   }
 
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];

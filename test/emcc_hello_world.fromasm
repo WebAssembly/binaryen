@@ -403,16 +403,14 @@
           )
         )
         (br_if $while-in$1
-          (i32.eqz
-            (i32.eq
-              (tee_local $2
-                (i32.add
-                  (get_local $2)
-                  (i32.const 1)
-                )
+          (i32.ne
+            (tee_local $2
+              (i32.add
+                (get_local $2)
+                (i32.const 1)
               )
-              (i32.const 87)
             )
+            (i32.const 87)
           )
         )
         (block
@@ -5951,14 +5949,12 @@
                                     )
                                   )
                                   (br_if $while-in$95
-                                    (i32.eqz
-                                      (i32.lt_u
-                                        (get_local $13)
-                                        (tee_local $8
-                                          (i32.mul
-                                            (get_local $8)
-                                            (i32.const 10)
-                                          )
+                                    (i32.ge_u
+                                      (get_local $13)
+                                      (tee_local $8
+                                        (i32.mul
+                                          (get_local $8)
+                                          (i32.const 10)
                                         )
                                       )
                                     )

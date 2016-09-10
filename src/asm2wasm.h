@@ -807,8 +807,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
   if (optimize) {
-    passRunner.add("vacuum"); // autodrop can add some garbage
-    passRunner.add("remove-unused-brs"); // vacuum may open up more opportunities
+    // autodrop can add some garbage
+    passRunner.add("vacuum");
+    passRunner.add("remove-unused-brs");
+    passRunner.add("optimize-instructions");
   }
   passRunner.run();
 

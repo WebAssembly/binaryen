@@ -10,6 +10,7 @@
   (import "global" "Infinity" (global $u f64))
   (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
   (import "env" "gb" (global $n i32))
+  (import "env" "STACKTOP" (global $STACKTOP i32))
   (import "env" "setTempRet0" (func $setTempRet0 (param i32) (result i32)))
   (import "env" "abort" (func $abort (param f64) (result f64)))
   (import "env" "print" (func $print (param i32)))
@@ -766,5 +767,26 @@
       )
     )
     (get_local $1)
+  )
+  (func $optimize_exprs_at_end (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (loop $while-in$1
+      (block $while-out$0
+        (br_if $while-out$0
+          (get_local $1)
+        )
+        (br_if $while-in$1
+          (i32.ne
+            (get_local $2)
+            (i32.const 1)
+          )
+        )
+        (set_local $3
+          (i32.const 5)
+        )
+      )
+    )
   )
 )

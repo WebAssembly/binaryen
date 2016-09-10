@@ -10,6 +10,7 @@
   (import "global" "Infinity" (global $u f64))
   (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
   (import "env" "gb" (global $n i32))
+  (import "env" "STACKTOP" (global $STACKTOP i32))
   (import "env" "setTempRet0" (func $setTempRet0 (param i32) (result i32)))
   (import "env" "abort" (func $abort (param f64) (result f64)))
   (import "env" "print" (func $print (param i32)))
@@ -1247,6 +1248,65 @@
     )
     (return
       (get_local $i$lcssa)
+    )
+  )
+  (func $optimize_exprs_at_end (param $$e i32)
+    (local $$0 i32)
+    (local $$1 i32)
+    (local $$arrayidx i32)
+    (local $$cmp i32)
+    (local $$conv i32)
+    (local $$dec i32)
+    (local $$i$012 i32)
+    (local $$i$012$lcssa i32)
+    (local $$i$111 i32)
+    (local $$inc i32)
+    (local $$incdec$ptr i32)
+    (local $$incdec$ptr$lcssa i32)
+    (local $$s$0$lcssa i32)
+    (local $$s$010 i32)
+    (local $$s$1 i32)
+    (local $$tobool i32)
+    (local $$tobool5 i32)
+    (local $$tobool5$9 i32)
+    (local $$tobool8 i32)
+    (local $label i32)
+    (loop $while-in$1
+      (block $while-out$0
+        (if
+          (get_local $$cmp)
+          (br $while-out$0)
+        )
+        (set_local $$inc
+          (get_local $$i$012)
+        )
+        (set_local $$tobool
+          (i32.eq
+            (get_local $$inc)
+            (i32.const 1)
+          )
+        )
+        (if
+          (get_local $$tobool)
+          (block
+            (set_local $label
+              (i32.const 5)
+            )
+            (br $while-out$0)
+          )
+          (set_local $$i$012
+            (get_local $$inc)
+          )
+        )
+        (br $while-in$1)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 2)
+      )
+      (nop)
     )
   )
 )
