@@ -481,12 +481,13 @@
     )
     (loop $in
       (block $out
-        (if
-          (i32.const 0)
-          (block $block8
-            (call $loops)
+        (br_if $in
+          (i32.eqz
+            (i32.const 0)
           )
-          (br $in)
+        )
+        (block $block8
+          (call $loops)
         )
       )
     )
@@ -591,22 +592,20 @@
     )
     (loop $in
       (block $out
-        (if
+        (br_if $out
           (i32.const 0)
-          (br $out)
-          (call $loops)
         )
+        (call $loops)
         (return)
         (br $in)
       )
     )
     (loop $in
       (block $out
-        (if
+        (br_if $out
           (i32.const 0)
-          (br $out)
-          (call $loops)
         )
+        (call $loops)
         (br $out)
         (br $in)
       )
@@ -688,6 +687,42 @@
             (br $in-todo2)
           )
         )
+      )
+    )
+  )
+  (func $br_if_in_block (type $2) (result i32)
+    (block $outval
+      (block $in
+        (br_if $in
+          (i32.const 1)
+        )
+        (br $in)
+        (drop
+          (i32.const 2)
+        )
+        (br_if $in
+          (i32.eqz
+            (i32.const 3)
+          )
+        )
+        (unreachable)
+        (drop
+          (i32.const 4)
+        )
+        (br_if $in
+          (i32.const 5)
+        )
+        (unreachable)
+        (drop
+          (i32.const 6)
+        )
+      )
+      (if
+        (i32.const 6)
+        (br $outval
+          (i32.const 7)
+        )
+        (i32.const 8)
       )
     )
   )

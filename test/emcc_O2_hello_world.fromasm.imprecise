@@ -3220,20 +3220,17 @@
                                     (br $while-out$37)
                                   )
                                 )
-                                (if
+                                (br_if $while-in$38
                                   (tee_local $14
                                     (i32.load offset=8
                                       (get_local $14)
                                     )
                                   )
-                                  (br $while-in$38)
-                                  (block
-                                    (set_local $6
-                                      (i32.const 173)
-                                    )
-                                    (br $label$break$L259)
-                                  )
                                 )
+                                (set_local $6
+                                  (i32.const 173)
+                                )
+                                (br $label$break$L259)
                               )
                             )
                             (if
@@ -3859,16 +3856,15 @@
                       (br $while-out$48)
                     )
                   )
-                  (if
+                  (br_if $while-in$49
                     (tee_local $1
                       (i32.load offset=8
                         (get_local $1)
                       )
                     )
-                    (br $while-in$49)
-                    (set_local $28
-                      (i32.const 624)
-                    )
+                  )
+                  (set_local $28
+                    (i32.const 624)
                   )
                 )
               )
@@ -8567,7 +8563,7 @@
                 (br $label$break$L1)
               )
             )
-            (if
+            (br_if $while-in$2
               (i32.and
                 (tee_local $4
                   (tee_local $0
@@ -8579,14 +8575,13 @@
                 )
                 (i32.const 3)
               )
-              (br $while-in$2)
-              (block
-                (set_local $1
-                  (get_local $0)
-                )
-                (set_local $2
-                  (i32.const 4)
-                )
+            )
+            (block
+              (set_local $1
+                (get_local $0)
+              )
+              (set_local $2
+                (i32.const 4)
               )
             )
           )

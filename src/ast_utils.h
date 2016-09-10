@@ -364,6 +364,21 @@ struct ExpressionManipulator {
     } copier;
     return flexibleCopy(original, wasm, copier);
   }
+
+  // Splice an item into the middle of a block's list
+  static void spliceIntoBlock(Block* block, Index index, Expression* add) {
+    auto& list = block->list;
+    if (index == list.size()) {
+      list.push_back(add); // simple append
+    } else {
+      // we need to make room
+      list.push_back(nullptr);
+      for (Index i = list.size() - 1; i > index; i--) {
+        list[i] = list[i - 1];
+      }
+      list[index] = add;
+    }
+  }
 };
 
 struct ExpressionAnalyzer {

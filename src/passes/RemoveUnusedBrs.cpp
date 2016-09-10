@@ -274,7 +274,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
       for (size_t i = 0; i < flows.size(); i++) {
-        auto* flow = (*flows[i])->cast<Return>(); // cannot be a break
+        auto* flow = (*flows[i])->dynCast<Return>();
+        if (!flow) continue;
         if (!flow->value) {
           // return => nop
           ExpressionManipulator::nop(flow);
@@ -293,9 +294,38 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       loops.clear();
       if (anotherCycle) worked = true;
     } while (anotherCycle);
-    // finally, we may have simplified ifs enough to turn them into selects
-    struct Selectifier : public WalkerPass<PostWalker<Selectifier, Visitor<Selectifier>>> {
+    // perform some final optimizations
+    struct FinalOptimizer : public WalkerPass<PostWalker<FinalOptimizer, Visitor<FinalOptimizer>>> {
+      void visitBlock(Block* curr) {
+        // if a block has an if br else br, we can un-conditionalize the latter, allowing
+        // the if to become a br_if.
+        // * note that if not in a block already, then we need to create a block for this, so not useful otherwise
+        // * note that this only happens at the end of a block, as code after the if is dead
+        // * note that we do this at the end, because un-conditionalizing can interfere with optimizeLoop()ing.
+        auto& list = curr->list;
+        for (Index i = 0; i < list.size(); i++) {
+          auto* iff = list[i]->dynCast<If>();
+          if (!iff || !iff->ifFalse || isConcreteWasmType(iff->type)) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
+          auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
+          if (ifTrueBreak && !ifTrueBreak->condition) {
+            // we are an if-else where the ifTrue is a break without a condition, so we can do this
+            list[i] = ifTrueBreak;
+            ifTrueBreak->condition = iff->condition;
+            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
+            continue;
+          }
+          // otherwise, perhaps we can flip the if
+          auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
+          if (ifFalseBreak && !ifFalseBreak->condition) {
+            list[i] = ifFalseBreak;
+            ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
+            continue;
+          }
+        }
+      }
       void visitIf(If* curr) {
+        // we may have simplified ifs enough to turn them into selects
         if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
           // TODO: estimate cost
@@ -317,9 +347,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
       }
     };
-    Selectifier selectifier;
-    selectifier.setModule(getModule());
-    selectifier.walkFunction(func);
+    FinalOptimizer finalOptimizer;
+    finalOptimizer.setModule(getModule());
+    finalOptimizer.walkFunction(func);
     if (worked) {
       // Our work may alter block and if types, they may now return
       struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {

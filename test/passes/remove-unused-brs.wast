@@ -653,4 +653,17 @@
       )
     )
   )
+  (func $br_if_in_block (result i32)
+    (block $outval
+      (block $in
+        (if (i32.const 1) (br $in) (br $in))
+        (drop (i32.const 2))
+        (if (i32.const 3) (unreachable) (br $in))
+        (drop (i32.const 4))
+        (if (i32.const 5) (br $in) (unreachable))
+        (drop (i32.const 6))
+      )
+      (if (i32.const 6) (br $outval (i32.const 7)) (i32.const 8))
+    )
+  )
 )
