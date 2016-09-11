@@ -36,6 +36,7 @@ Pass *createPostEmscriptenPass();
 Pass *createPrinterPass();
 Pass *createMinifiedPrinterPass();
 Pass *createFullPrinterPass();
+Pass *createRelooperJumpThreadingPass();
 Pass *createRemoveImportsPass();
 Pass *createRemoveMemoryPass();
 Pass *createRemoveUnusedBrsPass();

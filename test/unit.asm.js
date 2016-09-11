@@ -416,23 +416,127 @@ function asm(global, env, buffer) {
    return i$lcssa | 0
   }
 
-  function optimize_exprs_at_end($e) {
-   $e = $e|0;
-   var $0 = 0, $1 = 0, $arrayidx = 0, $cmp = 0, $conv = 0, $dec = 0, $i$012 = 0, $i$012$lcssa = 0, $i$111 = 0, $inc = 0, $incdec$ptr = 0, $incdec$ptr$lcssa = 0, $s$0$lcssa = 0, $s$010 = 0, $s$1 = 0, $tobool = 0, $tobool5 = 0, $tobool5$9 = 0, $tobool8 = 0, label = 0;
-   while(1) {
-    if ($cmp) {
+  function relooperJumpThreading(x) {
+   x = x | 0;
+   var label = 0;
+   // from if
+   if (x) {
+    h(0);
+    label = 1;
+   }
+   if ((label|0) == 1) {
+    h(1);
+   }
+   h(-1);
+   // from loop
+   while (1) {
+    x = x + 1;
+    if (x) {
+     h(2);
+     label = 2;
      break;
-    }
-    $inc = $i$012;
-    $tobool = ($inc|0)==1;
-    if ($tobool) {
-     label = 5;
-     break;
-    } else {
-     $i$012 = $inc;
     }
    }
    if ((label|0) == 2) {
+    h(3);
+   }
+   h(-2);
+   // if-else afterward
+   if (x) {
+    h(4);
+    if (x == 3) {
+     label = 3;
+    } else {
+     label = 4;
+    }
+   }
+   if ((label|0) == 3) {
+    h(5);
+   } else if ((label|0) == 4) {
+    h(6);
+   }
+   h(-3);
+   // two ifs afterward
+   if (x) {
+    h(7);
+    if (x == 5) {
+     label = 5;
+    } else {
+     label = 6;
+    }
+   }
+   if ((label|0) == 5) {
+    h(8);
+    if (x == 6) {
+     label = 6;
+    }
+   }
+   if ((label|0) == 6) {
+    h(9);
+   }
+   h(-4);
+   // labeled if after
+   if (x) {
+    h(10);
+    label = 7;
+   }
+   L1: do {
+    if ((label|0) == 7) {
+     h(11);
+     break L1;
+    }
+   } while (0);
+   h(-5);
+   // labeled if after normal if
+   if (x) {
+    h(12);
+    if (x == 8) {
+      label = 8;
+    } else {
+      label = 9;
+    }
+   }
+   if ((label|0) == 8) {
+    h(13);
+    if (x) label = 9;
+   }
+   L1: do {
+    if ((label|0) == 9) {
+     h(14);
+     break L1;
+    }
+   } while (0);
+   h(-6);
+   // TODO
+   // labeled if after a first if
+   // do-enclosed if after (?)
+   // test multiple labels, some should be ignored initially by JumpUpdater
+   return x;
+  }
+
+  function relooperJumpThreading__ZN4game14preloadweaponsEv() {
+   var $12 = 0, $14 = 0, $or$cond8 = 0, $or$cond6 = 0, $vararg_ptr5 = 0, $11 = 0, $exitcond = 0, label = 0;
+   while(1) {
+    if ($14) {
+     if ($or$cond8) {
+      label = 7;
+     } else {
+      label = 8;
+     }
+    } else {
+     if ($or$cond6) {
+      label = 7;
+     } else {
+      label = 8;
+     }
+    }
+    if ((label|0) == 7) {
+     label = 0;
+    }
+    else if ((label|0) == 8) {
+     label = 0;
+     HEAP32[$vararg_ptr5>>2] = $11;
+    }
    }
   }
 

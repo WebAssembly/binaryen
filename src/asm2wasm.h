@@ -522,6 +522,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, [&](PassRunner& passRunner) {
       // run autodrop first, before optimizations
       passRunner.add<AutoDrop>();
+      // optimize relooper label variable usage at the wasm level, where it is easy
+      passRunner.add("relooper-jump-threading");
     });
   }
 
@@ -802,6 +804,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
     }
   };
+
   PassRunner passRunner(&wasm);
   passRunner.add<FinalizeCalls>(this);
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate

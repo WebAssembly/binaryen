@@ -11,6 +11,7 @@ SET(passes_SOURCES
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
+  RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveUnusedBrs.cpp
