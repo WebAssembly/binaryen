@@ -18,6 +18,7 @@
 
 #include <passes/passes.h>
 #include <pass.h>
+#include <wasm-validator.h>
 
 namespace wasm {
 
@@ -132,10 +133,9 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 void PassRunner::run() {
   if (debug) {
     // for debug logging purposes, run each pass in full before running the other
-    std::chrono::high_resolution_clock::time_point beforeEverything;
+    auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
     std::cerr << "[PassRunner] running passes..." << std::endl;
-    beforeEverything = std::chrono::high_resolution_clock::now();
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
@@ -158,10 +158,19 @@ void PassRunner::run() {
       auto after = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
+      totalTime += diff;
+#if 0
+      // validate, ignoring the time
+      std::cerr << "[PassRunner]   (validating)\n";
+      if (!WasmValidator().validate(*wasm)) {
+        std::cerr << "last pass (" << pass->name << ") broke validation\n";
+        abort();
+      }
+#endif
     }
-    auto after = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff = after - beforeEverything;
-    std::cerr << "[PassRunner] passes took " << diff.count() << " seconds." << std::endl;
+    std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
+    // validate
+    assert(WasmValidator().validate(*wasm));
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better
     // to run as many passes as possible on a single function before moving to the next
