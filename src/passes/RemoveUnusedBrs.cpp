@@ -25,6 +25,16 @@
 
 namespace wasm {
 
+// to turn an if into a br-if, we must be able to reorder the
+// condition and possible value, and the possible value must
+// not have side effects (as they would run unconditionally)
+static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue) {
+  if (!brValue) return true;
+  EffectAnalyzer value(brValue);
+  if (value.hasSideEffects()) return false;
+  return !EffectAnalyzer(ifCondition).invalidates(value);
+}
+
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>> {
   bool isFunctionParallel() override { return true; }
 
@@ -137,15 +147,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
         // if the br has a value, then if => br_if means we always execute the value, and also the order is value,condition vs condition,value
-        if (br->value) {
-          EffectAnalyzer value(br->value);
-          if (value.hasSideEffects()) return;
-          EffectAnalyzer condition(curr->condition);
-          if (condition.invalidates(value)) return;
+        if (canTurnIfIntoBrIf(curr->condition, br->value)) {
+          br->condition = curr->condition;
+          replaceCurrent(br);
+          anotherCycle = true;
         }
-        br->condition = curr->condition;
-        replaceCurrent(br);
-        anotherCycle = true;
       }
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is a dead end
@@ -398,7 +404,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           auto* iff = list[i]->dynCast<If>();
           if (!iff || !iff->ifFalse || isConcreteWasmType(iff->type)) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
-          if (ifTrueBreak && !ifTrueBreak->condition) {
+          if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value)) {
             // we are an if-else where the ifTrue is a break without a condition, so we can do this
             list[i] = ifTrueBreak;
             ifTrueBreak->condition = iff->condition;
@@ -407,7 +413,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           }
           // otherwise, perhaps we can flip the if
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
-          if (ifFalseBreak && !ifFalseBreak->condition) {
+          if (ifFalseBreak && !ifFalseBreak->condition && canTurnIfIntoBrIf(iff->condition, ifFalseBreak->value)) {
             list[i] = ifFalseBreak;
             ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);

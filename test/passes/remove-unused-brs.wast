@@ -700,4 +700,64 @@
       (br $stack1)
     )
   )
+  (func $if-to-br_if-conflict (param $x i32) (param $y i32) (result i32)
+    (block $leave
+      (set_local $y
+        (block $out
+          (if
+            (get_local $x)
+            (br $out
+              (block
+                (set_local $x (i32.const 0))
+                (i32.const 1)
+              )
+            )
+            (br_if $leave (i32.const 1))
+          )
+          (unreachable)
+        )
+      )
+    )
+    (i32.add (get_local $x) (get_local $y))
+  )
+  (func $if-to-br_if-conflict2 (param $x i32) (param $y i32) (result i32)
+    (block $leave
+      (set_local $y
+        (block $out
+          (if
+            (get_local $x)
+            (br_if $leave (i32.const 1))
+            (br $out
+              (block
+                (set_local $x (i32.const 0))
+                (i32.const 1)
+              )
+            )
+          )
+          (unreachable)
+        )
+      )
+    )
+    (i32.add (get_local $x) (get_local $y))
+  )
+  (func $if-to-br_if-value-sideeffect (param $x i32) (param $y i32) (result i32)
+    (block $leave
+      (set_local $y
+        (block $out
+          (if
+            (get_local $x)
+            (br $out
+              (block
+                (drop (call $if-to-br_if-value-sideeffect (i32.const 0) (i32.const 1)))
+                (nop)
+                (i32.const 1)
+              )
+            )
+          )
+          (unreachable)
+        )
+      )
+    )
+    (i32.add (get_local $x) (get_local $y))
+  )
 )
