@@ -72,17 +72,17 @@ struct PassRunner {
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);
     if (!pass) Fatal() << "Could not find pass: " << passName << "\n";
-    passes.push_back(pass);
+    doAdd(pass);
   }
 
   template<class P>
   void add() {
-    passes.push_back(new P());
+    doAdd(new P());
   }
 
   template<class P, class Arg>
   void add(Arg arg){
-    passes.push_back(new P(arg));
+    doAdd(new P(arg));
   }
 
   // Adds the default set of optimization passes; this is
@@ -110,6 +110,8 @@ struct PassRunner {
   ~PassRunner();
 
 private:
+  void doAdd(Pass* pass);
+
   void runPassOnFunction(Pass* pass, Function* func);
 };
 
@@ -121,12 +123,13 @@ public:
   virtual ~Pass() {};
 
   // Override this to perform preparation work before the pass runs.
-  virtual void prepare(PassRunner* runner, Module* module) {}
-  virtual void run(PassRunner* runner, Module* module) = 0;
-  // Override this to perform finalization work after the pass runs.
-  virtual void finalize(PassRunner* runner, Module* module) {}
+  // This will be called before the pass is run on a module.
+  virtual void prepareToRun(PassRunner* runner, Module* module) {}
 
-  // Run on a single function. This has no prepare/finalize calls.
+  // Implement this with code to run the pass on the whole module
+  virtual void run(PassRunner* runner, Module* module) = 0;
+
+  // Implement this with code to run the pass on a single function
   virtual void runFunction(PassRunner* runner, Module* module, Function* function) {
     WASM_UNREACHABLE(); // by default, passes cannot be run this way
   }
@@ -166,9 +169,7 @@ template <typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
 public:
   void run(PassRunner* runner, Module* module) override {
-    prepare(runner, module);
     WalkerType::walkModule(module);
-    finalize(runner, module);
   }
 
   void runFunction(PassRunner* runner, Module* module, Function* func) override {

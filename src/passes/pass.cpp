@@ -232,6 +232,11 @@ PassRunner::~PassRunner() {
   }
 }
 
+void PassRunner::doAdd(Pass* pass) {
+  passes.push_back(pass);
+  pass->prepareToRun(this, wasm);
+}
+
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   // function-parallel passes get a new instance per function
   if (pass->isFunctionParallel()) {

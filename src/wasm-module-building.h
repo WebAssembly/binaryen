@@ -97,7 +97,7 @@ public:
     }
 
     // Before parallelism, create all passes on the main thread here, to ensure
-    // constructors run at least once on the main thread, for one-time init things.
+    // prepareToRun() is called for each pass before we start to optimize functions.
     {
       PassRunner passRunner(wasm);
       addPrePasses(passRunner);

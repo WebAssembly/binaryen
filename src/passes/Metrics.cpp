@@ -34,7 +34,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     counts[name]++;
   }
 
-  void finalize(PassRunner *runner, Module *module) override {
+  void visitModule(Module* module) {
     ostream &o = cout;
     o << "Counts"
       << "\n";
