@@ -666,4 +666,38 @@
       (if (i32.const 6) (br $outval (i32.const 7)) (i32.const 8))
     )
   )
+  (func $threading
+    (drop
+      (block $value-out
+        (block $value-in
+          (block $out
+            (block $in
+              (if (i32.const 1)
+                (br $in)
+              )
+              (br_if $in (i32.const 2))
+              (br $value-in (i32.const 3))
+            )
+            (br $out)
+          )
+          (i32.const 4)
+        )
+      )
+    )
+    (block $stack1
+      (block $stack2
+        (block $stack3
+          (block $stack4
+            (if (i32.const 1)
+              (br $stack4)
+            )
+            (unreachable)
+          )
+          (br $stack3)
+        )
+        (br $stack2)
+      )
+      (br $stack1)
+    )
+  )
 )

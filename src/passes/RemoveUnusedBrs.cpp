@@ -312,8 +312,81 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       typeUpdater.walkFunction(func);
     }
 
+    // thread trivial jumps
+    struct JumpThreader : public ControlFlowWalker<JumpThreader, Visitor<JumpThreader>> {
+      // map of all value-less breaks going to a block (and not a loop)
+      std::map<Block*, std::vector<Break*>> breaksToBlock;
+
+      // number of definitions of each name - when a name is defined more than once, it is not trivially safe to do this
+      std::map<Name, Index> numDefs;
+
+      // the names to update, when we can (just one def)
+      std::map<Break*, Name> newNames;
+
+      void visitBreak(Break* curr) {
+        if (!curr->value) {
+          if (auto* target = findBreakTarget(curr->name)->dynCast<Block>()) {
+            breaksToBlock[target].push_back(curr);
+          }
+        }
+      }
+      // TODO: Switch?
+      void visitBlock(Block* curr) {
+        if (curr->name.is()) numDefs[curr->name]++;
+
+        auto& list = curr->list;
+        if (list.size() == 1 && curr->name.is()) {
+          // if this block has just one child, a sub-block, then jumps to the former are jumps to us, really
+          if (auto* child = list[0]->dynCast<Block>()) {
+            if (child->name.is() && child->name != curr->name) {
+              auto& breaks = breaksToBlock[child];
+              for (auto* br : breaks) {
+                newNames[br] = curr->name;
+                breaksToBlock[curr].push_back(br); // update the list - we may push it even more later
+              }
+              breaksToBlock.erase(child);
+            }
+          }
+        } else if (list.size() == 2) {
+          // if this block has two children, a child-block and a simple jump, then jumps to child-block can be replaced with jumps to the new target
+          auto* child = list[0]->dynCast<Block>();
+          auto* jump = list[1]->dynCast<Break>();
+          if (child && child->name.is() && jump && ExpressionAnalyzer::isSimple(jump)) {
+            auto& breaks = breaksToBlock[child];
+            for (auto* br : breaks) {
+              newNames[br] = jump->name;
+            }
+            // if the jump is to another block then we can update the list, and maybe push it even more later
+            if (auto* newTarget = findBreakTarget(jump->name)->dynCast<Block>()) {
+              for (auto* br : breaks) {
+                breaksToBlock[newTarget].push_back(br);
+              }
+            }
+            breaksToBlock.erase(child);
+          }
+        }
+      }
+      void visitLoop(Loop* curr) {
+        if (curr->name.is()) numDefs[curr->name]++;
+      }
+
+      void finish() {
+        for (auto& iter : newNames) {
+          auto* br = iter.first;
+          auto name = iter.second;
+          if (numDefs[name] == 1) {
+            br->name = name;
+          }
+        }
+      }
+    };
+    JumpThreader jumpThreader;
+    jumpThreader.setModule(getModule());
+    jumpThreader.walkFunction(func);
+    jumpThreader.finish();
+
     // perform some final optimizations
-    struct FinalOptimizer : public WalkerPass<PostWalker<FinalOptimizer, Visitor<FinalOptimizer>>> {
+    struct FinalOptimizer : public PostWalker<FinalOptimizer, Visitor<FinalOptimizer>> {
       void visitBlock(Block* curr) {
         // if a block has an if br else br, we can un-conditionalize the latter, allowing
         // the if to become a br_if.
@@ -374,7 +447,5 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
 Pass *createRemoveUnusedBrsPass() {
   return new RemoveUnusedBrs();
 }
-
-// TODO: jump threading, when a jump->jump->target => jump->target
 
 } // namespace wasm

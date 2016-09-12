@@ -108,7 +108,7 @@
           (drop
             (i32.const 0)
           )
-          (br_if $inner
+          (br_if $topmost
             (i32.const 1)
           )
         )
@@ -723,6 +723,40 @@
           (i32.const 7)
         )
         (i32.const 8)
+      )
+    )
+  )
+  (func $threading (type $1)
+    (drop
+      (block $value-out
+        (block $value-in
+          (block $out
+            (block $in
+              (br_if $out
+                (i32.const 1)
+              )
+              (br_if $out
+                (i32.const 2)
+              )
+              (br $value-in
+                (i32.const 3)
+              )
+            )
+          )
+          (i32.const 4)
+        )
+      )
+    )
+    (block $stack1
+      (block $stack2
+        (block $stack3
+          (block $stack4
+            (br_if $stack1
+              (i32.const 1)
+            )
+            (unreachable)
+          )
+        )
       )
     )
   )
