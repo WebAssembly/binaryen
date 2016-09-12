@@ -51,7 +51,6 @@ struct PatternDatabase {
   std::map<Expression::Id, std::vector<Pattern>> patternMap; // root expression id => list of all patterns for it TODO optimize more
 
   PatternDatabase() {
-    // TODO: do this on first use, with a lock, to avoid startup pause
     // generate module
     input = strdup(
       #include "OptimizeInstructions.wast.processed"
@@ -75,14 +74,12 @@ struct PatternDatabase {
 
 static PatternDatabase* database = nullptr;
 
-static void ensureDatabase() {
-  if (!database) {
-    // we must only ever create one database
-    static OnlyOnce onlyOnce;
-    onlyOnce.verify();
+struct DatabaseEnsurer {
+  DatabaseEnsurer() {
+    assert(!database);
     database = new PatternDatabase;
   }
-}
+};
 
 // Check for matches and apply them
 struct Match {
@@ -162,8 +159,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
 
   Pass* create() override { return new OptimizeInstructions; }
 
-  OptimizeInstructions() {
-    ensureDatabase();
+  void prepareToRun(PassRunner* runner, Module* module) override {
+    static DatabaseEnsurer ensurer;
   }
 
   void visitExpression(Expression* curr) {
