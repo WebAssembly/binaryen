@@ -28,18 +28,26 @@ namespace wasm {
 struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
   Name target; // look for this one XXX looking by name may fall prey to duplicate names
   Index found;
+  WasmType valueType;
 
-  BreakSeeker(Name target) : target(target), found(false) {}
+  BreakSeeker(Name target) : target(target), found(0) {}
+
+  void noteFound(Expression* value) {
+    found++;
+    if (found == 1) valueType = unreachable;
+    if (!value) valueType = none;
+    else if (value->type != unreachable) valueType = value->type;
+  }
 
   void visitBreak(Break *curr) {
-    if (curr->name == target) found++;
+    if (curr->name == target) noteFound(curr->value);
   }
 
   void visitSwitch(Switch *curr) {
     for (auto name : curr->targets) {
-      if (name == target) found++;
+      if (name == target) noteFound(curr->value);
     }
-    if (curr->default_ == target) found++;
+    if (curr->default_ == target) noteFound(curr->value);
   }
 
   static bool has(Expression* tree, Name target) {

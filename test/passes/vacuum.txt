@@ -181,4 +181,30 @@
   (func $drop-get-global (type $0)
     (call $drop-get-global)
   )
+  (func $relooperJumpThreading1 (type $0)
+    (local $$vararg_ptr5 i32)
+    (local $$11 i32)
+    (loop $while-in$1
+      (drop
+        (block $jumpthreading$outer$8
+          (block $jumpthreading$inner$8
+            (br $jumpthreading$outer$8
+              (i32.const 0)
+            )
+          )
+          (i32.store
+            (get_local $$vararg_ptr5)
+            (get_local $$11)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $relooperJumpThreading2 (type $0)
+    (nop)
+  )
+  (func $relooperJumpThreading3 (type $0)
+    (nop)
+  )
 )

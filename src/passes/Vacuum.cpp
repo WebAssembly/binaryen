@@ -157,7 +157,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         Break* br = list[z - skip]->dynCast<Break>();
         Switch* sw = list[z - skip]->dynCast<Switch>();
         if ((br && !br->condition) || sw) {
+          auto* last = list.back();
           list.resize(z - skip + 1);
+          // if we removed the last one, and it was a return value, it must be returned
+          if (list.back() != last && isConcreteWasmType(last->type)) {
+            list.push_back(last);
+          }
           needResize = false;
           break;
         }
@@ -222,18 +227,32 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
       auto* last = block->list.back();
       if (isConcreteWasmType(last->type)) {
         assert(block->type == last->type);
-        block->list.back() = last = optimize(last, false);
+        last = optimize(last, false);
         if (!last) {
-          block->list.pop_back();
-          // we don't need the drop anymore, let's see what we have left in the block
-          if (block->list.size() > 1) {
-            replaceCurrent(block);
-          } else if (block->list.size() == 1) {
-            replaceCurrent(block->list[0]);
-          } else {
-            ExpressionManipulator::nop(curr);
+          // we may be able to remove this, if there are no brs
+          bool canPop = true;
+          if (block->name.is()) {
+            BreakSeeker breakSeeker(block->name);
+            Expression* temp = block;
+            breakSeeker.walk(temp);
+            if (breakSeeker.found && breakSeeker.valueType != none) {
+              canPop = false;
+            }
           }
-          return;
+          if (canPop) {
+            block->list.back() = last;
+            block->list.pop_back();
+            block->type = none;
+            // we don't need the drop anymore, let's see what we have left in the block
+            if (block->list.size() > 1) {
+              replaceCurrent(block);
+            } else if (block->list.size() == 1) {
+              replaceCurrent(block->list[0]);
+            } else {
+              ExpressionManipulator::nop(curr);
+            }
+            return;
+          }
         }
       }
     }

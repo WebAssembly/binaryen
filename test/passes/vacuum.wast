@@ -363,4 +363,53 @@
       )
     )
   )
+  (func $relooperJumpThreading1
+    (local $$vararg_ptr5 i32)
+    (local $$11 i32)
+    (loop $while-in$1
+      (drop
+        (block $jumpthreading$outer$8
+          (block $jumpthreading$inner$8
+            (br $jumpthreading$outer$8 ;; the rest is dead in the outer block, but be careful to leave the return value!
+              (i32.const 0)
+            )
+          )
+          (i32.store
+            (get_local $$vararg_ptr5)
+            (get_local $$11)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $relooperJumpThreading2
+    (loop $while-in$1
+      (drop
+        (block $jumpthreading$outer$8
+          (block $jumpthreading$inner$8
+            (br $jumpthreading$outer$8
+              (i32.const 0)
+            )
+          )
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $relooperJumpThreading3
+    (loop $while-in$1
+      (drop
+        (block $jumpthreading$outer$8
+          (br $jumpthreading$outer$8 ;; code after this is dead, can kill it, but preserve the return value at the end!
+            (i32.const 0)
+          )
+          (drop (i32.const 3))
+          (drop (i32.const 2))
+          (drop (i32.const 1))
+          (i32.const 0)
+        )
+      )
+    )
+  )
 )
