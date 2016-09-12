@@ -294,6 +294,24 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       loops.clear();
       if (anotherCycle) worked = true;
     } while (anotherCycle);
+
+    if (worked) {
+      // Our work may alter block and if types, they may now return
+      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
+        void visitBlock(Block* curr) {
+          curr->finalize();
+        }
+        void visitLoop(Loop* curr) {
+          curr->finalize();
+        }
+        void visitIf(If* curr) {
+          curr->finalize();
+        }
+      };
+      TypeUpdater typeUpdater;
+      typeUpdater.walkFunction(func);
+    }
+
     // perform some final optimizations
     struct FinalOptimizer : public WalkerPass<PostWalker<FinalOptimizer, Visitor<FinalOptimizer>>> {
       void visitBlock(Block* curr) {
@@ -350,27 +368,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     FinalOptimizer finalOptimizer;
     finalOptimizer.setModule(getModule());
     finalOptimizer.walkFunction(func);
-    if (worked) {
-      // Our work may alter block and if types, they may now return
-      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
-        void visitBlock(Block* curr) {
-          curr->finalize();
-        }
-        void visitLoop(Loop* curr) {
-          curr->finalize();
-        }
-        void visitIf(If* curr) {
-          curr->finalize();
-        }
-      };
-      TypeUpdater typeUpdater;
-      typeUpdater.walkFunction(func);
-    }
   }
 };
 
 Pass *createRemoveUnusedBrsPass() {
   return new RemoveUnusedBrs();
 }
+
+// TODO: jump threading, when a jump->jump->target => jump->target
 
 } // namespace wasm
