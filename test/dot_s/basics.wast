@@ -1,6 +1,5 @@
 (module
   (memory 1)
-  (data (i32.const 4) "@\04\00\00")
   (data (i32.const 16) "hello, world!\n\00")
   (data (i32.const 32) "vcq")
   (data (i32.const 48) "\16\00\00\00")
@@ -107,4 +106,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1088, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 52, "initializers": [] }
