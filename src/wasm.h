@@ -1027,6 +1027,8 @@ public:
   void finalize() {
     if (condition) {
       type = none;
+    } else {
+      type = unreachable;
     }
   }
 };

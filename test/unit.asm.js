@@ -540,6 +540,23 @@ function asm(global, env, buffer) {
    }
   }
 
+  function __Z12multi_varargiz($0) {
+   $0 = $0|0;
+   var $2 = 0, $$06$i4 = 0, $exitcond$i6 = 0, $12 = 0, $20 = 0;
+   if ($2) {
+    while(1) {
+     $12 = $$06$i4;
+     if ($exitcond$i6) {
+      break;
+     } else {
+      $$06$i4 = $20;
+     }
+    }
+   } else {
+    lb(1) | 0; // returns a value, and the while is unreachable
+   }
+  }
+
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg ];

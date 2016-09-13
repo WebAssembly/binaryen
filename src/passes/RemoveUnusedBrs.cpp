@@ -149,6 +149,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         // if the br has a value, then if => br_if means we always execute the value, and also the order is value,condition vs condition,value
         if (canTurnIfIntoBrIf(curr->condition, br->value)) {
           br->condition = curr->condition;
+          br->finalize();
           replaceCurrent(br);
           anotherCycle = true;
         }
@@ -408,6 +409,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
             // we are an if-else where the ifTrue is a break without a condition, so we can do this
             list[i] = ifTrueBreak;
             ifTrueBreak->condition = iff->condition;
+            ifTrueBreak->finalize();
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
             continue;
           }
@@ -416,6 +418,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           if (ifFalseBreak && !ifFalseBreak->condition && canTurnIfIntoBrIf(iff->condition, ifFalseBreak->value)) {
             list[i] = ifFalseBreak;
             ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+            ifFalseBreak->finalize();
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
             continue;
           }

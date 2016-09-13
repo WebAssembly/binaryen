@@ -971,4 +971,21 @@
       (br $while-in$1)
     )
   )
+  (func $__Z12multi_varargiz (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (if
+      (get_local $1)
+      (loop $while-in$1
+        (br_if $while-in$1
+          (i32.eqz
+            (get_local $2)
+          )
+        )
+      )
+      (call $lb
+        (i32.const 1)
+      )
+    )
+  )
 )
