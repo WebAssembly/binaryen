@@ -1,11 +1,13 @@
 (module
   (memory 1)
-  (export "memory" memory)
+  (export "memory" (memory $0))
   (func $_main
-    (grow_memory
-      (i32.add
-        (current_memory)
-        (i32.const 1)
+    (drop
+      (grow_memory
+        (i32.add
+          (current_memory)
+          (i32.const 1)
+        )
       )
     )
   )

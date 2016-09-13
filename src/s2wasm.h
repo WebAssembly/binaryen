@@ -1067,8 +1067,6 @@ class S2WasmBuilder {
         return target->cast<Loop>()->name;
       }
     };
-    // fixups
-    std::vector<Block*> loopBlocks; // we need to clear their names
     // main loop
     while (1) {
       skipWhitespace();
@@ -1097,21 +1095,27 @@ class S2WasmBuilder {
           recordLabel();
         } else s = strchr(s, '\n');
       } else if (match("loop")) {
+        // Allocate an explicit block. This replaces the exit label that was previously on the loop.
+        // Do this for now to keep LLVM's output compatible with both 0xb and 0xc Binaryen.
+        // TODO: Update LLVM to model the 0xc loop behavior
+        auto* explicitBlock = allocator->alloc<Block>();
+        addToBlock(explicitBlock);
+        bstack.push_back(explicitBlock);
         auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
         curr->name = getNextLabel();
-        auto block = allocator->alloc<Block>();
-        block->name = getNextLabel();
-        curr->body = block;
-        loopBlocks.push_back(block);
-        bstack.push_back(block);
+        explicitBlock->name = getNextLabel();
+        auto implicitBlock = allocator->alloc<Block>();
+        curr->body = implicitBlock;
         bstack.push_back(curr);
       } else if (match("end_loop")) {
         auto* loop = bstack.back()->cast<Loop>();
         bstack.pop_back();
-        auto* implicitBlock = bstack.back()->cast<Block>();
+        auto* explicitBlock = bstack.back()->cast<Block>();
         bstack.pop_back();
-        implicitBlock->finalize();
+
+        explicitBlock->finalize();
+        loop->body->finalize();
         loop->finalize();
       } else if (match("br_table")) {
         auto curr = allocator->alloc<Switch>();
@@ -1198,9 +1202,6 @@ class S2WasmBuilder {
     bstack.pop_back(); // remove the base block for the function body
     assert(bstack.empty());
     assert(estack.empty());
-    for (auto block : loopBlocks) {
-      block->name = Name();
-    }
     func->body->dynCast<Block>()->finalize();
     wasm->addFunction(func);
   }

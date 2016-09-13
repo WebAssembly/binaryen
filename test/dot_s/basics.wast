@@ -41,46 +41,48 @@
             (i32.const 1)
           )
         )
-        (loop $label$2
-          (set_local $0
-            (i32.add
-              (i32.gt_s
-                (get_local $0)
-                (i32.const 10)
-              )
-              (get_local $0)
-            )
-          )
-          (block $label$4
-            (br_if $label$4
-              (i32.ne
-                (i32.rem_s
-                  (get_local $0)
-                  (i32.const 5)
-                )
-                (i32.const 3)
-              )
-            )
+        (block $label$3
+          (loop $label$2
             (set_local $0
               (i32.add
-                (i32.rem_s
+                (i32.gt_s
                   (get_local $0)
-                  (i32.const 111)
+                  (i32.const 10)
                 )
                 (get_local $0)
               )
             )
-          )
-          (br_if $label$1
-            (i32.eq
-              (i32.rem_s
-                (get_local $0)
-                (i32.const 7)
+            (block $label$4
+              (br_if $label$4
+                (i32.ne
+                  (i32.rem_s
+                    (get_local $0)
+                    (i32.const 5)
+                  )
+                  (i32.const 3)
+                )
               )
-              (i32.const 0)
+              (set_local $0
+                (i32.add
+                  (i32.rem_s
+                    (get_local $0)
+                    (i32.const 111)
+                  )
+                  (get_local $0)
+                )
+              )
             )
+            (br_if $label$1
+              (i32.eq
+                (i32.rem_s
+                  (get_local $0)
+                  (i32.const 7)
+                )
+                (i32.const 0)
+              )
+            )
+            (br $label$2)
           )
-          (br $label$2)
         )
       )
       (set_local $0
