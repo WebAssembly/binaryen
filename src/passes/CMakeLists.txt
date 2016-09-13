@@ -3,6 +3,7 @@ SET(passes_SOURCES
   CoalesceLocals.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
+  ExtractFunction.cpp
   MergeBlocks.cpp
   Metrics.cpp
   NameManager.cpp
