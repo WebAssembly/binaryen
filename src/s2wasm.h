@@ -1151,11 +1151,10 @@ class S2WasmBuilder {
         Name assign = getAssign();
         skipComma();
         auto curr = allocator->alloc<SetLocal>();
-        curr->setTee(true);
         curr->index = func->getLocalIndex(getAssign());
         skipComma();
         curr->value = getInput();
-        curr->type = curr->value->type;
+        curr->setTee(true);
         setOutput(curr, assign);
       } else if (match("return")) {
         addToBlock(builder.makeReturn(*s == '$' ? getInput() : nullptr));
