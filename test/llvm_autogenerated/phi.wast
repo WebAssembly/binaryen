@@ -1,9 +1,9 @@
 (module
   (memory 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" memory)
-  (export "test0" $test0)
-  (export "test1" $test1)
+  (export "memory" (memory $0))
+  (export "test0" (func $test0))
+  (export "test1" (func $test1))
   (func $test0 (param $0 i32) (result i32)
     (block $label$0
       (br_if $label$0
@@ -37,25 +37,27 @@
     (set_local $4
       (i32.const 0)
     )
-    (loop $label$1 $label$0
-      (set_local $1
-        (get_local $2)
-      )
-      (set_local $2
-        (get_local $3)
-      )
-      (set_local $3
-        (get_local $1)
-      )
-      (br_if $label$0
-        (i32.lt_s
-          (tee_local $4
-            (i32.add
-              (get_local $4)
-              (i32.const 1)
+    (block $label$1
+      (loop $label$0
+        (set_local $1
+          (get_local $2)
+        )
+        (set_local $2
+          (get_local $3)
+        )
+        (set_local $3
+          (get_local $1)
+        )
+        (br_if $label$0
+          (i32.lt_s
+            (tee_local $4
+              (i32.add
+                (get_local $4)
+                (i32.const 1)
+              )
             )
+            (get_local $0)
           )
-          (get_local $0)
         )
       )
     )

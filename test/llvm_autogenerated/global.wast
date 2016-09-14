@@ -13,11 +13,11 @@
   (data (i32.const 136) "\00\00\00\00\00\00\00@")
   (data (i32.const 656) "\e0\00\00\00")
   (data (i32.const 1192) "\a4\04\00\00")
-  (export "memory" memory)
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
-  (import $memcpy "env" "memcpy" (param i32 i32 i32) (result i32))
-  (export "foo" $foo)
-  (export "call_memcpy" $call_memcpy)
+  (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
+  (export "memory" (memory $0))
+  (export "foo" (func $foo))
+  (export "call_memcpy" (func $call_memcpy))
   (func $foo (result i32)
     (return
       (i32.load offset=32

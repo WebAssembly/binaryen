@@ -1,13 +1,13 @@
 (module
   (memory 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" memory)
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$fff (func (param f32 f32) (result f32)))
-  (import $fmod "env" "fmod" (param f64 f64) (result f64))
-  (import $fmodf "env" "fmodf" (param f32 f32) (result f32))
-  (export "frem32" $frem32)
-  (export "frem64" $frem64)
+  (import "env" "fmod" (func $fmod (param f64 f64) (result f64)))
+  (import "env" "fmodf" (func $fmodf (param f32 f32) (result f32)))
+  (export "memory" (memory $0))
+  (export "frem32" (func $frem32))
+  (export "frem64" (func $frem64))
   (func $frem32 (param $0 f32) (param $1 f32) (result f32)
     (return
       (call_import $fmodf

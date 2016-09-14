@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/reg-stackify.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/reg-stackify.ll"
 	.globl	no0
 	.type	no0,@function
 no0:
@@ -155,11 +155,11 @@ multiple_uses:
 stackify_store_across_side_effects:
 .Lfunc_begin9:
 	.param  	i32
-	.local  	i64
 	i64.const	$push0=, 4611686018427387904
-	i64.store	$1=, 0($0), $pop0
+	i64.store	$drop=, 0($0), $pop0
 	call    	evoke_side_effects@FUNCTION
-	i64.store	$drop=, 0($0), $1
+	i64.const	$push1=, 4611686018427387904
+	i64.store	$drop=, 0($0), $pop1
 	call    	evoke_side_effects@FUNCTION
 	return
 	.endfunc
@@ -351,9 +351,9 @@ no_stackify_store_past_load:
 .Lfunc_begin18:
 	.param  	i32, i32, i32
 	.result 	i32
-	i32.store	$1=, 0($1), $0
+	i32.store	$drop=, 0($1), $0
 	i32.load	$2=, 0($2)
-	i32.call	$drop=, callee@FUNCTION, $1
+	i32.call	$drop=, callee@FUNCTION, $0
 	return  	$2
 	.endfunc
 .Lfunc_end18:
@@ -365,10 +365,10 @@ store_past_invar_load:
 .Lfunc_begin19:
 	.param  	i32, i32, i32
 	.result 	i32
-	i32.store	$push0=, 0($1), $0
-	i32.call	$drop=, callee@FUNCTION, $pop0
-	i32.load	$push1=, 0($2)
-	return  	$pop1
+	i32.store	$drop=, 0($1), $0
+	i32.call	$drop=, callee@FUNCTION, $0
+	i32.load	$push0=, 0($2)
+	return  	$pop0
 	.endfunc
 .Lfunc_end19:
 	.size	store_past_invar_load, .Lfunc_end19-store_past_invar_load
@@ -388,21 +388,21 @@ no_stackify_past_epilogue:
 .Lfunc_begin21:
 	.result 	i32
 	.local  	i32, i32
-	i32.const	$push3=, __stack_pointer
-	i32.const	$push0=, __stack_pointer
-	i32.load	$push1=, 0($pop0)
+	i32.const	$push3=, 0
+	i32.const	$push0=, 0
+	i32.load	$push1=, __stack_pointer($pop0)
 	i32.const	$push2=, 16
-	i32.sub 	$push9=, $pop1, $pop2
-	i32.store	$push11=, 0($pop3), $pop9
-	tee_local	$push10=, $0=, $pop11
+	i32.sub 	$push10=, $pop1, $pop2
+	tee_local	$push9=, $1=, $pop10
+	i32.store	$drop=, __stack_pointer($pop3), $pop9
 	i32.const	$push7=, 12
-	i32.add 	$push8=, $pop10, $pop7
-	i32.call	$1=, use_memory@FUNCTION, $pop8
-	i32.const	$push6=, __stack_pointer
+	i32.add 	$push8=, $1, $pop7
+	i32.call	$0=, use_memory@FUNCTION, $pop8
+	i32.const	$push6=, 0
 	i32.const	$push4=, 16
-	i32.add 	$push5=, $0, $pop4
-	i32.store	$drop=, 0($pop6), $pop5
-	return  	$1
+	i32.add 	$push5=, $1, $pop4
+	i32.store	$drop=, __stack_pointer($pop6), $pop5
+	return  	$0
 	.endfunc
 .Lfunc_end21:
 	.size	no_stackify_past_epilogue, .Lfunc_end21-no_stackify_past_epilogue
@@ -437,13 +437,13 @@ stackpointer_dependency:
 	.param  	i32
 	.result 	i32
 	.local  	i32
-	i32.const	$push0=, __stack_pointer
-	i32.load	$push2=, 0($pop0)
+	i32.const	$push0=, 0
+	i32.load	$push2=, __stack_pointer($pop0)
 	copy_local	$push4=, $pop2
 	tee_local	$push3=, $1=, $pop4
 	i32.call	$0=, stackpointer_callee@FUNCTION, $0, $pop3
-	i32.const	$push1=, __stack_pointer
-	i32.store	$drop=, 0($pop1), $1
+	i32.const	$push1=, 0
+	i32.store	$drop=, __stack_pointer($pop1), $1
 	return  	$0
 	.endfunc
 .Lfunc_end23:
@@ -458,3 +458,63 @@ count:
 	.int32	0
 	.size	count, 4
 
+	.section	.debug_str,"MS",@progbits,1
+.Linfo_string0:
+	.asciz	"clang version 3.9.0 (trunk 266005) (llvm/trunk 266105)"
+.Linfo_string1:
+	.asciz	"test.c"
+.Linfo_string2:
+	.asciz	"/"
+	.section	.debug_loc,"",@progbits
+	.section	.debug_abbrev,"",@progbits
+.Lsection_abbrev:
+	.int8	1
+	.int8	17
+	.int8	0
+	.int8	37
+	.int8	14
+	.int8	19
+	.int8	5
+	.int8	3
+	.int8	14
+	.int8	16
+	.int8	23
+	.int8	27
+	.int8	14
+	.int8	0
+	.int8	0
+	.int8	0
+	.section	.debug_info,"",@progbits
+.Lsection_info:
+.Lcu_begin0:
+	.int32	26
+	.int16	4
+	.int32	.Lsection_abbrev
+	.int8	4
+	.int8	1
+	.int32	.Linfo_string0
+	.int16	12
+	.int32	.Linfo_string1
+	.int32	.Lline_table_start0
+	.int32	.Linfo_string2
+	.section	.debug_ranges,"",@progbits
+.Ldebug_range:
+	.section	.debug_macinfo,"",@progbits
+.Ldebug_macinfo:
+.Lcu_macro_begin0:
+	.int8	0
+
+	.functype	readnone_callee, i32
+	.functype	readonly_callee, i32
+	.functype	evoke_side_effects, void
+	.functype	use_a, void, i32
+	.functype	use_b, void, i32
+	.functype	use_2, void, i32, i32
+	.functype	red, i32
+	.functype	green, i32
+	.functype	blue, i32
+	.functype	callee, i32, i32
+	.functype	use_memory, i32, i32
+	.functype	stackpointer_callee, i32, i32, i32
+	.section	.debug_line,"",@progbits
+.Lline_table_start0:

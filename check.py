@@ -523,7 +523,7 @@ if 1: # TODO: figure out the story. will .s files have drops?
   # Test exporting memory growth function
   cmd = [s2wasm, os.path.join('test', 'linker', 'main.s'), '--emscripten-glue', '--allow-memory-growth']
   output = run_command(cmd)
-  fail_if_not_contained(output, '(export "__growWasmMemory" $__growWasmMemory)')
+  fail_if_not_contained(output, '(export "__growWasmMemory" (func $__growWasmMemory))')
   fail_if_not_contained(output, '(func $__growWasmMemory (param $newSize i32)')
 
   print '\n[ running validation tests... ]\n'

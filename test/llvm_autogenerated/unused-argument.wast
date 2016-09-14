@@ -1,12 +1,12 @@
 (module
   (memory 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" memory)
   (type $FUNCSIG$i (func (result i32)))
-  (import $return_something "env" "return_something" (result i32))
-  (export "unused_first" $unused_first)
-  (export "unused_second" $unused_second)
-  (export "call_something" $call_something)
+  (import "env" "return_something" (func $return_something (result i32)))
+  (export "memory" (memory $0))
+  (export "unused_first" (func $unused_first))
+  (export "unused_second" (func $unused_second))
+  (export "call_something" (func $call_something))
   (func $unused_first (param $0 i32) (param $1 i32) (result i32)
     (return
       (get_local $1)
@@ -18,7 +18,9 @@
     )
   )
   (func $call_something
-    (call_import $return_something)
+    (drop
+      (call_import $return_something)
+    )
     (return)
   )
 )

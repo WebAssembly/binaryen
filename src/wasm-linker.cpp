@@ -209,7 +209,13 @@ void Linker::layout() {
         param->type = type;
         call->operands.push_back(param);
       }
-      block->list.push_back(call);
+      Expression* e = call;
+      if (target->result != none) {
+        auto* drop = out.wasm.allocator.alloc<Drop>();
+        drop->value = call;
+        e = drop;
+      }
+      block->list.push_back(e);
       block->finalize();
     }
   }

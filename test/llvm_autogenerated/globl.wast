@@ -1,8 +1,8 @@
 (module
   (memory 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" memory)
-  (export "foo" $foo)
+  (export "memory" (memory $0))
+  (export "foo" (func $foo))
   (func $foo
   )
 )
