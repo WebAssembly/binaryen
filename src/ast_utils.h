@@ -881,9 +881,21 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
   }
 
   void visitIf(If* curr) {
-    // if without else does not return a value, so the body must be dropped if it is concrete
-    if (!curr->ifFalse && isConcreteWasmType(curr->ifTrue->type)) {
-      curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
+    if (curr->ifFalse) {
+      if (!isConcreteWasmType(curr->type)) {
+        // if either side of an if-else not returning a value is concrete, drop it
+        if (isConcreteWasmType(curr->ifTrue->type)) {
+          curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
+        }
+        if (isConcreteWasmType(curr->ifFalse->type)) {
+          curr->ifFalse = Builder(*getModule()).makeDrop(curr->ifFalse);
+        }
+      }
+    } else {
+      // if without else does not return a value, so the body must be dropped if it is concrete
+      if (isConcreteWasmType(curr->ifTrue->type)) {
+        curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
+      }
     }
   }
 

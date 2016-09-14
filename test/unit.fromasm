@@ -1002,9 +1002,20 @@
           )
         )
       )
-      (call $lb
-        (i32.const 1)
+      (drop
+        (call $lb
+          (i32.const 1)
+        )
       )
     )
+  )
+  (func $jumpThreadDrop (result i32)
+    (local $0 i32)
+    (set_local $0
+      (call_import $return_int)
+    )
+    (block $jumpthreading$outer$2
+    )
+    (get_local $0)
   )
 )

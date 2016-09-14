@@ -557,6 +557,21 @@ function asm(global, env, buffer) {
    }
   }
 
+  function jumpThreadDrop() {
+    var label = 0, temp = 0;
+    temp = return_int() | 0;
+    while (1) {
+      label = 14;
+      break;
+    }
+    if ((label | 0) == 10) {
+    } else if ((label | 0) == 12) {
+      return_int() | 0; // drop in the middle of an if-else chain for threading
+    } else if ((label | 0) == 14) {
+    }
+    return temp | 0;
+  }
+
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg ];

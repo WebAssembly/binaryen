@@ -1572,9 +1572,53 @@
           (br $while-in$1)
         )
       )
-      (call $lb
-        (i32.const 1)
+      (drop
+        (call $lb
+          (i32.const 1)
+        )
       )
+    )
+  )
+  (func $jumpThreadDrop (result i32)
+    (local $label i32)
+    (local $temp i32)
+    (set_local $temp
+      (call_import $return_int)
+    )
+    (loop $while-in$1
+      (block $while-out$0
+        (set_local $label
+          (i32.const 14)
+        )
+        (br $while-out$0)
+        (br $while-in$1)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 10)
+      )
+      (nop)
+      (if
+        (i32.eq
+          (get_local $label)
+          (i32.const 12)
+        )
+        (drop
+          (call_import $return_int)
+        )
+        (if
+          (i32.eq
+            (get_local $label)
+            (i32.const 14)
+          )
+          (nop)
+        )
+      )
+    )
+    (return
+      (get_local $temp)
     )
   )
 )
