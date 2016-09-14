@@ -102,8 +102,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   // block returns
   std::map<Name, std::vector<BlockBreak>> blockBreaks;
 
-  // blocks that are the targets of a switch; we need to know this
-  // since we can't produce a block return value for them.
+  // blocks that we can't produce a block return value for them.
+  // (switch target, or some other reason)
   std::set<Name> unoptimizableBlocks;
 
   // A stack of sinkables from the current traversal state. When
@@ -328,9 +328,18 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break set_local's value to the break
       auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
-      assert(!breaks[j].br->value);
-      breaks[j].br->value = (*breakSetLocalPointer)->cast<SetLocal>()->value;
-      ExpressionManipulator::nop(*breakSetLocalPointer);
+      auto* br = breaks[j].br;
+      assert(!br->value);
+      // if the break is conditional, then we must set the value here - if the break is not taken, we must still have the new value in the local
+      auto* set = (*breakSetLocalPointer)->cast<SetLocal>();
+      if (br->condition) {
+        br->value = set;
+        set->setTee(true);
+        *breakSetLocalPointer = getModule()->allocator.alloc<Nop>();
+      } else {
+        br->value = set->value;
+        ExpressionManipulator::nop(set);
+      }
     }
     // finally, create a set_local on the block itself
     auto* newSetLocal = Builder(*getModule()).makeSetLocal(sharedIndex, block);
