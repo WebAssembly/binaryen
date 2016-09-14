@@ -105,8 +105,16 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker
 void AsmConstWalker::visitCallImport(CallImport* curr) {
   if (curr->target == EMSCRIPTEN_ASM_CONST) {
     auto arg = curr->operands[0]->cast<Const>();
-    Address segmentIndex = segmentsByAddress[arg->value.geti32()];
-    std::string code = escape(&wasm.memory.segments[segmentIndex].data[0]);
+    auto address = arg->value.geti32();
+    auto segmentIterator = segmentsByAddress.find(address);
+    std::string code;
+    if (segmentIterator != segmentsByAddress.end()) {
+      Address segmentIndex = segmentsByAddress[address];
+      code = escape(&wasm.memory.segments[segmentIndex].data[0]);
+    } else {
+      // If we can't find the segment corresponding with the address, then we omitted the segment and the address points to an empty string.
+      code = escape("");
+    }
     int32_t id;
     if (ids.count(code) == 0) {
       id = ids.size();
