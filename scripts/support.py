@@ -144,7 +144,8 @@ def split_wast(wast):
 
 def run_command(cmd, expected_status=0, stderr=None, expected_err=None):
   if expected_err is not None:
-    assert stderr == subprocess.PIPE or stderr is None, "Can't redirect stderr if using expected_err"
+    assert stderr == subprocess.PIPE or stderr is None,\
+        "Can't redirect stderr if using expected_err"
     stderr = subprocess.PIPE
   print 'executing: ', ' '.join(cmd)
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
