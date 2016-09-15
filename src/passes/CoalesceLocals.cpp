@@ -225,7 +225,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   // copying state
 
-  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high)
+  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high) TODO: use a map for high N, as this tends to be sparse? or don't look at copies at all for big N?
   std::vector<Index> totalCopies; // total # of copies for each local, with all others
 
   void addCopy(Index i, Index j) {
