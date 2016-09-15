@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/varargs.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/varargs.ll"
 	.globl	start
 	.type	start,@function
 start:
@@ -77,19 +77,20 @@ arg_i128:
 	i32.const	$push1=, 7
 	i32.add 	$push2=, $pop0, $pop1
 	i32.const	$push3=, -8
-	i32.and 	$push12=, $pop2, $pop3
-	tee_local	$push11=, $3=, $pop12
+	i32.and 	$push13=, $pop2, $pop3
+	tee_local	$push12=, $2=, $pop13
 	i32.const	$push4=, 8
-	i32.add 	$push5=, $pop11, $pop4
-	i32.store	$2=, 0($1), $pop5
-	i64.load	$4=, 0($3)
-	i32.const	$push6=, 16
-	i32.add 	$push7=, $3, $pop6
-	i32.store	$drop=, 0($1), $pop7
-	i32.const	$push10=, 8
-	i32.add 	$push8=, $0, $pop10
-	i64.load	$push9=, 0($2)
-	i64.store	$drop=, 0($pop8), $pop9
+	i32.add 	$push11=, $pop12, $pop4
+	tee_local	$push10=, $3=, $pop11
+	i32.store	$drop=, 0($1), $pop10
+	i64.load	$4=, 0($2)
+	i32.const	$push5=, 16
+	i32.add 	$push6=, $2, $pop5
+	i32.store	$drop=, 0($1), $pop6
+	i32.const	$push9=, 8
+	i32.add 	$push7=, $0, $pop9
+	i64.load	$push8=, 0($3)
+	i64.store	$drop=, 0($pop7), $pop8
 	i64.store	$drop=, 0($0), $4
 	return
 	.endfunc
@@ -110,22 +111,22 @@ caller_none:
 	.type	caller_some,@function
 caller_some:
 	.local  	i32
-	i32.const	$push5=, __stack_pointer
-	i32.const	$push2=, __stack_pointer
-	i32.load	$push3=, 0($pop2)
+	i32.const	$push5=, 0
+	i32.const	$push2=, 0
+	i32.load	$push3=, __stack_pointer($pop2)
 	i32.const	$push4=, 16
-	i32.sub 	$push9=, $pop3, $pop4
-	i32.store	$push11=, 0($pop5), $pop9
-	tee_local	$push10=, $0=, $pop11
+	i32.sub 	$push10=, $pop3, $pop4
+	tee_local	$push9=, $0=, $pop10
+	i32.store	$drop=, __stack_pointer($pop5), $pop9
 	i64.const	$push0=, 4611686018427387904
-	i64.store	$drop=, 8($pop10), $pop0
+	i64.store	$drop=, 8($0), $pop0
 	i32.const	$push1=, 0
 	i32.store	$drop=, 0($0), $pop1
 	call    	callee@FUNCTION, $0
-	i32.const	$push8=, __stack_pointer
+	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$drop=, 0($pop8), $pop7
+	i32.store	$drop=, __stack_pointer($pop8), $pop7
 	return
 	.endfunc
 .Lfunc_end7:
@@ -150,3 +151,4 @@ startbb:
 	.size	startbb, .Lfunc_end8-startbb
 
 
+	.functype	callee, void

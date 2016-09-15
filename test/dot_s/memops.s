@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.const	$8=, 1048576
 	i32.sub 	$12=, $7, $8
 	i32.const	$8=, 0
-	i32.store	$12=, 0($8), $12
+	i32.store	$drop=, 0($8), $12
 	i32.const	$1=, 0
 	copy_local	$0=, $1
 	copy_local	$6=, $1
@@ -79,7 +79,7 @@ main:                                   # @main
 	i32.const	$9=, 1048576
 	i32.add 	$12=, $12, $9
 	i32.const	$9=, 0
-	i32.store	$12=, 0($9), $12
+	i32.store	$drop=, 0($9), $12
 	return  	$pop17
 	.endfunc
 .Lfunc_end1:

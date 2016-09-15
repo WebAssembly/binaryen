@@ -1,12 +1,12 @@
 (module
   (memory 1)
   (data (i32.const 16) "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")
-  (export "memory" memory)
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$v (func))
-  (import $getchar "env" "getchar" (result i32))
-  (export "main" $main)
-  (export "dynCall_i" $dynCall_i)
+  (import "env" "getchar" (func $getchar (result i32)))
+  (export "memory" (memory $0))
+  (export "main" (func $main))
+  (export "dynCall_i" (func $dynCall_i))
   (table 5 5 anyfunc)
   (elem (i32.const 0) $__wasm_nullptr $c $b $d $a)
   (func $a (type $FUNCSIG$i) (result i32)
@@ -26,7 +26,7 @@
     (block $label$0
       (br_if $label$0
         (i32.ge_u
-          (set_local $2
+          (tee_local $2
             (i32.load
               (i32.add
                 (i32.shl

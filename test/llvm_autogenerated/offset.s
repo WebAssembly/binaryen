@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/offset.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/offset.ll"
 	.globl	load_i32_with_folded_offset
 	.type	load_i32_with_folded_offset,@function
 load_i32_with_folded_offset:
@@ -369,9 +369,10 @@ aggregate_load_store:
 	.type	aggregate_return,@function
 aggregate_return:
 	.param  	i32
+	i64.const	$push0=, 0
+	i64.store	$drop=, 8($0):p2align=2, $pop0
 	i64.const	$push1=, 0
-	i64.store	$push0=, 8($0):p2align=2, $pop1
-	i64.store	$drop=, 0($0):p2align=2, $pop0
+	i64.store	$drop=, 0($0):p2align=2, $pop1
 	.endfunc
 .Lfunc_end33:
 	.size	aggregate_return, .Lfunc_end33-aggregate_return
@@ -380,12 +381,14 @@ aggregate_return:
 	.type	aggregate_return_without_merge,@function
 aggregate_return_without_merge:
 	.param  	i32
+	i32.const	$push0=, 0
+	i32.store8	$drop=, 14($0), $pop0
+	i32.const	$push3=, 0
+	i32.store16	$drop=, 12($0), $pop3
 	i32.const	$push2=, 0
-	i32.store8	$push0=, 14($0), $pop2
-	i32.store16	$push1=, 12($0), $pop0
-	i32.store	$drop=, 8($0), $pop1
-	i64.const	$push3=, 0
-	i64.store	$drop=, 0($0), $pop3
+	i32.store	$drop=, 8($0), $pop2
+	i64.const	$push1=, 0
+	i64.store	$drop=, 0($0), $pop1
 	.endfunc
 .Lfunc_end34:
 	.size	aggregate_return_without_merge, .Lfunc_end34-aggregate_return_without_merge

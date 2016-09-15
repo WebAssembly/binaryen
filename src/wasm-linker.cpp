@@ -193,23 +193,24 @@ void Linker::layout() {
     out.wasm.addFunction(func);
     exportFunction(start, true);
     out.wasm.addStart(start);
-    auto* block = out.wasm.allocator.alloc<Block>();
+    Builder builder(out.wasm);
+    auto* block = builder.makeBlock();
     func->body = block;
     {
       // Create the call, matching its parameters.
       // TODO allow calling with non-default values.
-      auto* call = out.wasm.allocator.alloc<Call>();
-      call->target = startFunction;
-      size_t paramNum = 0;
+      std::vector<Expression*> args;
+      Index paramNum = 0;
       for (WasmType type : target->params) {
         Name name = Name::fromInt(paramNum++);
         Builder::addVar(func, name, type);
-        auto* param = out.wasm.allocator.alloc<GetLocal>();
-        param->index = func->getLocalIndex(name);
-        param->type = type;
-        call->operands.push_back(param);
+        auto* param = builder.makeGetLocal(func->getLocalIndex(name), type);
+        args.push_back(param);
       }
-      block->list.push_back(call);
+      auto* call = builder.makeCall(startFunction, args, target->result);
+      Expression* e = call;
+      if (target->result != none) e = builder.makeDrop(call);
+      block->list.push_back(e);
       block->finalize();
     }
   }

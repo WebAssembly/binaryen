@@ -1,9 +1,9 @@
 (module
   (memory 1)
-  (export "memory" memory)
-  (export "main" $main)
-  (export "f1" $f1)
-  (export "f2" $f2)
+  (export "memory" (memory $0))
+  (export "main" (func $main))
+  (export "f1" (func $f1))
+  (export "f2" (func $f2))
   (func $main (result i32)
     (return
       (i32.const 5)

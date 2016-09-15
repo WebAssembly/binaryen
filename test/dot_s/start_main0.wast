@@ -1,9 +1,9 @@
 (module
   (memory 1)
-  (export "memory" memory)
   (start $_start)
-  (export "main" $main)
-  (export "_start" $_start)
+  (export "memory" (memory $0))
+  (export "main" (func $main))
+  (export "_start" (func $_start))
   (func $main
   )
   (func $_start

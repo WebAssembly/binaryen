@@ -1,9 +1,9 @@
 (module
   (memory 1)
-  (export "memory" memory)
-  (export "foo" $foo)
-  (export "bar" $bar)
-  (export "qux" $qux)
+  (export "memory" (memory $0))
+  (export "foo" (func $foo))
+  (export "bar" (func $bar))
+  (export "qux" (func $qux))
   (func $foo
     (return)
   )

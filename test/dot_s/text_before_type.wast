@@ -1,9 +1,11 @@
 (module
   (memory 1)
-  (export "memory" memory)
-  (export "main" $main)
+  (export "memory" (memory $0))
+  (export "main" (func $main))
   (func $main (result i32)
-    (call $foo)
+    (drop
+      (call $foo)
+    )
     (i32.const 0)
   )
   (func $foo

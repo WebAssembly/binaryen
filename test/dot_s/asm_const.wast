@@ -1,13 +1,15 @@
 (module
   (memory 1)
   (data (i32.const 16) "{ Module.print(\"hello, world!\"); }\00")
-  (export "memory" memory)
   (type $FUNCSIG$vi (func (param i32)))
-  (import $emscripten_asm_const_vi "env" "emscripten_asm_const_vi" (param i32))
-  (export "main" $main)
+  (import "env" "emscripten_asm_const_vi" (func $emscripten_asm_const_vi (param i32)))
+  (export "memory" (memory $0))
+  (export "main" (func $main))
   (func $main (result i32)
-    (call_import $emscripten_asm_const_vi
-      (i32.const 0)
+    (drop
+      (call_import $emscripten_asm_const_vi
+        (i32.const 0)
+      )
     )
     (return
       (i32.const 0)

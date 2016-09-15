@@ -1,8 +1,8 @@
 (module
   (memory 1)
-  (export "memory" memory)
-  (export "return_i32" $return_i32)
-  (export "return_void" $return_void)
+  (export "memory" (memory $0))
+  (export "return_i32" (func $return_i32))
+  (export "return_void" (func $return_void))
   (func $return_i32 (result i32)
     (i32.const 5)
   )

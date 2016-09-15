@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/mem-intrinsics.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/mem-intrinsics.ll"
 	.globl	copy_yes
 	.type	copy_yes,@function
 copy_yes:
@@ -67,25 +67,25 @@ set_no:
 	.type	frame_index,@function
 frame_index:
 	.local  	i32
-	i32.const	$push6=, __stack_pointer
-	i32.const	$push3=, __stack_pointer
-	i32.load	$push4=, 0($pop3)
+	i32.const	$push6=, 0
+	i32.const	$push3=, 0
+	i32.load	$push4=, __stack_pointer($pop3)
 	i32.const	$push5=, 4096
-	i32.sub 	$push12=, $pop4, $pop5
-	i32.store	$push16=, 0($pop6), $pop12
-	tee_local	$push15=, $0=, $pop16
+	i32.sub 	$push15=, $pop4, $pop5
+	tee_local	$push14=, $0=, $pop15
+	i32.store	$drop=, __stack_pointer($pop6), $pop14
 	i32.const	$push10=, 2048
-	i32.add 	$push11=, $pop15, $pop10
+	i32.add 	$push11=, $0, $pop10
 	i32.const	$push2=, 0
 	i32.const	$push1=, 1024
 	i32.call	$drop=, memset@FUNCTION, $pop11, $pop2, $pop1
-	i32.const	$push9=, __stack_pointer
-	i32.const	$push14=, 0
-	i32.const	$push13=, 1024
-	i32.call	$push0=, memset@FUNCTION, $0, $pop14, $pop13
+	i32.const	$push9=, 0
+	i32.const	$push13=, 0
+	i32.const	$push12=, 1024
+	i32.call	$push0=, memset@FUNCTION, $0, $pop13, $pop12
 	i32.const	$push7=, 4096
 	i32.add 	$push8=, $pop0, $pop7
-	i32.store	$drop=, 0($pop9), $pop8
+	i32.store	$drop=, __stack_pointer($pop9), $pop8
 	return
 	.endfunc
 .Lfunc_end6:
@@ -148,3 +148,5 @@ tail_dup_to_reuse_result:
 	.size	tail_dup_to_reuse_result, .Lfunc_end8-tail_dup_to_reuse_result
 
 
+	.functype	def, i32
+	.functype	block_tail_dup, void

@@ -1,9 +1,9 @@
 (module
   (memory 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" memory)
-  (export "return_i32" $return_i32)
-  (export "return_i32_twice" $return_i32_twice)
+  (export "memory" (memory $0))
+  (export "return_i32" (func $return_i32))
+  (export "return_i32_twice" (func $return_i32_twice))
   (func $return_i32 (param $0 i32) (result i32)
     (get_local $0)
   )
@@ -14,17 +14,21 @@
           (get_local $0)
         )
       )
-      (i32.store
-        (i32.const 0)
-        (i32.const 0)
+      (drop
+        (i32.store
+          (i32.const 0)
+          (i32.const 0)
+        )
       )
       (return
         (i32.const 1)
       )
     )
-    (i32.store
-      (i32.const 0)
-      (i32.const 2)
+    (drop
+      (i32.store
+        (i32.const 0)
+        (i32.const 2)
+      )
     )
     (i32.const 3)
   )
