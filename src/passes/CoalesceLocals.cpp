@@ -235,7 +235,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     totalCopies[j]++;
   }
 
-  bool getCopies(Index i, Index j) {
+  uint8_t getCopies(Index i, Index j) {
     return copies[std::min(i, j) * numLocals + std::max(i, j)];
   }
 };
