@@ -440,7 +440,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   newInterferences.resize(numLocals * numLocals);
   std::fill(newInterferences.begin(), newInterferences.end(), 0);
   auto numParams = getFunction()->getNumParams();
-  newCopies.resize(numLocals * numLocals);
+  newCopies.resize(numParams * numLocals); // start with enough room for the params
   std::fill(newCopies.begin(), newCopies.end(), 0);
   Index nextFree = 0;
   removedCopies = 0;
@@ -476,6 +476,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
       types[found] = getFunction()->getLocalType(actual);
       nextFree++;
       removedCopies += getCopies(found, actual);
+      newCopies.resize(nextFree * numLocals);
     } else {
       removedCopies += foundCopies;
     }
