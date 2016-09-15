@@ -438,13 +438,13 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   indices.resize(numLocals);
   types.resize(numLocals);
   newInterferences.resize(numLocals * numLocals);
-  newCopies.resize(numLocals * numLocals);
   std::fill(newInterferences.begin(), newInterferences.end(), 0);
+  auto numParams = getFunction()->getNumParams();
+  newCopies.resize(numLocals * numLocals);
   std::fill(newCopies.begin(), newCopies.end(), 0);
   Index nextFree = 0;
   removedCopies = 0;
   // we can't reorder parameters, they are fixed in order, and cannot coalesce
-  auto numParams = getFunction()->getNumParams();
   Index i = 0;
   for (; i < numParams; i++) {
     assert(order[i] == i); // order must leave the params in place
@@ -475,7 +475,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
       indices[actual] = found = nextFree;
       types[found] = getFunction()->getLocalType(actual);
       nextFree++;
-      removedCopies += newCopies[found * numLocals + actual];
+      removedCopies += getCopies(found, actual);
     } else {
       removedCopies += foundCopies;
     }
