@@ -198,6 +198,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
   void scanLivenessThroughActions(std::vector<Action>& actions, LocalSet& live);
 
   void pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices);
+  void pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices, Index& removedCopies);
 
   virtual void pickIndices(std::vector<Index>& indices); // returns a vector of oldIndex => newIndex
 
@@ -224,14 +225,17 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   // copying state
 
-  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high)
+  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high) TODO: use a map for high N, as this tends to be sparse? or don't look at copies at all for big N?
+  std::vector<Index> totalCopies; // total # of copies for each local, with all others
 
   void addCopy(Index i, Index j) {
     auto k = std::min(i, j) * numLocals + std::max(i, j);
     copies[k] = std::min(copies[k], uint8_t(254)) + 1;
+    totalCopies[i]++;
+    totalCopies[j]++;
   }
 
-  bool getCopies(Index i, Index j) {
+  uint8_t getCopies(Index i, Index j) {
     return copies[std::min(i, j) * numLocals + std::max(i, j)];
   }
 };
@@ -240,6 +244,8 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   numLocals = func->getNumLocals();
   copies.resize(numLocals * numLocals);
   std::fill(copies.begin(), copies.end(), 0);
+  totalCopies.resize(numLocals);
+  std::fill(totalCopies.begin(), totalCopies.end(), 0);
   // collect initial liveness info
   WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>>::doWalkFunction(func);
   // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
@@ -388,8 +394,43 @@ void CoalesceLocals::calculateInterferences(const LocalSet& locals) {
 // Indices decision making
 
 void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices) {
-  // simple greedy coloring
-  // TODO: take into account eliminated copies
+  Index removedCopies;
+  pickIndicesFromOrder(order, indices, removedCopies);
+}
+
+void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices, Index& removedCopies) {
+  // mostly-simple greedy coloring
+#if CFG_DEBUG
+  std::cerr << "\npickIndicesFromOrder on " << getFunction()->name << '\n';
+  std::cerr << getFunction()->body << '\n';
+  std::cerr << "order:\n";
+  for (auto i : order) std::cerr << i << ' ';
+  std::cerr << '\n';
+  std::cerr << "interferences:\n";
+  for (Index i = 0; i < numLocals; i++) {
+    for (Index j = 0; j < i + 1; j++) {
+      std::cerr << "  ";
+    }
+    for (Index j = i + 1; j < numLocals; j++) {
+      std::cerr << int(interferes(i, j)) << ' ';
+    }
+    std::cerr << " : $" << i << '\n';
+  }
+  std::cerr << "copies:\n";
+  for (Index i = 0; i < numLocals; i++) {
+    for (Index j = 0; j < i + 1; j++) {
+      std::cerr << "  ";
+    }
+    for (Index j = i + 1; j < numLocals; j++) {
+      std::cerr << int(getCopies(i, j)) << ' ';
+    }
+    std::cerr << " : $" << i << '\n';
+  }
+  std::cerr << "total copies:\n";
+  for (Index i = 0; i < numLocals; i++) {
+    std::cerr << " $" << i << ": " << totalCopies[i] << '\n';
+  }
+#endif
   // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
   std::vector<WasmType> types;
   std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
@@ -397,12 +438,13 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   indices.resize(numLocals);
   types.resize(numLocals);
   newInterferences.resize(numLocals * numLocals);
-  newCopies.resize(numLocals * numLocals);
   std::fill(newInterferences.begin(), newInterferences.end(), 0);
+  auto numParams = getFunction()->getNumParams();
+  newCopies.resize(numParams * numLocals); // start with enough room for the params
   std::fill(newCopies.begin(), newCopies.end(), 0);
   Index nextFree = 0;
+  removedCopies = 0;
   // we can't reorder parameters, they are fixed in order, and cannot coalesce
-  auto numParams = getFunction()->getNumParams();
   Index i = 0;
   for (; i < numParams; i++) {
     assert(order[i] == i); // order must leave the params in place
@@ -421,6 +463,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     for (Index j = 0; j < nextFree; j++) {
       if (!newInterferences[j * numLocals + actual] && getFunction()->getLocalType(actual) == types[j]) {
         // this does not interfere, so it might be what we want. but pick the one eliminating the most copies
+        // (we could stop looking forward when there are no more items that have copies anyhow, but it doesn't seem to help)
         auto currCopies = newCopies[j * numLocals + actual];
         if (found == Index(-1) || currCopies > foundCopies) {
           indices[actual] = found = j;
@@ -432,7 +475,14 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
       indices[actual] = found = nextFree;
       types[found] = getFunction()->getLocalType(actual);
       nextFree++;
+      removedCopies += getCopies(found, actual);
+      newCopies.resize(nextFree * numLocals);
+    } else {
+      removedCopies += foundCopies;
     }
+#if CFG_DEBUG
+    std::cerr << "set local $" << actual << " to $" << found << '\n';
+#endif
     // merge new interferences and copies for the new index
     for (Index k = i + 1; k < numLocals; k++) {
       auto j = order[k]; // go in the order, we only need to update for those we will see later
@@ -442,31 +492,85 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   }
 }
 
+// Utilities for operating on permutation vectors
+
+static std::vector<Index> makeIdentity(Index num) {
+  std::vector<Index> ret;
+  ret.resize(num);
+  for (Index i = 0; i < num; i++) {
+    ret[i] = i;
+  }
+  return ret;
+}
+
+static void setIdentity(std::vector<Index>& ret) {
+  auto num = ret.size();
+  assert(num > 0); // must already be of the right size
+  for (Index i = 0; i < num; i++) {
+    ret[i] = i;
+  }
+}
+
+static std::vector<Index> makeReversed(std::vector<Index>& original) {
+  std::vector<Index> ret;
+  auto num = original.size();
+  ret.resize(num);
+  for (Index i = 0; i < num; i++) {
+    ret[original[i]] = i;
+  }
+  return ret;
+}
+
+// given a baseline order, adjust it based on an important order of priorities (higher values
+// are higher priority). The priorities take precedence, unless they are equal and then
+// the original order should be kept.
+std::vector<Index> adjustOrderByPriorities(std::vector<Index>& baseline, std::vector<Index>& priorities) {
+  std::vector<Index> ret = baseline;
+  std::vector<Index> reversed = makeReversed(baseline);
+  std::sort(ret.begin(), ret.end(), [&priorities, &reversed](Index x, Index y) {
+    return priorities[x] > priorities[y] || (priorities[x] == priorities[y] && reversed[x] < reversed[y]);
+  });
+  return ret;
+};
+
 void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
   if (numLocals == 0) return;
   if (numLocals == 1) {
     indices.push_back(0);
     return;
   }
+  if (getFunction()->getNumVars() <= 1) {
+    // nothing to think about here, since we can't reorder params
+    indices = makeIdentity(numLocals);
+    return;
+  }
+  // take into account total copies. but we must keep params in place, so give them max priority
+  auto adjustedTotalCopies = totalCopies;
+  auto numParams = getFunction()->getNumParams();
+  for (Index i = 0; i < numParams; i++) {
+    adjustedTotalCopies[i] = std::numeric_limits<Index>::max();
+  }
   // first try the natural order. this is less arbitrary than it seems, as the program
   // may have a natural order of locals inherent in it.
-  std::vector<Index> order;
-  order.resize(numLocals);
-  for (Index i = 0; i < numLocals; i++) {
-    order[i] = i;
-  }
-  pickIndicesFromOrder(order, indices);
+  auto order = makeIdentity(numLocals);
+  order = adjustOrderByPriorities(order, adjustedTotalCopies);
+  Index removedCopies;
+  pickIndicesFromOrder(order, indices, removedCopies);
   auto maxIndex = *std::max_element(indices.begin(), indices.end());
-  // next try the reverse order. this both gives us anothe chance at something good,
+  // next try the reverse order. this both gives us another chance at something good,
   // and also the very naturalness of the simple order may be quite suboptimal
-  auto numParams = getFunction()->getNumParams();
+  setIdentity(order);
   for (Index i = numParams; i < numLocals; i++) {
     order[i] = numParams + numLocals - 1 - i;
   }
+  order = adjustOrderByPriorities(order, adjustedTotalCopies);
   std::vector<Index> reverseIndices;
-  pickIndicesFromOrder(order, reverseIndices);
+  Index reverseRemovedCopies;
+  pickIndicesFromOrder(order, reverseIndices, reverseRemovedCopies);
   auto reverseMaxIndex = *std::max_element(reverseIndices.begin(), reverseIndices.end());
-  if (reverseMaxIndex < maxIndex) {
+  // prefer to remove copies foremost, as it matters more for code size (minus gzip), and
+  // improves throughput.
+  if (reverseRemovedCopies > removedCopies || (reverseRemovedCopies == removedCopies && reverseMaxIndex < maxIndex)) {
     indices.swap(reverseIndices);
   }
 }
@@ -553,7 +657,8 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
     void calculateFitness(Order* order) {
       // apply the order
       std::vector<Index> indices; // the phenotype
-      parent->pickIndicesFromOrder(*order, indices);
+      Index removedCopies;
+      parent->pickIndicesFromOrder(*order, indices, removedCopies);
       auto maxIndex = *std::max_element(indices.begin(), indices.end());
       assert(maxIndex <= parent->numLocals);
       // main part of fitness is the number of locals
@@ -563,6 +668,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
       for (Index i = 0; i < parent->numLocals; i++) {
         if ((*order)[i] == i) fitness += fragment; // boost for each that wasn't moved
       }
+      fitness = (100 * fitness) + removedCopies; // removing copies is a secondary concern
       order->setFitness(fitness);
     }
 
@@ -577,6 +683,8 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
         // first, there may be an inherent order in the input (frequent indices are lower,
         // etc.). second, by ensuring we start with the natural order, we ensure we are at
         // least as good as the non-learning variant.
+        // TODO: use ::pickIndices from the parent, so we literally get the simpler approach
+        //       as our first option
         first = false;
       } else {
         // leave params alone, shuffle the rest

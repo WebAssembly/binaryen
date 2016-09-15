@@ -283,6 +283,28 @@ public:
     return block;
   }
 
+  // ensures the first node is a block, if it isn't already, and merges in the second,
+  // either as a single element or, if a block, by appending to the first block
+  Block* blockifyMerge(Expression* any, Expression* append) {
+    Block* block = nullptr;
+    if (any) block = any->dynCast<Block>();
+    if (!block) {
+      block = makeBlock(any);
+    } else {
+      assert(!isConcreteWasmType(block->type));
+    }
+    auto* other = append->dynCast<Block>();
+    if (!other) {
+      block->list.push_back(append);
+    } else {
+      for (auto* item : other->list) {
+        block->list.push_back(item);
+      }
+    }
+    block->finalize(); // TODO: move out of if
+    return block;
+  }
+
   // a helper for the common pattern of a sequence of two expressions. Similar to
   // blockify, but does *not* reuse a block if the first is one.
   Block* makeSequence(Expression* left, Expression* right) {
@@ -290,6 +312,32 @@ public:
     block->list.push_back(right);
     block->finalize();
     return block;
+  }
+
+  // Grab a slice out of a block, replacing it with nops, and returning
+  // either another block with the contents (if more than 1) or a single expression
+  Expression* stealSlice(Block* input, Index from, Index to) {
+    Expression* ret;
+    if (to == from + 1) {
+      // just one
+      ret = input->list[from];
+    } else {
+      auto* block = allocator.alloc<Block>();
+      for (Index i = from; i < to; i++) {
+        block->list.push_back(input->list[i]);
+      }
+      block->finalize();
+      ret = block;
+    }
+    if (to == input->list.size()) {
+      input->list.resize(from);
+    } else {
+      for (Index i = from; i < to; i++) {
+        input->list[i] = allocator.alloc<Nop>();
+      }
+    }
+    input->finalize();
+    return ret;
   }
 };
 

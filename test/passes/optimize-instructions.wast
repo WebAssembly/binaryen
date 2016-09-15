@@ -192,5 +192,64 @@
         )
       )
     )
+    (drop
+      (i32.eq
+        (i32.const 100)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.const 0)
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+    (if
+      (i32.eqz
+        (i32.eqz
+          (i32.const 123)
+        )
+      )
+      (nop)
+    )
+    (drop
+      (select
+        (i32.const 101)
+        (i32.const 102)
+        (i32.eqz
+          (get_local $i1)
+        )
+      )
+    )
+    (drop
+      (select
+        (tee_local $i1
+          (i32.const 103)
+        ) ;; these conflict
+        (tee_local $i1
+          (i32.const 104)
+        )
+        (i32.eqz
+          (get_local $i1)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.eqz
+          (i32.eqz
+            (i32.const 2)
+          )
+        )
+      )
+    )
   )
 )

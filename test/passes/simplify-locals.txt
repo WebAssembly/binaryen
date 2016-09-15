@@ -7,11 +7,13 @@
   (type $4 (func (param i32)))
   (type $5 (func (param i32) (result i32)))
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
-  (type $7 (func (param i32 i32)))
+  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+  (type $8 (func (param i32 i32)))
   (import "env" "waka" (func $waka))
   (import "env" "waka_int" (func $waka_int (result i32)))
   (import "env" "i64sub" (func $_i64Subtract (param i32 i32 i32 i32) (result i32)))
   (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
+  (import "env" "lp" (func $lp (param i32 i32) (result i32)))
   (func $b0-yes (type $4) (param $i1 i32)
     (local $x i32)
     (local $y i32)
@@ -576,14 +578,18 @@
       (block $out
         (nop)
         (br_if $out
-          (block $waka
-            (nop)
-            (br_if $waka
-              (i32.const 12)
-              (i32.const 1)
+          (tee_local $x
+            (block $waka
+              (nop)
+              (br_if $waka
+                (tee_local $x
+                  (i32.const 12)
+                )
+                (i32.const 1)
+              )
+              (nop)
+              (i32.const 34)
             )
-            (nop)
-            (i32.const 34)
           )
           (i32.const 1)
         )
@@ -607,15 +613,17 @@
           (nop)
         )
         (br_if $out
-          (if
-            (i32.const 1)
-            (block $block3
-              (nop)
-              (i32.const 14)
-            )
-            (block $block5
-              (nop)
-              (i32.const 25)
+          (tee_local $x
+            (if
+              (i32.const 1)
+              (block $block3
+                (nop)
+                (i32.const 14)
+              )
+              (block $block5
+                (nop)
+                (i32.const 25)
+              )
             )
           )
           (i32.const 1)
@@ -674,7 +682,7 @@
       (get_local $i1)
     )
   )
-  (func $no-out-of-label (type $7) (param $x i32) (param $y i32)
+  (func $no-out-of-label (type $8) (param $x i32) (param $y i32)
     (loop $moar
       (set_local $x
         (block $block0
@@ -701,5 +709,30 @@
     (drop
       (get_local $y)
     )
+  )
+  (func $freetype-cd (type $5) (param $a i32) (result i32)
+    (local $e i32)
+    (loop $while-in$1
+      (set_local $a
+        (block $while-out$0
+          (set_local $e
+            (get_local $a)
+          )
+          (nop)
+          (br_if $while-out$0
+            (tee_local $a
+              (i32.const 4)
+            )
+            (get_local $e)
+          )
+          (nop)
+          (i32.add
+            (get_local $a)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+    (get_local $a)
   )
 )

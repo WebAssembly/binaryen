@@ -18,6 +18,7 @@
 
 #include <passes/passes.h>
 #include <pass.h>
+#include <wasm-validator.h>
 
 namespace wasm {
 
@@ -65,6 +66,7 @@ void PassRegistry::registerPasses() {
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
+  registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
@@ -74,6 +76,7 @@ void PassRegistry::registerPasses() {
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
+  registerPass("relooper-jump-threading", "thread relooper jumps (fastcomp output only)", createRelooperJumpThreadingPass);
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
   registerPass("remove-unused-brs", "removes breaks from locations that are not needed", createRemoveUnusedBrsPass);
@@ -132,10 +135,9 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 void PassRunner::run() {
   if (debug) {
     // for debug logging purposes, run each pass in full before running the other
-    std::chrono::high_resolution_clock::time_point beforeEverything;
+    auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
     std::cerr << "[PassRunner] running passes..." << std::endl;
-    beforeEverything = std::chrono::high_resolution_clock::now();
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
@@ -158,10 +160,19 @@ void PassRunner::run() {
       auto after = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
+      totalTime += diff;
+#if 0
+      // validate, ignoring the time
+      std::cerr << "[PassRunner]   (validating)\n";
+      if (!WasmValidator().validate(*wasm)) {
+        std::cerr << "last pass (" << pass->name << ") broke validation\n";
+        abort();
+      }
+#endif
     }
-    auto after = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff = after - beforeEverything;
-    std::cerr << "[PassRunner] passes took " << diff.count() << " seconds." << std::endl;
+    std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
+    // validate
+    assert(WasmValidator().validate(*wasm));
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better
     // to run as many passes as possible on a single function before moving to the next
@@ -221,6 +232,11 @@ PassRunner::~PassRunner() {
   for (auto pass : passes) {
     delete pass;
   }
+}
+
+void PassRunner::doAdd(Pass* pass) {
+  passes.push_back(pass);
+  pass->prepareToRun(this, wasm);
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {

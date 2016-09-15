@@ -27,25 +27,39 @@ namespace wasm {
 
 struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
   Name target; // look for this one XXX looking by name may fall prey to duplicate names
-  size_t found;
+  Index found;
+  WasmType valueType;
 
-  BreakSeeker(Name target) : target(target), found(false) {}
+  BreakSeeker(Name target) : target(target), found(0) {}
+
+  void noteFound(Expression* value) {
+    found++;
+    if (found == 1) valueType = unreachable;
+    if (!value) valueType = none;
+    else if (value->type != unreachable) valueType = value->type;
+  }
 
   void visitBreak(Break *curr) {
-    if (curr->name == target) found++;
+    if (curr->name == target) noteFound(curr->value);
   }
 
   void visitSwitch(Switch *curr) {
     for (auto name : curr->targets) {
-      if (name == target) found++;
+      if (name == target) noteFound(curr->value);
     }
-    if (curr->default_ == target) found++;
+    if (curr->default_ == target) noteFound(curr->value);
   }
 
   static bool has(Expression* tree, Name target) {
     BreakSeeker breakSeeker(target);
     breakSeeker.walk(tree);
     return breakSeeker.found > 0;
+  }
+
+  static Index count(Expression* tree, Name target) {
+    BreakSeeker breakSeeker(target);
+    breakSeeker.walk(tree);
+    return breakSeeker.found;
   }
 };
 
@@ -92,13 +106,16 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
+  std::set<Name> globalsRead;
+  std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
+  bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches; }
-  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory; }
+  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0; }
+  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
@@ -114,6 +131,17 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
     }
     for (auto local : localsRead) {
       if (other.localsWritten.count(local)) return true;
+    }
+    if ((accessesGlobal() && other.calls) || (other.accessesGlobal() && calls)) {
+      return true;
+    }
+    for (auto global : globalsWritten) {
+      if (other.globalsWritten.count(global) || other.globalsRead.count(global)) {
+        return true;
+      }
+    }
+    for (auto global : globalsRead) {
+      if (other.globalsWritten.count(global)) return true;
     }
     return false;
   }
@@ -163,8 +191,12 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitSetLocal(SetLocal *curr) {
     localsWritten.insert(curr->index);
   }
-  void visitGetGlobal(GetGlobal *curr) { readsMemory = true; }  // TODO: global-specific
-  void visitSetGlobal(SetGlobal *curr) { writesMemory = true; } //       stuff?
+  void visitGetGlobal(GetGlobal *curr) {
+    globalsRead.insert(curr->name);
+  }
+  void visitSetGlobal(SetGlobal *curr) {
+    globalsWritten.insert(curr->name);
+  }
   void visitLoad(Load *curr) { readsMemory = true; }
   void visitStore(Store *curr) { writesMemory = true; }
   void visitReturn(Return *curr) { branches = true; }
@@ -340,6 +372,21 @@ struct ExpressionManipulator {
     } copier;
     return flexibleCopy(original, wasm, copier);
   }
+
+  // Splice an item into the middle of a block's list
+  static void spliceIntoBlock(Block* block, Index index, Expression* add) {
+    auto& list = block->list;
+    if (index == list.size()) {
+      list.push_back(add); // simple append
+    } else {
+      // we need to make room
+      list.push_back(nullptr);
+      for (Index i = list.size() - 1; i > index; i--) {
+        list[i] = list[i - 1];
+      }
+      list[index] = add;
+    }
+  }
 };
 
 struct ExpressionAnalyzer {
@@ -371,6 +418,25 @@ struct ExpressionAnalyzer {
     }
     // The value might be used, so it depends on if the function returns
     return func->result != none;
+  }
+
+  // Checks if a break is a simple - no condition, no value, just a plain branching
+  static bool isSimple(Break* curr) {
+    return !curr->condition && !curr->value;
+  }
+
+  // Checks if an expression ends with a simple break,
+  // and returns a pointer to it if so.
+  // (It might also have other internal branches.)
+  static Expression* getEndingSimpleBreak(Expression* curr) {
+    if (auto* br = curr->dynCast<Break>()) {
+      if (isSimple(br)) return br;
+      return nullptr;
+    }
+    if (auto* block = curr->dynCast<Block>()) {
+      if (block->list.size() > 0) return getEndingSimpleBreak(block->list.back());
+    }
+    return nullptr;
   }
 
   template<typename T>
@@ -812,6 +878,25 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
     }
     expressionStack.pop_back();
     curr->finalize(); // we may have changed our type
+  }
+
+  void visitIf(If* curr) {
+    if (curr->ifFalse) {
+      if (!isConcreteWasmType(curr->type)) {
+        // if either side of an if-else not returning a value is concrete, drop it
+        if (isConcreteWasmType(curr->ifTrue->type)) {
+          curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
+        }
+        if (isConcreteWasmType(curr->ifFalse->type)) {
+          curr->ifFalse = Builder(*getModule()).makeDrop(curr->ifFalse);
+        }
+      }
+    } else {
+      // if without else does not return a value, so the body must be dropped if it is concrete
+      if (isConcreteWasmType(curr->ifTrue->type)) {
+        curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
+      }
+    }
   }
 
   void visitFunction(Function* curr) {

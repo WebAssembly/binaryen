@@ -981,7 +981,6 @@ public:
   Expression *condition, *ifTrue, *ifFalse;
 
   void finalize() {
-    assert(ifTrue);
     if (ifFalse) {
       if (ifTrue->type == ifFalse->type) {
         type = ifTrue->type;
@@ -992,6 +991,8 @@ public:
       } else {
         type = none;
       }
+    } else {
+      type = none; // if without else
     }
   }
 };
@@ -1027,6 +1028,8 @@ public:
   void finalize() {
     if (condition) {
       type = none;
+    } else {
+      type = unreachable;
     }
   }
 };

@@ -24,6 +24,7 @@
 #include <pass.h>
 #include <wasm-s-parser.h>
 #include <support/threads.h>
+#include <ast_utils.h>
 
 namespace wasm {
 
@@ -50,7 +51,6 @@ struct PatternDatabase {
   std::map<Expression::Id, std::vector<Pattern>> patternMap; // root expression id => list of all patterns for it TODO optimize more
 
   PatternDatabase() {
-    // TODO: do this on first use, with a lock, to avoid startup pause
     // generate module
     input = strdup(
       #include "OptimizeInstructions.wast.processed"
@@ -74,14 +74,12 @@ struct PatternDatabase {
 
 static PatternDatabase* database = nullptr;
 
-static void ensureDatabase() {
-  if (!database) {
-    // we must only ever create one database
-    static OnlyOnce onlyOnce;
-    onlyOnce.verify();
+struct DatabaseEnsurer {
+  DatabaseEnsurer() {
+    assert(!database);
     database = new PatternDatabase;
   }
-}
+};
 
 // Check for matches and apply them
 struct Match {
@@ -161,13 +159,18 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
 
   Pass* create() override { return new OptimizeInstructions; }
 
-  OptimizeInstructions() {
-    ensureDatabase();
+  void prepareToRun(PassRunner* runner, Module* module) override {
+    static DatabaseEnsurer ensurer;
   }
 
   void visitExpression(Expression* curr) {
     // we may be able to apply multiple patterns, one may open opportunities that look deeper NB: patterns must not have cycles
     while (1) {
+      auto* handOptimized = handOptimize(curr);
+      if (handOptimized) {
+        curr = handOptimized;
+        replaceCurrent(curr);
+      }
       auto iter = database->patternMap.find(curr->_id);
       if (iter == database->patternMap.end()) return;
       auto& patterns = iter->second;
@@ -183,6 +186,65 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       }
       if (!more) break;
     }
+  }
+
+  // Optimizations that don't yet fit in the pattern DSL, but could be eventually maybe
+  Expression* handOptimize(Expression* curr) {
+    if (auto* binary = curr->dynCast<Binary>()) {
+      // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
+      if (binary->op == BinaryOp::ShrSInt32 && binary->right->is<Const>()) {
+        auto shifts = binary->right->cast<Const>()->value.geti32();
+        if (shifts == 24 || shifts == 16) {
+          auto* left = binary->left->dynCast<Binary>();
+          if (left && left->op == ShlInt32 && left->right->is<Const>() && left->right->cast<Const>()->value.geti32() == shifts) {
+            auto* load = left->left->dynCast<Load>();
+            if (load && ((load->bytes == 1 && shifts == 24) || (load->bytes == 2 && shifts == 16))) {
+              load->signed_ = true;
+              return load;
+            }
+          }
+        }
+      }
+    } else if (auto* set = curr->dynCast<SetGlobal>()) {
+      // optimize out a set of a get
+      auto* get = set->value->dynCast<GetGlobal>();
+      if (get && get->name == set->name) {
+        ExpressionManipulator::nop(curr);
+      }
+    } else if (auto* iff = curr->dynCast<If>()) {
+      iff->condition = optimizeBoolean(iff->condition);
+    } else if (auto* select = curr->dynCast<Select>()) {
+      select->condition = optimizeBoolean(select->condition);
+      auto* condition = select->condition->dynCast<Unary>();
+      if (condition && condition->op == EqZInt32) {
+        // flip select to remove eqz, if we can reorder
+        EffectAnalyzer ifTrue(select->ifTrue);
+        EffectAnalyzer ifFalse(select->ifFalse);
+        if (!ifTrue.invalidates(ifFalse)) {
+          select->condition = condition->value;
+          std::swap(select->ifTrue, select->ifFalse);
+        }
+      }
+    } else if (auto* br = curr->dynCast<Break>()) {
+      if (br->condition) {
+        br->condition = optimizeBoolean(br->condition);
+      }
+    }
+    return nullptr;
+  }
+
+private:
+
+  Expression* optimizeBoolean(Expression* boolean) {
+    auto* condition = boolean->dynCast<Unary>();
+    if (condition && condition->op == EqZInt32) {
+      auto* condition2 = condition->value->dynCast<Unary>();
+      if (condition2 && condition2->op == EqZInt32) {
+        // double eqz
+        return condition2->value;
+      }
+    }
+    return boolean;
   }
 };
 

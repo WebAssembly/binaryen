@@ -881,21 +881,21 @@
       (get_local $1)
     )
   )
-  (func $prefer-remove-copies1 (type $2)
+  (func $prefer-remove-copies2 (type $2)
     (local $0 i32)
     (local $1 i32)
-    (set_local $1
+    (set_local $0
       (i32.const 0)
     )
     (nop)
-    (set_local $0
+    (set_local $1
       (i32.const 1)
     )
     (drop
-      (get_local $0)
+      (get_local $1)
     )
     (drop
-      (get_local $1)
+      (get_local $0)
     )
   )
 )

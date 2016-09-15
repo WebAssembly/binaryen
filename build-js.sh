@@ -43,7 +43,7 @@ EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 OUT_FILE_SUFFIX=
 
 if [ "$1" == "-g" ]; then
-  EMCC_ARGS="$EMCC_ARGS -O0"
+  EMCC_ARGS="$EMCC_ARGS -O2" # need emcc js opts to be decently fast
   EMCC_ARGS="$EMCC_ARGS --llvm-opts 0 --llvm-lto 0"
   EMCC_ARGS="$EMCC_ARGS -profiling"
   OUT_FILE_SUFFIX=-g

@@ -21,8 +21,19 @@
 #include <wasm.h>
 #include <pass.h>
 #include <ast_utils.h>
+#include <wasm-builder.h>
 
 namespace wasm {
+
+// to turn an if into a br-if, we must be able to reorder the
+// condition and possible value, and the possible value must
+// not have side effects (as they would run unconditionally)
+static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue) {
+  if (!brValue) return true;
+  EffectAnalyzer value(brValue);
+  if (value.hasSideEffects()) return false;
+  return !EffectAnalyzer(ifCondition).invalidates(value);
+}
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>> {
   bool isFunctionParallel() override { return true; }
@@ -43,6 +54,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
 
   // a stack for if-else contents, we merge their outputs
   std::vector<Flows> ifStack;
+
+  // list of all loops, so we can optimize them
+  std::vector<Loop*> loops;
 
   static void visitAny(RemoveUnusedBrs* self, Expression** currp) {
     auto* curr = *currp;
@@ -109,7 +123,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       // ignore (could be result of a previous cycle)
       self->valueCanFlow = false;
     } else {
-      // anything else stops the flow TODO: optimize loops?
+      // anything else stops the flow
       flows.clear();
       self->valueCanFlow = false;
     }
@@ -123,23 +137,25 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     self->ifStack.push_back(std::move(self->flows));
   }
 
+  void visitLoop(Loop* curr) {
+    loops.push_back(curr);
+  }
+
   void visitIf(If* curr) {
     if (!curr->ifFalse) {
       // if without an else. try to reduce   if (condition) br  =>  br_if (condition)
       Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
         // if the br has a value, then if => br_if means we always execute the value, and also the order is value,condition vs condition,value
-        if (br->value) {
-          EffectAnalyzer value(br->value);
-          if (value.hasSideEffects()) return;
-          EffectAnalyzer condition(curr->condition);
-          if (condition.invalidates(value)) return;
+        if (canTurnIfIntoBrIf(curr->condition, br->value)) {
+          br->condition = curr->condition;
+          br->finalize();
+          replaceCurrent(br);
+          anotherCycle = true;
         }
-        br->condition = curr->condition;
-        replaceCurrent(br);
-        anotherCycle = true;
       }
     }
+    // TODO: if-else can be turned into a br_if as well, if one of the sides is a dead end
   }
 
   // override scan to add a pre and a post check task to all nodes
@@ -163,6 +179,99 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     }
   }
 
+  // optimizes a loop. returns true if we made changes
+  bool optimizeLoop(Loop* loop) {
+    // if a loop ends in
+    // (loop $in
+    //   (block $out
+    //     if (..) br $in; else br $out;
+    //   )
+    // )
+    // then our normal opts can remove the break out since it flows directly out
+    // (and later passes make the if one-armed). however, the simple analysis
+    // fails on patterns like
+    //     if (..) br $out;
+    //     br $in;
+    // which is a common way to do a while (1) loop (end it with a jump to the
+    // top), so we handle that here. Specifically we want to conditionalize
+    // breaks to the loop top, i.e., put them behind a condition, so that other
+    // code can flow directly out and thus brs out can be removed. (even if
+    // the change is to let a break somewhere else flow out, that can still be
+    // helpful, as it shortens the logical loop. it is also good to generate
+    // an if-else instead of an if, as it might allow an eqz to be removed
+    // by flipping arms)
+    if (!loop->name.is()) return false;
+    auto* block = loop->body->dynCast<Block>();
+    if (!block) return false;
+    // does the last element break to the top of the loop?
+    auto& list = block->list;
+    if (list.size() <= 1) return false;
+    auto* last = list.back()->dynCast<Break>();
+    if (!last || !ExpressionAnalyzer::isSimple(last) || last->name != loop->name) return false;
+    // last is a simple break to the top of the loop. if we can conditionalize it,
+    // it won't block things from flowing out and not needing breaks to do so.
+    Index i = list.size() - 2;
+    Builder builder(*getModule());
+    while (1) {
+      auto* curr = list[i];
+      if (auto* iff = curr->dynCast<If>()) {
+        // let's try to move the code going to the top of the loop into the if-else
+        if (!iff->ifFalse) {
+          // we need the ifTrue to break, so it cannot reach the code we want to move
+          if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifTrue)) {
+            iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            return true;
+          }
+        } else {
+          // this is already an if-else. if one side is a dead end, we can append to the other, if
+          // there is no returned value to concern us
+          assert(!isConcreteWasmType(iff->type)); // can't be, since in the middle of a block
+          if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifTrue)) {
+            iff->ifFalse = builder.blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            return true;
+          } else if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifFalse)) {
+            iff->ifTrue = builder.blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            return true;
+          }
+        }
+        return false;
+      } else if (auto* brIf = curr->dynCast<Break>()) {
+        // br_if is similar to if.
+        if (brIf->condition && !brIf->value && brIf->name != loop->name) {
+          if (i == list.size() - 2) {
+            // there is the br_if, and then the br to the top, so just flip them and the condition
+            brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
+            last->name = brIf->name;
+            brIf->name = loop->name;
+            return true;
+          } else {
+            // there are elements in the middle,
+            //   br_if $somewhere (condition)
+            //   (..more..)
+            //   br $in
+            // we can convert the br_if to an if. this has a cost, though,
+            // so only do it if it looks useful, which it definitely is if
+            //  (a) $somewhere is straight out (so the br out vanishes), and
+            //  (b) this br_if is the only branch to that block (so the block will vanish)
+            if (brIf->name == block->name && BreakSeeker::count(block, block->name) == 1) {
+              // note that we could drop the last element here, it is a br we know for sure is removable,
+              // but telling stealSlice to steal all to the end is more efficient, it can just truncate.
+              list[i] = builder.makeIf(brIf->condition, builder.makeBreak(brIf->name), builder.stealSlice(block, i + 1, list.size()));
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+      // if there is control flow, we must stop looking
+      if (EffectAnalyzer(curr).branches) {
+        return false;
+      }
+      if (i == 0) return false;
+      i--;
+    }
+  }
+
   void doWalkFunction(Function* func) {
     // multiple cycles may be needed
     bool worked = false;
@@ -172,7 +281,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
       for (size_t i = 0; i < flows.size(); i++) {
-        auto* flow = (*flows[i])->cast<Return>(); // cannot be a break
+        auto* flow = (*flows[i])->dynCast<Return>();
+        if (!flow) continue;
         if (!flow->value) {
           // return => nop
           ExpressionManipulator::nop(flow);
@@ -184,11 +294,138 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
       }
       flows.clear();
+      // optimize loops (we don't do it while tracking flows, as they can interfere)
+      for (auto* loop : loops) {
+        anotherCycle |= optimizeLoop(loop);
+      }
+      loops.clear();
       if (anotherCycle) worked = true;
     } while (anotherCycle);
-    // finally, we may have simplified ifs enough to turn them into selects
-    struct Selectifier : public WalkerPass<PostWalker<Selectifier, Visitor<Selectifier>>> {
+
+    if (worked) {
+      // Our work may alter block and if types, they may now return
+      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
+        void visitBlock(Block* curr) {
+          curr->finalize();
+        }
+        void visitLoop(Loop* curr) {
+          curr->finalize();
+        }
+        void visitIf(If* curr) {
+          curr->finalize();
+        }
+      };
+      TypeUpdater typeUpdater;
+      typeUpdater.walkFunction(func);
+    }
+
+    // thread trivial jumps
+    struct JumpThreader : public ControlFlowWalker<JumpThreader, Visitor<JumpThreader>> {
+      // map of all value-less breaks going to a block (and not a loop)
+      std::map<Block*, std::vector<Break*>> breaksToBlock;
+
+      // number of definitions of each name - when a name is defined more than once, it is not trivially safe to do this
+      std::map<Name, Index> numDefs;
+
+      // the names to update, when we can (just one def)
+      std::map<Break*, Name> newNames;
+
+      void visitBreak(Break* curr) {
+        if (!curr->value) {
+          if (auto* target = findBreakTarget(curr->name)->dynCast<Block>()) {
+            breaksToBlock[target].push_back(curr);
+          }
+        }
+      }
+      // TODO: Switch?
+      void visitBlock(Block* curr) {
+        if (curr->name.is()) numDefs[curr->name]++;
+
+        auto& list = curr->list;
+        if (list.size() == 1 && curr->name.is()) {
+          // if this block has just one child, a sub-block, then jumps to the former are jumps to us, really
+          if (auto* child = list[0]->dynCast<Block>()) {
+            if (child->name.is() && child->name != curr->name) {
+              auto& breaks = breaksToBlock[child];
+              for (auto* br : breaks) {
+                newNames[br] = curr->name;
+                breaksToBlock[curr].push_back(br); // update the list - we may push it even more later
+              }
+              breaksToBlock.erase(child);
+            }
+          }
+        } else if (list.size() == 2) {
+          // if this block has two children, a child-block and a simple jump, then jumps to child-block can be replaced with jumps to the new target
+          auto* child = list[0]->dynCast<Block>();
+          auto* jump = list[1]->dynCast<Break>();
+          if (child && child->name.is() && jump && ExpressionAnalyzer::isSimple(jump)) {
+            auto& breaks = breaksToBlock[child];
+            for (auto* br : breaks) {
+              newNames[br] = jump->name;
+            }
+            // if the jump is to another block then we can update the list, and maybe push it even more later
+            if (auto* newTarget = findBreakTarget(jump->name)->dynCast<Block>()) {
+              for (auto* br : breaks) {
+                breaksToBlock[newTarget].push_back(br);
+              }
+            }
+            breaksToBlock.erase(child);
+          }
+        }
+      }
+      void visitLoop(Loop* curr) {
+        if (curr->name.is()) numDefs[curr->name]++;
+      }
+
+      void finish() {
+        for (auto& iter : newNames) {
+          auto* br = iter.first;
+          auto name = iter.second;
+          if (numDefs[name] == 1) {
+            br->name = name;
+          }
+        }
+      }
+    };
+    JumpThreader jumpThreader;
+    jumpThreader.setModule(getModule());
+    jumpThreader.walkFunction(func);
+    jumpThreader.finish();
+
+    // perform some final optimizations
+    struct FinalOptimizer : public PostWalker<FinalOptimizer, Visitor<FinalOptimizer>> {
+      void visitBlock(Block* curr) {
+        // if a block has an if br else br, we can un-conditionalize the latter, allowing
+        // the if to become a br_if.
+        // * note that if not in a block already, then we need to create a block for this, so not useful otherwise
+        // * note that this only happens at the end of a block, as code after the if is dead
+        // * note that we do this at the end, because un-conditionalizing can interfere with optimizeLoop()ing.
+        auto& list = curr->list;
+        for (Index i = 0; i < list.size(); i++) {
+          auto* iff = list[i]->dynCast<If>();
+          if (!iff || !iff->ifFalse || isConcreteWasmType(iff->type)) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
+          auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
+          if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value)) {
+            // we are an if-else where the ifTrue is a break without a condition, so we can do this
+            list[i] = ifTrueBreak;
+            ifTrueBreak->condition = iff->condition;
+            ifTrueBreak->finalize();
+            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
+            continue;
+          }
+          // otherwise, perhaps we can flip the if
+          auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
+          if (ifFalseBreak && !ifFalseBreak->condition && canTurnIfIntoBrIf(iff->condition, ifFalseBreak->value)) {
+            list[i] = ifFalseBreak;
+            ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+            ifFalseBreak->finalize();
+            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
+            continue;
+          }
+        }
+      }
       void visitIf(If* curr) {
+        // we may have simplified ifs enough to turn them into selects
         if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
           // TODO: estimate cost
@@ -210,25 +447,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
       }
     };
-    Selectifier selectifier;
-    selectifier.setModule(getModule());
-    selectifier.walkFunction(func);
-    if (worked) {
-      // Our work may alter block and if types, they may now return
-      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
-        void visitBlock(Block* curr) {
-          curr->finalize();
-        }
-        void visitLoop(Loop* curr) {
-          curr->finalize();
-        }
-        void visitIf(If* curr) {
-          curr->finalize();
-        }
-      };
-      TypeUpdater typeUpdater;
-      typeUpdater.walkFunction(func);
-    }
+    FinalOptimizer finalOptimizer;
+    finalOptimizer.setModule(getModule());
+    finalOptimizer.walkFunction(func);
   }
 };
 

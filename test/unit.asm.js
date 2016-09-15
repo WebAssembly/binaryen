@@ -9,11 +9,13 @@ function asm(global, env, buffer) {
   var Math_ceil = global.Math.ceil;
   var tempDoublePtr = env.tempDoublePtr | 0;
   var n = env.gb | 0;
+  var STACKTOP = env.STACKTOP | 0;
   var setTempRet0=env.setTempRet0;
 
   var abort = env.abort;
   var print = env.print;
   var h = env.h;
+  var return_int = env.return_int;
 
   var HEAP8 = new global.Int8Array(buffer);
   var HEAP16 = new global.Int16Array(buffer);
@@ -330,9 +332,244 @@ function asm(global, env, buffer) {
     y = 3 ? +abort(7) : 4.5;
   }
 
+  function loadSigned(x) {
+    x = x | 0;
+    loadSigned(HEAP8[x >> 0] << 24 >> 24);
+    loadSigned(HEAPU8[x >> 0] << 24 >> 24);
+    loadSigned(HEAP16[x >> 1] << 16 >> 16);
+    loadSigned(HEAPU16[x >> 1] << 16 >> 16);
+    loadSigned(HEAP8[x >> 0] << 24 >> 16);
+    loadSigned(HEAPU8[x >> 0] << 16 >> 24);
+    loadSigned(HEAP16[x >> 1] << 16 >> 24);
+    loadSigned(HEAPU16[x >> 1] << 24 >> 16);
+  }
+
   function z() {
   }
   function w() {
+  }
+
+  function globalOpts() {
+    var x = 0, y = +0;
+    x = Int;
+    y = Double;
+    HEAP8[13] = HEAP32[3]; // access memory, should not confuse the global writes
+    Double = y;
+    Int = x;
+    globalOpts();
+    x = Int;
+    if (1) Int = 20; // but this does interfere
+    Int = x;
+    globalOpts();
+    x = Int;
+    globalOpts(); // this too
+    Int = x;
+  }
+
+  function dropCallImport() {
+    if (1) return_int() | 0;
+  }
+
+  function loophi(x, y) {
+   x = x | 0;
+   y = y | 0;
+   var temp = 0, inc = 0, loopvar = 0; // this order matters
+   loopvar = x;
+   while(1) {
+    loophi(loopvar | 0, 0);
+    temp = loopvar;
+    if (temp) {
+     if (temp) {
+      break;
+     }
+    }
+    inc = loopvar + 1 | 0;
+    if (inc == y) {
+     loopvar = inc;
+    } else {
+     break;
+    }
+   }
+  }
+
+  function loophi2() {
+   var jnc = 0, i = 0, i$lcssa = 0, temp = 0, j = 0;
+   i = 0;
+   L7: while(1) {
+    j = 0;
+    while(1) {
+     temp = j;
+     if (1) {
+      if (temp) {
+       i$lcssa = i;
+       break L7;
+      }
+     }
+     jnc = j + 1 | 0;
+     if (jnc) {
+      j = jnc;
+     } else {
+      break;
+     }
+    }
+   }
+   return i$lcssa | 0
+  }
+
+  function relooperJumpThreading(x) {
+   x = x | 0;
+   var label = 0;
+   // from if
+   if (x) {
+    h(0);
+    label = 1;
+   }
+   if ((label|0) == 1) {
+    h(1);
+   }
+   h(-1);
+   // from loop
+   while (1) {
+    x = x + 1;
+    if (x) {
+     h(2);
+     label = 2;
+     break;
+    }
+   }
+   if ((label|0) == 2) {
+    h(3);
+   }
+   h(-2);
+   // if-else afterward
+   if (x) {
+    h(4);
+    if (x == 3) {
+     label = 3;
+    } else {
+     label = 4;
+    }
+   }
+   if ((label|0) == 3) {
+    h(5);
+   } else if ((label|0) == 4) {
+    h(6);
+   }
+   h(-3);
+   // two ifs afterward
+   if (x) {
+    h(7);
+    if (x == 5) {
+     label = 5;
+    } else {
+     label = 6;
+    }
+   }
+   if ((label|0) == 5) {
+    h(8);
+    if (x == 6) {
+     label = 6;
+    }
+   }
+   if ((label|0) == 6) {
+    h(9);
+   }
+   h(-4);
+   // labeled if after
+   if (x) {
+    h(10);
+    label = 7;
+   }
+   L1: do {
+    if ((label|0) == 7) {
+     h(11);
+     break L1;
+    }
+   } while (0);
+   h(-5);
+   // labeled if after normal if
+   if (x) {
+    h(12);
+    if (x == 8) {
+      label = 8;
+    } else {
+      label = 9;
+    }
+   }
+   if ((label|0) == 8) {
+    h(13);
+    if (x) label = 9;
+   }
+   L1: do {
+    if ((label|0) == 9) {
+     h(14);
+     break L1;
+    }
+   } while (0);
+   h(-6);
+   // TODO
+   // labeled if after a first if
+   // do-enclosed if after (?)
+   // test multiple labels, some should be ignored initially by JumpUpdater
+   return x;
+  }
+
+  function relooperJumpThreading__ZN4game14preloadweaponsEv() {
+   var $12 = 0, $14 = 0, $or$cond8 = 0, $or$cond6 = 0, $vararg_ptr5 = 0, $11 = 0, $exitcond = 0, label = 0;
+   while(1) {
+    if ($14) {
+     if ($or$cond8) {
+      label = 7;
+     } else {
+      label = 8;
+     }
+    } else {
+     if ($or$cond6) {
+      label = 7;
+     } else {
+      label = 8;
+     }
+    }
+    if ((label|0) == 7) {
+     label = 0;
+    }
+    else if ((label|0) == 8) {
+     label = 0;
+     HEAP32[$vararg_ptr5>>2] = $11;
+    }
+   }
+  }
+
+  function __Z12multi_varargiz($0) {
+   $0 = $0|0;
+   var $2 = 0, $$06$i4 = 0, $exitcond$i6 = 0, $12 = 0, $20 = 0;
+   if ($2) {
+    while(1) {
+     $12 = $$06$i4;
+     if ($exitcond$i6) {
+      break;
+     } else {
+      $$06$i4 = $20;
+     }
+    }
+   } else {
+    lb(1) | 0; // returns a value, and the while is unreachable
+   }
+  }
+
+  function jumpThreadDrop() {
+    var label = 0, temp = 0;
+    temp = return_int() | 0;
+    while (1) {
+      label = 14;
+      break;
+    }
+    if ((label | 0) == 10) {
+    } else if ((label | 0) == 12) {
+      return_int() | 0; // drop in the middle of an if-else chain for threading
+    } else if ((label | 0) == 14) {
+    }
+    return temp | 0;
   }
 
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];

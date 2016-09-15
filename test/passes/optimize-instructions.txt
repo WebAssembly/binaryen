@@ -166,5 +166,51 @@
         (f64.const 2)
       )
     )
+    (drop
+      (i32.eqz
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.const 0)
+      )
+    )
+    (if
+      (i32.const 123)
+      (nop)
+    )
+    (drop
+      (select
+        (i32.const 102)
+        (i32.const 101)
+        (get_local $i1)
+      )
+    )
+    (drop
+      (select
+        (tee_local $i1
+          (i32.const 103)
+        )
+        (tee_local $i1
+          (i32.const 104)
+        )
+        (i32.eqz
+          (get_local $i1)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
   )
 )

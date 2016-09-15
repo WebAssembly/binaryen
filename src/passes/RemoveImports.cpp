@@ -28,22 +28,14 @@
 namespace wasm {
 
 struct RemoveImports : public WalkerPass<PostWalker<RemoveImports, Visitor<RemoveImports>>> {
-  MixedArena* allocator;
-  Module* module;
-
-  void prepare(PassRunner* runner, Module *module_) override {
-    allocator = runner->allocator;
-    module = module_;
-  }
-
   void visitCallImport(CallImport *curr) {
-    WasmType type = module->getImport(curr->target)->functionType->result;
+    WasmType type = getModule()->getImport(curr->target)->functionType->result;
     if (type == none) {
-      replaceCurrent(allocator->alloc<Nop>());
+      replaceCurrent(getModule()->allocator.alloc<Nop>());
     } else {
       Literal nopLiteral;
       nopLiteral.type = type;
-      replaceCurrent(allocator->alloc<Const>()->set(nopLiteral));
+      replaceCurrent(getModule()->allocator.alloc<Const>()->set(nopLiteral));
     }
   }
 

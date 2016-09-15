@@ -5,14 +5,17 @@
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$dd (func (param f64) (result f64)))
+  (type $FUNCSIG$i (func (result i32)))
   (import "global" "NaN" (global $t f64))
   (import "global" "Infinity" (global $u f64))
   (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
   (import "env" "gb" (global $n i32))
+  (import "env" "STACKTOP" (global $STACKTOP i32))
   (import "env" "setTempRet0" (func $setTempRet0 (param i32) (result i32)))
   (import "env" "abort" (func $abort (param f64) (result f64)))
   (import "env" "print" (func $print (param i32)))
   (import "env" "h" (func $h (param i32)))
+  (import "env" "return_int" (func $return_int (result i32)))
   (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
   (import "env" "memory" (memory $memory))
   (import "env" "table" (table $table))
@@ -817,8 +820,10 @@
         (get_local $y)
         (i32.const 3)
       )
-      (call $lb
-        (i32.const 2)
+      (drop
+        (call $lb
+          (i32.const 2)
+        )
       )
     )
   )
@@ -1001,10 +1006,619 @@
       )
     )
   )
+  (func $loadSigned (param $x i32)
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_s
+            (get_local $x)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_u
+            (get_local $x)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_s
+            (get_local $x)
+          )
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_u
+            (get_local $x)
+          )
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_s
+            (get_local $x)
+          )
+          (i32.const 24)
+        )
+        (i32.const 16)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_u
+            (get_local $x)
+          )
+          (i32.const 16)
+        )
+        (i32.const 24)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_s
+            (get_local $x)
+          )
+          (i32.const 16)
+        )
+        (i32.const 24)
+      )
+    )
+    (call $loadSigned
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_u
+            (get_local $x)
+          )
+          (i32.const 24)
+        )
+        (i32.const 16)
+      )
+    )
+  )
   (func $z
     (nop)
   )
   (func $w
     (nop)
+  )
+  (func $globalOpts
+    (local $x i32)
+    (local $y f64)
+    (set_local $x
+      (get_global $Int)
+    )
+    (set_local $y
+      (get_global $Double)
+    )
+    (i32.store8
+      (i32.const 13)
+      (i32.load
+        (i32.const 12)
+      )
+    )
+    (set_global $Double
+      (get_local $y)
+    )
+    (set_global $Int
+      (get_local $x)
+    )
+    (call $globalOpts)
+    (set_local $x
+      (get_global $Int)
+    )
+    (if
+      (i32.const 1)
+      (set_global $Int
+        (i32.const 20)
+      )
+    )
+    (set_global $Int
+      (get_local $x)
+    )
+    (call $globalOpts)
+    (set_local $x
+      (get_global $Int)
+    )
+    (call $globalOpts)
+    (set_global $Int
+      (get_local $x)
+    )
+  )
+  (func $dropCallImport
+    (if
+      (i32.const 1)
+      (drop
+        (call_import $return_int)
+      )
+    )
+  )
+  (func $loophi (param $x i32) (param $y i32)
+    (local $temp i32)
+    (local $inc i32)
+    (local $loopvar i32)
+    (set_local $loopvar
+      (get_local $x)
+    )
+    (loop $while-in$1
+      (block $while-out$0
+        (call $loophi
+          (get_local $loopvar)
+          (i32.const 0)
+        )
+        (set_local $temp
+          (get_local $loopvar)
+        )
+        (if
+          (get_local $temp)
+          (if
+            (get_local $temp)
+            (br $while-out$0)
+          )
+        )
+        (set_local $inc
+          (i32.add
+            (get_local $loopvar)
+            (i32.const 1)
+          )
+        )
+        (if
+          (i32.eq
+            (get_local $inc)
+            (get_local $y)
+          )
+          (set_local $loopvar
+            (get_local $inc)
+          )
+          (br $while-out$0)
+        )
+        (br $while-in$1)
+      )
+    )
+  )
+  (func $loophi2 (result i32)
+    (local $jnc i32)
+    (local $i i32)
+    (local $i$lcssa i32)
+    (local $temp i32)
+    (local $j i32)
+    (set_local $i
+      (i32.const 0)
+    )
+    (loop $label$continue$L7
+      (block $label$break$L7
+        (set_local $j
+          (i32.const 0)
+        )
+        (loop $while-in$1
+          (block $while-out$0
+            (set_local $temp
+              (get_local $j)
+            )
+            (if
+              (i32.const 1)
+              (if
+                (get_local $temp)
+                (block
+                  (set_local $i$lcssa
+                    (get_local $i)
+                  )
+                  (br $label$break$L7)
+                )
+              )
+            )
+            (set_local $jnc
+              (i32.add
+                (get_local $j)
+                (i32.const 1)
+              )
+            )
+            (if
+              (get_local $jnc)
+              (set_local $j
+                (get_local $jnc)
+              )
+              (br $while-out$0)
+            )
+            (br $while-in$1)
+          )
+        )
+        (br $label$continue$L7)
+      )
+    )
+    (return
+      (get_local $i$lcssa)
+    )
+  )
+  (func $relooperJumpThreading (param $x i32) (result i32)
+    (local $label i32)
+    (if
+      (get_local $x)
+      (block
+        (call_import $h
+          (i32.const 0)
+        )
+        (set_local $label
+          (i32.const 1)
+        )
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 1)
+      )
+      (call_import $h
+        (i32.const 1)
+      )
+    )
+    (call_import $h
+      (i32.const -1)
+    )
+    (loop $while-in$1
+      (block $while-out$0
+        (set_local $x
+          (i32.add
+            (get_local $x)
+            (i32.const 1)
+          )
+        )
+        (if
+          (get_local $x)
+          (block
+            (call_import $h
+              (i32.const 2)
+            )
+            (set_local $label
+              (i32.const 2)
+            )
+            (br $while-out$0)
+          )
+        )
+        (br $while-in$1)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 2)
+      )
+      (call_import $h
+        (i32.const 3)
+      )
+    )
+    (call_import $h
+      (i32.const -2)
+    )
+    (if
+      (get_local $x)
+      (block
+        (call_import $h
+          (i32.const 4)
+        )
+        (if
+          (i32.eq
+            (get_local $x)
+            (i32.const 3)
+          )
+          (set_local $label
+            (i32.const 3)
+          )
+          (set_local $label
+            (i32.const 4)
+          )
+        )
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 3)
+      )
+      (call_import $h
+        (i32.const 5)
+      )
+      (if
+        (i32.eq
+          (get_local $label)
+          (i32.const 4)
+        )
+        (call_import $h
+          (i32.const 6)
+        )
+      )
+    )
+    (call_import $h
+      (i32.const -3)
+    )
+    (if
+      (get_local $x)
+      (block
+        (call_import $h
+          (i32.const 7)
+        )
+        (if
+          (i32.eq
+            (get_local $x)
+            (i32.const 5)
+          )
+          (set_local $label
+            (i32.const 5)
+          )
+          (set_local $label
+            (i32.const 6)
+          )
+        )
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 5)
+      )
+      (block
+        (call_import $h
+          (i32.const 8)
+        )
+        (if
+          (i32.eq
+            (get_local $x)
+            (i32.const 6)
+          )
+          (set_local $label
+            (i32.const 6)
+          )
+        )
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 6)
+      )
+      (call_import $h
+        (i32.const 9)
+      )
+    )
+    (call_import $h
+      (i32.const -4)
+    )
+    (if
+      (get_local $x)
+      (block
+        (call_import $h
+          (i32.const 10)
+        )
+        (set_local $label
+          (i32.const 7)
+        )
+      )
+    )
+    (block $label$break$L1
+      (if
+        (i32.eq
+          (get_local $label)
+          (i32.const 7)
+        )
+        (block
+          (call_import $h
+            (i32.const 11)
+          )
+          (br $label$break$L1)
+        )
+      )
+    )
+    (call_import $h
+      (i32.const -5)
+    )
+    (if
+      (get_local $x)
+      (block
+        (call_import $h
+          (i32.const 12)
+        )
+        (if
+          (i32.eq
+            (get_local $x)
+            (i32.const 8)
+          )
+          (set_local $label
+            (i32.const 8)
+          )
+          (set_local $label
+            (i32.const 9)
+          )
+        )
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 8)
+      )
+      (block
+        (call_import $h
+          (i32.const 13)
+        )
+        (if
+          (get_local $x)
+          (set_local $label
+            (i32.const 9)
+          )
+        )
+      )
+    )
+    (block $label$break$L1
+      (if
+        (i32.eq
+          (get_local $label)
+          (i32.const 9)
+        )
+        (block
+          (call_import $h
+            (i32.const 14)
+          )
+          (br $label$break$L1)
+        )
+      )
+    )
+    (call_import $h
+      (i32.const -6)
+    )
+    (return
+      (get_local $x)
+    )
+  )
+  (func $relooperJumpThreading__ZN4game14preloadweaponsEv
+    (local $$12 i32)
+    (local $$14 i32)
+    (local $$or$cond8 i32)
+    (local $$or$cond6 i32)
+    (local $$vararg_ptr5 i32)
+    (local $$11 i32)
+    (local $$exitcond i32)
+    (local $label i32)
+    (loop $while-in$1
+      (block $while-out$0
+        (if
+          (get_local $$14)
+          (if
+            (get_local $$or$cond8)
+            (set_local $label
+              (i32.const 7)
+            )
+            (set_local $label
+              (i32.const 8)
+            )
+          )
+          (if
+            (get_local $$or$cond6)
+            (set_local $label
+              (i32.const 7)
+            )
+            (set_local $label
+              (i32.const 8)
+            )
+          )
+        )
+        (if
+          (i32.eq
+            (get_local $label)
+            (i32.const 7)
+          )
+          (set_local $label
+            (i32.const 0)
+          )
+          (if
+            (i32.eq
+              (get_local $label)
+              (i32.const 8)
+            )
+            (block
+              (set_local $label
+                (i32.const 0)
+              )
+              (i32.store
+                (get_local $$vararg_ptr5)
+                (get_local $$11)
+              )
+            )
+          )
+        )
+        (br $while-in$1)
+      )
+    )
+  )
+  (func $__Z12multi_varargiz (param $$0 i32)
+    (local $$2 i32)
+    (local $$$06$i4 i32)
+    (local $$exitcond$i6 i32)
+    (local $$12 i32)
+    (local $$20 i32)
+    (if
+      (get_local $$2)
+      (loop $while-in$1
+        (block $while-out$0
+          (set_local $$12
+            (get_local $$$06$i4)
+          )
+          (if
+            (get_local $$exitcond$i6)
+            (br $while-out$0)
+            (set_local $$$06$i4
+              (get_local $$20)
+            )
+          )
+          (br $while-in$1)
+        )
+      )
+      (drop
+        (call $lb
+          (i32.const 1)
+        )
+      )
+    )
+  )
+  (func $jumpThreadDrop (result i32)
+    (local $label i32)
+    (local $temp i32)
+    (set_local $temp
+      (call_import $return_int)
+    )
+    (loop $while-in$1
+      (block $while-out$0
+        (set_local $label
+          (i32.const 14)
+        )
+        (br $while-out$0)
+        (br $while-in$1)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 10)
+      )
+      (nop)
+      (if
+        (i32.eq
+          (get_local $label)
+          (i32.const 12)
+        )
+        (drop
+          (call_import $return_int)
+        )
+        (if
+          (i32.eq
+            (get_local $label)
+            (i32.const 14)
+          )
+          (nop)
+        )
+      )
+    )
+    (return
+      (get_local $temp)
+    )
   )
 )

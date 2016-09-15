@@ -11,6 +11,7 @@
   (import $waka_int "env" "waka_int" (result i32))
   (import $_i64Subtract "env" "i64sub" (param i32 i32 i32 i32) (result i32))
   (import $___udivmoddi4 "env" "moddi" (param i32 i32 i32 i32 i32) (result i32))
+  (import $lp "env" "lp" (param i32 i32) (result i32))
   (func $b0-yes (type $4) (param $i1 i32)
     (local $x i32)
     (local $y i32)
@@ -750,5 +751,28 @@
       )
     )
     (drop (get_local $y))
+  )
+  (func $freetype-cd (param $a i32) (result i32)
+    (local $e i32)
+    (loop $while-in$1
+      (block $while-out$0
+        (set_local $e
+          (get_local $a)
+        )
+        (set_local $a ;; this set must happen, so that if the br_if does not break, we have the right $a later down - once we use a block return value, the $a set's outside the block
+          (i32.const 4)
+        )
+        (br_if $while-out$0
+          (get_local $e)
+        )
+        (set_local $a
+          (i32.add
+            (get_local $a)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+    (get_local $a)
   )
 )

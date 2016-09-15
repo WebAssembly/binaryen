@@ -3,6 +3,7 @@ SET(passes_SOURCES
   CoalesceLocals.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
+  ExtractFunction.cpp
   MergeBlocks.cpp
   Metrics.cpp
   NameManager.cpp
@@ -11,6 +12,7 @@ SET(passes_SOURCES
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
+  RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveUnusedBrs.cpp

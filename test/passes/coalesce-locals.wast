@@ -905,7 +905,7 @@
       (get_local $z)
     )
   )
-  (func $prefer-remove-copies1 (type $2)
+  (func $prefer-remove-copies2 (type $2)
     (local $y i32)
     (local $z i32)
     (local $x i32)

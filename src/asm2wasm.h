@@ -523,6 +523,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, [&](PassRunner& passRunner) {
       // run autodrop first, before optimizations
       passRunner.add<AutoDrop>();
+      // optimize relooper label variable usage at the wasm level, where it is easy
+      passRunner.add("relooper-jump-threading");
     });
   }
 
@@ -803,13 +805,16 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
     }
   };
+
   PassRunner passRunner(&wasm);
   passRunner.add<FinalizeCalls>(this);
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
   if (optimize) {
-    passRunner.add("vacuum"); // autodrop can add some garbage
-    passRunner.add("remove-unused-brs"); // vacuum may open up more opportunities
+    // autodrop can add some garbage
+    passRunner.add("vacuum");
+    passRunner.add("remove-unused-brs");
+    passRunner.add("optimize-instructions");
   }
   passRunner.run();
 
@@ -866,19 +871,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
 #endif
 
-#if 0 // enable asm2wasm i64 optimizations when browsers have consistent i64 support in wasm
   if (udivmoddi4.is() && getTempRet0.is()) {
     // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm
     // we can only do this if we know getTempRet0 as well since we use it to figure out which minified global is tempRet0
     // (getTempRet0 might be an import, if this is a shared module, so we can't optimize that case)
-    int tempRet0;
+    Name tempRet0;
     {
       Expression* curr = wasm.getFunction(getTempRet0)->body;
       if (curr->is<Block>()) curr = curr->cast<Block>()->list[0];
-      curr = curr->cast<Return>()->value;
-      auto* load = curr->cast<Load>();
-      auto* ptr = load->ptr->cast<Const>();
-      tempRet0 = ptr->value.geti32() + load->offset;
+      if (curr->is<Return>()) curr = curr->cast<Return>()->value;
+      auto* get = curr->cast<GetGlobal>();
+      tempRet0 = get->name;
     }
     // udivmoddi4 receives xl, xh, yl, yl, r, and
     //    if r then *r = x % y
@@ -898,13 +901,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       return builder.makeSetLocal(
         target,
         builder.makeBinary(
-          Or,
+          OrInt64,
           builder.makeUnary(
             ExtendUInt32,
             builder.makeGetLocal(low, i32)
           ),
           builder.makeBinary(
-            Shl,
+            ShlInt64,
             builder.makeUnary(
               ExtendUInt32,
               builder.makeGetLocal(high, i32)
@@ -923,10 +926,11 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           8, 0, 8,
           builder.makeGetLocal(r, i32),
           builder.makeBinary(
-            RemU,
+            RemUInt64,
             builder.makeGetLocal(x64, i64),
             builder.makeGetLocal(y64, i64)
-          )
+          ),
+          i64
         )
       )
     );
@@ -934,20 +938,19 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       builder.makeSetLocal(
         x64,
         builder.makeBinary(
-          DivU,
+          DivUInt64,
           builder.makeGetLocal(x64, i64),
           builder.makeGetLocal(y64, i64)
         )
       )
     );
     body->list.push_back(
-      builder.makeStore(
-        4, 0, 4,
-        builder.makeConst(Literal(int32_t(tempRet0))),
+      builder.makeSetGlobal(
+        tempRet0,
         builder.makeUnary(
           WrapInt64,
           builder.makeBinary(
-            ShrU,
+            ShrUInt64,
             builder.makeGetLocal(x64, i64),
             builder.makeConst(Literal(int64_t(32)))
           )
@@ -960,9 +963,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         builder.makeGetLocal(x64, i64)
       )
     );
+    body->finalize();
     func->body = body;
   }
-#endif
 
   assert(WasmValidator().validate(wasm));
 }

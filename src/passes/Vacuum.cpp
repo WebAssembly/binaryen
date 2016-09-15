@@ -47,25 +47,30 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         case Expression::Id::CallImportId:
         case Expression::Id::CallIndirectId:
         case Expression::Id::SetLocalId:
-        case Expression::Id::LoadId:
         case Expression::Id::StoreId:
         case Expression::Id::ReturnId:
-        case Expression::Id::GetGlobalId:
         case Expression::Id::SetGlobalId:
         case Expression::Id::HostId:
         case Expression::Id::UnreachableId: return curr; // always needed
 
+        case Expression::Id::LoadId: {
+          if (!resultUsed) {
+            return curr->cast<Load>()->ptr;
+          }
+          return curr;
+        }
         case Expression::Id::ConstId:
         case Expression::Id::GetLocalId:
+        case Expression::Id::GetGlobalId: {
+          if (!resultUsed) return nullptr;
+          return curr;
+        }
+
         case Expression::Id::UnaryId:
         case Expression::Id::BinaryId:
         case Expression::Id::SelectId: {
           if (resultUsed) {
             return curr; // used, keep it
-          }
-          // result is not used, perhaps it is dead
-          if (curr->is<Const>() || curr->is<GetLocal>()) {
-            return nullptr;
           }
           // for unary, binary, and select, we need to check their arguments for side effects
           if (auto* unary = curr->dynCast<Unary>()) {
@@ -132,13 +137,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
 
   void visitBlock(Block *curr) {
     // compress out nops and other dead code
-    bool resultUsed = ExpressionAnalyzer::isResultUsed(expressionStack, getFunction());
     int skip = 0;
     auto& list = curr->list;
     size_t size = list.size();
     bool needResize = false;
     for (size_t z = 0; z < size; z++) {
-      auto* optimized = optimize(list[z], z == size - 1 && resultUsed);
+      auto* optimized = optimize(list[z], z == size - 1 && isConcreteWasmType(curr->type));
       if (!optimized) {
         skip++;
         needResize = true;
@@ -153,7 +157,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         Break* br = list[z - skip]->dynCast<Break>();
         Switch* sw = list[z - skip]->dynCast<Switch>();
         if ((br && !br->condition) || sw) {
+          auto* last = list.back();
           list.resize(z - skip + 1);
+          // if we removed the last one, and it was a return value, it must be returned
+          if (list.back() != last && isConcreteWasmType(last->type)) {
+            list.push_back(last);
+          }
           needResize = false;
           break;
         }
@@ -165,7 +174,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
     if (!curr->name.is()) {
       if (list.size() == 1) {
         // just one element. replace the block, either with it or with a nop if it's not needed
-        if (resultUsed || EffectAnalyzer(list[0]).hasSideEffects()) {
+        if (isConcreteWasmType(curr->type) || EffectAnalyzer(list[0]).hasSideEffects()) {
           replaceCurrent(list[0]);
         } else {
           ExpressionManipulator::nop(curr);
@@ -200,10 +209,52 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
   }
 
   void visitDrop(Drop* curr) {
-    // if the drop input has no side effects, it can be wiped out
-    if (!EffectAnalyzer(curr->value).hasSideEffects()) {
+    // optimize the dropped value, maybe leaving nothing
+    curr->value = optimize(curr->value, false);
+    if (curr->value == nullptr) {
       ExpressionManipulator::nop(curr);
       return;
+    }
+    // a drop of a tee is a set
+    if (auto* set = curr->value->dynCast<SetLocal>()) {
+      assert(set->isTee());
+      set->setTee(false);
+      replaceCurrent(set);
+      return;
+    }
+    // if we are dropping a block's return value, we might be able to remove it entirely
+    if (auto* block = curr->value->dynCast<Block>()) {
+      auto* last = block->list.back();
+      if (isConcreteWasmType(last->type)) {
+        assert(block->type == last->type);
+        last = optimize(last, false);
+        if (!last) {
+          // we may be able to remove this, if there are no brs
+          bool canPop = true;
+          if (block->name.is()) {
+            BreakSeeker breakSeeker(block->name);
+            Expression* temp = block;
+            breakSeeker.walk(temp);
+            if (breakSeeker.found && breakSeeker.valueType != none) {
+              canPop = false;
+            }
+          }
+          if (canPop) {
+            block->list.back() = last;
+            block->list.pop_back();
+            block->type = none;
+            // we don't need the drop anymore, let's see what we have left in the block
+            if (block->list.size() > 1) {
+              replaceCurrent(block);
+            } else if (block->list.size() == 1) {
+              replaceCurrent(block->list[0]);
+            } else {
+              ExpressionManipulator::nop(curr);
+            }
+            return;
+          }
+        }
+      }
     }
     // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a branch, this can make that branch optimizable and more vaccuming possible
     auto* iff = curr->value->dynCast<If>();
