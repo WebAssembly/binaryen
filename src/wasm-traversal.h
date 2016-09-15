@@ -335,8 +335,8 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       }
       case Expression::Id::SwitchId: {
         self->pushTask(SubType::doVisitSwitch, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
         self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
+        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
         break;
       }
       case Expression::Id::CallId: {
