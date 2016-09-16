@@ -34,6 +34,11 @@
 using namespace cashew;
 using namespace wasm;
 
+Name ASSERT_RETURN("assert_return"),
+     ASSERT_TRAP("assert_trap"),
+     ASSERT_INVALID("assert_invalid"),
+     ASSERT_MALFORMED("assert_malformed");
+
 //
 // An invocation into a module
 //
@@ -109,7 +114,7 @@ static void run_asserts(size_t* i, bool* checked, Module* wasm,
     Colors::green(std::cerr);
     std::cerr << " [line: " << curr.line << "]\n";
     Colors::normal(std::cerr);
-    if (id == ASSERT_INVALID) {
+    if (id == ASSERT_INVALID || id == ASSERT_MALFORMED) {
       // a module invalidity test
       Module wasm;
       bool invalid = false;
