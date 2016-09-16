@@ -218,7 +218,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         // let's try to move the code going to the top of the loop into the if-else
         if (!iff->ifFalse) {
           // we need the ifTrue to break, so it cannot reach the code we want to move
-          if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifTrue)) {
+          if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
             return true;
           }
@@ -226,10 +226,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           // this is already an if-else. if one side is a dead end, we can append to the other, if
           // there is no returned value to concern us
           assert(!isConcreteWasmType(iff->type)); // can't be, since in the middle of a block
-          if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifTrue)) {
+          if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = builder.blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
             return true;
-          } else if (ExpressionAnalyzer::getEndingSimpleBreak(iff->ifFalse)) {
+          } else if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifFalse)) {
             iff->ifTrue = builder.blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
             return true;
           }

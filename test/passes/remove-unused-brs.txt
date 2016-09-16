@@ -4,6 +4,7 @@
   (type $1 (func))
   (type $2 (func (result i32)))
   (type $3 (func (param i32 i32) (result i32)))
+  (type $4 (func (param i32 i32)))
   (func $b0-yes (type $0) (param $i1 i32)
     (block $topmost
     )
@@ -841,6 +842,36 @@
     (i32.add
       (get_local $x)
       (get_local $y)
+    )
+  )
+  (func $fuzz (type $4) (param $j i32) (param $g i32)
+    (block $label$break$c
+      (loop $label$continue$d
+        (block $label$break$d
+          (if
+            (i32.lt_s
+              (get_local $j)
+              (i32.const 2147483640)
+            )
+            (block $x
+              (block $y
+                (block $z
+                  (br_if $x
+                    (get_local $j)
+                  )
+                )
+              )
+            )
+            (block $switch$26
+            )
+          )
+          (i32.store
+            (i32.const 5724)
+            (i32.const -254899267)
+          )
+          (br $label$continue$d)
+        )
+      )
     )
   )
 )
