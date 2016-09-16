@@ -251,7 +251,7 @@
                         (i32.const 1224)
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (if
                     (i32.eq
@@ -275,7 +275,7 @@
                         (get_local $7)
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                 )
               )
@@ -501,7 +501,7 @@
                             (i32.const 1224)
                           )
                         )
-                        (call_import $qa)
+                        (call $qa)
                       )
                       (if
                         (i32.eq
@@ -530,7 +530,7 @@
                             )
                           )
                         )
-                        (call_import $qa)
+                        (call $qa)
                       )
                     )
                   )
@@ -623,7 +623,7 @@
                               (i32.const 1224)
                             )
                           )
-                          (call_import $qa)
+                          (call $qa)
                           (block
                             (set_local $41
                               (get_local $5)
@@ -886,7 +886,7 @@
                         )
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (if
                     (i32.ge_u
@@ -898,7 +898,7 @@
                         )
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (set_local $0
                     (i32.load offset=24
@@ -1005,7 +1005,7 @@
                             (get_local $6)
                             (get_local $3)
                           )
-                          (call_import $qa)
+                          (call $qa)
                           (block
                             (i32.store
                               (get_local $6)
@@ -1027,7 +1027,7 @@
                             )
                             (get_local $3)
                           )
-                          (call_import $qa)
+                          (call $qa)
                         )
                         (if
                           (i32.ne
@@ -1041,7 +1041,7 @@
                             )
                             (get_local $1)
                           )
-                          (call_import $qa)
+                          (call $qa)
                         )
                         (if
                           (i32.eq
@@ -1068,7 +1068,7 @@
                               (get_local $17)
                             )
                           )
-                          (call_import $qa)
+                          (call $qa)
                         )
                       )
                     )
@@ -1133,7 +1133,7 @@
                                   (i32.const 1224)
                                 )
                               )
-                              (call_import $qa)
+                              (call $qa)
                             )
                             (if
                               (i32.eq
@@ -1172,7 +1172,7 @@
                               )
                             )
                           )
-                          (call_import $qa)
+                          (call $qa)
                         )
                         (i32.store offset=24
                           (get_local $23)
@@ -1189,7 +1189,7 @@
                               (get_local $3)
                               (get_local $17)
                             )
-                            (call_import $qa)
+                            (call $qa)
                             (block
                               (i32.store offset=16
                                 (get_local $23)
@@ -1215,7 +1215,7 @@
                                 (i32.const 1224)
                               )
                             )
-                            (call_import $qa)
+                            (call $qa)
                             (block
                               (i32.store offset=20
                                 (get_local $23)
@@ -1348,7 +1348,7 @@
                                   (i32.const 1224)
                                 )
                               )
-                              (call_import $qa)
+                              (call $qa)
                               (block
                                 (set_local $42
                                   (get_local $6)
@@ -2016,7 +2016,7 @@
                             )
                           )
                         )
-                        (call_import $qa)
+                        (call $qa)
                       )
                       (if
                         (i32.ge_u
@@ -2028,7 +2028,7 @@
                             )
                           )
                         )
-                        (call_import $qa)
+                        (call $qa)
                       )
                       (set_local $5
                         (i32.load offset=24
@@ -2136,7 +2136,7 @@
                                 (get_local $3)
                                 (get_local $10)
                               )
-                              (call_import $qa)
+                              (call $qa)
                               (block
                                 (i32.store
                                   (get_local $3)
@@ -2158,7 +2158,7 @@
                                 )
                                 (get_local $10)
                               )
-                              (call_import $qa)
+                              (call $qa)
                             )
                             (if
                               (i32.ne
@@ -2172,7 +2172,7 @@
                                 )
                                 (get_local $11)
                               )
-                              (call_import $qa)
+                              (call $qa)
                             )
                             (if
                               (i32.eq
@@ -2199,7 +2199,7 @@
                                   (get_local $3)
                                 )
                               )
-                              (call_import $qa)
+                              (call $qa)
                             )
                           )
                         )
@@ -2264,7 +2264,7 @@
                                       (i32.const 1224)
                                     )
                                   )
-                                  (call_import $qa)
+                                  (call $qa)
                                 )
                                 (if
                                   (i32.eq
@@ -2303,7 +2303,7 @@
                                   )
                                 )
                               )
-                              (call_import $qa)
+                              (call $qa)
                             )
                             (i32.store offset=24
                               (get_local $22)
@@ -2320,7 +2320,7 @@
                                   (get_local $10)
                                   (get_local $3)
                                 )
-                                (call_import $qa)
+                                (call $qa)
                                 (block
                                   (i32.store offset=16
                                     (get_local $22)
@@ -2346,7 +2346,7 @@
                                     (i32.const 1224)
                                   )
                                 )
-                                (call_import $qa)
+                                (call $qa)
                                 (block
                                   (i32.store offset=20
                                     (get_local $22)
@@ -2475,7 +2475,7 @@
                                         (i32.const 1224)
                                       )
                                     )
-                                    (call_import $qa)
+                                    (call $qa)
                                     (block
                                       (set_local $19
                                         (get_local $2)
@@ -2792,7 +2792,7 @@
                                     (i32.const 1224)
                                   )
                                 )
-                                (call_import $qa)
+                                (call $qa)
                                 (block
                                   (i32.store
                                     (get_local $21)
@@ -2863,7 +2863,7 @@
                                       (i32.const 0)
                                     )
                                   )
-                                  (call_import $qa)
+                                  (call $qa)
                                 )
                               )
                             )
@@ -3282,7 +3282,7 @@
                         (if
                           (i32.eq
                             (tee_local $19
-                              (call_import $ta
+                              (call $ta
                                 (get_local $7)
                               )
                             )
@@ -3340,7 +3340,7 @@
                     (if
                       (i32.ne
                         (tee_local $16
-                          (call_import $ta
+                          (call $ta
                             (i32.const 0)
                           )
                         )
@@ -3427,7 +3427,7 @@
                             (if
                               (i32.eq
                                 (tee_local $19
-                                  (call_import $ta
+                                  (call $ta
                                     (get_local $2)
                                   )
                                 )
@@ -3517,14 +3517,14 @@
                           )
                           (if
                             (i32.eq
-                              (call_import $ta
+                              (call $ta
                                 (get_local $0)
                               )
                               (i32.const -1)
                             )
                             (block
                               (drop
-                                (call_import $ta
+                                (call $ta
                                   (get_local $19)
                                 )
                               )
@@ -3590,12 +3590,12 @@
           (i32.and
             (i32.lt_u
               (tee_local $4
-                (call_import $ta
+                (call $ta
                   (get_local $13)
                 )
               )
               (tee_local $13
-                (call_import $ta
+                (call $ta
                   (i32.const 0)
                 )
               )
@@ -4141,7 +4141,7 @@
                                                     (get_local $21)
                                                     (get_local $8)
                                                   )
-                                                  (call_import $qa)
+                                                  (call $qa)
                                                 )
                                                 (br_if $do-once$53
                                                   (i32.eq
@@ -4151,7 +4151,7 @@
                                                     (get_local $4)
                                                   )
                                                 )
-                                                (call_import $qa)
+                                                (call $qa)
                                               )
                                             )
                                           )
@@ -4197,7 +4197,7 @@
                                                     (get_local $11)
                                                     (get_local $8)
                                                   )
-                                                  (call_import $qa)
+                                                  (call $qa)
                                                 )
                                                 (if
                                                   (i32.eq
@@ -4218,7 +4218,7 @@
                                                     (br $do-once$55)
                                                   )
                                                 )
-                                                (call_import $qa)
+                                                (call $qa)
                                               )
                                             )
                                           )
@@ -4338,7 +4338,7 @@
                                                     (get_local $16)
                                                     (get_local $8)
                                                   )
-                                                  (call_import $qa)
+                                                  (call $qa)
                                                   (block
                                                     (i32.store
                                                       (get_local $16)
@@ -4360,7 +4360,7 @@
                                                     )
                                                     (get_local $8)
                                                   )
-                                                  (call_import $qa)
+                                                  (call $qa)
                                                 )
                                                 (if
                                                   (i32.ne
@@ -4374,7 +4374,7 @@
                                                     )
                                                     (get_local $4)
                                                   )
-                                                  (call_import $qa)
+                                                  (call $qa)
                                                 )
                                                 (if
                                                   (i32.eq
@@ -4401,7 +4401,7 @@
                                                       (get_local $0)
                                                     )
                                                   )
-                                                  (call_import $qa)
+                                                  (call $qa)
                                                 )
                                               )
                                             )
@@ -4464,7 +4464,7 @@
                                                       (i32.const 1224)
                                                     )
                                                   )
-                                                  (call_import $qa)
+                                                  (call $qa)
                                                 )
                                                 (if
                                                   (i32.eq
@@ -4504,7 +4504,7 @@
                                                 )
                                               )
                                             )
-                                            (call_import $qa)
+                                            (call $qa)
                                           )
                                           (i32.store offset=24
                                             (get_local $24)
@@ -4526,7 +4526,7 @@
                                                 (get_local $11)
                                                 (get_local $0)
                                               )
-                                              (call_import $qa)
+                                              (call $qa)
                                               (block
                                                 (i32.store offset=16
                                                   (get_local $24)
@@ -4555,7 +4555,7 @@
                                                 (i32.const 1224)
                                               )
                                             )
-                                            (call_import $qa)
+                                            (call $qa)
                                             (block
                                               (i32.store offset=20
                                                 (get_local $24)
@@ -4673,7 +4673,7 @@
                                         (br $do-once$65)
                                       )
                                     )
-                                    (call_import $qa)
+                                    (call $qa)
                                   )
                                   (block
                                     (i32.store
@@ -4987,7 +4987,7 @@
                                   (i32.const 1224)
                                 )
                               )
-                              (call_import $qa)
+                              (call $qa)
                               (block
                                 (i32.store
                                   (get_local $46)
@@ -5058,7 +5058,7 @@
                                     (i32.const 0)
                                   )
                                 )
-                                (call_import $qa)
+                                (call $qa)
                               )
                             )
                           )
@@ -5386,7 +5386,7 @@
                               (i32.const 1224)
                             )
                           )
-                          (call_import $qa)
+                          (call $qa)
                           (block
                             (set_local $47
                               (get_local $5)
@@ -5698,7 +5698,7 @@
                           (i32.const 1224)
                         )
                       )
-                      (call_import $qa)
+                      (call $qa)
                       (block
                         (i32.store
                           (get_local $48)
@@ -5769,7 +5769,7 @@
                             (i32.const 0)
                           )
                         )
-                        (call_import $qa)
+                        (call $qa)
                       )
                     )
                   )
@@ -6025,7 +6025,7 @@
           )
         )
       )
-      (call_import $qa)
+      (call $qa)
     )
     (if
       (i32.eq
@@ -6044,7 +6044,7 @@
         )
         (i32.const 1)
       )
-      (call_import $qa)
+      (call $qa)
     )
     (set_local $8
       (i32.add
@@ -6102,7 +6102,7 @@
               )
               (get_local $14)
             )
-            (call_import $qa)
+            (call $qa)
           )
           (if
             (i32.eq
@@ -6210,7 +6210,7 @@
                       (get_local $11)
                       (get_local $14)
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (if
                     (i32.ne
@@ -6219,7 +6219,7 @@
                       )
                       (get_local $0)
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                 )
               )
@@ -6270,7 +6270,7 @@
                       (get_local $1)
                       (get_local $14)
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (if
                     (i32.eq
@@ -6287,7 +6287,7 @@
                     (set_local $10
                       (get_local $3)
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                 )
               )
@@ -6421,7 +6421,7 @@
                     (get_local $9)
                     (get_local $14)
                   )
-                  (call_import $qa)
+                  (call $qa)
                   (block
                     (i32.store
                       (get_local $9)
@@ -6443,7 +6443,7 @@
                     )
                     (get_local $14)
                   )
-                  (call_import $qa)
+                  (call $qa)
                 )
                 (if
                   (i32.ne
@@ -6457,7 +6457,7 @@
                     )
                     (get_local $0)
                   )
-                  (call_import $qa)
+                  (call $qa)
                 )
                 (if
                   (i32.eq
@@ -6484,7 +6484,7 @@
                       (get_local $1)
                     )
                   )
-                  (call_import $qa)
+                  (call $qa)
                 )
               )
             )
@@ -6554,7 +6554,7 @@
                         (i32.const 1224)
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (if
                     (i32.eq
@@ -6602,7 +6602,7 @@
                     )
                   )
                 )
-                (call_import $qa)
+                (call $qa)
               )
               (i32.store offset=24
                 (get_local $4)
@@ -6624,7 +6624,7 @@
                     (get_local $3)
                     (get_local $1)
                   )
-                  (call_import $qa)
+                  (call $qa)
                   (block
                     (i32.store offset=16
                       (get_local $4)
@@ -6650,7 +6650,7 @@
                       (i32.const 1224)
                     )
                   )
-                  (call_import $qa)
+                  (call $qa)
                   (block
                     (i32.store offset=20
                       (get_local $4)
@@ -6695,7 +6695,7 @@
         (get_local $2)
         (get_local $8)
       )
-      (call_import $qa)
+      (call $qa)
     )
     (if
       (i32.eqz
@@ -6713,7 +6713,7 @@
           (i32.const 1)
         )
       )
-      (call_import $qa)
+      (call $qa)
     )
     (if
       (i32.and
@@ -6892,7 +6892,7 @@
                         (i32.const 1224)
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (if
                     (i32.ne
@@ -6901,7 +6901,7 @@
                       )
                       (get_local $8)
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                 )
               )
@@ -6948,7 +6948,7 @@
                         (i32.const 1224)
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (if
                     (i32.eq
@@ -6965,7 +6965,7 @@
                     (set_local $17
                       (get_local $3)
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                 )
               )
@@ -7086,7 +7086,7 @@
                           (i32.const 1224)
                         )
                       )
-                      (call_import $qa)
+                      (call $qa)
                       (block
                         (i32.store
                           (get_local $3)
@@ -7110,7 +7110,7 @@
                           (i32.const 1224)
                         )
                       )
-                      (call_import $qa)
+                      (call $qa)
                     )
                     (if
                       (i32.ne
@@ -7124,7 +7124,7 @@
                         )
                         (get_local $8)
                       )
-                      (call_import $qa)
+                      (call $qa)
                     )
                     (if
                       (i32.eq
@@ -7151,7 +7151,7 @@
                           (get_local $9)
                         )
                       )
-                      (call_import $qa)
+                      (call $qa)
                     )
                   )
                 )
@@ -7215,7 +7215,7 @@
                             (i32.const 1224)
                           )
                         )
-                        (call_import $qa)
+                        (call $qa)
                       )
                       (if
                         (i32.eq
@@ -7254,7 +7254,7 @@
                         )
                       )
                     )
-                    (call_import $qa)
+                    (call $qa)
                   )
                   (i32.store offset=24
                     (get_local $12)
@@ -7276,7 +7276,7 @@
                         (get_local $0)
                         (get_local $9)
                       )
-                      (call_import $qa)
+                      (call $qa)
                       (block
                         (i32.store offset=16
                           (get_local $12)
@@ -7302,7 +7302,7 @@
                           (i32.const 1224)
                         )
                       )
-                      (call_import $qa)
+                      (call $qa)
                       (block
                         (i32.store offset=20
                           (get_local $12)
@@ -7408,7 +7408,7 @@
                 (i32.const 1224)
               )
             )
-            (call_import $qa)
+            (call $qa)
             (block
               (set_local $15
                 (get_local $4)
@@ -7692,7 +7692,7 @@
                 (i32.const 1224)
               )
             )
-            (call_import $qa)
+            (call $qa)
             (block
               (i32.store
                 (get_local $18)
@@ -7763,7 +7763,7 @@
                   (i32.const 0)
                 )
               )
-              (call_import $qa)
+              (call $qa)
             )
           )
         )
@@ -7946,7 +7946,7 @@
                   (i32.const 1160)
                 )
                 (block
-                  (call_import $ra
+                  (call $ra
                     (i32.const 1)
                     (get_local $0)
                   )
@@ -7966,13 +7966,13 @@
                   )
                   (set_local $9
                     (call $Pa
-                      (call_import $ya
+                      (call $ya
                         (i32.const 146)
                         (get_local $12)
                       )
                     )
                   )
-                  (call_import $oa
+                  (call $oa
                     (i32.const 0)
                   )
                   (get_local $9)
@@ -7993,7 +7993,7 @@
                     (get_local $4)
                   )
                   (call $Pa
-                    (call_import $ya
+                    (call $ya
                       (i32.const 146)
                       (get_local $11)
                     )
@@ -8649,7 +8649,7 @@
               (i32.const 0)
             )
           )
-          (call_import $pa
+          (call $pa
             (i32.const 1188)
           )
           (if
@@ -8718,7 +8718,7 @@
               (get_local $0)
             )
           )
-          (call_import $xa
+          (call $xa
             (i32.const 1188)
           )
           (get_local $2)
@@ -9018,7 +9018,7 @@
         (i32.const 4096)
       )
       (return
-        (call_import $va
+        (call $va
           (get_local $0)
           (get_local $1)
           (get_local $2)
@@ -9582,7 +9582,7 @@
       (if
         (i32.lt_s
           (call $Pa
-            (call_import $ua
+            (call $ua
               (i32.const 140)
               (get_local $3)
             )
@@ -9653,7 +9653,7 @@
           )
         )
         (if
-          (call_import $wa
+          (call $wa
             (i32.const 54)
             (get_local $3)
           )
@@ -9748,7 +9748,7 @@
     )
     (set_local $0
       (call $Pa
-        (call_import $sa
+        (call $sa
           (i32.const 6)
           (get_local $2)
         )
@@ -9865,7 +9865,7 @@
     )
   )
   (func $ob (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (call_import $ja
+    (call $ja
       (i32.const 1)
     )
     (i32.const 0)
@@ -9930,7 +9930,7 @@
     )
   )
   (func $nb (param $0 i32) (result i32)
-    (call_import $ja
+    (call $ja
       (i32.const 0)
     )
     (i32.const 0)
@@ -9950,7 +9950,7 @@
     (nop)
   )
   (func $pb (param $0 i32)
-    (call_import $ja
+    (call $ja
       (i32.const 2)
     )
   )

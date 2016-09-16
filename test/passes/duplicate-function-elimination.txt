@@ -370,7 +370,7 @@
   (import "env" "i" (func $i))
   (import "env" "j" (func $i))
   (func $erase (type $FUNCSIG$v)
-    (call_import $i)
+    (call $i)
   )
 )
 (module
@@ -379,10 +379,10 @@
   (import "env" "i" (func $i))
   (import "env" "j" (func $j))
   (func $keep2 (type $FUNCSIG$v)
-    (call_import $i)
+    (call $i)
   )
   (func $other (type $FUNCSIG$v)
-    (call_import $j)
+    (call $j)
   )
 )
 (module

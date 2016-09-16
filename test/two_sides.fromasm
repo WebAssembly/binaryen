@@ -12,7 +12,7 @@
     (local $5 f64)
     (if
       (get_local $4)
-      (call_import $f64-to-int
+      (call $f64-to-int
         (f64.mul
           (f64.add
             (f64.convert_s/i32
@@ -35,7 +35,7 @@
           )
         )
       )
-      (call_import $f64-to-int
+      (call $f64-to-int
         (f64.mul
           (f64.add
             (f64.convert_s/i32

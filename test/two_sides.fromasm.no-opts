@@ -39,7 +39,7 @@
           )
         )
         (set_local $i5
-          (call_import $f64-to-int
+          (call $f64-to-int
             (get_local $d6)
           )
         )
@@ -73,7 +73,7 @@
           )
         )
         (set_local $i5
-          (call_import $f64-to-int
+          (call $f64-to-int
             (get_local $d6)
           )
         )

@@ -25,7 +25,7 @@
         (i32.const 4)
       )
     )
-    (call_import $print
+    (call $print
       (i32.sub
         (i32.const 0)
         (i32.load offset=4
@@ -169,7 +169,7 @@
         (block $block$4$break
           (block $block$3$break
             (block
-              (call_import $print
+              (call $print
                 (i32.const 0)
               )
               (set_local $0
@@ -195,7 +195,7 @@
                 )
                 (block
                   (block
-                    (call_import $print
+                    (call $print
                       (i32.const 7)
                     )
                     (set_local $0
@@ -220,7 +220,7 @@
           )
           (block
             (block
-              (call_import $print
+              (call $print
                 (i32.const 2)
               )
               (set_local $0
@@ -242,7 +242,7 @@
         )
         (loop $shape$6$continue
           (block
-            (call_import $print
+            (call $print
               (i32.const 3)
             )
             (set_local $0
@@ -256,7 +256,7 @@
       )
       (block
         (block
-          (call_import $print
+          (call $print
             (i32.const 9)
           )
           (set_local $0
@@ -294,7 +294,7 @@
         (i32.const 4)
       )
     )
-    (call_import $print
+    (call $print
       (i32.sub
         (i32.const 0)
         (i32.load offset=4
@@ -434,7 +434,7 @@
     )
     (block $block$10$break
       (block $block$4$break
-        (call_import $print
+        (call $print
           (i32.const 0)
         )
         (if
@@ -453,7 +453,7 @@
               (i32.const 2)
             )
             (block
-              (call_import $print
+              (call $print
                 (i32.const 7)
               )
               (br_if $block$10$break
@@ -466,7 +466,7 @@
             (br $block$4$break)
           )
         )
-        (call_import $print
+        (call $print
           (i32.const 2)
         )
         (br_if $block$10$break
@@ -477,7 +477,7 @@
         )
       )
       (loop $shape$6$continue
-        (call_import $print
+        (call $print
           (i32.const 3)
         )
         (drop
@@ -486,7 +486,7 @@
         (br $shape$6$continue)
       )
     )
-    (call_import $print
+    (call $print
       (i32.const 9)
     )
     (drop

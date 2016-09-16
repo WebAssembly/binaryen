@@ -148,7 +148,7 @@
       (if
         (i32.const 0)
         (drop
-          (call_import $int)
+          (call $int)
         )
         (br $out)
       )
@@ -156,25 +156,25 @@
         (i32.const 1)
         (br $out)
         (drop
-          (call_import $int)
+          (call $int)
         )
       )
     )
   )
   (func $drop-silly (type $0)
     (drop
-      (call_import $int)
+      (call $int)
     )
     (drop
-      (call_import $int)
+      (call $int)
     )
     (drop
-      (call_import $int)
+      (call $int)
     )
     (drop
       (i32.add
-        (call_import $int)
-        (call_import $int)
+        (call $int)
+        (call $int)
       )
     )
   )

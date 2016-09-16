@@ -43,7 +43,7 @@
       )
     )
     (drop
-      (call_import $ext_byval_func
+      (call $ext_byval_func
         (i32.add
           (get_local $1)
           (i32.const 12)
@@ -85,7 +85,7 @@
       )
     )
     (drop
-      (call_import $ext_byval_func_align8
+      (call $ext_byval_func_align8
         (i32.add
           (get_local $1)
           (i32.const 8)
@@ -141,7 +141,7 @@
       )
     )
     (drop
-      (call_import $ext_byval_func_alignedstruct
+      (call $ext_byval_func_alignedstruct
         (get_local $1)
       )
     )
@@ -158,7 +158,7 @@
   )
   (func $byval_param (param $0 i32)
     (drop
-      (call_import $ext_func
+      (call $ext_func
         (get_local $0)
       )
     )
@@ -166,7 +166,7 @@
   )
   (func $byval_empty_caller (param $0 i32)
     (drop
-      (call_import $ext_byval_func_empty
+      (call $ext_byval_func_empty
         (get_local $0)
       )
     )
@@ -174,7 +174,7 @@
   )
   (func $byval_empty_callee (param $0 i32)
     (drop
-      (call_import $ext_func_empty
+      (call $ext_func_empty
         (get_local $0)
       )
     )
@@ -196,9 +196,9 @@
       )
     )
     (drop
-      (call_import $big_byval_callee
+      (call $big_byval_callee
         (tee_local $0
-          (call_import $memcpy
+          (call $memcpy
             (get_local $1)
             (get_local $0)
             (i32.const 131072)

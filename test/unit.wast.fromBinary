@@ -166,7 +166,7 @@
     (local $var$1 f64)
     (block $label$0
       (set_local $var$0
-        (call_import $import$1
+        (call $import$1
           (get_local $var$1)
         )
       )
@@ -292,7 +292,7 @@
     )
   )
   (func $frem (type $4) (result f64)
-    (call_import $import$2
+    (call $import$2
       (f64.const 5.5)
       (f64.const 1.2)
     )

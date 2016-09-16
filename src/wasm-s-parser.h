@@ -1207,8 +1207,18 @@ private:
   }
 
   Expression* makeCall(Element& s) {
+    auto target = s[1]->str();
+    auto* import = wasm.checkImport(target);
+    if (import && import->kind == Import::Function) {
+      auto ret = allocator.alloc<CallImport>();
+      ret->target = target;
+      Import* import = wasm.getImport(ret->target);
+      ret->type = import->functionType->result;
+      parseCallOperands(s, 2, s.size(), ret);
+      return ret;
+    }
     auto ret = allocator.alloc<Call>();
-    ret->target = s[1]->str();
+    ret->target = target;
     ret->type = functionTypes[ret->target];
     parseCallOperands(s, 2, s.size(), ret);
     return ret;

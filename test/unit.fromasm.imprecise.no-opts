@@ -313,7 +313,7 @@
             (br $label$continue$L3)
           )
         )
-        (call_import $h
+        (call $h
           (i32.const 120)
         )
         (br $label$continue$L1)
@@ -330,7 +330,7 @@
   )
   (func $frem (result f64)
     (return
-      (call_import $f64-rem
+      (call $f64-rem
         (f64.const 5.5)
         (f64.const 1.2)
       )
@@ -512,7 +512,7 @@
           )
           (br $for-out$0)
         )
-        (call_import $h
+        (call $h
           (get_local $i)
         )
         (set_local $i
@@ -547,29 +547,29 @@
   )
   (func $aborts
     (drop
-      (call_import $abort
+      (call $abort
         (f64.const 0)
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.convert_s/i32
           (i32.const 55)
         )
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.const 0)
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.const 12.34)
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.promote/f32
           (f32.const 56.779998779296875)
         )
@@ -579,12 +579,12 @@
   (func $continues
     (loop $while-in$1
       (block $while-out$0
-        (call_import $print
+        (call $print
           (i32.const 1)
         )
         (block $do-once$2
           (loop $unlikely-continue$3
-            (call_import $print
+            (call $print
               (i32.const 5)
             )
             (if
@@ -593,7 +593,7 @@
             )
           )
         )
-        (call_import $print
+        (call $print
           (i32.const 2)
         )
         (br $while-in$1)
@@ -873,12 +873,12 @@
           (call $phi)
         )
         (drop
-          (call_import $setTempRet0
+          (call $setTempRet0
             (i32.const 10)
           )
         )
         (call $zeroInit
-          (call_import $setTempRet0
+          (call $setTempRet0
             (i32.const 10)
           )
         )
@@ -985,7 +985,7 @@
       (if
         (i32.const 1)
         (i32.trunc_s/f64
-          (call_import $abort
+          (call $abort
             (f64.convert_s/i32
               (i32.const 5)
             )
@@ -997,7 +997,7 @@
     (set_local $y
       (if
         (i32.const 3)
-        (call_import $abort
+        (call $abort
           (f64.convert_s/i32
             (i32.const 7)
           )
@@ -1149,7 +1149,7 @@
     (if
       (i32.const 1)
       (drop
-        (call_import $return_int)
+        (call $return_int)
       )
     )
   )
@@ -1255,7 +1255,7 @@
     (if
       (get_local $x)
       (block
-        (call_import $h
+        (call $h
           (i32.const 0)
         )
         (set_local $label
@@ -1268,11 +1268,11 @@
         (get_local $label)
         (i32.const 1)
       )
-      (call_import $h
+      (call $h
         (i32.const 1)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -1)
     )
     (loop $while-in$1
@@ -1286,7 +1286,7 @@
         (if
           (get_local $x)
           (block
-            (call_import $h
+            (call $h
               (i32.const 2)
             )
             (set_local $label
@@ -1303,17 +1303,17 @@
         (get_local $label)
         (i32.const 2)
       )
-      (call_import $h
+      (call $h
         (i32.const 3)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -2)
     )
     (if
       (get_local $x)
       (block
-        (call_import $h
+        (call $h
           (i32.const 4)
         )
         (if
@@ -1335,7 +1335,7 @@
         (get_local $label)
         (i32.const 3)
       )
-      (call_import $h
+      (call $h
         (i32.const 5)
       )
       (if
@@ -1343,18 +1343,18 @@
           (get_local $label)
           (i32.const 4)
         )
-        (call_import $h
+        (call $h
           (i32.const 6)
         )
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -3)
     )
     (if
       (get_local $x)
       (block
-        (call_import $h
+        (call $h
           (i32.const 7)
         )
         (if
@@ -1377,7 +1377,7 @@
         (i32.const 5)
       )
       (block
-        (call_import $h
+        (call $h
           (i32.const 8)
         )
         (if
@@ -1396,17 +1396,17 @@
         (get_local $label)
         (i32.const 6)
       )
-      (call_import $h
+      (call $h
         (i32.const 9)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -4)
     )
     (if
       (get_local $x)
       (block
-        (call_import $h
+        (call $h
           (i32.const 10)
         )
         (set_local $label
@@ -1421,20 +1421,20 @@
           (i32.const 7)
         )
         (block
-          (call_import $h
+          (call $h
             (i32.const 11)
           )
           (br $label$break$L1)
         )
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -5)
     )
     (if
       (get_local $x)
       (block
-        (call_import $h
+        (call $h
           (i32.const 12)
         )
         (if
@@ -1457,7 +1457,7 @@
         (i32.const 8)
       )
       (block
-        (call_import $h
+        (call $h
           (i32.const 13)
         )
         (if
@@ -1475,14 +1475,14 @@
           (i32.const 9)
         )
         (block
-          (call_import $h
+          (call $h
             (i32.const 14)
           )
           (br $label$break$L1)
         )
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -6)
     )
     (return
@@ -1583,7 +1583,7 @@
     (local $label i32)
     (local $temp i32)
     (set_local $temp
-      (call_import $return_int)
+      (call $return_int)
     )
     (loop $while-in$1
       (block $while-out$0
@@ -1606,7 +1606,7 @@
           (i32.const 12)
         )
         (drop
-          (call_import $return_int)
+          (call $return_int)
         )
         (if
           (i32.eq

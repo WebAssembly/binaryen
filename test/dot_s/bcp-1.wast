@@ -288,34 +288,34 @@
                 )
               )
               (drop
-                (call_import $exit
+                (call $exit
                   (get_local $0)
                 )
               )
               (unreachable)
             )
             (drop
-              (call_import $abort)
+              (call $abort)
             )
             (unreachable)
           )
           (drop
-            (call_import $abort)
+            (call $abort)
           )
           (unreachable)
         )
         (drop
-          (call_import $abort)
+          (call $abort)
         )
         (unreachable)
       )
       (drop
-        (call_import $abort)
+        (call $abort)
       )
       (unreachable)
     )
     (drop
-      (call_import $abort)
+      (call $abort)
     )
     (unreachable)
   )

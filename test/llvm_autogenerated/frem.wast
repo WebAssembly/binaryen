@@ -10,7 +10,7 @@
   (export "frem64" (func $frem64))
   (func $frem32 (param $0 f32) (param $1 f32) (result f32)
     (return
-      (call_import $fmodf
+      (call $fmodf
         (get_local $0)
         (get_local $1)
       )
@@ -18,7 +18,7 @@
   )
   (func $frem64 (param $0 f64) (param $1 f64) (result f64)
     (return
-      (call_import $fmod
+      (call $fmod
         (get_local $0)
         (get_local $1)
       )

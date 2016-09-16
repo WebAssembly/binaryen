@@ -9,7 +9,7 @@
   (export "f3" (func $f3))
   (func $f1 (result i32)
     (drop
-      (call_import $abort)
+      (call $abort)
     )
     (unreachable)
   )

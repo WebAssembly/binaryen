@@ -7,7 +7,7 @@
   (export "main" (func $main))
   (func $main (result i32)
     (drop
-      (call_import $emscripten_asm_const_vi
+      (call $emscripten_asm_const_vi
         (i32.const 0)
       )
     )

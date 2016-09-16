@@ -21,7 +21,7 @@
   (export "tail_dup_to_reuse_result" (func $tail_dup_to_reuse_result))
   (func $copy_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
-      (call_import $memcpy
+      (call $memcpy
         (get_local $0)
         (get_local $1)
         (get_local $2)
@@ -30,7 +30,7 @@
   )
   (func $copy_no (param $0 i32) (param $1 i32) (param $2 i32)
     (drop
-      (call_import $memcpy
+      (call $memcpy
         (get_local $0)
         (get_local $1)
         (get_local $2)
@@ -40,7 +40,7 @@
   )
   (func $move_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
-      (call_import $memmove
+      (call $memmove
         (get_local $0)
         (get_local $1)
         (get_local $2)
@@ -49,7 +49,7 @@
   )
   (func $move_no (param $0 i32) (param $1 i32) (param $2 i32)
     (drop
-      (call_import $memmove
+      (call $memmove
         (get_local $0)
         (get_local $1)
         (get_local $2)
@@ -59,7 +59,7 @@
   )
   (func $set_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
-      (call_import $memset
+      (call $memset
         (get_local $0)
         (get_local $1)
         (get_local $2)
@@ -68,7 +68,7 @@
   )
   (func $set_no (param $0 i32) (param $1 i32) (param $2 i32)
     (drop
-      (call_import $memset
+      (call $memset
         (get_local $0)
         (get_local $1)
         (get_local $2)
@@ -92,7 +92,7 @@
       )
     )
     (drop
-      (call_import $memset
+      (call $memset
         (i32.add
           (get_local $0)
           (i32.const 2048)
@@ -105,7 +105,7 @@
       (i32.store offset=4
         (i32.const 0)
         (i32.add
-          (call_import $memset
+          (call $memset
             (get_local $0)
             (i32.const 0)
             (i32.const 1024)
@@ -126,7 +126,7 @@
             )
           )
           (set_local $0
-            (call_import $def)
+            (call $def)
           )
           (br $label$1)
         )
@@ -137,21 +137,21 @@
         )
       )
       (drop
-        (call_import $block_tail_dup)
+        (call $block_tail_dup)
       )
       (return
         (get_local $0)
       )
     )
     (drop
-      (call_import $memset
+      (call $memset
         (get_local $0)
         (get_local $1)
         (get_local $2)
       )
     )
     (drop
-      (call_import $block_tail_dup)
+      (call $block_tail_dup)
     )
     (return
       (get_local $0)
@@ -167,7 +167,7 @@
             )
           )
           (set_local $0
-            (call_import $def)
+            (call $def)
           )
           (br $label$1)
         )
@@ -182,7 +182,7 @@
       )
     )
     (return
-      (call_import $memset
+      (call $memset
         (get_local $0)
         (get_local $1)
         (get_local $2)

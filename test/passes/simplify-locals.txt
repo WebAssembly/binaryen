@@ -97,7 +97,7 @@
       )
       (nop)
       (nop)
-      (call_import $waka)
+      (call $waka)
       (drop
         (i32.const 9)
       )
@@ -145,19 +145,19 @@
     (block $block3
       (nop)
       (set_local $a
-        (call_import $waka_int)
+        (call $waka_int)
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
-        (call_import $waka_int)
+        (call $waka_int)
       )
-      (call_import $waka)
+      (call $waka)
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
-        (call_import $waka_int)
+        (call $waka_int)
       )
       (drop
         (i32.load
@@ -167,9 +167,9 @@
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
-        (call_import $waka_int)
+        (call $waka_int)
       )
       (i32.store
         (i32.const 1)
@@ -178,14 +178,14 @@
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
       (nop)
       (set_local $a
         (i32.load
           (i32.const 100)
         )
       )
-      (call_import $waka)
+      (call $waka)
       (nop)
       (drop
         (i32.load
@@ -197,17 +197,17 @@
           (i32.const 101)
         )
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
         (i32.load
           (i32.const 102)
         )
       )
-      (call_import $waka)
+      (call $waka)
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
         (i32.load
           (i32.const 103)
@@ -220,7 +220,7 @@
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
       (nop)
       (set_local $a
         (block $block0
@@ -236,7 +236,7 @@
           (get_local $5)
         )
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
         (block $block2
           (block $block4
@@ -251,11 +251,11 @@
           (get_local $6)
         )
       )
-      (call_import $waka)
+      (call $waka)
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
         (block $block5
           (block $block6
@@ -278,7 +278,7 @@
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
       (set_local $a
         (block $block7
           (block $block8
@@ -300,7 +300,7 @@
       (drop
         (get_local $a)
       )
-      (call_import $waka)
+      (call $waka)
     )
     (block $out-of-block
       (nop)
@@ -415,8 +415,8 @@
     (nop)
     (nop)
     (drop
-      (call_import $___udivmoddi4
-        (call_import $_i64Subtract
+      (call $___udivmoddi4
+        (call $_i64Subtract
           (i32.xor
             (tee_local $$1$0
               (i32.or
@@ -474,7 +474,7 @@
         (i32.load
           (i32.const 168)
         )
-        (call_import $_i64Subtract
+        (call $_i64Subtract
           (i32.xor
             (tee_local $$2$0
               (i32.or
@@ -536,7 +536,7 @@
       )
     )
     (set_local $$10$0
-      (call_import $_i64Subtract
+      (call $_i64Subtract
         (i32.xor
           (i32.load
             (get_local $$rem)

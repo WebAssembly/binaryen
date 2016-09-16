@@ -14,7 +14,7 @@
   (elem (i32.const 0) $__wasm_nullptr $main)
   (func $main (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
     (drop
-      (call_import $puts
+      (call $puts
         (i32.const 16)
       )
     )

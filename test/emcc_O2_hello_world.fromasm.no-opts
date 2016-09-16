@@ -275,7 +275,7 @@
                           (i32.const 192)
                         )
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                     )
                     (set_local $i12
                       (i32.add
@@ -301,7 +301,7 @@
                         )
                         (br $do-once$2)
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                     )
                   )
                   (i32.store
@@ -546,7 +546,7 @@
                               (i32.const 192)
                             )
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                         )
                         (set_local $i11
                           (i32.add
@@ -577,7 +577,7 @@
                             )
                             (br $do-once$4)
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                         )
                       )
                       (block
@@ -703,7 +703,7 @@
                                 (i32.const 192)
                               )
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                             (block
                               (set_local $i19
                                 (get_local $i16)
@@ -1009,7 +1009,7 @@
                       (get_local $i22)
                       (get_local $i7)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (set_local $i3
                     (i32.add
@@ -1022,7 +1022,7 @@
                       (get_local $i22)
                       (get_local $i3)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (set_local $i5
                     (i32.load
@@ -1169,7 +1169,7 @@
                             (get_local $i28)
                             (get_local $i7)
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                           (block
                             (i32.store
                               (get_local $i28)
@@ -1196,7 +1196,7 @@
                             (get_local $i14)
                             (get_local $i7)
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                         )
                         (set_local $i17
                           (i32.add
@@ -1211,7 +1211,7 @@
                             )
                             (get_local $i22)
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                         )
                         (set_local $i15
                           (i32.add
@@ -1240,7 +1240,7 @@
                             )
                             (br $do-once$8)
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                         )
                       )
                     )
@@ -1310,7 +1310,7 @@
                                   (i32.const 192)
                                 )
                               )
-                              (call_import $_abort)
+                              (call $_abort)
                             )
                             (set_local $i12
                               (i32.add
@@ -1355,7 +1355,7 @@
                             (get_local $i24)
                             (get_local $i12)
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                         )
                         (i32.store
                           (i32.add
@@ -1380,7 +1380,7 @@
                                 (get_local $i7)
                                 (get_local $i12)
                               )
-                              (call_import $_abort)
+                              (call $_abort)
                               (block
                                 (i32.store
                                   (i32.add
@@ -1418,7 +1418,7 @@
                                 (i32.const 192)
                               )
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                             (block
                               (i32.store
                                 (i32.add
@@ -1576,7 +1576,7 @@
                                     (i32.const 192)
                                   )
                                 )
-                                (call_import $_abort)
+                                (call $_abort)
                                 (block
                                   (set_local $i29
                                     (get_local $i12)
@@ -2349,7 +2349,7 @@
                         (get_local $i44)
                         (get_local $i15)
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                     )
                     (set_local $i8
                       (i32.add
@@ -2362,7 +2362,7 @@
                         (get_local $i44)
                         (get_local $i8)
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                     )
                     (set_local $i3
                       (i32.load
@@ -2509,7 +2509,7 @@
                               (get_local $i49)
                               (get_local $i15)
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                             (block
                               (i32.store
                                 (get_local $i49)
@@ -2536,7 +2536,7 @@
                               (get_local $i2)
                               (get_local $i15)
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                           )
                           (set_local $i14
                             (i32.add
@@ -2551,7 +2551,7 @@
                               )
                               (get_local $i44)
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                           )
                           (set_local $i4
                             (i32.add
@@ -2580,7 +2580,7 @@
                               )
                               (br $do-once$21)
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                           )
                         )
                       )
@@ -2650,7 +2650,7 @@
                                     (i32.const 192)
                                   )
                                 )
-                                (call_import $_abort)
+                                (call $_abort)
                               )
                               (set_local $i7
                                 (i32.add
@@ -2695,7 +2695,7 @@
                               (get_local $i45)
                               (get_local $i7)
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                           )
                           (i32.store
                             (i32.add
@@ -2720,7 +2720,7 @@
                                   (get_local $i15)
                                   (get_local $i7)
                                 )
-                                (call_import $_abort)
+                                (call $_abort)
                                 (block
                                   (i32.store
                                     (i32.add
@@ -2758,7 +2758,7 @@
                                   (i32.const 192)
                                 )
                               )
-                              (call_import $_abort)
+                              (call $_abort)
                               (block
                                 (i32.store
                                   (i32.add
@@ -2874,7 +2874,7 @@
                                         (i32.const 192)
                                       )
                                     )
-                                    (call_import $_abort)
+                                    (call $_abort)
                                     (block
                                       (set_local $i50
                                         (get_local $i3)
@@ -3241,7 +3241,7 @@
                                   (i32.const 192)
                                 )
                               )
-                              (call_import $_abort)
+                              (call $_abort)
                               (block
                                 (i32.store
                                   (get_local $i54)
@@ -3339,7 +3339,7 @@
                                     )
                                     (br $do-once$29)
                                   )
-                                  (call_import $_abort)
+                                  (call $_abort)
                                 )
                               )
                             )
@@ -3605,7 +3605,7 @@
         )
         (block
           (set_local $i53
-            (call_import $_sysconf
+            (call $_sysconf
               (i32.const 30)
             )
           )
@@ -3648,7 +3648,7 @@
                 (i32.const 648)
                 (i32.xor
                   (i32.and
-                    (call_import $_time
+                    (call $_time
                       (i32.const 0)
                     )
                     (i32.const -16)
@@ -3658,7 +3658,7 @@
               )
               (br $do-once$33)
             )
-            (call_import $_abort)
+            (call $_abort)
           )
         )
       )
@@ -3864,7 +3864,7 @@
                   )
                   (block
                     (set_local $i45
-                      (call_import $_sbrk
+                      (call $_sbrk
                         (get_local $i50)
                       )
                     )
@@ -3927,7 +3927,7 @@
                 )
                 (block
                   (set_local $i52
-                    (call_import $_sbrk
+                    (call $_sbrk
                       (i32.const 0)
                     )
                   )
@@ -4031,7 +4031,7 @@
                       (br $do-once$39)
                     )
                     (set_local $i45
-                      (call_import $_sbrk
+                      (call $_sbrk
                         (get_local $i62)
                       )
                     )
@@ -4133,14 +4133,14 @@
                     )
                     (if
                       (i32.eq
-                        (call_import $_sbrk
+                        (call $_sbrk
                           (get_local $i5)
                         )
                         (i32.const -1)
                       )
                       (block
                         (drop
-                          (call_import $_sbrk
+                          (call $_sbrk
                             (get_local $i45)
                           )
                         )
@@ -4216,13 +4216,13 @@
           )
           (block
             (set_local $i63
-              (call_import $_sbrk
+              (call $_sbrk
                 (get_local $i43)
               )
             )
             (block
               (set_local $i43
-                (call_import $_sbrk
+                (call $_sbrk
                   (i32.const 0)
                 )
               )
@@ -4924,7 +4924,7 @@
                                               (get_local $i76)
                                               (get_local $i68)
                                             )
-                                            (call_import $_abort)
+                                            (call $_abort)
                                             (block
                                               (i32.store
                                                 (get_local $i76)
@@ -4951,7 +4951,7 @@
                                               (get_local $i5)
                                               (get_local $i68)
                                             )
-                                            (call_import $_abort)
+                                            (call $_abort)
                                           )
                                           (set_local $i52
                                             (i32.add
@@ -4966,7 +4966,7 @@
                                               )
                                               (get_local $i43)
                                             )
-                                            (call_import $_abort)
+                                            (call $_abort)
                                           )
                                           (set_local $i45
                                             (i32.add
@@ -4995,7 +4995,7 @@
                                               )
                                               (br $do-once$53)
                                             )
-                                            (call_import $_abort)
+                                            (call $_abort)
                                           )
                                         )
                                       )
@@ -5039,7 +5039,7 @@
                                                 (i32.const 192)
                                               )
                                             )
-                                            (call_import $_abort)
+                                            (call $_abort)
                                           )
                                           (set_local $i45
                                             (i32.add
@@ -5111,7 +5111,7 @@
                                         (get_local $i72)
                                         (get_local $i55)
                                       )
-                                      (call_import $_abort)
+                                      (call $_abort)
                                     )
                                     (i32.store
                                       (i32.add
@@ -5139,7 +5139,7 @@
                                             (get_local $i45)
                                             (get_local $i55)
                                           )
-                                          (call_import $_abort)
+                                          (call $_abort)
                                           (block
                                             (i32.store
                                               (i32.add
@@ -5181,7 +5181,7 @@
                                           (i32.const 192)
                                         )
                                       )
-                                      (call_import $_abort)
+                                      (call $_abort)
                                       (block
                                         (i32.store
                                           (i32.add
@@ -5242,7 +5242,7 @@
                                               (get_local $i45)
                                               (get_local $i68)
                                             )
-                                            (call_import $_abort)
+                                            (call $_abort)
                                           )
                                           (if
                                             (i32.eq
@@ -5256,7 +5256,7 @@
                                             )
                                             (br $do-once$61)
                                           )
-                                          (call_import $_abort)
+                                          (call $_abort)
                                         )
                                       )
                                     )
@@ -5302,7 +5302,7 @@
                                               (get_local $i55)
                                               (get_local $i68)
                                             )
-                                            (call_import $_abort)
+                                            (call $_abort)
                                           )
                                           (set_local $i5
                                             (i32.add
@@ -5324,7 +5324,7 @@
                                               (br $do-once$63)
                                             )
                                           )
-                                          (call_import $_abort)
+                                          (call $_abort)
                                         )
                                       )
                                     )
@@ -5486,7 +5486,7 @@
                                         (br $do-once$65)
                                       )
                                     )
-                                    (call_import $_abort)
+                                    (call $_abort)
                                   )
                                 )
                               )
@@ -5834,7 +5834,7 @@
                                   (i32.const 192)
                                 )
                               )
-                              (call_import $_abort)
+                              (call $_abort)
                               (block
                                 (i32.store
                                   (get_local $i84)
@@ -5932,7 +5932,7 @@
                                     )
                                     (br $do-once$50)
                                   )
-                                  (call_import $_abort)
+                                  (call $_abort)
                                 )
                               )
                             )
@@ -6345,7 +6345,7 @@
                                 (i32.const 192)
                               )
                             )
-                            (call_import $_abort)
+                            (call $_abort)
                             (block
                               (set_local $i87
                                 (get_local $i43)
@@ -6706,7 +6706,7 @@
                           (i32.const 192)
                         )
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                       (block
                         (i32.store
                           (get_local $i91)
@@ -6804,7 +6804,7 @@
                             )
                             (br $do-once$44)
                           )
-                          (call_import $_abort)
+                          (call $_abort)
                         )
                       )
                     )
@@ -7117,7 +7117,7 @@
         (get_local $i2)
         (get_local $i3)
       )
-      (call_import $_abort)
+      (call $_abort)
     )
     (set_local $i4
       (i32.load
@@ -7138,7 +7138,7 @@
         (get_local $i1)
         (i32.const 1)
       )
-      (call_import $_abort)
+      (call $_abort)
     )
     (set_local $i5
       (i32.and
@@ -7192,7 +7192,7 @@
               (get_local $i8)
               (get_local $i3)
             )
-            (call_import $_abort)
+            (call $_abort)
           )
           (if
             (i32.eq
@@ -7313,7 +7313,7 @@
                       (get_local $i7)
                       (get_local $i3)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (if
                     (i32.ne
@@ -7325,7 +7325,7 @@
                       )
                       (get_local $i8)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                 )
               )
@@ -7370,7 +7370,7 @@
                       (get_local $i10)
                       (get_local $i3)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (set_local $i14
                     (i32.add
@@ -7388,7 +7388,7 @@
                     (set_local $i15
                       (get_local $i14)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                 )
                 (set_local $i15
@@ -7563,7 +7563,7 @@
                     (get_local $i22)
                     (get_local $i3)
                   )
-                  (call_import $_abort)
+                  (call $_abort)
                   (block
                     (i32.store
                       (get_local $i22)
@@ -7590,7 +7590,7 @@
                     (get_local $i11)
                     (get_local $i3)
                   )
-                  (call_import $_abort)
+                  (call $_abort)
                 )
                 (set_local $i16
                   (i32.add
@@ -7605,7 +7605,7 @@
                     )
                     (get_local $i8)
                   )
-                  (call_import $_abort)
+                  (call $_abort)
                 )
                 (set_local $i14
                   (i32.add
@@ -7634,7 +7634,7 @@
                     )
                     (br $do-once$2)
                   )
-                  (call_import $_abort)
+                  (call $_abort)
                 )
               )
             )
@@ -7709,7 +7709,7 @@
                         (i32.const 192)
                       )
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (set_local $i10
                     (i32.add
@@ -7762,7 +7762,7 @@
                   (get_local $i18)
                   (get_local $i10)
                 )
-                (call_import $_abort)
+                (call $_abort)
               )
               (i32.store
                 (i32.add
@@ -7790,7 +7790,7 @@
                       (get_local $i14)
                       (get_local $i10)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                     (block
                       (i32.store
                         (i32.add
@@ -7828,7 +7828,7 @@
                       (i32.const 192)
                     )
                   )
-                  (call_import $_abort)
+                  (call $_abort)
                   (block
                     (i32.store
                       (i32.add
@@ -7888,7 +7888,7 @@
         (get_local $i12)
         (get_local $i6)
       )
-      (call_import $_abort)
+      (call $_abort)
     )
     (set_local $i5
       (i32.add
@@ -7908,7 +7908,7 @@
           (i32.const 1)
         )
       )
-      (call_import $_abort)
+      (call $_abort)
     )
     (if
       (i32.eqz
@@ -8185,7 +8185,7 @@
                           (i32.const 192)
                         )
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                       (block
                         (i32.store
                           (get_local $i27)
@@ -8214,7 +8214,7 @@
                           (i32.const 192)
                         )
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                     )
                     (set_local $i15
                       (i32.add
@@ -8229,7 +8229,7 @@
                         )
                         (get_local $i6)
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                     )
                     (set_local $i20
                       (i32.add
@@ -8258,7 +8258,7 @@
                         )
                         (br $do-once$10)
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                     )
                   )
                 )
@@ -8327,7 +8327,7 @@
                             (i32.const 192)
                           )
                         )
-                        (call_import $_abort)
+                        (call $_abort)
                       )
                       (set_local $i22
                         (i32.add
@@ -8372,7 +8372,7 @@
                       (get_local $i23)
                       (get_local $i22)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (i32.store
                     (i32.add
@@ -8400,7 +8400,7 @@
                           (get_local $i8)
                           (get_local $i22)
                         )
-                        (call_import $_abort)
+                        (call $_abort)
                         (block
                           (i32.store
                             (i32.add
@@ -8438,7 +8438,7 @@
                           (i32.const 192)
                         )
                       )
-                      (call_import $_abort)
+                      (call $_abort)
                       (block
                         (i32.store
                           (i32.add
@@ -8503,7 +8503,7 @@
                         (i32.const 192)
                       )
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (if
                     (i32.ne
@@ -8515,7 +8515,7 @@
                       )
                       (get_local $i6)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                 )
               )
@@ -8556,7 +8556,7 @@
                         (i32.const 192)
                       )
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                   (set_local $i21
                     (i32.add
@@ -8574,7 +8574,7 @@
                     (set_local $i28
                       (get_local $i21)
                     )
-                    (call_import $_abort)
+                    (call $_abort)
                   )
                 )
                 (set_local $i28
@@ -8723,7 +8723,7 @@
                   (i32.const 192)
                 )
               )
-              (call_import $_abort)
+              (call $_abort)
               (block
                 (set_local $i30
                   (get_local $i13)
@@ -9051,7 +9051,7 @@
                   (i32.const 192)
                 )
               )
-              (call_import $_abort)
+              (call $_abort)
               (block
                 (i32.store
                   (get_local $i35)
@@ -9149,7 +9149,7 @@
                     )
                     (br $do-once$16)
                   )
-                  (call_import $_abort)
+                  (call $_abort)
                 )
               )
             )
@@ -9391,7 +9391,7 @@
             )
             (set_local $i14
               (call $___syscall_ret
-                (call_import $___syscall146
+                (call $___syscall146
                   (i32.const 146)
                   (get_local $i5)
                 )
@@ -9399,7 +9399,7 @@
             )
           )
           (block
-            (call_import $_pthread_cleanup_push
+            (call $_pthread_cleanup_push
               (i32.const 4)
               (get_local $i1)
             )
@@ -9425,13 +9425,13 @@
             )
             (set_local $i11
               (call $___syscall_ret
-                (call_import $___syscall146
+                (call $___syscall146
                   (i32.const 146)
                   (get_local $i6)
                 )
               )
             )
-            (call_import $_pthread_cleanup_pop
+            (call $_pthread_cleanup_pop
               (i32.const 0)
             )
             (set_local $i14
@@ -10051,7 +10051,7 @@
               )
             )
           )
-          (call_import $___lock
+          (call $___lock
             (i32.const 36)
           )
           (set_local $i4
@@ -10154,7 +10154,7 @@
               )
             )
           )
-          (call_import $___unlock
+          (call $___unlock
             (i32.const 36)
           )
           (set_local $i2
@@ -10696,7 +10696,7 @@
         (i32.const 4096)
       )
       (return
-        (call_import $_emscripten_memcpy_big
+        (call $_emscripten_memcpy_big
           (get_local $i1)
           (get_local $i2)
           (get_local $i3)
@@ -11204,7 +11204,7 @@
     (if
       (i32.lt_s
         (call $___syscall_ret
-          (call_import $___syscall140
+          (call $___syscall140
             (i32.const 140)
             (get_local $i5)
           )
@@ -11413,7 +11413,7 @@
         (get_local $i3)
       )
       (set_local $i9
-        (call_import $i32u-div
+        (call $i32u-div
           (get_local $i8)
           (get_local $i2)
         )
@@ -11486,7 +11486,7 @@
                 )
               )
               (i32.ne
-                (call_import $___syscall54
+                (call $___syscall54
                   (i32.const 54)
                   (get_local $i5)
                 )
@@ -11637,7 +11637,7 @@
     )
     (set_local $i1
       (call $___syscall_ret
-        (call_import $___syscall6
+        (call $___syscall6
           (i32.const 6)
           (get_local $i3)
         )
@@ -11775,7 +11775,7 @@
       (set_local $i1
         (i32.load
           (i32.add
-            (call_import $_pthread_self)
+            (call $_pthread_self)
             (i32.const 60)
           )
         )
@@ -11866,7 +11866,7 @@
     )
   )
   (func $b1 (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
-    (call_import $abort
+    (call $abort
       (i32.const 1)
     )
     (return
@@ -11884,7 +11884,7 @@
     )
   )
   (func $b0 (param $i1 i32) (result i32)
-    (call_import $abort
+    (call $abort
       (i32.const 0)
     )
     (return
@@ -11920,7 +11920,7 @@
     )
   )
   (func $b2 (param $i1 i32)
-    (call_import $abort
+    (call $abort
       (i32.const 2)
     )
   )

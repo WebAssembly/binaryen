@@ -154,7 +154,7 @@
     (local $d f64)
     (block $block0
       (set_local $i
-        (call_import $f64-to-int
+        (call $f64-to-int
           (get_local $d)
         )
       )
@@ -284,7 +284,7 @@
     )
   )
   (func $frem (type $4) (result f64)
-    (call_import $f64-rem
+    (call $f64-rem
       (f64.const 5.5)
       (f64.const 1.2)
     )

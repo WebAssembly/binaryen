@@ -224,7 +224,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printCallBody(curr);
   }
   void visitCallImport(CallImport *curr) {
-    printOpening(o, "call_import ");
+    printOpening(o, "call ");
     printCallBody(curr);
   }
   void visitCallIndirect(CallIndirect *curr) {

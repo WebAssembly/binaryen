@@ -7,7 +7,7 @@
   (func $main (result i32)
     (local $0 i32)
     (drop
-      (call_import $exit
+      (call $exit
         (i32.const 0)
       )
     )
