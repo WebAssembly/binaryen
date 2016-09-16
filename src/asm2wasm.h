@@ -878,7 +878,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     Name tempRet0;
     {
       Expression* curr = wasm.getFunction(getTempRet0)->body;
-      if (curr->is<Block>()) curr = curr->cast<Block>()->list[0];
+      if (curr->is<Block>()) curr = curr->cast<Block>()->list.back();
       if (curr->is<Return>()) curr = curr->cast<Return>()->value;
       auto* get = curr->cast<GetGlobal>();
       tempRet0 = get->name;

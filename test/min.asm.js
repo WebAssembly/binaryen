@@ -18,6 +18,8 @@ function (global, env, buffer) {
   var hF32 = new global.Float32Array(buffer);
   var hF64 = new global.Float64Array(buffer);
 
+  var M = 0; // tempRet
+
   function floats(f) {
     f = fr(f);
     var t = fr(0);
@@ -40,7 +42,11 @@ function (global, env, buffer) {
   function ctzzzz() {
     return ctz32(0x1234) | 0;
   }
+  function ub() {
+    ub(); // emterpreter assertions mode might add some code here
+    return M | 0;
+  }
 
-  return { floats: floats };
+  return { floats: floats, getTempRet0: ub };
 }
 
