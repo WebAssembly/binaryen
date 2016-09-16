@@ -272,12 +272,18 @@ class SExpressionWasmBuilder {
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0) {
+  SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName = nullptr) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0) {
     assert(module[0]->str() == MODULE);
-    if (module.size() > 1 && module[1]->isStr()) {
+    Index i = 1;
+    if (module[i]->dollared()) {
+      if (moduleName) {
+        *moduleName = module[i]->str();
+      }
+      i++;
+    }
+    if (i < module.size() && module[i]->isStr()) {
       // these s-expressions contain a binary module, actually
       std::vector<char> data;
-      size_t i = 1;
       while (i < module.size()) {
         auto str = module[i++]->c_str();
         if (auto size = strlen(str)) {
@@ -289,13 +295,13 @@ public:
       return;
     }
     functionCounter = 0;
-    for (unsigned i = 1; i < module.size(); i++) {
-      preParseFunctionType(*module[i]);
-      preParseImports(*module[i]);
+    for (unsigned j = i; j < module.size(); j++) {
+      preParseFunctionType(*module[j]);
+      preParseImports(*module[j]);
     }
     functionCounter = 0;
-    for (unsigned i = 1; i < module.size(); i++) {
-      parseModuleElement(*module[i]);
+    for (unsigned j = i; j < module.size(); j++) {
+      parseModuleElement(*module[j]);
     }
   }
 
