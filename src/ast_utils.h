@@ -51,12 +51,14 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
   }
 
   static bool has(Expression* tree, Name target) {
+    if (!target.is()) return false;
     BreakSeeker breakSeeker(target);
     breakSeeker.walk(tree);
     return breakSeeker.found > 0;
   }
 
   static Index count(Expression* tree, Name target) {
+    if (!target.is()) return 0;
     BreakSeeker breakSeeker(target);
     breakSeeker.walk(tree);
     return breakSeeker.found;
@@ -425,18 +427,16 @@ struct ExpressionAnalyzer {
     return !curr->condition && !curr->value;
   }
 
-  // Checks if an expression ends with a simple break,
-  // and returns a pointer to it if so.
-  // (It might also have other internal branches.)
-  static Expression* getEndingSimpleBreak(Expression* curr) {
+  // Checks if an expression does not flow out in an obvious way.
+  // We return true if it cannot flow out. If it can flow out, we
+  // might still return true, as the analysis here is simple and fast.
+  static bool obviouslyDoesNotFlowOut(Expression* curr) {
     if (auto* br = curr->dynCast<Break>()) {
-      if (isSimple(br)) return br;
-      return nullptr;
+      if (!br->condition) return true;
+    } else if (auto* block = curr->dynCast<Block>()) {
+      if (block->list.size() > 0 && obviouslyDoesNotFlowOut(block->list.back()) && !BreakSeeker::has(block, block->name)) return true;
     }
-    if (auto* block = curr->dynCast<Block>()) {
-      if (block->list.size() > 0) return getEndingSimpleBreak(block->list.back());
-    }
-    return nullptr;
+    return false;
   }
 
   template<typename T>

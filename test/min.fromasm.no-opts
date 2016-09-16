@@ -6,6 +6,8 @@
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (export "floats" (func $floats))
+  (export "getTempRet0" (func $ub))
+  (global $M i32 (i32.const 0))
   (func $floats (param $f f32) (result f32)
     (local $t f32)
     (return
@@ -58,6 +60,14 @@
       (i32.ctz
         (i32.const 4660)
       )
+    )
+  )
+  (func $ub (result i32)
+    (drop
+      (call $ub)
+    )
+    (return
+      (get_global $M)
     )
   )
 )
