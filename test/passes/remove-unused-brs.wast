@@ -158,9 +158,11 @@
           (drop
             (i32.const 12)
           )
-          (br_if $topmost
-            (i32.const 1)
-            (i32.const 1)
+          (drop
+            (br_if $topmost
+              (i32.const 1)
+              (i32.const 1)
+            )
           )
         )
         (block $block3

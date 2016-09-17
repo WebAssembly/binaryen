@@ -4600,15 +4600,17 @@
                                                   (i32.const 1)
                                                 )
                                                 (block i32
-                                                  (br_if $do-once$64
-                                                    (get_local $6)
-                                                    (i32.and
-                                                      (get_local $16)
+                                                  (drop
+                                                    (br_if $do-once$64
+                                                      (get_local $6)
                                                       (i32.and
-                                                        (get_local $12)
-                                                        (f64.eq
-                                                          (get_local $14)
-                                                          (f64.const 0)
+                                                        (get_local $16)
+                                                        (i32.and
+                                                          (get_local $12)
+                                                          (f64.eq
+                                                            (get_local $14)
+                                                            (f64.const 0)
+                                                          )
                                                         )
                                                       )
                                                     )
@@ -4958,10 +4960,12 @@
                                                       )
                                                     )
                                                   )
-                                                  (br_if $do-once$70
-                                                    (get_local $9)
-                                                    (i32.eqz
-                                                      (get_local $5)
+                                                  (drop
+                                                    (br_if $do-once$70
+                                                      (get_local $9)
+                                                      (i32.eqz
+                                                        (get_local $5)
+                                                      )
                                                     )
                                                   )
                                                   (i32.store
@@ -5168,10 +5172,12 @@
                                                                 )
                                                               )
                                                             )
-                                                            (br_if $do-once$78
-                                                              (get_local $5)
-                                                              (i32.eqz
-                                                                (get_local $9)
+                                                            (drop
+                                                              (br_if $do-once$78
+                                                                (get_local $5)
+                                                                (i32.eqz
+                                                                  (get_local $9)
+                                                                )
                                                               )
                                                             )
                                                             (i32.store
@@ -5506,13 +5512,15 @@
                                                     (if
                                                       (get_local $30)
                                                       (block f64
-                                                        (br_if $do-once$90
-                                                          (get_local $22)
-                                                          (i32.ne
-                                                            (i32.load8_s
-                                                              (get_local $36)
+                                                        (drop
+                                                          (br_if $do-once$90
+                                                            (get_local $22)
+                                                            (i32.ne
+                                                              (i32.load8_s
+                                                                (get_local $36)
+                                                              )
+                                                              (i32.const 45)
                                                             )
-                                                            (i32.const 45)
                                                           )
                                                         )
                                                         (set_local $14
@@ -12600,11 +12608,13 @@
                                       )
                                     )
                                     (block i32
-                                      (br_if $do-once$69
-                                        (i32.const 31)
-                                        (i32.gt_u
-                                          (get_local $2)
-                                          (i32.const 16777215)
+                                      (drop
+                                        (br_if $do-once$69
+                                          (i32.const 31)
+                                          (i32.gt_u
+                                            (get_local $2)
+                                            (i32.const 16777215)
+                                          )
                                         )
                                       )
                                       (i32.or

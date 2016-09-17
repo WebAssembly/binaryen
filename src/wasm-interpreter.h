@@ -155,18 +155,19 @@ public:
   Flow visitBreak(Break *curr) {
     NOTE_ENTER("Break");
     bool condition = true;
-    Flow flow(curr->name);
+    Flow flow;
     if (curr->value) {
       flow = visit(curr->value);
       if (flow.breaking()) return flow;
-      flow.breakTo = curr->name;
     }
     if (curr->condition) {
       Flow conditionFlow = visit(curr->condition);
       if (conditionFlow.breaking()) return conditionFlow;
       condition = conditionFlow.value.getInteger() != 0;
+      if (!condition) return flow;
     }
-    return condition ? flow : Flow();
+    flow.breakTo = curr->name;
+    return flow;
   }
   Flow visitSwitch(Switch *curr) {
     NOTE_ENTER("Switch");

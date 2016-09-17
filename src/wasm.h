@@ -1027,7 +1027,11 @@ public:
 
   void finalize() {
     if (condition) {
-      type = none;
+      if (value) {
+        type = value->type;
+      } else {
+        type = none;
+      }
     } else {
       type = unreachable;
     }
