@@ -274,6 +274,7 @@ public:
   // Assumes control of and modifies the input.
   SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName = nullptr) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0) {
     assert(module[0]->str() == MODULE);
+    if (module.size() == 1) return;
     Index i = 1;
     if (module[i]->dollared()) {
       if (moduleName) {
