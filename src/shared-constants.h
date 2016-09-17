@@ -49,7 +49,6 @@ extern Name GROW_WASM_MEMORY,
             FAKE_RETURN,
             SPECTEST,
             PRINT,
-            INVOKE,
             EXIT;
 
 } // namespace wasm

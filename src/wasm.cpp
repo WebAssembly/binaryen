@@ -74,7 +74,6 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      FAKE_RETURN("fake_return_waka123"),
      SPECTEST("spectest"),
      PRINT("print"),
-     INVOKE("invoke"),
      EXIT("exit");
 
 // core AST type checking

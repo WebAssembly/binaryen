@@ -1473,7 +1473,7 @@ private:
         ex->kind = Export::Table;
       } else if (inner[0]->str() == GLOBAL) {
         ex->value = inner[1]->str();
-        ex->kind = Export::Table;
+        ex->kind = Export::Global;
       } else {
         WASM_UNREACHABLE();
       }
@@ -1487,7 +1487,7 @@ private:
         ex->kind = Export::Table;
       } else if (s[2]->str() == GLOBAL) {
         ex->value = s[3]->str();
-        ex->kind = Export::Table;
+        ex->kind = Export::Global;
       } else {
         WASM_UNREACHABLE();
       }
