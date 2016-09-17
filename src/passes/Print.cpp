@@ -109,6 +109,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         o << ' ';
         printName(curr->name);
       }
+      if (isConcreteWasmType(curr->type)) {
+        o << ' ' << printWasmType(curr->type);
+      }
       incIndent();
       if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
         // recurse into the first element

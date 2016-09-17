@@ -991,13 +991,23 @@ private:
       auto& s = *sp;
       size_t i = 1;
       if (i < s.size() && s[i]->isStr()) {
-        curr->name = s[i]->str();
-        i++;
+        // could be a name or a type
+        if (s[i]->dollared() || stringToWasmType(s[i]->str(), true /* allowError */) == none) {
+          curr->name = s[i]->str();
+          i++;
+        } else {
+          curr->name = getPrefixedName("block");
+        }
       } else {
         curr->name = getPrefixedName("block");
       }
       labelStack.push_back(curr->name);
-      if (i >= s.size()) break; // labeled empty block
+      if (i >= s.size()) break; // empty block
+      if (s[i]->isStr()) {
+        // block signature
+        i++; // TODO: parse the signature
+        if (i >= s.size()) break; // empty block
+      }
       auto& first = *s[i];
       if (first[0]->str() == BLOCK) {
         // recurse
@@ -1014,7 +1024,7 @@ private:
       auto& s = *sp;
       size_t i = 1;
       if (i < s.size()) {
-        if (s[i]->isStr()) {
+        while (i < s.size() && s[i]->isStr()) {
           i++;
         }
         if (t < int(stack.size()) - 1) {
@@ -1132,7 +1142,12 @@ private:
 
   Expression* makeIf(Element& s) {
     auto ret = allocator.alloc<If>();
-    ret->condition = parseExpression(s[1]);
+    Index i = 1;
+    if (s[i]->isStr()) {
+      // if type
+      i++;
+    }
+    ret->condition = parseExpression(s[i++]);
 
     // ifTrue and ifFalse may get implicit blocks
     auto handle = [&](const char* title, Element& s) {
@@ -1162,9 +1177,9 @@ private:
       return ret;
     };
 
-    ret->ifTrue = handle("if-true", *s[2]);
-    if (s.size() == 4) {
-      ret->ifFalse = handle("if-else", *s[3]);
+    ret->ifTrue = handle("if-true", *s[i++]);
+    if (i < s.size()) {
+      ret->ifFalse = handle("if-else", *s[i++]);
       ret->finalize();
     }
     return ret;

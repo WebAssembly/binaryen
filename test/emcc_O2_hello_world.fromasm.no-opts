@@ -3723,13 +3723,13 @@
           (get_local $i52)
           (i32.const 0)
         )
-        (block
+        (block i32
           (set_local $i51
             (i32.load
               (i32.const 608)
             )
           )
-          (block
+          (block i32
             (set_local $i50
               (i32.add
                 (get_local $i51)
@@ -3795,7 +3795,7 @@
                           (get_local $i51)
                           (get_local $i52)
                         )
-                        (block
+                        (block i32
                           (set_local $i45
                             (i32.add
                               (get_local $i50)
@@ -3925,7 +3925,7 @@
                   (get_local $i36)
                   (i32.const 173)
                 )
-                (block
+                (block i32
                   (set_local $i52
                     (call $_sbrk
                       (i32.const 0)
@@ -4101,13 +4101,13 @@
                           )
                         )
                       )
-                      (block
+                      (block i32
                         (set_local $i52
                           (i32.load
                             (i32.const 656)
                           )
                         )
-                        (block
+                        (block i32
                           (set_local $i5
                             (i32.and
                               (i32.add
@@ -4214,13 +4214,13 @@
             )
             (i32.const 0)
           )
-          (block
+          (block i32
             (set_local $i63
               (call $_sbrk
                 (get_local $i43)
               )
             )
-            (block
+            (block i32
               (set_local $i43
                 (call $_sbrk
                   (i32.const 0)
@@ -4246,7 +4246,7 @@
           )
           (i32.const 0)
         )
-        (block
+        (block i32
           (set_local $i60
             (i32.sub
               (get_local $i43)
@@ -5996,7 +5996,7 @@
                         (get_local $i63)
                         (get_local $i60)
                       )
-                      (block
+                      (block i32
                         (set_local $i53
                           (i32.add
                             (get_local $i63)
@@ -10466,7 +10466,7 @@
                 (get_local $i6)
                 (get_local $i8)
               )
-              (block
+              (block i32
                 (set_local $i11
                   (i32.and
                     (get_local $i2)
@@ -10573,7 +10573,7 @@
             (get_local $i3)
           )
         )
-        (block
+        (block i32
           (drop
             (call_indirect $FUNCSIG$iiii
               (get_local $i1)
@@ -11069,14 +11069,14 @@
                 )
                 (i32.const 10)
               )
-              (block
+              (block i32
                 (set_local $i5
                   (i32.add
                     (get_local $i2)
                     (i32.const 20)
                   )
                 )
-                (block
+                (block i32
                   (set_local $i6
                     (i32.load
                       (get_local $i5)
@@ -11456,7 +11456,7 @@
           )
           (i32.const 0)
         )
-        (block
+        (block i32
           (i32.store
             (get_local $i5)
             (i32.load
@@ -11466,7 +11466,7 @@
               )
             )
           )
-          (block
+          (block i32
             (i32.store
               (i32.add
                 (get_local $i5)
@@ -11474,7 +11474,7 @@
               )
               (i32.const 21505)
             )
-            (block
+            (block i32
               (i32.store
                 (i32.add
                   (get_local $i5)

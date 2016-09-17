@@ -30302,7 +30302,7 @@
       )
     )
     (return
-      (block
+      (block i32
         (block
           (set_global $tempRet0
             (get_local $h)
@@ -30337,7 +30337,7 @@
       )
     )
     (return
-      (block
+      (block i32
         (block
           (set_global $tempRet0
             (get_local $h)
@@ -30913,7 +30913,7 @@
       )
     )
     (return
-      (block
+      (block i32
         (block
           (set_global $tempRet0
             (i32.add
@@ -31316,7 +31316,7 @@
       (get_local $__stackBase__)
     )
     (return
-      (block
+      (block i32
         (block
           (set_global $tempRet0
             (get_local $$10$1)
@@ -31357,7 +31357,7 @@
       )
     )
     (return
-      (block
+      (block i32
         (block
           (set_global $tempRet0
             (i32.or
@@ -31434,7 +31434,7 @@
       (get_local $__stackBase__)
     )
     (return
-      (block
+      (block i32
         (block
           (set_global $tempRet0
             (i32.load

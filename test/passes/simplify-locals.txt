@@ -223,7 +223,7 @@
       (call $waka)
       (nop)
       (set_local $a
-        (block $block0
+        (block $block0 i32
           (block $block1
             (nop)
             (i32.store
@@ -238,7 +238,7 @@
       )
       (call $waka)
       (set_local $a
-        (block $block2
+        (block $block2 i32
           (block $block4
             (nop)
             (i32.store
@@ -257,7 +257,7 @@
       )
       (call $waka)
       (set_local $a
-        (block $block5
+        (block $block5 i32
           (block $block6
             (nop)
             (i32.store
@@ -280,7 +280,7 @@
       )
       (call $waka)
       (set_local $a
-        (block $block7
+        (block $block7 i32
           (block $block8
             (nop)
             (i32.store
@@ -306,7 +306,7 @@
       (nop)
       (nop)
       (drop
-        (block $b
+        (block $b i32
           (block $c
             (br $b
               (i32.const 1337)
@@ -563,7 +563,7 @@
       (get_local $__stackBase__)
     )
     (return
-      (block $block12
+      (block $block12 i32
         (i32.store
           (i32.const 168)
           (get_local $$10$1)
@@ -575,11 +575,11 @@
   (func $block-returns (type $FUNCSIG$v)
     (local $x i32)
     (set_local $x
-      (block $out
+      (block $out i32
         (nop)
         (br_if $out
           (tee_local $x
-            (block $waka
+            (block $waka i32
               (nop)
               (br_if $waka
                 (tee_local $x
@@ -600,11 +600,11 @@
           (set_local $x
             (if
               (i32.const 1)
-              (block
+              (block i32
                 (nop)
                 (i32.const 13)
               )
-              (block
+              (block i32
                 (nop)
                 (i32.const 24)
               )
@@ -616,11 +616,11 @@
           (tee_local $x
             (if
               (i32.const 1)
-              (block $block3
+              (block $block3 i32
                 (nop)
                 (i32.const 14)
               )
-              (block $block5
+              (block $block5 i32
                 (nop)
                 (i32.const 25)
               )
@@ -685,7 +685,7 @@
   (func $no-out-of-label (type $8) (param $x i32) (param $y i32)
     (loop $moar
       (set_local $x
-        (block $block0
+        (block $block0 i32
           (br_if $moar
             (get_local $x)
           )
@@ -698,7 +698,7 @@
     )
     (block $moar
       (set_local $y
-        (block $block1
+        (block $block1 i32
           (br_if $moar
             (get_local $y)
           )
@@ -714,7 +714,7 @@
     (local $e i32)
     (loop $while-in$1
       (set_local $a
-        (block $while-out$0
+        (block $while-out$0 i32
           (set_local $e
             (get_local $a)
           )

@@ -3,7 +3,7 @@
   (data (i32.const 1026) "\14\00")
   (type $0 (func (result i32)))
   (func $kitchensink (type $0) (result i32)
-    (block $block0
+    (block $block0 i32
       (drop
         (i32.add
           (i32.const 10)

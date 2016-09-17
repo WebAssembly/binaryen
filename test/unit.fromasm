@@ -400,7 +400,7 @@
             (i32.const 3)
           )
         )
-        (block
+        (block i32
           (drop
             (call $lb
               (i32.const 4)
@@ -421,7 +421,7 @@
           )
         )
       )
-      (block
+      (block i32
         (drop
           (call $lb
             (i32.const 8)
@@ -492,7 +492,7 @@
     )
   )
   (func $phi (result i32)
-    (block $do-once$0
+    (block $do-once$0 i32
       (br_if $do-once$0
         (i32.const 0)
         (call $lb
