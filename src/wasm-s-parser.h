@@ -441,6 +441,9 @@ private:
         i++;
       }
     }
+    if (exportName.is() && !name.is()) {
+      name = exportName; // useful for debugging
+    }
     return i;
   }
 
