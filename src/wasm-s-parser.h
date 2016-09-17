@@ -212,6 +212,10 @@ private:
             if (depth == 0) {
               break;
             }
+          } else if (input[0] == '\n') {
+            line++;
+            lineStart = input;
+            input++;
           } else {
             input++;
           }
@@ -442,9 +446,11 @@ private:
         i++;
       }
     }
+#if 0
     if (exportName.is() && !name.is()) {
       name = exportName; // useful for debugging
     }
+#endif
     return i;
   }
 
@@ -461,6 +467,7 @@ private:
       ex->name = exportName;
       ex->value = name;
       ex->kind = Export::Function;
+      if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
       wasm.addExport(ex.release());
     }
     functionCounter++;
@@ -1394,6 +1401,7 @@ private:
         ex->name = inner[1]->str();
         ex->value = wasm.memory.name;
         ex->kind = Export::Memory;
+        if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
         i++;
       } else {
@@ -1461,32 +1469,27 @@ private:
     ex->name = s[1]->str();
     if (s[2]->isList()) {
       auto& inner = *s[2];
+      ex->value = inner[1]->str();
       if (inner[0]->str() == FUNC) {
-        ex->value = inner[1]->str();
         ex->kind = Export::Function;
       } else if (inner[0]->str() == MEMORY) {
         if (!hasMemory) throw ParseException("memory exported but no memory");
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Memory;
       } else if (inner[0]->str() == TABLE) {
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Table;
       } else if (inner[0]->str() == GLOBAL) {
-        ex->value = inner[1]->str();
         ex->kind = Export::Global;
       } else {
         WASM_UNREACHABLE();
       }
     } else if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
+      ex->value = s[3]->str();
       if (s[2]->str() == MEMORY) {
         if (!hasMemory) throw ParseException("memory exported but no memory");
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Memory;
       } else if (s[2]->str() == TABLE) {
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Table;
       } else if (s[2]->str() == GLOBAL) {
-        ex->value = s[3]->str();
         ex->kind = Export::Global;
       } else {
         WASM_UNREACHABLE();
@@ -1496,6 +1499,7 @@ private:
       ex->value = s[2]->str();
       ex->kind = Export::Function;
     }
+    if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
     wasm.addExport(ex.release());
   }
 
@@ -1591,6 +1595,7 @@ private:
         ex->name = inner[1]->str();
         ex->value = global->name;
         ex->kind = Export::Global;
+        if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
         i++;
       } else {
@@ -1609,11 +1614,9 @@ private:
     seenTable = true;
     Index i = 1;
     if (i == s.size()) return; // empty table in old notation
-#if 0 // TODO: new table notation
     if (s[i]->dollared()) {
       wasm.table.name = s[i++]->str();
     }
-#endif
     if (i == s.size()) return;
     if (s[i]->isList()) {
       auto& inner = *s[i];
@@ -1622,6 +1625,7 @@ private:
         ex->name = inner[1]->str();
         ex->value = wasm.table.name;
         ex->kind = Export::Table;
+        if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
         i++;
       } else {
@@ -1639,8 +1643,12 @@ private:
       // first element isn't dollared, and isn't anyfunc. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
       if (s[s.size() - 1]->str() == ANYFUNC) {
         // (table initial max? type)
-        wasm.table.initial = atoi(s[i]->c_str());
-        wasm.table.max = atoi(s[i + 1]->c_str());
+        if (i < s.size() - 1) {
+          wasm.table.initial = atoi(s[i++]->c_str());
+        }
+        if (i < s.size() - 1) {
+          wasm.table.max = atoi(s[i++]->c_str());
+        }
         return;
       }
     }

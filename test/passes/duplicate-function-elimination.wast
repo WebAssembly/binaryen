@@ -54,7 +54,8 @@
   (type $0 (func))
   (export "keep2" $keep2)
   (export "other" $other)
-  (table $keep2 $other $caller)
+  (table 3 3 anyfunc)
+  (elem (i32.const 0) $keep2 $other $caller)
   (func $keep2 (type $0)
     (nop)
   )
@@ -460,7 +461,8 @@
 (module
   (memory 0)
   (type $T (func))
-  (table $erase $other)
+  (table 2 2 anyfunc)
+  (elem (i32.const 0)  $erase $other)
   (func $erase (type $T)
     (call_indirect $T
       (i32.const 0)
@@ -475,7 +477,8 @@
 (module
   (memory 0)
   (type $T (func))
-  (table $keep2 $other)
+  (table 2 2 anyfunc)
+  (elem (i32.const 0)  $keep2 $other)
   (func $keep2 (type $T)
     (call_indirect $T
       (i32.const 0)
@@ -491,7 +494,8 @@
   (memory 0)
   (type $T (func))
   (type $S (func))
-  (table $keep2 $other)
+  (table 2 2 anyfunc)
+  (elem (i32.const 0)  $keep2 $other)
   (func $keep2 (type $T)
     (call_indirect $T
       (i32.const 0)
