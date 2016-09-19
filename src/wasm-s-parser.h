@@ -372,12 +372,22 @@ private:
     }
   }
 
+  bool isImport(Element& curr) {
+    for (Index i = 0; i < curr.size(); i++) {
+      auto& x = *curr[i];
+      if (x.isList() && x.size() > 0 && x[0]->isStr() && x[0]->str() == IMPORT) return true;
+    }
+    return false;
+  }
+
   void preParseImports(Element& curr) {
     IString id = curr[0]->str();
     if (id == IMPORT) parseImport(curr);
+    if (id == FUNC && isImport(curr)) parseFunction(curr, true /* preParseImport */);
   }
 
   void parseModuleElement(Element& curr) {
+    if (isImport(curr)) return; // already done
     IString id = curr[0]->str();
     if (id == START) return parseStart(curr);
     if (id == FUNC) return parseFunction(curr);
@@ -454,7 +464,7 @@ private:
     return i;
   }
 
-  void parseFunction(Element& s) {
+  void parseFunction(Element& s, bool preParseImport = false) {
     size_t i = 1;
     Name name, exportName;
     i = parseFunctionNames(s, name, exportName);
@@ -481,6 +491,7 @@ private:
     WasmType result = none;
     Name type;
     Block* autoBlock = nullptr; // we may need to add a block for the very top level
+    Name importModule, importBase;
     auto makeFunction = [&]() {
       currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
         name,
@@ -530,7 +541,7 @@ private:
       } else if (id == TYPE) {
         Name name = curr[1]->str();
         type = name;
-        if (!wasm.checkFunctionType(name)) throw ParseException("unknown function");
+        if (!wasm.checkFunctionType(name)) throw ParseException("unknown function type");
         FunctionType* type = wasm.getFunctionType(name);
         result = type->result;
         for (size_t j = 0; j < type->params.size(); j++) {
@@ -539,6 +550,9 @@ private:
           typeParams.emplace_back(name, currType);
           currLocalTypes[name] = currType;
         }
+      } else if (id == IMPORT) {
+        importModule = curr[1]->str();
+        importBase = curr[2]->str();
       } else {
         // body
         if (typeParams.size() > 0 && params.size() == 0) {
@@ -554,6 +568,26 @@ private:
         }
       }
     }
+    if (importModule.is()) {
+      // this is an import, actually
+      assert(preParseImport);
+      std::unique_ptr<Import> im = make_unique<Import>();
+      im->name = name;
+      if (!im->name.is()) {
+        im->name = Name::fromInt(importCounter);
+      }
+      importCounter++;
+      im->module = importModule;
+      im->base = importBase;
+      im->kind = Import::Function;
+      im->functionType = wasm.getFunctionType(type);
+      wasm.addImport(im.release());
+      assert(!currFunction);
+      currLocalTypes.clear();
+      labelStack.clear();
+      return;
+    }
+    assert(!preParseImport);
     if (brokeToAutoBlock) {
       ensureAutoBlock();
       autoBlock->name = FAKE_RETURN;
@@ -1520,10 +1554,11 @@ private:
         newStyle = false; // either (param..) or (result..)
       }
     }
+    Index newStyleInner = 1;
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
-    } else if (newStyle) {
-      im->name = (*s[3])[1]->str();
+    } else if (newStyle && (*s[3])[newStyleInner]->isStr()) {
+      im->name = (*s[3])[newStyleInner++]->str();
     } else {
       im->name = Name::fromInt(importCounter);
     }
@@ -1547,7 +1582,7 @@ private:
     im->base = s[i++]->str();
     // parse internals
     Element& inner = newStyle ? *s[3] : s;
-    Index j = newStyle ? 2 : i;
+    Index j = newStyle ? newStyleInner : i;
     if (im->kind == Import::Function) {
       std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
       if (inner.size() > j) {
