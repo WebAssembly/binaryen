@@ -47,6 +47,7 @@ extern Name GROW_WASM_MEMORY,
             BR,
             ANYFUNC,
             FAKE_RETURN,
+            MUT,
             SPECTEST,
             PRINT,
             EXIT;

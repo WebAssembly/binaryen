@@ -383,7 +383,10 @@ private:
   void preParseImports(Element& curr) {
     IString id = curr[0]->str();
     if (id == IMPORT) parseImport(curr);
-    if (id == FUNC && isImport(curr)) parseFunction(curr, true /* preParseImport */);
+    if (isImport(curr)) {
+      if (id == FUNC) parseFunction(curr, true /* preParseImport */);
+      else throw ParseException("fancy import we don't support yet", curr.line, curr.col);
+    }
   }
 
   void parseModuleElement(Element& curr) {
@@ -1022,6 +1025,7 @@ private:
   Expression* makeSetGlobal(Element& s) {
     auto ret = allocator.alloc<SetGlobal>();
     ret->name = s[1]->str();
+    if (wasm.checkGlobal(ret->name) && !wasm.checkGlobal(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
     ret->value = parseExpression(s[2]);
     return ret;
   }
@@ -1513,6 +1517,8 @@ private:
         ex->kind = Export::Table;
       } else if (inner[0]->str() == GLOBAL) {
         ex->kind = Export::Global;
+        auto* global = wasm.getGlobal(ex->value);
+        if (global->mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
       } else {
         WASM_UNREACHABLE();
       }
@@ -1609,7 +1615,14 @@ private:
       }
       im->functionType = ensureFunctionType(getSig(type.get()), &wasm);
     } else if (im->kind == Import::Global) {
-      im->globalType = stringToWasmType(inner[j]->str());
+      if (inner[j]->isStr()) {
+        im->globalType = stringToWasmType(inner[j]->str());
+      } else {
+        auto& inner2 = *inner[j];
+        assert(inner2[0]->str() == MUT);
+        im->globalType = stringToWasmType(inner2[1]->str());
+        throw ParseException("cannot import a mutable global", s.line, s.col);
+      }
     }
     wasm.addImport(im.release());
   }
@@ -1623,7 +1636,10 @@ private:
       global->name = Name::fromInt(globalCounter);
     }
     globalCounter++;
-    if (s[i]->isList()) {
+    bool mutable_ = false;
+    WasmType type = none;
+    bool exported = false;
+    while (s[i]->isList()) {
       auto& inner = *s[i];
       if (inner[0]->str() == EXPORT) {
         auto ex = make_unique<Export>();
@@ -1632,13 +1648,25 @@ private:
         ex->kind = Export::Global;
         if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
+        exported = true;
+        i++;
+      } else if (inner[0]->str() == IMPORT) {
+        throw ParseException("TODO: import in the middle of a global definition", s.line, s.col);
+      } else if (inner[0]->str() == MUT) {
+        mutable_ = true;
+        type = stringToWasmType(inner[1]->str());
         i++;
       } else {
-        WASM_UNREACHABLE();
+        break;
       }
     }
-    global->type = stringToWasmType(s[i++]->str());
+    if (exported && mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
+    if (type == none) {
+      type = stringToWasmType(s[i++]->str());
+    }
+    global->type = type;
     global->init = parseExpression(s[i++]);
+    global->mutable_ = mutable_;
     assert(i == s.size());
     wasm.addGlobal(global.release());
   }

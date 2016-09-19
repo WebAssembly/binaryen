@@ -1523,6 +1523,7 @@ public:
   Name name;
   WasmType type;
   Expression* init;
+  bool mutable_;
 };
 
 class Module {

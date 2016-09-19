@@ -72,6 +72,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      BR("br"),
      ANYFUNC("anyfunc"),
      FAKE_RETURN("fake_return_waka123"),
+     MUT("mut"),
      SPECTEST("spectest"),
      PRINT("print"),
      EXIT("exit");

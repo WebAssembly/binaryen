@@ -1653,6 +1653,7 @@ public:
       auto curr = new Global;
       curr->type = getWasmType();
       curr->init = readExpression();
+      curr->mutable_ = true; // TODO
       wasm.addGlobal(curr);
     }
   }
