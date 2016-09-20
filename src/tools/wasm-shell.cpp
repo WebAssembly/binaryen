@@ -159,7 +159,13 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       if (!invalid && id == ASSERT_UNLINKABLE) {
         // validate "instantiating" the mdoule
         for (auto& import : wasm.imports) {
-          if (import->module != SPECTEST || import->base != PRINT) {
+          if (import->module == SPECTEST && import->base == PRINT) {
+            if (import->kind != Import::Function) {
+              std::cerr << "spectest.print should be a function, but is " << import->kind << '\n';
+              invalid = true;
+              break;
+            }
+          } else {
             std::cerr << "unknown import: " << import->module << '.' << import->base << '\n';
             invalid = true;
             break;
