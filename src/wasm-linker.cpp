@@ -22,6 +22,7 @@
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-printing.h"
+#include "wasm-traversal.h"
 
 using namespace wasm;
 
@@ -350,6 +351,13 @@ Index Linker::getFunctionIndex(Name name) {
   return functionIndexes[name];
 }
 
+struct CallIndirectFinder : public PostWalker<CallIndirectFinder, Visitor<CallIndirectFinder>> {
+  bool hasIndirectCalls = false;
+  void visitCallIndirect(CallIndirect* curr) {
+    hasIndirectCalls = true;
+  }
+};
+
 void Linker::makeDummyFunction() {
   bool create = false;
   // Check if there are address-taken functions
@@ -358,6 +366,12 @@ void Linker::makeDummyFunction() {
       create = true;
       break;
     }
+  }
+  // Check if there are call-indirect instructions
+  if (!create) {
+    CallIndirectFinder finder;
+    finder.walkModule(&out.wasm);
+    create = finder.hasIndirectCalls;
   }
   if (!create) return;
   wasm::Builder wasmBuilder(out.wasm);
