@@ -563,7 +563,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitGlobal(Global *curr) {
     printOpening(o, "global ");
     printName(curr->name) << ' ';
-    o << printWasmType(curr->type) << ' ';
+    if (curr->mutable_) {
+      o << "(mut " << printWasmType(curr->type) << ") ";
+    } else {
+      o << printWasmType(curr->type) << ' ';
+    }
     visit(curr->init);
     o << ')';
   }

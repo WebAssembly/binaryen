@@ -177,6 +177,7 @@ private:
     else if (type == f64) value = Literal(double(0));
     else WASM_UNREACHABLE();
     global->init = wasm.allocator.alloc<Const>()->set(value);
+    global->mutable_ = true;
     wasm.addGlobal(global);
   }
 
@@ -502,9 +503,20 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       type = WasmType::f64;
     }
     if (type != WasmType::none) {
+      // we need imported globals to be mutable, but wasm doesn't support that yet, so we must
+      // import an immutable and create a mutable global initialized to its value
+      import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
       import->kind = Import::Global;
       import->globalType = type;
       mappedGlobals.emplace(name, type);
+      {
+        auto global = new Global();
+        global->name = name;
+        global->type = type;
+        global->init = builder.makeGetGlobal(import->name, type);
+        global->mutable_ = true;
+        wasm.addGlobal(global);
+      }
     } else {
       import->kind = Import::Function;
     }

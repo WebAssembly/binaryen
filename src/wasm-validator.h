@@ -335,7 +335,7 @@ public:
   }
 
   void visitGlobal(Global* curr) {
-    shouldBeTrue(curr->init->is<Const>(), curr->name, "global init must be valid");
+    shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
     shouldBeEqual(curr->type, curr->init->type, nullptr, "global init must have correct type");
   }
 

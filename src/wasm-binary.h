@@ -1293,8 +1293,13 @@ public:
       else if (match(BinaryConsts::Section::FunctionSignatures)) readFunctionSignatures();
       else if (match(BinaryConsts::Section::Functions)) readFunctions();
       else if (match(BinaryConsts::Section::ExportTable)) readExports();
-      else if (match(BinaryConsts::Section::Globals)) readGlobals();
-      else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
+      else if (match(BinaryConsts::Section::Globals)) {
+        readGlobals();
+        // imports can read global imports, so we run getGlobalName and create the mapping
+        // but after we read globals, we need to add the internal globals too, so do that here
+        mappedGlobals.clear(); // wipe the mapping
+        getGlobalName(0); // force rebuild
+      } else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
       else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
       else if (match(BinaryConsts::Section::Names)) readNames();
       else {
