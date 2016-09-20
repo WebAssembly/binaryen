@@ -304,12 +304,17 @@ public:
       binaryBuilder.read();
       return;
     }
+    Index implementedFunctions = 0;
     functionCounter = 0;
     for (unsigned j = i; j < module.size(); j++) {
-      preParseFunctionType(*module[j]);
-      preParseImports(*module[j]);
+      auto& s = *module[j];
+      preParseFunctionType(s);
+      preParseImports(s);
+      if (s[0]->str() == FUNC && !isImport(s)) {
+        implementedFunctions++;
+      }
     }
-    functionCounter = 0;
+    functionCounter -= implementedFunctions; // we go through the functions again, now parsing them, and the counter begins from where imports ended
     for (unsigned j = i; j < module.size(); j++) {
       parseModuleElement(*module[j]);
     }
