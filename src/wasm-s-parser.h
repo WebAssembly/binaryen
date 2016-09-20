@@ -571,6 +571,18 @@ private:
         }
       }
     }
+    // see https://github.com/WebAssembly/spec/pull/301
+    if (type.isNull()) {
+      // if no function type name provided, then we generated one
+      std::unique_ptr<FunctionType> functionType = std::unique_ptr<FunctionType>(sigToFunctionType(getSigFromStructs(result, params)));
+      for (auto& existing : wasm.functionTypes) {
+        if (existing->structuralComparison(*functionType)) {
+          type = existing->name;
+          break;
+        }
+      }
+      if (!type.is()) throw ParseException("no function type [internal error?]", s.line, s.col);
+    }
     if (importModule.is()) {
       // this is an import, actually
       assert(preParseImport);
@@ -603,18 +615,6 @@ private:
       body = allocator.alloc<Nop>();
     }
     if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
-    // see https://github.com/WebAssembly/spec/pull/301
-    if (type.isNull()) {
-      // if no function type name provided, then we generated one
-      std::unique_ptr<FunctionType> functionType = std::unique_ptr<FunctionType>(sigToFunctionType(getSig(currFunction.get())));
-      for (auto& existing : wasm.functionTypes) {
-        if (existing->structuralComparison(*functionType)) {
-          type = existing->name;
-          break;
-        }
-      }
-      if (!type.is()) throw ParseException("no function type [internal error?]", s.line, s.col);
-    }
     currFunction->body = body;
     currFunction->type = type;
 
