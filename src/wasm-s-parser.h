@@ -80,7 +80,7 @@ public:
   }
 
   Element* operator[](unsigned i) {
-    if (i >= list().size()) throw ParseException("expected more elements in list", line, col);
+    if (i >= list().size()) assert(0 && "expected more elements in list");
     return list()[i];
   }
 
@@ -270,13 +270,12 @@ class SExpressionWasmBuilder {
   MixedArena& allocator;
   std::vector<Name> functionNames;
   int functionCounter;
-  int importCounter;
   int globalCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName = nullptr) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0) {
+  SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName = nullptr) : wasm(wasm), allocator(wasm.allocator), globalCounter(0) {
     assert(module[0]->str() == MODULE);
     if (module.size() == 1) return;
     Index i = 1;
@@ -385,6 +384,7 @@ private:
     if (id == IMPORT) parseImport(curr);
     if (isImport(curr)) {
       if (id == FUNC) parseFunction(curr, true /* preParseImport */);
+      else if (id == GLOBAL) parseGlobal(curr, true /* preParseImport */);
       else throw ParseException("fancy import we don't support yet", curr.line, curr.col);
     }
   }
@@ -589,9 +589,8 @@ private:
       std::unique_ptr<Import> im = make_unique<Import>();
       im->name = name;
       if (!im->name.is()) {
-        im->name = Name::fromInt(importCounter);
+        im->name = name;
       }
-      importCounter++;
       im->module = importModule;
       im->base = importBase;
       im->kind = Import::Function;
@@ -638,6 +637,10 @@ private:
     }
     if (allowError) return none;
     abort();
+  }
+
+  bool isWasmType(IString str) {
+    return stringToWasmType(str, true) != none;
   }
 
 public:
@@ -1562,12 +1565,26 @@ private:
     Index newStyleInner = 1;
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
-    } else if (newStyle && (*s[3])[newStyleInner]->isStr()) {
-      im->name = (*s[3])[newStyleInner++]->str();
-    } else {
-      im->name = Name::fromInt(importCounter);
+    } else if (newStyle && newStyleInner < s[3]->size() && (*s[3])[newStyleInner]->isStr()) {
+      auto str = (*s[3])[newStyleInner]->str();
+      if (!isWasmType(str)) {
+        im->name = str;
+        newStyleInner++;
+      }
     }
-    importCounter++;
+    if (!im->name.is()) {
+      if (im->kind == Import::Function) {
+        im->name = Name::fromInt(functionCounter++);
+      } else if (im->kind == Import::Global) {
+        im->name = Name::fromInt(globalCounter++);
+      } else if (im->kind == Import::Memory) {
+        im->name = Name::fromInt(0);
+      } else if (im->kind == Import::Table) {
+        im->name = Name::fromInt(0);
+      } else {
+        WASM_UNREACHABLE();
+      }
+    }
     if (!s[i]->quoted()) {
       if (s[i]->str() == MEMORY) {
         im->kind = Import::Memory;
@@ -1626,7 +1643,7 @@ private:
     wasm.addImport(im.release());
   }
 
-  void parseGlobal(Element& s) {
+  void parseGlobal(Element& s, bool preParseImport = false) {
     std::unique_ptr<Global> global = make_unique<Global>();
     size_t i = 1;
     if (s[i]->dollared()) {
@@ -1638,7 +1655,8 @@ private:
     bool mutable_ = false;
     WasmType type = none;
     bool exported = false;
-    while (s[i]->isList()) {
+    Name importModule, importBase;
+    while (i < s.size() && s[i]->isList()) {
       auto& inner = *s[i];
       if (inner[0]->str() == EXPORT) {
         auto ex = make_unique<Export>();
@@ -1650,7 +1668,9 @@ private:
         exported = true;
         i++;
       } else if (inner[0]->str() == IMPORT) {
-        throw ParseException("TODO: import in the middle of a global definition", s.line, s.col);
+        importModule = inner[1]->str();
+        importBase = inner[2]->str();
+        i++;
       } else if (inner[0]->str() == MUT) {
         mutable_ = true;
         type = stringToWasmType(inner[1]->str());
@@ -1663,6 +1683,20 @@ private:
     if (type == none) {
       type = stringToWasmType(s[i++]->str());
     }
+    if (importModule.is()) {
+      // this is an import, actually
+      assert(preParseImport);
+      if (mutable_) throw ParseException("cannot import a mutable global", s.line, s.col);
+      std::unique_ptr<Import> im = make_unique<Import>();
+      im->name = global->name;
+      im->module = importModule;
+      im->base = importBase;
+      im->kind = Import::Global;
+      im->globalType = type;
+      wasm.addImport(im.release());
+      return;
+    }
+    assert(!preParseImport);
     global->type = type;
     global->init = parseExpression(s[i++]);
     global->mutable_ = mutable_;

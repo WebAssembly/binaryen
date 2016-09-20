@@ -38,6 +38,7 @@ Name ASSERT_RETURN("assert_return"),
      ASSERT_TRAP("assert_trap"),
      ASSERT_INVALID("assert_invalid"),
      ASSERT_MALFORMED("assert_malformed"),
+     ASSERT_UNLINKABLE("assert_unlinkable"),
      INVOKE("invoke"),
      GET("get");
 
@@ -139,7 +140,7 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
     Colors::green(std::cerr);
     std::cerr << " [line: " << curr.line << "]\n";
     Colors::normal(std::cerr);
-    if (id == ASSERT_INVALID || id == ASSERT_MALFORMED) {
+    if (id == ASSERT_INVALID || id == ASSERT_MALFORMED || id == ASSERT_UNLINKABLE) {
       // a module invalidity test
       Module wasm;
       bool invalid = false;
@@ -154,6 +155,16 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       if (!invalid) {
         // maybe parsed ok, but otherwise incorrect
         invalid = !WasmValidator().validate(wasm);
+      }
+      if (!invalid && id == ASSERT_UNLINKABLE) {
+        // validate "instantiating" the mdoule
+        for (auto& import : wasm.imports) {
+          if (import->module != SPECTEST || import->base != PRINT) {
+            std::cerr << "unknown import: " << import->module << '.' << import->base << '\n';
+            invalid = true;
+            break;
+          }
+        }
       }
       if (!invalid) {
         Colors::red(std::cerr);
