@@ -179,7 +179,6 @@ public:
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
-    shouldBeTrue(getModule()->table.segments.size() > 0, curr, "no table");
     auto* type = getModule()->checkFunctionType(curr->fullType);
     if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) return;
     shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");

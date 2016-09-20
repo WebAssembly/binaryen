@@ -132,7 +132,11 @@ public:
   void dump() {
     std::cout << "dumping " << this << " : " << *this << ".\n";
   }
+
+  #undef element_assert
 };
+
+#define element_assert(condition, element) assert((condition) ? true : (std::cerr << "on: " << element << " at " << element.line << ":" << element.col << '\n' && 0));
 
 //
 // Generic S-Expression parsing into lists
@@ -655,7 +659,7 @@ public:
   #define abort_on(str) { throw ParseException(std::string("abort_on ") + str); }
 
   Expression* parseExpression(Element& s) {
-    if (!s.isList()) throw ParseException("invalid node for parseExpression, needed list", s.line, s.col);
+    element_assert(s.isList(), s);
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
@@ -1311,6 +1315,7 @@ private:
   }
 
   Expression* makeCallIndirect(Element& s) {
+    if (!seenTable) throw ParseException("no table");
     auto ret = allocator.alloc<CallIndirect>();
     IString type = s[1]->str();
     auto* fullType = wasm.checkFunctionType(type);
@@ -1773,8 +1778,12 @@ private:
     if (!s[i]->dollared()) {
       if (s[i]->str() == ANYFUNC) {
         // (table type (elem ..))
-        parseElem(*s[i + 1]);
-        wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+        parseInnerElem(*s[i + 1]);
+        if (wasm.table.segments.size() > 0) {
+          wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+        } else {
+          wasm.table.initial = wasm.table.max = 0;
+        }
         return;
       }
       // first element isn't dollared, and isn't anyfunc. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
@@ -1790,17 +1799,29 @@ private:
       }
     }
     // old notation (table func1 func2 ..)
-    parseElem(s, i);
-    wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+    parseInnerElem(s, i);
+    if (wasm.table.segments.size() > 0) {
+      wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+    } else {
+      wasm.table.initial = wasm.table.max = 0;
+    }
   }
 
-  void parseElem(Element& s, Index i = 1) {
-    if (!seenTable) throw ParseException("elem without table", s.line, s.col);
+  void parseElem(Element& s) {
+    Index i = 1;
     if (!s[i]->isList()) {
       // the table is named
       i++;
     }
     auto* offset = parseExpression(s[i++]);
+    parseInnerElem(s, i, offset);
+  }
+
+  void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr) {
+    if (!seenTable) throw ParseException("elem without table", s.line, s.col);
+    if (!offset) {
+      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+    }
     Table::Segment segment(offset);
     for (; i < s.size(); i++) {
       segment.data.push_back(getFunctionName(*s[i]));
