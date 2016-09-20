@@ -1463,7 +1463,7 @@ private:
       } else {
         assert(inner.size() > 0 ? inner[0]->str() != IMPORT : true);
         // (memory (data ..)) format
-        parseData(*s[i]);
+        parseInnerData(*s[i]);
         wasm.memory.initial = wasm.memory.segments[0].data.size();
         return;
       }
@@ -1508,12 +1508,19 @@ private:
       i++;
     }
     auto* offset = parseExpression(s[i++]);
+    parseInnerData(s, i, offset);
+  }
+
+  void parseInnerData(Element& s, Index i = 1, Expression* offset = nullptr) {
     std::vector<char> data;
     while (i < s.size()) {
       const char *input = s[i++]->c_str();
       if (auto size = strlen(input)) {
         stringToBinary(input, size, data);
       }
+    }
+    if (!offset) {
+      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     }
     wasm.memory.segments.emplace_back(offset, data.data(), data.size());
   }
