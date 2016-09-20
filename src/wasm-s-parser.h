@@ -62,6 +62,8 @@ class Element {
   bool dollared_;
   bool quoted_;
 
+  #define element_assert(condition) assert((condition) ? true : (std::cerr << "on: " << *this << '\n' && 0));
+
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
 
@@ -80,7 +82,7 @@ public:
   }
 
   Element* operator[](unsigned i) {
-    if (i >= list().size()) assert(0 && "expected more elements in list");
+    if (i >= list().size()) element_assert(0 && "expected more elements in list");
     return list()[i];
   }
 
@@ -91,12 +93,12 @@ public:
   // string methods
 
   IString str() {
-    assert(!isList_);
+    element_assert(!isList_);
     return str_;
   }
 
   const char* c_str() {
-    assert(!isList_);
+    element_assert(!isList_);
     return str_.str;
   }
 
@@ -1640,6 +1642,13 @@ private:
         im->globalType = stringToWasmType(inner2[1]->str());
         throw ParseException("cannot import a mutable global", s.line, s.col);
       }
+    } else if (im->kind == Import::Table) {
+      if (j < inner.size() - 1) {
+        wasm.table.initial = atoi(inner[j++]->c_str());
+      }
+      if (j < inner.size() - 1) {
+        wasm.table.max = atoi(inner[j++]->c_str());
+      }
     }
     wasm.addImport(im.release());
   }
@@ -1760,13 +1769,11 @@ private:
 
   void parseElem(Element& s, Index i = 1) {
     if (!seenTable) throw ParseException("elem without table", s.line, s.col);
-    Expression* offset;
-    if (s[i]->isList()) {
-      // there is an init expression
-      offset = parseExpression(s[i++]);
-    } else {
-      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+    if (!s[i]->isList()) {
+      // the table is named
+      i++;
     }
+    auto* offset = parseExpression(s[i++]);
     Table::Segment segment(offset);
     for (; i < s.size(); i++) {
       segment.data.push_back(getFunctionName(*s[i]));
