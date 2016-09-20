@@ -387,6 +387,7 @@ private:
     if (isImport(curr)) {
       if (id == FUNC) parseFunction(curr, true /* preParseImport */);
       else if (id == GLOBAL) parseGlobal(curr, true /* preParseImport */);
+      else if (id == TABLE) parseTable(curr, true /* preParseImport */);
       else throw ParseException("fancy import we don't support yet", curr.line, curr.col);
     }
   }
@@ -1490,13 +1491,11 @@ private:
   void parseData(Element& s) {
     if (!hasMemory) throw ParseException("data but no memory");
     Index i = 1;
-    Expression* offset;
-    if (i < s.size() && s[i]->isList()) {
-      // there is an init expression
-      offset = parseExpression(s[i++]);
-    } else {
-      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+    if (!s[i]->isList()) {
+      // the memory is named
+      i++;
     }
+    auto* offset = parseExpression(s[i++]);
     std::vector<char> data;
     while (i < s.size()) {
       const char *input = s[i++]->c_str();
@@ -1556,8 +1555,10 @@ private:
         im->kind = Import::Function;
       } else if ((*s[3])[0]->str() == MEMORY) {
         im->kind = Import::Memory;
+        hasMemory = true;
       } else if ((*s[3])[0]->str() == TABLE) {
         im->kind = Import::Table;
+        if (seenTable) throw ParseException("more than one table");
         seenTable = true;
       } else if ((*s[3])[0]->str() == GLOBAL) {
         im->kind = Import::Global;
@@ -1649,6 +1650,13 @@ private:
       if (j < inner.size() - 1) {
         wasm.table.max = atoi(inner[j++]->c_str());
       }
+    } else if (im->kind == Import::Memory) {
+      if (j < inner.size() - 1) {
+        wasm.memory.initial = atoi(inner[j++]->c_str());
+      }
+      if (j < inner.size() - 1) {
+        wasm.memory.max = atoi(inner[j++]->c_str());
+      }
     }
     wasm.addImport(im.release());
   }
@@ -1720,7 +1728,8 @@ private:
 
   bool seenTable = false;
 
-  void parseTable(Element& s) {
+  void parseTable(Element& s, bool preParseImport = false) {
+    if (seenTable) throw ParseException("more than one table");
     seenTable = true;
     Index i = 1;
     if (i == s.size()) return; // empty table in old notation
@@ -1728,6 +1737,7 @@ private:
       wasm.table.name = s[i++]->str();
     }
     if (i == s.size()) return;
+    Name importModule, importBase;
     if (s[i]->isList()) {
       auto& inner = *s[i];
       if (inner[0]->str() == EXPORT) {
@@ -1737,6 +1747,10 @@ private:
         ex->kind = Export::Table;
         if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
+        i++;
+      } else if (inner[0]->str() == IMPORT) {
+        importModule = inner[1]->str();
+        importBase = inner[2]->str();
         i++;
       } else {
         WASM_UNREACHABLE();
