@@ -1646,7 +1646,7 @@ private:
   void parseGlobal(Element& s, bool preParseImport = false) {
     std::unique_ptr<Global> global = make_unique<Global>();
     size_t i = 1;
-    if (s[i]->dollared()) {
+    if (s[i]->dollared() && !(s[i]->isStr() && isWasmType(s[i]->str()))) {
       global->name = s[i++]->str();
     } else {
       global->name = Name::fromInt(globalCounter);
@@ -1698,7 +1698,11 @@ private:
     }
     assert(!preParseImport);
     global->type = type;
-    global->init = parseExpression(s[i++]);
+    if (i < s.size()) {
+      global->init = parseExpression(s[i++]);
+    } else {
+      throw ParseException("global without init", s.line, s.col);
+    }
     global->mutable_ = mutable_;
     assert(i == s.size());
     wasm.addGlobal(global.release());

@@ -707,6 +707,7 @@ public:
         auto name = curr->name;
         NOTE_EVAL1(name);
         NOTE_EVAL1(instance.globals[name]);
+        assert(instance.globals.find(name) != instance.globals.end());
         return instance.globals[name];
       }
       Flow visitSetGlobal(SetGlobal *curr) {
@@ -787,7 +788,10 @@ public:
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW); // cannot still be breaking, it means we missed our stop
     Literal ret = flow.value;
     if (function->result == none) ret = Literal();
-    assert(function->result == ret.type);
+    if (function->result != ret.type) {
+      std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
+      abort();
+    }
     callDepth = previousCallDepth; // may decrease more than one, if we jumped up the stack
     // if we jumped up the stack, we also need to pop higher frames
     while (functionStack.size() > previousFunctionStackSize) {

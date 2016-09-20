@@ -111,7 +111,20 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {}
+  void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
+    // add spectest globals
+    for (auto& import : wasm.imports) {
+      if (import->kind == Import::Global && import->module == SPECTEST && import->base == GLOBAL) {
+        switch (import->globalType) {
+          case i32: globals[import->name] = Literal(int32_t(666)); break;
+          case i64: globals[import->name] = Literal(int64_t(666)); break;
+          case f32: globals[import->name] = Literal(float(666.6)); break;
+          case f64: globals[import->name] = Literal(double(666.6)); break;
+          default: WASM_UNREACHABLE();
+        }
+      }
+    }
+  }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
     if (import->module == SPECTEST && import->base == PRINT) {
