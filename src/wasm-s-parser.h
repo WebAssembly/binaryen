@@ -388,6 +388,7 @@ private:
       if (id == FUNC) parseFunction(curr, true /* preParseImport */);
       else if (id == GLOBAL) parseGlobal(curr, true /* preParseImport */);
       else if (id == TABLE) parseTable(curr, true /* preParseImport */);
+      else if (id == MEMORY) parseMemory(curr, true /* preParseImport */);
       else throw ParseException("fancy import we don't support yet", curr.line, curr.col);
     }
   }
@@ -1432,12 +1433,14 @@ private:
 
   bool hasMemory = false;
 
-  void parseMemory(Element& s) {
+  void parseMemory(Element& s, bool preParseImport = false) {
+    if (hasMemory) throw ParseException("too many memories");
     hasMemory = true;
     Index i = 1;
     if (s[i]->dollared()) {
       wasm.memory.name = s[i++]->str();
     }
+    Name importModule, importBase;
     if (s[i]->isList()) {
       auto& inner = *s[i];
       if (inner[0]->str() == EXPORT) {
@@ -1447,6 +1450,10 @@ private:
         ex->kind = Export::Memory;
         if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
+        i++;
+      } else if (inner[0]->str() == IMPORT) {
+        importModule = inner[1]->str();
+        importBase = inner[2]->str();
         i++;
       } else {
         assert(inner.size() > 0 ? inner[0]->str() != IMPORT : true);
@@ -1555,6 +1562,7 @@ private:
         im->kind = Import::Function;
       } else if ((*s[3])[0]->str() == MEMORY) {
         im->kind = Import::Memory;
+        if (hasMemory) throw ParseException("too many memories");
         hasMemory = true;
       } else if ((*s[3])[0]->str() == TABLE) {
         im->kind = Import::Table;
@@ -1650,11 +1658,12 @@ private:
       if (j < inner.size() - 1) {
         wasm.table.max = atoi(inner[j++]->c_str());
       }
+      // ends with the table element type
     } else if (im->kind == Import::Memory) {
-      if (j < inner.size() - 1) {
+      if (j < inner.size()) {
         wasm.memory.initial = atoi(inner[j++]->c_str());
       }
-      if (j < inner.size() - 1) {
+      if (j < inner.size()) {
         wasm.memory.max = atoi(inner[j++]->c_str());
       }
     }
