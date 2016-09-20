@@ -1,5 +1,4 @@
 (module
-  (memory 256 256)
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
@@ -17,8 +16,8 @@
   (import "env" "h" (func $h (param i32)))
   (import "env" "return_int" (func $return_int (result i32)))
   (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
-  (import "env" "memory" (memory $memory))
-  (import "env" "table" (table $table))
+  (import "env" "memory" (memory 256 256))
+  (import "env" "table" (table 10 10 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (export "big_negative" (func $big_negative))
@@ -30,7 +29,6 @@
   (global $tempDoublePtr (mut i32) (get_global $tempDoublePtr$asm2wasm$import))
   (global $n (mut i32) (get_global $n$asm2wasm$import))
   (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
-  (table 10 10 anyfunc)
   (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (func $big_negative
     (local $temp f64)
