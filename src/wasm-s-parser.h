@@ -1556,6 +1556,7 @@ private:
         im->kind = Import::Memory;
       } else if ((*s[3])[0]->str() == TABLE) {
         im->kind = Import::Table;
+        seenTable = true;
       } else if ((*s[3])[0]->str() == GLOBAL) {
         im->kind = Import::Global;
       } else {
