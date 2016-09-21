@@ -1287,15 +1287,19 @@ private:
     auto ret = allocator.alloc<Loop>();
     size_t i = 1;
     Name out;
-    if (s.size() > i + 1 && s[i]->isStr() && s[i + 1]->isStr()) { // out can only be named if both are
+    if (s.size() > i + 1 && s[i]->dollared() && s[i + 1]->dollared()) { // out can only be named if both are
       out = s[i]->str();
       i++;
     }
-    if (s.size() > i && s[i]->isStr()) {
+    if (s.size() > i && s[i]->dollared()) {
       ret->name = s[i]->str();
       i++;
     } else {
       ret->name = getPrefixedName("loop-in");
+    }
+    if (i < s.size() && s[i]->isStr()) {
+      // block signature
+      i++; // TODO: parse the signature
     }
     labelStack.push_back(ret->name);
     ret->body = makeMaybeBlock(s, i);
