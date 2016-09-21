@@ -1276,7 +1276,9 @@ public:
 
     // read sections until the end
     while (more()) {
-      auto sectionCode = getU32LEB();
+      uint32_t sectionCode = getU32LEB();
+      uint32_t payloadLen = getU32LEB();
+      if (pos + payloadLen > input.size()) throw ParseException("Section extends beyond end of input");
 
       switch (sectionCode) {
         case BinaryConsts::Section::Start: readStart(); break;
@@ -1306,31 +1308,12 @@ public:
   }
 
   bool readUserSection() {
-    auto nameSize = getU32LEB();
-    uint32_t sectionSize, before;
-    auto match = [&](const char* name) {
-      for (size_t i = 0; i < nameSize; i++) {
-        if (pos + i >= input.size()) return false;
-        if (name[i] == 0) return false;
-        if (input[pos + i] != name[i]) return false;
-      }
-      if (strlen(name) != nameSize) return false;
-      // name matched, read section size and then section itself
-      pos += nameSize;
-      sectionSize = getU32LEB();
-      before = pos;
-      assert(pos + sectionSize <= input.size());
-      return true;
-    };
-    if (match(BinaryConsts::UserSections::Names)) {
+    Name sectionName = getInlineString();
+    if (sectionName.equals(BinaryConsts::UserSections::Names)) {
       readNames();
       return true;
     }
-    std::cerr << "unfamiliar section: ";
-    assert(pos + nameSize - 1 < input.size());
-    for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
-    std::cerr << std::endl;
-    assert(pos == before + sectionSize);
+    std::cerr << "unfamiliar section: " << sectionName << std::endl;
     return false;
   }
 
@@ -1499,7 +1482,7 @@ public:
     for (size_t i = 0; i < numTypes; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new FunctionType;
-      auto form = getInt8();
+      auto form = getU32LEB();
       WASM_UNUSED(form);
       assert(form == BinaryConsts::TypeForms::Basic);
       size_t numParams = getU32LEB();
