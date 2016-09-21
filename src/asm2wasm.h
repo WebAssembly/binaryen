@@ -508,6 +508,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
       import->kind = Import::Global;
       import->globalType = type;
+      import->globalMutable = false;
       mappedGlobals.emplace(name, type);
       {
         auto global = new Global();
@@ -867,6 +868,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     import->base = Name("memoryBase");
     import->kind = Import::Global;
     import->globalType = i32;
+    import->globalMutable = false;
     wasm.addImport(import);
   }
 
@@ -878,6 +880,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     import->base = Name("tableBase");
     import->kind = Import::Global;
     import->globalType = i32;
+    import->globalMutable = false;
     wasm.addImport(import);
   }
 

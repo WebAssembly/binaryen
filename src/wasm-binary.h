@@ -252,6 +252,10 @@ enum Section {
   Data = 11
 };
 
+enum ElementType {
+  AnyFunc = 0x20
+};
+
 namespace UserSections {
 extern const char* Names;
 }
@@ -511,8 +515,16 @@ public:
     return ret;
   }
 
+  void writeResizableLimits(Address initial, Address maximum) {
+    uint32_t flags = maximum ? 1 : 0;
+    o << U32LEB(flags);
+    o << U32LEB(initial);
+    if (flags) {
+      o << U32LEB(maximum);
+    }
+  }
+
   int32_t startSection(BinaryConsts::Section code) {
-    //writeInlineString(name);
     o << U32LEB(code);
     return writeU32LEBPlaceholder(); // section size to be filled in later
   }
@@ -576,16 +588,23 @@ public:
     o << U32LEB(wasm->imports.size());
     for (auto& import : wasm->imports) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << U32LEB(import->kind);
-      switch (import->kind) {
-        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name));
-        case Export::Table: break;
-        case Export::Memory: break;
-        case Export::Global: o << binaryWasmType(import->globalType);break;
-        default: WASM_UNREACHABLE();
-      }
       writeInlineString(import->module.str);
       writeInlineString(import->base.str);
+      o << U32LEB(import->kind);
+      switch (import->kind) {
+        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
+        case Export::Table:
+          o << U32LEB(BinaryConsts::ElementType::AnyFunc);
+          writeResizableLimits(wasm->table.initial, wasm->table.max == Table::kMaxSize);
+          break;
+        // TODO: Memory resizing indication here?
+        case Export::Memory: writeResizableLimits(wasm->memory.initial, wasm->memory.max == Memory::kMaxSize); break;
+        case Export::Global:
+          o << binaryWasmType(import->globalType);
+          o << U32LEB(import->globalMutable);
+          break;
+        default: WASM_UNREACHABLE();
+      }
     }
     finishSection(start);
   }
@@ -1516,6 +1535,14 @@ public:
     }
   }
 
+  void getResizableLimits(Address& initial, Address* max) {
+    auto flags = getU32LEB();
+    initial = getU32LEB();
+    bool hasMax = flags & 0x1;
+    assert(max || !hasMax);
+    if (hasMax) *max = getU32LEB();
+  }
+
   void readImports() {
     if (debug) std::cerr << "== readImports" << std::endl;
     size_t num = getU32LEB();
@@ -1524,6 +1551,8 @@ public:
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Import;
       curr->name = Name(std::string("import$") + std::to_string(i));
+      curr->module = getInlineString();
+      curr->base = getInlineString();
       curr->kind = (Import::Kind)getU32LEB();
       switch (curr->kind) {
         case Import::Function: {
@@ -1534,13 +1563,21 @@ public:
           functionImportIndexes.push_back(curr->name);
           break;
         }
-        case Import::Table: break;
-        case Import::Memory: break;
-        case Import::Global: curr->globalType = getWasmType(); break;
+        case Import::Table: {
+          auto elementType = getU32LEB();
+          WASM_UNUSED(elementType);
+          assert(elementType == BinaryConsts::ElementType::AnyFunc);
+          getResizableLimits(wasm.table.initial, &wasm.table.max);
+          break;
+        }
+        case Import::Memory: getResizableLimits(wasm.memory.initial, &wasm.memory.max); break;
+        case Import::Global:
+          curr->globalType = getWasmType();
+          curr->globalMutable = getU32LEB();
+          // XXX assert(!curr->globalMutable) like wasm-s-parser?
+          break;
         default: WASM_UNREACHABLE();
       }
-      curr->module = getInlineString();
-      curr->base = getInlineString();
       wasm.addImport(curr);
     }
   }
