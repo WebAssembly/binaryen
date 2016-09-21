@@ -1714,8 +1714,8 @@ public:
     }
     // now that we have names for each function, apply things
 
-    if (startIndex != static_cast<Index>(-1) && startIndex < wasm.functions.size()) {
-      wasm.start = wasm.functions[startIndex]->name;
+    if (startIndex != static_cast<Index>(-1)) {
+      wasm.start = getFunctionIndexName(startIndex);
     }
 
     for (auto& iter : exportIndexes) {
