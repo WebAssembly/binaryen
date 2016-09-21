@@ -1227,44 +1227,32 @@ private:
   Expression* makeIf(Element& s) {
     auto ret = allocator.alloc<If>();
     Index i = 1;
+    Name label;
+    if (s[i]->dollared()) {
+      // the if is labeled
+      label = s[i++]->str();
+    } else {
+      label = getPrefixedName("if");
+    }
+    labelStack.push_back(label);
     if (s[i]->isStr()) {
-      // if type
+      // if type, TODO: parse?
       i++;
     }
     ret->condition = parseExpression(s[i++]);
-
-    // ifTrue and ifFalse may get implicit blocks
-    auto handle = [&](const char* title, Element& s) {
-      Name name = getPrefixedName(title);
-      bool explicitThenElse = false;
-      if (s[0]->str() == THEN || s[0]->str() == ELSE) {
-        explicitThenElse = true;
-        if (s[1]->isStr() && s[1]->dollared()) {
-          name = s[1]->str();
-        }
-      }
-      labelStack.push_back(name);
-      auto* ret = parseExpression(&s);
-      labelStack.pop_back();
-      if (explicitThenElse) {
-        ret->dynCast<Block>()->name = name;
-      } else {
-        // add a block if we must
-        if (BreakSeeker::has(ret, name)) {
-          auto* block = allocator.alloc<Block>();
-          block->name = name;
-          block->list.push_back(ret);
-          block->finalize();
-          ret = block;
-        }
-      }
-      return ret;
-    };
-
-    ret->ifTrue = handle("if-true", *s[i++]);
+    ret->ifTrue = parseExpression(*s[i++]);
     if (i < s.size()) {
-      ret->ifFalse = handle("if-else", *s[i++]);
-      ret->finalize();
+      ret->ifFalse = parseExpression(*s[i++]);
+    }
+    ret->finalize();
+    labelStack.pop_back();
+    // create a break target if we must
+    if (BreakSeeker::has(ret, label)) {
+      auto* block = allocator.alloc<Block>();
+      block->name = label;
+      block->list.push_back(ret);
+      block->finalize();
+      return block;
     }
     return ret;
   }

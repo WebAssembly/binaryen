@@ -299,7 +299,7 @@
           (i32.const 1)
         )
         (block $block2
-          (block $block3
+          (block $block1
             (drop
               (i32.const 2)
             )
@@ -313,7 +313,7 @@
       (if
         (i32.const 0)
         (block $block4
-          (block $block5
+          (block $block3
             (drop
               (i32.const 2)
             )
@@ -329,7 +329,7 @@
       )
       (if
         (block $block6 i32
-          (block $block7
+          (block $block5
             (drop
               (i32.const 2)
             )
@@ -349,14 +349,14 @@
           (i32.const 0)
         )
         (block $a
-          (block $block11
+          (block $block7
             (drop
               (i32.const 1)
             )
           )
         )
         (block $a
-          (block $block13
+          (block $block8
             (drop
               (i32.const 2)
             )
@@ -535,7 +535,7 @@
       (block $out
         (if
           (i32.const 0)
-          (block $block15
+          (block $block13
             (drop
               (i32.const 1)
             )
@@ -580,7 +580,7 @@
       (block $out
         (if
           (i32.const 0)
-          (block $block22
+          (block $block17
             (drop
               (i32.const 1)
             )
@@ -801,7 +801,7 @@
               (i32.const 1)
             )
             (br $out
-              (block $block2 i32
+              (block $block1 i32
                 (set_local $x
                   (i32.const 0)
                 )
