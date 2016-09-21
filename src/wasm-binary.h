@@ -237,19 +237,24 @@ enum Meta {
   Version = 0x0c
 };
 
-namespace Section {
-  extern const char* Memory;
-  extern const char* Signatures;
-  extern const char* ImportTable;
-  extern const char* FunctionSignatures;
-  extern const char* Functions;
-  extern const char* ExportTable;
-  extern const char* Globals;
-  extern const char* DataSegments;
-  extern const char* FunctionTable;
-  extern const char* Names;
-  extern const char* Start;
+enum Section {
+  User = 0,
+  Type = 1,
+  Import = 2,
+  Function = 3,
+  Table = 4,
+  Memory = 5,
+  Global = 6,
+  Export = 7,
+  Start = 8,
+  Element = 9,
+  Code = 10,
+  Data = 11
 };
+
+namespace UserSections {
+extern const char* Names;
+}
 
 enum ASTNodes {
   CurrentMemory = 0x3b,
@@ -478,7 +483,7 @@ public:
   void write() {
     writeHeader();
 
-    writeSignatures();
+    writeTypes();
     writeImports();
     writeFunctionSignatures();
     writeFunctionTable();
@@ -506,14 +511,14 @@ public:
     return ret;
   }
 
-  int32_t startSection(const char* name) {
-    // emit 5 bytes of 0, which we'll fill with LEB later
-    writeInlineString(name);
-    return writeU32LEBPlaceholder();
+  int32_t startSection(BinaryConsts::Section code) {
+    //writeInlineString(name);
+    o << U32LEB(code);
+    return writeU32LEBPlaceholder(); // section size to be filled in later
   }
 
   void finishSection(int32_t start) {
-    int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
+    int32_t size = o.size() - start - 6; // section size does not include the 6 bytes of the code and size field
     o.writeAt(start, U32LEB(size));
   }
 
@@ -534,10 +539,10 @@ public:
     finishSection(start);
   }
 
-  void writeSignatures() {
+  void writeTypes() {
     if (wasm->functionTypes.size() == 0) return;
-    if (debug) std::cerr << "== writeSignatures" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Signatures);
+    if (debug) std::cerr << "== writeTypes" << std::endl;
+    auto start = startSection(BinaryConsts::Section::Type);
     o << U32LEB(wasm->functionTypes.size());
     for (auto& type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -567,7 +572,7 @@ public:
   void writeImports() {
     if (wasm->imports.size() == 0) return;
     if (debug) std::cerr << "== writeImports" << std::endl;
-    auto start = startSection(BinaryConsts::Section::ImportTable);
+    auto start = startSection(BinaryConsts::Section::Import);
     o << U32LEB(wasm->imports.size());
     for (auto& import : wasm->imports) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -627,7 +632,7 @@ public:
   void writeFunctionSignatures() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
-    auto start = startSection(BinaryConsts::Section::FunctionSignatures);
+    auto start = startSection(BinaryConsts::Section::Function);
     o << U32LEB(wasm->functions.size());
     for (auto& curr : wasm->functions) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -645,7 +650,7 @@ public:
   void writeFunctions() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctions" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Functions);
+    auto start = startSection(BinaryConsts::Section::Code);
     size_t total = wasm->functions.size();
     o << U32LEB(total);
     for (size_t i = 0; i < total; i++) {
@@ -679,7 +684,7 @@ public:
   void writeGlobals() {
     if (wasm->globals.size() == 0) return;
     if (debug) std::cerr << "== writeglobals" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Globals);
+    auto start = startSection(BinaryConsts::Section::Global);
     o << U32LEB(wasm->globals.size());
     for (auto& curr : wasm->globals) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -693,7 +698,7 @@ public:
   void writeExports() {
     if (wasm->exports.size() == 0) return;
     if (debug) std::cerr << "== writeexports" << std::endl;
-    auto start = startSection(BinaryConsts::Section::ExportTable);
+    auto start = startSection(BinaryConsts::Section::Export);
     o << U32LEB(wasm->exports.size());
     for (auto& curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -716,7 +721,7 @@ public:
     for (auto& segment : wasm->memory.segments) {
       if (segment.data.size() > 0) num++;
     }
-    auto start = startSection(BinaryConsts::Section::DataSegments);
+    auto start = startSection(BinaryConsts::Section::Data);
     o << U32LEB(num);
     for (auto& segment : wasm->memory.segments) {
       if (segment.data.size() == 0) continue;
@@ -770,7 +775,7 @@ public:
   void writeFunctionTable() {
     if (wasm->table.segments.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionTable" << std::endl;
-    auto start = startSection(BinaryConsts::Section::FunctionTable);
+    auto start = startSection(BinaryConsts::Section::Table);
     o << U32LEB(wasm->table.initial);
     o << U32LEB(wasm->table.max);
     o << U32LEB(wasm->table.segments.size());
@@ -788,7 +793,8 @@ public:
   void writeNames() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeNames" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Names);
+    auto start = startSection(BinaryConsts::Section::User);
+    writeInlineString("names");
     o << U32LEB(wasm->functions.size());
     for (auto& curr : wasm->functions) {
       writeInlineString(curr->name.str);
@@ -1270,49 +1276,62 @@ public:
 
     // read sections until the end
     while (more()) {
-      auto nameSize = getU32LEB();
-      uint32_t sectionSize, before;
-      auto match = [&](const char* name) {
-        for (size_t i = 0; i < nameSize; i++) {
-          if (pos + i >= input.size()) return false;
-          if (name[i] == 0) return false;
-          if (input[pos + i] != name[i]) return false;
+      auto sectionCode = getU32LEB();
+
+      switch (sectionCode) {
+        case BinaryConsts::Section::Start: readStart(); break;
+        case BinaryConsts::Section::Memory: readMemory(); break;
+        case BinaryConsts::Section::Type: readSignatures(); break;
+        case BinaryConsts::Section::Import: readImports(); break;
+        case BinaryConsts::Section::Function: readFunctionSignatures(); break;
+        case BinaryConsts::Section::Code: readFunctions(); break;
+        case BinaryConsts::Section::Export: readExports(); break;
+        case BinaryConsts::Section::Global: {
+          readGlobals();
+          // imports can read global imports, so we run getGlobalName and create the mapping
+          // but after we read globals, we need to add the internal globals too, so do that here
+          mappedGlobals.clear(); // wipe the mapping
+          getGlobalName(0); // force rebuild
+          break;
         }
-        if (strlen(name) != nameSize) return false;
-        // name matched, read section size and then section itself
-        pos += nameSize;
-        sectionSize = getU32LEB();
-        before = pos;
-        assert(pos + sectionSize <= input.size());
-        return true;
-      };
-      if (match(BinaryConsts::Section::Start)) readStart();
-      else if (match(BinaryConsts::Section::Memory)) readMemory();
-      else if (match(BinaryConsts::Section::Signatures)) readSignatures();
-      else if (match(BinaryConsts::Section::ImportTable)) readImports();
-      else if (match(BinaryConsts::Section::FunctionSignatures)) readFunctionSignatures();
-      else if (match(BinaryConsts::Section::Functions)) readFunctions();
-      else if (match(BinaryConsts::Section::ExportTable)) readExports();
-      else if (match(BinaryConsts::Section::Globals)) {
-        readGlobals();
-        // imports can read global imports, so we run getGlobalName and create the mapping
-        // but after we read globals, we need to add the internal globals too, so do that here
-        mappedGlobals.clear(); // wipe the mapping
-        getGlobalName(0); // force rebuild
-      } else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
-      else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
-      else if (match(BinaryConsts::Section::Names)) readNames();
-      else {
-        std::cerr << "unfamiliar section: ";
-        assert(pos + nameSize - 1 < input.size());
-        for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
-        std::cerr << std::endl;
-        abort();
+        case BinaryConsts::Section::Data: readDataSegments(); break;
+        case BinaryConsts::Section::Table: readFunctionTable(); break;
+
+        default:
+          if (!readUserSection()) abort();
       }
-      assert(pos == before + sectionSize);
     }
 
     processFunctions();
+  }
+
+  bool readUserSection() {
+    auto nameSize = getU32LEB();
+    uint32_t sectionSize, before;
+    auto match = [&](const char* name) {
+      for (size_t i = 0; i < nameSize; i++) {
+        if (pos + i >= input.size()) return false;
+        if (name[i] == 0) return false;
+        if (input[pos + i] != name[i]) return false;
+      }
+      if (strlen(name) != nameSize) return false;
+      // name matched, read section size and then section itself
+      pos += nameSize;
+      sectionSize = getU32LEB();
+      before = pos;
+      assert(pos + sectionSize <= input.size());
+      return true;
+    };
+    if (match(BinaryConsts::UserSections::Names)) {
+      readNames();
+      return true;
+    }
+    std::cerr << "unfamiliar section: ";
+    assert(pos + nameSize - 1 < input.size());
+    for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
+    std::cerr << std::endl;
+    assert(pos == before + sectionSize);
+    return false;
   }
 
   bool more() {
@@ -1328,21 +1347,21 @@ public:
     if (debug) std::cerr << "<==" << std::endl;
     auto ret = uint16_t(getInt8());
     ret |= uint16_t(getInt8()) << 8;
-    if (debug) std::cerr << "getInt16: " << ret << " ==>" << std::endl;
+    if (debug) std::cerr << "getInt16: " << ret << "/0x" << std::hex << ret << std::dec << " ==>" << std::endl;
     return ret;
   }
   uint32_t getInt32() {
     if (debug) std::cerr << "<==" << std::endl;
     auto ret = uint32_t(getInt16());
     ret |= uint32_t(getInt16()) << 16;
-    if (debug) std::cerr << "getInt32: " << ret << " ==>" << std::endl;
+    if (debug) std::cerr << "getInt32: " << ret << "/0x" << std::hex << ret << std::dec <<" ==>" << std::endl;
     return ret;
   }
   uint64_t getInt64() {
     if (debug) std::cerr << "<==" << std::endl;
     auto ret = uint64_t(getInt32());
     ret |= uint64_t(getInt32()) << 32;
-    if (debug) std::cerr << "getInt64: " << ret << " ==>" << std::endl;
+    if (debug) std::cerr << "getInt64: " << ret  << "/0x" << std::hex << ret << std::dec << " ==>" << std::endl;
     return ret;
   }
   float getFloat32() {
