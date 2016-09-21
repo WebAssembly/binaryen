@@ -275,6 +275,8 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
   std::vector<Name> functionNames;
+  std::vector<Name> functionTypeNames;
+  std::vector<Name> globalNames;
   int functionCounter;
   int globalCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
@@ -346,8 +348,8 @@ private:
         if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
         functionTypes[name] = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
-        Name typeName = curr[1]->str();
-        if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function", curr.line, curr.col);
+        Name typeName = getFunctionTypeName(*curr[1]);
+        if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function type", curr.line, curr.col);
         type = wasm.getFunctionType(typeName);
         functionTypes[name] = type->result;
       } else if (id == PARAM && curr.size() > 1) {
@@ -377,6 +379,8 @@ private:
         }
       }
       if (need) {
+        functionType->name = Name::fromInt(wasm.functionTypes.size());
+        functionTypeNames.push_back(functionType->name);
         wasm.addFunctionType(functionType.release());
       }
     }
@@ -441,8 +445,19 @@ private:
     } else {
       // index
       size_t offset = atoi(s.str().c_str());
-      if (offset >= functionNames.size()) throw ParseException("unknown function");
+      if (offset >= functionNames.size()) throw ParseException("unknown function in getFunctionName");
       return functionNames[offset];
+    }
+  }
+
+  Name getFunctionTypeName(Element& s) {
+    if (s.dollared()) {
+      return s.str();
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= functionTypeNames.size()) throw ParseException("unknown function type in getFunctionTypeName");
+      return functionTypeNames[offset];
     }
   }
 
@@ -484,9 +499,18 @@ private:
     size_t i = 1;
     Name name, exportName;
     i = parseFunctionNames(s, name, exportName);
-    if (!name.is()) {
-      // unnamed, use an index
-      name = Name::fromInt(functionCounter);
+    if (!preParseImport) {
+      if (!name.is()) {
+        // unnamed, use an index
+        name = Name::fromInt(functionCounter);
+      }
+      functionCounter++;
+    } else {
+      // just preparsing, functionCounter was incremented by preParseFunctionType
+      if (!name.is()) {
+        // unnamed, use an index
+        name = functionNames[functionCounter - 1];
+      }
     }
     if (exportName.is()) {
       auto ex = make_unique<Export>();
@@ -496,7 +520,6 @@ private:
       if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
       wasm.addExport(ex.release());
     }
-    functionCounter++;
     Expression* body = nullptr;
     localIndex = 0;
     otherIndex = 0;
@@ -555,7 +578,7 @@ private:
         if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
         result = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
-        Name name = curr[1]->str();
+        Name name = getFunctionTypeName(*curr[1]);
         type = name;
         if (!wasm.checkFunctionType(name)) throw ParseException("unknown function type");
         FunctionType* type = wasm.getFunctionType(name);
@@ -601,9 +624,6 @@ private:
       assert(preParseImport);
       std::unique_ptr<Import> im = make_unique<Import>();
       im->name = name;
-      if (!im->name.is()) {
-        im->name = name;
-      }
       im->module = importModule;
       im->base = importBase;
       im->kind = Import::Function;
@@ -629,7 +649,6 @@ private:
     if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
     currFunction->body = body;
     currFunction->type = type;
-
     wasm.addFunction(currFunction.release());
     currLocalTypes.clear();
     labelStack.clear();
@@ -1293,7 +1312,7 @@ private:
   }
 
   Expression* makeCall(Element& s) {
-    auto target = s[1]->str();
+    auto target = getFunctionName(*s[1]);
     auto* import = wasm.checkImport(target);
     if (import && import->kind == Import::Function) {
       auto ret = allocator.alloc<CallImport>();
@@ -1604,8 +1623,10 @@ private:
     if (!im->name.is()) {
       if (im->kind == Import::Function) {
         im->name = Name::fromInt(functionCounter++);
+        functionNames.push_back(im->name);
       } else if (im->kind == Import::Global) {
         im->name = Name::fromInt(globalCounter++);
+        globalNames.push_back(im->name);
       } else if (im->kind == Import::Memory) {
         im->name = Name::fromInt(0);
       } else if (im->kind == Import::Table) {
@@ -1700,6 +1721,7 @@ private:
       global->name = Name::fromInt(globalCounter);
     }
     globalCounter++;
+    globalNames.push_back(global->name);
     bool mutable_ = false;
     WasmType type = none;
     bool exported = false;
@@ -1861,6 +1883,10 @@ private:
         type->result = stringToWasmType(curr[1]->str());
       }
     }
+    if (!type->name.is()) {
+      type->name = Name::fromInt(wasm.functionTypes.size());
+    }
+    functionTypeNames.push_back(type->name);
     wasm.addFunctionType(type.release());
   }
 };

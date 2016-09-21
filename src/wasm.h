@@ -1552,12 +1552,6 @@ private:
 public:
   Module() {};
 
-  FunctionType* getFunctionType(Index i) { assert(i < functionTypes.size()); return functionTypes[i].get(); }
-  Import* getImport(Index i) { assert(i < imports.size()); return imports[i].get(); }
-  Export* getExport(Index i) { assert(i < exports.size()); return exports[i].get(); }
-  Function* getFunction(Index i) { assert(i < functions.size()); return functions[i].get(); }
-  Global* getGlobal(Index i) { assert(i < globals.size()); return globals[i].get(); }
-
   FunctionType* getFunctionType(Name name) { assert(functionTypesMap.count(name)); return functionTypesMap[name]; }
   Import* getImport(Name name) { assert(importsMap.count(name)); return importsMap[name]; }
   Export* getExport(Name name) { assert(exportsMap.count(name)); return exportsMap[name]; }
@@ -1570,56 +1564,35 @@ public:
   Function* checkFunction(Name name) { if (!functionsMap.count(name)) return nullptr; return functionsMap[name]; }
   Global* checkGlobal(Name name) { if (!globalsMap.count(name)) return nullptr; return globalsMap[name]; }
 
-  FunctionType* checkFunctionType(Index i) { if (i >= functionTypes.size()) return nullptr; return functionTypes[i].get(); }
-  Import* checkImport(Index i) { if (i >= imports.size()) return nullptr; return imports[i].get(); }
-  Export* checkExport(Index i) { if (i >= exports.size()) return nullptr; return exports[i].get(); }
-  Function* checkFunction(Index i) { if (i >= functions.size()) return nullptr; return functions[i].get(); }
-  Global* checkGlobal(Index i) { if (i >= globals.size()) return nullptr; return globals[i].get(); }
-
   void addFunctionType(FunctionType* curr) {
-    Name numericName = Name::fromInt(functionTypes.size()); // TODO: remove all these, assert on names already existing, do numeric stuff in wasm-s-parser etc.
-    if (curr->name.isNull()) {
-      curr->name = numericName;
-    }
+    assert(curr->name.is());
     functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
+    assert(functionTypesMap.find(curr->name) == functionTypesMap.end());
     functionTypesMap[curr->name] = curr;
-    functionTypesMap[numericName] = curr;
   }
   void addImport(Import* curr) {
-    Name numericName = Name::fromInt(imports.size());
-    if (curr->name.isNull()) {
-      curr->name = numericName;
-    }
+    assert(curr->name.is());
     imports.push_back(std::unique_ptr<Import>(curr));
+    assert(importsMap.find(curr->name) == importsMap.end());
     importsMap[curr->name] = curr;
-    importsMap[numericName] = curr;
   }
   void addExport(Export* curr) {
-    Name numericName = Name::fromInt(exports.size());
-    if (curr->name.isNull()) {
-      curr->name = numericName;
-    }
+    assert(curr->name.is());
     exports.push_back(std::unique_ptr<Export>(curr));
+    assert(exportsMap.find(curr->name) == exportsMap.end());
     exportsMap[curr->name] = curr;
-    exportsMap[numericName] = curr;
   }
   void addFunction(Function* curr) {
-    Name numericName = Name::fromInt(functions.size());
-    if (curr->name.isNull()) {
-      curr->name = numericName;
-    }
+    assert(curr->name.is());
     functions.push_back(std::unique_ptr<Function>(curr));
+    assert(functionsMap.find(curr->name) == functionsMap.end());
     functionsMap[curr->name] = curr;
-    functionsMap[numericName] = curr;
   }
   void addGlobal(Global* curr) {
-    Name numericName = Name::fromInt(globals.size());
-    if (curr->name.isNull()) {
-      curr->name = numericName;
-    }
+    assert(curr->name.is());
     globals.push_back(std::unique_ptr<Global>(curr));
+    assert(globalsMap.find(curr->name) == globalsMap.end());
     globalsMap[curr->name] = curr;
-    globalsMap[numericName] = curr;
   }
 
   void addStart(const Name &s) {

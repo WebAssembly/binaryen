@@ -191,7 +191,7 @@
       )
     )
   )
-  (func $b15 (type $1)
+  (func $b15b (type $1)
     (block $topmost
       (if
         (i32.const 18)

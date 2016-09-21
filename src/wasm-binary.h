@@ -652,7 +652,7 @@ public:
       if (debug) std::cerr << "write one at" << o.size() << std::endl;
       size_t sizePos = writeU32LEBPlaceholder();
       size_t start = o.size();
-      Function* function = wasm->getFunction(i);
+      Function* function = wasm->functions[i].get();
       mappedLocals.clear();
       numLocalsByType.clear();
       if (debug) std::cerr << "writing" << function->name << std::endl;
@@ -1495,6 +1495,7 @@ public:
         assert(numResults == 1);
         curr->result = getWasmType();
       }
+      curr->name = Name::fromInt(wasm.functionTypes.size());
       wasm.addFunctionType(curr);
     }
   }
@@ -1526,7 +1527,7 @@ public:
         case Import::Function: {
           auto index = getU32LEB();
           assert(index < wasm.functionTypes.size());
-          curr->functionType = wasm.getFunctionType(index);
+          curr->functionType = wasm.functionTypes[index].get();
           assert(curr->functionType->name.is());
           functionImportIndexes.push_back(curr->name);
           break;
@@ -1551,7 +1552,7 @@ public:
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto index = getU32LEB();
-      functionTypes.push_back(wasm.getFunctionType(index));
+      functionTypes.push_back(wasm.functionTypes[index].get());
     }
   }
 
@@ -1659,6 +1660,7 @@ public:
       curr->type = getWasmType();
       curr->init = readExpression();
       curr->mutable_ = true; // TODO
+      curr->name = Name("global$" + std::to_string(wasm.globals.size()));
       wasm.addGlobal(curr);
     }
   }
@@ -1998,7 +2000,7 @@ public:
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
     auto arity = getU32LEB();
     WASM_UNUSED(arity);
-    auto* fullType = wasm.getFunctionType(getU32LEB());
+    auto* fullType = wasm.functionTypes.at(getU32LEB()).get();
     curr->fullType = fullType->name;
     auto num = fullType->params.size();
     assert(num == arity);

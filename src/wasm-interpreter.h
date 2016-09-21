@@ -51,14 +51,14 @@ class Flow {
 public:
   Flow() {}
   Flow(Literal value) : value(value) {}
-  Flow(IString breakTo) : breakTo(breakTo) {}
+  Flow(Name breakTo) : breakTo(breakTo) {}
 
   Literal value;
-  IString breakTo; // if non-null, a break is going on
+  Name breakTo; // if non-null, a break is going on
 
   bool breaking() { return breakTo.is(); }
 
-  void clearIf(IString target) {
+  void clearIf(Name target) {
     if (breakTo == target) {
       breakTo.clear();
     }
@@ -589,7 +589,7 @@ private:
   std::vector<Name> functionStack;
 
   // Call a function, starting an invocation.
-  Literal callFunction(IString name, LiteralList& arguments) {
+  Literal callFunction(Name name, LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
     callDepth = 0;
     functionStack.clear();
@@ -598,7 +598,7 @@ private:
 
 public:
   // Internal function call. Must be public so that callTable implementations can use it (refactor?)
-  Literal callFunctionInternal(IString name, LiteralList& arguments) {
+  Literal callFunctionInternal(Name name, LiteralList& arguments) {
 
     class FunctionScope {
      public:
@@ -757,7 +757,7 @@ public:
             return Literal(int32_t(ret));
           }
           case HasFeature: {
-            IString id = curr->nameOperand;
+            Name id = curr->nameOperand;
             if (id == WASM) return Literal(1);
             return Literal((int32_t)0);
           }

@@ -438,7 +438,7 @@
   (memory 0)
   (type $FUNCSIG$v (func))
   (import $i "env" "i")
-  (import $i "env" "j")
+  (import $j "env" "j")
   (func $erase (type $FUNCSIG$v)
     (call $i)
   )
