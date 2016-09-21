@@ -461,6 +461,17 @@ private:
     }
   }
 
+  Name getGlobalName(Element& s) {
+    if (s.dollared()) {
+      return s.str();
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= globalNames.size()) throw ParseException("unknown global in getGlobalName");
+      return globalNames[offset];
+    }
+  }
+
   void parseStart(Element& s) {
     wasm.addStart(getFunctionName(*s[1]));
   }
@@ -1043,7 +1054,7 @@ private:
 
   Expression* makeGetGlobal(Element& s) {
     auto ret = allocator.alloc<GetGlobal>();
-    ret->name = s[1]->str();
+    ret->name = getGlobalName(*s[1]);
     auto* global = wasm.checkGlobal(ret->name);
     if (global) {
       ret->type = global->type;
@@ -1059,7 +1070,7 @@ private:
 
   Expression* makeSetGlobal(Element& s) {
     auto ret = allocator.alloc<SetGlobal>();
-    ret->name = s[1]->str();
+    ret->name = getGlobalName(*s[1]);
     if (wasm.checkGlobal(ret->name) && !wasm.checkGlobal(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
     ret->value = parseExpression(s[2]);
     return ret;
@@ -1605,24 +1616,20 @@ private:
     Index newStyleInner = 1;
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
-    } else if (newStyle && newStyleInner < s[3]->size() && (*s[3])[newStyleInner]->isStr()) {
-      auto str = (*s[3])[newStyleInner]->str();
-      if (!isWasmType(str)) {
-        im->name = str;
-        newStyleInner++;
-      }
+    } else if (newStyle && newStyleInner < s[3]->size() && (*s[3])[newStyleInner]->dollared()) {
+      im->name = (*s[3])[newStyleInner++]->str();
     }
     if (!im->name.is()) {
       if (im->kind == Import::Function) {
-        im->name = Name::fromInt(functionCounter++);
+        im->name = Name("import$function$" + std::to_string(functionCounter++));
         functionNames.push_back(im->name);
       } else if (im->kind == Import::Global) {
-        im->name = Name::fromInt(globalCounter++);
+        im->name = Name("import$global" + std::to_string(globalCounter++));
         globalNames.push_back(im->name);
       } else if (im->kind == Import::Memory) {
-        im->name = Name::fromInt(0);
+        im->name = Name("import$memory$" + std::to_string(0));
       } else if (im->kind == Import::Table) {
-        im->name = Name::fromInt(0);
+        im->name = Name("import$table$" + std::to_string(0));
       } else {
         WASM_UNREACHABLE();
       }
