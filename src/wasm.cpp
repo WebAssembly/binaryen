@@ -26,20 +26,10 @@ Name WASM("wasm"),
      RETURN_FLOW("*return:)*");
 
 namespace BinaryConsts {
-namespace Section {
-  const char* Memory = "memory";
-  const char* Signatures = "type";
-  const char* ImportTable = "import";
-  const char* FunctionSignatures = "function";
-  const char* Functions = "code";
-  const char* ExportTable = "export";
-  const char* Globals = "global";
-  const char* DataSegments = "data";
-  const char* FunctionTable = "table";
-  const char* Names = "name";
-  const char* Start = "start";
-};
-};
+namespace UserSections {
+const char* Names = "names";
+}
+}
 
 Name GROW_WASM_MEMORY("__growWasmMemory"),
      NEW_SIZE("newSize"),
@@ -163,4 +153,3 @@ void Loop::finalize() {
 }
 
 } // namespace wasm
-

@@ -237,19 +237,28 @@ enum Meta {
   Version = 0x0c
 };
 
-namespace Section {
-  extern const char* Memory;
-  extern const char* Signatures;
-  extern const char* ImportTable;
-  extern const char* FunctionSignatures;
-  extern const char* Functions;
-  extern const char* ExportTable;
-  extern const char* Globals;
-  extern const char* DataSegments;
-  extern const char* FunctionTable;
-  extern const char* Names;
-  extern const char* Start;
+enum Section {
+  User = 0,
+  Type = 1,
+  Import = 2,
+  Function = 3,
+  Table = 4,
+  Memory = 5,
+  Global = 6,
+  Export = 7,
+  Start = 8,
+  Element = 9,
+  Code = 10,
+  Data = 11
 };
+
+enum ElementType {
+  AnyFunc = 0x20
+};
+
+namespace UserSections {
+extern const char* Names;
+}
 
 enum ASTNodes {
   CurrentMemory = 0x3b,
@@ -478,7 +487,7 @@ public:
   void write() {
     writeHeader();
 
-    writeSignatures();
+    writeTypes();
     writeImports();
     writeFunctionSignatures();
     writeFunctionTable();
@@ -506,14 +515,22 @@ public:
     return ret;
   }
 
-  int32_t startSection(const char* name) {
-    // emit 5 bytes of 0, which we'll fill with LEB later
-    writeInlineString(name);
-    return writeU32LEBPlaceholder();
+  void writeResizableLimits(Address initial, Address maximum) {
+    uint32_t flags = maximum ? 1 : 0;
+    o << U32LEB(flags);
+    o << U32LEB(initial);
+    if (flags) {
+      o << U32LEB(maximum);
+    }
+  }
+
+  int32_t startSection(BinaryConsts::Section code) {
+    o << U32LEB(code);
+    return writeU32LEBPlaceholder(); // section size to be filled in later
   }
 
   void finishSection(int32_t start) {
-    int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
+    int32_t size = o.size() - start - 6; // section size does not include the 6 bytes of the code and size field
     o.writeAt(start, U32LEB(size));
   }
 
@@ -529,15 +546,16 @@ public:
     if (wasm->memory.max == 0) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
     auto start = startSection(BinaryConsts::Section::Memory);
-    o << U32LEB(wasm->memory.initial)
-      << U32LEB(wasm->memory.max);
+    o << U32LEB(1); // Define 1 memory
+    Address max = wasm->memory.max == Memory::kMaxSize ? Address(0) : wasm->memory.max;
+    writeResizableLimits(wasm->memory.initial, max);
     finishSection(start);
   }
 
-  void writeSignatures() {
+  void writeTypes() {
     if (wasm->functionTypes.size() == 0) return;
-    if (debug) std::cerr << "== writeSignatures" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Signatures);
+    if (debug) std::cerr << "== writeTypes" << std::endl;
+    auto start = startSection(BinaryConsts::Section::Type);
     o << U32LEB(wasm->functionTypes.size());
     for (auto& type : wasm->functionTypes) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -567,20 +585,31 @@ public:
   void writeImports() {
     if (wasm->imports.size() == 0) return;
     if (debug) std::cerr << "== writeImports" << std::endl;
-    auto start = startSection(BinaryConsts::Section::ImportTable);
+    auto start = startSection(BinaryConsts::Section::Import);
     o << U32LEB(wasm->imports.size());
     for (auto& import : wasm->imports) {
       if (debug) std::cerr << "write one" << std::endl;
-      o << U32LEB(import->kind);
-      switch (import->kind) {
-        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name));
-        case Export::Table: break;
-        case Export::Memory: break;
-        case Export::Global: o << binaryWasmType(import->globalType);break;
-        default: WASM_UNREACHABLE();
-      }
       writeInlineString(import->module.str);
       writeInlineString(import->base.str);
+      o << U32LEB(import->kind);
+      switch (import->kind) {
+        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
+        case Export::Table: {
+          o << U32LEB(BinaryConsts::ElementType::AnyFunc);
+          auto max = wasm->table.max == Table::kMaxSize ? Address(0) : wasm->table.max;
+          writeResizableLimits(wasm->table.initial, max);
+          break;
+        }
+        case Export::Memory: {
+          auto max = wasm->memory.max == Memory::kMaxSize ? Address(0) : wasm->memory.max;
+          writeResizableLimits(wasm->memory.initial, max); break;
+        }
+        case Export::Global:
+          o << binaryWasmType(import->globalType);
+          o << U32LEB(0); // Mutable global's can't be imported for now.
+          break;
+        default: WASM_UNREACHABLE();
+      }
     }
     finishSection(start);
   }
@@ -627,7 +656,7 @@ public:
   void writeFunctionSignatures() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
-    auto start = startSection(BinaryConsts::Section::FunctionSignatures);
+    auto start = startSection(BinaryConsts::Section::Function);
     o << U32LEB(wasm->functions.size());
     for (auto& curr : wasm->functions) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -645,7 +674,7 @@ public:
   void writeFunctions() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeFunctions" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Functions);
+    auto start = startSection(BinaryConsts::Section::Code);
     size_t total = wasm->functions.size();
     o << U32LEB(total);
     for (size_t i = 0; i < total; i++) {
@@ -679,7 +708,7 @@ public:
   void writeGlobals() {
     if (wasm->globals.size() == 0) return;
     if (debug) std::cerr << "== writeglobals" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Globals);
+    auto start = startSection(BinaryConsts::Section::Global);
     o << U32LEB(wasm->globals.size());
     for (auto& curr : wasm->globals) {
       if (debug) std::cerr << "write one" << std::endl;
@@ -693,10 +722,11 @@ public:
   void writeExports() {
     if (wasm->exports.size() == 0) return;
     if (debug) std::cerr << "== writeexports" << std::endl;
-    auto start = startSection(BinaryConsts::Section::ExportTable);
+    auto start = startSection(BinaryConsts::Section::Export);
     o << U32LEB(wasm->exports.size());
     for (auto& curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
+      writeInlineString(curr->name.str);
       o << U32LEB(curr->kind);
       switch (curr->kind) {
         case Export::Function: o << U32LEB(getFunctionIndex(curr->value)); break;
@@ -705,7 +735,7 @@ public:
         case Export::Global: o << U32LEB(getGlobalIndex(curr->value)); break;
         default: WASM_UNREACHABLE();
       }
-      writeInlineString(curr->name.str);
+
     }
     finishSection(start);
   }
@@ -716,7 +746,7 @@ public:
     for (auto& segment : wasm->memory.segments) {
       if (segment.data.size() > 0) num++;
     }
-    auto start = startSection(BinaryConsts::Section::DataSegments);
+    auto start = startSection(BinaryConsts::Section::Data);
     o << U32LEB(num);
     for (auto& segment : wasm->memory.segments) {
       if (segment.data.size() == 0) continue;
@@ -770,7 +800,7 @@ public:
   void writeFunctionTable() {
     if (wasm->table.segments.size() == 0) return;
     if (debug) std::cerr << "== writeFunctionTable" << std::endl;
-    auto start = startSection(BinaryConsts::Section::FunctionTable);
+    auto start = startSection(BinaryConsts::Section::Table);
     o << U32LEB(wasm->table.initial);
     o << U32LEB(wasm->table.max);
     o << U32LEB(wasm->table.segments.size());
@@ -788,7 +818,8 @@ public:
   void writeNames() {
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeNames" << std::endl;
-    auto start = startSection(BinaryConsts::Section::Names);
+    auto start = startSection(BinaryConsts::Section::User);
+    writeInlineString("names");
     o << U32LEB(wasm->functions.size());
     for (auto& curr : wasm->functions) {
       writeInlineString(curr->name.str);
@@ -1270,49 +1301,45 @@ public:
 
     // read sections until the end
     while (more()) {
-      auto nameSize = getU32LEB();
-      uint32_t sectionSize, before;
-      auto match = [&](const char* name) {
-        for (size_t i = 0; i < nameSize; i++) {
-          if (pos + i >= input.size()) return false;
-          if (name[i] == 0) return false;
-          if (input[pos + i] != name[i]) return false;
+      uint32_t sectionCode = getU32LEB();
+      uint32_t payloadLen = getU32LEB();
+      if (pos + payloadLen > input.size()) throw ParseException("Section extends beyond end of input");
+
+      switch (sectionCode) {
+        case BinaryConsts::Section::Start: readStart(); break;
+        case BinaryConsts::Section::Memory: readMemory(); break;
+        case BinaryConsts::Section::Type: readSignatures(); break;
+        case BinaryConsts::Section::Import: readImports(); break;
+        case BinaryConsts::Section::Function: readFunctionSignatures(); break;
+        case BinaryConsts::Section::Code: readFunctions(); break;
+        case BinaryConsts::Section::Export: readExports(); break;
+        case BinaryConsts::Section::Global: {
+          readGlobals();
+          // imports can read global imports, so we run getGlobalName and create the mapping
+          // but after we read globals, we need to add the internal globals too, so do that here
+          mappedGlobals.clear(); // wipe the mapping
+          getGlobalName(0); // force rebuild
+          break;
         }
-        if (strlen(name) != nameSize) return false;
-        // name matched, read section size and then section itself
-        pos += nameSize;
-        sectionSize = getU32LEB();
-        before = pos;
-        assert(pos + sectionSize <= input.size());
-        return true;
-      };
-      if (match(BinaryConsts::Section::Start)) readStart();
-      else if (match(BinaryConsts::Section::Memory)) readMemory();
-      else if (match(BinaryConsts::Section::Signatures)) readSignatures();
-      else if (match(BinaryConsts::Section::ImportTable)) readImports();
-      else if (match(BinaryConsts::Section::FunctionSignatures)) readFunctionSignatures();
-      else if (match(BinaryConsts::Section::Functions)) readFunctions();
-      else if (match(BinaryConsts::Section::ExportTable)) readExports();
-      else if (match(BinaryConsts::Section::Globals)) {
-        readGlobals();
-        // imports can read global imports, so we run getGlobalName and create the mapping
-        // but after we read globals, we need to add the internal globals too, so do that here
-        mappedGlobals.clear(); // wipe the mapping
-        getGlobalName(0); // force rebuild
-      } else if (match(BinaryConsts::Section::DataSegments)) readDataSegments();
-      else if (match(BinaryConsts::Section::FunctionTable)) readFunctionTable();
-      else if (match(BinaryConsts::Section::Names)) readNames();
-      else {
-        std::cerr << "unfamiliar section: ";
-        assert(pos + nameSize - 1 < input.size());
-        for (size_t i = 0; i < nameSize; i++) std::cerr << input[pos + i];
-        std::cerr << std::endl;
-        abort();
+        case BinaryConsts::Section::Data: readDataSegments(); break;
+        case BinaryConsts::Section::Table: readFunctionTable(); break;
+
+        default:
+          if (!readUserSection()) abort();
       }
-      assert(pos == before + sectionSize);
     }
 
     processFunctions();
+  }
+
+  bool readUserSection() {
+    Name sectionName = getInlineString();
+    if (sectionName.equals(BinaryConsts::UserSections::Names)) {
+      readNames();
+      return true;
+    }
+    std::cerr << "unfamiliar section: " << sectionName << std::endl;
+    return false;
   }
 
   bool more() {
@@ -1328,21 +1355,21 @@ public:
     if (debug) std::cerr << "<==" << std::endl;
     auto ret = uint16_t(getInt8());
     ret |= uint16_t(getInt8()) << 8;
-    if (debug) std::cerr << "getInt16: " << ret << " ==>" << std::endl;
+    if (debug) std::cerr << "getInt16: " << ret << "/0x" << std::hex << ret << std::dec << " ==>" << std::endl;
     return ret;
   }
   uint32_t getInt32() {
     if (debug) std::cerr << "<==" << std::endl;
     auto ret = uint32_t(getInt16());
     ret |= uint32_t(getInt16()) << 16;
-    if (debug) std::cerr << "getInt32: " << ret << " ==>" << std::endl;
+    if (debug) std::cerr << "getInt32: " << ret << "/0x" << std::hex << ret << std::dec <<" ==>" << std::endl;
     return ret;
   }
   uint64_t getInt64() {
     if (debug) std::cerr << "<==" << std::endl;
     auto ret = uint64_t(getInt32());
     ret |= uint64_t(getInt32()) << 32;
-    if (debug) std::cerr << "getInt64: " << ret << " ==>" << std::endl;
+    if (debug) std::cerr << "getInt64: " << ret  << "/0x" << std::hex << ret << std::dec << " ==>" << std::endl;
     return ret;
   }
   float getFloat32() {
@@ -1469,8 +1496,10 @@ public:
 
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
-    wasm.memory.initial = getU32LEB();
-    wasm.memory.max = getU32LEB();
+    auto numMemories = getU32LEB();
+    if (!numMemories) return;
+    assert(numMemories == 1);
+    getResizableLimits(wasm.memory.initial, &wasm.memory.max);
   }
 
   void readSignatures() {
@@ -1480,7 +1509,7 @@ public:
     for (size_t i = 0; i < numTypes; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new FunctionType;
-      auto form = getInt8();
+      auto form = getU32LEB();
       WASM_UNUSED(form);
       assert(form == BinaryConsts::TypeForms::Basic);
       size_t numParams = getU32LEB();
@@ -1514,6 +1543,14 @@ public:
     }
   }
 
+  void getResizableLimits(Address& initial, Address* max) {
+    auto flags = getU32LEB();
+    initial = getU32LEB();
+    bool hasMax = flags & 0x1;
+    assert(max || !hasMax);
+    if (hasMax) *max = getU32LEB();
+  }
+
   void readImports() {
     if (debug) std::cerr << "== readImports" << std::endl;
     size_t num = getU32LEB();
@@ -1522,6 +1559,8 @@ public:
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Import;
       curr->name = Name(std::string("import$") + std::to_string(i));
+      curr->module = getInlineString();
+      curr->base = getInlineString();
       curr->kind = (Import::Kind)getU32LEB();
       switch (curr->kind) {
         case Import::Function: {
@@ -1532,13 +1571,23 @@ public:
           functionImportIndexes.push_back(curr->name);
           break;
         }
-        case Import::Table: break;
-        case Import::Memory: break;
-        case Import::Global: curr->globalType = getWasmType(); break;
+        case Import::Table: {
+          auto elementType = getU32LEB();
+          WASM_UNUSED(elementType);
+          assert(elementType == BinaryConsts::ElementType::AnyFunc);
+          getResizableLimits(wasm.table.initial, &wasm.table.max);
+          break;
+        }
+        case Import::Memory: getResizableLimits(wasm.memory.initial, &wasm.memory.max); break;
+        case Import::Global: {
+          curr->globalType = getWasmType();
+          auto globalMutable = getU32LEB();
+          WASM_UNUSED(globalMutable);
+          assert(!globalMutable);
+          break;
+        }
         default: WASM_UNREACHABLE();
       }
-      curr->module = getInlineString();
-      curr->base = getInlineString();
       wasm.addImport(curr);
     }
   }
@@ -1634,9 +1683,9 @@ public:
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Export;
+      curr->name = getInlineString();
       curr->kind = (Export::Kind)getU32LEB();
       auto index = getU32LEB();
-      curr->name = getInlineString();
       exportIndexes[curr] = index;
     }
   }
