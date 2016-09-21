@@ -122,6 +122,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case f64: globals[import->name] = Literal(double(666.6)); break;
           default: WASM_UNREACHABLE();
         }
+      } else if (import->kind == Import::Memory && import->module == SPECTEST && import->base == MEMORY) {
+        // imported memory has initial 1 and max 2
+        wasm.memory.initial = 1;
+        wasm.memory.max = 2;
       }
     }
   }
