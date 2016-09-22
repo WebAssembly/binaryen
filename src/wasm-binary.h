@@ -750,13 +750,14 @@ public:
     o << U32LEB(num);
     for (auto& segment : wasm->memory.segments) {
       if (segment.data.size() == 0) continue;
+      o << U32LEB(0); // Linear memory 0 in the MVP
       writeExpression(segment.offset);
       o << int8_t(BinaryConsts::End);
       writeInlineBuffer(&segment.data[0], segment.data.size());
     }
     finishSection(start);
   }
-  
+
   std::map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
   uint32_t getFunctionIndex(Name name) {
     if (!mappedFunctions.size()) {
@@ -974,14 +975,14 @@ public:
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallFunction) << U32LEB(curr->operands.size()) << U32LEB(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
   }
   void visitCallImport(CallImport *curr) {
     if (debug) std::cerr << "zz node: CallImport" << std::endl;
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallFunction) << U32LEB(curr->operands.size()) << U32LEB(getFunctionIndex(curr->target));
+    o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
@@ -1803,6 +1804,9 @@ public:
     if (debug) std::cerr << "== readDataSegments" << std::endl;
     auto num = getU32LEB();
     for (size_t i = 0; i < num; i++) {
+      auto memoryIndex = getU32LEB();
+      WASM_UNUSED(memoryIndex);
+      assert(memoryIndex == 0); // Only one linear memory in the MVP
       Memory::Segment curr;
       auto offset = readExpression();
       auto size = getU32LEB();
@@ -2007,10 +2011,9 @@ public:
   }
 
   template<typename T>
-  void fillCall(T* call, FunctionType* type, Index arity) {
+  void fillCall(T* call, FunctionType* type) {
     assert(type);
     auto num = type->params.size();
-    assert(num == arity);
     call->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
       call->operands[num - i - 1] = popExpression();
@@ -2020,8 +2023,6 @@ public:
 
   Expression* visitCall() {
     if (debug) std::cerr << "zz node: Call" << std::endl;
-    auto arity = getU32LEB();
-    WASM_UNUSED(arity);
     auto index = getU32LEB();
     FunctionType* type;
     Expression* ret;
@@ -2031,7 +2032,7 @@ public:
       auto* import = wasm.getImport(functionImportIndexes[index]);
       call->target = import->name;
       type = import->functionType;
-      fillCall(call, type, arity);
+      fillCall(call, type);
       ret = call;
     } else {
       // this is a call of a defined function
@@ -2039,7 +2040,7 @@ public:
       auto adjustedIndex = index - functionImportIndexes.size();
       assert(adjustedIndex < functionTypes.size());
       type = functionTypes[adjustedIndex];
-      fillCall(call, type, arity);
+      fillCall(call, type);
       functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
       ret = call;
     }
