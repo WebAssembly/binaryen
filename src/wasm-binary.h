@@ -726,6 +726,7 @@ public:
     o << U32LEB(wasm->exports.size());
     for (auto& curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
+      writeInlineString(curr->name.str);
       o << U32LEB(curr->kind);
       switch (curr->kind) {
         case Export::Function: o << U32LEB(getFunctionIndex(curr->value)); break;
@@ -734,7 +735,7 @@ public:
         case Export::Global: o << U32LEB(getGlobalIndex(curr->value)); break;
         default: WASM_UNREACHABLE();
       }
-      writeInlineString(curr->name.str);
+
     }
     finishSection(start);
   }
@@ -1680,9 +1681,9 @@ public:
     for (size_t i = 0; i < num; i++) {
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Export;
+      curr->name = getInlineString();
       curr->kind = (Export::Kind)getU32LEB();
       auto index = getU32LEB();
-      curr->name = getInlineString();
       exportIndexes[curr] = index;
     }
   }
