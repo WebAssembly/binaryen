@@ -750,13 +750,14 @@ public:
     o << U32LEB(num);
     for (auto& segment : wasm->memory.segments) {
       if (segment.data.size() == 0) continue;
+      o << U32LEB(0); // Linear memory 0 in the MVP
       writeExpression(segment.offset);
       o << int8_t(BinaryConsts::End);
       writeInlineBuffer(&segment.data[0], segment.data.size());
     }
     finishSection(start);
   }
-  
+
   std::map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
   uint32_t getFunctionIndex(Name name) {
     if (!mappedFunctions.size()) {
@@ -1803,6 +1804,9 @@ public:
     if (debug) std::cerr << "== readDataSegments" << std::endl;
     auto num = getU32LEB();
     for (size_t i = 0; i < num; i++) {
+      auto memoryIndex = getU32LEB();
+      WASM_UNUSED(memoryIndex);
+      assert(memoryIndex == 0); // Only one linear memory in the MVP
       Memory::Segment curr;
       auto offset = readExpression();
       auto size = getU32LEB();
