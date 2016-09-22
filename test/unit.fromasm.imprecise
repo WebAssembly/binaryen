@@ -1,31 +1,34 @@
 (module
-  (memory 256 256)
   (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$dd (func (param f64) (result f64)))
   (type $FUNCSIG$i (func (result i32)))
-  (import "global" "NaN" (global $t f64))
-  (import "global" "Infinity" (global $u f64))
-  (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
-  (import "env" "gb" (global $n i32))
-  (import "env" "STACKTOP" (global $STACKTOP i32))
+  (import "global" "NaN" (global $t$asm2wasm$import f64))
+  (import "global" "Infinity" (global $u$asm2wasm$import f64))
+  (import "env" "tempDoublePtr" (global $tempDoublePtr$asm2wasm$import i32))
+  (import "env" "gb" (global $n$asm2wasm$import i32))
+  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
   (import "env" "setTempRet0" (func $setTempRet0 (param i32) (result i32)))
   (import "env" "abort" (func $abort (param f64) (result f64)))
   (import "env" "print" (func $print (param i32)))
   (import "env" "h" (func $h (param i32)))
   (import "env" "return_int" (func $return_int (result i32)))
   (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
-  (import "env" "memory" (memory $memory))
-  (import "env" "table" (table $table))
+  (import "env" "memory" (memory 256 256))
+  (import "env" "table" (table 10 10 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (export "big_negative" (func $big_negative))
   (export "pick" (func $big_negative))
-  (global $Int i32 (i32.const 0))
-  (global $Double f64 (f64.const 0))
-  (table 10 10 anyfunc)
+  (global $t (mut f64) (get_global $t$asm2wasm$import))
+  (global $u (mut f64) (get_global $u$asm2wasm$import))
+  (global $Int (mut i32) (i32.const 0))
+  (global $Double (mut f64) (f64.const 0))
+  (global $tempDoublePtr (mut i32) (get_global $tempDoublePtr$asm2wasm$import))
+  (global $n (mut i32) (get_global $n$asm2wasm$import))
+  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
   (elem (i32.const 0) $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
   (func $big_negative
     (nop)
@@ -184,7 +187,7 @@
             (br $label$break$L1)
           )
         )
-        (call_import $h
+        (call $h
           (i32.const 120)
         )
         (br $label$continue$L1)
@@ -193,7 +196,7 @@
     (i32.const 0)
   )
   (func $frem (result f64)
-    (call_import $f64-rem
+    (call $f64-rem
       (f64.const 5.5)
       (f64.const 1.2)
     )
@@ -278,7 +281,7 @@
           (i32.const 200)
         )
         (block
-          (call_import $h
+          (call $h
             (get_local $0)
           )
           (set_local $0
@@ -297,29 +300,29 @@
   )
   (func $aborts
     (drop
-      (call_import $abort
+      (call $abort
         (f64.const 0)
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.convert_s/i32
           (i32.const 55)
         )
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.const 0)
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.const 12.34)
       )
     )
     (drop
-      (call_import $abort
+      (call $abort
         (f64.promote/f32
           (f32.const 56.779998779296875)
         )
@@ -328,18 +331,18 @@
   )
   (func $continues
     (loop $while-in$1
-      (call_import $print
+      (call $print
         (i32.const 1)
       )
       (loop $unlikely-continue$3
-        (call_import $print
+        (call $print
           (i32.const 5)
         )
         (br_if $unlikely-continue$3
           (i32.const 0)
         )
       )
-      (call_import $print
+      (call $print
         (i32.const 2)
       )
       (br $while-in$1)
@@ -381,7 +384,7 @@
             (i32.const 3)
           )
         )
-        (block
+        (block i32
           (drop
             (call $lb
               (i32.const 4)
@@ -402,7 +405,7 @@
           )
         )
       )
-      (block
+      (block i32
         (drop
           (call $lb
             (i32.const 8)
@@ -473,11 +476,13 @@
     )
   )
   (func $phi (result i32)
-    (block $do-once$0
-      (br_if $do-once$0
-        (i32.const 0)
-        (call $lb
-          (i32.const 1)
+    (block $do-once$0 i32
+      (drop
+        (br_if $do-once$0
+          (i32.const 0)
+          (call $lb
+            (i32.const 1)
+          )
         )
       )
       (i32.const 1)
@@ -503,12 +508,12 @@
           (call $phi)
         )
         (drop
-          (call_import $setTempRet0
+          (call $setTempRet0
             (i32.const 10)
           )
         )
         (call $zeroInit
-          (call_import $setTempRet0
+          (call $setTempRet0
             (i32.const 10)
           )
         )
@@ -574,7 +579,7 @@
       (if
         (i32.const 1)
         (i32.trunc_s/f64
-          (call_import $abort
+          (call $abort
             (f64.convert_s/i32
               (i32.const 5)
             )
@@ -586,7 +591,7 @@
     (drop
       (if
         (i32.const 3)
-        (call_import $abort
+        (call $abort
           (f64.convert_s/i32
             (i32.const 7)
           )
@@ -695,7 +700,7 @@
     (if
       (i32.const 1)
       (drop
-        (call_import $return_int)
+        (call $return_int)
       )
     )
   )
@@ -771,7 +776,7 @@
         (if
           (get_local $0)
           (block
-            (call_import $h
+            (call $h
               (i32.const 0)
             )
             (br $jumpthreading$inner$0)
@@ -779,11 +784,11 @@
         )
         (br $jumpthreading$outer$0)
       )
-      (call_import $h
+      (call $h
         (i32.const 1)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -1)
     )
     (block $jumpthreading$inner$1
@@ -798,16 +803,16 @@
             )
           )
         )
-        (call_import $h
+        (call $h
           (i32.const 2)
         )
         (br $jumpthreading$inner$1)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const 3)
     )
-    (call_import $h
+    (call $h
       (i32.const -2)
     )
     (block $jumpthreading$outer$3
@@ -816,7 +821,7 @@
           (if
             (get_local $0)
             (block
-              (call_import $h
+              (call $h
                 (i32.const 4)
               )
               (br_if $jumpthreading$inner$2
@@ -830,16 +835,16 @@
           )
           (br $jumpthreading$outer$3)
         )
-        (call_import $h
+        (call $h
           (i32.const 5)
         )
         (br $jumpthreading$outer$3)
       )
-      (call_import $h
+      (call $h
         (i32.const 6)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -3)
     )
     (block $jumpthreading$outer$5
@@ -848,7 +853,7 @@
           (if
             (get_local $0)
             (block
-              (call_import $h
+              (call $h
                 (i32.const 7)
               )
               (br_if $jumpthreading$inner$4
@@ -862,7 +867,7 @@
           )
           (br $jumpthreading$outer$5)
         )
-        (call_import $h
+        (call $h
           (i32.const 8)
         )
         (br_if $jumpthreading$inner$5
@@ -873,11 +878,11 @@
         )
         (br $jumpthreading$outer$5)
       )
-      (call_import $h
+      (call $h
         (i32.const 9)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -4)
     )
     (block $jumpthreading$outer$6
@@ -885,7 +890,7 @@
         (if
           (get_local $0)
           (block
-            (call_import $h
+            (call $h
               (i32.const 10)
             )
             (br $jumpthreading$inner$6)
@@ -893,11 +898,11 @@
         )
         (br $jumpthreading$outer$6)
       )
-      (call_import $h
+      (call $h
         (i32.const 11)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -5)
     )
     (block $jumpthreading$outer$8
@@ -907,7 +912,7 @@
             (if
               (get_local $0)
               (block
-                (call_import $h
+                (call $h
                   (i32.const 12)
                 )
                 (br_if $jumpthreading$inner$7
@@ -921,7 +926,7 @@
             )
             (br $jumpthreading$outer$8)
           )
-          (call_import $h
+          (call $h
             (i32.const 13)
           )
           (br_if $jumpthreading$inner$8
@@ -930,11 +935,11 @@
         )
         (br $jumpthreading$outer$8)
       )
-      (call_import $h
+      (call $h
         (i32.const 14)
       )
     )
-    (call_import $h
+    (call $h
       (i32.const -6)
     )
     (get_local $0)
@@ -993,7 +998,7 @@
   (func $jumpThreadDrop (result i32)
     (local $0 i32)
     (set_local $0
-      (call_import $return_int)
+      (call $return_int)
     )
     (block $jumpthreading$outer$2
     )

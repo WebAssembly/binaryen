@@ -62,6 +62,8 @@ class Element {
   bool dollared_;
   bool quoted_;
 
+  #define element_assert(condition) assert((condition) ? true : (std::cerr << "on: " << *this << '\n' && 0));
+
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
 
@@ -80,7 +82,7 @@ public:
   }
 
   Element* operator[](unsigned i) {
-    if (i >= list().size()) throw ParseException("expected more elements in list", line, col);
+    if (i >= list().size()) element_assert(0 && "expected more elements in list");
     return list()[i];
   }
 
@@ -91,12 +93,12 @@ public:
   // string methods
 
   IString str() {
-    assert(!isList_);
+    element_assert(!isList_);
     return str_;
   }
 
   const char* c_str() {
-    assert(!isList_);
+    element_assert(!isList_);
     return str_.str;
   }
 
@@ -130,7 +132,11 @@ public:
   void dump() {
     std::cout << "dumping " << this << " : " << *this << ".\n";
   }
+
+  #undef element_assert
 };
+
+#define element_assert(condition, element) assert((condition) ? true : (std::cerr << "on: " << element << " at " << element.line << ":" << element.col << '\n' && 0));
 
 //
 // Generic S-Expression parsing into lists
@@ -212,6 +218,10 @@ private:
             if (depth == 0) {
               break;
             }
+          } else if (input[0] == '\n') {
+            line++;
+            lineStart = input;
+            input++;
           } else {
             input++;
           }
@@ -265,19 +275,27 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
   std::vector<Name> functionNames;
+  std::vector<Name> functionTypeNames;
+  std::vector<Name> globalNames;
   int functionCounter;
-  int importCounter;
   int globalCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm, Element& module) : wasm(wasm), allocator(wasm.allocator), importCounter(0), globalCounter(0) {
+  SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName = nullptr) : wasm(wasm), allocator(wasm.allocator), globalCounter(0) {
     assert(module[0]->str() == MODULE);
-    if (module.size() > 1 && module[1]->isStr()) {
+    if (module.size() == 1) return;
+    Index i = 1;
+    if (module[i]->dollared()) {
+      if (moduleName) {
+        *moduleName = module[i]->str();
+      }
+      i++;
+    }
+    if (i < module.size() && module[i]->isStr()) {
       // these s-expressions contain a binary module, actually
       std::vector<char> data;
-      size_t i = 1;
       while (i < module.size()) {
         auto str = module[i++]->c_str();
         if (auto size = strlen(str)) {
@@ -288,14 +306,19 @@ public:
       binaryBuilder.read();
       return;
     }
+    Index implementedFunctions = 0;
     functionCounter = 0;
-    for (unsigned i = 1; i < module.size(); i++) {
-      preParseFunctionType(*module[i]);
-      preParseImports(*module[i]);
+    for (unsigned j = i; j < module.size(); j++) {
+      auto& s = *module[j];
+      preParseFunctionType(s);
+      preParseImports(s);
+      if (s[0]->str() == FUNC && !isImport(s)) {
+        implementedFunctions++;
+      }
     }
-    functionCounter = 0;
-    for (unsigned i = 1; i < module.size(); i++) {
-      parseModuleElement(*module[i]);
+    functionCounter -= implementedFunctions; // we go through the functions again, now parsing them, and the counter begins from where imports ended
+    for (unsigned j = i; j < module.size(); j++) {
+      parseModuleElement(*module[j]);
     }
   }
 
@@ -325,8 +348,8 @@ private:
         if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
         functionTypes[name] = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
-        Name typeName = curr[1]->str();
-        if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function", curr.line, curr.col);
+        Name typeName = getFunctionTypeName(*curr[1]);
+        if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function type", curr.line, curr.col);
         type = wasm.getFunctionType(typeName);
         functionTypes[name] = type->result;
       } else if (id == PARAM && curr.size() > 1) {
@@ -356,17 +379,35 @@ private:
         }
       }
       if (need) {
+        functionType->name = Name::fromInt(wasm.functionTypes.size());
+        functionTypeNames.push_back(functionType->name);
         wasm.addFunctionType(functionType.release());
       }
     }
   }
 
+  bool isImport(Element& curr) {
+    for (Index i = 0; i < curr.size(); i++) {
+      auto& x = *curr[i];
+      if (x.isList() && x.size() > 0 && x[0]->isStr() && x[0]->str() == IMPORT) return true;
+    }
+    return false;
+  }
+
   void preParseImports(Element& curr) {
     IString id = curr[0]->str();
     if (id == IMPORT) parseImport(curr);
+    if (isImport(curr)) {
+      if (id == FUNC) parseFunction(curr, true /* preParseImport */);
+      else if (id == GLOBAL) parseGlobal(curr, true /* preParseImport */);
+      else if (id == TABLE) parseTable(curr, true /* preParseImport */);
+      else if (id == MEMORY) parseMemory(curr, true /* preParseImport */);
+      else throw ParseException("fancy import we don't support yet", curr.line, curr.col);
+    }
   }
 
   void parseModuleElement(Element& curr) {
+    if (isImport(curr)) return; // already done
     IString id = curr[0]->str();
     if (id == START) return parseStart(curr);
     if (id == FUNC) return parseFunction(curr);
@@ -404,8 +445,30 @@ private:
     } else {
       // index
       size_t offset = atoi(s.str().c_str());
-      if (offset >= functionNames.size()) throw ParseException("unknown function");
+      if (offset >= functionNames.size()) throw ParseException("unknown function in getFunctionName");
       return functionNames[offset];
+    }
+  }
+
+  Name getFunctionTypeName(Element& s) {
+    if (s.dollared()) {
+      return s.str();
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= functionTypeNames.size()) throw ParseException("unknown function type in getFunctionTypeName");
+      return functionTypeNames[offset];
+    }
+  }
+
+  Name getGlobalName(Element& s) {
+    if (s.dollared()) {
+      return s.str();
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= globalNames.size()) throw ParseException("unknown global in getGlobalName");
+      return globalNames[offset];
     }
   }
 
@@ -435,25 +498,39 @@ private:
         i++;
       }
     }
+#if 0
+    if (exportName.is() && !name.is()) {
+      name = exportName; // useful for debugging
+    }
+#endif
     return i;
   }
 
-  void parseFunction(Element& s) {
+  void parseFunction(Element& s, bool preParseImport = false) {
     size_t i = 1;
     Name name, exportName;
     i = parseFunctionNames(s, name, exportName);
-    if (!name.is()) {
-      // unnamed, use an index
-      name = Name::fromInt(functionCounter);
+    if (!preParseImport) {
+      if (!name.is()) {
+        // unnamed, use an index
+        name = Name::fromInt(functionCounter);
+      }
+      functionCounter++;
+    } else {
+      // just preparsing, functionCounter was incremented by preParseFunctionType
+      if (!name.is()) {
+        // unnamed, use an index
+        name = functionNames[functionCounter - 1];
+      }
     }
     if (exportName.is()) {
       auto ex = make_unique<Export>();
       ex->name = exportName;
       ex->value = name;
       ex->kind = Export::Function;
+      if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
       wasm.addExport(ex.release());
     }
-    functionCounter++;
     Expression* body = nullptr;
     localIndex = 0;
     otherIndex = 0;
@@ -464,6 +541,7 @@ private:
     WasmType result = none;
     Name type;
     Block* autoBlock = nullptr; // we may need to add a block for the very top level
+    Name importModule, importBase;
     auto makeFunction = [&]() {
       currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
         name,
@@ -511,9 +589,9 @@ private:
         if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
         result = stringToWasmType(curr[1]->str());
       } else if (id == TYPE) {
-        Name name = curr[1]->str();
+        Name name = getFunctionTypeName(*curr[1]);
         type = name;
-        if (!wasm.checkFunctionType(name)) throw ParseException("unknown function");
+        if (!wasm.checkFunctionType(name)) throw ParseException("unknown function type");
         FunctionType* type = wasm.getFunctionType(name);
         result = type->result;
         for (size_t j = 0; j < type->params.size(); j++) {
@@ -522,6 +600,9 @@ private:
           typeParams.emplace_back(name, currType);
           currLocalTypes[name] = currType;
         }
+      } else if (id == IMPORT) {
+        importModule = curr[1]->str();
+        importBase = curr[2]->str();
       } else {
         // body
         if (typeParams.size() > 0 && params.size() == 0) {
@@ -537,6 +618,34 @@ private:
         }
       }
     }
+    // see https://github.com/WebAssembly/spec/pull/301
+    if (type.isNull()) {
+      // if no function type name provided, then we generated one
+      std::unique_ptr<FunctionType> functionType = std::unique_ptr<FunctionType>(sigToFunctionType(getSigFromStructs(result, params)));
+      for (auto& existing : wasm.functionTypes) {
+        if (existing->structuralComparison(*functionType)) {
+          type = existing->name;
+          break;
+        }
+      }
+      if (!type.is()) throw ParseException("no function type [internal error?]", s.line, s.col);
+    }
+    if (importModule.is()) {
+      // this is an import, actually
+      assert(preParseImport);
+      std::unique_ptr<Import> im = make_unique<Import>();
+      im->name = name;
+      im->module = importModule;
+      im->base = importBase;
+      im->kind = Import::Function;
+      im->functionType = wasm.getFunctionType(type);
+      wasm.addImport(im.release());
+      assert(!currFunction);
+      currLocalTypes.clear();
+      labelStack.clear();
+      return;
+    }
+    assert(!preParseImport);
     if (brokeToAutoBlock) {
       ensureAutoBlock();
       autoBlock->name = FAKE_RETURN;
@@ -549,21 +658,8 @@ private:
       body = allocator.alloc<Nop>();
     }
     if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
-    // see https://github.com/WebAssembly/spec/pull/301
-    if (type.isNull()) {
-      // if no function type name provided, then we generated one
-      std::unique_ptr<FunctionType> functionType = std::unique_ptr<FunctionType>(sigToFunctionType(getSig(currFunction.get())));
-      for (auto& existing : wasm.functionTypes) {
-        if (existing->structuralComparison(*functionType)) {
-          type = existing->name;
-          break;
-        }
-      }
-      if (!type.is()) throw ParseException("no function type [internal error?]", s.line, s.col);
-    }
     currFunction->body = body;
     currFunction->type = type;
-
     wasm.addFunction(currFunction.release());
     currLocalTypes.clear();
     labelStack.clear();
@@ -586,6 +682,10 @@ private:
     abort();
   }
 
+  bool isWasmType(IString str) {
+    return stringToWasmType(str, true) != none;
+  }
+
 public:
   Expression* parseExpression(Element* s) {
     return parseExpression(*s);
@@ -594,7 +694,7 @@ public:
   #define abort_on(str) { throw ParseException(std::string("abort_on ") + str); }
 
   Expression* parseExpression(Element& s) {
-    if (!s.isList()) throw ParseException("invalid node for parseExpression, needed list", s.line, s.col);
+    element_assert(s.isList(), s);
     IString id = s[0]->str();
     const char *str = id.str;
     const char *dot = strchr(str, '.');
@@ -954,7 +1054,7 @@ private:
 
   Expression* makeGetGlobal(Element& s) {
     auto ret = allocator.alloc<GetGlobal>();
-    ret->name = s[1]->str();
+    ret->name = getGlobalName(*s[1]);
     auto* global = wasm.checkGlobal(ret->name);
     if (global) {
       ret->type = global->type;
@@ -970,7 +1070,8 @@ private:
 
   Expression* makeSetGlobal(Element& s) {
     auto ret = allocator.alloc<SetGlobal>();
-    ret->name = s[1]->str();
+    ret->name = getGlobalName(*s[1]);
+    if (wasm.checkGlobal(ret->name) && !wasm.checkGlobal(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
     ret->value = parseExpression(s[2]);
     return ret;
   }
@@ -985,13 +1086,23 @@ private:
       auto& s = *sp;
       size_t i = 1;
       if (i < s.size() && s[i]->isStr()) {
-        curr->name = s[i]->str();
-        i++;
+        // could be a name or a type
+        if (s[i]->dollared() || stringToWasmType(s[i]->str(), true /* allowError */) == none) {
+          curr->name = s[i]->str();
+          i++;
+        } else {
+          curr->name = getPrefixedName("block");
+        }
       } else {
         curr->name = getPrefixedName("block");
       }
       labelStack.push_back(curr->name);
-      if (i >= s.size()) break; // labeled empty block
+      if (i >= s.size()) break; // empty block
+      if (s[i]->isStr()) {
+        // block signature
+        i++; // TODO: parse the signature
+        if (i >= s.size()) break; // empty block
+      }
       auto& first = *s[i];
       if (first[0]->str() == BLOCK) {
         // recurse
@@ -1008,7 +1119,7 @@ private:
       auto& s = *sp;
       size_t i = 1;
       if (i < s.size()) {
-        if (s[i]->isStr()) {
+        while (i < s.size() && s[i]->isStr()) {
           i++;
         }
         if (t < int(stack.size()) - 1) {
@@ -1126,40 +1237,33 @@ private:
 
   Expression* makeIf(Element& s) {
     auto ret = allocator.alloc<If>();
-    ret->condition = parseExpression(s[1]);
-
-    // ifTrue and ifFalse may get implicit blocks
-    auto handle = [&](const char* title, Element& s) {
-      Name name = getPrefixedName(title);
-      bool explicitThenElse = false;
-      if (s[0]->str() == THEN || s[0]->str() == ELSE) {
-        explicitThenElse = true;
-        if (s[1]->isStr() && s[1]->dollared()) {
-          name = s[1]->str();
-        }
-      }
-      labelStack.push_back(name);
-      auto* ret = parseExpression(&s);
-      labelStack.pop_back();
-      if (explicitThenElse) {
-        ret->dynCast<Block>()->name = name;
-      } else {
-        // add a block if we must
-        if (BreakSeeker::has(ret, name)) {
-          auto* block = allocator.alloc<Block>();
-          block->name = name;
-          block->list.push_back(ret);
-          block->finalize();
-          ret = block;
-        }
-      }
-      return ret;
-    };
-
-    ret->ifTrue = handle("if-true", *s[2]);
-    if (s.size() == 4) {
-      ret->ifFalse = handle("if-else", *s[3]);
-      ret->finalize();
+    Index i = 1;
+    Name label;
+    if (s[i]->dollared()) {
+      // the if is labeled
+      label = s[i++]->str();
+    } else {
+      label = getPrefixedName("if");
+    }
+    labelStack.push_back(label);
+    if (s[i]->isStr()) {
+      // if type, TODO: parse?
+      i++;
+    }
+    ret->condition = parseExpression(s[i++]);
+    ret->ifTrue = parseExpression(*s[i++]);
+    if (i < s.size()) {
+      ret->ifFalse = parseExpression(*s[i++]);
+    }
+    ret->finalize();
+    labelStack.pop_back();
+    // create a break target if we must
+    if (BreakSeeker::has(ret, label)) {
+      auto* block = allocator.alloc<Block>();
+      block->name = label;
+      block->list.push_back(ret);
+      block->finalize();
+      return block;
     }
     return ret;
   }
@@ -1182,15 +1286,19 @@ private:
     auto ret = allocator.alloc<Loop>();
     size_t i = 1;
     Name out;
-    if (s.size() > i + 1 && s[i]->isStr() && s[i + 1]->isStr()) { // out can only be named if both are
+    if (s.size() > i + 1 && s[i]->dollared() && s[i + 1]->dollared()) { // out can only be named if both are
       out = s[i]->str();
       i++;
     }
-    if (s.size() > i && s[i]->isStr()) {
+    if (s.size() > i && s[i]->dollared()) {
       ret->name = s[i]->str();
       i++;
     } else {
       ret->name = getPrefixedName("loop-in");
+    }
+    if (i < s.size() && s[i]->isStr()) {
+      // block signature
+      i++; // TODO: parse the signature
     }
     labelStack.push_back(ret->name);
     ret->body = makeMaybeBlock(s, i);
@@ -1207,8 +1315,18 @@ private:
   }
 
   Expression* makeCall(Element& s) {
+    auto target = getFunctionName(*s[1]);
+    auto* import = wasm.checkImport(target);
+    if (import && import->kind == Import::Function) {
+      auto ret = allocator.alloc<CallImport>();
+      ret->target = target;
+      Import* import = wasm.getImport(ret->target);
+      ret->type = import->functionType->result;
+      parseCallOperands(s, 2, s.size(), ret);
+      return ret;
+    }
     auto ret = allocator.alloc<Call>();
-    ret->target = s[1]->str();
+    ret->target = target;
     ret->type = functionTypes[ret->target];
     parseCallOperands(s, 2, s.size(), ret);
     return ret;
@@ -1224,6 +1342,7 @@ private:
   }
 
   Expression* makeCallIndirect(Element& s) {
+    if (!seenTable) throw ParseException("no table");
     auto ret = allocator.alloc<CallIndirect>();
     IString type = s[1]->str();
     auto* fullType = wasm.checkFunctionType(type);
@@ -1346,12 +1465,14 @@ private:
 
   bool hasMemory = false;
 
-  void parseMemory(Element& s) {
+  void parseMemory(Element& s, bool preParseImport = false) {
+    if (hasMemory) throw ParseException("too many memories");
     hasMemory = true;
     Index i = 1;
     if (s[i]->dollared()) {
       wasm.memory.name = s[i++]->str();
     }
+    Name importModule, importBase;
     if (s[i]->isList()) {
       auto& inner = *s[i];
       if (inner[0]->str() == EXPORT) {
@@ -1359,12 +1480,17 @@ private:
         ex->name = inner[1]->str();
         ex->value = wasm.memory.name;
         ex->kind = Export::Memory;
+        if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
+        i++;
+      } else if (inner[0]->str() == IMPORT) {
+        importModule = inner[1]->str();
+        importBase = inner[2]->str();
         i++;
       } else {
         assert(inner.size() > 0 ? inner[0]->str() != IMPORT : true);
         // (memory (data ..)) format
-        parseData(*s[i]);
+        parseInnerData(*s[i]);
         wasm.memory.initial = wasm.memory.segments[0].data.size();
         return;
       }
@@ -1404,19 +1530,24 @@ private:
   void parseData(Element& s) {
     if (!hasMemory) throw ParseException("data but no memory");
     Index i = 1;
-    Expression* offset;
-    if (i < s.size() && s[i]->isList()) {
-      // there is an init expression
-      offset = parseExpression(s[i++]);
-    } else {
-      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+    if (!s[i]->isList()) {
+      // the memory is named
+      i++;
     }
+    auto* offset = parseExpression(s[i++]);
+    parseInnerData(s, i, offset);
+  }
+
+  void parseInnerData(Element& s, Index i = 1, Expression* offset = nullptr) {
     std::vector<char> data;
     while (i < s.size()) {
       const char *input = s[i++]->c_str();
       if (auto size = strlen(input)) {
         stringToBinary(input, size, data);
       }
+    }
+    if (!offset) {
+      offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     }
     wasm.memory.segments.emplace_back(offset, data.data(), data.size());
   }
@@ -1426,33 +1557,29 @@ private:
     ex->name = s[1]->str();
     if (s[2]->isList()) {
       auto& inner = *s[2];
+      ex->value = inner[1]->str();
       if (inner[0]->str() == FUNC) {
-        ex->value = inner[1]->str();
         ex->kind = Export::Function;
       } else if (inner[0]->str() == MEMORY) {
         if (!hasMemory) throw ParseException("memory exported but no memory");
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Memory;
       } else if (inner[0]->str() == TABLE) {
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Table;
       } else if (inner[0]->str() == GLOBAL) {
-        ex->value = inner[1]->str();
-        ex->kind = Export::Table;
+        ex->kind = Export::Global;
+        if (wasm.checkGlobal(ex->value) && wasm.getGlobal(ex->value)->mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
       } else {
         WASM_UNREACHABLE();
       }
     } else if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
+      ex->value = s[3]->str();
       if (s[2]->str() == MEMORY) {
         if (!hasMemory) throw ParseException("memory exported but no memory");
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Memory;
       } else if (s[2]->str() == TABLE) {
-        ex->value = Name::fromInt(0);
         ex->kind = Export::Table;
       } else if (s[2]->str() == GLOBAL) {
-        ex->value = s[3]->str();
-        ex->kind = Export::Table;
+        ex->kind = Export::Global;
       } else {
         WASM_UNREACHABLE();
       }
@@ -1461,6 +1588,7 @@ private:
       ex->value = s[2]->str();
       ex->kind = Export::Function;
     }
+    if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
     wasm.addExport(ex.release());
   }
 
@@ -1473,22 +1601,39 @@ private:
         im->kind = Import::Function;
       } else if ((*s[3])[0]->str() == MEMORY) {
         im->kind = Import::Memory;
+        if (hasMemory) throw ParseException("too many memories");
+        hasMemory = true;
       } else if ((*s[3])[0]->str() == TABLE) {
         im->kind = Import::Table;
+        if (seenTable) throw ParseException("more than one table");
+        seenTable = true;
       } else if ((*s[3])[0]->str() == GLOBAL) {
         im->kind = Import::Global;
       } else {
         newStyle = false; // either (param..) or (result..)
       }
     }
+    Index newStyleInner = 1;
     if (s.size() > 3 && s[3]->isStr()) {
       im->name = s[i++]->str();
-    } else if (newStyle) {
-      im->name = (*s[3])[1]->str();
-    } else {
-      im->name = Name::fromInt(importCounter);
+    } else if (newStyle && newStyleInner < s[3]->size() && (*s[3])[newStyleInner]->dollared()) {
+      im->name = (*s[3])[newStyleInner++]->str();
     }
-    importCounter++;
+    if (!im->name.is()) {
+      if (im->kind == Import::Function) {
+        im->name = Name("import$function$" + std::to_string(functionCounter++));
+        functionNames.push_back(im->name);
+      } else if (im->kind == Import::Global) {
+        im->name = Name("import$global" + std::to_string(globalCounter++));
+        globalNames.push_back(im->name);
+      } else if (im->kind == Import::Memory) {
+        im->name = Name("import$memory$" + std::to_string(0));
+      } else if (im->kind == Import::Table) {
+        im->name = Name("import$table$" + std::to_string(0));
+      } else {
+        WASM_UNREACHABLE();
+      }
+    }
     if (!s[i]->quoted()) {
       if (s[i]->str() == MEMORY) {
         im->kind = Import::Memory;
@@ -1508,7 +1653,7 @@ private:
     im->base = s[i++]->str();
     // parse internals
     Element& inner = newStyle ? *s[3] : s;
-    Index j = newStyle ? 2 : i;
+    Index j = newStyle ? newStyleInner : i;
     if (im->kind == Import::Function) {
       std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
       if (inner.size() > j) {
@@ -1535,51 +1680,115 @@ private:
       }
       im->functionType = ensureFunctionType(getSig(type.get()), &wasm);
     } else if (im->kind == Import::Global) {
-      im->globalType = stringToWasmType(inner[j]->str());
+      if (inner[j]->isStr()) {
+        im->globalType = stringToWasmType(inner[j]->str());
+      } else {
+        auto& inner2 = *inner[j];
+        assert(inner2[0]->str() == MUT);
+        im->globalType = stringToWasmType(inner2[1]->str());
+        throw ParseException("cannot import a mutable global", s.line, s.col);
+      }
+    } else if (im->kind == Import::Table) {
+      if (j < inner.size() - 1) {
+        wasm.table.initial = atoi(inner[j++]->c_str());
+      }
+      if (j < inner.size() - 1) {
+        wasm.table.max = atoi(inner[j++]->c_str());
+      } else {
+        wasm.table.max = wasm.table.initial;
+      }
+      // ends with the table element type
+    } else if (im->kind == Import::Memory) {
+      if (j < inner.size()) {
+        wasm.memory.initial = atoi(inner[j++]->c_str());
+      }
+      if (j < inner.size()) {
+        wasm.memory.max = atoi(inner[j++]->c_str());
+      } else {
+        wasm.memory.max = wasm.memory.initial;
+      }
     }
     wasm.addImport(im.release());
   }
 
-  void parseGlobal(Element& s) {
+  void parseGlobal(Element& s, bool preParseImport = false) {
     std::unique_ptr<Global> global = make_unique<Global>();
     size_t i = 1;
-    if (s[i]->dollared()) {
+    if (s[i]->dollared() && !(s[i]->isStr() && isWasmType(s[i]->str()))) {
       global->name = s[i++]->str();
     } else {
       global->name = Name::fromInt(globalCounter);
     }
     globalCounter++;
-    if (s[i]->isList()) {
+    globalNames.push_back(global->name);
+    bool mutable_ = false;
+    WasmType type = none;
+    bool exported = false;
+    Name importModule, importBase;
+    while (i < s.size() && s[i]->isList()) {
       auto& inner = *s[i];
       if (inner[0]->str() == EXPORT) {
         auto ex = make_unique<Export>();
         ex->name = inner[1]->str();
         ex->value = global->name;
         ex->kind = Export::Global;
+        if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
+        exported = true;
+        i++;
+      } else if (inner[0]->str() == IMPORT) {
+        importModule = inner[1]->str();
+        importBase = inner[2]->str();
+        i++;
+      } else if (inner[0]->str() == MUT) {
+        mutable_ = true;
+        type = stringToWasmType(inner[1]->str());
         i++;
       } else {
-        WASM_UNREACHABLE();
+        break;
       }
     }
-    global->type = stringToWasmType(s[i++]->str());
-    global->init = parseExpression(s[i++]);
+    if (exported && mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
+    if (type == none) {
+      type = stringToWasmType(s[i++]->str());
+    }
+    if (importModule.is()) {
+      // this is an import, actually
+      assert(preParseImport);
+      if (mutable_) throw ParseException("cannot import a mutable global", s.line, s.col);
+      std::unique_ptr<Import> im = make_unique<Import>();
+      im->name = global->name;
+      im->module = importModule;
+      im->base = importBase;
+      im->kind = Import::Global;
+      im->globalType = type;
+      wasm.addImport(im.release());
+      return;
+    }
+    assert(!preParseImport);
+    global->type = type;
+    if (i < s.size()) {
+      global->init = parseExpression(s[i++]);
+    } else {
+      throw ParseException("global without init", s.line, s.col);
+    }
+    global->mutable_ = mutable_;
     assert(i == s.size());
     wasm.addGlobal(global.release());
   }
 
   bool seenTable = false;
 
-  void parseTable(Element& s) {
+  void parseTable(Element& s, bool preParseImport = false) {
+    if (seenTable) throw ParseException("more than one table");
     seenTable = true;
     Index i = 1;
     if (i == s.size()) return; // empty table in old notation
-#if 0 // TODO: new table notation
     if (s[i]->dollared()) {
       wasm.table.name = s[i++]->str();
     }
-#endif
     if (i == s.size()) return;
+    Name importModule, importBase;
     if (s[i]->isList()) {
       auto& inner = *s[i];
       if (inner[0]->str() == EXPORT) {
@@ -1587,7 +1796,12 @@ private:
         ex->name = inner[1]->str();
         ex->value = wasm.table.name;
         ex->kind = Export::Table;
+        if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
+        i++;
+      } else if (inner[0]->str() == IMPORT) {
+        importModule = inner[1]->str();
+        importBase = inner[2]->str();
         i++;
       } else {
         WASM_UNREACHABLE();
@@ -1597,30 +1811,48 @@ private:
     if (!s[i]->dollared()) {
       if (s[i]->str() == ANYFUNC) {
         // (table type (elem ..))
-        parseElem(*s[i + 1]);
-        wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+        parseInnerElem(*s[i + 1]);
+        if (wasm.table.segments.size() > 0) {
+          wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+        } else {
+          wasm.table.initial = wasm.table.max = 0;
+        }
         return;
       }
       // first element isn't dollared, and isn't anyfunc. this could be old syntax for (table 0 1) which means function 0 and 1, or it could be (table initial max? type), look for type
       if (s[s.size() - 1]->str() == ANYFUNC) {
         // (table initial max? type)
-        wasm.table.initial = atoi(s[i]->c_str());
-        wasm.table.max = atoi(s[i + 1]->c_str());
+        if (i < s.size() - 1) {
+          wasm.table.initial = atoi(s[i++]->c_str());
+        }
+        if (i < s.size() - 1) {
+          wasm.table.max = atoi(s[i++]->c_str());
+        }
         return;
       }
     }
     // old notation (table func1 func2 ..)
-    parseElem(s, i);
-    wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+    parseInnerElem(s, i);
+    if (wasm.table.segments.size() > 0) {
+      wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+    } else {
+      wasm.table.initial = wasm.table.max = 0;
+    }
   }
 
-  void parseElem(Element& s, Index i = 1) {
+  void parseElem(Element& s) {
+    Index i = 1;
+    if (!s[i]->isList()) {
+      // the table is named
+      i++;
+    }
+    auto* offset = parseExpression(s[i++]);
+    parseInnerElem(s, i, offset);
+  }
+
+  void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr) {
     if (!seenTable) throw ParseException("elem without table", s.line, s.col);
-    Expression* offset;
-    if (s[i]->isList()) {
-      // there is an init expression
-      offset = parseExpression(s[i++]);
-    } else {
+    if (!offset) {
       offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     }
     Table::Segment segment(offset);
@@ -1650,6 +1882,10 @@ private:
         type->result = stringToWasmType(curr[1]->str());
       }
     }
+    if (!type->name.is()) {
+      type->name = Name::fromInt(wasm.functionTypes.size());
+    }
+    functionTypeNames.push_back(type->name);
     wasm.addFunctionType(type.release());
   }
 };

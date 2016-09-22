@@ -109,6 +109,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         o << ' ';
         printName(curr->name);
       }
+      if (isConcreteWasmType(curr->type)) {
+        o << ' ' << printWasmType(curr->type);
+      }
       incIndent();
       if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
         // recurse into the first element
@@ -224,7 +227,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printCallBody(curr);
   }
   void visitCallImport(CallImport *curr) {
-    printOpening(o, "call_import ");
+    printOpening(o, "call ");
     printCallBody(curr);
   }
   void visitCallIndirect(CallIndirect *curr) {
@@ -537,8 +540,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printText(o, curr->base.str) << ' ';
     switch (curr->kind) {
       case Export::Function: if (curr->functionType) visitFunctionType(curr->functionType, &curr->name); break;
-      case Export::Table:    o << "(table "  << curr->name << ")"; break;
-      case Export::Memory:   o << "(memory " << curr->name << ")"; break;
+      case Export::Table:    printTableHeader(&currModule->table); break;
+      case Export::Memory:   printMemoryHeader(&currModule->memory); break;
       case Export::Global:   o << "(global " << curr->name << ' ' << printWasmType(curr->globalType) << ")"; break;
       default: WASM_UNREACHABLE();
     }
@@ -560,7 +563,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitGlobal(Global *curr) {
     printOpening(o, "global ");
     printName(curr->name) << ' ';
-    o << printWasmType(curr->type) << ' ';
+    if (curr->mutable_) {
+      o << "(mut " << printWasmType(curr->type) << ") ";
+    } else {
+      o << printWasmType(curr->type) << ' ';
+    }
     visit(curr->init);
     o << ')';
   }
@@ -599,11 +606,26 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     decIndent();
   }
-  void visitTable(Table *curr) {
+  void printTableHeader(Table* curr) {
     printOpening(o, "table") << ' ';
     o << curr->initial;
     if (curr->max && curr->max != Table::kMaxSize) o << ' ' << curr->max;
-    o << " anyfunc)\n";
+    o << " anyfunc)";
+  }
+  void visitTable(Table *curr) {
+    // if table wasn't imported, declare it
+    bool found = false;
+    for (auto& import : currModule->imports) {
+      if (import->kind == Import::Table) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      doIndent(o, indent);
+      printTableHeader(curr);
+      o << '\n';
+    }
     doIndent(o, indent);
     for (auto& segment : curr->segments) {
       printOpening(o, "elem ", true);
@@ -615,11 +637,26 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ')';
     }
   }
-  void visitMemory(Memory* curr) {
+  void printMemoryHeader(Memory* curr) {
     printOpening(o, "memory") << ' ';
     o << curr->initial;
     if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
-    o << ")\n";
+    o << ")";
+  }
+  void visitMemory(Memory* curr) {
+    // if memory wasn't imported, declare it
+    bool found = false;
+    for (auto& import : currModule->imports) {
+      if (import->kind == Import::Memory) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      doIndent(o, indent);
+      printMemoryHeader(curr);
+      o << '\n';
+    }
     for (auto segment : curr->segments) {
       doIndent(o, indent);
       printOpening(o, "data ", true);
@@ -652,7 +689,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     currModule = curr;
     printOpening(o, "module", true);
     incIndent();
-    doIndent(o, indent);
     visitMemory(&curr->memory);
     if (curr->start.is()) {
       doIndent(o, indent);
@@ -682,7 +718,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << maybeNewLine;
     }
     if (curr->table.segments.size() > 0 || curr->table.initial > 0 || curr->table.max != Table::kMaxSize) {
-      doIndent(o, indent);
       visitTable(&curr->table);
       o << maybeNewLine;
     }

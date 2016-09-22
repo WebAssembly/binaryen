@@ -1,10 +1,9 @@
 (module
-  (memory 256 256)
   (data (get_global $memoryBase) "two_sides.asm.js")
   (type $FUNCSIG$id (func (param f64) (result i32)))
   (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
-  (import "env" "memory" (memory $memory))
-  (import "env" "table" (table $table))
+  (import "env" "memory" (memory 256 256))
+  (import "env" "table" (table 0 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (export "_test" (func $_test))
@@ -12,7 +11,7 @@
     (local $5 f64)
     (if
       (get_local $4)
-      (call_import $f64-to-int
+      (call $f64-to-int
         (f64.mul
           (f64.add
             (f64.convert_s/i32
@@ -35,7 +34,7 @@
           )
         )
       )
-      (call_import $f64-to-int
+      (call $f64-to-int
         (f64.mul
           (f64.add
             (f64.convert_s/i32

@@ -293,7 +293,7 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (drop
-      (block $foo
+      (block $foo i32
         (br_table $foo $foo
           (i32.const 0)
           (i32.const 0)
@@ -303,7 +303,7 @@
   )
   (func $other (type $0)
     (drop
-      (block $bar
+      (block $bar i32
         (br_table $bar $bar
           (i32.const 0)
           (i32.const 1)
@@ -368,9 +368,9 @@
   (memory 0)
   (type $FUNCSIG$v (func))
   (import "env" "i" (func $i))
-  (import "env" "j" (func $i))
+  (import "env" "j" (func $j))
   (func $erase (type $FUNCSIG$v)
-    (call_import $i)
+    (call $i)
   )
 )
 (module
@@ -379,10 +379,10 @@
   (import "env" "i" (func $i))
   (import "env" "j" (func $j))
   (func $keep2 (type $FUNCSIG$v)
-    (call_import $i)
+    (call $i)
   )
   (func $other (type $FUNCSIG$v)
-    (call_import $j)
+    (call $j)
   )
 )
 (module

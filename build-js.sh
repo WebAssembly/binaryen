@@ -66,6 +66,7 @@ echo "building wasm.js"
   src/emscripten-optimizer/parser.cpp \
   src/emscripten-optimizer/simple_ast.cpp \
   src/emscripten-optimizer/optimizer-shared.cpp \
+  src/wasm-emscripten.cpp \
   src/support/colors.cpp \
   src/support/safe_integer.cpp \
   src/support/bits.cpp \

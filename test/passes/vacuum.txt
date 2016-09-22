@@ -22,12 +22,12 @@
     (block $two-in-a-block
     )
     (set_local $x
-      (block $result-used
+      (block $result-used i32
         (get_local $x)
       )
     )
     (set_local $x
-      (block $two-and-result-used
+      (block $two-and-result-used i32
         (get_local $y)
       )
     )
@@ -123,7 +123,7 @@
     (if
       (if
         (get_local $d)
-        (block $block1
+        (block $block1 i32
           (f64.ne
             (f64.promote/f32
               (f32.load
@@ -148,7 +148,7 @@
       (if
         (i32.const 0)
         (drop
-          (call_import $int)
+          (call $int)
         )
         (br $out)
       )
@@ -156,25 +156,25 @@
         (i32.const 1)
         (br $out)
         (drop
-          (call_import $int)
+          (call $int)
         )
       )
     )
   )
   (func $drop-silly (type $0)
     (drop
-      (call_import $int)
+      (call $int)
     )
     (drop
-      (call_import $int)
+      (call $int)
     )
     (drop
-      (call_import $int)
+      (call $int)
     )
     (drop
       (i32.add
-        (call_import $int)
-        (call_import $int)
+        (call $int)
+        (call $int)
       )
     )
   )
@@ -186,7 +186,7 @@
     (local $$11 i32)
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8
+        (block $jumpthreading$outer$8 i32
           (block $jumpthreading$inner$8
             (br $jumpthreading$outer$8
               (i32.const 0)

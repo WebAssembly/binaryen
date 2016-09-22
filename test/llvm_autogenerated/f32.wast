@@ -134,7 +134,7 @@
   )
   (func $fma32 (param $0 f32) (param $1 f32) (param $2 f32) (result f32)
     (return
-      (call_import $fmaf
+      (call $fmaf
         (get_local $0)
         (get_local $1)
         (get_local $2)

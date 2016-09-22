@@ -25,7 +25,7 @@
         (i32.const 4)
       )
     )
-    (call_import $print
+    (call $print
       (i32.sub
         (i32.const 0)
         (i32.load offset=4
@@ -157,7 +157,7 @@
         (block $block$6$break
           (block $block$5$break
             (block
-              (call_import $print
+              (call $print
                 (i32.const 0)
               )
               (set_local $0
@@ -180,7 +180,7 @@
               )
               (block
                 (block
-                  (call_import $print
+                  (call $print
                     (i32.const 8)
                   )
                   (set_local $0
@@ -207,7 +207,7 @@
                 (i32.const 0)
               )
               (block
-                (call_import $print
+                (call $print
                   (i32.const 5)
                 )
                 (set_local $0
@@ -236,7 +236,7 @@
         (block
           (block $block$3$break
             (block
-              (call_import $print
+              (call $print
                 (i32.const 4)
               )
               (set_local $0
@@ -272,7 +272,7 @@
           )
           (block
             (block
-              (call_import $print
+              (call $print
                 (i32.const 2)
               )
               (set_local $0
@@ -318,7 +318,7 @@
         (i32.const 4)
       )
     )
-    (call_import $print
+    (call $print
       (i32.sub
         (i32.const 0)
         (i32.load offset=4
@@ -445,7 +445,7 @@
       (i32.const 112)
       (i32.const 34)
     )
-    (call_import $print
+    (call $print
       (i32.const 0)
     )
     (if
@@ -454,7 +454,7 @@
         (i32.const 2)
       )
       (block
-        (call_import $print
+        (call $print
           (i32.const 8)
         )
         (drop
@@ -475,7 +475,7 @@
           (set_local $0
             (i32.const 0)
           )
-          (call_import $print
+          (call $print
             (i32.const 5)
           )
           (br_if $shape$3$continue
@@ -492,7 +492,7 @@
           (br $shape$3$continue)
         )
       )
-      (call_import $print
+      (call $print
         (i32.const 4)
       )
       (br_if $shape$3$continue
@@ -520,7 +520,7 @@
           (br $shape$3$continue)
         )
       )
-      (call_import $print
+      (call $print
         (i32.const 2)
       )
       (drop

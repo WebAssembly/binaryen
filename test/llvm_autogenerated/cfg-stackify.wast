@@ -54,7 +54,7 @@
           )
         )
         (drop
-          (call_import $something)
+          (call $something)
         )
         (br $label$0)
       )
@@ -81,7 +81,7 @@
           )
         )
         (drop
-          (call_import $something)
+          (call $something)
         )
         (br $label$0)
       )
@@ -512,7 +512,7 @@
             (unreachable)
           )
           (drop
-            (call_import $bar)
+            (call $bar)
           )
           (br $label$1)
         )
@@ -787,7 +787,7 @@
         (br_if $label$1
           (i32.eqz
             (i32.and
-              (call_import $a)
+              (call $a)
               (i32.const 1)
             )
           )
@@ -804,7 +804,7 @@
               (br_if $label$4
                 (i32.eqz
                   (i32.and
-                    (call_import $a)
+                    (call $a)
                     (i32.const 1)
                   )
                 )
@@ -817,7 +817,7 @@
               )
               (br_if $label$2
                 (i32.and
-                  (call_import $a)
+                  (call $a)
                   (i32.const 1)
                 )
               )
@@ -831,7 +831,7 @@
             )
             (br_if $label$2
               (i32.and
-                (call_import $a)
+                (call $a)
                 (i32.const 1)
               )
             )
@@ -1120,7 +1120,7 @@
           )
         )
         (drop
-          (call_import $test15_callee1)
+          (call $test15_callee1)
         )
         (br $label$0)
       )
@@ -1157,7 +1157,7 @@
         )
       )
       (drop
-        (call_import $test15_callee0)
+        (call $test15_callee0)
       )
       (return)
     )

@@ -51,14 +51,14 @@ class Flow {
 public:
   Flow() {}
   Flow(Literal value) : value(value) {}
-  Flow(IString breakTo) : breakTo(breakTo) {}
+  Flow(Name breakTo) : breakTo(breakTo) {}
 
   Literal value;
-  IString breakTo; // if non-null, a break is going on
+  Name breakTo; // if non-null, a break is going on
 
   bool breaking() { return breakTo.is(); }
 
-  void clearIf(IString target) {
+  void clearIf(Name target) {
     if (breakTo == target) {
       breakTo.clear();
     }
@@ -155,18 +155,19 @@ public:
   Flow visitBreak(Break *curr) {
     NOTE_ENTER("Break");
     bool condition = true;
-    Flow flow(curr->name);
+    Flow flow;
     if (curr->value) {
       flow = visit(curr->value);
       if (flow.breaking()) return flow;
-      flow.breakTo = curr->name;
     }
     if (curr->condition) {
       Flow conditionFlow = visit(curr->condition);
       if (conditionFlow.breaking()) return conditionFlow;
       condition = conditionFlow.value.getInteger() != 0;
+      if (!condition) return flow;
     }
-    return condition ? flow : Flow();
+    flow.breakTo = curr->name;
+    return flow;
   }
   Flow visitSwitch(Switch *curr) {
     NOTE_ENTER("Switch");
@@ -553,10 +554,21 @@ public:
     }
   }
 
+  // call an exported function
   Literal callExport(Name name, LiteralList& arguments) {
     Export *export_ = wasm.checkExport(name);
     if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
+  }
+
+  // get an exported global
+  Literal getExport(Name name) {
+    Export *export_ = wasm.checkExport(name);
+    if (!export_) externalInterface->trap("getExport external not found");
+    Name internalName = export_->value;
+    auto iter = globals.find(internalName);
+    if (iter == globals.end()) externalInterface->trap("getExport internal not found");
+    return iter->second;
   }
 
   std::string printFunctionStack() {
@@ -577,7 +589,7 @@ private:
   std::vector<Name> functionStack;
 
   // Call a function, starting an invocation.
-  Literal callFunction(IString name, LiteralList& arguments) {
+  Literal callFunction(Name name, LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
     callDepth = 0;
     functionStack.clear();
@@ -586,7 +598,7 @@ private:
 
 public:
   // Internal function call. Must be public so that callTable implementations can use it (refactor?)
-  Literal callFunctionInternal(IString name, LiteralList& arguments) {
+  Literal callFunctionInternal(Name name, LiteralList& arguments) {
 
     class FunctionScope {
      public:
@@ -695,6 +707,7 @@ public:
         auto name = curr->name;
         NOTE_EVAL1(name);
         NOTE_EVAL1(instance.globals[name]);
+        assert(instance.globals.find(name) != instance.globals.end());
         return instance.globals[name];
       }
       Flow visitSetGlobal(SetGlobal *curr) {
@@ -744,7 +757,7 @@ public:
             return Literal(int32_t(ret));
           }
           case HasFeature: {
-            IString id = curr->nameOperand;
+            Name id = curr->nameOperand;
             if (id == WASM) return Literal(1);
             return Literal((int32_t)0);
           }
@@ -775,7 +788,10 @@ public:
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW); // cannot still be breaking, it means we missed our stop
     Literal ret = flow.value;
     if (function->result == none) ret = Literal();
-    assert(function->result == ret.type);
+    if (function->result != ret.type) {
+      std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
+      abort();
+    }
     callDepth = previousCallDepth; // may decrease more than one, if we jumped up the stack
     // if we jumped up the stack, we also need to pop higher frames
     while (functionStack.size() > previousFunctionStackSize) {

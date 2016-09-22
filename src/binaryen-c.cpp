@@ -128,6 +128,7 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
   auto* wasm = (Module*)module;
   auto* ret = new FunctionType;
   if (name) ret->name = name;
+  else ret->name = Name::fromInt(wasm->functionTypes.size());
   ret->result = WasmType(result);
   for (BinaryenIndex i = 0; i < numParams; i++) {
     ret->params.push_back(WasmType(paramTypes[i]));

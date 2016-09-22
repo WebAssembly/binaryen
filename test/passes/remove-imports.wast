@@ -7,12 +7,12 @@
   (import $waka-ret "somewhere" "waka-ret" (result i32))
   (import $waka-ret-d "somewhere" "waka-ret-d" (result f64))
   (func $nada (type $FUNCSIG$v)
-    (call_import $waka)
+    (call $waka)
     (drop
-      (call_import $waka-ret)
+      (call $waka-ret)
     )
     (drop
-      (call_import $waka-ret-d)
+      (call $waka-ret-d)
     )
   )
 )

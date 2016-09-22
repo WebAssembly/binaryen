@@ -303,14 +303,14 @@
     (block $out
       (drop
         (if (i32.const 0)
-          (call_import $int)
+          (call $int)
           (br $out)
         )
       )
       (drop
         (if (i32.const 1)
           (br $out)
-          (call_import $int)
+          (call $int)
         )
       )
     )
@@ -326,7 +326,7 @@
     (drop
       (i32.eqz
         (i32.eqz
-          (call_import $int)
+          (call $int)
         )
       )
     )
@@ -339,19 +339,19 @@
     (drop
       (i32.add
         (i32.const 4)
-        (call_import $int)
+        (call $int)
       )
     )
     (drop
       (i32.add
-        (call_import $int)
+        (call $int)
         (i32.const 5)
       )
     )
     (drop
       (i32.add
-        (call_import $int)
-        (call_import $int)
+        (call $int)
+        (call $int)
       )
     )
   )

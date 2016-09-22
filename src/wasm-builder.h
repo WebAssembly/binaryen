@@ -339,6 +339,12 @@ public:
     input->finalize();
     return ret;
   }
+
+  // Drop an expression if it has a concrete type
+  Expression* dropIfConcretelyTyped(Expression* curr) {
+    if (!isConcreteWasmType(curr->type)) return curr;
+    return makeDrop(curr);
+  }
 };
 
 } // namespace wasm

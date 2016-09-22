@@ -37,7 +37,7 @@
   )
   (func $importedDoubles (type $4) (result f64)
     (local $temp f64)
-    (block $topmost
+    (block $topmost f64
       (set_local $temp
         (f64.add
           (f64.add
@@ -91,7 +91,7 @@
     (local $t f64)
     (local $Int f64)
     (local $Double i32)
-    (block $topmost
+    (block $topmost f64
       (if
         (f64.gt
           (get_local $x)
@@ -154,7 +154,7 @@
     (local $d f64)
     (block $block0
       (set_local $i
-        (call_import $f64-to-int
+        (call $f64-to-int
           (get_local $d)
         )
       )
@@ -177,13 +177,13 @@
     (local $J f64)
     (set_local $J
       (f64.sub
-        (block $block0
+        (block $block0 f64
           (drop
             (f64.const 0.1)
           )
           (f64.const 5.1)
         )
-        (block $block1
+        (block $block1 f64
           (drop
             (f64.const 3.2)
           )
@@ -193,7 +193,7 @@
     )
   )
   (func $switcher (type $6) (param $x i32) (result i32)
-    (block $topmost
+    (block $topmost i32
       (block $switch$0
         (block $switch-default$3
           (block $switch-case$2
@@ -284,14 +284,14 @@
     )
   )
   (func $frem (type $4) (result f64)
-    (call_import $f64-rem
+    (call $f64-rem
       (f64.const 5.5)
       (f64.const 1.2)
     )
   )
   (func $big_uint_div_u (type $5) (result i32)
     (local $x i32)
-    (block $topmost
+    (block $topmost i32
       (set_local $x
         (i32.and
           (i32.div_u
@@ -340,7 +340,7 @@
     (local $asm2wasm_i32_temp i32)
     (block $block0
       (set_local $x
-        (block $block1
+        (block $block1 i32
           (set_local $asm2wasm_i32_temp
             (i32.const 0)
           )

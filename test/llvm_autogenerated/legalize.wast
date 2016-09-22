@@ -97,7 +97,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 512)
@@ -112,7 +112,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 528)
@@ -123,7 +123,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 544)
@@ -139,7 +139,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 560)
@@ -155,7 +155,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 736)
@@ -171,7 +171,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 720)
@@ -187,7 +187,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 752)
@@ -203,7 +203,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 592)
@@ -214,7 +214,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 608)
@@ -225,7 +225,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 624)
@@ -236,7 +236,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 688)
@@ -252,7 +252,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 640)
@@ -263,7 +263,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 656)
@@ -279,7 +279,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 672)
@@ -290,7 +290,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 576)
@@ -301,7 +301,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 704)
@@ -312,7 +312,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 480)
@@ -326,7 +326,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 464)
@@ -342,7 +342,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 496)
@@ -356,7 +356,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 352)
@@ -372,7 +372,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 336)
@@ -388,7 +388,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 368)
@@ -404,7 +404,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 432)
@@ -420,7 +420,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 864)
@@ -431,7 +431,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 848)
@@ -442,7 +442,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 880)
@@ -453,7 +453,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 1008)
@@ -464,7 +464,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 960)
@@ -475,7 +475,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 976)
@@ -486,7 +486,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 816)
@@ -497,7 +497,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 240)
@@ -513,7 +513,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 192)
@@ -524,7 +524,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 208)
@@ -540,7 +540,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 224)
@@ -551,7 +551,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 768)
@@ -562,7 +562,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 784)
@@ -573,7 +573,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 800)
@@ -584,7 +584,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 992)
@@ -595,7 +595,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 832)
@@ -606,7 +606,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 384)
@@ -617,7 +617,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 400)
@@ -631,7 +631,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 416)
@@ -642,7 +642,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 320)
@@ -653,7 +653,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 448)
@@ -664,7 +664,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 128)
@@ -675,7 +675,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 144)
@@ -689,7 +689,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 160)
@@ -700,7 +700,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (get_local $52)
         (get_local $1)
         (get_local $2)
@@ -708,7 +708,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 16)
@@ -719,7 +719,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 32)
@@ -730,7 +730,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 64)
@@ -746,7 +746,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 896)
@@ -757,7 +757,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 256)
@@ -768,7 +768,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 912)
@@ -779,7 +779,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 928)
@@ -790,7 +790,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 944)
@@ -801,7 +801,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 80)
@@ -812,7 +812,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 96)
@@ -826,7 +826,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 112)
@@ -837,7 +837,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 48)
@@ -848,7 +848,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 176)
@@ -859,7 +859,7 @@
       )
     )
     (drop
-      (call_import $__lshrti3
+      (call $__lshrti3
         (i32.add
           (get_local $52)
           (i32.const 288)
@@ -870,7 +870,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 272)
@@ -881,7 +881,7 @@
       )
     )
     (drop
-      (call_import $__ashlti3
+      (call $__ashlti3
         (i32.add
           (get_local $52)
           (i32.const 304)

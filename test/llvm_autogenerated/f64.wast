@@ -134,7 +134,7 @@
   )
   (func $fma64 (param $0 f64) (param $1 f64) (param $2 f64) (result f64)
     (return
-      (call_import $fma
+      (call $fma
         (get_local $0)
         (get_local $1)
         (get_local $2)

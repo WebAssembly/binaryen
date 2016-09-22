@@ -47,12 +47,9 @@ extern Name GROW_WASM_MEMORY,
             BR,
             ANYFUNC,
             FAKE_RETURN,
-            ASSERT_RETURN,
-            ASSERT_TRAP,
-            ASSERT_INVALID,
+            MUT,
             SPECTEST,
             PRINT,
-            INVOKE,
             EXIT;
 
 } // namespace wasm

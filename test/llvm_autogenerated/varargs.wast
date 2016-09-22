@@ -145,7 +145,7 @@
   )
   (func $caller_none
     (drop
-      (call_import $callee
+      (call $callee
         (i32.const 0)
       )
     )
@@ -179,7 +179,7 @@
       )
     )
     (drop
-      (call_import $callee
+      (call $callee
         (get_local $0)
       )
     )

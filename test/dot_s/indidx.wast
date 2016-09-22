@@ -30,7 +30,7 @@
             (i32.load
               (i32.add
                 (i32.shl
-                  (call_import $getchar)
+                  (call $getchar)
                   (i32.const 2)
                 )
                 (i32.const -176)

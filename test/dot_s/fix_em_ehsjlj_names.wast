@@ -38,12 +38,12 @@
     (local $2 i32)
     (local $3 i32)
     (drop
-      (call_import $invoke_v
+      (call $invoke_v
         (i32.const 1)
       )
     )
     (drop
-      (call_import $invoke_iiii
+      (call $invoke_iiii
         (i32.const 2)
         (i32.const 1)
         (i32.const 2)
@@ -51,14 +51,14 @@
       )
     )
     (drop
-      (call_import $invoke_ffd
+      (call $invoke_ffd
         (i32.const 3)
         (f32.const 1.5)
         (f64.const 3.4)
       )
     )
     (drop
-      (call_import $invoke_iii
+      (call $invoke_iii
         (i32.const 4)
         (i32.add
           (get_local $1)
@@ -71,7 +71,7 @@
       )
     )
     (drop
-      (call_import $emscripten_longjmp
+      (call $emscripten_longjmp
         (i32.const 5)
         (i32.const 6)
       )

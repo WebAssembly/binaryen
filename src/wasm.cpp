@@ -72,12 +72,9 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      BR("br"),
      ANYFUNC("anyfunc"),
      FAKE_RETURN("fake_return_waka123"),
-     ASSERT_RETURN("assert_return"),
-     ASSERT_TRAP("assert_trap"),
-     ASSERT_INVALID("assert_invalid"),
+     MUT("mut"),
      SPECTEST("spectest"),
      PRINT("print"),
-     INVOKE("invoke"),
      EXIT("exit");
 
 // core AST type checking

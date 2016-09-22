@@ -119,13 +119,13 @@
       )
     )
     (return
-      (call_import $readnone_callee)
+      (call $readnone_callee)
     )
   )
   (func $no_sink_readonly_call (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (local $3 i32)
     (set_local $3
-      (call_import $readonly_callee)
+      (call $readonly_callee)
     )
     (drop
       (i32.store
@@ -210,7 +210,7 @@
       )
     )
     (drop
-      (call_import $evoke_side_effects)
+      (call $evoke_side_effects)
     )
     (drop
       (i64.store
@@ -219,7 +219,7 @@
       )
     )
     (drop
-      (call_import $evoke_side_effects)
+      (call $evoke_side_effects)
     )
     (return)
   )
@@ -275,7 +275,7 @@
   )
   (func $simple_multiple_use (param $0 i32) (param $1 i32)
     (drop
-      (call_import $use_a
+      (call $use_a
         (tee_local $1
           (i32.mul
             (get_local $1)
@@ -285,7 +285,7 @@
       )
     )
     (drop
-      (call_import $use_b
+      (call $use_b
         (get_local $1)
       )
     )
@@ -293,7 +293,7 @@
   )
   (func $multiple_uses_in_same_insn (param $0 i32) (param $1 i32)
     (drop
-      (call_import $use_2
+      (call $use_2
         (tee_local $1
           (i32.mul
             (get_local $1)
@@ -309,24 +309,24 @@
     (return
       (i32.add
         (i32.add
-          (call_import $red)
-          (call_import $green)
+          (call $red)
+          (call $green)
         )
-        (call_import $blue)
+        (call $blue)
       )
     )
   )
   (func $no_stackify_past_use (param $0 i32) (result i32)
     (local $1 i32)
     (set_local $1
-      (call_import $callee
+      (call $callee
         (get_local $0)
       )
     )
     (return
       (i32.div_s
         (i32.sub
-          (call_import $callee
+          (call $callee
             (i32.add
               (get_local $0)
               (i32.const 1)
@@ -343,13 +343,13 @@
     (return
       (i32.mul
         (tee_local $1
-          (call_import $callee
+          (call $callee
             (get_local $0)
           )
         )
         (i32.add
           (get_local $1)
-          (call_import $callee
+          (call $callee
             (i32.add
               (get_local $0)
               (i32.const 1)
@@ -470,7 +470,7 @@
     (local $0 i32)
     (local $1 i32)
     (set_local $0
-      (call_import $red)
+      (call $red)
     )
     (set_local $1
       (i32.load offset=12
@@ -478,7 +478,7 @@
       )
     )
     (drop
-      (call_import $callee
+      (call $callee
         (get_local $0)
       )
     )
@@ -499,7 +499,7 @@
       )
     )
     (drop
-      (call_import $callee
+      (call $callee
         (get_local $0)
       )
     )
@@ -515,7 +515,7 @@
       )
     )
     (drop
-      (call_import $callee
+      (call $callee
         (get_local $0)
       )
     )
@@ -545,7 +545,7 @@
       )
     )
     (set_local $0
-      (call_import $use_memory
+      (call $use_memory
         (i32.add
           (get_local $1)
           (i32.const 12)
@@ -601,7 +601,7 @@
   (func $stackpointer_dependency (param $0 i32) (result i32)
     (local $1 i32)
     (set_local $0
-      (call_import $stackpointer_callee
+      (call $stackpointer_callee
         (get_local $0)
         (tee_local $1
           (i32.load offset=4

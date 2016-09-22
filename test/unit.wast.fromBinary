@@ -37,7 +37,7 @@
   )
   (func $importedDoubles (type $4) (result f64)
     (local $var$0 f64)
-    (block $label$0
+    (block $label$0 f64
       (set_local $var$0
         (f64.add
           (f64.add
@@ -95,7 +95,7 @@
     (local $var$2 i32)
     (local $var$3 f64)
     (local $var$4 f64)
-    (block $label$0
+    (block $label$0 f64
       (if
         (f64.gt
           (get_local $var$0)
@@ -166,7 +166,7 @@
     (local $var$1 f64)
     (block $label$0
       (set_local $var$0
-        (call_import $import$1
+        (call $import$1
           (get_local $var$1)
         )
       )
@@ -189,13 +189,13 @@
     (local $var$0 f64)
     (set_local $var$0
       (f64.sub
-        (block $label$0
+        (block $label$0 f64
           (drop
             (f64.const 0.1)
           )
           (f64.const 5.1)
         )
-        (block $label$1
+        (block $label$1 f64
           (drop
             (f64.const 3.2)
           )
@@ -205,7 +205,7 @@
     )
   )
   (func $switcher (type $6) (param $var$0 i32) (result i32)
-    (block $label$0
+    (block $label$0 i32
       (block $label$1
         (block $label$2
           (block $label$3
@@ -292,14 +292,14 @@
     )
   )
   (func $frem (type $4) (result f64)
-    (call_import $import$2
+    (call $import$2
       (f64.const 5.5)
       (f64.const 1.2)
     )
   )
   (func $big_uint_div_u (type $5) (result i32)
     (local $var$0 i32)
-    (block $label$0
+    (block $label$0 i32
       (set_local $var$0
         (i32.and
           (i32.div_u
@@ -348,7 +348,7 @@
     (local $var$3 f64)
     (block $label$0
       (set_local $var$0
-        (block $label$1
+        (block $label$1 i32
           (set_local $var$1
             (i32.const 0)
           )
@@ -428,7 +428,7 @@
     (nop)
   )
   (func $block_and_after (type $5) (result i32)
-    (block $label$0
+    (block $label$0 i32
       (block $label$1
         (drop
           (i32.const 1)

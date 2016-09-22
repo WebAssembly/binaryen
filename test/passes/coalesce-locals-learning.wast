@@ -289,7 +289,7 @@
       (get_local $y)
     )
   )
-  (func $if-through2 (type $2)
+  (func $if-through3 (type $2)
     (local $x i32)
     (local $y i32)
     (set_local $x
@@ -453,7 +453,7 @@
       (get_local $w)
     )
   )
-  (func $interfere-in-dead (type $2)
+  (func $interfere-in-dead4 (type $2)
     (local $x i32)
     (local $y i32)
     (block $block

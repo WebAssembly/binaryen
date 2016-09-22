@@ -146,11 +146,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       // if without an else. try to reduce   if (condition) br  =>  br_if (condition)
       Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
-        // if the br has a value, then if => br_if means we always execute the value, and also the order is value,condition vs condition,value
         if (canTurnIfIntoBrIf(curr->condition, br->value)) {
           br->condition = curr->condition;
           br->finalize();
-          replaceCurrent(br);
+          replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
       }
@@ -407,18 +406,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value)) {
             // we are an if-else where the ifTrue is a break without a condition, so we can do this
-            list[i] = ifTrueBreak;
             ifTrueBreak->condition = iff->condition;
             ifTrueBreak->finalize();
+            list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
             continue;
           }
           // otherwise, perhaps we can flip the if
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
           if (ifFalseBreak && !ifFalseBreak->condition && canTurnIfIntoBrIf(iff->condition, ifFalseBreak->value)) {
-            list[i] = ifFalseBreak;
             ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
+            list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
             continue;
           }

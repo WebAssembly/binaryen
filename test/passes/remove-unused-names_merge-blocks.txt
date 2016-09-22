@@ -126,7 +126,7 @@
     (local $x i32)
     (drop
       (i32.eqz
-        (block
+        (block i32
           (i32.const 10)
         )
       )
@@ -174,7 +174,7 @@
   (func $binary (type $3)
     (drop
       (i32.add
-        (block
+        (block i32
           (i32.const 10)
         )
         (i32.const 20)
@@ -204,7 +204,7 @@
     (drop
       (i32.add
         (i32.const 10)
-        (block
+        (block i32
           (i32.const 20)
         )
       )
@@ -232,10 +232,10 @@
     )
     (drop
       (i32.add
-        (block
+        (block i32
           (i32.const 10)
         )
-        (block
+        (block i32
           (i32.const 20)
         )
       )
@@ -287,7 +287,7 @@
     (drop
       (i32.add
         (unreachable)
-        (block
+        (block i32
           (drop
             (i32.const 10)
           )
@@ -331,7 +331,7 @@
     )
     (drop
       (select
-        (block
+        (block i32
           (i32.const 10)
         )
         (i32.const 30)
@@ -347,7 +347,7 @@
     (drop
       (select
         (i32.const 20)
-        (block
+        (block i32
           (i32.const 30)
         )
         (i32.const 50)
@@ -363,7 +363,7 @@
       (select
         (i32.const 20)
         (i32.const 40)
-        (block
+        (block i32
           (i32.const 50)
         )
       )
@@ -373,10 +373,10 @@
     )
     (drop
       (select
-        (block
+        (block i32
           (i32.const 10)
         )
-        (block
+        (block i32
           (i32.const 20)
         )
         (i32.const 40)
@@ -387,11 +387,11 @@
     )
     (drop
       (select
-        (block
+        (block i32
           (i32.const 10)
         )
         (i32.const 30)
-        (block
+        (block i32
           (i32.const 40)
         )
       )
@@ -402,10 +402,10 @@
     (drop
       (select
         (i32.const 20)
-        (block
+        (block i32
           (i32.const 30)
         )
-        (block
+        (block i32
           (i32.const 40)
         )
       )
@@ -430,13 +430,13 @@
     (drop
       (select
         (unreachable)
-        (block
+        (block i32
           (drop
             (i32.const 30)
           )
           (i32.const 40)
         )
-        (block
+        (block i32
           (drop
             (i32.const 50)
           )
@@ -468,7 +468,7 @@
       (select
         (i32.const 20)
         (unreachable)
-        (block
+        (block i32
           (drop
             (i32.const 50)
           )
@@ -541,7 +541,7 @@
         (i32.const 20)
       )
       (drop
-        (block $out2
+        (block $out2 i32
           (drop
             (i32.const 10)
           )
@@ -559,7 +559,7 @@
   )
   (func $calls (type $3)
     (call $call-i
-      (block
+      (block i32
         (i32.const 10)
       )
     )
@@ -601,7 +601,7 @@
     )
     (call $call-ii
       (unreachable)
-      (block
+      (block i32
         (drop
           (i32.const 20)
         )
@@ -670,7 +670,7 @@
     )
     (call_indirect $ii
       (unreachable)
-      (block
+      (block i32
         (drop
           (i32.const 30)
         )
@@ -683,7 +683,7 @@
     (local $0 f64)
     (local $1 f64)
     (if
-      (block
+      (block i32
         (nop)
         (f64.gt
           (get_local $0)

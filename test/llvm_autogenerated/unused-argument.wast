@@ -19,7 +19,7 @@
   )
   (func $call_something
     (drop
-      (call_import $return_something)
+      (call $return_something)
     )
     (return)
   )

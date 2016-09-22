@@ -55,15 +55,20 @@ struct PatternDatabase {
     input = strdup(
       #include "OptimizeInstructions.wast.processed"
     );
-    SExpressionParser parser(input);
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(wasm, *root[0]);
-    // parse module form
-    auto* func = wasm.getFunction("patterns");
-    auto* body = func->body->cast<Block>();
-    for (auto* item : body->list) {
-      auto* pair = item->cast<Block>();
-      patternMap[pair->list[0]->_id].emplace_back(pair->list[0], pair->list[1]);
+    try {
+      SExpressionParser parser(input);
+      Element& root = *parser.root;
+      SExpressionWasmBuilder builder(wasm, *root[0]);
+      // parse module form
+      auto* func = wasm.getFunction("patterns");
+      auto* body = func->body->cast<Block>();
+      for (auto* item : body->list) {
+        auto* pair = item->cast<Block>();
+        patternMap[pair->list[0]->_id].emplace_back(pair->list[0], pair->list[1]);
+      }
+    } catch (ParseException& p) {
+      p.dump(std::cerr);
+      Fatal() << "error in parsing wasm binary";
     }
   }
 

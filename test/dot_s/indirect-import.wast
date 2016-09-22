@@ -48,7 +48,7 @@
       )
     )
     (drop
-      (call_import $extern_vj
+      (call $extern_vj
         (i64.const 1)
       )
     )
@@ -59,7 +59,7 @@
       )
     )
     (drop
-      (call_import $extern_v)
+      (call $extern_v)
     )
     (drop
       (i32.store offset=16
@@ -68,7 +68,7 @@
       )
     )
     (drop
-      (call_import $extern_ijidf
+      (call $extern_ijidf
         (i64.const 1)
         (i32.const 2)
         (f64.const 3)
@@ -110,20 +110,20 @@
     (unreachable)
   )
   (func $__importThunk_extern_fd (type $FUNCSIG$fd) (param $0 f64) (result f32)
-    (call_import $extern_fd
+    (call $extern_fd
       (get_local $0)
     )
   )
   (func $__importThunk_extern_vj (type $FUNCSIG$vj) (param $0 i64)
-    (call_import $extern_vj
+    (call $extern_vj
       (get_local $0)
     )
   )
   (func $__importThunk_extern_v (type $FUNCSIG$v)
-    (call_import $extern_v)
+    (call $extern_v)
   )
   (func $__importThunk_extern_ijidf (type $FUNCSIG$ijidf) (param $0 i64) (param $1 i32) (param $2 f64) (param $3 f32) (result i32)
-    (call_import $extern_ijidf
+    (call $extern_ijidf
       (get_local $0)
       (get_local $1)
       (get_local $2)
@@ -131,12 +131,12 @@
     )
   )
   (func $__importThunk_extern_struct (type $FUNCSIG$vi) (param $0 i32)
-    (call_import $extern_struct
+    (call $extern_struct
       (get_local $0)
     )
   )
   (func $__importThunk_extern_sret (type $FUNCSIG$vi) (param $0 i32)
-    (call_import $extern_sret
+    (call $extern_sret
       (get_local $0)
     )
   )

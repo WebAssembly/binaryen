@@ -179,7 +179,6 @@ public:
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
-    shouldBeTrue(getModule()->table.segments.size() > 0, curr, "no table");
     auto* type = getModule()->checkFunctionType(curr->fullType);
     if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) return;
     shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
@@ -335,7 +334,7 @@ public:
   }
 
   void visitGlobal(Global* curr) {
-    shouldBeTrue(curr->init->is<Const>(), curr->name, "global init must be valid");
+    shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
     shouldBeEqual(curr->type, curr->init->type, nullptr, "global init must have correct type");
   }
 
@@ -394,7 +393,15 @@ public:
             break;
           }
         }
-        shouldBeTrue(found, name, "module exports must be found");
+        shouldBeTrue(found, name, "module function exports must be found");
+      } else if (exp->kind == Export::Global) {
+        shouldBeTrue(curr->checkGlobal(name), name, "module global exports must be found");
+      } else if (exp->kind == Export::Table) {
+        shouldBeTrue(name == Name("0") || name == curr->table.name, name, "module table exports must be found");
+      } else if (exp->kind == Export::Memory) {
+        shouldBeTrue(name == Name("0") || name == curr->memory.name, name, "module memory exports must be found");
+      } else {
+        WASM_UNREACHABLE();
       }
       Name exportName = exp->name;
       shouldBeFalse(exportNames.count(exportName) > 0, exportName, "module exports must be unique");

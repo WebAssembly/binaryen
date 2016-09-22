@@ -54,6 +54,16 @@ std::string getSig(WasmType result, const ListType& operands) {
   return ret;
 }
 
+template<typename ListType>
+std::string getSigFromStructs(WasmType result, const ListType& operands) {
+  std::string ret;
+  ret += getSig(result);
+  for (auto operand : operands) {
+    ret += getSig(operand.type);
+  }
+  return ret;
+}
+
 WasmType sigToWasmType(char sig);
 
 FunctionType* sigToFunctionType(std::string sig);
