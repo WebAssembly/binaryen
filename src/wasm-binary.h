@@ -898,6 +898,7 @@ public:
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
+    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
     breakStack.push_back(curr->name);
     size_t i = 0;
     for (auto* child : curr->list) {
@@ -924,6 +925,7 @@ public:
     if (debug) std::cerr << "zz node: If" << std::endl;
     recurse(curr->condition);
     o << int8_t(BinaryConsts::If);
+    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
     breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
     recursePossibleBlockContents(curr->ifTrue); // TODO: emit block contents directly, if possible
     breakStack.pop_back();
@@ -938,6 +940,7 @@ public:
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
     o << int8_t(BinaryConsts::Loop);
+    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
     breakStack.push_back(curr->name);
     recursePossibleBlockContents(curr->body);
     breakStack.pop_back();
@@ -1908,6 +1911,7 @@ public:
     // a common pattern that can be very highly nested.
     std::vector<Block*> stack;
     while (1) {
+      curr->type = getWasmType();
       curr->name = getNextLabel();
       breakStack.push_back(curr->name);
       stack.push_back(curr);
@@ -1971,6 +1975,7 @@ public:
 
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
+    curr->type = getWasmType();
     curr->condition = popExpression();
     curr->ifTrue = getBlock();
     if (lastSeparator == BinaryConsts::Else) {
@@ -1981,6 +1986,7 @@ public:
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
+    curr->type = getWasmType();
     curr->name = getNextLabel();
     breakStack.push_back(curr->name);
     curr->body = getMaybeBlock();
