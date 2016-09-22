@@ -606,7 +606,7 @@ public:
         }
         case Export::Global:
           o << binaryWasmType(import->globalType);
-          o << U32LEB(import->globalMutable);
+          o << U32LEB(0); // Mutable global's can't be imported for now.
           break;
         default: WASM_UNREACHABLE();
       }
@@ -1579,11 +1579,13 @@ public:
           break;
         }
         case Import::Memory: getResizableLimits(wasm.memory.initial, &wasm.memory.max); break;
-        case Import::Global:
+        case Import::Global: {
           curr->globalType = getWasmType();
-          curr->globalMutable = getU32LEB();
-          // XXX assert(!curr->globalMutable) like wasm-s-parser?
+          auto globalMutable = getU32LEB();
+          WASM_UNUSED(globalMutable);
+          assert(!globalMutable);
           break;
+        }
         default: WASM_UNREACHABLE();
       }
       wasm.addImport(curr);
