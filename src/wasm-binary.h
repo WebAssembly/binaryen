@@ -1567,7 +1567,7 @@ public:
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
   std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the defined function i
   Function* currFunction = nullptr;
-  size_t endOfFunction;
+  Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
 
   void readFunctions() {
     if (debug) std::cerr << "== readFunctions" << std::endl;
