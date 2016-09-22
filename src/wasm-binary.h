@@ -546,8 +546,9 @@ public:
     if (wasm->memory.max == 0) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
     auto start = startSection(BinaryConsts::Section::Memory);
-    o << U32LEB(wasm->memory.initial)
-      << U32LEB(wasm->memory.max);
+    o << U32LEB(1); // Define 1 memory
+    Address max = wasm->memory.max == Memory::kMaxSize ? Address(0) : wasm->memory.max;
+    writeResizableLimits(wasm->memory.initial, max);
     finishSection(start);
   }
 
@@ -593,12 +594,16 @@ public:
       o << U32LEB(import->kind);
       switch (import->kind) {
         case Export::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
-        case Export::Table:
+        case Export::Table: {
           o << U32LEB(BinaryConsts::ElementType::AnyFunc);
-          writeResizableLimits(wasm->table.initial, wasm->table.max == Table::kMaxSize);
+          auto max = wasm->table.max == Table::kMaxSize ? Address(0) : wasm->table.max;
+          writeResizableLimits(wasm->table.initial, max);
           break;
-        // TODO: Memory resizing indication here?
-        case Export::Memory: writeResizableLimits(wasm->memory.initial, wasm->memory.max == Memory::kMaxSize); break;
+        }
+        case Export::Memory: {
+          auto max = wasm->memory.max == Memory::kMaxSize ? Address(0) : wasm->memory.max;
+          writeResizableLimits(wasm->memory.initial, max); break;
+        }
         case Export::Global:
           o << binaryWasmType(import->globalType);
           o << U32LEB(import->globalMutable);
@@ -1490,8 +1495,10 @@ public:
 
   void readMemory() {
     if (debug) std::cerr << "== readMemory" << std::endl;
-    wasm.memory.initial = getU32LEB();
-    wasm.memory.max = getU32LEB();
+    auto numMemories = getU32LEB();
+    if (!numMemories) return;
+    assert(numMemories == 1);
+    getResizableLimits(wasm.memory.initial, &wasm.memory.max);
   }
 
   void readSignatures() {
