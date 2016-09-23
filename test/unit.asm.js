@@ -572,6 +572,21 @@ function asm(global, env, buffer) {
     return temp | 0;
   }
 
+  function dropIgnoredImportInIf($0,$1,$2) {
+   $0 = $0|0;
+   $1 = $1|0;
+   $2 = $2|0;
+   do {
+    if ($0) {
+     $0 = 1;
+     lb($2 | 0) | 0;
+    } else {
+     break;
+    }
+   } while(0);
+   return;
+  }
+
   var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg ];

@@ -422,6 +422,32 @@ struct ExpressionAnalyzer {
     return func->result != none;
   }
 
+  // Checks if a value is dropped.
+  static bool isResultDropped(std::vector<Expression*> stack) {
+    for (int i = int(stack.size()) - 2; i >= 0; i--) {
+      auto* curr = stack[i];
+      auto* above = stack[i + 1];
+      if (curr->is<Block>()) {
+        auto* block = curr->cast<Block>();
+        for (size_t j = 0; j < block->list.size() - 1; j++) {
+          if (block->list[j] == above) return false;
+        }
+        assert(block->list.back() == above);
+        // continue down
+      } else if (curr->is<If>()) {
+        auto* iff = curr->cast<If>();
+        if (above == iff->condition) return false;
+        if (!iff->ifFalse) return false;
+        assert(above == iff->ifTrue || above == iff->ifFalse);
+        // continue down
+      } else {
+        if (curr->is<Drop>()) return true; // dropped
+        return false; // all other node types use the result
+      }
+    }
+    return false;
+  }
+
   // Checks if a break is a simple - no condition, no value, just a plain branching
   static bool isSimple(Break* curr) {
     return !curr->condition && !curr->value;
@@ -856,56 +882,6 @@ struct ExpressionAnalyzer {
   }
 };
 
-// Adds drop() operations where necessary. This lets you not worry about adding drop when
-// generating code.
-struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<AutoDrop>>> {
-  bool isFunctionParallel() override { return true; }
-
-  Pass* create() override { return new AutoDrop; }
-
-  void visitBlock(Block* curr) {
-    if (curr->list.size() == 0) return;
-    for (Index i = 0; i < curr->list.size() - 1; i++) {
-      auto* child = curr->list[i];
-      if (isConcreteWasmType(child->type)) {
-        curr->list[i] = Builder(*getModule()).makeDrop(child);
-      }
-    }
-    auto* last = curr->list.back();
-    expressionStack.push_back(last);
-    if (isConcreteWasmType(last->type) && !ExpressionAnalyzer::isResultUsed(expressionStack, getFunction())) {
-      curr->list.back() = Builder(*getModule()).makeDrop(last);
-    }
-    expressionStack.pop_back();
-    curr->finalize(); // we may have changed our type
-  }
-
-  void visitIf(If* curr) {
-    if (curr->ifFalse) {
-      if (!isConcreteWasmType(curr->type)) {
-        // if either side of an if-else not returning a value is concrete, drop it
-        if (isConcreteWasmType(curr->ifTrue->type)) {
-          curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
-        }
-        if (isConcreteWasmType(curr->ifFalse->type)) {
-          curr->ifFalse = Builder(*getModule()).makeDrop(curr->ifFalse);
-        }
-      }
-    } else {
-      // if without else does not return a value, so the body must be dropped if it is concrete
-      if (isConcreteWasmType(curr->ifTrue->type)) {
-        curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
-      }
-    }
-  }
-
-  void visitFunction(Function* curr) {
-    if (curr->result == none && isConcreteWasmType(curr->body->type)) {
-      curr->body = Builder(*getModule()).makeDrop(curr->body);
-    }
-  }
-};
-
 // Finalizes a node
 
 struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, Visitor<ReFinalize>>> {
@@ -932,6 +908,66 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, Visitor<ReFinalize>
   void visitHost(Host *curr) { curr->finalize(); }
   void visitNop(Nop *curr) { curr->finalize(); }
   void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+};
+
+// Adds drop() operations where necessary. This lets you not worry about adding drop when
+// generating code.
+struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<AutoDrop>>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new AutoDrop; }
+
+  bool maybeDrop(Expression*& child) {
+    bool acted = false;
+    if (isConcreteWasmType(child->type)) {
+      expressionStack.push_back(child);
+      if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) && !ExpressionAnalyzer::isResultDropped(expressionStack)) {
+        child = Builder(*getModule()).makeDrop(child);
+        acted = true;
+      }
+      expressionStack.pop_back();
+    }
+    return acted;
+  }
+
+  void reFinalize() {
+    for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
+      auto* curr = expressionStack[i];
+      ReFinalize().visit(curr);
+    }
+  }
+
+  void visitBlock(Block* curr) {
+    if (curr->list.size() == 0) return;
+    for (Index i = 0; i < curr->list.size() - 1; i++) {
+      auto* child = curr->list[i];
+      if (isConcreteWasmType(child->type)) {
+        curr->list[i] = Builder(*getModule()).makeDrop(child);
+      }
+    }
+    if (maybeDrop(curr->list.back())) {
+      reFinalize();
+      assert(curr->type == none);
+    }
+  }
+
+  void visitIf(If* curr) {
+    bool acted = false;
+    if (maybeDrop(curr->ifTrue)) acted = true;
+    if (curr->ifFalse) {
+      if (maybeDrop(curr->ifFalse)) acted = true;
+    }
+    if (acted) {
+      reFinalize();
+      assert(curr->type == none);
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (curr->result == none && isConcreteWasmType(curr->body->type)) {
+      curr->body = Builder(*getModule()).makeDrop(curr->body);
+    }
+  }
 };
 
 } // namespace wasm
