@@ -161,14 +161,12 @@ void PassRunner::run() {
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
       totalTime += diff;
-#if 0
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
       if (!WasmValidator().validate(*wasm)) {
         std::cerr << "last pass (" << pass->name << ") broke validation\n";
         abort();
       }
-#endif
     }
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
     // validate
