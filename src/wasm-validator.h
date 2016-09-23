@@ -197,6 +197,7 @@ public:
       }
       shouldBeEqual(getFunction()->getLocalType(curr->index), curr->value->type, curr, "set_local type must match function");
     }
+    shouldBeTrue(isConcreteWasmType(curr->type) == curr->isTee(), curr, "if tee_local, return a concrete type, otherwise not");
   }
   void visitLoad(Load *curr) {
     validateAlignment(curr->align, curr->type, curr->bytes);
@@ -286,6 +287,9 @@ public:
   void visitSelect(Select* curr) {
     shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
     shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
+  }
+  void visitDrop(Drop* curr) {
+    shouldBeTrue(isConcreteWasmType(curr->value->type) || curr->value->type == unreachable, curr, "drop value must be concrete or unreachable");
   }
 
   void visitReturn(Return* curr) {
