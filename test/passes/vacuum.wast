@@ -412,4 +412,16 @@
       )
     )
   )
+  (func $if2drops (result i32)
+    (if
+      (i32.const 1)
+      (drop
+        (call $if2drops)
+      )
+      (drop
+        (call $if2drops)
+      )
+    )
+    (i32.const 2)
+  )
 )

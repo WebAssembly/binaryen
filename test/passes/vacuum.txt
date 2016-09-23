@@ -207,4 +207,14 @@
   (func $relooperJumpThreading3 (type $0)
     (nop)
   )
+  (func $if2drops (type $3) (result i32)
+    (drop
+      (if
+        (i32.const 1)
+        (call $if2drops)
+        (call $if2drops)
+      )
+    )
+    (i32.const 2)
+  )
 )

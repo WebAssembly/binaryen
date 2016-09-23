@@ -1012,4 +1012,17 @@
       )
     )
   )
+  (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32)
+    (drop
+      (if
+        (get_local $0)
+        (call $lb
+          (get_local $1)
+        )
+        (call $lb
+          (get_local $2)
+        )
+      )
+    )
+  )
 )

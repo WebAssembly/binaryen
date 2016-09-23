@@ -1644,4 +1644,23 @@
     )
     (return)
   )
+  (func $dropIgnoredImportsInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
+    (block $do-once$0
+      (if
+        (get_local $$0)
+        (drop
+          (call $lb
+            (get_local $$1)
+          )
+        )
+        (drop
+          (call $lb
+            (get_local $$2)
+          )
+        )
+      )
+      (nop)
+    )
+    (return)
+  )
 )
