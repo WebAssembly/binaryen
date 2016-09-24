@@ -1047,29 +1047,12 @@
       (br $shape$0$continue)
     )
   )
-  (func $split (type $v)
-    (call $check
-      (i32.const 0)
-    )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
-      (call $check
-        (i32.const 2)
-      )
-    )
-  )
   (func $if (type $v)
     (call $check
       (i32.const 0)
     )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
+    (call $check
+      (i32.const 1)
     )
     (call $check
       (i32.const 2)
@@ -1079,14 +1062,8 @@
     (call $check
       (i32.const 0)
     )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
-      (call $check
-        (i32.const 2)
-      )
+    (call $check
+      (i32.const 1)
     )
     (call $check
       (i32.const 3)
@@ -1101,10 +1078,7 @@
         (call $check
           (i32.const 1)
         )
-        (br_if $shape$0$continue
-          (i32.const 10)
-        )
-        (br $block$3$break)
+        (br $shape$0$continue)
       )
     )
     (call $check
@@ -1124,20 +1098,14 @@
           (call $check
             (i32.const 2)
           )
-          (br_if $block$4$break
-            (i32.const -6)
-          )
-          (br $shape$1$continue)
+          (br $block$4$break)
         )
       )
       (call $check
         (i32.const 3)
       )
-      (if
-        (i32.const -10)
-        (call $check
-          (i32.const 4)
-        )
+      (call $check
+        (i32.const 4)
       )
       (call $check
         (i32.const 5)

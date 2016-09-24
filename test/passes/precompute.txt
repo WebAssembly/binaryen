@@ -16,13 +16,6 @@
       (br $in)
     )
     (nop)
-    (if
-      (i32.const 2)
-      (call $x
-        (i32.const 3)
-      )
-    )
-    (nop)
     (block $c
       (nop)
       (call $x

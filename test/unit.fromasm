@@ -509,7 +509,7 @@
   )
   (func $smallIf
     (if
-      (i32.const 2)
+      (call $return_int)
       (drop
         (call $lb
           (i32.const 3)
@@ -594,7 +594,7 @@
   (func $conditionalTypeFun
     (drop
       (if
-        (i32.const 1)
+        (call $return_int)
         (i32.trunc_s/f64
           (call $abort
             (f64.convert_s/i32
@@ -607,7 +607,7 @@
     )
     (drop
       (if
-        (i32.const 3)
+        (call $return_int)
         (call $abort
           (f64.convert_s/i32
             (i32.const 7)
@@ -696,7 +696,7 @@
       (get_global $Int)
     )
     (if
-      (i32.const 1)
+      (call $return_int)
       (set_global $Int
         (i32.const 20)
       )
@@ -715,7 +715,7 @@
   )
   (func $dropCallImport
     (if
-      (i32.const 1)
+      (call $return_int)
       (drop
         (call $return_int)
       )
@@ -768,7 +768,7 @@
             (get_local $0)
           )
           (if
-            (i32.const 1)
+            (call $return_int)
             (br_if $label$break$L7
               (get_local $2)
             )

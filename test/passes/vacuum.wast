@@ -299,21 +299,22 @@
       (unreachable)
     )
   )
-  (func $if-drop
+  (func $if-drop (result i32)
     (block $out
       (drop
-        (if (i32.const 0)
+        (if (call $if-drop)
           (call $int)
           (br $out)
         )
       )
       (drop
-        (if (i32.const 1)
+        (if (call $if-drop)
           (br $out)
           (call $int)
         )
       )
     )
+    (i32.const 1)
   )
   (func $drop-silly
     (drop
@@ -414,7 +415,7 @@
   )
   (func $if2drops (result i32)
     (if
-      (i32.const 1)
+      (call $if2drops)
       (drop
         (call $if2drops)
       )
@@ -423,5 +424,11 @@
       )
     )
     (i32.const 2)
+  )
+  (func $if-const (param $x i32)
+    (if (i32.const 0) (call $if-const (i32.const 1)))
+    (if (i32.const 2) (call $if-const (i32.const 3)))
+    (if (i32.const 0) (call $if-const (i32.const 4)) (call $if-const (i32.const 5)))
+    (if (i32.const 6) (call $if-const (i32.const 7)) (call $if-const (i32.const 8)))
   )
 )
