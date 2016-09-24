@@ -27,7 +27,7 @@ Name WASM("wasm"),
 
 namespace BinaryConsts {
 namespace UserSections {
-const char* Names = "names";
+const char* Name = "name";
 }
 }
 
