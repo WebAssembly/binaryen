@@ -591,7 +591,7 @@
               (i32.const 5)
             )
             (if
-              (i32.const 0)
+              (call $return_int)
               (br $unlikely-continue$3)
             )
           )
@@ -870,7 +870,7 @@
   )
   (func $dropCall (result i32)
     (if
-      (i32.const 0)
+      (call $return_int)
       (block
         (drop
           (call $phi)

@@ -205,7 +205,7 @@ function asm(global, env, buffer) {
       print(1);
       do {
         print(5);
-        if (0) continue;
+        if (return_int()) continue;
       } while (0);
       print(2);
     }
@@ -275,7 +275,7 @@ function asm(global, env, buffer) {
   }
 
   function dropCall() {
-    if (0) {
+    if (return_int() | 0) {
       phi(); // drop this
       setTempRet0(10); // this too
       zeroInit(setTempRet0(10) | 0);
