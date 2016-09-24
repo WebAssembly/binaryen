@@ -9,6 +9,7 @@
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $8 (func (param i32 i32)))
+  (type $9 (func (param i32 i32 i32) (result i32)))
   (import "env" "waka" (func $waka))
   (import "env" "waka_int" (func $waka_int (result i32)))
   (import "env" "i64sub" (func $_i64Subtract (param i32 i32 i32 i32) (result i32)))
@@ -734,5 +735,33 @@
       )
     )
     (get_local $a)
+  )
+  (func $drop-if-value (type $9) (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (local $temp i32)
+    (drop
+      (if
+        (get_local $x)
+        (block $block53 i32
+          (nop)
+          (set_local $temp
+            (get_local $y)
+          )
+          (get_local $z)
+        )
+        (block $block54 i32
+          (nop)
+          (set_local $temp
+            (get_local $y)
+          )
+          (get_local $z)
+        )
+      )
+    )
+    (drop
+      (get_local $temp)
+    )
+    (return
+      (i32.const 0)
+    )
   )
 )

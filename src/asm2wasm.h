@@ -797,13 +797,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           switch (curr->type) {
             case i32: replaceCurrent(parent->builder.makeUnary(TruncSFloat64ToInt32, curr)); break;
             case f32: replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr)); break;
-            case none: replaceCurrent(parent->builder.makeDrop(curr)); break;
+            case none: {
+              // this function returns a value, but we are not using it, so it must be dropped.
+              // autodrop will do that for us.
+              break;
+            }
             default: WASM_UNREACHABLE();
           }
         } else {
           assert(curr->type == none);
           // we don't want a return value here, but the import does provide one
-          replaceCurrent(parent->builder.makeDrop(curr));
+          // autodrop will do that for us.
         }
         curr->type = importResult;
       }

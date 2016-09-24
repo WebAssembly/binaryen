@@ -775,4 +775,30 @@
     )
     (get_local $a)
   )
+  (func $drop-if-value (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (local $temp i32)
+    (drop
+      (if
+        (get_local $x)
+        (block $block53 i32
+          (nop)
+          (set_local $temp
+            (get_local $y)
+          )
+          (get_local $z)
+        )
+        (block $block54 i32
+          (nop)
+          (set_local $temp
+            (get_local $y)
+          )
+          (get_local $z)
+        )
+      )
+    )
+    (drop (get_local $temp))
+    (return
+      (i32.const 0)
+    )
+  )
 )

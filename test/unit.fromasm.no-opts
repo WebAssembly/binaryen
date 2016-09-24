@@ -862,14 +862,14 @@
   )
   (func $smallIf
     (block $do-once$0
-      (drop
-        (if
-          (i32.const 2)
+      (if
+        (i32.const 2)
+        (drop
           (call $lb
             (i32.const 3)
           )
-          (br $do-once$0)
         )
+        (br $do-once$0)
       )
       (nop)
     )
@@ -936,23 +936,23 @@
   )
   (func $breakThroughMany (param $$s i32)
     (block $label$break$L1
-      (drop
-        (if
-          (get_local $$s)
-          (loop $while-in$2
-            (block $while-out$1
-              (if
-                (i32.eqz
-                  (get_local $$s)
-                )
-                (br $label$break$L1)
+      (if
+        (get_local $$s)
+        (loop $while-in$2
+          (block $while-out$1
+            (if
+              (i32.eqz
+                (get_local $$s)
               )
-              (call $zeroInit
-                (i32.const 0)
-              )
-              (br $while-in$2)
+              (br $label$break$L1)
             )
+            (call $zeroInit
+              (i32.const 0)
+            )
+            (br $while-in$2)
           )
+        )
+        (drop
           (i32.const 1337)
         )
       )
@@ -1629,5 +1629,44 @@
     (return
       (get_local $temp)
     )
+  )
+  (func $dropIgnoredImportInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
+    (block $do-once$0
+      (if
+        (get_local $$0)
+        (block
+          (set_local $$0
+            (i32.const 1)
+          )
+          (drop
+            (call $lb
+              (get_local $$2)
+            )
+          )
+        )
+        (br $do-once$0)
+      )
+      (nop)
+    )
+    (return)
+  )
+  (func $dropIgnoredImportsInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
+    (block $do-once$0
+      (if
+        (get_local $$0)
+        (drop
+          (call $lb
+            (get_local $$1)
+          )
+        )
+        (drop
+          (call $lb
+            (get_local $$2)
+          )
+        )
+      )
+      (nop)
+    )
+    (return)
   )
 )

@@ -351,9 +351,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   // optimize set_locals from both sides of an if into a return value
   void optimizeIfReturn(If* iff, Expression** currp, Sinkables& ifTrue) {
     assert(iff->ifFalse);
-    // if this if already has a result that is used, we can't do anything
-    assert(expressionStack.back() == iff);
-    if (ExpressionAnalyzer::isResultUsed(expressionStack, getFunction())) return;
+    // if this if already has a result, we can't do anything
+    if (isConcreteWasmType(iff->type)) return;
     // We now have the sinkables from both sides of the if.
     Sinkables& ifFalse = sinkables;
     Index sharedIndex = -1;

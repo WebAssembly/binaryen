@@ -193,9 +193,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         curr->ifTrue = curr->ifFalse;
         curr->ifFalse = nullptr;
         curr->condition = Builder(*getModule()).makeUnary(EqZInt32, curr->condition);
+      } else if (curr->ifTrue->is<Drop>() && curr->ifFalse->is<Drop>()) {
+        // instead of dropping both sides, drop the if
+        curr->ifTrue = curr->ifTrue->cast<Drop>()->value;
+        curr->ifFalse = curr->ifFalse->cast<Drop>()->value;
+        curr->finalize();
+        replaceCurrent(Builder(*getModule()).makeDrop(curr));
       }
-    }
-    if (!curr->ifFalse) {
+    } else {
       // no else
       if (curr->ifTrue->is<Nop>()) {
         // no nothing

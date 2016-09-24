@@ -399,10 +399,12 @@ BinaryenFloat64: 4
             )
             (block
             )
-            (drop
-              (if
-                (i32.const 1)
+            (if
+              (i32.const 1)
+              (drop
                 (i32.const 2)
+              )
+              (drop
                 (i32.const 3)
               )
             )
@@ -1992,10 +1994,12 @@ int main() {
             )
             (block
             )
-            (drop
-              (if
-                (i32.const 1)
+            (if
+              (i32.const 1)
+              (drop
                 (i32.const 2)
+              )
+              (drop
                 (i32.const 3)
               )
             )

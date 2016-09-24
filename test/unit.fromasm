@@ -508,13 +508,11 @@
     )
   )
   (func $smallIf
-    (block $do-once$0
-      (if
-        (i32.const 2)
-        (drop
-          (call $lb
-            (i32.const 3)
-          )
+    (if
+      (i32.const 2)
+      (drop
+        (call $lb
+          (i32.const 3)
         )
       )
     )
@@ -1022,5 +1020,28 @@
     (block $jumpthreading$outer$2
     )
     (get_local $0)
+  )
+  (func $dropIgnoredImportInIf (param $0 i32) (param $1 i32) (param $2 i32)
+    (if
+      (get_local $0)
+      (drop
+        (call $lb
+          (get_local $2)
+        )
+      )
+    )
+  )
+  (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32)
+    (drop
+      (if
+        (get_local $0)
+        (call $lb
+          (get_local $1)
+        )
+        (call $lb
+          (get_local $2)
+        )
+      )
+    )
   )
 )
