@@ -205,7 +205,7 @@ function asm(global, env, buffer) {
       print(1);
       do {
         print(5);
-        if (0) continue;
+        if (return_int()) continue;
       } while (0);
       print(2);
     }
@@ -266,7 +266,7 @@ function asm(global, env, buffer) {
 
   function smallIf() {
     do {
-      if (2) {
+      if (return_int() | 0) {
         lb(3) | 0;
       } else {
         break;
@@ -275,7 +275,7 @@ function asm(global, env, buffer) {
   }
 
   function dropCall() {
-    if (0) {
+    if (return_int() | 0) {
       phi(); // drop this
       setTempRet0(10); // this too
       zeroInit(setTempRet0(10) | 0);
@@ -328,8 +328,8 @@ function asm(global, env, buffer) {
 
   function conditionalTypeFun() {
     var x = 0, y = +0;
-    x = 1 ? abort(5) | 0 : 2;
-    y = 3 ? +abort(7) : 4.5;
+    x = return_int() | 0 ? abort(5) | 0 : 2;
+    y = return_int() | 0 ? +abort(7) : 4.5;
   }
 
   function loadSigned(x) {
@@ -358,7 +358,7 @@ function asm(global, env, buffer) {
     Int = x;
     globalOpts();
     x = Int;
-    if (1) Int = 20; // but this does interfere
+    if (return_int() | 0) Int = 20; // but this does interfere
     Int = x;
     globalOpts();
     x = Int;
@@ -367,7 +367,7 @@ function asm(global, env, buffer) {
   }
 
   function dropCallImport() {
-    if (1) return_int() | 0;
+    if (return_int() | 0) return_int() | 0;
   }
 
   function loophi(x, y) {
@@ -399,7 +399,7 @@ function asm(global, env, buffer) {
     j = 0;
     while(1) {
      temp = j;
-     if (1) {
+     if (return_int() | 0) {
       if (temp) {
        i$lcssa = i;
        break L7;

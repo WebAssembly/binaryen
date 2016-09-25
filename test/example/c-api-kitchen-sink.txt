@@ -1054,29 +1054,12 @@ optimized:
       (br $shape$0$continue)
     )
   )
-  (func $split (type $v)
-    (call $check
-      (i32.const 0)
-    )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
-      (call $check
-        (i32.const 2)
-      )
-    )
-  )
   (func $if (type $v)
     (call $check
       (i32.const 0)
     )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
+    (call $check
+      (i32.const 1)
     )
     (call $check
       (i32.const 2)
@@ -1086,14 +1069,8 @@ optimized:
     (call $check
       (i32.const 0)
     )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
-      (call $check
-        (i32.const 2)
-      )
+    (call $check
+      (i32.const 1)
     )
     (call $check
       (i32.const 3)
@@ -1108,10 +1085,7 @@ optimized:
         (call $check
           (i32.const 1)
         )
-        (br_if $shape$0$continue
-          (i32.const 10)
-        )
-        (br $block$3$break)
+        (br $shape$0$continue)
       )
     )
     (call $check
@@ -1128,26 +1102,17 @@ optimized:
           (call $check
             (i32.const 1)
           )
-          (br_if $block$7$break
-            (i32.const 0)
-          )
           (call $check
             (i32.const 2)
           )
-          (br_if $block$4$break
-            (i32.const -6)
-          )
-          (br $shape$1$continue)
+          (br $block$4$break)
         )
       )
       (call $check
         (i32.const 3)
       )
-      (if
-        (i32.const -10)
-        (call $check
-          (i32.const 4)
-        )
+      (call $check
+        (i32.const 4)
       )
       (call $check
         (i32.const 5)
@@ -1162,23 +1127,6 @@ optimized:
       (i32.const 0)
     )
     (block $switch$1$leave
-      (block $switch$1$default
-        (block $switch$1$case$3
-          (block $switch$1$case$2
-            (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
-              (i32.const -99)
-            )
-          )
-          (call $check
-            (i32.const 1)
-          )
-          (br $switch$1$leave)
-        )
-        (call $check
-          (i32.const 2)
-        )
-        (br $switch$1$leave)
-      )
       (call $check
         (i32.const 3)
       )
@@ -3113,29 +3061,12 @@ optimized:
       (br $shape$0$continue)
     )
   )
-  (func $split (type $v)
-    (call $check
-      (i32.const 0)
-    )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
-      (call $check
-        (i32.const 2)
-      )
-    )
-  )
   (func $if (type $v)
     (call $check
       (i32.const 0)
     )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
+    (call $check
+      (i32.const 1)
     )
     (call $check
       (i32.const 2)
@@ -3145,14 +3076,8 @@ optimized:
     (call $check
       (i32.const 0)
     )
-    (if
-      (i32.const 55)
-      (call $check
-        (i32.const 1)
-      )
-      (call $check
-        (i32.const 2)
-      )
+    (call $check
+      (i32.const 1)
     )
     (call $check
       (i32.const 3)
@@ -3167,10 +3092,7 @@ optimized:
         (call $check
           (i32.const 1)
         )
-        (br_if $shape$0$continue
-          (i32.const 10)
-        )
-        (br $block$3$break)
+        (br $shape$0$continue)
       )
     )
     (call $check
@@ -3187,26 +3109,17 @@ optimized:
           (call $check
             (i32.const 1)
           )
-          (br_if $block$7$break
-            (i32.const 0)
-          )
           (call $check
             (i32.const 2)
           )
-          (br_if $block$4$break
-            (i32.const -6)
-          )
-          (br $shape$1$continue)
+          (br $block$4$break)
         )
       )
       (call $check
         (i32.const 3)
       )
-      (if
-        (i32.const -10)
-        (call $check
-          (i32.const 4)
-        )
+      (call $check
+        (i32.const 4)
       )
       (call $check
         (i32.const 5)
@@ -3221,23 +3134,6 @@ optimized:
       (i32.const 0)
     )
     (block $switch$1$leave
-      (block $switch$1$default
-        (block $switch$1$case$3
-          (block $switch$1$case$2
-            (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
-              (i32.const -99)
-            )
-          )
-          (call $check
-            (i32.const 1)
-          )
-          (br $switch$1$leave)
-        )
-        (call $check
-          (i32.const 2)
-        )
-        (br $switch$1$leave)
-      )
       (call $check
         (i32.const 3)
       )

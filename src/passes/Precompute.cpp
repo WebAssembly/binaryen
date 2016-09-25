@@ -15,23 +15,14 @@
  */
 
 //
-// Removes dead, i.e. unreachable, code.
-//
-// We keep a record of when control flow is reachable. When it isn't, we
-// kill (turn into unreachable). We then fold away entire unreachable
-// expressions.
-//
-// When dead code causes an operation to not happen, like a store, a call
-// or an add, we replace with a block with a list of what does happen.
-// That isn't necessarily smaller, but blocks are friendlier to other
-// optimizations: blocks can be merged and eliminated, and they clearly
-// have no side effects.
+// Computes code at compile time where possible.
 //
 
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
+#include <ast_utils.h>
 
 namespace wasm {
 
@@ -90,7 +81,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   Pass* create() override { return new Precompute; }
 
   void visitExpression(Expression* curr) {
-    if (curr->is<Const>()) return;
+    if (curr->is<Const>() || curr->is<Nop>()) return;
     // try to evaluate this into a const
     Flow flow;
     try {
@@ -99,8 +90,11 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       return;
     }
     if (flow.breaking()) return; // TODO: can create a break as a replacement in some cases (not NONSTANDALONE)
+    // this was precomputed
     if (isConcreteWasmType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
+    } else {
+      ExpressionManipulator::nop(curr);
     }
   }
 };

@@ -186,6 +186,21 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
   }
 
   void visitIf(If* curr) {
+    // if the condition is a constant, just apply it
+    // we can just return the ifTrue or ifFalse.
+    if (auto* value = curr->condition->dynCast<Const>()) {
+      if (value->value.getInteger()) {
+        replaceCurrent(curr->ifTrue);
+        return;
+      } else {
+        if (curr->ifFalse) {
+          replaceCurrent(curr->ifFalse);
+        } else {
+          ExpressionManipulator::nop(curr);
+        }
+        return;
+      }
+    }
     if (curr->ifFalse) {
       if (curr->ifFalse->is<Nop>()) {
         curr->ifFalse = nullptr;

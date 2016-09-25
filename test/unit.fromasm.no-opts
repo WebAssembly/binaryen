@@ -597,7 +597,7 @@
               (i32.const 5)
             )
             (if
-              (i32.const 0)
+              (call $return_int)
               (br $unlikely-continue$3)
             )
           )
@@ -863,7 +863,7 @@
   (func $smallIf
     (block $do-once$0
       (if
-        (i32.const 2)
+        (call $return_int)
         (drop
           (call $lb
             (i32.const 3)
@@ -876,7 +876,7 @@
   )
   (func $dropCall (result i32)
     (if
-      (i32.const 0)
+      (call $return_int)
       (block
         (drop
           (call $phi)
@@ -992,7 +992,7 @@
     (local $y f64)
     (set_local $x
       (if
-        (i32.const 1)
+        (call $return_int)
         (i32.trunc_s/f64
           (call $abort
             (f64.convert_s/i32
@@ -1005,7 +1005,7 @@
     )
     (set_local $y
       (if
-        (i32.const 3)
+        (call $return_int)
         (call $abort
           (f64.convert_s/i32
             (i32.const 7)
@@ -1137,7 +1137,7 @@
       (get_global $Int)
     )
     (if
-      (i32.const 1)
+      (call $return_int)
       (set_global $Int
         (i32.const 20)
       )
@@ -1156,7 +1156,7 @@
   )
   (func $dropCallImport
     (if
-      (i32.const 1)
+      (call $return_int)
       (drop
         (call $return_int)
       )
@@ -1225,7 +1225,7 @@
               (get_local $j)
             )
             (if
-              (i32.const 1)
+              (call $return_int)
               (if
                 (get_local $temp)
                 (block

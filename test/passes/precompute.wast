@@ -41,5 +41,15 @@
     (loop $in
       (br $in)
     )
+    (block $b
+      (br_if $b (i32.const 0))
+      (br_if $b (i32.const 1))
+      (call $x (i32.const 4))
+    )
+    (block $c
+      (br_if $c (i32.const 0))
+      (call $x (i32.const 4))
+      (br_if $c (i32.const 1))
+    )
   )
 )
