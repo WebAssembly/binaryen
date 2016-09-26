@@ -50,6 +50,134 @@
       (br_if $c (i32.const 0))
       (call $x (i32.const 4))
       (br_if $c (i32.const 1))
+      (br $c)
+    )
+    (drop
+      (block $val
+        (drop (br_if $val (i32.const 100) (i32.const 0)))
+        (call $x (i32.const 4))
+        (drop (br_if $val (i32.const 101) (i32.const 1)))
+        (br $val (i32.const 102))
+      )
+    )
+    (block $d
+      (block $e
+        (br_if $d (br $e))
+        (call $x (i32.const 4))
+        (br_if $e (br $d))
+      )
+    )
+    (drop
+      (block $d
+        (call $x (i32.const 5))
+        (block $e
+          (drop (br_if $d (br $e) (i32.const 1)))
+          (drop (br_if $d (br $e) (i32.const 0)))
+          (drop (br_if $d (i32.const 1) (br $e)))
+          (drop (br_if $d (i32.const 0) (br $e)))
+          (unreachable)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (block $d
+        (call $x (i32.const 6))
+        (block $e
+          (drop (br_if $d (br $e) (i32.const 0)))
+          (drop (br_if $d (i32.const 1) (br $e)))
+          (drop (br_if $d (i32.const 0) (br $e)))
+          (unreachable)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (block $d
+        (call $x (i32.const 7))
+        (block $e
+          (drop (br_if $d (i32.const 1) (br $e)))
+        )
+        (i32.const 2)
+      )
+    )
+    (call $x
+      (block $out
+        (block $waka1
+          (block $waka2
+            (block $waka3
+              (br_table $waka1 $waka2 $waka3
+                (i32.const 0)
+              )
+            )
+            (br $out (i32.const 0))
+          )
+          (br $out (i32.const 1))
+        )
+        (br $out (i32.const 2))
+      )
+    )
+    (call $x
+      (block $out
+        (block $waka1
+          (block $waka2
+            (block $waka3
+              (br_table $waka1 $waka2 $waka3
+                (i32.const 1)
+              )
+            )
+            (br $out (i32.const 0))
+          )
+          (br $out (i32.const 1))
+        )
+        (br $out (i32.const 2))
+      )
+    )
+    (call $x
+      (block $out
+        (block $waka1
+          (block $waka2
+            (block $waka3
+              (br_table $waka1 $waka2 $waka3
+                (i32.const 2)
+              )
+            )
+            (br $out (i32.const 0))
+          )
+          (br $out (i32.const 1))
+        )
+        (br $out (i32.const 2))
+      )
+    )
+    (call $x
+      (block $out
+        (block $waka1
+          (block $waka2
+            (block $waka3
+              (br_table $waka1 $waka2 $waka3
+                (i32.const 3)
+              )
+            )
+            (br $out (i32.const 0))
+          )
+          (br $out (i32.const 1))
+        )
+        (br $out (i32.const 2))
+      )
+    )
+  )
+  (func $ret (result i32)
+    (if (call $ret)
+      (return (i32.const 0))
+    )
+    (if (call $ret)
+      (return (return (i32.const 1)))
+    )
+    (i32.const 1)
+  )
+  (func $noret
+    (if (call $ret)
+      (return)
     )
   )
 )
