@@ -7,6 +7,7 @@
   (func $test
     (local $x i64)
     (local $y i64)
+    (local $z i32)
     (set_local $x
       (i64.const 100)
     )
@@ -126,6 +127,66 @@
     (i64.store
       (i32.const 120)
       (get_local $x)
+    )
+    (set_local $z
+      (i64.eq
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.ne
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.le_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.le_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.ge_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.ge_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.lt_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.lt_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.gt_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.gt_s
+        (get_local $x)
+        (get_local $y)
+      )
     )
   )
 )

@@ -57,7 +57,17 @@ Name I64_CONST("i64_const"),
      I64_ASHR("i64_ashr"),
      I64_LSHR("i64_lshr"),
      I64_LOAD("i64_load"),
-     I64_STORE("i64_store");
+     I64_STORE("i64_store"),
+     I64_EQ("i64_eq"),
+     I64_NE("i64_ne"),
+     I64_ULE("i64_ule"),
+     I64_SLE("i64_sle"),
+     I64_UGE("i64_uge"),
+     I64_SGE("i64_sge"),
+     I64_ULT("i64_ult"),
+     I64_SLT("i64_slt"),
+     I64_UGT("i64_ugt"),
+     I64_SGT("i64_sgt");
 
 // Utilities
 
@@ -1485,6 +1495,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_LOAD) return builder.makeLoad(8, true, 0, indexOr(ast[2][1][1]->getInteger(), 8), process(ast[2][0]), i64);
             auto* left = process(ast[2][0]);
             auto* right = process(ast[2][1]);
+            // maths
             if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
             if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
             if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
@@ -1498,6 +1509,17 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_SHL) return builder.makeBinary(BinaryOp::ShlInt64, left, right);
             if (name == I64_ASHR) return builder.makeBinary(BinaryOp::ShrSInt64, left, right);
             if (name == I64_LSHR) return builder.makeBinary(BinaryOp::ShrUInt64, left, right);
+            // comps
+            if (name == I64_EQ) return builder.makeBinary(BinaryOp::EqInt64, left, right);
+            if (name == I64_NE) return builder.makeBinary(BinaryOp::NeInt64, left, right);
+            if (name == I64_ULE) return builder.makeBinary(BinaryOp::LeUInt64, left, right);
+            if (name == I64_SLE) return builder.makeBinary(BinaryOp::LeSInt64, left, right);
+            if (name == I64_UGE) return builder.makeBinary(BinaryOp::GeUInt64, left, right);
+            if (name == I64_SGE) return builder.makeBinary(BinaryOp::GeSInt64, left, right);
+            if (name == I64_ULT) return builder.makeBinary(BinaryOp::LtUInt64, left, right);
+            if (name == I64_SLT) return builder.makeBinary(BinaryOp::LtSInt64, left, right);
+            if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
+            if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
           } else if (ast[2]->size() == 3) { // 3 params
             if (name == I64_STORE) return builder.makeStore(8, 0, indexOr(ast[2][2][1]->getInteger(), 8), process(ast[2][0]), process(ast[2][1]), i64);
           }

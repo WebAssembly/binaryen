@@ -17,7 +17,7 @@ function asm(global, env, buffer) {
   var HEAPF64 = new global.Float64Array(buffer);
 
   function test() {
-    var x = i64(), y = i64(); // define i64 variables using special intrinsic
+    var x = i64(), y = i64(), z = 0; // define i64 variables using special intrinsic
     x = i64_const(100, 0); // i64 constant
     y = i64_const(17, 30);
     x = i64_add(x, y); // binaries
@@ -41,6 +41,17 @@ function asm(global, env, buffer) {
     i64_store(120, x, 2);
     i64_store(120, x, 4);
     i64_store(120, x, 8);
+    // comps
+    z = i64_eq(x, y);
+    z = i64_ne(x, y);
+    z = i64_ule(x, y);
+    z = i64_sle(x, y);
+    z = i64_uge(x, y);
+    z = i64_sge(x, y);
+    z = i64_ult(x, y);
+    z = i64_slt(x, y);
+    z = i64_ugt(x, y);
+    z = i64_sgt(x, y);
   }
 
   return { test: test };
