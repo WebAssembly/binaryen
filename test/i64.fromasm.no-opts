@@ -8,6 +8,9 @@
     (local $x i64)
     (local $y i64)
     (local $z i32)
+    (local $int32 i32)
+    (local $float32 f32)
+    (local $float64 f64)
     (set_local $x
       (i64.const 100)
     )
@@ -186,6 +189,61 @@
       (i64.gt_s
         (get_local $x)
         (get_local $y)
+      )
+    )
+    (set_local $int32
+      (i32.wrap/i64
+        (get_local $x)
+      )
+    )
+    (set_local $x
+      (i64.extend_s/i32
+        (get_local $int32)
+      )
+    )
+    (set_local $x
+      (i64.extend_u/i32
+        (get_local $int32)
+      )
+    )
+    (set_local $float32
+      (f32.convert_s/i64
+        (get_local $x)
+      )
+    )
+    (set_local $float64
+      (f64.convert_s/i64
+        (get_local $x)
+      )
+    )
+    (set_local $float32
+      (f32.convert_u/i64
+        (get_local $x)
+      )
+    )
+    (set_local $float64
+      (f64.convert_u/i64
+        (get_local $x)
+      )
+    )
+    (set_local $x
+      (i64.trunc_s/f32
+        (get_local $float32)
+      )
+    )
+    (set_local $x
+      (i64.trunc_s/f64
+        (get_local $float64)
+      )
+    )
+    (set_local $x
+      (i64.trunc_u/f32
+        (get_local $float32)
+      )
+    )
+    (set_local $x
+      (i64.trunc_u/f64
+        (get_local $float64)
       )
     )
   )

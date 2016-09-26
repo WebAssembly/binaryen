@@ -67,7 +67,18 @@ Name I64_CONST("i64_const"),
      I64_ULT("i64_ult"),
      I64_SLT("i64_slt"),
      I64_UGT("i64_ugt"),
-     I64_SGT("i64_sgt");
+     I64_SGT("i64_sgt"),
+     I64_TRUNC("i64_trunc"),
+     I64_SEXT("i64_sext"),
+     I64_ZEXT("i64_zext"),
+     I64_S2F("i64_s2f"),
+     I64_S2D("i64_s2d"),
+     I64_U2F("i64_u2f"),
+     I64_U2D("i64_u2d"),
+     I64_F2S("i64_f2s"),
+     I64_D2S("i64_d2s"),
+     I64_F2U("i64_f2u"),
+     I64_D2U("i64_d2u");
 
 // Utilities
 
@@ -1486,7 +1497,21 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           return ret;
         }
         if (wasmOnly && maybeWasmInt64Intrinsic(name)) {
-          if (ast[2]->size() == 2) { // 2 params,binary
+          auto num = ast[2]->size();
+          if (num == 1) {
+            auto* value = process(ast[2][0]);
+            if (name == I64_TRUNC) return builder.makeUnary(UnaryOp::WrapInt64, value);
+            if (name == I64_SEXT) return builder.makeUnary(UnaryOp::ExtendSInt32, value);
+            if (name == I64_ZEXT) return builder.makeUnary(UnaryOp::ExtendUInt32, value);
+            if (name == I64_S2F) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat32, value);
+            if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
+            if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
+            if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
+            if (name == I64_F2S) return builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
+            if (name == I64_D2S) return builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
+            if (name == I64_F2U) return builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
+            if (name == I64_D2U) return builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
+          } else if (num == 2) { // 2 params,binary
             if (name == I64_CONST) {
               uint64_t low = ast[2][0][1]->getInteger();
               uint64_t high = ast[2][1][1]->getInteger();
@@ -1520,7 +1545,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_SLT) return builder.makeBinary(BinaryOp::LtSInt64, left, right);
             if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
             if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
-          } else if (ast[2]->size() == 3) { // 3 params
+          } else if (num == 3) { // 3 params
             if (name == I64_STORE) return builder.makeStore(8, 0, indexOr(ast[2][2][1]->getInteger(), 8), process(ast[2][0]), process(ast[2][1]), i64);
           }
         }
