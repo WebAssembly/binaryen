@@ -33,6 +33,14 @@ function asm(global, env, buffer) {
     x = i64_shl(x, y);
     x = i64_ashr(x, y);
     x = i64_lshr(x, y);
+    x = i64_load(120, 0); // load and store
+    x = i64_load(120, 2);
+    x = i64_load(120, 4);
+    x = i64_load(120, 8);
+    i64_store(120, x, 0);
+    i64_store(120, x, 2);
+    i64_store(120, x, 4);
+    i64_store(120, x, 8);
   }
 
   return { test: test };

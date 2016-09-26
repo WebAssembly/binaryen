@@ -55,7 +55,9 @@ Name I64_CONST("i64_const"),
      I64_XOR("i64_xor"),
      I64_SHL("i64_shl"),
      I64_ASHR("i64_ashr"),
-     I64_LSHR("i64_lshr");
+     I64_LSHR("i64_lshr"),
+     I64_LOAD("i64_load"),
+     I64_STORE("i64_store");
 
 // Utilities
 
@@ -68,6 +70,10 @@ static void abort_on(std::string why, Ref element) {
 static void abort_on(std::string why, IString element) {
   std::cerr << why << ' ' << element.str << '\n';
   abort();
+}
+
+Index indexOr(Index x, Index y) {
+  return x ? x : y;
 }
 
 // useful when we need to see our parent, in an asm.js expression stack
@@ -1474,8 +1480,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_CONST) {
               uint64_t low = ast[2][0][1]->getInteger();
               uint64_t high = ast[2][1][1]->getInteger();
-              return wasm.allocator.alloc<Const>()->set(Literal(uint64_t(low + (high << 32))));
+              return builder.makeConst(Literal(uint64_t(low + (high << 32))));
             }
+            if (name == I64_LOAD) return builder.makeLoad(8, true, 0, indexOr(ast[2][1][1]->getInteger(), 8), process(ast[2][0]), i64);
             auto* left = process(ast[2][0]);
             auto* right = process(ast[2][1]);
             if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
@@ -1491,6 +1498,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_SHL) return builder.makeBinary(BinaryOp::ShlInt64, left, right);
             if (name == I64_ASHR) return builder.makeBinary(BinaryOp::ShrSInt64, left, right);
             if (name == I64_LSHR) return builder.makeBinary(BinaryOp::ShrUInt64, left, right);
+          } else if (ast[2]->size() == 3) { // 3 params
+            if (name == I64_STORE) return builder.makeStore(8, 0, indexOr(ast[2][2][1]->getInteger(), 8), process(ast[2][0]), process(ast[2][1]), i64);
           }
         }
         Expression* ret;

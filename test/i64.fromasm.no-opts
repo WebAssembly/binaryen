@@ -91,5 +91,41 @@
         (get_local $y)
       )
     )
+    (set_local $x
+      (i64.load
+        (i32.const 120)
+      )
+    )
+    (set_local $x
+      (i64.load align=2
+        (i32.const 120)
+      )
+    )
+    (set_local $x
+      (i64.load align=4
+        (i32.const 120)
+      )
+    )
+    (set_local $x
+      (i64.load
+        (i32.const 120)
+      )
+    )
+    (i64.store
+      (i32.const 120)
+      (get_local $x)
+    )
+    (i64.store align=2
+      (i32.const 120)
+      (get_local $x)
+    )
+    (i64.store align=4
+      (i32.const 120)
+      (get_local $x)
+    )
+    (i64.store
+      (i32.const 120)
+      (get_local $x)
+    )
   )
 )
