@@ -40,6 +40,10 @@ namespace wasm {
 
 using namespace cashew;
 
+// Names
+
+Name I64_CONST("i64_const");
+
 // Utilities
 
 static void abort_on(std::string why, Ref element) {
@@ -1447,6 +1451,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             abort();
           }
           return ret;
+        }
+        if (wasmOnly) {
+          if (name == I64_CONST) {
+            uint64_t low = ast[2][0][1]->getInteger();
+            uint64_t high = ast[2][1][1]->getInteger();
+            return wasm.allocator.alloc<Const>()->set(Literal(uint64_t(low + (high << 32))));
+          }
         }
         Expression* ret;
         ExpressionList* operands;

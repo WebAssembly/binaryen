@@ -18,6 +18,8 @@ function asm(global, env, buffer) {
 
   function test() {
     var x = i64(), y = i64(); // define i64 variables using special intrinsic
+    x = i64_const(100, 0); // i64 constant
+    y = i64_const(17, 30);
   }
 
   return { test: test };

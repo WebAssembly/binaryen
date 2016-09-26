@@ -7,6 +7,11 @@
   (func $test
     (local $x i64)
     (local $y i64)
-    (nop)
+    (set_local $x
+      (i64.const 100)
+    )
+    (set_local $y
+      (i64.const 128849018897)
+    )
   )
 )
