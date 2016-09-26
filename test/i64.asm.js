@@ -20,6 +20,19 @@ function asm(global, env, buffer) {
     var x = i64(), y = i64(); // define i64 variables using special intrinsic
     x = i64_const(100, 0); // i64 constant
     y = i64_const(17, 30);
+    x = i64_add(x, y); // binaries
+    x = i64_sub(x, y);
+    x = i64_mul(x, y);
+    x = i64_udiv(x, y);
+    x = i64_sdiv(x, y);
+    x = i64_urem(x, y);
+    x = i64_srem(x, y);
+    x = i64_and(x, y);
+    x = i64_or(x, y);
+    x = i64_xor(x, y);
+    x = i64_shl(x, y);
+    x = i64_ashr(x, y);
+    x = i64_lshr(x, y);
   }
 
   return { test: test };

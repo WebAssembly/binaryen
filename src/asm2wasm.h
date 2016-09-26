@@ -42,7 +42,20 @@ using namespace cashew;
 
 // Names
 
-Name I64_CONST("i64_const");
+Name I64_CONST("i64_const"),
+     I64_ADD("i64_add"),
+     I64_SUB("i64_sub"),
+     I64_MUL("i64_mul"),
+     I64_UDIV("i64_udiv"),
+     I64_SDIV("i64_sdiv"),
+     I64_UREM("i64_urem"),
+     I64_SREM("i64_srem"),
+     I64_AND("i64_and"),
+     I64_OR("i64_or"),
+     I64_XOR("i64_xor"),
+     I64_SHL("i64_shl"),
+     I64_ASHR("i64_ashr"),
+     I64_LSHR("i64_lshr");
 
 // Utilities
 
@@ -371,6 +384,10 @@ private:
     }
     abort();
     return -1; // avoid warning
+  }
+
+  bool maybeWasmInt64Intrinsic(Name name) {
+    return strncmp(name.str, "i64_", 4) == 0;
   }
 
   std::map<unsigned, Ref> tempNums;
@@ -1452,11 +1469,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           return ret;
         }
-        if (wasmOnly) {
-          if (name == I64_CONST) {
-            uint64_t low = ast[2][0][1]->getInteger();
-            uint64_t high = ast[2][1][1]->getInteger();
-            return wasm.allocator.alloc<Const>()->set(Literal(uint64_t(low + (high << 32))));
+        if (wasmOnly && maybeWasmInt64Intrinsic(name)) {
+          if (ast[2]->size() == 2) { // 2 params,binary
+            if (name == I64_CONST) {
+              uint64_t low = ast[2][0][1]->getInteger();
+              uint64_t high = ast[2][1][1]->getInteger();
+              return wasm.allocator.alloc<Const>()->set(Literal(uint64_t(low + (high << 32))));
+            }
+            auto* left = process(ast[2][0]);
+            auto* right = process(ast[2][1]);
+            if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
+            if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
+            if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
+            if (name == I64_UDIV) return builder.makeBinary(BinaryOp::DivUInt64, left, right);
+            if (name == I64_SDIV) return builder.makeBinary(BinaryOp::DivSInt64, left, right);
+            if (name == I64_UREM) return builder.makeBinary(BinaryOp::RemUInt64, left, right);
+            if (name == I64_SREM) return builder.makeBinary(BinaryOp::RemSInt64, left, right);
+            if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
+            if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
+            if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
+            if (name == I64_SHL) return builder.makeBinary(BinaryOp::ShlInt64, left, right);
+            if (name == I64_ASHR) return builder.makeBinary(BinaryOp::ShrSInt64, left, right);
+            if (name == I64_LSHR) return builder.makeBinary(BinaryOp::ShrUInt64, left, right);
           }
         }
         Expression* ret;

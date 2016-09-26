@@ -13,5 +13,83 @@
     (set_local $y
       (i64.const 128849018897)
     )
+    (set_local $x
+      (i64.add
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.sub
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.mul
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.div_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.div_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.rem_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.rem_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.and
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.or
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.xor
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.shl
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.shr_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.shr_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
   )
 )
