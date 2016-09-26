@@ -160,6 +160,7 @@ class Asm2WasmBuilder {
   bool debug;
   bool imprecise;
   bool optimize;
+  bool wasmOnly;
 
 public:
   std::map<IString, MappedGlobal> mappedGlobals;
@@ -259,14 +260,15 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, bool optimize)
+ Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, bool optimize, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
        memoryGrowth(memoryGrowth),
        debug(debug),
        imprecise(imprecise),
-       optimize(optimize) {}
+       optimize(optimize),
+       wasmOnly(wasmOnly) {}
 
  void processAsm(Ref ast);
 
@@ -286,7 +288,7 @@ private:
         return view->second.type;
       }
     }
-    return detectType(ast, data, false, Math_fround);
+    return detectType(ast, data, false, Math_fround, wasmOnly);
   }
 
   WasmType detectWasmType(Ref ast, AsmData *data) {
@@ -1027,7 +1029,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     curr = curr[1];
     assert(curr[0] == ASSIGN && curr[2][0] == NAME);
     IString name = curr[2][1]->getIString();
-    AsmType asmType = detectType(curr[3], nullptr, false, Math_fround);
+    AsmType asmType = detectType(curr[3], nullptr, false, Math_fround, wasmOnly);
     Builder::addParam(function, name, asmToWasmType(asmType));
     functionVariables.insert(name);
     asmData.addParam(name, asmType);
@@ -1038,7 +1040,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     for (unsigned j = 0; j < curr[1]->size(); j++) {
       Ref pair = curr[1][j];
       IString name = pair[0]->getIString();
-      AsmType asmType = detectType(pair[1], nullptr, true, Math_fround);
+      AsmType asmType = detectType(pair[1], nullptr, true, Math_fround, wasmOnly);
       Builder::addVar(function, name, asmToWasmType(asmType));
       functionVariables.insert(name);
       asmData.addVar(name, asmType);
@@ -1110,7 +1112,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             conv->type = WasmType::f32;
             ret->value = conv;
           } else {
-            abort();
+            abort_on("bad subtract types", ast);
           }
         }
         return ret;

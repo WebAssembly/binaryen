@@ -32,6 +32,7 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool opts = true;
   bool imprecise = false;
+  bool wasmOnly = false;
 
   Options options("asm2wasm", "Translate asm.js files to .wast files");
   options
@@ -60,6 +61,10 @@ int main(int argc, const char *argv[]) {
       .add("--imprecise", "-i", "Imprecise optimizations", Options::Arguments::Zero,
            [&imprecise](Options *o, const std::string &) {
              imprecise = true;
+           })
+      .add("--wasm-only", "-w", "Input is in WebAssembly-only format, and not actually valid asm.js", Options::Arguments::Zero,
+           [&wasmOnly](Options *o, const std::string &) {
+             wasmOnly = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
@@ -93,7 +98,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, opts);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, opts, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided

@@ -1,0 +1,12 @@
+(module
+  (import "env" "memory" (memory 256 256))
+  (import "env" "table" (table 0 anyfunc))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (export "test" (func $test))
+  (func $test
+    (local $x i64)
+    (local $y i64)
+    (nop)
+  )
+)

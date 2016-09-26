@@ -49,12 +49,13 @@ enum AsmType {
   ASM_INT8X16,
   ASM_INT16X8,
   ASM_INT32X4,
+  ASM_INT64, // non-asm.js
   ASM_NONE // number of types
 };
 
 struct AsmData;
 
-AsmType detectType(cashew::Ref node, AsmData *asmData=nullptr, bool inVarDef=false, cashew::IString minifiedFround=cashew::IString());
+AsmType detectType(cashew::Ref node, AsmData *asmData=nullptr, bool inVarDef=false, cashew::IString minifiedFround=cashew::IString(), bool allowI64=false);
 
 struct AsmData {
   struct Local {
