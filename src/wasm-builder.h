@@ -76,7 +76,7 @@ public:
     }
     return ret;
   }
-  If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse=nullptr) {
+  If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse = nullptr) {
     auto* ret = allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
     ret->finalize();
@@ -88,7 +88,7 @@ public:
     ret->finalize();
     return ret;
   }
-  Break* makeBreak(Name name, Expression* value=nullptr, Expression* condition=nullptr) {
+  Break* makeBreak(Name name, Expression* value = nullptr, Expression* condition = nullptr) {
     auto* ret = allocator.alloc<Break>();
     ret->name = name; ret->value = value; ret->condition = condition;
     ret->finalize();
@@ -202,7 +202,7 @@ public:
     ret->finalize();
     return ret;
   }
-  Return* makeReturn(Expression *value) {
+  Return* makeReturn(Expression *value = nullptr) {
     auto* ret = allocator.alloc<Return>();
     ret->value = value;
     return ret;

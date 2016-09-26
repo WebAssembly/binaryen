@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-Name NONSTANDALONE("Binaryen|nonstandalone");
+Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
 
 // Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
 class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
@@ -36,38 +36,38 @@ public:
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
     // but we can't tell if non-infinite, since we don't have state, so loops are just impossible to optimize for now
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
 
   Flow visitCall(Call* curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitCallImport(CallImport* curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitCallIndirect(CallIndirect* curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGetLocal(GetLocal *curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitSetLocal(SetLocal *curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGetGlobal(GetGlobal *curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitSetGlobal(SetGlobal *curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitLoad(Load *curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitStore(Store *curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitHost(Host *curr) {
-    return Flow(NONSTANDALONE);
+    return Flow(NONSTANDALONE_FLOW);
   }
 
   void trap(const char* why) override {
@@ -89,7 +89,51 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
       return;
     }
-    if (flow.breaking()) return; // TODO: can create a break as a replacement in some cases (not NONSTANDALONE)
+    if (flow.breaking()) {
+      if (flow.breakTo == NONSTANDALONE_FLOW) return;
+      if (flow.breakTo == RETURN_FLOW) {
+        // this expression causes a return. if it's already a return, reuse the node
+        if (auto* ret = curr->dynCast<Return>()) {
+          if (flow.value.type != none) {
+            // reuse a const value if there is one
+            if (ret->value) {
+              if (auto* value = ret->value->dynCast<Const>()) {
+                value->value = flow.value;
+                return;
+              }
+            }
+            ret->value = Builder(*getModule()).makeConst(flow.value);
+          } else {
+            ret->value = nullptr;
+          }
+        } else {
+          Builder builder(*getModule());
+          replaceCurrent(builder.makeReturn(flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+        }
+        return;
+      }
+      // this expression causes a break, emit it directly. if it's already a br, reuse the node.
+      if (auto* br = curr->dynCast<Break>()) {
+        br->name = flow.breakTo;
+        br->condition = nullptr;
+        if (flow.value.type != none) {
+          // reuse a const value if there is one
+          if (br->value) {
+            if (auto* value = br->value->dynCast<Const>()) {
+              value->value = flow.value;
+              return;
+            }
+          }
+          br->value = Builder(*getModule()).makeConst(flow.value);
+        } else {
+          br->value = nullptr;
+        }
+      } else {
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeBreak(flow.breakTo, flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
+      }
+      return;
+    }
     // this was precomputed
     if (isConcreteWasmType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));

@@ -1,0 +1,18 @@
+(module
+  (memory 0)
+  (type $0 (func (result i32)))
+  (func $ret (type $0) (result i32)
+    (block $out i32
+      (drop
+        (call $ret)
+      )
+      (if
+        (call $ret)
+        (return
+          (i32.const 1)
+        )
+      )
+      (i32.const 999)
+    )
+  )
+)
