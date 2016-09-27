@@ -78,7 +78,9 @@ Name I64_CONST("i64_const"),
      I64_F2S("i64_f2s"),
      I64_D2S("i64_d2s"),
      I64_F2U("i64_f2u"),
-     I64_D2U("i64_d2u");
+     I64_D2U("i64_d2u"),
+     I64_BC2D("i64_bc2d"),
+     I64_BC2I("i64_bc2i");
 
 // Utilities
 
@@ -1511,6 +1513,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_D2S) return builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
             if (name == I64_F2U) return builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
             if (name == I64_D2U) return builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
+            if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
+            if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
           } else if (num == 2) { // 2 params,binary
             if (name == I64_CONST) {
               uint64_t low = ast[2][0][1]->getInteger();

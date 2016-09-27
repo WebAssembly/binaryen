@@ -67,6 +67,9 @@ function asm(global, env, buffer) {
     x = i64_d2s(float64);
     x = i64_f2u(float32);
     x = i64_d2u(float64);
+    // bitcasts
+    x = i64_bc2i(float64);
+    float64 = i64_bc2d(x);
   }
 
   return { test: test };

@@ -7,6 +7,10 @@
   (func $test
     (local $x i64)
     (local $y i64)
+    (local $z i32)
+    (local $int32 i32)
+    (local $float32 f32)
+    (local $float64 f64)
     (set_local $x
       (i64.const 100)
     )
@@ -89,6 +93,157 @@
       (i64.shr_u
         (get_local $x)
         (get_local $y)
+      )
+    )
+    (set_local $x
+      (i64.load
+        (i32.const 120)
+      )
+    )
+    (set_local $x
+      (i64.load align=2
+        (i32.const 120)
+      )
+    )
+    (set_local $x
+      (i64.load align=4
+        (i32.const 120)
+      )
+    )
+    (set_local $x
+      (i64.load
+        (i32.const 120)
+      )
+    )
+    (i64.store
+      (i32.const 120)
+      (get_local $x)
+    )
+    (i64.store align=2
+      (i32.const 120)
+      (get_local $x)
+    )
+    (i64.store align=4
+      (i32.const 120)
+      (get_local $x)
+    )
+    (i64.store
+      (i32.const 120)
+      (get_local $x)
+    )
+    (set_local $z
+      (i64.eq
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.ne
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.le_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.le_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.ge_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.ge_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.lt_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.lt_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.gt_u
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (i64.gt_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $int32
+      (i32.wrap/i64
+        (get_local $x)
+      )
+    )
+    (set_local $x
+      (i64.extend_s/i32
+        (get_local $int32)
+      )
+    )
+    (set_local $x
+      (i64.extend_u/i32
+        (get_local $int32)
+      )
+    )
+    (set_local $float32
+      (f32.convert_s/i64
+        (get_local $x)
+      )
+    )
+    (set_local $float64
+      (f64.convert_s/i64
+        (get_local $x)
+      )
+    )
+    (set_local $float32
+      (f32.convert_u/i64
+        (get_local $x)
+      )
+    )
+    (set_local $float64
+      (f64.convert_u/i64
+        (get_local $x)
+      )
+    )
+    (set_local $x
+      (i64.trunc_s/f32
+        (get_local $float32)
+      )
+    )
+    (set_local $x
+      (i64.trunc_s/f64
+        (get_local $float64)
+      )
+    )
+    (set_local $x
+      (i64.trunc_u/f32
+        (get_local $float32)
+      )
+    )
+    (set_local $x
+      (i64.trunc_u/f64
+        (get_local $float64)
       )
     )
   )
