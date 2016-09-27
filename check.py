@@ -306,7 +306,7 @@ for asm in tests:
         if actual != expected:
           fail(actual, expected)
 
-        binary_format_check(wasm, verify_final_result = False)
+        binary_format_check(wasm, verify_final_result=False)
 
         # verify in wasm
         if interpreter:
