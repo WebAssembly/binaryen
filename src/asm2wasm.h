@@ -1517,8 +1517,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
           } else if (num == 2) { // 2 params,binary
             if (name == I64_CONST) {
-              uint64_t low = ast[2][0][1]->getInteger();
-              uint64_t high = ast[2][1][1]->getInteger();
+              uint64_t low = ast[2][0][1]->getNumber();
+              uint64_t high = ast[2][1][1]->getNumber();
               return builder.makeConst(Literal(uint64_t(low + (high << 32))));
             }
             if (name == I64_LOAD) return builder.makeLoad(8, true, 0, indexOr(ast[2][1][1]->getInteger(), 8), process(ast[2][0]), i64);
