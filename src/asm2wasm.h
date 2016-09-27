@@ -100,24 +100,28 @@ Index indexOr(Index x, Index y) {
   return x ? x : y;
 }
 
-Expression* recreateI64(Builder& builder, Index low, Index high) {
+Expression* recreateI64(Builder& builder, Expression* low, Expression* high) {
   return
     builder.makeBinary(
       OrInt64,
       builder.makeUnary(
         ExtendUInt32,
-        builder.makeGetLocal(low, i32)
+        low
       ),
       builder.makeBinary(
         ShlInt64,
         builder.makeUnary(
           ExtendUInt32,
-          builder.makeGetLocal(high, i32)
+          high
         ),
         builder.makeConst(Literal(int64_t(32)))
       )
     )
   ;
+};
+
+Expression* recreateI64(Builder& builder, Index low, Index high) {
+  return recreateI64(builder, builder.makeGetLocal(low, i32), builder.makeGetLocal(high, i32));
 };
 
 Expression* getI64High(Builder& builder, Index index) {
@@ -157,20 +161,100 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
+    // for each illegal import, we must call a legalized stub instead
+    for (auto& im : module->imports) {
+      if (im->kind == Import::Function && isIllegal(im->functionType)) {
+        auto legalName = makeLegalStub(im.get(), module);
+        illegalToLegal[im->name, legalName];
+      }
+    }
+    if (illegalToLegal.size() > 0) {
+      // fix up imports: call_import of an illegal must be turned to a call of a legal
+
+      struct FixImports : public WalkerPass<PostWalker<FixImports, Visitor<FixImports>>> {
+        bool isFunctionParallel() override { return true; }
+
+        Pass* create() override { return new FixImports(parent); }
+
+        std::map<Name, Name>* illegalToLegal;
+
+        FixImports(std::map<Name, Name>* illegalToLegal) : illegalToLegal(illegalToLegal) {}
+
+        void visitCall(Call* curr) {
+TODO
+          assert(getModule()->checkFunction(curr->target) ? true : (std::cerr << curr->target << '\n', false));
+          auto result = getModule()->getFunction(curr->target)->result;
+          if (curr->type != result) {
+            curr->type = result;
+          }
+        }
+
+        void visitCallImport(CallImport* curr) {
+TODO
+          // fill out call_import - add extra params as needed, etc. asm tolerates ffi overloading, wasm does not
+          auto iter = parent->importedFunctionTypes.find(curr->target);
+          if (iter == parent->importedFunctionTypes.end()) return; // one of our fake imports for callIndirect fixups
+          auto type = iter->second.get();
+          for (size_t i = 0; i < type->params.size(); i++) {
+            if (i >= curr->operands.size()) {
+              // add a new param
+              auto val = parent->allocator.alloc<Const>();
+              val->type = val->value.type = type->params[i];
+              curr->operands.push_back(val);
+            } else if (curr->operands[i]->type != type->params[i]) {
+              assert(type->params[i] == f64);
+              // overloaded, upgrade to f64
+              switch (curr->operands[i]->type) {
+                case i32: curr->operands[i] = parent->builder.makeUnary(ConvertSInt32ToFloat64, curr->operands[i]); break;
+                case f32: curr->operands[i] = parent->builder.makeUnary(PromoteFloat32, curr->operands[i]); break;
+                default: {} // f64, unreachable, etc., are all good
+              }
+            }
+          }
+          auto importResult = getModule()->getImport(curr->target)->functionType->result;
+          if (curr->type != importResult) {
+            if (importResult == f64) {
+              // we use a JS f64 value which is the most general, and convert to it
+              switch (curr->type) {
+                case i32: replaceCurrent(parent->builder.makeUnary(TruncSFloat64ToInt32, curr)); break;
+                case f32: replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr)); break;
+                case none: {
+                  // this function returns a value, but we are not using it, so it must be dropped.
+                  // autodrop will do that for us.
+                  break;
+                }
+                default: WASM_UNREACHABLE();
+              }
+            } else {
+              assert(curr->type == none);
+              // we don't want a return value here, but the import does provide one
+              // autodrop will do that for us.
+            }
+            curr->type = importResult;
+          }
+        }
+      };
+
+      PassRunner passRunner(&wasm);
+      passRunner.add<FixImports>(&illegalToLegal);
+      passRunner.run();
+    }
   }
 
 private:
-  // map of illegal to legal names
+  // map of illegal to legal names for imports
   std::map<Name, Name> illegalToLegal;
 
-  bool isIllegal(Function* func) {
-    for (auto param : func->params) {
+  template<typename T>
+  bool isIllegal(T* t) {
+    for (auto param : t->params) {
       if (param == i64) return true;
     }
-    if (func->result == i64) return true;
+    if (t->result == i64) return true;
     return false;
   }
 
+  // JS calls the export, so it must call a legal stub that calls the actual wasm function
   Name makeLegalStub(Function* func, Module* module) {
     Builder builder(*module);
     auto* legal = new Function();
@@ -196,7 +280,7 @@ private:
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
       block->list.push_back(builder.makeCall(
-        GET_TEMP_RET0,
+        SET_TEMP_RET0,
         { getI64High(builder, index) },
         none
       ));
@@ -206,6 +290,40 @@ private:
       legal->result = func->result;
       legal->body = call;
     }
+
+    module->addFunction(legal);
+    return legal->name;
+  }
+
+  // wasm calls the import, so it must call a stub that calls the actual legal JS import
+  Name makeLegalStub(Import* im, Module* module) {
+    Builder builder(*module);
+    auto* legal = new Function();
+    legal->name = Name(std::string("legal$") + im->name.str);
+
+    auto* call = module->allocator.alloc<CallImport>();
+    call->target = im->name;
+
+    for (auto param : im->functionType->params) {
+      if (param == i64) {
+        call->operands.push_back(getI64Low(builder, legal->params.size()));
+        call->operands.push_back(getI64High(builder, legal->params.size()));
+      } else {
+        call->operands.push_back(builder.makeGetLocal(legal->params.size(), param));
+      }
+      legal->params.push_back(param);
+    }
+
+    if (im->functionType->result == i64) {
+      legal->body = recreateI64(builder, call, builder.makeCall(
+        GET_TEMP_RET0,
+        {},
+        i32
+      ));
+    } else {
+      legal->body = call;
+    }
+    legal->result = im->functionType->result;
 
     module->addFunction(legal);
     return legal->name;
