@@ -652,7 +652,6 @@ private:
     }
     if (autoBlock) {
       autoBlock->finalize();
-      autoBlock->type = result;
     }
     if (!currFunction) {
       makeFunction();
