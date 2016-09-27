@@ -1862,7 +1862,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
       auto br = allocator.alloc<Switch>();
       br->condition = process(ast[1]);
-      assert(br->condition->type == i32);
 
       Ref cases = ast[2];
       bool seen = false;
