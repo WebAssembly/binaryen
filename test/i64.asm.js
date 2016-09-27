@@ -71,6 +71,10 @@ function asm(global, env, buffer) {
     x = i64_bc2i(float64);
     float64 = i64_bc2d(x);
   }
+  function arg(x) {
+    x = i64(x);
+    i64_store(100, x, 0);
+  }
 
   return { test: test };
 }
