@@ -466,6 +466,7 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
   bool debug;
+  bool debugInfo = true;
 
   MixedArena allocator;
 
@@ -484,6 +485,10 @@ public:
     prepare();
   }
 
+  void setDebugInfo(bool set) {
+    debugInfo = set;
+  }
+
   void write() {
     writeHeader();
 
@@ -497,7 +502,7 @@ public:
     writeStart();
     writeFunctions();
     writeDataSegments();
-    writeNames();
+    if (debugInfo) writeNames();
 
     finishUp();
   }

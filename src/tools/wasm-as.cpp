@@ -28,6 +28,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
+  bool debugInfo = false;
   Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.extra["validate"] = "wasm";
   options
@@ -46,6 +47,9 @@ int main(int argc, const char *argv[]) {
              }
              o->extra["validate"] = argument;
            })
+      .add("--debuginfo", "-g", "Emit names section and debug info",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { debugInfo = true; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -78,6 +82,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "binarification..." << std::endl;
   BufferWithRandomAccess buffer(options.debug);
   WasmBinaryWriter writer(&wasm, buffer, options.debug);
+  writer.setDebugInfo(debugInfo);
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;
