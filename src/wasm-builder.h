@@ -243,10 +243,12 @@ public:
   static Index addVar(Function* func, Name name, WasmType type) {
     // always ok to add a var, it does not affect other indices
     assert(func->localIndices.size() == func->params.size() + func->vars.size());
+    Index index = func->getNumLocals();
     func->vars.emplace_back(type);
-    Index index = func->localNames.size();
-    func->localIndices[name] = index;
-    func->localNames.push_back(name);
+    if (name.is()) {
+      func->localIndices[name] = index;
+      func->localNames.push_back(name);
+    }
     return index;
   }
 

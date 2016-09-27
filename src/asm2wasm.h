@@ -100,6 +100,118 @@ Index indexOr(Index x, Index y) {
   return x ? x : y;
 }
 
+Expression* recreateI64(Builder& builder, Index low, Index high) {
+  return
+    builder.makeBinary(
+      OrInt64,
+      builder.makeUnary(
+        ExtendUInt32,
+        builder.makeGetLocal(low, i32)
+      ),
+      builder.makeBinary(
+        ShlInt64,
+        builder.makeUnary(
+          ExtendUInt32,
+          builder.makeGetLocal(high, i32)
+        ),
+        builder.makeConst(Literal(int64_t(32)))
+      )
+    )
+  ;
+};
+
+Expression* getI64High(Builder& builder, Index index) {
+  return
+    builder.makeUnary(
+      WrapInt64,
+      builder.makeBinary(
+        ShrUInt64,
+        builder.makeGetLocal(index, i64),
+        builder.makeConst(Literal(int64_t(32)))
+      )
+    )
+  ;
+}
+
+Expression* getI64Low(Builder& builder, Index index) {
+  return
+    builder.makeUnary(
+      WrapInt64,
+      builder.makeGetLocal(index, i64)
+    )
+  ;
+}
+
+// i64 imports and exports must be turned into i32, i32
+struct LegalizeJSInterface : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    // for each illegal export, we must export a legalized stub instead
+    for (auto& ex : module->exports) {
+      if (ex->kind == Export::Function) {
+        // if it's an import, ignore it
+        if (auto* func = module->checkFunction(ex->value)) {
+          if (isIllegal(func)) {
+            auto legalName = makeLegalStub(func, module);
+            ex->value = legalName;
+          }
+        }
+      }
+    }
+  }
+
+private:
+  // map of illegal to legal names
+  std::map<Name, Name> illegalToLegal;
+
+  bool isIllegal(Function* func) {
+    for (auto param : func->params) {
+      if (param == i64) return true;
+    }
+    if (func->result == i64) return true;
+    return false;
+  }
+
+  Name makeLegalStub(Function* func, Module* module) {
+    Builder builder(*module);
+    auto* legal = new Function();
+    legal->name = Name(std::string("legal$") + func->name.str);
+
+    auto* call = module->allocator.alloc<Call>();
+    call->target = func->name;
+
+    for (auto param : func->params) {
+      if (param == i64) {
+        call->operands.push_back(recreateI64(builder, legal->params.size(), legal->params.size() + 1));
+        legal->params.push_back(i32);
+        legal->params.push_back(i32);
+      } else {
+        call->operands.push_back(builder.makeGetLocal(legal->params.size(), param));
+        legal->params.push_back(param);
+      }
+    }
+
+    if (func->result == i64) {
+      legal->result = i32;
+      auto index = builder.addVar(legal, Name("temp"), i64);
+      auto* block = builder.makeBlock();
+      block->list.push_back(builder.makeSetLocal(index, call));
+      block->list.push_back(builder.makeCall(
+        GET_TEMP_RET0,
+        { getI64High(builder, index) },
+        none
+      ));
+      block->list.push_back(getI64Low(builder, index));
+      legal->body = block;
+    } else {
+      legal->result = func->result;
+      legal->body = call;
+    }
+
+    module->addFunction(legal);
+    return legal->name;
+  }
+};
+
 // useful when we need to see our parent, in an asm.js expression stack
 struct AstStackHelper {
   static std::vector<Ref> astStack;
@@ -878,6 +990,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   passRunner.add<FinalizeCalls>(this);
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
+  if (wasmOnly) {
+    // we didn't legalize i64s in fastcomp, and so must legalize the interface to the outside
+    passRunner.add<LegalizeJSInterface>();
+  }
   if (optimize) {
     // autodrop can add some garbage
     passRunner.add("vacuum");
@@ -965,28 +1081,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           x64 = Builder::addVar(func, "x64", i64),
           y64 = Builder::addVar(func, "y64", i64);
     auto* body = allocator.alloc<Block>();
-    auto recreateI64 = [&](Index target, Index low, Index high) {
-      return builder.makeSetLocal(
-        target,
-        builder.makeBinary(
-          OrInt64,
-          builder.makeUnary(
-            ExtendUInt32,
-            builder.makeGetLocal(low, i32)
-          ),
-          builder.makeBinary(
-            ShlInt64,
-            builder.makeUnary(
-              ExtendUInt32,
-              builder.makeGetLocal(high, i32)
-            ),
-            builder.makeConst(Literal(int64_t(32)))
-          )
-        )
-      );
-    };
-    body->list.push_back(recreateI64(x64, xl, xh));
-    body->list.push_back(recreateI64(y64, yl, yh));
+    body->list.push_back(builder.makeSetLocal(x64, recreateI64(builder, xl, xh)));
+    body->list.push_back(builder.makeSetLocal(y64, recreateI64(builder, yl, yh)));
     body->list.push_back(
       builder.makeIf(
         builder.makeGetLocal(r, i32),
@@ -1015,22 +1111,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     body->list.push_back(
       builder.makeSetGlobal(
         tempRet0,
-        builder.makeUnary(
-          WrapInt64,
-          builder.makeBinary(
-            ShrUInt64,
-            builder.makeGetLocal(x64, i64),
-            builder.makeConst(Literal(int64_t(32)))
-          )
-        )
+        getI64High(builder, x64)
       )
     );
-    body->list.push_back(
-      builder.makeUnary(
-        WrapInt64,
-        builder.makeGetLocal(x64, i64)
-      )
-    );
+    body->list.push_back(getI64Low(builder, x64));
     body->finalize();
     func->body = body;
   }

@@ -71,12 +71,27 @@ function asm(global, env, buffer) {
     x = i64_bc2i(float64);
     float64 = i64_bc2d(x);
   }
-  function arg(x) {
+  function arg(x) { // illegal param, but not exported
     x = i64(x);
     i64_store(100, x, 0);
     arg(i64(x)); // "coercion"/"cast"
   }
+  function illegalParam(a, x, c) {
+    a = 0;
+    x = i64(x);
+    b = +0;
+    i64_store(100, x, 0);
+    illegalParam(0, i64(x), 12.34); // "coercion"/"cast"
+  }
+/*
+  function result() { // illegal result, but not exported
+    return i64_const(1, 2);
+  }
+  function illegalResult() { // illegal result, but not exported
+    return i64_const(1, 2);
+  }
+*/
 
-  return { test: test };
+  return { test: test, illegalParam : illegalParam, /* illegalResult: illegalResult */ };
 }
 

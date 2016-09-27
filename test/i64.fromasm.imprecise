@@ -4,6 +4,7 @@
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (export "test" (func $test))
+  (export "illegalParam" (func $legal$illegalParam))
   (func $test
     (local $0 i64)
     (local $1 i32)
@@ -54,6 +55,34 @@
     )
     (call $arg
       (get_local $0)
+    )
+  )
+  (func $illegalParam (param $0 i32) (param $1 i64) (param $2 f64)
+    (i64.store
+      (i32.const 100)
+      (get_local $1)
+    )
+    (call $illegalParam
+      (i32.const 0)
+      (get_local $1)
+      (f64.const 12.34)
+    )
+  )
+  (func $legal$illegalParam (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
+    (call $illegalParam
+      (get_local $0)
+      (i64.or
+        (i64.extend_u/i32
+          (get_local $1)
+        )
+        (i64.shl
+          (i64.extend_u/i32
+            (get_local $2)
+          )
+          (i64.const 32)
+        )
+      )
+      (get_local $3)
     )
   )
 )
