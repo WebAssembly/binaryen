@@ -42,7 +42,8 @@ using namespace cashew;
 
 // Names
 
-Name I64_CONST("i64_const"),
+Name I64("i64"),
+     I64_CONST("i64_const"),
      I64_ADD("i64_add"),
      I64_SUB("i64_sub"),
      I64_MUL("i64_mul"),
@@ -416,7 +417,7 @@ private:
   }
 
   bool maybeWasmInt64Intrinsic(Name name) {
-    return strncmp(name.str, "i64_", 4) == 0;
+    return strncmp(name.str, "i64", 3) == 0;
   }
 
   std::map<unsigned, Ref> tempNums;
@@ -1502,6 +1503,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto num = ast[2]->size();
           if (num == 1) {
             auto* value = process(ast[2][0]);
+            if (name == I64) return value; // no-op "coercion" / "cast"
             if (name == I64_TRUNC) return builder.makeUnary(UnaryOp::WrapInt64, value);
             if (name == I64_SEXT) return builder.makeUnary(UnaryOp::ExtendSInt32, value);
             if (name == I64_ZEXT) return builder.makeUnary(UnaryOp::ExtendUInt32, value);

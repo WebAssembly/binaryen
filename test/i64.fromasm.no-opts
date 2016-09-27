@@ -262,5 +262,8 @@
       (i32.const 100)
       (get_local $x)
     )
+    (call $arg
+      (get_local $x)
+    )
   )
 )

@@ -79,7 +79,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   module->memory.max = pre.memoryGrowth ? Address(Memory::kMaxSize) : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
-  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */, false /* TODO: support optimizing? */);
+  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */, false /* TODO: support optimizing? */, false /* TODO: support asm2wasm-i64? */);
   asm2wasm->processAsm(asmjs);
 }
 

@@ -246,5 +246,24 @@
         (get_local $float64)
       )
     )
+    (set_local $x
+      (i64.reinterpret/f64
+        (get_local $float64)
+      )
+    )
+    (set_local $float64
+      (f64.reinterpret/i64
+        (get_local $x)
+      )
+    )
+  )
+  (func $arg (param $x i64)
+    (i64.store
+      (i32.const 100)
+      (get_local $x)
+    )
+    (call $arg
+      (get_local $x)
+    )
   )
 )

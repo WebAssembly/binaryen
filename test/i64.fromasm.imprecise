@@ -47,4 +47,13 @@
       )
     )
   )
+  (func $arg (param $0 i64)
+    (i64.store
+      (i32.const 100)
+      (get_local $0)
+    )
+    (call $arg
+      (get_local $0)
+    )
+  )
 )

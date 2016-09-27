@@ -74,6 +74,7 @@ function asm(global, env, buffer) {
   function arg(x) {
     x = i64(x);
     i64_store(100, x, 0);
+    arg(i64(x)); // "coercion"/"cast"
   }
 
   return { test: test };
