@@ -360,8 +360,8 @@ for t in tests:
     if actual != expected:
       fail(actual, expected)
 
-    binary_format_check(t, wasm_as_args = ['-g']) # test with debuginfo
-    binary_format_check(t, wasm_as_args = [], binary_suffix='.fromBinary.noDebugInfo') # test without debuginfo
+    binary_format_check(t, wasm_as_args=['-g']) # test with debuginfo
+    binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo') # test without debuginfo
 
     minify_check(t)
 
