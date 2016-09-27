@@ -261,15 +261,14 @@ private:
 
   std::map<IString, std::unique_ptr<FunctionType>> importedFunctionTypes;
 
-  void noteImportedFunctionCall(Ref ast, WasmType resultType, AsmData *asmData, CallImport* call) {
+  void noteImportedFunctionCall(Ref ast, WasmType resultType, CallImport* call) {
     assert(ast[0] == CALL && ast[1][0] == NAME);
     IString importName = ast[1][1]->getIString();
     auto type = make_unique<FunctionType>();
     type->name = IString((std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
     type->result = resultType;
-    Ref args = ast[2];
-    for (unsigned i = 0; i < args->size(); i++) {
-      type->params.push_back(detectWasmType(args[i], asmData));
+    for (auto* operand : call->operands) {
+      type->params.push_back(operand->type);
     }
     // if we already saw this signature, verify it's the same (or else handle that)
     if (importedFunctionTypes.find(importName) != importedFunctionTypes.end()) {
@@ -1557,11 +1556,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         Expression* ret;
         ExpressionList* operands;
+        bool import = false;
         if (wasm.checkImport(name)) {
-          Ref parent = astStackHelper.getParent();
-          WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
+          import = true;
           auto specific = allocator.alloc<CallImport>();
-          noteImportedFunctionCall(ast, type, &asmData, specific);
           specific->target = name;
           operands = &specific->operands;
           ret = specific;
@@ -1574,6 +1572,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Ref args = ast[2];
         for (unsigned i = 0; i < args->size(); i++) {
           operands->push_back(process(args[i]));
+        }
+        if (import) {
+          Ref parent = astStackHelper.getParent();
+          WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
+          noteImportedFunctionCall(ast, type, ret->cast<CallImport>());
         }
         return ret;
       }
