@@ -18,6 +18,8 @@ function asm(global, env, buffer) {
 
   var fround = global.Math.fround;
 
+  var illegalImport = env.illegalImport;
+
   function test() {
     var x = i64(), y = i64(), z = 0; // define i64 variables using special intrinsic
     var int32 = 0, float32 = fround(0), float64 = +0;
@@ -70,6 +72,9 @@ function asm(global, env, buffer) {
     // bitcasts
     x = i64_bc2i(float64);
     float64 = i64_bc2d(x);
+  }
+  function imports() {
+    illegalImport(-3.13159, i64_const(11, 22), -33); // this call must be legalized
   }
   function arg(x) { // illegal param, but not exported
     x = i64(x);
