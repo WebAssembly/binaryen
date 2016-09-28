@@ -8,43 +8,33 @@
   (export "trunc_i16_i64" (func $trunc_i16_i64))
   (export "trunc_i32_i64" (func $trunc_i32_i64))
   (func $trunc_i8_i32 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store8
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store8
+      (get_local $0)
+      (get_local $1)
     )
   )
   (func $trunc_i16_i32 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store16
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store16
+      (get_local $0)
+      (get_local $1)
     )
   )
   (func $trunc_i8_i64 (param $0 i32) (param $1 i64)
-    (drop
-      (i64.store8
-        (get_local $0)
-        (get_local $1)
-      )
+    (i64.store8
+      (get_local $0)
+      (get_local $1)
     )
   )
   (func $trunc_i16_i64 (param $0 i32) (param $1 i64)
-    (drop
-      (i64.store16
-        (get_local $0)
-        (get_local $1)
-      )
+    (i64.store16
+      (get_local $0)
+      (get_local $1)
     )
   )
   (func $trunc_i32_i64 (param $0 i32) (param $1 i64)
-    (drop
-      (i64.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (i64.store
+      (get_local $0)
+      (get_local $1)
     )
   )
 )

@@ -287,36 +287,24 @@
                   (i32.const 0)
                 )
               )
-              (drop
-                (call $exit
-                  (get_local $0)
-                )
+              (call $exit
+                (get_local $0)
               )
               (unreachable)
             )
-            (drop
-              (call $abort)
-            )
+            (call $abort)
             (unreachable)
           )
-          (drop
-            (call $abort)
-          )
+          (call $abort)
           (unreachable)
         )
-        (drop
-          (call $abort)
-        )
+        (call $abort)
         (unreachable)
       )
-      (drop
-        (call $abort)
-      )
+      (call $abort)
       (unreachable)
     )
-    (drop
-      (call $abort)
-    )
+    (call $abort)
     (unreachable)
   )
   (func $__wasm_nullptr (type $FUNCSIG$v)

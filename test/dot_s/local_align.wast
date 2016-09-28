@@ -5,10 +5,8 @@
   (func $foo (param $0 i32)
   )
   (func $main (result i32)
-    (drop
-      (call $foo
-        (i32.const 16)
-      )
+    (call $foo
+      (i32.const 16)
     )
     (i32.const 0)
   )

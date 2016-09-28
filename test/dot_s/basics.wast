@@ -13,10 +13,8 @@
   (table 2 2 anyfunc)
   (elem (i32.const 0) $__wasm_nullptr $main)
   (func $main (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
-    (drop
-      (call $puts
-        (i32.const 16)
-      )
+    (call $puts
+      (i32.const 16)
     )
     (block $label$0
       (block $label$1

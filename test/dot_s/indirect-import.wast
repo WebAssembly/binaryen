@@ -22,50 +22,36 @@
   (func $bar (result i32)
     (local $0 i32)
     (local $1 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $1
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 32)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $1
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
+          (i32.const 32)
         )
       )
     )
-    (drop
-      (i32.store offset=28
-        (get_local $1)
-        (i32.const 1)
-      )
+    (i32.store offset=28
+      (get_local $1)
+      (i32.const 1)
     )
-    (drop
-      (i32.store offset=24
-        (get_local $1)
-        (i32.const 2)
-      )
+    (i32.store offset=24
+      (get_local $1)
+      (i32.const 2)
     )
-    (drop
-      (call $extern_vj
-        (i64.const 1)
-      )
+    (call $extern_vj
+      (i64.const 1)
     )
-    (drop
-      (i32.store offset=20
-        (get_local $1)
-        (i32.const 3)
-      )
+    (i32.store offset=20
+      (get_local $1)
+      (i32.const 3)
     )
-    (drop
-      (call $extern_v)
-    )
-    (drop
-      (i32.store offset=16
-        (get_local $1)
-        (i32.const 4)
-      )
+    (call $extern_v)
+    (i32.store offset=16
+      (get_local $1)
+      (i32.const 4)
     )
     (drop
       (call $extern_ijidf
@@ -75,30 +61,24 @@
         (f32.const 4)
       )
     )
-    (drop
-      (i32.store offset=12
-        (get_local $1)
-        (i32.const 5)
-      )
+    (i32.store offset=12
+      (get_local $1)
+      (i32.const 5)
     )
-    (drop
-      (i32.store offset=8
-        (get_local $1)
-        (i32.const 6)
-      )
+    (i32.store offset=8
+      (get_local $1)
+      (i32.const 6)
     )
     (set_local $0
       (i32.load offset=28
         (get_local $1)
       )
     )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $1)
-          (i32.const 32)
-        )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $1)
+        (i32.const 32)
       )
     )
     (get_local $0)

@@ -6,16 +6,12 @@
   (export "memory" (memory $0))
   (export "main" (func $main))
   (func $_Z6reporti (param $0 i32)
-    (drop
-      (i32.store
-        (i32.const 8)
-        (get_local $0)
-      )
+    (i32.store
+      (i32.const 8)
+      (get_local $0)
     )
-    (drop
-      (call $emscripten_asm_const_vi
-        (i32.const 0)
-      )
+    (call $emscripten_asm_const_vi
+      (i32.const 0)
     )
     (return)
   )
@@ -53,11 +49,9 @@
     (set_local $8
       (i32.const 0)
     )
-    (drop
-      (i32.store
-        (get_local $8)
-        (get_local $12)
-      )
+    (i32.store
+      (get_local $8)
+      (get_local $12)
     )
     (set_local $1
       (i32.const 0)
@@ -84,16 +78,14 @@
                 (get_local $10)
               )
             )
-            (drop
-              (i32.store8
-                (i32.add
-                  (get_local $10)
-                  (get_local $4)
-                )
-                (i32.add
-                  (get_local $6)
-                  (get_local $4)
-                )
+            (i32.store8
+              (i32.add
+                (get_local $10)
+                (get_local $4)
+              )
+              (i32.add
+                (get_local $6)
+                (get_local $4)
               )
             )
             (set_local $2
@@ -190,10 +182,8 @@
         )
       )
     )
-    (drop
-      (call $_Z6reporti
-        (get_local $6)
-      )
+    (call $_Z6reporti
+      (get_local $6)
     )
     (set_local $9
       (i32.const 1048576)
@@ -207,11 +197,9 @@
     (set_local $9
       (i32.const 0)
     )
-    (drop
-      (i32.store
-        (get_local $9)
-        (get_local $12)
-      )
+    (i32.store
+      (get_local $9)
+      (get_local $12)
     )
     (return
       (i32.const 0)

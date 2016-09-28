@@ -49,11 +49,9 @@
             )
             (block $label$5
               (loop $label$4
-                (drop
-                  (i32.store
-                    (get_local $7)
-                    (get_local $6)
-                  )
+                (i32.store
+                  (get_local $7)
+                  (get_local $6)
                 )
                 (set_local $6
                   (i32.add
