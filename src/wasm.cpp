@@ -133,6 +133,17 @@ static WasmType mergeTypes(std::vector<WasmType>& types) {
   return type;
 }
 
+void Block::finalize(WasmType type_) {
+  type = type_;
+  if (type == none && list.size() > 0) {
+    if (list.back()->type == unreachable) {
+      if (!BreakSeeker::has(this, name)) {
+        type = unreachable; // the last element is unreachable, and this block truly cannot be exited, so it is unreachable itself
+      }
+    }
+  }
+}
+
 void Block::finalize() {
   if (!name.is()) {
     // nothing branches here, so this is easy
@@ -146,6 +157,38 @@ void Block::finalize() {
 
   TypeSeeker seeker(this, this->name);
   type = mergeTypes(seeker.types);
+}
+
+void If::finalize(WasmType type_) {
+  type = type_;
+  if (type == none && (condition->type == unreachable || (ifTrue->type == unreachable && (!ifFalse || ifFalse->type == unreachable)))) {
+    type = unreachable;
+  }
+}
+
+void If::finalize() {
+  if (condition->type == unreachable) {
+    type = unreachable;
+  } else if (ifFalse) {
+    if (ifTrue->type == ifFalse->type) {
+      type = ifTrue->type;
+    } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
+      type = ifTrue->type;
+    } else if (isConcreteWasmType(ifFalse->type) && ifTrue->type == unreachable) {
+      type = ifFalse->type;
+    } else {
+      type = none;
+    }
+  } else {
+    type = none; // if without else
+  }
+}
+
+void Loop::finalize(WasmType type_) {
+  type = type_;
+  if (type == none && body->type == unreachable) {
+    type = unreachable;
+  }
 }
 
 void Loop::finalize() {

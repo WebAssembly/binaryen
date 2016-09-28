@@ -175,6 +175,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (handOptimized) {
         curr = handOptimized;
         replaceCurrent(curr);
+        continue;
       }
       auto iter = database->patternMap.find(curr->_id);
       if (iter == database->patternMap.end()) return;
@@ -209,6 +210,56 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
+      } else if (binary->op == EqInt32) {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (c->value.geti32() == 0) {
+            // equal 0 => eqz
+            return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
+          }
+        }
+        if (auto* c = binary->left->dynCast<Const>()) {
+          if (c->value.geti32() == 0) {
+            // equal 0 => eqz
+            return Builder(*getModule()).makeUnary(EqZInt32, binary->right);
+          }
+        }
+      }
+    } else if (auto* unary = curr->dynCast<Unary>()) {
+      // de-morgan's laws
+      if (unary->op == EqZInt32) {
+        if (auto* inner = unary->value->dynCast<Binary>()) {
+          switch (inner->op) {
+            case EqInt32:  inner->op = NeInt32;  return inner;
+            case NeInt32:  inner->op = EqInt32;  return inner;
+            case LtSInt32: inner->op = GeSInt32; return inner;
+            case LtUInt32: inner->op = GeUInt32; return inner;
+            case LeSInt32: inner->op = GtSInt32; return inner;
+            case LeUInt32: inner->op = GtUInt32; return inner;
+            case GtSInt32: inner->op = LeSInt32; return inner;
+            case GtUInt32: inner->op = LeUInt32; return inner;
+            case GeSInt32: inner->op = LtSInt32; return inner;
+            case GeUInt32: inner->op = LtUInt32; return inner;
+
+            case EqInt64:  inner->op = NeInt64;  return inner;
+            case NeInt64:  inner->op = EqInt64;  return inner;
+            case LtSInt64: inner->op = GeSInt64; return inner;
+            case LtUInt64: inner->op = GeUInt64; return inner;
+            case LeSInt64: inner->op = GtSInt64; return inner;
+            case LeUInt64: inner->op = GtUInt64; return inner;
+            case GtSInt64: inner->op = LeSInt64; return inner;
+            case GtUInt64: inner->op = LeUInt64; return inner;
+            case GeSInt64: inner->op = LtSInt64; return inner;
+            case GeUInt64: inner->op = LtUInt64; return inner;
+
+            case EqFloat32: inner->op = NeFloat32; return inner;
+            case NeFloat32: inner->op = EqFloat32; return inner;
+
+            case EqFloat64: inner->op = NeFloat64; return inner;
+            case NeFloat64: inner->op = EqFloat64; return inner;
+
+            default: {}
+          }
+        }
       }
     } else if (auto* set = curr->dynCast<SetGlobal>()) {
       // optimize out a set of a get
@@ -218,6 +269,15 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       }
     } else if (auto* iff = curr->dynCast<If>()) {
       iff->condition = optimizeBoolean(iff->condition);
+      if (iff->ifFalse) {
+        if (auto* unary = iff->condition->dynCast<Unary>()) {
+          if (unary->op == EqZInt32) {
+            // flip if-else arms to get rid of an eqz
+            iff->condition = unary->value;
+            std::swap(iff->ifTrue, iff->ifFalse);
+          }
+        }
+      }
     } else if (auto* select = curr->dynCast<Select>()) {
       select->condition = optimizeBoolean(select->condition);
       auto* condition = select->condition->dynCast<Unary>();

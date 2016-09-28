@@ -84,40 +84,46 @@
     )
     (if
       (i32.const 0)
-      (block $out
-        (br $out
+      (drop
+        (block $out i32
+          (br $out
+            (unreachable)
+          )
+          (drop
+            (i32.const 0)
+          )
           (unreachable)
         )
-        (drop
-          (i32.const 0)
-        )
-        (unreachable)
       )
     )
     (if
       (i32.const 0)
-      (block $out
-        (br_if $out
+      (drop
+        (block $out i32
+          (br_if $out
+            (unreachable)
+            (i32.const 0)
+          )
+          (drop
+            (i32.const 0)
+          )
           (unreachable)
-          (i32.const 0)
         )
-        (drop
-          (i32.const 0)
-        )
-        (unreachable)
       )
     )
     (if
       (i32.const 0)
-      (block $out
-        (br_if $out
-          (unreachable)
+      (drop
+        (block $out i32
+          (br_if $out
+            (unreachable)
+            (unreachable)
+          )
+          (drop
+            (i32.const 0)
+          )
           (unreachable)
         )
-        (drop
-          (i32.const 0)
-        )
-        (unreachable)
       )
     )
     (block $out

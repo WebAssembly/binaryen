@@ -87,12 +87,12 @@
       )
     )
     (set_local $x
-      (block $result-used
+      (block $result-used i32
         (get_local $x)
       )
     )
     (set_local $x
-      (block $two-and-result-used
+      (block $two-and-result-used i32
         (drop
           (get_local $x)
         )
@@ -109,7 +109,7 @@
       (nop)
     )
     (drop
-      (loop $loop-in5
+      (loop $loop-in5 i32
         (drop
           (get_local $0)
         )
@@ -276,9 +276,9 @@
   )
   (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
     (if
-      (if
+      (if i32
         (get_local $d)
-        (block $block1
+        (block $block1 i32
           (nop)
           (f64.ne
             (f64.promote/f32
@@ -358,7 +358,7 @@
   )
   (func $drop-get-global
     (drop
-      (block
+      (block i32
         (call $drop-get-global)
         (get_global $Int) ;; this is not needed due to the block being drop'd, but make sure the call is not then dropped either
       )
@@ -369,7 +369,7 @@
     (local $$11 i32)
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8
+        (block $jumpthreading$outer$8 i32
           (block $jumpthreading$inner$8
             (br $jumpthreading$outer$8 ;; the rest is dead in the outer block, but be careful to leave the return value!
               (i32.const 0)
@@ -387,7 +387,7 @@
   (func $relooperJumpThreading2
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8
+        (block $jumpthreading$outer$8 i32
           (block $jumpthreading$inner$8
             (br $jumpthreading$outer$8
               (i32.const 0)
@@ -401,7 +401,7 @@
   (func $relooperJumpThreading3
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8
+        (block $jumpthreading$outer$8 i32
           (br $jumpthreading$outer$8 ;; code after this is dead, can kill it, but preserve the return value at the end!
             (i32.const 0)
           )

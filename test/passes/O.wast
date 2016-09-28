@@ -1,6 +1,6 @@
 (module
   (func $ret (result i32)
-    (block $out
+    (block $out i32
       (drop (call $ret))
       (if (call $ret)
         (return

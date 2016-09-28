@@ -180,7 +180,7 @@
         )
         (block
           (set_local $i2
-            (if
+            (if i32
               (i32.lt_u
                 (get_local $i1)
                 (i32.const 11)
@@ -983,7 +983,7 @@
                         )
                       )
                       (set_local $i5
-                        (if
+                        (if i32
                           (get_local $i15)
                           (get_local $i10)
                           (get_local $i5)
@@ -993,7 +993,7 @@
                         (get_local $i23)
                       )
                       (set_local $i7
-                        (if
+                        (if i32
                           (get_local $i15)
                           (get_local $i23)
                           (get_local $i7)
@@ -1848,7 +1848,7 @@
                       (set_local $i7
                         (i32.shl
                           (get_local $i5)
-                          (if
+                          (if i32
                             (i32.eq
                               (get_local $i32)
                               (i32.const 31)
@@ -1958,7 +1958,7 @@
                             )
                           )
                           (set_local $i16
-                            (if
+                            (if i32
                               (i32.or
                                 (i32.eq
                                   (get_local $i9)
@@ -2248,14 +2248,14 @@
                         )
                       )
                       (set_local $i3
-                        (if
+                        (if i32
                           (get_local $i7)
                           (get_local $i8)
                           (get_local $i37)
                         )
                       )
                       (set_local $i8
-                        (if
+                        (if i32
                           (get_local $i7)
                           (get_local $i38)
                           (get_local $i39)
@@ -2325,7 +2325,7 @@
                   )
                 )
                 (if
-                  (if
+                  (if i32
                     (i32.ne
                       (get_local $i44)
                       (i32.const 0)
@@ -3135,7 +3135,7 @@
                           (set_local $i4
                             (i32.shl
                               (get_local $i43)
-                              (if
+                              (if i32
                                 (i32.eq
                                   (get_local $i52)
                                   (i32.const 31)
@@ -3721,7 +3721,7 @@
       )
     )
     (if
-      (if
+      (if i32
         (i32.ne
           (get_local $i52)
           (i32.const 0)
@@ -3793,7 +3793,7 @@
                       )
                     )
                     (if
-                      (if
+                      (if i32
                         (i32.le_u
                           (get_local $i51)
                           (get_local $i52)
@@ -3923,7 +3923,7 @@
           )
           (block $do-once$39
             (if
-              (if
+              (if i32
                 (i32.eq
                   (get_local $i36)
                   (i32.const 173)
@@ -4014,7 +4014,7 @@
                       )
                     )
                     (if
-                      (if
+                      (if i32
                         (i32.ne
                           (get_local $i45)
                           (i32.const 0)
@@ -4087,7 +4087,7 @@
                 )
                 (block $do-once$42
                   (if
-                    (if
+                    (if i32
                       (i32.and
                         (i32.gt_u
                           (get_local $i53)
@@ -4204,9 +4204,9 @@
       )
     )
     (if
-      (if
-        (if
-          (if
+      (if i32
+        (if i32
+          (if i32
             (i32.eq
               (get_local $i36)
               (i32.const 190)
@@ -4382,8 +4382,8 @@
                 )
               )
               (if
-                (if
-                  (if
+                (if i32
+                  (if i32
                     (i32.eq
                       (get_local $i36)
                       (i32.const 203)
@@ -4429,7 +4429,7 @@
                     )
                   )
                   (set_local $i44
-                    (if
+                    (if i32
                       (i32.eq
                         (i32.and
                           (get_local $i63)
@@ -4623,7 +4623,7 @@
                     (set_local $i44
                       (i32.add
                         (get_local $i58)
-                        (if
+                        (if i32
                           (i32.eq
                             (i32.and
                               (get_local $i63)
@@ -4651,7 +4651,7 @@
                     (set_local $i43
                       (i32.add
                         (get_local $i61)
-                        (if
+                        (if i32
                           (i32.eq
                             (i32.and
                               (get_local $i63)
@@ -5728,7 +5728,7 @@
                           (set_local $i50
                             (i32.shl
                               (get_local $i79)
-                              (if
+                              (if i32
                                 (i32.eq
                                   (get_local $i82)
                                   (i32.const 31)
@@ -5994,7 +5994,7 @@
                     )
                   )
                   (if
-                    (if
+                    (if i32
                       (i32.le_u
                         (get_local $i63)
                         (get_local $i60)
@@ -6051,7 +6051,7 @@
               (set_local $i63
                 (i32.add
                   (get_local $i44)
-                  (if
+                  (if i32
                     (i32.eq
                       (i32.and
                         (get_local $i53)
@@ -6077,7 +6077,7 @@
                 )
               )
               (set_local $i44
-                (if
+                (if i32
                   (i32.lt_u
                     (get_local $i63)
                     (get_local $i53)
@@ -6099,7 +6099,7 @@
                 )
               )
               (set_local $i61
-                (if
+                (if i32
                   (i32.eq
                     (i32.and
                       (get_local $i43)
@@ -6600,7 +6600,7 @@
                   (set_local $i5
                     (i32.shl
                       (get_local $i63)
-                      (if
+                      (if i32
                         (i32.eq
                           (get_local $i89)
                           (i32.const 31)
@@ -6911,7 +6911,7 @@
                 )
               )
               (set_local $i62
-                (if
+                (if i32
                   (i32.eq
                     (i32.and
                       (get_local $i5)
@@ -8945,7 +8945,7 @@
           (set_local $i31
             (i32.shl
               (get_local $i29)
-              (if
+              (if i32
                 (i32.eq
                   (get_local $i32)
                   (i32.const 31)
@@ -10464,7 +10464,7 @@
             )
           )
           (if
-            (if
+            (if i32
               (i32.lt_u
                 (get_local $i6)
                 (get_local $i8)
@@ -10567,7 +10567,7 @@
       )
     )
     (if
-      (if
+      (if i32
         (i32.gt_u
           (i32.load
             (get_local $i2)
@@ -11062,7 +11062,7 @@
         )
         (block
           (if
-            (if
+            (if i32
               (i32.ne
                 (i32.load8_s
                   (i32.add
@@ -11449,7 +11449,7 @@
       (i32.const 5)
     )
     (if
-      (if
+      (if i32
         (i32.eq
           (i32.and
             (i32.load

@@ -264,7 +264,7 @@
       )
       (call $waka)
       (set_local $a
-        (block
+        (block i32
           (block
             (set_local $5
               (i32.const 105)
@@ -282,7 +282,7 @@
       )
       (call $waka)
       (set_local $a
-        (block
+        (block i32
           (block
             (set_local $6
               (i32.const 107)
@@ -301,7 +301,7 @@
       )
       (call $waka)
       (set_local $a
-        (block
+        (block i32
           (block
             (set_local $7
               (i32.const 109)
@@ -324,7 +324,7 @@
       )
       (call $waka)
       (set_local $a
-        (block
+        (block i32
           (block
             (set_local $8
               (i32.const 111)
@@ -367,7 +367,7 @@
         (i32.const 1337)
       )
       (drop
-        (loop $loop-in5
+        (loop $loop-in5 i32
           (drop
             (get_local $a)
           )
@@ -466,7 +466,7 @@
           (i32.const 31)
         )
         (i32.shl
-          (if
+          (if i32
             (i32.lt_s
               (get_local $$a$1)
               (i32.const 0)
@@ -481,7 +481,7 @@
     (set_local $$1$1
       (i32.or
         (i32.shr_s
-          (if
+          (if i32
             (i32.lt_s
               (get_local $$a$1)
               (i32.const 0)
@@ -492,7 +492,7 @@
           (i32.const 31)
         )
         (i32.shl
-          (if
+          (if i32
             (i32.lt_s
               (get_local $$a$1)
               (i32.const 0)
@@ -511,7 +511,7 @@
           (i32.const 31)
         )
         (i32.shl
-          (if
+          (if i32
             (i32.lt_s
               (get_local $$b$1)
               (i32.const 0)
@@ -526,7 +526,7 @@
     (set_local $$2$1
       (i32.or
         (i32.shr_s
-          (if
+          (if i32
             (i32.lt_s
               (get_local $$b$1)
               (i32.const 0)
@@ -537,7 +537,7 @@
           (i32.const 31)
         )
         (i32.shl
-          (if
+          (if i32
             (i32.lt_s
               (get_local $$b$1)
               (i32.const 0)
@@ -618,7 +618,7 @@
       (get_local $__stackBase__)
     )
     (return
-      (block $block12
+      (block $block12 i32
         (i32.store
           (i32.const 168)
           (get_local $$10$1)
@@ -735,7 +735,7 @@
   (func $no-out-of-label (param $x i32) (param $y i32)
     (loop $moar
       (set_local $x
-        (block
+        (block i32
           (br_if $moar (get_local $x))
           (i32.const 0)
         )
@@ -744,7 +744,7 @@
     (drop (get_local $x))
     (block $moar
       (set_local $y
-        (block
+        (block i32
           (br_if $moar (get_local $y))
           (i32.const 0)
         )
@@ -778,7 +778,7 @@
   (func $drop-if-value (param $x i32) (param $y i32) (param $z i32) (result i32)
     (local $temp i32)
     (drop
-      (if
+      (if i32
         (get_local $x)
         (block $block53 i32
           (nop)
