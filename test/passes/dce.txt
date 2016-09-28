@@ -47,15 +47,21 @@
     )
     (if
       (i32.const 0)
-      (unreachable)
+      (drop
+        (unreachable)
+      )
     )
     (if
       (i32.const 0)
-      (unreachable)
+      (drop
+        (unreachable)
+      )
     )
     (if
       (i32.const 0)
-      (unreachable)
+      (drop
+        (unreachable)
+      )
     )
     (block $out
       (block $in

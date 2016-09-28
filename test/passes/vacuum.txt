@@ -121,7 +121,7 @@
   )
   (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
     (if
-      (if
+      (if i32
         (get_local $d)
         (block $block1 i32
           (f64.ne
@@ -145,17 +145,17 @@
   )
   (func $if-drop (type $3) (result i32)
     (block $out
-      (if
-        (call $if-drop)
-        (drop
+      (drop
+        (if
+          (call $if-drop)
           (call $int)
+          (br $out)
         )
-        (br $out)
       )
-      (if
-        (call $if-drop)
-        (br $out)
-        (drop
+      (drop
+        (if
+          (call $if-drop)
+          (br $out)
           (call $int)
         )
       )
@@ -210,7 +210,7 @@
   )
   (func $if2drops (type $3) (result i32)
     (drop
-      (if
+      (if i32
         (call $if2drops)
         (call $if2drops)
         (call $if2drops)

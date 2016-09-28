@@ -426,7 +426,7 @@
                   (i32.const 31)
                 )
                 (i32.shl
-                  (if
+                  (if i32
                     (i32.lt_s
                       (get_local $$a$1)
                       (i32.const 0)
@@ -444,7 +444,7 @@
             (tee_local $$1$1
               (i32.or
                 (i32.shr_s
-                  (if
+                  (if i32
                     (i32.lt_s
                       (get_local $$a$1)
                       (i32.const 0)
@@ -455,7 +455,7 @@
                   (i32.const 31)
                 )
                 (i32.shl
-                  (if
+                  (if i32
                     (i32.lt_s
                       (get_local $$a$1)
                       (i32.const 0)
@@ -484,7 +484,7 @@
                   (i32.const 31)
                 )
                 (i32.shl
-                  (if
+                  (if i32
                     (i32.lt_s
                       (get_local $$b$1)
                       (i32.const 0)
@@ -502,7 +502,7 @@
             (tee_local $$2$1
               (i32.or
                 (i32.shr_s
-                  (if
+                  (if i32
                     (i32.lt_s
                       (get_local $$b$1)
                       (i32.const 0)
@@ -513,7 +513,7 @@
                   (i32.const 31)
                 )
                 (i32.shl
-                  (if
+                  (if i32
                     (i32.lt_s
                       (get_local $$b$1)
                       (i32.const 0)
@@ -599,7 +599,7 @@
         )
         (block $waka2
           (set_local $x
-            (if
+            (if i32
               (i32.const 1)
               (block i32
                 (nop)
@@ -615,7 +615,7 @@
         )
         (br_if $out
           (tee_local $x
-            (if
+            (if i32
               (i32.const 1)
               (block $block3 i32
                 (nop)
@@ -739,7 +739,7 @@
   (func $drop-if-value (type $9) (param $x i32) (param $y i32) (param $z i32) (result i32)
     (local $temp i32)
     (drop
-      (if
+      (if i32
         (get_local $x)
         (block $block53 i32
           (nop)

@@ -302,7 +302,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     } while (anotherCycle);
 
     if (worked) {
-      // Our work may alter block and if types, they may now return
+      // Our work may alter block and if types, they may now return values that we made flow through them
       struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
         void visitBlock(Block* curr) {
           curr->finalize();

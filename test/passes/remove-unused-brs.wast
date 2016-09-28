@@ -151,7 +151,7 @@
     )
   )
   (func $b13 (type $2) (result i32)
-    (block $topmost
+    (block $topmost i32
       (if
         (i32.const 1)
         (block $block1
@@ -178,13 +178,13 @@
     )
   )
   (func $b14 (type $2) (result i32)
-    (block $topmost
-      (if
+    (block $topmost i32
+      (if i32
         (i32.const 1)
-        (block $block1
+        (block $block1 i32
           (i32.const 12)
         )
-        (block $block3
+        (block $block3 i32
           (i32.const 27)
         )
       )
@@ -355,7 +355,7 @@
         )
       )
       (if
-        (block $block6
+        (block $block6 i32
           (block
             (drop
               (i32.const 2)
@@ -372,7 +372,7 @@
         )
       )
       (if
-        (block $a
+        (block $a i32
           (br $a
             (i32.const 0)
           )
@@ -440,7 +440,7 @@
         (i32.const 1)
       )
     )
-    (block $do-once$0
+    (block $do-once$0 i32
       (if
         (tee_local $x
           (i32.const 1)
@@ -606,7 +606,7 @@
           (call $loops)
         )
         (drop
-          (block $out2
+          (block $out2 i32
             (br $out2 (i32.const 1))
           )
         )
@@ -656,7 +656,7 @@
     )
   )
   (func $br_if_in_block (result i32)
-    (block $outval
+    (block $outval i32
       (block $in
         (if (i32.const 1) (br $in) (br $in))
         (drop (i32.const 2))
@@ -665,13 +665,13 @@
         (if (i32.const 5) (br $in) (unreachable))
         (drop (i32.const 6))
       )
-      (if (i32.const 6) (br $outval (i32.const 7)) (i32.const 8))
+      (if i32 (i32.const 6) (br $outval (i32.const 7)) (i32.const 8))
     )
   )
   (func $threading
     (drop
-      (block $value-out
-        (block $value-in
+      (block $value-out i32
+        (block $value-in i32
           (block $out
             (block $in
               (if (i32.const 1)
@@ -705,11 +705,11 @@
   (func $if-to-br_if-conflict (param $x i32) (param $y i32) (result i32)
     (block $leave
       (set_local $y
-        (block $out
+        (block $out i32
           (if
             (get_local $x)
             (br $out
-              (block
+              (block i32
                 (set_local $x (i32.const 0))
                 (i32.const 1)
               )
@@ -725,12 +725,12 @@
   (func $if-to-br_if-conflict2 (param $x i32) (param $y i32) (result i32)
     (block $leave
       (set_local $y
-        (block $out
+        (block $out i32
           (if
             (get_local $x)
             (br_if $leave (i32.const 1))
             (br $out
-              (block
+              (block i32
                 (set_local $x (i32.const 0))
                 (i32.const 1)
               )
@@ -745,11 +745,11 @@
   (func $if-to-br_if-value-sideeffect (param $x i32) (param $y i32) (result i32)
     (block $leave
       (set_local $y
-        (block $out
+        (block $out i32
           (if
             (get_local $x)
             (br $out
-              (block
+              (block i32
                 (drop (call $if-to-br_if-value-sideeffect (i32.const 0) (i32.const 1)))
                 (nop)
                 (i32.const 1)

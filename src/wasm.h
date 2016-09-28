@@ -964,12 +964,12 @@ public:
   Name name;
   ExpressionList list;
 
-  // set the type of a block if you already know it
-  void finalize(WasmType type_) {
-    type = type_;
-  }
+  // set the type given you know its type, which is the case when parsing
+  // s-expression or binary, as explicit types are given. the only additional work
+  // this does is to set the type to unreachable in the cases that is needed.
+  void finalize(WasmType type_);
 
-  // set the type of a block based on its contents. this scans the block, so it is not fast
+  // set the type purely based on its contents. this scans the block, so it is not fast
   void finalize();
 };
 
@@ -980,21 +980,13 @@ public:
 
   Expression *condition, *ifTrue, *ifFalse;
 
-  void finalize() {
-    if (ifFalse) {
-      if (ifTrue->type == ifFalse->type) {
-        type = ifTrue->type;
-      } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
-        type = ifTrue->type;
-      } else if (isConcreteWasmType(ifFalse->type) && ifTrue->type == unreachable) {
-        type = ifFalse->type;
-      } else {
-        type = none;
-      }
-    } else {
-      type = none; // if without else
-    }
-  }
+  // set the type given you know its type, which is the case when parsing
+  // s-expression or binary, as explicit types are given. the only additional work
+  // this does is to set the type to unreachable in the cases that is needed.
+  void finalize(WasmType type_);
+
+  // set the type purely based on its contents.
+  void finalize();
 };
 
 class Loop : public SpecificExpression<Expression::LoopId> {
@@ -1005,12 +997,12 @@ public:
   Name name;
   Expression *body;
 
-  // set the type of a loop if you already know it
-  void finalize(WasmType type_) {
-    type = type_;
-  }
+  // set the type given you know its type, which is the case when parsing
+  // s-expression or binary, as explicit types are given. the only additional work
+  // this does is to set the type to unreachable in the cases that is needed.
+  void finalize(WasmType type_);
 
-  // set the type of a loop based on its contents. this scans the loop, so it is not fast
+  // set the type purely based on its contents.
   void finalize();
 };
 

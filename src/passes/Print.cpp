@@ -140,6 +140,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitIf(If *curr) {
     printOpening(o, "if");
+    if (isConcreteWasmType(curr->type)) {
+      o << ' ' << printWasmType(curr->type);
+    }
     incIndent();
     printFullLine(curr->condition);
     // ifTrue and False have implict blocks, avoid printing them if possible

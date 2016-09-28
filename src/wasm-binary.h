@@ -452,19 +452,6 @@ enum TypeForms {
 } // namespace BinaryConsts
 
 
-struct ArityChecker : public PostWalker<ArityChecker, Visitor<ArityChecker>> {
-  std::unordered_map<cashew::IString, bool> arities;
-
-  ArityChecker(Expression* function)  {
-    walk(function);
-  }
-
-  void visitBreak(Break* curr) {
-    // Assume the module has already beeen type-checked, and that all breaks have matching arity.
-    if (curr->value) arities[curr->name] = true;
-  }
-};
-
 inline int8_t binaryWasmType(WasmType type) {
   switch (type) {
     case none: return 0;
@@ -481,8 +468,6 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   BufferWithRandomAccess& o;
   bool debug;
   bool debugInfo = true;
-
-  std::unordered_map<cashew::IString, bool> brTargetArities;
 
   MixedArena allocator;
 
@@ -718,9 +703,6 @@ public:
       if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
 
-      ArityChecker ar(function->body);
-      brTargetArities = std::move(ar.arities);
-
       writeExpression(function->body);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
@@ -918,18 +900,7 @@ public:
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
-
-    int arity = curr->type != none && curr->type != unreachable;
-    if (brTargetArities.count(curr->name)) {
-      if (curr->type == unreachable) {
-        arity = brTargetArities[curr->name];
-      } else {
-        assert((curr->type != none) == brTargetArities[curr->name]);
-      }
-    }
-    // For blocks with type unreachable but whose breaks have arity 1, encode i32 as their
-    // signature so that the decoder knows to pop a value for the breaks' values.
-    o << binaryWasmType(curr->type != unreachable ? curr->type : arity ? i32 : none);
+    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
     breakStack.push_back(curr->name);
     size_t i = 0;
     for (auto* child : curr->list) {
@@ -1703,7 +1674,7 @@ public:
         assert(breakStack.empty());
         assert(expressionStack.empty());
         assert(depth == 0);
-        func->body = getMaybeBlock();
+        func->body = getMaybeBlock(func->result);
         assert(depth == 0);
         assert(breakStack.empty());
         assert(expressionStack.empty());
@@ -1975,12 +1946,12 @@ public:
         curr->list.push_back(expressionStack[i]);
       }
       expressionStack.resize(start);
-      curr->finalize();
+      curr->finalize(curr->type);
       breakStack.pop_back();
     }
   }
 
-  Expression* getMaybeBlock() {
+  Expression* getMaybeBlock(WasmType type) {
     auto start = expressionStack.size();
     processExpressions();
     size_t end = expressionStack.size();
@@ -1991,15 +1962,16 @@ public:
     for (size_t i = start; i < end; i++) {
       block->list.push_back(expressionStack[i]);
     }
-    block->finalize();
+    block->finalize(type);
     expressionStack.resize(start);
     return block;
   }
 
-  Expression* getBlock(WasmType ty) {
+  Expression* getBlock(WasmType type) {
     Name label = getNextLabel();
-    breakStack.push_back({label, ty != none && ty != unreachable});
-    auto* block = Builder(wasm).blockify(getMaybeBlock());
+    breakStack.push_back({label, type != none && type != unreachable});
+    auto* block = Builder(wasm).blockify(getMaybeBlock(type));
+    block->finalize();
     breakStack.pop_back();
     block->cast<Block>()->name = label;
     return block;
@@ -2012,8 +1984,8 @@ public:
     curr->ifTrue = getBlock(curr->type);
     if (lastSeparator == BinaryConsts::Else) {
       curr->ifFalse = getBlock(curr->type);
-      curr->finalize();
     }
+    curr->finalize(curr->type);
     assert(lastSeparator == BinaryConsts::End);
   }
   void visitLoop(Loop *curr) {
@@ -2021,9 +1993,9 @@ public:
     curr->type = getWasmType();
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, 0});
-    curr->body = getMaybeBlock();
+    curr->body = getMaybeBlock(curr->type);
     breakStack.pop_back();
-    curr->finalize();
+    curr->finalize(curr->type);
   }
 
   BreakTarget getBreakTarget(int32_t offset) {

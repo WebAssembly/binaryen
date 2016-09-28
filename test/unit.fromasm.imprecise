@@ -574,7 +574,7 @@
   )
   (func $conditionalTypeFun
     (drop
-      (if
+      (if i32
         (call $return_int)
         (i32.trunc_s/f64
           (call $abort
@@ -587,7 +587,7 @@
       )
     )
     (drop
-      (if
+      (if f64
         (call $return_int)
         (call $abort
           (f64.convert_s/i32
@@ -1008,7 +1008,7 @@
   )
   (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32)
     (drop
-      (if
+      (if i32
         (get_local $0)
         (call $lb
           (get_local $1)
