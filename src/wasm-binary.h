@@ -913,8 +913,7 @@ public:
     if (debug) std::cerr << "zz recurse from " << depth-- << " at " << o.size() << std::endl;
   }
 
-  struct BreakTarget { Name name; int arity; };
-  std::vector<BreakTarget> breakStack;
+  std::vector<Name> breakStack;
 
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
@@ -931,7 +930,7 @@ public:
     // For blocks with type unreachable but whose breaks have arity 1, encode i32 as their
     // signature so that the decoder knows to pop a value for the breaks' values.
     o << binaryWasmType(curr->type != unreachable ? curr->type : arity ? i32 : none);
-    breakStack.push_back({curr->name, arity});
+    breakStack.push_back(curr->name);
     size_t i = 0;
     for (auto* child : curr->list) {
       if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i++ << std::endl;
@@ -958,12 +957,12 @@ public:
     recurse(curr->condition);
     o << int8_t(BinaryConsts::If);
     o << binaryWasmType(curr->type != unreachable ? curr->type : none);
-    breakStack.push_back({IMPOSSIBLE_CONTINUE, 0}); // the binary format requires this; we have a block if we need one; TODO: optimize
+    breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
     recursePossibleBlockContents(curr->ifTrue); // TODO: emit block contents directly, if possible
     breakStack.pop_back();
     if (curr->ifFalse) {
       o << int8_t(BinaryConsts::Else);
-      breakStack.push_back({IMPOSSIBLE_CONTINUE, 0}); // TODO ditto
+      breakStack.push_back(IMPOSSIBLE_CONTINUE); // TODO ditto
       recursePossibleBlockContents(curr->ifFalse);
       breakStack.pop_back();
     }
@@ -973,8 +972,7 @@ public:
     if (debug) std::cerr << "zz node: Loop" << std::endl;
     o << int8_t(BinaryConsts::Loop);
     o << binaryWasmType(curr->type != unreachable ? curr->type : none);
-    int arity = curr->type != unreachable && curr->type != none;
-    breakStack.push_back({curr->name, arity});
+    breakStack.push_back(curr->name);
     recursePossibleBlockContents(curr->body);
     breakStack.pop_back();
     o << int8_t(BinaryConsts::End);
@@ -982,7 +980,7 @@ public:
 
   int32_t getBreakIndex(Name name) { // -1 if not found
     for (int i = breakStack.size() - 1; i >= 0; i--) {
-      if (breakStack[i].name == name) {
+      if (breakStack[i] == name) {
         return breakStack.size() - 1 - i;
       }
     }
