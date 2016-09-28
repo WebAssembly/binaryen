@@ -7,38 +7,30 @@
   (export "stf32" (func $stf32))
   (export "stf64" (func $stf64))
   (func $sti32 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti64 (param $0 i32) (param $1 i64)
-    (drop
-      (i64.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (i64.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $stf32 (param $0 i32) (param $1 f32)
-    (drop
-      (f32.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (f32.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $stf64 (param $0 i32) (param $1 f64)
-    (drop
-      (f64.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (f64.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )

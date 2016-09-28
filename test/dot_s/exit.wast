@@ -6,10 +6,8 @@
   (export "main" (func $main))
   (func $main (result i32)
     (local $0 i32)
-    (drop
-      (call $exit
-        (i32.const 0)
-      )
+    (call $exit
+      (i32.const 0)
     )
     (unreachable)
   )

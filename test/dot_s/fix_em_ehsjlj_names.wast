@@ -37,10 +37,8 @@
     (local $1 i32)
     (local $2 i32)
     (local $3 i32)
-    (drop
-      (call $invoke_v
-        (i32.const 1)
-      )
+    (call $invoke_v
+      (i32.const 1)
     )
     (drop
       (call $invoke_iiii
@@ -70,11 +68,9 @@
         )
       )
     )
-    (drop
-      (call $emscripten_longjmp
-        (i32.const 5)
-        (i32.const 6)
-      )
+    (call $emscripten_longjmp
+      (i32.const 5)
+      (i32.const 6)
     )
     (i32.const 0)
   )

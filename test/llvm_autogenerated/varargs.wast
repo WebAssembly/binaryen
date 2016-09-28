@@ -15,11 +15,9 @@
   (export "caller_some" (func $caller_some))
   (export "startbb" (func $startbb))
   (func $start (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
@@ -27,29 +25,25 @@
     (return)
   )
   (func $copy (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (i32.load
-          (get_local $1)
-        )
+    (i32.store
+      (get_local $0)
+      (i32.load
+        (get_local $1)
       )
     )
     (return)
   )
   (func $arg_i8 (param $0 i32) (result i32)
     (local $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (i32.add
-          (tee_local $1
-            (i32.load
-              (get_local $0)
-            )
+    (i32.store
+      (get_local $0)
+      (i32.add
+        (tee_local $1
+          (i32.load
+            (get_local $0)
           )
-          (i32.const 4)
         )
+        (i32.const 4)
       )
     )
     (return
@@ -60,23 +54,21 @@
   )
   (func $arg_i32 (param $0 i32) (result i32)
     (local $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (i32.add
-          (tee_local $1
-            (i32.and
-              (i32.add
-                (i32.load
-                  (get_local $0)
-                )
-                (i32.const 3)
+    (i32.store
+      (get_local $0)
+      (i32.add
+        (tee_local $1
+          (i32.and
+            (i32.add
+              (i32.load
+                (get_local $0)
               )
-              (i32.const -4)
+              (i32.const 3)
             )
+            (i32.const -4)
           )
-          (i32.const 4)
         )
+        (i32.const 4)
       )
     )
     (return
@@ -89,24 +81,22 @@
     (local $2 i32)
     (local $3 i32)
     (local $4 i64)
-    (drop
-      (i32.store
-        (get_local $1)
-        (tee_local $3
-          (i32.add
-            (tee_local $2
-              (i32.and
-                (i32.add
-                  (i32.load
-                    (get_local $1)
-                  )
-                  (i32.const 7)
+    (i32.store
+      (get_local $1)
+      (tee_local $3
+        (i32.add
+          (tee_local $2
+            (i32.and
+              (i32.add
+                (i32.load
+                  (get_local $1)
                 )
-                (i32.const -8)
+                (i32.const 7)
               )
+              (i32.const -8)
             )
-            (i32.const 8)
           )
+          (i32.const 8)
         )
       )
     )
@@ -115,81 +105,63 @@
         (get_local $2)
       )
     )
-    (drop
-      (i32.store
-        (get_local $1)
-        (i32.add
-          (get_local $2)
-          (i32.const 16)
-        )
+    (i32.store
+      (get_local $1)
+      (i32.add
+        (get_local $2)
+        (i32.const 16)
       )
     )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (get_local $3)
-        )
-      )
-    )
-    (drop
-      (i64.store
+    (i64.store
+      (i32.add
         (get_local $0)
-        (get_local $4)
+        (i32.const 8)
       )
+      (i64.load
+        (get_local $3)
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (get_local $4)
     )
     (return)
   )
   (func $caller_none
-    (drop
-      (call $callee
-        (i32.const 0)
-      )
+    (call $callee
+      (i32.const 0)
     )
     (return)
   )
   (func $caller_some
     (local $0 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $0
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $0
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (i64.store offset=8
-        (get_local $0)
-        (i64.const 4611686018427387904)
-      )
-    )
-    (drop
-      (i32.store
-        (get_local $0)
-        (i32.const 0)
-      )
-    )
-    (drop
-      (call $callee
-        (get_local $0)
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $0)
           (i32.const 16)
         )
+      )
+    )
+    (i64.store offset=8
+      (get_local $0)
+      (i64.const 4611686018427387904)
+    )
+    (i32.store
+      (get_local $0)
+      (i32.const 0)
+    )
+    (call $callee
+      (get_local $0)
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $0)
+        (i32.const 16)
       )
     )
     (return)
@@ -206,11 +178,9 @@
       )
       (return)
     )
-    (drop
-      (i32.store
-        (get_local $1)
-        (get_local $2)
-      )
+    (i32.store
+      (get_local $1)
+      (get_local $2)
     )
     (return)
   )

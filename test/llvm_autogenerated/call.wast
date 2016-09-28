@@ -53,9 +53,7 @@
     )
   )
   (func $call_void_nullary
-    (drop
-      (call $void_nullary)
-    )
+    (call $void_nullary)
     (return)
   )
   (func $call_i32_unary (param $0 i32) (result i32)
@@ -74,10 +72,8 @@
     )
   )
   (func $call_indirect_void (param $0 i32)
-    (drop
-      (call_indirect $FUNCSIG$v
-        (get_local $0)
-      )
+    (call_indirect $FUNCSIG$v
+      (get_local $0)
     )
     (return)
   )
@@ -89,21 +85,15 @@
     )
   )
   (func $tail_call_void_nullary
-    (drop
-      (call $void_nullary)
-    )
+    (call $void_nullary)
     (return)
   )
   (func $fastcc_tail_call_void_nullary
-    (drop
-      (call $void_nullary)
-    )
+    (call $void_nullary)
     (return)
   )
   (func $coldcc_tail_call_void_nullary
-    (drop
-      (call $void_nullary)
-    )
+    (call $void_nullary)
     (return)
   )
   (func $__wasm_nullptr (type $FUNCSIG$v)

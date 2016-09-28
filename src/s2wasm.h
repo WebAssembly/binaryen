@@ -745,7 +745,11 @@ class S2WasmBuilder {
     };
     auto setOutput = [&](Expression* curr, Name assign) {
       if (assign.isNull() || assign.str[0] == 'd') { // drop
-        addToBlock(builder.makeDrop(curr));
+        auto* add = curr;
+        if (isConcreteWasmType(curr->type)) {
+          add = builder.makeDrop(curr);
+        }
+        addToBlock(add);
       } else if (assign.str[0] == 'p') { // push
         push(curr);
       } else { // set to a local

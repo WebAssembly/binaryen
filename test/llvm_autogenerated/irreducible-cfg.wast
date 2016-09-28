@@ -61,24 +61,22 @@
                   )
                   (br $label$2)
                 )
-                (drop
-                  (f64.store align=4
-                    (tee_local $2
-                      (i32.add
-                        (get_local $0)
-                        (i32.shl
-                          (get_local $5)
-                          (i32.const 3)
-                        )
+                (f64.store align=4
+                  (tee_local $2
+                    (i32.add
+                      (get_local $0)
+                      (i32.shl
+                        (get_local $5)
+                        (i32.const 3)
                       )
                     )
-                    (tee_local $4
-                      (f64.mul
-                        (f64.load align=4
-                          (get_local $2)
-                        )
-                        (f64.const 2.3)
+                  )
+                  (tee_local $4
+                    (f64.mul
+                      (f64.load align=4
+                        (get_local $2)
                       )
+                      (f64.const 2.3)
                     )
                   )
                 )
@@ -87,19 +85,17 @@
                 )
                 (br $label$2)
               )
-              (drop
-                (f64.store align=4
-                  (i32.add
-                    (get_local $0)
-                    (i32.shl
-                      (get_local $5)
-                      (i32.const 3)
-                    )
+              (f64.store align=4
+                (i32.add
+                  (get_local $0)
+                  (i32.shl
+                    (get_local $5)
+                    (i32.const 3)
                   )
-                  (f64.add
-                    (get_local $4)
-                    (f64.const 1.3)
-                  )
+                )
+                (f64.add
+                  (get_local $4)
+                  (f64.const 1.3)
                 )
               )
               (set_local $5
@@ -183,24 +179,22 @@
                       )
                       (br $label$2)
                     )
-                    (drop
-                      (f64.store align=4
-                        (tee_local $2
-                          (i32.add
-                            (get_local $0)
-                            (i32.shl
-                              (get_local $5)
-                              (i32.const 3)
-                            )
+                    (f64.store align=4
+                      (tee_local $2
+                        (i32.add
+                          (get_local $0)
+                          (i32.shl
+                            (get_local $5)
+                            (i32.const 3)
                           )
                         )
-                        (tee_local $4
-                          (f64.mul
-                            (f64.load align=4
-                              (get_local $2)
-                            )
-                            (f64.const 2.3)
+                      )
+                      (tee_local $4
+                        (f64.mul
+                          (f64.load align=4
+                            (get_local $2)
                           )
+                          (f64.const 2.3)
                         )
                       )
                     )
@@ -228,19 +222,17 @@
                   )
                   (br $label$2)
                 )
-                (drop
-                  (f64.store align=4
-                    (i32.add
-                      (get_local $0)
-                      (i32.shl
-                        (get_local $5)
-                        (i32.const 3)
-                      )
+                (f64.store align=4
+                  (i32.add
+                    (get_local $0)
+                    (i32.shl
+                      (get_local $5)
+                      (i32.const 3)
                     )
-                    (f64.add
-                      (get_local $4)
-                      (f64.const 1.3)
-                    )
+                  )
+                  (f64.add
+                    (get_local $4)
+                    (f64.const 1.3)
                   )
                 )
                 (set_local $5
