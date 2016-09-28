@@ -651,7 +651,7 @@ private:
       autoBlock->name = FAKE_RETURN;
     }
     if (autoBlock) {
-      autoBlock->finalize();
+      autoBlock->finalize(result);
     }
     if (!currFunction) {
       makeFunction();
@@ -1100,8 +1100,10 @@ private:
       if (i >= s.size()) break; // empty block
       if (s[i]->isStr()) {
         // block signature
-        i++; // TODO: parse the signature
+        curr->type = stringToWasmType(s[i++]->str());
         if (i >= s.size()) break; // empty block
+      } else {
+        curr->type = none;
       }
       auto& first = *s[i];
       if (first[0]->str() == BLOCK) {
@@ -1133,7 +1135,7 @@ private:
       }
       assert(labelStack.back() == curr->name);
       labelStack.pop_back();
-      curr->finalize();
+      curr->finalize(curr->type);
     }
     return stack[0].second;
   }
@@ -1246,36 +1248,37 @@ private:
       label = getPrefixedName("if");
     }
     labelStack.push_back(label);
+    WasmType type = none;
     if (s[i]->isStr()) {
-      // if type, TODO: parse?
-      i++;
+      type = stringToWasmType(s[i++]->str());
     }
     ret->condition = parseExpression(s[i++]);
     ret->ifTrue = parseExpression(*s[i++]);
     if (i < s.size()) {
       ret->ifFalse = parseExpression(*s[i++]);
     }
-    ret->finalize();
+    ret->finalize(type);
     labelStack.pop_back();
     // create a break target if we must
     if (BreakSeeker::has(ret, label)) {
       auto* block = allocator.alloc<Block>();
       block->name = label;
       block->list.push_back(ret);
-      block->finalize();
+      block->finalize(ret->type);
       return block;
     }
     return ret;
   }
 
-  Expression* makeMaybeBlock(Element& s, size_t i, size_t stopAt=-1) {
+  Expression* makeMaybeBlock(Element& s, size_t i, WasmType type) {
+    Index stopAt = -1;
     if (s.size() == i) return allocator.alloc<Nop>();
     if (s.size() == i+1) return parseExpression(s[i]);
     auto ret = allocator.alloc<Block>();
     for (; i < s.size() && i < stopAt; i++) {
       ret->list.push_back(parseExpression(s[i]));
     }
-    ret->finalize();
+    ret->finalize(type);
     // Note that we do not name these implicit/synthetic blocks. They
     // are the effects of syntactic sugar, and nothing can branch to
     // them anyhow.
@@ -1296,14 +1299,15 @@ private:
     } else {
       ret->name = getPrefixedName("loop-in");
     }
+    ret->type = none;
     if (i < s.size() && s[i]->isStr()) {
       // block signature
-      i++; // TODO: parse the signature
+      ret->type = stringToWasmType(s[i++]->str());
     }
     labelStack.push_back(ret->name);
-    ret->body = makeMaybeBlock(s, i);
+    ret->body = makeMaybeBlock(s, i, ret->type);
     labelStack.pop_back();
-    ret->finalize();
+    ret->finalize(ret->type);
     if (out.is()) {
       auto* block = allocator.alloc<Block>();
       block->name = out;

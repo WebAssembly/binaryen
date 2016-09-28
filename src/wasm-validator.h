@@ -64,9 +64,17 @@ public:
     if (curr->name.is()) {
       if (breakInfos.count(curr) > 0) {
         auto& info = breakInfos[curr];
+        if (isConcreteWasmType(curr->type)) {
+          shouldBeTrue(info.arity != 0, curr, "break arities must be > 0 if block has a value");
+        } else {
+          shouldBeTrue(info.arity == 0, curr, "break arities must be 0 if block has no value");
+        }
         // none or unreachable means a poison value that we should ignore - if consumed, it will error
         if (isConcreteWasmType(info.type) && isConcreteWasmType(curr->type)) {
           shouldBeEqual(curr->type, info.type, curr, "block+breaks must have right type if breaks return a value");
+        }
+        if (isConcreteWasmType(curr->type) && info.arity && info.type != unreachable) {
+          shouldBeEqual(curr->type, info.type, curr, "block+breaks must have right type if breaks have arity");
         }
         shouldBeTrue(info.arity != Index(-1), curr, "break arities must match");
         if (curr->list.size() > 0) {
@@ -88,6 +96,9 @@ public:
         }
       }
     }
+    if (!isConcreteWasmType(curr->type) && curr->list.size() > 0) {
+      shouldBeFalse(isConcreteWasmType(curr->list.back()->type), curr, "block with no value cannot have a last element with a value");
+    }
   }
 
   static void visitPreLoop(WasmValidator* self, Expression** currp) {
@@ -102,6 +113,9 @@ public:
         auto& info = breakInfos[curr];
         shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
       }
+    }
+    if (curr->type == none) {
+      shouldBeFalse(isConcreteWasmType(curr->body->type), curr, "bad body for a loop that has no value");
     }
   }
 
@@ -289,6 +303,15 @@ public:
   void visitSelect(Select* curr) {
     shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
     shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
+  }
+
+  void visitDrop(Drop* curr) {
+    // TODO: assert on this, when tests pass
+    if (getenv("BINARYEN_WARN_DROP")) {
+      if (!(isConcreteWasmType(curr->value->type) || curr->value->type == unreachable)) {
+        std::cerr << "warning: bad drop " << curr << " in " << (getFunction() ? getFunction()->name : Name("?")) << '\n';
+      }
+    }
   }
 
   void visitReturn(Return* curr) {

@@ -186,11 +186,11 @@ if not has_vanilla_emcc:
 
 # check utilities
 
-def binary_format_check(wast, verify_final_result=True):
+def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'], binary_suffix='.fromBinary'):
   # checks we can convert the wast to binary and back
 
   print '     (binary format check)'
-  cmd = [os.path.join('bin', 'wasm-as'), wast, '-o', 'a.wasm']
+  cmd = [os.path.join('bin', 'wasm-as'), wast, '-o', 'a.wasm'] + wasm_as_args
   print '      ', ' '.join(cmd)
   if os.path.exists('a.wasm'): os.unlink('a.wasm')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
@@ -208,7 +208,7 @@ def binary_format_check(wast, verify_final_result=True):
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
   if verify_final_result:
-    expected = open(wast + '.fromBinary').read()
+    expected = open(wast + binary_suffix).read()
     actual = open('ab.wast').read()
     if actual != expected:
       fail(actual, expected)
@@ -362,7 +362,9 @@ for t in tests:
     if actual != expected:
       fail(actual, expected)
 
-    binary_format_check(t)
+    binary_format_check(t, wasm_as_args=['-g']) # test with debuginfo
+    binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo') # test without debuginfo
+
     minify_check(t)
 
 print '\n[ checking wasm-shell spec testcases... ]\n'

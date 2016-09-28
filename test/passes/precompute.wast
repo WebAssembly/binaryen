@@ -53,7 +53,7 @@
       (br $c)
     )
     (drop
-      (block $val
+      (block $val i32
         (drop (br_if $val (i32.const 100) (i32.const 0)))
         (call $x (i32.const 4))
         (drop (br_if $val (i32.const 101) (i32.const 1)))
@@ -68,7 +68,7 @@
       )
     )
     (drop
-      (block $d
+      (block $d i32
         (call $x (i32.const 5))
         (block $e
           (drop (br_if $d (br $e) (i32.const 1)))
@@ -81,7 +81,7 @@
       )
     )
     (drop
-      (block $d
+      (block $d i32
         (call $x (i32.const 6))
         (block $e
           (drop (br_if $d (br $e) (i32.const 0)))
@@ -93,7 +93,7 @@
       )
     )
     (drop
-      (block $d
+      (block $d i32
         (call $x (i32.const 7))
         (block $e
           (drop (br_if $d (i32.const 1) (br $e)))
@@ -102,7 +102,7 @@
       )
     )
     (call $x
-      (block $out
+      (block $out i32
         (block $waka1
           (block $waka2
             (block $waka3
@@ -118,7 +118,7 @@
       )
     )
     (call $x
-      (block $out
+      (block $out i32
         (block $waka1
           (block $waka2
             (block $waka3
@@ -134,7 +134,7 @@
       )
     )
     (call $x
-      (block $out
+      (block $out i32
         (block $waka1
           (block $waka2
             (block $waka3
@@ -150,7 +150,7 @@
       )
     )
     (call $x
-      (block $out
+      (block $out i32
         (block $waka1
           (block $waka2
             (block $waka3

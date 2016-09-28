@@ -95,19 +95,23 @@ print '\n[ checking binary format testcases... ]\n'
 
 for wast in sorted(os.listdir('test')):
   if wast.endswith('.wast') and not wast in []: # blacklist some known failures
-    cmd = [os.path.join('bin', 'wasm-as'), os.path.join('test', wast), '-o', 'a.wasm']
-    print ' '.join(cmd)
-    if os.path.exists('a.wasm'): os.unlink('a.wasm')
-    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert os.path.exists('a.wasm')
+    for debug_info in [0, 1]:
+      cmd = [os.path.join('bin', 'wasm-as'), os.path.join('test', wast), '-o', 'a.wasm']
+      if debug_info: cmd += ['-g']
+      print ' '.join(cmd)
+      if os.path.exists('a.wasm'): os.unlink('a.wasm')
+      subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      assert os.path.exists('a.wasm')
 
-    cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'a.wast']
-    print ' '.join(cmd)
-    if os.path.exists('a.wast'): os.unlink('a.wast')
-    subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    assert os.path.exists('a.wast')
-    actual = open('a.wast').read()
-    with open(os.path.join('test', wast + '.fromBinary'), 'w') as o: o.write(actual)
+      cmd = [os.path.join('bin', 'wasm-dis'), 'a.wasm', '-o', 'a.wast']
+      print ' '.join(cmd)
+      if os.path.exists('a.wast'): os.unlink('a.wast')
+      subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      assert os.path.exists('a.wast')
+      actual = open('a.wast').read()
+      binary_name = wast + '.fromBinary'
+      if not debug_info: binary_name += '.noDebugInfo'
+      with open(os.path.join('test', binary_name), 'w') as o: o.write(actual)
 
 print '\n[ checking example testcases... ]\n'
 

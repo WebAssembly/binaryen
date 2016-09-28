@@ -985,7 +985,7 @@
     (local $x i32)
     (local $y f64)
     (set_local $x
-      (if
+      (if i32
         (call $return_int)
         (i32.trunc_s/f64
           (call $abort
@@ -998,7 +998,7 @@
       )
     )
     (set_local $y
-      (if
+      (if f64
         (call $return_int)
         (call $abort
           (f64.convert_s/i32

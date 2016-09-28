@@ -721,7 +721,7 @@
           (i32.const 6)
         )
       )
-      (if
+      (if i32
         (i32.const 6)
         (br $outval
           (i32.const 7)

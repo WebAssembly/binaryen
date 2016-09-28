@@ -429,7 +429,7 @@
     (i32.const 0)
   )
   (func $loop-roundtrip (type $7) (param $0 f64) (result f64)
-    (loop $loop-in1
+    (loop $loop-in1 f64
       (drop
         (get_local $0)
       )

@@ -257,7 +257,7 @@ enum ElementType {
 };
 
 namespace UserSections {
-extern const char* Names;
+extern const char* Name;
 }
 
 enum ASTNodes {
@@ -424,7 +424,7 @@ enum ASTNodes {
   GetGlobal = 0x1a,
   SetGlobal = 0x1b,
 
-  Nop = 0x00,
+  Unreachable = 0x00,
   Block = 0x01,
   Loop = 0x02,
   If = 0x03,
@@ -434,7 +434,7 @@ enum ASTNodes {
   BrIf = 0x07,
   TableSwitch = 0x08,
   Return = 0x09,
-  Unreachable = 0x0a,
+  Nop = 0x0a,
   Drop = 0x0b,
   End = 0x0f
 };
@@ -451,6 +451,7 @@ enum TypeForms {
 
 } // namespace BinaryConsts
 
+
 inline int8_t binaryWasmType(WasmType type) {
   switch (type) {
     case none: return 0;
@@ -466,6 +467,7 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
   bool debug;
+  bool debugInfo = true;
 
   MixedArena allocator;
 
@@ -484,6 +486,10 @@ public:
     prepare();
   }
 
+  void setDebugInfo(bool set) {
+    debugInfo = set;
+  }
+
   void write() {
     writeHeader();
 
@@ -497,7 +503,7 @@ public:
     writeStart();
     writeFunctions();
     writeDataSegments();
-    writeNames();
+    if (debugInfo) writeNames();
 
     finishUp();
   }
@@ -696,6 +702,7 @@ public:
       if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
       if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
+
       writeExpression(function->body);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
@@ -820,7 +827,7 @@ public:
     if (wasm->functions.size() == 0) return;
     if (debug) std::cerr << "== writeNames" << std::endl;
     auto start = startSection(BinaryConsts::Section::User);
-    writeInlineString("names");
+    writeInlineString(BinaryConsts::UserSections::Name);
     o << U32LEB(wasm->functions.size());
     for (auto& curr : wasm->functions) {
       writeInlineString(curr->name.str);
@@ -893,6 +900,7 @@ public:
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
+    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
     breakStack.push_back(curr->name);
     size_t i = 0;
     for (auto* child : curr->list) {
@@ -919,6 +927,7 @@ public:
     if (debug) std::cerr << "zz node: If" << std::endl;
     recurse(curr->condition);
     o << int8_t(BinaryConsts::If);
+    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
     breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
     recursePossibleBlockContents(curr->ifTrue); // TODO: emit block contents directly, if possible
     breakStack.pop_back();
@@ -933,6 +942,7 @@ public:
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
     o << int8_t(BinaryConsts::Loop);
+    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
     breakStack.push_back(curr->name);
     recursePossibleBlockContents(curr->body);
     breakStack.pop_back();
@@ -956,7 +966,7 @@ public:
     }
     if (curr->condition) recurse(curr->condition);
     o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-      << U32LEB(curr->value ? 1 : 0) << U32LEB(getBreakIndex(curr->name));
+      << U32LEB(getBreakIndex(curr->name));
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
@@ -964,11 +974,11 @@ public:
       recurse(curr->value);
     }
     recurse(curr->condition);
-    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->value ? 1 : 0) << U32LEB(curr->targets.size());
+    o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
     for (auto target : curr->targets) {
-      o << uint32_t(getBreakIndex(target));
+      o << U32LEB(getBreakIndex(target));
     }
-    o << uint32_t(getBreakIndex(curr->default_));
+    o << U32LEB(getBreakIndex(curr->default_));
   }
   void visitCall(Call *curr) {
     if (debug) std::cerr << "zz node: Call" << std::endl;
@@ -1335,7 +1345,7 @@ public:
 
   bool readUserSection() {
     Name sectionName = getInlineString();
-    if (sectionName.equals(BinaryConsts::UserSections::Names)) {
+    if (sectionName.equals(BinaryConsts::UserSections::Name)) {
       readNames();
       return true;
     }
@@ -1664,7 +1674,7 @@ public:
         assert(breakStack.empty());
         assert(expressionStack.empty());
         assert(depth == 0);
-        func->body = getMaybeBlock();
+        func->body = getMaybeBlock(func->result);
         assert(depth == 0);
         assert(breakStack.empty());
         assert(expressionStack.empty());
@@ -1715,7 +1725,8 @@ public:
     }
   }
 
-  std::vector<Name> breakStack;
+  struct BreakTarget { Name name; int arity;};
+  std::vector<BreakTarget> breakStack;
 
   std::vector<Expression*> expressionStack;
 
@@ -1903,8 +1914,9 @@ public:
     // a common pattern that can be very highly nested.
     std::vector<Block*> stack;
     while (1) {
+      curr->type = getWasmType();
       curr->name = getNextLabel();
-      breakStack.push_back(curr->name);
+      breakStack.push_back({curr->name, curr->type != none});
       stack.push_back(curr);
       if (getInt8() == BinaryConsts::Block) {
         // a recursion
@@ -1934,12 +1946,12 @@ public:
         curr->list.push_back(expressionStack[i]);
       }
       expressionStack.resize(start);
-      curr->finalize();
+      curr->finalize(curr->type);
       breakStack.pop_back();
     }
   }
 
-  Expression* getMaybeBlock() {
+  Expression* getMaybeBlock(WasmType type) {
     auto start = expressionStack.size();
     processExpressions();
     size_t end = expressionStack.size();
@@ -1950,15 +1962,16 @@ public:
     for (size_t i = start; i < end; i++) {
       block->list.push_back(expressionStack[i]);
     }
-    block->finalize();
+    block->finalize(type);
     expressionStack.resize(start);
     return block;
   }
 
-  Expression* getBlock() {
+  Expression* getBlock(WasmType type) {
     Name label = getNextLabel();
-    breakStack.push_back(label);
-    auto* block = Builder(wasm).blockify(getMaybeBlock());
+    breakStack.push_back({label, type != none && type != unreachable});
+    auto* block = Builder(wasm).blockify(getMaybeBlock(type));
+    block->finalize();
     breakStack.pop_back();
     block->cast<Block>()->name = label;
     return block;
@@ -1966,48 +1979,53 @@ public:
 
   void visitIf(If *curr) {
     if (debug) std::cerr << "zz node: If" << std::endl;
+    curr->type = getWasmType();
     curr->condition = popExpression();
-    curr->ifTrue = getBlock();
+    curr->ifTrue = getBlock(curr->type);
     if (lastSeparator == BinaryConsts::Else) {
-      curr->ifFalse = getBlock();
-      curr->finalize();
+      curr->ifFalse = getBlock(curr->type);
     }
+    curr->finalize(curr->type);
     assert(lastSeparator == BinaryConsts::End);
   }
   void visitLoop(Loop *curr) {
     if (debug) std::cerr << "zz node: Loop" << std::endl;
+    curr->type = getWasmType();
     curr->name = getNextLabel();
-    breakStack.push_back(curr->name);
-    curr->body = getMaybeBlock();
+    breakStack.push_back({curr->name, 0});
+    curr->body = getMaybeBlock(curr->type);
     breakStack.pop_back();
-    curr->finalize();
+    curr->finalize(curr->type);
   }
 
-  Name getBreakName(int32_t offset) {
+  BreakTarget getBreakTarget(int32_t offset) {
+    if (debug) std::cerr << "getBreakTarget "<<offset<<std::endl;
     assert(breakStack.size() - 1 - offset < breakStack.size());
+    if (debug) std::cerr <<"breaktarget "<< breakStack[breakStack.size() - 1 - offset].name<< " arity "<<breakStack[breakStack.size() - 1 - offset].arity<< std::endl;
     return breakStack[breakStack.size() - 1 - offset];
   }
 
   void visitBreak(Break *curr, uint8_t code) {
     if (debug) std::cerr << "zz node: Break" << std::endl;
-    auto arity = getU32LEB();
-    assert(arity == 0 || arity == 1);
-    curr->name = getBreakName(getU32LEB());
+    BreakTarget target = getBreakTarget(getU32LEB());
+    curr->name = target.name;
     if (code == BinaryConsts::BrIf) curr->condition = popExpression();
-    if (arity == 1) curr->value = popExpression();
+    if (target.arity) curr->value = popExpression();
     curr->finalize();
   }
   void visitSwitch(Switch *curr) {
     if (debug) std::cerr << "zz node: Switch" << std::endl;
-    auto arity = getU32LEB();
-    assert(arity == 0 || arity == 1);
     curr->condition = popExpression();
-    if (arity == 1) curr->value = popExpression();
+
     auto numTargets = getU32LEB();
+    if (debug) std::cerr << "targets: "<< numTargets<<std::endl;
     for (size_t i = 0; i < numTargets; i++) {
-      curr->targets.push_back(getBreakName(getInt32()));
+      curr->targets.push_back(getBreakTarget(getU32LEB()).name);
     }
-    curr->default_ = getBreakName(getInt32());
+    auto defaultTarget = getBreakTarget(getU32LEB());
+    curr->default_ = defaultTarget.name;
+    if (debug) std::cerr << "default: "<< curr->default_<<std::endl;
+    if (defaultTarget.arity) curr->value = popExpression();
   }
 
   template<typename T>
