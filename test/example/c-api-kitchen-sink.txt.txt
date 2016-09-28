@@ -410,12 +410,12 @@
               )
             )
             (drop
-              (loop $in
+              (loop $in i32
                 (i32.const 0)
               )
             )
             (drop
-              (loop
+              (loop i32
                 (i32.const 0)
               )
             )

@@ -162,6 +162,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->name.is()) {
       o << ' ' << curr->name;
     }
+    if (isConcreteWasmType(curr->type)) {
+      o << ' ' << printWasmType(curr->type);
+    }
     incIndent();
     auto block = curr->body->dynCast<Block>();
     if (!full && block && block->name.isNull()) {
