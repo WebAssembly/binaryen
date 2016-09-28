@@ -1307,13 +1307,7 @@ private:
     labelStack.push_back(ret->name);
     ret->body = makeMaybeBlock(s, i, ret->type);
     labelStack.pop_back();
-    if (ret->type == none) {
-      if (ret->body->type == unreachable) {
-        ret->type = unreachable;
-      } else if (isConcreteWasmType(ret->body->type)) {
-        throw ParseException("bad body for a loop that has no value", s.line, s.col);
-      }
-    }
+    ret->finalize(ret->type);
     if (out.is()) {
       auto* block = allocator.alloc<Block>();
       block->name = out;

@@ -111,6 +111,9 @@ public:
         shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
       }
     }
+    if (curr->type == none) {
+      shouldBeFalse(isConcreteWasmType(curr->body->type), curr, "bad body for a loop that has no value");
+    }
   }
 
   void visitIf(If *curr) {
