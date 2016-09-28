@@ -451,6 +451,20 @@ enum TypeForms {
 
 } // namespace BinaryConsts
 
+
+struct ArityChecker : public PostWalker<ArityChecker, Visitor<ArityChecker>> {
+  std::unordered_map<cashew::IString, bool> arities;
+
+  ArityChecker(Expression* function)  {
+    walk(function);
+  }
+
+  void visitBreak(Break* curr) {
+    // Assume the module has already beeen type-checked, and that all breaks have matching arity.
+    if (curr->value) arities[curr->name] = true;
+  }
+};
+
 inline int8_t binaryWasmType(WasmType type) {
   switch (type) {
     case none: return 0;
@@ -467,6 +481,8 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   BufferWithRandomAccess& o;
   bool debug;
   bool debugInfo = true;
+
+  std::unordered_map<cashew::IString, bool> brTargetArities;
 
   MixedArena allocator;
 
@@ -701,6 +717,10 @@ public:
       if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
       if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
+
+      ArityChecker ar(function->body);
+      brTargetArities = std::move(ar.arities);
+
       writeExpression(function->body);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
@@ -899,8 +919,18 @@ public:
   void visitBlock(Block *curr) {
     if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
-    int arity = curr->type != unreachable && curr->type != none;
-    o << binaryWasmType(curr->type != unreachable ? curr->type : none);
+
+    int arity = curr->type != none && curr->type != unreachable;
+    if (brTargetArities.count(curr->name)) {
+      if (curr->type == unreachable) {
+        arity = brTargetArities[curr->name];
+      } else {
+        assert((curr->type != none) == brTargetArities[curr->name]);
+      }
+    }
+    // For blocks with type unreachable but whose breaks have arity 1, encode i32 as their
+    // signature so that the decoder knows to pop a value for the breaks' values.
+    o << binaryWasmType(curr->type != unreachable ? curr->type : arity ? i32 : none);
     breakStack.push_back({curr->name, arity});
     size_t i = 0;
     for (auto* child : curr->list) {
