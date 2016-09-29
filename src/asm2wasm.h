@@ -244,7 +244,7 @@ private:
 
     if (func->result == i64) {
       legal->result = i32;
-      auto index = builder.addVar(legal, Name("temp"), i64);
+      auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
       block->list.push_back(builder.makeCall(
