@@ -1,0 +1,29 @@
+(module
+  (data (get_global $memoryBase) "i64-setTempRet0.asm.js")
+  (import "env" "memory" (memory 256 256))
+  (import "env" "table" (table 0 anyfunc))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (export "illegalResult" (func $legalstub$illegalResult))
+  (global $tempRet0 (mut i32) (i32.const 0))
+  (func $illegalResult (result i64)
+    (i64.const 8589934593)
+  )
+  (func $legalstub$illegalResult (result i32)
+    (local $0 i64)
+    (set_local $0
+      (call $illegalResult)
+    )
+    (set_global $tempRet0
+      (i32.wrap/i64
+        (i64.shr_u
+          (get_local $0)
+          (i64.const 32)
+        )
+      )
+    )
+    (i32.wrap/i64
+      (get_local $0)
+    )
+  )
+)

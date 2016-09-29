@@ -84,7 +84,7 @@ Name I64("i64"),
      I64_BC2I("i64_bc2i"),
      I64_CTTZ("i64_cttz"),
      I64_CTLZ("i64_ctlz"),
-     SET_TEMP_RET0("setTempRet0"),
+     TEMP_RET_0("tempRet0"),
      I64S_REM("i64s-rem"),
      I64U_REM("i64u-rem"),
      I64S_DIV("i64s-div"),
@@ -248,11 +248,10 @@ private:
       auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
-      if (module->checkFunction(SET_TEMP_RET0)) {
-        block->list.push_back(builder.makeCall(
-          SET_TEMP_RET0,
-          { getI64High(builder, index) },
-          none
+      if (module->checkGlobal(TEMP_RET_0)) {
+        block->list.push_back(builder.makeSetGlobal(
+          TEMP_RET_0,
+          getI64High(builder, index)
         ));
       } else {
         block->list.push_back(builder.makeUnreachable()); // no way to emit the high bits :(
