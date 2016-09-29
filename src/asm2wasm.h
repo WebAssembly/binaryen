@@ -1067,7 +1067,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     void visitCall(Call* curr) {
       if (!getModule()->checkFunction(curr->target)) {
         std::cerr << "invalid call target: " << curr->target << '\n';
-        if (parent->maybeWasmInt64Intrinsic(curr->target)) std::cerr << " - perhaps this is a wasm-only i64() method, and you should run asm2wasm with --wasm-only?\n";
+        if (parent->maybeWasmInt64Intrinsic(curr->target)) {
+          std::cerr << " - perhaps this is a wasm-only i64() method, and you should run asm2wasm with --wasm-only?\n";
+          if (parent->wasmOnly) std::cerr << " - wait, you *did*. so this is an internal compiler error, please file an issue!\n";
+        }
         WASM_UNREACHABLE();
       }
       auto result = getModule()->getFunction(curr->target)->result;
