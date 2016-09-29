@@ -80,6 +80,21 @@
       (f64.const 12.34)
     )
   )
+  (func $call1 (param $0 i64) (result i64)
+    (call $call1
+      (get_local $0)
+    )
+  )
+  (func $call2 (param $0 i64) (result i64)
+    (drop
+      (call $call2
+        (call $call2
+          (get_local $0)
+        )
+      )
+    )
+    (i64.const 245127260211081)
+  )
   (func $legalstub$illegalParam (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
     (call $illegalParam
       (get_local $0)

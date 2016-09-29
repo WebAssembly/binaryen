@@ -91,7 +91,7 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
         if (node[1][0] == NAME) {
           IString name = node[1][1]->getIString();
           if (name == MATH_FROUND || name == minifiedFround) return ASM_FLOAT;
-          else if (name == INT64) return ASM_INT64;
+          else if (allowI64 && (name == INT64 || name == INT64_CONST)) return ASM_INT64;
           else if (name == SIMD_FLOAT32X4 || name == SIMD_FLOAT32X4_CHECK) return ASM_FLOAT32X4;
           else if (name == SIMD_FLOAT64X2 || name == SIMD_FLOAT64X2_CHECK) return ASM_FLOAT64X2;
           else if (name == SIMD_INT8X16   || name == SIMD_INT8X16_CHECK) return ASM_INT8X16;
