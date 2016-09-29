@@ -51,11 +51,9 @@
         (get_local $1)
       )
     )
-    (drop
-      (i32.store
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store
+      (get_local $0)
+      (i32.const 0)
     )
     (return
       (get_local $1)
@@ -67,22 +65,18 @@
         (get_local $1)
       )
     )
-    (drop
-      (i32.store
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store
+      (get_local $0)
+      (i32.const 0)
     )
     (return
       (get_local $1)
     )
   )
   (func $yes0 (param $0 i32) (param $1 i32) (result i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store
+      (get_local $0)
+      (i32.const 0)
     )
     (return
       (i32.load
@@ -98,11 +92,9 @@
     )
   )
   (func $sink_trap (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (drop
-      (i32.store
-        (get_local $2)
-        (i32.const 0)
-      )
+    (i32.store
+      (get_local $2)
+      (i32.const 0)
     )
     (return
       (i32.div_s
@@ -112,11 +104,9 @@
     )
   )
   (func $sink_readnone_call (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (drop
-      (i32.store
-        (get_local $2)
-        (i32.const 0)
-      )
+    (i32.store
+      (get_local $2)
+      (i32.const 0)
     )
     (return
       (call $readnone_callee)
@@ -127,11 +117,9 @@
     (set_local $3
       (call $readonly_callee)
     )
-    (drop
-      (i32.store
-        (get_local $2)
-        (i32.const 0)
-      )
+    (i32.store
+      (get_local $2)
+      (i32.const 0)
     )
     (return
       (get_local $3)
@@ -193,34 +181,24 @@
           (get_local $0)
         )
       )
-      (drop
-        (i32.store
-          (get_local $2)
-          (get_local $3)
-        )
+      (i32.store
+        (get_local $2)
+        (get_local $3)
       )
     )
     (return)
   )
   (func $stackify_store_across_side_effects (param $0 i32)
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.const 4611686018427387904)
-      )
+    (i64.store
+      (get_local $0)
+      (i64.const 4611686018427387904)
     )
-    (drop
-      (call $evoke_side_effects)
+    (call $evoke_side_effects)
+    (i64.store
+      (get_local $0)
+      (i64.const 4611686018427387904)
     )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.const 4611686018427387904)
-      )
-    )
-    (drop
-      (call $evoke_side_effects)
-    )
+    (call $evoke_side_effects)
     (return)
   )
   (func $div_tree (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (result i32)
@@ -274,34 +252,28 @@
     )
   )
   (func $simple_multiple_use (param $0 i32) (param $1 i32)
-    (drop
-      (call $use_a
-        (tee_local $1
-          (i32.mul
-            (get_local $1)
-            (get_local $0)
-          )
+    (call $use_a
+      (tee_local $1
+        (i32.mul
+          (get_local $1)
+          (get_local $0)
         )
       )
     )
-    (drop
-      (call $use_b
-        (get_local $1)
-      )
+    (call $use_b
+      (get_local $1)
     )
     (return)
   )
   (func $multiple_uses_in_same_insn (param $0 i32) (param $1 i32)
-    (drop
-      (call $use_2
-        (tee_local $1
-          (i32.mul
-            (get_local $1)
-            (get_local $0)
-          )
+    (call $use_2
+      (tee_local $1
+        (i32.mul
+          (get_local $1)
+          (get_local $0)
         )
-        (get_local $1)
       )
+      (get_local $1)
     )
     (return)
   )
@@ -487,11 +459,9 @@
     )
   )
   (func $no_stackify_store_past_load (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (drop
-      (i32.store
-        (get_local $1)
-        (get_local $0)
-      )
+    (i32.store
+      (get_local $1)
+      (get_local $0)
     )
     (set_local $2
       (i32.load
@@ -508,11 +478,9 @@
     )
   )
   (func $store_past_invar_load (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (drop
-      (i32.store
-        (get_local $1)
-        (get_local $0)
-      )
+    (i32.store
+      (get_local $1)
+      (get_local $0)
     )
     (drop
       (call $callee
@@ -531,16 +499,14 @@
   (func $no_stackify_past_epilogue (result i32)
     (local $0 i32)
     (local $1 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $1
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $1
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
+          (i32.const 16)
         )
       )
     )
@@ -552,13 +518,11 @@
         )
       )
     )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $1)
-          (i32.const 16)
-        )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $1)
+        (i32.const 16)
       )
     )
     (return
@@ -572,14 +536,12 @@
     )
     (block $label$1
       (loop $label$0
-        (drop
-          (i32.store
-            (get_local $1)
-            (i32.add
-              (get_local $2)
-              (i32.load
-                (get_local $1)
-              )
+        (i32.store
+          (get_local $1)
+          (i32.add
+            (get_local $2)
+            (i32.load
+              (get_local $1)
             )
           )
         )
@@ -610,11 +572,9 @@
         )
       )
     )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (get_local $1)
-      )
+    (i32.store offset=4
+      (i32.const 0)
+      (get_local $1)
     )
     (return
       (get_local $0)

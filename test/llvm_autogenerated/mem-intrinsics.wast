@@ -78,16 +78,14 @@
   )
   (func $frame_index
     (local $0 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $0
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 4096)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $0
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
+          (i32.const 4096)
         )
       )
     )
@@ -101,17 +99,15 @@
         (i32.const 1024)
       )
     )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (call $memset
-            (get_local $0)
-            (i32.const 0)
-            (i32.const 1024)
-          )
-          (i32.const 4096)
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (call $memset
+          (get_local $0)
+          (i32.const 0)
+          (i32.const 1024)
         )
+        (i32.const 4096)
       )
     )
     (return)
@@ -136,9 +132,7 @@
           )
         )
       )
-      (drop
-        (call $block_tail_dup)
-      )
+      (call $block_tail_dup)
       (return
         (get_local $0)
       )
@@ -150,9 +144,7 @@
         (get_local $2)
       )
     )
-    (drop
-      (call $block_tail_dup)
-    )
+    (call $block_tail_dup)
     (return
       (get_local $0)
     )

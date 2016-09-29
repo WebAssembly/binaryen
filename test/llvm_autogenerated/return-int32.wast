@@ -14,21 +14,17 @@
           (get_local $0)
         )
       )
-      (drop
-        (i32.store
-          (i32.const 0)
-          (i32.const 0)
-        )
+      (i32.store
+        (i32.const 0)
+        (i32.const 0)
       )
       (return
         (i32.const 1)
       )
     )
-    (drop
-      (i32.store
-        (i32.const 0)
-        (i32.const 2)
-      )
+    (i32.store
+      (i32.const 0)
+      (i32.const 2)
     )
     (i32.const 3)
   )

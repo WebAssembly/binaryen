@@ -6,10 +6,8 @@
   (export "memory" (memory $0))
   (export "main" (func $main))
   (func $main (result i32)
-    (drop
-      (call $emscripten_asm_const_vi
-        (i32.const 0)
-      )
+    (call $emscripten_asm_const_vi
+      (i32.const 0)
     )
     (return
       (i32.const 0)

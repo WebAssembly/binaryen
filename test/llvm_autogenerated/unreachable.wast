@@ -8,9 +8,7 @@
   (export "f2" (func $f2))
   (export "f3" (func $f3))
   (func $f1 (result i32)
-    (drop
-      (call $abort)
-    )
+    (call $abort)
     (unreachable)
   )
   (func $f2

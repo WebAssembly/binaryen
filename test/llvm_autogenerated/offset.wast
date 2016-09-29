@@ -115,112 +115,90 @@
     )
   )
   (func $store_i32_with_folded_offset (param $0 i32)
-    (drop
-      (i32.store offset=24
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store offset=24
+      (get_local $0)
+      (i32.const 0)
     )
   )
   (func $store_i32_with_folded_gep_offset (param $0 i32)
-    (drop
-      (i32.store offset=24
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store offset=24
+      (get_local $0)
+      (i32.const 0)
     )
   )
   (func $store_i32_with_unfolded_gep_negative_offset (param $0 i32)
-    (drop
-      (i32.store
-        (i32.add
-          (get_local $0)
-          (i32.const -24)
-        )
-        (i32.const 0)
+    (i32.store
+      (i32.add
+        (get_local $0)
+        (i32.const -24)
       )
+      (i32.const 0)
     )
   )
   (func $store_i32_with_unfolded_offset (param $0 i32)
-    (drop
-      (i32.store
-        (i32.add
-          (get_local $0)
-          (i32.const 24)
-        )
-        (i32.const 0)
+    (i32.store
+      (i32.add
+        (get_local $0)
+        (i32.const 24)
       )
+      (i32.const 0)
     )
   )
   (func $store_i32_with_unfolded_gep_offset (param $0 i32)
-    (drop
-      (i32.store
-        (i32.add
-          (get_local $0)
-          (i32.const 24)
-        )
-        (i32.const 0)
+    (i32.store
+      (i32.add
+        (get_local $0)
+        (i32.const 24)
       )
+      (i32.const 0)
     )
   )
   (func $store_i64_with_folded_offset (param $0 i32)
-    (drop
-      (i64.store offset=24
-        (get_local $0)
-        (i64.const 0)
-      )
+    (i64.store offset=24
+      (get_local $0)
+      (i64.const 0)
     )
   )
   (func $store_i64_with_folded_gep_offset (param $0 i32)
-    (drop
-      (i64.store offset=24
-        (get_local $0)
-        (i64.const 0)
-      )
+    (i64.store offset=24
+      (get_local $0)
+      (i64.const 0)
     )
   )
   (func $store_i64_with_unfolded_gep_negative_offset (param $0 i32)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const -24)
-        )
-        (i64.const 0)
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const -24)
       )
+      (i64.const 0)
     )
   )
   (func $store_i64_with_unfolded_offset (param $0 i32)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 24)
-        )
-        (i64.const 0)
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 24)
       )
+      (i64.const 0)
     )
   )
   (func $store_i64_with_unfolded_gep_offset (param $0 i32)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 24)
-        )
-        (i64.const 0)
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 24)
       )
+      (i64.const 0)
     )
   )
   (func $store_i32_with_folded_or_offset (param $0 i32)
-    (drop
-      (i32.store8 offset=2
-        (i32.and
-          (get_local $0)
-          (i32.const -4)
-        )
-        (i32.const 0)
+    (i32.store8 offset=2
+      (i32.and
+        (get_local $0)
+        (i32.const -4)
       )
+      (i32.const 0)
     )
   )
   (func $load_i32_from_numeric_address (result i32)
@@ -234,19 +212,15 @@
     )
   )
   (func $store_i32_to_numeric_address
-    (drop
-      (i32.store offset=42
-        (i32.const 0)
-        (i32.const 0)
-      )
+    (i32.store offset=42
+      (i32.const 0)
+      (i32.const 0)
     )
   )
   (func $store_i32_to_global_address
-    (drop
-      (i32.store offset=12
-        (i32.const 0)
-        (i32.const 0)
-      )
+    (i32.store offset=12
+      (i32.const 0)
+      (i32.const 0)
     )
   )
   (func $load_i8_s_with_folded_offset (param $0 i32) (result i32)
@@ -270,19 +244,15 @@
     )
   )
   (func $store_i8_with_folded_offset (param $0 i32)
-    (drop
-      (i32.store8 offset=24
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store8 offset=24
+      (get_local $0)
+      (i32.const 0)
     )
   )
   (func $store_i8_with_folded_gep_offset (param $0 i32)
-    (drop
-      (i32.store8 offset=24
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store8 offset=24
+      (get_local $0)
+      (i32.const 0)
     )
   )
   (func $aggregate_load_store (param $0 i32) (param $1 i32)
@@ -304,71 +274,51 @@
         (get_local $0)
       )
     )
-    (drop
-      (i32.store offset=12
-        (get_local $1)
-        (i32.load offset=12
-          (get_local $0)
-        )
+    (i32.store offset=12
+      (get_local $1)
+      (i32.load offset=12
+        (get_local $0)
       )
     )
-    (drop
-      (i32.store offset=8
-        (get_local $1)
-        (get_local $4)
-      )
+    (i32.store offset=8
+      (get_local $1)
+      (get_local $4)
     )
-    (drop
-      (i32.store offset=4
-        (get_local $1)
-        (get_local $3)
-      )
+    (i32.store offset=4
+      (get_local $1)
+      (get_local $3)
     )
-    (drop
-      (i32.store
-        (get_local $1)
-        (get_local $2)
-      )
+    (i32.store
+      (get_local $1)
+      (get_local $2)
     )
   )
   (func $aggregate_return (param $0 i32)
-    (drop
-      (i64.store offset=8 align=4
-        (get_local $0)
-        (i64.const 0)
-      )
+    (i64.store offset=8 align=4
+      (get_local $0)
+      (i64.const 0)
     )
-    (drop
-      (i64.store align=4
-        (get_local $0)
-        (i64.const 0)
-      )
+    (i64.store align=4
+      (get_local $0)
+      (i64.const 0)
     )
   )
   (func $aggregate_return_without_merge (param $0 i32)
-    (drop
-      (i32.store8 offset=14
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store8 offset=14
+      (get_local $0)
+      (i32.const 0)
     )
-    (drop
-      (i32.store16 offset=12
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store16 offset=12
+      (get_local $0)
+      (i32.const 0)
     )
-    (drop
-      (i32.store offset=8
-        (get_local $0)
-        (i32.const 0)
-      )
+    (i32.store offset=8
+      (get_local $0)
+      (i32.const 0)
     )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.const 0)
-      )
+    (i64.store
+      (get_local $0)
+      (i64.const 0)
     )
   )
 )

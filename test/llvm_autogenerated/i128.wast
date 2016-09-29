@@ -37,40 +37,36 @@
   (export "masked_rotr" (func $masked_rotr))
   (func $add128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i64)
-    (drop
-      (i64.store
-        (get_local $0)
-        (tee_local $5
-          (i64.add
-            (get_local $1)
-            (get_local $3)
-          )
+    (i64.store
+      (get_local $0)
+      (tee_local $5
+        (i64.add
+          (get_local $1)
+          (get_local $3)
         )
       )
     )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.add
         (i64.add
-          (i64.add
-            (get_local $2)
-            (get_local $4)
-          )
-          (select
-            (i64.const 1)
-            (i64.extend_u/i32
-              (i64.lt_u
-                (get_local $5)
-                (get_local $1)
-              )
-            )
+          (get_local $2)
+          (get_local $4)
+        )
+        (select
+          (i64.const 1)
+          (i64.extend_u/i32
             (i64.lt_u
               (get_local $5)
-              (get_local $3)
+              (get_local $1)
             )
+          )
+          (i64.lt_u
+            (get_local $5)
+            (get_local $3)
           )
         )
       )
@@ -78,31 +74,27 @@
     (return)
   )
   (func $sub128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.sub
-          (get_local $1)
-          (get_local $3)
-        )
+    (i64.store
+      (get_local $0)
+      (i64.sub
+        (get_local $1)
+        (get_local $3)
       )
     )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.sub
         (i64.sub
-          (i64.sub
-            (get_local $2)
-            (get_local $4)
-          )
-          (i64.extend_u/i32
-            (i64.lt_u
-              (get_local $1)
-              (get_local $3)
-            )
+          (get_local $2)
+          (get_local $4)
+        )
+        (i64.extend_u/i32
+          (i64.lt_u
+            (get_local $1)
+            (get_local $3)
           )
         )
       )
@@ -111,683 +103,571 @@
   )
   (func $mul128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__multi3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (get_local $3)
-        (get_local $4)
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__multi3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (get_local $3)
+      (get_local $4)
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $sdiv128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__divti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (get_local $3)
-        (get_local $4)
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__divti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (get_local $3)
+      (get_local $4)
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $udiv128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__udivti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (get_local $3)
-        (get_local $4)
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__udivti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (get_local $3)
+      (get_local $4)
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $srem128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__modti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (get_local $3)
-        (get_local $4)
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__modti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (get_local $3)
+      (get_local $4)
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $urem128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__umodti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (get_local $3)
-        (get_local $4)
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__umodti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (get_local $3)
+      (get_local $4)
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $and128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.and
-          (get_local $2)
-          (get_local $4)
-        )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.and
+        (get_local $2)
+        (get_local $4)
       )
     )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.and
-          (get_local $1)
-          (get_local $3)
-        )
+    (i64.store
+      (get_local $0)
+      (i64.and
+        (get_local $1)
+        (get_local $3)
       )
     )
     (return)
   )
   (func $or128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.or
-          (get_local $2)
-          (get_local $4)
-        )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.or
+        (get_local $2)
+        (get_local $4)
       )
     )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.or
-          (get_local $1)
-          (get_local $3)
-        )
+    (i64.store
+      (get_local $0)
+      (i64.or
+        (get_local $1)
+        (get_local $3)
       )
     )
     (return)
   )
   (func $xor128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.xor
-          (get_local $2)
-          (get_local $4)
-        )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.xor
+        (get_local $2)
+        (get_local $4)
       )
     )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.xor
-          (get_local $1)
-          (get_local $3)
-        )
+    (i64.store
+      (get_local $0)
+      (i64.xor
+        (get_local $1)
+        (get_local $3)
       )
     )
     (return)
   )
   (func $shl128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__ashlti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (get_local $3)
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__ashlti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (get_local $3)
+      )
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $shr128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__lshrti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (get_local $3)
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__lshrti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (get_local $3)
+      )
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $sar128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 16)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__ashrti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (get_local $3)
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.load
-          (i32.add
-            (get_local $5)
-            (i32.const 8)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.load
-          (get_local $5)
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 16)
         )
+      )
+    )
+    (call $__ashrti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (get_local $3)
+      )
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.load
+        (i32.add
+          (get_local $5)
+          (i32.const 8)
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.load
+        (get_local $5)
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
       )
     )
     (return)
   )
   (func $clz128 (param $0 i32) (param $1 i64) (param $2 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.const 0)
-      )
-    )
-    (drop
-      (i64.store
+    (i64.store
+      (i32.add
         (get_local $0)
-        (select
+        (i32.const 8)
+      )
+      (i64.const 0)
+    )
+    (i64.store
+      (get_local $0)
+      (select
+        (i64.clz
+          (get_local $2)
+        )
+        (i64.add
           (i64.clz
-            (get_local $2)
+            (get_local $1)
           )
-          (i64.add
-            (i64.clz
-              (get_local $1)
-            )
-            (i64.const 64)
-          )
-          (i64.ne
-            (get_local $2)
-            (i64.const 0)
-          )
+          (i64.const 64)
+        )
+        (i64.ne
+          (get_local $2)
+          (i64.const 0)
         )
       )
     )
     (return)
   )
   (func $clz128_zero_undef (param $0 i32) (param $1 i64) (param $2 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.const 0)
-      )
-    )
-    (drop
-      (i64.store
+    (i64.store
+      (i32.add
         (get_local $0)
-        (select
+        (i32.const 8)
+      )
+      (i64.const 0)
+    )
+    (i64.store
+      (get_local $0)
+      (select
+        (i64.clz
+          (get_local $2)
+        )
+        (i64.add
           (i64.clz
-            (get_local $2)
+            (get_local $1)
           )
-          (i64.add
-            (i64.clz
-              (get_local $1)
-            )
-            (i64.const 64)
-          )
-          (i64.ne
-            (get_local $2)
-            (i64.const 0)
-          )
+          (i64.const 64)
+        )
+        (i64.ne
+          (get_local $2)
+          (i64.const 0)
         )
       )
     )
     (return)
   )
   (func $ctz128 (param $0 i32) (param $1 i64) (param $2 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.const 0)
-      )
-    )
-    (drop
-      (i64.store
+    (i64.store
+      (i32.add
         (get_local $0)
-        (select
+        (i32.const 8)
+      )
+      (i64.const 0)
+    )
+    (i64.store
+      (get_local $0)
+      (select
+        (i64.ctz
+          (get_local $1)
+        )
+        (i64.add
           (i64.ctz
-            (get_local $1)
+            (get_local $2)
           )
-          (i64.add
-            (i64.ctz
-              (get_local $2)
-            )
-            (i64.const 64)
-          )
-          (i64.ne
-            (get_local $1)
-            (i64.const 0)
-          )
+          (i64.const 64)
+        )
+        (i64.ne
+          (get_local $1)
+          (i64.const 0)
         )
       )
     )
     (return)
   )
   (func $ctz128_zero_undef (param $0 i32) (param $1 i64) (param $2 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.const 0)
-      )
-    )
-    (drop
-      (i64.store
+    (i64.store
+      (i32.add
         (get_local $0)
-        (select
+        (i32.const 8)
+      )
+      (i64.const 0)
+    )
+    (i64.store
+      (get_local $0)
+      (select
+        (i64.ctz
+          (get_local $1)
+        )
+        (i64.add
           (i64.ctz
-            (get_local $1)
+            (get_local $2)
           )
-          (i64.add
-            (i64.ctz
-              (get_local $2)
-            )
-            (i64.const 64)
-          )
-          (i64.ne
-            (get_local $1)
-            (i64.const 0)
-          )
+          (i64.const 64)
+        )
+        (i64.ne
+          (get_local $1)
+          (i64.const 0)
         )
       )
     )
     (return)
   )
   (func $popcnt128 (param $0 i32) (param $1 i64) (param $2 i64)
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.const 0)
-      )
-    )
-    (drop
-      (i64.store
+    (i64.store
+      (i32.add
         (get_local $0)
-        (i64.add
-          (i64.popcnt
-            (get_local $1)
-          )
-          (i64.popcnt
-            (get_local $2)
-          )
+        (i32.const 8)
+      )
+      (i64.const 0)
+    )
+    (i64.store
+      (get_local $0)
+      (i64.add
+        (i64.popcnt
+          (get_local $1)
+        )
+        (i64.popcnt
+          (get_local $2)
         )
       )
     )
@@ -805,370 +685,322 @@
   )
   (func $rotl (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 32)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
+          (i32.const 32)
         )
       )
     )
-    (drop
-      (call $__ashlti3
-        (i32.add
-          (get_local $5)
-          (i32.const 16)
-        )
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
+    (call $__ashlti3
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
+      )
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (get_local $3)
+      )
+    )
+    (call $__lshrti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (i64.sub
+          (i64.const 128)
           (get_local $3)
         )
       )
     )
-    (drop
-      (call $__lshrti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (i64.sub
-            (i64.const 128)
-            (get_local $3)
-          )
-        )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
       )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.or
-          (i64.load
-            (i32.add
-              (i32.add
-                (get_local $5)
-                (i32.const 16)
-              )
-              (i32.const 8)
-            )
-          )
-          (i64.load
+      (i64.or
+        (i64.load
+          (i32.add
             (i32.add
               (get_local $5)
-              (i32.const 8)
+              (i32.const 16)
             )
+            (i32.const 8)
+          )
+        )
+        (i64.load
+          (i32.add
+            (get_local $5)
+            (i32.const 8)
           )
         )
       )
     )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.or
-          (i64.load offset=16
-            (get_local $5)
-          )
-          (i64.load
-            (get_local $5)
-          )
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
+    (i64.store
+      (get_local $0)
+      (i64.or
+        (i64.load offset=16
           (get_local $5)
-          (i32.const 32)
         )
+        (i64.load
+          (get_local $5)
+        )
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 32)
       )
     )
     (return)
   )
   (func $masked_rotl (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 32)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__ashlti3
-        (i32.add
-          (get_local $5)
-          (i32.const 16)
-        )
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (tee_local $3
-            (i64.and
-              (get_local $3)
-              (i64.const 127)
-            )
-          )
-        )
-      )
-    )
-    (drop
-      (call $__lshrti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (i64.sub
-            (i64.const 128)
-            (get_local $3)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.or
-          (i64.load
-            (i32.add
-              (i32.add
-                (get_local $5)
-                (i32.const 16)
-              )
-              (i32.const 8)
-            )
-          )
-          (i64.load
-            (i32.add
-              (get_local $5)
-              (i32.const 8)
-            )
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.or
-          (i64.load offset=16
-            (get_local $5)
-          )
-          (i64.load
-            (get_local $5)
-          )
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 32)
         )
+      )
+    )
+    (call $__ashlti3
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
+      )
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (tee_local $3
+          (i64.and
+            (get_local $3)
+            (i64.const 127)
+          )
+        )
+      )
+    )
+    (call $__lshrti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (i64.sub
+          (i64.const 128)
+          (get_local $3)
+        )
+      )
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.or
+        (i64.load
+          (i32.add
+            (i32.add
+              (get_local $5)
+              (i32.const 16)
+            )
+            (i32.const 8)
+          )
+        )
+        (i64.load
+          (i32.add
+            (get_local $5)
+            (i32.const 8)
+          )
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.or
+        (i64.load offset=16
+          (get_local $5)
+        )
+        (i64.load
+          (get_local $5)
+        )
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 32)
       )
     )
     (return)
   )
   (func $rotr (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 32)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
+          (i32.const 32)
         )
       )
     )
-    (drop
-      (call $__lshrti3
-        (i32.add
-          (get_local $5)
-          (i32.const 16)
-        )
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
+    (call $__lshrti3
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
+      )
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (get_local $3)
+      )
+    )
+    (call $__ashlti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (i64.sub
+          (i64.const 128)
           (get_local $3)
         )
       )
     )
-    (drop
-      (call $__ashlti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (i64.sub
-            (i64.const 128)
-            (get_local $3)
-          )
-        )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
       )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.or
-          (i64.load
-            (i32.add
-              (i32.add
-                (get_local $5)
-                (i32.const 16)
-              )
-              (i32.const 8)
-            )
-          )
-          (i64.load
+      (i64.or
+        (i64.load
+          (i32.add
             (i32.add
               (get_local $5)
-              (i32.const 8)
+              (i32.const 16)
             )
+            (i32.const 8)
+          )
+        )
+        (i64.load
+          (i32.add
+            (get_local $5)
+            (i32.const 8)
           )
         )
       )
     )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.or
-          (i64.load offset=16
-            (get_local $5)
-          )
-          (i64.load
-            (get_local $5)
-          )
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
+    (i64.store
+      (get_local $0)
+      (i64.or
+        (i64.load offset=16
           (get_local $5)
-          (i32.const 32)
         )
+        (i64.load
+          (get_local $5)
+        )
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 32)
       )
     )
     (return)
   )
   (func $masked_rotr (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i32)
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (tee_local $5
-          (i32.sub
-            (i32.load offset=4
-              (i32.const 0)
-            )
-            (i32.const 32)
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $5
+        (i32.sub
+          (i32.load offset=4
+            (i32.const 0)
           )
-        )
-      )
-    )
-    (drop
-      (call $__lshrti3
-        (i32.add
-          (get_local $5)
-          (i32.const 16)
-        )
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (tee_local $3
-            (i64.and
-              (get_local $3)
-              (i64.const 127)
-            )
-          )
-        )
-      )
-    )
-    (drop
-      (call $__ashlti3
-        (get_local $5)
-        (get_local $1)
-        (get_local $2)
-        (i32.wrap/i64
-          (i64.sub
-            (i64.const 128)
-            (get_local $3)
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (i32.add
-          (get_local $0)
-          (i32.const 8)
-        )
-        (i64.or
-          (i64.load
-            (i32.add
-              (i32.add
-                (get_local $5)
-                (i32.const 16)
-              )
-              (i32.const 8)
-            )
-          )
-          (i64.load
-            (i32.add
-              (get_local $5)
-              (i32.const 8)
-            )
-          )
-        )
-      )
-    )
-    (drop
-      (i64.store
-        (get_local $0)
-        (i64.or
-          (i64.load offset=16
-            (get_local $5)
-          )
-          (i64.load
-            (get_local $5)
-          )
-        )
-      )
-    )
-    (drop
-      (i32.store offset=4
-        (i32.const 0)
-        (i32.add
-          (get_local $5)
           (i32.const 32)
         )
+      )
+    )
+    (call $__lshrti3
+      (i32.add
+        (get_local $5)
+        (i32.const 16)
+      )
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (tee_local $3
+          (i64.and
+            (get_local $3)
+            (i64.const 127)
+          )
+        )
+      )
+    )
+    (call $__ashlti3
+      (get_local $5)
+      (get_local $1)
+      (get_local $2)
+      (i32.wrap/i64
+        (i64.sub
+          (i64.const 128)
+          (get_local $3)
+        )
+      )
+    )
+    (i64.store
+      (i32.add
+        (get_local $0)
+        (i32.const 8)
+      )
+      (i64.or
+        (i64.load
+          (i32.add
+            (i32.add
+              (get_local $5)
+              (i32.const 16)
+            )
+            (i32.const 8)
+          )
+        )
+        (i64.load
+          (i32.add
+            (get_local $5)
+            (i32.const 8)
+          )
+        )
+      )
+    )
+    (i64.store
+      (get_local $0)
+      (i64.or
+        (i64.load offset=16
+          (get_local $5)
+        )
+        (i64.load
+          (get_local $5)
+        )
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.add
+        (get_local $5)
+        (i32.const 32)
       )
     )
     (return)

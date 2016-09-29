@@ -21,9 +21,7 @@
     )
   )
   (func $__needs_exit (result i32)
-    (drop
-      (call $__exit)
-    )
+    (call $__exit)
     (return
       (i32.const 1)
     )

@@ -93,92 +93,72 @@
     )
   )
   (func $sti32_a1 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store align=1
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store align=1
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti32_a2 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store align=2
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store align=2
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti32_a4 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti32 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti32_a8 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti8_a1 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store8
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store8
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti8_a2 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store8
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store8
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti16_a1 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store16 align=1
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store16 align=1
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti16_a2 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store16
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store16
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
   (func $sti16_a4 (param $0 i32) (param $1 i32)
-    (drop
-      (i32.store16
-        (get_local $0)
-        (get_local $1)
-      )
+    (i32.store16
+      (get_local $0)
+      (get_local $1)
     )
     (return)
   )
