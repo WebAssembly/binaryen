@@ -199,7 +199,7 @@ struct LegalizeJSInterface : public Pass {
           if (iter == illegalToLegal->end()) return;
 
           if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
-          replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type == i64 ? i32 : curr->type));
+          replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
         }
       };
 
@@ -300,13 +300,17 @@ private:
     }
 
     if (im->functionType->result == i64) {
-      func->body = recreateI64(builder, call, builder.makeCall(
-        GET_TEMP_RET0,
-        {},
-        i32
-      ));
+      call->type = i32;
+      Expression* get;
+      if (module->checkGlobal(TEMP_RET_0)) {
+        get = builder.makeGetGlobal(TEMP_RET_0, i32);
+      } else {
+        get = builder.makeUnreachable(); // no way to emit the high bits :(
+      }
+      func->body = recreateI64(builder, call, get);
       type->result = i32;
     } else {
+      call->type = im->functionType->result;
       func->body = call;
       type->result = im->functionType->result;
     }

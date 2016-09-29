@@ -1,8 +1,12 @@
 (module
   (type $FUNCSIG$vdji (func (param f64 i64 i32)))
+  (type $FUNCSIG$j (func (result i64)))
   (type $legaltype$illegalImport (func (param f64 i32 i32 i32)))
+  (type $legaltype$illegalImportResult (func (result i32)))
   (import "env" "illegalImport" (func $illegalImport (param f64 i64 i32)))
+  (import "env" "illegalImportResult" (func $illegalImportResult (result i64)))
   (import "env" "illegalImport" (func $legalimport$illegalImport (param f64 i32 i32 i32)))
+  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
   (import "env" "memory" (memory 256 256))
   (import "env" "table" (table 0 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
@@ -273,11 +277,14 @@
       )
     )
   )
-  (func $imports
+  (func $imports (result i64)
     (call $legalfunc$illegalImport
       (f64.const -3.13159)
       (i64.const 94489280523)
       (i32.const -33)
+    )
+    (return
+      (call $legalfunc$illegalImportResult)
     )
   )
   (func $arg (param $x i64)
@@ -442,6 +449,19 @@
         )
       )
       (get_local $2)
+    )
+  )
+  (func $legalfunc$illegalImportResult (result i64)
+    (i64.or
+      (i64.extend_u/i32
+        (call $legalimport$illegalImportResult)
+      )
+      (i64.shl
+        (i64.extend_u/i32
+          (unreachable)
+        )
+        (i64.const 32)
+      )
     )
   )
 )
