@@ -149,3 +149,8 @@ va-arg-22.c.s.wast # memcpy
 va-arg-21.c.s.wast # malloc
 vprintf-chk-1.c.s.wast # vprintf
 vprintf-1.c.s.wast # vprintf
+
+# new in 0xc
+20021118-2.c.s.wast # [parse exception: no table]
+921208-1.c.s.wast # [parse exception: no table]
+930126-1.c.s.wast # called abort()

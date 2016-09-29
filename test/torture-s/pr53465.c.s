@@ -15,31 +15,31 @@ foo:                                    # @foo
 	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %for.body.preheader
 	i32.const	$3=, 0
-	i32.const	$4=, 0
-                                        # implicit-def: %vreg30
+                                        # implicit-def: %vreg29
+	i32.const	$5=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	copy_local	$2=, $5
+	copy_local	$2=, $4
 	i32.load	$push5=, 0($0)
-	tee_local	$push4=, $5=, $pop5
+	tee_local	$push4=, $4=, $pop5
 	i32.eqz 	$push10=, $pop4
 	br_if   	1, $pop10       # 1: down to label3
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	block
-	i32.eqz 	$push11=, $4
+	i32.eqz 	$push11=, $5
 	br_if   	0, $pop11       # 0: down to label4
 # BB#4:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.le_s	$push1=, $5, $2
+	i32.le_s	$push1=, $4, $2
 	br_if   	4, $pop1        # 4: down to label0
 .LBB0_5:                                # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label4:
 	i32.const	$push9=, 4
 	i32.add 	$0=, $0, $pop9
-	i32.const	$4=, 1
+	i32.const	$5=, 1
 	i32.const	$push8=, 1
 	i32.add 	$push7=, $3, $pop8
 	tee_local	$push6=, $3=, $pop7

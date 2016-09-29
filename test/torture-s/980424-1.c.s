@@ -71,15 +71,6 @@ main:                                   # @main
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 
-	.hidden	i                       # @i
-	.type	i,@object
-	.section	.bss.i,"aw",@nobits
-	.globl	i
-	.p2align	2
-i:
-	.int32	0                       # 0x0
-	.size	i, 4
-
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -88,6 +79,15 @@ i:
 a:
 	.skip	396
 	.size	a, 396
+
+	.hidden	i                       # @i
+	.type	i,@object
+	.section	.bss.i,"aw",@nobits
+	.globl	i
+	.p2align	2
+i:
+	.int32	0                       # 0x0
+	.size	i, 4
 
 
 	.ident	"clang version 4.0.0 "

@@ -15,7 +15,7 @@ foo:                                    # @foo
 	i32.const	$push0=, -1
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %if.end
+# BB#1:                                 # %for.cond.preheader
 	i32.const	$5=, 0
 	i32.const	$push23=, 0
 	i32.load	$4=, t($pop23)
@@ -23,7 +23,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 1
 	i32.lt_s	$push4=, $3, $pop3
 	br_if   	0, $pop4        # 0: down to label2
-# BB#2:                                 # %if.end
+# BB#2:                                 # %for.cond.preheader
 	i32.const	$push5=, 12
 	i32.mul 	$push6=, $0, $pop5
 	i32.add 	$push7=, $4, $pop6

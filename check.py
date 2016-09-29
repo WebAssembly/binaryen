@@ -55,6 +55,10 @@ os.environ['BINARYEN'] = os.getcwd()
 
 def fetch_waterfall():
   rev = open(os.path.join('test', 'revision')).read().strip()
+  buildername = { 'linux2':'linux',
+                  'darwin':'mac',
+                  'win32':'windows',
+                  'cygwin':'windows' }[sys.platform]
   try:
     local_rev = open(os.path.join('test', 'local-revision')).read().strip()
   except:
@@ -62,7 +66,7 @@ def fetch_waterfall():
   if local_rev == rev: return
   # fetch it
   basename = 'wasm-binaries-' + rev + '.tbz2'
-  url = 'https://storage.googleapis.com/wasm-llvm/builds/git/' + basename
+  url = '/'.join(['https://storage.googleapis.com/wasm-llvm/builds', buildername, rev, basename])
   print '(downloading waterfall %s: %s)' % (rev, url)
   downloaded = urllib2.urlopen(url).read().strip()
   fullname = os.path.join('test', basename)
@@ -541,7 +545,7 @@ run_command(cmd, expected_status=1)
 cmd = [wasm_as, '--validate=none', os.path.join('test', 'validator', 'invalid_return.wast')]
 run_command(cmd)
 
-if torture and 0:
+if torture:
 
   print '\n[ checking torture testcases... ]\n'
 

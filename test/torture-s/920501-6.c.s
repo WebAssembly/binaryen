@@ -229,7 +229,7 @@ plist:                                  # @plist
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-	.local  	i32, i64, i32, i64, i64, i32, i32
+	.local  	i32, i32, i64, i64, i64, i32, i32
 # BB#0:                                 # %for.cond.i.preheader.i.preheader
 	i32.const	$push30=, 0
 	i32.const	$push27=, 0
@@ -238,15 +238,15 @@ main:                                   # @main
 	i32.sub 	$push32=, $pop28, $pop29
 	tee_local	$push31=, $8=, $pop32
 	i32.store	$drop=, __stack_pointer($pop30), $pop31
-	i64.const	$3=, 1234111111
-	copy_local	$4=, $8
+	i64.const	$4=, 1234111111
+	copy_local	$3=, $8
 .LBB3_1:                                # %for.cond.i.preheader.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB3_2 Depth 2
                                         #     Child Loop BB3_4 Depth 2
                                         #     Child Loop BB3_7 Depth 2
 	loop                            # label18:
-	copy_local	$5=, $3
+	copy_local	$5=, $4
 	i64.const	$6=, 0
 .LBB3_2:                                # %for.cond.i.i
                                         #   Parent Loop BB3_1 Depth=1
@@ -280,7 +280,7 @@ main:                                   # @main
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label22:
-	i64.div_u	$push49=, $3, $6
+	i64.div_u	$push49=, $4, $6
 	tee_local	$push48=, $5=, $pop49
 	i64.add 	$push6=, $5, $6
 	i64.const	$push47=, 1
@@ -306,7 +306,7 @@ main:                                   # @main
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label26:
 	i64.extend_u/i32	$push9=, $7
-	i64.rem_u	$push10=, $3, $pop9
+	i64.rem_u	$push10=, $4, $pop9
 	i64.eqz 	$push11=, $pop10
 	br_if   	3, $pop11       # 3: down to label24
 # BB#8:                                 # %for.cond1.i
@@ -320,22 +320,22 @@ main:                                   # @main
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop                        # label27:
 	end_block                       # label25:
-	i64.store	$drop=, 0($4), $3
+	i64.store	$drop=, 0($3), $4
 	i32.const	$push56=, 8
-	i32.add 	$4=, $4, $pop56
+	i32.add 	$3=, $3, $pop56
 .LBB3_10:                               # %for.inc6.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_block                       # label24:
 	i64.const	$push60=, 2
-	i64.add 	$push59=, $3, $pop60
-	tee_local	$push58=, $3=, $pop59
+	i64.add 	$push59=, $4, $pop60
+	tee_local	$push58=, $4=, $pop59
 	i64.const	$push57=, 1234111128
 	i64.lt_u	$push13=, $pop58, $pop57
 	br_if   	0, $pop13       # 0: up to label18
 # BB#11:                                # %plist.exit
 	end_loop                        # label19:
 	i64.const	$push14=, 0
-	i64.store	$drop=, 0($4), $pop14
+	i64.store	$drop=, 0($3), $pop14
 	block
 	i64.load	$push16=, 0($8)
 	i64.const	$push15=, 1234111117

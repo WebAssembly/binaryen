@@ -35,8 +35,8 @@ bar:                                    # @bar
 	i32.lt_s	$push2=, $0, $pop11
 	br_if   	0, $pop2        # 0: down to label1
 # BB#3:                                 # %for.body.preheader
-	copy_local	$4=, $2
-	copy_local	$5=, $0
+	copy_local	$4=, $0
+	copy_local	$5=, $2
 .LBB1_4:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
@@ -52,14 +52,14 @@ bar:                                    # @bar
 	i32.lt_u	$push3=, $3, $pop17
 	i32.select	$push7=, $pop4, $pop6, $pop3
 	i32.load8_u	$push8=, 0($pop7)
-	i32.store8	$drop=, 0($4), $pop8
-	i32.const	$push16=, 2
-	i32.add 	$1=, $1, $pop16
-	i32.const	$push15=, 1
-	i32.add 	$4=, $4, $pop15
+	i32.store8	$drop=, 0($5), $pop8
+	i32.const	$push16=, 1
+	i32.add 	$5=, $5, $pop16
+	i32.const	$push15=, 2
+	i32.add 	$1=, $1, $pop15
 	i32.const	$push14=, -1
-	i32.add 	$push13=, $5, $pop14
-	tee_local	$push12=, $5=, $pop13
+	i32.add 	$push13=, $4, $pop14
+	tee_local	$push12=, $4=, $pop13
 	br_if   	0, $pop12       # 0: up to label2
 .LBB1_5:                                # %for.end
 	end_loop                        # label3:

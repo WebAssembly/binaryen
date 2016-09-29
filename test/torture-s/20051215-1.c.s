@@ -16,8 +16,8 @@ foo:                                    # @foo
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.lr.ph
 	i32.const	$3=, 0
-	i32.const	$5=, 0
 	i32.const	$4=, 0
+	i32.const	$5=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
@@ -28,7 +28,7 @@ foo:                                    # @foo
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$push1=, 0($2)
 	i32.mul 	$4=, $pop1, $3
-.LBB0_4:                                # %for.cond1.preheader
+.LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
 	i32.mul 	$push3=, $4, $0

@@ -5,7 +5,7 @@
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
-# BB#0:                                 # %if.end8
+# BB#0:                                 # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -16,7 +16,7 @@ test1:                                  # @test1
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
-# BB#0:                                 # %if.end8
+# BB#0:                                 # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:

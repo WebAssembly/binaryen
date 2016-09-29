@@ -7,23 +7,23 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, 1
-	i32.const	$push14=, 1
-	i32.const	$push13=, 1
-	i32.const	$push2=, -1
+	block
+	block
 	i32.const	$push0=, 13
-	i32.ne  	$push1=, $0, $pop0
-	i32.select	$push4=, $pop13, $pop2, $pop1
-	i32.const	$push12=, -1
-	i32.select	$push5=, $pop4, $pop12, $0
-	i32.const	$push6=, 5
-	i32.eq  	$push7=, $0, $pop6
-	i32.select	$push8=, $pop14, $pop5, $pop7
-	i32.const	$push9=, 20
-	i32.eq  	$push10=, $0, $pop9
-	i32.select	$push11=, $pop3, $pop8, $pop10
-                                        # fallthrough-return: $pop11
+	i32.eq  	$push1=, $0, $pop0
+	br_if   	0, $pop1        # 0: down to label1
+# BB#1:                                 # %entry
+	i32.const	$1=, 1
+	br_if   	1, $0           # 1: down to label0
+.LBB0_2:                                # %if.end
+	end_block                       # label1:
+	i32.const	$1=, -1
+.LBB0_3:                                # %return
+	end_block                       # label0:
+	copy_local	$push2=, $1
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -40,7 +40,7 @@ main:                                   # @main
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label1:
+	loop                            # label3:
 	i32.call	$push6=, foo@FUNCTION, $0
 	i32.const	$push13=, 1
 	i32.eqz 	$push2=, $0
@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.shl 	$push1=, $pop0, $pop10
 	i32.sub 	$push5=, $pop4, $pop1
 	i32.ne  	$push7=, $pop6, $pop5
-	br_if   	2, $pop7        # 2: down to label0
+	br_if   	2, $pop7        # 2: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push17=, 1
@@ -61,13 +61,13 @@ main:                                   # @main
 	tee_local	$push15=, $0=, $pop16
 	i32.const	$push14=, 29
 	i32.le_s	$push8=, $pop15, $pop14
-	br_if   	0, $pop8        # 0: up to label1
+	br_if   	0, $pop8        # 0: up to label3
 # BB#3:                                 # %for.end
-	end_loop                        # label2:
+	end_loop                        # label4:
 	i32.const	$push9=, 0
 	return  	$pop9
 .LBB1_4:                                # %if.then
-	end_block                       # label0:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
