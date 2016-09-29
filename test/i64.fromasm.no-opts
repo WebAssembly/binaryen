@@ -309,6 +309,16 @@
         (get_local $x)
       )
     )
+    (set_local $x
+      (i64.clz
+        (get_local $y)
+      )
+    )
+    (set_local $y
+      (i64.ctz
+        (get_local $x)
+      )
+    )
   )
   (func $imports
     (call $legalfunc$illegalImport

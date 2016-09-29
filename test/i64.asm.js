@@ -72,6 +72,9 @@ function asm(global, env, buffer) {
     // bitcasts
     x = i64_bc2i(float64);
     float64 = i64_bc2d(x);
+    // intrinsics
+    x = i64_ctlz(y);
+    y = i64_cttz(x);
   }
   function imports() {
     illegalImport(-3.13159, i64_const(11, 22), -33); // this call must be legalized

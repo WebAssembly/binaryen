@@ -82,6 +82,8 @@ Name I64("i64"),
      I64_D2U("i64_d2u"),
      I64_BC2D("i64_bc2d"),
      I64_BC2I("i64_bc2i"),
+     I64_CTTZ("i64_cttz"),
+     I64_CTLZ("i64_ctlz"),
      SET_TEMP_RET0("setTempRet0"),
      I64S_REM("i64s-rem"),
      I64U_REM("i64u-rem"),
@@ -1749,6 +1751,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_D2U) return builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
             if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
             if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
+            if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
+            if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
           } else if (num == 2) { // 2 params,binary
             if (name == I64_CONST) {
               uint64_t low = ast[2][0][1]->getNumber();

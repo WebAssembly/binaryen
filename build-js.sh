@@ -81,6 +81,8 @@ echo "building wasm.js"
   #-DWASM_JS_DEBUG
   #-DWASM_INTERPRETER_DEBUG=2
 
+exit 0
+
 echo "building binaryen.js"
 
 if [ "$1" != "-g" ]; then

@@ -686,7 +686,7 @@ if has_emcc:
 
   print '\n[ checking wasm.js methods... ]\n'
 
-  for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary', 'asmjs,interpret-binary', 'interpret-binary,asmjs']:
+  for method_init in ['interpret-s-expr', 'asmjs', 'interpret-binary', 'asmjs,interpret-binary', 'interpret-binary,asmjs']:
     # check success and failure for simple modes, only success for combined/fallback ones
     for success in [1, 0] if ',' not in method_init else [1]:
       method = method_init
