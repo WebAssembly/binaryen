@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (data (i32.const 16) "\d2\04\00\00\00\00\00\00)\t\00\00")
   (type $FUNCSIG$v (func))
   (export "memory" (memory $0))

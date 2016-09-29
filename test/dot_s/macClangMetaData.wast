@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (data (i32.const 16) "Hello, World!\00")
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (import "env" "puts" (func $puts (param i32) (result i32)))

@@ -1,5 +1,5 @@
 (module
-  (memory 1 1)
+  (memory $0 1 1)
   (start $main)
   (type $i (func (result i32)))
   (type $v (func))
@@ -268,7 +268,7 @@
   )
 )
 (module
-  (memory 1 1)
+  (memory $0 1 1)
   (start $main)
   (type $i (func (result i32)))
   (type $v (func))

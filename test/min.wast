@@ -1,5 +1,5 @@
 (module
-  (memory 256 256)
+  (memory $0 256 256)
   (type $0 (func (param f32) (result f32)))
   (type $1 (func (param i32 i32) (result f32)))
   (type $2 (func (param i32) (result i32)))

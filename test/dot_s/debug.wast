@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (export "memory" (memory $0))
   (export "fib" (func $fib))
   (func $fib (param $0 i32) (result i32)

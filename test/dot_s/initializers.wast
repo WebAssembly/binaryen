@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (export "memory" (memory $0))
   (export "main" (func $main))
   (export "f1" (func $f1))

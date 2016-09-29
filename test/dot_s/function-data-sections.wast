@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (data (i32.const 12) "\00\00\00\00")
   (data (i32.const 16) "\01\00\00\00")
   (data (i32.const 20) "33\13@")

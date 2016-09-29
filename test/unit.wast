@@ -1,5 +1,5 @@
 (module
-  (memory 4096 4096)
+  (memory $0 4096 4096)
   (data (i32.const 1026) "\14\00")
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$v (func))
