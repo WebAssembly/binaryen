@@ -91,14 +91,12 @@ function asm(global, env, buffer) {
     i64_store(100, x, 0);
     illegalParam(0, i64(x), 12.34); // "coercion"/"cast"
   }
-/*
   function result() { // illegal result, but not exported
     return i64_const(1, 2);
   }
-  function illegalResult() { // illegal result, but not exported
+  function illegalResult() { // illegal result, exported
     return i64_const(1, 2);
   }
-*/
   function call1(x) {
     x = i64(x);
     var y = i64();
@@ -140,6 +138,6 @@ function asm(global, env, buffer) {
    return $$0 | 0;
   }
 
-  return { test: test, illegalParam : illegalParam, /* illegalResult: illegalResult */ };
+  return { test: test, illegalParam : illegalParam, illegalResult: illegalResult };
 }
 

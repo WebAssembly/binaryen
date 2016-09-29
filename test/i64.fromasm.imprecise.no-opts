@@ -9,6 +9,7 @@
   (import "env" "tableBase" (global $tableBase i32))
   (export "test" (func $test))
   (export "illegalParam" (func $legalstub$illegalParam))
+  (export "illegalResult" (func $legalstub$illegalResult))
   (func $test
     (local $x i64)
     (local $y i64)
@@ -299,6 +300,16 @@
       (f64.const 12.34)
     )
   )
+  (func $result (result i64)
+    (return
+      (i64.const 8589934593)
+    )
+  )
+  (func $illegalResult (result i64)
+    (return
+      (i64.const 8589934593)
+    )
+  )
   (func $call1 (param $x i64) (result i64)
     (local $y i64)
     (set_local $y
@@ -406,6 +417,16 @@
         )
       )
       (get_local $3)
+    )
+  )
+  (func $legalstub$illegalResult (result i32)
+    (local $0 i64)
+    (set_local $0
+      (call $illegalResult)
+    )
+    (unreachable)
+    (i32.wrap/i64
+      (get_local $0)
     )
   )
   (func $legalfunc$illegalImport (param $0 f64) (param $1 i64) (param $2 i32)

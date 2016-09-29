@@ -230,6 +230,7 @@ private:
 
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
+    call->type = func->result;
 
     for (auto param : func->params) {
       if (param == i64) {
@@ -247,12 +248,17 @@ private:
       auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
-      block->list.push_back(builder.makeCall(
-        SET_TEMP_RET0,
-        { getI64High(builder, index) },
-        none
-      ));
+      if (module->checkFunction(SET_TEMP_RET0)) {
+        block->list.push_back(builder.makeCall(
+          SET_TEMP_RET0,
+          { getI64High(builder, index) },
+          none
+        ));
+      } else {
+        block->list.push_back(builder.makeUnreachable()); // no way to emit the high bits :(
+      }
       block->list.push_back(getI64Low(builder, index));
+      block->finalize();
       legal->body = block;
     } else {
       legal->result = func->result;
