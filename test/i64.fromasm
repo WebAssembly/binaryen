@@ -95,6 +95,9 @@
     )
     (i64.const 245127260211081)
   )
+  (func $returnCastConst (result i64)
+    (i64.const 0)
+  )
   (func $legalstub$illegalParam (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
     (call $illegalParam
       (get_local $0)

@@ -1685,7 +1685,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto num = ast[2]->size();
           if (num == 1) {
             auto* value = process(ast[2][0]);
-            if (name == I64) return value; // no-op "coercion" / "cast"
+            if (name == I64) {
+              // no-op "coercion" / "cast", although we also tolerate i64(0) for constants that fit in i32
+              if (value->type == i32) {
+                if (auto* c = value->cast<Const>()) {
+                  return builder.makeConst(Literal(int64_t(c->value.geti32())));
+                }
+              }
+              return value;
+            }
             if (name == I64_TRUNC) return builder.makeUnary(UnaryOp::WrapInt64, value);
             if (name == I64_SEXT) return builder.makeUnary(UnaryOp::ExtendSInt32, value);
             if (name == I64_ZEXT) return builder.makeUnary(UnaryOp::ExtendUInt32, value);

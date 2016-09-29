@@ -107,6 +107,9 @@ function asm(global, env, buffer) {
     call2(call2(x));
     return i64_const(591726473, 57073); // return an i64 const
   }
+  function returnCastConst() {
+     return i64(0);
+  }
 
   return { test: test, illegalParam : illegalParam, /* illegalResult: illegalResult */ };
 }
