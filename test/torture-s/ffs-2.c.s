@@ -6,139 +6,115 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
-	i32.const	$push56=, 0
-	i64.load	$push55=, ffstesttab($pop56)
-	tee_local	$push54=, $0=, $pop55
-	i32.wrap/i64	$push53=, $pop54
-	tee_local	$push52=, $1=, $pop53
-	i32.ctz 	$push0=, $pop52
-	i32.const	$push51=, 1
-	i32.add 	$push1=, $pop0, $pop51
-	i32.const	$push50=, 0
-	i32.select	$push2=, $pop1, $pop50, $1
-	i64.const	$push49=, 32
-	i64.shr_u	$push3=, $0, $pop49
-	i32.wrap/i64	$push4=, $pop3
-	i32.ne  	$push5=, $pop2, $pop4
-	br_if   	0, $pop5        # 0: down to label0
+	i32.const	$push46=, 0
+	i32.load	$push45=, ffstesttab($pop46)
+	tee_local	$push44=, $0=, $pop45
+	i32.ctz 	$push0=, $pop44
+	i32.const	$push43=, 1
+	i32.add 	$push1=, $pop0, $pop43
+	i32.const	$push42=, 0
+	i32.select	$push2=, $pop1, $pop42, $0
+	i32.const	$push41=, 0
+	i32.load	$push3=, ffstesttab+4($pop41)
+	i32.ne  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %for.cond
-	i32.const	$push64=, 0
-	i64.load	$push63=, ffstesttab+8($pop64)
-	tee_local	$push62=, $0=, $pop63
-	i32.wrap/i64	$push61=, $pop62
-	tee_local	$push60=, $1=, $pop61
-	i32.ctz 	$push6=, $pop60
-	i32.const	$push59=, 1
-	i32.add 	$push7=, $pop6, $pop59
-	i32.const	$push58=, 0
-	i32.select	$push8=, $pop7, $pop58, $1
-	i64.const	$push57=, 32
-	i64.shr_u	$push9=, $0, $pop57
-	i32.wrap/i64	$push10=, $pop9
-	i32.ne  	$push11=, $pop8, $pop10
-	br_if   	0, $pop11       # 0: down to label0
-# BB#2:                                 # %for.cond.1
-	i32.const	$push72=, 0
-	i64.load	$push71=, ffstesttab+16($pop72)
-	tee_local	$push70=, $0=, $pop71
-	i32.wrap/i64	$push69=, $pop70
-	tee_local	$push68=, $1=, $pop69
-	i32.ctz 	$push12=, $pop68
-	i32.const	$push67=, 1
-	i32.add 	$push13=, $pop12, $pop67
-	i32.const	$push66=, 0
-	i32.select	$push14=, $pop13, $pop66, $1
-	i64.const	$push65=, 32
-	i64.shr_u	$push15=, $0, $pop65
-	i32.wrap/i64	$push16=, $pop15
-	i32.ne  	$push17=, $pop14, $pop16
-	br_if   	0, $pop17       # 0: down to label0
-# BB#3:                                 # %for.cond.2
-	i32.const	$push80=, 0
-	i64.load	$push79=, ffstesttab+24($pop80)
-	tee_local	$push78=, $0=, $pop79
-	i32.wrap/i64	$push77=, $pop78
-	tee_local	$push76=, $1=, $pop77
-	i32.ctz 	$push18=, $pop76
-	i32.const	$push75=, 1
-	i32.add 	$push19=, $pop18, $pop75
-	i32.const	$push74=, 0
-	i32.select	$push20=, $pop19, $pop74, $1
-	i64.const	$push73=, 32
-	i64.shr_u	$push21=, $0, $pop73
-	i32.wrap/i64	$push22=, $pop21
-	i32.ne  	$push23=, $pop20, $pop22
-	br_if   	0, $pop23       # 0: down to label0
-# BB#4:                                 # %for.cond.3
-	i32.const	$push88=, 0
-	i64.load	$push87=, ffstesttab+32($pop88)
-	tee_local	$push86=, $0=, $pop87
-	i32.wrap/i64	$push85=, $pop86
-	tee_local	$push84=, $1=, $pop85
-	i32.ctz 	$push24=, $pop84
-	i32.const	$push83=, 1
-	i32.add 	$push25=, $pop24, $pop83
-	i32.const	$push82=, 0
-	i32.select	$push26=, $pop25, $pop82, $1
-	i64.const	$push81=, 32
-	i64.shr_u	$push27=, $0, $pop81
-	i32.wrap/i64	$push28=, $pop27
-	i32.ne  	$push29=, $pop26, $pop28
-	br_if   	0, $pop29       # 0: down to label0
-# BB#5:                                 # %for.cond.4
-	i32.const	$push96=, 0
-	i64.load	$push95=, ffstesttab+40($pop96)
-	tee_local	$push94=, $0=, $pop95
-	i32.wrap/i64	$push93=, $pop94
-	tee_local	$push92=, $1=, $pop93
-	i32.ctz 	$push30=, $pop92
-	i32.const	$push91=, 1
-	i32.add 	$push31=, $pop30, $pop91
-	i32.const	$push90=, 0
-	i32.select	$push32=, $pop31, $pop90, $1
-	i64.const	$push89=, 32
-	i64.shr_u	$push33=, $0, $pop89
-	i32.wrap/i64	$push34=, $pop33
-	i32.ne  	$push35=, $pop32, $pop34
-	br_if   	0, $pop35       # 0: down to label0
-# BB#6:                                 # %for.cond.5
-	i32.const	$push104=, 0
-	i64.load	$push103=, ffstesttab+48($pop104)
-	tee_local	$push102=, $0=, $pop103
-	i32.wrap/i64	$push101=, $pop102
-	tee_local	$push100=, $1=, $pop101
-	i32.ctz 	$push36=, $pop100
-	i32.const	$push99=, 1
-	i32.add 	$push37=, $pop36, $pop99
-	i32.const	$push98=, 0
-	i32.select	$push38=, $pop37, $pop98, $1
-	i64.const	$push97=, 32
-	i64.shr_u	$push39=, $0, $pop97
-	i32.wrap/i64	$push40=, $pop39
-	i32.ne  	$push41=, $pop38, $pop40
-	br_if   	0, $pop41       # 0: down to label0
-# BB#7:                                 # %for.cond.6
-	i32.const	$push112=, 0
-	i64.load	$push111=, ffstesttab+56($pop112)
-	tee_local	$push110=, $0=, $pop111
-	i32.wrap/i64	$push109=, $pop110
-	tee_local	$push108=, $1=, $pop109
-	i32.ctz 	$push42=, $pop108
-	i32.const	$push107=, 1
-	i32.add 	$push43=, $pop42, $pop107
-	i32.const	$push106=, 0
-	i32.select	$push44=, $pop43, $pop106, $1
-	i64.const	$push105=, 32
-	i64.shr_u	$push45=, $0, $pop105
-	i32.wrap/i64	$push46=, $pop45
-	i32.ne  	$push47=, $pop44, $pop46
-	br_if   	0, $pop47       # 0: down to label0
-# BB#8:                                 # %for.cond.7
+	i32.const	$push52=, 0
+	i32.load	$push51=, ffstesttab+8($pop52)
+	tee_local	$push50=, $0=, $pop51
+	i32.ctz 	$push5=, $pop50
+	i32.const	$push49=, 1
+	i32.add 	$push6=, $pop5, $pop49
 	i32.const	$push48=, 0
-	call    	exit@FUNCTION, $pop48
+	i32.select	$push7=, $pop6, $pop48, $0
+	i32.const	$push47=, 0
+	i32.load	$push8=, ffstesttab+12($pop47)
+	i32.ne  	$push9=, $pop7, $pop8
+	br_if   	0, $pop9        # 0: down to label0
+# BB#2:                                 # %for.cond.1
+	i32.const	$push58=, 0
+	i32.load	$push57=, ffstesttab+16($pop58)
+	tee_local	$push56=, $0=, $pop57
+	i32.ctz 	$push10=, $pop56
+	i32.const	$push55=, 1
+	i32.add 	$push11=, $pop10, $pop55
+	i32.const	$push54=, 0
+	i32.select	$push12=, $pop11, $pop54, $0
+	i32.const	$push53=, 0
+	i32.load	$push13=, ffstesttab+20($pop53)
+	i32.ne  	$push14=, $pop12, $pop13
+	br_if   	0, $pop14       # 0: down to label0
+# BB#3:                                 # %for.cond.2
+	i32.const	$push64=, 0
+	i32.load	$push63=, ffstesttab+24($pop64)
+	tee_local	$push62=, $0=, $pop63
+	i32.ctz 	$push15=, $pop62
+	i32.const	$push61=, 1
+	i32.add 	$push16=, $pop15, $pop61
+	i32.const	$push60=, 0
+	i32.select	$push17=, $pop16, $pop60, $0
+	i32.const	$push59=, 0
+	i32.load	$push18=, ffstesttab+28($pop59)
+	i32.ne  	$push19=, $pop17, $pop18
+	br_if   	0, $pop19       # 0: down to label0
+# BB#4:                                 # %for.cond.3
+	i32.const	$push70=, 0
+	i32.load	$push69=, ffstesttab+32($pop70)
+	tee_local	$push68=, $0=, $pop69
+	i32.ctz 	$push20=, $pop68
+	i32.const	$push67=, 1
+	i32.add 	$push21=, $pop20, $pop67
+	i32.const	$push66=, 0
+	i32.select	$push22=, $pop21, $pop66, $0
+	i32.const	$push65=, 0
+	i32.load	$push23=, ffstesttab+36($pop65)
+	i32.ne  	$push24=, $pop22, $pop23
+	br_if   	0, $pop24       # 0: down to label0
+# BB#5:                                 # %for.cond.4
+	i32.const	$push76=, 0
+	i32.load	$push75=, ffstesttab+40($pop76)
+	tee_local	$push74=, $0=, $pop75
+	i32.ctz 	$push25=, $pop74
+	i32.const	$push73=, 1
+	i32.add 	$push26=, $pop25, $pop73
+	i32.const	$push72=, 0
+	i32.select	$push27=, $pop26, $pop72, $0
+	i32.const	$push71=, 0
+	i32.load	$push28=, ffstesttab+44($pop71)
+	i32.ne  	$push29=, $pop27, $pop28
+	br_if   	0, $pop29       # 0: down to label0
+# BB#6:                                 # %for.cond.5
+	i32.const	$push82=, 0
+	i32.load	$push81=, ffstesttab+48($pop82)
+	tee_local	$push80=, $0=, $pop81
+	i32.ctz 	$push30=, $pop80
+	i32.const	$push79=, 1
+	i32.add 	$push31=, $pop30, $pop79
+	i32.const	$push78=, 0
+	i32.select	$push32=, $pop31, $pop78, $0
+	i32.const	$push77=, 0
+	i32.load	$push33=, ffstesttab+52($pop77)
+	i32.ne  	$push34=, $pop32, $pop33
+	br_if   	0, $pop34       # 0: down to label0
+# BB#7:                                 # %for.cond.6
+	i32.const	$push88=, 0
+	i32.load	$push87=, ffstesttab+56($pop88)
+	tee_local	$push86=, $0=, $pop87
+	i32.ctz 	$push35=, $pop86
+	i32.const	$push85=, 1
+	i32.add 	$push36=, $pop35, $pop85
+	i32.const	$push84=, 0
+	i32.select	$push37=, $pop36, $pop84, $0
+	i32.const	$push83=, 0
+	i32.load	$push38=, ffstesttab+60($pop83)
+	i32.ne  	$push39=, $pop37, $pop38
+	br_if   	0, $pop39       # 0: down to label0
+# BB#8:                                 # %for.cond.7
+	i32.const	$push40=, 0
+	call    	exit@FUNCTION, $pop40
 	unreachable
 .LBB0_9:                                # %if.then
 	end_block                       # label0:

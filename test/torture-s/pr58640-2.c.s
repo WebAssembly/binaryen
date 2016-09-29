@@ -7,7 +7,7 @@
 fn1:                                    # @fn1
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %for.cond4.preheader.split
+# BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	i32.const	$push26=, 0
 	i32.load	$push25=, a+36($pop26)

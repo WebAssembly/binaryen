@@ -29,11 +29,14 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 3999996
-	i32.add 	$push1=, $1, $pop0
-	i32.select	$push2=, $pop1, $1, $0
-	i32.load	$push3=, 0($pop2)
-                                        # fallthrough-return: $pop3
+	i32.const	$push1=, 999999
+	i32.const	$push0=, 0
+	i32.select	$push2=, $pop1, $pop0, $0
+	i32.const	$push3=, 2
+	i32.shl 	$push4=, $pop2, $pop3
+	i32.add 	$push5=, $1, $pop4
+	i32.load	$push6=, 0($pop5)
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

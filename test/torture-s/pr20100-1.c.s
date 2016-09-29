@@ -57,27 +57,27 @@ get_n:                                  # @get_n
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push27=, 1
-	i32.add 	$3=, $3, $pop27
-	i32.const	$push26=, 0
-	i32.const	$push25=, 65535
-	i32.and 	$push24=, $2, $pop25
-	tee_local	$push23=, $2=, $pop24
-	i32.const	$push22=, 1
-	i32.add 	$push4=, $pop23, $pop22
+	i32.const	$push28=, 0
+	i32.const	$push27=, 65535
+	i32.and 	$push26=, $2, $pop27
+	tee_local	$push25=, $2=, $pop26
+	i32.const	$push24=, 1
+	i32.add 	$push4=, $pop25, $pop24
 	i32.eq  	$push3=, $2, $1
-	i32.select	$push21=, $pop26, $pop4, $pop3
-	tee_local	$push20=, $2=, $pop21
-	i32.const	$push19=, 65535
-	i32.and 	$push5=, $pop20, $pop19
-	i32.eq  	$push6=, $0, $pop5
+	i32.select	$2=, $pop28, $pop4, $pop3
+	i32.const	$push23=, 1
+	i32.add 	$push22=, $3, $pop23
+	tee_local	$push21=, $3=, $pop22
+	i32.const	$push20=, 65535
+	i32.and 	$push5=, $pop21, $pop20
+	i32.const	$push19=, 4
+	i32.gt_u	$push6=, $pop5, $pop19
 	br_if   	1, $pop6        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push29=, 65535
-	i32.and 	$push7=, $3, $pop29
-	i32.const	$push28=, 5
-	i32.lt_u	$push8=, $pop7, $pop28
+	i32.and 	$push7=, $2, $pop29
+	i32.ne  	$push8=, $0, $pop7
 	br_if   	0, $pop8        # 0: up to label1
 .LBB1_4:                                # %while.cond.while.end_crit_edge
 	end_loop                        # label2:

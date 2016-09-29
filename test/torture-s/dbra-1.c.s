@@ -7,64 +7,12 @@
 f1:                                     # @f1
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	block
-	block
-	i32.eqz 	$push21=, $0
-	br_if   	0, $pop21       # 0: down to label1
-# BB#1:                                 # %for.inc
-	i32.const	$1=, 1
-	i32.const	$push12=, 1
-	i32.eq  	$push0=, $0, $pop12
-	br_if   	0, $pop0        # 0: down to label1
-# BB#2:                                 # %for.inc.1
-	i32.const	$1=, 2
-	i32.const	$push13=, 2
-	i32.eq  	$push1=, $0, $pop13
-	br_if   	0, $pop1        # 0: down to label1
-# BB#3:                                 # %for.inc.2
-	i32.const	$1=, 3
-	i32.const	$push14=, 3
-	i32.eq  	$push2=, $0, $pop14
-	br_if   	0, $pop2        # 0: down to label1
-# BB#4:                                 # %for.inc.3
-	i32.const	$1=, 4
-	i32.const	$push15=, 4
-	i32.eq  	$push3=, $0, $pop15
-	br_if   	0, $pop3        # 0: down to label1
-# BB#5:                                 # %for.inc.4
-	i32.const	$1=, 5
-	i32.const	$push16=, 5
-	i32.eq  	$push4=, $0, $pop16
-	br_if   	0, $pop4        # 0: down to label1
-# BB#6:                                 # %for.inc.5
-	i32.const	$1=, 6
-	i32.const	$push17=, 6
-	i32.eq  	$push5=, $0, $pop17
-	br_if   	0, $pop5        # 0: down to label1
-# BB#7:                                 # %for.inc.6
-	i32.const	$1=, 7
-	i32.const	$push18=, 7
-	i32.eq  	$push6=, $0, $pop18
-	br_if   	0, $pop6        # 0: down to label1
-# BB#8:                                 # %for.inc.7
-	i32.const	$1=, 8
-	i32.const	$push19=, 8
-	i32.ne  	$push7=, $0, $pop19
-	br_if   	1, $pop7        # 1: down to label0
-.LBB0_9:                                # %cleanup
-	end_block                       # label1:
-	return  	$1
-.LBB0_10:                               # %for.inc.8
-	end_block                       # label0:
-	i32.const	$push8=, 9
-	i32.const	$push10=, -1
-	i32.const	$push20=, 9
-	i32.eq  	$push9=, $0, $pop20
-	i32.select	$push11=, $pop8, $pop10, $pop9
-                                        # fallthrough-return: $pop11
+	i32.const	$push2=, -1
+	i32.const	$push0=, 10
+	i32.lt_u	$push1=, $0, $pop0
+	i32.select	$push3=, $0, $pop2, $pop1
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
@@ -90,65 +38,15 @@ f2:                                     # @f2
 f3:                                     # @f3
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
-	block
-	block
-	i32.const	$push0=, 1
-	i32.eq  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label3
-# BB#1:                                 # %for.inc
-	i32.const	$1=, 1
-	i32.const	$push2=, 2
-	i32.eq  	$push3=, $0, $pop2
-	br_if   	0, $pop3        # 0: down to label3
-# BB#2:                                 # %for.inc.1
-	i32.const	$1=, 2
-	i32.const	$push4=, 3
-	i32.eq  	$push5=, $0, $pop4
-	br_if   	0, $pop5        # 0: down to label3
-# BB#3:                                 # %for.inc.2
-	i32.const	$1=, 3
-	i32.const	$push6=, 4
-	i32.eq  	$push7=, $0, $pop6
-	br_if   	0, $pop7        # 0: down to label3
-# BB#4:                                 # %for.inc.3
-	i32.const	$1=, 4
-	i32.const	$push8=, 5
-	i32.eq  	$push9=, $0, $pop8
-	br_if   	0, $pop9        # 0: down to label3
-# BB#5:                                 # %for.inc.4
-	i32.const	$1=, 5
-	i32.const	$push10=, 6
-	i32.eq  	$push11=, $0, $pop10
-	br_if   	0, $pop11       # 0: down to label3
-# BB#6:                                 # %for.inc.5
-	i32.const	$1=, 6
-	i32.const	$push12=, 7
-	i32.eq  	$push13=, $0, $pop12
-	br_if   	0, $pop13       # 0: down to label3
-# BB#7:                                 # %for.inc.6
-	i32.const	$1=, 7
-	i32.const	$push14=, 8
-	i32.eq  	$push15=, $0, $pop14
-	br_if   	0, $pop15       # 0: down to label3
-# BB#8:                                 # %for.inc.7
-	i32.const	$1=, 8
-	i32.const	$push21=, 9
-	i32.ne  	$push16=, $0, $pop21
-	br_if   	1, $pop16       # 1: down to label2
-.LBB2_9:                                # %cleanup
-	end_block                       # label3:
-	return  	$1
-.LBB2_10:                               # %for.inc.8
-	end_block                       # label2:
-	i32.const	$push22=, 9
-	i32.const	$push19=, -1
-	i32.const	$push17=, 10
-	i32.eq  	$push18=, $0, $pop17
-	i32.select	$push20=, $pop22, $pop19, $pop18
-                                        # fallthrough-return: $pop20
+	i32.const	$push0=, -1
+	i32.add 	$push6=, $0, $pop0
+	tee_local	$push5=, $0=, $pop6
+	i32.const	$push4=, -1
+	i32.const	$push1=, 10
+	i32.lt_u	$push2=, $0, $pop1
+	i32.select	$push3=, $pop5, $pop4, $pop2
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
@@ -175,65 +73,19 @@ f4:                                     # @f4
 f5:                                     # @f5
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block
-	block
-	i32.const	$push0=, -1
-	i32.eq  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label5
-# BB#1:                                 # %for.inc
-	i32.const	$1=, 1
-	i32.const	$push2=, -2
-	i32.eq  	$push3=, $0, $pop2
-	br_if   	0, $pop3        # 0: down to label5
-# BB#2:                                 # %for.inc.1
-	i32.const	$1=, 2
-	i32.const	$push4=, -3
-	i32.eq  	$push5=, $0, $pop4
-	br_if   	0, $pop5        # 0: down to label5
-# BB#3:                                 # %for.inc.2
-	i32.const	$1=, 3
-	i32.const	$push6=, -4
-	i32.eq  	$push7=, $0, $pop6
-	br_if   	0, $pop7        # 0: down to label5
-# BB#4:                                 # %for.inc.3
-	i32.const	$1=, 4
-	i32.const	$push8=, -5
-	i32.eq  	$push9=, $0, $pop8
-	br_if   	0, $pop9        # 0: down to label5
-# BB#5:                                 # %for.inc.4
-	i32.const	$1=, 5
-	i32.const	$push10=, -6
-	i32.eq  	$push11=, $0, $pop10
-	br_if   	0, $pop11       # 0: down to label5
-# BB#6:                                 # %for.inc.5
-	i32.const	$1=, 6
-	i32.const	$push12=, -7
-	i32.eq  	$push13=, $0, $pop12
-	br_if   	0, $pop13       # 0: down to label5
-# BB#7:                                 # %for.inc.6
-	i32.const	$1=, 7
-	i32.const	$push14=, -8
-	i32.eq  	$push15=, $0, $pop14
-	br_if   	0, $pop15       # 0: down to label5
-# BB#8:                                 # %for.inc.7
-	i32.const	$1=, 8
-	i32.const	$push16=, -9
-	i32.ne  	$push17=, $0, $pop16
-	br_if   	1, $pop17       # 1: down to label4
-.LBB4_9:                                # %cleanup
-	end_block                       # label5:
-	return  	$1
-.LBB4_10:                               # %for.inc.8
-	end_block                       # label4:
-	i32.const	$push21=, 9
-	i32.const	$push20=, -1
-	i32.const	$push18=, -10
-	i32.eq  	$push19=, $0, $pop18
-	i32.select	$push22=, $pop21, $pop20, $pop19
-                                        # fallthrough-return: $pop22
+	i32.const	$push0=, -10
+	i32.lt_u	$push1=, $0, $pop0
+	br_if   	0, $pop1        # 0: down to label0
+# BB#1:                                 # %switch.lookup
+	i32.const	$push3=, -1
+	i32.xor 	$push4=, $0, $pop3
+	return  	$pop4
+.LBB4_2:                                # %for.inc.9
+	end_block                       # label0:
+	i32.const	$push2=, -1
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5

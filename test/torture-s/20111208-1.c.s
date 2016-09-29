@@ -40,7 +40,7 @@ pack_unpack:                            # @pack_unpack
 	i32.add 	$0=, $0, $pop7
 	copy_local	$1=, $3
 	br      	1               # 1: up to label0
-.LBB0_5:                                # %sw.bb8
+.LBB0_5:                                # %sw.bb7
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
 	i32.load	$push5=, 0($0):p2align=0
@@ -95,7 +95,7 @@ main:                                   # @main
 	i32.const	$push9=, 108
 	i32.ne  	$push3=, $pop10, $pop9
 	br_if   	0, $pop3        # 0: down to label5
-# BB#3:                                 # %sw.bb8.i
+# BB#3:                                 # %sw.bb7.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.load	$push5=, 0($3):p2align=0
 	call    	do_something@FUNCTION, $pop5

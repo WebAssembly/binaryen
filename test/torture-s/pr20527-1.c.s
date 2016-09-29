@@ -6,42 +6,44 @@
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32, i32, i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	block
 	i32.gt_s	$push0=, $2, $3
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
-	i32.const	$push9=, -1
-	i32.add 	$5=, $2, $pop9
+	i32.const	$push12=, -1
+	i32.add 	$4=, $2, $pop12
 	i32.const	$push1=, 2
-	i32.shl 	$push8=, $2, $pop1
-	tee_local	$push7=, $4=, $pop8
-	i32.add 	$2=, $1, $pop7
-	i32.add 	$0=, $0, $4
+	i32.shl 	$push11=, $2, $pop1
+	tee_local	$push10=, $2=, $pop11
+	i32.add 	$0=, $0, $pop10
+	i32.add 	$push2=, $1, $2
+	i32.const	$push9=, 4
+	i32.add 	$2=, $pop2, $pop9
 	i32.const	$1=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.const	$push19=, 4
-	i32.add 	$push18=, $2, $pop19
-	tee_local	$push17=, $4=, $pop18
-	i32.load	$push2=, 0($pop17)
-	i32.load	$push3=, 0($2)
-	i32.sub 	$push4=, $pop2, $pop3
-	i32.add 	$push16=, $pop4, $1
-	tee_local	$push15=, $1=, $pop16
-	i32.const	$push14=, -1
-	i32.add 	$push5=, $pop15, $pop14
-	i32.store	$drop=, 0($0), $pop5
-	i32.const	$push13=, 4
-	i32.add 	$0=, $0, $pop13
-	copy_local	$2=, $4
-	i32.const	$push12=, 1
-	i32.add 	$push11=, $5, $pop12
-	tee_local	$push10=, $5=, $pop11
-	i32.lt_s	$push6=, $pop10, $3
-	br_if   	0, $pop6        # 0: up to label1
+	i32.load	$push5=, 0($2)
+	i32.const	$push21=, -4
+	i32.add 	$push3=, $2, $pop21
+	i32.load	$push4=, 0($pop3)
+	i32.sub 	$push6=, $pop5, $pop4
+	i32.add 	$push20=, $pop6, $1
+	tee_local	$push19=, $1=, $pop20
+	i32.const	$push18=, -1
+	i32.add 	$push7=, $pop19, $pop18
+	i32.store	$drop=, 0($0), $pop7
+	i32.const	$push17=, 4
+	i32.add 	$0=, $0, $pop17
+	i32.const	$push16=, 4
+	i32.add 	$2=, $2, $pop16
+	i32.const	$push15=, 1
+	i32.add 	$push14=, $4, $pop15
+	tee_local	$push13=, $4=, $pop14
+	i32.lt_s	$push8=, $pop13, $3
+	br_if   	0, $pop8        # 0: up to label1
 .LBB0_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:

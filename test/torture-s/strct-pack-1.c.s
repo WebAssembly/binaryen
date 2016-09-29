@@ -9,21 +9,19 @@ check:                                  # @check
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	i32.const	$1=, 1
 	block
 	i32.load16_u	$push0=, 0($0)
-	i32.const	$push1=, 1
-	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label1
+	i32.const	$push5=, 1
+	i32.ne  	$push1=, $pop0, $pop5
+	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
+	f64.load	$push2=, 2($0):p2align=1
+	f64.const	$push3=, 0x1p4
+	f64.ne  	$push4=, $pop2, $pop3
+	br_if   	0, $pop4        # 0: down to label0
+# BB#2:                                 # %if.end
 	i32.const	$1=, 0
-	f64.load	$push3=, 2($0):p2align=1
-	f64.const	$push4=, 0x1p4
-	f64.eq  	$push5=, $pop3, $pop4
-	br_if   	1, $pop5        # 1: down to label0
-.LBB0_2:                                # %if.then
-	end_block                       # label1:
-	i32.const	$1=, 1
 .LBB0_3:                                # %return
 	end_block                       # label0:
 	copy_local	$push6=, $1

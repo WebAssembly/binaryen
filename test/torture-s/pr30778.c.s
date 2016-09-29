@@ -11,11 +11,11 @@ init_reg_last:                          # @init_reg_last
 	i32.load	$push15=, reg_stat($pop0)
 	tee_local	$push14=, $0=, $pop15
 	i32.const	$push13=, 0
-	i32.store	$drop=, 0($pop14), $pop13
+	i32.store	$drop=, 0($pop14):p2align=0, $pop13
 	i32.const	$push1=, 8
 	i32.add 	$push2=, $0, $pop1
 	i64.const	$push3=, 0
-	i64.store	$drop=, 0($pop2):p2align=2, $pop3
+	i64.store	$drop=, 0($pop2):p2align=0, $pop3
 	i32.const	$push4=, 18
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push12=, 0
@@ -23,11 +23,11 @@ init_reg_last:                          # @init_reg_last
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
 	i32.const	$push11=, 0
-	i32.store16	$drop=, 0($pop7), $pop11
+	i32.store16	$drop=, 0($pop7):p2align=0, $pop11
 	i32.const	$push8=, 4
 	i32.add 	$push9=, $0, $pop8
 	i32.const	$push10=, 0
-	i32.store	$drop=, 0($pop9), $pop10
+	i32.store	$drop=, 0($pop9):p2align=0, $pop10
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
