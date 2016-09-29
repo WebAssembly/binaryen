@@ -139,6 +139,24 @@ function asm(global, env, buffer) {
    }
    return $$0 | 0;
   }
+  function switch64($a444) {
+    $a444 = i64($a444);
+    var $waka = 0;
+    switch (i64($a444)) {
+     case i64_const(7,10):  {
+      $waka = 11000;
+      break;
+     }
+     case i64_const(5,10):  {
+      $waka = 10;
+      break;
+     }
+     default: {
+      $waka = 1;
+     }
+    }
+    return $waka | 0;
+  }
 
   return { test: test, illegalParam : illegalParam, illegalResult: illegalResult };
 }

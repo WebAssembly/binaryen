@@ -662,6 +662,10 @@ private:
       if (ast[1] == MINUS && ast[2][0] == UNARY_PREFIX && ast[2][1] == PLUS && ast[2][2][0] == NUM) {
         return Literal((double)-ast[2][2][1]->getNumber());
       }
+    } else if (wasmOnly && ast[0] == CALL && ast[1][0] == NAME && ast[1][1] == I64_CONST) {
+      uint64_t low = ast[2][0][1]->getNumber();
+      uint64_t high = ast[2][1][1]->getNumber();
+      return Literal(uint64_t(low + (high << 32)));
     }
     return Literal();
   }
@@ -1766,11 +1770,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
             if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
           } else if (num == 2) { // 2 params,binary
-            if (name == I64_CONST) {
-              uint64_t low = ast[2][0][1]->getNumber();
-              uint64_t high = ast[2][1][1]->getNumber();
-              return builder.makeConst(Literal(uint64_t(low + (high << 32))));
-            }
+            if (name == I64_CONST) return builder.makeConst(getLiteral(ast));
             if (name == I64_LOAD) return builder.makeLoad(8, true, 0, indexOr(ast[2][1][1]->getInteger(), 8), process(ast[2][0]), i64);
             auto* left = process(ast[2][0]);
             auto* right = process(ast[2][1]);
@@ -2119,13 +2119,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
       Ref cases = ast[2];
       bool seen = false;
-      int min = 0; // the lowest index we see; we will offset to it
+      int64_t min = 0; // the lowest index we see; we will offset to it
       for (unsigned i = 0; i < cases->size(); i++) {
         Ref curr = cases[i];
         Ref condition = curr[0];
         if (!condition->isNull()) {
-          assert(condition[0] == NUM || condition[0] == UNARY_PREFIX);
-          int32_t index = getLiteral(condition).geti32();
+          int64_t index = getLiteral(condition).getInteger();
           if (!seen) {
             seen = true;
             min = index;
@@ -2134,12 +2133,23 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
         }
       }
-      Binary* offsetor = allocator.alloc<Binary>();
-      offsetor->op = BinaryOp::SubInt32;
-      offsetor->left = br->condition;
-      offsetor->right = builder.makeConst(Literal(min));
-      offsetor->type = i32;
-      br->condition = offsetor;
+      if (br->condition->type == i32) {
+        Binary* offsetor = allocator.alloc<Binary>();
+        offsetor->op = BinaryOp::SubInt32;
+        offsetor->left = br->condition;
+        offsetor->right = builder.makeConst(Literal(int32_t(min)));
+        offsetor->type = i32;
+        br->condition = offsetor;
+      } else {
+        assert(br->condition->type == i64);
+        // 64-bit condition. after offsetting it must be in a reasonable range, but the offsetting itself must be 64-bit
+        Binary* offsetor = allocator.alloc<Binary>();
+        offsetor->op = BinaryOp::SubInt64;
+        offsetor->left = br->condition;
+        offsetor->right = builder.makeConst(Literal(int64_t(min)));
+        offsetor->type = i64;
+        br->condition = builder.makeUnary(UnaryOp::WrapInt64, offsetor); // TODO: check this fits in 32 bits
+      }
 
       auto top = allocator.alloc<Block>();
       top->list.push_back(br);
@@ -2154,15 +2164,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (condition->isNull()) {
           name = br->default_ = getNextId("switch-default");
         } else {
-          assert(condition[0] == NUM || condition[0] == UNARY_PREFIX);
-          int32_t index = getLiteral(condition).geti32();
+          auto index = getLiteral(condition).getInteger();
           assert(index >= min);
           index -= min;
           assert(index >= 0);
-          size_t index_s = index;
+          uint64_t index_s = index;
           name = getNextId("switch-case");
           if (br->targets.size() <= index_s) {
-            br->targets.resize(index_s+1);
+            br->targets.resize(index_s + 1);
           }
           br->targets[index_s] = name;
         }

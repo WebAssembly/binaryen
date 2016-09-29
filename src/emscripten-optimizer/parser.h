@@ -551,8 +551,8 @@ class Parser {
           if (value.isNumber()) {
             arg = parseFrag(value);
             src += value.size;
-          } else {
-            assert(value.type == OPERATOR);
+          } else if (value.type == OPERATOR) {
+            // negative number
             assert(value.str == MINUS);
             src += value.size;
             skipSpace(src);
@@ -560,6 +560,12 @@ class Parser {
             assert(value2.isNumber());
             arg = Builder::makePrefix(MINUS, parseFrag(value2));
             src += value2.size;
+          } else {
+            // identifier and function call
+            assert(value.type == IDENT);
+            src += value.size;
+            skipSpace(src);
+            arg = parseCall(parseFrag(value), src);
           }
           Builder::appendCaseToSwitch(ret, arg);
           skipSpace(src);

@@ -131,6 +131,31 @@
       )
     )
   )
+  (func $switch64 (param $0 i64) (result i32)
+    (block $switch$0 i32
+      (block $switch-default$3
+        (block $switch-case$2
+          (block $switch-case$1
+            (br_table $switch-case$2 $switch-default$3 $switch-case$1 $switch-default$3
+              (i32.wrap/i64
+                (i64.sub
+                  (get_local $0)
+                  (i64.const 42949672965)
+                )
+              )
+            )
+          )
+          (br $switch$0
+            (i32.const 11000)
+          )
+        )
+        (br $switch$0
+          (i32.const 10)
+        )
+      )
+      (i32.const 1)
+    )
+  )
   (func $legalstub$illegalParam (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
     (call $illegalParam
       (get_local $0)
