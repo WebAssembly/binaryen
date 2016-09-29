@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (type $FUNCSIG$vi (func (param i32)))
   (import "env" "exit" (func $exit (param i32)))
   (export "memory" (memory $0))

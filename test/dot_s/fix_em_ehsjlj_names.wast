@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
   (type $FUNCSIG$fifd (func (param i32 f32 f64) (result f32)))
