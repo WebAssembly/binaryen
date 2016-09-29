@@ -9,6 +9,54 @@
   (import "env" "tableBase" (global $tableBase i32))
   (export "test" (func $test))
   (export "illegalParam" (func $legalstub$illegalParam))
+  (func $i64u-div (param $0 i64) (param $1 i64) (result i64)
+    (if i64
+      (i64.eqz
+        (get_local $1)
+      )
+      (i64.const 0)
+      (i64.div_u
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $i64s-div (param $0 i64) (param $1 i64) (result i64)
+    (if i64
+      (i64.eqz
+        (get_local $1)
+      )
+      (i64.const 0)
+      (i64.div_s
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $i64u-rem (param $0 i64) (param $1 i64) (result i64)
+    (if i64
+      (i64.eqz
+        (get_local $1)
+      )
+      (i64.const 0)
+      (i64.rem_u
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $i64s-rem (param $0 i64) (param $1 i64) (result i64)
+    (if i64
+      (i64.eqz
+        (get_local $1)
+      )
+      (i64.const 0)
+      (i64.rem_s
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
   (func $test
     (local $x i64)
     (local $y i64)
@@ -41,25 +89,25 @@
       )
     )
     (set_local $x
-      (i64.div_u
+      (call $i64u-div
         (get_local $x)
         (get_local $y)
       )
     )
     (set_local $x
-      (i64.div_s
+      (call $i64s-div
         (get_local $x)
         (get_local $y)
       )
     )
     (set_local $x
-      (i64.rem_u
+      (call $i64u-rem
         (get_local $x)
         (get_local $y)
       )
     )
     (set_local $x
-      (i64.rem_s
+      (call $i64s-rem
         (get_local $x)
         (get_local $y)
       )

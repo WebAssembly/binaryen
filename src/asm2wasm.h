@@ -82,7 +82,11 @@ Name I64("i64"),
      I64_D2U("i64_d2u"),
      I64_BC2D("i64_bc2d"),
      I64_BC2I("i64_bc2i"),
-     SET_TEMP_RET0("setTempRet0");
+     SET_TEMP_RET0("setTempRet0"),
+     I64S_REM("i64s-rem"),
+     I64U_REM("i64u-rem"),
+     I64S_DIV("i64s-div"),
+     I64U_DIV("i64u-div");
 
 // Utilities
 
@@ -683,6 +687,44 @@ private:
     ret->list.push_back(expression);
     ret->finalize();
     return ret;
+  }
+
+  // Some binary opts might trap, so emit them safely if we are precise
+  Expression* makeDangerousI64Binary(BinaryOp op, Expression* left, Expression* right) {
+    if (imprecise) return builder.makeBinary(op, left, right);
+    // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
+    auto *call = allocator.alloc<Call>();
+    switch (op) {
+      case BinaryOp::RemSInt64: call->target = I64S_REM; break;
+      case BinaryOp::RemUInt64: call->target = I64U_REM; break;
+      case BinaryOp::DivSInt64: call->target = I64S_DIV; break;
+      case BinaryOp::DivUInt64: call->target = I64U_DIV; break;
+      default: WASM_UNREACHABLE();
+    }
+    call->operands.push_back(left);
+    call->operands.push_back(right);
+    call->type = i64;
+    static std::set<Name> addedFunctions;
+    if (addedFunctions.count(call->target) == 0) {
+      addedFunctions.insert(call->target);
+      auto func = new Function;
+      func->name = call->target;
+      func->params.push_back(i64);
+      func->params.push_back(i64);
+      func->result = i64;
+      func->body = builder.makeIf(
+        builder.makeUnary(EqZInt64,
+          builder.makeGetLocal(1, i64)
+        ),
+        builder.makeConst(Literal(int64_t(0))),
+        builder.makeBinary(op,
+          builder.makeGetLocal(0, i64),
+          builder.makeGetLocal(1, i64)
+        )
+      );
+      wasm.addFunction(func);
+    }
+    return call;
   }
 
   Function* processFunction(Ref ast);
@@ -1720,10 +1762,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
             if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
             if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-            if (name == I64_UDIV) return builder.makeBinary(BinaryOp::DivUInt64, left, right);
-            if (name == I64_SDIV) return builder.makeBinary(BinaryOp::DivSInt64, left, right);
-            if (name == I64_UREM) return builder.makeBinary(BinaryOp::RemUInt64, left, right);
-            if (name == I64_SREM) return builder.makeBinary(BinaryOp::RemSInt64, left, right);
+            if (name == I64_UDIV) return makeDangerousI64Binary(BinaryOp::DivUInt64, left, right);
+            if (name == I64_SDIV) return makeDangerousI64Binary(BinaryOp::DivSInt64, left, right);
+            if (name == I64_UREM) return makeDangerousI64Binary(BinaryOp::RemUInt64, left, right);
+            if (name == I64_SREM) return makeDangerousI64Binary(BinaryOp::RemSInt64, left, right);
             if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
             if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
             if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
