@@ -635,7 +635,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     doIndent(o, indent);
     for (auto& segment : curr->segments) {
       // Don't print empty segments
-      if (segment.data.empty()) break;
+      if (segment.data.empty()) continue;
       printOpening(o, "elem ", true);
       visit(segment.offset);
       for (auto name : segment.data) {
