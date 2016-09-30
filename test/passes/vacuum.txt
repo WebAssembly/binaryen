@@ -145,17 +145,17 @@
   )
   (func $if-drop (type $3) (result i32)
     (block $out
-      (drop
-        (if
-          (call $if-drop)
+      (if
+        (call $if-drop)
+        (drop
           (call $int)
-          (br $out)
         )
+        (br $out)
       )
-      (drop
-        (if
-          (call $if-drop)
-          (br $out)
+      (if
+        (call $if-drop)
+        (br $out)
+        (drop
           (call $int)
         )
       )
