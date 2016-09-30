@@ -12,6 +12,8 @@
   (export "sge_i64" (func $sge_i64))
   (export "ugt_i64" (func $ugt_i64))
   (export "uge_i64" (func $uge_i64))
+  (table 0 anyfunc)
+  
   (func $eq_i64 (param $0 i64) (param $1 i64) (result i32)
     (return
       (i64.eq

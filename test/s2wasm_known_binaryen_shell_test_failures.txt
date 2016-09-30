@@ -28,7 +28,6 @@ multi-ix.c.s.wast
 pr37573.c.s.wast
 pr43236.c.s.wast
 pr44852.c.s.wast
-pr44942.c.s.wast
 pr51877.c.s.wast
 pr51933.c.s.wast
 pr54471.c.s.wast
@@ -56,6 +55,7 @@ complex-7.c.s.wast
 920612-1.c.s.wast
 920625-1.c.s.wast
 920711-1.c.s.wast
+930126-1.c.s.wast
 931004-10.c.s.wast
 931004-12.c.s.wast
 931004-14.c.s.wast
@@ -151,6 +151,4 @@ vprintf-chk-1.c.s.wast # vprintf
 vprintf-1.c.s.wast # vprintf
 
 # new in 0xc
-20021118-2.c.s.wast # [parse exception: no table]
-921208-1.c.s.wast # [parse exception: no table]
 930126-1.c.s.wast # called abort()

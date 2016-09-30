@@ -19,6 +19,8 @@
   (export "byval_empty_caller" (func $byval_empty_caller))
   (export "byval_empty_callee" (func $byval_empty_callee))
   (export "big_byval" (func $big_byval))
+  (table 0 anyfunc)
+  
   (func $byval_arg (param $0 i32)
     (local $1 i32)
     (i32.store offset=4

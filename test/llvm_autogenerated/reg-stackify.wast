@@ -45,6 +45,8 @@
   (export "no_stackify_past_epilogue" (func $no_stackify_past_epilogue))
   (export "stackify_indvar" (func $stackify_indvar))
   (export "stackpointer_dependency" (func $stackpointer_dependency))
+  (table 0 anyfunc)
+  
   (func $no0 (param $0 i32) (param $1 i32) (result i32)
     (set_local $1
       (i32.load

@@ -14,6 +14,8 @@
   (export "caller_none" (func $caller_none))
   (export "caller_some" (func $caller_some))
   (export "startbb" (func $startbb))
+  (table 0 anyfunc)
+  
   (func $start (param $0 i32) (param $1 i32)
     (i32.store
       (get_local $0)

@@ -4,6 +4,8 @@
   (export "foo" (func $foo))
   (export "bar" (func $bar))
   (export "qux" (func $qux))
+  (table 0 anyfunc)
+  
   (func $foo
     (return)
   )

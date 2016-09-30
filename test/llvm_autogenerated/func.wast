@@ -8,6 +8,8 @@
   (export "f3" (func $f3))
   (export "f4" (func $f4))
   (export "f5" (func $f5))
+  (table 0 anyfunc)
+  
   (func $f0
     (return)
   )

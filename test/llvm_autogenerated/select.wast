@@ -14,6 +14,8 @@
   (export "select_f64_bool" (func $select_f64_bool))
   (export "select_f64_eq" (func $select_f64_eq))
   (export "select_f64_ne" (func $select_f64_ne))
+  (table 0 anyfunc)
+  
   (func $select_i32_bool (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
       (select

@@ -11,6 +11,8 @@
   (export "memory" (memory $0))
   (export "bar32" (func $bar32))
   (export "bar64" (func $bar64))
+  (table 0 anyfunc)
+  
   (func $bar32 (param $0 i32)
     (block $label$0
       (br_if $label$0

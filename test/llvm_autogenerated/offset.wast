@@ -38,6 +38,8 @@
   (export "aggregate_load_store" (func $aggregate_load_store))
   (export "aggregate_return" (func $aggregate_return))
   (export "aggregate_return_without_merge" (func $aggregate_return_without_merge))
+  (table 0 anyfunc)
+  
   (func $load_i32_with_folded_offset (param $0 i32) (result i32)
     (i32.load offset=24
       (get_local $0)

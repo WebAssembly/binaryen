@@ -16,6 +16,8 @@
   (export "ule_f32" (func $ule_f32))
   (export "ugt_f32" (func $ugt_f32))
   (export "uge_f32" (func $uge_f32))
+  (table 0 anyfunc)
+  
   (func $ord_f32 (param $0 f32) (param $1 f32) (result i32)
     (return
       (i32.and

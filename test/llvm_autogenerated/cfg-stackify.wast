@@ -34,6 +34,8 @@
   (export "test13" (func $test13))
   (export "test14" (func $test14))
   (export "test15" (func $test15))
+  (table 0 anyfunc)
+  
   (func $test0 (param $0 i32)
     (local $1 i32)
     (set_local $1

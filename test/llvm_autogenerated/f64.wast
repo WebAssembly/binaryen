@@ -20,6 +20,8 @@
   (export "fmin64" (func $fmin64))
   (export "fmax64" (func $fmax64))
   (export "fma64" (func $fma64))
+  (table 0 anyfunc)
+  
   (func $fadd64 (param $0 f64) (param $1 f64) (result f64)
     (return
       (f64.add

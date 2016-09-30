@@ -8,6 +8,8 @@
   (export "bitcast_f32_i32" (func $bitcast_f32_i32))
   (export "bitcast_i64_f64" (func $bitcast_i64_f64))
   (export "bitcast_f64_i64" (func $bitcast_f64_i64))
+  (table 0 anyfunc)
+  
   (func $immediate_f32 (result f32)
     (f32.const 2.5)
   )

@@ -18,6 +18,8 @@
   (export "frameaddress_0" (func $frameaddress_0))
   (export "frameaddress_1" (func $frameaddress_1))
   (export "inline_asm" (func $inline_asm))
+  (table 0 anyfunc)
+  
   (func $alloca32
     (local $0 i32)
     (i32.store offset=4

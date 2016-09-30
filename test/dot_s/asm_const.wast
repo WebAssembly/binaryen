@@ -5,6 +5,8 @@
   (import "env" "emscripten_asm_const_vi" (func $emscripten_asm_const_vi (param i32)))
   (export "memory" (memory $0))
   (export "main" (func $main))
+  (table 0 anyfunc)
+  
   (func $main (result i32)
     (call $emscripten_asm_const_vi
       (i32.const 0)

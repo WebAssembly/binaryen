@@ -122,6 +122,7 @@ void Linker::layout() {
 
   // Pad the indirect function table with a dummy function
   makeDummyFunction();
+  ensureTableIsPopulated();
 
   // Pre-assign the function indexes
   for (auto& pair : out.indirectIndexes) {
@@ -359,6 +360,7 @@ void Linker::makeDummyFunction() {
       break;
     }
   }
+
   if (!create) return;
   wasm::Builder wasmBuilder(out.wasm);
   Expression *unreachable = wasmBuilder.makeUnreachable();

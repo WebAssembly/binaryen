@@ -20,6 +20,8 @@
   (export "fmin32" (func $fmin32))
   (export "fmax32" (func $fmax32))
   (export "fma32" (func $fma32))
+  (table 0 anyfunc)
+  
   (func $fadd32 (param $0 f32) (param $1 f32) (result f32)
     (return
       (f32.add

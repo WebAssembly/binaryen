@@ -4,6 +4,8 @@
   (export "memory" (memory $0))
   (export "return_i32" (func $return_i32))
   (export "return_i32_twice" (func $return_i32_twice))
+  (table 0 anyfunc)
+  
   (func $return_i32 (param $0 i32) (result i32)
     (get_local $0)
   )

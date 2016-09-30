@@ -4,6 +4,8 @@
   (export "memory" (memory $0))
   (export "return_void" (func $return_void))
   (export "return_void_twice" (func $return_void_twice))
+  (table 0 anyfunc)
+  
   (func $return_void
   )
   (func $return_void_twice (param $0 i32)
