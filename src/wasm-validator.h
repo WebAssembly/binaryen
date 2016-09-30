@@ -303,12 +303,7 @@ public:
   }
 
   void visitDrop(Drop* curr) {
-    // TODO: assert on this, when tests pass
-    if (getenv("BINARYEN_WARN_DROP")) {
-      if (!(isConcreteWasmType(curr->value->type) || curr->value->type == unreachable)) {
-        std::cerr << "warning: bad drop " << curr << " in " << (getFunction() ? getFunction()->name : Name("?")) << '\n';
-      }
-    }
+    shouldBeTrue(isConcreteWasmType(curr->value->type) || curr->value->type == unreachable, curr, "can only drop a valid value");
   }
 
   void visitReturn(Return* curr) {

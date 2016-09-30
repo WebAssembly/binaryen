@@ -302,13 +302,15 @@
   (func $if-drop (result i32)
     (block $out
       (drop
-        (if (call $if-drop)
+        (if i32
+          (call $if-drop)
           (call $int)
           (br $out)
         )
       )
       (drop
-        (if (call $if-drop)
+        (if i32
+          (call $if-drop)
           (br $out)
           (call $int)
         )
