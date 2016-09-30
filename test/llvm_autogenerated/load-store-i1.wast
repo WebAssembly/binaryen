@@ -8,6 +8,8 @@
   (export "load_s_i1_i64" (func $load_s_i1_i64))
   (export "store_i32_i1" (func $store_i32_i1))
   (export "store_i64_i1" (func $store_i64_i1))
+  (table 0 anyfunc)
+  
   (func $load_u_i1_i32 (param $0 i32) (result i32)
     (return
       (i32.load8_u

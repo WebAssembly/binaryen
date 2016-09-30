@@ -5,6 +5,8 @@
   (import "env" "emscripten_asm_const_vi" (func $emscripten_asm_const_vi (param i32)))
   (export "memory" (memory $0))
   (export "main" (func $main))
+  (table 0 anyfunc)
+  
   (func $_Z6reporti (param $0 i32)
     (i32.store
       (i32.const 8)

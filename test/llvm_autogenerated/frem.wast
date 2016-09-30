@@ -8,6 +8,8 @@
   (export "memory" (memory $0))
   (export "frem32" (func $frem32))
   (export "frem64" (func $frem64))
+  (table 0 anyfunc)
+  
   (func $frem32 (param $0 f32) (param $1 f32) (result f32)
     (return
       (call $fmodf

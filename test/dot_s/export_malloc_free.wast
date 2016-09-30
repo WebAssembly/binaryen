@@ -5,6 +5,8 @@
   (export "malloc" (func $malloc))
   (export "free" (func $free))
   (export "realloc" (func $realloc))
+  (table 0 anyfunc)
+  
   (func $main (result i32)
     (i32.const 0)
   )

@@ -22,7 +22,6 @@
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-printing.h"
-#include "wasm-traversal.h"
 
 using namespace wasm;
 
@@ -123,6 +122,7 @@ void Linker::layout() {
 
   // Pad the indirect function table with a dummy function
   makeDummyFunction();
+  ensureTableIsPopulated();
 
   // Pre-assign the function indexes
   for (auto& pair : out.indirectIndexes) {
@@ -351,13 +351,6 @@ Index Linker::getFunctionIndex(Name name) {
   return functionIndexes[name];
 }
 
-struct CallIndirectFinder : public PostWalker<CallIndirectFinder, Visitor<CallIndirectFinder>> {
-  bool hasIndirectCalls = false;
-  void visitCallIndirect(CallIndirect* curr) {
-    hasIndirectCalls = true;
-  }
-};
-
 void Linker::makeDummyFunction() {
   bool create = false;
   // Check if there are address-taken functions
@@ -367,12 +360,7 @@ void Linker::makeDummyFunction() {
       break;
     }
   }
-  // Check if there are call-indirect instructions
-  if (!create) {
-    CallIndirectFinder finder;
-    finder.walkModule(&out.wasm);
-    create = finder.hasIndirectCalls;
-  }
+
   if (!create) return;
   wasm::Builder wasmBuilder(out.wasm);
   Expression *unreachable = wasmBuilder.makeUnreachable();

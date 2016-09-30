@@ -25,6 +25,8 @@
   (export "masked_rotl" (func $masked_rotl))
   (export "rotr" (func $rotr))
   (export "masked_rotr" (func $masked_rotr))
+  (table 0 anyfunc)
+  
   (func $add64 (param $0 i64) (param $1 i64) (result i64)
     (return
       (i64.add

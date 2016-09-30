@@ -7,6 +7,8 @@
   (export "f1" (func $f1))
   (export "f2" (func $f2))
   (export "f3" (func $f3))
+  (table 0 anyfunc)
+  
   (func $f1 (result i32)
     (call $abort)
     (unreachable)

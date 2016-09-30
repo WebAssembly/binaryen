@@ -12,6 +12,8 @@
   (export "zext_i16_i64" (func $zext_i16_i64))
   (export "sext_i32_i64" (func $sext_i32_i64))
   (export "zext_i32_i64" (func $zext_i32_i64))
+  (table 0 anyfunc)
+  
   (func $sext_i8_i32 (param $0 i32) (result i32)
     (return
       (i32.load8_s

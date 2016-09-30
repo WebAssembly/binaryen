@@ -4,6 +4,8 @@
   (export "memory" (memory $0))
   (export "test0" (func $test0))
   (export "test1" (func $test1))
+  (table 0 anyfunc)
+  
   (func $test0 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
     (local $4 f64)
     (local $5 i32)

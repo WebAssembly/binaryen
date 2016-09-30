@@ -19,6 +19,8 @@
   (export "frame_index" (func $frame_index))
   (export "drop_result" (func $drop_result))
   (export "tail_dup_to_reuse_result" (func $tail_dup_to_reuse_result))
+  (table 0 anyfunc)
+  
   (func $copy_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
       (call $memcpy

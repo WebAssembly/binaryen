@@ -7,6 +7,8 @@
   (export "unused_first" (func $unused_first))
   (export "unused_second" (func $unused_second))
   (export "call_something" (func $call_something))
+  (table 0 anyfunc)
+  
   (func $unused_first (param $0 i32) (param $1 i32) (result i32)
     (return
       (get_local $1)

@@ -18,6 +18,8 @@
   (export "memory" (memory $0))
   (export "foo" (func $foo))
   (export "call_memcpy" (func $call_memcpy))
+  (table 0 anyfunc)
+  
   (func $foo (result i32)
     (return
       (i32.load offset=32

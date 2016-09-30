@@ -1,6 +1,8 @@
 (module
   (memory $0 1)
   (export "memory" (memory $0))
+  (table 0 anyfunc)
+  
   (func $_main
     (drop
       (grow_memory

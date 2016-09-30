@@ -11,6 +11,8 @@
   (export "fpext_f32_f64" (func $fpext_f32_f64))
   (export "fpconv_f64_f32" (func $fpconv_f64_f32))
   (export "bigshift" (func $bigshift))
+  (table 0 anyfunc)
+  
   (func $shl_i3 (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
       (i32.shl
