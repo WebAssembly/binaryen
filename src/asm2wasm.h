@@ -264,7 +264,10 @@ private:
       legal->body = call;
     }
 
-    module->addFunction(legal);
+    // a method may be exported multiple times
+    if (!module->checkFunction(legal->name)) {
+      module->addFunction(legal);
+    }
     return legal->name;
   }
 
