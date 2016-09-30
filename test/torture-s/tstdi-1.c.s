@@ -25,12 +25,11 @@ fne:                                    # @fne
 	.param  	i64
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, 13
 	i32.const	$push2=, 140
-	i64.const	$push0=, 0
-	i64.ne  	$push1=, $0, $pop0
-	i32.select	$push4=, $pop3, $pop2, $pop1
-                                        # fallthrough-return: $pop4
+	i32.const	$push1=, 13
+	i64.eqz 	$push0=, $0
+	i32.select	$push3=, $pop2, $pop1, $pop0
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end1:
 	.size	fne, .Lfunc_end1-fne

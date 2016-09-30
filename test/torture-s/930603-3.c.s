@@ -7,27 +7,27 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
+	i32.const	$2=, 1
 	block
 	block
-	i32.const	$push0=, 107
+	i32.const	$push0=, 100
 	i32.eq  	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
-	i32.const	$push2=, 100
+	i32.const	$push2=, 107
 	i32.ne  	$push3=, $1, $pop2
 	br_if   	1, $pop3        # 1: down to label0
-# BB#2:                                 # %sw.bb
-	i32.load8_u	$push6=, 0($0)
-	i32.const	$push7=, 1
-	i32.shr_u	$push9=, $pop6, $pop7
-	return  	$pop9
-.LBB0_3:                                # %sw.bb3
+# BB#2:                                 # %sw.bb3
+	i32.const	$push4=, 3
+	i32.add 	$0=, $0, $pop4
+	i32.const	$2=, 4
+.LBB0_3:                                # %sw.epilog
 	end_block                       # label1:
-	i32.load8_u	$push4=, 3($0)
-	i32.const	$push5=, 4
-	i32.shr_u	$push8=, $pop4, $pop5
-	return  	$pop8
+	i32.load8_u	$push5=, 0($0)
+	i32.shr_u	$push6=, $pop5, $2
+	return  	$pop6
 .LBB0_4:                                # %sw.default
 	end_block                       # label0:
 	call    	abort@FUNCTION

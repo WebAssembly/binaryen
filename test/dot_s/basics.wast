@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (data (i32.const 16) "hello, world!\n\00")
   (data (i32.const 32) "vcq")
   (data (i32.const 48) "\16\00\00\00")

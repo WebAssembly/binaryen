@@ -1,5 +1,5 @@
 (module
-  (memory 0)
+  (memory $0 0)
   (start $start)
   (type $0 (func))
   (export "exported" (func $exported))

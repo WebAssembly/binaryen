@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$dddd (func (param f64 f64 f64) (result f64)))
   (import "env" "fma" (func $fma (param f64 f64 f64) (result f64)))

@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))

@@ -7,26 +7,25 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 31
 	block
 	i32.const	$push0=, -4
-	i32.add 	$push8=, $0, $pop0
-	tee_local	$push7=, $0=, $pop8
+	i32.add 	$push10=, $0, $pop0
+	tee_local	$push9=, $0=, $pop10
 	i32.const	$push1=, 7
-	i32.gt_u	$push2=, $pop7, $pop1
+	i32.gt_u	$push2=, $pop9, $pop1
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %switch.lookup
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $0, $pop3
-	i32.const	$push5=, .Lswitch.table
-	i32.add 	$push6=, $pop4, $pop5
-	i32.load	$1=, 0($pop6)
+	i32.const	$push4=, 2
+	i32.shl 	$push5=, $0, $pop4
+	i32.const	$push6=, .Lswitch.table
+	i32.add 	$push7=, $pop5, $pop6
+	i32.load	$push8=, 0($pop7)
+	return  	$pop8
 .LBB0_2:                                # %return
 	end_block                       # label0:
-	copy_local	$push9=, $1
-                                        # fallthrough-return: $pop9
+	i32.const	$push3=, 31
+                                        # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

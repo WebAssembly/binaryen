@@ -70,6 +70,13 @@ e:
 	.int32	1                       # 0x1
 	.size	e, 4
 
+	.type	d,@object               # @d
+	.section	.bss.d,"aw",@nobits
+	.p2align	4
+d:
+	.skip	36
+	.size	d, 36
+
 	.hidden	i                       # @i
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
@@ -78,13 +85,6 @@ e:
 i:
 	.int32	0                       # 0x0
 	.size	i, 4
-
-	.type	d,@object               # @d
-	.section	.bss.d,"aw",@nobits
-	.p2align	4
-d:
-	.skip	36
-	.size	d, 36
 
 
 	.ident	"clang version 4.0.0 "

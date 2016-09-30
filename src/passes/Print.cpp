@@ -645,6 +645,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void printMemoryHeader(Memory* curr) {
     printOpening(o, "memory") << ' ';
+    printName(curr->name) << ' ';
     o << curr->initial;
     if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
     o << ")";

@@ -1,5 +1,5 @@
 (module
-  (memory 10)
+  (memory $0 10)
   (type $ii (func (param i32 i32)))
   (type $1 (func))
   (table 1 1 anyfunc)

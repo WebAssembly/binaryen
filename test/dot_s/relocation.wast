@@ -1,5 +1,5 @@
 (module
-  (memory 1)
+  (memory $0 1)
   (data (i32.const 12) "\10\00\00\00")
   (data (i32.const 16) "\0c\00\00\00")
   (export "memory" (memory $0))

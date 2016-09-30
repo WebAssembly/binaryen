@@ -21,24 +21,19 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-                                        # implicit-def: %vreg18
+                                        # implicit-def: %vreg14
 	block
 	i32.const	$push0=, -10
-	i32.add 	$push4=, $0, $pop0
-	tee_local	$push3=, $0=, $pop4
-	i32.const	$push1=, 4
-	i32.gt_u	$push2=, $pop3, $pop1
-	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %entry
-	block
-	br_table 	$0, 0, 0, 0, 0, 0, 0 # 0: down to label1
-.LBB1_2:                                # %sw.bb4
-	end_block                       # label1:
+	i32.add 	$push1=, $0, $pop0
+	i32.const	$push2=, 4
+	i32.gt_u	$push3=, $pop1, $pop2
+	br_if   	0, $pop3        # 0: down to label0
+# BB#1:                                 # %sw.epilog.sink.split
 	i32.load	$2=, 0($1)
-.LBB1_3:                                # %sw.epilog
+.LBB1_2:                                # %sw.epilog
 	end_block                       # label0:
-	copy_local	$push5=, $2
-                                        # fallthrough-return: $pop5
+	copy_local	$push4=, $2
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo

@@ -55,25 +55,25 @@ main:                                   # @main
 # BB#2:                                 # %for.end
 	end_loop                        # label3:
 	call    	bar@FUNCTION
-	i32.const	$1=, 0
+	i32.const	$2=, 0
 	i32.const	$0=, c
-	i32.const	$2=, 1
+	i32.const	$1=, 1
 .LBB1_3:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1
 	block
 	loop                            # label5:
 	i32.load	$push1=, 0($0)
-	i32.ne  	$push2=, $pop1, $2
+	i32.ne  	$push2=, $pop1, $1
 	br_if   	2, $pop2        # 2: down to label4
 # BB#4:                                 # %if.end
                                         #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$push15=, 4
 	i32.add 	$0=, $0, $pop15
 	i32.const	$push14=, 1
-	i32.shl 	$2=, $2, $pop14
+	i32.shl 	$1=, $1, $pop14
 	i32.const	$push13=, 1
-	i32.add 	$push12=, $1, $pop13
-	tee_local	$push11=, $1=, $pop12
+	i32.add 	$push12=, $2, $pop13
+	tee_local	$push11=, $2=, $pop12
 	i32.const	$push10=, 624
 	i32.lt_u	$push3=, $pop11, $pop10
 	br_if   	0, $pop3        # 0: up to label5

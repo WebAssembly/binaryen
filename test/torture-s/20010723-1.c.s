@@ -6,7 +6,7 @@
 	.type	test,@function
 test:                                   # @test
 	.result 	i32
-# BB#0:                                 # %for.body.lr.ph
+# BB#0:                                 # %entry
 	i32.const	$push0=, 8
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -19,7 +19,7 @@ test:                                   # @test
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable

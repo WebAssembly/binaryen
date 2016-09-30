@@ -13,39 +13,37 @@ reset_palette:                          # @reset_palette
 	i32.const	$push2=, vc_cons
 	i32.add 	$1=, $pop1, $pop2
 	i32.const	$0=, 6
-	i32.const	$2=, 0
+	i32.const	$2=, -64
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
 	i32.load	$push3=, 0($1)
 	i32.add 	$push4=, $pop3, $0
-	i32.const	$push27=, -2
-	i32.add 	$push5=, $pop4, $pop27
-	i32.const	$push26=, default_red
-	i32.add 	$push6=, $2, $pop26
+	i32.const	$push25=, -2
+	i32.add 	$push5=, $pop4, $pop25
+	i32.const	$push24=, default_red+64
+	i32.add 	$push6=, $2, $pop24
 	i32.load	$push7=, 0($pop6)
 	i32.store8	$drop=, 0($pop5), $pop7
 	i32.load	$push8=, 0($1)
 	i32.add 	$push9=, $pop8, $0
-	i32.const	$push25=, -1
-	i32.add 	$push10=, $pop9, $pop25
-	i32.const	$push24=, default_grn
-	i32.add 	$push11=, $2, $pop24
+	i32.const	$push23=, -1
+	i32.add 	$push10=, $pop9, $pop23
+	i32.const	$push22=, default_grn+64
+	i32.add 	$push11=, $2, $pop22
 	i32.load	$push12=, 0($pop11)
 	i32.store8	$drop=, 0($pop10), $pop12
 	i32.load	$push13=, 0($1)
 	i32.add 	$push14=, $pop13, $0
-	i32.const	$push23=, default_blu
-	i32.add 	$push15=, $2, $pop23
+	i32.const	$push21=, default_blu+64
+	i32.add 	$push15=, $2, $pop21
 	i32.load	$push16=, 0($pop15)
 	i32.store8	$drop=, 0($pop14), $pop16
-	i32.const	$push22=, 4
-	i32.add 	$2=, $2, $pop22
-	i32.const	$push21=, 3
-	i32.add 	$push20=, $0, $pop21
-	tee_local	$push19=, $0=, $pop20
-	i32.const	$push18=, 54
-	i32.ne  	$push17=, $pop19, $pop18
+	i32.const	$push20=, 3
+	i32.add 	$0=, $0, $pop20
+	i32.const	$push19=, 4
+	i32.add 	$push18=, $2, $pop19
+	tee_local	$push17=, $2=, $pop18
 	br_if   	0, $pop17       # 0: up to label0
 # BB#2:                                 # %bar.exit
 	end_loop                        # label1:

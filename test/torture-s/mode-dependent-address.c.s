@@ -35,12 +35,12 @@ f883b:                                  # @f883b
 	i64.load	$push10=, 0($3)
 	i64.and 	$push11=, $pop9, $pop10
 	i64.store8	$drop=, 0($pop12), $pop11
-	i32.const	$push20=, 2
-	i32.add 	$1=, $1, $pop20
+	i32.const	$push20=, 8
+	i32.add 	$3=, $3, $pop20
 	i32.const	$push19=, 4
 	i32.add 	$2=, $2, $pop19
-	i32.const	$push18=, 8
-	i32.add 	$3=, $3, $pop18
+	i32.const	$push18=, 2
+	i32.add 	$1=, $1, $pop18
 	i32.const	$push17=, 1
 	i32.add 	$push16=, $6, $pop17
 	tee_local	$push15=, $6=, $pop16

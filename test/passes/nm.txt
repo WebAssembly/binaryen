@@ -2,7 +2,7 @@
     $b : 5
     $c : 13
 (module
-  (memory 0)
+  (memory $0 0)
   (type $0 (func))
   (func $a (type $0)
     (nop)

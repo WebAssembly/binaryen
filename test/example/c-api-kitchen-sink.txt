@@ -7,7 +7,7 @@ BinaryenFloat64: 4
   (f32.const -33.61199951171875)
 )
 (module
-  (memory 1 256)
+  (memory $0 1 256)
   (data (i32.const 10) "hello, world")
   (start $starter)
   (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
@@ -538,7 +538,7 @@ BinaryenFloat64: 4
 )
 raw:
 (module
-  (memory 0)
+  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
@@ -1025,7 +1025,7 @@ raw:
 )
 optimized:
 (module
-  (memory 0)
+  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
@@ -1182,7 +1182,7 @@ optimized:
 )
 module loaded from binary form:
 (module
-  (memory 0)
+  (memory $0 0)
   (type $0 (func (param i32 i32) (result i32)))
   (func $adder (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
     (i32.add
@@ -1192,7 +1192,7 @@ module loaded from binary form:
   )
 )
 (module
-  (memory 0)
+  (memory $0 0)
   (start $starter)
   (type $vi (func (param i32)))
   (type $v (func))
@@ -1205,7 +1205,7 @@ module loaded from binary form:
 )
 (i32.const 1234)
 (module
-  (memory 0)
+  (memory $0 0)
   (type $v (func))
   (func $func (type $v)
     (local $0 i32)
@@ -1550,7 +1550,7 @@ int main() {
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
-  (memory 1 256)
+  (memory $0 1 256)
   (data (i32.const 10) "hello, world")
   (start $starter)
   (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
@@ -2541,7 +2541,7 @@ int main() {
 raw:
   BinaryenModulePrint(the_module);
 (module
-  (memory 0)
+  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
@@ -3032,7 +3032,7 @@ raw:
 optimized:
   BinaryenModulePrint(the_module);
 (module
-  (memory 0)
+  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))

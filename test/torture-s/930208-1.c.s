@@ -12,18 +12,18 @@ f:                                      # @f
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
 	i32.store8	$drop=, 3($0), $pop2
-	i32.load	$push8=, 0($0)
-	i32.const	$push9=, 16711680
-	i32.and 	$push10=, $pop8, $pop9
-	i32.const	$push11=, 131072
-	i32.ne  	$push12=, $pop10, $pop11
-	i32.load16_u	$push3=, 0($0)
-	i32.const	$push4=, 65280
-	i32.and 	$push5=, $pop3, $pop4
-	i32.const	$push6=, 512
-	i32.ne  	$push7=, $pop5, $pop6
-	i32.or  	$push13=, $pop12, $pop7
-                                        # fallthrough-return: $pop13
+	i32.load8_u	$push3=, 0($0)
+	i32.const	$push12=, 1
+	i32.add 	$push4=, $pop3, $pop12
+	i32.store8	$drop=, 0($0), $pop4
+	i32.load8_u	$push8=, 2($0)
+	i32.const	$push6=, 2
+	i32.ne  	$push9=, $pop8, $pop6
+	i32.load8_u	$push5=, 1($0)
+	i32.const	$push11=, 2
+	i32.ne  	$push7=, $pop5, $pop11
+	i32.or  	$push10=, $pop9, $pop7
+                                        # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
