@@ -67,6 +67,7 @@ void PassRegistry::registerPasses() {
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
+  registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);

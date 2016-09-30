@@ -970,6 +970,54 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
   }
 };
 
+struct I64Utilities {
+  static Expression* recreateI64(Builder& builder, Expression* low, Expression* high) {
+    return
+      builder.makeBinary(
+        OrInt64,
+        builder.makeUnary(
+          ExtendUInt32,
+          low
+        ),
+        builder.makeBinary(
+          ShlInt64,
+          builder.makeUnary(
+            ExtendUInt32,
+            high
+          ),
+          builder.makeConst(Literal(int64_t(32)))
+        )
+      )
+    ;
+  };
+
+  static Expression* recreateI64(Builder& builder, Index low, Index high) {
+    return recreateI64(builder, builder.makeGetLocal(low, i32), builder.makeGetLocal(high, i32));
+  };
+
+  static Expression* getI64High(Builder& builder, Index index) {
+    return
+      builder.makeUnary(
+        WrapInt64,
+        builder.makeBinary(
+          ShrUInt64,
+          builder.makeGetLocal(index, i64),
+          builder.makeConst(Literal(int64_t(32)))
+        )
+      )
+    ;
+  }
+
+  static Expression* getI64Low(Builder& builder, Index index) {
+    return
+      builder.makeUnary(
+        WrapInt64,
+        builder.makeGetLocal(index, i64)
+      )
+    ;
+  }
+};
+
 } // namespace wasm
 
 #endif // wasm_ast_utils_h
