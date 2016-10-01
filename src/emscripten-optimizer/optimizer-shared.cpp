@@ -52,7 +52,7 @@ HeapInfo parseHeap(const char *name) {
   return ret;
 }
 
-AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFround) {
+AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFround, bool allowI64) {
   switch (node[0]->getCString()[0]) {
     case 'n': {
       if (node[0] == NUM) {
@@ -79,7 +79,7 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
       if (node[0] == UNARY_PREFIX) {
         switch (node[1]->getCString()[0]) {
           case '+': return ASM_DOUBLE;
-          case '-': return detectType(node[2], asmData, inVarDef, minifiedFround);
+          case '-': return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
           case '!': case '~': return ASM_INT;
         }
         break;
@@ -91,6 +91,7 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
         if (node[1][0] == NAME) {
           IString name = node[1][1]->getIString();
           if (name == MATH_FROUND || name == minifiedFround) return ASM_FLOAT;
+          else if (allowI64 && (name == INT64 || name == INT64_CONST)) return ASM_INT64;
           else if (name == SIMD_FLOAT32X4 || name == SIMD_FLOAT32X4_CHECK) return ASM_FLOAT32X4;
           else if (name == SIMD_FLOAT64X2 || name == SIMD_FLOAT64X2_CHECK) return ASM_FLOAT64X2;
           else if (name == SIMD_INT8X16   || name == SIMD_INT8X16_CHECK) return ASM_INT8X16;
@@ -99,7 +100,7 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
         }
         return ASM_NONE;
       } else if (node[0] == CONDITIONAL) {
-        return detectType(node[2], asmData, inVarDef, minifiedFround);
+        return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
       }
       break;
     }
@@ -107,7 +108,7 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
       if (node[0] == BINARY) {
         switch (node[1]->getCString()[0]) {
           case '+': case '-':
-          case '*': case '/': case '%': return detectType(node[2], asmData, inVarDef, minifiedFround);
+          case '*': case '/': case '%': return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
           case '|': case '&': case '^': case '<': case '>': // handles <<, >>, >>=, <=, >=
           case '=': case '!': { // handles ==, !=
             return ASM_INT;
@@ -118,7 +119,7 @@ AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFr
     }
     case 's': {
       if (node[0] == SEQ) {
-        return detectType(node[2], asmData, inVarDef, minifiedFround);
+        return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
       } else if (node[0] == SUB) {
         assert(node[1][0] == NAME);
         HeapInfo info = parseHeap(node[1][1]->getCString());

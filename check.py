@@ -299,6 +299,8 @@ for asm in tests:
           # test mem init importing
           open('a.mem', 'wb').write(asm)
           cmd += ['--mem-init=a.mem']
+        if 'i64' in asm:
+          cmd += ['--wasm-only']
         wasm = os.path.join('test', wasm)
         print '..', asm, wasm
         actual = run_command(cmd)

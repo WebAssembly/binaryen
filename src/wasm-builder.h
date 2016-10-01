@@ -115,6 +115,22 @@ public:
     call->operands.set(args);
     return call;
   }
+  template<typename T>
+  Call* makeCall(Name target, const T& args, WasmType type) {
+    auto* call = allocator.alloc<Call>();
+    call->type = type; // not all functions may exist yet, so type must be provided
+    call->target = target;
+    call->operands.set(args);
+    return call;
+  }
+  template<typename T>
+  CallImport* makeCallImport(Name target, const T& args, WasmType type) {
+    auto* call = allocator.alloc<CallImport>();
+    call->type = type; // similar to makeCall, for consistency
+    call->target = target;
+    call->operands.set(args);
+    return call;
+  }
   CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
     auto* call = allocator.alloc<CallIndirect>();
     call->fullType = type->name;
@@ -242,11 +258,14 @@ public:
 
   static Index addVar(Function* func, Name name, WasmType type) {
     // always ok to add a var, it does not affect other indices
-    assert(func->localIndices.size() == func->params.size() + func->vars.size());
+    Index index = func->getNumLocals();
+    if (name.is()) {
+      // if there is a name, apply it, but here we assume all the rest have names too FIXME
+      assert(func->localIndices.size() == func->params.size() + func->vars.size());
+      func->localIndices[name] = index;
+      func->localNames.push_back(name);
+    }
     func->vars.emplace_back(type);
-    Index index = func->localNames.size();
-    func->localIndices[name] = index;
-    func->localNames.push_back(name);
     return index;
   }
 

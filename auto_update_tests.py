@@ -22,6 +22,8 @@ for asm in sorted(os.listdir('test')):
           # test mem init importing
           open('a.mem', 'wb').write(asm)
           cmd += ['--mem-init=a.mem']
+        if 'i64' in asm:
+          cmd += ['--wasm-only']
         print '..', asm, wasm
         print '    ', ' '.join(cmd)
         actual = run_command(cmd)

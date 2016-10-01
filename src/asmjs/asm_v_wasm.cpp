@@ -25,6 +25,7 @@ WasmType asmToWasmType(AsmType asmType) {
     case ASM_INT: return WasmType::i32;
     case ASM_DOUBLE: return WasmType::f64;
     case ASM_FLOAT: return WasmType::f32;
+    case ASM_INT64: return WasmType::i64;
     case ASM_NONE: return WasmType::none;
     default: {}
   }
@@ -36,6 +37,7 @@ AsmType wasmToAsmType(WasmType type) {
     case WasmType::i32: return ASM_INT;
     case WasmType::f32: return ASM_FLOAT;
     case WasmType::f64: return ASM_DOUBLE;
+    case WasmType::i64: return ASM_INT64;
     case WasmType::none: return ASM_NONE;
     default: {}
   }

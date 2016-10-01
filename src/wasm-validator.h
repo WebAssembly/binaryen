@@ -46,6 +46,9 @@ public:
   bool validate(Module& module, bool validateWeb=false) {
     validateWebConstraints = validateWeb;
     walkModule(&module);
+    if (!valid) {
+      WasmPrinter::printModule(&module, std::cerr);
+    }
     return valid;
   }
 

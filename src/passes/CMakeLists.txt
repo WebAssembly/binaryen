@@ -4,6 +4,7 @@ SET(passes_SOURCES
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
+  LegalizeJSInterface.cpp
   MergeBlocks.cpp
   Metrics.cpp
   NameManager.cpp
