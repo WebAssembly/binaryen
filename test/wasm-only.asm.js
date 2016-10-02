@@ -73,6 +73,13 @@ function asm(global, env, buffer) {
     stored(121, d, 8);
   }
 
+  function test() {
+    var i = 0, f = fround(0);
+    // bitcasts
+    i = i32_bc2i(f);
+    f = i32_bc2f(i);
+  }
+
   function test64() {
     var x = i64(), y = i64(), z = 0; // define i64 variables using special intrinsic
     var int32 = 0, float32 = fround(0), float64 = +0;

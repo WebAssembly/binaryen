@@ -222,6 +222,20 @@
       (get_local $d)
     )
   )
+  (func $test
+    (local $i i32)
+    (local $f f32)
+    (set_local $i
+      (i32.reinterpret/f32
+        (get_local $f)
+      )
+    )
+    (set_local $f
+      (f32.reinterpret/i32
+        (get_local $i)
+      )
+    )
+  )
   (func $i64u-div (param $0 i64) (param $1 i64) (result i64)
     (if i64
       (i64.eqz

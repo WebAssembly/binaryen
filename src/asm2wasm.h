@@ -97,7 +97,9 @@ Name I64("i64"),
      STORE4("store4"),
      STORE8("store8"),
      STOREF("storef"),
-     STORED("stored");
+     STORED("stored"),
+     I32_BC2F("i32_bc2f"),
+     I32_BC2I("i32_bc2i");
 
 // Utilities
 
@@ -1568,6 +1570,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                     return value;
                   }
                 }
+                if (name == I32_BC2F) return builder.makeUnary(UnaryOp::ReinterpretInt32, value);
+                if (name == I32_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat32, value);
+
                 if (name == I64_TRUNC) return builder.makeUnary(UnaryOp::WrapInt64, value);
                 if (name == I64_SEXT) return builder.makeUnary(UnaryOp::ExtendSInt32, value);
                 if (name == I64_ZEXT) return builder.makeUnary(UnaryOp::ExtendUInt32, value);
