@@ -177,7 +177,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         if (isConcreteWasmType(curr->type) || EffectAnalyzer(list[0]).hasSideEffects()) {
           replaceCurrent(list[0]);
         } else {
-          ExpressionManipulator::nop(curr);
+          if (curr->type == unreachable) {
+            ExpressionManipulator::convert<Block, Unreachable>(curr);
+          } else {
+            ExpressionManipulator::nop(curr);
+          }
         }
       } else if (list.size() == 0) {
         ExpressionManipulator::nop(curr);
