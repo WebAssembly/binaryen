@@ -1,5 +1,5 @@
 //
-// Test i64 support in wasm-only builds. In this case, fastcomp emits code that is
+// Test wasm-only builds. In this case, fastcomp emits code that is
 // not asm.js, it will only ever run as wasm, and contains special intrinsics for
 // asm2wasm that map LLVM IR into i64s.
 //
@@ -21,7 +21,66 @@ function asm(global, env, buffer) {
   var illegalImport = env.illegalImport;
   var illegalImportResult = env.illegalImportResult;
 
+  function loads() {
+    var i = 0, f = fround(0), d = +0;
+    i = load1(100);
+    i = load1(101, 0);
+    i = load2(102);
+    i = load2(103, 0);
+    i = load2(104, 1);
+    i = load2(105, 2);
+    i = load4(106);
+    i = load4(107, 0);
+    i = load4(108, 1);
+    i = load4(109, 2);
+    i = load4(110, 4);
+    f = loadf(111);
+    f = loadf(112, 0);
+    f = loadf(113, 1);
+    f = loadf(114, 2);
+    f = loadf(115, 4);
+    d = loadd(116);
+    d = loadd(117, 0);
+    d = loadd(118, 1);
+    d = loadd(119, 2);
+    d = loadd(120, 4);
+    d = loadd(121, 8);
+  }
+
+  function stores() {
+    var i = 0, f = fround(0), d = +0;
+    store1(100, i);
+    store1(101, i, 0);
+    store2(102, i);
+    store2(103, i, 0);
+    store2(104, i, 1);
+    store2(105, i, 2);
+    store4(106, i);
+    store4(107, i, 0);
+    store4(108, i, 1);
+    store4(109, i, 2);
+    store4(110, i, 4);
+    storef(111, f);
+    storef(112, f, 0);
+    storef(113, f, 1);
+    storef(114, f, 2);
+    storef(115, f, 4);
+    stored(116, d);
+    stored(117, d, 0);
+    stored(118, d, 1);
+    stored(119, d, 2);
+    stored(120, d, 4);
+    stored(121, d, 8);
+  }
+
   function test() {
+    var i = 0, f = fround(0);
+    // bitcasts
+    i = i32_bc2i(f);
+    f = i32_bc2f(i);
+  }
+
+  function test64() {
     var x = i64(), y = i64(), z = 0; // define i64 variables using special intrinsic
     var int32 = 0, float32 = fround(0), float64 = +0;
     x = i64_const(100, 0); // i64 constant
@@ -39,14 +98,16 @@ function asm(global, env, buffer) {
     x = i64_shl(x, y);
     x = i64_ashr(x, y);
     x = i64_lshr(x, y);
-    x = i64_load(120, 0); // load and store
-    x = i64_load(120, 2);
-    x = i64_load(120, 4);
-    x = i64_load(120, 8);
-    i64_store(120, x, 0);
-    i64_store(120, x, 2);
-    i64_store(120, x, 4);
-    i64_store(120, x, 8);
+    x = load8(120, 0); // load and store
+    x = load8(120);
+    x = load8(120, 2);
+    x = load8(120, 4);
+    x = load8(120, 8);
+    store8(120, x, 0);
+    store8(120, x);
+    store8(120, x, 2);
+    store8(120, x, 4);
+    store8(120, x, 8);
     // comps
     z = i64_eq(x, y);
     z = i64_ne(x, y);
@@ -83,14 +144,14 @@ function asm(global, env, buffer) {
   }
   function arg(x) { // illegal param, but not exported
     x = i64(x);
-    i64_store(100, x, 0);
+    store8(100, x, 0);
     arg(i64(x)); // "coercion"/"cast"
   }
   function illegalParam(a, x, c) {
     a = 0;
     x = i64(x);
     b = +0;
-    i64_store(100, x, 0);
+    store8(100, x, 0);
     illegalParam(0, i64(x), 12.34); // "coercion"/"cast"
   }
   function result() { // illegal result, but not exported
@@ -158,6 +219,6 @@ function asm(global, env, buffer) {
     return $waka | 0;
   }
 
-  return { test: test, illegalParam : illegalParam, illegalResult: illegalResult };
+  return { test64: test64, illegalParam : illegalParam, illegalResult: illegalResult };
 }
 
