@@ -57,8 +57,6 @@ Name I64("i64"),
      I64_SHL("i64_shl"),
      I64_ASHR("i64_ashr"),
      I64_LSHR("i64_lshr"),
-     I64_LOAD("i64_load"),
-     I64_STORE("i64_store"),
      I64_EQ("i64_eq"),
      I64_NE("i64_ne"),
      I64_ULE("i64_ule"),
@@ -87,7 +85,19 @@ Name I64("i64"),
      I64S_REM("i64s-rem"),
      I64U_REM("i64u-rem"),
      I64S_DIV("i64s-div"),
-     I64U_DIV("i64u-div");
+     I64U_DIV("i64u-div"),
+     LOAD1("load1"),
+     LOAD2("load2"),
+     LOAD4("load4"),
+     LOAD8("load8"),
+     LOADF("loadf"),
+     LOADD("loadd"),
+     STORE1("store1"),
+     STORE2("store2"),
+     STORE4("store4"),
+     STORE8("store8"),
+     STOREF("storef"),
+     STORED("stored");
 
 // Utilities
 
@@ -419,10 +429,6 @@ private:
     }
     abort();
     return -1; // avoid warning
-  }
-
-  bool maybeWasmInt64Intrinsic(Name name) {
-    return strncmp(name.str, "i64", 3) == 0;
   }
 
   std::map<unsigned, Ref> tempNums;
@@ -802,7 +808,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         } else if (key == GET_TEMP_RET0) {
           getTempRet0 = value;
         }
-        assert(wasm.checkFunction(value));
         if (exported.count(key) > 0) {
           // asm.js allows duplicate exports, but not wasm. use the last, like asm.js
           exported[key]->value = value;
@@ -864,10 +869,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     void visitCall(Call* curr) {
       if (!getModule()->checkFunction(curr->target)) {
         std::cerr << "invalid call target: " << curr->target << '\n';
-        if (parent->maybeWasmInt64Intrinsic(curr->target)) {
-          std::cerr << " - perhaps this is a wasm-only i64() method, and you should run asm2wasm with --wasm-only?\n";
-          if (parent->wasmOnly) std::cerr << " - wait, you *did*. so this is an internal compiler error, please file an issue!\n";
-        }
         WASM_UNREACHABLE();
       }
       auto result = getModule()->getFunction(curr->target)->result;
@@ -1525,66 +1526,96 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           return ret;
         }
-        if (wasmOnly && maybeWasmInt64Intrinsic(name)) {
+        if (wasmOnly) {
           auto num = ast[2]->size();
-          if (num == 1) {
-            auto* value = process(ast[2][0]);
-            if (name == I64) {
-              // no-op "coercion" / "cast", although we also tolerate i64(0) for constants that fit in i32
-              if (value->type == i32) {
-                return builder.makeConst(Literal(int64_t(value->cast<Const>()->value.geti32())));
-              } else {
-                fixCallType(value, i64);
-                return value;
-              }
+          switch (name.str[0]) {
+            case 'l': {
+              auto align = num == 2 ? ast[2][1][1]->getInteger() : 0;
+              if (name == LOAD1) return builder.makeLoad(1, true, 0, 1,                 process(ast[2][0]), i32);
+              if (name == LOAD2) return builder.makeLoad(2, true, 0, indexOr(align, 2), process(ast[2][0]), i32);
+              if (name == LOAD4) return builder.makeLoad(4, true, 0, indexOr(align, 4), process(ast[2][0]), i32);
+              if (name == LOAD8) return builder.makeLoad(8, true, 0, indexOr(align, 8), process(ast[2][0]), i64);
+              if (name == LOADF) return builder.makeLoad(4, true, 0, indexOr(align, 4), process(ast[2][0]), f32);
+              if (name == LOADD) return builder.makeLoad(8, true, 0, indexOr(align, 8), process(ast[2][0]), f64);
+              break;
             }
-            if (name == I64_TRUNC) return builder.makeUnary(UnaryOp::WrapInt64, value);
-            if (name == I64_SEXT) return builder.makeUnary(UnaryOp::ExtendSInt32, value);
-            if (name == I64_ZEXT) return builder.makeUnary(UnaryOp::ExtendUInt32, value);
-            if (name == I64_S2F) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat32, value);
-            if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
-            if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
-            if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
-            if (name == I64_F2S) return builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
-            if (name == I64_D2S) return builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
-            if (name == I64_F2U) return builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
-            if (name == I64_D2U) return builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
-            if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
-            if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
-            if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
-            if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
-          } else if (num == 2) { // 2 params,binary
-            if (name == I64_CONST) return builder.makeConst(getLiteral(ast));
-            if (name == I64_LOAD) return builder.makeLoad(8, true, 0, indexOr(ast[2][1][1]->getInteger(), 8), process(ast[2][0]), i64);
-            auto* left = process(ast[2][0]);
-            auto* right = process(ast[2][1]);
-            // maths
-            if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
-            if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
-            if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-            if (name == I64_UDIV) return makeDangerousI64Binary(BinaryOp::DivUInt64, left, right);
-            if (name == I64_SDIV) return makeDangerousI64Binary(BinaryOp::DivSInt64, left, right);
-            if (name == I64_UREM) return makeDangerousI64Binary(BinaryOp::RemUInt64, left, right);
-            if (name == I64_SREM) return makeDangerousI64Binary(BinaryOp::RemSInt64, left, right);
-            if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
-            if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
-            if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
-            if (name == I64_SHL) return builder.makeBinary(BinaryOp::ShlInt64, left, right);
-            if (name == I64_ASHR) return builder.makeBinary(BinaryOp::ShrSInt64, left, right);
-            if (name == I64_LSHR) return builder.makeBinary(BinaryOp::ShrUInt64, left, right);
-            // comps
-            if (name == I64_EQ) return builder.makeBinary(BinaryOp::EqInt64, left, right);
-            if (name == I64_NE) return builder.makeBinary(BinaryOp::NeInt64, left, right);
-            if (name == I64_ULE) return builder.makeBinary(BinaryOp::LeUInt64, left, right);
-            if (name == I64_SLE) return builder.makeBinary(BinaryOp::LeSInt64, left, right);
-            if (name == I64_UGE) return builder.makeBinary(BinaryOp::GeUInt64, left, right);
-            if (name == I64_SGE) return builder.makeBinary(BinaryOp::GeSInt64, left, right);
-            if (name == I64_ULT) return builder.makeBinary(BinaryOp::LtUInt64, left, right);
-            if (name == I64_SLT) return builder.makeBinary(BinaryOp::LtSInt64, left, right);
-            if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
-            if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
-          } else if (num == 3) { // 3 params
-            if (name == I64_STORE) return builder.makeStore(8, 0, indexOr(ast[2][2][1]->getInteger(), 8), process(ast[2][0]), process(ast[2][1]), i64);
+            case 's': {
+              auto align = num == 3 ? ast[2][2][1]->getInteger() : 0;
+              if (name == STORE1) return builder.makeStore(1, 0, 1,                 process(ast[2][0]), process(ast[2][1]), i32);
+              if (name == STORE2) return builder.makeStore(2, 0, indexOr(align, 2), process(ast[2][0]), process(ast[2][1]), i32);
+              if (name == STORE4) return builder.makeStore(4, 0, indexOr(align, 4), process(ast[2][0]), process(ast[2][1]), i32);
+              if (name == STORE8) return builder.makeStore(8, 0, indexOr(align, 8), process(ast[2][0]), process(ast[2][1]), i64);
+              if (name == STOREF) {
+                auto* value = process(ast[2][1]);
+                if (value->type == f64) {
+                  // asm.js allows storing a double to HEAPF32, we must cast here
+                  value = builder.makeUnary(DemoteFloat64, value);
+                }
+                return builder.makeStore(4, 0, indexOr(align, 4), process(ast[2][0]), value, f32);
+              }
+              if (name == STORED) return builder.makeStore(8, 0, indexOr(align, 8), process(ast[2][0]), process(ast[2][1]), f64);
+              break;
+            }
+            case 'i': {
+              if (num == 1) {
+                auto* value = process(ast[2][0]);
+                if (name == I64) {
+                  // no-op "coercion" / "cast", although we also tolerate i64(0) for constants that fit in i32
+                  if (value->type == i32) {
+                    return builder.makeConst(Literal(int64_t(value->cast<Const>()->value.geti32())));
+                  } else {
+                    fixCallType(value, i64);
+                    return value;
+                  }
+                }
+                if (name == I64_TRUNC) return builder.makeUnary(UnaryOp::WrapInt64, value);
+                if (name == I64_SEXT) return builder.makeUnary(UnaryOp::ExtendSInt32, value);
+                if (name == I64_ZEXT) return builder.makeUnary(UnaryOp::ExtendUInt32, value);
+                if (name == I64_S2F) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat32, value);
+                if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
+                if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
+                if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
+                if (name == I64_F2S) return builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
+                if (name == I64_D2S) return builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
+                if (name == I64_F2U) return builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
+                if (name == I64_D2U) return builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
+                if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
+                if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
+                if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
+                if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
+              } else if (num == 2) { // 2 params,binary
+                if (name == I64_CONST) return builder.makeConst(getLiteral(ast));
+                auto* left = process(ast[2][0]);
+                auto* right = process(ast[2][1]);
+                // maths
+                if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
+                if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
+                if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
+                if (name == I64_UDIV) return makeDangerousI64Binary(BinaryOp::DivUInt64, left, right);
+                if (name == I64_SDIV) return makeDangerousI64Binary(BinaryOp::DivSInt64, left, right);
+                if (name == I64_UREM) return makeDangerousI64Binary(BinaryOp::RemUInt64, left, right);
+                if (name == I64_SREM) return makeDangerousI64Binary(BinaryOp::RemSInt64, left, right);
+                if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
+                if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
+                if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
+                if (name == I64_SHL) return builder.makeBinary(BinaryOp::ShlInt64, left, right);
+                if (name == I64_ASHR) return builder.makeBinary(BinaryOp::ShrSInt64, left, right);
+                if (name == I64_LSHR) return builder.makeBinary(BinaryOp::ShrUInt64, left, right);
+                // comps
+                if (name == I64_EQ) return builder.makeBinary(BinaryOp::EqInt64, left, right);
+                if (name == I64_NE) return builder.makeBinary(BinaryOp::NeInt64, left, right);
+                if (name == I64_ULE) return builder.makeBinary(BinaryOp::LeUInt64, left, right);
+                if (name == I64_SLE) return builder.makeBinary(BinaryOp::LeSInt64, left, right);
+                if (name == I64_UGE) return builder.makeBinary(BinaryOp::GeUInt64, left, right);
+                if (name == I64_SGE) return builder.makeBinary(BinaryOp::GeSInt64, left, right);
+                if (name == I64_ULT) return builder.makeBinary(BinaryOp::LtUInt64, left, right);
+                if (name == I64_SLT) return builder.makeBinary(BinaryOp::LtSInt64, left, right);
+                if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
+                if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
+              }
+              break;
+            }
+            default: {}
           }
         }
         Expression* ret;
