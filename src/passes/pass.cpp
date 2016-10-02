@@ -15,6 +15,7 @@
  */
 
 #include <chrono>
+#include <sstream>
 
 #include <passes/passes.h>
 #include <pass.h>
@@ -143,7 +144,10 @@ void PassRunner::run() {
       padding = std::max(padding, pass->name.size());
     }
     for (auto* pass : passes) {
-      currPass = pass;
+      // ignoring the time, save a printout of the module before, in case this pass breaks it, so we can print the before and after
+      std::stringstream moduleBefore;
+      WasmPrinter::printModule(wasm, moduleBefore);
+      // prepare to run
       std::chrono::high_resolution_clock::time_point before;
       std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
       for (size_t i = 0; i < padding - pass->name.size(); i++) {
@@ -162,18 +166,20 @@ void PassRunner::run() {
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
       totalTime += diff;
-#if 0
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
-      if (!WasmValidator().validate(*wasm)) {
-        std::cerr << "last pass (" << pass->name << ") broke validation\n";
+      if (!WasmValidator().validate(*wasm, false, validateGlobally)) {
+        std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         abort();
       }
-#endif
     }
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
     // validate
-    assert(WasmValidator().validate(*wasm));
+    std::cerr << "[PassRunner] (final validation)\n";
+    if (!WasmValidator().validate(*wasm, false, validateGlobally)) {
+      std::cerr << "final module does not validate\n";
+      abort();
+    }
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better
     // to run as many passes as possible on a single function before moving to the next
@@ -241,6 +247,11 @@ void PassRunner::doAdd(Pass* pass) {
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
+#if 0
+  if (debug) {
+    std::cerr << "[PassRunner]   runPass " << pass->name << " OnFunction " << func->name << "\n";
+  }
+#endif
   // function-parallel passes get a new instance per function
   if (pass->isFunctionParallel()) {
     auto instance = std::unique_ptr<Pass>(pass->create());

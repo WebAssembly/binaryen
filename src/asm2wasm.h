@@ -633,11 +633,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, [&](PassRunner& passRunner) {
+      if (debug) {
+        passRunner.setDebug(true);
+        passRunner.setValidateGlobally(false);
+      }
       // run autodrop first, before optimizations
       passRunner.add<AutoDrop>();
       // optimize relooper label variable usage at the wasm level, where it is easy
       passRunner.add("relooper-jump-threading");
-    });
+    }, debug, false /* do not validate globally yet */);
   }
 
   // first pass - do almost everything, but function imports and indirect calls
@@ -821,6 +825,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   if (optimize) {
     optimizingBuilder->finish();
     PassRunner passRunner(&wasm);
+    if (debug) {
+      passRunner.setDebug(true);
+      passRunner.setValidateGlobally(false);
+    }
     passRunner.add("post-emscripten");
     passRunner.run();
   }
@@ -859,7 +867,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
     Asm2WasmBuilder* parent;
 
-    FinalizeCalls(Asm2WasmBuilder* parent) : parent(parent) {}
+    FinalizeCalls(Asm2WasmBuilder* parent) : parent(parent) {
+      name = "finalize-calls";
+    }
 
     void visitCall(Call* curr) {
       if (!getModule()->checkFunction(curr->target)) {
@@ -930,6 +940,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   };
 
   PassRunner passRunner(&wasm);
+  if (debug) {
+    passRunner.setDebug(true);
+    passRunner.setValidateGlobally(false);
+  }
   passRunner.add<FinalizeCalls>(this);
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
@@ -1069,9 +1083,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   auto name = ast[1]->getIString();
 
   if (debug) {
-    std::cout << "\nfunc: " << ast[1]->getIString().str << '\n';
-    ast->stringify(std::cout);
-    std::cout << '\n';
+    std::cout << "asm2wasming func: " << ast[1]->getIString().str << '\n';
   }
 
   auto function = new Function;
@@ -1141,11 +1153,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   std::function<Expression* (Ref)> process = [&](Ref ast) -> Expression* {
     AstStackHelper astStackHelper(ast); // TODO: only create one when we need it?
-    if (debug) {
-      std::cout << "at: ";
-      ast->stringify(std::cout);
-      std::cout << '\n';
-    }
     IString what = ast[0]->getIString();
     if (what == STAT) {
       return process(ast[1]); // and drop return value, if any

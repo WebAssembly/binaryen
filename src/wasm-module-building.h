@@ -83,16 +83,18 @@ class OptimizingIncrementalModuleBuilder {
   std::mutex mutex;
   std::condition_variable condition;
   bool finishing;
+  bool debug;
+  bool validateGlobally;
 
 public:
   // numFunctions must be equal to the number of functions allocated, or higher. Knowing
   // this bounds helps avoid locking.
-  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, std::function<void (PassRunner&)> addPrePasses)
+  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, std::function<void (PassRunner&)> addPrePasses, bool debug, bool validateGlobally)
       : wasm(wasm), numFunctions(numFunctions), addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr), nextFunction(0),
         numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
-        finishing(false) {
-    if (numFunctions == 0) {
-      // special case: no functions to be optimized.  Don't create any threads.
+        finishing(false), debug(debug), validateGlobally(validateGlobally) {
+    if (numFunctions == 0 || debug) {
+      // if no functions to be optimized, or debug non-parallel mode, don't create any threads.
       return;
     }
 
@@ -134,6 +136,7 @@ public:
   // Add a function to the module, and to be optimized
   void addFunction(Function* func) {
     wasm->addFunction(func);
+    if (debug) return; // we optimize at the end if debugging
     queueFunction(func);
     // wake workers if needed
     auto wake = availableFuncs.load();
@@ -145,6 +148,18 @@ public:
   // All functions have been added, block until all are optimized, and then do
   // global optimizations. When this returns, the module is ready and optimized.
   void finish() {
+    if (debug) {
+      // in debug mode, optimize each function now that we are done adding functions,
+      // then optimize globally
+      PassRunner passRunner(wasm);
+      passRunner.setDebug(true);
+      passRunner.setValidateGlobally(validateGlobally);
+      addPrePasses(passRunner);
+      passRunner.addDefaultFunctionOptimizationPasses();
+      passRunner.addDefaultGlobalOptimizationPasses();
+      passRunner.run();
+      return;
+    }
     DEBUG_THREAD("finish()ing");
     assert(nextFunction == numFunctions);
     wakeAllWorkers();

@@ -28,7 +28,8 @@ namespace wasm {
 
 struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> {
   bool valid = true;
-  bool validateWebConstraints = false;
+  bool validateWeb = false;
+  bool validateGlobally = true;
 
   struct BreakInfo {
     WasmType type;
@@ -43,8 +44,9 @@ struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> 
   WasmType returnType = unreachable; // type used in returns
 
 public:
-  bool validate(Module& module, bool validateWeb=false) {
-    validateWebConstraints = validateWeb;
+  bool validate(Module& module, bool validateWeb_ = false, bool validateGlobally_ = true) {
+    validateWeb = validateWeb_;
+    validateGlobally = validateGlobally_;
     walkModule(&module);
     if (!valid) {
       WasmPrinter::printModule(&module, std::cerr);
@@ -175,6 +177,7 @@ public:
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
   }
   void visitCall(Call *curr) {
+    if (!validateGlobally) return;
     auto* target = getModule()->checkFunction(curr->target);
     if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
     if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
@@ -185,8 +188,10 @@ public:
     }
   }
   void visitCallImport(CallImport *curr) {
+    if (!validateGlobally) return;
     auto* import = getModule()->checkImport(curr->target);
     if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
+    if (!shouldBeTrue(import->functionType, curr, "called import must be function")) return;
     auto* type = import->functionType;
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
@@ -196,6 +201,7 @@ public:
     }
   }
   void visitCallIndirect(CallIndirect *curr) {
+    if (!validateGlobally) return;
     auto* type = getModule()->checkFunctionType(curr->fullType);
     if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) return;
     shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
@@ -336,7 +342,8 @@ public:
   }
 
   void visitImport(Import* curr) {
-    if (!validateWebConstraints) return;
+    if (!validateWeb) return;
+    if (!validateGlobally) return;
     if (curr->kind == Import::Function) {
       shouldBeUnequal(curr->functionType->result, i64, curr->name, "Imported function must not have i64 return type");
       for (WasmType param : curr->functionType->params) {
@@ -346,7 +353,8 @@ public:
   }
 
   void visitExport(Export* curr) {
-    if (!validateWebConstraints) return;
+    if (!validateWeb) return;
+    if (!validateGlobally) return;
     Function* f = getModule()->getFunction(curr->value);
     shouldBeUnequal(f->result, i64, f->name, "Exported function must not have i64 return type");
     for (auto param : f->params) {
@@ -355,6 +363,7 @@ public:
   }
 
   void visitGlobal(Global* curr) {
+    if (!validateGlobally) return;
     shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
     shouldBeEqual(curr->type, curr->init->type, nullptr, "global init must have correct type");
   }
@@ -402,6 +411,7 @@ public:
     }
   }
   void visitModule(Module *curr) {
+    if (!validateGlobally) return;
     // exports
     std::set<Name> exportNames;
     for (auto& exp : curr->exports) {
