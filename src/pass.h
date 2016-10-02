@@ -62,12 +62,18 @@ struct PassRunner {
   Module* wasm;
   MixedArena* allocator;
   std::vector<Pass*> passes;
-  Pass* currPass;
   bool debug = false;
+  bool validateGlobally = false;
 
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
 
-  void setDebug(bool debug_) { debug = debug_; }
+  void setDebug(bool debug_) {
+    debug = debug_;
+    validateGlobally = debug; // validate everything by default if debugging
+  }
+  void setValidateGlobally(bool validate) {
+    validateGlobally = validate;
+  }
 
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);

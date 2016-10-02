@@ -89,11 +89,6 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "parsing..." << std::endl;
   cashew::Parser<Ref, DotZeroValueBuilder> builder;
   Ref asmjs = builder.parseToplevel(start);
-  if (options.debug) {
-    std::cerr << "parsed:" << std::endl;
-    asmjs->stringify(std::cerr, true);
-    std::cerr << std::endl;
-  }
 
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;

@@ -885,6 +885,8 @@ struct ExpressionAnalyzer {
 // Finalizes a node
 
 struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, Visitor<ReFinalize>>> {
+  ReFinalize() { name = "refinalize"; }
+
   void visitBlock(Block *curr) { curr->finalize(); }
   void visitIf(If *curr) { curr->finalize(); }
   void visitLoop(Loop *curr) { curr->finalize(); }
@@ -916,6 +918,8 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new AutoDrop; }
+
+  AutoDrop() { name = "autodrop"; }
 
   bool maybeDrop(Expression*& child) {
     bool acted = false;
