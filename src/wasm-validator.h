@@ -373,7 +373,7 @@ public:
 
   void visitExport(Export* curr) {
     if (!validateGlobally) return;
-    if (curr->kind == Export::Function) {
+    if (curr->kind == ExternalKind::Function) {
       if (validateWeb) {
         Function* f = getModule()->getFunction(curr->value);
         shouldBeUnequal(f->result, i64, f->name, "Exported function must not have i64 return type");
