@@ -527,7 +527,7 @@ private:
       auto ex = make_unique<Export>();
       ex->name = exportName;
       ex->value = name;
-      ex->kind = Export::Function;
+      ex->kind = ExternalKind::Function;
       if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
       wasm.addExport(ex.release());
     }
@@ -637,7 +637,7 @@ private:
       im->name = name;
       im->module = importModule;
       im->base = importBase;
-      im->kind = Import::Function;
+      im->kind = ExternalKind::Function;
       im->functionType = wasm.getFunctionType(type);
       wasm.addImport(im.release());
       assert(!currFunction);
@@ -1061,7 +1061,7 @@ private:
       return ret;
     }
     auto* import = wasm.checkImport(ret->name);
-    if (import && import->kind == Import::Global) {
+    if (import && import->kind == ExternalKind::Global) {
       ret->type = import->globalType;
       return ret;
     }
@@ -1321,7 +1321,7 @@ private:
   Expression* makeCall(Element& s) {
     auto target = getFunctionName(*s[1]);
     auto* import = wasm.checkImport(target);
-    if (import && import->kind == Import::Function) {
+    if (import && import->kind == ExternalKind::Function) {
       auto ret = allocator.alloc<CallImport>();
       ret->target = target;
       Import* import = wasm.getImport(ret->target);
@@ -1483,7 +1483,7 @@ private:
         auto ex = make_unique<Export>();
         ex->name = inner[1]->str();
         ex->value = wasm.memory.name;
-        ex->kind = Export::Memory;
+        ex->kind = ExternalKind::Memory;
         if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
         i++;
@@ -1563,14 +1563,14 @@ private:
       auto& inner = *s[2];
       ex->value = inner[1]->str();
       if (inner[0]->str() == FUNC) {
-        ex->kind = Export::Function;
+        ex->kind = ExternalKind::Function;
       } else if (inner[0]->str() == MEMORY) {
         if (!hasMemory) throw ParseException("memory exported but no memory");
-        ex->kind = Export::Memory;
+        ex->kind = ExternalKind::Memory;
       } else if (inner[0]->str() == TABLE) {
-        ex->kind = Export::Table;
+        ex->kind = ExternalKind::Table;
       } else if (inner[0]->str() == GLOBAL) {
-        ex->kind = Export::Global;
+        ex->kind = ExternalKind::Global;
         if (wasm.checkGlobal(ex->value) && wasm.getGlobal(ex->value)->mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
       } else {
         WASM_UNREACHABLE();
@@ -1579,18 +1579,18 @@ private:
       ex->value = s[3]->str();
       if (s[2]->str() == MEMORY) {
         if (!hasMemory) throw ParseException("memory exported but no memory");
-        ex->kind = Export::Memory;
+        ex->kind = ExternalKind::Memory;
       } else if (s[2]->str() == TABLE) {
-        ex->kind = Export::Table;
+        ex->kind = ExternalKind::Table;
       } else if (s[2]->str() == GLOBAL) {
-        ex->kind = Export::Global;
+        ex->kind = ExternalKind::Global;
       } else {
         WASM_UNREACHABLE();
       }
     } else {
       // function
       ex->value = s[2]->str();
-      ex->kind = Export::Function;
+      ex->kind = ExternalKind::Function;
     }
     if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
     wasm.addExport(ex.release());
@@ -1602,17 +1602,17 @@ private:
     bool newStyle = s.size() == 4 && s[3]->isList(); // (import "env" "STACKTOP" (global $stackTop i32))
     if (newStyle) {
       if ((*s[3])[0]->str() == FUNC) {
-        im->kind = Import::Function;
+        im->kind = ExternalKind::Function;
       } else if ((*s[3])[0]->str() == MEMORY) {
-        im->kind = Import::Memory;
+        im->kind = ExternalKind::Memory;
         if (hasMemory) throw ParseException("too many memories");
         hasMemory = true;
       } else if ((*s[3])[0]->str() == TABLE) {
-        im->kind = Import::Table;
+        im->kind = ExternalKind::Table;
         if (seenTable) throw ParseException("more than one table");
         seenTable = true;
       } else if ((*s[3])[0]->str() == GLOBAL) {
-        im->kind = Import::Global;
+        im->kind = ExternalKind::Global;
       } else {
         newStyle = false; // either (param..) or (result..)
       }
@@ -1624,15 +1624,15 @@ private:
       im->name = (*s[3])[newStyleInner++]->str();
     }
     if (!im->name.is()) {
-      if (im->kind == Import::Function) {
+      if (im->kind == ExternalKind::Function) {
         im->name = Name("import$function$" + std::to_string(functionCounter++));
         functionNames.push_back(im->name);
-      } else if (im->kind == Import::Global) {
+      } else if (im->kind == ExternalKind::Global) {
         im->name = Name("import$global" + std::to_string(globalCounter++));
         globalNames.push_back(im->name);
-      } else if (im->kind == Import::Memory) {
+      } else if (im->kind == ExternalKind::Memory) {
         im->name = Name("import$memory$" + std::to_string(0));
-      } else if (im->kind == Import::Table) {
+      } else if (im->kind == ExternalKind::Table) {
         im->name = Name("import$table$" + std::to_string(0));
       } else {
         WASM_UNREACHABLE();
@@ -1640,17 +1640,17 @@ private:
     }
     if (!s[i]->quoted()) {
       if (s[i]->str() == MEMORY) {
-        im->kind = Import::Memory;
+        im->kind = ExternalKind::Memory;
       } else if (s[i]->str() == TABLE) {
-        im->kind = Import::Table;
+        im->kind = ExternalKind::Table;
       } else if (s[i]->str() == GLOBAL) {
-        im->kind = Import::Global;
+        im->kind = ExternalKind::Global;
       } else {
         WASM_UNREACHABLE();
       }
       i++;
     } else if (!newStyle) {
-      im->kind = Import::Function;
+      im->kind = ExternalKind::Function;
     }
     im->module = s[i++]->str();
     if (!s[i]->isStr()) throw ParseException("no name for import");
@@ -1658,7 +1658,7 @@ private:
     // parse internals
     Element& inner = newStyle ? *s[3] : s;
     Index j = newStyle ? newStyleInner : i;
-    if (im->kind == Import::Function) {
+    if (im->kind == ExternalKind::Function) {
       std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
       if (inner.size() > j) {
         Element& params = *inner[j];
@@ -1683,7 +1683,7 @@ private:
         }
       }
       im->functionType = ensureFunctionType(getSig(type.get()), &wasm);
-    } else if (im->kind == Import::Global) {
+    } else if (im->kind == ExternalKind::Global) {
       if (inner[j]->isStr()) {
         im->globalType = stringToWasmType(inner[j]->str());
       } else {
@@ -1692,7 +1692,7 @@ private:
         im->globalType = stringToWasmType(inner2[1]->str());
         throw ParseException("cannot import a mutable global", s.line, s.col);
       }
-    } else if (im->kind == Import::Table) {
+    } else if (im->kind == ExternalKind::Table) {
       if (j < inner.size() - 1) {
         wasm.table.initial = atoi(inner[j++]->c_str());
       }
@@ -1702,7 +1702,7 @@ private:
         wasm.table.max = wasm.table.initial;
       }
       // ends with the table element type
-    } else if (im->kind == Import::Memory) {
+    } else if (im->kind == ExternalKind::Memory) {
       if (j < inner.size()) {
         wasm.memory.initial = atoi(inner[j++]->c_str());
       }
@@ -1735,7 +1735,7 @@ private:
         auto ex = make_unique<Export>();
         ex->name = inner[1]->str();
         ex->value = global->name;
-        ex->kind = Export::Global;
+        ex->kind = ExternalKind::Global;
         if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
         exported = true;
@@ -1764,7 +1764,7 @@ private:
       im->name = global->name;
       im->module = importModule;
       im->base = importBase;
-      im->kind = Import::Global;
+      im->kind = ExternalKind::Global;
       im->globalType = type;
       wasm.addImport(im.release());
       return;
@@ -1799,7 +1799,7 @@ private:
         auto ex = make_unique<Export>();
         ex->name = inner[1]->str();
         ex->value = wasm.table.name;
-        ex->kind = Export::Table;
+        ex->kind = ExternalKind::Table;
         if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
         wasm.addExport(ex.release());
         i++;

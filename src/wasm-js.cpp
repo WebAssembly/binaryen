@@ -145,7 +145,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     Module['asmExports'] = {};
   });
   for (auto& curr : module->exports) {
-    if (curr->kind == Export::Function) {
+    if (curr->kind == ExternalKind::Function) {
       EM_ASM_({
         var name = Pointer_stringify($0);
         Module['asmExports'][name] = function() {
@@ -176,7 +176,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         bool found = false;
         for (auto& import : wasm.imports) {
           if (import->module == ENV && import->base == MEMORY) {
-            assert(import->kind == Import::Memory);
+            assert(import->kind == ExternalKind::Memory);
             // memory is imported
             EM_ASM({
               Module['asmExports']['memory'] = Module['lookupImport']('env', 'memory');
@@ -203,7 +203,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         bool found = false;
         for (auto& import : wasm.imports) {
           if (import->module == ENV && import->base == TABLE) {
-            assert(import->kind == Import::Table);
+            assert(import->kind == ExternalKind::Table);
             // table is imported
             EM_ASM({
               Module['outside']['wasmTable'] = Module['lookupImport']('env', 'table');
@@ -263,7 +263,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
     void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
       for (auto& import : wasm.imports) {
-        if (import->kind == Import::Global) {
+        if (import->kind == ExternalKind::Global) {
           double ret = EM_ASM_DOUBLE({
             var mod = Pointer_stringify($0);
             var base = Pointer_stringify($1);
