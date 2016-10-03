@@ -164,7 +164,7 @@ function integrateWasmJS(Module) {
   }
 
   function doNativeWasm(global, env, providedBuffer) {
-    if (typeof Wasm !== 'object') {
+    if (typeof WebAssembly !== 'object') {
       Module['printErr']('no native wasm support detected');
       return false;
     }
