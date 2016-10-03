@@ -224,7 +224,12 @@
   )
   (func $test
     (local $i i32)
+    (local $j i64)
     (local $f f32)
+    (local $f1 f32)
+    (local $f2 f32)
+    (local $d1 f64)
+    (local $d2 f64)
     (set_local $i
       (i32.reinterpret/f32
         (get_local $f)
@@ -233,6 +238,33 @@
     (set_local $f
       (f32.reinterpret/i32
         (get_local $i)
+      )
+    )
+    (set_local $i
+      (i32.ctz
+        (get_local $i)
+      )
+    )
+    (set_local $i
+      (i32.popcnt
+        (get_local $i)
+      )
+    )
+    (set_local $j
+      (i64.popcnt
+        (get_local $j)
+      )
+    )
+    (set_local $f1
+      (f32.copysign
+        (get_local $f1)
+        (get_local $f2)
+      )
+    )
+    (set_local $d1
+      (f64.copysign
+        (get_local $d1)
+        (get_local $d2)
       )
     )
   )
