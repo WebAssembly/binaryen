@@ -42,7 +42,11 @@ using namespace cashew;
 
 // Names
 
-Name I64("i64"),
+Name I32_CTTZ("i32_cttz"),
+     I32_CTPOP("i32_ctpop"),
+     I32_BC2F("i32_bc2f"),
+     I32_BC2I("i32_bc2i"),
+     I64("i64"),
      I64_CONST("i64_const"),
      I64_ADD("i64_add"),
      I64_SUB("i64_sub"),
@@ -82,10 +86,13 @@ Name I64("i64"),
      I64_BC2I("i64_bc2i"),
      I64_CTTZ("i64_cttz"),
      I64_CTLZ("i64_ctlz"),
+     I64_CTPOP("i64_ctpop"),
      I64S_REM("i64s-rem"),
      I64U_REM("i64u-rem"),
      I64S_DIV("i64s-div"),
      I64U_DIV("i64u-div"),
+     F32_COPYSIGN("f32_copysign"),
+     F64_COPYSIGN("f64_copysign"),
      LOAD1("load1"),
      LOAD2("load2"),
      LOAD4("load4"),
@@ -97,9 +104,7 @@ Name I64("i64"),
      STORE4("store4"),
      STORE8("store8"),
      STOREF("storef"),
-     STORED("stored"),
-     I32_BC2F("i32_bc2f"),
-     I32_BC2I("i32_bc2i");
+     STORED("stored");
 
 // Utilities
 
@@ -1577,6 +1582,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                     return value;
                   }
                 }
+                if (name == I32_CTTZ) return builder.makeUnary(UnaryOp::CtzInt32, value);
+                if (name == I32_CTPOP) return builder.makeUnary(UnaryOp::PopcntInt32, value);
                 if (name == I32_BC2F) return builder.makeUnary(UnaryOp::ReinterpretInt32, value);
                 if (name == I32_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat32, value);
 
@@ -1595,6 +1602,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
                 if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
                 if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
+                if (name == I64_CTPOP) return builder.makeUnary(UnaryOp::PopcntInt64, value);
               } else if (num == 2) { // 2 params,binary
                 if (name == I64_CONST) return builder.makeConst(getLiteral(ast));
                 auto* left = process(ast[2][0]);
@@ -1625,6 +1633,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
                 if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
               }
+              break;
+            }
+            case 'f': {
+              if (name == F32_COPYSIGN) return builder.makeBinary(BinaryOp::CopySignFloat32, process(ast[2][0]), process(ast[2][1]));
+              if (name == F64_COPYSIGN) return builder.makeBinary(BinaryOp::CopySignFloat64, process(ast[2][0]), process(ast[2][1]));
               break;
             }
             default: {}

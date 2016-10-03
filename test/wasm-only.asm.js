@@ -74,10 +74,15 @@ function asm(global, env, buffer) {
   }
 
   function test() {
-    var i = 0, f = fround(0);
+    var i = 0, j = i64(), f = fround(0), f1 = fround(0), f2 = fround(0), d1 = +0, d2 = +0;
     // bitcasts
     i = i32_bc2i(f);
     f = i32_bc2f(i);
+    i = i32_cttz(i);
+    i = i32_ctpop(i);
+    j = i64_ctpop(j);
+    f1 = f32_copysign(f1, f2);
+    d1 = f64_copysign(d1, d2);
   }
 
   function test64() {
