@@ -164,7 +164,7 @@ function integrateWasmJS(Module) {
   }
 
   function doNativeWasm(global, env, providedBuffer) {
-    if (typeof Wasm !== 'object') {
+    if (typeof WebAssembly !== 'object') {
       Module['printErr']('no native wasm support detected');
       return false;
     }
@@ -177,7 +177,7 @@ function integrateWasmJS(Module) {
     info['env'] = env;
     var instance;
     try {
-      instance = Wasm['instantiateModule'](getBinary(), info);
+      instance = new WebAssembly.Instance(new WebAssembly.Module(getBinary()), info)
     } catch (e) {
       Module['printErr']('failed to compile wasm module: ' + e);
       return false;
