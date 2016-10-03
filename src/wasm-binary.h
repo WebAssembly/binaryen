@@ -572,7 +572,7 @@ public:
   }
 
   void finishSection(int32_t start) {
-    int32_t size = o.size() - start - 6; // section size does not include the 6 bytes of the code and size field
+    int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field
     o.writeAt(start, U32LEB(size));
   }
 
