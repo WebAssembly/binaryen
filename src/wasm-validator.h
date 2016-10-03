@@ -21,7 +21,7 @@
 //
 //  * validateWeb: The Web platform doesn't have i64 values, so it is illegal
 //                 to import or export such a value. When this option is set,
-//                 such values are validation errors.
+//                 such imports/exports are validation errors.
 //
 //  * validateGlobally: Binaryen supports building modules in parallel, which
 //                      means you can add and optimize a function before the
@@ -373,7 +373,7 @@ public:
 
   void visitExport(Export* curr) {
     if (!validateGlobally) return;
-    if (curr->kind == Import::Function) {
+    if (curr->kind == Export::Function) {
       if (validateWeb) {
         Function* f = getModule()->getFunction(curr->value);
         shouldBeUnequal(f->result, i64, f->name, "Exported function must not have i64 return type");
