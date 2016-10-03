@@ -361,7 +361,7 @@ public:
 
   void visitImport(Import* curr) {
     if (!validateGlobally) return;
-    if (curr->kind == Import::Function) {
+    if (curr->kind == ExternalKind::Function) {
       if (validateWeb) {
         shouldBeUnequal(curr->functionType->result, i64, curr->name, "Imported function must not have i64 return type");
         for (WasmType param : curr->functionType->params) {
@@ -438,7 +438,7 @@ public:
     std::set<Name> exportNames;
     for (auto& exp : curr->exports) {
       Name name = exp->value;
-      if (exp->kind == Export::Function) {
+      if (exp->kind == ExternalKind::Function) {
         bool found = false;
         for (auto& func : curr->functions) {
           if (func->name == name) {
@@ -447,11 +447,11 @@ public:
           }
         }
         shouldBeTrue(found, name, "module function exports must be found");
-      } else if (exp->kind == Export::Global) {
+      } else if (exp->kind == ExternalKind::Global) {
         shouldBeTrue(curr->checkGlobal(name), name, "module global exports must be found");
-      } else if (exp->kind == Export::Table) {
+      } else if (exp->kind == ExternalKind::Table) {
         shouldBeTrue(name == Name("0") || name == curr->table.name, name, "module table exports must be found");
-      } else if (exp->kind == Export::Memory) {
+      } else if (exp->kind == ExternalKind::Memory) {
         shouldBeTrue(name == Name("0") || name == curr->memory.name, name, "module memory exports must be found");
       } else {
         WASM_UNREACHABLE();

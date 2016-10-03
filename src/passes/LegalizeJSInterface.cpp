@@ -36,7 +36,7 @@ struct LegalizeJSInterface : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // for each illegal export, we must export a legalized stub instead
     for (auto& ex : module->exports) {
-      if (ex->kind == Export::Function) {
+      if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
         if (auto* func = module->checkFunction(ex->value)) {
           if (isIllegal(func)) {
@@ -49,7 +49,7 @@ struct LegalizeJSInterface : public Pass {
     // for each illegal import, we must call a legalized stub instead
     std::vector<Import*> newImports; // add them at the end, to not invalidate the iter
     for (auto& im : module->imports) {
-      if (im->kind == Import::Function && isIllegal(im->functionType)) {
+      if (im->kind == ExternalKind::Function && isIllegal(im->functionType)) {
         Name funcName;
         auto* legal = makeLegalStub(im.get(), module, funcName);
         illegalToLegal[im->name] = funcName;
@@ -158,7 +158,7 @@ private:
     legal->name = Name(std::string("legalimport$") + im->name.str);
     legal->module = im->module;
     legal->base = im->base;
-    legal->kind = Import::Function;
+    legal->kind = ExternalKind::Function;
     legal->functionType = type;
     auto* func = new Function();
     func->name = Name(std::string("legalfunc$") + im->name.str);

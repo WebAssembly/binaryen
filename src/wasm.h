@@ -1427,35 +1427,28 @@ public:
   }
 };
 
+enum class ExternalKind {
+  Function = 0,
+  Table = 1,
+  Memory = 2,
+  Global = 3
+};
+
 class Import {
 public:
-  enum Kind {
-    Function = 0,
-    Table = 1,
-    Memory = 2,
-    Global = 3,
-  };
-
   Import() : functionType(nullptr), globalType(none) {}
 
   Name name, module, base; // name = module.base
-  Kind kind;
+  ExternalKind kind;
   FunctionType* functionType; // for Function imports
   WasmType globalType; // for Global imports
 };
 
 class Export {
 public:
-  enum Kind {
-    Function = 0,
-    Table = 1,
-    Memory = 2,
-    Global = 3,
-  };
-
   Name name;  // exported name - note that this is the key, as the internal name is non-unique (can have multiple exports for an internal, also over kinds)
   Name value; // internal name
-  Kind kind;
+  ExternalKind kind;
 };
 
 class Table {

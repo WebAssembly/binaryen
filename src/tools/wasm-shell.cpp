@@ -160,8 +160,8 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
         // validate "instantiating" the mdoule
         for (auto& import : wasm.imports) {
           if (import->module == SPECTEST && import->base == PRINT) {
-            if (import->kind != Import::Function) {
-              std::cerr << "spectest.print should be a function, but is " << import->kind << '\n';
+            if (import->kind != ExternalKind::Function) {
+              std::cerr << "spectest.print should be a function, but is " << int32_t(import->kind) << '\n';
               invalid = true;
               break;
             }

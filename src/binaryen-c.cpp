@@ -719,7 +719,7 @@ BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* intern
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->functionType = (FunctionType*)type;
-  ret->kind = Import::Function;
+  ret->kind = ExternalKind::Function;
   wasm->addImport(ret);
   return ret;
 }
@@ -811,7 +811,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;
     memoryExport->value = Name::fromInt(0);
-    memoryExport->kind = Export::Memory;
+    memoryExport->kind = ExternalKind::Memory;
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
