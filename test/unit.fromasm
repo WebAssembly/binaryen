@@ -124,10 +124,10 @@
     )
   )
   (func $switcher (param $0 i32) (result i32)
-    (block $switch-default$3
+    (block $switch$0
       (block $switch-case$2
         (block $switch-case$1
-          (br_table $switch-case$1 $switch-case$2 $switch-default$3
+          (br_table $switch-case$1 $switch-case$2 $switch$0
             (i32.sub
               (get_local $0)
               (i32.const 1)
@@ -142,10 +142,10 @@
         (i32.const 2)
       )
     )
-    (block $switch-default$7
-      (block $switch-case$6
-        (block $switch-case$5
-          (br_table $switch-case$6 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-default$7 $switch-case$5 $switch-default$7
+    (block $switch$3
+      (block $switch-case$5
+        (block $switch-case$4
+          (br_table $switch-case$5 $switch$3 $switch$3 $switch$3 $switch$3 $switch$3 $switch$3 $switch-case$4 $switch$3
             (i32.sub
               (get_local $0)
               (i32.const 5)
@@ -160,12 +160,12 @@
         (i32.const 51)
       )
     )
-    (block $switch-default$16
-      (block $switch-case$15
-        (block $switch-case$12
-          (block $switch-case$9
-            (block $switch-case$8
-              (br_table $switch-case$15 $switch-default$16 $switch-default$16 $switch-case$12 $switch-default$16 $switch-default$16 $switch-default$16 $switch-default$16 $switch-case$9 $switch-default$16 $switch-case$8 $switch-default$16
+    (block $label$break$Lout
+      (block $switch-case$13
+        (block $switch-case$10
+          (block $switch-case$7
+            (block $switch-case$6
+              (br_table $switch-case$13 $label$break$Lout $label$break$Lout $switch-case$10 $label$break$Lout $label$break$Lout $label$break$Lout $label$break$Lout $switch-case$7 $label$break$Lout $switch-case$6 $label$break$Lout
                 (i32.sub
                   (get_local $0)
                   (i32.const 2)
@@ -180,11 +180,11 @@
       (block $label$break$L1
         (loop $label$continue$L3
           (block $label$break$L3
-            (block $switch-default$21
-              (block $switch-case$20
-                (block $switch-case$19
-                  (block $switch-case$18
-                    (br_table $switch-case$18 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$20 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-default$21 $switch-case$19 $switch-default$21
+            (block $switch-default$18
+              (block $switch-case$17
+                (block $switch-case$16
+                  (block $switch-case$15
+                    (br_table $switch-case$15 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-case$17 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-case$16 $switch-default$18
                       (i32.sub
                         (get_local $0)
                         (i32.const -1)
