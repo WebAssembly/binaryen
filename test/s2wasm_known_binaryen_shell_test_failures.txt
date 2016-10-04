@@ -55,7 +55,6 @@ complex-7.c.s.wast
 920612-1.c.s.wast
 920625-1.c.s.wast
 920711-1.c.s.wast
-930126-1.c.s.wast
 931004-10.c.s.wast
 931004-12.c.s.wast
 931004-14.c.s.wast
@@ -149,6 +148,3 @@ va-arg-22.c.s.wast # memcpy
 va-arg-21.c.s.wast # malloc
 vprintf-chk-1.c.s.wast # vprintf
 vprintf-1.c.s.wast # vprintf
-
-# new in 0xc
-930126-1.c.s.wast # called abort()
