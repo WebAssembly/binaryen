@@ -2023,22 +2023,20 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         top = next;
       }
 
+      // the outermost block can be branched to to exit the whole switch
+      top->name = name;
+
       // ensure a default
       if (br->default_.isNull()) {
-        br->default_ = getNextId("switch-default");
+        br->default_ = top->name;
       }
       for (size_t i = 0; i < br->targets.size(); i++) {
         if (br->targets[i].isNull()) br->targets[i] = br->default_;
       }
-      top->name = br->default_;
 
       breakStack.pop_back();
 
-      // Create a topmost block for breaking out of the entire switch
-      auto ret = allocator.alloc<Block>();
-      ret->name = name;
-      ret->list.push_back(top);
-      return ret;
+      return top;
     }
     abort_on("confusing expression", ast);
     return (Expression*)nullptr; // avoid warning
