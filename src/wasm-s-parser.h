@@ -1346,7 +1346,7 @@ private:
   }
 
   Expression* makeCallIndirect(Element& s) {
-    if (!seenTable) throw ParseException("no table");
+    if (!wasm.table.exists) throw ParseException("no table");
     auto ret = allocator.alloc<CallIndirect>();
     IString type = s[1]->str();
     auto* fullType = wasm.checkFunctionType(type);
@@ -1609,8 +1609,8 @@ private:
         hasMemory = true;
       } else if ((*s[3])[0]->str() == TABLE) {
         im->kind = ExternalKind::Table;
-        if (seenTable) throw ParseException("more than one table");
-        seenTable = true;
+        if (wasm.table.exists) throw ParseException("more than one table");
+        wasm.table.exists = true;
       } else if ((*s[3])[0]->str() == GLOBAL) {
         im->kind = ExternalKind::Global;
       } else {
@@ -1781,11 +1781,10 @@ private:
     wasm.addGlobal(global.release());
   }
 
-  bool seenTable = false;
 
   void parseTable(Element& s, bool preParseImport = false) {
-    if (seenTable) throw ParseException("more than one table");
-    seenTable = true;
+    if (wasm.table.exists) throw ParseException("more than one table");
+    wasm.table.exists = true;
     Index i = 1;
     if (i == s.size()) return; // empty table in old notation
     if (s[i]->dollared()) {
@@ -1855,7 +1854,7 @@ private:
   }
 
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr) {
-    if (!seenTable) throw ParseException("elem without table", s.line, s.col);
+    if (!wasm.table.exists) throw ParseException("elem without table", s.line, s.col);
     if (!offset) {
       offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     }

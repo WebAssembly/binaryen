@@ -756,6 +756,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
   }
 
   auto* wasm = (Module*)module;
+  wasm->table.exists = true;
   Table::Segment segment(wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
   for (BinaryenIndex i = 0; i < numFuncs; i++) {
     segment.data.push_back(((Function*)funcs[i])->name);
