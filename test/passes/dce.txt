@@ -2,6 +2,8 @@
   (memory $0 10)
   (type $ii (func (param i32 i32)))
   (type $1 (func))
+  (type $2 (func (result i32)))
+  (type $3 (func (param i32) (result i32)))
   (table 1 1 anyfunc)
   (elem (i32.const 0) $call-me)
   (func $call-me (type $ii) (param $0 i32) (param $1 i32)
@@ -295,5 +297,35 @@
     (drop
       (i32.const 2000)
     )
+  )
+  (func $typed-block-none-then-unreachable (type $2) (result i32)
+    (block $top-typed i32
+      (block $switch$0
+        (return
+          (i32.const 0)
+        )
+      )
+      (unreachable)
+    )
+  )
+  (func $typed-block-remove-br-changes-type (type $3) (param $$$0 i32) (result i32)
+    (block $switch$7
+      (block $switch-default$10
+        (block $switch-case$9
+          (block $switch-case$8
+            (br_table $switch-case$9 $switch-case$8 $switch-default$10
+              (i32.const -1)
+            )
+          )
+        )
+        (return
+          (get_local $$$0)
+        )
+      )
+      (return
+        (get_local $$$0)
+      )
+    )
+    (unreachable)
   )
 )
