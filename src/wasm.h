@@ -1473,11 +1473,14 @@ public:
     }
   };
 
+  // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.
+  // The table can exist but be empty and have no defined initial or max size.
+  bool exists;
   Name name;
   Address initial, max;
   std::vector<Segment> segments;
 
-  Table() : initial(0), max(kMaxSize) {
+  Table() : exists(false), initial(0), max(kMaxSize) {
     name = Name::fromInt(0);
   }
 };

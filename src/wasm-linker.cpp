@@ -122,7 +122,8 @@ void Linker::layout() {
 
   // Pad the indirect function table with a dummy function
   makeDummyFunction();
-  ensureTableIsPopulated();
+  // Always create a table, even if it's empty.
+  out.wasm.table.exists = true;
 
   // Pre-assign the function indexes
   for (auto& pair : out.indirectIndexes) {
@@ -141,7 +142,7 @@ void Linker::layout() {
 
   // Emit the pre-assigned function names in sorted order
   for (const auto& P : functionNames) {
-    ensureTableIsPopulated();
+    ensureTableSegment();
     getTableDataRef().push_back(P.second);
   }
 
@@ -319,7 +320,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
   emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
 }
 
-void Linker::ensureTableIsPopulated() {
+void Linker::ensureTableSegment() {
   if (out.wasm.table.segments.size() == 0) {
     auto emptySegment = out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0)));
     out.wasm.table.segments.emplace_back(emptySegment);
@@ -340,7 +341,7 @@ std::vector<Name> Linker::getTableData() {
 
 Index Linker::getFunctionIndex(Name name) {
   if (!functionIndexes.count(name)) {
-    ensureTableIsPopulated();
+    ensureTableSegment();
     functionIndexes[name] = getTableData().size();
     getTableDataRef().push_back(name);
     if (debug) {

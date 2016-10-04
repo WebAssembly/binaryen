@@ -269,7 +269,7 @@ class Linker {
 
   // Makes sure the table has a single segment, with offset 0,
   // to which we can add content.
-  void ensureTableIsPopulated();
+  void ensureTableSegment();
 
   std::vector<Name>& getTableDataRef();
   std::vector<Name> getTableData();

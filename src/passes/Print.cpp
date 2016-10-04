@@ -726,7 +726,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitGlobal(child.get());
       o << maybeNewLine;
     }
-    if (curr->table.segments.size() > 0 || curr->table.initial > 0 || curr->table.max != Table::kMaxSize) {
+    if (curr->table.exists) {
       visitTable(&curr->table);
       o << maybeNewLine;
     }

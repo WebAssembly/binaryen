@@ -532,10 +532,11 @@ public:
     writeTypes();
     writeImports();
     writeFunctionSignatures();
-    writeFunctionTable();
+    writeFunctionTableDeclaration();
     writeMemory();
     writeGlobals();
     writeExports();
+    writeTableElements();
     writeStart();
     writeFunctions();
     writeDataSegments();
@@ -572,7 +573,7 @@ public:
   }
 
   void finishSection(int32_t start) {
-    int32_t size = o.size() - start - 6; // section size does not include the 6 bytes of the code and size field
+    int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
     o.writeAt(start, U32LEB(size));
   }
 
@@ -740,6 +741,7 @@ public:
       if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
 
       writeExpression(function->body);
+      o << int8_t(BinaryConsts::End);
       size_t size = o.size() - start;
       assert(size <= std::numeric_limits<uint32_t>::max());
       if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
@@ -841,14 +843,25 @@ public:
     return mappedGlobals[name];
   }
 
-  void writeFunctionTable() {
-    if (wasm->table.segments.size() == 0) return;
-    if (debug) std::cerr << "== writeFunctionTable" << std::endl;
+  void writeFunctionTableDeclaration() {
+    if (!wasm->table.exists) return; // or is imported!!
+    if (debug) std::cerr << "== writeFunctionTableDeclaration" << std::endl;
     auto start = startSection(BinaryConsts::Section::Table);
-    o << U32LEB(wasm->table.initial);
-    o << U32LEB(wasm->table.max);
+    o << U32LEB(1); // Declare 1 table.
+    o << U32LEB(BinaryConsts::ElementType::AnyFunc);
+    Address max = wasm->table.max == Table::kMaxSize ? Address(0) : wasm->table.max;
+    writeResizableLimits(wasm->table.initial, max);
+    finishSection(start);
+  }
+
+  void writeTableElements() {
+    if (!wasm->table.exists) return;
+    if (debug) std::cerr << "== writeTableElements" << std::endl;
+    auto start = startSection(BinaryConsts::Section::Element);
+
     o << U32LEB(wasm->table.segments.size());
     for (auto& segment : wasm->table.segments) {
+      o << U32LEB(0); // Table index; 0 in the MVP (and binaryen IR only has 1 table)
       writeExpression(segment.offset);
       o << int8_t(BinaryConsts::End);
       o << U32LEB(segment.data.size());
@@ -1032,11 +1045,12 @@ public:
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
-    recurse(curr->target);
+
     for (auto* operand : curr->operands) {
       recurse(operand);
     }
-    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(curr->operands.size()) << U32LEB(getFunctionTypeIndex(curr->fullType));
+    recurse(curr->target);
+    o << int8_t(BinaryConsts::CallIndirect) << U32LEB(getFunctionTypeIndex(curr->fullType));
   }
   void visitGetLocal(GetLocal *curr) {
     if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
@@ -1360,6 +1374,7 @@ public:
         case BinaryConsts::Section::Function: readFunctionSignatures(); break;
         case BinaryConsts::Section::Code: readFunctions(); break;
         case BinaryConsts::Section::Export: readExports(); break;
+        case BinaryConsts::Section::Element: readTableElements(); break;
         case BinaryConsts::Section::Global: {
           readGlobals();
           // imports can read global imports, so we run getGlobalName and create the mapping
@@ -1369,7 +1384,7 @@ public:
           break;
         }
         case BinaryConsts::Section::Data: readDataSegments(); break;
-        case BinaryConsts::Section::Table: readFunctionTable(); break;
+        case BinaryConsts::Section::Table: readFunctionTableDeclaration(); break;
 
         default:
           if (!readUserSection()) abort();
@@ -1621,7 +1636,8 @@ public:
         case Import::Table: {
           auto elementType = getU32LEB();
           WASM_UNUSED(elementType);
-          assert(elementType == BinaryConsts::ElementType::AnyFunc);
+          if (elementType != BinaryConsts::ElementType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
+          wasm.table.exists = true;
           getResizableLimits(wasm.table.initial, &wasm.table.max);
           break;
         }
@@ -1675,7 +1691,7 @@ public:
       assert(size > 0);
       endOfFunction = pos + size;
       auto type = functionTypes[i];
-      if (debug) std::cerr << "reading" << i << std::endl;
+      if (debug) std::cerr << "reading " << i << std::endl;
       size_t nextVar = 0;
       auto addVar = [&]() {
         Name name = cashew::IString(("var$" + std::to_string(nextVar++)).c_str(), false);
@@ -1719,6 +1735,7 @@ public:
       currFunction = nullptr;
       functions.push_back(func);
     }
+    if (debug) std::cerr << " end function bodies" << std::endl;
   }
 
   std::map<Export*, Index> exportIndexes;
@@ -1868,17 +1885,29 @@ public:
 
   std::map<Index, std::vector<Index>> functionTable;
 
-  void readFunctionTable() {
-    if (debug) std::cerr << "== readFunctionTable" << std::endl;
-    wasm.table.initial = getU32LEB();
-    wasm.table.max = getU32LEB();
-    auto num = getU32LEB();
-    for (size_t i = 0; i < num; i++) {
+  void readFunctionTableDeclaration() {
+    if (debug) std::cerr << "== readFunctionTableDeclaration" << std::endl;
+    auto numTables = getU32LEB();
+    if (numTables != 1) throw ParseException("Only 1 table definition allowed in MVP");
+    wasm.table.exists = true;
+    auto elemType = getU32LEB();
+    if (elemType != BinaryConsts::ElementType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");
+    getResizableLimits(wasm.table.initial, &wasm.table.max);
+  }
+
+  void readTableElements() {
+    if (debug) std::cerr << "== readTableElements" << std::endl;
+    auto numSegments = getU32LEB();
+    if (numSegments >= Table::kMaxSize) throw ParseException("Too many segments");
+    for (size_t i = 0; i < numSegments; i++) {
+      auto tableIndex = getU32LEB();
+      if (tableIndex != 0) throw ParseException("Table elements must refer to table 0 in MVP");
       wasm.table.segments.emplace_back(readExpression());
-      auto& temporary = functionTable[i];
+
+      auto& indexSegment = functionTable[i];
       auto size = getU32LEB();
       for (Index j = 0; j < size; j++) {
-        temporary.push_back(getU32LEB());
+        indexSegment.push_back(getU32LEB());
       }
     }
   }
@@ -1901,8 +1930,7 @@ public:
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr) {
     if (pos == endOfFunction) {
-      curr = nullptr;
-      return BinaryConsts::End;
+      throw ParseException("Reached function end without seeing End opcode");
     }
     if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
     uint8_t code = getInt8();
@@ -2102,17 +2130,14 @@ public:
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
-    auto arity = getU32LEB();
-    WASM_UNUSED(arity);
     auto* fullType = wasm.functionTypes.at(getU32LEB()).get();
     curr->fullType = fullType->name;
     auto num = fullType->params.size();
-    assert(num == arity);
     curr->operands.resize(num);
+    curr->target = popExpression();
     for (size_t i = 0; i < num; i++) {
       curr->operands[num - i - 1] = popExpression();
     }
-    curr->target = popExpression();
     curr->type = fullType->result;
   }
   void visitGetLocal(GetLocal *curr) {
