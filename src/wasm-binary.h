@@ -457,8 +457,8 @@ enum ASTNodes {
   CallFunction = 0x16,
   CallIndirect = 0x17,
   TeeLocal = 0x19,
-  GetGlobal = 0x1a,
-  SetGlobal = 0x1b,
+  GetGlobal = 0xbb,
+  SetGlobal = 0xbc,
 
   Unreachable = 0x00,
   Block = 0x01,
@@ -758,6 +758,7 @@ public:
     for (auto& curr : wasm->globals) {
       if (debug) std::cerr << "write one" << std::endl;
       o << binaryWasmType(curr->type);
+      o << U32LEB(curr->mutable_);
       writeExpression(curr->init);
       o << int8_t(BinaryConsts::End);
     }
@@ -1771,8 +1772,10 @@ public:
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Global;
       curr->type = getWasmType();
+      auto mutable_ = getU32LEB();
+      if (bool(mutable_) != mutable_) throw ParseException("Global mutability must be 0 or 1");
+      curr->mutable_ = mutable_;
       curr->init = readExpression();
-      curr->mutable_ = true; // TODO
       curr->name = Name("global$" + std::to_string(wasm.globals.size()));
       wasm.addGlobal(curr);
     }
