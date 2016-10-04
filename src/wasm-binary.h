@@ -457,8 +457,8 @@ enum ASTNodes {
   CallFunction = 0x16,
   CallIndirect = 0x17,
   TeeLocal = 0x19,
-  GetGlobal = 0x1a,
-  SetGlobal = 0x1b,
+  GetGlobal = 0xbb,
+  SetGlobal = 0xbc,
 
   Unreachable = 0x00,
   Block = 0x01,
