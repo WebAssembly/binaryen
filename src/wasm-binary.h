@@ -1313,7 +1313,7 @@ public:
     if (curr->value) {
       recurse(curr->value);
     }
-    o << int8_t(BinaryConsts::Return) << U32LEB(curr->value ? 1 : 0);
+    o << int8_t(BinaryConsts::Return);
   }
   void visitHost(Host *curr) {
     if (debug) std::cerr << "zz node: Host" << std::endl;
@@ -2378,9 +2378,7 @@ public:
   }
   void visitReturn(Return *curr) {
     if (debug) std::cerr << "zz node: Return" << std::endl;
-    auto arity = getU32LEB();
-    assert(arity == 0 || arity == 1);
-    if (arity == 1) {
+    if (currFunction->result != none) {
       curr->value = popExpression();
     }
   }
