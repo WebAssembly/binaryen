@@ -10,6 +10,7 @@
   (type $6 (func (param i32) (result i32)))
   (type $7 (func (param f64) (result f64)))
   (type $8 (func (result i64)))
+  (type $9 (func (param i32 i64)))
   (import "env" "_emscripten_asm_const_vi" (func $import$0))
   (import "asm2wasm" "f64-to-int" (func $import$1 (param f64) (result i32)))
   (import "asm2wasm" "f64-rem" (func $import$2 (param f64 f64) (result f64)))
@@ -449,6 +450,12 @@
   )
   (func $big-i64 (type $8) (result i64)
     (i64.const -9218868437227405313)
+  )
+  (func $i64-store32 (type $9) (param $var$0 i32) (param $var$1 i64)
+    (i64.store32
+      (get_local $var$0)
+      (get_local $var$1)
+    )
   )
 )
 
