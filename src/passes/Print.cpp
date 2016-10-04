@@ -545,10 +545,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str) << ' ';
     switch (curr->kind) {
-      case Export::Function: if (curr->functionType) visitFunctionType(curr->functionType, &curr->name); break;
-      case Export::Table:    printTableHeader(&currModule->table); break;
-      case Export::Memory:   printMemoryHeader(&currModule->memory); break;
-      case Export::Global:   o << "(global " << curr->name << ' ' << printWasmType(curr->globalType) << ")"; break;
+      case ExternalKind::Function: if (curr->functionType) visitFunctionType(curr->functionType, &curr->name); break;
+      case ExternalKind::Table:    printTableHeader(&currModule->table); break;
+      case ExternalKind::Memory:   printMemoryHeader(&currModule->memory); break;
+      case ExternalKind::Global:   o << "(global " << curr->name << ' ' << printWasmType(curr->globalType) << ")"; break;
       default: WASM_UNREACHABLE();
     }
     o << ')';
@@ -557,10 +557,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printOpening(o, "export ");
     printText(o, curr->name.str) << " (";
     switch (curr->kind) {
-      case Export::Function: o << "func"; break;
-      case Export::Table:    o << "table"; break;
-      case Export::Memory:   o << "memory"; break;
-      case Export::Global:   o << "global"; break;
+      case ExternalKind::Function: o << "func"; break;
+      case ExternalKind::Table:    o << "table"; break;
+      case ExternalKind::Memory:   o << "memory"; break;
+      case ExternalKind::Global:   o << "global"; break;
       default: WASM_UNREACHABLE();
     }
     o << ' ';
@@ -622,7 +622,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     // if table wasn't imported, declare it
     bool found = false;
     for (auto& import : currModule->imports) {
-      if (import->kind == Import::Table) {
+      if (import->kind == ExternalKind::Table) {
         found = true;
         break;
       }
@@ -656,7 +656,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     // if memory wasn't imported, declare it
     bool found = false;
     for (auto& import : currModule->imports) {
-      if (import->kind == Import::Memory) {
+      if (import->kind == ExternalKind::Memory) {
         found = true;
         break;
       }

@@ -114,7 +114,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
     // add spectest globals
     for (auto& import : wasm.imports) {
-      if (import->kind == Import::Global && import->module == SPECTEST && import->base == GLOBAL) {
+      if (import->kind == ExternalKind::Global && import->module == SPECTEST && import->base == GLOBAL) {
         switch (import->globalType) {
           case i32: globals[import->name] = Literal(int32_t(666)); break;
           case i64: globals[import->name] = Literal(int64_t(666)); break;
@@ -122,7 +122,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case f64: globals[import->name] = Literal(double(666.6)); break;
           default: WASM_UNREACHABLE();
         }
-      } else if (import->kind == Import::Memory && import->module == SPECTEST && import->base == MEMORY) {
+      } else if (import->kind == ExternalKind::Memory && import->module == SPECTEST && import->base == MEMORY) {
         // imported memory has initial 1 and max 2
         wasm.memory.initial = 1;
         wasm.memory.max = 2;

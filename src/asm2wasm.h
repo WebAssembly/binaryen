@@ -619,7 +619,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       // we need imported globals to be mutable, but wasm doesn't support that yet, so we must
       // import an immutable and create a mutable global initialized to its value
       import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
-      import->kind = Import::Global;
+      import->kind = ExternalKind::Global;
       import->globalType = type;
       mappedGlobals.emplace(name, type);
       {
@@ -631,7 +631,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         wasm.addGlobal(global);
       }
     } else {
-      import->kind = Import::Function;
+      import->kind = ExternalKind::Function;
     }
     wasm.addImport(import);
   };
@@ -827,7 +827,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           auto* export_ = new Export;
           export_->name = key;
           export_->value = value;
-          export_->kind = Export::Function;
+          export_->kind = ExternalKind::Function;
           wasm.addExport(export_);
           exported[key] = export_;
         }
@@ -851,7 +851,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   std::vector<IString> toErase;
 
   for (auto& import : wasm.imports) {
-    if (import->kind != Import::Function) continue;
+    if (import->kind != ExternalKind::Function) continue;
     IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
@@ -978,7 +978,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   auto memoryExport = make_unique<Export>();
   memoryExport->name = MEMORY;
   memoryExport->value = Name::fromInt(0);
-  memoryExport->kind = Export::Memory;
+  memoryExport->kind = ExternalKind::Memory;
   wasm.addExport(memoryExport.release());
 #else
   // import memory
@@ -986,7 +986,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   memoryImport->name = MEMORY;
   memoryImport->module = ENV;
   memoryImport->base = MEMORY;
-  memoryImport->kind = Import::Memory;
+  memoryImport->kind = ExternalKind::Memory;
   wasm.addImport(memoryImport.release());
 
   // import table
@@ -994,7 +994,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   tableImport->name = TABLE;
   tableImport->module = ENV;
   tableImport->base = TABLE;
-  tableImport->kind = Import::Table;
+  tableImport->kind = ExternalKind::Table;
   wasm.addImport(tableImport.release());
 
   // Import memory offset
@@ -1003,7 +1003,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     import->name = Name("memoryBase");
     import->module = Name("env");
     import->base = Name("memoryBase");
-    import->kind = Import::Global;
+    import->kind = ExternalKind::Global;
     import->globalType = i32;
     wasm.addImport(import);
   }
@@ -1014,7 +1014,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     import->name = Name("tableBase");
     import->module = Name("env");
     import->base = Name("tableBase");
-    import->kind = Import::Global;
+    import->kind = ExternalKind::Global;
     import->globalType = i32;
     wasm.addImport(import);
   }
@@ -1237,7 +1237,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->module = ASM2WASM;
           import->base = F64_REM;
           import->functionType = ensureFunctionType("ddd", &wasm);
-          import->kind = Import::Function;
+          import->kind = ExternalKind::Function;
           wasm.addImport(import);
         }
         return call;
@@ -1263,7 +1263,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->module = ASM2WASM;
           import->base = call->target;
           import->functionType = ensureFunctionType("iii", &wasm);
-          import->kind = Import::Function;
+          import->kind = ExternalKind::Function;
           wasm.addImport(import);
         }
         return call;
@@ -1302,7 +1302,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->module = ASM2WASM;
           import->base = DEBUGGER;
           import->functionType = ensureFunctionType("v", &wasm);
-          import->kind = Import::Function;
+          import->kind = ExternalKind::Function;
           wasm.addImport(import);
         }
         return call;
@@ -1408,7 +1408,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               import->module = ASM2WASM;
               import->base = F64_TO_INT;
               import->functionType = ensureFunctionType("id", &wasm);
-              import->kind = Import::Function;
+              import->kind = ExternalKind::Function;
               wasm.addImport(import);
             }
             return ret;

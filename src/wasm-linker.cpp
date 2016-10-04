@@ -52,7 +52,7 @@ void Linker::ensureImport(Name target, std::string signature) {
     import->name = import->base = target;
     import->module = ENV;
     import->functionType = ensureFunctionType(signature, &out.wasm);
-    import->kind = Import::Function;
+    import->kind = ExternalKind::Function;
     out.wasm.addImport(import);
   }
 }
@@ -113,7 +113,7 @@ void Linker::layout() {
   auto memoryExport = make_unique<Export>();
   memoryExport->name = MEMORY;
   memoryExport->value = Name::fromInt(0);
-  memoryExport->kind = Export::Memory;
+  memoryExport->kind = ExternalKind::Memory;
   out.wasm.addExport(memoryExport.release());
 
   // XXX For now, export all functions marked .globl.

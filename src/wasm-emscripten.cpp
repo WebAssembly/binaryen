@@ -45,7 +45,7 @@ void generateMemoryGrowthFunction(Module& wasm) {
   wasm.addFunction(growFunction);
   auto export_ = new Export;
   export_->name = export_->value = name;
-  export_->kind = Export::Function;
+  export_->kind = ExternalKind::Function;
   wasm.addExport(export_);
 }
 
@@ -134,7 +134,7 @@ void AsmConstWalker::visitCallImport(CallImport* curr) {
       import->name = import->base = curr->target;
       import->module = ENV;
       import->functionType = ensureFunctionType(getSig(curr), &wasm);
-      import->kind = Import::Function;
+      import->kind = ExternalKind::Function;
       wasm.addImport(import);
     }
   }

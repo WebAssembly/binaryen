@@ -17,6 +17,22 @@
 //
 // Simple WebAssembly module validator.
 //
+// There are some options regarding how to validate:
+//
+//  * validateWeb: The Web platform doesn't have i64 values, so it is illegal
+//                 to import or export such a value. When this option is set,
+//                 such imports/exports are validation errors.
+//
+//  * validateGlobally: Binaryen supports building modules in parallel, which
+//                      means you can add and optimize a function before the
+//                      module is complete, for example, you can add function A
+//                      with a call to function B before function B exists.
+//                      When validateGlobally is disabled, we don't look at
+//                      global correctness, and instead only check inside
+//                      each function (so in the example above we wouldn't care
+//                      about function B not existing yet, but we would care
+//                      if e.g. inside function A an i32.add receives an i64).
+//
 
 #ifndef wasm_wasm_validator_h
 #define wasm_wasm_validator_h
@@ -28,6 +44,8 @@ namespace wasm {
 
 struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> {
   bool valid = true;
+
+  // what to validate, see comment up top
   bool validateWeb = false;
   bool validateGlobally = true;
 
@@ -342,23 +360,27 @@ public:
   }
 
   void visitImport(Import* curr) {
-    if (!validateWeb) return;
     if (!validateGlobally) return;
-    if (curr->kind == Import::Function) {
-      shouldBeUnequal(curr->functionType->result, i64, curr->name, "Imported function must not have i64 return type");
-      for (WasmType param : curr->functionType->params) {
-        shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
+    if (curr->kind == ExternalKind::Function) {
+      if (validateWeb) {
+        shouldBeUnequal(curr->functionType->result, i64, curr->name, "Imported function must not have i64 return type");
+        for (WasmType param : curr->functionType->params) {
+          shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
+        }
       }
     }
   }
 
   void visitExport(Export* curr) {
-    if (!validateWeb) return;
     if (!validateGlobally) return;
-    Function* f = getModule()->getFunction(curr->value);
-    shouldBeUnequal(f->result, i64, f->name, "Exported function must not have i64 return type");
-    for (auto param : f->params) {
-      shouldBeUnequal(param, i64, f->name, "Exported function must not have i64 parameters");
+    if (curr->kind == ExternalKind::Function) {
+      if (validateWeb) {
+        Function* f = getModule()->getFunction(curr->value);
+        shouldBeUnequal(f->result, i64, f->name, "Exported function must not have i64 return type");
+        for (auto param : f->params) {
+          shouldBeUnequal(param, i64, f->name, "Exported function must not have i64 parameters");
+        }
+      }
     }
   }
 
@@ -416,7 +438,7 @@ public:
     std::set<Name> exportNames;
     for (auto& exp : curr->exports) {
       Name name = exp->value;
-      if (exp->kind == Export::Function) {
+      if (exp->kind == ExternalKind::Function) {
         bool found = false;
         for (auto& func : curr->functions) {
           if (func->name == name) {
@@ -425,11 +447,11 @@ public:
           }
         }
         shouldBeTrue(found, name, "module function exports must be found");
-      } else if (exp->kind == Export::Global) {
+      } else if (exp->kind == ExternalKind::Global) {
         shouldBeTrue(curr->checkGlobal(name), name, "module global exports must be found");
-      } else if (exp->kind == Export::Table) {
+      } else if (exp->kind == ExternalKind::Table) {
         shouldBeTrue(name == Name("0") || name == curr->table.name, name, "module table exports must be found");
-      } else if (exp->kind == Export::Memory) {
+      } else if (exp->kind == ExternalKind::Memory) {
         shouldBeTrue(name == Name("0") || name == curr->memory.name, name, "module memory exports must be found");
       } else {
         WASM_UNREACHABLE();

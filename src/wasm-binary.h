@@ -634,20 +634,20 @@ public:
       if (debug) std::cerr << "write one" << std::endl;
       writeInlineString(import->module.str);
       writeInlineString(import->base.str);
-      o << U32LEB(import->kind);
+      o << U32LEB(int32_t(import->kind));
       switch (import->kind) {
-        case Export::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
-        case Export::Table: {
+        case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
+        case ExternalKind::Table: {
           o << U32LEB(BinaryConsts::ElementType::AnyFunc);
           auto max = wasm->table.max == Table::kMaxSize ? Address(0) : wasm->table.max;
           writeResizableLimits(wasm->table.initial, max);
           break;
         }
-        case Export::Memory: {
+        case ExternalKind::Memory: {
           auto max = wasm->memory.max == Memory::kMaxSize ? Address(0) : wasm->memory.max;
           writeResizableLimits(wasm->memory.initial, max); break;
         }
-        case Export::Global:
+        case ExternalKind::Global:
           o << binaryWasmType(import->globalType);
           o << U32LEB(0); // Mutable global's can't be imported for now.
           break;
@@ -772,12 +772,12 @@ public:
     for (auto& curr : wasm->exports) {
       if (debug) std::cerr << "write one" << std::endl;
       writeInlineString(curr->name.str);
-      o << U32LEB(curr->kind);
+      o << U32LEB(int32_t(curr->kind));
       switch (curr->kind) {
-        case Export::Function: o << U32LEB(getFunctionIndex(curr->value)); break;
-        case Export::Table: o << U32LEB(0); break;
-        case Export::Memory: o << U32LEB(0); break;
-        case Export::Global: o << U32LEB(getGlobalIndex(curr->value)); break;
+        case ExternalKind::Function: o << U32LEB(getFunctionIndex(curr->value)); break;
+        case ExternalKind::Table: o << U32LEB(0); break;
+        case ExternalKind::Memory: o << U32LEB(0); break;
+        case ExternalKind::Global: o << U32LEB(getGlobalIndex(curr->value)); break;
         default: WASM_UNREACHABLE();
       }
 
@@ -808,7 +808,7 @@ public:
     if (!mappedFunctions.size()) {
       // Create name => index mapping.
       for (auto& import : wasm->imports) {
-        if (import->kind != Import::Function) continue;
+        if (import->kind != ExternalKind::Function) continue;
         assert(mappedFunctions.count(import->name) == 0);
         auto index = mappedFunctions.size();
         mappedFunctions[import->name] = index;
@@ -828,7 +828,7 @@ public:
     if (!mappedGlobals.size()) {
       // Create name => index mapping.
       for (auto& import : wasm->imports) {
-        if (import->kind != Import::Global) continue;
+        if (import->kind != ExternalKind::Global) continue;
         assert(mappedGlobals.count(import->name) == 0);
         auto index = mappedGlobals.size();
         mappedGlobals[import->name] = index;
@@ -1597,7 +1597,7 @@ public:
   Name getFunctionIndexName(Index i) {
     if (i < functionImportIndexes.size()) {
       auto* import = wasm.getImport(functionImportIndexes[i]);
-      assert(import->kind == Import::Function);
+      assert(import->kind == ExternalKind::Function);
       return import->name;
     } else {
       i -= functionImportIndexes.size();
@@ -1623,9 +1623,9 @@ public:
       curr->name = Name(std::string("import$") + std::to_string(i));
       curr->module = getInlineString();
       curr->base = getInlineString();
-      curr->kind = (Import::Kind)getU32LEB();
+      curr->kind = (ExternalKind)getU32LEB();
       switch (curr->kind) {
-        case Import::Function: {
+        case ExternalKind::Function: {
           auto index = getU32LEB();
           assert(index < wasm.functionTypes.size());
           curr->functionType = wasm.functionTypes[index].get();
@@ -1633,7 +1633,7 @@ public:
           functionImportIndexes.push_back(curr->name);
           break;
         }
-        case Import::Table: {
+        case ExternalKind::Table: {
           auto elementType = getU32LEB();
           WASM_UNUSED(elementType);
           if (elementType != BinaryConsts::ElementType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
@@ -1641,8 +1641,8 @@ public:
           getResizableLimits(wasm.table.initial, &wasm.table.max);
           break;
         }
-        case Import::Memory: getResizableLimits(wasm.memory.initial, &wasm.memory.max); break;
-        case Import::Global: {
+        case ExternalKind::Memory: getResizableLimits(wasm.memory.initial, &wasm.memory.max); break;
+        case ExternalKind::Global: {
           curr->globalType = getWasmType();
           auto globalMutable = getU32LEB();
           WASM_UNUSED(globalMutable);
@@ -1748,7 +1748,7 @@ public:
       if (debug) std::cerr << "read one" << std::endl;
       auto curr = new Export;
       curr->name = getInlineString();
-      curr->kind = (Export::Kind)getU32LEB();
+      curr->kind = (ExternalKind)getU32LEB();
       auto index = getU32LEB();
       exportIndexes[curr] = index;
     }
@@ -1809,7 +1809,7 @@ public:
     if (!mappedGlobals.size()) {
       // Create name => index mapping.
       for (auto& import : wasm.imports) {
-        if (import->kind != Import::Global) continue;
+        if (import->kind != ExternalKind::Global) continue;
         auto index = mappedGlobals.size();
         mappedGlobals[index] = import->name;
       }
@@ -1835,13 +1835,13 @@ public:
     for (auto& iter : exportIndexes) {
       Export* curr = iter.first;
       switch (curr->kind) {
-        case Export::Function: {
+        case ExternalKind::Function: {
           curr->value = getFunctionIndexName(iter.second);
           break;
         }
-        case Export::Table: curr->value = Name::fromInt(0); break;
-        case Export::Memory: curr->value = Name::fromInt(0); break;
-        case Export::Global: curr->value = getGlobalName(iter.second); break;
+        case ExternalKind::Table: curr->value = Name::fromInt(0); break;
+        case ExternalKind::Memory: curr->value = Name::fromInt(0); break;
+        case ExternalKind::Global: curr->value = getGlobalName(iter.second); break;
         default: WASM_UNREACHABLE();
       }
       wasm.addExport(curr);
@@ -2164,7 +2164,7 @@ public:
       return;
     }
     auto* import = wasm.checkImport(curr->name);
-    if (import && import->kind == Import::Global) {
+    if (import && import->kind == ExternalKind::Global) {
       curr->type = import->globalType;
       return;
     }
