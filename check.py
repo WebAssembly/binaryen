@@ -433,6 +433,8 @@ for t in spec_tests:
 
     # we must ignore some binary format splits
     splits_to_skip = {
+        'func.wast': [2],
+        'return.wast': [2]
     }
 
     # check binary format. here we can verify execution of the final result, no need for an output verification
