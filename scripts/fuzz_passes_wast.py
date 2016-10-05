@@ -75,7 +75,8 @@ try:
 
   def apply_passes(passes):
     wasm_opt = os.path.join('bin', 'wasm-opt')
-    subprocess.check_call([wasm_opt, original_wast] + passes + ['-o', wast], stderr=open('/dev/null'))
+    subprocess.check_call([wasm_opt, original_wast] + passes + ['-o', wast],
+                          stderr=open('/dev/null'))
 
   # loop, looking for failures
 
@@ -107,7 +108,7 @@ try:
     ret = []
     while 1:
       str_ret = str(ret)
-      if random.random() < 0.1 and str_ret not in tested:
+      if random.random() < 0.5 and str_ret not in tested:
         tested.add(str_ret)
         return ret
       ret.append('--' + random.choice(PASSES))
