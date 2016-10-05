@@ -393,4 +393,40 @@
       (i32.const 2000)
     )
   )
+  (func $typed-block-none-then-unreachable (result i32)
+    (block $top-typed i32
+      (block $switch$0 ;; this looks like it can be broken to, so it gets type 'none'
+        (return
+          (i32.const 0)
+        )
+        (br $switch$0) ;; this is not reachable, so dce cleans it up, changing $switch$0's type
+      )
+      (return ;; and this is cleaned up as well, leaving $top-typed in need of a type change
+        (i32.const 1)
+      )
+    )
+  )
+  (func $typed-block-remove-br-changes-type (param $$$0 i32) (result i32)
+    (block $switch$7
+      (block $switch-default$10
+        (block $switch-case$9
+          (block $switch-case$8
+            (br_table $switch-case$9 $switch-case$8 $switch-default$10
+              (i32.const -1)
+            )
+          )
+        )
+        (return
+          (get_local $$$0)
+        )
+        (br $switch$7)
+      )
+      (return
+        (get_local $$$0)
+      )
+    )
+    (return
+      (i32.const 0)
+    )
+  )
 )

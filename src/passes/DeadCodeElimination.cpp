@@ -110,12 +110,23 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
     Index i = self->blockStack.back();
     self->blockStack.back()++;
     if (!self->reachable) {
-      // control flow ended in the middle of the block
+      // control flow ended in the middle of the block, so we can truncate the rest.
       // note that we still visit the rest, so if we already truncated, do not lengthen.
       // note that it is ok that we visit the others even though the list was shortened;
       // our arena vectors leave things as they are when shrinking.
       if (block->list.size() > i + 1) {
-        block->list.resize(i + 1);
+        // but note that it is not legal to truncate a block if it leaves a bad last element,
+        // given the wasm type rules. For example, if the last element is a return, then
+        // the block doesn't care about it for type checking purposes, but if removing
+        // it would leave an element with type none as the last, that could be a problem,
+        // see https://github.com/WebAssembly/spec/issues/355
+        if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
+          block->list.resize(i + 1);
+          // note that we do *not* finalize here. it is incorrect to re-finalize a block
+          // after removing elements, as it may no longer have branches to it that would
+          // determine its type, so re-finalizing would just wipe out an existing type
+          // that it had.
+        }
       }
     }
   }
