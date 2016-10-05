@@ -539,6 +539,12 @@ private:
     return call;
   }
 
+  Expression* truncateToInt32(Expression* value) {
+    if (value->type == i64) return builder.makeUnary(UnaryOp::WrapInt64, value);
+    // either i32, or a call_import whose type we don't know yet (but would be legalized to i32 anyhow)
+    return value;
+  }
+
   Function* processFunction(Ref ast);
 };
 
@@ -1432,7 +1438,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     } else if (what == IF) {
       auto* condition = process(ast[1]);
       auto* ifTrue = process(ast[2]);
-      return builder.makeIf(condition, ifTrue, !!ast[3] ? process(ast[3]) : nullptr);
+      return builder.makeIf(truncateToInt32(condition), ifTrue, !!ast[3] ? process(ast[3]) : nullptr);
     } else if (what == CALL) {
       if (ast[1][0] == NAME) {
         IString name = ast[1][1]->getIString();

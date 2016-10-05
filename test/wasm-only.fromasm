@@ -290,7 +290,9 @@
   )
   (func $ifValue64 (param $0 i64) (param $1 i64) (result i64)
     (if i64
-      (get_local $1)
+      (i32.wrap/i64
+        (get_local $1)
+      )
       (call $call2
         (get_local $0)
       )
