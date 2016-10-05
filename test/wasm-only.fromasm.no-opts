@@ -661,7 +661,9 @@
     (local $$9 i64)
     (local $$10 i64)
     (if
-      (get_local $$6)
+      (i32.wrap/i64
+        (get_local $$6)
+      )
       (block
         (set_local $$9
           (call $call2
