@@ -16,6 +16,7 @@ fib:
 	i32.const	$2=, -1
 	i32.const	$4=, 1
 .LBB0_1:
+        block
 	loop
 	i32.const	$push1=, 1
 .Ltmp2:
@@ -34,6 +35,7 @@ fib:
 .Ltmp5:
 .LBB0_3:
 	end_loop
+        end_block
 .Ltmp6:
 	.loc	1 6 3
 	return  	$4

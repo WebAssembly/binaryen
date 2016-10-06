@@ -23,6 +23,7 @@ main:                                   # @main
 	br_if   	0, $pop10
 .LBB0_1:                                  # %.preheader
                                         # =>This Inner Loop Header: Depth=1
+        block
 	loop
 	i32.const	$push12=, 10
 	i32.gt_s	$push13=, $0, $pop12
@@ -45,6 +46,7 @@ main:                                   # @main
 	br_if   	2, $pop23
 	br      	0
 	end_loop
+        end_block
 	end_block
 	i32.const	$push11=, -12
 	i32.add 	$0=, $0, $pop11

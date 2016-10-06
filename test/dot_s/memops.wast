@@ -64,13 +64,13 @@
     (set_local $6
       (get_local $1)
     )
-    (block $label$1
-      (loop $label$0
+    (block $label$0
+      (loop $label$1
         (set_local $4
           (get_local $1)
         )
-        (block $label$3
-          (loop $label$2
+        (block $label$2
+          (loop $label$3
             (set_local $10
               (i32.const 0)
             )
@@ -105,7 +105,7 @@
             (set_local $5
               (get_local $1)
             )
-            (br_if $label$2
+            (br_if $label$3
               (i32.ne
                 (get_local $4)
                 (get_local $3)
@@ -113,8 +113,8 @@
             )
           )
         )
-        (block $label$5
-          (loop $label$4
+        (block $label$4
+          (loop $label$5
             (set_local $11
               (i32.const 0)
             )
@@ -144,7 +144,7 @@
                 (get_local $2)
               )
             )
-            (br_if $label$4
+            (br_if $label$5
               (i32.ne
                 (get_local $5)
                 (get_local $3)
@@ -176,7 +176,7 @@
             (get_local $2)
           )
         )
-        (br_if $label$0
+        (br_if $label$1
           (i32.ne
             (get_local $0)
             (i32.const 100)

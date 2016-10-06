@@ -39,8 +39,8 @@
             (i32.const 1)
           )
         )
-        (block $label$3
-          (loop $label$2
+        (block $label$2
+          (loop $label$3
             (set_local $0
               (i32.add
                 (i32.gt_s
@@ -79,7 +79,7 @@
                 (i32.const 0)
               )
             )
-            (br $label$2)
+            (br $label$3)
           )
         )
       )

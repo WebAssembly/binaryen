@@ -319,6 +319,7 @@ test3:
 	br_if   	0, $pop0
 	i32.eq  	$0=, $0, $0
 .LBB12_2:
+	block
 	loop
 	br_if   	1, $0
 .LBB12_3:
@@ -330,6 +331,7 @@ test3:
 	br      	0
 .LBB12_5:
 	end_loop
+	end_block
 	unreachable
 .LBB12_6:
 	end_block
@@ -386,7 +388,7 @@ test5:
 	i32.const	$push6=, 0
 	i32.store	0($pop7), $pop6
 	i32.eqz 	$push10=, $0
-	br_if   	2, $pop10
+	br_if   	1, $pop10
 	i32.const	$push9=, 0
 	i32.const	$push8=, 1
 	i32.store	0($pop9), $pop8
@@ -421,7 +423,7 @@ test6:
 	i32.const	$push7=, 0
 	i32.store	0($pop8), $pop7
 	i32.eqz 	$push16=, $2
-	br_if   	3, $pop16
+	br_if   	2, $pop16
 	i32.const	$push13=, 0
 	i32.const	$push12=, 1
 	i32.store	0($pop13), $pop12
@@ -429,7 +431,7 @@ test6:
 	i32.and 	$push10=, $1, $pop11
 	tee_local	$push9=, $0=, $pop10
 	i32.eqz 	$push17=, $pop9
-	br_if   	2, $pop17
+	br_if   	1, $pop17
 	i32.const	$push15=, 0
 	i32.const	$push14=, 1
 	i32.store	0($pop15), $pop14
@@ -518,6 +520,7 @@ test9:
 	i32.const	$push10=, 0
 	i32.store	0($pop11), $pop10
 .LBB18_1:
+	block
 	loop
 	i32.const	$push14=, 0
 	i32.const	$push13=, 1
@@ -545,7 +548,7 @@ test9:
 	i32.const	$push18=, 1
 	i32.and 	$push9=, $pop8, $pop18
 	i32.eqz 	$push26=, $pop9
-	br_if   	3, $pop26
+	br_if   	2, $pop26
 	br      	1
 .LBB18_4:
 	end_block
@@ -556,11 +559,12 @@ test9:
 	i32.const	$push21=, 1
 	i32.and 	$push7=, $pop6, $pop21
 	i32.eqz 	$push27=, $pop7
-	br_if   	2, $pop27
+	br_if   	1, $pop27
 	br      	0
 .LBB18_5:
 	end_loop
 	end_loop
+	end_block
 	i32.const	$push3=, 0
 	i32.const	$push2=, 5
 	i32.store	0($pop3), $pop2
@@ -593,10 +597,12 @@ test10:
 	tee_local	$push2=, $2=, $pop3
 	i32.const	$push1=, 4
 	i32.gt_u	$push0=, $pop2, $pop1
-	br_if   	5, $pop0
+	br_if   	3, $pop0
+	block
 	copy_local	$4=, $3
-	br_table 	$2, 0, 1, 5, 2, 4, 0
+	br_table 	$2, 1, 0, 4, 2, 3, 1
 .LBB19_6:
+	end_block
 	end_loop
 	end_loop
 	return
@@ -680,6 +686,7 @@ test12:
 	.param  	i32
 	.local  	i32
 .LBB21_1:
+	block
 	loop
 	block
 	block
@@ -710,6 +717,7 @@ test12:
 	br      	0
 .LBB21_7:
 	end_loop
+	end_block
 	return
 	.endfunc
 .Lfunc_end21:
@@ -773,6 +781,7 @@ test15:
 	i32.const	$0=, 0
 .LBB24_2:
 	block
+	block
 	loop
 	i32.const	$push1=, 1
 	br_if   	1, $pop1
@@ -784,6 +793,7 @@ test15:
 	br      	2
 .LBB24_4:
 	end_loop
+	end_block
 	i32.const	$1=, 0
 .LBB24_5:
 	end_block

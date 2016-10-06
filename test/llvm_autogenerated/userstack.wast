@@ -407,18 +407,16 @@
         (i32.const 1)
       )
     )
-    (block $label$1
-      (loop $label$0
-        (i32.store
-          (get_local $2)
-          (i32.const 1)
-        )
-        (set_local $2
-          (get_local $1)
-        )
-        (br_if $label$0
-          (get_local $0)
-        )
+    (loop $label$0
+      (i32.store
+        (get_local $2)
+        (i32.const 1)
+      )
+      (set_local $2
+        (get_local $1)
+      )
+      (br_if $label$0
+        (get_local $0)
       )
     )
     (return)

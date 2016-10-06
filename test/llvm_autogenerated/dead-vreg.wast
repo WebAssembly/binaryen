@@ -34,66 +34,62 @@
           (i32.const 1)
         )
       )
-      (block $label$2
-        (loop $label$1
-          (block $label$3
-            (br_if $label$3
-              (get_local $4)
+      (loop $label$1
+        (block $label$2
+          (br_if $label$2
+            (get_local $4)
+          )
+          (set_local $6
+            (i32.const 0)
+          )
+          (set_local $7
+            (get_local $0)
+          )
+          (set_local $8
+            (get_local $1)
+          )
+          (loop $label$3
+            (i32.store
+              (get_local $7)
+              (get_local $6)
             )
             (set_local $6
-              (i32.const 0)
+              (i32.add
+                (get_local $6)
+                (get_local $5)
+              )
             )
             (set_local $7
-              (get_local $0)
-            )
-            (set_local $8
-              (get_local $1)
-            )
-            (block $label$5
-              (loop $label$4
-                (i32.store
-                  (get_local $7)
-                  (get_local $6)
-                )
-                (set_local $6
-                  (i32.add
-                    (get_local $6)
-                    (get_local $5)
-                  )
-                )
-                (set_local $7
-                  (i32.add
-                    (get_local $7)
-                    (i32.const 4)
-                  )
-                )
-                (br_if $label$4
-                  (tee_local $8
-                    (i32.add
-                      (get_local $8)
-                      (i32.const -1)
-                    )
-                  )
-                )
+              (i32.add
+                (get_local $7)
+                (i32.const 4)
               )
             )
-          )
-          (set_local $0
-            (i32.add
-              (get_local $0)
-              (get_local $3)
-            )
-          )
-          (br_if $label$1
-            (i32.ne
-              (tee_local $5
+            (br_if $label$3
+              (tee_local $8
                 (i32.add
-                  (get_local $5)
-                  (i32.const 1)
+                  (get_local $8)
+                  (i32.const -1)
                 )
               )
-              (get_local $2)
             )
+          )
+        )
+        (set_local $0
+          (i32.add
+            (get_local $0)
+            (get_local $3)
+          )
+        )
+        (br_if $label$1
+          (i32.ne
+            (tee_local $5
+              (i32.add
+                (get_local $5)
+                (i32.const 1)
+              )
+            )
+            (get_local $2)
           )
         )
       )
