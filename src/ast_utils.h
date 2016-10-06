@@ -25,8 +25,11 @@
 
 namespace wasm {
 
+// Finds if there are breaks targeting a name. Note that since names are
+// unique in our IR, we just need to look for the name, and do not need
+// to analyze scoping.
 struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
-  Name target; // look for this one XXX looking by name may fall prey to duplicate names
+  Name target;
   Index found;
   WasmType valueType;
 
