@@ -9,11 +9,8 @@ import sys
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-LLVM_TEST_DIR = os.path.join(ROOT_DIR, 'third_party', 'llvm', 'test', 'CodeGen',
-                             'WebAssembly')
+LLVM_TEST_DIR = os.path.join('test', 'CodeGen', 'WebAssembly')
 S_TEST_DIR = ROOT_DIR
-LLVM_DIR = os.path.join(ROOT_DIR, 'third_party', 'llvm')
-BIN_DIR = os.path.join(LLVM_DIR, 'build', 'bin')
 
 
 def FindTestFiles(directory, ext):
@@ -47,9 +44,14 @@ def GetRunLine(test):
 
 def main(args):
     parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--llvm-dir', required=True)
+    parser.add_argument('-b', '--bin-dir', required=True)
     options = parser.parse_args(args)
+    llvm_dir = options.llvm_dir
+    bin_dir = options.bin_dir
+    llvm_test_dir = os.path.join(llvm_dir, LLVM_TEST_DIR)
 
-    tests = FindTestFiles(LLVM_TEST_DIR, '.ll')
+    tests = FindTestFiles(llvm_test_dir, '.ll')
     for ll_test in tests:
         name_noext = os.path.splitext(os.path.basename(ll_test))[0]
 
@@ -71,7 +73,8 @@ def main(args):
         # generate .s files.
         if cmd[0] != 'llc':
             continue
-        cmd[0] = os.path.join(BIN_DIR, cmd[0])
+        cmd[0] = os.path.join(bin_dir, cmd[0])
+        print ' '.join(cmd)
         subprocess.check_call(cmd)
 
 
