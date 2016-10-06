@@ -79,40 +79,48 @@ struct LocalSet : std::vector<Index> {
   // TODO: binary search in all the following
 
   void insert(Index x) {
-    for (Index i = 0; i < size(); i++) {
-      auto seen = (*this)[i];
-      if (seen == x) return;
-      if (seen > x) {
-        resize(size() + 1);
-        for (Index j = size() - 1; j > i; j--) {
-          (*this)[j] = (*this)[j - 1];
-        }
-        (*this)[i] = x;
-        return;
-      }
+    Index low = 0, high = size() - 1;
+    while (low < high) {
+      Index mid = (low + high) / 2;
+      if ((*this)[mid] >= x) high = mid;
+      else low = mid + 1;
     }
-    // we didn't find anything larger
-    push_back(x);
+    if ((*this)[low] == x) return;
+    else if ((*this)[low] > x) {
+      resize(size() + 1);
+      for (Index i = size() - 1; i > low; i--) {
+        (*this)[i] = (*this)[i - 1];
+      }
+      (*this)[low] = x;
+    }
+    else push_back(x);
   }
 
   bool erase(Index x) {
-    for (Index i = 0; i < size(); i++) {
-      if ((*this)[i] == x) {
-        for (Index j = i + 1; j < size(); j++) {
-          (*this)[j - 1] = (*this)[j];
-        }
-        resize(size() - 1);
-        return true;
+    Index low = 0, high = size() - 1;
+    while (low < high) {
+      Index mid = (low + high) / 2;
+      if ((*this)[mid] >= x) high = mid;
+      else low = mid + 1;
+    }
+    if ((*this)[low] == x) {
+      for (Index i = low + 1; i < size(); i++) {
+        (*this)[i - 1] = (*this)[i];
       }
+      resize(size() - 1);
+      return true;
     }
     return false;
   }
 
   bool has(Index x) {
-    for (Index i = 0; i < size(); i++) {
-      if ((*this)[i] == x) return true;
+    Index low = 0, high = size() - 1;
+    while (low < high) {
+      Index mid = (low + high) / 2;
+      if ((*this)[mid] >= x) high = mid;
+      else low = mid + 1;
     }
-    return false;
+    return (*this)[low] == x;
   }
 
   void verify() const {
