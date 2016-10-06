@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/frem.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/frem.ll"
 	.globl	frem32
 	.type	frem32,@function
 frem32:

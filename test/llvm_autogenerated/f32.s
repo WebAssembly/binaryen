@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/f32.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/f32.ll"
 	.globl	fadd32
 	.type	fadd32,@function
 fadd32:

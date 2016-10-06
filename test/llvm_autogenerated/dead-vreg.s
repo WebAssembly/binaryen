@@ -23,7 +23,7 @@ foo:
 	copy_local	$8=, $1
 .LBB0_4:
 	loop
-	i32.store	$drop=, 0($7), $6
+	i32.store	0($7), $6
 	i32.add 	$6=, $6, $5
 	i32.const	$push8=, 4
 	i32.add 	$7=, $7, $pop8
@@ -43,7 +43,6 @@ foo:
 .LBB0_6:
 	end_loop
 	end_block
-	return
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo

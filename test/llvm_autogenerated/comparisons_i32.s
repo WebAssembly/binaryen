@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/comparisons_i32.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/comparisons_i32.ll"
 	.globl	eq_i32
 	.type	eq_i32,@function
 eq_i32:

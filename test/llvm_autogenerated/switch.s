@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/switch.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/switch.ll"
 	.globl	bar32
 	.type	bar32,@function
 bar32:
@@ -92,3 +92,9 @@ bar64:
 	.size	bar64, .Lfunc_end1-bar64
 
 
+	.functype	foo0, void
+	.functype	foo1, void
+	.functype	foo2, void
+	.functype	foo3, void
+	.functype	foo4, void
+	.functype	foo5, void

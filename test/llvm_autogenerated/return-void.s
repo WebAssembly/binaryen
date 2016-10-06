@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/return-void.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/return-void.ll"
 	.globl	return_void
 	.type	return_void,@function
 return_void:
@@ -16,13 +16,13 @@ return_void_twice:
 	br_if   	0, $pop4
 	i32.const	$push2=, 0
 	i32.const	$push3=, 0
-	i32.store	$drop=, 0($pop2), $pop3
+	i32.store	0($pop2), $pop3
 	return
 .LBB1_2:
 	end_block
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$drop=, 0($pop1), $pop0
+	i32.store	0($pop1), $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	return_void_twice, .Lfunc_end1-return_void_twice

@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/irreducible-cfg.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/irreducible-cfg.ll"
 	.globl	test0
 	.type	test0,@function
 test0:
@@ -45,7 +45,7 @@ test0:
 	f64.const	$push7=, 0x1.2666666666666p1
 	f64.mul 	$push15=, $pop6, $pop7
 	tee_local	$push14=, $4=, $pop15
-	f64.store	$drop=, 0($pop16):p2align=2, $pop14
+	f64.store	0($pop16):p2align=2, $pop14
 	i32.const	$6=, 0
 	br      	4
 .LBB0_9:
@@ -55,7 +55,7 @@ test0:
 	i32.add 	$push12=, $0, $pop11
 	f64.const	$push8=, 0x1.4cccccccccccdp0
 	f64.add 	$push9=, $4, $pop8
-	f64.store	$drop=, 0($pop12):p2align=2, $pop9
+	f64.store	0($pop12):p2align=2, $pop9
 	i32.const	$push13=, 1
 	i32.add 	$5=, $5, $pop13
 	br      	1
@@ -123,7 +123,7 @@ test1:
 	f64.const	$push7=, 0x1.2666666666666p1
 	f64.mul 	$push16=, $pop6, $pop7
 	tee_local	$push15=, $4=, $pop16
-	f64.store	$drop=, 0($pop17):p2align=2, $pop15
+	f64.store	0($pop17):p2align=2, $pop15
 	i32.const	$2=, 0
 	i32.const	$6=, 4
 	br      	6
@@ -144,7 +144,7 @@ test1:
 	i32.add 	$push13=, $0, $pop12
 	f64.const	$push9=, 0x1.4cccccccccccdp0
 	f64.add 	$push10=, $4, $pop9
-	f64.store	$drop=, 0($pop13):p2align=2, $pop10
+	f64.store	0($pop13):p2align=2, $pop10
 	i32.const	$push14=, 1
 	i32.add 	$5=, $5, $pop14
 	br      	1

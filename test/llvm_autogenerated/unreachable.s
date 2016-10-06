@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/unreachable.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/unreachable.ll"
 	.globl	f1
 	.type	f1,@function
 f1:
@@ -27,3 +27,4 @@ f3:
 	.size	f3, .Lfunc_end2-f3
 
 
+	.functype	abort, void

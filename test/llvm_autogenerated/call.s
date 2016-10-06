@@ -119,15 +119,6 @@ coldcc_tail_call_void_nullary:
 .Lfunc_end11:
 	.size	coldcc_tail_call_void_nullary, .Lfunc_end11-coldcc_tail_call_void_nullary
 
-	.hidden	addr_void_nullary
-	.type	addr_void_nullary,@object
-	.data
-	.globl	addr_void_nullary
-	.p2align	2
-addr_void_nullary:
-	.int32	void_nullary@FUNCTION
-	.size	addr_void_nullary, 4
-
 
 	.functype	i32_nullary, i32
 	.functype	i32_unary, i32, i32

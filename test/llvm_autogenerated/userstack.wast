@@ -14,6 +14,8 @@
   (export "dynamic_alloca" (func $dynamic_alloca))
   (export "dynamic_alloca_redzone" (func $dynamic_alloca_redzone))
   (export "dynamic_static_alloca" (func $dynamic_static_alloca))
+  (export "llvm_stack_builtins" (func $llvm_stack_builtins))
+  (export "dynamic_alloca_nouse" (func $dynamic_alloca_nouse))
   (export "copytoreg_fi" (func $copytoreg_fi))
   (export "frameaddress_0" (func $frameaddress_0))
   (export "frameaddress_1" (func $frameaddress_1))
@@ -236,9 +238,11 @@
   )
   (func $dynamic_static_alloca (param $0 i32)
     (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
     (i32.store offset=4
       (i32.const 0)
-      (tee_local $1
+      (tee_local $2
         (i32.sub
           (i32.load offset=4
             (i32.const 0)
@@ -247,27 +251,62 @@
         )
       )
     )
+    (i32.store offset=12
+      (tee_local $1
+        (get_local $2)
+      )
+      (i32.const 101)
+    )
     (i32.store offset=4
       (i32.const 0)
-      (tee_local $0
-        (i32.sub
-          (get_local $1)
-          (i32.and
-            (i32.add
-              (i32.shl
-                (get_local $0)
-                (i32.const 2)
+      (tee_local $3
+        (tee_local $2
+          (i32.sub
+            (get_local $2)
+            (tee_local $0
+              (i32.and
+                (i32.add
+                  (i32.shl
+                    (get_local $0)
+                    (i32.const 2)
+                  )
+                  (i32.const 15)
+                )
+                (i32.const -16)
               )
-              (i32.const 15)
             )
-            (i32.const -16)
           )
         )
       )
     )
+    (i32.store offset=12
+      (get_local $1)
+      (i32.const 102)
+    )
+    (i32.store
+      (get_local $2)
+      (i32.const 103)
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (tee_local $0
+        (i32.sub
+          (get_local $3)
+          (get_local $0)
+        )
+      )
+    )
+    (i32.store offset=12
+      (get_local $1)
+      (i32.const 104)
+    )
+    (i32.store
+      (get_local $2)
+      (i32.const 105)
+    )
     (i32.store
       (get_local $0)
-      (i32.const 0)
+      (i32.const 106)
     )
     (i32.store offset=4
       (i32.const 0)
@@ -275,6 +314,77 @@
         (get_local $1)
         (i32.const 16)
       )
+    )
+    (return)
+  )
+  (func $llvm_stack_builtins (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (set_local $2
+      (tee_local $3
+        (i32.load offset=4
+          (i32.const 0)
+        )
+      )
+    )
+    (set_local $1
+      (get_local $3)
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.sub
+        (get_local $3)
+        (i32.and
+          (i32.add
+            (i32.shl
+              (get_local $0)
+              (i32.const 2)
+            )
+            (i32.const 15)
+          )
+          (i32.const -16)
+        )
+      )
+    )
+    (drop
+      (get_local $1)
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (get_local $2)
+    )
+    (return)
+  )
+  (func $dynamic_alloca_nouse (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (set_local $1
+      (tee_local $2
+        (i32.load offset=4
+          (i32.const 0)
+        )
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (i32.sub
+        (get_local $2)
+        (i32.and
+          (i32.add
+            (i32.shl
+              (get_local $0)
+              (i32.const 2)
+            )
+            (i32.const 15)
+          )
+          (i32.const -16)
+        )
+      )
+    )
+    (i32.store offset=4
+      (i32.const 0)
+      (get_local $1)
     )
     (return)
   )

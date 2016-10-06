@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/return-int32.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/return-int32.ll"
 	.globl	return_i32
 	.type	return_i32,@function
 return_i32:
@@ -20,14 +20,14 @@ return_i32_twice:
 	br_if   	0, $pop6
 	i32.const	$push3=, 0
 	i32.const	$push5=, 0
-	i32.store	$drop=, 0($pop3), $pop5
+	i32.store	0($pop3), $pop5
 	i32.const	$push4=, 1
 	return  	$pop4
 .LBB1_2:
 	end_block
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
-	i32.store	$drop=, 0($pop1), $pop0
+	i32.store	0($pop1), $pop0
 	i32.const	$push2=, 3
 	.endfunc
 .Lfunc_end1:

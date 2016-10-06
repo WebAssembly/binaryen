@@ -1,12 +1,11 @@
 	.text
-	.file	"test/dot_s/indirect-import.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/indirect-import.ll"
 	.hidden	bar
 	.globl	bar
 	.type	bar,@function
-bar:                                    # @bar
+bar:
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
 	i32.const	$push13=, 0
 	i32.const	$push10=, 0
 	i32.load	$push11=, __stack_pointer($pop10)
@@ -39,29 +38,16 @@ bar:                                    # @bar
 	i32.const	$push14=, 32
 	i32.add 	$push15=, $1, $pop14
 	i32.store	__stack_pointer($pop16), $pop15
-	copy_local	$push20=, $0
-                                        # fallthrough-return: $pop20
+	return  	$0
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
 
-	.hidden	baz
-	.globl	baz
-	.type	baz,@function
-baz:                                    # @baz
-	.result 	i32
-# BB#0:                                 # %entry
-	i32.const	$push0=, extern_v@FUNCTION
-                                        # fallthrough-return: $pop0
-	.endfunc
-.Lfunc_end1:
-	.size	baz, .Lfunc_end1-baz
 
-
-	.ident	"clang version 4.0.0 (trunk 281345) (llvm/trunk 281343)"
 	.functype	extern_fd, f32, f64
 	.functype	extern_vj, void, i64
 	.functype	extern_v, void
 	.functype	extern_ijidf, i32, i64, i32, f64, f32
 	.functype	extern_struct, void, i32
 	.functype	extern_sret, void, i32
+	.functype	extern_i128ret, void, i32, i64

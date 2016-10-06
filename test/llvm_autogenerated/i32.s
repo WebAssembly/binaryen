@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/i32.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/i32.ll"
 	.globl	add32
 	.type	add32,@function
 add32:

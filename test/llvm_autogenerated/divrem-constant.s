@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/divrem-constant.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/divrem-constant.ll"
 	.globl	test_udiv_2
 	.type	test_udiv_2,@function
 test_udiv_2:

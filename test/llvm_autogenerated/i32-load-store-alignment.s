@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/i32-load-store-alignment.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/i32-load-store-alignment.ll"
 	.globl	ldi32_a1
 	.type	ldi32_a1,@function
 ldi32_a1:
@@ -114,7 +114,7 @@ ldi16_a4:
 	.type	sti32_a1,@function
 sti32_a1:
 	.param  	i32, i32
-	i32.store	$drop=, 0($0):p2align=0, $1
+	i32.store	0($0):p2align=0, $1
 	return
 	.endfunc
 .Lfunc_end10:
@@ -124,7 +124,7 @@ sti32_a1:
 	.type	sti32_a2,@function
 sti32_a2:
 	.param  	i32, i32
-	i32.store	$drop=, 0($0):p2align=1, $1
+	i32.store	0($0):p2align=1, $1
 	return
 	.endfunc
 .Lfunc_end11:
@@ -134,7 +134,7 @@ sti32_a2:
 	.type	sti32_a4,@function
 sti32_a4:
 	.param  	i32, i32
-	i32.store	$drop=, 0($0), $1
+	i32.store	0($0), $1
 	return
 	.endfunc
 .Lfunc_end12:
@@ -144,7 +144,7 @@ sti32_a4:
 	.type	sti32,@function
 sti32:
 	.param  	i32, i32
-	i32.store	$drop=, 0($0), $1
+	i32.store	0($0), $1
 	return
 	.endfunc
 .Lfunc_end13:
@@ -154,7 +154,7 @@ sti32:
 	.type	sti32_a8,@function
 sti32_a8:
 	.param  	i32, i32
-	i32.store	$drop=, 0($0), $1
+	i32.store	0($0), $1
 	return
 	.endfunc
 .Lfunc_end14:
@@ -164,7 +164,7 @@ sti32_a8:
 	.type	sti8_a1,@function
 sti8_a1:
 	.param  	i32, i32
-	i32.store8	$drop=, 0($0), $1
+	i32.store8	0($0), $1
 	return
 	.endfunc
 .Lfunc_end15:
@@ -174,7 +174,7 @@ sti8_a1:
 	.type	sti8_a2,@function
 sti8_a2:
 	.param  	i32, i32
-	i32.store8	$drop=, 0($0), $1
+	i32.store8	0($0), $1
 	return
 	.endfunc
 .Lfunc_end16:
@@ -184,7 +184,7 @@ sti8_a2:
 	.type	sti16_a1,@function
 sti16_a1:
 	.param  	i32, i32
-	i32.store16	$drop=, 0($0):p2align=0, $1
+	i32.store16	0($0):p2align=0, $1
 	return
 	.endfunc
 .Lfunc_end17:
@@ -194,7 +194,7 @@ sti16_a1:
 	.type	sti16_a2,@function
 sti16_a2:
 	.param  	i32, i32
-	i32.store16	$drop=, 0($0), $1
+	i32.store16	0($0), $1
 	return
 	.endfunc
 .Lfunc_end18:
@@ -204,7 +204,7 @@ sti16_a2:
 	.type	sti16_a4,@function
 sti16_a4:
 	.param  	i32, i32
-	i32.store16	$drop=, 0($0), $1
+	i32.store16	0($0), $1
 	return
 	.endfunc
 .Lfunc_end19:

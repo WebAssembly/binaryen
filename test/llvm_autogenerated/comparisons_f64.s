@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/comparisons_f64.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/comparisons_f64.ll"
 	.globl	ord_f64
 	.type	ord_f64,@function
 ord_f64:

@@ -1,6 +1,8 @@
 (module
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
+  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+  (type $FUNCSIG$fff (func (param f32 f32) (result f32)))
   (export "memory" (memory $0))
   (export "fold_promote" (func $fold_promote))
   (export "fold_demote" (func $fold_demote))

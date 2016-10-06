@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/memory-addr32.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/memory-addr32.ll"
 	.globl	current_memory
 	.type	current_memory,@function
 current_memory:

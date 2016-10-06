@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/f64.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/f64.ll"
 	.globl	fadd64
 	.type	fadd64,@function
 fadd64:

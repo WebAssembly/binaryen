@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/i64.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/i64.ll"
 	.globl	add64
 	.type	add64,@function
 add64:
