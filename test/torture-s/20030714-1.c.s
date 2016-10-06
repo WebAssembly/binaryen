@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
 	.section	.text.RenderBox_setStyle,"ax",@progbits
 	.hidden	RenderBox_setStyle
 	.globl	RenderBox_setStyle
@@ -31,14 +31,14 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.const	$push29=, 16
 	i32.or  	$push28=, $3, $pop29
 	tee_local	$push27=, $3=, $pop28
-	i32.store16	$drop=, 0($pop7), $pop27
+	i32.store16	0($pop7), $pop27
 .LBB0_3:                                # %if.end
 	end_block                       # label2:
 	i32.const	$push11=, 26
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push9=, 65519
 	i32.and 	$push10=, $3, $pop9
-	i32.store16	$drop=, 0($pop12), $pop10
+	i32.store16	0($pop12), $pop10
 	i32.load	$2=, 0($1)
 	block
 	i32.load	$push14=, 28($0)
@@ -65,7 +65,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	tee_local	$push30=, $0=, $pop31
 	i32.load16_u	$push22=, 0($0)
 	i32.or  	$push23=, $pop22, $3
-	i32.store16	$drop=, 0($pop30), $pop23
+	i32.store16	0($pop30), $pop23
 .LBB0_7:                                # %sw.epilog
 	end_block                       # label0:
                                         # fallthrough-return
@@ -120,7 +120,7 @@ main:                                   # @main
 # BB#0:                                 # %RenderBox_setStyle.exit
 	i32.const	$push1=, 0
 	i32.const	$push0=, RenderBox_isTableCell@FUNCTION
-	i32.store	$drop=, g_this+28($pop1), $pop0
+	i32.store	g_this+28($pop1), $pop0
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
 	i32.load	$push2=, g__style($pop15)
@@ -128,7 +128,7 @@ main:                                   # @main
 	i32.and 	$push4=, $pop2, $pop3
 	i32.const	$push5=, 393216
 	i32.or  	$push6=, $pop4, $pop5
-	i32.store	$drop=, g__style($pop16), $pop6
+	i32.store	g__style($pop16), $pop6
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
 	i32.load16_u	$push7=, g_this+26($pop13)
@@ -136,7 +136,7 @@ main:                                   # @main
 	i32.and 	$push9=, $pop7, $pop8
 	i32.const	$push10=, 16
 	i32.or  	$push11=, $pop9, $pop10
-	i32.store16	$drop=, g_this+26($pop14), $pop11
+	i32.store16	g_this+26($pop14), $pop11
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12
 	unreachable
@@ -179,5 +179,5 @@ g__style:
 	.size	g__style, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

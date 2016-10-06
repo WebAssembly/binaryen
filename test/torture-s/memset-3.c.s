@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-3.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-3.c"
 	.section	.text.reset,"ax",@progbits
 	.hidden	reset
 	.globl	reset
@@ -654,6 +654,6 @@ u:
 	.size	u, 32
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

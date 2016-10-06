@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071216-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071216-1.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -47,7 +47,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push28=, 0
 	i32.const	$push0=, 26
-	i32.store	$drop=, x($pop28), $pop0
+	i32.store	x($pop28), $pop0
 	block
 	i32.call	$push27=, bar@FUNCTION
 	tee_local	$push26=, $0=, $pop27
@@ -65,7 +65,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push36=, 0
 	i32.const	$push6=, -39
-	i32.store	$drop=, x($pop36), $pop6
+	i32.store	x($pop36), $pop6
 	i32.call	$push35=, bar@FUNCTION
 	tee_local	$push34=, $0=, $pop35
 	i32.const	$push33=, -37
@@ -82,7 +82,7 @@ main:                                   # @main
 # BB#2:                                 # %if.end4
 	i32.const	$push41=, 0
 	i32.const	$push12=, -38
-	i32.store	$drop=, x($pop41), $pop12
+	i32.store	x($pop41), $pop12
 	i32.call	$push40=, bar@FUNCTION
 	tee_local	$push39=, $0=, $pop40
 	i32.const	$push15=, -37
@@ -115,5 +115,5 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

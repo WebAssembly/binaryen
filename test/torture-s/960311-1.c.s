@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960311-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960311-1.c"
 	.section	.text.a1,"ax",@progbits
 	.hidden	a1
 	.globl	a1
@@ -11,7 +11,7 @@ a1:                                     # @a1
 	i32.load	$push1=, count($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, count($pop0), $pop3
+	i32.store	count($pop0), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -35,7 +35,7 @@ b:                                      # @b
 	i32.load	$push3=, count($pop18)
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$drop=, count($pop2), $pop5
+	i32.store	count($pop2), $pop5
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	block
@@ -49,7 +49,7 @@ b:                                      # @b
 	i32.load	$push9=, count($pop19)
 	i32.const	$push10=, 1
 	i32.add 	$push11=, $pop9, $pop10
-	i32.store	$drop=, count($pop8), $pop11
+	i32.store	count($pop8), $pop11
 .LBB1_4:                                # %if.end7
 	end_block                       # label1:
 	block
@@ -63,7 +63,7 @@ b:                                      # @b
 	i32.load	$push15=, count($pop20)
 	i32.const	$push16=, 1
 	i32.add 	$push17=, $pop15, $pop16
-	i32.store	$drop=, count($pop14), $pop17
+	i32.store	count($pop14), $pop17
 .LBB1_6:                                # %if.end15
 	end_block                       # label2:
                                         # fallthrough-return
@@ -80,7 +80,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end21
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$drop=, count($pop1), $pop0
+	i32.store	count($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -98,5 +98,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

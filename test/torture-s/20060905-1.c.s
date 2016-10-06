@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060905-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060905-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -22,7 +22,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push8=, 0
 	i32.load8_u	$push1=, 0($0)
-	i32.store8	$drop=, g($pop8), $pop1
+	i32.store8	g($pop8), $pop1
 	i32.const	$push7=, 1
 	i32.add 	$1=, $1, $pop7
 .LBB0_3:                                # %for.inc.i
@@ -71,5 +71,5 @@ g:
 	.size	g, 1
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

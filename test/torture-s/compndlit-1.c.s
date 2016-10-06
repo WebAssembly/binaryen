@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/compndlit-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/compndlit-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.eq  	$push8=, $pop2, $pop3
 	tee_local	$push7=, $0=, $pop8
 	i32.select	$push6=, $pop5, $pop4, $pop7
-	i32.store	$drop=, x($pop10), $pop6
+	i32.store	x($pop10), $pop6
 	block
 	i32.eqz 	$push12=, $0
 	br_if   	0, $pop12       # 0: down to label0
@@ -48,6 +48,6 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020402-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020402-2.c"
 	.section	.text.InitCache,"ax",@progbits
 	.hidden	InitCache
 	.globl	InitCache
@@ -8,121 +8,121 @@ InitCache:                              # @InitCache
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, MyPte+4($pop0), $0
+	i32.store	MyPte+4($pop0), $0
 	i32.const	$push76=, 0
 	i32.const	$push1=, 5
-	i32.store	$drop=, MyPte+12($pop76), $pop1
+	i32.store	MyPte+12($pop76), $pop1
 	i32.const	$push75=, 0
 	i32.const	$push2=, MyPte+16
-	i32.store	$drop=, Local1($pop75), $pop2
+	i32.store	Local1($pop75), $pop2
 	i32.const	$push74=, 0
 	i32.const	$push3=, MyPte+20
-	i32.store	$drop=, Local2($pop74), $pop3
+	i32.store	Local2($pop74), $pop3
 	i32.const	$push73=, 0
 	i32.const	$push4=, MyPte+24
-	i32.store	$drop=, Local3($pop73), $pop4
+	i32.store	Local3($pop73), $pop4
 	i32.const	$push72=, 0
 	i32.const	$push5=, MyPte+28
-	i32.store	$drop=, RDbf1($pop72), $pop5
+	i32.store	RDbf1($pop72), $pop5
 	i32.const	$push71=, 0
 	i32.const	$push70=, 0
-	i32.store	$drop=, MyPte+8($pop71), $pop70
+	i32.store	MyPte+8($pop71), $pop70
 	i32.const	$push69=, 0
 	i32.const	$push6=, MyPte+32
-	i32.store	$drop=, RDbf2($pop69), $pop6
+	i32.store	RDbf2($pop69), $pop6
 	i32.const	$push68=, 0
 	i32.const	$push7=, MyPte+36
-	i32.store	$drop=, RDbf3($pop68), $pop7
+	i32.store	RDbf3($pop68), $pop7
 	i32.const	$push67=, 0
 	i32.const	$push8=, 1
-	i32.store	$drop=, MyPte+36($pop67), $pop8
+	i32.store	MyPte+36($pop67), $pop8
 	i32.const	$push66=, 0
 	i32.const	$push9=, MyPte+156
-	i32.store	$drop=, IntVc1($pop66), $pop9
+	i32.store	IntVc1($pop66), $pop9
 	i32.const	$push65=, 0
 	i32.const	$push10=, MyPte+160
-	i32.store	$drop=, IntVc2($pop65), $pop10
+	i32.store	IntVc2($pop65), $pop10
 	i32.const	$push64=, 0
 	i32.const	$push11=, MyPte+164
-	i32.store	$drop=, IntCode3($pop64), $pop11
+	i32.store	IntCode3($pop64), $pop11
 	i32.const	$push63=, 0
 	i32.const	$push12=, MyPte+168
-	i32.store	$drop=, IntCode4($pop63), $pop12
+	i32.store	IntCode4($pop63), $pop12
 	i32.const	$push62=, 0
 	i32.const	$push13=, MyPte+172
-	i32.store	$drop=, IntCode5($pop62), $pop13
+	i32.store	IntCode5($pop62), $pop13
 	i32.const	$push61=, 0
 	i32.const	$push14=, MyPte+176
-	i32.store	$drop=, IntCode6($pop61), $pop14
+	i32.store	IntCode6($pop61), $pop14
 	i32.const	$push60=, 0
 	i32.const	$push15=, MyPte+180
-	i32.store	$drop=, Workspace($pop60), $pop15
+	i32.store	Workspace($pop60), $pop15
 	i32.const	$push59=, 0
 	i32.const	$push16=, MyPte+184
-	i32.store	$drop=, Workspace+4($pop59), $pop16
+	i32.store	Workspace+4($pop59), $pop16
 	i32.const	$push58=, 0
 	i32.const	$push17=, MyPte+188
-	i32.store	$drop=, Workspace+8($pop58), $pop17
+	i32.store	Workspace+8($pop58), $pop17
 	i32.const	$push57=, 0
 	i32.const	$push18=, MyPte+192
-	i32.store	$drop=, Workspace+12($pop57), $pop18
+	i32.store	Workspace+12($pop57), $pop18
 	i32.const	$push56=, 0
 	i32.const	$push19=, MyPte+196
-	i32.store	$drop=, Workspace+16($pop56), $pop19
+	i32.store	Workspace+16($pop56), $pop19
 	i32.const	$push55=, 0
 	i32.const	$push20=, MyPte+200
-	i32.store	$drop=, Workspace+20($pop55), $pop20
+	i32.store	Workspace+20($pop55), $pop20
 	i32.const	$push54=, 0
 	i32.const	$push21=, MyPte+204
-	i32.store	$drop=, Workspace+24($pop54), $pop21
+	i32.store	Workspace+24($pop54), $pop21
 	i32.const	$push53=, 0
 	i32.const	$push22=, MyPte+208
-	i32.store	$drop=, Workspace+28($pop53), $pop22
+	i32.store	Workspace+28($pop53), $pop22
 	i32.const	$push52=, 0
 	i32.const	$push23=, MyPte+212
-	i32.store	$drop=, Workspace+32($pop52), $pop23
+	i32.store	Workspace+32($pop52), $pop23
 	i32.const	$push51=, 0
 	i32.const	$push24=, MyPte+216
-	i32.store	$drop=, Workspace+36($pop51), $pop24
+	i32.store	Workspace+36($pop51), $pop24
 	i32.const	$push50=, 0
 	i32.const	$push25=, MyPte+220
-	i32.store	$drop=, Workspace+40($pop50), $pop25
+	i32.store	Workspace+40($pop50), $pop25
 	i32.const	$push49=, 0
 	i32.const	$push26=, MyPte+108
-	i32.store	$drop=, Lom1($pop49), $pop26
+	i32.store	Lom1($pop49), $pop26
 	i32.const	$push48=, 0
 	i32.const	$push27=, MyPte+112
-	i32.store	$drop=, Lom2($pop48), $pop27
+	i32.store	Lom2($pop48), $pop27
 	i32.const	$push47=, 0
 	i32.const	$push28=, MyPte+116
-	i32.store	$drop=, Lom3($pop47), $pop28
+	i32.store	Lom3($pop47), $pop28
 	i32.const	$push46=, 0
 	i32.const	$push29=, MyPte+120
-	i32.store	$drop=, Lom4($pop46), $pop29
+	i32.store	Lom4($pop46), $pop29
 	i32.const	$push45=, 0
 	i32.const	$push30=, MyPte+124
-	i32.store	$drop=, Lom5($pop45), $pop30
+	i32.store	Lom5($pop45), $pop30
 	i32.const	$push44=, 0
 	i32.const	$push31=, MyPte+128
-	i32.store	$drop=, Lom6($pop44), $pop31
+	i32.store	Lom6($pop44), $pop31
 	i32.const	$push43=, 0
 	i32.const	$push32=, MyPte+132
-	i32.store	$drop=, Lom7($pop43), $pop32
+	i32.store	Lom7($pop43), $pop32
 	i32.const	$push42=, 0
 	i32.const	$push33=, MyPte+136
-	i32.store	$drop=, Lom8($pop42), $pop33
+	i32.store	Lom8($pop42), $pop33
 	i32.const	$push41=, 0
 	i32.const	$push34=, MyPte+140
-	i32.store	$drop=, Lom9($pop41), $pop34
+	i32.store	Lom9($pop41), $pop34
 	i32.const	$push40=, 0
 	i32.const	$push35=, MyPte+144
-	i32.store	$drop=, Lom10($pop40), $pop35
+	i32.store	Lom10($pop40), $pop35
 	i32.const	$push39=, 0
 	i32.const	$push36=, MyPte+148
-	i32.store	$drop=, RDbf11($pop39), $pop36
+	i32.store	RDbf11($pop39), $pop36
 	i32.const	$push38=, 0
 	i32.const	$push37=, MyPte+152
-	i32.store	$drop=, RDbf12($pop38), $pop37
+	i32.store	RDbf12($pop38), $pop37
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -138,118 +138,118 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 5
-	i32.store	$drop=, MyPte+12($pop1), $pop0
+	i32.store	MyPte+12($pop1), $pop0
 	i32.const	$push76=, 0
 	i64.const	$push2=, 5
-	i64.store	$drop=, MyPte+4($pop76):p2align=2, $pop2
+	i64.store	MyPte+4($pop76):p2align=2, $pop2
 	i32.const	$push75=, 0
 	i32.const	$push3=, MyPte+16
-	i32.store	$drop=, Local1($pop75), $pop3
+	i32.store	Local1($pop75), $pop3
 	i32.const	$push74=, 0
 	i32.const	$push4=, MyPte+20
-	i32.store	$drop=, Local2($pop74), $pop4
+	i32.store	Local2($pop74), $pop4
 	i32.const	$push73=, 0
 	i32.const	$push5=, MyPte+24
-	i32.store	$drop=, Local3($pop73), $pop5
+	i32.store	Local3($pop73), $pop5
 	i32.const	$push72=, 0
 	i32.const	$push6=, MyPte+28
-	i32.store	$drop=, RDbf1($pop72), $pop6
+	i32.store	RDbf1($pop72), $pop6
 	i32.const	$push71=, 0
 	i32.const	$push7=, MyPte+32
-	i32.store	$drop=, RDbf2($pop71), $pop7
+	i32.store	RDbf2($pop71), $pop7
 	i32.const	$push70=, 0
 	i32.const	$push8=, MyPte+36
-	i32.store	$drop=, RDbf3($pop70), $pop8
+	i32.store	RDbf3($pop70), $pop8
 	i32.const	$push69=, 0
 	i32.const	$push9=, 1
-	i32.store	$drop=, MyPte+36($pop69), $pop9
+	i32.store	MyPte+36($pop69), $pop9
 	i32.const	$push68=, 0
 	i32.const	$push10=, MyPte+156
-	i32.store	$drop=, IntVc1($pop68), $pop10
+	i32.store	IntVc1($pop68), $pop10
 	i32.const	$push67=, 0
 	i32.const	$push11=, MyPte+160
-	i32.store	$drop=, IntVc2($pop67), $pop11
+	i32.store	IntVc2($pop67), $pop11
 	i32.const	$push66=, 0
 	i32.const	$push12=, MyPte+164
-	i32.store	$drop=, IntCode3($pop66), $pop12
+	i32.store	IntCode3($pop66), $pop12
 	i32.const	$push65=, 0
 	i32.const	$push13=, MyPte+168
-	i32.store	$drop=, IntCode4($pop65), $pop13
+	i32.store	IntCode4($pop65), $pop13
 	i32.const	$push64=, 0
 	i32.const	$push14=, MyPte+172
-	i32.store	$drop=, IntCode5($pop64), $pop14
+	i32.store	IntCode5($pop64), $pop14
 	i32.const	$push63=, 0
 	i32.const	$push15=, MyPte+176
-	i32.store	$drop=, IntCode6($pop63), $pop15
+	i32.store	IntCode6($pop63), $pop15
 	i32.const	$push62=, 0
 	i32.const	$push16=, MyPte+180
-	i32.store	$drop=, Workspace($pop62), $pop16
+	i32.store	Workspace($pop62), $pop16
 	i32.const	$push61=, 0
 	i32.const	$push17=, MyPte+184
-	i32.store	$drop=, Workspace+4($pop61), $pop17
+	i32.store	Workspace+4($pop61), $pop17
 	i32.const	$push60=, 0
 	i32.const	$push18=, MyPte+188
-	i32.store	$drop=, Workspace+8($pop60), $pop18
+	i32.store	Workspace+8($pop60), $pop18
 	i32.const	$push59=, 0
 	i32.const	$push19=, MyPte+192
-	i32.store	$drop=, Workspace+12($pop59), $pop19
+	i32.store	Workspace+12($pop59), $pop19
 	i32.const	$push58=, 0
 	i32.const	$push20=, MyPte+196
-	i32.store	$drop=, Workspace+16($pop58), $pop20
+	i32.store	Workspace+16($pop58), $pop20
 	i32.const	$push57=, 0
 	i32.const	$push21=, MyPte+200
-	i32.store	$drop=, Workspace+20($pop57), $pop21
+	i32.store	Workspace+20($pop57), $pop21
 	i32.const	$push56=, 0
 	i32.const	$push22=, MyPte+204
-	i32.store	$drop=, Workspace+24($pop56), $pop22
+	i32.store	Workspace+24($pop56), $pop22
 	i32.const	$push55=, 0
 	i32.const	$push23=, MyPte+208
-	i32.store	$drop=, Workspace+28($pop55), $pop23
+	i32.store	Workspace+28($pop55), $pop23
 	i32.const	$push54=, 0
 	i32.const	$push24=, MyPte+212
-	i32.store	$drop=, Workspace+32($pop54), $pop24
+	i32.store	Workspace+32($pop54), $pop24
 	i32.const	$push53=, 0
 	i32.const	$push25=, MyPte+216
-	i32.store	$drop=, Workspace+36($pop53), $pop25
+	i32.store	Workspace+36($pop53), $pop25
 	i32.const	$push52=, 0
 	i32.const	$push26=, MyPte+220
-	i32.store	$drop=, Workspace+40($pop52), $pop26
+	i32.store	Workspace+40($pop52), $pop26
 	i32.const	$push51=, 0
 	i32.const	$push27=, MyPte+108
-	i32.store	$drop=, Lom1($pop51), $pop27
+	i32.store	Lom1($pop51), $pop27
 	i32.const	$push50=, 0
 	i32.const	$push28=, MyPte+112
-	i32.store	$drop=, Lom2($pop50), $pop28
+	i32.store	Lom2($pop50), $pop28
 	i32.const	$push49=, 0
 	i32.const	$push29=, MyPte+116
-	i32.store	$drop=, Lom3($pop49), $pop29
+	i32.store	Lom3($pop49), $pop29
 	i32.const	$push48=, 0
 	i32.const	$push30=, MyPte+120
-	i32.store	$drop=, Lom4($pop48), $pop30
+	i32.store	Lom4($pop48), $pop30
 	i32.const	$push47=, 0
 	i32.const	$push31=, MyPte+124
-	i32.store	$drop=, Lom5($pop47), $pop31
+	i32.store	Lom5($pop47), $pop31
 	i32.const	$push46=, 0
 	i32.const	$push32=, MyPte+128
-	i32.store	$drop=, Lom6($pop46), $pop32
+	i32.store	Lom6($pop46), $pop32
 	i32.const	$push45=, 0
 	i32.const	$push33=, MyPte+132
-	i32.store	$drop=, Lom7($pop45), $pop33
+	i32.store	Lom7($pop45), $pop33
 	i32.const	$push44=, 0
 	i32.const	$push34=, MyPte+136
-	i32.store	$drop=, Lom8($pop44), $pop34
+	i32.store	Lom8($pop44), $pop34
 	i32.const	$push43=, 0
 	i32.const	$push35=, MyPte+140
-	i32.store	$drop=, Lom9($pop43), $pop35
+	i32.store	Lom9($pop43), $pop35
 	i32.const	$push42=, 0
 	i32.const	$push36=, MyPte+144
-	i32.store	$drop=, Lom10($pop42), $pop36
+	i32.store	Lom10($pop42), $pop36
 	i32.const	$push41=, 0
 	i32.const	$push37=, MyPte+148
-	i32.store	$drop=, RDbf11($pop41), $pop37
+	i32.store	RDbf11($pop41), $pop37
 	i32.const	$push40=, 0
 	i32.const	$push38=, MyPte+152
-	i32.store	$drop=, RDbf12($pop40), $pop38
+	i32.store	RDbf12($pop40), $pop38
 	i32.const	$push39=, 0
                                         # fallthrough-return: $pop39
 	.endfunc
@@ -491,4 +491,4 @@ MyPte:
 	.size	MyPte, 392
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

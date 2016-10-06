@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990127-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990127-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,16 +14,16 @@ main:                                   # @main
 	i32.const	$push29=, 16
 	i32.sub 	$push65=, $pop28, $pop29
 	tee_local	$push64=, $3=, $pop65
-	i32.store	$drop=, __stack_pointer($pop30), $pop64
+	i32.store	__stack_pointer($pop30), $pop64
 	i32.const	$0=, 10
 	i32.const	$push63=, 10
-	i32.store	$drop=, 12($3), $pop63
+	i32.store	12($3), $pop63
 	i32.const	$push0=, 20
-	i32.store	$drop=, 8($3), $pop0
+	i32.store	8($3), $pop0
 	i32.const	$push1=, 2
-	i32.store	$drop=, 8($3), $pop1
+	i32.store	8($3), $pop1
 	i32.const	$push2=, 9
-	i32.store	$drop=, 12($3), $pop2
+	i32.store	12($3), $pop2
 	i32.const	$2=, 21
 .LBB0_1:                                # %while.body.1
                                         # =>This Inner Loop Header: Depth=1
@@ -38,7 +38,7 @@ main:                                   # @main
 	tee_local	$push69=, $0=, $pop70
 	i32.const	$push68=, -1
 	i32.add 	$push4=, $pop69, $pop68
-	i32.store	$drop=, 8($3), $pop4
+	i32.store	8($3), $pop4
 	i32.const	$push67=, 1
 	i32.add 	$2=, $1, $pop67
 	br_if   	0, $0           # 0: up to label0
@@ -54,7 +54,7 @@ main:                                   # @main
 	tee_local	$push72=, $2=, $pop73
 	i32.const	$push71=, -1
 	i32.add 	$push5=, $pop72, $pop71
-	i32.store	$drop=, 0($0), $pop5
+	i32.store	0($0), $pop5
 	i32.eqz 	$push118=, $2
 	br_if   	1, $pop118      # 1: down to label3
 # BB#5:                                 # %while.body.2
@@ -81,7 +81,7 @@ main:                                   # @main
 	tee_local	$push78=, $0=, $pop79
 	i32.const	$push77=, -1
 	i32.add 	$push7=, $pop78, $pop77
-	i32.store	$drop=, 0($1), $pop7
+	i32.store	0($1), $pop7
 	i32.eqz 	$push119=, $0
 	br_if   	1, $pop119      # 1: down to label5
 # BB#8:                                 # %while.body.3
@@ -108,7 +108,7 @@ main:                                   # @main
 	tee_local	$push84=, $0=, $pop85
 	i32.const	$push83=, -1
 	i32.add 	$push9=, $pop84, $pop83
-	i32.store	$drop=, 0($1), $pop9
+	i32.store	0($1), $pop9
 	i32.eqz 	$push120=, $0
 	br_if   	1, $pop120      # 1: down to label7
 # BB#11:                                # %while.body.4
@@ -135,7 +135,7 @@ main:                                   # @main
 	tee_local	$push90=, $0=, $pop91
 	i32.const	$push89=, -1
 	i32.add 	$push11=, $pop90, $pop89
-	i32.store	$drop=, 0($1), $pop11
+	i32.store	0($1), $pop11
 	i32.eqz 	$push121=, $0
 	br_if   	1, $pop121      # 1: down to label9
 # BB#14:                                # %while.body.5
@@ -162,7 +162,7 @@ main:                                   # @main
 	tee_local	$push96=, $0=, $pop97
 	i32.const	$push95=, -1
 	i32.add 	$push13=, $pop96, $pop95
-	i32.store	$drop=, 0($1), $pop13
+	i32.store	0($1), $pop13
 	i32.eqz 	$push122=, $0
 	br_if   	1, $pop122      # 1: down to label11
 # BB#17:                                # %while.body.6
@@ -189,7 +189,7 @@ main:                                   # @main
 	tee_local	$push102=, $0=, $pop103
 	i32.const	$push101=, -1
 	i32.add 	$push15=, $pop102, $pop101
-	i32.store	$drop=, 0($1), $pop15
+	i32.store	0($1), $pop15
 	i32.eqz 	$push123=, $0
 	br_if   	1, $pop123      # 1: down to label13
 # BB#20:                                # %while.body.7
@@ -216,7 +216,7 @@ main:                                   # @main
 	tee_local	$push108=, $0=, $pop109
 	i32.const	$push107=, -1
 	i32.add 	$push17=, $pop108, $pop107
-	i32.store	$drop=, 0($1), $pop17
+	i32.store	0($1), $pop17
 	i32.eqz 	$push124=, $0
 	br_if   	1, $pop124      # 1: down to label15
 # BB#23:                                # %while.body.8
@@ -243,7 +243,7 @@ main:                                   # @main
 	tee_local	$push114=, $0=, $pop115
 	i32.const	$push113=, -1
 	i32.add 	$push19=, $pop114, $pop113
-	i32.store	$drop=, 0($1), $pop19
+	i32.store	0($1), $pop19
 	i32.eqz 	$push125=, $0
 	br_if   	1, $pop125      # 1: down to label17
 # BB#26:                                # %while.body.9
@@ -280,6 +280,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060412-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060412-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.call	$drop=, memset@FUNCTION, $pop2, $pop1, $pop0
 	i32.const	$push3=, 0
 	i32.const	$push5=, 0
-	i32.store	$drop=, t+4($pop3), $pop5
+	i32.store	t+4($pop3), $pop5
 	i32.const	$push4=, 0
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -30,4 +30,4 @@ t:
 	.size	t, 332
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

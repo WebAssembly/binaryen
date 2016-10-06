@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080519-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080519-1.c"
 	.section	.text.merge_overlapping_regs,"ax",@progbits
 	.hidden	merge_overlapping_regs
 	.globl	merge_overlapping_regs
@@ -41,9 +41,9 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push26=, 16
 	i32.sub 	$push36=, $pop25, $pop26
 	tee_local	$push35=, $6=, $pop36
-	i32.store	$drop=, __stack_pointer($pop27), $pop35
+	i32.store	__stack_pointer($pop27), $pop35
 	i64.const	$push0=, 0
-	i64.store	$drop=, 8($6):p2align=2, $pop0
+	i64.store	8($6):p2align=2, $pop0
 	block
 	i32.load	$push34=, 0($0)
 	tee_local	$push33=, $5=, $pop34
@@ -85,8 +85,8 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push8=, 12
 	i32.add 	$push50=, $6, $pop8
 	tee_local	$push49=, $0=, $pop50
-	i32.store	$drop=, 0($pop49), $3
-	i32.store	$drop=, 8($6), $4
+	i32.store	0($pop49), $3
+	i32.store	8($6), $4
 	i32.const	$push9=, 0
 	i32.lt_s	$push10=, $2, $pop9
 	br_if   	0, $pop10       # 0: down to label1
@@ -101,14 +101,14 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push16=, -1
 	i32.xor 	$push17=, $pop15, $pop16
 	i32.or  	$push18=, $3, $pop17
-	i32.store	$drop=, 0($0), $pop18
+	i32.store	0($0), $pop18
 	i32.const	$push19=, reg_class_contents
 	i32.add 	$push20=, $2, $pop19
 	i32.load	$push21=, 0($pop20)
 	i32.const	$push51=, -1
 	i32.xor 	$push22=, $pop21, $pop51
 	i32.or  	$push23=, $4, $pop22
-	i32.store	$drop=, 8($6), $pop23
+	i32.store	8($6), $pop23
 	i32.const	$push31=, 8
 	i32.add 	$push32=, $6, $pop31
 	call    	merge_overlapping_regs@FUNCTION, $pop32
@@ -117,7 +117,7 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$push30=, 0
 	i32.const	$push28=, 16
 	i32.add 	$push29=, $6, $pop28
-	i32.store	$drop=, __stack_pointer($pop30), $pop29
+	i32.store	__stack_pointer($pop30), $pop29
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -137,25 +137,25 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.sub 	$push17=, $pop5, $pop6
 	tee_local	$push16=, $0=, $pop17
-	i32.store	$drop=, __stack_pointer($pop7), $pop16
+	i32.store	__stack_pointer($pop7), $pop16
 	i64.const	$push0=, 0
-	i64.store	$drop=, 8($0), $pop0
+	i64.store	8($0), $pop0
 	i32.const	$push2=, 0
 	i64.const	$push1=, -1
-	i64.store	$drop=, reg_class_contents($pop2), $pop1
+	i64.store	reg_class_contents($pop2), $pop1
 	i32.const	$push15=, 0
 	i64.const	$push14=, 0
-	i64.store	$drop=, reg_class_contents+8($pop15), $pop14
+	i64.store	reg_class_contents+8($pop15), $pop14
 	i32.const	$push3=, 1
-	i32.store	$drop=, 4($0), $pop3
+	i32.store	4($0), $pop3
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11
-	i32.store	$drop=, 0($0), $pop12
+	i32.store	0($0), $pop12
 	call    	regrename_optimize@FUNCTION, $0
 	i32.const	$push10=, 0
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $0, $pop8
-	i32.store	$drop=, __stack_pointer($pop10), $pop9
+	i32.store	__stack_pointer($pop10), $pop9
 	i32.const	$push13=, 0
                                         # fallthrough-return: $pop13
 	.endfunc
@@ -172,5 +172,5 @@ reg_class_contents:
 	.size	reg_class_contents, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-2.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -10,11 +10,11 @@ f:                                      # @f
 	f64.load	$push1=, 0($2)
 	f64.load	$push0=, 0($1)
 	f64.add 	$push2=, $pop1, $pop0
-	f64.store	$drop=, 0($0), $pop2
+	f64.store	0($0), $pop2
 	f64.load	$push4=, 8($2)
 	f64.load	$push3=, 8($1)
 	f64.add 	$push5=, $pop4, $pop3
-	f64.store	$drop=, 8($0), $pop5
+	f64.store	8($0), $pop5
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -72,6 +72,6 @@ bg:
 	.size	bg, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

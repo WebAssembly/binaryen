@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/arith-rand.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/arith-rand.c"
 	.section	.text.simple_rand,"ax",@progbits
 	.hidden	simple_rand
 	.globl	simple_rand
@@ -16,7 +16,7 @@ simple_rand:                            # @simple_rand
 	i32.const	$push4=, 12345
 	i32.add 	$push8=, $pop3, $pop4
 	tee_local	$push7=, $0=, $pop8
-	i32.store	$drop=, simple_rand.seed($pop0), $pop7
+	i32.store	simple_rand.seed($pop0), $pop7
 	i32.const	$push5=, 8
 	i32.shr_u	$push6=, $0, $pop5
                                         # fallthrough-return: $pop6
@@ -76,7 +76,7 @@ random_bitstring:                       # @random_bitstring
 .LBB1_5:                                # %cleanup
 	end_loop                        # label1:
 	i32.const	$push6=, 0
-	i32.store	$drop=, simple_rand.seed($pop6), $1
+	i32.store	simple_rand.seed($pop6), $1
 	copy_local	$push22=, $2
                                         # fallthrough-return: $pop22
 	.endfunc
@@ -333,26 +333,26 @@ main:                                   # @main
 # BB#22:                                # %for.end
 	end_loop                        # label7:
 	i32.const	$push57=, 0
-	i32.store	$drop=, simple_rand.seed($pop57), $2
+	i32.store	simple_rand.seed($pop57), $2
 	i32.const	$push145=, 0
 	call    	exit@FUNCTION, $pop145
 	unreachable
 .LBB2_23:                               # %if.then136
 	end_block                       # label5:
 	i32.const	$push37=, 0
-	i32.store	$drop=, simple_rand.seed($pop37), $2
+	i32.store	simple_rand.seed($pop37), $2
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_24:                               # %if.then40
 	end_block                       # label4:
 	i32.const	$push19=, 0
-	i32.store	$drop=, simple_rand.seed($pop19), $2
+	i32.store	simple_rand.seed($pop19), $2
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_25:                               # %if.then227
 	end_block                       # label3:
 	i32.const	$push55=, 0
-	i32.store	$drop=, simple_rand.seed($pop55), $2
+	i32.store	simple_rand.seed($pop55), $2
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -367,6 +367,6 @@ simple_rand.seed:
 	.size	simple_rand.seed, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

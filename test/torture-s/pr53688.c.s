@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr53688.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr53688.c"
 	.section	.text.init,"ax",@progbits
 	.hidden	init
 	.globl	init
@@ -8,15 +8,15 @@ init:                                   # @init
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i64.const	$push0=, 6147487297207357523
-	i64.store	$drop=, p+9($pop1):p2align=0, $pop0
+	i64.store	p+9($pop1):p2align=0, $pop0
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.load8_u	$push2=, .L.str+8($pop6)
-	i32.store8	$drop=, p+8($pop7), $pop2
+	i32.store8	p+8($pop7), $pop2
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
 	i64.load	$push3=, .L.str($pop4):p2align=0
-	i64.store	$drop=, p($pop5):p2align=0, $pop3
+	i64.store	p($pop5):p2align=0, $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -33,20 +33,20 @@ main:                                   # @main
 	call    	init@FUNCTION
 	i32.const	$push19=, 0
 	i32.const	$push0=, 32
-	i32.store8	$drop=, headline+9($pop19), $pop0
+	i32.store8	headline+9($pop19), $pop0
 	i32.const	$push18=, 0
 	i32.const	$push17=, 0
 	i32.load8_u	$push1=, p+8($pop17)
-	i32.store8	$drop=, headline+8($pop18), $pop1
+	i32.store8	headline+8($pop18), $pop1
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
 	i64.load	$push2=, p($pop15):p2align=0
-	i64.store	$drop=, headline($pop16), $pop2
+	i64.store	headline($pop16), $pop2
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
 	i64.load	$push12=, p+9($pop13):p2align=0
 	tee_local	$push11=, $0=, $pop12
-	i64.store	$drop=, headline+10($pop14):p2align=1, $pop11
+	i64.store	headline+10($pop14):p2align=1, $pop11
 	i32.const	$push4=, headline+18
 	i32.const	$push10=, 32
 	i32.const	$push3=, 238
@@ -93,5 +93,5 @@ headline:
 	.size	headline, 256
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-4.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-4.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i64.const	$push0=, -4294967295
-	i64.store	$drop=, s64($pop1), $pop0
+	i64.store	s64($pop1), $pop0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -26,4 +26,4 @@ s64:
 	.size	s64, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

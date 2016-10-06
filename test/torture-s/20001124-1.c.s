@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001124-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001124-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -10,19 +10,19 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 9
-	i32.store8	$drop=, s+4($pop1), $pop0
+	i32.store8	s+4($pop1), $pop0
 	i32.const	$push10=, 0
 	i32.const	$push2=, 512
-	i32.store	$drop=, s($pop10), $pop2
+	i32.store	s($pop10), $pop2
 	i32.const	$push9=, 0
 	i64.const	$push3=, 2048
-	i64.store	$drop=, i($pop9), $pop3
+	i64.store	i($pop9), $pop3
 	i32.const	$push8=, 0
 	i32.const	$push4=, s
-	i32.store	$drop=, i+8($pop8), $pop4
+	i32.store	i+8($pop8), $pop4
 	i32.const	$push7=, 0
 	i64.const	$push5=, 0
-	i64.store	$drop=, f($pop7), $pop5
+	i64.store	f($pop7), $pop5
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6
 	unreachable
@@ -58,5 +58,5 @@ f:
 	.size	f, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

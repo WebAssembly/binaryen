@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43987.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43987.c"
 	.section	.text.add_input_file,"ax",@progbits
 	.hidden	add_input_file
 	.globl	add_input_file
@@ -9,7 +9,7 @@ add_input_file:                         # @add_input_file
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, B+4($pop0)
-	i32.store	$drop=, 0($pop1), $0
+	i32.store	0($pop1), $0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.sub 	$push6=, $pop2, $pop3
 	i32.const	$push4=, 12
 	i32.add 	$push5=, $pop6, $pop4
-	i32.store	$drop=, B+4($pop0), $pop5
+	i32.store	B+4($pop0), $pop5
 	i32.const	$push7=, 0
                                         # fallthrough-return: $pop7
 	.endfunc
@@ -46,4 +46,4 @@ B:
 	.size	B, 1024
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

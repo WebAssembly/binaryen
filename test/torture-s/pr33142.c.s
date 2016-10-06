@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33142.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33142.c"
 	.section	.text.lisp_atan2,"ax",@progbits
 	.hidden	lisp_atan2
 	.globl	lisp_atan2
@@ -47,11 +47,11 @@ main:                                   # @main
 	i32.const	$push8=, 16
 	i32.sub 	$push14=, $pop7, $pop8
 	tee_local	$push13=, $0=, $pop14
-	i32.store	$drop=, __stack_pointer($pop9), $pop13
+	i32.store	__stack_pointer($pop9), $pop13
 	i32.const	$push0=, 63
-	i32.store	$drop=, 12($0), $pop0
+	i32.store	12($0), $pop0
 	i32.const	$push1=, -77
-	i32.store	$drop=, 8($0), $pop1
+	i32.store	8($0), $pop1
 	block
 	i32.load	$push2=, 12($0)
 	i32.load	$push3=, 8($0)
@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$drop=, __stack_pointer($pop12), $pop11
+	i32.store	__stack_pointer($pop12), $pop11
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB1_2:                                # %if.then
@@ -73,5 +73,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

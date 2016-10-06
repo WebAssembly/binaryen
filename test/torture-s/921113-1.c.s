@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
 	.section	.text.w,"ax",@progbits
 	.hidden	w
 	.globl	w
@@ -102,7 +102,7 @@ gitter:                                 # @gitter
 	br_if   	0, $pop9        # 0: down to label2
 # BB#4:                                 # %f2.exit
 	i32.const	$push10=, 0
-	i32.store	$drop=, 0($3), $pop10
+	i32.store	0($3), $pop10
 	block
 	f32.load	$push28=, 0($1)
 	tee_local	$push27=, $6=, $pop28
@@ -126,7 +126,7 @@ gitter:                                 # @gitter
 	br_if   	0, $pop21       # 0: down to label3
 # BB#6:                                 # %if.then15
 	i32.const	$push22=, 1065353216
-	i32.store	$drop=, 0($2), $pop22
+	i32.store	0($2), $pop22
 .LBB3_7:                                # %if.end18
 	end_block                       # label3:
 	return  	$4
@@ -152,7 +152,7 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.sub 	$push13=, $pop5, $pop6
 	tee_local	$push12=, $0=, $pop13
-	i32.store	$drop=, __stack_pointer($pop7), $pop12
+	i32.store	__stack_pointer($pop7), $pop12
 	i32.const	$push2=, pos
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8
@@ -189,6 +189,6 @@ limit:
 	.size	limit, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

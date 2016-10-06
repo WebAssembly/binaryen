@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr38151.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr38151.c"
 	.section	.text.check2848va,"ax",@progbits
 	.hidden	check2848va
 	.globl	check2848va
@@ -13,7 +13,7 @@ check2848va:                            # @check2848va
 	i32.const	$push21=, 16
 	i32.sub 	$push26=, $pop20, $pop21
 	tee_local	$push25=, $3=, $pop26
-	i32.store	$drop=, 12($pop25), $1
+	i32.store	12($pop25), $1
 	i32.const	$push0=, 15
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, -16
@@ -21,7 +21,7 @@ check2848va:                            # @check2848va
 	tee_local	$push23=, $1=, $pop24
 	i32.const	$push3=, 16
 	i32.add 	$push4=, $pop23, $pop3
-	i32.store	$drop=, 12($3), $pop4
+	i32.store	12($3), $pop4
 	i32.load	$2=, 8($1)
 	i32.load	$3=, 4($1)
 	block
@@ -36,7 +36,7 @@ check2848va:                            # @check2848va
 	i32.load	$push8=, fails($pop27)
 	i32.const	$push9=, 1
 	i32.add 	$push10=, $pop8, $pop9
-	i32.store	$drop=, fails($pop28), $pop10
+	i32.store	fails($pop28), $pop10
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block
@@ -57,7 +57,7 @@ check2848va:                            # @check2848va
 	i32.load	$push16=, fails($pop31)
 	i32.const	$push17=, 1
 	i32.add 	$push18=, $pop16, $pop17
-	i32.store	$drop=, fails($pop15), $pop18
+	i32.store	fails($pop15), $pop18
 .LBB0_5:                                # %if.end4
 	end_block                       # label1:
                                         # fallthrough-return
@@ -79,25 +79,25 @@ main:                                   # @main
 	i32.const	$push8=, 32
 	i32.sub 	$push21=, $pop7, $pop8
 	tee_local	$push20=, $0=, $pop21
-	i32.store	$drop=, __stack_pointer($pop9), $pop20
+	i32.store	__stack_pointer($pop9), $pop20
 	i32.const	$push19=, 0
 	i64.const	$push0=, 3107062874477850347
-	i64.store	$drop=, s2848($pop19), $pop0
+	i64.store	s2848($pop19), $pop0
 	i32.const	$push18=, 0
 	i32.const	$push1=, -218144346
-	i32.store	$drop=, s2848+8($pop18), $pop1
+	i32.store	s2848+8($pop18), $pop1
 	i32.const	$push2=, -267489557
-	i32.store	$drop=, 16($0), $pop2
+	i32.store	16($0), $pop2
 	i32.const	$push17=, -218144346
-	i32.store	$drop=, 24($0), $pop17
+	i32.store	24($0), $pop17
 	i32.const	$push3=, 723419448
-	i32.store	$drop=, 20($0), $pop3
+	i32.store	20($0), $pop3
 	i32.const	$push16=, 0
 	i32.load	$push4=, s2848+12($pop16)
-	i32.store	$drop=, 28($0), $pop4
+	i32.store	28($0), $pop4
 	i32.const	$push13=, 16
 	i32.add 	$push14=, $0, $pop13
-	i32.store	$drop=, 0($0), $pop14
+	i32.store	0($0), $pop14
 	call    	check2848va@FUNCTION, $0, $0
 	block
 	i32.const	$push15=, 0
@@ -107,7 +107,7 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i32.const	$push10=, 32
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$drop=, __stack_pointer($pop12), $pop11
+	i32.store	__stack_pointer($pop12), $pop11
 	i32.const	$push22=, 0
 	return  	$pop22
 .LBB1_2:                                # %if.then
@@ -137,5 +137,5 @@ fails:
 	.size	fails, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

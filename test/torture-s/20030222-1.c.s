@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030222-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030222-1.c"
 	.section	.text.ll_to_int,"ax",@progbits
 	.hidden	ll_to_int
 	.globl	ll_to_int
@@ -9,7 +9,7 @@ ll_to_int:                              # @ll_to_int
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	i64.store32	$drop=, 0($1), $0
+	i64.store32	0($1), $0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -29,14 +29,14 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.sub 	$push10=, $pop3, $pop4
 	tee_local	$push9=, $2=, $pop10
-	i32.store	$drop=, __stack_pointer($pop5), $pop9
+	i32.store	__stack_pointer($pop5), $pop9
 	i32.const	$push8=, 0
 	i32.load	$push7=, val($pop8)
 	tee_local	$push6=, $1=, $pop7
 	i64.extend_s/i32	$0=, $pop6
 	#APP
 	#NO_APP
-	i64.store32	$drop=, 12($2), $0
+	i64.store32	12($2), $0
 	block
 	i32.load	$push0=, 12($2)
 	i32.ne  	$push1=, $1, $pop0
@@ -63,6 +63,6 @@ val:
 	.size	val, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

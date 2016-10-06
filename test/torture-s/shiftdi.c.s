@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/shiftdi.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/shiftdi.c"
 	.section	.text.g,"ax",@progbits
 	.hidden	g
 	.globl	g
@@ -21,7 +21,7 @@ g:                                      # @g
 	i64.extend_u/i32	$push9=, $2
 	i64.shl 	$push10=, $pop8, $pop9
 	i64.or  	$push12=, $pop11, $pop10
-	i64.store	$drop=, 0($3), $pop12
+	i64.store	0($3), $pop12
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -41,4 +41,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/nestfunc-4.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/nestfunc-4.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -18,7 +18,7 @@ main:                                   # @main
 	i32.select	$push3=, $pop8, $pop1, $pop2
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$drop=, level($pop0), $pop5
+	i32.store	level($pop0), $pop5
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6
 	unreachable
@@ -44,7 +44,7 @@ foo:                                    # @foo
 	i32.select	$push3=, $pop8, $pop1, $pop2
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$drop=, level($pop0), $pop5
+	i32.store	level($pop0), $pop5
 	i32.const	$push6=, -42
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -87,5 +87,5 @@ level:
 	.size	level, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

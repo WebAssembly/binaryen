@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-10.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-10.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,7 +14,7 @@ main:                                   # @main
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $pop2, $pop0
-	i32.store	$drop=, count($pop5), $pop1
+	i32.store	count($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end4
@@ -36,5 +36,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

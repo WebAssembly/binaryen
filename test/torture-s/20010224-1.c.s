@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010224-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010224-1.c"
 	.section	.text.ba_compute_psd,"ax",@progbits
 	.hidden	ba_compute_psd
 	.globl	ba_compute_psd
@@ -23,7 +23,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	i32.add 	$push6=, $4, $pop17
 	i32.load16_u	$push16=, 0($pop6)
 	tee_local	$push15=, $4=, $pop16
-	i32.store16	$drop=, 0($pop18), $pop15
+	i32.store16	0($pop18), $pop15
 	block
 	i32.const	$push14=, 1
 	i32.add 	$push13=, $0, $pop14
@@ -54,7 +54,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	br_if   	0, $pop27       # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
-	i32.store16	$drop=, 0($1), $4
+	i32.store16	0($1), $4
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
                                         # fallthrough-return
@@ -106,7 +106,7 @@ main:                                   # @main
 	i32.add 	$push7=, $pop6, $pop5
 	i32.add 	$push9=, $pop8, $pop7
 	i32.add 	$push11=, $pop10, $pop9
-	i32.store16	$drop=, 0($pop4), $pop11
+	i32.store16	0($pop4), $pop11
 	block
 	i32.const	$push15=, 0
 	i32.load16_u	$push12=, bndpsd+2($pop15)
@@ -167,5 +167,5 @@ bndpsd:
 	.size	bndpsd, 12
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

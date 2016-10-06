@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42231.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42231.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -77,7 +77,7 @@ storemax:                               # @storemax
 	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %if.then
 	i32.const	$push3=, 0
-	i32.store	$drop=, max($pop3), $0
+	i32.store	max($pop3), $0
 .LBB2_2:                                # %if.end
 	end_block                       # label3:
                                         # fallthrough-return
@@ -93,5 +93,5 @@ max:
 	.size	max, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

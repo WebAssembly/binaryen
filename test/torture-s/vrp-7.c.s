@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/vrp-7.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/vrp-7.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 1
 	i32.and 	$push3=, $pop1, $pop2
 	i32.or  	$push8=, $pop7, $pop3
-	i32.store8	$drop=, t($pop4), $pop8
+	i32.store8	t($pop4), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -60,5 +60,5 @@ t:
 	.size	t, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

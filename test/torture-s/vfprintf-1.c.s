@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/vfprintf-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/vfprintf-1.c"
 	.section	.text.inner,"ax",@progbits
 	.hidden	inner
 	.globl	inner
@@ -14,9 +14,9 @@ inner:                                  # @inner
 	i32.const	$push77=, 16
 	i32.sub 	$push83=, $pop76, $pop77
 	tee_local	$push82=, $2=, $pop83
-	i32.store	$drop=, __stack_pointer($pop78), $pop82
-	i32.store	$drop=, 12($2), $1
-	i32.store	$drop=, 8($2), $1
+	i32.store	__stack_pointer($pop78), $pop82
+	i32.store	12($2), $1
+	i32.store	8($2), $1
 	block
 	block
 	block
@@ -234,7 +234,7 @@ inner:                                  # @inner
 	i32.const	$push81=, 0
 	i32.const	$push79=, 16
 	i32.add 	$push80=, $2, $pop79
-	i32.store	$drop=, __stack_pointer($pop81), $pop80
+	i32.store	__stack_pointer($pop81), $pop80
 	return
 .LBB0_24:                               # %if.then50
 	end_block                       # label0:
@@ -258,7 +258,7 @@ main:                                   # @main
 	i32.const	$push18=, 112
 	i32.sub 	$push43=, $pop17, $pop18
 	tee_local	$push42=, $0=, $pop43
-	i32.store	$drop=, __stack_pointer($pop19), $pop42
+	i32.store	__stack_pointer($pop19), $pop42
 	i32.const	$push0=, 0
 	i32.const	$push41=, 0
 	call    	inner@FUNCTION, $pop0, $pop41
@@ -272,49 +272,49 @@ main:                                   # @main
 	i32.const	$push38=, 0
 	call    	inner@FUNCTION, $pop3, $pop38
 	i32.const	$push4=, .L.str
-	i32.store	$drop=, 96($0), $pop4
+	i32.store	96($0), $pop4
 	i32.const	$push5=, 4
 	i32.const	$push23=, 96
 	i32.add 	$push24=, $0, $pop23
 	call    	inner@FUNCTION, $pop5, $pop24
 	i32.const	$push6=, .L.str.1
-	i32.store	$drop=, 80($0), $pop6
+	i32.store	80($0), $pop6
 	i32.const	$push7=, 5
 	i32.const	$push25=, 80
 	i32.add 	$push26=, $0, $pop25
 	call    	inner@FUNCTION, $pop7, $pop26
 	i32.const	$push8=, .L.str.2
-	i32.store	$drop=, 64($0), $pop8
+	i32.store	64($0), $pop8
 	i32.const	$push9=, 6
 	i32.const	$push27=, 64
 	i32.add 	$push28=, $0, $pop27
 	call    	inner@FUNCTION, $pop9, $pop28
 	i32.const	$push10=, .L.str.3
-	i32.store	$drop=, 48($0), $pop10
+	i32.store	48($0), $pop10
 	i32.const	$push11=, 7
 	i32.const	$push29=, 48
 	i32.add 	$push30=, $0, $pop29
 	call    	inner@FUNCTION, $pop11, $pop30
 	i32.const	$push12=, 120
-	i32.store	$drop=, 32($0), $pop12
+	i32.store	32($0), $pop12
 	i32.const	$push13=, 8
 	i32.const	$push31=, 32
 	i32.add 	$push32=, $0, $pop31
 	call    	inner@FUNCTION, $pop13, $pop32
 	i32.const	$push37=, .L.str.1
-	i32.store	$drop=, 16($0), $pop37
+	i32.store	16($0), $pop37
 	i32.const	$push14=, 9
 	i32.const	$push33=, 16
 	i32.add 	$push34=, $0, $pop33
 	call    	inner@FUNCTION, $pop14, $pop34
 	i32.const	$push36=, 0
-	i32.store	$drop=, 0($0), $pop36
+	i32.store	0($0), $pop36
 	i32.const	$push15=, 10
 	call    	inner@FUNCTION, $pop15, $0
 	i32.const	$push22=, 0
 	i32.const	$push20=, 112
 	i32.add 	$push21=, $0, $pop20
-	i32.store	$drop=, __stack_pointer($pop22), $pop21
+	i32.store	__stack_pointer($pop22), $pop21
 	i32.const	$push35=, 0
                                         # fallthrough-return: $pop35
 	.endfunc
@@ -363,6 +363,6 @@ main:                                   # @main
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	vfprintf, i32, i32, i32, i32
 	.functype	abort, void

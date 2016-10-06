@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010118-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010118-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -32,8 +32,8 @@ bar:                                    # @bar
 	br_if   	1, $pop5        # 1: down to label0
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
-	i32.store	$drop=, 8($0), $3
-	i32.store	$drop=, 12($0), $4
+	i32.store	8($0), $3
+	i32.store	12($0), $4
 	i32.load	$push6=, 16($0)
 	f64.convert_s/i32	$push7=, $pop6
 	f64.const	$push8=, 0x0p0
@@ -42,7 +42,7 @@ bar:                                    # @bar
 	f64.mul 	$push11=, $pop9, $pop10
 	i32.trunc_s/f64	$push12=, $pop11
 	i32.add 	$push13=, $pop12, $1
-	i32.store	$drop=, 0($0), $pop13
+	i32.store	0($0), $pop13
 	i32.const	$push14=, 4
 	i32.add 	$push15=, $0, $pop14
 	i32.load	$push16=, 20($0)
@@ -53,7 +53,7 @@ bar:                                    # @bar
 	f64.mul 	$push19=, $pop18, $pop22
 	i32.trunc_s/f64	$push20=, $pop19
 	i32.add 	$push21=, $pop20, $2
-	i32.store	$drop=, 0($pop15), $pop21
+	i32.store	0($pop15), $pop21
 .LBB1_3:                                # %if.end
 	end_block                       # label0:
                                         # fallthrough-return
@@ -76,5 +76,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

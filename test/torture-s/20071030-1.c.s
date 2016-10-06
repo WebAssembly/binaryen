@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071030-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071030-1.c"
 	.section	.text.CalcPing,"ax",@progbits
 	.hidden	CalcPing
 	.globl	CalcPing
@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.const	$push16=, 1552
 	i32.sub 	$push30=, $pop15, $pop16
 	tee_local	$push29=, $5=, $pop30
-	i32.store	$drop=, __stack_pointer($pop17), $pop29
+	i32.store	__stack_pointer($pop17), $pop29
 	i32.const	$3=, 0
 	i32.const	$push21=, 8
 	i32.add 	$push22=, $5, $pop21
@@ -87,7 +87,7 @@ main:                                   # @main
 	i32.const	$push27=, 16
 	i32.add 	$push1=, $pop24, $pop27
 	i32.const	$push2=, 1065353216
-	i32.store	$drop=, 0($pop1), $pop2
+	i32.store	0($pop1), $pop2
 	f32.const	$4=, 0x0p0
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
@@ -127,7 +127,7 @@ main:                                   # @main
 	i32.const	$push20=, 0
 	i32.const	$push18=, 1552
 	i32.add 	$push19=, $5, $pop18
-	i32.store	$drop=, __stack_pointer($pop20), $pop19
+	i32.store	__stack_pointer($pop20), $pop19
 	i32.const	$push13=, 0
 	return  	$pop13
 .LBB1_5:                                # %if.then
@@ -139,5 +139,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

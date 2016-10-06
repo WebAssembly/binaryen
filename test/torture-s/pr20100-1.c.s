@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20100-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20100-1.c"
 	.section	.text.frob,"ax",@progbits
 	.hidden	frob
 	.globl	frob
@@ -9,7 +9,7 @@ frob:                                   # @frob
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store16	$drop=, p($pop0), $1
+	i32.store16	p($pop0), $1
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
 	i32.const	$push1=, 1
@@ -21,7 +21,7 @@ frob:                                   # @frob
 	i32.eq  	$push6=, $0, $pop5
 	i32.select	$push11=, $pop13, $pop2, $pop6
 	tee_local	$push10=, $0=, $pop11
-	i32.store16	$drop=, g($pop14), $pop10
+	i32.store16	g($pop14), $pop10
 	i32.const	$push7=, 65535
 	i32.and 	$push8=, $0, $pop7
 	i32.eq  	$push9=, $pop8, $1
@@ -82,7 +82,7 @@ get_n:                                  # @get_n
 .LBB1_4:                                # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push9=, 0
-	i32.store16	$drop=, g($pop9), $2
+	i32.store16	g($pop9), $2
 .LBB1_5:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push10=, 65535
@@ -101,13 +101,13 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
-	i32.store16	$drop=, p($pop1), $pop0
+	i32.store16	p($pop1), $pop0
 	i32.const	$push6=, 0
 	i32.const	$push2=, 3
-	i32.store8	$drop=, e($pop6), $pop2
+	i32.store8	e($pop6), $pop2
 	i32.const	$push5=, 0
 	i32.const	$push4=, 2
-	i32.store16	$drop=, g($pop5), $pop4
+	i32.store16	g($pop5), $pop4
 	i32.const	$push3=, 0
 	call    	exit@FUNCTION, $pop3
 	unreachable
@@ -138,5 +138,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

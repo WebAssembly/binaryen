@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-8.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-8.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -38,7 +38,7 @@ main:                                   # @main
 	i32.const	$push10=, 16
 	i32.sub 	$push21=, $pop9, $pop10
 	tee_local	$push20=, $1=, $pop21
-	i32.store	$drop=, __stack_pointer($pop11), $pop20
+	i32.store	__stack_pointer($pop11), $pop20
 	block
 	block
 	i32.const	$push19=, 0
@@ -67,7 +67,7 @@ main:                                   # @main
 	br_if   	1, $pop32       # 1: down to label1
 .LBB1_3:                                # %e
 	end_block                       # label2:
-	f64.store	$drop=, 8($1), $0
+	f64.store	8($1), $0
 	i32.const	$push29=, 0
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $1, $pop12
@@ -77,7 +77,7 @@ main:                                   # @main
 	unreachable
 .LBB1_4:                                # %for.cond.2
 	end_block                       # label1:
-	f64.store	$drop=, 8($1), $0
+	f64.store	8($1), $0
 	i32.const	$push7=, 1
 	i32.const	$push14=, 8
 	i32.add 	$push15=, $1, $pop14
@@ -101,6 +101,6 @@ a:
 	.size	a, 24
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

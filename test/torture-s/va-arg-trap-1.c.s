@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-trap-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-trap-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -22,7 +22,7 @@ bar:                                    # @bar
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, ap($pop0), $1
+	i32.store	ap($pop0), $1
 	i32.call	$drop=, foo@FUNCTION
 	unreachable
 	.endfunc
@@ -43,9 +43,9 @@ main:                                   # @main
 	i32.const	$push3=, 16
 	i32.sub 	$push6=, $pop2, $pop3
 	tee_local	$push5=, $0=, $pop6
-	i32.store	$drop=, __stack_pointer($pop4), $pop5
+	i32.store	__stack_pointer($pop4), $pop5
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	call    	bar@FUNCTION, $0, $0
 	unreachable
 	.endfunc
@@ -71,5 +71,5 @@ f:
 	.size	f, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960521-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960521-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -22,7 +22,7 @@ foo:                                    # @foo
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push15=, -1
-	i32.store	$drop=, 0($0), $pop15
+	i32.store	0($0), $pop15
 	i32.const	$push14=, 4
 	i32.add 	$0=, $0, $pop14
 	i32.const	$push13=, 1
@@ -57,29 +57,29 @@ main:                                   # @main
 	i32.const	$4=, 0
 	i32.const	$push18=, 0
 	i32.const	$push0=, 130560
-	i32.store	$drop=, n($pop18), $pop0
+	i32.store	n($pop18), $pop0
 	i32.const	$push17=, 0
 	i32.const	$push1=, 522240
 	i32.call	$push16=, malloc@FUNCTION, $pop1
 	tee_local	$push15=, $3=, $pop16
-	i32.store	$drop=, a($pop17), $pop15
+	i32.store	a($pop17), $pop15
 	i32.const	$push14=, 522240
 	i32.call	$push13=, malloc@FUNCTION, $pop14
 	tee_local	$push12=, $0=, $pop13
 	i32.const	$push11=, 0
-	i32.store	$drop=, 0($pop12), $pop11
+	i32.store	0($pop12), $pop11
 	i32.const	$push10=, 0
 	i32.const	$push9=, 4
 	i32.add 	$push8=, $0, $pop9
 	tee_local	$push7=, $1=, $pop8
-	i32.store	$drop=, b($pop10), $pop7
+	i32.store	b($pop10), $pop7
 	i32.const	$push6=, 0
 	i32.load	$2=, n($pop6)
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
 	i32.const	$push23=, -1
-	i32.store	$drop=, 0($3), $pop23
+	i32.store	0($3), $pop23
 	i32.const	$push22=, 4
 	i32.add 	$3=, $3, $pop22
 	i32.const	$push21=, 1
@@ -135,7 +135,7 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

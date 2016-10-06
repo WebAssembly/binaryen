@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-6.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-6.c"
 	.section	.text.ctest_float,"ax",@progbits
 	.hidden	ctest_float
 	.globl	ctest_float
@@ -8,10 +8,10 @@ ctest_float:                            # @ctest_float
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.load	$push0=, 0($1)
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	f32.load	$push1=, 4($1)
 	f32.neg 	$push2=, $pop1
-	f32.store	$drop=, 4($0), $pop2
+	f32.store	4($0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -36,10 +36,10 @@ ctest_double:                           # @ctest_double
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i64.load	$push0=, 0($1)
-	i64.store	$drop=, 0($0), $pop0
+	i64.store	0($0), $pop0
 	f64.load	$push1=, 8($1)
 	f64.neg 	$push2=, $pop1
-	f64.store	$drop=, 8($0), $pop2
+	f64.store	8($0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -70,7 +70,7 @@ ctest_long_double:                      # @ctest_long_double
 	i32.const	$push17=, 16
 	i32.sub 	$push26=, $pop16, $pop17
 	tee_local	$push25=, $2=, $pop26
-	i32.store	$drop=, __stack_pointer($pop18), $pop25
+	i32.store	__stack_pointer($pop18), $pop25
 	i64.const	$push5=, 0
 	i64.const	$push4=, -9223372036854775808
 	i64.load	$push3=, 16($1)
@@ -79,25 +79,25 @@ ctest_long_double:                      # @ctest_long_double
 	i64.load	$push2=, 0($pop1)
 	call    	__subtf3@FUNCTION, $2, $pop5, $pop4, $pop3, $pop2
 	i64.load	$push6=, 0($1)
-	i64.store	$drop=, 0($0), $pop6
+	i64.store	0($0), $pop6
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $0, $pop7
 	i32.const	$push24=, 8
 	i32.add 	$push9=, $1, $pop24
 	i64.load	$push10=, 0($pop9)
-	i64.store	$drop=, 0($pop8), $pop10
+	i64.store	0($pop8), $pop10
 	i32.const	$push23=, 24
 	i32.add 	$push11=, $0, $pop23
 	i32.const	$push22=, 8
 	i32.add 	$push12=, $2, $pop22
 	i64.load	$push13=, 0($pop12)
-	i64.store	$drop=, 0($pop11), $pop13
+	i64.store	0($pop11), $pop13
 	i64.load	$push14=, 0($2)
-	i64.store	$drop=, 16($0), $pop14
+	i64.store	16($0), $pop14
 	i32.const	$push21=, 0
 	i32.const	$push19=, 16
 	i32.add 	$push20=, $2, $pop19
-	i32.store	$drop=, __stack_pointer($pop21), $pop20
+	i32.store	__stack_pointer($pop21), $pop20
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end4:
@@ -122,11 +122,11 @@ ctest_int:                              # @ctest_int
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.load	$push0=, 0($1)
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.const	$push2=, 0
 	i32.load	$push1=, 4($1)
 	i32.sub 	$push3=, $pop2, $pop1
-	i32.store	$drop=, 4($0), $pop3
+	i32.store	4($0), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end6:
@@ -151,11 +151,11 @@ ctest_long_int:                         # @ctest_long_int
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.load	$push0=, 0($1)
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.const	$push2=, 0
 	i32.load	$push1=, 4($1)
 	i32.sub 	$push3=, $pop2, $pop1
-	i32.store	$drop=, 4($0), $pop3
+	i32.store	4($0), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end8:
@@ -181,7 +181,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store	$drop=, err($pop0), $pop2
+	i32.store	err($pop0), $pop2
 	i32.const	$push1=, 0
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -198,4 +198,4 @@ err:
 	.size	err, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

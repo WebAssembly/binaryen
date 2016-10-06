@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-2.c"
 	.section	.text.simple_global,"ax",@progbits
 	.hidden	simple_global
 	.globl	simple_global
@@ -46,11 +46,11 @@ simple_local:                           # @simple_local
 	i32.const	$push2=, 416
 	i32.sub 	$push8=, $pop1, $pop2
 	tee_local	$push7=, $0=, $pop8
-	i32.store	$drop=, __stack_pointer($pop3), $pop7
+	i32.store	__stack_pointer($pop3), $pop7
 	i32.const	$push6=, 0
 	i32.const	$push4=, 416
 	i32.add 	$push5=, $0, $pop4
-	i32.store	$drop=, __stack_pointer($pop6), $pop5
+	i32.store	__stack_pointer($pop6), $pop5
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -67,7 +67,7 @@ simple_arg:                             # @simple_arg
 	i32.load	$push1=, __stack_pointer($pop0)
 	i32.const	$push2=, 16
 	i32.sub 	$push3=, $pop1, $pop2
-	i32.store	$drop=, 12($pop3), $2
+	i32.store	12($pop3), $2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end4:
@@ -117,7 +117,7 @@ main:                                   # @main
 	call    	simple_arg@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push6=, 0
 	i32.const	$push4=, str
-	i32.store	$drop=, str+16($pop6), $pop4
+	i32.store	str+16($pop6), $pop4
 	call    	expr_global@FUNCTION
 	call    	expr_local@FUNCTION
 	i32.const	$push5=, 0
@@ -201,5 +201,5 @@ simple_static_local.ix:
 	.size	simple_static_local.ix, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

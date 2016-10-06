@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-2.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -15,11 +15,11 @@ f:                                      # @f
 	i32.const	$push12=, 16
 	i32.sub 	$push20=, $pop11, $pop12
 	tee_local	$push19=, $5=, $pop20
-	i32.store	$drop=, __stack_pointer($pop13), $pop19
-	i32.store	$drop=, 12($5), $1
+	i32.store	__stack_pointer($pop13), $pop19
+	i32.store	12($5), $1
 	i32.const	$push18=, 4
 	i32.add 	$push2=, $1, $pop18
-	i32.store	$drop=, 12($5), $pop2
+	i32.store	12($5), $pop2
 	i32.load	$4=, 0($1)
 	block
 	block
@@ -38,7 +38,7 @@ f:                                      # @f
 	br_if   	3, $pop5        # 3: down to label1
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.store	$drop=, 12($5), $3
+	i32.store	12($5), $3
 	i32.const	$push24=, -9
 	i32.add 	$2=, $1, $pop24
 	i32.const	$push23=, -4
@@ -62,7 +62,7 @@ f:                                      # @f
 	i32.const	$push16=, 0
 	i32.const	$push14=, 16
 	i32.add 	$push15=, $5, $pop14
-	i32.store	$drop=, __stack_pointer($pop16), $pop15
+	i32.store	__stack_pointer($pop16), $pop15
 	return  	$1
 .LBB0_6:                                # %if.then
 	end_block                       # label1:
@@ -90,11 +90,11 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.sub 	$push9=, $pop5, $pop6
 	tee_local	$push8=, $0=, $pop9
-	i32.store	$drop=, __stack_pointer($pop7), $pop8
+	i32.store	__stack_pointer($pop7), $pop8
 	i64.const	$push0=, 528280977420
-	i64.store	$drop=, 8($0), $pop0
+	i64.store	8($0), $pop0
 	i64.const	$push1=, 47244640266
-	i64.store	$drop=, 0($0), $pop1
+	i64.store	0($0), $pop1
 	i32.const	$push2=, 3
 	i32.call	$drop=, f@FUNCTION, $pop2, $0
 	i32.const	$push3=, 0
@@ -105,6 +105,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

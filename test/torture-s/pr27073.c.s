@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr27073.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr27073.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -16,19 +16,19 @@ foo:                                    # @foo
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
-	i32.store	$drop=, 0($0), $5
+	i32.store	0($0), $5
 	i32.const	$push12=, 4
 	i32.add 	$push1=, $0, $pop12
-	i32.store	$drop=, 0($pop1), $6
+	i32.store	0($pop1), $6
 	i32.const	$push11=, 8
 	i32.add 	$push2=, $0, $pop11
-	i32.store	$drop=, 0($pop2), $7
+	i32.store	0($pop2), $7
 	i32.const	$push10=, 12
 	i32.add 	$push3=, $0, $pop10
-	i32.store	$drop=, 0($pop3), $8
+	i32.store	0($pop3), $8
 	i32.const	$push9=, 16
 	i32.add 	$push4=, $0, $pop9
-	i32.store	$drop=, 0($pop4), $9
+	i32.store	0($pop4), $9
 	i32.const	$push8=, 20
 	i32.add 	$0=, $0, $pop8
 	i32.const	$push7=, 1
@@ -57,7 +57,7 @@ main:                                   # @main
 	i32.const	$push36=, 48
 	i32.sub 	$push41=, $pop35, $pop36
 	tee_local	$push40=, $0=, $pop41
-	i32.store	$drop=, __stack_pointer($pop37), $pop40
+	i32.store	__stack_pointer($pop37), $pop40
 	i32.const	$push4=, 2
 	i32.const	$push3=, 100
 	i32.const	$push39=, 200
@@ -128,6 +128,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

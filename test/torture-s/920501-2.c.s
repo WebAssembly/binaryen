@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-2.c"
 	.section	.text.gcd_ll,"ax",@progbits
 	.hidden	gcd_ll
 	.globl	gcd_ll
@@ -396,7 +396,7 @@ facts:                                  # @facts
 	br_if   	0, $pop32       # 0: down to label33
 # BB#33:                                # %if.then26
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.store	$drop=, 0($15), $2
+	i32.store	0($15), $2
 	i64.const	$push100=, 4294967295
 	i64.and 	$push33=, $12, $pop100
 	i64.div_u	$push99=, $0, $pop33
@@ -475,6 +475,6 @@ factab:
 	.size	factab, 40
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

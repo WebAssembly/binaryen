@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010129-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010129-1.c"
 	.section	.text.baz1,"ax",@progbits
 	.hidden	baz1
 	.globl	baz1
@@ -15,7 +15,7 @@ baz1:                                   # @baz1
 	tee_local	$push3=, $1=, $pop4
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop3, $pop1
-	i32.store	$drop=, baz1.l($pop0), $pop2
+	i32.store	baz1.l($pop0), $pop2
 	copy_local	$push6=, $1
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -73,7 +73,7 @@ foo:                                    # @foo
 	tee_local	$push26=, $9=, $pop27
 	i32.const	$push25=, 1
 	i32.add 	$push4=, $pop26, $pop25
-	i32.store	$drop=, baz1.l($pop29), $pop4
+	i32.store	baz1.l($pop29), $pop4
 	block
 	block
 	i32.ge_s	$push5=, $9, $1
@@ -143,7 +143,7 @@ foo:                                    # @foo
 	i32.const	$push43=, 0
 	i32.const	$push42=, 2
 	i32.add 	$push23=, $9, $pop42
-	i32.store	$drop=, baz1.l($pop43), $pop23
+	i32.store	baz1.l($pop43), $pop23
 	i32.const	$push41=, 1
 	i32.add 	$push40=, $9, $pop41
 	tee_local	$push39=, $9=, $pop40
@@ -176,13 +176,13 @@ main:                                   # @main
 	i32.const	$push5=, 16
 	i32.sub 	$push12=, $pop4, $pop5
 	tee_local	$push11=, $0=, $pop12
-	i32.store	$drop=, __stack_pointer($pop6), $pop11
+	i32.store	__stack_pointer($pop6), $pop11
 	i32.const	$push0=, 0
 	i32.const	$push7=, 12
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$drop=, bar($pop0), $pop8
+	i32.store	bar($pop0), $pop8
 	i32.const	$push10=, 0
-	i32.store	$drop=, 12($0), $pop10
+	i32.store	12($0), $pop10
 	i32.const	$push2=, 1
 	i32.const	$push1=, 51217
 	i32.call	$drop=, foo@FUNCTION, $0, $pop2, $pop1
@@ -210,6 +210,6 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

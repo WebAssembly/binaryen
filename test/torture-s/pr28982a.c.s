@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28982a.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28982a.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -263,45 +263,45 @@ foo:                                    # @foo
 	end_loop                        # label2:
 	end_block                       # label0:
 	i32.const	$push142=, 0
-	f32.store	$drop=, results+4($pop142), $42
+	f32.store	results+4($pop142), $42
 	i32.const	$push141=, 0
-	f32.store	$drop=, results($pop141), $41
+	f32.store	results($pop141), $41
 	i32.const	$push140=, 0
-	f32.store	$drop=, results+8($pop140), $43
+	f32.store	results+8($pop140), $43
 	i32.const	$push139=, 0
-	f32.store	$drop=, results+12($pop139), $44
+	f32.store	results+12($pop139), $44
 	i32.const	$push138=, 0
-	f32.store	$drop=, results+16($pop138), $45
+	f32.store	results+16($pop138), $45
 	i32.const	$push137=, 0
-	f32.store	$drop=, results+20($pop137), $46
+	f32.store	results+20($pop137), $46
 	i32.const	$push136=, 0
-	f32.store	$drop=, results+24($pop136), $47
+	f32.store	results+24($pop136), $47
 	i32.const	$push135=, 0
-	f32.store	$drop=, results+28($pop135), $48
+	f32.store	results+28($pop135), $48
 	i32.const	$push134=, 0
-	f32.store	$drop=, results+32($pop134), $49
+	f32.store	results+32($pop134), $49
 	i32.const	$push133=, 0
-	f32.store	$drop=, results+36($pop133), $50
+	f32.store	results+36($pop133), $50
 	i32.const	$push132=, 0
-	f32.store	$drop=, results+40($pop132), $51
+	f32.store	results+40($pop132), $51
 	i32.const	$push131=, 0
-	f32.store	$drop=, results+44($pop131), $52
+	f32.store	results+44($pop131), $52
 	i32.const	$push130=, 0
-	f32.store	$drop=, results+48($pop130), $53
+	f32.store	results+48($pop130), $53
 	i32.const	$push129=, 0
-	f32.store	$drop=, results+52($pop129), $54
+	f32.store	results+52($pop129), $54
 	i32.const	$push128=, 0
-	f32.store	$drop=, results+56($pop128), $55
+	f32.store	results+56($pop128), $55
 	i32.const	$push127=, 0
-	f32.store	$drop=, results+60($pop127), $56
+	f32.store	results+60($pop127), $56
 	i32.const	$push126=, 0
-	f32.store	$drop=, results+64($pop126), $57
+	f32.store	results+64($pop126), $57
 	i32.const	$push125=, 0
-	f32.store	$drop=, results+68($pop125), $58
+	f32.store	results+68($pop125), $58
 	i32.const	$push124=, 0
-	f32.store	$drop=, results+72($pop124), $59
+	f32.store	results+72($pop124), $59
 	i32.const	$push123=, 0
-	f32.store	$drop=, results+76($pop123), $60
+	f32.store	results+76($pop123), $60
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -319,126 +319,126 @@ main:                                   # @main
 	i32.const	$1=, 0
 	i32.const	$push162=, 0
 	i32.const	$push161=, input
-	i32.store	$drop=, ptrs($pop162), $pop161
+	i32.store	ptrs($pop162), $pop161
 	i32.const	$push160=, 0
 	i32.const	$push0=, input+4
-	i32.store	$drop=, ptrs+4($pop160), $pop0
+	i32.store	ptrs+4($pop160), $pop0
 	i32.const	$push159=, 0
 	i32.const	$push1=, input+8
-	i32.store	$drop=, ptrs+8($pop159), $pop1
+	i32.store	ptrs+8($pop159), $pop1
 	i32.const	$push158=, 0
 	i64.const	$push2=, 8589934593
-	i64.store	$drop=, incs+4($pop158):p2align=2, $pop2
+	i64.store	incs+4($pop158):p2align=2, $pop2
 	i32.const	$push157=, 0
 	i32.const	$push3=, input+12
-	i32.store	$drop=, ptrs+12($pop157), $pop3
+	i32.store	ptrs+12($pop157), $pop3
 	i32.const	$push156=, 0
 	i32.const	$push155=, 0
-	i32.store	$drop=, incs($pop156), $pop155
+	i32.store	incs($pop156), $pop155
 	i32.const	$push154=, 0
 	i32.const	$push4=, 3
-	i32.store	$drop=, incs+12($pop154), $pop4
+	i32.store	incs+12($pop154), $pop4
 	i32.const	$push153=, 0
 	i32.const	$push5=, input+16
-	i32.store	$drop=, ptrs+16($pop153), $pop5
+	i32.store	ptrs+16($pop153), $pop5
 	i32.const	$push152=, 0
 	i32.const	$push151=, 4
-	i32.store	$drop=, incs+16($pop152), $pop151
+	i32.store	incs+16($pop152), $pop151
 	i32.const	$push150=, 0
 	i32.const	$push6=, input+20
-	i32.store	$drop=, ptrs+20($pop150), $pop6
+	i32.store	ptrs+20($pop150), $pop6
 	i32.const	$push149=, 0
 	i32.const	$push7=, 5
-	i32.store	$drop=, incs+20($pop149), $pop7
+	i32.store	incs+20($pop149), $pop7
 	i32.const	$push148=, 0
 	i32.const	$push8=, input+24
-	i32.store	$drop=, ptrs+24($pop148), $pop8
+	i32.store	ptrs+24($pop148), $pop8
 	i32.const	$push147=, 0
 	i32.const	$push9=, 6
-	i32.store	$drop=, incs+24($pop147), $pop9
+	i32.store	incs+24($pop147), $pop9
 	i32.const	$push146=, 0
 	i32.const	$push10=, input+28
-	i32.store	$drop=, ptrs+28($pop146), $pop10
+	i32.store	ptrs+28($pop146), $pop10
 	i32.const	$push145=, 0
 	i32.const	$push11=, 7
-	i32.store	$drop=, incs+28($pop145), $pop11
+	i32.store	incs+28($pop145), $pop11
 	i32.const	$push144=, 0
 	i32.const	$push12=, input+32
-	i32.store	$drop=, ptrs+32($pop144), $pop12
+	i32.store	ptrs+32($pop144), $pop12
 	i32.const	$push143=, 0
 	i32.const	$push13=, 8
-	i32.store	$drop=, incs+32($pop143), $pop13
+	i32.store	incs+32($pop143), $pop13
 	i32.const	$push142=, 0
 	i32.const	$push14=, input+36
-	i32.store	$drop=, ptrs+36($pop142), $pop14
+	i32.store	ptrs+36($pop142), $pop14
 	i32.const	$push141=, 0
 	i32.const	$push15=, 9
-	i32.store	$drop=, incs+36($pop141), $pop15
+	i32.store	incs+36($pop141), $pop15
 	i32.const	$push140=, 0
 	i32.const	$push16=, input+40
-	i32.store	$drop=, ptrs+40($pop140), $pop16
+	i32.store	ptrs+40($pop140), $pop16
 	i32.const	$push139=, 0
 	i32.const	$push17=, 10
-	i32.store	$drop=, incs+40($pop139), $pop17
+	i32.store	incs+40($pop139), $pop17
 	i32.const	$push138=, 0
 	i32.const	$push18=, input+44
-	i32.store	$drop=, ptrs+44($pop138), $pop18
+	i32.store	ptrs+44($pop138), $pop18
 	i32.const	$push137=, 0
 	i32.const	$push19=, 11
-	i32.store	$drop=, incs+44($pop137), $pop19
+	i32.store	incs+44($pop137), $pop19
 	i32.const	$push136=, 0
 	i32.const	$push20=, input+48
-	i32.store	$drop=, ptrs+48($pop136), $pop20
+	i32.store	ptrs+48($pop136), $pop20
 	i32.const	$push135=, 0
 	i32.const	$push21=, 12
-	i32.store	$drop=, incs+48($pop135), $pop21
+	i32.store	incs+48($pop135), $pop21
 	i32.const	$push134=, 0
 	i32.const	$push22=, input+52
-	i32.store	$drop=, ptrs+52($pop134), $pop22
+	i32.store	ptrs+52($pop134), $pop22
 	i32.const	$push133=, 0
 	i32.const	$push23=, 13
-	i32.store	$drop=, incs+52($pop133), $pop23
+	i32.store	incs+52($pop133), $pop23
 	i32.const	$push132=, 0
 	i32.const	$push24=, input+56
-	i32.store	$drop=, ptrs+56($pop132), $pop24
+	i32.store	ptrs+56($pop132), $pop24
 	i32.const	$push131=, 0
 	i32.const	$push25=, 14
-	i32.store	$drop=, incs+56($pop131), $pop25
+	i32.store	incs+56($pop131), $pop25
 	i32.const	$push130=, 0
 	i32.const	$push26=, input+60
-	i32.store	$drop=, ptrs+60($pop130), $pop26
+	i32.store	ptrs+60($pop130), $pop26
 	i32.const	$push129=, 0
 	i32.const	$push27=, 15
-	i32.store	$drop=, incs+60($pop129), $pop27
+	i32.store	incs+60($pop129), $pop27
 	i32.const	$push128=, 0
 	i32.const	$push28=, input+64
-	i32.store	$drop=, ptrs+64($pop128), $pop28
+	i32.store	ptrs+64($pop128), $pop28
 	i32.const	$push127=, 0
 	i32.const	$push29=, 16
-	i32.store	$drop=, incs+64($pop127), $pop29
+	i32.store	incs+64($pop127), $pop29
 	i32.const	$push126=, 0
 	i32.const	$push30=, input+68
-	i32.store	$drop=, ptrs+68($pop126), $pop30
+	i32.store	ptrs+68($pop126), $pop30
 	i32.const	$push125=, 0
 	i32.const	$push31=, 17
-	i32.store	$drop=, incs+68($pop125), $pop31
+	i32.store	incs+68($pop125), $pop31
 	i32.const	$push124=, 0
 	i32.const	$push32=, input+72
-	i32.store	$drop=, ptrs+72($pop124), $pop32
+	i32.store	ptrs+72($pop124), $pop32
 	i32.const	$push123=, 0
 	i32.const	$push33=, 18
-	i32.store	$drop=, incs+72($pop123), $pop33
+	i32.store	incs+72($pop123), $pop33
 	i32.const	$push122=, 0
 	i32.const	$push34=, input+76
-	i32.store	$drop=, ptrs+76($pop122), $pop34
+	i32.store	ptrs+76($pop122), $pop34
 	i32.const	$push121=, 0
 	i32.const	$push35=, 19
-	i32.store	$drop=, incs+76($pop121), $pop35
+	i32.store	incs+76($pop121), $pop35
 .LBB1_1:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
 	f32.convert_s/i32	$push36=, $1
-	f32.store	$drop=, 0($0), $pop36
+	f32.store	0($0), $pop36
 	i32.const	$push167=, 4
 	i32.add 	$0=, $0, $pop167
 	i32.const	$push166=, 1
@@ -594,4 +594,4 @@ input:
 	.size	input, 320
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

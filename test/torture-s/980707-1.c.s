@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980707-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980707-1.c"
 	.section	.text.buildargv,"ax",@progbits
 	.hidden	buildargv
 	.globl	buildargv
@@ -36,7 +36,7 @@ buildargv:                              # @buildargv
 	i32.shl 	$push1=, $2, $pop15
 	i32.const	$push14=, buildargv.arglist
 	i32.add 	$push2=, $pop1, $pop14
-	i32.store	$drop=, 0($pop2), $0
+	i32.store	0($pop2), $0
 	i32.const	$push13=, 1
 	i32.add 	$2=, $2, $pop13
 .LBB0_5:                                # %while.cond7
@@ -61,7 +61,7 @@ buildargv:                              # @buildargv
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label4:
 	i32.const	$push21=, 0
-	i32.store8	$drop=, 0($0), $pop21
+	i32.store8	0($0), $pop21
 	i32.const	$push20=, 1
 	i32.add 	$0=, $0, $pop20
 	br      	0               # 0: up to label0
@@ -72,7 +72,7 @@ buildargv:                              # @buildargv
 	i32.const	$push6=, buildargv.arglist
 	i32.add 	$push7=, $pop5, $pop6
 	i32.const	$push8=, 0
-	i32.store	$drop=, 0($pop7), $pop8
+	i32.store	0($pop7), $pop8
 	i32.const	$push22=, buildargv.arglist
                                         # fallthrough-return: $pop22
 	.endfunc
@@ -93,13 +93,13 @@ main:                                   # @main
 	i32.const	$push19=, 256
 	i32.sub 	$push24=, $pop18, $pop19
 	tee_local	$push23=, $0=, $pop24
-	i32.store	$drop=, __stack_pointer($pop20), $pop23
+	i32.store	__stack_pointer($pop20), $pop23
 	i32.const	$push22=, 0
 	i32.load8_u	$push0=, .L.str+4($pop22)
-	i32.store8	$drop=, 4($0), $pop0
+	i32.store8	4($0), $pop0
 	i32.const	$push21=, 0
 	i32.load	$push1=, .L.str($pop21):p2align=0
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	copy_local	$0=, $0
 	i32.const	$2=, 0
 .LBB1_1:                                # %while.cond1.i
@@ -128,7 +128,7 @@ main:                                   # @main
 	i32.shl 	$push3=, $2, $pop31
 	i32.const	$push30=, buildargv.arglist
 	i32.add 	$push4=, $pop3, $pop30
-	i32.store	$drop=, 0($pop4), $0
+	i32.store	0($pop4), $0
 	i32.const	$push29=, 1
 	i32.add 	$2=, $2, $pop29
 .LBB1_5:                                # %while.cond7.i
@@ -153,7 +153,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop                        # label9:
 	i32.const	$push37=, 0
-	i32.store8	$drop=, 0($0), $pop37
+	i32.store8	0($0), $pop37
 	i32.const	$push36=, 1
 	i32.add 	$0=, $0, $pop36
 	br      	0               # 0: up to label5
@@ -164,7 +164,7 @@ main:                                   # @main
 	i32.const	$push8=, buildargv.arglist
 	i32.add 	$push9=, $pop7, $pop8
 	i32.const	$push39=, 0
-	i32.store	$drop=, 0($pop9), $pop39
+	i32.store	0($pop9), $pop39
 	block
 	i32.const	$push38=, 0
 	i32.load	$push10=, buildargv.arglist($pop38)
@@ -217,7 +217,7 @@ buildargv.arglist:
 	.size	.L.str.2, 2
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

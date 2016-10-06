@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070517-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070517-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -52,7 +52,7 @@ get_kind:                               # @get_kind
 	i32.sub 	$push6=, $pop3, $pop4
 	tee_local	$push5=, $0=, $pop6
 	i32.const	$push0=, 10
-	i32.store	$drop=, 12($pop5), $pop0
+	i32.store	12($pop5), $pop0
 	i32.load	$push1=, 12($0)
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -60,5 +60,5 @@ get_kind:                               # @get_kind
 	.size	get_kind, .Lfunc_end1-get_kind
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

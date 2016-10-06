@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-2.c"
 	.section	.text.one_raw_spinlock,"ax",@progbits
 	.hidden	one_raw_spinlock
 	.globl	one_raw_spinlock
@@ -11,7 +11,7 @@ one_raw_spinlock:                       # @one_raw_spinlock
 	i32.load	$push1=, ii($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, ii($pop0), $pop3
+	i32.store	ii($pop0), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -31,7 +31,7 @@ main:                                   # @main
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $pop2, $pop0
-	i32.store	$drop=, ii($pop5), $pop1
+	i32.store	ii($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end
@@ -55,5 +55,5 @@ ii:
 	.size	ii, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

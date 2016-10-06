@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031204-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031204-1.c"
 	.section	.text.in_aton,"ax",@progbits
 	.hidden	in_aton
 	.globl	in_aton
@@ -115,7 +115,7 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	br_if   	1, $pop17       # 1: down to label6
 # BB#11:                                # %if.then39
 	i32.const	$push18=, 0
-	i32.store8	$drop=, 0($7), $pop18
+	i32.store8	0($7), $pop18
 	i32.const	$push19=, 1
 	i32.add 	$7=, $7, $pop19
 .LBB1_12:                               # %if.end41
@@ -229,7 +229,7 @@ main:                                   # @main
 	br_if   	1, $pop17       # 1: down to label14
 # BB#11:                                # %if.then39.i
 	i32.const	$push18=, 0
-	i32.store8	$drop=, 0($6), $pop18
+	i32.store8	0($6), $pop18
 	i32.const	$push19=, 1
 	i32.add 	$6=, $6, $pop19
 .LBB2_12:                               # %if.end
@@ -254,6 +254,6 @@ main.addr:
 	.size	main.addr, 19
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void

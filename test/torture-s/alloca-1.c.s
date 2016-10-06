@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/alloca-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/alloca-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -33,7 +33,7 @@ main:                                   # @main
 	i32.const	$push5=, 32
 	i32.sub 	$push11=, $pop4, $pop5
 	tee_local	$push10=, $0=, $pop11
-	i32.store	$drop=, __stack_pointer($pop6), $pop10
+	i32.store	__stack_pointer($pop6), $pop10
 	block
 	i32.const	$push0=, 15
 	i32.and 	$push1=, $0, $pop0
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.const	$push9=, 0
 	i32.const	$push7=, 32
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.store	__stack_pointer($pop9), $pop8
 	i32.const	$push2=, 0
 	return  	$pop2
 .LBB1_2:                                # %if.then
@@ -54,5 +54,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

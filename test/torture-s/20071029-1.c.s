@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071029-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071029-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -16,7 +16,7 @@ test:                                   # @test
 	i32.const	$push1=, 1
 	i32.add 	$push17=, $pop18, $pop1
 	tee_local	$push16=, $1=, $pop17
-	i32.store	$drop=, test.i($pop0), $pop16
+	i32.store	test.i($pop0), $pop16
 	block
 	block
 	i32.ne  	$push2=, $3, $2
@@ -84,7 +84,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 64
 	i32.sub 	$push11=, $pop2, $pop3
 	tee_local	$push10=, $2=, $pop11
-	i32.store	$drop=, __stack_pointer($pop4), $pop10
+	i32.store	__stack_pointer($pop4), $pop10
 	i32.const	$push9=, 1
 	i32.add 	$0=, $0, $pop9
 	i32.const	$push5=, 8
@@ -94,7 +94,7 @@ foo:                                    # @foo
 .LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
-	i32.store	$drop=, 8($2), $0
+	i32.store	8($2), $0
 	i32.const	$push14=, 0
 	i32.const	$push13=, 52
 	i32.call	$drop=, memset@FUNCTION, $1, $pop14, $pop13
@@ -132,6 +132,6 @@ test.i:
 	.size	test.i, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

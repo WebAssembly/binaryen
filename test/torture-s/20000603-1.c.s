@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000603-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000603-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	f64
 # BB#0:                                 # %entry
 	i64.const	$push0=, 4607182418800017408
-	i64.store	$drop=, 0($0), $pop0
+	i64.store	0($0), $pop0
 	f64.load	$push1=, 0($1)
 	f64.const	$push2=, 0x1p0
 	f64.add 	$push3=, $pop1, $pop2
@@ -32,4 +32,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

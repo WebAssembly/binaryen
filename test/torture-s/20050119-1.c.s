@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050119-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050119-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -41,15 +41,15 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.sub 	$push12=, $pop5, $pop6
 	tee_local	$push11=, $0=, $pop12
-	i32.store	$drop=, __stack_pointer($pop7), $pop11
+	i32.store	__stack_pointer($pop7), $pop11
 	i32.const	$push0=, 50462977
-	i32.store	$drop=, 8($0), $pop0
+	i32.store	8($0), $pop0
 	i32.const	$push1=, 3
-	i32.store8	$drop=, 12($0), $pop1
+	i32.store8	12($0), $pop1
 	i32.const	$push2=, 258
-	i32.store16	$drop=, 13($0):p2align=0, $pop2
+	i32.store16	13($0):p2align=0, $pop2
 	i32.const	$push3=, 0
-	i32.store8	$drop=, 15($0), $pop3
+	i32.store8	15($0), $pop3
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8
 	call    	foo@FUNCTION, $pop9
@@ -61,6 +61,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

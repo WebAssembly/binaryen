@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36034-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36034-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -9,123 +9,123 @@ test:                                   # @test
 	i32.const	$push0=, 0
 	i32.const	$push89=, 0
 	i64.load	$push1=, x($pop89)
-	i64.store	$drop=, tmp($pop0), $pop1
+	i64.store	tmp($pop0), $pop1
 	i32.const	$push88=, 0
 	i32.const	$push87=, 0
 	i64.load	$push2=, x+8($pop87)
-	i64.store	$drop=, tmp+8($pop88), $pop2
+	i64.store	tmp+8($pop88), $pop2
 	i32.const	$push86=, 0
 	i32.const	$push85=, 0
 	i64.load	$push3=, x+16($pop85)
-	i64.store	$drop=, tmp+16($pop86), $pop3
+	i64.store	tmp+16($pop86), $pop3
 	i32.const	$push84=, 0
 	i32.const	$push83=, 0
 	i64.load	$push4=, x+24($pop83)
-	i64.store	$drop=, tmp+24($pop84), $pop4
+	i64.store	tmp+24($pop84), $pop4
 	i32.const	$push82=, 0
 	i32.const	$push81=, 0
 	i64.load	$push5=, x+32($pop81)
-	i64.store	$drop=, tmp+32($pop82), $pop5
+	i64.store	tmp+32($pop82), $pop5
 	i32.const	$push80=, 0
 	i32.const	$push79=, 0
 	i64.load	$push6=, x+40($pop79)
-	i64.store	$drop=, tmp+40($pop80), $pop6
+	i64.store	tmp+40($pop80), $pop6
 	i32.const	$push78=, 0
 	i32.const	$push77=, 0
 	i64.load	$push7=, x+80($pop77)
-	i64.store	$drop=, tmp+48($pop78), $pop7
+	i64.store	tmp+48($pop78), $pop7
 	i32.const	$push76=, 0
 	i32.const	$push75=, 0
 	i64.load	$push8=, x+88($pop75)
-	i64.store	$drop=, tmp+56($pop76), $pop8
+	i64.store	tmp+56($pop76), $pop8
 	i32.const	$push74=, 0
 	i32.const	$push73=, 0
 	i64.load	$push9=, x+96($pop73)
-	i64.store	$drop=, tmp+64($pop74), $pop9
+	i64.store	tmp+64($pop74), $pop9
 	i32.const	$push72=, 0
 	i32.const	$push71=, 0
 	i64.load	$push10=, x+104($pop71)
-	i64.store	$drop=, tmp+72($pop72), $pop10
+	i64.store	tmp+72($pop72), $pop10
 	i32.const	$push70=, 0
 	i32.const	$push69=, 0
 	i64.load	$push11=, x+112($pop69)
-	i64.store	$drop=, tmp+80($pop70), $pop11
+	i64.store	tmp+80($pop70), $pop11
 	i32.const	$push68=, 0
 	i32.const	$push67=, 0
 	i64.load	$push12=, x+120($pop67)
-	i64.store	$drop=, tmp+88($pop68), $pop12
+	i64.store	tmp+88($pop68), $pop12
 	i32.const	$push66=, 0
 	i32.const	$push65=, 0
 	i64.load	$push13=, x+160($pop65)
-	i64.store	$drop=, tmp+96($pop66), $pop13
+	i64.store	tmp+96($pop66), $pop13
 	i32.const	$push64=, 0
 	i32.const	$push63=, 0
 	i64.load	$push14=, x+168($pop63)
-	i64.store	$drop=, tmp+104($pop64), $pop14
+	i64.store	tmp+104($pop64), $pop14
 	i32.const	$push62=, 0
 	i32.const	$push61=, 0
 	i64.load	$push15=, x+176($pop61)
-	i64.store	$drop=, tmp+112($pop62), $pop15
+	i64.store	tmp+112($pop62), $pop15
 	i32.const	$push60=, 0
 	i32.const	$push59=, 0
 	i64.load	$push16=, x+184($pop59)
-	i64.store	$drop=, tmp+120($pop60), $pop16
+	i64.store	tmp+120($pop60), $pop16
 	i32.const	$push58=, 0
 	i32.const	$push57=, 0
 	i64.load	$push17=, x+192($pop57)
-	i64.store	$drop=, tmp+128($pop58), $pop17
+	i64.store	tmp+128($pop58), $pop17
 	i32.const	$push56=, 0
 	i32.const	$push55=, 0
 	i64.load	$push18=, x+200($pop55)
-	i64.store	$drop=, tmp+136($pop56), $pop18
+	i64.store	tmp+136($pop56), $pop18
 	i32.const	$push54=, 0
 	i32.const	$push53=, 0
 	i64.load	$push19=, x+240($pop53)
-	i64.store	$drop=, tmp+144($pop54), $pop19
+	i64.store	tmp+144($pop54), $pop19
 	i32.const	$push52=, 0
 	i32.const	$push51=, 0
 	i64.load	$push20=, x+248($pop51)
-	i64.store	$drop=, tmp+152($pop52), $pop20
+	i64.store	tmp+152($pop52), $pop20
 	i32.const	$push50=, 0
 	i32.const	$push49=, 0
 	i64.load	$push21=, x+256($pop49)
-	i64.store	$drop=, tmp+160($pop50), $pop21
+	i64.store	tmp+160($pop50), $pop21
 	i32.const	$push48=, 0
 	i32.const	$push47=, 0
 	i64.load	$push22=, x+264($pop47)
-	i64.store	$drop=, tmp+168($pop48), $pop22
+	i64.store	tmp+168($pop48), $pop22
 	i32.const	$push46=, 0
 	i32.const	$push45=, 0
 	i64.load	$push23=, x+272($pop45)
-	i64.store	$drop=, tmp+176($pop46), $pop23
+	i64.store	tmp+176($pop46), $pop23
 	i32.const	$push44=, 0
 	i32.const	$push43=, 0
 	i64.load	$push24=, x+280($pop43)
-	i64.store	$drop=, tmp+184($pop44), $pop24
+	i64.store	tmp+184($pop44), $pop24
 	i32.const	$push42=, 0
 	i32.const	$push41=, 0
 	i64.load	$push25=, x+320($pop41)
-	i64.store	$drop=, tmp+192($pop42), $pop25
+	i64.store	tmp+192($pop42), $pop25
 	i32.const	$push40=, 0
 	i32.const	$push39=, 0
 	i64.load	$push26=, x+328($pop39)
-	i64.store	$drop=, tmp+200($pop40), $pop26
+	i64.store	tmp+200($pop40), $pop26
 	i32.const	$push38=, 0
 	i32.const	$push37=, 0
 	i64.load	$push27=, x+336($pop37)
-	i64.store	$drop=, tmp+208($pop38), $pop27
+	i64.store	tmp+208($pop38), $pop27
 	i32.const	$push36=, 0
 	i32.const	$push35=, 0
 	i64.load	$push28=, x+344($pop35)
-	i64.store	$drop=, tmp+216($pop36), $pop28
+	i64.store	tmp+216($pop36), $pop28
 	i32.const	$push34=, 0
 	i32.const	$push33=, 0
 	i64.load	$push29=, x+352($pop33)
-	i64.store	$drop=, tmp+224($pop34), $pop29
+	i64.store	tmp+224($pop34), $pop29
 	i32.const	$push32=, 0
 	i32.const	$push31=, 0
 	i64.load	$push30=, x+360($pop31)
-	i64.store	$drop=, tmp+232($pop32), $pop30
+	i64.store	tmp+232($pop32), $pop30
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -398,5 +398,5 @@ tmp:
 	.size	tmp, 240
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

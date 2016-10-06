@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15262.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15262.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -8,7 +8,7 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1084647014
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -26,7 +26,7 @@ foo:                                    # @foo
 	i32.const	$push3=, 0
 	i32.load	$3=, __stack_pointer($pop3)
 	i32.const	$push0=, 1
-	i32.store	$drop=, 4($0), $pop0
+	i32.store	4($0), $pop0
 	i32.const	$push4=, 16
 	i32.sub 	$push11=, $3, $pop4
 	tee_local	$push10=, $0=, $pop11
@@ -36,7 +36,7 @@ foo:                                    # @foo
 	i32.add 	$push8=, $0, $pop7
 	i32.select	$push1=, $pop6, $pop8, $1
 	i32.const	$push2=, 1084647014
-	i32.store	$drop=, 0($pop1), $pop2
+	i32.store	0($pop1), $pop2
 	i32.const	$push9=, 1
                                         # fallthrough-return: $pop9
 	.endfunc
@@ -57,4 +57,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

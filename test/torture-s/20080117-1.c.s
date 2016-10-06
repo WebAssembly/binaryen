@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080117-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080117-1.c"
 	.section	.text.gstate_path_memory,"ax",@progbits
 	.hidden	gstate_path_memory
 	.globl	gstate_path_memory
@@ -11,10 +11,10 @@ gstate_path_memory:                     # @gstate_path_memory
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 0
 	i32.load	$push3=, gstate_initial+8($pop2)
-	i32.store	$drop=, 0($pop1), $pop3
+	i32.store	0($pop1), $pop3
 	i32.const	$push5=, 0
 	i64.load	$push4=, gstate_initial($pop5):p2align=2
-	i64.store	$drop=, 0($0):p2align=2, $pop4
+	i64.store	0($0):p2align=2, $pop4
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -56,4 +56,4 @@ gstate_initial:
 	.size	gstate_initial, 12
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

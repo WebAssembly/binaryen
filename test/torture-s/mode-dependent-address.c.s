@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
 	.section	.text.f883b,"ax",@progbits
 	.hidden	f883b
 	.globl	f883b
@@ -34,7 +34,7 @@ f883b:                                  # @f883b
 	i64.extend_u/i32	$push9=, $pop8
 	i64.load	$push10=, 0($3)
 	i64.and 	$push11=, $pop9, $pop10
-	i64.store8	$drop=, 0($pop12), $pop11
+	i64.store8	0($pop12), $pop11
 	i32.const	$push20=, 8
 	i32.add 	$3=, $3, $pop20
 	i32.const	$push19=, 4
@@ -71,16 +71,16 @@ main:                                   # @main
 	loop                            # label2:
 	i32.const	$push34=, arg4
 	i32.add 	$push0=, $4, $pop34
-	i32.store8	$drop=, 0($pop0), $4
+	i32.store8	0($pop0), $4
 	i32.const	$push33=, 255
 	i32.and 	$push32=, $4, $pop33
 	tee_local	$push31=, $0=, $pop32
-	i32.store	$drop=, 0($2), $pop31
-	i32.store16	$drop=, 0($3), $0
+	i32.store	0($2), $pop31
+	i32.store16	0($3), $0
 	i64.extend_u/i32	$push1=, $4
 	i64.const	$push30=, 255
 	i64.and 	$push2=, $pop1, $pop30
-	i64.store	$drop=, 0($1), $pop2
+	i64.store	0($1), $pop2
 	i32.const	$push29=, 8
 	i32.add 	$1=, $1, $pop29
 	i32.const	$push28=, 4
@@ -125,7 +125,7 @@ main:                                   # @main
 	i64.extend_u/i32	$push14=, $pop13
 	i64.load	$push15=, 0($3)
 	i64.and 	$push16=, $pop14, $pop15
-	i64.store8	$drop=, 0($4), $pop16
+	i64.store8	0($4), $pop16
 	i32.const	$push40=, 4
 	i32.add 	$2=, $2, $pop40
 	i32.const	$push39=, 8
@@ -320,5 +320,5 @@ result:
 	.size	result, 96
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

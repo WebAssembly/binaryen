@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr17133.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr17133.c"
 	.section	.text.pure_alloc,"ax",@progbits
 	.hidden	pure_alloc
 	.globl	pure_alloc
@@ -15,7 +15,7 @@ pure_alloc:                             # @pure_alloc
 	i32.const	$push12=, 2
 	i32.add 	$push11=, $pop13, $pop12
 	tee_local	$push10=, $2=, $pop11
-	i32.store	$drop=, foo($pop0), $pop10
+	i32.store	foo($pop0), $pop10
 	i32.const	$push9=, 0
 	i32.load	$0=, bar($pop9)
 	block
@@ -37,7 +37,7 @@ pure_alloc:                             # @pure_alloc
 	i32.const	$3=, 0
 	i32.const	$push17=, 0
 	i32.const	$push2=, 2
-	i32.store	$drop=, foo($pop17), $pop2
+	i32.store	foo($pop17), $pop2
 .LBB0_4:                                # %if.then
 	end_block                       # label0:
 	i32.add 	$push3=, $0, $3
@@ -62,7 +62,7 @@ main:                                   # @main
 	i32.const	$push12=, 2
 	i32.add 	$push11=, $pop1, $pop12
 	tee_local	$push10=, $0=, $pop11
-	i32.store	$drop=, foo($pop0), $pop10
+	i32.store	foo($pop0), $pop10
 	block
 	block
 	block
@@ -84,7 +84,7 @@ main:                                   # @main
 # BB#4:                                 # %pure_alloc.exit.thread.split
 	i32.const	$push5=, 0
 	i32.const	$push4=, 2
-	i32.store	$drop=, foo($pop5), $pop4
+	i32.store	foo($pop5), $pop4
 .LBB1_5:                                # %if.end
 	end_block                       # label4:
 	i32.const	$push6=, 0
@@ -128,5 +128,5 @@ baz:
 	.size	baz, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

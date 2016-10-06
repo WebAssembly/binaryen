@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63659.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63659.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -16,7 +16,7 @@ main:                                   # @main
 # BB#1:                                 # %for.cond
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.store	$drop=, a($pop10), $pop9
+	i32.store	a($pop10), $pop9
 .LBB0_2:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push15=, 0
@@ -26,7 +26,7 @@ main:                                   # @main
 	i32.load	$push1=, h($pop13)
 	i32.shr_s	$push12=, $pop2, $pop1
 	tee_local	$push11=, $0=, $pop12
-	i32.store	$drop=, g($pop15), $pop11
+	i32.store	g($pop15), $pop11
 	i32.const	$1=, 255
 	block
 	i32.eqz 	$push24=, $0
@@ -40,11 +40,11 @@ main:                                   # @main
 	i32.load	$push5=, d($pop21)
 	i32.const	$push20=, 255
 	i32.and 	$push4=, $1, $pop20
-	i32.store	$drop=, 0($pop5), $pop4
+	i32.store	0($pop5), $pop4
 	i32.const	$push19=, 0
-	i32.store8	$drop=, e($pop19), $1
+	i32.store8	e($pop19), $1
 	i32.const	$push18=, 0
-	i32.store8	$drop=, f($pop18), $1
+	i32.store8	f($pop18), $1
 	block
 	i32.const	$push17=, 0
 	i32.load	$push6=, b($pop17)
@@ -142,5 +142,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memcpy-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memcpy-2.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.gt_s	$push2=, $pop1, $pop56
 	i32.select	$push55=, $pop59, $9, $pop2
 	tee_local	$push54=, $9=, $pop55
-	i32.store8	$drop=, 0($pop3), $pop54
+	i32.store8	0($pop3), $pop54
 	i32.const	$push53=, 1
 	i32.add 	$9=, $9, $pop53
 	i32.const	$push52=, 1
@@ -260,6 +260,6 @@ u2:
 	.size	u2, 96
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

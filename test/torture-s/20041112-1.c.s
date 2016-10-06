@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041112-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041112-1.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -23,7 +23,7 @@ bar:                                    # @bar
 	i32.eq  	$push6=, $pop5, $pop4
 	i32.select	$push7=, $1, $pop14, $pop6
 	i32.select	$push8=, $pop15, $pop7, $0
-	i32.store	$drop=, global($pop0), $pop8
+	i32.store	global($pop0), $pop8
 	i32.eqz 	$push10=, $0
 	i32.const	$push13=, global
 	i32.const	$push12=, -1
@@ -43,7 +43,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
-	i32.store	$drop=, global($pop1), $pop0
+	i32.store	global($pop1), $pop0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -60,4 +60,4 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

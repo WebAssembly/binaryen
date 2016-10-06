@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-9.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-9.c"
 	.section	.text.proc1,"ax",@progbits
 	.hidden	proc1
 	.globl	proc1
@@ -80,7 +80,7 @@ print_longlong:                         # @print_longlong
 	i32.const	$push6=, 32
 	i32.sub 	$push16=, $pop5, $pop6
 	tee_local	$push15=, $4=, $pop16
-	i32.store	$drop=, __stack_pointer($pop7), $pop15
+	i32.store	__stack_pointer($pop7), $pop15
 	i32.wrap/i64	$3=, $0
 	block
 	block
@@ -91,8 +91,8 @@ print_longlong:                         # @print_longlong
 	i32.eqz 	$push17=, $pop13
 	br_if   	0, $pop17       # 0: down to label1
 # BB#1:                                 # %if.then
-	i32.store	$drop=, 20($4), $3
-	i32.store	$drop=, 16($4), $2
+	i32.store	20($4), $3
+	i32.store	16($4), $2
 	i32.const	$push2=, .L.str
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $4, $pop11
@@ -100,7 +100,7 @@ print_longlong:                         # @print_longlong
 	br      	1               # 1: down to label0
 .LBB5_2:                                # %if.else
 	end_block                       # label1:
-	i32.store	$drop=, 0($4), $3
+	i32.store	0($4), $3
 	i32.const	$push3=, .L.str.1
 	i32.call	$drop=, sprintf@FUNCTION, $1, $pop3, $4
 .LBB5_3:                                # %if.end
@@ -108,7 +108,7 @@ print_longlong:                         # @print_longlong
 	i32.const	$push10=, 0
 	i32.const	$push8=, 32
 	i32.add 	$push9=, $4, $pop8
-	i32.store	$drop=, __stack_pointer($pop10), $pop9
+	i32.store	__stack_pointer($pop10), $pop9
 	copy_local	$push18=, $4
                                         # fallthrough-return: $pop18
 	.endfunc
@@ -129,9 +129,9 @@ main:                                   # @main
 	i32.const	$push19=, 192
 	i32.sub 	$push51=, $pop18, $pop19
 	tee_local	$push50=, $0=, $pop51
-	i32.store	$drop=, __stack_pointer($pop20), $pop50
+	i32.store	__stack_pointer($pop20), $pop50
 	i32.const	$push0=, 1
-	i32.store	$drop=, 64($0), $pop0
+	i32.store	64($0), $pop0
 	i32.const	$push21=, 80
 	i32.add 	$push22=, $0, $pop21
 	i32.const	$push49=, .L.str.1
@@ -146,7 +146,7 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push3=, 305419896
-	i32.store	$drop=, 48($0), $pop3
+	i32.store	48($0), $pop3
 	i32.const	$push27=, 80
 	i32.add 	$push28=, $0, $pop27
 	i32.const	$push52=, .L.str.1
@@ -160,7 +160,7 @@ main:                                   # @main
 	br_if   	0, $pop5        # 0: down to label2
 # BB#2:                                 # %if.end11
 	i64.const	$push6=, 1311768467732155613
-	i64.store	$drop=, 32($0), $pop6
+	i64.store	32($0), $pop6
 	i32.const	$push33=, 80
 	i32.add 	$push34=, $0, $pop33
 	i32.const	$push53=, .L.str
@@ -174,7 +174,7 @@ main:                                   # @main
 	br_if   	0, $pop8        # 0: down to label2
 # BB#3:                                 # %if.end19
 	i64.const	$push9=, -1
-	i64.store	$drop=, 16($0), $pop9
+	i64.store	16($0), $pop9
 	i32.const	$push39=, 80
 	i32.add 	$push40=, $0, $pop39
 	i32.const	$push54=, .L.str
@@ -188,7 +188,7 @@ main:                                   # @main
 	br_if   	0, $pop11       # 0: down to label2
 # BB#4:                                 # %if.end27
 	i32.const	$push12=, -1430532899
-	i32.store	$drop=, 0($0), $pop12
+	i32.store	0($0), $pop12
 	i32.const	$push45=, 80
 	i32.add 	$push46=, $0, $pop45
 	i32.const	$push13=, .L.str.1
@@ -247,7 +247,7 @@ main:                                   # @main
 	.size	.L.str.6, 9
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

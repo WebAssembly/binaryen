@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920810-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920810-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -14,9 +14,9 @@ f:                                      # @f
 	i32.call	$push4=, memcpy@FUNCTION, $pop0, $0, $pop1
 	tee_local	$push3=, $2=, $pop4
 	i32.const	$push2=, 0
-	i32.store	$drop=, 4($pop3), $pop2
-	i32.store	$drop=, 0($2), $0
-	i32.store	$drop=, 8($2), $1
+	i32.store	4($pop3), $pop2
+	i32.store	0($2), $0
+	i32.store	8($2), $1
 	copy_local	$push5=, $2
                                         # fallthrough-return: $pop5
 	.endfunc
@@ -38,6 +38,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	malloc, i32, i32
 	.functype	exit, void, i32

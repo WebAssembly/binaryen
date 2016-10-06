@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020413-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020413-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -14,7 +14,7 @@ test:                                   # @test
 	i32.const	$push82=, 16
 	i32.sub 	$push101=, $pop81, $pop82
 	tee_local	$push100=, $5=, $pop101
-	i32.store	$drop=, __stack_pointer($pop83), $pop100
+	i32.store	__stack_pointer($pop83), $pop100
 	i64.const	$push99=, 0
 	i64.const	$push0=, -9223372036854775808
 	call    	__subtf3@FUNCTION, $5, $pop99, $pop0, $0, $1
@@ -228,11 +228,11 @@ test:                                   # @test
 	br_if   	1, $pop41       # 1: down to label0
 .LBB0_25:                               # %if.end19
 	end_block                       # label1:
-	i32.store	$drop=, 0($2), $4
+	i32.store	0($2), $4
 	i32.const	$push86=, 0
 	i32.const	$push84=, 16
 	i32.add 	$push85=, $5, $pop84
-	i32.store	$drop=, __stack_pointer($pop86), $pop85
+	i32.store	__stack_pointer($pop86), $pop85
 	return
 .LBB0_26:                               # %while.body.10
 	end_block                       # label0:
@@ -256,7 +256,7 @@ main:                                   # @main
 	i32.const	$push8=, 16
 	i32.sub 	$push22=, $pop7, $pop8
 	tee_local	$push21=, $0=, $pop22
-	i32.store	$drop=, __stack_pointer($pop9), $pop21
+	i32.store	__stack_pointer($pop9), $pop21
 	i64.const	$push1=, 0
 	i64.const	$push0=, 4611826755915743232
 	i32.const	$push10=, 12
@@ -285,6 +285,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

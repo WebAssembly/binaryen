@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/multdi-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/multdi-1.c"
 	.section	.text.mpy,"ax",@progbits
 	.hidden	mpy
 	.globl	mpy
@@ -25,7 +25,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, -1
-	i64.store	$drop=, mpy_res($pop1), $pop0
+	i64.store	mpy_res($pop1), $pop0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -42,4 +42,4 @@ mpy_res:
 	.size	mpy_res, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

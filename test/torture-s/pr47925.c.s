@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47925.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47925.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -59,10 +59,10 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.sub 	$push14=, $pop3, $pop4
 	tee_local	$push13=, $0=, $pop14
-	i32.store	$drop=, __stack_pointer($pop5), $pop13
+	i32.store	__stack_pointer($pop5), $pop13
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
-	i32.store	$drop=, 8($0), $pop10
+	i32.store	8($0), $pop10
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push0=, 10
@@ -70,7 +70,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$drop=, __stack_pointer($pop8), $pop7
+	i32.store	__stack_pointer($pop8), $pop7
 	i32.const	$push1=, 0
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -78,4 +78,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

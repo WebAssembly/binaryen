@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990222-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990222-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.const	$push25=, 1
 	i32.add 	$push24=, $pop0, $pop25
 	tee_local	$push23=, $1=, $pop24
-	i32.store8	$drop=, line+2($pop27), $pop23
+	i32.store8	line+2($pop27), $pop23
 	block
 	i32.const	$push22=, 24
 	i32.shl 	$push1=, $1, $pop22
@@ -32,12 +32,12 @@ main:                                   # @main
 	i32.const	$push36=, 1
 	i32.add 	$push4=, $1, $pop36
 	i32.const	$push35=, 48
-	i32.store8	$drop=, 0($pop4), $pop35
+	i32.store8	0($pop4), $pop35
 	i32.load8_u	$push5=, 0($1)
 	i32.const	$push34=, 1
 	i32.add 	$push33=, $pop5, $pop34
 	tee_local	$push32=, $0=, $pop33
-	i32.store8	$drop=, 0($1), $pop32
+	i32.store8	0($1), $pop32
 	i32.const	$push31=, -1
 	i32.add 	$1=, $1, $pop31
 	i32.const	$push30=, 24
@@ -93,5 +93,5 @@ line:
 	.size	line, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

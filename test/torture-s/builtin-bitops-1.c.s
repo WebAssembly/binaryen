@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-bitops-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-bitops-1.c"
 	.section	.text.my_ffs,"ax",@progbits
 	.hidden	my_ffs
 	.globl	my_ffs
@@ -1673,7 +1673,7 @@ longlongs:
 	.size	longlongs, 104
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	__builtin_clrsb, i32
 	.functype	__builtin_clrsbl, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strcpy-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strcpy-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -66,7 +66,7 @@ main:                                   # @main
 	i32.gt_s	$push2=, $pop1, $pop64
 	i32.select	$push63=, $pop67, $9, $pop2
 	tee_local	$push62=, $9=, $pop63
-	i32.store8	$drop=, 0($pop3), $pop62
+	i32.store8	0($pop3), $pop62
 	i32.const	$push61=, 1
 	i32.add 	$9=, $9, $pop61
 	i32.const	$push60=, 1
@@ -80,7 +80,7 @@ main:                                   # @main
 	i32.const	$push70=, u2
 	i32.add 	$push5=, $pop4, $pop70
 	i32.const	$push69=, 0
-	i32.store8	$drop=, 0($pop5), $pop69
+	i32.store8	0($pop5), $pop69
 	i32.call	$push6=, strcpy@FUNCTION, $1, $3
 	i32.ne  	$push7=, $pop6, $1
 	br_if   	6, $pop7        # 6: down to label1
@@ -286,7 +286,7 @@ u2:
 	.size	u2, 112
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-18.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-18.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -20,7 +20,7 @@ test2:                                  # @test2
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.load	$push0=, 0($0):p2align=0
-	i64.store	$drop=, 0($0):p2align=0, $pop0
+	i64.store	0($0):p2align=0, $pop0
 	block
 	i32.const	$push1=, 1
 	i32.eqz 	$push2=, $pop1
@@ -109,9 +109,9 @@ main:                                   # @main
 	i32.const	$push5=, 16
 	i32.sub 	$push11=, $pop4, $pop5
 	tee_local	$push10=, $0=, $pop11
-	i32.store	$drop=, __stack_pointer($pop6), $pop10
+	i32.store	__stack_pointer($pop6), $pop10
 	i64.load	$push0=, 4($0):p2align=2
-	i64.store	$drop=, 4($0):p2align=2, $pop0
+	i64.store	4($0):p2align=2, $pop0
 	block
 	i32.const	$push1=, 1
 	i32.eqz 	$push12=, $pop1
@@ -120,7 +120,7 @@ main:                                   # @main
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.store	__stack_pointer($pop9), $pop8
 	i32.const	$push2=, 0
 	return  	$pop2
 .LBB7_2:                                # %if.then.i
@@ -132,6 +132,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end7-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	mempcpy, i32, i32, i32, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050316-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050316-1.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -37,9 +37,9 @@ test3:                                  # @test3
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 0
-	i32.store	$drop=, 0($pop1), $pop2
+	i32.store	0($pop1), $pop2
 	i32.const	$push3=, 0
-	i32.store	$drop=, 0($0), $pop3
+	i32.store	0($0), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -58,7 +58,7 @@ test4:                                  # @test4
 	i32.shl 	$push1=, $2, $pop0
 	i32.or  	$push4=, $pop3, $pop1
 	i64.extend_s/i32	$push5=, $pop4
-	i64.store	$drop=, 0($0), $pop5
+	i64.store	0($0), $pop5
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -73,8 +73,8 @@ test5:                                  # @test5
 # BB#0:                                 # %entry
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $0, $pop0
-	i32.store	$drop=, 0($pop1), $2
-	i32.store	$drop=, 0($0), $1
+	i32.store	0($pop1), $2
+	i32.store	0($0), $1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end4:
@@ -94,4 +94,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

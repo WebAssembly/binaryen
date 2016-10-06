@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030715-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030715-1.c"
 	.section	.text.ap_check_cmd_context,"ax",@progbits
 	.hidden	ap_check_cmd_context
 	.globl	ap_check_cmd_context
@@ -39,7 +39,7 @@ server_type:                            # @server_type
 .LBB1_2:                                # %if.end9
 	end_block                       # label1:
 	i32.const	$push4=, 0
-	i32.store	$drop=, ap_standalone($pop4), $3
+	i32.store	ap_standalone($pop4), $3
 	i32.const	$4=, 0
 .LBB1_3:                                # %cleanup
 	end_block                       # label0:
@@ -58,7 +58,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$drop=, ap_standalone($pop1), $pop0
+	i32.store	ap_standalone($pop1), $pop0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -92,5 +92,5 @@ ap_standalone:
 	.size	.L.str.2, 50
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcmp, i32, i32, i32

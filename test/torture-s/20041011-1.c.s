@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041011-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041011-1.c"
 	.section	.text.t1,"ax",@progbits
 	.hidden	t1
 	.globl	t1
@@ -82,65 +82,65 @@ t1:                                     # @t1
 	i32.const	$push39=, 0
 	i32.load	$32=, gvol+120($pop39)
 	i32.const	$push38=, 0
-	i32.store	$drop=, gvol+4($pop38), $3
+	i32.store	gvol+4($pop38), $3
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+8($pop37), $4
+	i32.store	gvol+8($pop37), $4
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+12($pop36), $5
+	i32.store	gvol+12($pop36), $5
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+16($pop35), $6
+	i32.store	gvol+16($pop35), $6
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+20($pop34), $7
+	i32.store	gvol+20($pop34), $7
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+24($pop33), $8
+	i32.store	gvol+24($pop33), $8
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+28($pop32), $9
+	i32.store	gvol+28($pop32), $9
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+32($pop31), $10
+	i32.store	gvol+32($pop31), $10
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+36($pop30), $11
+	i32.store	gvol+36($pop30), $11
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+40($pop29), $12
+	i32.store	gvol+40($pop29), $12
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+44($pop28), $13
+	i32.store	gvol+44($pop28), $13
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+48($pop27), $14
+	i32.store	gvol+48($pop27), $14
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+52($pop26), $15
+	i32.store	gvol+52($pop26), $15
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+56($pop25), $16
+	i32.store	gvol+56($pop25), $16
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+60($pop24), $17
+	i32.store	gvol+60($pop24), $17
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+64($pop23), $18
+	i32.store	gvol+64($pop23), $18
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+68($pop22), $19
+	i32.store	gvol+68($pop22), $19
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+72($pop21), $20
+	i32.store	gvol+72($pop21), $20
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+76($pop20), $21
+	i32.store	gvol+76($pop20), $21
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+80($pop19), $22
+	i32.store	gvol+80($pop19), $22
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+84($pop18), $23
+	i32.store	gvol+84($pop18), $23
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+88($pop17), $24
+	i32.store	gvol+88($pop17), $24
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+92($pop16), $25
+	i32.store	gvol+92($pop16), $25
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+96($pop15), $26
+	i32.store	gvol+96($pop15), $26
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+100($pop14), $27
+	i32.store	gvol+100($pop14), $27
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+104($pop13), $28
+	i32.store	gvol+104($pop13), $28
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+108($pop12), $29
+	i32.store	gvol+108($pop12), $29
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+112($pop11), $30
+	i32.store	gvol+112($pop11), $30
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+116($pop10), $31
+	i32.store	gvol+116($pop10), $31
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+120($pop9), $32
+	i32.store	gvol+120($pop9), $32
 	i32.const	$push8=, -1
 	i32.add 	$push7=, $0, $pop8
 	tee_local	$push6=, $0=, $pop7
@@ -238,65 +238,65 @@ t2:                                     # @t2
 	i32.const	$push38=, 0
 	i32.load	$32=, gvol+120($pop38)
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+4($pop37), $3
+	i32.store	gvol+4($pop37), $3
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+8($pop36), $4
+	i32.store	gvol+8($pop36), $4
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+12($pop35), $5
+	i32.store	gvol+12($pop35), $5
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+16($pop34), $6
+	i32.store	gvol+16($pop34), $6
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+20($pop33), $7
+	i32.store	gvol+20($pop33), $7
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+24($pop32), $8
+	i32.store	gvol+24($pop32), $8
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+28($pop31), $9
+	i32.store	gvol+28($pop31), $9
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+32($pop30), $10
+	i32.store	gvol+32($pop30), $10
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+36($pop29), $11
+	i32.store	gvol+36($pop29), $11
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+40($pop28), $12
+	i32.store	gvol+40($pop28), $12
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+44($pop27), $13
+	i32.store	gvol+44($pop27), $13
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+48($pop26), $14
+	i32.store	gvol+48($pop26), $14
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+52($pop25), $15
+	i32.store	gvol+52($pop25), $15
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+56($pop24), $16
+	i32.store	gvol+56($pop24), $16
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+60($pop23), $17
+	i32.store	gvol+60($pop23), $17
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+64($pop22), $18
+	i32.store	gvol+64($pop22), $18
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+68($pop21), $19
+	i32.store	gvol+68($pop21), $19
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+72($pop20), $20
+	i32.store	gvol+72($pop20), $20
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+76($pop19), $21
+	i32.store	gvol+76($pop19), $21
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+80($pop18), $22
+	i32.store	gvol+80($pop18), $22
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+84($pop17), $23
+	i32.store	gvol+84($pop17), $23
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+88($pop16), $24
+	i32.store	gvol+88($pop16), $24
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+92($pop15), $25
+	i32.store	gvol+92($pop15), $25
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+96($pop14), $26
+	i32.store	gvol+96($pop14), $26
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+100($pop13), $27
+	i32.store	gvol+100($pop13), $27
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+104($pop12), $28
+	i32.store	gvol+104($pop12), $28
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+108($pop11), $29
+	i32.store	gvol+108($pop11), $29
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+112($pop10), $30
+	i32.store	gvol+112($pop10), $30
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+116($pop9), $31
+	i32.store	gvol+116($pop9), $31
 	i32.const	$push8=, 0
-	i32.store	$drop=, gvol+120($pop8), $32
+	i32.store	gvol+120($pop8), $32
 	i32.const	$push7=, -1
 	i32.add 	$push6=, $0, $pop7
 	tee_local	$push5=, $0=, $pop6
@@ -398,65 +398,65 @@ t3:                                     # @t3
 	i32.const	$push39=, 0
 	i32.load	$32=, gvol+120($pop39)
 	i32.const	$push38=, 0
-	i32.store	$drop=, gvol+4($pop38), $3
+	i32.store	gvol+4($pop38), $3
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+8($pop37), $4
+	i32.store	gvol+8($pop37), $4
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+12($pop36), $5
+	i32.store	gvol+12($pop36), $5
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+16($pop35), $6
+	i32.store	gvol+16($pop35), $6
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+20($pop34), $7
+	i32.store	gvol+20($pop34), $7
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+24($pop33), $8
+	i32.store	gvol+24($pop33), $8
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+28($pop32), $9
+	i32.store	gvol+28($pop32), $9
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+32($pop31), $10
+	i32.store	gvol+32($pop31), $10
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+36($pop30), $11
+	i32.store	gvol+36($pop30), $11
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+40($pop29), $12
+	i32.store	gvol+40($pop29), $12
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+44($pop28), $13
+	i32.store	gvol+44($pop28), $13
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+48($pop27), $14
+	i32.store	gvol+48($pop27), $14
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+52($pop26), $15
+	i32.store	gvol+52($pop26), $15
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+56($pop25), $16
+	i32.store	gvol+56($pop25), $16
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+60($pop24), $17
+	i32.store	gvol+60($pop24), $17
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+64($pop23), $18
+	i32.store	gvol+64($pop23), $18
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+68($pop22), $19
+	i32.store	gvol+68($pop22), $19
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+72($pop21), $20
+	i32.store	gvol+72($pop21), $20
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+76($pop20), $21
+	i32.store	gvol+76($pop20), $21
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+80($pop19), $22
+	i32.store	gvol+80($pop19), $22
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+84($pop18), $23
+	i32.store	gvol+84($pop18), $23
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+88($pop17), $24
+	i32.store	gvol+88($pop17), $24
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+92($pop16), $25
+	i32.store	gvol+92($pop16), $25
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+96($pop15), $26
+	i32.store	gvol+96($pop15), $26
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+100($pop14), $27
+	i32.store	gvol+100($pop14), $27
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+104($pop13), $28
+	i32.store	gvol+104($pop13), $28
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+108($pop12), $29
+	i32.store	gvol+108($pop12), $29
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+112($pop11), $30
+	i32.store	gvol+112($pop11), $30
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+116($pop10), $31
+	i32.store	gvol+116($pop10), $31
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+120($pop9), $32
+	i32.store	gvol+120($pop9), $32
 	i32.const	$push8=, -1
 	i32.add 	$push7=, $0, $pop8
 	tee_local	$push6=, $0=, $pop7
@@ -554,65 +554,65 @@ t4:                                     # @t4
 	i32.const	$push38=, 0
 	i32.load	$32=, gvol+120($pop38)
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+4($pop37), $3
+	i32.store	gvol+4($pop37), $3
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+8($pop36), $4
+	i32.store	gvol+8($pop36), $4
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+12($pop35), $5
+	i32.store	gvol+12($pop35), $5
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+16($pop34), $6
+	i32.store	gvol+16($pop34), $6
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+20($pop33), $7
+	i32.store	gvol+20($pop33), $7
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+24($pop32), $8
+	i32.store	gvol+24($pop32), $8
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+28($pop31), $9
+	i32.store	gvol+28($pop31), $9
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+32($pop30), $10
+	i32.store	gvol+32($pop30), $10
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+36($pop29), $11
+	i32.store	gvol+36($pop29), $11
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+40($pop28), $12
+	i32.store	gvol+40($pop28), $12
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+44($pop27), $13
+	i32.store	gvol+44($pop27), $13
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+48($pop26), $14
+	i32.store	gvol+48($pop26), $14
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+52($pop25), $15
+	i32.store	gvol+52($pop25), $15
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+56($pop24), $16
+	i32.store	gvol+56($pop24), $16
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+60($pop23), $17
+	i32.store	gvol+60($pop23), $17
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+64($pop22), $18
+	i32.store	gvol+64($pop22), $18
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+68($pop21), $19
+	i32.store	gvol+68($pop21), $19
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+72($pop20), $20
+	i32.store	gvol+72($pop20), $20
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+76($pop19), $21
+	i32.store	gvol+76($pop19), $21
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+80($pop18), $22
+	i32.store	gvol+80($pop18), $22
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+84($pop17), $23
+	i32.store	gvol+84($pop17), $23
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+88($pop16), $24
+	i32.store	gvol+88($pop16), $24
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+92($pop15), $25
+	i32.store	gvol+92($pop15), $25
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+96($pop14), $26
+	i32.store	gvol+96($pop14), $26
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+100($pop13), $27
+	i32.store	gvol+100($pop13), $27
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+104($pop12), $28
+	i32.store	gvol+104($pop12), $28
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+108($pop11), $29
+	i32.store	gvol+108($pop11), $29
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+112($pop10), $30
+	i32.store	gvol+112($pop10), $30
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+116($pop9), $31
+	i32.store	gvol+116($pop9), $31
 	i32.const	$push8=, 0
-	i32.store	$drop=, gvol+120($pop8), $32
+	i32.store	gvol+120($pop8), $32
 	i32.const	$push7=, -1
 	i32.add 	$push6=, $0, $pop7
 	tee_local	$push5=, $0=, $pop6
@@ -712,65 +712,65 @@ t5:                                     # @t5
 	i32.const	$push37=, 0
 	i32.load	$32=, gvol+120($pop37)
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+4($pop36), $3
+	i32.store	gvol+4($pop36), $3
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+8($pop35), $4
+	i32.store	gvol+8($pop35), $4
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+12($pop34), $5
+	i32.store	gvol+12($pop34), $5
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+16($pop33), $6
+	i32.store	gvol+16($pop33), $6
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+20($pop32), $7
+	i32.store	gvol+20($pop32), $7
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+24($pop31), $8
+	i32.store	gvol+24($pop31), $8
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+28($pop30), $9
+	i32.store	gvol+28($pop30), $9
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+32($pop29), $10
+	i32.store	gvol+32($pop29), $10
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+36($pop28), $11
+	i32.store	gvol+36($pop28), $11
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+40($pop27), $12
+	i32.store	gvol+40($pop27), $12
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+44($pop26), $13
+	i32.store	gvol+44($pop26), $13
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+48($pop25), $14
+	i32.store	gvol+48($pop25), $14
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+52($pop24), $15
+	i32.store	gvol+52($pop24), $15
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+56($pop23), $16
+	i32.store	gvol+56($pop23), $16
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+60($pop22), $17
+	i32.store	gvol+60($pop22), $17
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+64($pop21), $18
+	i32.store	gvol+64($pop21), $18
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+68($pop20), $19
+	i32.store	gvol+68($pop20), $19
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+72($pop19), $20
+	i32.store	gvol+72($pop19), $20
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+76($pop18), $21
+	i32.store	gvol+76($pop18), $21
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+80($pop17), $22
+	i32.store	gvol+80($pop17), $22
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+84($pop16), $23
+	i32.store	gvol+84($pop16), $23
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+88($pop15), $24
+	i32.store	gvol+88($pop15), $24
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+92($pop14), $25
+	i32.store	gvol+92($pop14), $25
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+96($pop13), $26
+	i32.store	gvol+96($pop13), $26
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+100($pop12), $27
+	i32.store	gvol+100($pop12), $27
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+104($pop11), $28
+	i32.store	gvol+104($pop11), $28
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+108($pop10), $29
+	i32.store	gvol+108($pop10), $29
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+112($pop9), $30
+	i32.store	gvol+112($pop9), $30
 	i32.const	$push8=, 0
-	i32.store	$drop=, gvol+116($pop8), $31
+	i32.store	gvol+116($pop8), $31
 	i32.const	$push7=, 0
-	i32.store	$drop=, gvol+120($pop7), $32
+	i32.store	gvol+120($pop7), $32
 	i32.const	$push6=, -1
 	i32.add 	$push5=, $0, $pop6
 	tee_local	$push4=, $0=, $pop5
@@ -869,65 +869,65 @@ t6:                                     # @t6
 	i32.const	$push37=, 0
 	i32.load	$31=, gvol+120($pop37)
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+4($pop36), $2
+	i32.store	gvol+4($pop36), $2
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+8($pop35), $3
+	i32.store	gvol+8($pop35), $3
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+12($pop34), $4
+	i32.store	gvol+12($pop34), $4
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+16($pop33), $5
+	i32.store	gvol+16($pop33), $5
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+20($pop32), $6
+	i32.store	gvol+20($pop32), $6
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+24($pop31), $7
+	i32.store	gvol+24($pop31), $7
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+28($pop30), $8
+	i32.store	gvol+28($pop30), $8
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+32($pop29), $9
+	i32.store	gvol+32($pop29), $9
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+36($pop28), $10
+	i32.store	gvol+36($pop28), $10
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+40($pop27), $11
+	i32.store	gvol+40($pop27), $11
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+44($pop26), $12
+	i32.store	gvol+44($pop26), $12
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+48($pop25), $13
+	i32.store	gvol+48($pop25), $13
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+52($pop24), $14
+	i32.store	gvol+52($pop24), $14
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+56($pop23), $15
+	i32.store	gvol+56($pop23), $15
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+60($pop22), $16
+	i32.store	gvol+60($pop22), $16
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+64($pop21), $17
+	i32.store	gvol+64($pop21), $17
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+68($pop20), $18
+	i32.store	gvol+68($pop20), $18
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+72($pop19), $19
+	i32.store	gvol+72($pop19), $19
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+76($pop18), $20
+	i32.store	gvol+76($pop18), $20
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+80($pop17), $21
+	i32.store	gvol+80($pop17), $21
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+84($pop16), $22
+	i32.store	gvol+84($pop16), $22
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+88($pop15), $23
+	i32.store	gvol+88($pop15), $23
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+92($pop14), $24
+	i32.store	gvol+92($pop14), $24
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+96($pop13), $25
+	i32.store	gvol+96($pop13), $25
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+100($pop12), $26
+	i32.store	gvol+100($pop12), $26
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+104($pop11), $27
+	i32.store	gvol+104($pop11), $27
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+108($pop10), $28
+	i32.store	gvol+108($pop10), $28
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+112($pop9), $29
+	i32.store	gvol+112($pop9), $29
 	i32.const	$push8=, 0
-	i32.store	$drop=, gvol+116($pop8), $30
+	i32.store	gvol+116($pop8), $30
 	i32.const	$push7=, 0
-	i32.store	$drop=, gvol+120($pop7), $31
+	i32.store	gvol+120($pop7), $31
 	i32.const	$push6=, -1
 	i32.add 	$push5=, $0, $pop6
 	tee_local	$push4=, $0=, $pop5
@@ -1027,65 +1027,65 @@ t7:                                     # @t7
 	i32.const	$push39=, 0
 	i32.load	$31=, gvol+120($pop39)
 	i32.const	$push38=, 0
-	i32.store	$drop=, gvol+4($pop38), $2
+	i32.store	gvol+4($pop38), $2
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+8($pop37), $3
+	i32.store	gvol+8($pop37), $3
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+12($pop36), $4
+	i32.store	gvol+12($pop36), $4
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+16($pop35), $5
+	i32.store	gvol+16($pop35), $5
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+20($pop34), $6
+	i32.store	gvol+20($pop34), $6
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+24($pop33), $7
+	i32.store	gvol+24($pop33), $7
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+28($pop32), $8
+	i32.store	gvol+28($pop32), $8
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+32($pop31), $9
+	i32.store	gvol+32($pop31), $9
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+36($pop30), $10
+	i32.store	gvol+36($pop30), $10
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+40($pop29), $11
+	i32.store	gvol+40($pop29), $11
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+44($pop28), $12
+	i32.store	gvol+44($pop28), $12
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+48($pop27), $13
+	i32.store	gvol+48($pop27), $13
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+52($pop26), $14
+	i32.store	gvol+52($pop26), $14
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+56($pop25), $15
+	i32.store	gvol+56($pop25), $15
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+60($pop24), $16
+	i32.store	gvol+60($pop24), $16
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+64($pop23), $17
+	i32.store	gvol+64($pop23), $17
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+68($pop22), $18
+	i32.store	gvol+68($pop22), $18
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+72($pop21), $19
+	i32.store	gvol+72($pop21), $19
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+76($pop20), $20
+	i32.store	gvol+76($pop20), $20
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+80($pop19), $21
+	i32.store	gvol+80($pop19), $21
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+84($pop18), $22
+	i32.store	gvol+84($pop18), $22
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+88($pop17), $23
+	i32.store	gvol+88($pop17), $23
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+92($pop16), $24
+	i32.store	gvol+92($pop16), $24
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+96($pop15), $25
+	i32.store	gvol+96($pop15), $25
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+100($pop14), $26
+	i32.store	gvol+100($pop14), $26
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+104($pop13), $27
+	i32.store	gvol+104($pop13), $27
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+108($pop12), $28
+	i32.store	gvol+108($pop12), $28
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+112($pop11), $29
+	i32.store	gvol+112($pop11), $29
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+116($pop10), $30
+	i32.store	gvol+116($pop10), $30
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+120($pop9), $31
+	i32.store	gvol+120($pop9), $31
 	i32.const	$push8=, -1
 	i32.add 	$push7=, $0, $pop8
 	tee_local	$push6=, $0=, $pop7
@@ -1185,65 +1185,65 @@ t8:                                     # @t8
 	i32.const	$push39=, 0
 	i32.load	$31=, gvol+120($pop39)
 	i32.const	$push38=, 0
-	i32.store	$drop=, gvol+4($pop38), $2
+	i32.store	gvol+4($pop38), $2
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+8($pop37), $3
+	i32.store	gvol+8($pop37), $3
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+12($pop36), $4
+	i32.store	gvol+12($pop36), $4
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+16($pop35), $5
+	i32.store	gvol+16($pop35), $5
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+20($pop34), $6
+	i32.store	gvol+20($pop34), $6
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+24($pop33), $7
+	i32.store	gvol+24($pop33), $7
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+28($pop32), $8
+	i32.store	gvol+28($pop32), $8
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+32($pop31), $9
+	i32.store	gvol+32($pop31), $9
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+36($pop30), $10
+	i32.store	gvol+36($pop30), $10
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+40($pop29), $11
+	i32.store	gvol+40($pop29), $11
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+44($pop28), $12
+	i32.store	gvol+44($pop28), $12
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+48($pop27), $13
+	i32.store	gvol+48($pop27), $13
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+52($pop26), $14
+	i32.store	gvol+52($pop26), $14
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+56($pop25), $15
+	i32.store	gvol+56($pop25), $15
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+60($pop24), $16
+	i32.store	gvol+60($pop24), $16
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+64($pop23), $17
+	i32.store	gvol+64($pop23), $17
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+68($pop22), $18
+	i32.store	gvol+68($pop22), $18
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+72($pop21), $19
+	i32.store	gvol+72($pop21), $19
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+76($pop20), $20
+	i32.store	gvol+76($pop20), $20
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+80($pop19), $21
+	i32.store	gvol+80($pop19), $21
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+84($pop18), $22
+	i32.store	gvol+84($pop18), $22
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+88($pop17), $23
+	i32.store	gvol+88($pop17), $23
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+92($pop16), $24
+	i32.store	gvol+92($pop16), $24
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+96($pop15), $25
+	i32.store	gvol+96($pop15), $25
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+100($pop14), $26
+	i32.store	gvol+100($pop14), $26
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+104($pop13), $27
+	i32.store	gvol+104($pop13), $27
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+108($pop12), $28
+	i32.store	gvol+108($pop12), $28
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+112($pop11), $29
+	i32.store	gvol+112($pop11), $29
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+116($pop10), $30
+	i32.store	gvol+116($pop10), $30
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+120($pop9), $31
+	i32.store	gvol+120($pop9), $31
 	i32.const	$push8=, -1
 	i32.add 	$push7=, $0, $pop8
 	tee_local	$push6=, $0=, $pop7
@@ -1343,65 +1343,65 @@ t9:                                     # @t9
 	i32.const	$push39=, 0
 	i32.load	$31=, gvol+120($pop39)
 	i32.const	$push38=, 0
-	i32.store	$drop=, gvol+4($pop38), $2
+	i32.store	gvol+4($pop38), $2
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+8($pop37), $3
+	i32.store	gvol+8($pop37), $3
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+12($pop36), $4
+	i32.store	gvol+12($pop36), $4
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+16($pop35), $5
+	i32.store	gvol+16($pop35), $5
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+20($pop34), $6
+	i32.store	gvol+20($pop34), $6
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+24($pop33), $7
+	i32.store	gvol+24($pop33), $7
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+28($pop32), $8
+	i32.store	gvol+28($pop32), $8
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+32($pop31), $9
+	i32.store	gvol+32($pop31), $9
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+36($pop30), $10
+	i32.store	gvol+36($pop30), $10
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+40($pop29), $11
+	i32.store	gvol+40($pop29), $11
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+44($pop28), $12
+	i32.store	gvol+44($pop28), $12
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+48($pop27), $13
+	i32.store	gvol+48($pop27), $13
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+52($pop26), $14
+	i32.store	gvol+52($pop26), $14
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+56($pop25), $15
+	i32.store	gvol+56($pop25), $15
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+60($pop24), $16
+	i32.store	gvol+60($pop24), $16
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+64($pop23), $17
+	i32.store	gvol+64($pop23), $17
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+68($pop22), $18
+	i32.store	gvol+68($pop22), $18
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+72($pop21), $19
+	i32.store	gvol+72($pop21), $19
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+76($pop20), $20
+	i32.store	gvol+76($pop20), $20
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+80($pop19), $21
+	i32.store	gvol+80($pop19), $21
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+84($pop18), $22
+	i32.store	gvol+84($pop18), $22
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+88($pop17), $23
+	i32.store	gvol+88($pop17), $23
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+92($pop16), $24
+	i32.store	gvol+92($pop16), $24
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+96($pop15), $25
+	i32.store	gvol+96($pop15), $25
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+100($pop14), $26
+	i32.store	gvol+100($pop14), $26
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+104($pop13), $27
+	i32.store	gvol+104($pop13), $27
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+108($pop12), $28
+	i32.store	gvol+108($pop12), $28
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+112($pop11), $29
+	i32.store	gvol+112($pop11), $29
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+116($pop10), $30
+	i32.store	gvol+116($pop10), $30
 	i32.const	$push9=, 0
-	i32.store	$drop=, gvol+120($pop9), $31
+	i32.store	gvol+120($pop9), $31
 	i32.const	$push8=, -1
 	i32.add 	$push7=, $0, $pop8
 	tee_local	$push6=, $0=, $pop7
@@ -1503,65 +1503,65 @@ t10:                                    # @t10
 	i32.const	$push40=, 0
 	i32.load	$32=, gvol+120($pop40)
 	i32.const	$push39=, 0
-	i32.store	$drop=, gvol+4($pop39), $3
+	i32.store	gvol+4($pop39), $3
 	i32.const	$push38=, 0
-	i32.store	$drop=, gvol+8($pop38), $4
+	i32.store	gvol+8($pop38), $4
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+12($pop37), $5
+	i32.store	gvol+12($pop37), $5
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+16($pop36), $6
+	i32.store	gvol+16($pop36), $6
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+20($pop35), $7
+	i32.store	gvol+20($pop35), $7
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+24($pop34), $8
+	i32.store	gvol+24($pop34), $8
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+28($pop33), $9
+	i32.store	gvol+28($pop33), $9
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+32($pop32), $10
+	i32.store	gvol+32($pop32), $10
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+36($pop31), $11
+	i32.store	gvol+36($pop31), $11
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+40($pop30), $12
+	i32.store	gvol+40($pop30), $12
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+44($pop29), $13
+	i32.store	gvol+44($pop29), $13
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+48($pop28), $14
+	i32.store	gvol+48($pop28), $14
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+52($pop27), $15
+	i32.store	gvol+52($pop27), $15
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+56($pop26), $16
+	i32.store	gvol+56($pop26), $16
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+60($pop25), $17
+	i32.store	gvol+60($pop25), $17
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+64($pop24), $18
+	i32.store	gvol+64($pop24), $18
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+68($pop23), $19
+	i32.store	gvol+68($pop23), $19
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+72($pop22), $20
+	i32.store	gvol+72($pop22), $20
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+76($pop21), $21
+	i32.store	gvol+76($pop21), $21
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+80($pop20), $22
+	i32.store	gvol+80($pop20), $22
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+84($pop19), $23
+	i32.store	gvol+84($pop19), $23
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+88($pop18), $24
+	i32.store	gvol+88($pop18), $24
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+92($pop17), $25
+	i32.store	gvol+92($pop17), $25
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+96($pop16), $26
+	i32.store	gvol+96($pop16), $26
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+100($pop15), $27
+	i32.store	gvol+100($pop15), $27
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+104($pop14), $28
+	i32.store	gvol+104($pop14), $28
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+108($pop13), $29
+	i32.store	gvol+108($pop13), $29
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+112($pop12), $30
+	i32.store	gvol+112($pop12), $30
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+116($pop11), $31
+	i32.store	gvol+116($pop11), $31
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+120($pop10), $32
+	i32.store	gvol+120($pop10), $32
 	i32.const	$push9=, -1
 	i32.add 	$push8=, $0, $pop9
 	tee_local	$push7=, $0=, $pop8
@@ -1662,65 +1662,65 @@ t11:                                    # @t11
 	i32.const	$push40=, 0
 	i32.load	$32=, gvol+120($pop40)
 	i32.const	$push39=, 0
-	i32.store	$drop=, gvol+4($pop39), $3
+	i32.store	gvol+4($pop39), $3
 	i32.const	$push38=, 0
-	i32.store	$drop=, gvol+8($pop38), $4
+	i32.store	gvol+8($pop38), $4
 	i32.const	$push37=, 0
-	i32.store	$drop=, gvol+12($pop37), $5
+	i32.store	gvol+12($pop37), $5
 	i32.const	$push36=, 0
-	i32.store	$drop=, gvol+16($pop36), $6
+	i32.store	gvol+16($pop36), $6
 	i32.const	$push35=, 0
-	i32.store	$drop=, gvol+20($pop35), $7
+	i32.store	gvol+20($pop35), $7
 	i32.const	$push34=, 0
-	i32.store	$drop=, gvol+24($pop34), $8
+	i32.store	gvol+24($pop34), $8
 	i32.const	$push33=, 0
-	i32.store	$drop=, gvol+28($pop33), $9
+	i32.store	gvol+28($pop33), $9
 	i32.const	$push32=, 0
-	i32.store	$drop=, gvol+32($pop32), $10
+	i32.store	gvol+32($pop32), $10
 	i32.const	$push31=, 0
-	i32.store	$drop=, gvol+36($pop31), $11
+	i32.store	gvol+36($pop31), $11
 	i32.const	$push30=, 0
-	i32.store	$drop=, gvol+40($pop30), $12
+	i32.store	gvol+40($pop30), $12
 	i32.const	$push29=, 0
-	i32.store	$drop=, gvol+44($pop29), $13
+	i32.store	gvol+44($pop29), $13
 	i32.const	$push28=, 0
-	i32.store	$drop=, gvol+48($pop28), $14
+	i32.store	gvol+48($pop28), $14
 	i32.const	$push27=, 0
-	i32.store	$drop=, gvol+52($pop27), $15
+	i32.store	gvol+52($pop27), $15
 	i32.const	$push26=, 0
-	i32.store	$drop=, gvol+56($pop26), $16
+	i32.store	gvol+56($pop26), $16
 	i32.const	$push25=, 0
-	i32.store	$drop=, gvol+60($pop25), $17
+	i32.store	gvol+60($pop25), $17
 	i32.const	$push24=, 0
-	i32.store	$drop=, gvol+64($pop24), $18
+	i32.store	gvol+64($pop24), $18
 	i32.const	$push23=, 0
-	i32.store	$drop=, gvol+68($pop23), $19
+	i32.store	gvol+68($pop23), $19
 	i32.const	$push22=, 0
-	i32.store	$drop=, gvol+72($pop22), $20
+	i32.store	gvol+72($pop22), $20
 	i32.const	$push21=, 0
-	i32.store	$drop=, gvol+76($pop21), $21
+	i32.store	gvol+76($pop21), $21
 	i32.const	$push20=, 0
-	i32.store	$drop=, gvol+80($pop20), $22
+	i32.store	gvol+80($pop20), $22
 	i32.const	$push19=, 0
-	i32.store	$drop=, gvol+84($pop19), $23
+	i32.store	gvol+84($pop19), $23
 	i32.const	$push18=, 0
-	i32.store	$drop=, gvol+88($pop18), $24
+	i32.store	gvol+88($pop18), $24
 	i32.const	$push17=, 0
-	i32.store	$drop=, gvol+92($pop17), $25
+	i32.store	gvol+92($pop17), $25
 	i32.const	$push16=, 0
-	i32.store	$drop=, gvol+96($pop16), $26
+	i32.store	gvol+96($pop16), $26
 	i32.const	$push15=, 0
-	i32.store	$drop=, gvol+100($pop15), $27
+	i32.store	gvol+100($pop15), $27
 	i32.const	$push14=, 0
-	i32.store	$drop=, gvol+104($pop14), $28
+	i32.store	gvol+104($pop14), $28
 	i32.const	$push13=, 0
-	i32.store	$drop=, gvol+108($pop13), $29
+	i32.store	gvol+108($pop13), $29
 	i32.const	$push12=, 0
-	i32.store	$drop=, gvol+112($pop12), $30
+	i32.store	gvol+112($pop12), $30
 	i32.const	$push11=, 0
-	i32.store	$drop=, gvol+116($pop11), $31
+	i32.store	gvol+116($pop11), $31
 	i32.const	$push10=, 0
-	i32.store	$drop=, gvol+120($pop10), $32
+	i32.store	gvol+120($pop10), $32
 	i32.const	$push9=, -1
 	i32.add 	$push8=, $0, $pop9
 	tee_local	$push7=, $0=, $pop8
@@ -1761,7 +1761,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i64.const	$push0=, 100
-	i64.store	$drop=, gull($pop1), $pop0
+	i64.store	gull($pop1), $pop0
 	block
 	i32.const	$push100=, 3
 	i64.const	$push2=, -1
@@ -1972,6 +1972,6 @@ gull:
 	.size	gull, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

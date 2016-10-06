@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950221-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950221-1.c"
 	.section	.text.g1,"ax",@progbits
 	.hidden	g1
 	.globl	g1
@@ -77,11 +77,11 @@ main:                                   # @main
 # BB#0:                                 # %alabel.i
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
-	i32.store	$drop=, el($pop0), $pop5
+	i32.store	el($pop0), $pop5
 	i32.const	$push4=, 0
 	i32.load	$push1=, parsefile($pop4)
 	i32.const	$push2=, -559038737
-	i32.store	$drop=, 0($pop1), $pop2
+	i32.store	0($pop1), $pop2
 	i32.const	$push3=, -559038737
 	i32.call	$drop=, g2@FUNCTION, $pop3
 	unreachable
@@ -126,6 +126,6 @@ filler:
 	.size	filler, 522240
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

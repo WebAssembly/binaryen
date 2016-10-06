@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56962.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56962.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -57,7 +57,7 @@ foo:                                    # @foo
 	i32.shl 	$push12=, $pop11, $pop28
 	i32.add 	$push13=, $0, $pop12
 	i64.load	$push14=, 0($pop13)
-	i64.store	$drop=, 0($pop16), $pop14
+	i64.store	0($pop16), $pop14
 	i32.add 	$push17=, $3, $1
 	i32.const	$push27=, 3
 	i32.shl 	$push18=, $pop17, $pop27
@@ -70,7 +70,7 @@ foo:                                    # @foo
 	i32.shl 	$push23=, $pop22, $pop25
 	i32.add 	$push24=, $0, $pop23
 	i64.add 	$push20=, $4, $6
-	i64.store	$drop=, 0($pop24), $pop20
+	i64.store	0($pop24), $pop20
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -103,5 +103,5 @@ v:
 	.size	v, 1152
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

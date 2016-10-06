@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-3.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-3.c"
 	.section	.text.simple_vol_global,"ax",@progbits
 	.hidden	simple_vol_global
 	.globl	simple_vol_global
@@ -108,10 +108,10 @@ main:                                   # @main
 	call    	simple_vol_file@FUNCTION
 	i32.const	$push1=, 0
 	i32.const	$push0=, str
-	i32.store	$drop=, vol_str+16($pop1), $pop0
+	i32.store	vol_str+16($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push3=, str
-	i32.store	$drop=, str+16($pop4), $pop3
+	i32.store	str+16($pop4), $pop3
 	call    	expr_vol_global@FUNCTION
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
@@ -264,5 +264,5 @@ stat_int_arr:
 	.size	stat_int_arr, 400
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

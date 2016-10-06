@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000815-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000815-1.c"
 	.section	.text.invalidate_memory,"ax",@progbits
 	.hidden	invalidate_memory
 	.globl	invalidate_memory
@@ -117,7 +117,7 @@ main:                                   # @main
 	i32.const	$push9=, 48
 	i32.sub 	$push24=, $pop8, $pop9
 	tee_local	$push23=, $3=, $pop24
-	i32.store	$drop=, __stack_pointer($pop10), $pop23
+	i32.store	__stack_pointer($pop10), $pop23
 	i32.const	$1=, 0
 	i32.const	$push14=, 8
 	i32.add 	$push15=, $3, $pop14
@@ -127,9 +127,9 @@ main:                                   # @main
 	i32.const	$push21=, 0
 	i32.const	$push16=, 8
 	i32.add 	$push17=, $3, $pop16
-	i32.store	$drop=, table($pop21), $pop17
+	i32.store	table($pop21), $pop17
 	i32.const	$push20=, 1
-	i32.store8	$drop=, 44($3), $pop20
+	i32.store8	44($3), $pop20
 	i32.const	$push18=, 8
 	i32.add 	$push19=, $3, $pop18
 	copy_local	$2=, $pop19
@@ -182,7 +182,7 @@ main:                                   # @main
 	i32.const	$push13=, 0
 	i32.const	$push11=, 48
 	i32.add 	$push12=, $3, $pop11
-	i32.store	$drop=, __stack_pointer($pop13), $pop12
+	i32.store	__stack_pointer($pop13), $pop12
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB3_8:                                # %if.then.i
@@ -201,5 +201,5 @@ table:
 	.size	table, 128
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960802-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960802-1.c"
 	.section	.text.f1,"ax",@progbits
 	.hidden	f1
 	.globl	f1
@@ -34,7 +34,7 @@ f3:                                     # @f3
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, val($pop0), $0
+	i32.store	val($pop0), $0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -48,7 +48,7 @@ f4:                                     # @f4
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1577058610
-	i32.store	$drop=, val($pop1), $pop0
+	i32.store	val($pop1), $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -63,7 +63,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1577058610
-	i32.store	$drop=, val($pop1), $pop0
+	i32.store	val($pop1), $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -81,5 +81,5 @@ val:
 	.size	val, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

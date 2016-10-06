@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40668.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40668.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -29,7 +29,7 @@ bar:                                    # @bar
 	i32.const	$push11=, .Lswitch.table
 	i32.add 	$push12=, $pop10, $pop11
 	i32.load	$push13=, 0($pop12)
-	i32.store	$drop=, 0($1):p2align=0, $pop13
+	i32.store	0($1):p2align=0, $pop13
 .LBB0_3:                                # %sw.epilog
 	end_block                       # label0:
                                         # fallthrough-return
@@ -66,4 +66,4 @@ main:                                   # @main
 	.size	.Lswitch.table, 36
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

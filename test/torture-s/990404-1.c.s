@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990404-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990404-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,7 +9,7 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$11=, -1
-                                        # implicit-def: %vreg123
+                                        # implicit-def: %vreg122
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
@@ -115,7 +115,7 @@ main:                                   # @main
 	i32.const	$push89=, x
 	i32.add 	$push11=, $pop10, $pop89
 	i32.const	$push88=, 0
-	i32.store	$drop=, 0($pop11), $pop88
+	i32.store	0($pop11), $pop88
 	i32.const	$push87=, 1
 	i32.add 	$push86=, $11, $pop87
 	tee_local	$push85=, $11=, $pop86
@@ -154,6 +154,6 @@ x:
 	.size	x, 40
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

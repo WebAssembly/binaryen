@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020418-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020418-1.c"
 	.section	.text.gcc_crash,"ax",@progbits
 	.hidden	gcc_crash
 	.globl	gcc_crash
@@ -25,7 +25,7 @@ gcc_crash:                              # @gcc_crash
 	br_if   	0, $1           # 0: up to label1
 # BB#3:                                 # %if.end6
 	end_loop                        # label2:
-	i32.store	$drop=, 0($0), $2
+	i32.store	0($0), $2
 	return
 .LBB0_4:                                # %if.then
 	end_block                       # label0:
@@ -49,9 +49,9 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.sub 	$push9=, $pop3, $pop4
 	tee_local	$push8=, $0=, $pop9
-	i32.store	$drop=, __stack_pointer($pop5), $pop8
+	i32.store	__stack_pointer($pop5), $pop8
 	i32.const	$push0=, 53
-	i32.store	$drop=, 8($0), $pop0
+	i32.store	8($0), $pop0
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
 	call    	gcc_crash@FUNCTION, $pop7
@@ -63,5 +63,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

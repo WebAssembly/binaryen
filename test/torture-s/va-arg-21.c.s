@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-21.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-21.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,9 +14,9 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.sub 	$push7=, $pop3, $pop4
 	tee_local	$push6=, $0=, $pop7
-	i32.store	$drop=, __stack_pointer($pop5), $pop6
+	i32.store	__stack_pointer($pop5), $pop6
 	i32.const	$push0=, .L.str.1
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	call    	doit@FUNCTION, $0, $0
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
@@ -35,10 +35,10 @@ doit:                                   # @doit
 	i32.call	$2=, malloc@FUNCTION, $pop0
 	i32.const	$push3=, 4
 	i32.call	$3=, malloc@FUNCTION, $pop3
-	i32.store	$drop=, 0($2), $1
+	i32.store	0($2), $1
 	i32.const	$push1=, .L.str
 	i32.call	$drop=, vprintf@FUNCTION, $pop1, $1
-	i32.store	$drop=, 0($3), $1
+	i32.store	0($3), $1
 	i32.const	$push2=, .L.str
 	i32.call	$drop=, vprintf@FUNCTION, $pop2, $1
 	block
@@ -66,7 +66,7 @@ doit:                                   # @doit
 	.size	.L.str.1, 13
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32
 	.functype	malloc, i32, i32
 	.functype	vprintf, i32, i32, i32

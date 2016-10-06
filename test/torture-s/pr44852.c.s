@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44852.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44852.c"
 	.section	.text.sf,"ax",@progbits
 	.hidden	sf
 	.globl	sf
@@ -32,9 +32,9 @@ sf:                                     # @sf
 # BB#3:                                 # %if.then
 	end_loop                        # label2:
 	i32.const	$push4=, 48
-	i32.store8	$drop=, 0($1), $pop4
+	i32.store8	0($1), $pop4
 	i32.const	$push6=, 49
-	i32.store8	$drop=, 0($1), $pop6
+	i32.store8	0($1), $pop6
 	return  	$2
 .LBB0_4:                                # %while.end.loopexit
 	end_block                       # label0:
@@ -42,7 +42,7 @@ sf:                                     # @sf
 	i32.add 	$push7=, $2, $pop1
 	i32.const	$push2=, 1
 	i32.add 	$push5=, $3, $pop2
-	i32.store8	$drop=, 0($pop7), $pop5
+	i32.store8	0($pop7), $pop5
 	copy_local	$push16=, $2
                                         # fallthrough-return: $pop16
 	.endfunc
@@ -63,20 +63,20 @@ main:                                   # @main
 	i32.const	$push19=, 16
 	i32.sub 	$push35=, $pop18, $pop19
 	tee_local	$push34=, $0=, $pop35
-	i32.store	$drop=, __stack_pointer($pop20), $pop34
+	i32.store	__stack_pointer($pop20), $pop34
 	i32.const	$push2=, 14
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, .Lmain.s+6($pop0)
-	i32.store8	$drop=, 0($pop3), $pop1
+	i32.store8	0($pop3), $pop1
 	i32.const	$push5=, 12
 	i32.add 	$push6=, $0, $pop5
 	i32.const	$push33=, 0
 	i32.load16_u	$push4=, .Lmain.s+4($pop33):p2align=0
-	i32.store16	$drop=, 0($pop6), $pop4
+	i32.store16	0($pop6), $pop4
 	i32.const	$push32=, 0
 	i32.load	$push7=, .Lmain.s($pop32):p2align=0
-	i32.store	$drop=, 8($0), $pop7
+	i32.store	8($0), $pop7
 	block
 	i32.const	$push26=, 8
 	i32.add 	$push27=, $0, $pop26
@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	i32.const	$push21=, 16
 	i32.add 	$push22=, $0, $pop21
-	i32.store	$drop=, __stack_pointer($pop23), $pop22
+	i32.store	__stack_pointer($pop23), $pop22
 	i32.const	$push16=, 0
 	return  	$pop16
 .LBB1_3:                                # %if.then
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	.L.str, 7
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

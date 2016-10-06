@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/p18298.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/p18298.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -31,7 +31,7 @@ main:                                   # @main
 # BB#1:                                 # %while.body
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
-	i32.store8	$drop=, s($pop3), $pop2
+	i32.store8	s($pop3), $pop2
 .LBB1_2:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push4=, 0
@@ -50,5 +50,5 @@ s:
 	.size	s, 2048
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcmp, i32, i32, i32

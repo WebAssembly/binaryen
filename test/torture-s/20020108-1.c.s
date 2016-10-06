@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020108-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020108-1.c"
 	.section	.text.ashift_qi_0,"ax",@progbits
 	.hidden	ashift_qi_0
 	.globl	ashift_qi_0
@@ -2570,5 +2570,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end168-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

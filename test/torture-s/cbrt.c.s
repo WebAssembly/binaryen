@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/cbrt.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/cbrt.c"
 	.section	.text.cbrtl,"ax",@progbits
 	.hidden	cbrtl
 	.globl	cbrtl
@@ -15,8 +15,8 @@ cbrtl:                                  # @cbrtl
 	i32.sub 	$push69=, $pop58, $pop59
 	tee_local	$push68=, $6=, $pop69
 	i64.const	$push0=, 0
-	i64.store	$drop=, 8($pop68), $pop0
-	f64.store	$drop=, 0($6), $0
+	i64.store	8($pop68), $pop0
+	f64.store	0($6), $0
 	block
 	i64.reinterpret/f64	$push67=, $0
 	tee_local	$push66=, $1=, $pop67
@@ -43,7 +43,7 @@ cbrtl:                                  # @cbrtl
 	i32.eqz 	$push90=, $pop7
 	br_if   	0, $pop90       # 0: down to label1
 # BB#3:                                 # %if.end13
-	i32.store	$drop=, 4($6), $3
+	i32.store	4($6), $3
 	block
 	block
 	i32.const	$push8=, 1048575
@@ -51,11 +51,11 @@ cbrtl:                                  # @cbrtl
 	br_if   	0, $pop9        # 0: down to label3
 # BB#4:                                 # %if.then18
 	i32.const	$push13=, 1129316352
-	i32.store	$drop=, 12($6), $pop13
+	i32.store	12($6), $pop13
 	f64.load	$push14=, 8($6)
 	f64.mul 	$push72=, $pop14, $0
 	tee_local	$push71=, $5=, $pop72
-	f64.store	$drop=, 8($6), $pop71
+	f64.store	8($6), $pop71
 	i64.reinterpret/f64	$push15=, $5
 	i64.const	$push16=, 32
 	i64.shr_u	$push17=, $pop15, $pop16
@@ -73,7 +73,7 @@ cbrtl:                                  # @cbrtl
 	i32.add 	$3=, $pop11, $pop12
 .LBB0_6:                                # %if.end31
 	end_block                       # label2:
-	i32.store	$drop=, 12($6), $3
+	i32.store	12($6), $3
 	f64.load	$push89=, 8($6)
 	tee_local	$push88=, $5=, $pop89
 	f64.const	$push31=, 0x1.9b6db6db6db6ep0
@@ -95,16 +95,16 @@ cbrtl:                                  # @cbrtl
 	f64.add 	$push34=, $pop32, $pop33
 	f64.mul 	$push83=, $pop88, $pop34
 	tee_local	$push82=, $5=, $pop83
-	f64.store	$drop=, 8($6), $pop82
+	f64.store	8($6), $pop82
 	i32.const	$push35=, 0
-	i32.store	$drop=, 8($6), $pop35
+	i32.store	8($6), $pop35
 	i64.reinterpret/f64	$push36=, $5
 	i64.const	$push37=, 32
 	i64.shr_u	$push38=, $pop36, $pop37
 	i32.wrap/i64	$push39=, $pop38
 	i32.const	$push40=, 1
 	i32.add 	$push41=, $pop39, $pop40
-	i32.store	$drop=, 12($6), $pop41
+	i32.store	12($6), $pop41
 	f64.load	$push81=, 8($6)
 	tee_local	$push80=, $5=, $pop81
 	f64.mul 	$push42=, $5, $5
@@ -117,13 +117,13 @@ cbrtl:                                  # @cbrtl
 	f64.mul 	$push47=, $5, $pop46
 	f64.add 	$push77=, $pop80, $pop47
 	tee_local	$push76=, $5=, $pop77
-	f64.store	$drop=, 8($6), $pop76
+	f64.store	8($6), $pop76
 	i64.reinterpret/f64	$push48=, $5
 	i64.const	$push75=, 32
 	i64.shr_u	$push49=, $pop48, $pop75
 	i32.wrap/i64	$push50=, $pop49
 	i32.or  	$push51=, $pop50, $2
-	i32.store	$drop=, 12($6), $pop51
+	i32.store	12($6), $pop51
 	f64.load	$push74=, 8($6)
 	tee_local	$push73=, $5=, $pop74
 	f64.mul 	$push52=, $5, $5
@@ -155,5 +155,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

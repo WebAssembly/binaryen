@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021120-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021120-2.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -9,11 +9,11 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 10
-	i32.store	$drop=, g1($pop1), $pop0
+	i32.store	g1($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push2=, 7930
 	i32.div_s	$push3=, $pop2, $0
-	i32.store	$drop=, g2($pop4), $pop3
+	i32.store	g2($pop4), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -28,10 +28,10 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 10
-	i32.store	$drop=, g2($pop1), $pop0
+	i32.store	g2($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.const	$push3=, 10
-	i32.store	$drop=, g1($pop4), $pop3
+	i32.store	g1($pop4), $pop3
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -58,5 +58,5 @@ g2:
 	.size	g2, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

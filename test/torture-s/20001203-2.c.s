@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
 	.section	.text.create_array_type,"ax",@progbits
 	.hidden	create_array_type
 	.globl	create_array_type
@@ -15,11 +15,11 @@ create_array_type:                      # @create_array_type
 	br_if   	0, $pop51       # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 1
-	i32.store16	$drop=, 8($0), $pop0
+	i32.store16	8($0), $pop0
 	i32.load	$push1=, 0($1)
 	i32.const	$push2=, 3
 	i32.mul 	$push3=, $pop1, $pop2
-	i32.store	$drop=, 0($0), $pop3
+	i32.store	0($0), $pop3
 	i32.const	$7=, 0
 	block
 	i32.load	$push26=, 4($0)
@@ -44,7 +44,7 @@ create_array_type:                      # @create_array_type
 	i32.const	$push40=, 16
 	i32.add 	$push39=, $3, $pop40
 	tee_local	$push38=, $3=, $pop39
-	i32.store	$drop=, 0($7), $pop38
+	i32.store	0($7), $pop38
 	block
 	i32.const	$push9=, 12
 	i32.add 	$push37=, $1, $pop9
@@ -57,7 +57,7 @@ create_array_type:                      # @create_array_type
 	i32.const	$push11=, 28
 	i32.add 	$push12=, $1, $pop11
 	i32.const	$push13=, 1
-	i32.store	$drop=, 0($pop12), $pop13
+	i32.store	0($pop12), $pop13
 .LBB0_5:                                # %if.end17
 	end_block                       # label3:
 	i32.const	$push19=, 16
@@ -72,7 +72,7 @@ create_array_type:                      # @create_array_type
 	i32.xor 	$push17=, $5, $pop16
 	i32.and 	$push46=, $pop18, $pop17
 	tee_local	$push45=, $3=, $pop46
-	i32.store	$drop=, 0($pop49), $pop45
+	i32.store	0($pop49), $pop45
 	i32.const	$push20=, 8
 	i32.add 	$push21=, $1, $pop20
 	i32.load	$push44=, 0($pop21)
@@ -82,11 +82,11 @@ create_array_type:                      # @create_array_type
 	i32.gt_s	$push24=, $pop22, $pop23
 	i32.select	$push42=, $2, $3, $pop24
 	tee_local	$push41=, $1=, $pop42
-	i32.store	$drop=, 0($6), $pop41
-	i32.store	$drop=, 0($4), $1
+	i32.store	0($6), $pop41
+	i32.store	0($4), $1
 .LBB0_6:                                # %cond.end
 	end_block                       # label2:
-	i32.store	$drop=, 12($0), $7
+	i32.store	12($0), $7
 	return  	$0
 .LBB0_7:                                # %if.then
 	end_block                       # label1:
@@ -121,9 +121,9 @@ get_discrete_bounds:                    # @get_discrete_bounds
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$drop=, 0($0), $pop0
+	i64.store	0($0), $pop0
 	i64.const	$push1=, 2
-	i64.store	$drop=, 0($1), $pop1
+	i64.store	0($1), $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -171,6 +171,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

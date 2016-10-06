@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980701-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980701-1.c"
 	.section	.text.ns_name_skip,"ax",@progbits
 	.hidden	ns_name_skip
 	.globl	ns_name_skip
@@ -9,7 +9,7 @@ ns_name_skip:                           # @ns_name_skip
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.const	$push1=, 0
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -62,6 +62,6 @@ a:
 	.size	a, 2
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

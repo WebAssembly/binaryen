@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991016-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991016-1.c"
 	.section	.text.doit,"ax",@progbits
 	.hidden	doit
 	.globl	doit
@@ -37,7 +37,7 @@ doit:                                   # @doit
 	br_if   	0, $pop7        # 0: up to label3
 # BB#5:                                 # %do.end16
 	end_loop                        # label4:
-	i64.store	$drop=, 0($2), $5
+	i64.store	0($2), $5
 	i64.eqz 	$push3=, $4
 	return  	$pop3
 .LBB0_6:                                # %do.body.preheader
@@ -56,7 +56,7 @@ doit:                                   # @doit
 	br_if   	0, $pop13       # 0: up to label5
 # BB#8:                                 # %do.end
 	end_loop                        # label6:
-	i32.store	$drop=, 0($2), $0
+	i32.store	0($2), $0
 	i32.eqz 	$push5=, $3
 	return  	$pop5
 .LBB0_9:                                # %do.body2.preheader
@@ -75,7 +75,7 @@ doit:                                   # @doit
 	br_if   	0, $pop19       # 0: up to label7
 # BB#11:                                # %do.end7
 	end_loop                        # label8:
-	i32.store	$drop=, 0($2), $0
+	i32.store	0($2), $0
 	i32.eqz 	$push4=, $3
 	return  	$pop4
 .LBB0_12:                               # %sw.default
@@ -101,6 +101,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

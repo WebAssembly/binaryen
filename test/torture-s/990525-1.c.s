@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990525-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990525-1.c"
 	.section	.text.die,"ax",@progbits
 	.hidden	die
 	.globl	die
@@ -36,10 +36,10 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.sub 	$push10=, $pop3, $pop4
 	tee_local	$push9=, $0=, $pop10
-	i32.store	$drop=, __stack_pointer($pop5), $pop9
+	i32.store	__stack_pointer($pop5), $pop9
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0):p2align=2
-	i64.store	$drop=, 8($0):p2align=2, $pop1
+	i64.store	8($0):p2align=2, $pop1
 	i32.const	$push6=, 8
 	i32.add 	$push7=, $0, $pop6
 	call    	die@FUNCTION, $pop7
@@ -59,6 +59,6 @@ main:                                   # @main
 	.size	.Lmain.s, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

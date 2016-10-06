@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050826-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050826-2.c"
 	.section	.text.inet_check_attr,"ax",@progbits
 	.hidden	inet_check_attr
 	.globl	inet_check_attr
@@ -38,7 +38,7 @@ inet_check_attr:                        # @inet_check_attr
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push13=, 4
 	i32.add 	$push5=, $2, $pop13
-	i32.store	$drop=, 0($1), $pop5
+	i32.store	0($1), $pop5
 .LBB0_5:                                # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
@@ -73,51 +73,51 @@ main:                                   # @main
 	i32.const	$push87=, 64
 	i32.sub 	$push151=, $pop86, $pop87
 	tee_local	$push150=, $4=, $pop151
-	i32.store	$drop=, __stack_pointer($pop88), $pop150
+	i32.store	__stack_pointer($pop88), $pop150
 	i64.const	$push0=, 51539607564
-	i64.store	$drop=, 56($4), $pop0
+	i64.store	56($4), $pop0
 	i32.const	$push92=, 56
 	i32.add 	$push93=, $4, $pop92
-	i32.store	$drop=, 4($4), $pop93
+	i32.store	4($4), $pop93
 	i32.const	$push94=, 56
 	i32.add 	$push95=, $4, $pop94
-	i32.store	$drop=, 8($4), $pop95
+	i32.store	8($4), $pop95
 	i32.const	$push96=, 56
 	i32.add 	$push97=, $4, $pop96
-	i32.store	$drop=, 12($4), $pop97
+	i32.store	12($4), $pop97
 	i32.const	$push98=, 56
 	i32.add 	$push99=, $4, $pop98
-	i32.store	$drop=, 16($4), $pop99
+	i32.store	16($4), $pop99
 	i32.const	$push100=, 56
 	i32.add 	$push101=, $4, $pop100
-	i32.store	$drop=, 0($4), $pop101
+	i32.store	0($4), $pop101
 	i32.const	$push102=, 56
 	i32.add 	$push103=, $4, $pop102
-	i32.store	$drop=, 20($4), $pop103
+	i32.store	20($4), $pop103
 	i32.const	$push104=, 56
 	i32.add 	$push105=, $4, $pop104
-	i32.store	$drop=, 24($4), $pop105
+	i32.store	24($4), $pop105
 	i32.const	$push106=, 56
 	i32.add 	$push107=, $4, $pop106
-	i32.store	$drop=, 28($4), $pop107
+	i32.store	28($4), $pop107
 	i32.const	$push108=, 56
 	i32.add 	$push109=, $4, $pop108
-	i32.store	$drop=, 32($4), $pop109
+	i32.store	32($4), $pop109
 	i32.const	$push110=, 56
 	i32.add 	$push111=, $4, $pop110
-	i32.store	$drop=, 36($4), $pop111
+	i32.store	36($4), $pop111
 	i32.const	$push112=, 56
 	i32.add 	$push113=, $4, $pop112
-	i32.store	$drop=, 40($4), $pop113
+	i32.store	40($4), $pop113
 	i32.const	$push114=, 56
 	i32.add 	$push115=, $4, $pop114
-	i32.store	$drop=, 44($4), $pop115
+	i32.store	44($4), $pop115
 	i32.const	$push116=, 56
 	i32.add 	$push117=, $4, $pop116
-	i32.store	$drop=, 48($4), $pop117
+	i32.store	48($4), $pop117
 	i32.const	$push118=, 56
 	i32.add 	$push119=, $4, $pop118
-	i32.store	$drop=, 52($4), $pop119
+	i32.store	52($4), $pop119
 	block
 	block
 	block
@@ -213,66 +213,66 @@ main:                                   # @main
 	i32.add 	$push52=, $4, $pop51
 	i32.const	$push124=, 56
 	i32.add 	$push125=, $4, $pop124
-	i32.store	$drop=, 0($pop52), $pop125
+	i32.store	0($pop52), $pop125
 	i32.const	$push53=, 24
 	i32.add 	$push54=, $4, $pop53
 	i32.const	$push126=, 56
 	i32.add 	$push127=, $4, $pop126
-	i32.store	$drop=, 0($pop54), $pop127
+	i32.store	0($pop54), $pop127
 	i32.const	$push55=, 28
 	i32.add 	$push56=, $4, $pop55
 	i32.const	$push128=, 56
 	i32.add 	$push129=, $4, $pop128
-	i32.store	$drop=, 0($pop56), $pop129
+	i32.store	0($pop56), $pop129
 	i32.const	$push57=, 32
 	i32.add 	$push58=, $4, $pop57
 	i32.const	$push130=, 56
 	i32.add 	$push131=, $4, $pop130
-	i32.store	$drop=, 0($pop58), $pop131
+	i32.store	0($pop58), $pop131
 	i32.const	$push132=, 56
 	i32.add 	$push133=, $4, $pop132
-	i32.store	$drop=, 8($4), $pop133
+	i32.store	8($4), $pop133
 	i32.const	$push134=, 56
 	i32.add 	$push135=, $4, $pop134
-	i32.store	$drop=, 0($4), $pop135
+	i32.store	0($4), $pop135
 	i32.const	$push136=, 56
 	i32.add 	$push137=, $4, $pop136
-	i32.store	$drop=, 12($4), $pop137
+	i32.store	12($4), $pop137
 	i32.const	$push59=, 36
 	i32.add 	$push60=, $4, $pop59
 	i32.const	$push138=, 56
 	i32.add 	$push139=, $4, $pop138
-	i32.store	$drop=, 0($pop60), $pop139
+	i32.store	0($pop60), $pop139
 	i32.const	$push61=, 40
 	i32.add 	$push62=, $4, $pop61
 	i32.const	$push140=, 56
 	i32.add 	$push141=, $4, $pop140
-	i32.store	$drop=, 0($pop62), $pop141
+	i32.store	0($pop62), $pop141
 	i32.const	$push63=, 44
 	i32.add 	$push64=, $4, $pop63
 	i32.const	$push142=, 56
 	i32.add 	$push143=, $4, $pop142
-	i32.store	$drop=, 0($pop64), $pop143
+	i32.store	0($pop64), $pop143
 	i32.const	$push65=, 48
 	i32.add 	$push66=, $4, $pop65
 	i32.const	$push144=, 56
 	i32.add 	$push145=, $4, $pop144
-	i32.store	$drop=, 0($pop66), $pop145
+	i32.store	0($pop66), $pop145
 	i32.const	$push67=, 52
 	i32.add 	$push68=, $4, $pop67
 	i32.const	$push146=, 56
 	i32.add 	$push147=, $4, $pop146
-	i32.store	$drop=, 0($pop68), $pop147
+	i32.store	0($pop68), $pop147
 	i32.const	$1=, 0
 	i32.const	$push156=, 0
-	i32.store	$drop=, 4($4), $pop156
+	i32.store	4($4), $pop156
 	i32.load16_u	$push70=, 60($4)
 	i32.const	$push69=, 65528
 	i32.add 	$push71=, $pop70, $pop69
-	i32.store16	$drop=, 60($4), $pop71
+	i32.store16	60($4), $pop71
 	i32.const	$push72=, 20
 	i32.add 	$push73=, $4, $pop72
-	i32.store	$drop=, 0($pop73), $0
+	i32.store	0($pop73), $0
 	i32.call	$push74=, inet_check_attr@FUNCTION, $1, $4
 	i32.const	$push75=, -22
 	i32.ne  	$push76=, $pop74, $pop75
@@ -331,7 +331,7 @@ main:                                   # @main
 	i32.const	$push91=, 0
 	i32.const	$push89=, 64
 	i32.add 	$push90=, $4, $pop89
-	i32.store	$drop=, __stack_pointer($pop91), $pop90
+	i32.store	__stack_pointer($pop91), $pop90
 	i32.const	$push84=, 0
 	return  	$pop84
 .LBB1_24:                               # %if.then49
@@ -355,5 +355,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

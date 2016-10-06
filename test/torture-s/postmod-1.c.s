@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/postmod-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/postmod-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -56,42 +56,42 @@ foo:                                    # @foo
 	f32.load	$push4=, counter0($pop252)
 	f32.add 	$push5=, $pop3, $pop4
 	f32.add 	$push8=, $pop7, $pop5
-	f32.store	$drop=, counter0($pop257), $pop8
+	f32.store	counter0($pop257), $pop8
 	i32.const	$push251=, 0
 	i32.const	$push250=, array1+12
 	i32.add 	$push15=, $13, $pop250
 	f32.load	$push16=, 0($pop15)
 	f32.add 	$push14=, $7, $12
 	f32.add 	$push17=, $pop16, $pop14
-	f32.store	$drop=, counter1($pop251), $pop17
+	f32.store	counter1($pop251), $pop17
 	i32.const	$push249=, 0
 	i32.const	$push248=, array2+12
 	i32.add 	$push19=, $13, $pop248
 	f32.load	$push20=, 0($pop19)
 	f32.add 	$push18=, $6, $11
 	f32.add 	$push21=, $pop20, $pop18
-	f32.store	$drop=, counter2($pop249), $pop21
+	f32.store	counter2($pop249), $pop21
 	i32.const	$push247=, 0
 	i32.const	$push246=, array3+12
 	i32.add 	$push23=, $13, $pop246
 	f32.load	$push24=, 0($pop23)
 	f32.add 	$push22=, $5, $10
 	f32.add 	$push25=, $pop24, $pop22
-	f32.store	$drop=, counter3($pop247), $pop25
+	f32.store	counter3($pop247), $pop25
 	i32.const	$push245=, 0
 	i32.const	$push244=, array4+12
 	i32.add 	$push27=, $13, $pop244
 	f32.load	$push28=, 0($pop27)
 	f32.add 	$push26=, $4, $9
 	f32.add 	$push29=, $pop28, $pop26
-	f32.store	$drop=, counter4($pop245), $pop29
+	f32.store	counter4($pop245), $pop29
 	i32.const	$push243=, 0
 	i32.const	$push242=, array5+12
 	i32.add 	$push31=, $13, $pop242
 	f32.load	$push32=, 0($pop31)
 	f32.add 	$push30=, $3, $8
 	f32.add 	$push33=, $pop32, $pop30
-	f32.store	$drop=, counter5($pop243), $pop33
+	f32.store	counter5($pop243), $pop33
 	i32.const	$push241=, 0
 	i32.load	$0=, vol($pop241)
 	i32.const	$push240=, 0
@@ -106,252 +106,252 @@ foo:                                    # @foo
 	i32.const	$push235=, 0
 	i32.load	$push34=, vol($pop235)
 	i32.add 	$push35=, $0, $pop34
-	i32.store	$drop=, vol($pop236), $pop35
+	i32.store	vol($pop236), $pop35
 	i32.const	$push234=, 0
 	i32.const	$push233=, 0
 	i32.load	$push36=, vol($pop233)
 	i32.add 	$push37=, $13, $pop36
-	i32.store	$drop=, vol($pop234), $pop37
+	i32.store	vol($pop234), $pop37
 	i32.const	$push232=, 0
 	i32.const	$push231=, 0
 	i32.load	$push38=, vol($pop231)
 	i32.add 	$push39=, $14, $pop38
-	i32.store	$drop=, vol($pop232), $pop39
+	i32.store	vol($pop232), $pop39
 	i32.const	$push230=, 0
 	i32.const	$push229=, 0
 	i32.load	$push40=, vol($pop229)
 	i32.add 	$push41=, $15, $pop40
-	i32.store	$drop=, vol($pop230), $pop41
+	i32.store	vol($pop230), $pop41
 	i32.const	$push228=, 0
 	i32.const	$push227=, 0
 	i32.load	$push42=, vol($pop227)
 	i32.add 	$push43=, $16, $pop42
-	i32.store	$drop=, vol($pop228), $pop43
+	i32.store	vol($pop228), $pop43
 	i32.const	$push226=, 0
 	i32.const	$push225=, 0
 	i32.load	$push44=, vol($pop225)
 	i32.add 	$push45=, $0, $pop44
-	i32.store	$drop=, vol($pop226), $pop45
+	i32.store	vol($pop226), $pop45
 	i32.const	$push224=, 0
 	i32.const	$push223=, 0
 	i32.load	$push46=, vol($pop223)
 	i32.add 	$push47=, $13, $pop46
-	i32.store	$drop=, vol($pop224), $pop47
+	i32.store	vol($pop224), $pop47
 	i32.const	$push222=, 0
 	i32.const	$push221=, 0
 	i32.load	$push48=, vol($pop221)
 	i32.add 	$push49=, $14, $pop48
-	i32.store	$drop=, vol($pop222), $pop49
+	i32.store	vol($pop222), $pop49
 	i32.const	$push220=, 0
 	i32.const	$push219=, 0
 	i32.load	$push50=, vol($pop219)
 	i32.add 	$push51=, $15, $pop50
-	i32.store	$drop=, vol($pop220), $pop51
+	i32.store	vol($pop220), $pop51
 	i32.const	$push218=, 0
 	i32.const	$push217=, 0
 	i32.load	$push52=, vol($pop217)
 	i32.add 	$push53=, $16, $pop52
-	i32.store	$drop=, vol($pop218), $pop53
+	i32.store	vol($pop218), $pop53
 	i32.const	$push216=, 0
 	i32.const	$push215=, 0
 	i32.load	$push54=, vol($pop215)
 	i32.add 	$push55=, $0, $pop54
-	i32.store	$drop=, vol($pop216), $pop55
+	i32.store	vol($pop216), $pop55
 	i32.const	$push214=, 0
 	i32.const	$push213=, 0
 	i32.load	$push56=, vol($pop213)
 	i32.add 	$push57=, $13, $pop56
-	i32.store	$drop=, vol($pop214), $pop57
+	i32.store	vol($pop214), $pop57
 	i32.const	$push212=, 0
 	i32.const	$push211=, 0
 	i32.load	$push58=, vol($pop211)
 	i32.add 	$push59=, $14, $pop58
-	i32.store	$drop=, vol($pop212), $pop59
+	i32.store	vol($pop212), $pop59
 	i32.const	$push210=, 0
 	i32.const	$push209=, 0
 	i32.load	$push60=, vol($pop209)
 	i32.add 	$push61=, $15, $pop60
-	i32.store	$drop=, vol($pop210), $pop61
+	i32.store	vol($pop210), $pop61
 	i32.const	$push208=, 0
 	i32.const	$push207=, 0
 	i32.load	$push62=, vol($pop207)
 	i32.add 	$push63=, $16, $pop62
-	i32.store	$drop=, vol($pop208), $pop63
+	i32.store	vol($pop208), $pop63
 	i32.const	$push206=, 0
 	i32.const	$push205=, 0
 	i32.load	$push64=, vol($pop205)
 	i32.add 	$push65=, $0, $pop64
-	i32.store	$drop=, vol($pop206), $pop65
+	i32.store	vol($pop206), $pop65
 	i32.const	$push204=, 0
 	i32.const	$push203=, 0
 	i32.load	$push66=, vol($pop203)
 	i32.add 	$push67=, $13, $pop66
-	i32.store	$drop=, vol($pop204), $pop67
+	i32.store	vol($pop204), $pop67
 	i32.const	$push202=, 0
 	i32.const	$push201=, 0
 	i32.load	$push68=, vol($pop201)
 	i32.add 	$push69=, $14, $pop68
-	i32.store	$drop=, vol($pop202), $pop69
+	i32.store	vol($pop202), $pop69
 	i32.const	$push200=, 0
 	i32.const	$push199=, 0
 	i32.load	$push70=, vol($pop199)
 	i32.add 	$push71=, $15, $pop70
-	i32.store	$drop=, vol($pop200), $pop71
+	i32.store	vol($pop200), $pop71
 	i32.const	$push198=, 0
 	i32.const	$push197=, 0
 	i32.load	$push72=, vol($pop197)
 	i32.add 	$push73=, $16, $pop72
-	i32.store	$drop=, vol($pop198), $pop73
+	i32.store	vol($pop198), $pop73
 	i32.const	$push196=, 0
 	i32.const	$push195=, 0
 	i32.load	$push74=, vol($pop195)
 	i32.add 	$push75=, $0, $pop74
-	i32.store	$drop=, vol($pop196), $pop75
+	i32.store	vol($pop196), $pop75
 	i32.const	$push194=, 0
 	i32.const	$push193=, 0
 	i32.load	$push76=, vol($pop193)
 	i32.add 	$push77=, $13, $pop76
-	i32.store	$drop=, vol($pop194), $pop77
+	i32.store	vol($pop194), $pop77
 	i32.const	$push192=, 0
 	i32.const	$push191=, 0
 	i32.load	$push78=, vol($pop191)
 	i32.add 	$push79=, $14, $pop78
-	i32.store	$drop=, vol($pop192), $pop79
+	i32.store	vol($pop192), $pop79
 	i32.const	$push190=, 0
 	i32.const	$push189=, 0
 	i32.load	$push80=, vol($pop189)
 	i32.add 	$push81=, $15, $pop80
-	i32.store	$drop=, vol($pop190), $pop81
+	i32.store	vol($pop190), $pop81
 	i32.const	$push188=, 0
 	i32.const	$push187=, 0
 	i32.load	$push82=, vol($pop187)
 	i32.add 	$push83=, $16, $pop82
-	i32.store	$drop=, vol($pop188), $pop83
+	i32.store	vol($pop188), $pop83
 	i32.const	$push186=, 0
 	i32.const	$push185=, 0
 	i32.load	$push84=, vol($pop185)
 	i32.add 	$push85=, $0, $pop84
-	i32.store	$drop=, vol($pop186), $pop85
+	i32.store	vol($pop186), $pop85
 	i32.const	$push184=, 0
 	i32.const	$push183=, 0
 	i32.load	$push86=, vol($pop183)
 	i32.add 	$push87=, $13, $pop86
-	i32.store	$drop=, vol($pop184), $pop87
+	i32.store	vol($pop184), $pop87
 	i32.const	$push182=, 0
 	i32.const	$push181=, 0
 	i32.load	$push88=, vol($pop181)
 	i32.add 	$push89=, $14, $pop88
-	i32.store	$drop=, vol($pop182), $pop89
+	i32.store	vol($pop182), $pop89
 	i32.const	$push180=, 0
 	i32.const	$push179=, 0
 	i32.load	$push90=, vol($pop179)
 	i32.add 	$push91=, $15, $pop90
-	i32.store	$drop=, vol($pop180), $pop91
+	i32.store	vol($pop180), $pop91
 	i32.const	$push178=, 0
 	i32.const	$push177=, 0
 	i32.load	$push92=, vol($pop177)
 	i32.add 	$push93=, $16, $pop92
-	i32.store	$drop=, vol($pop178), $pop93
+	i32.store	vol($pop178), $pop93
 	i32.const	$push176=, 0
 	i32.const	$push175=, 0
 	i32.load	$push94=, vol($pop175)
 	i32.add 	$push95=, $0, $pop94
-	i32.store	$drop=, vol($pop176), $pop95
+	i32.store	vol($pop176), $pop95
 	i32.const	$push174=, 0
 	i32.const	$push173=, 0
 	i32.load	$push96=, vol($pop173)
 	i32.add 	$push97=, $13, $pop96
-	i32.store	$drop=, vol($pop174), $pop97
+	i32.store	vol($pop174), $pop97
 	i32.const	$push172=, 0
 	i32.const	$push171=, 0
 	i32.load	$push98=, vol($pop171)
 	i32.add 	$push99=, $14, $pop98
-	i32.store	$drop=, vol($pop172), $pop99
+	i32.store	vol($pop172), $pop99
 	i32.const	$push170=, 0
 	i32.const	$push169=, 0
 	i32.load	$push100=, vol($pop169)
 	i32.add 	$push101=, $15, $pop100
-	i32.store	$drop=, vol($pop170), $pop101
+	i32.store	vol($pop170), $pop101
 	i32.const	$push168=, 0
 	i32.const	$push167=, 0
 	i32.load	$push102=, vol($pop167)
 	i32.add 	$push103=, $16, $pop102
-	i32.store	$drop=, vol($pop168), $pop103
+	i32.store	vol($pop168), $pop103
 	i32.const	$push166=, 0
 	i32.const	$push165=, 0
 	i32.load	$push104=, vol($pop165)
 	i32.add 	$push105=, $0, $pop104
-	i32.store	$drop=, vol($pop166), $pop105
+	i32.store	vol($pop166), $pop105
 	i32.const	$push164=, 0
 	i32.const	$push163=, 0
 	i32.load	$push106=, vol($pop163)
 	i32.add 	$push107=, $13, $pop106
-	i32.store	$drop=, vol($pop164), $pop107
+	i32.store	vol($pop164), $pop107
 	i32.const	$push162=, 0
 	i32.const	$push161=, 0
 	i32.load	$push108=, vol($pop161)
 	i32.add 	$push109=, $14, $pop108
-	i32.store	$drop=, vol($pop162), $pop109
+	i32.store	vol($pop162), $pop109
 	i32.const	$push160=, 0
 	i32.const	$push159=, 0
 	i32.load	$push110=, vol($pop159)
 	i32.add 	$push111=, $15, $pop110
-	i32.store	$drop=, vol($pop160), $pop111
+	i32.store	vol($pop160), $pop111
 	i32.const	$push158=, 0
 	i32.const	$push157=, 0
 	i32.load	$push112=, vol($pop157)
 	i32.add 	$push113=, $16, $pop112
-	i32.store	$drop=, vol($pop158), $pop113
+	i32.store	vol($pop158), $pop113
 	i32.const	$push156=, 0
 	i32.const	$push155=, 0
 	i32.load	$push114=, vol($pop155)
 	i32.add 	$push115=, $0, $pop114
-	i32.store	$drop=, vol($pop156), $pop115
+	i32.store	vol($pop156), $pop115
 	i32.const	$push154=, 0
 	i32.const	$push153=, 0
 	i32.load	$push116=, vol($pop153)
 	i32.add 	$push117=, $13, $pop116
-	i32.store	$drop=, vol($pop154), $pop117
+	i32.store	vol($pop154), $pop117
 	i32.const	$push152=, 0
 	i32.const	$push151=, 0
 	i32.load	$push118=, vol($pop151)
 	i32.add 	$push119=, $14, $pop118
-	i32.store	$drop=, vol($pop152), $pop119
+	i32.store	vol($pop152), $pop119
 	i32.const	$push150=, 0
 	i32.const	$push149=, 0
 	i32.load	$push120=, vol($pop149)
 	i32.add 	$push121=, $15, $pop120
-	i32.store	$drop=, vol($pop150), $pop121
+	i32.store	vol($pop150), $pop121
 	i32.const	$push148=, 0
 	i32.const	$push147=, 0
 	i32.load	$push122=, vol($pop147)
 	i32.add 	$push123=, $16, $pop122
-	i32.store	$drop=, vol($pop148), $pop123
+	i32.store	vol($pop148), $pop123
 	i32.const	$push146=, 0
 	i32.const	$push145=, 0
 	i32.load	$push124=, vol($pop145)
 	i32.add 	$push125=, $0, $pop124
-	i32.store	$drop=, vol($pop146), $pop125
+	i32.store	vol($pop146), $pop125
 	i32.const	$push144=, 0
 	i32.const	$push143=, 0
 	i32.load	$push126=, vol($pop143)
 	i32.add 	$push127=, $13, $pop126
-	i32.store	$drop=, vol($pop144), $pop127
+	i32.store	vol($pop144), $pop127
 	i32.const	$push142=, 0
 	i32.const	$push141=, 0
 	i32.load	$push128=, vol($pop141)
 	i32.add 	$push129=, $14, $pop128
-	i32.store	$drop=, vol($pop142), $pop129
+	i32.store	vol($pop142), $pop129
 	i32.const	$push140=, 0
 	i32.const	$push139=, 0
 	i32.load	$push130=, vol($pop139)
 	i32.add 	$push131=, $15, $pop130
-	i32.store	$drop=, vol($pop140), $pop131
+	i32.store	vol($pop140), $pop131
 	i32.const	$push138=, 0
 	i32.const	$push137=, 0
 	i32.load	$push132=, vol($pop137)
 	i32.add 	$push133=, $16, $pop132
-	i32.store	$drop=, vol($pop138), $pop133
+	i32.store	vol($pop138), $pop133
 	i32.const	$push136=, 12
 	i32.add 	$17=, $17, $pop136
 	i32.const	$push135=, 0
@@ -374,40 +374,40 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1073741824
-	i32.store	$drop=, array0+20($pop1), $pop0
+	i32.store	array0+20($pop1), $pop0
 	i32.const	$push53=, 0
 	i32.const	$push2=, 1065353216
-	i32.store	$drop=, array0+4($pop53), $pop2
+	i32.store	array0+4($pop53), $pop2
 	i32.const	$push52=, 0
 	i32.const	$push51=, 1065353216
-	i32.store	$drop=, array1+4($pop52), $pop51
+	i32.store	array1+4($pop52), $pop51
 	i32.const	$push50=, 0
 	i32.const	$push49=, 1073741824
-	i32.store	$drop=, array1+20($pop50), $pop49
+	i32.store	array1+20($pop50), $pop49
 	i32.const	$push48=, 0
 	i32.const	$push47=, 1065353216
-	i32.store	$drop=, array2+4($pop48), $pop47
+	i32.store	array2+4($pop48), $pop47
 	i32.const	$push46=, 0
 	i32.const	$push45=, 1073741824
-	i32.store	$drop=, array2+20($pop46), $pop45
+	i32.store	array2+20($pop46), $pop45
 	i32.const	$push44=, 0
 	i32.const	$push43=, 1065353216
-	i32.store	$drop=, array3+4($pop44), $pop43
+	i32.store	array3+4($pop44), $pop43
 	i32.const	$push42=, 0
 	i32.const	$push41=, 1073741824
-	i32.store	$drop=, array3+20($pop42), $pop41
+	i32.store	array3+20($pop42), $pop41
 	i32.const	$push40=, 0
 	i32.const	$push39=, 1065353216
-	i32.store	$drop=, array4+4($pop40), $pop39
+	i32.store	array4+4($pop40), $pop39
 	i32.const	$push38=, 0
 	i32.const	$push37=, 1073741824
-	i32.store	$drop=, array4+20($pop38), $pop37
+	i32.store	array4+20($pop38), $pop37
 	i32.const	$push36=, 0
 	i32.const	$push35=, 1065353216
-	i32.store	$drop=, array5+4($pop36), $pop35
+	i32.store	array5+4($pop36), $pop35
 	i32.const	$push34=, 0
 	i32.const	$push33=, 1073741824
-	i32.store	$drop=, array5+20($pop34), $pop33
+	i32.store	array5+20($pop34), $pop33
 	i32.const	$push3=, 1
 	call    	foo@FUNCTION, $pop3
 	i32.const	$push32=, 0
@@ -571,4 +571,4 @@ vol:
 	.size	vol, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-14.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-14.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -8,7 +8,7 @@ f:                                      # @f
 	.param  	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 90194313258
-	i64.store	$drop=, 4($0):p2align=2, $pop0
+	i64.store	4($0):p2align=2, $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -23,7 +23,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i64.const	$push0=, 90194313258
-	i64.store	$drop=, a3+4($pop1):p2align=2, $pop0
+	i64.store	a3+4($pop1):p2align=2, $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -41,5 +41,5 @@ a3:
 	.size	a3, 12
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

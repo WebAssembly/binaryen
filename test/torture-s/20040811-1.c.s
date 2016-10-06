@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040811-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040811-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -29,12 +29,12 @@ main:                                   # @main
 	tee_local	$push17=, $1=, $pop18
 	copy_local	$drop=, $pop17
 	i32.const	$push16=, 1
-	i32.store	$drop=, 0($1), $pop16
+	i32.store	0($1), $pop16
 	i32.const	$push15=, 0
-	i32.store	$drop=, p($pop15), $1
+	i32.store	p($pop15), $1
 	i32.add 	$push4=, $1, $0
 	i32.const	$push14=, 2
-	i32.store	$drop=, 0($pop4), $pop14
+	i32.store	0($pop4), $pop14
 	copy_local	$push3=, $3
 	copy_local	$3=, $pop3
 	i32.const	$push13=, 1
@@ -61,4 +61,4 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/961213-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/961213-1.c"
 	.section	.text.g,"ax",@progbits
 	.hidden	g
 	.globl	g
@@ -11,7 +11,7 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i64.const	$5=, 0
 	i64.const	$push5=, 0
-	i64.store	$drop=, 0($0), $pop5
+	i64.store	0($0), $pop5
 	block
 	i32.const	$push1=, 1
 	i32.lt_s	$push2=, $1, $pop1
@@ -34,7 +34,7 @@ g:                                      # @g
 	br_if   	0, $pop6        # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
 	end_loop                        # label2:
-	i64.store	$drop=, 0($0), $5
+	i64.store	0($0), $5
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
 	copy_local	$push10=, $1
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32
