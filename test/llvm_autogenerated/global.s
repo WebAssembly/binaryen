@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/global.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/global.ll"
 	.globl	foo
 	.type	foo,@function
 foo:

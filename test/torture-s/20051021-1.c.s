@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051021-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051021-1.c"
 	.section	.text.foo1,"ax",@progbits
 	.hidden	foo1
 	.globl	foo1
@@ -12,7 +12,7 @@ foo1:                                   # @foo1
 	i32.load	$push1=, count($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, count($pop0), $pop3
+	i32.store	count($pop0), $pop3
 	i32.const	$push4=, 0
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -31,7 +31,7 @@ foo2:                                   # @foo2
 	i32.load	$push1=, count($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, count($pop0), $pop3
+	i32.store	count($pop0), $pop3
 	i32.const	$push4=, 0
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -52,7 +52,7 @@ main:                                   # @main
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $pop2, $pop0
-	i32.store	$drop=, count($pop5), $pop1
+	i32.store	count($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end7
@@ -76,5 +76,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

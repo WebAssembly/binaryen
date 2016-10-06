@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47337.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47337.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -19,7 +19,7 @@ main:                                   # @main
 	i32.const	$push44=, a+1024
 	i32.add 	$push3=, $1, $pop44
 	i32.const	$push43=, 1
-	i32.store	$drop=, 0($pop3), $pop43
+	i32.store	0($pop3), $pop43
 	i32.const	$push42=, 4
 	i32.add 	$push41=, $1, $pop42
 	tee_local	$push40=, $1=, $pop41
@@ -28,7 +28,7 @@ main:                                   # @main
 	end_loop                        # label1:
 	i32.const	$push46=, 0
 	i32.const	$push45=, 0
-	i32.store	$drop=, d($pop46), $pop45
+	i32.store	d($pop46), $pop45
 	block
 	i32.eqz 	$push71=, $0
 	br_if   	0, $pop71       # 0: down to label2
@@ -92,7 +92,7 @@ main:                                   # @main
 	i32.const	$push47=, a
 	i32.add 	$push38=, $pop37, $pop47
 	i32.load	$push39=, 0($pop38)
-	i32.store	$drop=, b($pop69), $pop39
+	i32.store	b($pop69), $pop39
 .LBB0_4:                                # %if.end25
 	end_block                       # label2:
 	i32.const	$push70=, 0
@@ -144,5 +144,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcmp, i32, i32, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090527-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090527-1.c"
 	.section	.text.new_unit,"ax",@progbits
 	.hidden	new_unit
 	.globl	new_unit
@@ -19,7 +19,7 @@ new_unit:                               # @new_unit
 	i32.const	$push1=, 4
 	i32.add 	$push2=, $0, $pop1
 	i32.const	$push9=, 0
-	i32.store	$drop=, 0($pop2), $pop9
+	i32.store	0($pop2), $pop9
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block
@@ -29,7 +29,7 @@ new_unit:                               # @new_unit
 	br_if   	0, $pop4        # 0: down to label1
 # BB#3:                                 # %if.then3
 	i32.const	$push5=, 0
-	i32.store	$drop=, 0($0), $pop5
+	i32.store	0($0), $pop5
 .LBB0_4:                                # %if.end5
 	end_block                       # label1:
 	block
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

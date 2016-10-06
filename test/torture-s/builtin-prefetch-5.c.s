@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-5.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-5.c"
 	.section	.text.arg_ptr,"ax",@progbits
 	.hidden	arg_ptr
 	.globl	arg_ptr
@@ -55,18 +55,18 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$drop=, idx($pop1), $pop0
+	i32.store	idx($pop1), $pop0
 	call    	glob_ptr@FUNCTION
 	call    	glob_idx@FUNCTION
 	i32.const	$push9=, 0
 	i32.const	$push2=, 2
-	i32.store	$drop=, idx($pop9), $pop2
+	i32.store	idx($pop9), $pop2
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
 	i32.load	$push3=, ptr($pop7)
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$drop=, ptr($pop8), $pop5
+	i32.store	ptr($pop8), $pop5
 	call    	glob_ptr@FUNCTION
 	call    	glob_idx@FUNCTION
 	i32.const	$push6=, 0
@@ -113,5 +113,5 @@ s:
 	.size	s, 12
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

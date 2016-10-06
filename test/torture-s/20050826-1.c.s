@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050826-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050826-1.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -61,18 +61,18 @@ foo:                                    # @foo
 	i32.call	$drop=, memset@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push21=, 0
 	i32.const	$push20=, 1
-	i32.store8	$drop=, a($pop21), $pop20
+	i32.store8	a($pop21), $pop20
 	i32.const	$push19=, 0
 	i32.const	$push18=, 1
-	i32.store8	$drop=, a+6($pop19), $pop18
+	i32.store8	a+6($pop19), $pop18
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i32.load8_u	$push4=, .L.str.1+4($pop16)
-	i32.store8	$drop=, a+5($pop17), $pop4
+	i32.store8	a+5($pop17), $pop4
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i32.load	$push5=, .L.str.1($pop14):p2align=0
-	i32.store	$drop=, a+1($pop15):p2align=0, $pop5
+	i32.store	a+1($pop15):p2align=0, $pop5
 	block
 	i32.const	$push13=, 0
 	i64.load	$push6=, a($pop13):p2align=0
@@ -130,18 +130,18 @@ main:                                   # @main
 	i32.call	$drop=, memset@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push21=, 0
 	i32.const	$push20=, 1
-	i32.store8	$drop=, a($pop21), $pop20
+	i32.store8	a($pop21), $pop20
 	i32.const	$push19=, 0
 	i32.const	$push18=, 1
-	i32.store8	$drop=, a+6($pop19), $pop18
+	i32.store8	a+6($pop19), $pop18
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
 	i32.load8_u	$push4=, .L.str.1+4($pop16)
-	i32.store8	$drop=, a+5($pop17), $pop4
+	i32.store8	a+5($pop17), $pop4
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i32.load	$push5=, .L.str.1($pop14):p2align=0
-	i32.store	$drop=, a+1($pop15):p2align=0, $pop5
+	i32.store	a+1($pop15):p2align=0, $pop5
 	block
 	i32.const	$push13=, 0
 	i64.load	$push6=, a($pop13):p2align=0
@@ -206,6 +206,6 @@ a:
 	.size	.L.str.1, 6
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-2.c"
 	.section	.text.reset,"ax",@progbits
 	.hidden	reset
 	.globl	reset
@@ -146,18 +146,18 @@ main:                                   # @main
 	i32.add 	$push56=, $5, $pop0
 	tee_local	$push55=, $0=, $pop56
 	i32.const	$push54=, 0
-	i32.store8	$drop=, 0($pop55), $pop54
+	i32.store8	0($pop55), $pop54
 	i32.const	$push53=, 1
 	i32.const	$push52=, 0
 	call    	check@FUNCTION, $5, $pop53, $pop52
 	i32.const	$push51=, 0
 	i32.load8_u	$push4=, A($pop51)
-	i32.store8	$drop=, 0($0), $pop4
+	i32.store8	0($0), $pop4
 	i32.const	$push50=, 1
 	i32.const	$push49=, 65
 	call    	check@FUNCTION, $5, $pop50, $pop49
 	i32.const	$push48=, 66
-	i32.store8	$drop=, 0($0), $pop48
+	i32.store8	0($0), $pop48
 	i32.const	$push47=, 1
 	i32.const	$push46=, 66
 	call    	check@FUNCTION, $5, $pop47, $pop46
@@ -180,7 +180,7 @@ main:                                   # @main
 	i32.add 	$push75=, $5, $pop1
 	tee_local	$push74=, $0=, $pop75
 	i32.const	$push73=, 0
-	i32.store16	$drop=, 0($pop74):p2align=0, $pop73
+	i32.store16	0($pop74):p2align=0, $pop73
 	i32.const	$push72=, 2
 	i32.const	$push71=, 0
 	call    	check@FUNCTION, $5, $pop72, $pop71
@@ -188,12 +188,12 @@ main:                                   # @main
 	i32.load8_u	$push6=, A($pop70)
 	i32.const	$push69=, 257
 	i32.mul 	$push7=, $pop6, $pop69
-	i32.store16	$drop=, 0($0):p2align=0, $pop7
+	i32.store16	0($0):p2align=0, $pop7
 	i32.const	$push68=, 2
 	i32.const	$push67=, 65
 	call    	check@FUNCTION, $5, $pop68, $pop67
 	i32.const	$push66=, 16962
-	i32.store16	$drop=, 0($0):p2align=0, $pop66
+	i32.store16	0($0):p2align=0, $pop66
 	i32.const	$push65=, 2
 	i32.const	$push64=, 66
 	call    	check@FUNCTION, $5, $pop65, $pop64
@@ -217,28 +217,28 @@ main:                                   # @main
 	i32.add 	$push100=, $5, $pop101
 	tee_local	$push99=, $0=, $pop100
 	i32.const	$push98=, 0
-	i32.store8	$drop=, 0($pop99), $pop98
+	i32.store8	0($pop99), $pop98
 	i32.add 	$push97=, $5, $1
 	tee_local	$push96=, $1=, $pop97
 	i32.const	$push95=, 0
-	i32.store16	$drop=, 0($pop96):p2align=0, $pop95
+	i32.store16	0($pop96):p2align=0, $pop95
 	i32.const	$push94=, 3
 	i32.const	$push93=, 0
 	call    	check@FUNCTION, $5, $pop94, $pop93
 	i32.const	$push92=, 0
 	i32.load8_u	$push91=, A($pop92)
 	tee_local	$push90=, $2=, $pop91
-	i32.store8	$drop=, 0($0), $pop90
+	i32.store8	0($0), $pop90
 	i32.const	$push89=, 257
 	i32.mul 	$push9=, $2, $pop89
-	i32.store16	$drop=, 0($1):p2align=0, $pop9
+	i32.store16	0($1):p2align=0, $pop9
 	i32.const	$push88=, 3
 	i32.const	$push87=, 65
 	call    	check@FUNCTION, $5, $pop88, $pop87
 	i32.const	$push86=, 66
-	i32.store8	$drop=, 0($0), $pop86
+	i32.store8	0($0), $pop86
 	i32.const	$push85=, 16962
-	i32.store16	$drop=, 0($1):p2align=0, $pop85
+	i32.store16	0($1):p2align=0, $pop85
 	i32.const	$push84=, 3
 	i32.const	$push83=, 66
 	call    	check@FUNCTION, $5, $pop84, $pop83
@@ -261,7 +261,7 @@ main:                                   # @main
 	i32.add 	$push120=, $5, $pop2
 	tee_local	$push119=, $0=, $pop120
 	i32.const	$push118=, 0
-	i32.store	$drop=, 0($pop119):p2align=0, $pop118
+	i32.store	0($pop119):p2align=0, $pop118
 	i32.const	$push117=, 4
 	i32.const	$push116=, 0
 	call    	check@FUNCTION, $5, $pop117, $pop116
@@ -269,12 +269,12 @@ main:                                   # @main
 	i32.load8_u	$push11=, A($pop115)
 	i32.const	$push114=, 16843009
 	i32.mul 	$push12=, $pop11, $pop114
-	i32.store	$drop=, 0($0):p2align=0, $pop12
+	i32.store	0($0):p2align=0, $pop12
 	i32.const	$push113=, 4
 	i32.const	$push112=, 65
 	call    	check@FUNCTION, $5, $pop113, $pop112
 	i32.const	$push111=, 1111638594
-	i32.store	$drop=, 0($0):p2align=0, $pop111
+	i32.store	0($0):p2align=0, $pop111
 	i32.const	$push110=, 4
 	i32.const	$push109=, 66
 	call    	check@FUNCTION, $5, $pop110, $pop109
@@ -298,28 +298,28 @@ main:                                   # @main
 	i32.add 	$push145=, $5, $pop146
 	tee_local	$push144=, $0=, $pop145
 	i32.const	$push143=, 0
-	i32.store8	$drop=, 0($pop144), $pop143
+	i32.store8	0($pop144), $pop143
 	i32.add 	$push142=, $5, $1
 	tee_local	$push141=, $1=, $pop142
 	i32.const	$push140=, 0
-	i32.store	$drop=, 0($pop141):p2align=0, $pop140
+	i32.store	0($pop141):p2align=0, $pop140
 	i32.const	$push139=, 5
 	i32.const	$push138=, 0
 	call    	check@FUNCTION, $5, $pop139, $pop138
 	i32.const	$push137=, 0
 	i32.load8_u	$push136=, A($pop137)
 	tee_local	$push135=, $2=, $pop136
-	i32.store8	$drop=, 0($0), $pop135
+	i32.store8	0($0), $pop135
 	i32.const	$push134=, 16843009
 	i32.mul 	$push14=, $2, $pop134
-	i32.store	$drop=, 0($1):p2align=0, $pop14
+	i32.store	0($1):p2align=0, $pop14
 	i32.const	$push133=, 5
 	i32.const	$push132=, 65
 	call    	check@FUNCTION, $5, $pop133, $pop132
 	i32.const	$push131=, 66
-	i32.store8	$drop=, 0($0), $pop131
+	i32.store8	0($0), $pop131
 	i32.const	$push130=, 1111638594
-	i32.store	$drop=, 0($1):p2align=0, $pop130
+	i32.store	0($1):p2align=0, $pop130
 	i32.const	$push129=, 5
 	i32.const	$push128=, 66
 	call    	check@FUNCTION, $5, $pop129, $pop128
@@ -343,11 +343,11 @@ main:                                   # @main
 	i32.add 	$push172=, $5, $pop173
 	tee_local	$push171=, $0=, $pop172
 	i32.const	$push170=, 0
-	i32.store16	$drop=, 0($pop171):p2align=0, $pop170
+	i32.store16	0($pop171):p2align=0, $pop170
 	i32.add 	$push169=, $5, $1
 	tee_local	$push168=, $1=, $pop169
 	i32.const	$push167=, 0
-	i32.store	$drop=, 0($pop168):p2align=0, $pop167
+	i32.store	0($pop168):p2align=0, $pop167
 	i32.const	$push166=, 6
 	i32.const	$push165=, 0
 	call    	check@FUNCTION, $5, $pop166, $pop165
@@ -356,17 +356,17 @@ main:                                   # @main
 	tee_local	$push162=, $2=, $pop163
 	i32.const	$push161=, 257
 	i32.mul 	$push16=, $pop162, $pop161
-	i32.store16	$drop=, 0($0):p2align=0, $pop16
+	i32.store16	0($0):p2align=0, $pop16
 	i32.const	$push160=, 16843009
 	i32.mul 	$push17=, $2, $pop160
-	i32.store	$drop=, 0($1):p2align=0, $pop17
+	i32.store	0($1):p2align=0, $pop17
 	i32.const	$push159=, 6
 	i32.const	$push158=, 65
 	call    	check@FUNCTION, $5, $pop159, $pop158
 	i32.const	$push157=, 16962
-	i32.store16	$drop=, 0($0):p2align=0, $pop157
+	i32.store16	0($0):p2align=0, $pop157
 	i32.const	$push156=, 1111638594
-	i32.store	$drop=, 0($1):p2align=0, $pop156
+	i32.store	0($1):p2align=0, $pop156
 	i32.const	$push155=, 6
 	i32.const	$push154=, 66
 	call    	check@FUNCTION, $5, $pop155, $pop154
@@ -390,38 +390,38 @@ main:                                   # @main
 	i32.add 	$push204=, $5, $pop205
 	tee_local	$push203=, $0=, $pop204
 	i32.const	$push202=, 0
-	i32.store8	$drop=, 0($pop203), $pop202
+	i32.store8	0($pop203), $pop202
 	i32.const	$push201=, u+4
 	i32.add 	$push200=, $5, $pop201
 	tee_local	$push199=, $1=, $pop200
 	i32.const	$push198=, 0
-	i32.store16	$drop=, 0($pop199):p2align=0, $pop198
+	i32.store16	0($pop199):p2align=0, $pop198
 	i32.add 	$push197=, $5, $2
 	tee_local	$push196=, $2=, $pop197
 	i32.const	$push195=, 0
-	i32.store	$drop=, 0($pop196):p2align=0, $pop195
+	i32.store	0($pop196):p2align=0, $pop195
 	i32.const	$push194=, 7
 	i32.const	$push193=, 0
 	call    	check@FUNCTION, $5, $pop194, $pop193
 	i32.const	$push192=, 0
 	i32.load8_u	$push191=, A($pop192)
 	tee_local	$push190=, $3=, $pop191
-	i32.store8	$drop=, 0($0), $pop190
+	i32.store8	0($0), $pop190
 	i32.const	$push189=, 257
 	i32.mul 	$push19=, $3, $pop189
-	i32.store16	$drop=, 0($1):p2align=0, $pop19
+	i32.store16	0($1):p2align=0, $pop19
 	i32.const	$push188=, 16843009
 	i32.mul 	$push20=, $3, $pop188
-	i32.store	$drop=, 0($2):p2align=0, $pop20
+	i32.store	0($2):p2align=0, $pop20
 	i32.const	$push187=, 7
 	i32.const	$push186=, 65
 	call    	check@FUNCTION, $5, $pop187, $pop186
 	i32.const	$push185=, 66
-	i32.store8	$drop=, 0($0), $pop185
+	i32.store8	0($0), $pop185
 	i32.const	$push184=, 16962
-	i32.store16	$drop=, 0($1):p2align=0, $pop184
+	i32.store16	0($1):p2align=0, $pop184
 	i32.const	$push183=, 1111638594
-	i32.store	$drop=, 0($2):p2align=0, $pop183
+	i32.store	0($2):p2align=0, $pop183
 	i32.const	$push182=, 7
 	i32.const	$push181=, 66
 	call    	check@FUNCTION, $5, $pop182, $pop181
@@ -444,7 +444,7 @@ main:                                   # @main
 	i32.add 	$push227=, $5, $pop3
 	tee_local	$push226=, $0=, $pop227
 	i64.const	$push225=, 0
-	i64.store	$drop=, 0($pop226):p2align=0, $pop225
+	i64.store	0($pop226):p2align=0, $pop225
 	i32.const	$push224=, 8
 	i32.const	$push223=, 0
 	call    	check@FUNCTION, $5, $pop224, $pop223
@@ -455,13 +455,13 @@ main:                                   # @main
 	i32.const	$push220=, 16843009
 	i32.mul 	$push219=, $pop23, $pop220
 	tee_local	$push218=, $1=, $pop219
-	i32.store	$drop=, 0($pop22):p2align=0, $pop218
-	i32.store	$drop=, 0($0):p2align=0, $1
+	i32.store	0($pop22):p2align=0, $pop218
+	i32.store	0($0):p2align=0, $1
 	i32.const	$push217=, 8
 	i32.const	$push216=, 65
 	call    	check@FUNCTION, $5, $pop217, $pop216
 	i64.const	$push215=, 4774451407313060418
-	i64.store	$drop=, 0($0):p2align=0, $pop215
+	i64.store	0($0):p2align=0, $pop215
 	i32.const	$push214=, 8
 	i32.const	$push213=, 66
 	call    	check@FUNCTION, $5, $pop214, $pop213
@@ -485,37 +485,37 @@ main:                                   # @main
 	i32.add 	$push259=, $5, $pop260
 	tee_local	$push258=, $0=, $pop259
 	i32.const	$push257=, 0
-	i32.store8	$drop=, 0($pop258), $pop257
+	i32.store8	0($pop258), $pop257
 	i32.const	$push256=, u+4
 	i32.add 	$push255=, $5, $pop256
 	tee_local	$push254=, $1=, $pop255
 	i32.const	$push253=, 0
-	i32.store	$drop=, 0($pop254):p2align=0, $pop253
+	i32.store	0($pop254):p2align=0, $pop253
 	i32.add 	$push252=, $5, $2
 	tee_local	$push251=, $2=, $pop252
 	i32.const	$push250=, 0
-	i32.store	$drop=, 0($pop251):p2align=0, $pop250
+	i32.store	0($pop251):p2align=0, $pop250
 	i32.const	$push249=, 9
 	i32.const	$push248=, 0
 	call    	check@FUNCTION, $5, $pop249, $pop248
 	i32.const	$push247=, 0
 	i32.load8_u	$push246=, A($pop247)
 	tee_local	$push245=, $3=, $pop246
-	i32.store8	$drop=, 0($0), $pop245
+	i32.store8	0($0), $pop245
 	i32.const	$push244=, 16843009
 	i32.mul 	$push243=, $3, $pop244
 	tee_local	$push242=, $3=, $pop243
-	i32.store	$drop=, 0($1):p2align=0, $pop242
-	i32.store	$drop=, 0($2):p2align=0, $3
+	i32.store	0($1):p2align=0, $pop242
+	i32.store	0($2):p2align=0, $3
 	i32.const	$push241=, 9
 	i32.const	$push240=, 65
 	call    	check@FUNCTION, $5, $pop241, $pop240
 	i32.const	$push239=, 66
-	i32.store8	$drop=, 0($0), $pop239
+	i32.store8	0($0), $pop239
 	i32.const	$push238=, 1111638594
-	i32.store	$drop=, 0($1):p2align=0, $pop238
+	i32.store	0($1):p2align=0, $pop238
 	i32.const	$push237=, 1111638594
-	i32.store	$drop=, 0($2):p2align=0, $pop237
+	i32.store	0($2):p2align=0, $pop237
 	i32.const	$push236=, 9
 	i32.const	$push235=, 66
 	call    	check@FUNCTION, $5, $pop236, $pop235
@@ -539,16 +539,16 @@ main:                                   # @main
 	i32.add 	$push293=, $5, $pop294
 	tee_local	$push292=, $0=, $pop293
 	i32.const	$push291=, 0
-	i32.store16	$drop=, 0($pop292):p2align=0, $pop291
+	i32.store16	0($pop292):p2align=0, $pop291
 	i32.const	$push290=, u+4
 	i32.add 	$push289=, $5, $pop290
 	tee_local	$push288=, $1=, $pop289
 	i32.const	$push287=, 0
-	i32.store	$drop=, 0($pop288):p2align=0, $pop287
+	i32.store	0($pop288):p2align=0, $pop287
 	i32.add 	$push286=, $5, $2
 	tee_local	$push285=, $2=, $pop286
 	i32.const	$push284=, 0
-	i32.store	$drop=, 0($pop285):p2align=0, $pop284
+	i32.store	0($pop285):p2align=0, $pop284
 	i32.const	$push283=, 10
 	i32.const	$push282=, 0
 	call    	check@FUNCTION, $5, $pop283, $pop282
@@ -557,21 +557,21 @@ main:                                   # @main
 	tee_local	$push279=, $3=, $pop280
 	i32.const	$push278=, 257
 	i32.mul 	$push26=, $pop279, $pop278
-	i32.store16	$drop=, 0($0):p2align=0, $pop26
+	i32.store16	0($0):p2align=0, $pop26
 	i32.const	$push277=, 16843009
 	i32.mul 	$push276=, $3, $pop277
 	tee_local	$push275=, $3=, $pop276
-	i32.store	$drop=, 0($1):p2align=0, $pop275
-	i32.store	$drop=, 0($2):p2align=0, $3
+	i32.store	0($1):p2align=0, $pop275
+	i32.store	0($2):p2align=0, $3
 	i32.const	$push274=, 10
 	i32.const	$push273=, 65
 	call    	check@FUNCTION, $5, $pop274, $pop273
 	i32.const	$push272=, 16962
-	i32.store16	$drop=, 0($0):p2align=0, $pop272
+	i32.store16	0($0):p2align=0, $pop272
 	i32.const	$push271=, 1111638594
-	i32.store	$drop=, 0($1):p2align=0, $pop271
+	i32.store	0($1):p2align=0, $pop271
 	i32.const	$push270=, 1111638594
-	i32.store	$drop=, 0($2):p2align=0, $pop270
+	i32.store	0($2):p2align=0, $pop270
 	i32.const	$push269=, 10
 	i32.const	$push268=, 66
 	call    	check@FUNCTION, $5, $pop269, $pop268
@@ -595,47 +595,47 @@ main:                                   # @main
 	i32.add 	$push332=, $5, $pop333
 	tee_local	$push331=, $0=, $pop332
 	i32.const	$push330=, 0
-	i32.store8	$drop=, 0($pop331), $pop330
+	i32.store8	0($pop331), $pop330
 	i32.const	$push329=, u+8
 	i32.add 	$push328=, $5, $pop329
 	tee_local	$push327=, $1=, $pop328
 	i32.const	$push326=, 0
-	i32.store16	$drop=, 0($pop327):p2align=0, $pop326
+	i32.store16	0($pop327):p2align=0, $pop326
 	i32.const	$push325=, u+4
 	i32.add 	$push324=, $5, $pop325
 	tee_local	$push323=, $2=, $pop324
 	i32.const	$push322=, 0
-	i32.store	$drop=, 0($pop323):p2align=0, $pop322
+	i32.store	0($pop323):p2align=0, $pop322
 	i32.add 	$push321=, $5, $3
 	tee_local	$push320=, $3=, $pop321
 	i32.const	$push319=, 0
-	i32.store	$drop=, 0($pop320):p2align=0, $pop319
+	i32.store	0($pop320):p2align=0, $pop319
 	i32.const	$push318=, 11
 	i32.const	$push317=, 0
 	call    	check@FUNCTION, $5, $pop318, $pop317
 	i32.const	$push316=, 0
 	i32.load8_u	$push315=, A($pop316)
 	tee_local	$push314=, $4=, $pop315
-	i32.store8	$drop=, 0($0), $pop314
+	i32.store8	0($0), $pop314
 	i32.const	$push313=, 257
 	i32.mul 	$push28=, $4, $pop313
-	i32.store16	$drop=, 0($1):p2align=0, $pop28
+	i32.store16	0($1):p2align=0, $pop28
 	i32.const	$push312=, 16843009
 	i32.mul 	$push311=, $4, $pop312
 	tee_local	$push310=, $4=, $pop311
-	i32.store	$drop=, 0($2):p2align=0, $pop310
-	i32.store	$drop=, 0($3):p2align=0, $4
+	i32.store	0($2):p2align=0, $pop310
+	i32.store	0($3):p2align=0, $4
 	i32.const	$push309=, 11
 	i32.const	$push308=, 65
 	call    	check@FUNCTION, $5, $pop309, $pop308
 	i32.const	$push307=, 66
-	i32.store8	$drop=, 0($0), $pop307
+	i32.store8	0($0), $pop307
 	i32.const	$push306=, 16962
-	i32.store16	$drop=, 0($1):p2align=0, $pop306
+	i32.store16	0($1):p2align=0, $pop306
 	i32.const	$push305=, 1111638594
-	i32.store	$drop=, 0($2):p2align=0, $pop305
+	i32.store	0($2):p2align=0, $pop305
 	i32.const	$push304=, 1111638594
-	i32.store	$drop=, 0($3):p2align=0, $pop304
+	i32.store	0($3):p2align=0, $pop304
 	i32.const	$push303=, 11
 	i32.const	$push302=, 66
 	call    	check@FUNCTION, $5, $pop303, $pop302
@@ -659,11 +659,11 @@ main:                                   # @main
 	i32.add 	$push359=, $5, $pop360
 	tee_local	$push358=, $0=, $pop359
 	i64.const	$push357=, 0
-	i64.store	$drop=, 0($pop358):p2align=0, $pop357
+	i64.store	0($pop358):p2align=0, $pop357
 	i32.add 	$push356=, $5, $1
 	tee_local	$push355=, $1=, $pop356
 	i32.const	$push354=, 0
-	i32.store	$drop=, 0($pop355):p2align=0, $pop354
+	i32.store	0($pop355):p2align=0, $pop354
 	i32.const	$push353=, 12
 	i32.const	$push352=, 0
 	call    	check@FUNCTION, $5, $pop353, $pop352
@@ -674,16 +674,16 @@ main:                                   # @main
 	i32.const	$push349=, 16843009
 	i32.mul 	$push348=, $pop31, $pop349
 	tee_local	$push347=, $2=, $pop348
-	i32.store	$drop=, 0($pop30):p2align=0, $pop347
-	i32.store	$drop=, 0($0):p2align=0, $2
-	i32.store	$drop=, 0($1):p2align=0, $2
+	i32.store	0($pop30):p2align=0, $pop347
+	i32.store	0($0):p2align=0, $2
+	i32.store	0($1):p2align=0, $2
 	i32.const	$push346=, 12
 	i32.const	$push345=, 65
 	call    	check@FUNCTION, $5, $pop346, $pop345
 	i64.const	$push344=, 4774451407313060418
-	i64.store	$drop=, 0($0):p2align=0, $pop344
+	i64.store	0($0):p2align=0, $pop344
 	i32.const	$push343=, 1111638594
-	i32.store	$drop=, 0($1):p2align=0, $pop343
+	i32.store	0($1):p2align=0, $pop343
 	i32.const	$push342=, 12
 	i32.const	$push341=, 66
 	call    	check@FUNCTION, $5, $pop342, $pop341
@@ -707,40 +707,40 @@ main:                                   # @main
 	i32.add 	$push393=, $5, $pop394
 	tee_local	$push392=, $0=, $pop393
 	i32.const	$push391=, 0
-	i32.store8	$drop=, 0($pop392), $pop391
+	i32.store8	0($pop392), $pop391
 	i32.const	$push390=, u+4
 	i32.add 	$push389=, $5, $pop390
 	tee_local	$push388=, $1=, $pop389
 	i64.const	$push387=, 0
-	i64.store	$drop=, 0($pop388):p2align=0, $pop387
+	i64.store	0($pop388):p2align=0, $pop387
 	i32.add 	$push386=, $5, $2
 	tee_local	$push385=, $2=, $pop386
 	i32.const	$push384=, 0
-	i32.store	$drop=, 0($pop385):p2align=0, $pop384
+	i32.store	0($pop385):p2align=0, $pop384
 	i32.const	$push383=, 13
 	i32.const	$push382=, 0
 	call    	check@FUNCTION, $5, $pop383, $pop382
 	i32.const	$push381=, 0
 	i32.load8_u	$push380=, A($pop381)
 	tee_local	$push379=, $3=, $pop380
-	i32.store8	$drop=, 0($0), $pop379
+	i32.store8	0($0), $pop379
 	i32.const	$push378=, u+8
 	i32.add 	$push33=, $5, $pop378
 	i32.const	$push377=, 16843009
 	i32.mul 	$push376=, $3, $pop377
 	tee_local	$push375=, $3=, $pop376
-	i32.store	$drop=, 0($pop33):p2align=0, $pop375
-	i32.store	$drop=, 0($1):p2align=0, $3
-	i32.store	$drop=, 0($2):p2align=0, $3
+	i32.store	0($pop33):p2align=0, $pop375
+	i32.store	0($1):p2align=0, $3
+	i32.store	0($2):p2align=0, $3
 	i32.const	$push374=, 13
 	i32.const	$push373=, 65
 	call    	check@FUNCTION, $5, $pop374, $pop373
 	i32.const	$push372=, 66
-	i32.store8	$drop=, 0($0), $pop372
+	i32.store8	0($0), $pop372
 	i64.const	$push371=, 4774451407313060418
-	i64.store	$drop=, 0($1):p2align=0, $pop371
+	i64.store	0($1):p2align=0, $pop371
 	i32.const	$push370=, 1111638594
-	i32.store	$drop=, 0($2):p2align=0, $pop370
+	i32.store	0($2):p2align=0, $pop370
 	i32.const	$push369=, 13
 	i32.const	$push368=, 66
 	call    	check@FUNCTION, $5, $pop369, $pop368
@@ -764,16 +764,16 @@ main:                                   # @main
 	i32.add 	$push428=, $5, $pop429
 	tee_local	$push427=, $0=, $pop428
 	i32.const	$push426=, 0
-	i32.store16	$drop=, 0($pop427):p2align=0, $pop426
+	i32.store16	0($pop427):p2align=0, $pop426
 	i32.const	$push425=, u+4
 	i32.add 	$push424=, $5, $pop425
 	tee_local	$push423=, $1=, $pop424
 	i64.const	$push422=, 0
-	i64.store	$drop=, 0($pop423):p2align=0, $pop422
+	i64.store	0($pop423):p2align=0, $pop422
 	i32.add 	$push421=, $5, $2
 	tee_local	$push420=, $2=, $pop421
 	i32.const	$push419=, 0
-	i32.store	$drop=, 0($pop420):p2align=0, $pop419
+	i32.store	0($pop420):p2align=0, $pop419
 	i32.const	$push418=, 14
 	i32.const	$push417=, 0
 	call    	check@FUNCTION, $5, $pop418, $pop417
@@ -782,24 +782,24 @@ main:                                   # @main
 	tee_local	$push414=, $3=, $pop415
 	i32.const	$push413=, 257
 	i32.mul 	$push35=, $pop414, $pop413
-	i32.store16	$drop=, 0($0):p2align=0, $pop35
+	i32.store16	0($0):p2align=0, $pop35
 	i32.const	$push412=, u+8
 	i32.add 	$push36=, $5, $pop412
 	i32.const	$push411=, 16843009
 	i32.mul 	$push410=, $3, $pop411
 	tee_local	$push409=, $3=, $pop410
-	i32.store	$drop=, 0($pop36):p2align=0, $pop409
-	i32.store	$drop=, 0($1):p2align=0, $3
-	i32.store	$drop=, 0($2):p2align=0, $3
+	i32.store	0($pop36):p2align=0, $pop409
+	i32.store	0($1):p2align=0, $3
+	i32.store	0($2):p2align=0, $3
 	i32.const	$push408=, 14
 	i32.const	$push407=, 65
 	call    	check@FUNCTION, $5, $pop408, $pop407
 	i32.const	$push406=, 16962
-	i32.store16	$drop=, 0($0):p2align=0, $pop406
+	i32.store16	0($0):p2align=0, $pop406
 	i64.const	$push405=, 4774451407313060418
-	i64.store	$drop=, 0($1):p2align=0, $pop405
+	i64.store	0($1):p2align=0, $pop405
 	i32.const	$push404=, 1111638594
-	i32.store	$drop=, 0($2):p2align=0, $pop404
+	i32.store	0($2):p2align=0, $pop404
 	i32.const	$push403=, 14
 	i32.const	$push402=, 66
 	call    	check@FUNCTION, $5, $pop403, $pop402
@@ -823,50 +823,50 @@ main:                                   # @main
 	i32.add 	$push468=, $5, $pop469
 	tee_local	$push467=, $0=, $pop468
 	i32.const	$push466=, 0
-	i32.store8	$drop=, 0($pop467), $pop466
+	i32.store8	0($pop467), $pop466
 	i32.const	$push465=, u+12
 	i32.add 	$push464=, $5, $pop465
 	tee_local	$push463=, $1=, $pop464
 	i32.const	$push462=, 0
-	i32.store16	$drop=, 0($pop463):p2align=0, $pop462
+	i32.store16	0($pop463):p2align=0, $pop462
 	i32.const	$push461=, u+4
 	i32.add 	$push460=, $5, $pop461
 	tee_local	$push459=, $2=, $pop460
 	i64.const	$push458=, 0
-	i64.store	$drop=, 0($pop459):p2align=0, $pop458
+	i64.store	0($pop459):p2align=0, $pop458
 	i32.add 	$push457=, $5, $3
 	tee_local	$push456=, $3=, $pop457
 	i32.const	$push455=, 0
-	i32.store	$drop=, 0($pop456):p2align=0, $pop455
+	i32.store	0($pop456):p2align=0, $pop455
 	i32.const	$push454=, 15
 	i32.const	$push453=, 0
 	call    	check@FUNCTION, $5, $pop454, $pop453
 	i32.const	$push452=, 0
 	i32.load8_u	$push451=, A($pop452)
 	tee_local	$push450=, $4=, $pop451
-	i32.store8	$drop=, 0($0), $pop450
+	i32.store8	0($0), $pop450
 	i32.const	$push449=, 257
 	i32.mul 	$push38=, $4, $pop449
-	i32.store16	$drop=, 0($1):p2align=0, $pop38
+	i32.store16	0($1):p2align=0, $pop38
 	i32.const	$push448=, u+8
 	i32.add 	$push39=, $5, $pop448
 	i32.const	$push447=, 16843009
 	i32.mul 	$push446=, $4, $pop447
 	tee_local	$push445=, $4=, $pop446
-	i32.store	$drop=, 0($pop39):p2align=0, $pop445
-	i32.store	$drop=, 0($2):p2align=0, $4
-	i32.store	$drop=, 0($3):p2align=0, $4
+	i32.store	0($pop39):p2align=0, $pop445
+	i32.store	0($2):p2align=0, $4
+	i32.store	0($3):p2align=0, $4
 	i32.const	$push444=, 15
 	i32.const	$push443=, 65
 	call    	check@FUNCTION, $5, $pop444, $pop443
 	i32.const	$push442=, 66
-	i32.store8	$drop=, 0($0), $pop442
+	i32.store8	0($0), $pop442
 	i32.const	$push441=, 16962
-	i32.store16	$drop=, 0($1):p2align=0, $pop441
+	i32.store16	0($1):p2align=0, $pop441
 	i64.const	$push440=, 4774451407313060418
-	i64.store	$drop=, 0($2):p2align=0, $pop440
+	i64.store	0($2):p2align=0, $pop440
 	i32.const	$push439=, 1111638594
-	i32.store	$drop=, 0($3):p2align=0, $pop439
+	i32.store	0($3):p2align=0, $pop439
 	i32.const	$push438=, 15
 	i32.const	$push437=, 66
 	call    	check@FUNCTION, $5, $pop438, $pop437
@@ -901,6 +901,6 @@ u:
 	.size	u, 32
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

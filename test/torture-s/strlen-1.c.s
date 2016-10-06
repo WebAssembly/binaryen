@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -47,11 +47,11 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label6:
 	i32.const	$push13=, 0
-	i32.store8	$drop=, 0($4), $pop13
+	i32.store8	0($4), $pop13
 	i32.const	$push12=, 1
 	i32.add 	$push6=, $4, $pop12
 	i64.const	$push11=, 7089336938131513954
-	i64.store	$drop=, 0($pop6):p2align=0, $pop11
+	i64.store	0($pop6):p2align=0, $pop11
 	i32.call	$push1=, strlen@FUNCTION, $0
 	i32.ne  	$push2=, $3, $pop1
 	br_if   	4, $pop2        # 4: down to label0
@@ -95,7 +95,7 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

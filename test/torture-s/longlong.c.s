@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/longlong.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/longlong.c"
 	.section	.text.alpha_ep_extbl_i_eq_0,"ax",@progbits
 	.hidden	alpha_ep_extbl_i_eq_0
 	.globl	alpha_ep_extbl_i_eq_0
@@ -43,7 +43,7 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	i64.shr_u	$push17=, $pop16, $pop11
 	i64.const	$push18=, 255
 	i64.and 	$push19=, $pop17, $pop18
-	i64.store	$drop=, 0($pop22), $pop19
+	i64.store	0($pop22), $pop19
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
                                         # fallthrough-return
@@ -61,13 +61,13 @@ main:                                   # @main
 # BB#0:                                 # %alpha_ep_extbl_i_eq_0.exit
 	i32.const	$push21=, 0
 	i64.const	$push0=, 3160194
-	i64.store	$drop=, b+136($pop21), $pop0
+	i64.store	b+136($pop21), $pop0
 	i32.const	$push20=, 0
 	i64.const	$push1=, 6003104017374052362
-	i64.store	$drop=, b+16($pop20), $pop1
+	i64.store	b+16($pop20), $pop1
 	i32.const	$push19=, 0
 	i32.const	$push2=, -2013265854
-	i32.store	$drop=, pars($pop19), $pop2
+	i32.store	pars($pop19), $pop2
 	i32.const	$push18=, 0
 	i32.load	$push17=, r($pop18)
 	tee_local	$push16=, $0=, $pop17
@@ -80,7 +80,7 @@ main:                                   # @main
 	i64.shr_u	$push9=, $pop8, $pop7
 	i64.const	$push10=, 255
 	i64.and 	$push11=, $pop9, $pop10
-	i64.store	$drop=, 16($pop16), $pop11
+	i64.store	16($pop16), $pop11
 	block
 	i32.const	$push15=, 0
 	i64.load	$push12=, b+16($pop15)
@@ -127,6 +127,6 @@ pars:
 	.size	pars, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

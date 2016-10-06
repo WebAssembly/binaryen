@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35472.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35472.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -8,9 +8,9 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, p($pop0), $1
+	i32.store	p($pop0), $1
 	i32.const	$push1=, -1
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -29,7 +29,7 @@ test:                                   # @test
 	i32.const	$push9=, 128
 	i32.sub 	$push28=, $pop8, $pop9
 	tee_local	$push27=, $0=, $pop28
-	i32.store	$drop=, __stack_pointer($pop10), $pop27
+	i32.store	__stack_pointer($pop10), $pop27
 	i32.const	$push14=, 64
 	i32.add 	$push15=, $0, $pop14
 	i32.const	$push2=, 0
@@ -59,7 +59,7 @@ test:                                   # @test
 	i32.const	$push13=, 0
 	i32.const	$push11=, 128
 	i32.add 	$push12=, $0, $pop11
-	i32.store	$drop=, __stack_pointer($pop13), $pop12
+	i32.store	__stack_pointer($pop13), $pop12
 	return
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -83,7 +83,7 @@ main:                                   # @main
 	i32.const	$push8=, 128
 	i32.sub 	$push28=, $pop7, $pop8
 	tee_local	$push27=, $0=, $pop28
-	i32.store	$drop=, __stack_pointer($pop9), $pop27
+	i32.store	__stack_pointer($pop9), $pop27
 	i32.const	$push13=, 64
 	i32.add 	$push14=, $0, $pop13
 	i32.const	$push26=, 0
@@ -113,7 +113,7 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i32.const	$push10=, 128
 	i32.add 	$push11=, $0, $pop10
-	i32.store	$drop=, __stack_pointer($pop12), $pop11
+	i32.store	__stack_pointer($pop12), $pop11
 	i32.const	$push29=, 0
 	return  	$pop29
 .LBB2_2:                                # %if.then.i
@@ -134,5 +134,5 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

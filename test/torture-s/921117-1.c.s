@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921117-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921117-1.c"
 	.section	.text.check,"ax",@progbits
 	.hidden	check
 	.globl	check
@@ -35,23 +35,23 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push16=, 0
 	i32.const	$push0=, 99
-	i32.store	$drop=, cell+12($pop16), $pop0
+	i32.store	cell+12($pop16), $pop0
 	i32.const	$push15=, 0
 	i32.const	$push14=, 0
 	i32.load8_u	$push1=, .L.str+10($pop14)
-	i32.store8	$drop=, cell+10($pop15), $pop1
+	i32.store8	cell+10($pop15), $pop1
 	i32.const	$push13=, 0
 	i32.const	$push12=, 0
 	i32.load16_u	$push2=, .L.str+8($pop12):p2align=0
-	i32.store16	$drop=, cell+8($pop13), $pop2
+	i32.store16	cell+8($pop13), $pop2
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
 	i32.load	$push3=, .L.str+4($pop10):p2align=0
-	i32.store	$drop=, cell+4($pop11), $pop3
+	i32.store	cell+4($pop11), $pop3
 	i32.const	$push9=, 0
 	i32.const	$push8=, 0
 	i32.load	$push4=, .L.str($pop8):p2align=0
-	i32.store	$drop=, cell($pop9), $pop4
+	i32.store	cell($pop9), $pop4
 	block
 	i32.const	$push6=, cell
 	i32.const	$push5=, .L.str
@@ -85,7 +85,7 @@ cell:
 	.size	cell, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

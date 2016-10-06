@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41239.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41239.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -15,7 +15,7 @@ test:                                   # @test
 	i32.const	$push13=, 16
 	i32.sub 	$push21=, $pop12, $pop13
 	tee_local	$push20=, $3=, $pop21
-	i32.store	$drop=, __stack_pointer($pop14), $pop20
+	i32.store	__stack_pointer($pop14), $pop20
 	i32.load	$1=, 4($0)
 	block
 	i32.const	$push0=, 8
@@ -38,14 +38,14 @@ test:                                   # @test
 	i32.const	$push8=, .L.str.1
 	i32.const	$push23=, 0
 	i32.call	$push9=, fn4@FUNCTION, $pop8, $pop23
-	i32.store	$drop=, 0($3), $pop9
+	i32.store	0($3), $pop9
 	call    	fn2@FUNCTION, $2, $3
 .LBB0_3:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push17=, 0
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $3, $pop15
-	i32.store	$drop=, __stack_pointer($pop17), $pop16
+	i32.store	__stack_pointer($pop17), $pop16
 	i32.div_s	$push10=, $1, $0
                                         # fallthrough-return: $pop10
 	.endfunc
@@ -141,15 +141,15 @@ main:                                   # @main
 	i32.const	$push7=, 16
 	i32.sub 	$push11=, $pop6, $pop7
 	tee_local	$push10=, $0=, $pop11
-	i32.store	$drop=, __stack_pointer($pop8), $pop10
+	i32.store	__stack_pointer($pop8), $pop10
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.s+8($pop0)
-	i32.store	$drop=, 0($pop3), $pop1
+	i32.store	0($pop3), $pop1
 	i32.const	$push9=, 0
 	i64.load	$push4=, .Lmain.s($pop9):p2align=2
-	i64.store	$drop=, 0($0), $pop4
+	i64.store	0($0), $pop4
 	i32.call	$drop=, test@FUNCTION, $0
 	call    	abort@FUNCTION
 	unreachable
@@ -184,6 +184,6 @@ main:                                   # @main
 	.size	.Lmain.s, 12
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

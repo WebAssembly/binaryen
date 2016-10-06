@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020810-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020810-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -38,7 +38,7 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i64.load	$push1=, R($pop0)
-	i64.store	$drop=, 0($0):p2align=2, $pop1
+	i64.store	0($0):p2align=2, $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -91,5 +91,5 @@ R:
 	.size	R, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

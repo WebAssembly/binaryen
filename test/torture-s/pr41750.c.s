@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41750.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41750.c"
 	.section	.text.foo_create_got_section,"ax",@progbits
 	.hidden	foo_create_got_section
 	.globl	foo_create_got_section
@@ -9,7 +9,7 @@ foo_create_got_section:                 # @foo_create_got_section
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.load	$push0=, 0($1)
-	i32.store	$drop=, 8($pop0), $0
+	i32.store	8($pop0), $0
 	i32.const	$push1=, 1
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -39,7 +39,7 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 # BB#2:                                 # %if.then3.i
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $2, $pop0
-	i32.store	$drop=, 0($pop1), $0
+	i32.store	0($pop1), $0
 	copy_local	$3=, $0
 .LBB1_3:                                # %if.end.i
 	end_block                       # label1:
@@ -64,7 +64,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
 	i32.const	$push0=, hash
-	i32.store	$drop=, link_info($pop6), $pop0
+	i32.store	link_info($pop6), $pop0
 	block
 	i32.const	$push2=, abfd
 	i32.const	$push1=, link_info
@@ -111,5 +111,5 @@ abfd:
 	.size	abfd, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

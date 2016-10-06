@@ -837,12 +837,15 @@ class S2WasmBuilder {
       setOutput(curr, assign);
     };
     auto makeStore = [&](WasmType type) {
-      skipComma();
       auto curr = allocator->alloc<Store>();
       curr->valueType = type;
-      int32_t bytes = getInt() / CHAR_BIT;
-      curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
-      Name assign = getAssign();
+      s += strlen("store");
+      if(!isspace(*s)) {
+        curr->bytes = getInt() / CHAR_BIT;
+      } else {
+        curr->bytes = getWasmTypeSize(type);
+      }
+      skipWhitespace();
       getRelocatableConst(&curr->offset.addr);
       mustMatch("(");
       auto attributes = getAttributes(2);
@@ -855,7 +858,7 @@ class S2WasmBuilder {
       }
       curr->value = inputs[1];
       curr->finalize();
-      setOutput(curr, assign);
+      addToBlock(curr);
     };
     auto makeSelect = [&](WasmType type) {
       Name assign = getAssign();
@@ -1029,7 +1032,7 @@ class S2WasmBuilder {
           else if (match("shr_u")) makeBinary(BINARY_INT(ShrU), type);
           else if (match("shl")) makeBinary(BINARY_INT(Shl), type);
           else if (match("sub")) makeBinary(BINARY_INT_OR_FLOAT(Sub), type);
-          else if (match("store")) makeStore(type);
+          else if (peek("store")) makeStore(type);
           else if (match("select")) makeSelect(type);
           else if (match("sqrt")) makeUnary(type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
           else abort_on("type.s");

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000715-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000715-1.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -41,10 +41,10 @@ test4:                                  # @test4
 # BB#0:                                 # %if.end8
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$drop=, y($pop1), $pop0
+	i32.store	y($pop1), $pop0
 	i32.const	$push3=, 0
 	i32.const	$push2=, 3
-	i32.store	$drop=, x($pop3), $pop2
+	i32.store	x($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -58,10 +58,10 @@ test5:                                  # @test5
 # BB#0:                                 # %if.end8
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$drop=, y($pop1), $pop0
+	i32.store	y($pop1), $pop0
 	i32.const	$push3=, 0
 	i32.const	$push2=, 3
-	i32.store	$drop=, x($pop3), $pop2
+	i32.store	x($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end4:
@@ -75,10 +75,10 @@ test6:                                  # @test6
 # BB#0:                                 # %if.end8
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$drop=, y($pop1), $pop0
+	i32.store	y($pop1), $pop0
 	i32.const	$push3=, 0
 	i32.const	$push2=, 3
-	i32.store	$drop=, x($pop3), $pop2
+	i32.store	x($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end5:
@@ -120,5 +120,5 @@ y:
 	.size	y, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

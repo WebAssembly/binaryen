@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/fast-isel.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/fast-isel.ll"
 	.globl	immediate_f32
 	.type	immediate_f32,@function
 immediate_f32:

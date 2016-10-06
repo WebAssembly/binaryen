@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981130-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981130-1.c"
 	.section	.text.check,"ax",@progbits
 	.hidden	check
 	.globl	check
@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	i64.load	$push4=, s2($pop5)
 	tee_local	$push3=, $0=, $pop4
-	i64.store	$drop=, s1($pop0), $pop3
+	i64.store	s1($pop0), $pop3
 	i32.wrap/i64	$push1=, $0
 	i32.const	$push2=, 1
 	call    	check@FUNCTION, $pop1, $pop2
@@ -63,6 +63,6 @@ s1:
 	.size	s1, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32
 	.functype	abort, void

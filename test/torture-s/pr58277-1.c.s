@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58277-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58277-1.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -9,7 +9,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store8	$drop=, u($pop0), $pop2
+	i32.store8	u($pop0), $pop2
 	i32.const	$push1=, 0
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -43,16 +43,16 @@ main:                                   # @main
 	i32.const	$push116=, 32
 	i32.sub 	$push128=, $pop115, $pop116
 	tee_local	$push127=, $3=, $pop128
-	i32.store	$drop=, __stack_pointer($pop117), $pop127
+	i32.store	__stack_pointer($pop117), $pop127
 	i32.const	$push126=, 0
 	i32.const	$push125=, 1
-	i32.store	$drop=, n($pop126), $pop125
+	i32.store	n($pop126), $pop125
 	i32.const	$push124=, 0
 	i32.const	$push123=, 1
-	i32.store	$drop=, a($pop124), $pop123
+	i32.store	a($pop124), $pop123
 	i32.const	$push122=, 0
 	i32.const	$push121=, 0
-	i32.store8	$drop=, u($pop122), $pop121
+	i32.store8	u($pop122), $pop121
 	i32.const	$0=, 1
 .LBB2_1:                                # %for.body
                                         # =>This Loop Header: Depth=1
@@ -61,7 +61,7 @@ main:                                   # @main
 	loop                            # label0:
 	i32.const	$push131=, 0
 	i32.const	$push130=, 0
-	i32.store	$drop=, g($pop131), $pop130
+	i32.store	g($pop131), $pop130
 	block
 	block
 	i32.const	$push129=, 0
@@ -73,30 +73,30 @@ main:                                   # @main
 	i32.const	$push144=, 0
 	i32.load	$push1=, j($pop144)
 	i32.const	$push143=, 0
-	i32.store	$drop=, 0($pop1), $pop143
+	i32.store	0($pop1), $pop143
 	i32.const	$push142=, 0
 	i32.load	$push2=, i($pop142)
 	i32.const	$push141=, 0
 	i32.load	$push3=, j($pop141)
 	i32.load	$push4=, 0($pop3)
-	i32.store	$drop=, 0($pop2), $pop4
+	i32.store	0($pop2), $pop4
 	i32.const	$push140=, 0
 	i32.const	$push139=, 0
-	i32.store	$drop=, d($pop140), $pop139
+	i32.store	d($pop140), $pop139
 	i32.const	$push138=, 0
 	i32.const	$push137=, 1
-	i32.store8	$drop=, u($pop138), $pop137
+	i32.store8	u($pop138), $pop137
 	i32.const	$push136=, 0
 	i32.load	$push5=, i($pop136)
 	i32.const	$push135=, 0
-	i32.store	$drop=, 0($pop5), $pop135
+	i32.store	0($pop5), $pop135
 	i32.const	$push134=, 0
 	i32.load	$push6=, i($pop134)
 	i32.const	$push133=, 0
-	i32.store	$drop=, 0($pop6), $pop133
+	i32.store	0($pop6), $pop133
 	i32.const	$push132=, 0
 	i32.load	$push7=, i($pop132)
-	i32.store	$drop=, 0($pop7), $3
+	i32.store	0($pop7), $3
 	br      	1               # 1: down to label2
 .LBB2_3:                                # %for.cond.preheader.i
                                         #   in Loop: Header=BB2_1 Depth=1
@@ -104,14 +104,14 @@ main:                                   # @main
 	i32.const	$push151=, 0
 	i32.load	$push8=, i($pop151)
 	i32.const	$push150=, 0
-	i32.store	$drop=, 0($pop8), $pop150
+	i32.store	0($pop8), $pop150
 	i32.const	$push149=, 0
 	i32.load	$push9=, e($pop149)
 	i32.const	$push148=, 0
-	i32.store	$drop=, 0($pop9), $pop148
+	i32.store	0($pop9), $pop148
 	i32.const	$push147=, 0
 	i32.const	$push146=, 0
-	i32.store	$drop=, o($pop147), $pop146
+	i32.store	o($pop147), $pop146
 	block
 	i32.const	$push145=, 0
 	i32.load	$push10=, p($pop145)
@@ -126,7 +126,7 @@ main:                                   # @main
 	tee_local	$push154=, $2=, $pop155
 	i32.load	$push11=, 0($pop154)
 	i32.const	$push153=, 0
-	i32.store	$drop=, 0($pop11), $pop153
+	i32.store	0($pop11), $pop153
 	block
 	i32.const	$push152=, 0
 	i32.load	$push12=, j($pop152)
@@ -149,12 +149,12 @@ main:                                   # @main
 	i32.load	$push15=, k($pop165)
 	i32.const	$push164=, 1
 	i32.add 	$push16=, $pop15, $pop164
-	i32.store	$drop=, k($pop166), $pop16
+	i32.store	k($pop166), $pop16
 	i32.const	$push163=, 0
-	i32.store	$drop=, 0($0), $pop163
+	i32.store	0($0), $pop163
 	i32.const	$push162=, 0
 	i32.const	$push161=, 0
-	i32.store8	$drop=, u($pop162), $pop161
+	i32.store8	u($pop162), $pop161
 	i32.const	$push160=, 0
 	i32.load	$push17=, j($pop160)
 	i32.load	$push18=, 0($pop17)
@@ -168,54 +168,54 @@ main:                                   # @main
 	i32.const	$push187=, 0
 	i32.load	$push20=, j($pop187)
 	i32.load	$push21=, 0($pop20)
-	i32.store	$drop=, 0($2), $pop21
+	i32.store	0($2), $pop21
 	i32.const	$push186=, 0
 	i32.load	$push22=, i($pop186)
 	i32.const	$push185=, 0
 	i32.load	$push23=, j($pop185)
 	i32.load	$push24=, 0($pop23)
-	i32.store	$drop=, 0($pop22), $pop24
+	i32.store	0($pop22), $pop24
 	i32.const	$push184=, 0
 	i32.load	$0=, j($pop184)
 	i32.const	$push183=, 0
 	i32.load	$push26=, i($pop183)
 	i32.load	$push25=, 0($0)
-	i32.store	$drop=, 0($pop26), $pop25
+	i32.store	0($pop26), $pop25
 	i32.const	$push182=, 0
 	i32.load	$push27=, i($pop182)
 	i32.const	$push181=, 0
 	i32.load	$push28=, j($pop181)
 	i32.load	$push29=, 0($pop28)
-	i32.store	$drop=, 0($pop27), $pop29
+	i32.store	0($pop27), $pop29
 	i32.const	$push180=, 0
 	i32.load	$push30=, i($pop180)
 	i32.const	$push179=, 0
 	i32.load	$push31=, j($pop179)
 	i32.load	$push32=, 0($pop31)
-	i32.store	$drop=, 0($pop30), $pop32
+	i32.store	0($pop30), $pop32
 	i32.const	$push178=, 0
 	i32.load	$push33=, i($pop178)
 	i32.const	$push177=, 0
 	i32.load	$push34=, j($pop177)
 	i32.load	$push35=, 0($pop34)
-	i32.store	$drop=, 0($pop33), $pop35
+	i32.store	0($pop33), $pop35
 	i32.const	$push176=, 0
 	i32.load	$push36=, i($pop176)
 	i32.const	$push175=, 0
-	i32.store	$drop=, 0($pop36), $pop175
+	i32.store	0($pop36), $pop175
 	i32.const	$push174=, 0
 	i32.const	$push173=, 0
 	i32.load	$push37=, h($pop173)
 	i32.const	$push172=, 1
 	i32.add 	$push38=, $pop37, $pop172
-	i32.store	$drop=, h($pop174), $pop38
+	i32.store	h($pop174), $pop38
 	i32.const	$push171=, 0
 	i32.load	$push39=, e($pop171)
 	i32.const	$push170=, 0
-	i32.store	$drop=, 0($pop39), $pop170
+	i32.store	0($pop39), $pop170
 	i32.const	$push169=, 0
 	i32.const	$push168=, 0
-	i32.store	$drop=, o($pop169), $pop168
+	i32.store	o($pop169), $pop168
 	i32.const	$push167=, 0
 	i32.load	$push40=, p($pop167)
 	i32.eqz 	$push256=, $pop40
@@ -226,7 +226,7 @@ main:                                   # @main
 	end_block                       # label4:
 	i32.const	$push190=, 0
 	i32.const	$push189=, 0
-	i32.store	$drop=, f($pop190), $pop189
+	i32.store	f($pop190), $pop189
 	i32.const	$push188=, 0
 	i32.load	$0=, n($pop188)
 .LBB2_9:                                # %for.inc7
@@ -236,10 +236,10 @@ main:                                   # @main
 	i32.const	$push195=, -1
 	i32.add 	$push194=, $0, $pop195
 	tee_local	$push193=, $0=, $pop194
-	i32.store	$drop=, n($pop196), $pop193
+	i32.store	n($pop196), $pop193
 	i32.const	$push192=, 0
 	i32.const	$push191=, 0
-	i32.store8	$drop=, u($pop192), $pop191
+	i32.store8	u($pop192), $pop191
 	br_if   	0, $0           # 0: up to label0
 # BB#10:                                # %for.end8
 	end_loop                        # label1:
@@ -315,10 +315,10 @@ main:                                   # @main
 # BB#15:                                # %for.cond9.for.end29_crit_edge
 	end_loop                        # label12:
 	i32.const	$push64=, 0
-	i32.store	$drop=, c($pop64), $2
+	i32.store	c($pop64), $2
 	i32.const	$push224=, 0
 	i32.const	$push223=, 0
-	i32.store	$drop=, b($pop224), $pop223
+	i32.store	b($pop224), $pop223
 .LBB2_16:                               # %for.end29
 	end_block                       # label10:
 	call    	baz@FUNCTION
@@ -406,7 +406,7 @@ main:                                   # @main
 	i32.const	$push120=, 0
 	i32.const	$push118=, 32
 	i32.add 	$push119=, $3, $pop118
-	i32.store	$drop=, __stack_pointer($pop120), $pop119
+	i32.store	__stack_pointer($pop120), $pop119
 	i32.const	$push113=, 0
 	return  	$pop113
 .LBB2_18:                               # %if.then46
@@ -566,5 +566,5 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

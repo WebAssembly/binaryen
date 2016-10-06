@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960117-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960117-1.c"
 	.section	.text.get_id,"ax",@progbits
 	.hidden	get_id
 	.globl	get_id
@@ -10,7 +10,7 @@ get_id:                                 # @get_id
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, curval+2($pop0):p2align=1
-	i32.store8	$drop=, 0($pop1), $0
+	i32.store8	0($pop1), $0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -26,13 +26,13 @@ get_tok:                                # @get_tok
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, id_space
-	i32.store	$drop=, curval+2($pop1):p2align=1, $pop0
+	i32.store	curval+2($pop1):p2align=1, $pop0
 	i32.const	$push6=, 0
 	i32.const	$push2=, 99
-	i32.store8	$drop=, id_space($pop6), $pop2
+	i32.store8	id_space($pop6), $pop2
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
-	i32.store16	$drop=, curval($pop5), $pop4
+	i32.store16	curval($pop5), $pop4
 	i32.const	$push3=, 0
                                         # fallthrough-return: $pop3
 	.endfunc
@@ -71,5 +71,5 @@ id_space:
 	.size	id_space, 66
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

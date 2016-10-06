@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070212-3.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070212-3.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -15,7 +15,7 @@ bar:                                    # @bar
 	tee_local	$push4=, $4=, $pop5
 	i32.load	$2=, 0($pop4)
 	i32.const	$push2=, 1
-	i32.store	$drop=, 0($0), $pop2
+	i32.store	0($0), $pop2
 	block
 	i32.eqz 	$push6=, $3
 	br_if   	0, $pop6        # 0: down to label0
@@ -43,4 +43,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

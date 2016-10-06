@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011008-3.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011008-3.c"
 	.section	.text.log_compare,"ax",@progbits
 	.hidden	log_compare
 	.globl	log_compare
@@ -54,7 +54,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.add 	$push3=, $1, $pop2
 	i32.load	$push4=, 0($pop3)
 	i64.load	$push5=, 0($pop4):p2align=2
-	i64.store	$drop=, 0($2):p2align=2, $pop5
+	i64.store	0($2):p2align=2, $pop5
 	i32.add 	$push6=, $0, $3
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -76,5 +76,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58431.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58431.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -15,10 +15,10 @@ main:                                   # @main
 	i32.const	$push21=, 1
 	i32.xor 	$push20=, $pop0, $pop21
 	tee_local	$push19=, $1=, $pop20
-	i32.store16	$drop=, i($pop23), $pop19
+	i32.store16	i($pop23), $pop19
 	i32.const	$push18=, 0
 	i32.const	$push17=, 0
-	i32.store	$drop=, b($pop18), $pop17
+	i32.store	b($pop18), $pop17
 	i32.const	$push16=, 0
 	i32.load8_s	$0=, a($pop16)
 	i32.const	$push15=, 0
@@ -26,7 +26,7 @@ main:                                   # @main
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
 	i32.load	$push1=, k($pop13)
-	i32.store	$drop=, g($pop14), $pop1
+	i32.store	g($pop14), $pop1
 	i32.const	$push2=, 24
 	i32.shl 	$push3=, $1, $pop2
 	i32.const	$push12=, 24
@@ -41,7 +41,7 @@ main:                                   # @main
 .LBB0_2:                                # %lor.end
 	end_block                       # label0:
 	i32.const	$push26=, 0
-	i32.store	$drop=, j($pop26), $3
+	i32.store	j($pop26), $3
 	block
 	block
 	block
@@ -50,7 +50,7 @@ main:                                   # @main
 # BB#3:                                 # %if.else
 	i32.const	$push29=, 0
 	i32.const	$push28=, 1
-	i32.store8	$drop=, h($pop29), $pop28
+	i32.store8	h($pop29), $pop28
 	i32.const	$push27=, 0
 	i32.load	$push9=, e($pop27)
 	i32.eqz 	$push40=, $pop9
@@ -58,7 +58,7 @@ main:                                   # @main
 # BB#4:                                 # %for.inc17.preheader
 	i32.const	$push31=, 0
 	i32.const	$push30=, 0
-	i32.store	$drop=, e($pop31), $pop30
+	i32.store	e($pop31), $pop30
 	br      	1               # 1: down to label2
 .LBB0_5:                                # %for.cond10thread-pre-split
 	end_block                       # label3:
@@ -70,12 +70,12 @@ main:                                   # @main
 # BB#6:                                 # %for.inc.preheader
 	i32.const	$push34=, 0
 	i32.const	$push8=, 1
-	i32.store	$drop=, d($pop34), $pop8
+	i32.store	d($pop34), $pop8
 .LBB0_7:                                # %for.end22
 	end_block                       # label2:
 	i32.const	$push36=, 0
 	i32.const	$push10=, 1
-	i32.store	$drop=, b($pop36), $pop10
+	i32.store	b($pop36), $pop10
 	block
 	i32.const	$push35=, 0
 	i32.load8_u	$push11=, h($pop35)
@@ -91,7 +91,7 @@ main:                                   # @main
 	end_block                       # label1:
 	i32.const	$push39=, 0
 	i32.const	$push38=, 1
-	i32.store	$drop=, b($pop39), $pop38
+	i32.store	b($pop39), $pop38
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -187,5 +187,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/divconst-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/divconst-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -9,9 +9,9 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 14315126007568
-	i64.store	$drop=, 0($0):p2align=2, $pop0
+	i64.store	0($0):p2align=2, $pop0
 	i64.const	$push1=, 14315126007568
-	i64.store	$drop=, 8($0):p2align=2, $pop1
+	i64.store	8($0):p2align=2, $pop1
 	copy_local	$push2=, $0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -33,5 +33,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

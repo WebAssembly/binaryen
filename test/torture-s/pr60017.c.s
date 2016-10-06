@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60017.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60017.c"
 	.section	.text.func,"ax",@progbits
 	.hidden	func
 	.globl	func
@@ -11,10 +11,10 @@ func:                                   # @func
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 0
 	i64.load	$push3=, x+8($pop2):p2align=2
-	i64.store	$drop=, 0($pop1):p2align=2, $pop3
+	i64.store	0($pop1):p2align=2, $pop3
 	i32.const	$push5=, 0
 	i64.load	$push4=, x($pop5):p2align=2
-	i64.store	$drop=, 0($0):p2align=2, $pop4
+	i64.store	0($0):p2align=2, $pop4
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -62,5 +62,5 @@ x:
 	.size	x, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

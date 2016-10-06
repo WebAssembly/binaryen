@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43008.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43008.c"
 	.section	.text.my_alloc,"ax",@progbits
 	.hidden	my_alloc
 	.globl	my_alloc
@@ -12,7 +12,7 @@ my_alloc:                               # @my_alloc
 	i32.call	$push3=, __builtin_malloc@FUNCTION, $pop0
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push1=, i
-	i32.store	$drop=, 0($pop2), $pop1
+	i32.store	0($pop2), $pop1
 	copy_local	$push4=, $0
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -31,18 +31,18 @@ main:                                   # @main
 	i32.call	$push12=, __builtin_malloc@FUNCTION, $pop0
 	tee_local	$push11=, $0=, $pop12
 	i32.const	$push1=, i
-	i32.store	$drop=, 0($pop11), $pop1
+	i32.store	0($pop11), $pop1
 	i32.const	$push10=, 4
 	i32.call	$push2=, __builtin_malloc@FUNCTION, $pop10
 	i32.const	$push9=, i
-	i32.store	$drop=, 0($pop2), $pop9
+	i32.store	0($pop2), $pop9
 	i32.load	$push8=, 0($0)
 	tee_local	$push7=, $0=, $pop8
 	i32.const	$push3=, 1
-	i32.store	$drop=, 0($pop7), $pop3
+	i32.store	0($pop7), $pop3
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
-	i32.store	$drop=, i($pop6), $pop5
+	i32.store	i($pop6), $pop5
 	block
 	i32.load	$push4=, 0($0)
 	br_if   	0, $pop4        # 0: down to label0
@@ -67,6 +67,6 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	__builtin_malloc, i32
 	.functype	abort, void

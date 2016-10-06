@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34176.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34176.c"
 	.section	.text.hash_find_entry,"ax",@progbits
 	.hidden	hash_find_entry
 	.globl	hash_find_entry
@@ -9,7 +9,7 @@ hash_find_entry:                        # @hash_find_entry
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.const	$push1=, 0
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -31,7 +31,7 @@ foo:                                    # @foo
 	tee_local	$push4=, $1=, $pop5
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $pop4, $pop0
-	i32.store	$drop=, foo.count($pop7), $pop1
+	i32.store	foo.count($pop7), $pop1
 	block
 	i32.const	$push3=, 1
 	i32.ge_s	$push2=, $1, $pop3
@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push3=, 16
 	i32.sub 	$push13=, $pop2, $pop3
 	tee_local	$push12=, $2=, $pop13
-	i32.store	$drop=, __stack_pointer($pop4), $pop12
+	i32.store	__stack_pointer($pop4), $pop12
 	i32.const	$push8=, 12
 	i32.add 	$push9=, $2, $pop8
 	i32.call	$drop=, hash_find_entry@FUNCTION, $pop9
@@ -102,7 +102,7 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $2, $pop5
-	i32.store	$drop=, __stack_pointer($pop7), $pop6
+	i32.store	__stack_pointer($pop7), $pop6
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -117,5 +117,5 @@ foo.count:
 	.size	foo.count, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49218.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49218.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.const	$push16=, 16
 	i32.sub 	$push28=, $pop15, $pop16
 	tee_local	$push27=, $4=, $pop28
-	i32.store	$drop=, __stack_pointer($pop17), $pop27
+	i32.store	__stack_pointer($pop17), $pop27
 	i32.const	$push26=, 0
 	f32.load	$push0=, f($pop26)
 	call    	__fixsfti@FUNCTION, $4, $pop0
@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push20=, 0
 	i32.const	$push18=, 16
 	i32.add 	$push19=, $4, $pop18
-	i32.store	$drop=, __stack_pointer($pop20), $pop19
+	i32.store	__stack_pointer($pop20), $pop19
 	i32.const	$push37=, 0
                                         # fallthrough-return: $pop37
 	.endfunc
@@ -78,4 +78,4 @@ f:
 	.size	f, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

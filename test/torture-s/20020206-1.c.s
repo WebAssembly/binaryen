@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020206-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020206-1.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -8,9 +8,9 @@ bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 31
-	i32.store	$drop=, 8($0), $pop0
+	i32.store	8($0), $pop0
 	i64.const	$push1=, 223338299568
-	i64.store	$drop=, 0($0):p2align=2, $pop1
+	i64.store	0($0):p2align=2, $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -62,11 +62,11 @@ main:                                   # @main
 	i32.const	$push5=, 16
 	i32.sub 	$push8=, $pop4, $pop5
 	tee_local	$push7=, $0=, $pop8
-	i32.store	$drop=, __stack_pointer($pop6), $pop7
+	i32.store	__stack_pointer($pop6), $pop7
 	i32.const	$push0=, 31
-	i32.store	$drop=, 8($0), $pop0
+	i32.store	8($0), $pop0
 	i64.const	$push1=, 223338299568
-	i64.store	$drop=, 0($0), $pop1
+	i64.store	0($0), $pop1
 	call    	baz@FUNCTION, $0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
@@ -76,6 +76,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-9.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-9.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -66,23 +66,23 @@ main:                                   # @main
 	i32.const	$push12=, 16
 	i32.sub 	$push21=, $pop11, $pop12
 	tee_local	$push20=, $0=, $pop21
-	i32.store	$drop=, __stack_pointer($pop13), $pop20
+	i32.store	__stack_pointer($pop13), $pop20
 	i32.const	$push0=, 5130
-	i32.store16	$drop=, 8($0), $pop0
+	i32.store16	8($0), $pop0
 	i32.const	$push1=, 21
-	i32.store8	$drop=, 11($0), $pop1
+	i32.store8	11($0), $pop1
 	i32.const	$push2=, 22
-	i32.store8	$drop=, 13($0), $pop2
+	i32.store8	13($0), $pop2
 	i32.const	$push3=, 11
-	i32.store8	$drop=, 10($0), $pop3
+	i32.store8	10($0), $pop3
 	i32.const	$push4=, 12
-	i32.store8	$drop=, 12($0), $pop4
+	i32.store8	12($0), $pop4
 	i32.load16_u	$push5=, 8($0)
-	i32.store16	$drop=, 6($0), $pop5
+	i32.store16	6($0), $pop5
 	i32.load16_u	$push6=, 10($0)
-	i32.store16	$drop=, 4($0), $pop6
+	i32.store16	4($0), $pop6
 	i32.load16_u	$push7=, 12($0)
-	i32.store16	$drop=, 2($0), $pop7
+	i32.store16	2($0), $pop7
 	i32.const	$push14=, 6
 	i32.add 	$push15=, $0, $pop14
 	i32.const	$push16=, 4
@@ -99,6 +99,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

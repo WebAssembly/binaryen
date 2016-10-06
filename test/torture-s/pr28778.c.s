@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28778.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28778.c"
 	.section	.text.find,"ax",@progbits
 	.hidden	find
 	.globl	find
@@ -14,12 +14,12 @@ find:                                   # @find
 	i32.const	$push6=, 128
 	i32.sub 	$push12=, $pop5, $pop6
 	tee_local	$push11=, $1=, $pop12
-	i32.store	$drop=, __stack_pointer($pop7), $pop11
+	i32.store	__stack_pointer($pop7), $pop11
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.else
 	i32.const	$push0=, 42
-	i32.store	$drop=, 12($1), $pop0
+	i32.store	12($1), $pop0
 	copy_local	$0=, $1
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
@@ -32,7 +32,7 @@ find:                                   # @find
 	i32.const	$push10=, 0
 	i32.const	$push8=, 128
 	i32.add 	$push9=, $1, $pop8
-	i32.store	$drop=, __stack_pointer($pop10), $pop9
+	i32.store	__stack_pointer($pop10), $pop9
 	return
 .LBB0_4:                                # %if.then.i
 	end_block                       # label1:
@@ -78,5 +78,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

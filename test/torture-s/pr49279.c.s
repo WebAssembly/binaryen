@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49279.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49279.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -31,25 +31,25 @@ foo:                                    # @foo
 	i32.const	$push5=, 16
 	i32.sub 	$push16=, $pop4, $pop5
 	tee_local	$push15=, $2=, $pop16
-	i32.store	$drop=, __stack_pointer($pop6), $pop15
-	i32.store	$drop=, 12($2), $0
+	i32.store	__stack_pointer($pop6), $pop15
+	i32.store	12($2), $0
 	i32.const	$push0=, 1
-	i32.store	$drop=, 8($2), $pop0
+	i32.store	8($2), $pop0
 	i32.const	$push10=, 8
 	i32.add 	$push11=, $2, $pop10
 	i32.call	$push1=, bar@FUNCTION, $pop11
-	i32.store	$drop=, 4($pop1), $1
+	i32.store	4($pop1), $1
 	i32.load	$push14=, 12($2)
 	tee_local	$push13=, $0=, $pop14
 	i32.const	$push2=, 0
-	i32.store	$drop=, 0($pop13), $pop2
+	i32.store	0($pop13), $pop2
 	i32.const	$push12=, 1
-	i32.store	$drop=, 0($1), $pop12
+	i32.store	0($1), $pop12
 	i32.load	$1=, 0($0)
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $2, $pop7
-	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.store	__stack_pointer($pop9), $pop8
 	copy_local	$push17=, $1
                                         # fallthrough-return: $pop17
 	.endfunc
@@ -70,7 +70,7 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.sub 	$push16=, $pop5, $pop6
 	tee_local	$push15=, $0=, $pop16
-	i32.store	$drop=, __stack_pointer($pop7), $pop15
+	i32.store	__stack_pointer($pop7), $pop15
 	block
 	i32.const	$push11=, 12
 	i32.add 	$push12=, $0, $pop11
@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	i32.const	$push8=, 16
 	i32.add 	$push9=, $0, $pop8
-	i32.store	$drop=, __stack_pointer($pop10), $pop9
+	i32.store	__stack_pointer($pop10), $pop9
 	i32.const	$push3=, 0
 	return  	$pop3
 .LBB2_2:                                # %if.then
@@ -96,5 +96,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

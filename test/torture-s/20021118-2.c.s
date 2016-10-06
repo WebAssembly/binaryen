@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
 	.section	.text.t1,"ax",@progbits
 	.hidden	t1
 	.globl	t1
@@ -17,7 +17,7 @@ t1:                                     # @t1
 	i32.const	$push3=, 4
 	i32.add 	$push4=, $0, $pop3
 	i32.load	$push5=, 0($pop4)
-	i32.store	$drop=, 0($pop8), $pop5
+	i32.store	0($pop8), $pop5
 	f32.const	$push7=, 0x1.4p1
 	f32.const	$push6=, 0x1.cp1
 	call_indirect	$3, $pop7, $pop6
@@ -46,7 +46,7 @@ t2:                                     # @t2
 	i32.const	$push4=, 4
 	i32.add 	$push5=, $0, $pop4
 	i32.load	$push6=, 0($pop5)
-	i32.store	$drop=, 0($pop9), $pop6
+	i32.store	0($pop9), $pop6
 	f32.const	$push8=, 0x1.4p1
 	f32.const	$push7=, 0x1.cp1
 	call_indirect	$3, $pop8, $pop7
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

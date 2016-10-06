@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-ivopts-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-ivopts-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,10 +9,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1126498304
-	i32.store	$drop=, foo.tmp+8($pop1), $pop0
+	i32.store	foo.tmp+8($pop1), $pop0
 	i32.const	$push4=, 0
 	i64.const	$push2=, 4803089003686395904
-	i64.store	$drop=, foo.tmp($pop4), $pop2
+	i64.store	foo.tmp($pop4), $pop2
 	i32.const	$push3=, 0
                                         # fallthrough-return: $pop3
 	.endfunc
@@ -28,20 +28,20 @@ foo:                                    # @foo
 # BB#0:                                 # %for.inc9.3
 	i32.const	$push1=, 0
 	i64.const	$push0=, 4838273375797772288
-	i64.store	$drop=, foo.tmp+4($pop1):p2align=2, $pop0
+	i64.store	foo.tmp+4($pop1):p2align=2, $pop0
 	i32.const	$push9=, 0
 	i32.const	$push2=, 1095761920
-	i32.store	$drop=, foo.tmp($pop9), $pop2
+	i32.store	foo.tmp($pop9), $pop2
 	i32.const	$push3=, 1118306304
-	i32.store	$drop=, 4($0), $pop3
+	i32.store	4($0), $pop3
 	i32.const	$push8=, 1095761920
-	i32.store	$drop=, 0($0), $pop8
+	i32.store	0($0), $pop8
 	i32.const	$push7=, 0
 	i32.load	$push4=, foo.tmp+8($pop7)
-	i32.store	$drop=, 8($0), $pop4
+	i32.store	8($0), $pop4
 	i32.const	$push6=, 0
 	i32.load	$push5=, foo.tmp+12($pop6)
-	i32.store	$drop=, 12($0), $pop5
+	i32.store	12($0), $pop5
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -55,4 +55,4 @@ foo.tmp:
 	.size	foo.tmp, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

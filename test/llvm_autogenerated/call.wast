@@ -1,7 +1,6 @@
 (module
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (data (i32.const 12) "\01\00\00\00")
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
@@ -29,9 +28,8 @@
   (export "tail_call_void_nullary" (func $tail_call_void_nullary))
   (export "fastcc_tail_call_void_nullary" (func $fastcc_tail_call_void_nullary))
   (export "coldcc_tail_call_void_nullary" (func $coldcc_tail_call_void_nullary))
-  (export "dynCall_v" (func $dynCall_v))
-  (table 2 2 anyfunc)
-  (elem (i32.const 0) $__wasm_nullptr $__importThunk_void_nullary)
+  (table 0 anyfunc)
+  
   (func $call_i32_nullary (result i32)
     (return
       (call $i32_nullary)
@@ -95,17 +93,6 @@
   (func $coldcc_tail_call_void_nullary
     (call $void_nullary)
     (return)
-  )
-  (func $__wasm_nullptr (type $FUNCSIG$v)
-    (unreachable)
-  )
-  (func $__importThunk_void_nullary (type $FUNCSIG$v)
-    (call $void_nullary)
-  )
-  (func $dynCall_v (param $fptr i32)
-    (call_indirect $FUNCSIG$v
-      (get_local $fptr)
-    )
   )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }

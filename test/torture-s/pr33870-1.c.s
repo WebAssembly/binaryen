@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33870-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33870-1.c"
 	.section	.text.sort_pagelist,"ax",@progbits
 	.hidden	sort_pagelist
 	.globl	sort_pagelist
@@ -15,7 +15,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push43=, 160
 	i32.sub 	$push66=, $pop42, $pop43
 	tee_local	$push65=, $3=, $pop66
-	i32.store	$drop=, __stack_pointer($pop44), $pop65
+	i32.store	__stack_pointer($pop44), $pop65
 	i32.const	$push64=, 0
 	i32.const	$push0=, 100
 	i32.call	$1=, memset@FUNCTION, $3, $pop64, $pop0
@@ -43,7 +43,7 @@ sort_pagelist:                          # @sort_pagelist
 	tee_local	$push69=, $8=, $pop70
 	i32.load	$0=, 0($pop69)
 	i32.const	$push68=, 0
-	i32.store	$drop=, 0($8), $pop68
+	i32.store	0($8), $pop68
 	i32.const	$6=, 0
 .LBB0_3:                                # %for.body
                                         #   Parent Loop BB0_2 Depth=1
@@ -65,7 +65,7 @@ sort_pagelist:                          # @sort_pagelist
 # BB#4:                                 # %if.else
                                         #   in Loop: Header=BB0_3 Depth=2
 	i32.const	$push79=, 0
-	i32.store	$drop=, xx($pop79), $2
+	i32.store	xx($pop79), $2
 	i32.const	$push56=, 112
 	i32.add 	$push57=, $1, $pop56
 	copy_local	$7=, $pop57
@@ -94,7 +94,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #   in Loop: Header=BB0_6 Depth=3
 	i32.const	$push81=, 32
 	i32.add 	$push7=, $7, $pop81
-	i32.store	$drop=, 0($pop7), $8
+	i32.store	0($pop7), $8
 	i32.const	$push80=, 32
 	i32.add 	$push8=, $8, $pop80
 	i32.load	$9=, 0($pop8)
@@ -106,7 +106,7 @@ sort_pagelist:                          # @sort_pagelist
 	end_block                       # label15:
 	i32.const	$push83=, 32
 	i32.add 	$push5=, $7, $pop83
-	i32.store	$drop=, 0($pop5), $3
+	i32.store	0($pop5), $3
 	i32.const	$push82=, 32
 	i32.add 	$push6=, $3, $pop82
 	i32.load	$10=, 0($pop6)
@@ -118,7 +118,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push84=, 0
 	i32.load	$push9=, 0($2)
 	i32.load	$push10=, 0($pop9)
-	i32.store	$drop=, vx($pop84), $pop10
+	i32.store	vx($pop84), $pop10
 	i32.eqz 	$push119=, $9
 	br_if   	1, $pop119      # 1: down to label13
 # BB#10:                                # %if.end.i
@@ -142,10 +142,10 @@ sort_pagelist:                          # @sort_pagelist
 	end_block                       # label9:
 	i32.const	$push90=, 32
 	i32.add 	$push11=, $7, $pop90
-	i32.store	$drop=, 0($pop11), $10
+	i32.store	0($pop11), $10
 	i32.load	$3=, 0($2)
 	i32.const	$push89=, 0
-	i32.store	$drop=, 0($4), $pop89
+	i32.store	0($4), $pop89
 	i32.const	$push88=, 1
 	i32.add 	$push87=, $6, $pop88
 	tee_local	$push86=, $6=, $pop87
@@ -162,7 +162,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$8=, 0($5)
 	i32.const	$push93=, 0
-	i32.store	$drop=, xx($pop93), $2
+	i32.store	xx($pop93), $2
 	i32.const	$push92=, 0
 	i32.ne  	$6=, $8, $pop92
 	i32.const	$push58=, 112
@@ -193,7 +193,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #   in Loop: Header=BB0_19 Depth=2
 	i32.const	$push95=, 32
 	i32.add 	$push20=, $7, $pop95
-	i32.store	$drop=, 0($pop20), $8
+	i32.store	0($pop20), $8
 	i32.const	$push94=, 32
 	i32.add 	$push21=, $8, $pop94
 	i32.load	$9=, 0($pop21)
@@ -205,7 +205,7 @@ sort_pagelist:                          # @sort_pagelist
 	end_block                       # label19:
 	i32.const	$push97=, 32
 	i32.add 	$push18=, $7, $pop97
-	i32.store	$drop=, 0($pop18), $3
+	i32.store	0($pop18), $3
 	i32.const	$push96=, 32
 	i32.add 	$push19=, $3, $pop96
 	i32.load	$10=, 0($pop19)
@@ -217,7 +217,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push99=, 0
 	i32.load	$push22=, 0($2)
 	i32.load	$push23=, 0($pop22)
-	i32.store	$drop=, vx($pop99), $pop23
+	i32.store	vx($pop99), $pop23
 	i32.const	$push98=, 0
 	i32.ne  	$6=, $9, $pop98
 	i32.eqz 	$push122=, $9
@@ -232,7 +232,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_loop                        # label17:
 	end_block                       # label6:
-	i32.store	$drop=, 0($4), $3
+	i32.store	0($4), $3
 	br      	2               # 2: down to label3
 .LBB0_25:                               #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label5:
@@ -244,9 +244,9 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push100=, 32
 	i32.add 	$push25=, $7, $pop100
 	i32.select	$push24=, $9, $10, $6
-	i32.store	$drop=, 0($pop25), $pop24
+	i32.store	0($pop25), $pop24
 	i32.load	$push26=, 0($2)
-	i32.store	$drop=, 0($5), $pop26
+	i32.store	0($5), $pop26
 .LBB0_27:                               # %while.cond.backedge
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
@@ -270,7 +270,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.add 	$push28=, $1, $pop27
 	i32.load	$8=, 0($pop28)
 	i32.const	$push103=, 0
-	i32.store	$drop=, xx($pop103), $2
+	i32.store	xx($pop103), $2
 	i32.const	$push102=, 0
 	i32.ne  	$6=, $3, $pop102
 	i32.const	$push50=, 112
@@ -303,7 +303,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #   in Loop: Header=BB0_33 Depth=2
 	i32.const	$push106=, 32
 	i32.add 	$push34=, $7, $pop106
-	i32.store	$drop=, 0($pop34), $3
+	i32.store	0($pop34), $3
 	i32.const	$push105=, 32
 	i32.add 	$push35=, $3, $pop105
 	i32.load	$9=, 0($pop35)
@@ -315,7 +315,7 @@ sort_pagelist:                          # @sort_pagelist
 	end_block                       # label27:
 	i32.const	$push108=, 32
 	i32.add 	$push32=, $7, $pop108
-	i32.store	$drop=, 0($pop32), $8
+	i32.store	0($pop32), $8
 	i32.const	$push107=, 32
 	i32.add 	$push33=, $8, $pop107
 	i32.load	$10=, 0($pop33)
@@ -327,7 +327,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push110=, 0
 	i32.load	$push36=, 0($2)
 	i32.load	$push37=, 0($pop36)
-	i32.store	$drop=, vx($pop110), $pop37
+	i32.store	vx($pop110), $pop37
 	i32.const	$push109=, 0
 	i32.ne  	$6=, $9, $pop109
 	i32.eqz 	$push125=, $9
@@ -349,7 +349,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push115=, 32
 	i32.add 	$push39=, $7, $pop115
 	i32.select	$push38=, $9, $10, $6
-	i32.store	$drop=, 0($pop39), $pop38
+	i32.store	0($pop39), $pop38
 	i32.load	$3=, 0($2)
 	i32.const	$push114=, 1
 	i32.add 	$push113=, $4, $pop114
@@ -362,7 +362,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push47=, 0
 	i32.const	$push45=, 160
 	i32.add 	$push46=, $1, $pop45
-	i32.store	$drop=, __stack_pointer($pop47), $pop46
+	i32.store	__stack_pointer($pop47), $pop46
 	copy_local	$push126=, $3
                                         # fallthrough-return: $pop126
 	.endfunc
@@ -383,40 +383,40 @@ main:                                   # @main
 	i32.const	$push29=, 224
 	i32.sub 	$push39=, $pop28, $pop29
 	tee_local	$push38=, $1=, $pop39
-	i32.store	$drop=, __stack_pointer($pop30), $pop38
+	i32.store	__stack_pointer($pop30), $pop38
 	i32.const	$push2=, 32
 	i32.add 	$push3=, $1, $pop2
 	i32.const	$push0=, 44
 	i32.add 	$push1=, $1, $pop0
-	i32.store	$drop=, 0($pop3), $pop1
+	i32.store	0($pop3), $pop1
 	i32.const	$push4=, 48
 	i32.add 	$push5=, $1, $pop4
 	i32.const	$push6=, 4
-	i32.store	$drop=, 0($pop5), $pop6
+	i32.store	0($pop5), $pop6
 	i32.const	$push9=, 76
 	i32.add 	$push10=, $1, $pop9
 	i32.const	$push7=, 88
 	i32.add 	$push8=, $1, $pop7
-	i32.store	$drop=, 0($pop10), $pop8
+	i32.store	0($pop10), $pop8
 	i32.const	$push11=, 92
 	i32.add 	$push12=, $1, $pop11
 	i32.const	$push13=, 1
-	i32.store	$drop=, 0($pop12), $pop13
+	i32.store	0($pop12), $pop13
 	i32.const	$push16=, 120
 	i32.add 	$push17=, $1, $pop16
 	i32.const	$push14=, 132
 	i32.add 	$push15=, $1, $pop14
-	i32.store	$drop=, 0($pop17), $pop15
+	i32.store	0($pop17), $pop15
 	i32.const	$push18=, 136
 	i32.add 	$push19=, $1, $pop18
 	i32.const	$push20=, 3
-	i32.store	$drop=, 0($pop19), $pop20
+	i32.store	0($pop19), $pop20
 	i32.const	$push21=, 5
-	i32.store	$drop=, 4($1), $pop21
+	i32.store	4($1), $pop21
 	i32.const	$push22=, 164
 	i32.add 	$push23=, $1, $pop22
 	i32.const	$push37=, 0
-	i32.store	$drop=, 0($pop23), $pop37
+	i32.store	0($pop23), $pop37
 	block
 	i32.call	$push36=, sort_pagelist@FUNCTION, $1
 	tee_local	$push35=, $0=, $pop36
@@ -429,7 +429,7 @@ main:                                   # @main
 	i32.const	$push33=, 0
 	i32.const	$push31=, 224
 	i32.add 	$push32=, $1, $pop31
-	i32.store	$drop=, __stack_pointer($pop33), $pop32
+	i32.store	__stack_pointer($pop33), $pop32
 	i32.const	$push40=, 0
 	return  	$pop40
 .LBB1_2:                                # %if.then
@@ -459,5 +459,5 @@ vx:
 	.size	vx, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

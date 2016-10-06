@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-3c.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-3c.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -24,7 +24,7 @@ f:                                      # @f
 	i32.shl 	$push2=, $pop13, $pop12
 	i32.const	$push11=, a
 	i32.add 	$push3=, $pop2, $pop11
-	i32.store	$drop=, 0($pop3), $1
+	i32.store	0($pop3), $1
 	i32.const	$push10=, 32
 	i32.add 	$1=, $1, $pop10
 	i32.const	$push9=, 4
@@ -50,19 +50,19 @@ main:                                   # @main
 # BB#0:                                 # %if.end7
 	i32.const	$push1=, 0
 	i32.const	$push0=, a
-	i32.store	$drop=, a+512($pop1), $pop0
+	i32.store	a+512($pop1), $pop0
 	i32.const	$push10=, 0
 	i32.const	$push2=, a+32
-	i32.store	$drop=, a+256($pop10), $pop2
+	i32.store	a+256($pop10), $pop2
 	i32.const	$push9=, 0
 	i32.const	$push3=, a+64
-	i32.store	$drop=, a+128($pop9), $pop3
+	i32.store	a+128($pop9), $pop3
 	i32.const	$push8=, 0
 	i32.const	$push4=, a+96
-	i32.store	$drop=, a+64($pop8), $pop4
+	i32.store	a+64($pop8), $pop4
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
-	i32.store	$drop=, a+32($pop7), $pop6
+	i32.store	a+32($pop7), $pop6
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable
@@ -80,5 +80,5 @@ a:
 	.size	a, 1020
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

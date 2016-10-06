@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-1.c"
 	.section	.text.g0,"ax",@progbits
 	.hidden	g0
 	.globl	g0
@@ -50,9 +50,9 @@ xcexp:                                  # @xcexp
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i64.const	$push0=, 0
-	i64.store	$drop=, 8($0), $pop0
+	i64.store	8($0), $pop0
 	i64.const	$push1=, -4616189618054758400
-	i64.store	$drop=, 0($0), $pop1
+	i64.store	0($0), $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -73,5 +73,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

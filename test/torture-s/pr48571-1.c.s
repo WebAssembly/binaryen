@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr48571-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr48571-1.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -18,7 +18,7 @@ bar:                                    # @bar
 	i32.const	$push9=, 1
 	i32.shl 	$push8=, $1, $pop9
 	tee_local	$push7=, $1=, $pop8
-	i32.store	$drop=, 0($pop1), $pop7
+	i32.store	0($pop1), $pop7
 	i32.const	$push6=, 4
 	i32.add 	$push5=, $0, $pop6
 	tee_local	$push4=, $0=, $pop5
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.const	$push9=, c+2496
 	i32.add 	$push0=, $0, $pop9
 	i32.const	$push8=, 1
-	i32.store	$drop=, 0($pop0), $pop8
+	i32.store	0($pop0), $pop8
 	i32.const	$push7=, 4
 	i32.add 	$push6=, $0, $pop7
 	tee_local	$push5=, $0=, $pop6
@@ -99,5 +99,5 @@ c:
 	.size	c, 2496
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr52760.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr52760.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -27,7 +27,7 @@ foo:                                    # @foo
 	i32.or  	$push5=, $pop2, $pop4
 	i32.const	$push53=, 16
 	i32.shr_u	$push6=, $pop5, $pop53
-	i32.store16	$drop=, 0($1), $pop6
+	i32.store16	0($1), $pop6
 	i32.const	$push52=, 2
 	i32.add 	$push51=, $1, $pop52
 	tee_local	$push50=, $2=, $pop51
@@ -42,7 +42,7 @@ foo:                                    # @foo
 	i32.or  	$push10=, $pop7, $pop9
 	i32.const	$push44=, 16
 	i32.shr_u	$push11=, $pop10, $pop44
-	i32.store16	$drop=, 0($pop50), $pop11
+	i32.store16	0($pop50), $pop11
 	i32.const	$push43=, 4
 	i32.add 	$push42=, $1, $pop43
 	tee_local	$push41=, $2=, $pop42
@@ -57,7 +57,7 @@ foo:                                    # @foo
 	i32.or  	$push15=, $pop12, $pop14
 	i32.const	$push35=, 16
 	i32.shr_u	$push16=, $pop15, $pop35
-	i32.store16	$drop=, 0($pop41), $pop16
+	i32.store16	0($pop41), $pop16
 	i32.const	$push34=, 6
 	i32.add 	$push33=, $1, $pop34
 	tee_local	$push32=, $2=, $pop33
@@ -72,7 +72,7 @@ foo:                                    # @foo
 	i32.or  	$push20=, $pop17, $pop19
 	i32.const	$push26=, 16
 	i32.shr_u	$push21=, $pop20, $pop26
-	i32.store16	$drop=, 0($pop32), $pop21
+	i32.store16	0($pop32), $pop21
 	i32.const	$push25=, 8
 	i32.add 	$1=, $1, $pop25
 	i32.const	$push24=, -1
@@ -101,9 +101,9 @@ main:                                   # @main
 	i32.const	$push17=, 16
 	i32.sub 	$push25=, $pop16, $pop17
 	tee_local	$push24=, $0=, $pop25
-	i32.store	$drop=, __stack_pointer($pop18), $pop24
+	i32.store	__stack_pointer($pop18), $pop24
 	i64.const	$push0=, 434320308619640833
-	i64.store	$drop=, 8($0), $pop0
+	i64.store	8($0), $pop0
 	i32.const	$push1=, 1
 	i32.const	$push22=, 8
 	i32.add 	$push23=, $0, $pop22
@@ -132,7 +132,7 @@ main:                                   # @main
 	i32.const	$push21=, 0
 	i32.const	$push19=, 16
 	i32.add 	$push20=, $0, $pop19
-	i32.store	$drop=, __stack_pointer($pop21), $pop20
+	i32.store	__stack_pointer($pop21), $pop20
 	i32.const	$push14=, 0
 	return  	$pop14
 .LBB1_5:                                # %if.then
@@ -144,5 +144,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

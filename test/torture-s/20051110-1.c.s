@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051110-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051110-1.c"
 	.section	.text.add_unwind_adjustsp,"ax",@progbits
 	.hidden	add_unwind_adjustsp
 	.globl	add_unwind_adjustsp
@@ -29,7 +29,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.shr_u	$push10=, $0, $pop11
 	tee_local	$push9=, $1=, $pop10
 	i32.select	$push5=, $pop4, $pop3, $pop9
-	i32.store8	$drop=, 0($2), $pop5
+	i32.store8	0($2), $pop5
 	i32.const	$push8=, 1
 	i32.add 	$2=, $2, $pop8
 	copy_local	$0=, $1
@@ -51,7 +51,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1928
-	i32.store16	$drop=, bytes($pop1):p2align=0, $pop0
+	i32.store16	bytes($pop1):p2align=0, $pop0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -67,4 +67,4 @@ bytes:
 	.size	bytes, 5
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

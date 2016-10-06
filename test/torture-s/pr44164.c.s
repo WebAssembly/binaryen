@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44164.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44164.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -12,7 +12,7 @@ foo:                                    # @foo
 	i32.load	$1=, 0($0)
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
-	i32.store	$drop=, a($pop0), $pop3
+	i32.store	a($pop0), $pop3
 	i32.load	$push1=, 0($0)
 	i32.add 	$push2=, $1, $pop1
                                         # fallthrough-return: $pop2
@@ -29,7 +29,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
 	i32.const	$push0=, 1
-	i32.store	$drop=, a($pop5), $pop0
+	i32.store	a($pop5), $pop0
 	block
 	i32.const	$push1=, a
 	i32.call	$push2=, foo@FUNCTION, $pop1
@@ -57,5 +57,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

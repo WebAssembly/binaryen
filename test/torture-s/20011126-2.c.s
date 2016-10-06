@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011126-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011126-2.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -73,7 +73,7 @@ main:                                   # @main
 # BB#7:                                 # %while.body14.preheader.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop                        # label4:
-	i32.store8	$drop=, 0($0), $1
+	i32.store8	0($0), $1
 	i32.const	$push35=, 1
 	i32.add 	$6=, $5, $pop35
 	i32.const	$push34=, 0
@@ -94,7 +94,7 @@ main:                                   # @main
                                         # =>  This Inner Loop Header: Depth=2
 	loop                            # label9:
 	i32.load8_u	$push9=, 0($6)
-	i32.store8	$drop=, 0($4), $pop9
+	i32.store8	0($4), $pop9
 	i32.const	$push41=, 1
 	i32.add 	$4=, $4, $pop41
 	i32.const	$push40=, 1
@@ -138,4 +138,4 @@ main:                                   # @main
 	.size	.L.str, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

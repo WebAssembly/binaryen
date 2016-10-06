@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr51877.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr51877.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -7,15 +7,15 @@
 bar:                                    # @bar
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	i32.store8	$drop=, 4($0), $1
+	i32.store8	4($0), $1
 	i32.const	$push0=, 0
 	i32.load	$push1=, bar.n($pop0)
 	i32.const	$push2=, 1
 	i32.add 	$push9=, $pop1, $pop2
 	tee_local	$push8=, $1=, $pop9
-	i32.store	$drop=, 0($0), $pop8
+	i32.store	0($0), $pop8
 	i32.const	$push7=, 0
-	i32.store	$drop=, bar.n($pop7), $1
+	i32.store	bar.n($pop7), $1
 	i32.const	$push3=, 5
 	i32.add 	$push4=, $0, $pop3
 	i32.const	$push6=, 0
@@ -53,7 +53,7 @@ foo:                                    # @foo
 	i32.const	$push9=, 80
 	i32.sub 	$push19=, $pop8, $pop9
 	tee_local	$push18=, $2=, $pop19
-	i32.store	$drop=, __stack_pointer($pop10), $pop18
+	i32.store	__stack_pointer($pop10), $pop18
 	block
 	block
 	i32.const	$push0=, 6
@@ -82,7 +82,7 @@ foo:                                    # @foo
 	i32.const	$push13=, 0
 	i32.const	$push11=, 80
 	i32.add 	$push12=, $2, $pop11
-	i32.store	$drop=, __stack_pointer($pop13), $pop12
+	i32.store	__stack_pointer($pop13), $pop12
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -102,7 +102,7 @@ main:                                   # @main
 	i32.const	$push49=, 80
 	i32.sub 	$push62=, $pop48, $pop49
 	tee_local	$push61=, $0=, $pop62
-	i32.store	$drop=, __stack_pointer($pop50), $pop61
+	i32.store	__stack_pointer($pop50), $pop61
 	i32.const	$push54=, 40
 	i32.add 	$push55=, $0, $pop54
 	i32.const	$push60=, 3
@@ -205,7 +205,7 @@ main:                                   # @main
 	i32.const	$push53=, 0
 	i32.const	$push51=, 80
 	i32.add 	$push52=, $0, $pop51
-	i32.store	$drop=, __stack_pointer($pop53), $pop52
+	i32.store	__stack_pointer($pop53), $pop52
 	i32.const	$push46=, 0
 	return  	$pop46
 .LBB3_13:                               # %if.then39
@@ -242,5 +242,5 @@ b:
 	.size	b, 36
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

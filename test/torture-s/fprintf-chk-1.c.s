@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-chk-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-chk-1.c"
 	.section	.text.__fprintf_chk,"ax",@progbits
 	.hidden	__fprintf_chk
 	.globl	__fprintf_chk
@@ -15,7 +15,7 @@ __fprintf_chk:                          # @__fprintf_chk
 	i32.const	$push4=, 16
 	i32.sub 	$push11=, $pop3, $pop4
 	tee_local	$push10=, $4=, $pop11
-	i32.store	$drop=, __stack_pointer($pop5), $pop10
+	i32.store	__stack_pointer($pop5), $pop10
 	block
 	i32.const	$push9=, 0
 	i32.load	$push0=, should_optimize($pop9)
@@ -23,13 +23,13 @@ __fprintf_chk:                          # @__fprintf_chk
 # BB#1:                                 # %if.end
 	i32.const	$push12=, 0
 	i32.const	$push1=, 1
-	i32.store	$drop=, should_optimize($pop12), $pop1
-	i32.store	$drop=, 12($4), $3
+	i32.store	should_optimize($pop12), $pop1
+	i32.store	12($4), $3
 	i32.call	$3=, vfprintf@FUNCTION, $0, $2, $3
 	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $4, $pop6
-	i32.store	$drop=, __stack_pointer($pop8), $pop7
+	i32.store	__stack_pointer($pop8), $pop7
 	return  	$3
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -53,10 +53,10 @@ main:                                   # @main
 	i32.const	$push56=, 224
 	i32.sub 	$push95=, $pop55, $pop56
 	tee_local	$push94=, $1=, $pop95
-	i32.store	$drop=, __stack_pointer($pop57), $pop94
+	i32.store	__stack_pointer($pop57), $pop94
 	i32.const	$push93=, 0
 	i32.const	$push0=, 1
-	i32.store	$drop=, should_optimize($pop93), $pop0
+	i32.store	should_optimize($pop93), $pop0
 	i32.const	$push92=, 0
 	i32.load	$push91=, stdout($pop92)
 	tee_local	$push90=, $0=, $pop91
@@ -71,7 +71,7 @@ main:                                   # @main
 # BB#1:                                 # %if.end
 	i32.const	$push99=, 0
 	i32.const	$push98=, 0
-	i32.store	$drop=, should_optimize($pop99), $pop98
+	i32.store	should_optimize($pop99), $pop98
 	i32.const	$push97=, .L.str
 	i32.const	$push96=, 0
 	i32.call	$push2=, __fprintf_chk@FUNCTION, $0, $1, $pop97, $pop96
@@ -86,7 +86,7 @@ main:                                   # @main
 # BB#3:                                 # %if.end6
 	i32.const	$push104=, 0
 	i32.const	$push6=, 1
-	i32.store	$drop=, should_optimize($pop104), $pop6
+	i32.store	should_optimize($pop104), $pop6
 	i32.const	$push103=, .L.str.1
 	i32.const	$push102=, 0
 	i32.call	$drop=, __fprintf_chk@FUNCTION, $0, $1, $pop103, $pop102
@@ -97,7 +97,7 @@ main:                                   # @main
 # BB#4:                                 # %if.end10
 	i32.const	$push108=, 0
 	i32.const	$push107=, 0
-	i32.store	$drop=, should_optimize($pop108), $pop107
+	i32.store	should_optimize($pop108), $pop107
 	i32.const	$push106=, .L.str.1
 	i32.const	$push105=, 0
 	i32.call	$push8=, __fprintf_chk@FUNCTION, $0, $1, $pop106, $pop105
@@ -112,7 +112,7 @@ main:                                   # @main
 # BB#6:                                 # %if.end17
 	i32.const	$push114=, 0
 	i32.const	$push113=, 1
-	i32.store	$drop=, should_optimize($pop114), $pop113
+	i32.store	should_optimize($pop114), $pop113
 	i32.const	$push112=, .L.str.2
 	i32.const	$push111=, 0
 	i32.call	$drop=, __fprintf_chk@FUNCTION, $0, $1, $pop112, $pop111
@@ -123,7 +123,7 @@ main:                                   # @main
 # BB#7:                                 # %if.end21
 	i32.const	$push119=, 0
 	i32.const	$push118=, 0
-	i32.store	$drop=, should_optimize($pop119), $pop118
+	i32.store	should_optimize($pop119), $pop118
 	i32.const	$push117=, .L.str.2
 	i32.const	$push116=, 0
 	i32.call	$push13=, __fprintf_chk@FUNCTION, $0, $1, $pop117, $pop116
@@ -138,7 +138,7 @@ main:                                   # @main
 # BB#9:                                 # %if.end28
 	i32.const	$push124=, 0
 	i32.const	$push16=, 1
-	i32.store	$drop=, should_optimize($pop124), $pop16
+	i32.store	should_optimize($pop124), $pop16
 	i32.const	$push123=, .L.str.3
 	i32.const	$push122=, 0
 	i32.call	$drop=, __fprintf_chk@FUNCTION, $0, $1, $pop123, $pop122
@@ -149,7 +149,7 @@ main:                                   # @main
 # BB#10:                                # %if.end32
 	i32.const	$push128=, 0
 	i32.const	$push127=, 0
-	i32.store	$drop=, should_optimize($pop128), $pop127
+	i32.store	should_optimize($pop128), $pop127
 	i32.const	$push126=, .L.str.3
 	i32.const	$push125=, 0
 	i32.call	$push18=, __fprintf_chk@FUNCTION, $0, $1, $pop126, $pop125
@@ -162,9 +162,9 @@ main:                                   # @main
 # BB#12:                                # %if.end39
 	i32.const	$push133=, 0
 	i32.const	$push20=, 1
-	i32.store	$drop=, should_optimize($pop133), $pop20
+	i32.store	should_optimize($pop133), $pop20
 	i32.const	$push132=, .L.str
-	i32.store	$drop=, 208($1), $pop132
+	i32.store	208($1), $pop132
 	i32.const	$push131=, .L.str.4
 	i32.const	$push61=, 208
 	i32.add 	$push62=, $1, $pop61
@@ -175,10 +175,10 @@ main:                                   # @main
 	br_if   	0, $pop208      # 0: down to label1
 # BB#13:                                # %if.end43
 	i32.const	$push137=, .L.str
-	i32.store	$drop=, 192($1), $pop137
+	i32.store	192($1), $pop137
 	i32.const	$push136=, 0
 	i32.const	$push135=, 0
-	i32.store	$drop=, should_optimize($pop136), $pop135
+	i32.store	should_optimize($pop136), $pop135
 	i32.const	$push134=, .L.str.4
 	i32.const	$push63=, 192
 	i32.add 	$push64=, $1, $pop63
@@ -194,9 +194,9 @@ main:                                   # @main
 # BB#15:                                # %if.end50
 	i32.const	$push142=, 0
 	i32.const	$push26=, 1
-	i32.store	$drop=, should_optimize($pop142), $pop26
+	i32.store	should_optimize($pop142), $pop26
 	i32.const	$push141=, .L.str.1
-	i32.store	$drop=, 176($1), $pop141
+	i32.store	176($1), $pop141
 	i32.const	$push140=, .L.str.4
 	i32.const	$push65=, 176
 	i32.add 	$push66=, $1, $pop65
@@ -207,10 +207,10 @@ main:                                   # @main
 	br_if   	0, $pop210      # 0: down to label1
 # BB#16:                                # %if.end54
 	i32.const	$push146=, .L.str.1
-	i32.store	$drop=, 160($1), $pop146
+	i32.store	160($1), $pop146
 	i32.const	$push145=, 0
 	i32.const	$push144=, 0
-	i32.store	$drop=, should_optimize($pop145), $pop144
+	i32.store	should_optimize($pop145), $pop144
 	i32.const	$push143=, .L.str.4
 	i32.const	$push67=, 160
 	i32.add 	$push68=, $1, $pop67
@@ -226,9 +226,9 @@ main:                                   # @main
 # BB#18:                                # %if.end61
 	i32.const	$push152=, 0
 	i32.const	$push151=, 1
-	i32.store	$drop=, should_optimize($pop152), $pop151
+	i32.store	should_optimize($pop152), $pop151
 	i32.const	$push150=, .L.str.2
-	i32.store	$drop=, 144($1), $pop150
+	i32.store	144($1), $pop150
 	i32.const	$push149=, .L.str.4
 	i32.const	$push69=, 144
 	i32.add 	$push70=, $1, $pop69
@@ -239,10 +239,10 @@ main:                                   # @main
 	br_if   	0, $pop212      # 0: down to label1
 # BB#19:                                # %if.end65
 	i32.const	$push157=, .L.str.2
-	i32.store	$drop=, 128($1), $pop157
+	i32.store	128($1), $pop157
 	i32.const	$push156=, 0
 	i32.const	$push155=, 0
-	i32.store	$drop=, should_optimize($pop156), $pop155
+	i32.store	should_optimize($pop156), $pop155
 	i32.const	$push154=, .L.str.4
 	i32.const	$push71=, 128
 	i32.add 	$push72=, $1, $pop71
@@ -258,9 +258,9 @@ main:                                   # @main
 # BB#21:                                # %if.end72
 	i32.const	$push162=, 0
 	i32.const	$push36=, 1
-	i32.store	$drop=, should_optimize($pop162), $pop36
+	i32.store	should_optimize($pop162), $pop36
 	i32.const	$push161=, .L.str.3
-	i32.store	$drop=, 112($1), $pop161
+	i32.store	112($1), $pop161
 	i32.const	$push160=, .L.str.4
 	i32.const	$push73=, 112
 	i32.add 	$push74=, $1, $pop73
@@ -271,10 +271,10 @@ main:                                   # @main
 	br_if   	0, $pop214      # 0: down to label1
 # BB#22:                                # %if.end76
 	i32.const	$push166=, .L.str.3
-	i32.store	$drop=, 96($1), $pop166
+	i32.store	96($1), $pop166
 	i32.const	$push165=, 0
 	i32.const	$push164=, 0
-	i32.store	$drop=, should_optimize($pop165), $pop164
+	i32.store	should_optimize($pop165), $pop164
 	i32.const	$push163=, .L.str.4
 	i32.const	$push75=, 96
 	i32.add 	$push76=, $1, $pop75
@@ -288,9 +288,9 @@ main:                                   # @main
 # BB#24:                                # %if.end83
 	i32.const	$push172=, 0
 	i32.const	$push171=, 1
-	i32.store	$drop=, should_optimize($pop172), $pop171
+	i32.store	should_optimize($pop172), $pop171
 	i32.const	$push170=, 120
-	i32.store	$drop=, 80($1), $pop170
+	i32.store	80($1), $pop170
 	i32.const	$push169=, .L.str.5
 	i32.const	$push77=, 80
 	i32.add 	$push78=, $1, $pop77
@@ -301,10 +301,10 @@ main:                                   # @main
 	br_if   	0, $pop216      # 0: down to label1
 # BB#25:                                # %if.end87
 	i32.const	$push177=, 120
-	i32.store	$drop=, 64($1), $pop177
+	i32.store	64($1), $pop177
 	i32.const	$push176=, 0
 	i32.const	$push175=, 0
-	i32.store	$drop=, should_optimize($pop176), $pop175
+	i32.store	should_optimize($pop176), $pop175
 	i32.const	$push174=, .L.str.5
 	i32.const	$push79=, 64
 	i32.add 	$push80=, $1, $pop79
@@ -319,10 +319,10 @@ main:                                   # @main
 	br_if   	0, $pop217      # 0: down to label1
 # BB#27:                                # %if.end94
 	i32.const	$push183=, .L.str.1
-	i32.store	$drop=, 48($1), $pop183
+	i32.store	48($1), $pop183
 	i32.const	$push182=, 0
 	i32.const	$push181=, 0
-	i32.store	$drop=, should_optimize($pop182), $pop181
+	i32.store	should_optimize($pop182), $pop181
 	i32.const	$push180=, .L.str.6
 	i32.const	$push81=, 48
 	i32.add 	$push82=, $1, $pop81
@@ -333,10 +333,10 @@ main:                                   # @main
 	br_if   	0, $pop218      # 0: down to label1
 # BB#28:                                # %if.end98
 	i32.const	$push187=, .L.str.1
-	i32.store	$drop=, 32($1), $pop187
+	i32.store	32($1), $pop187
 	i32.const	$push186=, 0
 	i32.const	$push185=, 0
-	i32.store	$drop=, should_optimize($pop186), $pop185
+	i32.store	should_optimize($pop186), $pop185
 	i32.const	$push184=, .L.str.6
 	i32.const	$push83=, 32
 	i32.add 	$push84=, $1, $pop83
@@ -351,10 +351,10 @@ main:                                   # @main
 	br_if   	0, $pop219      # 0: down to label1
 # BB#30:                                # %if.end105
 	i32.const	$push193=, 0
-	i32.store	$drop=, 16($1), $pop193
+	i32.store	16($1), $pop193
 	i32.const	$push192=, 0
 	i32.const	$push191=, 0
-	i32.store	$drop=, should_optimize($pop192), $pop191
+	i32.store	should_optimize($pop192), $pop191
 	i32.const	$push190=, .L.str.7
 	i32.const	$push85=, 16
 	i32.add 	$push86=, $1, $pop85
@@ -365,10 +365,10 @@ main:                                   # @main
 	br_if   	0, $pop220      # 0: down to label1
 # BB#31:                                # %if.end109
 	i32.const	$push197=, 0
-	i32.store	$drop=, 0($1), $pop197
+	i32.store	0($1), $pop197
 	i32.const	$push196=, 0
 	i32.const	$push195=, 0
-	i32.store	$drop=, should_optimize($pop196), $pop195
+	i32.store	should_optimize($pop196), $pop195
 	i32.const	$push194=, .L.str.7
 	i32.call	$push50=, __fprintf_chk@FUNCTION, $0, $1, $pop194, $1
 	i32.const	$push51=, 2
@@ -383,7 +383,7 @@ main:                                   # @main
 	i32.const	$push60=, 0
 	i32.const	$push58=, 224
 	i32.add 	$push59=, $1, $pop58
-	i32.store	$drop=, __stack_pointer($pop60), $pop59
+	i32.store	__stack_pointer($pop60), $pop59
 	i32.const	$push199=, 0
 	return  	$pop199
 .LBB1_34:                               # %if.then115
@@ -445,6 +445,6 @@ should_optimize:
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	vfprintf, i32, i32, i32, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051113-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051113-1.c"
 	.section	.text.Sum,"ax",@progbits
 	.hidden	Sum
 	.globl	Sum
@@ -103,19 +103,19 @@ main:                                   # @main
 	i32.const	$push3=, 90
 	i32.call	$drop=, memset@FUNCTION, $pop2, $pop4, $pop3
 	i64.const	$push5=, 555
-	i64.store	$drop=, 10($0):p2align=0, $pop5
+	i64.store	10($0):p2align=0, $pop5
 	i32.const	$push6=, 3
-	i32.store	$drop=, 0($0):p2align=0, $pop6
+	i32.store	0($0):p2align=0, $pop6
 	i64.const	$push7=, 999
-	i64.store	$drop=, 40($0):p2align=0, $pop7
+	i64.store	40($0):p2align=0, $pop7
 	i64.const	$push8=, 4311810305
-	i64.store	$drop=, 70($0):p2align=0, $pop8
+	i64.store	70($0):p2align=0, $pop8
 	i64.const	$push17=, 555
-	i64.store	$drop=, 18($0):p2align=0, $pop17
+	i64.store	18($0):p2align=0, $pop17
 	i64.const	$push16=, 999
-	i64.store	$drop=, 48($0):p2align=0, $pop16
+	i64.store	48($0):p2align=0, $pop16
 	i64.const	$push15=, 4311810305
-	i64.store	$drop=, 78($0):p2align=0, $pop15
+	i64.store	78($0):p2align=0, $pop15
 	block
 	i64.call	$push9=, Sum@FUNCTION, $0
 	i64.const	$push14=, 4311811859
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	malloc, i32, i32
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/load-store-i1.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/load-store-i1.ll"
 	.globl	load_u_i1_i32
 	.type	load_u_i1_i32,@function
 load_u_i1_i32:
@@ -58,7 +58,7 @@ store_i32_i1:
 	.param  	i32, i32
 	i32.const	$push0=, 1
 	i32.and 	$push1=, $1, $pop0
-	i32.store8	$drop=, 0($0), $pop1
+	i32.store8	0($0), $pop1
 	return
 	.endfunc
 .Lfunc_end4:
@@ -70,7 +70,7 @@ store_i64_i1:
 	.param  	i32, i64
 	i64.const	$push0=, 1
 	i64.and 	$push1=, $1, $pop0
-	i64.store8	$drop=, 0($0), $pop1
+	i64.store8	0($0), $pop1
 	return
 	.endfunc
 .Lfunc_end5:

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071018-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071018-1.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -9,7 +9,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.const	$push0=, 8
 	i32.call	$push1=, __builtin_malloc@FUNCTION, $pop0
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -32,7 +32,7 @@ foo:                                    # @foo
 	i32.add 	$push9=, $pop4, $pop5
 	tee_local	$push8=, $0=, $pop9
 	i32.const	$push6=, 0
-	i32.store	$drop=, 0($pop8), $pop6
+	i32.store	0($pop8), $pop6
 	call    	bar@FUNCTION, $0
 	i32.load	$push7=, 0($0)
                                         # fallthrough-return: $pop7
@@ -64,6 +64,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	__builtin_malloc, i32
 	.functype	abort, void

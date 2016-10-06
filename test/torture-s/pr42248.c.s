@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42248.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42248.c"
 	.section	.text.check,"ax",@progbits
 	.hidden	check
 	.globl	check
@@ -35,9 +35,9 @@ init:                                   # @init
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i64.load	$push0=, 0($1)
-	i64.store	$drop=, 0($0), $pop0
+	i64.store	0($0), $pop0
 	i64.load	$push1=, 8($1)
-	i64.store	$drop=, 8($0), $pop1
+	i64.store	8($0), $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -52,10 +52,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i64.const	$push0=, 0
-	i64.store	$drop=, g1s+8($pop1), $pop0
+	i64.store	g1s+8($pop1), $pop0
 	i32.const	$push4=, 0
 	i64.const	$push2=, 4607182418800017408
-	i64.store	$drop=, g1s($pop4), $pop2
+	i64.store	g1s($pop4), $pop2
 	i32.const	$push3=, 0
                                         # fallthrough-return: $pop3
 	.endfunc
@@ -72,5 +72,5 @@ g1s:
 	.size	g1s, 32
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

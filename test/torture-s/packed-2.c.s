@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/packed-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/packed-2.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.const	$push2=, 0
-	i32.store	$drop=, t+2($pop0):p2align=1, $pop2
+	i32.store	t+2($pop0):p2align=1, $pop2
 	i32.const	$push1=, 0
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -26,4 +26,4 @@ t:
 	.size	t, 6
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

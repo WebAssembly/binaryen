@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20601-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20601-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -40,18 +40,18 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push35=, 0
 	i32.const	$push34=, 4
-	i32.store	$drop=, b($pop35), $pop34
+	i32.store	b($pop35), $pop34
 	i32.const	$push33=, 0
 	i32.const	$push0=, g
-	i32.store	$drop=, c($pop33), $pop0
+	i32.store	c($pop33), $pop0
 	i32.const	$1=, g+4
 	i32.const	$push32=, 0
 	i32.const	$push31=, g+4
-	i32.store	$drop=, e($pop32), $pop31
+	i32.store	e($pop32), $pop31
 	i32.const	$0=, 3
 	i32.const	$push30=, 0
 	i32.const	$push29=, 3
-	i32.store	$drop=, d($pop30), $pop29
+	i32.store	d($pop30), $pop29
 	i32.const	$3=, 1
 .LBB2_1:                                # %land.rhs.i
                                         # =>This Inner Loop Header: Depth=1
@@ -120,14 +120,14 @@ main:                                   # @main
 	i32.const	$push52=, 4
 	i32.add 	$push51=, $1, $pop52
 	tee_local	$push50=, $1=, $pop51
-	i32.store	$drop=, t+4100($pop53), $pop50
+	i32.store	t+4100($pop53), $pop50
 	i32.const	$push49=, 0
-	i32.store	$drop=, e($pop49), $1
+	i32.store	e($pop49), $1
 	i32.const	$push48=, 0
 	i32.const	$push47=, -1
 	i32.add 	$push46=, $0, $pop47
 	tee_local	$push45=, $4=, $pop46
-	i32.store	$drop=, d($pop48), $pop45
+	i32.store	d($pop48), $pop45
 .LBB2_11:                               # %sw.epilog.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label9:
@@ -135,12 +135,12 @@ main:                                   # @main
 	i32.const	$push61=, 4
 	i32.add 	$push60=, $1, $pop61
 	tee_local	$push59=, $1=, $pop60
-	i32.store	$drop=, e($pop62), $pop59
+	i32.store	e($pop62), $pop59
 	i32.const	$push58=, 0
 	i32.const	$push57=, -1
 	i32.add 	$push56=, $4, $pop57
 	tee_local	$push55=, $0=, $pop56
-	i32.store	$drop=, d($pop58), $pop55
+	i32.store	d($pop58), $pop55
 	i32.const	$push54=, 1
 	i32.gt_s	$push15=, $4, $pop54
 	br_if   	0, $pop15       # 0: up to label6
@@ -160,12 +160,12 @@ main:                                   # @main
 	i32.const	$push7=, 4
 	i32.add 	$push69=, $1, $pop7
 	tee_local	$push68=, $1=, $pop69
-	i32.store	$drop=, e($pop8), $pop68
+	i32.store	e($pop8), $pop68
 	i32.const	$push67=, 0
 	i32.const	$push9=, -1
 	i32.add 	$push66=, $0, $pop9
 	tee_local	$push65=, $0=, $pop66
-	i32.store	$drop=, d($pop67), $pop65
+	i32.store	d($pop67), $pop65
 	i32.const	$push12=, 1536
 	i32.or  	$push13=, $3, $pop12
 	i32.const	$push10=, 1
@@ -175,7 +175,7 @@ main:                                   # @main
 	end_block                       # label4:
 	i32.const	$push71=, 0
 	i32.const	$push70=, .L.str.4
-	i32.store	$drop=, t($pop71), $pop70
+	i32.store	t($pop71), $pop70
 	block
 	i32.const	$push18=, 512
 	i32.and 	$push19=, $3, $pop18
@@ -184,14 +184,14 @@ main:                                   # @main
 # BB#16:                                # %if.then6.i
 	i32.const	$push76=, 0
 	i32.const	$push75=, f
-	i32.store	$drop=, e($pop76), $pop75
+	i32.store	e($pop76), $pop75
 	i32.const	$push74=, 0
 	i32.const	$push73=, .L.str.4
-	i32.store	$drop=, f($pop74), $pop73
+	i32.store	f($pop74), $pop73
 	i32.const	$push72=, 0
 	i32.const	$push20=, 1
 	i32.add 	$push21=, $0, $pop20
-	i32.store	$drop=, d($pop72), $pop21
+	i32.store	d($pop72), $pop21
 	i32.const	$4=, 4
 .LBB2_17:                               # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
@@ -203,7 +203,7 @@ main:                                   # @main
 	i32.add 	$push24=, $pop23, $pop80
 	i32.load	$push79=, 0($pop24)
 	tee_local	$push78=, $2=, $pop79
-	i32.store	$drop=, 0($pop22), $pop78
+	i32.store	0($pop22), $pop78
 	i32.const	$push77=, 4
 	i32.add 	$4=, $4, $pop77
 	br_if   	0, $2           # 0: up to label14
@@ -334,6 +334,6 @@ f:
 	.size	f, 64
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

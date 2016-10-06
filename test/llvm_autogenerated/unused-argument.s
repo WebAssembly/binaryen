@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/unused-argument.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/unused-argument.ll"
 	.globl	unused_first
 	.type	unused_first,@function
 unused_first:
@@ -30,3 +30,4 @@ call_something:
 	.size	call_something, .Lfunc_end2-call_something
 
 
+	.functype	return_something, i32

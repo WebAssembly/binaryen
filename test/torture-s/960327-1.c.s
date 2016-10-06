@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960327-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960327-1.c"
 	.section	.text.g,"ax",@progbits
 	.hidden	g
 	.globl	g
@@ -27,20 +27,20 @@ f:                                      # @f
 	i32.const	$push18=, 16
 	i32.sub 	$push26=, $pop17, $pop18
 	tee_local	$push25=, $3=, $pop26
-	i32.store	$drop=, __stack_pointer($pop19), $pop25
+	i32.store	__stack_pointer($pop19), $pop25
 	i32.const	$push2=, 12
 	i32.add 	$push3=, $3, $pop2
 	i32.const	$push0=, 0
 	i32.load16_u	$push1=, .Lf.s+12($pop0):p2align=0
-	i32.store16	$drop=, 0($pop3), $pop1
+	i32.store16	0($pop3), $pop1
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $3, $pop5
 	i32.const	$push24=, 0
 	i32.load	$push4=, .Lf.s+8($pop24):p2align=0
-	i32.store	$drop=, 0($pop6), $pop4
+	i32.store	0($pop6), $pop4
 	i32.const	$push23=, 0
 	i64.load	$push7=, .Lf.s($pop23):p2align=0
-	i64.store	$drop=, 0($3):p2align=2, $pop7
+	i64.store	0($3):p2align=2, $pop7
 	i32.const	$push8=, 13
 	i32.add 	$2=, $3, $pop8
 .LBB1_1:                                # %while.cond
@@ -59,7 +59,7 @@ f:                                      # @f
 # BB#2:                                 # %while.end
 	end_loop                        # label1:
 	i32.const	$push11=, 88
-	i32.store16	$drop=, 0($0):p2align=0, $pop11
+	i32.store16	0($0):p2align=0, $pop11
 	block
 	i32.const	$push12=, 12
 	i32.add 	$push13=, $3, $pop12
@@ -71,7 +71,7 @@ f:                                      # @f
 	i32.const	$push22=, 0
 	i32.const	$push20=, 16
 	i32.add 	$push21=, $3, $pop20
-	i32.store	$drop=, __stack_pointer($pop22), $pop21
+	i32.store	__stack_pointer($pop22), $pop21
 	return  	$2
 .LBB1_4:                                # %if.then
 	end_block                       # label2:
@@ -103,6 +103,6 @@ main:                                   # @main
 	.size	.Lf.s, 14
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

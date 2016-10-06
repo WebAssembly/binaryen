@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041019-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041019-1.c"
 	.section	.text.test_store_ccp,"ax",@progbits
 	.hidden	test_store_ccp
 	.globl	test_store_ccp
@@ -28,9 +28,9 @@ test_store_ccp:                         # @test_store_ccp
 	i32.select	$push20=, $pop18, $pop4, $pop1
 	tee_local	$push19=, $0=, $pop20
 	i32.const	$push5=, 10
-	i32.store	$drop=, 0($pop19), $pop5
+	i32.store	0($pop19), $pop5
 	i32.const	$push6=, 3
-	i32.store	$drop=, 8($1), $pop6
+	i32.store	8($1), $pop6
 	i32.load	$push7=, 0($0)
 	i32.const	$push8=, 2
 	i32.add 	$push9=, $pop7, $pop8
@@ -66,10 +66,10 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	i32.lt_s	$push1=, $0, $pop0
 	i32.select	$push18=, $pop16, $pop4, $pop1
 	tee_local	$push17=, $1=, $pop18
-	i32.store	$drop=, 0($pop17), $0
+	i32.store	0($pop17), $0
 	i32.const	$push5=, 1
 	i32.add 	$push6=, $0, $pop5
-	i32.store	$drop=, 8($2), $pop6
+	i32.store	8($2), $pop6
 	i32.load	$push7=, 0($1)
                                         # fallthrough-return: $pop7
 	.endfunc
@@ -90,4 +90,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

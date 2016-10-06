@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920726-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920726-1.c"
 	.section	.text.first,"ax",@progbits
 	.hidden	first
 	.globl	first
@@ -15,8 +15,8 @@ first:                                  # @first
 	i32.const	$push7=, 16
 	i32.sub 	$push13=, $pop6, $pop7
 	tee_local	$push12=, $3=, $pop13
-	i32.store	$drop=, __stack_pointer($pop8), $pop12
-	i32.store	$drop=, 12($3), $2
+	i32.store	__stack_pointer($pop8), $pop12
+	i32.store	12($3), $2
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label0:
@@ -32,9 +32,9 @@ first:                                  # @first
 	tee_local	$push17=, $2=, $pop18
 	i32.const	$push16=, 4
 	i32.add 	$push1=, $pop17, $pop16
-	i32.store	$drop=, 12($3), $pop1
+	i32.store	12($3), $pop1
 	i32.load	$push2=, 0($2)
-	i32.store	$drop=, 0($3), $pop2
+	i32.store	0($3), $pop2
 	i32.const	$push15=, .L.str
 	i32.call	$drop=, sprintf@FUNCTION, $0, $pop15, $3
 	i32.call	$push3=, strlen@FUNCTION, $0
@@ -49,7 +49,7 @@ first:                                  # @first
 	br_if   	1, $pop24       # 1: down to label1
 # BB#4:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.store8	$drop=, 0($0), $2
+	i32.store8	0($0), $2
 	i32.const	$push23=, 1
 	i32.add 	$0=, $0, $pop23
 	i32.const	$push22=, 1
@@ -58,11 +58,11 @@ first:                                  # @first
 .LBB0_5:                                # %for.end
 	end_loop                        # label1:
 	i32.const	$push4=, 0
-	i32.store8	$drop=, 0($0), $pop4
+	i32.store8	0($0), $pop4
 	i32.const	$push11=, 0
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $3, $pop9
-	i32.store	$drop=, __stack_pointer($pop11), $pop10
+	i32.store	__stack_pointer($pop11), $pop10
 	copy_local	$push25=, $0
                                         # fallthrough-return: $pop25
 	.endfunc
@@ -84,8 +84,8 @@ second:                                 # @second
 	i32.const	$push7=, 16
 	i32.sub 	$push13=, $pop6, $pop7
 	tee_local	$push12=, $3=, $pop13
-	i32.store	$drop=, __stack_pointer($pop8), $pop12
-	i32.store	$drop=, 12($3), $2
+	i32.store	__stack_pointer($pop8), $pop12
+	i32.store	12($3), $2
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
@@ -101,9 +101,9 @@ second:                                 # @second
 	tee_local	$push17=, $2=, $pop18
 	i32.const	$push16=, 4
 	i32.add 	$push1=, $pop17, $pop16
-	i32.store	$drop=, 12($3), $pop1
+	i32.store	12($3), $pop1
 	i32.load	$push2=, 0($2)
-	i32.store	$drop=, 0($3), $pop2
+	i32.store	0($3), $pop2
 	i32.const	$push15=, .L.str
 	i32.call	$drop=, sprintf@FUNCTION, $0, $pop15, $3
 	i32.call	$push3=, strlen@FUNCTION, $0
@@ -118,7 +118,7 @@ second:                                 # @second
 	br_if   	1, $pop24       # 1: down to label4
 # BB#4:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.store8	$drop=, 0($0), $2
+	i32.store8	0($0), $2
 	i32.const	$push23=, 1
 	i32.add 	$0=, $0, $pop23
 	i32.const	$push22=, 1
@@ -127,11 +127,11 @@ second:                                 # @second
 .LBB1_5:                                # %for.end
 	end_loop                        # label4:
 	i32.const	$push4=, 0
-	i32.store8	$drop=, 0($0), $pop4
+	i32.store8	0($0), $pop4
 	i32.const	$push11=, 0
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $3, $pop9
-	i32.store	$drop=, __stack_pointer($pop11), $pop10
+	i32.store	__stack_pointer($pop11), $pop10
 	copy_local	$push25=, $0
                                         # fallthrough-return: $pop25
 	.endfunc
@@ -152,9 +152,9 @@ main:                                   # @main
 	i32.const	$push7=, 256
 	i32.sub 	$push23=, $pop6, $pop7
 	tee_local	$push22=, $0=, $pop23
-	i32.store	$drop=, __stack_pointer($pop8), $pop22
+	i32.store	__stack_pointer($pop8), $pop22
 	i64.const	$push0=, 85899345925
-	i64.store	$drop=, 16($0), $pop0
+	i64.store	16($0), $pop0
 	i32.const	$push9=, 144
 	i32.add 	$push10=, $0, $pop9
 	i32.const	$push1=, .L.str.1
@@ -162,7 +162,7 @@ main:                                   # @main
 	i32.add 	$push12=, $0, $pop11
 	i32.call	$drop=, first@FUNCTION, $pop10, $pop1, $pop12
 	i64.const	$push21=, 85899345925
-	i64.store	$drop=, 0($0), $pop21
+	i64.store	0($0), $pop21
 	i32.const	$push13=, 32
 	i32.add 	$push14=, $0, $pop13
 	i32.const	$push20=, .L.str.1
@@ -208,7 +208,7 @@ main:                                   # @main
 	.size	.L.str.2, 6
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strlen, i32, i32
 	.functype	strcmp, i32, i32, i32

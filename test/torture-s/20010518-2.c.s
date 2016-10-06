@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010518-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010518-2.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,37 +14,37 @@ main:                                   # @main
 	i32.const	$push28=, 48
 	i32.sub 	$push35=, $pop27, $pop28
 	tee_local	$push34=, $0=, $pop35
-	i32.store	$drop=, __stack_pointer($pop29), $pop34
+	i32.store	__stack_pointer($pop29), $pop34
 	i32.const	$push0=, 1
-	i32.store16	$drop=, 28($0), $pop0
+	i32.store16	28($0), $pop0
 	i32.const	$push33=, 2
-	i32.store	$drop=, 24($0), $pop33
+	i32.store	24($0), $pop33
 	i32.const	$push1=, 3
-	i32.store16	$drop=, 22($0), $pop1
+	i32.store16	22($0), $pop1
 	i32.const	$push2=, 4
-	i32.store16	$drop=, 20($0), $pop2
+	i32.store16	20($0), $pop2
 	i32.const	$push3=, 0
-	i32.store	$drop=, 16($0), $pop3
+	i32.store	16($0), $pop3
 	i32.const	$push32=, 0
-	i32.store8	$drop=, 15($0), $pop32
+	i32.store8	15($0), $pop32
 	i32.const	$push31=, 0
-	i32.store8	$drop=, 14($0), $pop31
+	i32.store8	14($0), $pop31
 	i32.load16_u	$push4=, 28($0)
-	i32.store16	$drop=, 46($0), $pop4
+	i32.store16	46($0), $pop4
 	i32.load	$push5=, 24($0)
-	i32.store	$drop=, 40($0), $pop5
+	i32.store	40($0), $pop5
 	i32.load16_u	$push6=, 22($0)
-	i32.store16	$drop=, 38($0), $pop6
+	i32.store16	38($0), $pop6
 	i32.load16_u	$push7=, 20($0)
-	i32.store16	$drop=, 36($0), $pop7
+	i32.store16	36($0), $pop7
 	i32.load	$push8=, 16($0)
-	i32.store	$drop=, 32($0), $pop8
+	i32.store	32($0), $pop8
 	i32.load8_u	$push9=, 15($0)
-	i32.store8	$drop=, 31($0), $pop9
+	i32.store8	31($0), $pop9
 	i32.load8_u	$push10=, 14($0)
-	i32.store8	$drop=, 30($0), $pop10
+	i32.store8	30($0), $pop10
 	i32.const	$push11=, 99
-	i32.store8	$drop=, 31($0), $pop11
+	i32.store8	31($0), $pop11
 	block
 	i32.load16_u	$push12=, 46($0)
 	i32.const	$push30=, 1
@@ -83,6 +83,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

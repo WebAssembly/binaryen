@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/load.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/load.ll"
 	.globl	ldi32
 	.type	ldi32,@function
 ldi32:

@@ -73,7 +73,7 @@ frame_index:
 	i32.const	$push5=, 4096
 	i32.sub 	$push15=, $pop4, $pop5
 	tee_local	$push14=, $0=, $pop15
-	i32.store	$drop=, __stack_pointer($pop6), $pop14
+	i32.store	__stack_pointer($pop6), $pop14
 	i32.const	$push10=, 2048
 	i32.add 	$push11=, $0, $pop10
 	i32.const	$push2=, 0
@@ -85,7 +85,7 @@ frame_index:
 	i32.call	$push0=, memset@FUNCTION, $0, $pop13, $pop12
 	i32.const	$push7=, 4096
 	i32.add 	$push8=, $pop0, $pop7
-	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.store	__stack_pointer($pop9), $pop8
 	return
 	.endfunc
 .Lfunc_end6:

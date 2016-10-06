@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
 	.section	.text.debug,"ax",@progbits
 	.hidden	debug
 	.globl	debug
@@ -72,7 +72,7 @@ compare:                                # @compare
 	i32.load	$push3=, errors($pop9)
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	$drop=, errors($pop2), $pop5
+	i32.store	errors($pop2), $pop5
 .LBB3_3:                                # %if.end
 	end_block                       # label0:
 	i32.call_indirect	$push6=, $2, $1
@@ -103,5 +103,5 @@ errors:
 	.size	errors, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	qsort, void, i32, i32, i32, i32

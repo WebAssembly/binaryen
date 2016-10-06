@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-17.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-17.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -34,7 +34,7 @@ check2:                                 # @check2
 # BB#1:                                 # %if.end
 	i32.const	$push6=, 0
 	i32.const	$push3=, 6
-	i32.store	$drop=, check2.r($pop6), $pop3
+	i32.store	check2.r($pop6), $pop3
 	i32.const	$push5=, 6
 	return  	$pop5
 .LBB1_2:                                # %if.then
@@ -61,9 +61,9 @@ test2:                                  # @test2
 # BB#1:                                 # %check2.exit
 	i32.const	$push6=, 0
 	i32.const	$push3=, 6
-	i32.store	$drop=, check2.r($pop6), $pop3
+	i32.store	check2.r($pop6), $pop3
 	i32.const	$push4=, 8020322
-	i32.store	$drop=, 0($0):p2align=0, $pop4
+	i32.store	0($0):p2align=0, $pop4
 	return
 .LBB2_2:                                # %if.then.i
 	end_block                       # label1:
@@ -87,13 +87,13 @@ main:                                   # @main
 	i32.const	$push13=, 16
 	i32.sub 	$push20=, $pop12, $pop13
 	tee_local	$push19=, $0=, $pop20
-	i32.store	$drop=, __stack_pointer($pop14), $pop19
+	i32.store	__stack_pointer($pop14), $pop19
 	i32.const	$push18=, 0
 	i32.load8_u	$push0=, .L.str+9($pop18)
-	i32.store8	$drop=, 6($0), $pop0
+	i32.store8	6($0), $pop0
 	i32.const	$push17=, 0
 	i32.load16_u	$push1=, .L.str+7($pop17):p2align=0
-	i32.store16	$drop=, 4($0), $pop1
+	i32.store16	4($0), $pop1
 	block
 	i32.const	$push15=, 4
 	i32.add 	$push16=, $0, $pop15
@@ -110,9 +110,9 @@ main:                                   # @main
 # BB#2:                                 # %test2.exit
 	i32.const	$push22=, 0
 	i32.const	$push8=, 6
-	i32.store	$drop=, check2.r($pop22), $pop8
+	i32.store	check2.r($pop22), $pop8
 	i32.const	$push9=, 8020322
-	i32.store	$drop=, 4($0), $pop9
+	i32.store	4($0), $pop9
 	i32.const	$push10=, 1
 	i32.eqz 	$push24=, $pop10
 	br_if   	0, $pop24       # 0: down to label2
@@ -153,7 +153,7 @@ check2.r:
 	.size	.L.str.2, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void
 	.functype	memcmp, i32, i32, i32, i32

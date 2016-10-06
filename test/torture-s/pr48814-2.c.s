@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr48814-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr48814-2.c"
 	.section	.text.incr,"ax",@progbits
 	.hidden	incr
 	.globl	incr
@@ -14,7 +14,7 @@ incr:                                   # @incr
 	i32.const	$push2=, 1
 	i32.add 	$push4=, $pop1, $pop2
 	tee_local	$push3=, $0=, $pop4
-	i32.store	$drop=, count($pop0), $pop3
+	i32.store	count($pop0), $pop3
 	copy_local	$push6=, $0
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -36,7 +36,7 @@ main:                                   # @main
 	i32.const	$push16=, 2
 	i32.add 	$push15=, $pop17, $pop16
 	tee_local	$push14=, $0=, $pop15
-	i32.store	$drop=, count($pop0), $pop14
+	i32.store	count($pop0), $pop14
 	i32.const	$push1=, 1
 	i32.add 	$push13=, $1, $pop1
 	tee_local	$push12=, $2=, $pop13
@@ -44,7 +44,7 @@ main:                                   # @main
 	i32.shl 	$push2=, $pop12, $pop11
 	i32.const	$push10=, arr
 	i32.add 	$push3=, $pop2, $pop10
-	i32.store	$drop=, 0($pop3), $2
+	i32.store	0($pop3), $2
 	block
 	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
@@ -89,5 +89,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

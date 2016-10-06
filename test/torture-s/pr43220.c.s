@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43220.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43220.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -29,12 +29,12 @@ main:                                   # @main
 	tee_local	$push37=, $1=, $pop38
 	copy_local	$drop=, $pop37
 	i32.const	$push36=, 1
-	i32.store	$drop=, 0($1), $pop36
+	i32.store	0($1), $pop36
 	i32.const	$push35=, 0
-	i32.store	$drop=, p($pop35), $1
+	i32.store	p($pop35), $1
 	i32.add 	$push4=, $1, $0
 	i32.const	$push34=, 2
-	i32.store	$drop=, 0($pop4), $pop34
+	i32.store	0($pop4), $pop34
 	copy_local	$push3=, $3
 	copy_local	$push33=, $pop3
 	tee_local	$push32=, $3=, $pop33
@@ -53,12 +53,12 @@ main:                                   # @main
 	tee_local	$push23=, $1=, $pop24
 	copy_local	$drop=, $pop23
 	i32.const	$push22=, 1
-	i32.store	$drop=, 0($1), $pop22
+	i32.store	0($1), $pop22
 	i32.const	$push21=, 0
-	i32.store	$drop=, p($pop21), $1
+	i32.store	p($pop21), $1
 	i32.add 	$push10=, $1, $0
 	i32.const	$push20=, 2
-	i32.store	$drop=, 0($pop10), $pop20
+	i32.store	0($pop10), $pop20
 	copy_local	$push9=, $3
 	copy_local	$3=, $pop9
 	i32.const	$push19=, 2
@@ -85,4 +85,4 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

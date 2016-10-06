@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strcmp-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strcmp-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -100,11 +100,11 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_3 Depth=3
 	end_block                       # label13:
 	i64.const	$push30=, 8680820740569200760
-	i64.store	$drop=, 0($6):p2align=0, $pop30
+	i64.store	0($6):p2align=0, $pop30
 	i32.const	$push29=, 8
 	i32.add 	$push2=, $6, $pop29
 	i32.const	$push28=, 30840
-	i32.store16	$drop=, 0($pop2):p2align=0, $pop28
+	i32.store16	0($pop2):p2align=0, $pop28
 	i32.const	$7=, u2
 	block
 	i32.eqz 	$push79=, $2
@@ -131,23 +131,23 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_3 Depth=3
 	end_block                       # label15:
 	i64.const	$push38=, 8680820740569200760
-	i64.store	$drop=, 1($8):p2align=0, $pop38
+	i64.store	1($8):p2align=0, $pop38
 	i32.const	$push37=, 9
 	i32.add 	$push3=, $8, $pop37
 	i32.const	$push36=, 120
-	i32.store8	$drop=, 0($pop3), $pop36
+	i32.store8	0($pop3), $pop36
 	i32.const	$push35=, 0
-	i32.store8	$drop=, 0($6), $pop35
+	i32.store8	0($6), $pop35
 	i32.const	$push34=, 0
-	i32.store8	$drop=, 0($8), $pop34
+	i32.store8	0($8), $pop34
 	i32.call	$push4=, strcmp@FUNCTION, $5, $7
 	br_if   	6, $pop4        # 6: down to label5
 # BB#12:                                # %test.exit
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push41=, 97
-	i32.store16	$drop=, 0($6):p2align=0, $pop41
+	i32.store16	0($6):p2align=0, $pop41
 	i32.const	$push40=, 0
-	i32.store8	$drop=, 0($8), $pop40
+	i32.store8	0($8), $pop40
 	i32.call	$push5=, strcmp@FUNCTION, $5, $7
 	i32.const	$push39=, 0
 	i32.le_s	$push6=, $pop5, $pop39
@@ -155,9 +155,9 @@ main:                                   # @main
 # BB#13:                                # %test.exit157
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push44=, 0
-	i32.store8	$drop=, 0($6), $pop44
+	i32.store8	0($6), $pop44
 	i32.const	$push43=, 97
-	i32.store16	$drop=, 0($8):p2align=0, $pop43
+	i32.store16	0($8):p2align=0, $pop43
 	i32.call	$push7=, strcmp@FUNCTION, $5, $7
 	i32.const	$push42=, 0
 	i32.ge_s	$push8=, $pop7, $pop42
@@ -165,9 +165,9 @@ main:                                   # @main
 # BB#14:                                # %test.exit162
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push47=, 98
-	i32.store16	$drop=, 0($6):p2align=0, $pop47
+	i32.store16	0($6):p2align=0, $pop47
 	i32.const	$push46=, 99
-	i32.store16	$drop=, 0($8):p2align=0, $pop46
+	i32.store16	0($8):p2align=0, $pop46
 	i32.call	$push9=, strcmp@FUNCTION, $5, $7
 	i32.const	$push45=, 0
 	i32.ge_s	$push10=, $pop9, $pop45
@@ -175,9 +175,9 @@ main:                                   # @main
 # BB#15:                                # %test.exit168
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push50=, 99
-	i32.store16	$drop=, 0($6):p2align=0, $pop50
+	i32.store16	0($6):p2align=0, $pop50
 	i32.const	$push49=, 98
-	i32.store16	$drop=, 0($8):p2align=0, $pop49
+	i32.store16	0($8):p2align=0, $pop49
 	i32.call	$push11=, strcmp@FUNCTION, $5, $7
 	i32.const	$push48=, 0
 	i32.le_s	$push12=, $pop11, $pop48
@@ -185,9 +185,9 @@ main:                                   # @main
 # BB#16:                                # %test.exit174
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push53=, 98
-	i32.store16	$drop=, 0($6):p2align=0, $pop53
+	i32.store16	0($6):p2align=0, $pop53
 	i32.const	$push52=, 169
-	i32.store16	$drop=, 0($8):p2align=0, $pop52
+	i32.store16	0($8):p2align=0, $pop52
 	i32.call	$push13=, strcmp@FUNCTION, $5, $7
 	i32.const	$push51=, 0
 	i32.ge_s	$push14=, $pop13, $pop51
@@ -195,9 +195,9 @@ main:                                   # @main
 # BB#17:                                # %test.exit180
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push56=, 169
-	i32.store16	$drop=, 0($6):p2align=0, $pop56
+	i32.store16	0($6):p2align=0, $pop56
 	i32.const	$push55=, 98
-	i32.store16	$drop=, 0($8):p2align=0, $pop55
+	i32.store16	0($8):p2align=0, $pop55
 	i32.call	$push15=, strcmp@FUNCTION, $5, $7
 	i32.const	$push54=, 0
 	i32.le_s	$push16=, $pop15, $pop54
@@ -205,9 +205,9 @@ main:                                   # @main
 # BB#18:                                # %test.exit186
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push59=, 169
-	i32.store16	$drop=, 0($6):p2align=0, $pop59
+	i32.store16	0($6):p2align=0, $pop59
 	i32.const	$push58=, 170
-	i32.store16	$drop=, 0($8):p2align=0, $pop58
+	i32.store16	0($8):p2align=0, $pop58
 	i32.call	$push17=, strcmp@FUNCTION, $5, $7
 	i32.const	$push57=, 0
 	i32.ge_s	$push18=, $pop17, $pop57
@@ -215,9 +215,9 @@ main:                                   # @main
 # BB#19:                                # %test.exit192
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push62=, 170
-	i32.store16	$drop=, 0($6):p2align=0, $pop62
+	i32.store16	0($6):p2align=0, $pop62
 	i32.const	$push61=, 169
-	i32.store16	$drop=, 0($8):p2align=0, $pop61
+	i32.store16	0($8):p2align=0, $pop61
 	i32.call	$push19=, strcmp@FUNCTION, $5, $7
 	i32.const	$push60=, 0
 	i32.le_s	$push20=, $pop19, $pop60
@@ -284,7 +284,7 @@ u2:
 	.size	u2, 96
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

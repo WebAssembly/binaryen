@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031201-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031201-1.c"
 	.section	.text.f1,"ax",@progbits
 	.hidden	f1
 	.globl	f1
@@ -9,19 +9,19 @@ f1:                                     # @f1
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, i($pop0), $0
+	i32.store	i($pop0), $0
 	i32.const	$push1=, 32
-	i32.store	$drop=, 4($0), $pop1
+	i32.store	4($0), $pop1
 	i32.const	$push7=, 32
-	i32.store	$drop=, 0($0), $pop7
+	i32.store	0($0), $pop7
 	call    	f0@FUNCTION
 	i32.const	$push6=, 0
 	i32.load	$push5=, i($pop6)
 	tee_local	$push4=, $0=, $pop5
 	i32.const	$push2=, 8
-	i32.store	$drop=, 4($pop4), $pop2
+	i32.store	4($pop4), $pop2
 	i32.const	$push3=, 8
-	i32.store	$drop=, 0($0), $pop3
+	i32.store	0($0), $pop3
 	call    	test@FUNCTION
 	unreachable
 	.endfunc
@@ -41,7 +41,7 @@ f0:                                     # @f0
 	tee_local	$push6=, $0=, $pop7
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $pop6, $pop0
-	i32.store	$drop=, f0.washere($pop9), $pop1
+	i32.store	f0.washere($pop9), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
@@ -113,7 +113,7 @@ main:                                   # @main
 	i32.const	$push2=, 16
 	i32.sub 	$push7=, $pop1, $pop2
 	tee_local	$push6=, $0=, $pop7
-	i32.store	$drop=, __stack_pointer($pop3), $pop6
+	i32.store	__stack_pointer($pop3), $pop6
 	i32.const	$push4=, 8
 	i32.add 	$push5=, $0, $pop4
 	i32.call	$drop=, f1@FUNCTION, $pop5
@@ -137,6 +137,6 @@ f0.washere:
 	.size	f0.washere, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

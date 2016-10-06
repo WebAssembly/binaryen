@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43560.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43560.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -33,9 +33,9 @@ test:                                   # @test
 	br_if   	1, $pop4        # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.store	$drop=, 0($2), $3
+	i32.store	0($2), $3
 	i32.const	$push19=, 0
-	i32.store8	$drop=, 0($1), $pop19
+	i32.store8	0($1), $pop19
 	i32.load	$push18=, 0($2)
 	tee_local	$push17=, $3=, $pop18
 	i32.const	$push16=, 1
@@ -77,4 +77,4 @@ s:
 	.size	s, 20
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

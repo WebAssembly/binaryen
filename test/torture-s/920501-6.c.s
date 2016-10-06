@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-6.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-6.c"
 	.section	.text.str2llu,"ax",@progbits
 	.hidden	str2llu
 	.globl	str2llu
@@ -198,7 +198,7 @@ plist:                                  # @plist
                                         #   in Loop: Header=BB2_2 Depth=1
 	end_loop                        # label17:
 	end_block                       # label15:
-	i64.store	$drop=, 0($4), $0
+	i64.store	0($4), $0
 	i32.const	$push42=, 8
 	i32.add 	$4=, $4, $pop42
 .LBB2_11:                               # %for.inc6
@@ -213,7 +213,7 @@ plist:                                  # @plist
 	end_loop                        # label9:
 	end_block                       # label7:
 	i64.const	$push15=, 0
-	i64.store	$drop=, 0($4), $pop15
+	i64.store	0($4), $pop15
 	i32.sub 	$push16=, $4, $2
 	i32.const	$push17=, 3
 	i32.shr_s	$push18=, $pop16, $pop17
@@ -237,7 +237,7 @@ main:                                   # @main
 	i32.const	$push29=, 80
 	i32.sub 	$push32=, $pop28, $pop29
 	tee_local	$push31=, $8=, $pop32
-	i32.store	$drop=, __stack_pointer($pop30), $pop31
+	i32.store	__stack_pointer($pop30), $pop31
 	i64.const	$4=, 1234111111
 	copy_local	$3=, $8
 .LBB3_1:                                # %for.cond.i.preheader.i
@@ -320,7 +320,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop                        # label27:
 	end_block                       # label25:
-	i64.store	$drop=, 0($3), $4
+	i64.store	0($3), $4
 	i32.const	$push56=, 8
 	i32.add 	$3=, $3, $pop56
 .LBB3_10:                               # %for.inc6.i
@@ -335,7 +335,7 @@ main:                                   # @main
 # BB#11:                                # %plist.exit
 	end_loop                        # label19:
 	i64.const	$push14=, 0
-	i64.store	$drop=, 0($3), $pop14
+	i64.store	0($3), $pop14
 	block
 	i64.load	$push16=, 0($8)
 	i64.const	$push15=, 1234111117
@@ -369,6 +369,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

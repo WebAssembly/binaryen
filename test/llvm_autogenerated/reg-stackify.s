@@ -8,7 +8,7 @@ no0:
 	.result 	i32
 	i32.load	$1=, 0($1)
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	return  	$1
 	.endfunc
 .Lfunc_end0:
@@ -22,7 +22,7 @@ no1:
 	.result 	i32
 	i32.load	$1=, 0($1)
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	return  	$1
 	.endfunc
 .Lfunc_end1:
@@ -35,7 +35,7 @@ yes0:
 	.param  	i32, i32
 	.result 	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.load	$push1=, 0($1)
 	return  	$pop1
 	.endfunc
@@ -61,7 +61,7 @@ sink_trap:
 	.param  	i32, i32, i32
 	.result 	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($2), $pop0
+	i32.store	0($2), $pop0
 	i32.div_s	$push1=, $0, $1
 	return  	$pop1
 	.endfunc
@@ -75,7 +75,7 @@ sink_readnone_call:
 	.param  	i32, i32, i32
 	.result 	i32
 	i32.const	$push1=, 0
-	i32.store	$drop=, 0($2), $pop1
+	i32.store	0($2), $pop1
 	i32.call	$push0=, readnone_callee@FUNCTION
 	return  	$pop0
 	.endfunc
@@ -91,7 +91,7 @@ no_sink_readonly_call:
 	.local  	i32
 	i32.call	$3=, readonly_callee@FUNCTION
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($2), $pop0
+	i32.store	0($2), $pop0
 	return  	$3
 	.endfunc
 .Lfunc_end6:
@@ -141,7 +141,7 @@ multiple_uses:
 	br_if   	0, $pop0
 	i32.lt_u	$push1=, $3, $0
 	br_if   	0, $pop1
-	i32.store	$drop=, 0($2), $3
+	i32.store	0($2), $3
 .LBB8_3:
 	end_block
 	return
@@ -156,10 +156,10 @@ stackify_store_across_side_effects:
 .Lfunc_begin9:
 	.param  	i32
 	i64.const	$push0=, 4611686018427387904
-	i64.store	$drop=, 0($0), $pop0
+	i64.store	0($0), $pop0
 	call    	evoke_side_effects@FUNCTION
 	i64.const	$push1=, 4611686018427387904
-	i64.store	$drop=, 0($0), $pop1
+	i64.store	0($0), $pop1
 	call    	evoke_side_effects@FUNCTION
 	return
 	.endfunc
@@ -351,7 +351,7 @@ no_stackify_store_past_load:
 .Lfunc_begin18:
 	.param  	i32, i32, i32
 	.result 	i32
-	i32.store	$drop=, 0($1), $0
+	i32.store	0($1), $0
 	i32.load	$2=, 0($2)
 	i32.call	$drop=, callee@FUNCTION, $0
 	return  	$2
@@ -365,7 +365,7 @@ store_past_invar_load:
 .Lfunc_begin19:
 	.param  	i32, i32, i32
 	.result 	i32
-	i32.store	$drop=, 0($1), $0
+	i32.store	0($1), $0
 	i32.call	$drop=, callee@FUNCTION, $0
 	i32.load	$push0=, 0($2)
 	return  	$pop0
@@ -394,14 +394,14 @@ no_stackify_past_epilogue:
 	i32.const	$push2=, 16
 	i32.sub 	$push10=, $pop1, $pop2
 	tee_local	$push9=, $1=, $pop10
-	i32.store	$drop=, __stack_pointer($pop3), $pop9
+	i32.store	__stack_pointer($pop3), $pop9
 	i32.const	$push7=, 12
 	i32.add 	$push8=, $1, $pop7
 	i32.call	$0=, use_memory@FUNCTION, $pop8
 	i32.const	$push6=, 0
 	i32.const	$push4=, 16
 	i32.add 	$push5=, $1, $pop4
-	i32.store	$drop=, __stack_pointer($pop6), $pop5
+	i32.store	__stack_pointer($pop6), $pop5
 	return  	$0
 	.endfunc
 .Lfunc_end21:
@@ -418,7 +418,7 @@ stackify_indvar:
 	loop
 	i32.load	$push0=, 0($1)
 	i32.add 	$push1=, $2, $pop0
-	i32.store	$drop=, 0($1), $pop1
+	i32.store	0($1), $pop1
 	i32.const	$push5=, 1
 	i32.add 	$push4=, $2, $pop5
 	tee_local	$push3=, $2=, $pop4
@@ -443,7 +443,7 @@ stackpointer_dependency:
 	tee_local	$push3=, $1=, $pop4
 	i32.call	$0=, stackpointer_callee@FUNCTION, $0, $pop3
 	i32.const	$push1=, 0
-	i32.store	$drop=, __stack_pointer($pop1), $1
+	i32.store	__stack_pointer($pop1), $1
 	return  	$0
 	.endfunc
 .Lfunc_end23:

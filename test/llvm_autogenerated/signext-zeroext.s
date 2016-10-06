@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/signext-zeroext.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/signext-zeroext.ll"
 	.globl	z2s_func
 	.type	z2s_func,@function
 z2s_func:

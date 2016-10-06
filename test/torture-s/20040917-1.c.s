@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040917-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040917-1.c"
 	.section	.text.not_inlinable,"ax",@progbits
 	.hidden	not_inlinable
 	.globl	not_inlinable
@@ -8,7 +8,7 @@ not_inlinable:                          # @not_inlinable
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, -10
-	i32.store	$drop=, test_var($pop1), $pop0
+	i32.store	test_var($pop1), $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -23,7 +23,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
 	i32.const	$push0=, 10
-	i32.store	$drop=, test_var($pop5), $pop0
+	i32.store	test_var($pop5), $pop0
 	call    	not_inlinable@FUNCTION
 	block
 	i32.const	$push4=, 0
@@ -50,5 +50,5 @@ test_var:
 	.size	test_var, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

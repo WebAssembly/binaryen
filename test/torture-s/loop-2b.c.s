@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2b.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2b.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -24,7 +24,7 @@ f:                                      # @f
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push10=, -2
-	i32.store	$drop=, 0($0), $pop10
+	i32.store	0($0), $pop10
 	copy_local	$push9=, $2
 	tee_local	$push8=, $1=, $pop9
 	i32.const	$push7=, 2147483645
@@ -55,7 +55,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, -4294967298
-	i64.store	$drop=, a($pop1):p2align=2, $pop0
+	i64.store	a($pop1):p2align=2, $pop0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -73,5 +73,5 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr17252.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr17252.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,10 +9,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
 	i32.const	$push0=, a
-	i32.store	$drop=, a($pop7), $pop0
+	i32.store	a($pop7), $pop0
 	i32.const	$push6=, 0
 	i32.const	$push1=, a+1
-	i32.store8	$drop=, a($pop6), $pop1
+	i32.store8	a($pop6), $pop1
 	block
 	i32.const	$push5=, 0
 	i32.load	$push2=, a($pop5)
@@ -40,5 +40,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

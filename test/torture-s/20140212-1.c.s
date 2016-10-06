@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20140212-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20140212-1.c"
 	.section	.text.fn1,"ax",@progbits
 	.hidden	fn1
 	.globl	fn1
@@ -9,10 +9,10 @@ fn1:                                    # @fn1
 # BB#0:                                 # %entry
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
-	i32.store	$drop=, c($pop21), $pop20
+	i32.store	c($pop21), $pop20
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
-	i32.store	$drop=, e($pop19), $pop18
+	i32.store	e($pop19), $pop18
 	i32.const	$push4=, 54
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
@@ -44,17 +44,17 @@ fn1:                                    # @fn1
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push23=, 0
 	i32.const	$push22=, 1
-	i32.store	$drop=, c($pop23), $pop22
+	i32.store	c($pop23), $pop22
 	br      	1               # 1: down to label2
 .LBB0_3:                                # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label3:
 	i32.const	$push27=, 0
 	i32.const	$push26=, 9
-	i32.store	$drop=, h($pop27), $pop26
+	i32.store	h($pop27), $pop26
 	i32.const	$push25=, 0
 	i32.const	$push24=, 9
-	i32.store	$drop=, i($pop25), $pop24
+	i32.store	i($pop25), $pop24
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
@@ -63,11 +63,11 @@ fn1:                                    # @fn1
 # BB#5:                                 # %if.then15
 	end_loop                        # label1:
 	i32.const	$push6=, 0
-	i32.store8	$drop=, j($pop6), $1
+	i32.store8	j($pop6), $1
 	i32.const	$push29=, 0
-	i32.store	$drop=, k($pop29), $0
+	i32.store	k($pop29), $0
 	i32.const	$push28=, 0
-	i32.store8	$drop=, g($pop28), $2
+	i32.store8	g($pop28), $2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -83,10 +83,10 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
-	i32.store	$drop=, c($pop21), $pop20
+	i32.store	c($pop21), $pop20
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
-	i32.store	$drop=, e($pop19), $pop18
+	i32.store	e($pop19), $pop18
 	i32.const	$push4=, 54
 	i32.const	$push17=, 0
 	i32.const	$push16=, 0
@@ -117,17 +117,17 @@ main:                                   # @main
 	i32.const	$4=, 1
 	i32.const	$push23=, 0
 	i32.const	$push22=, 1
-	i32.store	$drop=, c($pop23), $pop22
+	i32.store	c($pop23), $pop22
 	br      	1               # 1: down to label6
 .LBB1_3:                                # %if.else.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label7:
 	i32.const	$push27=, 0
 	i32.const	$push26=, 9
-	i32.store	$drop=, h($pop27), $pop26
+	i32.store	h($pop27), $pop26
 	i32.const	$push25=, 0
 	i32.const	$push24=, 9
-	i32.store	$drop=, i($pop25), $pop24
+	i32.store	i($pop25), $pop24
 .LBB1_4:                                # %if.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label6:
@@ -136,13 +136,13 @@ main:                                   # @main
 # BB#5:                                 # %fn1.exit
 	end_loop                        # label5:
 	i32.const	$push30=, 0
-	i32.store8	$drop=, j($pop30), $1
+	i32.store8	j($pop30), $1
 	i32.const	$push29=, 0
-	i32.store	$drop=, k($pop29), $0
+	i32.store	k($pop29), $0
 	i32.const	$push28=, 0
 	i32.const	$push5=, 147
 	i32.mul 	$push6=, $1, $pop5
-	i32.store8	$drop=, g($pop28), $pop6
+	i32.store8	g($pop28), $pop6
 	block
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $4, $pop7
@@ -256,5 +256,5 @@ h:
 	.size	h, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040703-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040703-1.c"
 	.section	.text.num_lshift,"ax",@progbits
 	.hidden	num_lshift
 	.globl	num_lshift
@@ -34,12 +34,12 @@ num_lshift:                             # @num_lshift
 	i32.lt_u	$push10=, $3, $pop9
 	br_if   	0, $pop10       # 0: down to label7
 # BB#2:                                 # %if.then5
-	i32.store	$drop=, 0($1), $5
+	i32.store	0($1), $5
 	i32.const	$7=, 0
 	i32.const	$push11=, 4
 	i32.add 	$push12=, $1, $pop11
 	i32.const	$push104=, 0
-	i32.store	$drop=, 0($pop12), $pop104
+	i32.store	0($pop12), $pop104
 	i32.const	$push13=, -32
 	i32.add 	$8=, $3, $pop13
 	copy_local	$9=, $5
@@ -52,14 +52,14 @@ num_lshift:                             # @num_lshift
 	i32.add 	$push15=, $1, $pop14
 	i32.shl 	$push108=, $7, $8
 	tee_local	$push107=, $10=, $pop108
-	i32.store	$drop=, 0($pop15), $pop107
+	i32.store	0($pop15), $pop107
 	i32.const	$push17=, 32
 	i32.sub 	$push18=, $pop17, $8
 	i32.shr_u	$push19=, $7, $pop18
 	i32.shl 	$push16=, $9, $8
 	i32.or  	$push106=, $pop19, $pop16
 	tee_local	$push105=, $9=, $pop106
-	i32.store	$drop=, 0($1), $pop105
+	i32.store	0($1), $pop105
 	br      	2               # 2: down to label4
 .LBB0_5:                                # %if.then
 	end_block                       # label6:
@@ -110,16 +110,16 @@ num_lshift:                             # @num_lshift
 	i32.and 	$10=, $10, $pop29
 .LBB0_13:                               # %num_trim.exit
 	end_block                       # label8:
-	i32.store	$drop=, 0($1), $9
+	i32.store	0($1), $9
 	i32.const	$push37=, 4
 	i32.add 	$push38=, $1, $pop37
-	i32.store	$drop=, 0($pop38), $10
+	i32.store	0($pop38), $10
 	i32.wrap/i64	$push39=, $6
 	i32.eqz 	$push127=, $pop39
 	br_if   	2, $pop127      # 2: down to label1
 # BB#14:                                # %if.then21
 	i32.const	$push40=, 0
-	i32.store	$drop=, 12($1), $pop40
+	i32.store	12($1), $pop40
 	br      	3               # 3: down to label0
 .LBB0_15:                               # %land.rhs
 	end_block                       # label3:
@@ -132,14 +132,14 @@ num_lshift:                             # @num_lshift
 	i32.ne  	$2=, $pop6, $pop7
 .LBB0_16:                               # %land.end
 	end_block                       # label2:
-	i32.store	$drop=, 12($1), $2
+	i32.store	12($1), $2
 	i64.const	$push8=, 0
-	i64.store	$drop=, 0($1):p2align=2, $pop8
+	i64.store	0($1):p2align=2, $pop8
 	br      	1               # 1: down to label0
 .LBB0_17:                               # %if.else3.i
 	end_block                       # label1:
-	i32.store	$drop=, 8($12), $9
-	i32.store	$drop=, 4($12), $10
+	i32.store	8($12), $9
+	i32.store	4($12), $10
 	i32.const	$push43=, -1
 	i32.const	$push50=, 0
 	i32.const	$push41=, 32
@@ -161,7 +161,7 @@ num_lshift:                             # @num_lshift
 	i32.gt_u	$push52=, $2, $pop51
 	br_if   	0, $pop52       # 0: down to label12
 # BB#18:                                # %if.then5.i61
-	i32.store	$drop=, 8($12), $8
+	i32.store	8($12), $8
 	i32.const	$push96=, 4
 	i32.add 	$push97=, $12, $pop96
 	copy_local	$7=, $pop97
@@ -183,7 +183,7 @@ num_lshift:                             # @num_lshift
 	end_block                       # label11:
 	i32.shl 	$push56=, $8, $11
 	i32.or  	$push57=, $10, $pop56
-	i32.store	$drop=, 0($7), $pop57
+	i32.store	0($7), $pop57
 .LBB0_22:                               # %if.end15.i
 	end_block                       # label10:
 	block
@@ -192,8 +192,8 @@ num_lshift:                             # @num_lshift
 	br_if   	0, $pop59       # 0: down to label13
 # BB#23:                                # %if.then17.i
 	i32.load	$push60=, 8($12)
-	i32.store	$drop=, 4($12), $pop60
-	i32.store	$drop=, 8($12), $8
+	i32.store	4($12), $pop60
+	i32.store	8($12), $8
 	i32.const	$push61=, -32
 	i32.add 	$3=, $3, $pop61
 .LBB0_24:                               # %if.end22.i
@@ -213,12 +213,12 @@ num_lshift:                             # @num_lshift
 	i32.shr_u	$push63=, $pop62, $3
 	i32.or  	$push117=, $pop65, $pop63
 	tee_local	$push116=, $9=, $pop117
-	i32.store	$drop=, 4($12), $pop116
+	i32.store	4($12), $pop116
 	i32.shr_u	$push66=, $10, $3
 	i32.shl 	$push67=, $8, $7
 	i32.or  	$push115=, $pop66, $pop67
 	tee_local	$push114=, $3=, $pop115
-	i32.store	$drop=, 8($12), $pop114
+	i32.store	8($12), $pop114
 	br      	1               # 1: down to label14
 .LBB0_26:                               # %if.end22.if.end38_crit_edge.i
 	end_block                       # label15:
@@ -264,17 +264,17 @@ num_lshift:                             # @num_lshift
 	i32.ne  	$push84=, $5, $9
 	i32.ne  	$push83=, $4, $3
 	i32.or  	$push85=, $pop84, $pop83
-	i32.store	$drop=, 0($pop87), $pop85
+	i32.store	0($pop87), $pop85
 .LBB0_33:                               # %if.end37
 	end_block                       # label0:
 	i64.load	$push88=, 0($1):p2align=2
-	i64.store	$drop=, 0($0):p2align=2, $pop88
+	i64.store	0($0):p2align=2, $pop88
 	i32.const	$push89=, 8
 	i32.add 	$push90=, $0, $pop89
 	i32.const	$push124=, 8
 	i32.add 	$push91=, $1, $pop124
 	i64.load	$push92=, 0($pop91):p2align=2
-	i64.store	$drop=, 0($pop90):p2align=2, $pop92
+	i64.store	0($pop90):p2align=2, $pop92
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -294,25 +294,25 @@ main:                                   # @main
 	i32.const	$push21=, 32
 	i32.sub 	$push30=, $pop20, $pop21
 	tee_local	$push29=, $0=, $pop30
-	i32.store	$drop=, __stack_pointer($pop22), $pop29
+	i32.store	__stack_pointer($pop22), $pop29
 	i32.const	$push2=, 12
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, num+12($pop0)
-	i32.store	$drop=, 0($pop3), $pop1
+	i32.store	0($pop3), $pop1
 	i32.const	$push5=, 8
 	i32.add 	$push6=, $0, $pop5
 	i32.const	$push28=, 0
 	i32.load	$push4=, num+8($pop28)
-	i32.store	$drop=, 0($pop6), $pop4
+	i32.store	0($pop6), $pop4
 	i32.const	$push8=, 4
 	i32.add 	$push9=, $0, $pop8
 	i32.const	$push27=, 0
 	i32.load	$push7=, num+4($pop27)
-	i32.store	$drop=, 0($pop9), $pop7
+	i32.store	0($pop9), $pop7
 	i32.const	$push26=, 0
 	i32.load	$push10=, num($pop26)
-	i32.store	$drop=, 0($0), $pop10
+	i32.store	0($0), $pop10
 	i32.const	$push23=, 16
 	i32.add 	$push24=, $0, $pop23
 	i32.const	$push12=, 64
@@ -373,6 +373,6 @@ num:
 	.size	num, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

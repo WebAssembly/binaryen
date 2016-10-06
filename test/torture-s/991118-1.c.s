@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991118-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991118-1.c"
 	.section	.text.sub,"ax",@progbits
 	.hidden	sub
 	.globl	sub
@@ -10,7 +10,7 @@ sub:                                    # @sub
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, -8690468286197432320
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$drop=, 0($0), $pop2
+	i64.store	0($0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -26,7 +26,7 @@ sub2:                                   # @sub2
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, 2381903268435576
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$drop=, 0($0), $pop2
+	i64.store	0($0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -42,7 +42,7 @@ sub3:                                   # @sub3
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, -4345234143098716160
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$drop=, 0($0), $pop2
+	i64.store	0($0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -58,7 +58,7 @@ sub4:                                   # @sub4
 	i64.load	$push0=, 0($1)
 	i64.const	$push1=, 6885502895806072
 	i64.xor 	$push2=, $pop0, $pop1
-	i64.store	$drop=, 0($0), $pop2
+	i64.store	0($0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -79,7 +79,7 @@ main:                                   # @main
 	i64.const	$push2=, -8690468286197432320
 	i64.xor 	$push48=, $pop49, $pop2
 	tee_local	$push47=, $3=, $pop48
-	i64.store	$drop=, tmp($pop1), $pop47
+	i64.store	tmp($pop1), $pop47
 	i32.const	$push46=, 0
 	i32.const	$push45=, 0
 	i64.load	$push44=, tmp2($pop45)
@@ -87,7 +87,7 @@ main:                                   # @main
 	i64.const	$push3=, 2381903268435576
 	i64.xor 	$push42=, $pop43, $pop3
 	tee_local	$push41=, $1=, $pop42
-	i64.store	$drop=, tmp2($pop46), $pop41
+	i64.store	tmp2($pop46), $pop41
 	block
 	i64.const	$push4=, -4096
 	i64.and 	$push5=, $3, $pop4
@@ -124,7 +124,7 @@ main:                                   # @main
 	i64.const	$push22=, -4345234143098716160
 	i64.xor 	$push62=, $pop63, $pop22
 	tee_local	$push61=, $3=, $pop62
-	i64.store	$drop=, tmp3($pop21), $pop61
+	i64.store	tmp3($pop21), $pop61
 	i32.const	$push60=, 0
 	i32.const	$push59=, 0
 	i64.load	$push58=, tmp4($pop59)
@@ -132,7 +132,7 @@ main:                                   # @main
 	i64.const	$push23=, 6885502895806072
 	i64.xor 	$push56=, $pop57, $pop23
 	tee_local	$push55=, $1=, $pop56
-	i64.store	$drop=, tmp4($pop60), $pop55
+	i64.store	tmp4($pop60), $pop55
 	i64.const	$push24=, -2048
 	i64.and 	$push25=, $3, $pop24
 	i64.const	$push26=, -3725223934242340864
@@ -237,6 +237,6 @@ tmp4:
 	.size	tmp4, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

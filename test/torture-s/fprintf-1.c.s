@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.const	$push46=, 144
 	i32.sub 	$push75=, $pop45, $pop46
 	tee_local	$push74=, $1=, $pop75
-	i32.store	$drop=, __stack_pointer($pop47), $pop74
+	i32.store	__stack_pointer($pop47), $pop74
 	i32.const	$push1=, .L.str
 	i32.const	$push0=, 5
 	i32.const	$push73=, 1
@@ -60,7 +60,7 @@ main:                                   # @main
 	i32.const	$push85=, 1
 	i32.call	$drop=, fwrite@FUNCTION, $pop16, $pop15, $pop85, $0
 	i32.const	$push84=, .L.str
-	i32.store	$drop=, 128($1), $pop84
+	i32.store	128($1), $pop84
 	i32.const	$push83=, .L.str.4
 	i32.const	$push51=, 128
 	i32.add 	$push52=, $1, $pop51
@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.const	$push89=, 1
 	i32.call	$drop=, fwrite@FUNCTION, $pop20, $pop19, $pop89, $0
 	i32.const	$push88=, .L.str.1
-	i32.store	$drop=, 112($1), $pop88
+	i32.store	112($1), $pop88
 	i32.const	$push87=, .L.str.4
 	i32.const	$push53=, 112
 	i32.add 	$push54=, $1, $pop53
@@ -86,7 +86,7 @@ main:                                   # @main
 	i32.const	$push23=, 97
 	i32.call	$drop=, fputc@FUNCTION, $pop23, $0
 	i32.const	$push24=, .L.str.2
-	i32.store	$drop=, 96($1), $pop24
+	i32.store	96($1), $pop24
 	i32.const	$push90=, .L.str.4
 	i32.const	$push55=, 96
 	i32.add 	$push56=, $1, $pop55
@@ -96,7 +96,7 @@ main:                                   # @main
 	br_if   	0, $pop27       # 0: down to label0
 # BB#7:                                 # %if.end31
 	i32.const	$push28=, .L.str.3
-	i32.store	$drop=, 80($1), $pop28
+	i32.store	80($1), $pop28
 	i32.const	$push91=, .L.str.4
 	i32.const	$push57=, 80
 	i32.add 	$push58=, $1, $pop57
@@ -106,7 +106,7 @@ main:                                   # @main
 	i32.const	$push30=, 120
 	i32.call	$drop=, fputc@FUNCTION, $pop30, $0
 	i32.const	$push92=, 120
-	i32.store	$drop=, 64($1), $pop92
+	i32.store	64($1), $pop92
 	i32.const	$push31=, .L.str.5
 	i32.const	$push59=, 64
 	i32.add 	$push60=, $1, $pop59
@@ -116,13 +116,13 @@ main:                                   # @main
 	br_if   	0, $pop34       # 0: down to label0
 # BB#9:                                 # %if.end41
 	i32.const	$push35=, .L.str.1
-	i32.store	$drop=, 48($1), $pop35
+	i32.store	48($1), $pop35
 	i32.const	$push36=, .L.str.6
 	i32.const	$push61=, 48
 	i32.add 	$push62=, $1, $pop61
 	i32.call	$drop=, fprintf@FUNCTION, $0, $pop36, $pop62
 	i32.const	$push94=, .L.str.1
-	i32.store	$drop=, 32($1), $pop94
+	i32.store	32($1), $pop94
 	i32.const	$push93=, .L.str.6
 	i32.const	$push63=, 32
 	i32.add 	$push64=, $1, $pop63
@@ -132,13 +132,13 @@ main:                                   # @main
 	br_if   	0, $pop39       # 0: down to label0
 # BB#10:                                # %if.end46
 	i32.const	$push97=, 0
-	i32.store	$drop=, 16($1), $pop97
+	i32.store	16($1), $pop97
 	i32.const	$push40=, .L.str.7
 	i32.const	$push65=, 16
 	i32.add 	$push66=, $1, $pop65
 	i32.call	$drop=, fprintf@FUNCTION, $0, $pop40, $pop66
 	i32.const	$push96=, 0
-	i32.store	$drop=, 0($1), $pop96
+	i32.store	0($1), $pop96
 	i32.const	$push95=, .L.str.7
 	i32.call	$push41=, fprintf@FUNCTION, $0, $pop95, $1
 	i32.const	$push42=, 2
@@ -148,7 +148,7 @@ main:                                   # @main
 	i32.const	$push50=, 0
 	i32.const	$push48=, 144
 	i32.add 	$push49=, $1, $pop48
-	i32.store	$drop=, __stack_pointer($pop50), $pop49
+	i32.store	__stack_pointer($pop50), $pop49
 	i32.const	$push98=, 0
 	return  	$pop98
 .LBB0_12:                               # %if.then50
@@ -201,7 +201,7 @@ main:                                   # @main
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	fwrite, i32, i32, i32, i32, i32

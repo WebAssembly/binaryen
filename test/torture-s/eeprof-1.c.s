@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/eeprof-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/eeprof-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -164,13 +164,13 @@ __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, last_fn_entered($pop0), $0
+	i32.store	last_fn_entered($pop0), $0
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, entry_calls($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, entry_calls($pop5), $pop3
+	i32.store	entry_calls($pop5), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -184,13 +184,13 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, last_fn_exited($pop0), $0
+	i32.store	last_fn_exited($pop0), $0
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, exit_calls($pop4)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, exit_calls($pop5), $pop3
+	i32.store	exit_calls($pop5), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end4:
@@ -288,5 +288,5 @@ last_fn_exited:
 	.size	last_fn_exited, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

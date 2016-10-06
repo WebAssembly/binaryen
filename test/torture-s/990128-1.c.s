@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990128-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990128-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -10,41 +10,41 @@ main:                                   # @main
 # BB#0:                                 # %for.inc.i.preheader.i.preheader
 	i32.const	$push1=, 0
 	i32.const	$push0=, sss
-	i32.store	$drop=, ss($pop1), $pop0
+	i32.store	ss($pop1), $pop0
 	i32.const	$1=, ss
 	i32.const	$push27=, 0
 	i32.const	$push26=, ss
-	i32.store	$drop=, p($pop27), $pop26
+	i32.store	p($pop27), $pop26
 	i32.const	$push25=, 0
 	i32.const	$push2=, sss+4
-	i32.store	$drop=, sss($pop25), $pop2
+	i32.store	sss($pop25), $pop2
 	i32.const	$push24=, 0
 	i32.const	$push3=, sss+8
-	i32.store	$drop=, sss+4($pop24), $pop3
+	i32.store	sss+4($pop24), $pop3
 	i32.const	$push23=, 0
 	i32.const	$push4=, sss+12
-	i32.store	$drop=, sss+8($pop23), $pop4
+	i32.store	sss+8($pop23), $pop4
 	i32.const	$push22=, 0
 	i32.const	$push5=, sss+16
-	i32.store	$drop=, sss+12($pop22), $pop5
+	i32.store	sss+12($pop22), $pop5
 	i32.const	$push21=, 0
 	i32.const	$push6=, sss+20
-	i32.store	$drop=, sss+16($pop21), $pop6
+	i32.store	sss+16($pop21), $pop6
 	i32.const	$push20=, 0
 	i32.const	$push7=, sss+24
-	i32.store	$drop=, sss+20($pop20), $pop7
+	i32.store	sss+20($pop20), $pop7
 	i32.const	$push19=, 0
 	i32.const	$push8=, sss+28
-	i32.store	$drop=, sss+24($pop19), $pop8
+	i32.store	sss+24($pop19), $pop8
 	i32.const	$push18=, 0
 	i32.const	$push9=, sss+32
-	i32.store	$drop=, sss+28($pop18), $pop9
+	i32.store	sss+28($pop18), $pop9
 	i32.const	$push17=, 0
 	i32.const	$push10=, sss+36
-	i32.store	$drop=, sss+32($pop17), $pop10
+	i32.store	sss+32($pop17), $pop10
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
-	i32.store	$drop=, sss+36($pop16), $pop15
+	i32.store	sss+36($pop16), $pop15
 	i32.const	$push14=, 0
 	i32.load	$2=, count($pop14)
 .LBB0_1:                                # %for.inc.i.preheader.i
@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.const	$push11=, 2
 	i32.add 	$push34=, $0, $pop11
 	tee_local	$push33=, $2=, $pop34
-	i32.store	$drop=, count($pop35), $pop33
+	i32.store	count($pop35), $pop33
 	block
 	i32.const	$push12=, 12
 	i32.ne  	$push13=, $2, $pop12
@@ -121,7 +121,7 @@ sub:                                    # @sub
                                         #   in Loop: Header=BB1_2 Depth=1
 	end_loop                        # label9:
 	i32.const	$push9=, 0
-	i32.store	$drop=, 0($1), $pop9
+	i32.store	0($1), $pop9
 	i32.const	$push8=, 1
 	i32.add 	$2=, $2, $pop8
 	i32.load	$push7=, 0($0)
@@ -130,15 +130,15 @@ sub:                                    # @sub
 # BB#5:                                 # %for.cond.look.exit.thread_crit_edge
 	end_loop                        # label7:
 	i32.const	$push0=, 0
-	i32.store	$drop=, count($pop0), $2
+	i32.store	count($pop0), $2
 .LBB1_6:                                # %for.end
 	end_block                       # label5:
 	i32.const	$push11=, 0
-	i32.store	$drop=, 0($1), $pop11
+	i32.store	0($1), $pop11
 	i32.const	$push10=, 0
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $2, $pop1
-	i32.store	$drop=, count($pop10), $pop2
+	i32.store	count($pop10), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -165,13 +165,13 @@ look:                                   # @look
 	end_loop                        # label12:
 	end_block                       # label10:
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($1), $pop0
+	i32.store	0($1), $pop0
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
 	i32.load	$push1=, count($pop7)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, count($pop8), $pop3
+	i32.store	count($pop8), $pop3
 	i32.const	$push6=, 1
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -215,6 +215,6 @@ sss:
 	.size	sss, 40
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

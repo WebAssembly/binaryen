@@ -8,15 +8,18 @@ test0:
 	i32.const	$1=, 1
 .LBB0_1:
 	loop
-	i32.ge_s	$push0=, $1, $0
-	br_if   	1, $pop0
+	block
+	i32.lt_s	$push0=, $1, $0
+	br_if   	0, $pop0
+	return
+.LBB0_3:
+	end_block
 	i32.const	$push1=, 1
 	i32.add 	$1=, $1, $pop1
 	call    	something@FUNCTION
 	br      	0
-.LBB0_3:
+.LBB0_4:
 	end_loop
-	return
 	.endfunc
 .Lfunc_end0:
 	.size	test0, .Lfunc_end0-test0
@@ -29,15 +32,18 @@ test1:
 	i32.const	$1=, 1
 .LBB1_1:
 	loop
-	i32.ge_s	$push0=, $1, $0
-	br_if   	1, $pop0
+	block
+	i32.lt_s	$push0=, $1, $0
+	br_if   	0, $pop0
+	return
+.LBB1_3:
+	end_block
 	i32.const	$push1=, 1
 	i32.add 	$1=, $1, $pop1
 	call    	something@FUNCTION
 	br      	0
-.LBB1_3:
+.LBB1_4:
 	end_loop
-	return
 	.endfunc
 .Lfunc_end1:
 	.size	test1, .Lfunc_end1-test1
@@ -55,7 +61,7 @@ test2:
 	f64.load	$push2=, 0($0)
 	f64.const	$push8=, 0x1.999999999999ap1
 	f64.mul 	$push3=, $pop2, $pop8
-	f64.store	$drop=, 0($0), $pop3
+	f64.store	0($0), $pop3
 	i32.const	$push7=, 8
 	i32.add 	$0=, $0, $pop7
 	i32.const	$push6=, -1
@@ -76,32 +82,30 @@ doublediamond:
 	.param  	i32, i32, i32
 	.result 	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($2), $pop0
+	i32.store	0($2), $pop0
 	block
 	block
-	block
-	i32.eqz 	$push7=, $0
-	br_if   	0, $pop7
-	i32.const	$push1=, 2
-	i32.store	$drop=, 0($2), $pop1
-	i32.eqz 	$push8=, $1
-	br_if   	1, $pop8
-	i32.const	$push2=, 4
-	i32.store	$drop=, 0($2), $pop2
-	br      	2
-.LBB3_3:
-	end_block
+	br_if   	0, $0
 	i32.const	$push4=, 1
-	i32.store	$drop=, 0($2), $pop4
+	i32.store	0($2), $pop4
+	br      	1
+.LBB3_2:
+	end_block
+	i32.const	$push1=, 2
+	i32.store	0($2), $pop1
+	block
+	br_if   	0, $1
+	i32.const	$push3=, 3
+	i32.store	0($2), $pop3
 	br      	1
 .LBB3_4:
 	end_block
-	i32.const	$push3=, 3
-	i32.store	$drop=, 0($2), $pop3
+	i32.const	$push2=, 4
+	i32.store	0($2), $pop2
 .LBB3_5:
 	end_block
 	i32.const	$push5=, 5
-	i32.store	$drop=, 0($2), $pop5
+	i32.store	0($2), $pop5
 	i32.const	$push6=, 0
 	return  	$pop6
 	.endfunc
@@ -114,15 +118,15 @@ triangle:
 	.param  	i32, i32
 	.result 	i32
 	i32.const	$push2=, 0
-	i32.store	$drop=, 0($0), $pop2
+	i32.store	0($0), $pop2
 	block
 	br_if   	0, $1
 	i32.const	$push0=, 1
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 .LBB4_2:
 	end_block
 	i32.const	$push1=, 2
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	i32.const	$push3=, 0
 	return  	$pop3
 	.endfunc
@@ -135,22 +139,21 @@ diamond:
 	.param  	i32, i32
 	.result 	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	block
 	block
-	i32.eqz 	$push5=, $1
-	br_if   	0, $pop5
-	i32.const	$push1=, 2
-	i32.store	$drop=, 0($0), $pop1
+	br_if   	0, $1
+	i32.const	$push2=, 1
+	i32.store	0($0), $pop2
 	br      	1
 .LBB5_2:
 	end_block
-	i32.const	$push2=, 1
-	i32.store	$drop=, 0($0), $pop2
+	i32.const	$push1=, 2
+	i32.store	0($0), $pop1
 .LBB5_3:
 	end_block
 	i32.const	$push3=, 3
-	i32.store	$drop=, 0($0), $pop3
+	i32.store	0($0), $pop3
 	i32.const	$push4=, 0
 	return  	$pop4
 	.endfunc
@@ -163,7 +166,7 @@ single_block:
 	.param  	i32
 	.result 	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.const	$push1=, 0
 	return  	$pop1
 	.endfunc
@@ -175,11 +178,11 @@ single_block:
 minimal_loop:
 	.param  	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 .LBB7_1:
 	loop
 	i32.const	$push1=, 1
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	br      	0
 .LBB7_2:
 	end_loop
@@ -193,16 +196,16 @@ simple_loop:
 	.param  	i32, i32
 	.result 	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 .LBB8_1:
 	loop
 	i32.const	$push3=, 1
-	i32.store	$drop=, 0($0), $pop3
+	i32.store	0($0), $pop3
 	i32.eqz 	$push4=, $1
 	br_if   	0, $pop4
 	end_loop
 	i32.const	$push1=, 2
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	i32.const	$push2=, 0
 	return  	$pop2
 	.endfunc
@@ -215,23 +218,23 @@ doubletriangle:
 	.param  	i32, i32, i32
 	.result 	i32
 	i32.const	$push4=, 0
-	i32.store	$drop=, 0($2), $pop4
+	i32.store	0($2), $pop4
 	block
 	br_if   	0, $0
 	i32.const	$push0=, 2
-	i32.store	$drop=, 0($2), $pop0
+	i32.store	0($2), $pop0
 	block
 	br_if   	0, $1
 	i32.const	$push1=, 3
-	i32.store	$drop=, 0($2), $pop1
+	i32.store	0($2), $pop1
 .LBB9_3:
 	end_block
 	i32.const	$push2=, 4
-	i32.store	$drop=, 0($2), $pop2
+	i32.store	0($2), $pop2
 .LBB9_4:
 	end_block
 	i32.const	$push3=, 5
-	i32.store	$drop=, 0($2), $pop3
+	i32.store	0($2), $pop3
 	i32.const	$push5=, 0
 	return  	$pop5
 	.endfunc
@@ -244,25 +247,24 @@ ifelse_earlyexits:
 	.param  	i32, i32, i32
 	.result 	i32
 	i32.const	$push0=, 0
-	i32.store	$drop=, 0($2), $pop0
+	i32.store	0($2), $pop0
 	block
 	block
-	i32.eqz 	$push6=, $0
-	br_if   	0, $pop6
-	i32.const	$push1=, 2
-	i32.store	$drop=, 0($2), $pop1
-	br_if   	1, $1
-	i32.const	$push2=, 3
-	i32.store	$drop=, 0($2), $pop2
-	br      	1
-.LBB10_3:
-	end_block
+	br_if   	0, $0
 	i32.const	$push3=, 1
-	i32.store	$drop=, 0($2), $pop3
+	i32.store	0($2), $pop3
+	br      	1
+.LBB10_2:
+	end_block
+	i32.const	$push1=, 2
+	i32.store	0($2), $pop1
+	br_if   	0, $1
+	i32.const	$push2=, 3
+	i32.store	0($2), $pop2
 .LBB10_4:
 	end_block
 	i32.const	$push4=, 4
-	i32.store	$drop=, 0($2), $pop4
+	i32.store	0($2), $pop4
 	i32.const	$push5=, 0
 	return  	$pop5
 	.endfunc
@@ -275,34 +277,32 @@ doublediamond_in_a_loop:
 	.param  	i32, i32, i32
 .LBB11_1:
 	loop
-	i32.const	$push2=, 0
-	i32.store	$drop=, 0($2), $pop2
+	i32.const	$push0=, 0
+	i32.store	0($2), $pop0
 	block
-	i32.eqz 	$push8=, $0
-	br_if   	0, $pop8
-	i32.const	$push3=, 2
-	i32.store	$drop=, 0($2), $pop3
-	block
-	i32.eqz 	$push9=, $1
-	br_if   	0, $pop9
-	i32.const	$push1=, 4
-	i32.store	$drop=, 0($2), $pop1
-	i32.const	$push0=, 5
-	i32.store	$drop=, 0($2), $pop0
-	br      	2
-.LBB11_4:
+	br_if   	0, $0
+	i32.const	$push2=, 1
+	i32.store	0($2), $pop2
+	i32.const	$push1=, 5
+	i32.store	0($2), $pop1
+	br      	1
+.LBB11_3:
 	end_block
+	i32.const	$push3=, 2
+	i32.store	0($2), $pop3
+	block
+	br_if   	0, $1
 	i32.const	$push5=, 3
-	i32.store	$drop=, 0($2), $pop5
+	i32.store	0($2), $pop5
 	i32.const	$push4=, 5
-	i32.store	$drop=, 0($2), $pop4
+	i32.store	0($2), $pop4
 	br      	1
 .LBB11_5:
 	end_block
-	i32.const	$push7=, 1
-	i32.store	$drop=, 0($2), $pop7
+	i32.const	$push7=, 4
+	i32.store	0($2), $pop7
 	i32.const	$push6=, 5
-	i32.store	$drop=, 0($2), $pop6
+	i32.store	0($2), $pop6
 	br      	0
 .LBB11_6:
 	end_loop
@@ -320,24 +320,18 @@ test3:
 	i32.eq  	$0=, $0, $0
 .LBB12_2:
 	loop
-	block
-	block
-	br_if   	0, $0
+	br_if   	1, $0
 .LBB12_3:
 	loop
 	i32.eqz 	$push1=, $0
 	br_if   	0, $pop1
-	br      	3
-.LBB12_4:
 	end_loop
-	end_block
-	unreachable
-.LBB12_5:
-	end_block
 	call    	bar@FUNCTION
 	br      	0
-.LBB12_6:
+.LBB12_5:
 	end_loop
+	unreachable
+.LBB12_6:
 	end_block
 	return
 	.endfunc
@@ -390,23 +384,23 @@ test5:
 	loop
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
-	i32.store	$drop=, 0($pop7), $pop6
+	i32.store	0($pop7), $pop6
 	i32.eqz 	$push10=, $0
 	br_if   	2, $pop10
 	i32.const	$push9=, 0
 	i32.const	$push8=, 1
-	i32.store	$drop=, 0($pop9), $pop8
+	i32.store	0($pop9), $pop8
 	br_if   	0, $1
 	end_loop
 	i32.const	$push3=, 0
 	i32.const	$push2=, 3
-	i32.store	$drop=, 0($pop3), $pop2
+	i32.store	0($pop3), $pop2
 	return
 .LBB14_4:
 	end_block
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
-	i32.store	$drop=, 0($pop1), $pop0
+	i32.store	0($pop1), $pop0
 	return
 	.endfunc
 .Lfunc_end14:
@@ -425,12 +419,12 @@ test6:
 	loop
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
-	i32.store	$drop=, 0($pop8), $pop7
+	i32.store	0($pop8), $pop7
 	i32.eqz 	$push16=, $2
 	br_if   	3, $pop16
 	i32.const	$push13=, 0
 	i32.const	$push12=, 1
-	i32.store	$drop=, 0($pop13), $pop12
+	i32.store	0($pop13), $pop12
 	i32.const	$push11=, 1
 	i32.and 	$push10=, $1, $pop11
 	tee_local	$push9=, $0=, $pop10
@@ -438,23 +432,23 @@ test6:
 	br_if   	2, $pop17
 	i32.const	$push15=, 0
 	i32.const	$push14=, 1
-	i32.store	$drop=, 0($pop15), $pop14
+	i32.store	0($pop15), $pop14
 	br_if   	0, $0
 	end_loop
 	i32.const	$push5=, 0
 	i32.const	$push4=, 2
-	i32.store	$drop=, 0($pop5), $pop4
+	i32.store	0($pop5), $pop4
 	return
 .LBB15_5:
 	end_block
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
-	i32.store	$drop=, 0($pop1), $pop0
+	i32.store	0($pop1), $pop0
 .LBB15_6:
 	end_block
 	i32.const	$push3=, 0
 	i32.const	$push2=, 4
-	i32.store	$drop=, 0($pop3), $pop2
+	i32.store	0($pop3), $pop2
 	return
 	.endfunc
 .Lfunc_end15:
@@ -466,43 +460,38 @@ test7:
 	.param  	i32, i32
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
-	i32.store	$drop=, 0($pop8), $pop7
+	i32.store	0($pop8), $pop7
 	i32.const	$push6=, 1
 	i32.and 	$0=, $0, $pop6
 .LBB16_1:
-	block
 	loop
 	i32.const	$push10=, 0
 	i32.const	$push9=, 1
-	i32.store	$drop=, 0($pop10), $pop9
+	i32.store	0($pop10), $pop9
 	block
-	i32.eqz 	$push17=, $0
-	br_if   	0, $pop17
+	br_if   	0, $0
 	i32.const	$push13=, 0
-	i32.const	$push12=, 3
-	i32.store	$drop=, 0($pop13), $pop12
+	i32.const	$push12=, 2
+	i32.store	0($pop13), $pop12
 	i32.const	$push11=, 1
-	i32.and 	$push3=, $1, $pop11
-	br_if   	1, $pop3
-	br      	3
-.LBB16_3:
-	end_block
-	i32.const	$push16=, 0
-	i32.const	$push15=, 2
-	i32.store	$drop=, 0($pop16), $pop15
-	i32.const	$push14=, 1
-	i32.and 	$push0=, $1, $pop14
-	br_if   	0, $pop0
-	end_loop
+	i32.and 	$push0=, $1, $pop11
+	br_if   	1, $pop0
 	i32.const	$push2=, 0
 	i32.const	$push1=, 4
-	i32.store	$drop=, 0($pop2), $pop1
+	i32.store	0($pop2), $pop1
 	unreachable
-.LBB16_5:
+.LBB16_4:
 	end_block
+	i32.const	$push16=, 0
+	i32.const	$push15=, 3
+	i32.store	0($pop16), $pop15
+	i32.const	$push14=, 1
+	i32.and 	$push3=, $1, $pop14
+	br_if   	0, $pop3
+	end_loop
 	i32.const	$push5=, 0
 	i32.const	$push4=, 5
-	i32.store	$drop=, 0($pop5), $pop4
+	i32.store	0($pop5), $pop4
 	unreachable
 	.endfunc
 .Lfunc_end16:
@@ -527,52 +516,54 @@ test8:
 test9:
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
-	i32.store	$drop=, 0($pop11), $pop10
+	i32.store	0($pop11), $pop10
 .LBB18_1:
 	loop
-	i32.const	$push23=, 0
-	i32.const	$push22=, 1
-	i32.store	$drop=, 0($pop23), $pop22
+	i32.const	$push14=, 0
+	i32.const	$push13=, 1
+	i32.store	0($pop14), $pop13
 	i32.call	$push0=, a@FUNCTION
-	i32.const	$push21=, 1
-	i32.and 	$push1=, $pop0, $pop21
+	i32.const	$push12=, 1
+	i32.and 	$push1=, $pop0, $pop12
 	i32.eqz 	$push24=, $pop1
 	br_if   	1, $pop24
 .LBB18_2:
 	loop
-	i32.const	$push14=, 0
-	i32.const	$push13=, 2
-	i32.store	$drop=, 0($pop14), $pop13
+	i32.const	$push17=, 0
+	i32.const	$push16=, 2
+	i32.store	0($pop17), $pop16
 	block
 	i32.call	$push4=, a@FUNCTION
-	i32.const	$push12=, 1
-	i32.and 	$push5=, $pop4, $pop12
+	i32.const	$push15=, 1
+	i32.and 	$push5=, $pop4, $pop15
 	i32.eqz 	$push25=, $pop5
 	br_if   	0, $pop25
-	i32.const	$push17=, 0
-	i32.const	$push16=, 3
-	i32.store	$drop=, 0($pop17), $pop16
+	i32.const	$push20=, 0
+	i32.const	$push19=, 3
+	i32.store	0($pop20), $pop19
 	i32.call	$push8=, a@FUNCTION
-	i32.const	$push15=, 1
-	i32.and 	$push9=, $pop8, $pop15
-	br_if   	1, $pop9
-	br      	3
+	i32.const	$push18=, 1
+	i32.and 	$push9=, $pop8, $pop18
+	i32.eqz 	$push26=, $pop9
+	br_if   	3, $pop26
+	br      	1
 .LBB18_4:
 	end_block
-	i32.const	$push20=, 0
-	i32.const	$push19=, 4
-	i32.store	$drop=, 0($pop20), $pop19
+	i32.const	$push23=, 0
+	i32.const	$push22=, 4
+	i32.store	0($pop23), $pop22
 	i32.call	$push6=, a@FUNCTION
-	i32.const	$push18=, 1
-	i32.and 	$push7=, $pop6, $pop18
-	br_if   	0, $pop7
-	br      	2
+	i32.const	$push21=, 1
+	i32.and 	$push7=, $pop6, $pop21
+	i32.eqz 	$push27=, $pop7
+	br_if   	2, $pop27
+	br      	0
 .LBB18_5:
 	end_loop
 	end_loop
 	i32.const	$push3=, 0
 	i32.const	$push2=, 5
-	i32.store	$drop=, 0($pop3), $pop2
+	i32.store	0($pop3), $pop2
 	return
 	.endfunc
 .Lfunc_end18:
@@ -624,57 +615,60 @@ test10:
 test11:
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
-	i32.store	$drop=, 0($pop14), $pop13
+	i32.store	0($pop14), $pop13
+	block
+	block
 	block
 	block
 	i32.const	$push12=, 0
 	br_if   	0, $pop12
 	i32.const	$push16=, 0
 	i32.const	$push5=, 1
-	i32.store	$drop=, 0($pop16), $pop5
+	i32.store	0($pop16), $pop5
 	block
 	i32.const	$push15=, 0
 	br_if   	0, $pop15
 	i32.const	$push7=, 0
 	i32.const	$push6=, 2
-	i32.store	$drop=, 0($pop7), $pop6
+	i32.store	0($pop7), $pop6
 	i32.const	$push17=, 0
 	br_if   	2, $pop17
 .LBB20_3:
 	end_block
 	i32.const	$push11=, 0
 	i32.const	$push10=, 3
-	i32.store	$drop=, 0($pop11), $pop10
+	i32.store	0($pop11), $pop10
 	return
 .LBB20_4:
 	end_block
 	i32.const	$push19=, 0
 	i32.const	$push0=, 4
-	i32.store	$drop=, 0($pop19), $pop0
-	block
+	i32.store	0($pop19), $pop0
 	i32.const	$push18=, 0
-	i32.eqz 	$push23=, $pop18
-	br_if   	0, $pop23
-	i32.const	$push4=, 0
-	i32.const	$push3=, 8
-	i32.store	$drop=, 0($pop4), $pop3
-	return
-.LBB20_6:
-	end_block
+	br_if   	1, $pop18
 	i32.const	$push21=, 0
 	i32.const	$push1=, 5
-	i32.store	$drop=, 0($pop21), $pop1
+	i32.store	0($pop21), $pop1
 	i32.const	$push20=, 0
-	br_if   	0, $pop20
-	i32.const	$push22=, 0
-	i32.const	$push2=, 6
-	i32.store	$drop=, 0($pop22), $pop2
-	return
-.LBB20_8:
+	i32.eqz 	$push23=, $pop20
+	br_if   	2, $pop23
+.LBB20_6:
 	end_block
 	i32.const	$push9=, 0
 	i32.const	$push8=, 7
-	i32.store	$drop=, 0($pop9), $pop8
+	i32.store	0($pop9), $pop8
+	return
+.LBB20_7:
+	end_block
+	i32.const	$push4=, 0
+	i32.const	$push3=, 8
+	i32.store	0($pop4), $pop3
+	return
+.LBB20_8:
+	end_block
+	i32.const	$push22=, 0
+	i32.const	$push2=, 6
+	i32.store	0($pop22), $pop2
 	return
 	.endfunc
 .Lfunc_end20:
@@ -689,30 +683,30 @@ test12:
 	loop
 	block
 	block
-	i32.load8_u	$push8=, 0($0)
-	tee_local	$push7=, $1=, $pop8
-	i32.const	$push6=, 103
-	i32.gt_s	$push0=, $pop7, $pop6
+	i32.load8_u	$push7=, 0($0)
+	tee_local	$push6=, $1=, $pop7
+	i32.const	$push5=, 103
+	i32.gt_s	$push0=, $pop6, $pop5
 	br_if   	0, $pop0
-	i32.const	$push9=, 42
-	i32.eq  	$push3=, $1, $pop9
+	i32.const	$push8=, 42
+	i32.eq  	$push3=, $1, $pop8
 	br_if   	1, $pop3
-	i32.const	$push10=, 76
-	i32.eq  	$push4=, $1, $pop10
+	i32.const	$push9=, 76
+	i32.eq  	$push4=, $1, $pop9
 	br_if   	1, $pop4
 	br      	3
 .LBB21_4:
 	end_block
-	i32.const	$push11=, 108
-	i32.eq  	$push1=, $1, $pop11
+	i32.const	$push10=, 108
+	i32.eq  	$push1=, $1, $pop10
 	br_if   	0, $pop1
-	i32.const	$push12=, 104
-	i32.ne  	$push2=, $1, $pop12
+	i32.const	$push11=, 104
+	i32.ne  	$push2=, $1, $pop11
 	br_if   	2, $pop2
 .LBB21_6:
 	end_block
-	i32.const	$push5=, 1
-	i32.add 	$0=, $0, $pop5
+	i32.const	$push12=, 1
+	i32.add 	$0=, $0, $pop12
 	br      	0
 .LBB21_7:
 	end_loop
@@ -727,21 +721,18 @@ test13:
 	.local  	i32
 	block
 	block
-	i32.const	$push0=, 1
-	i32.and 	$push1=, $0, $pop0
-	br_if   	0, $pop1
+	i32.const	$push0=, 0
+	br_if   	0, $pop0
 	i32.const	$0=, 0
 	block
-	i32.const	$push2=, 1
-	i32.and 	$push3=, $0, $pop2
-	i32.eqz 	$push6=, $pop3
-	br_if   	0, $pop6
+	i32.const	$push3=, 0
+	br_if   	0, $pop3
 	i32.const	$0=, 0
 .LBB22_3:
 	end_block
-	i32.const	$push4=, 1
-	i32.and 	$push5=, $0, $pop4
-	br_if   	1, $pop5
+	i32.const	$push1=, 1
+	i32.and 	$push2=, $0, $pop1
+	br_if   	1, $pop2
 	br      	1
 .LBB22_4:
 	end_block
@@ -778,14 +769,9 @@ test15:
 	block
 	block
 	i32.const	$push0=, 1
-	i32.eqz 	$push5=, $pop0
-	br_if   	0, $pop5
-	call    	test15_callee1@FUNCTION
-	br      	1
-.LBB24_2:
-	end_block
+	br_if   	0, $pop0
 	i32.const	$0=, 0
-.LBB24_3:
+.LBB24_2:
 	block
 	loop
 	i32.const	$push1=, 1
@@ -796,15 +782,18 @@ test15:
 	tee_local	$push2=, $0=, $pop3
 	br_if   	0, $pop2
 	br      	2
-.LBB24_5:
+.LBB24_4:
 	end_loop
 	i32.const	$1=, 0
-.LBB24_6:
+.LBB24_5:
 	end_block
-	i32.eqz 	$push6=, $1
-	br_if   	0, $pop6
+	i32.eqz 	$push5=, $1
+	br_if   	1, $pop5
 	call    	test15_callee0@FUNCTION
 	return
+.LBB24_7:
+	end_block
+	call    	test15_callee1@FUNCTION
 .LBB24_8:
 	end_block
 	return

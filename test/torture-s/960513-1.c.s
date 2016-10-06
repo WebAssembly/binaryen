@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960513-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960513-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -14,7 +14,7 @@ f:                                      # @f
 	i32.const	$push36=, 192
 	i32.sub 	$push121=, $pop35, $pop36
 	tee_local	$push120=, $6=, $pop121
-	i32.store	$drop=, __stack_pointer($pop37), $pop120
+	i32.store	__stack_pointer($pop37), $pop120
 	i32.const	$push41=, 176
 	i32.add 	$push42=, $6, $pop41
 	i64.const	$push1=, 0
@@ -139,13 +139,13 @@ f:                                      # @f
 	i32.const	$push85=, 8
 	i32.add 	$push31=, $6, $pop85
 	i64.load	$push32=, 0($pop31)
-	i64.store	$drop=, 0($pop30), $pop32
+	i64.store	0($pop30), $pop32
 	i64.load	$push33=, 0($6)
-	i64.store	$drop=, 0($0), $pop33
+	i64.store	0($0), $pop33
 	i32.const	$push40=, 0
 	i32.const	$push38=, 192
 	i32.add 	$push39=, $6, $pop38
-	i32.store	$drop=, __stack_pointer($pop40), $pop39
+	i32.store	__stack_pointer($pop40), $pop39
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -166,5 +166,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

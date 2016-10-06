@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071108-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071108-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -35,9 +35,9 @@ test:                                   # @test
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.store	$drop=, foo.s+4($pop0), $1
+	i32.store	foo.s+4($pop0), $1
 	i32.const	$push2=, 0
-	i32.store	$drop=, foo.s($pop2), $0
+	i32.store	foo.s($pop2), $0
 	i32.const	$push1=, foo.s
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.const	$push9=, 16
 	i32.sub 	$push25=, $pop8, $pop9
 	tee_local	$push24=, $1=, $pop25
-	i32.store	$drop=, __stack_pointer($pop10), $pop24
+	i32.store	__stack_pointer($pop10), $pop24
 	block
 	i32.const	$push14=, 12
 	i32.add 	$push15=, $1, $pop14
@@ -87,7 +87,7 @@ main:                                   # @main
 	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $1, $pop11
-	i32.store	$drop=, __stack_pointer($pop13), $pop12
+	i32.store	__stack_pointer($pop13), $pop12
 	i32.const	$push6=, 0
 	return  	$pop6
 .LBB3_5:                                # %if.then
@@ -106,5 +106,5 @@ foo.s:
 	.size	foo.s, 12
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

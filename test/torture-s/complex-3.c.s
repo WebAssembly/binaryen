@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-3.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-3.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -7,8 +7,8 @@
 f:                                      # @f
 	.param  	i32, f32, f32
 # BB#0:                                 # %entry
-	f32.store	$drop=, 4($0), $2
-	f32.store	$drop=, 0($0), $1
+	f32.store	4($0), $2
+	f32.store	0($0), $1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -29,5 +29,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

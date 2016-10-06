@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/gofast.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/gofast.c"
 	.section	.text.fp_add,"ax",@progbits
 	.hidden	fp_add
 	.globl	fp_add
@@ -435,14 +435,14 @@ fail:                                   # @fail
 	i32.const	$push8=, 16
 	i32.sub 	$push16=, $pop7, $pop8
 	tee_local	$push15=, $1=, $pop16
-	i32.store	$drop=, __stack_pointer($pop9), $pop15
+	i32.store	__stack_pointer($pop9), $pop15
 	i32.const	$push0=, 0
 	i32.const	$push14=, 0
 	i32.load	$push1=, fail_count($pop14)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, fail_count($pop0), $pop3
-	i32.store	$drop=, 0($1), $0
+	i32.store	fail_count($pop0), $pop3
+	i32.store	0($1), $0
 	i32.const	$push13=, 0
 	i32.load	$push4=, stderr($pop13)
 	i32.const	$push5=, .L.str
@@ -450,7 +450,7 @@ fail:                                   # @fail
 	i32.const	$push12=, 0
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $1, $pop10
-	i32.store	$drop=, __stack_pointer($pop12), $pop11
+	i32.store	__stack_pointer($pop12), $pop11
 	copy_local	$push17=, $1
                                         # fallthrough-return: $pop17
 	.endfunc
@@ -496,7 +496,7 @@ fail_count:
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

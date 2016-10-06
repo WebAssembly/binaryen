@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58831.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58831.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -10,7 +10,7 @@ main:                                   # @main
 	call    	fn2@FUNCTION
 	i32.const	$push1=, 0
 	i32.const	$push0=, r
-	i32.store	$drop=, i($pop1), $pop0
+	i32.store	i($pop1), $pop0
 	i32.const	$push4=, 0
 	i32.load	$push2=, b($pop4)
 	call    	fn1@FUNCTION, $pop2
@@ -26,10 +26,10 @@ fn2:                                    # @fn2
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 42
-	i32.store	$drop=, f($pop1), $pop0
+	i32.store	f($pop1), $pop0
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
-	i32.store16	$drop=, o($pop3), $pop2
+	i32.store16	o($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -51,24 +51,24 @@ fn1:                                    # @fn1
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label1:
 	i32.const	$push9=, 1
-	i32.store	$drop=, 0($0), $pop9
+	i32.store	0($0), $pop9
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
 	i32.load	$push1=, p($pop7)
 	i32.const	$push6=, 1
 	i32.add 	$push5=, $pop1, $pop6
 	tee_local	$push4=, $1=, $pop5
-	i32.store	$drop=, p($pop8), $pop4
+	i32.store	p($pop8), $pop4
 	br_if   	0, $1           # 0: up to label1
 .LBB2_3:                                # %for.end
 	end_loop                        # label2:
 	end_block                       # label0:
 	i32.const	$push12=, 0
 	i32.const	$push2=, d
-	i32.store	$drop=, b($pop12), $pop2
+	i32.store	b($pop12), $pop2
 	i32.const	$push11=, 0
 	i32.const	$push10=, d
-	i32.store	$drop=, r($pop11), $pop10
+	i32.store	r($pop11), $pop10
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -174,4 +174,4 @@ j:
 	.size	j, 2
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

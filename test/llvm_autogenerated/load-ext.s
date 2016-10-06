@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/load-ext.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/load-ext.ll"
 	.globl	sext_i8_i32
 	.type	sext_i8_i32,@function
 sext_i8_i32:

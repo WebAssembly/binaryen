@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2f.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2f.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -56,7 +56,7 @@ main:                                   # @main
 	i32.const	$push11=, 39
 	i32.call	$drop=, memset@FUNCTION, $pop10, $pop12, $pop11
 	i32.const	$push17=, 0
-	i32.store8	$drop=, 32805($0), $pop17
+	i32.store8	32805($0), $pop17
 .LBB1_2:                                # %if.end15
 	end_block                       # label1:
 	i32.const	$push18=, 0
@@ -73,7 +73,7 @@ main:                                   # @main
 	.size	.L.str, 10
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	open, i32, i32, i32
 	.functype	mmap, i32, i32, i32, i32, i32, i32, i64
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080604-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080604-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -35,21 +35,21 @@ baz:                                    # @baz
 	i32.const	$push4=, 16
 	i32.sub 	$push15=, $pop3, $pop4
 	tee_local	$push14=, $1=, $pop15
-	i32.store	$drop=, __stack_pointer($pop5), $pop14
+	i32.store	__stack_pointer($pop5), $pop14
 	i32.const	$push9=, 12
 	i32.add 	$push10=, $1, $pop9
 	i32.const	$push0=, x
 	i32.select	$push13=, $pop10, $pop0, $0
 	tee_local	$push12=, $0=, $pop13
 	i32.const	$push1=, .L.str
-	i32.store	$drop=, 0($pop12), $pop1
+	i32.store	0($pop12), $pop1
 	call    	foo@FUNCTION
 	i32.const	$push11=, .L.str
-	i32.store	$drop=, 0($0), $pop11
+	i32.store	0($0), $pop11
 	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $1, $pop6
-	i32.store	$drop=, __stack_pointer($pop8), $pop7
+	i32.store	__stack_pointer($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -64,11 +64,11 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, .L.str
-	i32.store	$drop=, x($pop1), $pop0
+	i32.store	x($pop1), $pop0
 	call    	foo@FUNCTION
 	i32.const	$push4=, 0
 	i32.const	$push3=, .L.str
-	i32.store	$drop=, x($pop4), $pop3
+	i32.store	x($pop4), $pop3
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -91,5 +91,5 @@ x:
 	.size	.L.str, 14
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20081218-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20081218-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -29,7 +29,7 @@ bar:                                    # @bar
 	i32.call	$drop=, memset@FUNCTION, $pop2, $pop1, $pop0
 	i32.const	$push4=, 0
 	i32.const	$push3=, 909588022
-	i32.store	$drop=, a+4($pop4), $pop3
+	i32.store	a+4($pop4), $pop3
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -82,7 +82,7 @@ main:                                   # @main
 # BB#5:                                 # %if.end9
 	i32.const	$push23=, 0
 	i32.const	$push10=, 909522486
-	i32.store	$drop=, a+4($pop23), $pop10
+	i32.store	a+4($pop23), $pop10
 .LBB2_6:                                # %for.body13
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label6:
@@ -134,5 +134,5 @@ a:
 	.size	a, 520
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

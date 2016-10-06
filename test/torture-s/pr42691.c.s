@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42691.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42691.c"
 	.section	.text.add,"ax",@progbits
 	.hidden	add
 	.globl	add
@@ -61,11 +61,11 @@ main:                                   # @main
 	i32.const	$push8=, 16
 	i32.sub 	$push15=, $pop7, $pop8
 	tee_local	$push14=, $2=, $pop15
-	i32.store	$drop=, __stack_pointer($pop9), $pop14
+	i32.store	__stack_pointer($pop9), $pop14
 	i64.const	$push1=, 4627167142146473984
-	i64.store	$drop=, 8($2), $pop1
+	i64.store	8($2), $pop1
 	i64.const	$push2=, 9218868437227405312
-	i64.store	$drop=, 0($2), $pop2
+	i64.store	0($2), $pop2
 	i32.const	$push13=, 8
 	i32.or  	$0=, $2, $pop13
 	f64.const	$1=, infinity
@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $2, $pop10
-	i32.store	$drop=, __stack_pointer($pop12), $pop11
+	i32.store	__stack_pointer($pop12), $pop11
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB1_4:                                # %if.then3.i
@@ -102,5 +102,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

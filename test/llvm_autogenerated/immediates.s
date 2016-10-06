@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/immediates.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/immediates.ll"
 	.globl	zero_i32
 	.type	zero_i32,@function
 zero_i32:

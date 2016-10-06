@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr19005.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr19005.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -48,7 +48,7 @@ bar:                                    # @bar
 	i32.const	$push10=, 0
 	i32.const	$push8=, 1
 	i32.xor 	$push9=, $2, $pop8
-	i32.store	$drop=, s($pop10), $pop9
+	i32.store	s($pop10), $pop9
 	return
 .LBB0_7:                                # %if.then8
 	end_block                       # label0:
@@ -106,7 +106,7 @@ foo:                                    # @foo
 	i32.const	$push5=, 1
 	i32.xor 	$push29=, $0, $pop5
 	tee_local	$push28=, $7=, $pop29
-	i32.store	$drop=, s($pop6), $pop28
+	i32.store	s($pop6), $pop28
 	br_if   	2, $7           # 2: down to label6
 # BB#4:                                 # %if.then.i33
 	br_if   	0, $5           # 0: down to label8
@@ -127,7 +127,7 @@ foo:                                    # @foo
 	i32.const	$push11=, 0
 	i32.const	$push9=, 1
 	i32.xor 	$push10=, $0, $pop9
-	i32.store	$drop=, s($pop11), $pop10
+	i32.store	s($pop11), $pop10
 .LBB1_10:                               # %if.else.i38
 	end_block                       # label6:
 	i32.ne  	$push12=, $3, $1
@@ -138,7 +138,7 @@ foo:                                    # @foo
 .LBB1_12:                               # %bar.exit41
 	end_block                       # label5:
 	i32.const	$push14=, 0
-	i32.store	$drop=, s($pop14), $0
+	i32.store	s($pop14), $0
 	i32.const	$push30=, 0
 	return  	$pop30
 .LBB1_13:                               # %if.then8.i
@@ -160,7 +160,7 @@ main:                                   # @main
 	i32.const	$0=, -10
 	i32.const	$push4=, 0
 	i32.const	$push3=, -10
-	i32.store	$drop=, v($pop4), $pop3
+	i32.store	v($pop4), $pop3
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label9:
@@ -171,7 +171,7 @@ main:                                   # @main
 	i32.const	$push8=, 1
 	i32.add 	$push7=, $pop0, $pop8
 	tee_local	$push6=, $0=, $pop7
-	i32.store	$drop=, v($pop10), $pop6
+	i32.store	v($pop10), $pop6
 	i32.const	$push5=, 266
 	i32.lt_s	$push1=, $0, $pop5
 	br_if   	0, $pop1        # 0: up to label9
@@ -202,5 +202,5 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

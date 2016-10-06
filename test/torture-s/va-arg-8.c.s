@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-8.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-8.c"
 	.section	.text.debug,"ax",@progbits
 	.hidden	debug
 	.globl	debug
@@ -14,12 +14,12 @@ debug:                                  # @debug
 	i32.const	$push14=, 16
 	i32.sub 	$push22=, $pop13, $pop14
 	tee_local	$push21=, $11=, $pop22
-	i32.store	$drop=, __stack_pointer($pop15), $pop21
-	i32.store	$drop=, 12($11), $9
+	i32.store	__stack_pointer($pop15), $pop21
+	i32.store	12($11), $9
 	i32.const	$push0=, 4
 	i32.add 	$push20=, $9, $pop0
 	tee_local	$push19=, $10=, $pop20
-	i32.store	$drop=, 12($11), $pop19
+	i32.store	12($11), $pop19
 	block
 	i32.load	$push1=, 0($9)
 	i32.const	$push2=, 10
@@ -33,7 +33,7 @@ debug:                                  # @debug
 	tee_local	$push23=, $9=, $pop24
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $pop23, $pop7
-	i32.store	$drop=, 12($11), $pop8
+	i32.store	12($11), $pop8
 	i64.load	$push9=, 0($9)
 	i64.const	$push10=, 20014547621496
 	i64.ne  	$push11=, $pop9, $pop10
@@ -42,7 +42,7 @@ debug:                                  # @debug
 	i32.const	$push18=, 0
 	i32.const	$push16=, 16
 	i32.add 	$push17=, $11, $pop16
-	i32.store	$drop=, __stack_pointer($pop18), $pop17
+	i32.store	__stack_pointer($pop18), $pop17
 	return
 .LBB0_3:                                # %if.then5
 	end_block                       # label0:
@@ -66,11 +66,11 @@ main:                                   # @main
 	i32.const	$push5=, 16
 	i32.sub 	$push8=, $pop4, $pop5
 	tee_local	$push7=, $0=, $pop8
-	i32.store	$drop=, __stack_pointer($pop6), $pop7
+	i32.store	__stack_pointer($pop6), $pop7
 	i64.const	$push0=, 20014547621496
-	i64.store	$drop=, 8($0), $pop0
+	i64.store	8($0), $pop0
 	i32.const	$push1=, 10
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	call    	debug@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
@@ -80,6 +80,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

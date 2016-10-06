@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/frame-address.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/frame-address.c"
 	.section	.text.check_fa_work,"ax",@progbits
 	.hidden	check_fa_work
 	.globl	check_fa_work
@@ -15,7 +15,7 @@ check_fa_work:                          # @check_fa_work
 	i32.sub 	$push18=, $pop9, $pop10
 	tee_local	$push17=, $2=, $pop18
 	i32.const	$push0=, 0
-	i32.store8	$drop=, 15($pop17), $pop0
+	i32.store8	15($pop17), $pop0
 	block
 	i32.const	$push11=, 15
 	i32.add 	$push12=, $2, $pop11
@@ -55,7 +55,7 @@ check_fa_mid:                           # @check_fa_mid
 	tee_local	$push5=, $1=, $pop6
 	i32.call	$0=, check_fa_work@FUNCTION, $0, $pop5
 	i32.const	$push3=, 0
-	i32.store	$drop=, __stack_pointer($pop3), $1
+	i32.store	__stack_pointer($pop3), $1
 	i32.const	$push0=, 0
 	i32.ne  	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -78,14 +78,14 @@ check_fa:                               # @check_fa
 	i32.const	$push4=, 16
 	i32.sub 	$push12=, $pop3, $pop4
 	tee_local	$push11=, $2=, $pop12
-	i32.store	$drop=, __stack_pointer($pop5), $pop11
+	i32.store	__stack_pointer($pop5), $pop11
 	i32.const	$push9=, 15
 	i32.add 	$push10=, $2, $pop9
 	i32.call	$1=, check_fa_mid@FUNCTION, $pop10
 	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $2, $pop6
-	i32.store	$drop=, __stack_pointer($pop8), $pop7
+	i32.store	__stack_pointer($pop8), $pop7
 	i32.const	$push0=, 0
 	i32.ne  	$push1=, $1, $pop0
                                         # fallthrough-return: $pop1
@@ -130,5 +130,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

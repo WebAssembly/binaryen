@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr30185.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr30185.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -10,7 +10,7 @@ foo:                                    # @foo
 	i64.load	$push1=, 8($1)
 	i64.load	$push0=, 8($2)
 	i64.div_s	$push2=, $pop1, $pop0
-	i64.store	$drop=, 8($0), $pop2
+	i64.store	8($0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -30,4 +30,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40022.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40022.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -14,7 +14,7 @@ foo:                                    # @foo
 	i32.const	$push2=, 16
 	i32.sub 	$push5=, $pop1, $pop2
 	tee_local	$push4=, $1=, $pop5
-	i32.store	$drop=, 12($pop4), $0
+	i32.store	12($pop4), $0
 	i32.const	$push3=, 12
 	i32.add 	$1=, $1, $pop3
 	#APP
@@ -35,7 +35,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 	i32.call	$push2=, foo@FUNCTION, $1
 	tee_local	$push1=, $1=, $pop2
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	block
 	i32.eqz 	$push9=, $1
 	br_if   	0, $pop9        # 0: down to label0
@@ -52,7 +52,7 @@ bar:                                    # @bar
 	end_block                       # label0:
 	i32.call	$push6=, foo@FUNCTION, $2
 	tee_local	$push5=, $1=, $pop6
-	i32.store	$drop=, 0($0), $pop5
+	i32.store	0($0), $pop5
 	block
 	i32.eqz 	$push10=, $1
 	br_if   	0, $pop10       # 0: down to label3
@@ -68,7 +68,7 @@ bar:                                    # @bar
 	end_loop                        # label5:
 	end_block                       # label3:
 	i32.call	$push0=, foo@FUNCTION, $3
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -84,7 +84,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, g
-	i32.store	$drop=, f($pop1), $pop0
+	i32.store	f($pop1), $pop0
 	i32.const	$push4=, d
 	i32.const	$push3=, e
 	i32.const	$push2=, f
@@ -157,5 +157,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

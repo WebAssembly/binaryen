@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041126-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041126-1.c"
 	.section	.text.check,"ax",@progbits
 	.hidden	check
 	.globl	check
@@ -72,7 +72,7 @@ main:                                   # @main
 	i32.const	$push14=, 48
 	i32.sub 	$push23=, $pop13, $pop14
 	tee_local	$push22=, $1=, $pop23
-	i32.store	$drop=, __stack_pointer($pop15), $pop22
+	i32.store	__stack_pointer($pop15), $pop22
 	i32.const	$push1=, .Lmain.a
 	i32.const	$push0=, 40
 	i32.call	$push21=, memcpy@FUNCTION, $1, $pop1, $pop0
@@ -80,11 +80,11 @@ main:                                   # @main
 	i32.const	$push2=, 16
 	i32.add 	$push3=, $pop20, $pop2
 	i32.const	$push4=, 0
-	i32.store	$drop=, 0($pop3), $pop4
+	i32.store	0($pop3), $pop4
 	i64.const	$push5=, 0
-	i64.store	$drop=, 8($0), $pop5
+	i64.store	8($0), $pop5
 	i64.const	$push19=, 0
-	i64.store	$drop=, 0($0), $pop19
+	i64.store	0($0), $pop19
 	i32.const	$1=, 5
 .LBB1_1:                                # %for.cond1.i
                                         # =>This Inner Loop Header: Depth=1
@@ -113,7 +113,7 @@ main:                                   # @main
 	i32.const	$push18=, 0
 	i32.const	$push16=, 48
 	i32.add 	$push17=, $0, $pop16
-	i32.store	$drop=, __stack_pointer($pop18), $pop17
+	i32.store	__stack_pointer($pop18), $pop17
 	i32.const	$push7=, 0
                                         # fallthrough-return: $pop7
 	.endfunc
@@ -137,5 +137,5 @@ main:                                   # @main
 	.size	.Lmain.a, 40
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

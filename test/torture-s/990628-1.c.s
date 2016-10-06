@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990628-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990628-1.c"
 	.section	.text.num_records,"ax",@progbits
 	.hidden	num_records
 	.globl	num_records
@@ -30,14 +30,14 @@ fetch:                                  # @fetch
 	tee_local	$push12=, $0=, $pop13
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop12, $pop4
-	i32.store	$drop=, fetch.fetch_count($pop3), $pop5
+	i32.store	fetch.fetch_count($pop3), $pop5
 	i32.const	$push11=, 0
 	i32.const	$push7=, 100
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
 	i32.gt_s	$push6=, $0, $pop9
 	i32.select	$push8=, $pop7, $pop10, $pop6
-	i32.store	$drop=, sqlca($pop11), $pop8
+	i32.store	sqlca($pop11), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -54,7 +54,7 @@ load_data:                              # @load_data
 	i32.const	$push26=, 404
 	i32.call	$push25=, malloc@FUNCTION, $pop26
 	tee_local	$push24=, $3=, $pop25
-	i32.store	$drop=, data_ptr($pop0), $pop24
+	i32.store	data_ptr($pop0), $pop24
 	i32.const	$push1=, 170
 	i32.const	$push23=, 404
 	i32.call	$drop=, memset@FUNCTION, $3, $pop1, $pop23
@@ -68,7 +68,7 @@ load_data:                              # @load_data
 	tee_local	$push17=, $2=, $pop18
 	i32.const	$push16=, 1
 	i32.add 	$push3=, $pop17, $pop16
-	i32.store	$drop=, fetch.fetch_count($pop20), $pop3
+	i32.store	fetch.fetch_count($pop20), $pop3
 	i32.const	$push15=, 0
 	i32.const	$push4=, 100
 	i32.const	$push14=, 0
@@ -76,7 +76,7 @@ load_data:                              # @load_data
 	i32.gt_s	$push12=, $2, $pop13
 	tee_local	$push11=, $1=, $pop12
 	i32.select	$push5=, $pop4, $pop14, $pop11
-	i32.store	$drop=, sqlca($pop15), $pop5
+	i32.store	sqlca($pop15), $pop5
 	block
 	br_if   	0, $1           # 0: down to label0
 .LBB2_1:                                # %while.body
@@ -99,11 +99,11 @@ load_data:                              # @load_data
 	end_loop                        # label2:
 	i32.const	$push8=, 0
 	i32.const	$push7=, 100
-	i32.store	$drop=, sqlca($pop8), $pop7
+	i32.store	sqlca($pop8), $pop7
 	i32.const	$push35=, 0
 	i32.const	$push9=, 1
 	i32.add 	$push10=, $2, $pop9
-	i32.store	$drop=, fetch.fetch_count($pop35), $pop10
+	i32.store	fetch.fetch_count($pop35), $pop10
 .LBB2_3:                                # %while.end
 	end_block                       # label0:
                                         # fallthrough-return
@@ -123,7 +123,7 @@ main:                                   # @main
 	i32.const	$push29=, 404
 	i32.call	$push28=, malloc@FUNCTION, $pop29
 	tee_local	$push27=, $2=, $pop28
-	i32.store	$drop=, data_ptr($pop0), $pop27
+	i32.store	data_ptr($pop0), $pop27
 	i32.const	$push1=, 170
 	i32.const	$push26=, 404
 	i32.call	$0=, memset@FUNCTION, $2, $pop1, $pop26
@@ -137,7 +137,7 @@ main:                                   # @main
 	tee_local	$push20=, $2=, $pop21
 	i32.const	$push19=, 1
 	i32.add 	$push3=, $pop20, $pop19
-	i32.store	$drop=, fetch.fetch_count($pop23), $pop3
+	i32.store	fetch.fetch_count($pop23), $pop3
 	i32.const	$push18=, 0
 	i32.const	$push4=, 100
 	i32.const	$push17=, 0
@@ -145,7 +145,7 @@ main:                                   # @main
 	i32.gt_s	$push15=, $2, $pop16
 	tee_local	$push14=, $3=, $pop15
 	i32.select	$push5=, $pop4, $pop17, $pop14
-	i32.store	$drop=, sqlca($pop18), $pop5
+	i32.store	sqlca($pop18), $pop5
 	block
 	br_if   	0, $3           # 0: down to label3
 # BB#1:                                 # %while.body.lr.ph.i
@@ -170,10 +170,10 @@ main:                                   # @main
 	end_loop                        # label5:
 	i32.const	$push8=, 0
 	i32.const	$push7=, 100
-	i32.store	$drop=, sqlca($pop8), $pop7
+	i32.store	sqlca($pop8), $pop7
 	i32.const	$push38=, 0
 	i32.const	$push9=, 2
-	i32.store	$drop=, fetch.fetch_count($pop38), $pop9
+	i32.store	fetch.fetch_count($pop38), $pop9
 .LBB3_4:                                # %load_data.exit
 	end_block                       # label3:
 	block
@@ -228,7 +228,7 @@ data_ptr:
 	.size	data_ptr, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

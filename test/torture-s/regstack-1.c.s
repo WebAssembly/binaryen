@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/regstack-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/regstack-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.const	$push58=, 320
 	i32.sub 	$push243=, $pop57, $pop58
 	tee_local	$push242=, $16=, $pop243
-	i32.store	$drop=, __stack_pointer($pop59), $pop242
+	i32.store	__stack_pointer($pop59), $pop242
 	i32.const	$push60=, 304
 	i32.add 	$push61=, $16, $pop60
 	i32.const	$push0=, 0
@@ -196,9 +196,9 @@ main:                                   # @main
 	i64.const	$push31=, -4612248968380809216
 	call    	__addtf3@FUNCTION, $16, $pop32, $pop30, $pop181, $pop31
 	i32.const	$push180=, 0
-	i64.store	$drop=, S+8($pop180), $6
+	i64.store	S+8($pop180), $6
 	i32.const	$push179=, 0
-	i64.store	$drop=, S($pop179), $7
+	i64.store	S($pop179), $7
 	i32.const	$push178=, 0
 	i32.const	$push126=, 176
 	i32.add 	$push127=, $16, $pop126
@@ -206,11 +206,11 @@ main:                                   # @main
 	i32.add 	$push33=, $pop127, $pop177
 	i64.load	$push176=, 0($pop33)
 	tee_local	$push175=, $9=, $pop176
-	i64.store	$drop=, X+8($pop178), $pop175
+	i64.store	X+8($pop178), $pop175
 	i32.const	$push174=, 0
 	i64.load	$push173=, 176($16)
 	tee_local	$push172=, $8=, $pop173
-	i64.store	$drop=, X($pop174), $pop172
+	i64.store	X($pop174), $pop172
 	i32.const	$push171=, 0
 	i32.const	$push128=, 96
 	i32.add 	$push129=, $16, $pop128
@@ -218,11 +218,11 @@ main:                                   # @main
 	i32.add 	$push34=, $pop129, $pop170
 	i64.load	$push169=, 0($pop34)
 	tee_local	$push168=, $13=, $pop169
-	i64.store	$drop=, T+8($pop171), $pop168
+	i64.store	T+8($pop171), $pop168
 	i32.const	$push167=, 0
 	i64.load	$push166=, 96($16)
 	tee_local	$push165=, $12=, $pop166
-	i64.store	$drop=, T($pop167), $pop165
+	i64.store	T($pop167), $pop165
 	i32.const	$push164=, 0
 	i32.const	$push130=, 64
 	i32.add 	$push131=, $16, $pop130
@@ -230,11 +230,11 @@ main:                                   # @main
 	i32.add 	$push35=, $pop131, $pop163
 	i64.load	$push162=, 0($pop35)
 	tee_local	$push161=, $5=, $pop162
-	i64.store	$drop=, Y+8($pop164), $pop161
+	i64.store	Y+8($pop164), $pop161
 	i32.const	$push160=, 0
 	i64.load	$push159=, 64($16)
 	tee_local	$push158=, $4=, $pop159
-	i64.store	$drop=, Y($pop160), $pop158
+	i64.store	Y($pop160), $pop158
 	i32.const	$push157=, 0
 	i32.const	$push132=, 144
 	i32.add 	$push133=, $16, $pop132
@@ -242,11 +242,11 @@ main:                                   # @main
 	i32.add 	$push36=, $pop133, $pop156
 	i64.load	$push155=, 0($pop36)
 	tee_local	$push154=, $3=, $pop155
-	i64.store	$drop=, Z+8($pop157), $pop154
+	i64.store	Z+8($pop157), $pop154
 	i32.const	$push153=, 0
 	i64.load	$push152=, 144($16)
 	tee_local	$push151=, $2=, $pop152
-	i64.store	$drop=, Z($pop153), $pop151
+	i64.store	Z($pop153), $pop151
 	i32.const	$push150=, 0
 	i32.const	$push134=, 32
 	i32.add 	$push135=, $16, $pop134
@@ -254,21 +254,21 @@ main:                                   # @main
 	i32.add 	$push37=, $pop135, $pop149
 	i64.load	$push148=, 0($pop37)
 	tee_local	$push147=, $15=, $pop148
-	i64.store	$drop=, R+8($pop150), $pop147
+	i64.store	R+8($pop150), $pop147
 	i32.const	$push146=, 0
 	i64.load	$push145=, 32($16)
 	tee_local	$push144=, $14=, $pop145
-	i64.store	$drop=, R($pop146), $pop144
+	i64.store	R($pop146), $pop144
 	i32.const	$push143=, 0
 	i32.const	$push142=, 8
 	i32.add 	$push38=, $16, $pop142
 	i64.load	$push141=, 0($pop38)
 	tee_local	$push140=, $1=, $pop141
-	i64.store	$drop=, Y1+8($pop143), $pop140
+	i64.store	Y1+8($pop143), $pop140
 	i32.const	$push139=, 0
 	i64.load	$push138=, 0($16)
 	tee_local	$push137=, $0=, $pop138
-	i64.store	$drop=, Y1($pop139), $pop137
+	i64.store	Y1($pop139), $pop137
 	block
 	i64.const	$push136=, 0
 	i64.const	$push39=, 4612354521497075712
@@ -422,6 +422,6 @@ S:
 	.size	S, 16
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

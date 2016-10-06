@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-7.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-7.c"
 	.section	.text.check_float,"ax",@progbits
 	.hidden	check_float
 	.globl	check_float
@@ -298,7 +298,7 @@ main:                                   # @main
 	i32.const	$push61=, 576
 	i32.sub 	$push200=, $pop60, $pop61
 	tee_local	$push199=, $45=, $pop200
-	i32.store	$drop=, __stack_pointer($pop62), $pop199
+	i32.store	__stack_pointer($pop62), $pop199
 	i32.const	$push0=, 0
 	f32.load	$0=, f1($pop0)
 	i32.const	$push198=, 0
@@ -319,38 +319,38 @@ main:                                   # @main
 	f32.load	$8=, f5($pop191)
 	i32.const	$push190=, 0
 	f32.load	$9=, f5+4($pop190)
-	f32.store	$drop=, 568($45), $0
-	f32.store	$drop=, 572($45), $1
-	f32.store	$drop=, 560($45), $2
-	f32.store	$drop=, 564($45), $3
-	f32.store	$drop=, 552($45), $4
-	f32.store	$drop=, 556($45), $5
-	f32.store	$drop=, 544($45), $6
-	f32.store	$drop=, 548($45), $7
-	f32.store	$drop=, 540($45), $9
-	f32.store	$drop=, 536($45), $8
+	f32.store	568($45), $0
+	f32.store	572($45), $1
+	f32.store	560($45), $2
+	f32.store	564($45), $3
+	f32.store	552($45), $4
+	f32.store	556($45), $5
+	f32.store	544($45), $6
+	f32.store	548($45), $7
+	f32.store	540($45), $9
+	f32.store	536($45), $8
 	i64.load	$push1=, 568($45)
-	i64.store	$drop=, 280($45):p2align=2, $pop1
+	i64.store	280($45):p2align=2, $pop1
 	i32.const	$push63=, 272
 	i32.add 	$push64=, $45, $pop63
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $pop64, $pop2
 	i32.load	$push4=, 564($45)
-	i32.store	$drop=, 0($pop3), $pop4
+	i32.store	0($pop3), $pop4
 	i32.load	$push5=, 560($45)
-	i32.store	$drop=, 272($45), $pop5
+	i32.store	272($45), $pop5
 	i32.const	$push65=, 264
 	i32.add 	$push66=, $45, $pop65
 	i32.const	$push189=, 4
 	i32.add 	$push6=, $pop66, $pop189
 	i32.load	$push7=, 556($45)
-	i32.store	$drop=, 0($pop6), $pop7
+	i32.store	0($pop6), $pop7
 	i32.load	$push8=, 552($45)
-	i32.store	$drop=, 264($45), $pop8
+	i32.store	264($45), $pop8
 	i64.load	$push9=, 544($45)
-	i64.store	$drop=, 256($45):p2align=2, $pop9
+	i64.store	256($45):p2align=2, $pop9
 	i64.load	$push10=, 536($45)
-	i64.store	$drop=, 248($45):p2align=2, $pop10
+	i64.store	248($45):p2align=2, $pop10
 	i32.const	$push67=, 280
 	i32.add 	$push68=, $45, $pop67
 	i32.const	$push69=, 272
@@ -382,56 +382,56 @@ main:                                   # @main
 	f64.load	$18=, d5($pop180)
 	i32.const	$push179=, 0
 	f64.load	$19=, d5+8($pop179)
-	f64.store	$drop=, 520($45), $10
-	f64.store	$drop=, 528($45), $11
-	f64.store	$drop=, 504($45), $12
-	f64.store	$drop=, 512($45), $13
-	f64.store	$drop=, 488($45), $14
-	f64.store	$drop=, 496($45), $15
-	f64.store	$drop=, 472($45), $16
-	f64.store	$drop=, 480($45), $17
-	f64.store	$drop=, 464($45), $19
-	f64.store	$drop=, 456($45), $18
+	f64.store	520($45), $10
+	f64.store	528($45), $11
+	f64.store	504($45), $12
+	f64.store	512($45), $13
+	f64.store	488($45), $14
+	f64.store	496($45), $15
+	f64.store	472($45), $16
+	f64.store	480($45), $17
+	f64.store	464($45), $19
+	f64.store	456($45), $18
 	i32.const	$push77=, 232
 	i32.add 	$push78=, $45, $pop77
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $pop78, $pop11
 	i64.load	$push13=, 528($45)
-	i64.store	$drop=, 0($pop12), $pop13
+	i64.store	0($pop12), $pop13
 	i32.const	$push79=, 216
 	i32.add 	$push80=, $45, $pop79
 	i32.const	$push178=, 8
 	i32.add 	$push14=, $pop80, $pop178
 	i64.load	$push15=, 512($45)
-	i64.store	$drop=, 0($pop14), $pop15
+	i64.store	0($pop14), $pop15
 	i64.load	$push16=, 520($45)
-	i64.store	$drop=, 232($45), $pop16
+	i64.store	232($45), $pop16
 	i64.load	$push17=, 504($45)
-	i64.store	$drop=, 216($45), $pop17
+	i64.store	216($45), $pop17
 	i32.const	$push81=, 200
 	i32.add 	$push82=, $45, $pop81
 	i32.const	$push177=, 8
 	i32.add 	$push18=, $pop82, $pop177
 	i64.load	$push19=, 496($45)
-	i64.store	$drop=, 0($pop18), $pop19
+	i64.store	0($pop18), $pop19
 	i64.load	$push20=, 488($45)
-	i64.store	$drop=, 200($45), $pop20
+	i64.store	200($45), $pop20
 	i32.const	$push83=, 184
 	i32.add 	$push84=, $45, $pop83
 	i32.const	$push176=, 8
 	i32.add 	$push21=, $pop84, $pop176
 	i64.load	$push22=, 480($45)
-	i64.store	$drop=, 0($pop21), $pop22
+	i64.store	0($pop21), $pop22
 	i64.load	$push23=, 472($45)
-	i64.store	$drop=, 184($45), $pop23
+	i64.store	184($45), $pop23
 	i32.const	$push85=, 168
 	i32.add 	$push86=, $45, $pop85
 	i32.const	$push175=, 8
 	i32.add 	$push24=, $pop86, $pop175
 	i64.load	$push25=, 464($45)
-	i64.store	$drop=, 0($pop24), $pop25
+	i64.store	0($pop24), $pop25
 	i64.load	$push26=, 456($45)
-	i64.store	$drop=, 168($45), $pop26
+	i64.store	168($45), $pop26
 	i32.const	$push87=, 232
 	i32.add 	$push88=, $45, $pop87
 	i32.const	$push89=, 216
@@ -483,127 +483,127 @@ main:                                   # @main
 	i64.load	$38=, ld5+16($pop156)
 	i32.const	$push155=, 0
 	i64.load	$39=, ld5+24($pop155)
-	i64.store	$drop=, 424($45), $21
-	i64.store	$drop=, 416($45), $20
+	i64.store	424($45), $21
+	i64.store	416($45), $20
 	i32.const	$push97=, 416
 	i32.add 	$push98=, $45, $pop97
 	i32.const	$push27=, 24
 	i32.add 	$push154=, $pop98, $pop27
 	tee_local	$push153=, $40=, $pop154
-	i64.store	$drop=, 0($pop153), $23
-	i64.store	$drop=, 432($45), $22
+	i64.store	0($pop153), $23
+	i64.store	432($45), $22
 	i32.const	$push99=, 384
 	i32.add 	$push100=, $45, $pop99
 	i32.const	$push152=, 24
 	i32.add 	$push151=, $pop100, $pop152
 	tee_local	$push150=, $41=, $pop151
-	i64.store	$drop=, 0($pop150), $27
-	i64.store	$drop=, 392($45), $25
-	i64.store	$drop=, 384($45), $24
-	i64.store	$drop=, 400($45), $26
+	i64.store	0($pop150), $27
+	i64.store	392($45), $25
+	i64.store	384($45), $24
+	i64.store	400($45), $26
 	i32.const	$push101=, 352
 	i32.add 	$push102=, $45, $pop101
 	i32.const	$push149=, 24
 	i32.add 	$push148=, $pop102, $pop149
 	tee_local	$push147=, $42=, $pop148
-	i64.store	$drop=, 0($pop147), $31
-	i64.store	$drop=, 360($45), $29
-	i64.store	$drop=, 352($45), $28
-	i64.store	$drop=, 368($45), $30
+	i64.store	0($pop147), $31
+	i64.store	360($45), $29
+	i64.store	352($45), $28
+	i64.store	368($45), $30
 	i32.const	$push103=, 320
 	i32.add 	$push104=, $45, $pop103
 	i32.const	$push146=, 24
 	i32.add 	$push145=, $pop104, $pop146
 	tee_local	$push144=, $43=, $pop145
-	i64.store	$drop=, 0($pop144), $35
-	i64.store	$drop=, 336($45), $34
+	i64.store	0($pop144), $35
+	i64.store	336($45), $34
 	i32.const	$push105=, 288
 	i32.add 	$push106=, $45, $pop105
 	i32.const	$push143=, 24
 	i32.add 	$push142=, $pop106, $pop143
 	tee_local	$push141=, $44=, $pop142
-	i64.store	$drop=, 0($pop141), $39
-	i64.store	$drop=, 328($45), $33
-	i64.store	$drop=, 320($45), $32
-	i64.store	$drop=, 304($45), $38
-	i64.store	$drop=, 296($45), $37
-	i64.store	$drop=, 288($45), $36
+	i64.store	0($pop141), $39
+	i64.store	328($45), $33
+	i64.store	320($45), $32
+	i64.store	304($45), $38
+	i64.store	296($45), $37
+	i64.store	288($45), $36
 	i32.const	$push107=, 128
 	i32.add 	$push108=, $45, $pop107
 	i32.const	$push140=, 24
 	i32.add 	$push28=, $pop108, $pop140
 	i64.load	$push29=, 0($40)
-	i64.store	$drop=, 0($pop28), $pop29
+	i64.store	0($pop28), $pop29
 	i32.const	$push109=, 128
 	i32.add 	$push110=, $45, $pop109
 	i32.const	$push30=, 16
 	i32.add 	$push31=, $pop110, $pop30
 	i64.load	$push32=, 432($45)
-	i64.store	$drop=, 0($pop31), $pop32
+	i64.store	0($pop31), $pop32
 	i64.load	$push33=, 424($45)
-	i64.store	$drop=, 136($45), $pop33
+	i64.store	136($45), $pop33
 	i64.load	$push34=, 416($45)
-	i64.store	$drop=, 128($45), $pop34
+	i64.store	128($45), $pop34
 	i32.const	$push111=, 96
 	i32.add 	$push112=, $45, $pop111
 	i32.const	$push139=, 24
 	i32.add 	$push35=, $pop112, $pop139
 	i64.load	$push36=, 0($41)
-	i64.store	$drop=, 0($pop35), $pop36
+	i64.store	0($pop35), $pop36
 	i32.const	$push113=, 96
 	i32.add 	$push114=, $45, $pop113
 	i32.const	$push138=, 16
 	i32.add 	$push37=, $pop114, $pop138
 	i64.load	$push38=, 400($45)
-	i64.store	$drop=, 0($pop37), $pop38
+	i64.store	0($pop37), $pop38
 	i64.load	$push39=, 392($45)
-	i64.store	$drop=, 104($45), $pop39
+	i64.store	104($45), $pop39
 	i64.load	$push40=, 384($45)
-	i64.store	$drop=, 96($45), $pop40
+	i64.store	96($45), $pop40
 	i32.const	$push115=, 64
 	i32.add 	$push116=, $45, $pop115
 	i32.const	$push137=, 24
 	i32.add 	$push41=, $pop116, $pop137
 	i64.load	$push42=, 0($42)
-	i64.store	$drop=, 0($pop41), $pop42
+	i64.store	0($pop41), $pop42
 	i32.const	$push117=, 64
 	i32.add 	$push118=, $45, $pop117
 	i32.const	$push136=, 16
 	i32.add 	$push43=, $pop118, $pop136
 	i64.load	$push44=, 368($45)
-	i64.store	$drop=, 0($pop43), $pop44
+	i64.store	0($pop43), $pop44
 	i64.load	$push45=, 360($45)
-	i64.store	$drop=, 72($45), $pop45
+	i64.store	72($45), $pop45
 	i64.load	$push46=, 352($45)
-	i64.store	$drop=, 64($45), $pop46
+	i64.store	64($45), $pop46
 	i32.const	$push119=, 32
 	i32.add 	$push120=, $45, $pop119
 	i32.const	$push135=, 24
 	i32.add 	$push47=, $pop120, $pop135
 	i64.load	$push48=, 0($43)
-	i64.store	$drop=, 0($pop47), $pop48
+	i64.store	0($pop47), $pop48
 	i32.const	$push121=, 32
 	i32.add 	$push122=, $45, $pop121
 	i32.const	$push134=, 16
 	i32.add 	$push49=, $pop122, $pop134
 	i64.load	$push50=, 336($45)
-	i64.store	$drop=, 0($pop49), $pop50
+	i64.store	0($pop49), $pop50
 	i64.load	$push51=, 328($45)
-	i64.store	$drop=, 40($45), $pop51
+	i64.store	40($45), $pop51
 	i64.load	$push52=, 320($45)
-	i64.store	$drop=, 32($45), $pop52
+	i64.store	32($45), $pop52
 	i32.const	$push133=, 24
 	i32.add 	$push53=, $45, $pop133
 	i64.load	$push54=, 0($44)
-	i64.store	$drop=, 0($pop53), $pop54
+	i64.store	0($pop53), $pop54
 	i32.const	$push132=, 16
 	i32.add 	$push55=, $45, $pop132
 	i64.load	$push56=, 304($45)
-	i64.store	$drop=, 0($pop55), $pop56
+	i64.store	0($pop55), $pop56
 	i64.load	$push57=, 296($45)
-	i64.store	$drop=, 8($45), $pop57
+	i64.store	8($45), $pop57
 	i64.load	$push58=, 288($45)
-	i64.store	$drop=, 0($45), $pop58
+	i64.store	0($45), $pop58
 	i32.const	$push123=, 128
 	i32.add 	$push124=, $45, $pop123
 	i32.const	$push125=, 96
@@ -781,6 +781,6 @@ ld5:
 	.size	ld5, 32
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

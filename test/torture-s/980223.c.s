@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980223.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980223.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -27,7 +27,7 @@ foo:                                    # @foo
 	i32.const	$push7=, 16
 	i32.sub 	$push18=, $pop6, $pop7
 	tee_local	$push17=, $4=, $pop18
-	i32.store	$drop=, __stack_pointer($pop8), $pop17
+	i32.store	__stack_pointer($pop8), $pop17
 	block
 	block
 	block
@@ -46,23 +46,23 @@ foo:                                    # @foo
 	tee_local	$push22=, $1=, $pop23
 	i64.load	$push21=, 8($pop22):p2align=2
 	tee_local	$push20=, $3=, $pop21
-	i64.store	$drop=, 0($2):p2align=2, $pop20
+	i64.store	0($2):p2align=2, $pop20
 	i32.load8_u	$push2=, 4($1)
 	i32.const	$push19=, 64
 	i32.and 	$push3=, $pop2, $pop19
 	br_if   	1, $pop3        # 1: down to label0
 .LBB1_3:                                # %if.end7
 	end_block                       # label1:
-	i64.store	$drop=, 0($0):p2align=2, $3
+	i64.store	0($0):p2align=2, $3
 	i32.const	$push11=, 0
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $4, $pop9
-	i32.store	$drop=, __stack_pointer($pop11), $pop10
+	i32.store	__stack_pointer($pop11), $pop10
 	return
 .LBB1_4:                                # %if.then6
 	end_block                       # label0:
 	i64.load	$push4=, 0($2):p2align=2
-	i64.store	$drop=, 8($4):p2align=2, $pop4
+	i64.store	8($4):p2align=2, $pop4
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $4, $pop12
 	call    	bar@FUNCTION, $2, $pop13
@@ -85,10 +85,10 @@ main:                                   # @main
 	i32.const	$push9=, 16
 	i32.sub 	$push18=, $pop8, $pop9
 	tee_local	$push17=, $1=, $pop18
-	i32.store	$drop=, __stack_pointer($pop10), $pop17
+	i32.store	__stack_pointer($pop10), $pop17
 	i32.const	$push16=, 0
 	i64.load	$push0=, .Lmain.y($pop16)
-	i64.store	$drop=, 8($1), $pop0
+	i64.store	8($1), $pop0
 	block
 	block
 	i32.const	$push15=, 0
@@ -102,7 +102,7 @@ main:                                   # @main
 	i32.load	$push21=, cons2($pop22)
 	tee_local	$push20=, $0=, $pop21
 	i64.load	$push3=, 8($pop20):p2align=2
-	i64.store	$drop=, 8($1), $pop3
+	i64.store	8($1), $pop3
 	i32.load8_u	$push4=, 4($0)
 	i32.const	$push19=, 64
 	i32.and 	$push5=, $pop4, $pop19
@@ -112,13 +112,13 @@ main:                                   # @main
 	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $1, $pop11
-	i32.store	$drop=, __stack_pointer($pop13), $pop12
+	i32.store	__stack_pointer($pop13), $pop12
 	i32.const	$push23=, 0
 	return  	$pop23
 .LBB2_3:                                # %if.then6.i
 	end_block                       # label3:
 	i64.load	$push6=, 8($1)
-	i64.store	$drop=, 0($1):p2align=2, $pop6
+	i64.store	0($1):p2align=2, $pop6
 	call    	bar@FUNCTION, $1, $1
 	unreachable
 	.endfunc
@@ -167,5 +167,5 @@ cons2:
 	.size	.Lmain.y, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

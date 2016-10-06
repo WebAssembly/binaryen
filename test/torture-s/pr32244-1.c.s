@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr32244-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr32244-1.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -38,7 +38,7 @@ main:                                   # @main
 	i64.and 	$push3=, $pop1, $pop2
 	i64.const	$push4=, 256
 	i64.or  	$push5=, $pop3, $pop4
-	i64.store	$drop=, x($pop0), $pop5
+	i64.store	x($pop0), $pop5
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -55,5 +55,5 @@ x:
 	.size	x, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

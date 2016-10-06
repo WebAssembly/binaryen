@@ -11,16 +11,16 @@ byval_arg:
 	i32.const	$push3=, 16
 	i32.sub 	$push11=, $pop2, $pop3
 	tee_local	$push10=, $1=, $pop11
-	i32.store	$drop=, __stack_pointer($pop4), $pop10
+	i32.store	__stack_pointer($pop4), $pop10
 	i32.load	$push0=, 0($0)
-	i32.store	$drop=, 12($1), $pop0
+	i32.store	12($1), $pop0
 	i32.const	$push8=, 12
 	i32.add 	$push9=, $1, $pop8
 	call    	ext_byval_func@FUNCTION, $pop9
 	i32.const	$push7=, 0
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $1, $pop5
-	i32.store	$drop=, __stack_pointer($pop7), $pop6
+	i32.store	__stack_pointer($pop7), $pop6
 	return
 	.endfunc
 .Lfunc_end0:
@@ -37,16 +37,16 @@ byval_arg_align8:
 	i32.const	$push3=, 16
 	i32.sub 	$push11=, $pop2, $pop3
 	tee_local	$push10=, $1=, $pop11
-	i32.store	$drop=, __stack_pointer($pop4), $pop10
+	i32.store	__stack_pointer($pop4), $pop10
 	i32.load	$push0=, 0($0)
-	i32.store	$drop=, 8($1), $pop0
+	i32.store	8($1), $pop0
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $1, $pop8
 	call    	ext_byval_func_align8@FUNCTION, $pop9
 	i32.const	$push7=, 0
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $1, $pop5
-	i32.store	$drop=, __stack_pointer($pop7), $pop6
+	i32.store	__stack_pointer($pop7), $pop6
 	return
 	.endfunc
 .Lfunc_end1:
@@ -63,20 +63,20 @@ byval_arg_double:
 	i32.const	$push7=, 16
 	i32.sub 	$push14=, $pop6, $pop7
 	tee_local	$push13=, $1=, $pop14
-	i32.store	$drop=, __stack_pointer($pop8), $pop13
+	i32.store	__stack_pointer($pop8), $pop13
 	i32.const	$push0=, 8
 	i32.add 	$push3=, $1, $pop0
 	i32.const	$push12=, 8
 	i32.add 	$push1=, $0, $pop12
 	i64.load	$push2=, 0($pop1)
-	i64.store	$drop=, 0($pop3), $pop2
+	i64.store	0($pop3), $pop2
 	i64.load	$push4=, 0($0)
-	i64.store	$drop=, 0($1), $pop4
+	i64.store	0($1), $pop4
 	call    	ext_byval_func_alignedstruct@FUNCTION, $1
 	i32.const	$push11=, 0
 	i32.const	$push9=, 16
 	i32.add 	$push10=, $1, $pop9
-	i32.store	$drop=, __stack_pointer($pop11), $pop10
+	i32.store	__stack_pointer($pop11), $pop10
 	return
 	.endfunc
 .Lfunc_end2:
@@ -123,7 +123,7 @@ big_byval:
 	i32.const	$push3=, 131072
 	i32.sub 	$push11=, $pop2, $pop3
 	tee_local	$push10=, $1=, $pop11
-	i32.store	$drop=, __stack_pointer($pop4), $pop10
+	i32.store	__stack_pointer($pop4), $pop10
 	i32.const	$push0=, 131072
 	i32.call	$push9=, memcpy@FUNCTION, $1, $0, $pop0
 	tee_local	$push8=, $0=, $pop9
@@ -131,7 +131,7 @@ big_byval:
 	i32.const	$push7=, 0
 	i32.const	$push5=, 131072
 	i32.add 	$push6=, $0, $pop5
-	i32.store	$drop=, __stack_pointer($pop7), $pop6
+	i32.store	__stack_pointer($pop7), $pop6
 	return
 	.endfunc
 .Lfunc_end6:

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/floatunsisf-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/floatunsisf-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -11,10 +11,10 @@ main:                                   # @main
 	i32.const	$push9=, 0
 	i32.load	$push0=, u($pop9)
 	f32.convert_u/i32	$push1=, $pop0
-	f32.store	$drop=, f1($pop10), $pop1
+	f32.store	f1($pop10), $pop1
 	i32.const	$push8=, 0
 	i32.const	$push2=, 1325400065
-	i32.store	$drop=, f2($pop8), $pop2
+	i32.store	f2($pop8), $pop2
 	block
 	i32.const	$push7=, 0
 	f32.load	$push3=, f1($pop7)
@@ -62,6 +62,6 @@ f2:
 	.size	f2, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

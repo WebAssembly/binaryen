@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011024-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011024-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,7 +9,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
 	i32.const	$push0=, 6513249
-	i32.store	$drop=, buf($pop6), $pop0
+	i32.store	buf($pop6), $pop0
 	block
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
@@ -19,11 +19,11 @@ main:                                   # @main
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
 	i32.load8_u	$push4=, .L.str.1+8($pop10)
-	i32.store8	$drop=, buf+8($pop11), $pop4
+	i32.store8	buf+8($pop11), $pop4
 	i32.const	$push9=, 0
 	i32.const	$push8=, 0
 	i64.load	$push5=, .L.str.1($pop8):p2align=0
-	i64.store	$drop=, buf($pop9), $pop5
+	i64.store	buf($pop9), $pop5
 	i32.const	$push7=, 0
 	return  	$pop7
 .LBB0_2:                                # %if.then1.i
@@ -55,6 +55,6 @@ buf:
 	.size	.L.str.1, 9
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	strcmp, i32, i32, i32

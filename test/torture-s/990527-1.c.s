@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990527-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990527-1.c"
 	.section	.text.g,"ax",@progbits
 	.hidden	g
 	.globl	g
@@ -11,7 +11,7 @@ g:                                      # @g
 	i32.const	$push3=, 0
 	i32.load	$push1=, sum($pop3)
 	i32.add 	$push2=, $pop1, $0
-	i32.store	$drop=, sum($pop0), $pop2
+	i32.store	sum($pop0), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -30,7 +30,7 @@ f:                                      # @f
 	i32.add 	$push2=, $pop1, $0
 	i32.const	$push3=, 81
 	i32.add 	$push4=, $pop2, $pop3
-	i32.store	$drop=, sum($pop0), $pop4
+	i32.store	sum($pop0), $pop4
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -50,7 +50,7 @@ main:                                   # @main
 	tee_local	$push2=, $0=, $pop3
 	i32.const	$push0=, 81
 	i32.add 	$push1=, $pop2, $pop0
-	i32.store	$drop=, sum($pop5), $pop1
+	i32.store	sum($pop5), $pop1
 	block
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end
@@ -75,6 +75,6 @@ sum:
 	.size	sum, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

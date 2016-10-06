@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/conv.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/conv.ll"
 	.globl	i32_wrap_i64
 	.type	i32_wrap_i64,@function
 i32_wrap_i64:

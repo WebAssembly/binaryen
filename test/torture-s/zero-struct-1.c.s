@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-1.c"
 	.section	.text.h,"ax",@progbits
 	.hidden	h
 	.globl	h
@@ -11,13 +11,13 @@ h:                                      # @h
 	i32.load	$push1=, f($pop9)
 	i32.const	$push2=, 2
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, f($pop0), $pop3
+	i32.store	f($pop0), $pop3
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
 	i32.load	$push4=, ff($pop7)
 	i32.const	$push6=, 2
 	i32.add 	$push5=, $pop4, $pop6
-	i32.store	$drop=, ff($pop8), $pop5
+	i32.store	ff($pop8), $pop5
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -37,14 +37,14 @@ main:                                   # @main
 	i32.const	$push2=, 2
 	i32.add 	$push14=, $pop1, $pop2
 	tee_local	$push13=, $1=, $pop14
-	i32.store	$drop=, f($pop0), $pop13
+	i32.store	f($pop0), $pop13
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
 	i32.load	$push3=, ff($pop11)
 	i32.const	$push10=, 2
 	i32.add 	$push9=, $pop3, $pop10
 	tee_local	$push8=, $0=, $pop9
-	i32.store	$drop=, ff($pop12), $pop8
+	i32.store	ff($pop12), $pop8
 	block
 	i32.const	$push7=, y+2
 	i32.ne  	$push4=, $1, $pop7
@@ -91,5 +91,5 @@ ff:
 	.size	ff, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

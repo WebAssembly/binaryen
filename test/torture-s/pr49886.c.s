@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49886.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49886.c"
 	.section	.text.never_ever,"ax",@progbits
 	.hidden	never_ever
 	.globl	never_ever
@@ -22,7 +22,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$drop=, cond($pop1), $pop0
+	i32.store	cond($pop1), $pop0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -39,7 +39,7 @@ bar_1:                                  # @bar_1
 	i32.load	$push0=, 4($1)
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$drop=, 4($1), $pop2
+	i32.store	4($1), $pop2
 	call    	mark_cell@FUNCTION, $1
                                         # fallthrough-return
 	.endfunc
@@ -201,7 +201,7 @@ bar_2:                                  # @bar_2
 	i32.load	$push0=, 4($1)
 	i32.const	$push1=, 2
 	i32.add 	$push2=, $pop0, $pop1
-	i32.store	$drop=, 4($1), $pop2
+	i32.store	4($1), $pop2
 	call    	mark_cell@FUNCTION, $1
                                         # fallthrough-return
 	.endfunc
@@ -227,5 +227,5 @@ gi:
 	.size	gi, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930930-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930930-2.c"
 	.section	.text.test_endianness,"ax",@progbits
 	.hidden	test_endianness
 	.globl	test_endianness
@@ -27,7 +27,7 @@ test_endianness_vol:                    # @test_endianness_vol
 	i32.sub 	$push8=, $pop5, $pop6
 	tee_local	$push7=, $0=, $pop8
 	i64.const	$push0=, 4621819117588971520
-	i64.store	$drop=, 8($pop7), $pop0
+	i64.store	8($pop7), $pop0
 	i32.load	$push2=, 8($0)
 	i32.const	$push1=, 0
 	i32.ne  	$push3=, $pop2, $pop1
@@ -50,9 +50,9 @@ main:                                   # @main
 	i32.const	$push5=, 16
 	i32.sub 	$push8=, $pop4, $pop5
 	tee_local	$push7=, $0=, $pop8
-	i32.store	$drop=, __stack_pointer($pop6), $pop7
+	i32.store	__stack_pointer($pop6), $pop7
 	i64.const	$push0=, 4621819117588971520
-	i64.store	$drop=, 8($0), $pop0
+	i64.store	8($0), $pop0
 	block
 	i32.load	$push1=, 8($0)
 	br_if   	0, $pop1        # 0: down to label0
@@ -69,6 +69,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

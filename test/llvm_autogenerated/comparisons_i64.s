@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/comparisons_i64.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/comparisons_i64.ll"
 	.globl	eq_i64
 	.type	eq_i64,@function
 eq_i64:

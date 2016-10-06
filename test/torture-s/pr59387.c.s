@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59387.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59387.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -11,7 +11,7 @@ main:                                   # @main
 	i32.const	$0=, -19
 	i32.const	$push6=, 0
 	i32.const	$push5=, -19
-	i32.store	$drop=, a($pop6), $pop5
+	i32.store	a($pop6), $pop5
 	i32.const	$push4=, 0
 	i32.load8_u	$1=, c($pop4)
 .LBB0_1:                                # %for.cond1.preheader
@@ -20,7 +20,7 @@ main:                                   # @main
 	i32.const	$push10=, 0
 	i32.load	$push0=, e($pop10)
 	i32.const	$push9=, f
-	i32.store	$drop=, 0($pop0), $pop9
+	i32.store	0($pop0), $pop9
 	i32.const	$push8=, -24
 	i32.add 	$1=, $1, $pop8
 	i32.const	$push7=, 0
@@ -33,15 +33,15 @@ main:                                   # @main
 	i32.const	$push13=, 1
 	i32.add 	$push12=, $0, $pop13
 	tee_local	$push11=, $0=, $pop12
-	i32.store	$drop=, a($pop14), $pop11
+	i32.store	a($pop14), $pop11
 	br_if   	0, $0           # 0: up to label0
 .LBB0_3:                                # %return
 	end_loop                        # label1:
 	i32.const	$push3=, 0
 	i32.const	$push2=, 24
-	i32.store	$drop=, b($pop3), $pop2
+	i32.store	b($pop3), $pop2
 	i32.const	$push16=, 0
-	i32.store8	$drop=, c($pop16), $1
+	i32.store8	c($pop16), $1
 	i32.const	$push15=, 0
                                         # fallthrough-return: $pop15
 	.endfunc
@@ -102,4 +102,4 @@ f:
 	.size	f, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

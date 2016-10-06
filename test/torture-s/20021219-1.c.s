@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021219-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021219-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -29,15 +29,15 @@ main:                                   # @main
 	i32.add 	$push4=, $pop18, $pop3
 	i32.const	$push1=, 0
 	i32.load8_u	$push2=, .Lmain.str+10($pop1)
-	i32.store8	$drop=, 0($pop4), $pop2
+	i32.store8	0($pop4), $pop2
 	i32.const	$push6=, 12
 	i32.add 	$push7=, $0, $pop6
 	i32.const	$push17=, 0
 	i32.load16_u	$push5=, .Lmain.str+8($pop17):p2align=0
-	i32.store16	$drop=, 0($pop7), $pop5
+	i32.store16	0($pop7), $pop5
 	i32.const	$push16=, 0
 	i64.load	$push8=, .Lmain.str($pop16):p2align=0
-	i64.store	$drop=, 4($0):p2align=2, $pop8
+	i64.store	4($0):p2align=2, $pop8
 	i32.const	$push9=, 10
 	i32.add 	$0=, $0, $pop9
 	i32.const	$1=, 32
@@ -79,4 +79,4 @@ main:                                   # @main
 	.size	.Lmain.str, 11
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57877.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57877.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -36,11 +36,11 @@ main:                                   # @main
 	i32.const	$push33=, 0
 	i32.load	$push32=, 0($1)
 	tee_local	$push31=, $3=, $pop32
-	i32.store	$drop=, h($pop33), $pop31
+	i32.store	h($pop33), $pop31
 	i32.const	$push30=, 0
 	i32.const	$push29=, 2
 	i32.add 	$push2=, $4, $pop29
-	i32.store	$drop=, g($pop30), $pop2
+	i32.store	g($pop30), $pop2
 	i32.const	$push28=, 0
 	i32.const	$push27=, 16
 	i32.shl 	$push3=, $3, $pop27
@@ -50,7 +50,7 @@ main:                                   # @main
 	i64.extend_u/i32	$push6=, $pop5
 	i64.lt_u	$push25=, $pop6, $0
 	tee_local	$push24=, $5=, $pop25
-	i32.store	$drop=, e($pop28), $pop24
+	i32.store	e($pop28), $pop24
 	i32.const	$push23=, 1
 	i32.add 	$push22=, $4, $pop23
 	tee_local	$push21=, $4=, $pop22
@@ -60,7 +60,7 @@ main:                                   # @main
 # BB#4:                                 # %for.cond.for.end_crit_edge.i
 	end_loop                        # label3:
 	i32.const	$push8=, 0
-	i32.store16	$drop=, d($pop8), $3
+	i32.store16	d($pop8), $3
 .LBB0_5:                                # %foo.exit
 	end_block                       # label0:
 	block
@@ -151,5 +151,5 @@ d:
 	.size	d, 2
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

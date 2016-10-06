@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61673.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61673.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -42,7 +42,7 @@ foo:                                    # @foo
 	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
-	i32.store8	$drop=, e($pop2), $0
+	i32.store8	e($pop2), $0
 .LBB1_2:                                # %if.end
 	end_block                       # label2:
 	call    	bar@FUNCTION, $0
@@ -66,7 +66,7 @@ baz:                                    # @baz
 	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %if.then
 	i32.const	$push2=, 0
-	i32.store8	$drop=, e($pop2), $0
+	i32.store8	e($pop2), $0
 .LBB2_2:                                # %if.end
 	end_block                       # label3:
                                         # fallthrough-return
@@ -83,7 +83,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push19=, 0
 	i32.const	$push0=, 33
-	i32.store8	$drop=, e($pop19), $pop0
+	i32.store8	e($pop19), $pop0
 	i32.const	$push1=, main.c
 	call    	foo@FUNCTION, $pop1
 	block
@@ -103,7 +103,7 @@ main:                                   # @main
 # BB#2:                                 # %if.end6
 	i32.const	$push23=, 0
 	i32.const	$push8=, 33
-	i32.store8	$drop=, e($pop23), $pop8
+	i32.store8	e($pop23), $pop8
 	i32.const	$push9=, main.c
 	call    	baz@FUNCTION, $pop9
 	i32.const	$push22=, 0
@@ -145,5 +145,5 @@ main.c:
 	.size	main.c, 2
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

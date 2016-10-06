@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/copysign-casts.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/copysign-casts.ll"
 	.globl	fold_promote
 	.type	fold_promote,@function
 fold_promote:
@@ -23,3 +23,5 @@ fold_demote:
 	.size	fold_demote, .Lfunc_end1-fold_demote
 
 
+	.functype	copysign, f64, f64, f64
+	.functype	copysignf, f32, f32, f32

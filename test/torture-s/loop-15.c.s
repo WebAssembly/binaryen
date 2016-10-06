@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-15.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-15.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -19,7 +19,7 @@ foo:                                    # @foo
 	i32.add 	$push4=, $1, $pop5
 	tee_local	$push3=, $2=, $pop4
 	i32.load	$push1=, 0($pop3)
-	i32.store	$drop=, 0($1), $pop1
+	i32.store	0($1), $pop1
 	copy_local	$1=, $2
 	i32.gt_u	$push2=, $2, $0
 	br_if   	0, $pop2        # 0: up to label1
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.const	$push19=, 32
 	i32.sub 	$push28=, $pop18, $pop19
 	tee_local	$push27=, $11=, $pop28
-	i32.store	$drop=, __stack_pointer($pop20), $pop27
+	i32.store	__stack_pointer($pop20), $pop27
 	i32.const	$3=, 0
 	i32.const	$2=, -1
 	i32.const	$push2=, 16
@@ -79,11 +79,11 @@ main:                                   # @main
                                         #       Child Loop BB1_12 Depth 3
 	loop                            # label8:
 	i32.const	$push32=, 4
-	i32.store	$drop=, 0($7), $pop32
+	i32.store	0($7), $pop32
 	i64.const	$push31=, 4294967296
-	i64.store	$drop=, 0($11), $pop31
+	i64.store	0($11), $pop31
 	i64.const	$push30=, 12884901890
-	i64.store	$drop=, 8($11), $pop30
+	i64.store	8($11), $pop30
 	block
 	i32.le_s	$push3=, $6, $3
 	br_if   	0, $pop3        # 0: down to label10
@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.add 	$push35=, $10, $pop36
 	tee_local	$push34=, $9=, $pop35
 	i32.load	$push5=, 0($pop34)
-	i32.store	$drop=, 0($10), $pop5
+	i32.store	0($10), $pop5
 	copy_local	$10=, $9
 	i32.gt_u	$push6=, $9, $4
 	br_if   	0, $pop6        # 0: up to label11
@@ -206,7 +206,7 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	i32.const	$push21=, 32
 	i32.add 	$push22=, $11, $pop21
-	i32.store	$drop=, __stack_pointer($pop23), $pop22
+	i32.store	__stack_pointer($pop23), $pop22
 	i32.const	$push15=, 0
 	return  	$pop15
 .LBB1_17:                               # %if.then
@@ -226,5 +226,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

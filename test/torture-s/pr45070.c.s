@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr45070.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr45070.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -14,12 +14,12 @@ main:                                   # @main
 	i32.const	$push9=, 16
 	i32.sub 	$push16=, $pop8, $pop9
 	tee_local	$push15=, $2=, $pop16
-	i32.store	$drop=, __stack_pointer($pop10), $pop15
+	i32.store	__stack_pointer($pop10), $pop15
 	i32.const	$1=, 0
 	i32.const	$push14=, 0
-	i32.store	$drop=, 8($2), $pop14
+	i32.store	8($2), $pop14
 	i64.const	$push0=, 0
-	i64.store	$drop=, 0($2), $pop0
+	i64.store	0($2), $pop0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
@@ -60,7 +60,7 @@ main:                                   # @main
 	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $2, $pop11
-	i32.store	$drop=, __stack_pointer($pop13), $pop12
+	i32.store	__stack_pointer($pop13), $pop12
 	i32.const	$push6=, 0
 	return  	$pop6
 .LBB0_7:                                # %if.then
@@ -99,7 +99,7 @@ next:                                   # @next
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$3=, 0
 	i32.const	$push12=, 0
-	i32.store	$drop=, 0($1), $pop12
+	i32.store	0($1), $pop12
 	call    	fetch@FUNCTION, $0
 	i32.load	$push7=, 0($0)
 	i32.load	$push6=, 0($2)
@@ -111,7 +111,7 @@ next:                                   # @next
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
 	i32.const	$push11=, 1
-	i32.store	$drop=, 0($pop10), $pop11
+	i32.store	0($pop10), $pop11
 	i32.const	$3=, 65535
 .LBB1_5:                                # %cleanup
 	end_block                       # label5:
@@ -127,12 +127,12 @@ fetch:                                  # @fetch
 	.param  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 128
-	i32.store	$drop=, 4($0), $pop0
+	i32.store	4($0), $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	fetch, .Lfunc_end2-fetch
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

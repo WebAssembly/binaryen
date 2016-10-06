@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
 	.section	.text.vec_assert_fail,"ax",@progbits
 	.hidden	vec_assert_fail
 	.globl	vec_assert_fail
@@ -42,7 +42,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.const	$push12=, 0
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
-	i32.store	$drop=, deferred_access_no_check($pop12), $pop1
+	i32.store	deferred_access_no_check($pop12), $pop1
 	return
 .LBB2_2:                                # %if.else
 	end_block                       # label0:
@@ -62,7 +62,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	i32.const	$push2=, -1
 	i32.add 	$push19=, $1, $pop2
 	tee_local	$push18=, $2=, $pop19
-	i32.store	$drop=, 0($0), $pop18
+	i32.store	0($0), $pop18
 	i32.eqz 	$push23=, $2
 	br_if   	0, $pop23       # 0: down to label2
 # BB#5:                                 # %VEC_deferred_access_base_last.exit29
@@ -100,13 +100,13 @@ main:                                   # @main
 	i32.call	$push8=, __builtin_malloc@FUNCTION, $pop0
 	tee_local	$push7=, $0=, $pop8
 	i32.const	$push1=, 2
-	i32.store	$drop=, 0($pop7), $pop1
+	i32.store	0($pop7), $pop1
 	i32.const	$push2=, 0
-	i32.store	$drop=, deferred_access_stack($pop2), $0
+	i32.store	deferred_access_stack($pop2), $0
 	i32.const	$push3=, 8
 	i32.add 	$push4=, $0, $pop3
 	i32.const	$push5=, 1
-	i32.store	$drop=, 0($pop4), $pop5
+	i32.store	0($pop4), $pop5
 	call    	pop_to_parent_deferring_access_checks@FUNCTION
 	i32.const	$push6=, 0
                                         # fallthrough-return: $pop6
@@ -138,6 +138,6 @@ deferred_access_stack:
 	.size	deferred_access_stack, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	__builtin_malloc, i32

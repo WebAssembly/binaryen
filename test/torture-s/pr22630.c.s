@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr22630.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr22630.c"
 	.section	.text.bla,"ax",@progbits
 	.hidden	bla
 	.globl	bla
@@ -15,7 +15,7 @@ bla:                                    # @bla
 # BB#1:                                 # %if.then1
 	i32.const	$push4=, 0
 	i32.const	$push3=, 1
-	i32.store	$drop=, j($pop4), $pop3
+	i32.store	j($pop4), $pop3
 .LBB0_2:                                # %if.end2
 	end_block                       # label0:
                                         # fallthrough-return
@@ -32,7 +32,7 @@ main:                                   # @main
 # BB#0:                                 # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$drop=, j($pop1), $pop0
+	i32.store	j($pop1), $pop0
 	i32.const	$push2=, 0
                                         # fallthrough-return: $pop2
 	.endfunc
@@ -49,4 +49,4 @@ j:
 	.size	j, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080522-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080522-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -10,9 +10,9 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
-	i32.store	$drop=, i($pop1), $pop0
+	i32.store	i($pop1), $pop0
 	i32.const	$push2=, 2
-	i32.store	$drop=, 0($0), $pop2
+	i32.store	0($0), $pop2
 	i32.const	$push4=, 0
 	i32.load	$push3=, i($pop4)
                                         # fallthrough-return: $pop3
@@ -29,10 +29,10 @@ bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 2
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.const	$push2=, 0
 	i32.const	$push1=, 1
-	i32.store	$drop=, i($pop2), $pop1
+	i32.store	i($pop2), $pop1
 	i32.load	$push3=, 0($0)
                                         # fallthrough-return: $pop3
 	.endfunc
@@ -53,9 +53,9 @@ main:                                   # @main
 	i32.const	$push18=, 16
 	i32.sub 	$push29=, $pop17, $pop18
 	tee_local	$push28=, $0=, $pop29
-	i32.store	$drop=, __stack_pointer($pop19), $pop28
+	i32.store	__stack_pointer($pop19), $pop28
 	i32.const	$push0=, 0
-	i32.store	$drop=, 12($0), $pop0
+	i32.store	12($0), $pop0
 	block
 	i32.const	$push27=, i
 	i32.call	$push1=, foo@FUNCTION, $pop27
@@ -96,7 +96,7 @@ main:                                   # @main
 	i32.const	$push22=, 0
 	i32.const	$push20=, 16
 	i32.add 	$push21=, $0, $pop20
-	i32.store	$drop=, __stack_pointer($pop22), $pop21
+	i32.store	__stack_pointer($pop22), $pop21
 	i32.const	$push15=, 0
 	return  	$pop15
 .LBB2_7:                                # %if.then17
@@ -115,5 +115,5 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-4.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-4.c"
 	.section	.text.assign_arg_ptr,"ax",@progbits
 	.hidden	assign_arg_ptr
 	.globl	assign_arg_ptr
@@ -88,7 +88,7 @@ preinc_glob_ptr:                        # @preinc_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, ptr($pop0), $pop3
+	i32.store	ptr($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -121,7 +121,7 @@ postinc_glob_ptr:                       # @postinc_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, ptr($pop0), $pop3
+	i32.store	ptr($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -154,7 +154,7 @@ predec_glob_ptr:                        # @predec_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, -4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, ptr($pop0), $pop3
+	i32.store	ptr($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -187,7 +187,7 @@ postdec_glob_ptr:                       # @postdec_glob_ptr
 	i32.load	$push1=, ptr($pop5)
 	i32.const	$push2=, -4
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, ptr($pop0), $pop3
+	i32.store	ptr($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -220,7 +220,7 @@ preinc_glob_idx:                        # @preinc_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, arrindex($pop0), $pop3
+	i32.store	arrindex($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -253,7 +253,7 @@ postinc_glob_idx:                       # @postinc_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, arrindex($pop0), $pop3
+	i32.store	arrindex($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -286,7 +286,7 @@ predec_glob_idx:                        # @predec_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, arrindex($pop0), $pop3
+	i32.store	arrindex($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -319,7 +319,7 @@ postdec_glob_idx:                       # @postdec_glob_idx
 	i32.load	$push1=, arrindex($pop5)
 	i32.const	$push2=, -1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, arrindex($pop0), $pop3
+	i32.store	arrindex($pop0), $pop3
 	i32.const	$push4=, 1
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -339,7 +339,7 @@ getptr:                                 # @getptr
 	i32.load	$push1=, getptrcnt($pop6)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, getptrcnt($pop0), $pop3
+	i32.store	getptrcnt($pop0), $pop3
 	i32.const	$push4=, 4
 	i32.add 	$push5=, $0, $pop4
                                         # fallthrough-return: $pop5
@@ -362,7 +362,7 @@ funccall_arg_ptr:                       # @funccall_arg_ptr
 	tee_local	$push4=, $1=, $pop5
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $pop4, $pop1
-	i32.store	$drop=, getptrcnt($pop0), $pop2
+	i32.store	getptrcnt($pop0), $pop2
 	i32.eqz 	$push3=, $1
                                         # fallthrough-return: $pop3
 	.endfunc
@@ -382,7 +382,7 @@ getint:                                 # @getint
 	i32.load	$push1=, getintcnt($pop6)
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $pop1, $pop2
-	i32.store	$drop=, getintcnt($pop0), $pop3
+	i32.store	getintcnt($pop0), $pop3
 	i32.const	$push5=, 1
 	i32.add 	$push4=, $0, $pop5
                                         # fallthrough-return: $pop4
@@ -405,7 +405,7 @@ funccall_arg_idx:                       # @funccall_arg_idx
 	i32.const	$push2=, 1
 	i32.add 	$push6=, $pop1, $pop2
 	tee_local	$push5=, $2=, $pop6
-	i32.store	$drop=, getintcnt($pop0), $pop5
+	i32.store	getintcnt($pop0), $pop5
 	i32.const	$push4=, 1
 	i32.eq  	$push3=, $2, $pop4
                                         # fallthrough-return: $pop3
@@ -438,7 +438,7 @@ main:                                   # @main
 	i32.const	$push16=, 1
 	i32.add 	$push15=, $0, $pop16
 	tee_local	$push14=, $1=, $pop15
-	i32.store	$drop=, arrindex($pop17), $pop14
+	i32.store	arrindex($pop17), $pop14
 	i32.const	$push13=, 1
 	i32.eqz 	$push34=, $pop13
 	br_if   	0, $pop34       # 0: down to label0
@@ -446,19 +446,19 @@ main:                                   # @main
 	i32.const	$push19=, 0
 	i32.const	$push2=, 2
 	i32.add 	$push3=, $0, $pop2
-	i32.store	$drop=, arrindex($pop19), $pop3
+	i32.store	arrindex($pop19), $pop3
 	i32.const	$push18=, 1
 	i32.eqz 	$push35=, $pop18
 	br_if   	0, $pop35       # 0: down to label0
 # BB#4:                                 # %if.end64
 	i32.const	$push21=, 0
-	i32.store	$drop=, arrindex($pop21), $1
+	i32.store	arrindex($pop21), $1
 	i32.const	$push20=, 1
 	i32.eqz 	$push36=, $pop20
 	br_if   	0, $pop36       # 0: down to label0
 # BB#5:                                 # %if.end72
 	i32.const	$push23=, 0
-	i32.store	$drop=, arrindex($pop23), $0
+	i32.store	arrindex($pop23), $0
 	i32.const	$push22=, 1
 	i32.eqz 	$push37=, $pop22
 	br_if   	0, $pop37       # 0: down to label0
@@ -469,7 +469,7 @@ main:                                   # @main
 	tee_local	$push25=, $0=, $pop26
 	i32.const	$push24=, 1
 	i32.add 	$push4=, $pop25, $pop24
-	i32.store	$drop=, getptrcnt($pop28), $pop4
+	i32.store	getptrcnt($pop28), $pop4
 	br_if   	0, $0           # 0: down to label0
 # BB#7:                                 # %if.end80
 	i32.const	$push33=, 0
@@ -478,7 +478,7 @@ main:                                   # @main
 	tee_local	$push30=, $0=, $pop31
 	i32.const	$push29=, 1
 	i32.add 	$push5=, $pop30, $pop29
-	i32.store	$drop=, getintcnt($pop33), $pop5
+	i32.store	getintcnt($pop33), $pop5
 	br_if   	0, $0           # 0: down to label0
 # BB#8:                                 # %if.end84
 	i32.const	$push6=, 0
@@ -538,6 +538,6 @@ getintcnt:
 	.size	getintcnt, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991228-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991228-1.c"
 	.section	.text.signbit,"ax",@progbits
 	.hidden	signbit
 	.globl	signbit
@@ -14,7 +14,7 @@ signbit:                                # @signbit
 	i32.const	$push10=, 16
 	i32.sub 	$push14=, $pop9, $pop10
 	tee_local	$push13=, $1=, $pop14
-	f64.store	$drop=, 8($pop13), $0
+	f64.store	8($pop13), $0
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $1, $pop11
 	i32.const	$push0=, 0
@@ -44,7 +44,7 @@ main:                                   # @main
 	i32.const	$push13=, 16
 	i32.sub 	$push22=, $pop12, $pop13
 	tee_local	$push21=, $1=, $pop22
-	i32.store	$drop=, __stack_pointer($pop14), $pop21
+	i32.store	__stack_pointer($pop14), $pop21
 	block
 	i32.const	$push20=, 0
 	i32.load	$push0=, endianness_test($pop20)
@@ -64,7 +64,7 @@ main:                                   # @main
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i64.const	$push6=, -4625196817309499392
-	i64.store	$drop=, 8($1), $pop6
+	i64.store	8($1), $pop6
 	block
 	i32.const	$push15=, 8
 	i32.add 	$push16=, $1, $pop15
@@ -104,6 +104,6 @@ endianness_test:
 	.size	endianness_test, 8
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32
 	.functype	abort, void

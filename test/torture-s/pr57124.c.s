@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57124.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57124.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -39,11 +39,11 @@ main:                                   # @main
 	i32.const	$push4=, 16
 	i32.sub 	$push11=, $pop3, $pop4
 	tee_local	$push10=, $0=, $pop11
-	i32.store	$drop=, __stack_pointer($pop5), $pop10
+	i32.store	__stack_pointer($pop5), $pop10
 	i32.const	$push0=, 65531
-	i32.store16	$drop=, 14($0), $pop0
+	i32.store16	14($0), $pop0
 	i32.const	$push1=, 65526
-	i32.store16	$drop=, 12($0), $pop1
+	i32.store16	12($0), $pop1
 	i32.const	$push6=, 14
 	i32.add 	$push7=, $0, $pop6
 	i32.const	$push8=, 12
@@ -55,6 +55,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

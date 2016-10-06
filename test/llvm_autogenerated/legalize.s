@@ -75,7 +75,7 @@ bigshift:
 	i32.const	$push468=, 1024
 	i32.sub 	$push919=, $pop467, $pop468
 	tee_local	$push918=, $52=, $pop919
-	i32.store	$drop=, __stack_pointer($pop469), $pop918
+	i32.store	__stack_pointer($pop469), $pop918
 	i32.const	$push473=, 512
 	i32.add 	$push474=, $52, $pop473
 	i32.wrap/i64	$push917=, $17
@@ -345,7 +345,7 @@ bigshift:
 	i32.lt_u	$push869=, $33, $pop870
 	tee_local	$push868=, $43=, $pop869
 	i64.select	$push25=, $pop24, $pop871, $pop868
-	i64.store	$drop=, 0($pop26), $pop25
+	i64.store	0($pop26), $pop25
 	i64.load	$push27=, 512($52)
 	i64.const	$push867=, 0
 	i64.select	$push28=, $pop27, $pop867, $41
@@ -353,7 +353,7 @@ bigshift:
 	i64.select	$push29=, $pop28, $pop866, $42
 	i64.const	$push865=, 0
 	i64.select	$push30=, $pop29, $pop865, $43
-	i64.store	$drop=, 0($0), $pop30
+	i64.store	0($0), $pop30
 	i32.const	$push42=, 24
 	i32.add 	$push43=, $0, $pop42
 	i32.const	$push601=, 528
@@ -378,7 +378,7 @@ bigshift:
 	i64.select	$push40=, $pop39, $pop861, $42
 	i64.const	$push860=, 0
 	i64.select	$push41=, $pop40, $pop860, $43
-	i64.store	$drop=, 0($pop43), $pop41
+	i64.store	0($pop43), $pop41
 	i32.const	$push52=, 16
 	i32.add 	$push53=, $0, $pop52
 	i64.load	$push44=, 528($52)
@@ -391,7 +391,7 @@ bigshift:
 	i64.select	$push50=, $pop49, $pop859, $42
 	i64.const	$push858=, 0
 	i64.select	$push51=, $pop50, $pop858, $43
-	i64.store	$drop=, 0($pop53), $pop51
+	i64.store	0($pop53), $pop51
 	i32.const	$push79=, 56
 	i32.add 	$push80=, $0, $pop79
 	i32.const	$push613=, 592
@@ -448,7 +448,7 @@ bigshift:
 	i64.select	$push77=, $pop76, $8, $33
 	i64.const	$push843=, 0
 	i64.select	$push78=, $pop77, $pop843, $43
-	i64.store	$drop=, 0($pop80), $pop78
+	i64.store	0($pop80), $pop78
 	i32.const	$push99=, 48
 	i32.add 	$push100=, $0, $pop99
 	i64.load	$push87=, 592($52)
@@ -471,7 +471,7 @@ bigshift:
 	i64.select	$push97=, $pop96, $7, $33
 	i64.const	$push841=, 0
 	i64.select	$push98=, $pop97, $pop841, $43
-	i64.store	$drop=, 0($pop100), $pop98
+	i64.store	0($pop100), $pop98
 	i32.const	$push120=, 40
 	i32.add 	$push121=, $0, $pop120
 	i32.const	$push627=, 576
@@ -511,7 +511,7 @@ bigshift:
 	i64.select	$push118=, $pop117, $6, $33
 	i64.const	$push833=, 0
 	i64.select	$push119=, $pop118, $pop833, $43
-	i64.store	$drop=, 0($pop121), $pop119
+	i64.store	0($pop121), $pop119
 	i32.const	$push136=, 32
 	i32.add 	$push137=, $0, $pop136
 	i64.load	$push128=, 576($52)
@@ -531,7 +531,7 @@ bigshift:
 	i64.select	$push134=, $pop133, $5, $33
 	i64.const	$push830=, 0
 	i64.select	$push135=, $pop134, $pop830, $43
-	i64.store	$drop=, 0($pop137), $pop135
+	i64.store	0($pop137), $pop135
 	i32.const	$push193=, 120
 	i32.add 	$push194=, $0, $pop193
 	i32.const	$push651=, 1008
@@ -656,7 +656,7 @@ bigshift:
 	i64.select	$push161=, $pop160, $8, $37
 	i64.select	$push191=, $pop190, $pop161, $43
 	i64.select	$push192=, $pop191, $16, $33
-	i64.store	$drop=, 0($pop194), $pop192
+	i64.store	0($pop194), $pop192
 	i32.const	$push235=, 112
 	i32.add 	$push236=, $0, $pop235
 	i64.load	$push218=, 1008($52)
@@ -703,7 +703,7 @@ bigshift:
 	i64.select	$push211=, $pop210, $7, $37
 	i64.select	$push233=, $pop232, $pop211, $43
 	i64.select	$push234=, $pop233, $15, $33
-	i64.store	$drop=, 0($pop236), $pop234
+	i64.store	0($pop236), $pop234
 	i32.const	$push286=, 104
 	i32.add 	$push287=, $0, $pop286
 	i32.const	$push673=, 992
@@ -799,7 +799,7 @@ bigshift:
 	i64.select	$push283=, $pop282, $6, $37
 	i64.select	$push284=, $pop265, $pop283, $43
 	i64.select	$push285=, $pop284, $14, $33
-	i64.store	$drop=, 0($pop287), $pop285
+	i64.store	0($pop287), $pop285
 	i32.const	$push324=, 96
 	i32.add 	$push325=, $0, $pop324
 	i64.load	$push301=, 992($52)
@@ -843,7 +843,7 @@ bigshift:
 	i64.select	$push321=, $pop320, $5, $37
 	i64.select	$push322=, $pop308, $pop321, $43
 	i64.select	$push323=, $pop322, $13, $33
-	i64.store	$drop=, 0($pop325), $pop323
+	i64.store	0($pop325), $pop323
 	i32.const	$push361=, 72
 	i32.add 	$push362=, $0, $pop361
 	i32.const	$push699=, 896
@@ -914,7 +914,7 @@ bigshift:
 	i64.select	$push358=, $pop357, $pop749, $49
 	i64.select	$push359=, $pop354, $pop358, $43
 	i64.select	$push360=, $pop359, $10, $33
-	i64.store	$drop=, 0($pop362), $pop360
+	i64.store	0($pop362), $pop360
 	i32.const	$push389=, 64
 	i32.add 	$push390=, $0, $pop389
 	i64.load	$push380=, 896($52)
@@ -948,7 +948,7 @@ bigshift:
 	i64.select	$push386=, $pop385, $pop744, $49
 	i64.select	$push387=, $pop383, $pop386, $43
 	i64.select	$push388=, $pop387, $9, $33
-	i64.store	$drop=, 0($pop390), $pop388
+	i64.store	0($pop390), $pop388
 	i32.const	$push432=, 88
 	i32.add 	$push433=, $0, $pop432
 	i32.const	$push703=, 912
@@ -1029,7 +1029,7 @@ bigshift:
 	i64.select	$push429=, $pop428, $pop729, $49
 	i64.select	$push430=, $pop419, $pop429, $43
 	i64.select	$push431=, $pop430, $12, $33
-	i64.store	$drop=, 0($pop433), $pop431
+	i64.store	0($pop433), $pop431
 	i32.const	$push464=, 80
 	i32.add 	$push465=, $0, $pop464
 	i64.load	$push434=, 912($52)
@@ -1066,11 +1066,11 @@ bigshift:
 	i64.select	$push461=, $pop460, $pop725, $49
 	i64.select	$push462=, $pop454, $pop461, $43
 	i64.select	$push463=, $pop462, $11, $33
-	i64.store	$drop=, 0($pop465), $pop463
+	i64.store	0($pop465), $pop463
 	i32.const	$push472=, 0
 	i32.const	$push470=, 1024
 	i32.add 	$push471=, $52, $pop470
-	i32.store	$drop=, __stack_pointer($pop472), $pop471
+	i32.store	__stack_pointer($pop472), $pop471
 	return
 	.endfunc
 .Lfunc_end5:

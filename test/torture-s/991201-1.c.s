@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991201-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991201-1.c"
 	.section	.text.reset_palette,"ax",@progbits
 	.hidden	reset_palette
 	.globl	reset_palette
@@ -24,7 +24,7 @@ reset_palette:                          # @reset_palette
 	i32.const	$push24=, default_red+64
 	i32.add 	$push6=, $2, $pop24
 	i32.load	$push7=, 0($pop6)
-	i32.store8	$drop=, 0($pop5), $pop7
+	i32.store8	0($pop5), $pop7
 	i32.load	$push8=, 0($1)
 	i32.add 	$push9=, $pop8, $0
 	i32.const	$push23=, -1
@@ -32,13 +32,13 @@ reset_palette:                          # @reset_palette
 	i32.const	$push22=, default_grn+64
 	i32.add 	$push11=, $2, $pop22
 	i32.load	$push12=, 0($pop11)
-	i32.store8	$drop=, 0($pop10), $pop12
+	i32.store8	0($pop10), $pop12
 	i32.load	$push13=, 0($1)
 	i32.add 	$push14=, $pop13, $0
 	i32.const	$push21=, default_blu+64
 	i32.add 	$push15=, $2, $pop21
 	i32.load	$push16=, 0($pop15)
-	i32.store8	$drop=, 0($pop14), $pop16
+	i32.store8	0($pop14), $pop16
 	i32.const	$push20=, 3
 	i32.add 	$0=, $0, $pop20
 	i32.const	$push19=, 4
@@ -197,6 +197,6 @@ default_blu:
 	.size	default_blu, 64
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090113-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090113-1.c"
 	.section	.text.msum_i4,"ax",@progbits
 	.hidden	msum_i4
 	.globl	msum_i4
@@ -14,7 +14,7 @@ msum_i4:                                # @msum_i4
 	i32.const	$push22=, 64
 	i32.sub 	$push42=, $pop21, $pop22
 	tee_local	$push41=, $8=, $pop42
-	i32.store	$drop=, __stack_pointer($pop23), $pop41
+	i32.store	__stack_pointer($pop23), $pop41
 	i32.load	$push40=, 0($2)
 	tee_local	$push39=, $2=, $pop40
 	i32.const	$push38=, -1
@@ -59,7 +59,7 @@ msum_i4:                                # @msum_i4
 	i32.add 	$push13=, $2, $pop51
 	i32.load	$push14=, 0($pop13)
 	i32.sub 	$push15=, $pop12, $pop14
-	i32.store	$drop=, 0($7), $pop15
+	i32.store	0($7), $pop15
 	i32.const	$push50=, 12
 	i32.add 	$2=, $2, $pop50
 	i32.const	$push49=, 4
@@ -109,14 +109,14 @@ msum_i4:                                # @msum_i4
 .LBB0_8:                                # %for.end22
                                         #   in Loop: Header=BB0_4 Depth=1
 	end_block                       # label5:
-	i32.store	$drop=, 0($1), $7
+	i32.store	0($1), $7
 	i32.const	$push62=, 4
 	i32.add 	$1=, $1, $pop62
 	i32.load	$push17=, 32($8)
 	i32.const	$push61=, 1
 	i32.add 	$push60=, $pop17, $pop61
 	tee_local	$push59=, $2=, $pop60
-	i32.store	$drop=, 32($8), $pop59
+	i32.store	32($8), $pop59
 	i32.load	$push18=, 0($8)
 	i32.ne  	$push19=, $2, $pop18
 	br_if   	0, $pop19       # 0: up to label3
@@ -125,7 +125,7 @@ msum_i4:                                # @msum_i4
 	i32.const	$push26=, 0
 	i32.const	$push24=, 64
 	i32.add 	$push25=, $8, $pop24
-	i32.store	$drop=, __stack_pointer($pop26), $pop25
+	i32.store	__stack_pointer($pop26), $pop25
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -145,4 +145,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"

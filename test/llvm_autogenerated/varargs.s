@@ -4,7 +4,7 @@
 	.type	start,@function
 start:
 	.param  	i32, i32
-	i32.store	$drop=, 0($0), $1
+	i32.store	0($0), $1
 	return
 	.endfunc
 .Lfunc_end0:
@@ -24,7 +24,7 @@ end:
 copy:
 	.param  	i32, i32
 	i32.load	$push0=, 0($1)
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	return
 	.endfunc
 .Lfunc_end2:
@@ -40,7 +40,7 @@ arg_i8:
 	tee_local	$push3=, $1=, $pop4
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $pop3, $pop0
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	i32.load	$push2=, 0($1)
 	return  	$pop2
 	.endfunc
@@ -61,7 +61,7 @@ arg_i32:
 	tee_local	$push7=, $1=, $pop8
 	i32.const	$push4=, 4
 	i32.add 	$push5=, $pop7, $pop4
-	i32.store	$drop=, 0($0), $pop5
+	i32.store	0($0), $pop5
 	i32.load	$push6=, 0($1)
 	return  	$pop6
 	.endfunc
@@ -82,16 +82,16 @@ arg_i128:
 	i32.const	$push4=, 8
 	i32.add 	$push11=, $pop12, $pop4
 	tee_local	$push10=, $3=, $pop11
-	i32.store	$drop=, 0($1), $pop10
+	i32.store	0($1), $pop10
 	i64.load	$4=, 0($2)
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $2, $pop5
-	i32.store	$drop=, 0($1), $pop6
+	i32.store	0($1), $pop6
 	i32.const	$push9=, 8
 	i32.add 	$push7=, $0, $pop9
 	i64.load	$push8=, 0($3)
-	i64.store	$drop=, 0($pop7), $pop8
-	i64.store	$drop=, 0($0), $4
+	i64.store	0($pop7), $pop8
+	i64.store	0($0), $4
 	return
 	.endfunc
 .Lfunc_end5:
@@ -117,16 +117,16 @@ caller_some:
 	i32.const	$push4=, 16
 	i32.sub 	$push10=, $pop3, $pop4
 	tee_local	$push9=, $0=, $pop10
-	i32.store	$drop=, __stack_pointer($pop5), $pop9
+	i32.store	__stack_pointer($pop5), $pop9
 	i64.const	$push0=, 4611686018427387904
-	i64.store	$drop=, 8($0), $pop0
+	i64.store	8($0), $pop0
 	i32.const	$push1=, 0
-	i32.store	$drop=, 0($0), $pop1
+	i32.store	0($0), $pop1
 	call    	callee@FUNCTION, $0
 	i32.const	$push8=, 0
 	i32.const	$push6=, 16
 	i32.add 	$push7=, $0, $pop6
-	i32.store	$drop=, __stack_pointer($pop8), $pop7
+	i32.store	__stack_pointer($pop8), $pop7
 	return
 	.endfunc
 .Lfunc_end7:
@@ -144,7 +144,7 @@ startbb:
 	return
 .LBB8_2:
 	end_block
-	i32.store	$drop=, 0($1), $2
+	i32.store	0($1), $2
 	return
 	.endfunc
 .Lfunc_end8:

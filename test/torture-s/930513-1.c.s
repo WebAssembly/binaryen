@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -15,16 +15,16 @@ f:                                      # @f
 	i32.const	$push5=, 16
 	i32.sub 	$push11=, $pop4, $pop5
 	tee_local	$push10=, $1=, $pop11
-	i32.store	$drop=, __stack_pointer($pop6), $pop10
+	i32.store	__stack_pointer($pop6), $pop10
 	i64.const	$push0=, 4617315517961601024
-	i64.store	$drop=, 0($1), $pop0
+	i64.store	0($1), $pop0
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
 	i32.call_indirect	$drop=, $0, $pop2, $pop1, $1
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $1, $pop7
-	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.store	__stack_pointer($pop9), $pop8
 	copy_local	$push12=, $1
                                         # fallthrough-return: $pop12
 	.endfunc
@@ -45,9 +45,9 @@ main:                                   # @main
 	i32.const	$push12=, 16
 	i32.sub 	$push16=, $pop11, $pop12
 	tee_local	$push15=, $0=, $pop16
-	i32.store	$drop=, __stack_pointer($pop13), $pop15
+	i32.store	__stack_pointer($pop13), $pop15
 	i64.const	$push1=, 4617315517961601024
-	i64.store	$drop=, 0($0), $pop1
+	i64.store	0($0), $pop1
 	i32.const	$push3=, buf
 	i32.const	$push2=, .L.str
 	i32.call	$drop=, sprintf@FUNCTION, $pop3, $pop2, $0
@@ -90,7 +90,7 @@ buf:
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	sprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

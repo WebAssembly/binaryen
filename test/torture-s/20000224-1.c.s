@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000224-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000224-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -42,7 +42,7 @@ test:                                   # @test
 # BB#3:                                 # %while.cond.while.end_crit_edge
 	end_loop                        # label2:
 	i32.const	$push6=, 0
-	i32.store	$drop=, flag($pop6), $3
+	i32.store	flag($pop6), $3
 .LBB0_4:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push20=, 1
@@ -94,5 +94,5 @@ flag:
 	.size	flag, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	exit, void, i32

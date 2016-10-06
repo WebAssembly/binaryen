@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44202-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44202-1.c"
 	.section	.text.add512,"ax",@progbits
 	.hidden	add512
 	.globl	add512
@@ -16,7 +16,7 @@ add512:                                 # @add512
 	i32.eqz 	$push3=, $pop1
 	br_if   	0, $pop3        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.store	$drop=, 0($1), $0
+	i32.store	0($1), $0
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	copy_local	$push4=, $2
@@ -40,7 +40,7 @@ add513:                                 # @add513
 	tee_local	$push1=, $2=, $pop2
 	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.then
-	i32.store	$drop=, 0($1), $0
+	i32.store	0($1), $0
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
 	copy_local	$push3=, $2
@@ -63,11 +63,11 @@ main:                                   # @main
 	i32.const	$push10=, 16
 	i32.sub 	$push19=, $pop9, $pop10
 	tee_local	$push18=, $0=, $pop19
-	i32.store	$drop=, __stack_pointer($pop11), $pop18
+	i32.store	__stack_pointer($pop11), $pop18
 	i32.const	$push17=, -1
-	i32.store	$drop=, 12($0), $pop17
+	i32.store	12($0), $pop17
 	i32.const	$push16=, -1
-	i32.store	$drop=, 8($0), $pop16
+	i32.store	8($0), $pop16
 	block
 	i32.const	$push1=, -512
 	i32.const	$push12=, 12
@@ -103,6 +103,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

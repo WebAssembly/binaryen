@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/doloop-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/doloop-2.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -17,7 +17,7 @@ main:                                   # @main
 	i32.load	$push0=, i($pop11)
 	i32.const	$push10=, 1
 	i32.add 	$push1=, $pop0, $pop10
-	i32.store	$drop=, i($pop12), $pop1
+	i32.store	i($pop12), $pop1
 	i32.const	$push9=, -1
 	i32.add 	$push8=, $0, $pop9
 	tee_local	$push7=, $0=, $pop8
@@ -54,6 +54,6 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

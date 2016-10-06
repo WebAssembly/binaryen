@@ -1,5 +1,5 @@
 	.text
-	.file	"/s/llvm/llvm/test/CodeGen/WebAssembly/comparisons_f32.ll"
+	.file	"/s/llvm-upstream/llvm/test/CodeGen/WebAssembly/comparisons_f32.ll"
 	.globl	ord_f32
 	.type	ord_f32,@function
 ord_f32:

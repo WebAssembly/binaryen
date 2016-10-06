@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041214-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041214-1.c"
 	.section	.text.g,"ax",@progbits
 	.hidden	g
 	.globl	g
@@ -51,8 +51,8 @@ f:                                      # @f
 	i32.const	$push5=, 16
 	i32.sub 	$push11=, $pop4, $pop5
 	tee_local	$push10=, $4=, $pop11
-	i32.store	$drop=, __stack_pointer($pop6), $pop10
-	i32.store	$drop=, 12($4), $2
+	i32.store	__stack_pointer($pop6), $pop10
+	i32.store	12($4), $2
 	block
 	i32.load8_u	$push1=, 0($1)
 	i32.eqz 	$push15=, $pop1
@@ -79,7 +79,7 @@ f:                                      # @f
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $4, $pop7
-	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.store	__stack_pointer($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -99,11 +99,11 @@ main:                                   # @main
 	i32.const	$push5=, 32
 	i32.sub 	$push17=, $pop4, $pop5
 	tee_local	$push16=, $0=, $pop17
-	i32.store	$drop=, __stack_pointer($pop6), $pop16
+	i32.store	__stack_pointer($pop6), $pop16
 	i32.const	$push15=, 0
-	i32.store	$drop=, 4($0), $pop15
+	i32.store	4($0), $pop15
 	i32.const	$push0=, .L.str.1
-	i32.store	$drop=, 0($0), $pop0
+	i32.store	0($0), $pop0
 	i32.const	$push10=, 22
 	i32.add 	$push11=, $0, $pop10
 	i32.const	$push1=, .L.str
@@ -118,7 +118,7 @@ main:                                   # @main
 	i32.const	$push9=, 0
 	i32.const	$push7=, 32
 	i32.add 	$push8=, $0, $pop7
-	i32.store	$drop=, __stack_pointer($pop9), $pop8
+	i32.store	__stack_pointer($pop9), $pop8
 	i32.const	$push18=, 0
 	return  	$pop18
 .LBB2_2:                                # %if.then
@@ -141,7 +141,7 @@ main:                                   # @main
 	.size	.L.str.1, 5
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	strcpy, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001228-1.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001228-1.c"
 	.section	.text.foo1,"ax",@progbits
 	.hidden	foo1
 	.globl	foo1
@@ -27,7 +27,7 @@ foo2:                                   # @foo2
 	i32.sub 	$push6=, $pop3, $pop4
 	tee_local	$push5=, $0=, $pop6
 	i32.const	$push0=, 1
-	i32.store	$drop=, 12($pop5), $pop0
+	i32.store	12($pop5), $pop0
 	i32.load8_s	$push1=, 12($0)
                                         # fallthrough-return: $pop1
 	.endfunc
@@ -48,9 +48,9 @@ main:                                   # @main
 	i32.const	$push6=, 16
 	i32.sub 	$push10=, $pop5, $pop6
 	tee_local	$push9=, $0=, $pop10
-	i32.store	$drop=, __stack_pointer($pop7), $pop9
+	i32.store	__stack_pointer($pop7), $pop9
 	i32.const	$push0=, 1
-	i32.store	$drop=, 12($0), $pop0
+	i32.store	12($0), $pop0
 	block
 	i32.load8_u	$push1=, 12($0)
 	i32.const	$push8=, 1
@@ -69,6 +69,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
 	.functype	exit, void, i32

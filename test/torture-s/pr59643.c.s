@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59643.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59643.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -41,7 +41,7 @@ foo:                                    # @foo
 	f64.mul 	$push11=, $pop10, $3
 	f64.add 	$push23=, $pop5, $pop11
 	tee_local	$push22=, $9=, $pop23
-	f64.store	$drop=, 0($pop12), $pop22
+	f64.store	0($pop12), $pop22
 	i32.const	$push21=, 8
 	i32.add 	$6=, $6, $pop21
 	i32.const	$push20=, 8
@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.const	$push18=, 768
 	i32.sub 	$push34=, $pop17, $pop18
 	tee_local	$push33=, $6=, $pop34
-	i32.store	$drop=, __stack_pointer($pop19), $pop33
+	i32.store	__stack_pointer($pop19), $pop33
 	i32.const	$5=, 0
 	i32.const	$push23=, 512
 	i32.add 	$push24=, $6, $pop23
@@ -90,17 +90,17 @@ main:                                   # @main
 	i32.and 	$push47=, $5, $pop48
 	tee_local	$push46=, $0=, $pop47
 	f64.convert_s/i32	$push0=, $pop46
-	f64.store	$drop=, 0($2), $pop0
+	f64.store	0($2), $pop0
 	i32.const	$push45=, -4
 	i32.add 	$push1=, $0, $pop45
 	f64.convert_s/i32	$push2=, $pop1
-	f64.store	$drop=, 0($3), $pop2
+	f64.store	0($3), $pop2
 	i32.const	$push44=, 3
 	i32.and 	$push3=, $5, $pop44
 	f64.convert_s/i32	$push43=, $pop3
 	tee_local	$push42=, $1=, $pop43
 	f64.add 	$push4=, $pop42, $1
-	f64.store	$drop=, 0($4), $pop4
+	f64.store	0($4), $pop4
 	i32.const	$push41=, 8
 	i32.add 	$2=, $2, $pop41
 	i32.const	$push40=, 8
@@ -153,7 +153,7 @@ main:                                   # @main
 	i32.const	$push22=, 0
 	i32.const	$push20=, 768
 	i32.add 	$push21=, $6, $pop20
-	i32.store	$drop=, __stack_pointer($pop22), $pop21
+	i32.store	__stack_pointer($pop22), $pop21
 	i32.const	$push15=, 0
 	return  	$pop15
 .LBB1_6:                                # %if.then
@@ -205,5 +205,5 @@ expected:
 	.size	expected, 256
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void

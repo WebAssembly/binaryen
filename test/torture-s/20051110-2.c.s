@@ -1,5 +1,5 @@
 	.text
-	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051110-2.c"
+	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051110-2.c"
 	.section	.text.add_unwind_adjustsp,"ax",@progbits
 	.hidden	add_unwind_adjustsp
 	.globl	add_unwind_adjustsp
@@ -34,7 +34,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.add 	$push4=, $3, $pop12
 	i32.const	$push11=, 128
 	i32.or  	$push3=, $2, $pop11
-	i32.store8	$drop=, 0($pop4), $pop3
+	i32.store8	0($pop4), $pop3
 	i32.const	$push10=, 1
 	i32.add 	$3=, $3, $pop10
 	br      	0               # 0: up to label0
@@ -44,7 +44,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.add 	$push8=, $3, $pop7
 	i32.const	$push5=, 127
 	i32.and 	$push6=, $2, $pop5
-	i32.store8	$drop=, 0($pop8), $pop6
+	i32.store8	0($pop8), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -81,7 +81,7 @@ main:                                   # @main
 	i32.add 	$push1=, $2, $pop18
 	i32.const	$push17=, 128
 	i32.or  	$push0=, $1, $pop17
-	i32.store8	$drop=, 0($pop1), $pop0
+	i32.store8	0($pop1), $pop0
 	i32.const	$push16=, 1
 	i32.add 	$2=, $2, $pop16
 	br      	0               # 0: up to label2
@@ -91,7 +91,7 @@ main:                                   # @main
 	i32.add 	$push6=, $2, $pop5
 	i32.const	$push3=, 127
 	i32.and 	$push4=, $1, $pop3
-	i32.store8	$drop=, 0($pop6), $pop4
+	i32.store8	0($pop6), $pop4
 	block
 	i32.const	$push24=, 0
 	i32.load8_u	$push7=, bytes($pop24)
@@ -135,5 +135,5 @@ flag:
 	.size	flag, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
 	.functype	abort, void
