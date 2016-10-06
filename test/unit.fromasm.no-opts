@@ -204,10 +204,10 @@
   )
   (func $switcher (param $x i32) (result i32)
     (local $waka i32)
-    (block $switch$0
-      (block $switch-case$2
-        (block $switch-case$1
-          (br_table $switch-case$1 $switch-case$2 $switch$0
+    (block $switch
+      (block $switch-case0
+        (block $switch-case
+          (br_table $switch-case $switch-case0 $switch
             (i32.sub
               (get_local $x)
               (i32.const 1)
@@ -222,10 +222,10 @@
         (i32.const 2)
       )
     )
-    (block $switch$3
-      (block $switch-case$5
-        (block $switch-case$4
-          (br_table $switch-case$5 $switch$3 $switch$3 $switch$3 $switch$3 $switch$3 $switch$3 $switch-case$4 $switch$3
+    (block $switch1
+      (block $switch-case3
+        (block $switch-case2
+          (br_table $switch-case3 $switch1 $switch1 $switch1 $switch1 $switch1 $switch1 $switch-case2 $switch1
             (i32.sub
               (get_local $x)
               (i32.const 5)
@@ -241,11 +241,11 @@
       )
     )
     (block $label$break$Lout
-      (block $switch-case$13
-        (block $switch-case$10
-          (block $switch-case$7
-            (block $switch-case$6
-              (br_table $switch-case$13 $label$break$Lout $label$break$Lout $switch-case$10 $label$break$Lout $label$break$Lout $label$break$Lout $label$break$Lout $switch-case$7 $label$break$Lout $switch-case$6 $label$break$Lout
+      (block $switch-case9
+        (block $switch-case6
+          (block $switch-case5
+            (block $switch-case4
+              (br_table $switch-case9 $label$break$Lout $label$break$Lout $switch-case6 $label$break$Lout $label$break$Lout $label$break$Lout $label$break$Lout $switch-case5 $label$break$Lout $switch-case4 $label$break$Lout
                 (i32.sub
                   (get_local $x)
                   (i32.const 2)
@@ -257,20 +257,20 @@
           (br $label$break$Lout)
         )
         (block
-          (loop $while-in$9
-            (block $while-out$8
-              (br $while-out$8)
-              (br $while-in$9)
+          (loop $while-in
+            (block $while-out
+              (br $while-out)
+              (br $while-in)
             )
           )
           (br $label$break$Lout)
         )
       )
       (block
-        (loop $while-in$12
-          (block $while-out$11
+        (loop $while-in8
+          (block $while-out7
             (br $label$break$Lout)
-            (br $while-in$12)
+            (br $while-in8)
           )
         )
         (br $label$break$Lout)
@@ -280,12 +280,12 @@
       (block $label$break$L1
         (loop $label$continue$L3
           (block $label$break$L3
-            (block $switch$14
-              (block $switch-default$18
-                (block $switch-case$17
-                  (block $switch-case$16
-                    (block $switch-case$15
-                      (br_table $switch-case$15 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-case$17 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-default$18 $switch-case$16 $switch-default$18
+            (block $switch10
+              (block $switch-default
+                (block $switch-case13
+                  (block $switch-case12
+                    (block $switch-case11
+                      (br_table $switch-case11 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case13 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case12 $switch-default
                         (i32.sub
                           (get_local $x)
                           (i32.const -1)
@@ -294,19 +294,19 @@
                     )
                     (block
                       (br $label$break$L1)
-                      (br $switch$14)
+                      (br $switch10)
                     )
                   )
                   (block
                     (set_local $waka
                       (i32.const 1)
                     )
-                    (br $switch$14)
+                    (br $switch10)
                   )
                 )
                 (block
                   (br $label$break$L3)
-                  (br $switch$14)
+                  (br $switch10)
                 )
               )
               (br $label$break$L1)
@@ -502,8 +502,8 @@
     (set_local $i
       (i32.const 1)
     )
-    (loop $for-in$1
-      (block $for-out$0
+    (loop $for-in
+      (block $for-out
         (if
           (i32.eqz
             (i32.lt_s
@@ -511,7 +511,7 @@
               (i32.const 200)
             )
           )
-          (br $for-out$0)
+          (br $for-out)
         )
         (call $h
           (get_local $i)
@@ -522,7 +522,7 @@
             (i32.const 1)
           )
         )
-        (br $for-in$1)
+        (br $for-in)
       )
     )
   )
@@ -578,26 +578,26 @@
     )
   )
   (func $continues
-    (loop $while-in$1
-      (block $while-out$0
+    (loop $while-in
+      (block $while-out
         (call $print
           (i32.const 1)
         )
-        (block $do-once$2
-          (loop $unlikely-continue$3
+        (block $do-once
+          (loop $unlikely-continue
             (call $print
               (i32.const 5)
             )
             (if
               (call $return_int)
-              (br $unlikely-continue$3)
+              (br $unlikely-continue)
             )
           )
         )
         (call $print
           (i32.const 2)
         )
-        (br $while-in$1)
+        (br $while-in)
       )
     )
   )
@@ -830,7 +830,7 @@
   )
   (func $phi (result i32)
     (local $x i32)
-    (block $do-once$0
+    (block $do-once
       (block
         (if
           (call $lb
@@ -840,7 +840,7 @@
             (set_local $x
               (i32.const 0)
             )
-            (br $do-once$0)
+            (br $do-once)
           )
         )
         (set_local $x
@@ -853,7 +853,7 @@
     )
   )
   (func $smallIf
-    (block $do-once$0
+    (block $do-once
       (if
         (call $return_int)
         (drop
@@ -861,7 +861,7 @@
             (i32.const 3)
           )
         )
-        (br $do-once$0)
+        (br $do-once)
       )
       (nop)
     )
@@ -930,8 +930,8 @@
     (block $label$break$L1
       (if
         (get_local $$s)
-        (loop $while-in$2
-          (block $while-out$1
+        (loop $while-in
+          (block $while-out
             (if
               (i32.eqz
                 (get_local $$s)
@@ -941,7 +941,7 @@
             (call $zeroInit
               (i32.const 0)
             )
-            (br $while-in$2)
+            (br $while-in)
           )
         )
         (drop
@@ -1161,8 +1161,8 @@
     (set_local $loopvar
       (get_local $x)
     )
-    (loop $while-in$1
-      (block $while-out$0
+    (loop $while-in
+      (block $while-out
         (call $loophi
           (get_local $loopvar)
           (i32.const 0)
@@ -1174,7 +1174,7 @@
           (get_local $temp)
           (if
             (get_local $temp)
-            (br $while-out$0)
+            (br $while-out)
           )
         )
         (set_local $inc
@@ -1191,9 +1191,9 @@
           (set_local $loopvar
             (get_local $inc)
           )
-          (br $while-out$0)
+          (br $while-out)
         )
-        (br $while-in$1)
+        (br $while-in)
       )
     )
   )
@@ -1211,8 +1211,8 @@
         (set_local $j
           (i32.const 0)
         )
-        (loop $while-in$1
-          (block $while-out$0
+        (loop $while-in
+          (block $while-out
             (set_local $temp
               (get_local $j)
             )
@@ -1239,9 +1239,9 @@
               (set_local $j
                 (get_local $jnc)
               )
-              (br $while-out$0)
+              (br $while-out)
             )
-            (br $while-in$1)
+            (br $while-in)
           )
         )
         (br $label$continue$L7)
@@ -1276,8 +1276,8 @@
     (call $h
       (i32.const -1)
     )
-    (loop $while-in$1
-      (block $while-out$0
+    (loop $while-in
+      (block $while-out
         (set_local $x
           (i32.add
             (get_local $x)
@@ -1293,10 +1293,10 @@
             (set_local $label
               (i32.const 2)
             )
-            (br $while-out$0)
+            (br $while-out)
           )
         )
-        (br $while-in$1)
+        (br $while-in)
       )
     )
     (if
@@ -1469,7 +1469,7 @@
         )
       )
     )
-    (block $label$break$L1
+    (block $label$break$L10
       (if
         (i32.eq
           (get_local $label)
@@ -1479,7 +1479,7 @@
           (call $h
             (i32.const 14)
           )
-          (br $label$break$L1)
+          (br $label$break$L10)
         )
       )
     )
@@ -1499,8 +1499,8 @@
     (local $$11 i32)
     (local $$exitcond i32)
     (local $label i32)
-    (loop $while-in$1
-      (block $while-out$0
+    (loop $while-in
+      (block $while-out
         (if
           (get_local $$14)
           (if
@@ -1546,7 +1546,7 @@
             )
           )
         )
-        (br $while-in$1)
+        (br $while-in)
       )
     )
   )
@@ -1558,19 +1558,19 @@
     (local $$20 i32)
     (if
       (get_local $$2)
-      (loop $while-in$1
-        (block $while-out$0
+      (loop $while-in
+        (block $while-out
           (set_local $$12
             (get_local $$$06$i4)
           )
           (if
             (get_local $$exitcond$i6)
-            (br $while-out$0)
+            (br $while-out)
             (set_local $$$06$i4
               (get_local $$20)
             )
           )
-          (br $while-in$1)
+          (br $while-in)
         )
       )
       (drop
@@ -1586,13 +1586,13 @@
     (set_local $temp
       (call $return_int)
     )
-    (loop $while-in$1
-      (block $while-out$0
+    (loop $while-in
+      (block $while-out
         (set_local $label
           (i32.const 14)
         )
-        (br $while-out$0)
-        (br $while-in$1)
+        (br $while-out)
+        (br $while-in)
       )
     )
     (if
@@ -1623,7 +1623,7 @@
     )
   )
   (func $dropIgnoredImportInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
-    (block $do-once$0
+    (block $do-once
       (if
         (get_local $$0)
         (block
@@ -1636,14 +1636,14 @@
             )
           )
         )
-        (br $do-once$0)
+        (br $do-once)
       )
       (nop)
     )
     (return)
   )
   (func $dropIgnoredImportsInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
-    (block $do-once$0
+    (block $do-once
       (if
         (get_local $$0)
         (drop

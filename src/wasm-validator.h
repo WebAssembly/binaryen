@@ -37,6 +37,8 @@
 #ifndef wasm_wasm_validator_h
 #define wasm_wasm_validator_h
 
+#include <set>
+
 #include "wasm.h"
 #include "wasm-printing.h"
 
@@ -61,6 +63,14 @@ struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> 
 
   WasmType returnType = unreachable; // type used in returns
 
+  std::set<Name> labelNames; // Binaryen IR requires that label names must be unique - IR generators must ensure that
+
+  void noteLabelName(Name name) {
+    if (!name.is()) return;
+    shouldBeTrue(labelNames.find(name) == labelNames.end(), name, "names in Binaren IR must be unique - IR generators must ensure that");
+    labelNames.insert(name);
+  }
+
 public:
   bool validate(Module& module, bool validateWeb_ = false, bool validateGlobally_ = true) {
     validateWeb = validateWeb_;
@@ -82,6 +92,7 @@ public:
   void visitBlock(Block *curr) {
     // if we are break'ed to, then the value must be right for us
     if (curr->name.is()) {
+      noteLabelName(curr->name);
       if (breakInfos.count(curr) > 0) {
         auto& info = breakInfos[curr];
         if (isConcreteWasmType(curr->type)) {
@@ -128,6 +139,7 @@ public:
 
   void visitLoop(Loop *curr) {
     if (curr->name.is()) {
+      noteLabelName(curr->name);
       breakTargets[curr->name].pop_back();
       if (breakInfos.count(curr) > 0) {
         auto& info = breakInfos[curr];
@@ -402,6 +414,7 @@ public:
       }
     }
     returnType = unreachable;
+    labelNames.clear();
   }
 
   bool isConstant(Expression* curr) {

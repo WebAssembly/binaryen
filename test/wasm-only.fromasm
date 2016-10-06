@@ -315,11 +315,11 @@
     )
   )
   (func $switch64 (param $0 i64) (result i32)
-    (block $switch$0 i32
-      (block $switch-default$3
-        (block $switch-case$2
-          (block $switch-case$1
-            (br_table $switch-case$2 $switch-default$3 $switch-case$1 $switch-default$3
+    (block $switch i32
+      (block $switch-default
+        (block $switch-case0
+          (block $switch-case
+            (br_table $switch-case0 $switch-default $switch-case $switch-default
               (i32.wrap/i64
                 (i64.sub
                   (get_local $0)
@@ -328,11 +328,11 @@
               )
             )
           )
-          (br $switch$0
+          (br $switch
             (i32.const 11000)
           )
         )
-        (br $switch$0
+        (br $switch
           (i32.const 10)
         )
       )

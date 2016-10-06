@@ -224,8 +224,8 @@
       (call $waka)
       (nop)
       (set_local $a
-        (block $block0 i32
-          (block $block1
+        (block $block i32
+          (block $block4
             (nop)
             (i32.store
               (i32.const 104)
@@ -239,8 +239,8 @@
       )
       (call $waka)
       (set_local $a
-        (block $block2 i32
-          (block $block4
+        (block $block5 i32
+          (block $block6
             (nop)
             (i32.store
               (i32.const 106)
@@ -258,8 +258,8 @@
       )
       (call $waka)
       (set_local $a
-        (block $block5 i32
-          (block $block6
+        (block $block7 i32
+          (block $block8
             (nop)
             (i32.store
               (i32.const 108)
@@ -281,8 +281,8 @@
       )
       (call $waka)
       (set_local $a
-        (block $block7 i32
-          (block $block8
+        (block $block9 i32
+          (block $block10
             (nop)
             (i32.store
               (i32.const 110)
@@ -686,7 +686,7 @@
   (func $no-out-of-label (type $8) (param $x i32) (param $y i32)
     (loop $moar
       (set_local $x
-        (block $block0 i32
+        (block $block i32
           (br_if $moar
             (get_local $x)
           )
@@ -697,10 +697,10 @@
     (drop
       (get_local $x)
     )
-    (block $moar
+    (block $moar17
       (set_local $y
-        (block $block1 i32
-          (br_if $moar
+        (block $block18 i32
+          (br_if $moar17
             (get_local $y)
           )
           (i32.const 0)

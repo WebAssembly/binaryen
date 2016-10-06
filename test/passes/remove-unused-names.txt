@@ -12,38 +12,38 @@
         (br $in)
       )
     )
-    (loop $in
-      (br $in)
+    (loop $in0
+      (br $in0)
     )
     (nop)
-    (block $out
-      (loop $in
-        (br $out)
-        (br $in)
+    (block $out4
+      (loop $in5
+        (br $out4)
+        (br $in5)
       )
     )
-    (block $out
-      (loop $in
-        (br $out)
-        (br $in)
+    (block $out6
+      (loop $in7
+        (br $out6)
+        (br $in7)
       )
     )
-    (loop $in
-      (block $out
-        (br $out)
-        (br $in)
+    (loop $in8
+      (block $out9
+        (br $out9)
+        (br $in8)
       )
     )
-    (loop $in
-      (block $out
-        (br $out)
-        (br $in)
+    (loop $in10
+      (block $out11
+        (br $out11)
+        (br $in10)
       )
     )
-    (block $out
-      (loop $in
-        (br $out)
-        (br $in)
+    (block $out12
+      (loop $in13
+        (br $out12)
+        (br $in13)
       )
     )
   )
@@ -52,13 +52,13 @@
       (br $b)
       (br $b)
     )
-    (block $b
-      (br_table $b $b
+    (block $b15
+      (br_table $b15 $b15
         (i32.const 3)
       )
     )
-    (block $b
-      (br_table $b $b
+    (block $b17
+      (br_table $b17 $b17
         (i32.const 3)
       )
     )

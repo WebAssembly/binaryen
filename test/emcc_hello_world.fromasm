@@ -293,11 +293,11 @@
         (i32.const 52)
       )
     )
-    (block $switch$0 f64
-      (block $switch-default$3
-        (block $switch-case$2
-          (block $switch-case$1
-            (br_table $switch-case$1 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-default$3 $switch-case$2 $switch-default$3
+    (block $switch f64
+      (block $switch-default
+        (block $switch-case0
+          (block $switch-case
+            (br_table $switch-case $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case0 $switch-default
               (i32.sub
                 (tee_local $2
                   (i32.and
@@ -336,11 +336,11 @@
               (i32.const 0)
             )
           )
-          (br $switch$0
+          (br $switch
             (get_local $0)
           )
         )
-        (br $switch$0
+        (br $switch
           (get_local $0)
         )
       )
@@ -387,7 +387,7 @@
     )
     (block $jumpthreading$outer$0
       (block $jumpthreading$inner$0
-        (loop $while-in$1
+        (loop $while-in
           (br_if $jumpthreading$inner$0
             (i32.eq
               (i32.and
@@ -399,7 +399,7 @@
               (get_local $0)
             )
           )
-          (br_if $while-in$1
+          (br_if $while-in
             (i32.ne
               (tee_local $1
                 (i32.add
@@ -447,8 +447,8 @@
         (get_local $4)
         (i32.const 5)
       )
-      (loop $while-in$3
-        (loop $while-in$5
+      (loop $while-in1
+        (loop $while-in3
           (set_local $0
             (i32.add
               (get_local $2)
@@ -463,7 +463,7 @@
               (set_local $2
                 (get_local $0)
               )
-              (br $while-in$5)
+              (br $while-in3)
             )
           )
         )
@@ -478,7 +478,7 @@
             (set_local $2
               (get_local $0)
             )
-            (br $while-in$3)
+            (br $while-in1)
           )
           (set_local $5
             (get_local $0)
@@ -699,7 +699,7 @@
   (func $_fflush (param $0 i32) (result i32)
     (local $1 i32)
     (local $2 i32)
-    (block $do-once$0 i32
+    (block $do-once i32
       (if i32
         (get_local $0)
         (block i32
@@ -710,7 +710,7 @@
               )
               (i32.const -1)
             )
-            (br $do-once$0
+            (br $do-once
               (call $___fflush_unlocked
                 (get_local $0)
               )
@@ -762,7 +762,7 @@
                 (i32.const 40)
               )
             )
-            (loop $while-in$3
+            (loop $while-in
               (set_local $2
                 (if i32
                   (i32.gt_s
@@ -802,7 +802,7 @@
                   (get_local $1)
                 )
               )
-              (br_if $while-in$3
+              (br_if $while-in
                 (tee_local $1
                   (i32.load offset=56
                     (get_local $1)
@@ -972,7 +972,7 @@
       (block $jumpthreading$outer$1 i32
         (block $jumpthreading$inner$1
           (block $jumpthreading$inner$0
-            (loop $while-in$1
+            (loop $while-in
               (br_if $jumpthreading$inner$0
                 (i32.eq
                   (get_local $11)
@@ -1148,7 +1148,7 @@
                 (set_local $1
                   (get_local $3)
                 )
-                (br $while-in$1)
+                (br $while-in)
               )
             )
           )
@@ -1277,12 +1277,12 @@
         (i32.const 40)
       )
     )
-    (loop $do-in$1
+    (loop $do-in
       (i32.store
         (get_local $4)
         (i32.const 0)
       )
-      (br_if $do-in$1
+      (br_if $do-in
         (i32.lt_s
           (tee_local $4
             (i32.add
@@ -1607,7 +1607,7 @@
                 (set_local $3
                   (get_local $1)
                 )
-                (loop $while-in$3
+                (loop $while-in
                   (if
                     (i32.eqz
                       (get_local $3)
@@ -1640,7 +1640,7 @@
                       (set_local $3
                         (get_local $4)
                       )
-                      (br $while-in$3)
+                      (br $while-in)
                     )
                   )
                 )
@@ -1792,7 +1792,7 @@
     )
   )
   (func $_wcrtomb (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (block $do-once$0 i32
+    (block $do-once i32
       (if i32
         (get_local $0)
         (block i32
@@ -1809,7 +1809,7 @@
                   (i32.const 255)
                 )
               )
-              (br $do-once$0
+              (br $do-once
                 (i32.const 1)
               )
             )
@@ -1846,7 +1846,7 @@
                   (i32.const 255)
                 )
               )
-              (br $do-once$0
+              (br $do-once
                 (i32.const 2)
               )
             )
@@ -1908,7 +1908,7 @@
                   (i32.const 255)
                 )
               )
-              (br $do-once$0
+              (br $do-once
                 (i32.const 3)
               )
             )
@@ -2042,7 +2042,7 @@
                   (i32.const 255)
                 )
               )
-              (loop $while-in$2
+              (loop $while-in
                 (br_if $jumpthreading$inner$2
                   (i32.eq
                     (i32.load8_s
@@ -2057,7 +2057,7 @@
                     )
                   )
                 )
-                (br_if $while-in$2
+                (br_if $while-in
                   (i32.and
                     (tee_local $3
                       (i32.ne
@@ -2132,8 +2132,8 @@
                   (get_local $2)
                   (i32.const 3)
                 )
-                (loop $while-in$6
-                  (block $while-out$5
+                (loop $while-in3
+                  (block $while-out2
                     (if
                       (i32.and
                         (i32.xor
@@ -2159,7 +2159,7 @@
                         (set_local $1
                           (get_local $2)
                         )
-                        (br $while-out$5)
+                        (br $while-out2)
                       )
                     )
                     (set_local $0
@@ -2183,7 +2183,7 @@
                       (set_local $2
                         (get_local $1)
                       )
-                      (br $while-in$6)
+                      (br $while-in3)
                     )
                   )
                 )
@@ -2208,7 +2208,7 @@
               )
             )
           )
-          (loop $while-in$8
+          (loop $while-in5
             (br_if $label$break$L8
               (i32.eq
                 (i32.load8_s
@@ -2229,7 +2229,7 @@
                 (i32.const 1)
               )
             )
-            (br_if $while-in$8
+            (br_if $while-in5
               (tee_local $1
                 (i32.add
                   (get_local $1)
@@ -2659,10 +2659,10 @@
             )
             (loop $label$continue$L9
               (block $label$break$L9
-                (block $switch-default$5
-                  (block $switch-case$4
-                    (block $switch-case$3
-                      (br_table $switch-case$4 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-default$5 $switch-case$3 $switch-default$5
+                (block $switch-default
+                  (block $switch-case0
+                    (block $switch-case
+                      (br_table $switch-case0 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case $switch-default
                         (i32.sub
                           (i32.shr_s
                             (i32.shl
@@ -2713,7 +2713,7 @@
                   (get_local $28)
                   (i32.const 9)
                 )
-                (loop $while-in$8
+                (loop $while-in
                   (set_local $28
                     (i32.const 0)
                   )
@@ -2759,7 +2759,7 @@
                       (set_local $43
                         (get_local $35)
                       )
-                      (br $while-in$8)
+                      (br $while-in)
                     )
                   )
                 )
@@ -2902,7 +2902,7 @@
                   (set_local $8
                     (i32.const 0)
                   )
-                  (loop $while-in$11
+                  (loop $while-in4
                     (if
                       (i32.eqz
                         (i32.and
@@ -2941,7 +2941,7 @@
                         (get_local $8)
                       )
                     )
-                    (br_if $while-in$11
+                    (br_if $while-in4
                       (i32.eq
                         (i32.and
                           (tee_local $5
@@ -2982,7 +2982,7 @@
                 )
               )
             )
-            (block $do-once$12
+            (block $do-once5
               (if
                 (i32.eq
                   (i32.shr_s
@@ -3092,7 +3092,7 @@
                           (set_local $17
                             (i32.const 0)
                           )
-                          (br $do-once$12)
+                          (br $do-once5)
                         )
                       )
                       (set_local $7
@@ -3170,7 +3170,7 @@
                     (set_local $8
                       (i32.const 0)
                     )
-                    (loop $while-in$15
+                    (loop $while-in8
                       (set_local $13
                         (i32.add
                           (i32.mul
@@ -3204,7 +3204,7 @@
                           (set_local $13
                             (get_local $9)
                           )
-                          (br $while-in$15)
+                          (br $while-in8)
                         )
                         (set_local $9
                           (get_local $13)
@@ -3308,7 +3308,7 @@
                             )
                           )
                         )
-                        (loop $while-in$18
+                        (loop $while-in11
                           (set_local $7
                             (i32.add
                               (i32.mul
@@ -3342,7 +3342,7 @@
                               (set_local $7
                                 (get_local $9)
                               )
-                              (br $while-in$18)
+                              (br $while-in11)
                             )
                             (br $label$break$L46
                               (get_local $5)
@@ -3470,7 +3470,7 @@
             (set_local $11
               (i32.const 0)
             )
-            (loop $while-in$20
+            (loop $while-in13
               (if
                 (i32.gt_u
                   (tee_local $5
@@ -3529,7 +3529,7 @@
                   (set_local $11
                     (get_local $5)
                   )
-                  (br $while-in$20)
+                  (br $while-in13)
                 )
                 (block
                   (set_local $16
@@ -3692,20 +3692,20 @@
                     (block $jumpthreading$inner$4
                       (block $jumpthreading$inner$3
                         (block $jumpthreading$inner$2
-                          (block $switch-default$127
-                            (block $switch-case$49
-                              (block $switch-case$48
-                                (block $switch-case$47
-                                  (block $switch-case$46
-                                    (block $switch-case$45
-                                      (block $switch-case$44
-                                        (block $switch-case$43
-                                          (block $switch-case$41
-                                            (block $switch-case$40
-                                              (block $switch-case$36
-                                                (block $switch-case$35
-                                                  (block $switch-case$34
-                                                    (br_table $switch-case$49 $switch-default$127 $switch-case$47 $switch-default$127 $switch-case$49 $switch-case$49 $switch-case$49 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-case$48 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-case$36 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-default$127 $switch-case$49 $switch-default$127 $switch-case$44 $switch-case$41 $switch-case$49 $switch-case$49 $switch-case$49 $switch-default$127 $switch-case$41 $switch-default$127 $switch-default$127 $switch-default$127 $switch-case$45 $switch-case$34 $switch-case$40 $switch-case$35 $switch-default$127 $switch-default$127 $switch-case$46 $switch-default$127 $switch-case$43 $switch-default$127 $switch-default$127 $switch-case$36 $switch-default$127
+                          (block $switch-default120
+                            (block $switch-case42
+                              (block $switch-case41
+                                (block $switch-case40
+                                  (block $switch-case39
+                                    (block $switch-case38
+                                      (block $switch-case37
+                                        (block $switch-case36
+                                          (block $switch-case34
+                                            (block $switch-case33
+                                              (block $switch-case29
+                                                (block $switch-case28
+                                                  (block $switch-case27
+                                                    (br_table $switch-case42 $switch-default120 $switch-case40 $switch-default120 $switch-case42 $switch-case42 $switch-case42 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case41 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case29 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case42 $switch-default120 $switch-case37 $switch-case34 $switch-case42 $switch-case42 $switch-case42 $switch-default120 $switch-case34 $switch-default120 $switch-default120 $switch-default120 $switch-case38 $switch-case27 $switch-case33 $switch-case28 $switch-default120 $switch-default120 $switch-case39 $switch-default120 $switch-case36 $switch-default120 $switch-default120 $switch-case29 $switch-default120
                                                       (i32.sub
                                                         (tee_local $16
                                                           (select
@@ -3737,15 +3737,15 @@
                                                       )
                                                     )
                                                   )
-                                                  (block $switch-default$33
-                                                    (block $switch-case$32
-                                                      (block $switch-case$31
-                                                        (block $switch-case$30
-                                                          (block $switch-case$29
-                                                            (block $switch-case$28
-                                                              (block $switch-case$27
-                                                                (block $switch-case$26
-                                                                  (br_table $switch-case$26 $switch-case$27 $switch-case$28 $switch-case$29 $switch-case$30 $switch-default$33 $switch-case$31 $switch-case$32 $switch-default$33
+                                                  (block $switch-default26
+                                                    (block $switch-case25
+                                                      (block $switch-case24
+                                                        (block $switch-case23
+                                                          (block $switch-case22
+                                                            (block $switch-case21
+                                                              (block $switch-case20
+                                                                (block $switch-case19
+                                                                  (br_table $switch-case19 $switch-case20 $switch-case21 $switch-case22 $switch-case23 $switch-default26 $switch-case24 $switch-case25 $switch-default26
                                                                     (i32.sub
                                                                       (get_local $11)
                                                                       (i32.const 0)
@@ -3952,7 +3952,7 @@
                                                 (set_local $8
                                                   (get_local $23)
                                                 )
-                                                (loop $while-in$39
+                                                (loop $while-in32
                                                   (i32.store8
                                                     (tee_local $8
                                                       (i32.add
@@ -3971,7 +3971,7 @@
                                                       (i32.const 255)
                                                     )
                                                   )
-                                                  (br_if $while-in$39
+                                                  (br_if $while-in32
                                                     (i32.eqz
                                                       (i32.and
                                                         (i32.eqz
@@ -4319,7 +4319,7 @@
                               (get_local $5)
                             )
                             (set_local $5
-                              (block $do-once$56 i32
+                              (block $do-once49 i32
                                 (if i32
                                   (i32.or
                                     (i32.lt_u
@@ -4420,14 +4420,14 @@
                                               (set_local $14
                                                 (f64.const 8)
                                               )
-                                              (loop $while-in$61
+                                              (loop $while-in54
                                                 (set_local $14
                                                   (f64.mul
                                                     (get_local $14)
                                                     (f64.const 16)
                                                   )
                                                 )
-                                                (br_if $while-in$61
+                                                (br_if $while-in54
                                                   (tee_local $5
                                                     (i32.add
                                                       (get_local $5)
@@ -4562,7 +4562,7 @@
                                         (set_local $5
                                           (get_local $24)
                                         )
-                                        (loop $while-in$63
+                                        (loop $while-in56
                                           (i32.store8
                                             (get_local $5)
                                             (i32.and
@@ -4597,7 +4597,7 @@
                                             )
                                           )
                                           (set_local $5
-                                            (block $do-once$64 i32
+                                            (block $do-once57 i32
                                               (if i32
                                                 (i32.eq
                                                   (i32.sub
@@ -4613,7 +4613,7 @@
                                                 )
                                                 (block i32
                                                   (drop
-                                                    (br_if $do-once$64
+                                                    (br_if $do-once57
                                                       (get_local $6)
                                                       (i32.and
                                                         (get_local $16)
@@ -4640,7 +4640,7 @@
                                               )
                                             )
                                           )
-                                          (br_if $while-in$63
+                                          (br_if $while-in56
                                             (f64.ne
                                               (get_local $14)
                                               (f64.const 0)
@@ -4784,7 +4784,7 @@
                                             (i32.const 8192)
                                           )
                                         )
-                                        (br $do-once$56
+                                        (br $do-once49
                                           (select
                                             (get_local $17)
                                             (get_local $6)
@@ -4851,7 +4851,7 @@
                                     (set_local $6
                                       (get_local $8)
                                     )
-                                    (loop $while-in$67
+                                    (loop $while-in60
                                       (i32.store
                                         (get_local $6)
                                         (tee_local $5
@@ -4866,7 +4866,7 @@
                                           (i32.const 4)
                                         )
                                       )
-                                      (br_if $while-in$67
+                                      (br_if $while-in60
                                         (f64.ne
                                           (tee_local $14
                                             (f64.mul
@@ -4896,7 +4896,7 @@
                                         (set_local $9
                                           (get_local $8)
                                         )
-                                        (loop $while-in$69
+                                        (loop $while-in62
                                           (set_local $21
                                             (select
                                               (i32.const 29)
@@ -4908,7 +4908,7 @@
                                             )
                                           )
                                           (set_local $9
-                                            (block $do-once$70 i32
+                                            (block $do-once63 i32
                                               (if i32
                                                 (i32.lt_u
                                                   (tee_local $7
@@ -4924,7 +4924,7 @@
                                                   (set_local $5
                                                     (i32.const 0)
                                                   )
-                                                  (loop $while-in$73
+                                                  (loop $while-in66
                                                     (set_local $12
                                                       (call $___uremdi3
                                                         (tee_local $5
@@ -4960,7 +4960,7 @@
                                                         (i32.const 0)
                                                       )
                                                     )
-                                                    (br_if $while-in$73
+                                                    (br_if $while-in66
                                                       (i32.ge_u
                                                         (tee_local $7
                                                           (i32.add
@@ -4973,7 +4973,7 @@
                                                     )
                                                   )
                                                   (drop
-                                                    (br_if $do-once$70
+                                                    (br_if $do-once63
                                                       (get_local $9)
                                                       (i32.eqz
                                                         (get_local $5)
@@ -4997,8 +4997,8 @@
                                           (set_local $5
                                             (get_local $6)
                                           )
-                                          (loop $while-in$75
-                                            (block $while-out$74
+                                          (loop $while-in68
+                                            (block $while-out67
                                               (if
                                                 (i32.le_u
                                                   (get_local $5)
@@ -5008,7 +5008,7 @@
                                                   (set_local $6
                                                     (get_local $5)
                                                   )
-                                                  (br $while-out$74)
+                                                  (br $while-out67)
                                                 )
                                               )
                                               (if
@@ -5027,7 +5027,7 @@
                                                   (set_local $5
                                                     (get_local $6)
                                                   )
-                                                  (br $while-in$75)
+                                                  (br $while-in68)
                                                 )
                                               )
                                             )
@@ -5043,7 +5043,7 @@
                                               )
                                             )
                                           )
-                                          (br_if $while-in$69
+                                          (br_if $while-in62
                                             (i32.gt_s
                                               (get_local $7)
                                               (i32.const 0)
@@ -5085,7 +5085,7 @@
                                             (i32.const 102)
                                           )
                                         )
-                                        (loop $while-in$77
+                                        (loop $while-in70
                                           (set_local $26
                                             (select
                                               (i32.const 9)
@@ -5108,7 +5108,7 @@
                                                   (select
                                                     (get_local $8)
                                                     (tee_local $5
-                                                      (block $do-once$78 i32
+                                                      (block $do-once71 i32
                                                         (if i32
                                                           (i32.lt_u
                                                             (get_local $5)
@@ -5136,7 +5136,7 @@
                                                             (set_local $7
                                                               (get_local $5)
                                                             )
-                                                            (loop $while-in$81
+                                                            (loop $while-in74
                                                               (i32.store
                                                                 (get_local $7)
                                                                 (i32.add
@@ -5160,7 +5160,7 @@
                                                                   (get_local $31)
                                                                 )
                                                               )
-                                                              (br_if $while-in$81
+                                                              (br_if $while-in74
                                                                 (i32.lt_u
                                                                   (tee_local $7
                                                                     (i32.add
@@ -5185,7 +5185,7 @@
                                                               )
                                                             )
                                                             (drop
-                                                              (br_if $do-once$78
+                                                              (br_if $do-once71
                                                                 (get_local $5)
                                                                 (i32.eqz
                                                                   (get_local $9)
@@ -5249,7 +5249,7 @@
                                               )
                                             )
                                           )
-                                          (br_if $while-in$77
+                                          (br_if $while-in70
                                             (i32.lt_s
                                               (get_local $7)
                                               (i32.const 0)
@@ -5264,7 +5264,7 @@
                                         (get_local $6)
                                       )
                                     )
-                                    (block $do-once$82
+                                    (block $do-once75
                                       (if
                                         (i32.lt_u
                                           (get_local $5)
@@ -5283,7 +5283,7 @@
                                               (i32.const 9)
                                             )
                                           )
-                                          (br_if $do-once$82
+                                          (br_if $do-once75
                                             (i32.lt_u
                                               (tee_local $11
                                                 (i32.load
@@ -5296,14 +5296,14 @@
                                           (set_local $7
                                             (i32.const 10)
                                           )
-                                          (loop $while-in$85
+                                          (loop $while-in78
                                             (set_local $6
                                               (i32.add
                                                 (get_local $6)
                                                 (i32.const 1)
                                               )
                                             )
-                                            (br_if $while-in$85
+                                            (br_if $while-in78
                                               (i32.ge_u
                                                 (get_local $11)
                                                 (tee_local $7
@@ -5420,14 +5420,14 @@
                                               (set_local $12
                                                 (i32.const 10)
                                               )
-                                              (loop $while-in$87
+                                              (loop $while-in80
                                                 (set_local $12
                                                   (i32.mul
                                                     (get_local $12)
                                                     (i32.const 10)
                                                   )
                                                 )
-                                                (br_if $while-in$87
+                                                (br_if $while-in80
                                                   (i32.ne
                                                     (tee_local $11
                                                       (i32.add
@@ -5444,7 +5444,7 @@
                                               (i32.const 10)
                                             )
                                           )
-                                          (block $do-once$88
+                                          (block $do-once81
                                             (if
                                               (i32.eqz
                                                 (i32.and
@@ -5520,12 +5520,12 @@
                                                   )
                                                 )
                                                 (set_local $22
-                                                  (block $do-once$90 f64
+                                                  (block $do-once83 f64
                                                     (if f64
                                                       (get_local $30)
                                                       (block f64
                                                         (drop
-                                                          (br_if $do-once$90
+                                                          (br_if $do-once83
                                                             (get_local $22)
                                                             (i32.ne
                                                               (i32.load8_s
@@ -5557,7 +5557,7 @@
                                                     )
                                                   )
                                                 )
-                                                (br_if $do-once$88
+                                                (br_if $do-once81
                                                   (f64.eq
                                                     (f64.add
                                                       (get_local $22)
@@ -5580,7 +5580,7 @@
                                                     (get_local $6)
                                                     (i32.const 999999999)
                                                   )
-                                                  (loop $while-in$93
+                                                  (loop $while-in86
                                                     (i32.store
                                                       (get_local $7)
                                                       (i32.const 0)
@@ -5622,7 +5622,7 @@
                                                         )
                                                       )
                                                     )
-                                                    (br_if $while-in$93
+                                                    (br_if $while-in86
                                                       (i32.gt_u
                                                         (get_local $6)
                                                         (i32.const 999999999)
@@ -5642,7 +5642,7 @@
                                                     (i32.const 9)
                                                   )
                                                 )
-                                                (br_if $do-once$88
+                                                (br_if $do-once81
                                                   (i32.lt_u
                                                     (tee_local $12
                                                       (i32.load
@@ -5655,14 +5655,14 @@
                                                 (set_local $11
                                                   (i32.const 10)
                                                 )
-                                                (loop $while-in$95
+                                                (loop $while-in88
                                                   (set_local $6
                                                     (i32.add
                                                       (get_local $6)
                                                       (i32.const 1)
                                                     )
                                                   )
-                                                  (br_if $while-in$95
+                                                  (br_if $while-in88
                                                     (i32.ge_u
                                                       (get_local $12)
                                                       (tee_local $11
@@ -5714,8 +5714,8 @@
                                     (set_local $5
                                       (get_local $9)
                                     )
-                                    (loop $while-in$97
-                                      (block $while-out$96
+                                    (loop $while-in90
+                                      (block $while-out89
                                         (if
                                           (i32.le_u
                                             (get_local $5)
@@ -5728,7 +5728,7 @@
                                             (set_local $9
                                               (get_local $5)
                                             )
-                                            (br $while-out$96)
+                                            (br $while-out89)
                                           )
                                         )
                                         (if
@@ -5752,13 +5752,13 @@
                                             (set_local $5
                                               (get_local $6)
                                             )
-                                            (br $while-in$97)
+                                            (br $while-in90)
                                           )
                                         )
                                       )
                                     )
                                     (set_local $19
-                                      (block $do-once$98 i32
+                                      (block $do-once91 i32
                                         (if i32
                                           (get_local $21)
                                           (block i32
@@ -5825,12 +5825,12 @@
                                                 (set_local $5
                                                   (get_local $16)
                                                 )
-                                                (br $do-once$98
+                                                (br $do-once91
                                                   (get_local $7)
                                                 )
                                               )
                                             )
-                                            (block $do-once$100
+                                            (block $do-once93
                                               (if
                                                 (get_local $26)
                                                 (block
@@ -5849,7 +5849,7 @@
                                                       (set_local $5
                                                         (i32.const 9)
                                                       )
-                                                      (br $do-once$100)
+                                                      (br $do-once93)
                                                     )
                                                   )
                                                   (if
@@ -5864,7 +5864,7 @@
                                                       (set_local $5
                                                         (i32.const 0)
                                                       )
-                                                      (br $do-once$100)
+                                                      (br $do-once93)
                                                     )
                                                     (block
                                                       (set_local $7
@@ -5875,14 +5875,14 @@
                                                       )
                                                     )
                                                   )
-                                                  (loop $while-in$103
+                                                  (loop $while-in96
                                                     (set_local $5
                                                       (i32.add
                                                         (get_local $5)
                                                         (i32.const 1)
                                                       )
                                                     )
-                                                    (br_if $while-in$103
+                                                    (br_if $while-in96
                                                       (i32.eqz
                                                         (i32.and
                                                           (call $i32u-rem
@@ -6073,7 +6073,7 @@
                                               )
                                               (i32.const 2)
                                             )
-                                            (loop $while-in$105
+                                            (loop $while-in98
                                               (i32.store8
                                                 (tee_local $7
                                                   (i32.add
@@ -6083,7 +6083,7 @@
                                                 )
                                                 (i32.const 48)
                                               )
-                                              (br_if $while-in$105
+                                              (br_if $while-in98
                                                 (i32.lt_s
                                                   (i32.sub
                                                     (get_local $32)
@@ -6183,7 +6183,7 @@
                                         (i32.const 65536)
                                       )
                                     )
-                                    (block $do-once$106
+                                    (block $do-once99
                                       (if
                                         (get_local $21)
                                         (block
@@ -6199,7 +6199,7 @@
                                               )
                                             )
                                           )
-                                          (loop $while-in$109
+                                          (loop $while-in102
                                             (set_local $6
                                               (call $_fmt_u
                                                 (i32.load
@@ -6209,14 +6209,14 @@
                                                 (get_local $34)
                                               )
                                             )
-                                            (block $do-once$110
+                                            (block $do-once103
                                               (if
                                                 (i32.eq
                                                   (get_local $7)
                                                   (get_local $12)
                                                 )
                                                 (block
-                                                  (br_if $do-once$110
+                                                  (br_if $do-once103
                                                     (i32.ne
                                                       (get_local $6)
                                                       (get_local $34)
@@ -6231,13 +6231,13 @@
                                                   )
                                                 )
                                                 (block
-                                                  (br_if $do-once$110
+                                                  (br_if $do-once103
                                                     (i32.le_u
                                                       (get_local $6)
                                                       (get_local $24)
                                                     )
                                                   )
-                                                  (loop $while-in$113
+                                                  (loop $while-in106
                                                     (i32.store8
                                                       (tee_local $6
                                                         (i32.add
@@ -6247,7 +6247,7 @@
                                                       )
                                                       (i32.const 48)
                                                     )
-                                                    (br_if $while-in$113
+                                                    (br_if $while-in106
                                                       (i32.gt_u
                                                         (get_local $6)
                                                         (get_local $24)
@@ -6291,15 +6291,15 @@
                                                 (set_local $7
                                                   (get_local $6)
                                                 )
-                                                (br $while-in$109)
+                                                (br $while-in102)
                                               )
                                             )
                                           )
-                                          (block $do-once$114
+                                          (block $do-once107
                                             (if
                                               (get_local $16)
                                               (block
-                                                (br_if $do-once$114
+                                                (br_if $do-once107
                                                   (i32.and
                                                     (i32.load
                                                       (get_local $0)
@@ -6332,7 +6332,7 @@
                                               (set_local $7
                                                 (get_local $5)
                                               )
-                                              (loop $while-in$117
+                                              (loop $while-in110
                                                 (if
                                                   (i32.gt_u
                                                     (tee_local $5
@@ -6346,7 +6346,7 @@
                                                     )
                                                     (get_local $24)
                                                   )
-                                                  (loop $while-in$119
+                                                  (loop $while-in112
                                                     (i32.store8
                                                       (tee_local $5
                                                         (i32.add
@@ -6356,7 +6356,7 @@
                                                       )
                                                       (i32.const 48)
                                                     )
-                                                    (br_if $while-in$119
+                                                    (br_if $while-in112
                                                       (i32.gt_u
                                                         (get_local $5)
                                                         (get_local $24)
@@ -6414,7 +6414,7 @@
                                                     (set_local $7
                                                       (get_local $5)
                                                     )
-                                                    (br $while-in$117)
+                                                    (br $while-in110)
                                                   )
                                                 )
                                               )
@@ -6459,7 +6459,7 @@
                                               (set_local $7
                                                 (get_local $5)
                                               )
-                                              (loop $while-in$121
+                                              (loop $while-in114
                                                 (set_local $8
                                                   (if i32
                                                     (i32.eq
@@ -6484,7 +6484,7 @@
                                                     (get_local $5)
                                                   )
                                                 )
-                                                (block $do-once$122
+                                                (block $do-once115
                                                   (if
                                                     (i32.eq
                                                       (get_local $6)
@@ -6514,7 +6514,7 @@
                                                           )
                                                         )
                                                       )
-                                                      (br_if $do-once$122
+                                                      (br_if $do-once115
                                                         (i32.and
                                                           (get_local $9)
                                                           (i32.lt_s
@@ -6523,7 +6523,7 @@
                                                           )
                                                         )
                                                       )
-                                                      (br_if $do-once$122
+                                                      (br_if $do-once115
                                                         (i32.and
                                                           (i32.load
                                                             (get_local $0)
@@ -6552,10 +6552,10 @@
                                                           (set_local $5
                                                             (get_local $8)
                                                           )
-                                                          (br $do-once$122)
+                                                          (br $do-once115)
                                                         )
                                                       )
-                                                      (loop $while-in$125
+                                                      (loop $while-in118
                                                         (i32.store8
                                                           (tee_local $5
                                                             (i32.add
@@ -6565,7 +6565,7 @@
                                                           )
                                                           (i32.const 48)
                                                         )
-                                                        (br_if $while-in$125
+                                                        (br_if $while-in118
                                                           (i32.gt_u
                                                             (get_local $5)
                                                             (get_local $24)
@@ -6630,7 +6630,7 @@
                                                     (set_local $7
                                                       (get_local $5)
                                                     )
-                                                    (br $while-in$121)
+                                                    (br $while-in114)
                                                   )
                                                 )
                                               )
@@ -6646,7 +6646,7 @@
                                             (i32.const 18)
                                             (i32.const 0)
                                           )
-                                          (br_if $do-once$106
+                                          (br_if $do-once99
                                             (i32.and
                                               (i32.load
                                                 (get_local $0)
@@ -6856,7 +6856,7 @@
                             (set_local $8
                               (get_local $23)
                             )
-                            (loop $while-in$130
+                            (loop $while-in123
                               (i32.store8
                                 (tee_local $8
                                   (i32.add
@@ -6883,7 +6883,7 @@
                                   (i32.const 255)
                                 )
                               )
-                              (br_if $while-in$130
+                              (br_if $while-in123
                                 (i32.eqz
                                   (i32.and
                                     (i32.eqz
@@ -7030,9 +7030,9 @@
                       (get_local $18)
                     )
                   )
-                  (loop $while-in$132
-                    (block $while-out$131
-                      (br_if $while-out$131
+                  (loop $while-in125
+                    (block $while-out124
+                      (br_if $while-out124
                         (i32.eqz
                           (tee_local $9
                             (i32.load
@@ -7041,7 +7041,7 @@
                           )
                         )
                       )
-                      (br_if $while-out$131
+                      (br_if $while-out124
                         (i32.or
                           (i32.lt_s
                             (tee_local $6
@@ -7067,7 +7067,7 @@
                           (i32.const 4)
                         )
                       )
-                      (br_if $while-in$132
+                      (br_if $while-in125
                         (i32.gt_u
                           (get_local $8)
                           (tee_local $1
@@ -7110,7 +7110,7 @@
                           (get_local $18)
                         )
                       )
-                      (loop $while-in$134
+                      (loop $while-in127
                         (if
                           (i32.eqz
                             (tee_local $8
@@ -7171,7 +7171,7 @@
                             )
                           )
                         )
-                        (br_if $while-in$134
+                        (br_if $while-in127
                           (i32.lt_u
                             (get_local $6)
                             (get_local $1)
@@ -7423,9 +7423,9 @@
             (set_local $0
               (i32.const 1)
             )
-            (loop $while-in$137
-              (block $while-out$136
-                (br_if $while-out$136
+            (loop $while-in130
+              (block $while-out129
+                (br_if $while-out129
                   (i32.eqz
                     (tee_local $1
                       (i32.load
@@ -7451,7 +7451,7 @@
                   (get_local $1)
                   (get_local $2)
                 )
-                (br_if $while-in$137
+                (br_if $while-in130
                   (i32.lt_s
                     (tee_local $0
                       (i32.add
@@ -7475,7 +7475,7 @@
                 (get_local $0)
                 (i32.const 10)
               )
-              (loop $while-in$139
+              (loop $while-in132
                 (set_local $1
                   (i32.add
                     (get_local $0)
@@ -7508,7 +7508,7 @@
                     (set_local $0
                       (get_local $1)
                     )
-                    (br $while-in$139)
+                    (br $while-in132)
                   )
                   (set_local $15
                     (i32.const 1)
@@ -7541,18 +7541,18 @@
           (get_local $1)
           (i32.const 20)
         )
-        (block $switch-default$14
-          (block $switch-case$13
-            (block $switch-case$12
-              (block $switch-case$11
-                (block $switch-case$10
-                  (block $switch-case$9
-                    (block $switch-case$8
-                      (block $switch-case$7
-                        (block $switch-case$6
-                          (block $switch-case$5
-                            (block $switch-case$4
-                              (br_table $switch-case$4 $switch-case$5 $switch-case$6 $switch-case$7 $switch-case$8 $switch-case$9 $switch-case$10 $switch-case$11 $switch-case$12 $switch-case$13 $switch-default$14
+        (block $switch-default
+          (block $switch-case9
+            (block $switch-case8
+              (block $switch-case7
+                (block $switch-case6
+                  (block $switch-case5
+                    (block $switch-case4
+                      (block $switch-case3
+                        (block $switch-case2
+                          (block $switch-case1
+                            (block $switch-case
+                              (br_table $switch-case $switch-case1 $switch-case2 $switch-case3 $switch-case4 $switch-case5 $switch-case6 $switch-case7 $switch-case8 $switch-case9 $switch-default
                                 (i32.sub
                                   (get_local $1)
                                   (i32.const 9)
@@ -7952,7 +7952,7 @@
           )
         )
         (block i32
-          (loop $while-in$1
+          (loop $while-in
             (set_local $3
               (call $___uremdi3
                 (get_local $0)
@@ -8011,7 +8011,7 @@
                 (set_local $1
                   (get_local $4)
                 )
-                (br $while-in$1)
+                (br $while-in)
               )
               (set_local $0
                 (get_local $3)
@@ -8025,7 +8025,7 @@
     )
     (if
       (get_local $0)
-      (loop $while-in$3
+      (loop $while-in1
         (i32.store8
           (tee_local $1
             (i32.add
@@ -8068,7 +8068,7 @@
             (set_local $0
               (get_local $2)
             )
-            (br $while-in$3)
+            (br $while-in1)
           )
         )
       )
@@ -8102,7 +8102,7 @@
     (set_local $5
       (get_local $6)
     )
-    (block $do-once$0
+    (block $do-once
       (if
         (i32.and
           (i32.gt_s
@@ -8166,7 +8166,7 @@
               (set_local $3
                 (get_local $7)
               )
-              (loop $while-in$3
+              (loop $while-in
                 (set_local $3
                   (i32.eqz
                     (i32.and
@@ -8192,7 +8192,7 @@
                     )
                   )
                 )
-                (br_if $while-in$3
+                (br_if $while-in
                   (i32.gt_u
                     (tee_local $2
                       (i32.add
@@ -8210,7 +8210,7 @@
                   (i32.const 255)
                 )
               )
-              (br_if $do-once$0
+              (br_if $do-once
                 (i32.eqz
                   (get_local $3)
                 )
@@ -8221,7 +8221,7 @@
               (set_local $1
                 (get_local $4)
               )
-              (br $do-once$0)
+              (br $do-once)
             )
           )
           (drop
@@ -8263,7 +8263,7 @@
     (local $22 i32)
     (local $23 i32)
     (local $24 i32)
-    (block $do-once$0
+    (block $do-once
       (if
         (i32.lt_u
           (get_local $0)
@@ -8919,8 +8919,8 @@
                   (set_local $2
                     (get_local $1)
                   )
-                  (loop $while-in$7
-                    (block $while-out$6
+                  (loop $while-in
+                    (block $while-out
                       (if
                         (i32.eqz
                           (tee_local $0
@@ -8941,7 +8941,7 @@
                             (set_local $2
                               (get_local $1)
                             )
-                            (br $while-out$6)
+                            (br $while-out)
                           )
                         )
                       )
@@ -8978,7 +8978,7 @@
                           (get_local $6)
                         )
                       )
-                      (br $while-in$7)
+                      (br $while-in)
                     )
                   )
                   (if
@@ -9009,7 +9009,7 @@
                       (get_local $2)
                     )
                   )
-                  (block $do-once$8
+                  (block $do-once4
                     (if
                       (i32.eq
                         (tee_local $0
@@ -9050,11 +9050,11 @@
                               (set_local $5
                                 (i32.const 0)
                               )
-                              (br $do-once$8)
+                              (br $do-once4)
                             )
                           )
                         )
-                        (loop $while-in$11
+                        (loop $while-in7
                           (if
                             (tee_local $8
                               (i32.load
@@ -9073,7 +9073,7 @@
                               (set_local $0
                                 (get_local $6)
                               )
-                              (br $while-in$11)
+                              (br $while-in7)
                             )
                           )
                           (if
@@ -9094,7 +9094,7 @@
                               (set_local $0
                                 (get_local $6)
                               )
-                              (br $while-in$11)
+                              (br $while-in7)
                             )
                           )
                         )
@@ -9171,7 +9171,7 @@
                       )
                     )
                   )
-                  (block $do-once$12
+                  (block $do-once8
                     (if
                       (get_local $11)
                       (block
@@ -9219,7 +9219,7 @@
                                     )
                                   )
                                 )
-                                (br $do-once$12)
+                                (br $do-once8)
                               )
                             )
                           )
@@ -9254,7 +9254,7 @@
                                 (get_local $5)
                               )
                             )
-                            (br_if $do-once$12
+                            (br_if $do-once8
                               (i32.eqz
                                 (get_local $5)
                               )
@@ -9692,7 +9692,7 @@
                         (set_local $2
                           (i32.const 0)
                         )
-                        (loop $while-in$18
+                        (loop $while-in14
                           (if
                             (i32.lt_u
                               (tee_local $8
@@ -9809,7 +9809,7 @@
                               (set_local $0
                                 (get_local $14)
                               )
-                              (br $while-in$18)
+                              (br $while-in14)
                             )
                           )
                         )
@@ -9862,7 +9862,7 @@
                               (set_local $0
                                 (get_local $9)
                               )
-                              (br $do-once$0)
+                              (br $do-once)
                             )
                           )
                           (set_local $12
@@ -9994,7 +9994,7 @@
                     (get_local $19)
                     (i32.const 90)
                   )
-                  (loop $while-in$20
+                  (loop $while-in16
                     (set_local $2
                       (i32.lt_u
                         (tee_local $0
@@ -10035,10 +10035,10 @@
                         (set_local $3
                           (get_local $0)
                         )
-                        (br $while-in$20)
+                        (br $while-in16)
                       )
                     )
-                    (br_if $while-in$20
+                    (br_if $while-in16
                       (tee_local $3
                         (i32.load offset=20
                           (get_local $3)
@@ -10096,7 +10096,7 @@
                           (get_local $6)
                         )
                       )
-                      (block $do-once$21
+                      (block $do-once17
                         (if
                           (i32.eq
                             (tee_local $0
@@ -10137,11 +10137,11 @@
                                   (set_local $10
                                     (i32.const 0)
                                   )
-                                  (br $do-once$21)
+                                  (br $do-once17)
                                 )
                               )
                             )
-                            (loop $while-in$24
+                            (loop $while-in20
                               (if
                                 (tee_local $3
                                   (i32.load
@@ -10160,7 +10160,7 @@
                                   (set_local $0
                                     (get_local $2)
                                   )
-                                  (br $while-in$24)
+                                  (br $while-in20)
                                 )
                               )
                               (if
@@ -10181,7 +10181,7 @@
                                   (set_local $0
                                     (get_local $2)
                                   )
-                                  (br $while-in$24)
+                                  (br $while-in20)
                                 )
                               )
                             )
@@ -10258,7 +10258,7 @@
                           )
                         )
                       )
-                      (block $do-once$25
+                      (block $do-once21
                         (if
                           (get_local $5)
                           (block
@@ -10306,7 +10306,7 @@
                                         )
                                       )
                                     )
-                                    (br $do-once$25)
+                                    (br $do-once21)
                                   )
                                 )
                               )
@@ -10341,7 +10341,7 @@
                                     (get_local $10)
                                   )
                                 )
-                                (br_if $do-once$25
+                                (br_if $do-once21
                                   (i32.eqz
                                     (get_local $10)
                                   )
@@ -10416,7 +10416,7 @@
                           )
                         )
                       )
-                      (block $do-once$29
+                      (block $do-once25
                         (if
                           (i32.lt_u
                             (get_local $7)
@@ -10574,7 +10574,7 @@
                                   (get_local $4)
                                   (get_local $0)
                                 )
-                                (br $do-once$29)
+                                (br $do-once25)
                               )
                             )
                             (set_local $1
@@ -10739,7 +10739,7 @@
                                   (get_local $4)
                                   (get_local $4)
                                 )
-                                (br $do-once$29)
+                                (br $do-once25)
                               )
                             )
                             (set_local $2
@@ -10769,7 +10769,7 @@
                             (block $jumpthreading$outer$1
                               (block $jumpthreading$inner$1
                                 (block $jumpthreading$inner$0
-                                  (loop $while-in$32
+                                  (loop $while-in28
                                     (br_if $jumpthreading$inner$1
                                       (i32.eq
                                         (i32.and
@@ -10814,7 +10814,7 @@
                                         (set_local $0
                                           (get_local $3)
                                         )
-                                        (br $while-in$32)
+                                        (br $while-in28)
                                       )
                                       (block
                                         (set_local $1
@@ -10853,7 +10853,7 @@
                                       (get_local $4)
                                       (get_local $4)
                                     )
-                                    (br $do-once$29)
+                                    (br $do-once25)
                                   )
                                 )
                                 (br $jumpthreading$outer$1)
@@ -11248,8 +11248,8 @@
                   (set_local $1
                     (i32.const 624)
                   )
-                  (loop $while-in$38
-                    (block $while-out$37
+                  (loop $while-in34
+                    (block $while-out33
                       (if
                         (i32.le_u
                           (tee_local $3
@@ -11278,11 +11278,11 @@
                             (set_local $4
                               (get_local $1)
                             )
-                            (br $while-out$37)
+                            (br $while-out33)
                           )
                         )
                       )
-                      (br_if $while-in$38
+                      (br_if $while-in34
                         (tee_local $1
                           (i32.load offset=8
                             (get_local $1)
@@ -11601,7 +11601,7 @@
           (get_local $3)
         )
       )
-      (block $do-once$44
+      (block $do-once40
         (if
           (tee_local $7
             (i32.load
@@ -11614,7 +11614,7 @@
             )
             (block $jumpthreading$outer$9
               (block $jumpthreading$inner$9
-                (loop $while-in$49
+                (loop $while-in45
                   (br_if $jumpthreading$inner$9
                     (i32.eq
                       (get_local $2)
@@ -11637,7 +11637,7 @@
                       )
                     )
                   )
-                  (br_if $while-in$49
+                  (br_if $while-in45
                     (tee_local $3
                       (i32.load offset=8
                         (get_local $3)
@@ -11740,7 +11740,7 @@
                         (i32.const 664)
                       )
                     )
-                    (br $do-once$44)
+                    (br $do-once40)
                   )
                 )
               )
@@ -11776,7 +11776,7 @@
             )
             (block $jumpthreading$outer$10
               (block $jumpthreading$inner$10
-                (loop $while-in$51
+                (loop $while-in47
                   (if
                     (i32.eq
                       (i32.load
@@ -11791,7 +11791,7 @@
                       (br $jumpthreading$inner$10)
                     )
                   )
-                  (br_if $while-in$51
+                  (br_if $while-in47
                     (tee_local $3
                       (i32.load offset=8
                         (get_local $3)
@@ -11901,7 +11901,7 @@
                       (i32.const 3)
                     )
                   )
-                  (block $do-once$52
+                  (block $do-once48
                     (if
                       (i32.eq
                         (get_local $8)
@@ -11969,7 +11969,7 @@
                               )
                               (get_local $0)
                             )
-                            (br $do-once$52)
+                            (br $do-once48)
                           )
                         )
                         (i32.store
@@ -12012,7 +12012,7 @@
                                             (get_local $8)
                                           )
                                         )
-                                        (block $do-once$55
+                                        (block $do-once51
                                           (if
                                             (i32.ne
                                               (tee_local $4
@@ -12041,7 +12041,7 @@
                                                 )
                                                 (call $_abort)
                                               )
-                                              (br_if $do-once$55
+                                              (br_if $do-once51
                                                 (i32.eq
                                                   (i32.load offset=12
                                                     (get_local $4)
@@ -12077,7 +12077,7 @@
                                             (br $label$break$L331)
                                           )
                                         )
-                                        (block $do-once$57
+                                        (block $do-once53
                                           (if
                                             (i32.eq
                                               (get_local $3)
@@ -12113,7 +12113,7 @@
                                                   (set_local $21
                                                     (get_local $0)
                                                   )
-                                                  (br $do-once$57)
+                                                  (br $do-once53)
                                                 )
                                               )
                                               (call $_abort)
@@ -12135,7 +12135,7 @@
                                             (get_local $8)
                                           )
                                         )
-                                        (block $do-once$59
+                                        (block $do-once55
                                           (if
                                             (i32.eq
                                               (tee_local $0
@@ -12177,11 +12177,11 @@
                                                     (set_local $11
                                                       (i32.const 0)
                                                     )
-                                                    (br $do-once$59)
+                                                    (br $do-once55)
                                                   )
                                                 )
                                               )
-                                              (loop $while-in$62
+                                              (loop $while-in58
                                                 (if
                                                   (tee_local $4
                                                     (i32.load
@@ -12200,7 +12200,7 @@
                                                     (set_local $0
                                                       (get_local $3)
                                                     )
-                                                    (br $while-in$62)
+                                                    (br $while-in58)
                                                   )
                                                 )
                                                 (if
@@ -12221,7 +12221,7 @@
                                                     (set_local $0
                                                       (get_local $3)
                                                     )
-                                                    (br $while-in$62)
+                                                    (br $while-in58)
                                                   )
                                                 )
                                               )
@@ -12303,7 +12303,7 @@
                                             (get_local $7)
                                           )
                                         )
-                                        (block $do-once$63
+                                        (block $do-once59
                                           (if
                                             (i32.eq
                                               (get_local $8)
@@ -12328,7 +12328,7 @@
                                                 (get_local $0)
                                                 (get_local $11)
                                               )
-                                              (br_if $do-once$63
+                                              (br_if $do-once59
                                                 (get_local $11)
                                               )
                                               (i32.store
@@ -12523,7 +12523,7 @@
                                 )
                               )
                             )
-                            (block $do-once$67
+                            (block $do-once63
                               (if
                                 (i32.and
                                   (tee_local $2
@@ -12562,7 +12562,7 @@
                                       (set_local $17
                                         (get_local $1)
                                       )
-                                      (br $do-once$67)
+                                      (br $do-once63)
                                     )
                                   )
                                   (call $_abort)
@@ -12603,7 +12603,7 @@
                               (get_local $6)
                               (get_local $0)
                             )
-                            (br $do-once$52)
+                            (br $do-once48)
                           )
                         )
                         (set_local $1
@@ -12611,7 +12611,7 @@
                             (i32.const 480)
                             (i32.shl
                               (tee_local $3
-                                (block $do-once$69 i32
+                                (block $do-once65 i32
                                   (if i32
                                     (tee_local $0
                                       (i32.shr_u
@@ -12621,7 +12621,7 @@
                                     )
                                     (block i32
                                       (drop
-                                        (br_if $do-once$69
+                                        (br_if $do-once65
                                           (i32.const 31)
                                           (i32.gt_u
                                             (get_local $2)
@@ -12774,7 +12774,7 @@
                               (get_local $6)
                               (get_local $6)
                             )
-                            (br $do-once$52)
+                            (br $do-once48)
                           )
                         )
                         (set_local $3
@@ -12804,7 +12804,7 @@
                         (block $jumpthreading$outer$6
                           (block $jumpthreading$inner$6
                             (block $jumpthreading$inner$5
-                              (loop $while-in$72
+                              (loop $while-in68
                                 (br_if $jumpthreading$inner$6
                                   (i32.eq
                                     (i32.and
@@ -12849,7 +12849,7 @@
                                     (set_local $0
                                       (get_local $4)
                                     )
-                                    (br $while-in$72)
+                                    (br $while-in68)
                                   )
                                   (block
                                     (set_local $1
@@ -12888,7 +12888,7 @@
                                   (get_local $6)
                                   (get_local $6)
                                 )
-                                (br $do-once$52)
+                                (br $do-once48)
                               )
                             )
                             (br $jumpthreading$outer$6)
@@ -12954,8 +12954,8 @@
                 )
               )
             )
-            (loop $while-in$74
-              (block $while-out$73
+            (loop $while-in70
+              (block $while-out69
                 (if
                   (i32.le_u
                     (tee_local $3
@@ -12965,7 +12965,7 @@
                     )
                     (get_local $7)
                   )
-                  (br_if $while-out$73
+                  (br_if $while-out69
                     (i32.gt_u
                       (tee_local $3
                         (i32.add
@@ -12984,7 +12984,7 @@
                     (get_local $4)
                   )
                 )
-                (br $while-in$74)
+                (br $while-in70)
               )
             )
             (set_local $5
@@ -13152,7 +13152,7 @@
                 (i32.const 24)
               )
             )
-            (loop $while-in$76
+            (loop $while-in72
               (i32.store
                 (tee_local $1
                   (i32.add
@@ -13162,7 +13162,7 @@
                 )
                 (i32.const 7)
               )
-              (br_if $while-in$76
+              (br_if $while-in72
                 (i32.lt_u
                   (i32.add
                     (get_local $1)
@@ -13302,7 +13302,7 @@
                       (get_local $7)
                       (get_local $1)
                     )
-                    (br $do-once$44)
+                    (br $do-once40)
                   )
                 )
                 (set_local $2
@@ -13462,7 +13462,7 @@
                       (get_local $7)
                       (get_local $7)
                     )
-                    (br $do-once$44)
+                    (br $do-once40)
                   )
                 )
                 (set_local $3
@@ -13492,7 +13492,7 @@
                 (block $jumpthreading$outer$8
                   (block $jumpthreading$inner$8
                     (block $jumpthreading$inner$7
-                      (loop $while-in$78
+                      (loop $while-in74
                         (br_if $jumpthreading$inner$8
                           (i32.eq
                             (i32.and
@@ -13537,7 +13537,7 @@
                             (set_local $1
                               (get_local $4)
                             )
-                            (br $while-in$78)
+                            (br $while-in74)
                           )
                           (block
                             (set_local $2
@@ -13576,7 +13576,7 @@
                           (get_local $7)
                           (get_local $7)
                         )
-                        (br $do-once$44)
+                        (br $do-once40)
                       )
                     )
                     (br $jumpthreading$outer$8)
@@ -13678,7 +13678,7 @@
             (set_local $3
               (i32.const 0)
             )
-            (loop $while-in$47
+            (loop $while-in43
               (i32.store offset=12
                 (tee_local $4
                   (i32.add
@@ -13698,7 +13698,7 @@
                 (get_local $4)
                 (get_local $4)
               )
-              (br_if $while-in$47
+              (br_if $while-in43
                 (i32.ne
                   (tee_local $3
                     (i32.add
@@ -13903,7 +13903,7 @@
         )
       )
     )
-    (block $do-once$0
+    (block $do-once
       (if
         (i32.and
           (get_local $3)
@@ -13982,7 +13982,7 @@
                   (set_local $1
                     (get_local $3)
                   )
-                  (br $do-once$0)
+                  (br $do-once)
                 )
               )
               (i32.store
@@ -14096,7 +14096,7 @@
                   (set_local $1
                     (get_local $3)
                   )
-                  (br $do-once$0)
+                  (br $do-once)
                 )
               )
               (if
@@ -14151,7 +14151,7 @@
               (set_local $1
                 (get_local $3)
               )
-              (br $do-once$0)
+              (br $do-once)
             )
           )
           (set_local $12
@@ -14159,7 +14159,7 @@
               (get_local $0)
             )
           )
-          (block $do-once$2
+          (block $do-once0
             (if
               (i32.eq
                 (tee_local $2
@@ -14201,11 +14201,11 @@
                       (set_local $7
                         (i32.const 0)
                       )
-                      (br $do-once$2)
+                      (br $do-once0)
                     )
                   )
                 )
-                (loop $while-in$5
+                (loop $while-in
                   (if
                     (tee_local $8
                       (i32.load
@@ -14224,7 +14224,7 @@
                       (set_local $5
                         (get_local $10)
                       )
-                      (br $while-in$5)
+                      (br $while-in)
                     )
                   )
                   (if
@@ -14245,7 +14245,7 @@
                       (set_local $5
                         (get_local $10)
                       )
-                      (br $while-in$5)
+                      (br $while-in)
                     )
                   )
                 )
@@ -14375,7 +14375,7 @@
                       (set_local $1
                         (get_local $3)
                       )
-                      (br $do-once$0)
+                      (br $do-once)
                     )
                   )
                 )
@@ -14421,7 +14421,7 @@
                       (set_local $1
                         (get_local $3)
                       )
-                      (br $do-once$0)
+                      (br $do-once)
                     )
                   )
                 )
@@ -14682,7 +14682,7 @@
             (i32.const 3)
           )
         )
-        (block $do-once$8
+        (block $do-once4
           (if
             (i32.lt_u
               (get_local $0)
@@ -14756,7 +14756,7 @@
                       )
                     )
                   )
-                  (br $do-once$8)
+                  (br $do-once4)
                 )
               )
               (if
@@ -14814,7 +14814,7 @@
                   (get_local $6)
                 )
               )
-              (block $do-once$10
+              (block $do-once6
                 (if
                   (i32.eq
                     (tee_local $0
@@ -14856,11 +14856,11 @@
                           (set_local $9
                             (i32.const 0)
                           )
-                          (br $do-once$10)
+                          (br $do-once6)
                         )
                       )
                     )
-                    (loop $while-in$13
+                    (loop $while-in9
                       (if
                         (tee_local $3
                           (i32.load
@@ -14879,7 +14879,7 @@
                           (set_local $1
                             (get_local $5)
                           )
-                          (br $while-in$13)
+                          (br $while-in9)
                         )
                       )
                       (if
@@ -14900,7 +14900,7 @@
                           (set_local $1
                             (get_local $5)
                           )
-                          (br $while-in$13)
+                          (br $while-in9)
                         )
                       )
                     )
@@ -15028,7 +15028,7 @@
                               )
                             )
                           )
-                          (br $do-once$8)
+                          (br $do-once4)
                         )
                       )
                     )
@@ -15063,7 +15063,7 @@
                           (get_local $9)
                         )
                       )
-                      (br_if $do-once$8
+                      (br_if $do-once4
                         (i32.eqz
                           (get_local $9)
                         )
@@ -15398,7 +15398,7 @@
       (get_local $4)
       (i32.const 0)
     )
-    (block $do-once$16
+    (block $do-once12
       (if
         (i32.and
           (tee_local $0
@@ -15441,7 +15441,7 @@
           (block $jumpthreading$outer$1
             (block $jumpthreading$inner$1
               (block $jumpthreading$inner$0
-                (loop $while-in$19
+                (loop $while-in15
                   (br_if $jumpthreading$inner$1
                     (i32.eq
                       (i32.and
@@ -15489,7 +15489,7 @@
                     (set_local $0
                       (get_local $3)
                     )
-                    (br $while-in$19)
+                    (br $while-in15)
                   )
                 )
               )
@@ -15518,7 +15518,7 @@
                     (get_local $4)
                     (get_local $4)
                   )
-                  (br $do-once$16)
+                  (br $do-once12)
                 )
               )
               (br $jumpthreading$outer$1)
@@ -15618,7 +15618,7 @@
         (i32.const 632)
       )
     )
-    (loop $while-in$21
+    (loop $while-in17
       (set_local $0
         (i32.add
           (tee_local $1
@@ -15629,7 +15629,7 @@
           (i32.const 8)
         )
       )
-      (br_if $while-in$21
+      (br_if $while-in17
         (get_local $1)
       )
     )
@@ -15745,7 +15745,7 @@
                 (get_local $3)
               )
             )
-            (loop $while-in$1
+            (loop $while-in
               (if
                 (i32.lt_s
                   (get_local $0)
@@ -15762,13 +15762,13 @@
                       (i32.const 1)
                     )
                   )
-                  (br $while-in$1)
+                  (br $while-in)
                 )
               )
             )
           )
         )
-        (loop $while-in$3
+        (loop $while-in1
           (if
             (i32.lt_s
               (get_local $0)
@@ -15785,13 +15785,13 @@
                   (i32.const 4)
                 )
               )
-              (br $while-in$3)
+              (br $while-in1)
             )
           )
         )
       )
     )
-    (loop $while-in$5
+    (loop $while-in3
       (if
         (i32.lt_s
           (get_local $0)
@@ -15808,7 +15808,7 @@
               (i32.const 1)
             )
           )
-          (br $while-in$5)
+          (br $while-in3)
         )
       )
     )
@@ -15953,9 +15953,9 @@
         )
       )
       (block
-        (loop $while-in$1
-          (block $while-out$0
-            (br_if $while-out$0
+        (loop $while-in
+          (block $while-out
+            (br_if $while-out
               (i32.eqz
                 (i32.and
                   (get_local $0)
@@ -15995,10 +15995,10 @@
                 (i32.const 1)
               )
             )
-            (br $while-in$1)
+            (br $while-in)
           )
         )
-        (loop $while-in$3
+        (loop $while-in1
           (if
             (i32.ge_s
               (get_local $2)
@@ -16029,13 +16029,13 @@
                   (i32.const 4)
                 )
               )
-              (br $while-in$3)
+              (br $while-in1)
             )
           )
         )
       )
     )
-    (loop $while-in$5
+    (loop $while-in3
       (if
         (i32.gt_s
           (get_local $2)
@@ -16066,7 +16066,7 @@
               (i32.const 1)
             )
           )
-          (br $while-in$5)
+          (br $while-in3)
         )
       )
     )

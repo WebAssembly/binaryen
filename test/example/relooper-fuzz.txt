@@ -196,7 +196,7 @@
         )
       )
       (loop $shape$3$continue
-        (block $block$5$break
+        (block $block$5$break0
           (if
             (i32.eq
               (get_local $1)
