@@ -33,7 +33,7 @@ ffs:                                    # @ffs
 	i32.eqz 	$push8=, $pop1
 	br_if   	0, $pop8        # 0: up to label1
 .LBB0_4:                                # %cleanup
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push9=, $2
                                         # fallthrough-return: $pop9
@@ -51,11 +51,11 @@ f:                                      # @f
 # BB#0:                                 # %entry
 	block
 	i32.eqz 	$push0=, $0
-	br_if   	0, $pop0        # 0: down to label3
+	br_if   	0, $pop0        # 0: down to label2
 # BB#1:                                 # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -77,6 +77,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

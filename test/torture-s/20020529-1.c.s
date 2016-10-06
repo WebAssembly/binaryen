@@ -20,12 +20,12 @@ foo:                                    # @foo
 	loop                            # label2:
 	i32.const	$push14=, 2
 	i32.ge_s	$push0=, $4, $pop14
-	br_if   	3, $pop0        # 3: down to label0
+	br_if   	2, $pop0        # 2: down to label0
 # BB#2:                                 # %f1.exit
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push15=, 1
 	i32.eq  	$push1=, $4, $pop15
-	br_if   	2, $pop1        # 2: down to label1
+	br_if   	1, $pop1        # 1: down to label1
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push16=, 1
@@ -33,23 +33,25 @@ foo:                                    # @foo
 	br_if   	0, $1           # 0: up to label2
 # BB#4:                                 # %if.end3
                                         #   in Loop: Header=BB0_1 Depth=1
+	block
 	i32.const	$push17=, 0
 	i32.store	f1.beenhere($pop17), $4
 	i32.store16	0($5), $3
 	i32.load	$push3=, 0($0)
-	br_if   	1, $pop3        # 1: down to label3
+	br_if   	0, $pop3        # 0: down to label3
 # BB#5:                                 # %if.end8
                                         #   in Loop: Header=BB0_1 Depth=1
-	br_if   	1, $2           # 1: down to label3
+	br_if   	0, $2           # 0: down to label3
 # BB#6:                                 # %for.cond.outer.backedge
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push13=, 16
 	i32.shl 	$push4=, $3, $pop13
 	i32.const	$push12=, 16
 	i32.shr_s	$3=, $pop4, $pop12
-	br      	0               # 0: up to label2
+	br      	1               # 1: up to label2
 .LBB0_7:                                # %if.then10
-	end_loop                        # label3:
+	end_block                       # label3:
+	end_loop
 	call    	f2@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.then
@@ -153,7 +155,7 @@ main:                                   # @main
 	loop                            # label8:
 	i32.const	$push20=, 1
 	i32.eq  	$push1=, $1, $pop20
-	br_if   	2, $pop1        # 2: down to label7
+	br_if   	1, $pop1        # 1: down to label7
 # BB#3:                                 # %if.end.i
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$2=, 0
@@ -166,7 +168,7 @@ main:                                   # @main
 	i32.le_s	$push3=, $pop22, $pop21
 	br_if   	0, $pop3        # 0: up to label8
 # BB#4:                                 # %if.then.i.i.loopexit
-	end_loop                        # label9:
+	end_loop
 	i32.const	$push4=, 0
 	i32.store	f1.beenhere($pop4), $1
 	i32.const	$push5=, 1
@@ -181,13 +183,13 @@ main:                                   # @main
 	block
 	i32.const	$push8=, 65535
 	i32.and 	$push9=, $2, $pop8
-	br_if   	0, $pop9        # 0: down to label10
+	br_if   	0, $pop9        # 0: down to label9
 # BB#6:                                 # %if.end
 	i32.const	$push28=, 0
 	call    	exit@FUNCTION, $pop28
 	unreachable
 .LBB3_7:                                # %if.then
-	end_block                       # label10:
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_8:
@@ -212,6 +214,6 @@ f1.beenhere:
 	.size	f1.beenhere, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

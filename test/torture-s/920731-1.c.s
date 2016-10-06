@@ -24,7 +24,7 @@ f:                                      # @f
 	tee_local	$push5=, $1=, $pop6
 	i32.const	$push4=, 7
 	i32.gt_s	$push2=, $pop5, $pop4
-	br_if   	1, $pop2        # 1: down to label2
+	br_if   	1, $pop2        # 1: down to label0
 # BB#3:                                 # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push11=, 1
@@ -35,7 +35,7 @@ f:                                      # @f
 	i32.eqz 	$push12=, $pop1
 	br_if   	0, $pop12       # 0: up to label1
 .LBB0_4:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push13=, $1
                                         # fallthrough-return: $pop13
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

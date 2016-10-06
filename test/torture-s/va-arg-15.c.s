@@ -28,7 +28,7 @@ vafunction:                             # @vafunction
 	i32.add 	$push0=, $2, $pop18
 	i32.const	$push17=, 1
 	i32.and 	$push1=, $pop0, $pop17
-	br_if   	0, $pop1        # 0: down to label5
+	br_if   	0, $pop1        # 0: down to label4
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push21=, 4
@@ -38,11 +38,11 @@ vafunction:                             # @vafunction
 	i32.load	$4=, 0($1)
 	copy_local	$1=, $3
 	i32.eq  	$push6=, $2, $4
-	br_if   	1, $pop6        # 1: down to label4
-	br      	4               # 4: down to label1
+	br_if   	1, $pop6        # 1: down to label3
+	br      	3               # 3: down to label1
 .LBB0_3:                                # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label5:
+	end_block                       # label4:
 	i32.const	$push28=, 7
 	i32.add 	$push2=, $1, $pop28
 	i32.const	$push27=, -8
@@ -55,10 +55,10 @@ vafunction:                             # @vafunction
 	f64.load	$push3=, 0($3)
 	f64.convert_s/i32	$push4=, $2
 	f64.ne  	$push5=, $pop3, $pop4
-	br_if   	4, $pop5        # 4: down to label0
+	br_if   	3, $pop5        # 3: down to label0
 .LBB0_4:                                # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push32=, 1
 	i32.add 	$push31=, $2, $pop32
 	tee_local	$push30=, $2=, $pop31
@@ -66,7 +66,7 @@ vafunction:                             # @vafunction
 	i32.lt_s	$push7=, $pop30, $pop29
 	br_if   	0, $pop7        # 0: up to label2
 # BB#5:                                 # %for.end
-	end_loop                        # label3:
+	end_loop
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $5, $pop12
@@ -176,6 +176,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

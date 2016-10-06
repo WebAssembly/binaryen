@@ -37,6 +37,6 @@ f:                                      # @f
 	.size	f, .Lfunc_end1-f
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32
 	.functype	abort, void

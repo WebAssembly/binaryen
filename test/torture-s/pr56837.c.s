@@ -20,7 +20,7 @@ foo:                                    # @foo
 	tee_local	$push1=, $0=, $pop2
 	br_if   	0, $pop1        # 0: up to label0
 # BB#2:                                 # %for.end
-	end_loop                        # label1:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -40,17 +40,17 @@ main:                                   # @main
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label3:
+	loop                            # label2:
 	i32.load	$push1=, 0($0)
 	i32.const	$push6=, -1
 	i32.ne  	$push2=, $pop1, $pop6
-	br_if   	2, $pop2        # 2: down to label2
+	br_if   	1, $pop2        # 1: down to label1
 # BB#2:                                 # %for.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push7=, 4
 	i32.add 	$push3=, $0, $pop7
 	i32.load	$push0=, 0($pop3)
-	br_if   	2, $pop0        # 2: down to label2
+	br_if   	1, $pop0        # 1: down to label1
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push12=, 8
@@ -60,13 +60,13 @@ main:                                   # @main
 	tee_local	$push9=, $1=, $pop10
 	i32.const	$push8=, 1023
 	i32.le_s	$push4=, $pop9, $pop8
-	br_if   	0, $pop4        # 0: up to label3
+	br_if   	0, $pop4        # 0: up to label2
 # BB#4:                                 # %for.end
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB1_5:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -83,5 +83,5 @@ a:
 	.size	a, 8192
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

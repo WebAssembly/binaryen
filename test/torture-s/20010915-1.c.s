@@ -144,11 +144,11 @@ x:                                      # @x
 	i32.const	$push50=, 255
 	i32.and 	$push24=, $4, $pop50
 	i32.ne  	$push26=, $pop25, $pop24
-	br_if   	3, $pop26       # 3: down to label4
+	br_if   	2, $pop26       # 2: down to label4
 # BB#11:                                # %lor.lhs.false.i50
                                         #   in Loop: Header=BB1_10 Depth=1
 	i32.load8_u	$push27=, 1($1)
-	br_if   	3, $pop27       # 3: down to label4
+	br_if   	2, $pop27       # 2: down to label4
 # BB#12:                                # %lor.lhs.false.i50
                                         #   in Loop: Header=BB1_10 Depth=1
 	i32.const	$push56=, 0
@@ -156,7 +156,7 @@ x:                                      # @x
 	tee_local	$push54=, $1=, $pop55
 	i32.const	$push53=, 4
 	i32.ge_s	$push28=, $pop54, $pop53
-	br_if   	3, $pop28       # 3: down to label4
+	br_if   	2, $pop28       # 2: down to label4
 # BB#13:                                # %r.exit
                                         #   in Loop: Header=BB1_10 Depth=1
 	i32.const	$push67=, 0
@@ -178,7 +178,7 @@ x:                                      # @x
 	i32.lt_s	$push30=, $5, $0
 	br_if   	0, $pop30       # 0: up to label6
 .LBB1_14:                               # %cleanup
-	end_loop                        # label7:
+	end_loop
 	end_block                       # label5:
 	i32.const	$push68=, 0
 	return  	$pop68
@@ -214,7 +214,7 @@ s:                                      # @s
 	block
 	i32.const	$push0=, .L.str
 	i32.call	$push1=, strcmp@FUNCTION, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label8
+	br_if   	0, $pop1        # 0: down to label7
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
@@ -225,7 +225,7 @@ s:                                      # @s
 	i32.store	check($pop10), $pop2
 	i32.const	$push3=, 2
 	i32.ge_s	$push4=, $2, $pop3
-	br_if   	0, $pop4        # 0: down to label8
+	br_if   	0, $pop4        # 0: down to label7
 # BB#2:                                 # %if.end
 	i32.const	$push12=, 1
 	i32.add 	$push5=, $0, $pop12
@@ -233,7 +233,7 @@ s:                                      # @s
 	i32.const	$push11=, 0
 	return  	$pop11
 .LBB2_3:                                # %if.then
-	end_block                       # label8:
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -269,17 +269,17 @@ r:                                      # @r
 	i32.const	$push9=, 0
 	i32.load8_u	$push0=, r.c.0($pop9)
 	i32.ne  	$push1=, $pop10, $pop0
-	br_if   	0, $pop1        # 0: down to label9
+	br_if   	0, $pop1        # 0: down to label8
 # BB#1:                                 # %lor.lhs.false
 	i32.load8_u	$push2=, 1($0)
-	br_if   	0, $pop2        # 0: down to label9
+	br_if   	0, $pop2        # 0: down to label8
 # BB#2:                                 # %lor.lhs.false
 	i32.const	$push14=, 0
 	i32.load	$push13=, r.cnt($pop14)
 	tee_local	$push12=, $0=, $pop13
 	i32.const	$push3=, 4
 	i32.ge_s	$push4=, $pop12, $pop3
-	br_if   	0, $pop4        # 0: down to label9
+	br_if   	0, $pop4        # 0: down to label8
 # BB#3:                                 # %if.end
 	i32.const	$push7=, 0
 	i32.const	$push5=, 1
@@ -292,7 +292,7 @@ r:                                      # @r
 	i32.const	$push15=, 1
 	return  	$pop15
 .LBB4_4:                                # %if.then
-	end_block                       # label9:
+	end_block                       # label8:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -386,7 +386,7 @@ r.c.0:
 	.size	r.c.0, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	strcmp, i32, i32, i32

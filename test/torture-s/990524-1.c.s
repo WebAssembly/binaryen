@@ -26,15 +26,15 @@ loop:                                   # @loop
 	block
 	i32.const	$push15=, 34
 	i32.eq  	$push1=, $4, $pop15
-	br_if   	0, $pop1        # 0: down to label3
+	br_if   	0, $pop1        # 0: down to label2
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push23=, 92
 	i32.ne  	$push2=, $3, $pop23
-	br_if   	1, $pop2        # 1: down to label2
+	br_if   	1, $pop2        # 1: down to label1
 .LBB0_3:                                # %sw.bb2
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.const	$push14=, 92
 	i32.store8	0($0), $pop14
 	i32.const	$push13=, 1
@@ -46,12 +46,12 @@ loop:                                   # @loop
 	br      	1               # 1: up to label0
 .LBB0_4:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label2:
+	end_block                       # label1:
 	i32.const	$push24=, 1
 	i32.add 	$0=, $0, $pop24
 	br_if   	0, $3           # 0: up to label0
 # BB#5:                                 # %loopDone2
-	end_loop                        # label1:
+	end_loop
 	block
 	i32.const	$push5=, a
 	i32.sub 	$push6=, $pop5, $0
@@ -60,11 +60,11 @@ loop:                                   # @loop
 	i32.add 	$push8=, $2, $pop7
 	i32.sub 	$push10=, $pop9, $pop8
 	i32.ne  	$push11=, $pop6, $pop10
-	br_if   	0, $pop11       # 0: down to label4
+	br_if   	0, $pop11       # 0: down to label3
 # BB#6:                                 # %if.end
 	return
 .LBB0_7:                                # %if.then
-	end_block                       # label4:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -105,6 +105,6 @@ b:
 	.size	b, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

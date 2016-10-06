@@ -57,7 +57,7 @@ f:                                      # @f
 	i32.eq  	$push10=, $pop9, $pop27
 	br_if   	0, $pop10       # 0: up to label0
 # BB#2:                                 # %while.end
-	end_loop                        # label1:
+	end_loop
 	i32.const	$push11=, 88
 	i32.store16	0($0):p2align=0, $pop11
 	block
@@ -66,7 +66,7 @@ f:                                      # @f
 	i32.load8_u	$push14=, 0($pop13)
 	i32.const	$push32=, 88
 	i32.ne  	$push15=, $pop14, $pop32
-	br_if   	0, $pop15       # 0: down to label2
+	br_if   	0, $pop15       # 0: down to label1
 # BB#3:                                 # %if.end
 	i32.const	$push22=, 0
 	i32.const	$push20=, 16
@@ -74,7 +74,7 @@ f:                                      # @f
 	i32.store	__stack_pointer($pop22), $pop21
 	return  	$2
 .LBB1_4:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -103,6 +103,6 @@ main:                                   # @main
 	.size	.Lf.s, 14
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

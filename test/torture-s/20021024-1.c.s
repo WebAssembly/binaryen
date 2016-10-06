@@ -48,7 +48,7 @@ bar:                                    # @bar
 	i32.eqz 	$push20=, $2
 	br_if   	0, $pop20       # 0: up to label0
 # BB#2:                                 # %if.end
-	end_loop                        # label1:
+	end_loop
 	i32.const	$push11=, 3
 	i32.shl 	$push12=, $2, $pop11
 	i32.add 	$push13=, $1, $pop12
@@ -125,5 +125,5 @@ main.r:
 	.size	main.r, 512
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

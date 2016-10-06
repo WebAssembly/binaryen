@@ -153,21 +153,21 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.lt_s	$push1=, $pop28, $pop26
 	br_if   	0, $pop1        # 0: up to label1
 # BB#2:                                 # %if.end
-	end_loop                        # label2:
+	end_loop
 	block
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $6, $pop2
-	br_if   	0, $pop3        # 0: down to label3
+	br_if   	0, $pop3        # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push4=, 1
 	i32.ne  	$push5=, $7, $pop4
-	br_if   	0, $pop5        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label2
 # BB#4:                                 # %if.end11
 	block
 	i32.load	$push6=, 8($3)
 	i32.load	$push7=, 0($pop6)
 	i32.eqz 	$push43=, $pop7
-	br_if   	0, $pop43       # 0: down to label4
+	br_if   	0, $pop43       # 0: down to label3
 # BB#5:                                 # %DUPFFnew.exit167
 	i32.const	$push8=, 12
 	i32.call	$push41=, malloc@FUNCTION, $pop8
@@ -196,7 +196,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	tee_local	$push32=, $5=, $pop33
 	i32.const	$push31=, 1
 	i32.lt_s	$push15=, $pop32, $pop31
-	br_if   	0, $pop15       # 0: down to label5
+	br_if   	0, $pop15       # 0: down to label4
 # BB#6:                                 # %while.cond40.preheader.lr.ph
 	i32.const	$push42=, 4
 	i32.add 	$push16=, $3, $pop42
@@ -204,27 +204,27 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.lt_s	$3=, $pop0, $5
 .LBB7_7:                                # %while.cond40.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label6:
-	br_if   	0, $3           # 0: up to label6
+	loop                            # label5:
+	br_if   	0, $3           # 0: up to label5
 .LBB7_8:                                # %while.cond40
                                         # =>This Inner Loop Header: Depth=1
-	end_loop                        # label7:
-	loop                            # label8:
-	br      	0               # 0: up to label8
+	end_loop
+	loop                            # label6:
+	br      	0               # 0: up to label6
 .LBB7_9:                                # %if.end57
-	end_loop                        # label9:
-	end_block                       # label5:
+	end_loop
+	end_block                       # label4:
 	i32.store	0($1), $6
 	i32.store	0($4), $2
 .LBB7_10:                               # %cleanup
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push23=, 0
 	i32.const	$push21=, 16
 	i32.add 	$push22=, $8, $pop21
 	i32.store	__stack_pointer($pop23), $pop22
 	return  	$3
 .LBB7_11:                               # %if.then10
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -303,7 +303,7 @@ main:                                   # @main
 	.size	.L.str.1, 41
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	malloc, i32, i32
 	.functype	calloc, i32, i32, i32
 	.functype	printf, i32, i32

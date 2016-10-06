@@ -35,7 +35,7 @@ f:                                      # @f
 	tee_local	$push7=, $0=, $pop8
 	br_if   	0, $pop7        # 0: up to label1
 .LBB0_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push13=, $2
                                         # fallthrough-return: $pop13
@@ -54,7 +54,7 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	block
 	i32.eqz 	$push11=, $0
-	br_if   	0, $pop11       # 0: down to label3
+	br_if   	0, $pop11       # 0: down to label2
 # BB#1:                                 # %for.body.preheader.i
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
@@ -66,7 +66,7 @@ g:                                      # @g
 	i32.add 	$2=, $pop4, $pop5
 .LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	i32.store	0($1), $2
 	i32.const	$push10=, -4
 	i32.add 	$1=, $1, $pop10
@@ -75,10 +75,10 @@ g:                                      # @g
 	i32.const	$push8=, -1
 	i32.add 	$push7=, $0, $pop8
 	tee_local	$push6=, $0=, $pop7
-	br_if   	0, $pop6        # 0: up to label4
+	br_if   	0, $pop6        # 0: up to label3
 .LBB1_3:                                # %f.exit
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	copy_local	$push12=, $1
                                         # fallthrough-return: $pop12
 	.endfunc
@@ -115,5 +115,5 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

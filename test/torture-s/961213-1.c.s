@@ -33,7 +33,7 @@ g:                                      # @g
 	tee_local	$push6=, $3=, $pop7
 	br_if   	0, $pop6        # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
-	end_loop                        # label2:
+	end_loop
 	i64.store	0($0), $5
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

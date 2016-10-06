@@ -35,7 +35,7 @@ f:                                      # @f
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label3:
 	i32.ne  	$push5=, $1, $4
-	br_if   	3, $pop5        # 3: down to label1
+	br_if   	2, $pop5        # 2: down to label1
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.store	12($5), $3
@@ -53,7 +53,7 @@ f:                                      # @f
 	i32.lt_s	$push6=, $2, $0
 	br_if   	0, $pop6        # 0: up to label3
 .LBB0_4:                                # %for.end
-	end_loop                        # label4:
+	end_loop
 	end_block                       # label2:
 	i32.const	$push8=, 123
 	i32.ne  	$push9=, $4, $pop8
@@ -105,6 +105,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

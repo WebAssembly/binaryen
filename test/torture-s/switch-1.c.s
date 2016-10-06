@@ -56,7 +56,7 @@ main:                                   # @main
 	i32.const	$push12=, 7
 	i32.gt_u	$push11=, $pop13, $pop12
 	tee_local	$push10=, $4=, $pop11
-	br_if   	0, $pop10       # 0: down to label8
+	br_if   	0, $pop10       # 0: down to label7
 # BB#2:                                 # %switch.lookup.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push17=, 2
@@ -66,7 +66,8 @@ main:                                   # @main
 	i32.load	$3=, 0($pop1)
 .LBB1_3:                                # %foo.exit
                                         #   in Loop: Header=BB1_1 Depth=1
-	end_block                       # label8:
+	end_block                       # label7:
+	block
 	block
 	block
 	block
@@ -101,7 +102,7 @@ main:                                   # @main
 	tee_local	$push21=, $1=, $pop22
 	i32.const	$push20=, 66
 	i32.lt_s	$push7=, $pop21, $pop20
-	br_if   	4, $pop7        # 4: up to label6
+	br_if   	5, $pop7        # 5: up to label6
 	br      	6               # 6: down to label5
 .LBB1_8:                                # %if.then5
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -122,15 +123,16 @@ main:                                   # @main
 	end_block                       # label10:
 	i32.const	$push26=, 30
 	i32.ne  	$push2=, $3, $pop26
-	br_if   	2, $pop2        # 2: down to label7
+	br_if   	1, $pop2        # 1: down to label8
 .LBB1_11:                               # %for.inc.thread
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label9:
 	i32.const	$push9=, 1
 	i32.add 	$1=, $1, $pop9
-	br      	0               # 0: up to label6
+	br      	1               # 1: up to label6
 .LBB1_12:                               # %if.then19
-	end_loop                        # label7:
+	end_block                       # label8:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_13:                               # %for.end
@@ -172,5 +174,5 @@ main:                                   # @main
 	.size	.Lswitch.table, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

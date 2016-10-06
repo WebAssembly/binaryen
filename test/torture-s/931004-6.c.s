@@ -33,7 +33,7 @@ f:                                      # @f
 	loop                            # label3:
 	i32.load16_s	$push3=, 0($1)
 	i32.ne  	$push4=, $2, $pop3
-	br_if   	4, $pop4        # 4: down to label0
+	br_if   	3, $pop4        # 3: down to label0
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push26=, 10
@@ -42,7 +42,7 @@ f:                                      # @f
 	i32.add 	$push6=, $1, $pop25
 	i32.load16_s	$push7=, 0($pop6)
 	i32.ne  	$push8=, $pop5, $pop7
-	br_if   	3, $pop8        # 3: down to label1
+	br_if   	2, $pop8        # 2: down to label1
 # BB#4:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push30=, 8
@@ -58,7 +58,7 @@ f:                                      # @f
 	i32.lt_s	$push10=, $3, $0
 	br_if   	0, $pop10       # 0: up to label3
 .LBB0_5:                                # %for.end
-	end_loop                        # label4:
+	end_loop
 	end_block                       # label2:
 	i32.load	$push11=, 0($1)
 	i32.const	$push12=, 123
@@ -132,6 +132,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

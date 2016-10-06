@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.lt_s	$push7=, $pop21, $pop20
 	br_if   	0, $pop7        # 0: up to label2
 # BB#4:                                 # %for.cond.for.end_crit_edge.i
-	end_loop                        # label3:
+	end_loop
 	i32.const	$push8=, 0
 	i32.store16	d($pop8), $3
 .LBB0_5:                                # %foo.exit
@@ -66,12 +66,12 @@ main:                                   # @main
 	block
 	i32.const	$push9=, 1
 	i32.ne  	$push10=, $5, $pop9
-	br_if   	0, $pop10       # 0: down to label4
+	br_if   	0, $pop10       # 0: down to label3
 # BB#6:                                 # %if.end
 	i32.const	$push11=, 0
 	return  	$pop11
 .LBB0_7:                                # %if.then
-	end_block                       # label4:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -151,5 +151,5 @@ d:
 	.size	d, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

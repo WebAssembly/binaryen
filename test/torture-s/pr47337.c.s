@@ -25,13 +25,13 @@ main:                                   # @main
 	tee_local	$push40=, $1=, $pop41
 	br_if   	0, $pop40       # 0: up to label0
 # BB#2:                                 # %for.body9.preheader
-	end_loop                        # label1:
+	end_loop
 	i32.const	$push46=, 0
 	i32.const	$push45=, 0
 	i32.store	d($pop46), $pop45
 	block
 	i32.eqz 	$push71=, $0
-	br_if   	0, $pop71       # 0: down to label2
+	br_if   	0, $pop71       # 0: down to label1
 # BB#3:                                 # %fnx.exit
 	i32.const	$push69=, 0
 	i32.const	$push68=, 0
@@ -94,7 +94,7 @@ main:                                   # @main
 	i32.load	$push39=, 0($pop38)
 	i32.store	b($pop69), $pop39
 .LBB0_4:                                # %if.end25
-	end_block                       # label2:
+	end_block                       # label1:
 	i32.const	$push70=, 0
                                         # fallthrough-return: $pop70
 	.endfunc
@@ -144,5 +144,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	strcmp, i32, i32, i32

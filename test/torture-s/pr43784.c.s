@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.ne  	$push1=, $pop19, $pop18
 	br_if   	0, $pop1        # 0: up to label0
 # BB#2:                                 # %for.end
-	end_loop                        # label1:
+	end_loop
 	call    	rp@FUNCTION, $2
 	i32.const	$push3=, v+4
 	i32.const	$push2=, 256
@@ -38,11 +38,11 @@ main:                                   # @main
 .LBB0_3:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label3:
+	loop                            # label2:
 	i32.add 	$push4=, $1, $0
 	i32.load8_u	$push5=, 0($pop4)
 	i32.ne  	$push6=, $1, $pop5
-	br_if   	2, $pop6        # 2: down to label2
+	br_if   	1, $pop6        # 1: down to label1
 # BB#4:                                 # %for.cond1
                                         #   in Loop: Header=BB0_3 Depth=1
 	i32.const	$push26=, 1
@@ -50,9 +50,9 @@ main:                                   # @main
 	tee_local	$push24=, $1=, $pop25
 	i32.const	$push23=, 255
 	i32.le_s	$push7=, $pop24, $pop23
-	br_if   	0, $pop7        # 0: up to label3
+	br_if   	0, $pop7        # 0: up to label2
 # BB#5:                                 # %for.end12
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push15=, 0
 	i32.const	$push13=, 256
 	i32.add 	$push14=, $2, $pop13
@@ -60,7 +60,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB0_6:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -88,5 +88,5 @@ v:
 	.size	v, 260
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

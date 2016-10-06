@@ -23,14 +23,14 @@ foo:                                    # @foo
 	loop                            # label1:
 	block
 	i32.eqz 	$push12=, $2
-	br_if   	0, $pop12       # 0: down to label3
+	br_if   	0, $pop12       # 0: down to label2
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$push1=, 0($2)
 	i32.mul 	$4=, $pop1, $3
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.mul 	$push3=, $4, $0
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
@@ -43,7 +43,7 @@ foo:                                    # @foo
 	i32.ne  	$push5=, $1, $pop7
 	br_if   	0, $pop5        # 0: up to label1
 .LBB0_5:                                # %for.end6
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push13=, $5
                                         # fallthrough-return: $pop13
@@ -63,12 +63,12 @@ main:                                   # @main
 	i32.const	$push0=, 2
 	i32.const	$push3=, 0
 	i32.call	$push2=, foo@FUNCTION, $pop1, $pop0, $pop3
-	br_if   	0, $pop2        # 0: down to label4
+	br_if   	0, $pop2        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
-	end_block                       # label4:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -76,5 +76,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

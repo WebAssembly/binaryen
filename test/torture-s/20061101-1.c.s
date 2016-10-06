@@ -42,7 +42,7 @@ bug:                                    # @bug
 	i32.const	$push6=, 1
 	i32.and 	$push1=, $3, $pop6
 	i32.eqz 	$push11=, $pop1
-	br_if   	2, $pop11       # 2: down to label1
+	br_if   	1, $pop11       # 1: down to label1
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$3=, 0
@@ -56,7 +56,7 @@ bug:                                    # @bug
 	i32.eq  	$push5=, $pop4, $pop7
 	br_if   	0, $pop5        # 0: up to label2
 # BB#3:                                 # %if.then.i
-	end_loop                        # label3:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %while.end
@@ -80,5 +80,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

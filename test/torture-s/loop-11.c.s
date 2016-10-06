@@ -23,16 +23,16 @@ main:                                   # @main
 	i32.gt_s	$push0=, $1, $pop5
 	br_if   	0, $pop0        # 0: up to label0
 # BB#2:                                 # %for.body.preheader
-	end_loop                        # label1:
+	end_loop
 	i32.const	$1=, 0
 	i32.const	$0=, a
 .LBB0_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label3:
+	loop                            # label2:
 	i32.load	$push1=, 0($0)
 	i32.ne  	$push2=, $1, $pop1
-	br_if   	2, $pop2        # 2: down to label2
+	br_if   	1, $pop2        # 1: down to label1
 # BB#4:                                 # %for.cond
                                         #   in Loop: Header=BB0_3 Depth=1
 	i32.const	$push14=, 4
@@ -42,13 +42,13 @@ main:                                   # @main
 	tee_local	$push11=, $1=, $pop12
 	i32.const	$push10=, 198
 	i32.le_s	$push3=, $pop11, $pop10
-	br_if   	0, $pop3        # 0: up to label3
+	br_if   	0, $pop3        # 0: up to label2
 # BB#5:                                 # %for.end
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB0_6:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -63,5 +63,5 @@ a:
 	.size	a, 796
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

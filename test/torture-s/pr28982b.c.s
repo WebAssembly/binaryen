@@ -290,7 +290,7 @@ foo:                                    # @foo
 	tee_local	$push135=, $0=, $pop136
 	br_if   	0, $pop135      # 0: up to label1
 .LBB1_3:                                # %while.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push160=, 0
 	f32.store	results+4($pop160), $42
@@ -476,7 +476,7 @@ main:                                   # @main
 	i32.store	incs+76($pop121), $pop35
 .LBB2_1:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop                            # label2:
 	f32.convert_s/i32	$push36=, $1
 	f32.store	0($0), $pop36
 	i32.const	$push167=, 4
@@ -486,9 +486,9 @@ main:                                   # @main
 	tee_local	$push164=, $1=, $pop165
 	i32.const	$push163=, 80
 	i32.ne  	$push37=, $pop164, $pop163
-	br_if   	0, $pop37       # 0: up to label3
+	br_if   	0, $pop37       # 0: up to label2
 # BB#2:                                 # %for.end8
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push38=, 4
 	call    	foo@FUNCTION, $pop38
 	i32.const	$push39=, 0
@@ -634,4 +634,4 @@ input:
 	.size	input, 320
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

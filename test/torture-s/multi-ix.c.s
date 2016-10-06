@@ -1038,7 +1038,7 @@ f:                                      # @f
 	tee_local	$push667=, $0=, $pop668
 	br_if   	0, $pop667      # 0: up to label1
 .LBB0_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push196=, 0
 	i32.const	$push194=, 80480
@@ -1065,13 +1065,13 @@ s:                                      # @s
 	i32.store	12($pop6), $1
 	block
 	i32.eqz 	$push16=, $0
-	br_if   	0, $pop16       # 0: down to label3
+	br_if   	0, $pop16       # 0: down to label2
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push8=, -1
 	i32.add 	$0=, $0, $pop8
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	i32.load	$push15=, 12($2)
 	tee_local	$push14=, $1=, $pop15
 	i32.const	$push13=, 4
@@ -1084,10 +1084,10 @@ s:                                      # @s
 	tee_local	$push10=, $0=, $pop11
 	i32.const	$push9=, -1
 	i32.ne  	$push2=, $pop10, $pop9
-	br_if   	0, $pop2        # 0: up to label4
+	br_if   	0, $pop2        # 0: up to label3
 .LBB1_3:                                # %while.end
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -1111,12 +1111,12 @@ z:                                      # @z
 	i32.store	12($3), $1
 	block
 	i32.eqz 	$push18=, $0
-	br_if   	0, $pop18       # 0: down to label6
+	br_if   	0, $pop18       # 0: down to label4
 # BB#1:                                 # %while.body.preheader
 	i32.load	$1=, 12($3)
 .LBB2_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label7:
+	loop                            # label5:
 	i32.const	$push17=, 4
 	i32.add 	$push16=, $1, $pop17
 	tee_local	$push15=, $2=, $pop16
@@ -1129,10 +1129,10 @@ z:                                      # @z
 	i32.const	$push12=, -1
 	i32.add 	$push11=, $0, $pop12
 	tee_local	$push10=, $0=, $pop11
-	br_if   	0, $pop10       # 0: up to label7
+	br_if   	0, $pop10       # 0: up to label5
 .LBB2_3:                                # %while.end
-	end_loop                        # label8:
-	end_block                       # label6:
+	end_loop
+	end_block                       # label4:
 	i32.const	$push7=, 0
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $3, $pop5
@@ -1165,9 +1165,9 @@ c:                                      # @c
 .LBB3_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label10:
+	loop                            # label7:
 	i32.eqz 	$push24=, $0
-	br_if   	2, $pop24       # 2: down to label9
+	br_if   	1, $pop24       # 1: down to label6
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB3_1 Depth=1
 	i32.load	$push23=, 12($3)
@@ -1185,13 +1185,13 @@ c:                                      # @c
 	tee_local	$push17=, $0=, $pop18
 	i32.load	$push5=, 0($2)
 	i32.eq  	$push6=, $pop17, $pop5
-	br_if   	0, $pop6        # 0: up to label10
+	br_if   	0, $pop6        # 0: up to label7
 # BB#3:                                 # %if.then
-	end_loop                        # label11:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_4:                                # %while.end
-	end_block                       # label9:
+	end_block                       # label6:
 	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $3, $pop11
@@ -1218,6 +1218,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32
 	.functype	abort, void

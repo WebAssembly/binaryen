@@ -38,14 +38,14 @@ foo:                                    # @foo
 	tee_local	$push14=, $2=, $pop15
 	br_if   	0, $pop14       # 0: up to label3
 .LBB0_4:                                # %if.end7
-	end_loop                        # label4:
+	end_loop
 	end_block                       # label1:
 	i32.load	$2=, 12($1)
 	block
 	i32.load	$push5=, 12($0)
 	i32.const	$push16=, -1
 	i32.eq  	$push6=, $pop5, $pop16
-	br_if   	0, $pop6        # 0: down to label5
+	br_if   	0, $pop6        # 0: down to label4
 # BB#5:                                 # %if.end22
 	i32.const	$push17=, -1
 	i32.ne  	$push7=, $2, $pop17
@@ -53,7 +53,7 @@ foo:                                    # @foo
 # BB#6:                                 # %if.end27
 	return
 .LBB0_7:                                # %if.end22.thread
-	end_block                       # label5:
+	end_block                       # label4:
 	i32.load	$push8=, 16($1)
 	i32.store	16($0), $pop8
 	i32.const	$push9=, 12
@@ -122,6 +122,6 @@ x:
 	.size	x, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

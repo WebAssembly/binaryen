@@ -31,7 +31,7 @@ foo:                                    # @foo
 	tee_local	$push4=, $3=, $pop5
 	br_if   	0, $pop4        # 0: up to label0
 # BB#2:                                 # %while.end
-	end_loop                        # label1:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.call	$0=, memset@FUNCTION, $1, $pop0, $pop14
 .LBB1_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop                            # label1:
 	i32.add 	$push25=, $0, $2
 	tee_local	$push24=, $1=, $pop25
 	i32.const	$push23=, -8
@@ -72,14 +72,14 @@ main:                                   # @main
 	i32.const	$push19=, -16
 	i32.add 	$push18=, $2, $pop19
 	tee_local	$push17=, $2=, $pop18
-	br_if   	0, $pop17       # 0: up to label2
+	br_if   	0, $pop17       # 0: up to label1
 # BB#2:                                 # %foo.exit
-	end_loop                        # label3:
+	end_loop
 	block
 	i32.load	$push4=, 0($0)
 	i32.const	$push3=, 6
 	i32.ne  	$push5=, $pop4, $pop3
-	br_if   	0, $pop5        # 0: down to label4
+	br_if   	0, $pop5        # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push13=, 0
 	i32.const	$push11=, 1024
@@ -88,7 +88,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	return  	$pop6
 .LBB1_4:                                # %if.then
-	end_block                       # label4:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -96,5 +96,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

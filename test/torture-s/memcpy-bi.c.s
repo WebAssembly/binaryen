@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.ne  	$push27=, $pop299, $pop298
 	br_if   	0, $pop27       # 0: up to label1
 # BB#2:                                 # %check.exit
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push308=, 0
 	i32.const	$push307=, 0
 	i32.load16_u	$push306=, src($pop307)
@@ -54,7 +54,7 @@ main:                                   # @main
 	i32.store16	dst($pop308), $pop305
 	block
 	i32.ne  	$push28=, $0, $0
-	br_if   	0, $pop28       # 0: down to label3
+	br_if   	0, $pop28       # 0: down to label2
 # BB#3:                                 # %check.exit13
 	i32.const	$push314=, 0
 	i32.const	$push313=, 0
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.const	$push309=, src
 	i32.const	$push31=, 3
 	i32.call	$push32=, memcmp@FUNCTION, $pop310, $pop309, $pop31
-	br_if   	0, $pop32       # 0: down to label3
+	br_if   	0, $pop32       # 0: down to label2
 # BB#4:                                 # %check.exit17
 	i32.const	$push320=, 0
 	i32.const	$push319=, 0
@@ -82,7 +82,7 @@ main:                                   # @main
 	i32.const	$push315=, src
 	i32.const	$push35=, 5
 	i32.call	$push36=, memcmp@FUNCTION, $pop316, $pop315, $pop35
-	br_if   	0, $pop36       # 0: down to label3
+	br_if   	0, $pop36       # 0: down to label2
 # BB#5:                                 # %check.exit25
 	i32.const	$push326=, 0
 	i32.const	$push325=, 0
@@ -96,7 +96,7 @@ main:                                   # @main
 	i32.const	$push321=, src
 	i32.const	$push39=, 6
 	i32.call	$push40=, memcmp@FUNCTION, $pop322, $pop321, $pop39
-	br_if   	0, $pop40       # 0: down to label3
+	br_if   	0, $pop40       # 0: down to label2
 # BB#6:                                 # %check.exit29
 	i32.const	$push334=, 0
 	i32.const	$push333=, 0
@@ -114,7 +114,7 @@ main:                                   # @main
 	i32.const	$push327=, src
 	i32.const	$push44=, 7
 	i32.call	$push45=, memcmp@FUNCTION, $pop328, $pop327, $pop44
-	br_if   	0, $pop45       # 0: down to label3
+	br_if   	0, $pop45       # 0: down to label2
 # BB#7:                                 # %check.exit33
 	i32.const	$push340=, 0
 	i32.const	$push339=, 0
@@ -128,7 +128,7 @@ main:                                   # @main
 	i32.const	$push335=, src
 	i32.const	$push48=, 9
 	i32.call	$push49=, memcmp@FUNCTION, $pop336, $pop335, $pop48
-	br_if   	0, $pop49       # 0: down to label3
+	br_if   	0, $pop49       # 0: down to label2
 # BB#8:                                 # %check.exit41
 	i32.const	$push346=, 0
 	i32.const	$push345=, 0
@@ -142,7 +142,7 @@ main:                                   # @main
 	i32.const	$push341=, src
 	i32.const	$push52=, 10
 	i32.call	$push53=, memcmp@FUNCTION, $pop342, $pop341, $pop52
-	br_if   	0, $pop53       # 0: down to label3
+	br_if   	0, $pop53       # 0: down to label2
 # BB#9:                                 # %check.exit45
 	i32.const	$push354=, 0
 	i32.const	$push353=, 0
@@ -160,7 +160,7 @@ main:                                   # @main
 	i32.const	$push347=, src
 	i32.const	$push57=, 11
 	i32.call	$push58=, memcmp@FUNCTION, $pop348, $pop347, $pop57
-	br_if   	0, $pop58       # 0: down to label3
+	br_if   	0, $pop58       # 0: down to label2
 # BB#10:                                # %check.exit49
 	i32.const	$push360=, 0
 	i32.const	$push359=, 0
@@ -174,7 +174,7 @@ main:                                   # @main
 	i32.const	$push355=, src
 	i32.const	$push61=, 12
 	i32.call	$push62=, memcmp@FUNCTION, $pop356, $pop355, $pop61
-	br_if   	0, $pop62       # 0: down to label3
+	br_if   	0, $pop62       # 0: down to label2
 # BB#11:                                # %check.exit53
 	i32.const	$push368=, 0
 	i32.const	$push367=, 0
@@ -192,7 +192,7 @@ main:                                   # @main
 	i32.const	$push361=, src
 	i32.const	$push66=, 13
 	i32.call	$push67=, memcmp@FUNCTION, $pop362, $pop361, $pop66
-	br_if   	0, $pop67       # 0: down to label3
+	br_if   	0, $pop67       # 0: down to label2
 # BB#12:                                # %check.exit57
 	i32.const	$push376=, 0
 	i32.const	$push375=, 0
@@ -210,7 +210,7 @@ main:                                   # @main
 	i32.const	$push369=, src
 	i32.const	$push71=, 14
 	i32.call	$push72=, memcmp@FUNCTION, $pop370, $pop369, $pop71
-	br_if   	0, $pop72       # 0: down to label3
+	br_if   	0, $pop72       # 0: down to label2
 # BB#13:                                # %check.exit61
 	i32.const	$push386=, 0
 	i32.const	$push385=, 0
@@ -232,7 +232,7 @@ main:                                   # @main
 	i32.const	$push377=, src
 	i32.const	$push77=, 15
 	i32.call	$push78=, memcmp@FUNCTION, $pop378, $pop377, $pop77
-	br_if   	0, $pop78       # 0: down to label3
+	br_if   	0, $pop78       # 0: down to label2
 # BB#14:                                # %check.exit65
 	i32.const	$push392=, 0
 	i32.const	$push391=, 0
@@ -246,7 +246,7 @@ main:                                   # @main
 	i32.const	$push387=, src
 	i32.const	$push81=, 16
 	i32.call	$push82=, memcmp@FUNCTION, $pop388, $pop387, $pop81
-	br_if   	0, $pop82       # 0: down to label3
+	br_if   	0, $pop82       # 0: down to label2
 # BB#15:                                # %check.exit69
 	i32.const	$push400=, 0
 	i32.const	$push399=, 0
@@ -264,7 +264,7 @@ main:                                   # @main
 	i32.const	$push393=, src
 	i32.const	$push86=, 17
 	i32.call	$push87=, memcmp@FUNCTION, $pop394, $pop393, $pop86
-	br_if   	0, $pop87       # 0: down to label3
+	br_if   	0, $pop87       # 0: down to label2
 # BB#16:                                # %check.exit73
 	i32.const	$push408=, 0
 	i32.const	$push407=, 0
@@ -282,7 +282,7 @@ main:                                   # @main
 	i32.const	$push401=, src
 	i32.const	$push91=, 18
 	i32.call	$push92=, memcmp@FUNCTION, $pop402, $pop401, $pop91
-	br_if   	0, $pop92       # 0: down to label3
+	br_if   	0, $pop92       # 0: down to label2
 # BB#17:                                # %check.exit77
 	i32.const	$push418=, 0
 	i32.const	$push417=, 0
@@ -304,7 +304,7 @@ main:                                   # @main
 	i32.const	$push409=, src
 	i32.const	$push97=, 19
 	i32.call	$push98=, memcmp@FUNCTION, $pop410, $pop409, $pop97
-	br_if   	0, $pop98       # 0: down to label3
+	br_if   	0, $pop98       # 0: down to label2
 # BB#18:                                # %check.exit81
 	i32.const	$push426=, 0
 	i32.const	$push425=, 0
@@ -322,7 +322,7 @@ main:                                   # @main
 	i32.const	$push419=, src
 	i32.const	$push102=, 20
 	i32.call	$push103=, memcmp@FUNCTION, $pop420, $pop419, $pop102
-	br_if   	0, $pop103      # 0: down to label3
+	br_if   	0, $pop103      # 0: down to label2
 # BB#19:                                # %check.exit85
 	i32.const	$push436=, 0
 	i32.const	$push435=, 0
@@ -344,7 +344,7 @@ main:                                   # @main
 	i32.const	$push427=, src
 	i32.const	$push108=, 21
 	i32.call	$push109=, memcmp@FUNCTION, $pop428, $pop427, $pop108
-	br_if   	0, $pop109      # 0: down to label3
+	br_if   	0, $pop109      # 0: down to label2
 # BB#20:                                # %check.exit89
 	i32.const	$push446=, 0
 	i32.const	$push445=, 0
@@ -366,7 +366,7 @@ main:                                   # @main
 	i32.const	$push437=, src
 	i32.const	$push114=, 22
 	i32.call	$push115=, memcmp@FUNCTION, $pop438, $pop437, $pop114
-	br_if   	0, $pop115      # 0: down to label3
+	br_if   	0, $pop115      # 0: down to label2
 # BB#21:                                # %check.exit93
 	i32.const	$push458=, 0
 	i32.const	$push457=, 0
@@ -392,7 +392,7 @@ main:                                   # @main
 	i32.const	$push447=, src
 	i32.const	$push121=, 23
 	i32.call	$push122=, memcmp@FUNCTION, $pop448, $pop447, $pop121
-	br_if   	0, $pop122      # 0: down to label3
+	br_if   	0, $pop122      # 0: down to label2
 # BB#22:                                # %check.exit97
 	i32.const	$push466=, 0
 	i32.const	$push465=, 0
@@ -410,7 +410,7 @@ main:                                   # @main
 	i32.const	$push459=, src
 	i32.const	$push126=, 24
 	i32.call	$push127=, memcmp@FUNCTION, $pop460, $pop459, $pop126
-	br_if   	0, $pop127      # 0: down to label3
+	br_if   	0, $pop127      # 0: down to label2
 # BB#23:                                # %check.exit101
 	i32.const	$push476=, 0
 	i32.const	$push475=, 0
@@ -432,7 +432,7 @@ main:                                   # @main
 	i32.const	$push467=, src
 	i32.const	$push132=, 25
 	i32.call	$push133=, memcmp@FUNCTION, $pop468, $pop467, $pop132
-	br_if   	0, $pop133      # 0: down to label3
+	br_if   	0, $pop133      # 0: down to label2
 # BB#24:                                # %check.exit105
 	i32.const	$push486=, 0
 	i32.const	$push485=, 0
@@ -454,7 +454,7 @@ main:                                   # @main
 	i32.const	$push477=, src
 	i32.const	$push138=, 26
 	i32.call	$push139=, memcmp@FUNCTION, $pop478, $pop477, $pop138
-	br_if   	0, $pop139      # 0: down to label3
+	br_if   	0, $pop139      # 0: down to label2
 # BB#25:                                # %check.exit109
 	i32.const	$push498=, 0
 	i32.const	$push497=, 0
@@ -480,7 +480,7 @@ main:                                   # @main
 	i32.const	$push487=, src
 	i32.const	$push145=, 27
 	i32.call	$push146=, memcmp@FUNCTION, $pop488, $pop487, $pop145
-	br_if   	0, $pop146      # 0: down to label3
+	br_if   	0, $pop146      # 0: down to label2
 # BB#26:                                # %check.exit113
 	i32.const	$push508=, 0
 	i32.const	$push507=, 0
@@ -502,7 +502,7 @@ main:                                   # @main
 	i32.const	$push499=, src
 	i32.const	$push151=, 28
 	i32.call	$push152=, memcmp@FUNCTION, $pop500, $pop499, $pop151
-	br_if   	0, $pop152      # 0: down to label3
+	br_if   	0, $pop152      # 0: down to label2
 # BB#27:                                # %check.exit117
 	i32.const	$push520=, 0
 	i32.const	$push519=, 0
@@ -528,7 +528,7 @@ main:                                   # @main
 	i32.const	$push509=, src
 	i32.const	$push158=, 29
 	i32.call	$push159=, memcmp@FUNCTION, $pop510, $pop509, $pop158
-	br_if   	0, $pop159      # 0: down to label3
+	br_if   	0, $pop159      # 0: down to label2
 # BB#28:                                # %check.exit121
 	i32.const	$push160=, 0
 	i32.const	$push531=, 0
@@ -554,7 +554,7 @@ main:                                   # @main
 	i32.const	$push521=, src
 	i32.const	$push166=, 30
 	i32.call	$push167=, memcmp@FUNCTION, $pop522, $pop521, $pop166
-	br_if   	0, $pop167      # 0: down to label3
+	br_if   	0, $pop167      # 0: down to label2
 # BB#29:                                # %check.exit125
 	i32.const	$push169=, dst
 	i32.const	$push536=, src
@@ -564,7 +564,7 @@ main:                                   # @main
 	i32.const	$push533=, src
 	i32.const	$push532=, 31
 	i32.call	$push170=, memcmp@FUNCTION, $pop534, $pop533, $pop532
-	br_if   	0, $pop170      # 0: down to label3
+	br_if   	0, $pop170      # 0: down to label2
 # BB#30:                                # %check.exit129
 	i32.const	$push171=, 0
 	i32.const	$push544=, 0
@@ -585,7 +585,7 @@ main:                                   # @main
 	i32.const	$push537=, src
 	i32.const	$push176=, 32
 	i32.call	$push177=, memcmp@FUNCTION, $0, $pop537, $pop176
-	br_if   	0, $pop177      # 0: down to label3
+	br_if   	0, $pop177      # 0: down to label2
 # BB#31:                                # %check.exit133
 	i32.const	$push179=, dst
 	i32.const	$push549=, src
@@ -595,7 +595,7 @@ main:                                   # @main
 	i32.const	$push546=, src
 	i32.const	$push545=, 33
 	i32.call	$push180=, memcmp@FUNCTION, $pop547, $pop546, $pop545
-	br_if   	0, $pop180      # 0: down to label3
+	br_if   	0, $pop180      # 0: down to label2
 # BB#32:                                # %check.exit137
 	i32.const	$push552=, src
 	i32.const	$push181=, 34
@@ -603,7 +603,7 @@ main:                                   # @main
 	i32.const	$push551=, src
 	i32.const	$push550=, 34
 	i32.call	$push182=, memcmp@FUNCTION, $pop0, $pop551, $pop550
-	br_if   	0, $pop182      # 0: down to label3
+	br_if   	0, $pop182      # 0: down to label2
 # BB#33:                                # %check.exit141
 	i32.const	$push184=, dst
 	i32.const	$push557=, src
@@ -613,7 +613,7 @@ main:                                   # @main
 	i32.const	$push554=, src
 	i32.const	$push553=, 35
 	i32.call	$push185=, memcmp@FUNCTION, $pop555, $pop554, $pop553
-	br_if   	0, $pop185      # 0: down to label3
+	br_if   	0, $pop185      # 0: down to label2
 # BB#34:                                # %check.exit145
 	i32.const	$push560=, src
 	i32.const	$push186=, 36
@@ -621,7 +621,7 @@ main:                                   # @main
 	i32.const	$push559=, src
 	i32.const	$push558=, 36
 	i32.call	$push187=, memcmp@FUNCTION, $pop1, $pop559, $pop558
-	br_if   	0, $pop187      # 0: down to label3
+	br_if   	0, $pop187      # 0: down to label2
 # BB#35:                                # %check.exit149
 	i32.const	$push189=, dst
 	i32.const	$push565=, src
@@ -631,7 +631,7 @@ main:                                   # @main
 	i32.const	$push562=, src
 	i32.const	$push561=, 37
 	i32.call	$push190=, memcmp@FUNCTION, $pop563, $pop562, $pop561
-	br_if   	0, $pop190      # 0: down to label3
+	br_if   	0, $pop190      # 0: down to label2
 # BB#36:                                # %check.exit153
 	i32.const	$push568=, src
 	i32.const	$push191=, 38
@@ -639,7 +639,7 @@ main:                                   # @main
 	i32.const	$push567=, src
 	i32.const	$push566=, 38
 	i32.call	$push192=, memcmp@FUNCTION, $pop2, $pop567, $pop566
-	br_if   	0, $pop192      # 0: down to label3
+	br_if   	0, $pop192      # 0: down to label2
 # BB#37:                                # %check.exit157
 	i32.const	$push194=, dst
 	i32.const	$push573=, src
@@ -649,7 +649,7 @@ main:                                   # @main
 	i32.const	$push570=, src
 	i32.const	$push569=, 39
 	i32.call	$push195=, memcmp@FUNCTION, $pop571, $pop570, $pop569
-	br_if   	0, $pop195      # 0: down to label3
+	br_if   	0, $pop195      # 0: down to label2
 # BB#38:                                # %check.exit161
 	i32.const	$push576=, src
 	i32.const	$push196=, 40
@@ -657,7 +657,7 @@ main:                                   # @main
 	i32.const	$push575=, src
 	i32.const	$push574=, 40
 	i32.call	$push197=, memcmp@FUNCTION, $pop3, $pop575, $pop574
-	br_if   	0, $pop197      # 0: down to label3
+	br_if   	0, $pop197      # 0: down to label2
 # BB#39:                                # %check.exit165
 	i32.const	$push199=, dst
 	i32.const	$push581=, src
@@ -667,7 +667,7 @@ main:                                   # @main
 	i32.const	$push578=, src
 	i32.const	$push577=, 41
 	i32.call	$push200=, memcmp@FUNCTION, $pop579, $pop578, $pop577
-	br_if   	0, $pop200      # 0: down to label3
+	br_if   	0, $pop200      # 0: down to label2
 # BB#40:                                # %check.exit169
 	i32.const	$push584=, src
 	i32.const	$push201=, 42
@@ -675,7 +675,7 @@ main:                                   # @main
 	i32.const	$push583=, src
 	i32.const	$push582=, 42
 	i32.call	$push202=, memcmp@FUNCTION, $pop4, $pop583, $pop582
-	br_if   	0, $pop202      # 0: down to label3
+	br_if   	0, $pop202      # 0: down to label2
 # BB#41:                                # %check.exit173
 	i32.const	$push204=, dst
 	i32.const	$push589=, src
@@ -685,7 +685,7 @@ main:                                   # @main
 	i32.const	$push586=, src
 	i32.const	$push585=, 43
 	i32.call	$push205=, memcmp@FUNCTION, $pop587, $pop586, $pop585
-	br_if   	0, $pop205      # 0: down to label3
+	br_if   	0, $pop205      # 0: down to label2
 # BB#42:                                # %check.exit177
 	i32.const	$push592=, src
 	i32.const	$push206=, 44
@@ -693,7 +693,7 @@ main:                                   # @main
 	i32.const	$push591=, src
 	i32.const	$push590=, 44
 	i32.call	$push207=, memcmp@FUNCTION, $pop5, $pop591, $pop590
-	br_if   	0, $pop207      # 0: down to label3
+	br_if   	0, $pop207      # 0: down to label2
 # BB#43:                                # %check.exit181
 	i32.const	$push209=, dst
 	i32.const	$push597=, src
@@ -703,7 +703,7 @@ main:                                   # @main
 	i32.const	$push594=, src
 	i32.const	$push593=, 45
 	i32.call	$push210=, memcmp@FUNCTION, $pop595, $pop594, $pop593
-	br_if   	0, $pop210      # 0: down to label3
+	br_if   	0, $pop210      # 0: down to label2
 # BB#44:                                # %check.exit185
 	i32.const	$push600=, src
 	i32.const	$push211=, 46
@@ -711,7 +711,7 @@ main:                                   # @main
 	i32.const	$push599=, src
 	i32.const	$push598=, 46
 	i32.call	$push212=, memcmp@FUNCTION, $pop6, $pop599, $pop598
-	br_if   	0, $pop212      # 0: down to label3
+	br_if   	0, $pop212      # 0: down to label2
 # BB#45:                                # %check.exit189
 	i32.const	$push214=, dst
 	i32.const	$push605=, src
@@ -721,7 +721,7 @@ main:                                   # @main
 	i32.const	$push602=, src
 	i32.const	$push601=, 47
 	i32.call	$push215=, memcmp@FUNCTION, $pop603, $pop602, $pop601
-	br_if   	0, $pop215      # 0: down to label3
+	br_if   	0, $pop215      # 0: down to label2
 # BB#46:                                # %check.exit193
 	i32.const	$push608=, src
 	i32.const	$push216=, 48
@@ -729,7 +729,7 @@ main:                                   # @main
 	i32.const	$push607=, src
 	i32.const	$push606=, 48
 	i32.call	$push217=, memcmp@FUNCTION, $pop7, $pop607, $pop606
-	br_if   	0, $pop217      # 0: down to label3
+	br_if   	0, $pop217      # 0: down to label2
 # BB#47:                                # %check.exit197
 	i32.const	$push219=, dst
 	i32.const	$push613=, src
@@ -739,7 +739,7 @@ main:                                   # @main
 	i32.const	$push610=, src
 	i32.const	$push609=, 49
 	i32.call	$push220=, memcmp@FUNCTION, $pop611, $pop610, $pop609
-	br_if   	0, $pop220      # 0: down to label3
+	br_if   	0, $pop220      # 0: down to label2
 # BB#48:                                # %check.exit201
 	i32.const	$push616=, src
 	i32.const	$push221=, 50
@@ -747,7 +747,7 @@ main:                                   # @main
 	i32.const	$push615=, src
 	i32.const	$push614=, 50
 	i32.call	$push222=, memcmp@FUNCTION, $pop8, $pop615, $pop614
-	br_if   	0, $pop222      # 0: down to label3
+	br_if   	0, $pop222      # 0: down to label2
 # BB#49:                                # %check.exit205
 	i32.const	$push224=, dst
 	i32.const	$push621=, src
@@ -757,7 +757,7 @@ main:                                   # @main
 	i32.const	$push618=, src
 	i32.const	$push617=, 51
 	i32.call	$push225=, memcmp@FUNCTION, $pop619, $pop618, $pop617
-	br_if   	0, $pop225      # 0: down to label3
+	br_if   	0, $pop225      # 0: down to label2
 # BB#50:                                # %check.exit209
 	i32.const	$push624=, src
 	i32.const	$push226=, 52
@@ -765,7 +765,7 @@ main:                                   # @main
 	i32.const	$push623=, src
 	i32.const	$push622=, 52
 	i32.call	$push227=, memcmp@FUNCTION, $pop9, $pop623, $pop622
-	br_if   	0, $pop227      # 0: down to label3
+	br_if   	0, $pop227      # 0: down to label2
 # BB#51:                                # %check.exit213
 	i32.const	$push229=, dst
 	i32.const	$push629=, src
@@ -775,7 +775,7 @@ main:                                   # @main
 	i32.const	$push626=, src
 	i32.const	$push625=, 53
 	i32.call	$push230=, memcmp@FUNCTION, $pop627, $pop626, $pop625
-	br_if   	0, $pop230      # 0: down to label3
+	br_if   	0, $pop230      # 0: down to label2
 # BB#52:                                # %check.exit217
 	i32.const	$push632=, src
 	i32.const	$push231=, 54
@@ -783,7 +783,7 @@ main:                                   # @main
 	i32.const	$push631=, src
 	i32.const	$push630=, 54
 	i32.call	$push232=, memcmp@FUNCTION, $pop10, $pop631, $pop630
-	br_if   	0, $pop232      # 0: down to label3
+	br_if   	0, $pop232      # 0: down to label2
 # BB#53:                                # %check.exit221
 	i32.const	$push234=, dst
 	i32.const	$push637=, src
@@ -793,7 +793,7 @@ main:                                   # @main
 	i32.const	$push634=, src
 	i32.const	$push633=, 55
 	i32.call	$push235=, memcmp@FUNCTION, $pop635, $pop634, $pop633
-	br_if   	0, $pop235      # 0: down to label3
+	br_if   	0, $pop235      # 0: down to label2
 # BB#54:                                # %check.exit225
 	i32.const	$push640=, src
 	i32.const	$push236=, 56
@@ -801,7 +801,7 @@ main:                                   # @main
 	i32.const	$push639=, src
 	i32.const	$push638=, 56
 	i32.call	$push237=, memcmp@FUNCTION, $pop11, $pop639, $pop638
-	br_if   	0, $pop237      # 0: down to label3
+	br_if   	0, $pop237      # 0: down to label2
 # BB#55:                                # %check.exit229
 	i32.const	$push239=, dst
 	i32.const	$push645=, src
@@ -811,7 +811,7 @@ main:                                   # @main
 	i32.const	$push642=, src
 	i32.const	$push641=, 57
 	i32.call	$push240=, memcmp@FUNCTION, $pop643, $pop642, $pop641
-	br_if   	0, $pop240      # 0: down to label3
+	br_if   	0, $pop240      # 0: down to label2
 # BB#56:                                # %check.exit233
 	i32.const	$push648=, src
 	i32.const	$push241=, 58
@@ -819,7 +819,7 @@ main:                                   # @main
 	i32.const	$push647=, src
 	i32.const	$push646=, 58
 	i32.call	$push242=, memcmp@FUNCTION, $pop12, $pop647, $pop646
-	br_if   	0, $pop242      # 0: down to label3
+	br_if   	0, $pop242      # 0: down to label2
 # BB#57:                                # %check.exit237
 	i32.const	$push244=, dst
 	i32.const	$push653=, src
@@ -829,7 +829,7 @@ main:                                   # @main
 	i32.const	$push650=, src
 	i32.const	$push649=, 59
 	i32.call	$push245=, memcmp@FUNCTION, $pop651, $pop650, $pop649
-	br_if   	0, $pop245      # 0: down to label3
+	br_if   	0, $pop245      # 0: down to label2
 # BB#58:                                # %check.exit241
 	i32.const	$push656=, src
 	i32.const	$push246=, 60
@@ -837,7 +837,7 @@ main:                                   # @main
 	i32.const	$push655=, src
 	i32.const	$push654=, 60
 	i32.call	$push247=, memcmp@FUNCTION, $pop13, $pop655, $pop654
-	br_if   	0, $pop247      # 0: down to label3
+	br_if   	0, $pop247      # 0: down to label2
 # BB#59:                                # %check.exit245
 	i32.const	$push249=, dst
 	i32.const	$push661=, src
@@ -847,7 +847,7 @@ main:                                   # @main
 	i32.const	$push658=, src
 	i32.const	$push657=, 61
 	i32.call	$push250=, memcmp@FUNCTION, $pop659, $pop658, $pop657
-	br_if   	0, $pop250      # 0: down to label3
+	br_if   	0, $pop250      # 0: down to label2
 # BB#60:                                # %check.exit249
 	i32.const	$push664=, src
 	i32.const	$push251=, 62
@@ -855,7 +855,7 @@ main:                                   # @main
 	i32.const	$push663=, src
 	i32.const	$push662=, 62
 	i32.call	$push252=, memcmp@FUNCTION, $pop14, $pop663, $pop662
-	br_if   	0, $pop252      # 0: down to label3
+	br_if   	0, $pop252      # 0: down to label2
 # BB#61:                                # %check.exit253
 	i32.const	$push254=, dst
 	i32.const	$push669=, src
@@ -865,7 +865,7 @@ main:                                   # @main
 	i32.const	$push666=, src
 	i32.const	$push665=, 63
 	i32.call	$push255=, memcmp@FUNCTION, $pop667, $pop666, $pop665
-	br_if   	0, $pop255      # 0: down to label3
+	br_if   	0, $pop255      # 0: down to label2
 # BB#62:                                # %check.exit257
 	i32.const	$push672=, src
 	i32.const	$push256=, 64
@@ -873,7 +873,7 @@ main:                                   # @main
 	i32.const	$push671=, src
 	i32.const	$push670=, 64
 	i32.call	$push257=, memcmp@FUNCTION, $pop15, $pop671, $pop670
-	br_if   	0, $pop257      # 0: down to label3
+	br_if   	0, $pop257      # 0: down to label2
 # BB#63:                                # %check.exit261
 	i32.const	$push259=, dst
 	i32.const	$push677=, src
@@ -883,7 +883,7 @@ main:                                   # @main
 	i32.const	$push674=, src
 	i32.const	$push673=, 65
 	i32.call	$push260=, memcmp@FUNCTION, $pop675, $pop674, $pop673
-	br_if   	0, $pop260      # 0: down to label3
+	br_if   	0, $pop260      # 0: down to label2
 # BB#64:                                # %check.exit265
 	i32.const	$push680=, src
 	i32.const	$push261=, 66
@@ -891,7 +891,7 @@ main:                                   # @main
 	i32.const	$push679=, src
 	i32.const	$push678=, 66
 	i32.call	$push262=, memcmp@FUNCTION, $pop16, $pop679, $pop678
-	br_if   	0, $pop262      # 0: down to label3
+	br_if   	0, $pop262      # 0: down to label2
 # BB#65:                                # %check.exit269
 	i32.const	$push264=, dst
 	i32.const	$push685=, src
@@ -901,7 +901,7 @@ main:                                   # @main
 	i32.const	$push682=, src
 	i32.const	$push681=, 67
 	i32.call	$push265=, memcmp@FUNCTION, $pop683, $pop682, $pop681
-	br_if   	0, $pop265      # 0: down to label3
+	br_if   	0, $pop265      # 0: down to label2
 # BB#66:                                # %check.exit273
 	i32.const	$push688=, src
 	i32.const	$push266=, 68
@@ -909,7 +909,7 @@ main:                                   # @main
 	i32.const	$push687=, src
 	i32.const	$push686=, 68
 	i32.call	$push267=, memcmp@FUNCTION, $pop17, $pop687, $pop686
-	br_if   	0, $pop267      # 0: down to label3
+	br_if   	0, $pop267      # 0: down to label2
 # BB#67:                                # %check.exit277
 	i32.const	$push269=, dst
 	i32.const	$push693=, src
@@ -919,7 +919,7 @@ main:                                   # @main
 	i32.const	$push690=, src
 	i32.const	$push689=, 69
 	i32.call	$push270=, memcmp@FUNCTION, $pop691, $pop690, $pop689
-	br_if   	0, $pop270      # 0: down to label3
+	br_if   	0, $pop270      # 0: down to label2
 # BB#68:                                # %check.exit281
 	i32.const	$push696=, src
 	i32.const	$push271=, 70
@@ -927,7 +927,7 @@ main:                                   # @main
 	i32.const	$push695=, src
 	i32.const	$push694=, 70
 	i32.call	$push272=, memcmp@FUNCTION, $pop18, $pop695, $pop694
-	br_if   	0, $pop272      # 0: down to label3
+	br_if   	0, $pop272      # 0: down to label2
 # BB#69:                                # %check.exit285
 	i32.const	$push274=, dst
 	i32.const	$push701=, src
@@ -937,7 +937,7 @@ main:                                   # @main
 	i32.const	$push698=, src
 	i32.const	$push697=, 71
 	i32.call	$push275=, memcmp@FUNCTION, $pop699, $pop698, $pop697
-	br_if   	0, $pop275      # 0: down to label3
+	br_if   	0, $pop275      # 0: down to label2
 # BB#70:                                # %check.exit289
 	i32.const	$push704=, src
 	i32.const	$push276=, 72
@@ -945,7 +945,7 @@ main:                                   # @main
 	i32.const	$push703=, src
 	i32.const	$push702=, 72
 	i32.call	$push277=, memcmp@FUNCTION, $pop19, $pop703, $pop702
-	br_if   	0, $pop277      # 0: down to label3
+	br_if   	0, $pop277      # 0: down to label2
 # BB#71:                                # %check.exit293
 	i32.const	$push279=, dst
 	i32.const	$push709=, src
@@ -955,7 +955,7 @@ main:                                   # @main
 	i32.const	$push706=, src
 	i32.const	$push705=, 73
 	i32.call	$push280=, memcmp@FUNCTION, $pop707, $pop706, $pop705
-	br_if   	0, $pop280      # 0: down to label3
+	br_if   	0, $pop280      # 0: down to label2
 # BB#72:                                # %check.exit297
 	i32.const	$push712=, src
 	i32.const	$push281=, 74
@@ -963,7 +963,7 @@ main:                                   # @main
 	i32.const	$push711=, src
 	i32.const	$push710=, 74
 	i32.call	$push282=, memcmp@FUNCTION, $pop20, $pop711, $pop710
-	br_if   	0, $pop282      # 0: down to label3
+	br_if   	0, $pop282      # 0: down to label2
 # BB#73:                                # %check.exit301
 	i32.const	$push284=, dst
 	i32.const	$push717=, src
@@ -973,7 +973,7 @@ main:                                   # @main
 	i32.const	$push714=, src
 	i32.const	$push713=, 75
 	i32.call	$push285=, memcmp@FUNCTION, $pop715, $pop714, $pop713
-	br_if   	0, $pop285      # 0: down to label3
+	br_if   	0, $pop285      # 0: down to label2
 # BB#74:                                # %check.exit305
 	i32.const	$push720=, src
 	i32.const	$push286=, 76
@@ -981,7 +981,7 @@ main:                                   # @main
 	i32.const	$push719=, src
 	i32.const	$push718=, 76
 	i32.call	$push287=, memcmp@FUNCTION, $pop21, $pop719, $pop718
-	br_if   	0, $pop287      # 0: down to label3
+	br_if   	0, $pop287      # 0: down to label2
 # BB#75:                                # %check.exit309
 	i32.const	$push289=, dst
 	i32.const	$push725=, src
@@ -991,7 +991,7 @@ main:                                   # @main
 	i32.const	$push722=, src
 	i32.const	$push721=, 77
 	i32.call	$push290=, memcmp@FUNCTION, $pop723, $pop722, $pop721
-	br_if   	0, $pop290      # 0: down to label3
+	br_if   	0, $pop290      # 0: down to label2
 # BB#76:                                # %check.exit313
 	i32.const	$push728=, src
 	i32.const	$push291=, 78
@@ -999,7 +999,7 @@ main:                                   # @main
 	i32.const	$push727=, src
 	i32.const	$push726=, 78
 	i32.call	$push292=, memcmp@FUNCTION, $pop22, $pop727, $pop726
-	br_if   	0, $pop292      # 0: down to label3
+	br_if   	0, $pop292      # 0: down to label2
 # BB#77:                                # %check.exit317
 	i32.const	$push295=, dst
 	i32.const	$push294=, src
@@ -1008,12 +1008,12 @@ main:                                   # @main
 	i32.const	$push730=, src
 	i32.const	$push729=, 79
 	i32.call	$push296=, memcmp@FUNCTION, $pop23, $pop730, $pop729
-	br_if   	0, $pop296      # 0: down to label3
+	br_if   	0, $pop296      # 0: down to label2
 # BB#78:                                # %check.exit321
 	i32.const	$push297=, 0
 	return  	$pop297
 .LBB1_79:                               # %if.then.i320
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -1039,6 +1039,6 @@ dst:
 	.size	dst, 80
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

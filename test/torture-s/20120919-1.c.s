@@ -58,7 +58,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	loop                            # label2:
 	block
-	br_if   	0, $6           # 0: down to label4
+	br_if   	0, $6           # 0: down to label3
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB1_2 Depth=1
 	f64.load	$3=, 0($1)
@@ -77,14 +77,14 @@ main:                                   # @main
 	i32.add 	$5=, $pop5, $5
 .LBB1_4:                                # %if.end11
                                         #   in Loop: Header=BB1_2 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push37=, 1
 	i32.add 	$push36=, $6, $pop37
 	tee_local	$push35=, $6=, $pop36
 	i32.lt_s	$push6=, $pop35, $0
 	br_if   	0, $pop6        # 0: up to label2
 # BB#5:                                 # %while.end
-	end_loop                        # label3:
+	end_loop
 	i32.const	$push7=, 1234567890
 	i32.ne  	$push8=, $5, $pop7
 	br_if   	0, $pop8        # 0: down to label1
@@ -142,5 +142,5 @@ pi:
 	.size	pi, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

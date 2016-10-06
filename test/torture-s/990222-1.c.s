@@ -48,7 +48,7 @@ main:                                   # @main
 	i32.gt_s	$push8=, $pop7, $pop28
 	br_if   	0, $pop8        # 0: up to label1
 # BB#3:                                 # %while.end.loopexit
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push9=, 0
 	i32.load8_u	$1=, line+2($pop9)
 .LBB0_4:                                # %while.end
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.load8_u	$push11=, line($pop37)
 	i32.const	$push12=, 50
 	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	0, $pop13       # 0: down to label3
+	br_if   	0, $pop13       # 0: down to label2
 # BB#5:                                 # %while.end
 	i32.const	$push40=, 0
 	i32.load8_u	$push10=, line+1($pop40)
@@ -66,18 +66,18 @@ main:                                   # @main
 	i32.and 	$push14=, $pop10, $pop39
 	i32.const	$push38=, 48
 	i32.ne  	$push15=, $pop14, $pop38
-	br_if   	0, $pop15       # 0: down to label3
+	br_if   	0, $pop15       # 0: down to label2
 # BB#6:                                 # %while.end
 	i32.const	$push42=, 255
 	i32.and 	$push16=, $1, $pop42
 	i32.const	$push41=, 48
 	i32.ne  	$push17=, $pop16, $pop41
-	br_if   	0, $pop17       # 0: down to label3
+	br_if   	0, $pop17       # 0: down to label2
 # BB#7:                                 # %if.end
 	i32.const	$push18=, 0
 	return  	$pop18
 .LBB0_8:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -93,5 +93,5 @@ line:
 	.size	line, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

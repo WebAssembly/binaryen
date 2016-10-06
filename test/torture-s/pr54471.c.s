@@ -43,7 +43,7 @@ foo:                                    # @foo
 	tee_local	$push21=, $3=, $pop22
 	br_if   	0, $pop21       # 0: up to label1
 # BB#3:                                 # %for.end
-	end_loop                        # label2:
+	end_loop
 	i64.const	$push26=, 14348907
 	i64.xor 	$push2=, $4, $pop26
 	i64.or  	$push3=, $pop2, $5
@@ -100,5 +100,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

@@ -29,7 +29,7 @@ foo:                                    # @foo
 	i32.store	b($pop8), $pop4
 	br_if   	0, $1           # 0: up to label1
 .LBB0_3:                                # %if.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push2=, -1
                                         # fallthrough-return: $pop2
@@ -49,12 +49,12 @@ main:                                   # @main
 	i32.const	$push2=, 0
 	i32.load	$push0=, b($pop2)
 	i32.eqz 	$push9=, $pop0
-	br_if   	0, $pop9        # 0: down to label3
+	br_if   	0, $pop9        # 0: down to label2
 # BB#1:                                 # %for.body.i.preheader
 	i32.const	$0=, 1
 .LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	#APP
 	#NO_APP
 	i32.const	$push7=, 0
@@ -64,10 +64,10 @@ main:                                   # @main
 	i32.add 	$push4=, $pop1, $pop5
 	tee_local	$push3=, $1=, $pop4
 	i32.store	b($pop7), $pop3
-	br_if   	0, $1           # 0: up to label4
+	br_if   	0, $1           # 0: up to label3
 .LBB1_3:                                # %foo.exit
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	i32.const	$push8=, 0
                                         # fallthrough-return: $pop8
 	.endfunc
@@ -84,4 +84,4 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

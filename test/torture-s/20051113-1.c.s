@@ -35,7 +35,7 @@ Sum:                                    # @Sum
 	i32.lt_s	$push4=, $pop8, $1
 	br_if   	0, $pop4        # 0: up to label1
 .LBB0_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push12=, $3
                                         # fallthrough-return: $pop12
@@ -58,7 +58,7 @@ Sum2:                                   # @Sum2
 	tee_local	$push6=, $1=, $pop7
 	i32.const	$push5=, 1
 	i32.lt_s	$push1=, $pop6, $pop5
-	br_if   	0, $pop1        # 0: down to label3
+	br_if   	0, $pop1        # 0: down to label2
 # BB#1:                                 # %for.body.preheader
 	i32.const	$push2=, 18
 	i32.add 	$0=, $0, $pop2
@@ -66,7 +66,7 @@ Sum2:                                   # @Sum2
 	i32.const	$2=, 0
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	i64.load	$push3=, 0($0):p2align=0
 	i64.add 	$3=, $pop3, $3
 	i32.const	$push11=, 30
@@ -76,10 +76,10 @@ Sum2:                                   # @Sum2
 	i32.add 	$push9=, $2, $pop10
 	tee_local	$push8=, $2=, $pop9
 	i32.lt_s	$push4=, $pop8, $1
-	br_if   	0, $pop4        # 0: up to label4
+	br_if   	0, $pop4        # 0: up to label3
 .LBB1_3:                                # %for.end
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	copy_local	$push12=, $3
                                         # fallthrough-return: $pop12
 	.endfunc
@@ -120,17 +120,17 @@ main:                                   # @main
 	i64.call	$push9=, Sum@FUNCTION, $0
 	i64.const	$push14=, 4311811859
 	i64.ne  	$push10=, $pop9, $pop14
-	br_if   	0, $pop10       # 0: down to label6
+	br_if   	0, $pop10       # 0: down to label4
 # BB#1:                                 # %if.end
 	i64.call	$push11=, Sum2@FUNCTION, $0
 	i64.const	$push20=, 4311811859
 	i64.ne  	$push12=, $pop11, $pop20
-	br_if   	0, $pop12       # 0: down to label6
+	br_if   	0, $pop12       # 0: down to label4
 # BB#2:                                 # %if.end25
 	i32.const	$push13=, 0
 	return  	$pop13
 .LBB2_3:                                # %if.then24
-	end_block                       # label6:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	malloc, i32, i32
 	.functype	abort, void

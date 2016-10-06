@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.add 	$0=, $0, $pop1
 	br      	0               # 0: up to label2
 .LBB1_2:
-	end_loop                        # label3:
+	end_loop
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -65,6 +65,6 @@ a:
 	.size	a, 1004
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32
 	.functype	abort, void

@@ -17,7 +17,7 @@ main:                                   # @main
 	tee_local	$push1=, $0=, $pop2
 	br_if   	0, $pop1        # 0: up to label0
 # BB#2:                                 # %do.end
-	end_loop                        # label1:
+	end_loop
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -26,5 +26,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

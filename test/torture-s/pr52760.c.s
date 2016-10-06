@@ -80,7 +80,7 @@ foo:                                    # @foo
 	tee_local	$push22=, $0=, $pop23
 	br_if   	0, $pop22       # 0: up to label1
 .LBB0_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -112,22 +112,22 @@ main:                                   # @main
 	i32.load16_u	$push3=, 8($0)
 	i32.const	$push2=, 256
 	i32.ne  	$push4=, $pop3, $pop2
-	br_if   	0, $pop4        # 0: down to label3
+	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %lor.lhs.false
 	i32.load16_u	$push6=, 10($0)
 	i32.const	$push5=, 770
 	i32.ne  	$push7=, $pop6, $pop5
-	br_if   	0, $pop7        # 0: down to label3
+	br_if   	0, $pop7        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false5
 	i32.load16_u	$push9=, 12($0)
 	i32.const	$push8=, 1284
 	i32.ne  	$push10=, $pop9, $pop8
-	br_if   	0, $pop10       # 0: down to label3
+	br_if   	0, $pop10       # 0: down to label2
 # BB#3:                                 # %lor.lhs.false9
 	i32.load16_u	$push12=, 14($0)
 	i32.const	$push11=, 1798
 	i32.ne  	$push13=, $pop12, $pop11
-	br_if   	0, $pop13       # 0: down to label3
+	br_if   	0, $pop13       # 0: down to label2
 # BB#4:                                 # %if.end
 	i32.const	$push21=, 0
 	i32.const	$push19=, 16
@@ -136,7 +136,7 @@ main:                                   # @main
 	i32.const	$push14=, 0
 	return  	$pop14
 .LBB1_5:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -144,5 +144,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

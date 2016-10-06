@@ -65,7 +65,8 @@ main:                                   # @main
 	i32.load	$0=, a+4($pop42)
 .LBB1_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	block
+	loop                            # label2:
 	i32.const	$push52=, 3
 	i32.shl 	$push51=, $6, $pop52
 	tee_local	$push50=, $7=, $pop51
@@ -188,7 +189,7 @@ main:                                   # @main
 	i32.const	$6=, 3
 	i32.load	$push22=, 0($8)
 	i32.eq  	$push23=, $pop22, $5
-	br_if   	6, $pop23       # 6: up to label1
+	br_if   	6, $pop23       # 6: up to label2
 	br      	3               # 3: down to label5
 .LBB1_21:                               # %land.lhs.true.2
                                         #   in Loop: Header=BB1_1 Depth=1
@@ -220,7 +221,7 @@ main:                                   # @main
 	i32.load	$push71=, a+20($pop13)
 	tee_local	$push70=, $7=, $pop71
 	i32.gt_s	$push14=, $pop72, $pop70
-	br_if   	5, $pop14       # 5: down to label2
+	br_if   	5, $pop14       # 5: down to label1
 # BB#26:                                # %if.end.i45.2
 	i32.lt_s	$push15=, $6, $7
 	br_if   	2, $pop15       # 2: down to label4
@@ -230,7 +231,7 @@ main:                                   # @main
 	i32.load	$push17=, a+16($pop16)
 	i32.le_u	$push19=, $pop18, $pop17
 	br_if   	2, $pop19       # 2: down to label4
-	br      	5               # 5: down to label2
+	br      	5               # 5: down to label1
 .LBB1_28:                               # %if.then
 	end_block                       # label6:
 	call    	abort@FUNCTION
@@ -251,9 +252,10 @@ main:                                   # @main
 	tee_local	$push66=, $6=, $pop67
 	i32.const	$push65=, 4
 	i32.lt_s	$push40=, $pop66, $pop65
-	br_if   	0, $pop40       # 0: up to label1
+	br_if   	0, $pop40       # 0: up to label2
 .LBB1_32:                               # %for.end25
-	end_loop                        # label2:
+	end_loop
+	end_block                       # label1:
 	i32.const	$push41=, 0
                                         # fallthrough-return: $pop41
 	.endfunc
@@ -276,5 +278,5 @@ a:
 	.size	a, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

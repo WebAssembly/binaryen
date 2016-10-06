@@ -29,7 +29,7 @@ f:                                      # @f
 	loop                            # label3:
 	br      	0               # 0: up to label3
 .LBB0_5:                                # %if.end2
-	end_loop                        # label4:
+	end_loop
 	end_block                       # label0:
 	unreachable
 	unreachable
@@ -52,5 +52,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

@@ -20,7 +20,7 @@ t:                                      # @t
 	loop                            # label1:
 	block
 	i32.eqz 	$push12=, $1
-	br_if   	0, $pop12       # 0: down to label3
+	br_if   	0, $pop12       # 0: down to label2
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push5=, 0
@@ -29,7 +29,7 @@ t:                                      # @t
 	call_indirect	$pop2, $pop4
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.const	$push11=, a
 	i32.add 	$push3=, $1, $pop11
 	i32.const	$push10=, 0
@@ -41,7 +41,7 @@ t:                                      # @t
 	tee_local	$push6=, $0=, $pop7
 	br_if   	0, $pop6        # 0: up to label1
 .LBB0_5:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push13=, $1
                                         # fallthrough-return: $pop13
@@ -86,6 +86,6 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32
 	.functype	abort, void

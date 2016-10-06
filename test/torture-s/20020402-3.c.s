@@ -50,7 +50,7 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.gt_s	$push7=, $pop23, $pop22
 	br_if   	0, $pop7        # 0: up to label2
 # BB#3:                                 # %while.cond8.preheader
-	end_loop                        # label3:
+	end_loop
 	i32.const	$5=, 0
 	i32.const	$push8=, -1
 	i32.le_s	$push9=, $7, $pop8
@@ -66,11 +66,12 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.add 	$1=, $pop11, $pop12
 .LBB0_5:                                # %while.body10
                                         # =>This Inner Loop Header: Depth=1
+	block
 	loop                            # label4:
 	i32.load	$push13=, 0($1)
 	i64.load	$push14=, 8($pop13)
 	i64.gt_u	$push15=, $pop14, $0
-	br_if   	1, $pop15       # 1: down to label5
+	br_if   	1, $pop15       # 1: down to label3
 # BB#6:                                 # %while.cond8
                                         #   in Loop: Header=BB0_5 Depth=1
 	i32.const	$push41=, -4
@@ -84,7 +85,8 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	br_if   	0, $pop16       # 0: up to label4
 	br      	2               # 2: down to label0
 .LBB0_7:
-	end_loop                        # label5:
+	end_loop
+	end_block                       # label3:
 	copy_local	$5=, $2
 .LBB0_8:                                # %cleanup
 	end_block                       # label0:
@@ -108,4 +110,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

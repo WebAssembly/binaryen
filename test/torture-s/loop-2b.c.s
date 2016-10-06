@@ -29,7 +29,7 @@ f:                                      # @f
 	tee_local	$push8=, $1=, $pop9
 	i32.const	$push7=, 2147483645
 	i32.eq  	$push6=, $pop8, $pop7
-	br_if   	1, $pop6        # 1: down to label2
+	br_if   	1, $pop6        # 1: down to label0
 # BB#3:                                 # %for.body
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push12=, -1
@@ -38,7 +38,7 @@ f:                                      # @f
 	i32.add 	$0=, $0, $pop11
 	br_if   	0, $1           # 0: up to label1
 .LBB0_4:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push13=, $0
                                         # fallthrough-return: $pop13
@@ -73,5 +73,5 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

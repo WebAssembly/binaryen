@@ -16,18 +16,18 @@ foo:                                    # @foo
 	i32.add 	$push4=, $0, $3
 	tee_local	$push3=, $2=, $pop4
 	i32.load8_u	$push0=, 0($pop3)
-	br_if   	2, $pop0        # 2: down to label0
+	br_if   	1, $pop0        # 1: down to label0
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	block
 	i32.eqz 	$push9=, $1
-	br_if   	0, $pop9        # 0: down to label3
+	br_if   	0, $pop9        # 0: down to label2
 # BB#3:                                 # %if.then3
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.store8	0($2), $1
 .LBB0_4:                                # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.const	$push8=, 1
 	i32.add 	$push7=, $3, $pop8
 	tee_local	$push6=, $3=, $pop7
@@ -35,7 +35,7 @@ foo:                                    # @foo
 	i32.lt_u	$push1=, $pop6, $pop5
 	br_if   	0, $pop1        # 0: up to label1
 # BB#5:                                 # %for.end
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push2=, 0
 	i32.store	p($pop2), $0
 	return
@@ -367,5 +367,5 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

@@ -132,7 +132,7 @@ z:
 	.size	z, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	__divsc3, void, i32, f32, f32, f32, f32
 	.functype	abort, void
 	.functype	exit, void, i32

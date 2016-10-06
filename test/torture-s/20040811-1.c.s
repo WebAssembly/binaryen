@@ -44,7 +44,7 @@ main:                                   # @main
 	i32.ne  	$push5=, $pop11, $pop10
 	br_if   	0, $pop5        # 0: up to label0
 # BB#2:                                 # %cleanup3
-	end_loop                        # label1:
+	end_loop
 	i32.const	$push6=, 0
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -61,4 +61,4 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

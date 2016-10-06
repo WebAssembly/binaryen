@@ -25,7 +25,7 @@ add:                                    # @add
 	loop                            # label2:
 	f64.const	$push10=, infinity
 	f64.ne  	$push2=, $3, $pop10
-	br_if   	3, $pop2        # 3: down to label0
+	br_if   	2, $pop2        # 2: down to label0
 # BB#3:                                 # %while.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	f64.load	$3=, 0($1)
@@ -35,7 +35,7 @@ add:                                    # @add
 	f64.ne  	$push3=, $3, $2
 	br_if   	0, $pop3        # 0: up to label2
 .LBB0_4:                                # %if.end10
-	end_loop                        # label3:
+	end_loop
 	end_block                       # label1:
 	i32.const	$push4=, 0
 	return  	$pop4
@@ -72,10 +72,10 @@ main:                                   # @main
 .LBB1_1:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label5:
+	loop                            # label4:
 	f64.const	$push16=, infinity
 	f64.ne  	$push3=, $1, $pop16
-	br_if   	2, $pop3        # 2: down to label4
+	br_if   	1, $pop3        # 1: down to label3
 # BB#2:                                 # %while.cond.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	f64.load	$1=, 0($0)
@@ -84,9 +84,9 @@ main:                                   # @main
 	copy_local	$0=, $pop0
 	f64.const	$push17=, 0x1.7p4
 	f64.ne  	$push4=, $1, $pop17
-	br_if   	0, $pop4        # 0: up to label5
+	br_if   	0, $pop4        # 0: up to label4
 # BB#3:                                 # %add.exit
-	end_loop                        # label6:
+	end_loop
 	i32.const	$push12=, 0
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $2, $pop10
@@ -94,7 +94,7 @@ main:                                   # @main
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB1_4:                                # %if.then3.i
-	end_block                       # label4:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -102,5 +102,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

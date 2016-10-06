@@ -24,7 +24,7 @@ foo:                                    # @foo
 	i32.add 	$push5=, $1, $pop6
 	tee_local	$push4=, $1=, $pop5
 	i32.eqz 	$push12=, $pop4
-	br_if   	3, $pop12       # 3: down to label0
+	br_if   	2, $pop12       # 2: down to label0
 # BB#3:                                 # %while.cond.while.body_crit_edge
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load	$push9=, 0($4)
@@ -36,7 +36,7 @@ foo:                                    # @foo
 	copy_local	$0=, $2
 	br_if   	0, $3           # 0: up to label2
 # BB#4:                                 # %cleanup
-	end_loop                        # label3:
+	end_loop
 	i32.const	$push10=, 1
 	return  	$pop10
 .LBB0_5:
@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push1=, 2
 	i32.call	$push2=, foo@FUNCTION, $pop12, $pop1
-	br_if   	0, $pop2        # 0: down to label4
+	br_if   	0, $pop2        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$push10=, 0
 	i32.const	$push8=, 16
@@ -82,7 +82,7 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	return  	$pop3
 .LBB1_2:                                # %if.then
-	end_block                       # label4:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -90,5 +90,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

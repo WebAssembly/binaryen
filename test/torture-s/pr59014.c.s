@@ -26,7 +26,7 @@ foo:                                    # @foo
 	loop                            # label1:
 	br      	0               # 0: up to label1
 .LBB0_2:                                # %if.else
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push11=, 0
 	i32.store	d($pop11), $0
@@ -56,25 +56,25 @@ main:                                   # @main
 	i32.and 	$push1=, $pop8, $pop0
 	i32.or  	$push4=, $pop3, $pop1
 	i32.eqz 	$push14=, $pop4
-	br_if   	0, $pop14       # 0: down to label3
+	br_if   	0, $pop14       # 0: down to label2
 .LBB1_1:                                # %for.inc.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
-	br      	0               # 0: up to label4
+	loop                            # label3:
+	br      	0               # 0: up to label3
 .LBB1_2:                                # %foo.exit
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	i32.const	$push13=, 0
 	i32.store	d($pop13), $0
 	block
 	i32.const	$push5=, 2
 	i32.ne  	$push6=, $0, $pop5
-	br_if   	0, $pop6        # 0: down to label6
+	br_if   	0, $pop6        # 0: down to label4
 # BB#3:                                 # %if.end
 	i32.const	$push7=, 0
 	return  	$pop7
 .LBB1_4:                                # %if.then
-	end_block                       # label6:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -118,5 +118,5 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

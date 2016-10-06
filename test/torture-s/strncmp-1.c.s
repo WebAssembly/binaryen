@@ -67,17 +67,17 @@ main:                                   # @main
                                         #   Parent Loop BB1_1 Depth=1
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB1_3 Depth 3
-	loop                            # label8:
+	loop                            # label7:
 	i32.const	$4=, 0
 .LBB1_3:                                # %for.cond7.preheader
                                         #   Parent Loop BB1_1 Depth=1
                                         #     Parent Loop BB1_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	loop                            # label10:
+	loop                            # label8:
 	i32.const	$5=, u1
 	block
 	i32.eqz 	$push89=, $0
-	br_if   	0, $pop89       # 0: down to label12
+	br_if   	0, $pop89       # 0: down to label9
 # BB#4:                                 # %for.body9.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push33=, u1
@@ -86,11 +86,11 @@ main:                                   # @main
 	copy_local	$5=, $1
 .LBB1_5:                                # %for.cond10.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
-	end_block                       # label12:
+	end_block                       # label9:
 	copy_local	$6=, $5
 	block
 	i32.eqz 	$push90=, $4
-	br_if   	0, $pop90       # 0: down to label13
+	br_if   	0, $pop90       # 0: down to label10
 # BB#6:                                 # %for.body12.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push34=, 97
@@ -98,13 +98,13 @@ main:                                   # @main
 	i32.add 	$6=, $pop0, $4
 .LBB1_7:                                # %for.cond17.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
-	end_block                       # label13:
+	end_block                       # label10:
 	i64.const	$push35=, 8680820740569200760
 	i64.store	0($6):p2align=0, $pop35
 	i32.const	$7=, u2
 	block
 	i32.eqz 	$push91=, $2
-	br_if   	0, $pop91       # 0: down to label14
+	br_if   	0, $pop91       # 0: down to label11
 # BB#8:                                 # %for.body26.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push37=, u2
@@ -113,11 +113,11 @@ main:                                   # @main
 	copy_local	$7=, $3
 .LBB1_9:                                # %for.cond31.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
-	end_block                       # label14:
+	end_block                       # label11:
 	copy_local	$8=, $7
 	block
 	i32.eqz 	$push92=, $4
-	br_if   	0, $pop92       # 0: down to label15
+	br_if   	0, $pop92       # 0: down to label12
 # BB#10:                                # %for.body33.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push38=, 97
@@ -125,7 +125,7 @@ main:                                   # @main
 	i32.add 	$8=, $pop1, $4
 .LBB1_11:                               # %for.cond38.preheader
                                         #   in Loop: Header=BB1_3 Depth=3
-	end_block                       # label15:
+	end_block                       # label12:
 	i64.const	$push42=, 8680820740569200760
 	i64.store	0($8):p2align=0, $pop42
 	i32.const	$push41=, 0
@@ -134,11 +134,11 @@ main:                                   # @main
 	i32.store8	0($8), $pop40
 	i32.const	$push39=, 80
 	i32.call	$push2=, strncmp@FUNCTION, $5, $7, $pop39
-	br_if   	6, $pop2        # 6: down to label5
+	br_if   	3, $pop2        # 3: down to label5
 # BB#12:                                # %test.exit
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push3=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop3        # 6: down to label5
+	br_if   	3, $pop3        # 3: down to label5
 # BB#13:                                # %test.exit185
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push46=, 97
@@ -149,11 +149,11 @@ main:                                   # @main
 	i32.call	$push4=, strncmp@FUNCTION, $5, $7, $pop44
 	i32.const	$push43=, 0
 	i32.le_s	$push5=, $pop4, $pop43
-	br_if   	6, $pop5        # 6: down to label5
+	br_if   	3, $pop5        # 3: down to label5
 # BB#14:                                # %test.exit190
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push6=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop6        # 6: down to label5
+	br_if   	3, $pop6        # 3: down to label5
 # BB#15:                                # %test.exit196
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push50=, 0
@@ -164,11 +164,11 @@ main:                                   # @main
 	i32.call	$push7=, strncmp@FUNCTION, $5, $7, $pop48
 	i32.const	$push47=, 0
 	i32.ge_s	$push8=, $pop7, $pop47
-	br_if   	6, $pop8        # 6: down to label5
+	br_if   	3, $pop8        # 3: down to label5
 # BB#16:                                # %test.exit201
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push9=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop9        # 6: down to label5
+	br_if   	3, $pop9        # 3: down to label5
 # BB#17:                                # %test.exit207
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push54=, 98
@@ -179,11 +179,11 @@ main:                                   # @main
 	i32.call	$push10=, strncmp@FUNCTION, $5, $7, $pop52
 	i32.const	$push51=, 0
 	i32.ge_s	$push11=, $pop10, $pop51
-	br_if   	6, $pop11       # 6: down to label5
+	br_if   	3, $pop11       # 3: down to label5
 # BB#18:                                # %test.exit213
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push12=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop12       # 6: down to label5
+	br_if   	3, $pop12       # 3: down to label5
 # BB#19:                                # %test.exit219
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push58=, 99
@@ -194,11 +194,11 @@ main:                                   # @main
 	i32.call	$push13=, strncmp@FUNCTION, $5, $7, $pop56
 	i32.const	$push55=, 0
 	i32.le_s	$push14=, $pop13, $pop55
-	br_if   	6, $pop14       # 6: down to label5
+	br_if   	3, $pop14       # 3: down to label5
 # BB#20:                                # %test.exit225
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push15=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop15       # 6: down to label5
+	br_if   	3, $pop15       # 3: down to label5
 # BB#21:                                # %test.exit231
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push62=, 98
@@ -209,11 +209,11 @@ main:                                   # @main
 	i32.call	$push16=, strncmp@FUNCTION, $5, $7, $pop60
 	i32.const	$push59=, 0
 	i32.ge_s	$push17=, $pop16, $pop59
-	br_if   	6, $pop17       # 6: down to label5
+	br_if   	3, $pop17       # 3: down to label5
 # BB#22:                                # %test.exit237
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push18=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop18       # 6: down to label5
+	br_if   	3, $pop18       # 3: down to label5
 # BB#23:                                # %test.exit243
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push66=, 169
@@ -224,11 +224,11 @@ main:                                   # @main
 	i32.call	$push19=, strncmp@FUNCTION, $5, $7, $pop64
 	i32.const	$push63=, 0
 	i32.le_s	$push20=, $pop19, $pop63
-	br_if   	6, $pop20       # 6: down to label5
+	br_if   	3, $pop20       # 3: down to label5
 # BB#24:                                # %test.exit249
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push21=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop21       # 6: down to label5
+	br_if   	3, $pop21       # 3: down to label5
 # BB#25:                                # %test.exit255
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push70=, 169
@@ -239,11 +239,11 @@ main:                                   # @main
 	i32.call	$push22=, strncmp@FUNCTION, $5, $7, $pop68
 	i32.const	$push67=, 0
 	i32.ge_s	$push23=, $pop22, $pop67
-	br_if   	6, $pop23       # 6: down to label5
+	br_if   	3, $pop23       # 3: down to label5
 # BB#26:                                # %test.exit261
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push24=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	6, $pop24       # 6: down to label5
+	br_if   	3, $pop24       # 3: down to label5
 # BB#27:                                # %test.exit267
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push74=, 170
@@ -254,11 +254,11 @@ main:                                   # @main
 	i32.call	$push25=, strncmp@FUNCTION, $5, $7, $pop72
 	i32.const	$push71=, 0
 	i32.le_s	$push26=, $pop25, $pop71
-	br_if   	6, $pop26       # 6: down to label5
+	br_if   	3, $pop26       # 3: down to label5
 # BB#28:                                # %test.exit273
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.call	$push27=, strncmp@FUNCTION, $5, $7, $4
-	br_if   	7, $pop27       # 7: down to label4
+	br_if   	4, $pop27       # 4: down to label4
 # BB#29:                                # %for.cond4
                                         #   in Loop: Header=BB1_3 Depth=3
 	i32.const	$push78=, 1
@@ -266,10 +266,10 @@ main:                                   # @main
 	tee_local	$push76=, $4=, $pop77
 	i32.const	$push75=, 63
 	i32.le_u	$push28=, $pop76, $pop75
-	br_if   	0, $pop28       # 0: up to label10
+	br_if   	0, $pop28       # 0: up to label8
 # BB#30:                                # %for.inc79
                                         #   in Loop: Header=BB1_2 Depth=2
-	end_loop                        # label11:
+	end_loop
 	i32.const	$push83=, 1
 	i32.add 	$3=, $3, $pop83
 	i32.const	$push82=, 1
@@ -277,10 +277,10 @@ main:                                   # @main
 	tee_local	$push80=, $2=, $pop81
 	i32.const	$push79=, 8
 	i32.lt_u	$push29=, $pop80, $pop79
-	br_if   	0, $pop29       # 0: up to label8
+	br_if   	0, $pop29       # 0: up to label7
 # BB#31:                                # %for.inc82
                                         #   in Loop: Header=BB1_1 Depth=1
-	end_loop                        # label9:
+	end_loop
 	i32.const	$push88=, 1
 	i32.add 	$1=, $1, $pop88
 	i32.const	$push87=, 1
@@ -290,7 +290,7 @@ main:                                   # @main
 	i32.lt_u	$push30=, $pop85, $pop84
 	br_if   	0, $pop30       # 0: up to label6
 # BB#32:                                # %for.end84
-	end_loop                        # label7:
+	end_loop
 	i32.const	$push31=, 0
 	call    	exit@FUNCTION, $pop31
 	unreachable
@@ -321,7 +321,7 @@ u2:
 	.size	u2, 80
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	strncmp, i32, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

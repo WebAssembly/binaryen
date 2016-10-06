@@ -24,7 +24,7 @@ gcc_crash:                              # @gcc_crash
 	i32.add 	$2=, $2, $pop5
 	br_if   	0, $1           # 0: up to label1
 # BB#3:                                 # %if.end6
-	end_loop                        # label2:
+	end_loop
 	i32.store	0($0), $2
 	return
 .LBB0_4:                                # %if.then
@@ -63,5 +63,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

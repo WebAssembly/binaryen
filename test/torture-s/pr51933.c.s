@@ -62,7 +62,7 @@ bar:                                    # @bar
 	tee_local	$push12=, $4=, $pop13
 	br_if   	0, $pop12       # 0: up to label2
 .LBB1_5:                                # %for.end
-	end_loop                        # label3:
+	end_loop
 	end_block                       # label1:
 	i32.add 	$push9=, $2, $0
 	i32.const	$push10=, 0
@@ -91,7 +91,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	i32.const	$push39=, v3
 	i32.add 	$push0=, $1, $pop39
 	i32.const	$push38=, 1
@@ -104,9 +104,9 @@ main:                                   # @main
 	copy_local	$1=, $0
 	i32.const	$push34=, 256
 	i32.ne  	$push2=, $0, $pop34
-	br_if   	0, $pop2        # 0: up to label4
+	br_if   	0, $pop2        # 0: up to label3
 # BB#2:                                 # %for.body6.preheader
-	end_loop                        # label5:
+	end_loop
 	i32.const	$push3=, 101
 	i32.store16	8($2), $pop3
 	i64.const	$push4=, 28147922879250529
@@ -148,7 +148,7 @@ main:                                   # @main
 	i32.const	$push19=, .L.str
 	i32.const	$push18=, 18
 	i32.call	$push20=, memcmp@FUNCTION, $pop31, $pop19, $pop18
-	br_if   	0, $pop20       # 0: down to label6
+	br_if   	0, $pop20       # 0: down to label4
 # BB#3:                                 # %if.end
 	i32.const	$push27=, 0
 	i32.const	$push25=, 80
@@ -157,7 +157,7 @@ main:                                   # @main
 	i32.const	$push41=, 0
 	return  	$pop41
 .LBB2_4:                                # %if.then
-	end_block                       # label6:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -191,6 +191,6 @@ v3:
 	.size	.L.str, 18
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

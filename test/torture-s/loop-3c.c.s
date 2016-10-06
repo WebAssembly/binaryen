@@ -34,7 +34,7 @@ f:                                      # @f
 	i32.lt_s	$push4=, $pop7, $pop6
 	br_if   	0, $pop4        # 0: up to label0
 # BB#2:                                 # %do.end
-	end_loop                        # label1:
+	end_loop
 	copy_local	$push16=, $1
                                         # fallthrough-return: $pop16
 	.endfunc
@@ -80,5 +80,5 @@ a:
 	.size	a, 1020
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

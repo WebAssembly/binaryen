@@ -105,7 +105,7 @@ foo:                                    # @foo
 	call    	test@FUNCTION, $pop8
 	br      	0               # 0: up to label2
 .LBB1_2:
-	end_loop                        # label3:
+	end_loop
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
@@ -132,6 +132,6 @@ test.i:
 	.size	test.i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

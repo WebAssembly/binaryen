@@ -33,46 +33,46 @@ foo:                                    # @foo
 	tee_local	$push16=, $3=, $pop17
 	i32.const	$push15=, 66
 	i32.eq  	$push4=, $pop16, $pop15
-	br_if   	0, $pop4        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	block
 	i32.const	$push26=, 65
 	i32.ne  	$push5=, $3, $pop26
-	br_if   	0, $pop5        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label2
 # BB#3:                                 # %do.body.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	copy_local	$0=, $1
 .LBB0_4:                                # %do.body
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label4:
+	loop                            # label3:
 	i32.const	$push30=, 1
 	i32.add 	$push29=, $0, $pop30
 	tee_local	$push28=, $0=, $pop29
 	i32.load8_u	$push6=, 0($pop28)
 	i32.const	$push27=, 43
 	i32.eq  	$push7=, $pop6, $pop27
-	br_if   	0, $pop7        # 0: up to label4
-	br      	3               # 3: down to label2
+	br_if   	0, $pop7        # 0: up to label3
+	br      	2               # 2: down to label1
 .LBB0_5:                                # %for.end
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	block
 	i32.const	$push8=, 3
 	i32.lt_s	$push9=, $5, $pop8
-	br_if   	0, $pop9        # 0: down to label6
+	br_if   	0, $pop9        # 0: down to label4
 # BB#6:                                 # %land.lhs.true17
 	i32.const	$push10=, 58
 	i32.eq  	$push11=, $2, $pop10
 	i32.select	$push12=, $4, $1, $pop11
 	return  	$pop12
 .LBB0_7:                                # %if.end22
-	end_block                       # label6:
+	end_block                       # label4:
 	return  	$1
 .LBB0_8:                                # %cleanup.thread
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label2:
+	end_block                       # label1:
 	i32.const	$push14=, 1
 	i32.add 	$5=, $5, $pop14
 	i32.const	$push13=, 1
@@ -80,7 +80,7 @@ foo:                                    # @foo
 	copy_local	$4=, $1
 	br      	0               # 0: up to label0
 .LBB0_9:
-	end_loop                        # label1:
+	end_loop
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -108,4 +108,4 @@ main:                                   # @main
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

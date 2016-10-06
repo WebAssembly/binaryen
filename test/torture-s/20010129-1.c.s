@@ -114,20 +114,20 @@ foo:                                    # @foo
 	block
 	i32.or  	$push17=, $2, $3
 	i32.eqz 	$push45=, $pop17
-	br_if   	0, $pop45       # 0: down to label5
+	br_if   	0, $pop45       # 0: down to label4
 # BB#3:                                 # %if.end17
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$push37=, 1
 	i32.select	$10=, $2, $pop37, $2
 	block
-	br_if   	0, $3           # 0: down to label6
+	br_if   	0, $3           # 0: down to label5
 # BB#4:                                 # %land.lhs.true25
                                         #   in Loop: Header=BB3_2 Depth=1
-	br_if   	1, $5           # 1: down to label5
-	br      	5               # 5: down to label1
+	br_if   	1, $5           # 1: down to label4
+	br      	4               # 4: down to label1
 .LBB3_5:                                # %land.lhs.true20
                                         #   in Loop: Header=BB3_2 Depth=1
-	end_block                       # label6:
+	end_block                       # label5:
 	i32.eqz 	$push3=, $2
 	i32.const	$push38=, 1
 	i32.xor 	$push18=, $pop3, $pop38
@@ -136,10 +136,10 @@ foo:                                    # @foo
 	i32.or  	$push21=, $8, $pop20
 	i32.or  	$push22=, $4, $pop21
 	i32.eqz 	$push46=, $pop22
-	br_if   	4, $pop46       # 4: down to label1
+	br_if   	3, $pop46       # 3: down to label1
 .LBB3_6:                                # %while.cond.backedge
                                         #   in Loop: Header=BB3_2 Depth=1
-	end_block                       # label5:
+	end_block                       # label4:
 	i32.const	$push43=, 0
 	i32.const	$push42=, 2
 	i32.add 	$push23=, $9, $pop42
@@ -150,7 +150,7 @@ foo:                                    # @foo
 	i32.lt_s	$push24=, $pop39, $1
 	br_if   	0, $pop24       # 0: up to label3
 .LBB3_7:                                # %while.end
-	end_loop                        # label4:
+	end_loop
 	end_block                       # label2:
 	i32.const	$push44=, 0
 	return  	$pop44
@@ -210,6 +210,6 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

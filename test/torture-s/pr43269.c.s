@@ -46,7 +46,7 @@ func_32:                                # @func_32
 	loop                            # label2:
 	br      	0               # 0: up to label2
 .LBB1_3:
-	end_loop                        # label3:
+	end_loop
 	.endfunc
 .Lfunc_end1:
 	.size	func_32, .Lfunc_end1-func_32
@@ -79,5 +79,5 @@ g_211:
 	.size	g_211, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

@@ -82,9 +82,9 @@ foo:                                    # @foo
 	tee_local	$push40=, $9=, $pop41
 	i32.le_u	$push13=, $pop40, $7
 	br_if   	0, $pop13       # 0: up to label4
-	br      	3               # 3: down to label2
+	br      	2               # 2: down to label2
 .LBB0_6:
-	end_loop                        # label5:
+	end_loop
 	end_block                       # label3:
 	f64.const	$11=, 0x1p0
 	f64.const	$10=, 0x0p0
@@ -197,22 +197,22 @@ main:                                   # @main
 	f64.load	$push24=, 0($2)
 	f64.const	$push23=, 0x0p0
 	f64.ne  	$push25=, $pop24, $pop23
-	br_if   	0, $pop25       # 0: down to label6
+	br_if   	0, $pop25       # 0: down to label5
 # BB#1:                                 # %lor.lhs.false
 	f64.load	$push27=, 8($2)
 	f64.const	$push26=, 0x1.4p4
 	f64.ne  	$push28=, $pop27, $pop26
-	br_if   	0, $pop28       # 0: down to label6
+	br_if   	0, $pop28       # 0: down to label5
 # BB#2:                                 # %lor.lhs.false9
 	f64.load	$push30=, 16($2)
 	f64.const	$push29=, 0x1.4p3
 	f64.ne  	$push31=, $pop30, $pop29
-	br_if   	0, $pop31       # 0: down to label6
+	br_if   	0, $pop31       # 0: down to label5
 # BB#3:                                 # %lor.lhs.false12
 	f64.load	$push33=, 24($2)
 	f64.const	$push32=, -0x1.4p3
 	f64.ne  	$push34=, $pop33, $pop32
-	br_if   	0, $pop34       # 0: down to label6
+	br_if   	0, $pop34       # 0: down to label5
 # BB#4:                                 # %if.end
 	i32.const	$push38=, 84
 	i32.add 	$push39=, $2, $pop38
@@ -244,22 +244,22 @@ main:                                   # @main
 	f64.load	$push49=, 0($2)
 	f64.const	$push48=, 0x1.ep5
 	f64.ne  	$push50=, $pop49, $pop48
-	br_if   	0, $pop50       # 0: down to label6
+	br_if   	0, $pop50       # 0: down to label5
 # BB#5:                                 # %if.end
 	f64.load	$push35=, 8($2)
 	f64.const	$push51=, 0x1.4p4
 	f64.ne  	$push52=, $pop35, $pop51
-	br_if   	0, $pop52       # 0: down to label6
+	br_if   	0, $pop52       # 0: down to label5
 # BB#6:                                 # %if.end
 	f64.load	$push36=, 0($1)
 	f64.const	$push53=, -0x1.4p3
 	f64.ne  	$push54=, $pop36, $pop53
-	br_if   	0, $pop54       # 0: down to label6
+	br_if   	0, $pop54       # 0: down to label5
 # BB#7:                                 # %if.end
 	f64.load	$push37=, 0($0)
 	f64.const	$push55=, 0x1.d8p6
 	f64.ne  	$push56=, $pop37, $pop55
-	br_if   	0, $pop56       # 0: down to label6
+	br_if   	0, $pop56       # 0: down to label5
 # BB#8:                                 # %if.end30
 	i32.const	$push60=, 84
 	i32.add 	$push61=, $2, $pop60
@@ -291,22 +291,22 @@ main:                                   # @main
 	f64.load	$push71=, 0($2)
 	f64.const	$push70=, -0x1.4p4
 	f64.ne  	$push72=, $pop71, $pop70
-	br_if   	0, $pop72       # 0: down to label6
+	br_if   	0, $pop72       # 0: down to label5
 # BB#9:                                 # %if.end30
 	f64.load	$push57=, 8($2)
 	f64.const	$push73=, -0x1.4p3
 	f64.ne  	$push74=, $pop57, $pop73
-	br_if   	0, $pop74       # 0: down to label6
+	br_if   	0, $pop74       # 0: down to label5
 # BB#10:                                # %if.end30
 	f64.load	$push58=, 0($0)
 	f64.const	$push154=, 0x1.d8p6
 	f64.ne  	$push75=, $pop58, $pop154
-	br_if   	0, $pop75       # 0: down to label6
+	br_if   	0, $pop75       # 0: down to label5
 # BB#11:                                # %if.end30
 	f64.load	$push59=, 0($1)
 	f64.const	$push155=, 0x1.d8p6
 	f64.ne  	$push76=, $pop59, $pop155
-	br_if   	0, $pop76       # 0: down to label6
+	br_if   	0, $pop76       # 0: down to label5
 # BB#12:                                # %if.end46
 	i32.const	$push80=, 84
 	i32.add 	$push81=, $2, $pop80
@@ -338,22 +338,22 @@ main:                                   # @main
 	f64.load	$push90=, 0($2)
 	f64.const	$push89=, 0x0p0
 	f64.ne  	$push91=, $pop90, $pop89
-	br_if   	0, $pop91       # 0: down to label6
+	br_if   	0, $pop91       # 0: down to label5
 # BB#13:                                # %if.end46
 	f64.load	$push77=, 8($2)
 	f64.const	$push164=, 0x1.d8p6
 	f64.ne  	$push92=, $pop77, $pop164
-	br_if   	0, $pop92       # 0: down to label6
+	br_if   	0, $pop92       # 0: down to label5
 # BB#14:                                # %if.end46
 	f64.load	$push78=, 0($0)
 	f64.const	$push165=, 0x1.d8p6
 	f64.ne  	$push93=, $pop78, $pop165
-	br_if   	0, $pop93       # 0: down to label6
+	br_if   	0, $pop93       # 0: down to label5
 # BB#15:                                # %if.end46
 	f64.load	$push79=, 0($1)
 	f64.const	$push94=, 0x1.d8p6
 	f64.ne  	$push95=, $pop79, $pop94
-	br_if   	0, $pop95       # 0: down to label6
+	br_if   	0, $pop95       # 0: down to label5
 # BB#16:                                # %if.end62
 	i32.const	$push103=, 0
 	i32.const	$push101=, 112
@@ -362,7 +362,7 @@ main:                                   # @main
 	i32.const	$push96=, 0
 	return  	$pop96
 .LBB1_17:                               # %if.then61
-	end_block                       # label6:
+	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -389,5 +389,5 @@ main:                                   # @main
 	.size	.Lmain.e, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

@@ -31,7 +31,7 @@ check:                                  # @check
 	loop                            # label2:
 	i32.const	$push10=, 9
 	i32.gt_s	$push5=, $1, $pop10
-	br_if   	2, $pop5        # 2: down to label1
+	br_if   	1, $pop5        # 1: down to label1
 # BB#7:                                 # %for.body3
                                         #   in Loop: Header=BB0_6 Depth=1
 	i32.const	$push14=, 1
@@ -44,7 +44,7 @@ check:                                  # @check
 	i32.eq  	$push9=, $pop6, $pop11
 	br_if   	0, $pop9        # 0: up to label2
 # BB#8:                                 # %if.then6
-	end_loop                        # label3:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_9:                                # %for.end10
@@ -89,10 +89,10 @@ main:                                   # @main
 .LBB1_1:                                # %for.cond1.i
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label5:
+	loop                            # label4:
 	i32.const	$push24=, 9
 	i32.gt_s	$push6=, $1, $pop24
-	br_if   	2, $pop6        # 2: down to label4
+	br_if   	1, $pop6        # 1: down to label3
 # BB#2:                                 # %for.body3.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push28=, 1
@@ -103,13 +103,13 @@ main:                                   # @main
 	i32.load	$push26=, 0($pop10)
 	tee_local	$push25=, $1=, $pop26
 	i32.eq  	$push11=, $pop8, $pop25
-	br_if   	0, $pop11       # 0: up to label5
+	br_if   	0, $pop11       # 0: up to label4
 # BB#3:                                 # %if.then6.i
-	end_loop                        # label6:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %check.exit
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push18=, 0
 	i32.const	$push16=, 48
 	i32.add 	$push17=, $0, $pop16
@@ -137,5 +137,5 @@ main:                                   # @main
 	.size	.Lmain.a, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

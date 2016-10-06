@@ -54,7 +54,7 @@ f0:                                     # @f0
 	i32.load8_u	$push18=, 0($0)
 	tee_local	$push17=, $1=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label2
+	br_if   	1, $pop27       # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.load	$push24=, 12($3)
@@ -66,7 +66,7 @@ f0:                                     # @f0
 	tee_local	$push20=, $2=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push3=, $pop20, $pop19
-	br_if   	3, $pop3        # 3: down to label1
+	br_if   	2, $pop3        # 2: down to label1
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push26=, 1
@@ -77,7 +77,7 @@ f0:                                     # @f0
 	i32.eq  	$push6=, $1, $pop5
 	br_if   	0, $pop6        # 0: up to label3
 # BB#5:                                 # %if.then5
-	end_loop                        # label4:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_6:                                # %while.end
@@ -115,16 +115,16 @@ f1:                                     # @f1
 	i32.call	$push0=, strlen@FUNCTION, $1
 	i32.const	$push1=, 15
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label5
+	br_if   	0, $pop2        # 0: down to label4
 # BB#1:
 .LBB2_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label7:
+	loop                            # label6:
 	i32.load8_u	$push18=, 0($1)
 	tee_local	$push17=, $2=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label6
+	br_if   	1, $pop27       # 1: down to label5
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.load	$push24=, 12($4)
@@ -136,7 +136,7 @@ f1:                                     # @f1
 	tee_local	$push20=, $3=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label5
+	br_if   	2, $pop4        # 2: down to label4
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.const	$push26=, 1
@@ -145,20 +145,20 @@ f1:                                     # @f1
 	i32.add 	$push5=, $3, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $2, $pop6
-	br_if   	0, $pop7        # 0: up to label7
+	br_if   	0, $pop7        # 0: up to label6
 # BB#5:                                 # %if.then5
-	end_loop                        # label8:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB2_6:                                # %while.end
-	end_block                       # label6:
+	end_block                       # label5:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $4, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB2_7:                                # %if.then.i
-	end_block                       # label5:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -185,16 +185,16 @@ f2:                                     # @f2
 	i32.call	$push0=, strlen@FUNCTION, $2
 	i32.const	$push1=, 14
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label9
+	br_if   	0, $pop2        # 0: down to label7
 # BB#1:
 .LBB3_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label11:
+	loop                            # label9:
 	i32.load8_u	$push18=, 0($2)
 	tee_local	$push17=, $3=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label10
+	br_if   	1, $pop27       # 1: down to label8
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.load	$push24=, 12($5)
@@ -206,7 +206,7 @@ f2:                                     # @f2
 	tee_local	$push20=, $4=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label9
+	br_if   	2, $pop4        # 2: down to label7
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$push26=, 1
@@ -215,20 +215,20 @@ f2:                                     # @f2
 	i32.add 	$push5=, $4, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $3, $pop6
-	br_if   	0, $pop7        # 0: up to label11
+	br_if   	0, $pop7        # 0: up to label9
 # BB#5:                                 # %if.then5
-	end_loop                        # label12:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB3_6:                                # %while.end
-	end_block                       # label10:
+	end_block                       # label8:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $5, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB3_7:                                # %if.then.i
-	end_block                       # label9:
+	end_block                       # label7:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -255,16 +255,16 @@ f3:                                     # @f3
 	i32.call	$push0=, strlen@FUNCTION, $3
 	i32.const	$push1=, 13
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label13
+	br_if   	0, $pop2        # 0: down to label10
 # BB#1:
 .LBB4_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label15:
+	loop                            # label12:
 	i32.load8_u	$push18=, 0($3)
 	tee_local	$push17=, $4=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label14
+	br_if   	1, $pop27       # 1: down to label11
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB4_2 Depth=1
 	i32.load	$push24=, 12($6)
@@ -276,7 +276,7 @@ f3:                                     # @f3
 	tee_local	$push20=, $5=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label13
+	br_if   	2, $pop4        # 2: down to label10
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB4_2 Depth=1
 	i32.const	$push26=, 1
@@ -285,20 +285,20 @@ f3:                                     # @f3
 	i32.add 	$push5=, $5, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $4, $pop6
-	br_if   	0, $pop7        # 0: up to label15
+	br_if   	0, $pop7        # 0: up to label12
 # BB#5:                                 # %if.then5
-	end_loop                        # label16:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB4_6:                                # %while.end
-	end_block                       # label14:
+	end_block                       # label11:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $6, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB4_7:                                # %if.then.i
-	end_block                       # label13:
+	end_block                       # label10:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -325,16 +325,16 @@ f4:                                     # @f4
 	i32.call	$push0=, strlen@FUNCTION, $4
 	i32.const	$push1=, 12
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label17
+	br_if   	0, $pop2        # 0: down to label13
 # BB#1:
 .LBB5_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label19:
+	loop                            # label15:
 	i32.load8_u	$push18=, 0($4)
 	tee_local	$push17=, $5=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label18
+	br_if   	1, $pop27       # 1: down to label14
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB5_2 Depth=1
 	i32.load	$push24=, 12($7)
@@ -346,7 +346,7 @@ f4:                                     # @f4
 	tee_local	$push20=, $6=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label17
+	br_if   	2, $pop4        # 2: down to label13
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB5_2 Depth=1
 	i32.const	$push26=, 1
@@ -355,20 +355,20 @@ f4:                                     # @f4
 	i32.add 	$push5=, $6, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $5, $pop6
-	br_if   	0, $pop7        # 0: up to label19
+	br_if   	0, $pop7        # 0: up to label15
 # BB#5:                                 # %if.then5
-	end_loop                        # label20:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB5_6:                                # %while.end
-	end_block                       # label18:
+	end_block                       # label14:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $7, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB5_7:                                # %if.then.i
-	end_block                       # label17:
+	end_block                       # label13:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -395,16 +395,16 @@ f5:                                     # @f5
 	i32.call	$push0=, strlen@FUNCTION, $5
 	i32.const	$push1=, 11
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label21
+	br_if   	0, $pop2        # 0: down to label16
 # BB#1:
 .LBB6_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label23:
+	loop                            # label18:
 	i32.load8_u	$push18=, 0($5)
 	tee_local	$push17=, $6=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label22
+	br_if   	1, $pop27       # 1: down to label17
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB6_2 Depth=1
 	i32.load	$push24=, 12($8)
@@ -416,7 +416,7 @@ f5:                                     # @f5
 	tee_local	$push20=, $7=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label21
+	br_if   	2, $pop4        # 2: down to label16
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB6_2 Depth=1
 	i32.const	$push26=, 1
@@ -425,20 +425,20 @@ f5:                                     # @f5
 	i32.add 	$push5=, $7, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $6, $pop6
-	br_if   	0, $pop7        # 0: up to label23
+	br_if   	0, $pop7        # 0: up to label18
 # BB#5:                                 # %if.then5
-	end_loop                        # label24:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB6_6:                                # %while.end
-	end_block                       # label22:
+	end_block                       # label17:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $8, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB6_7:                                # %if.then.i
-	end_block                       # label21:
+	end_block                       # label16:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -465,16 +465,16 @@ f6:                                     # @f6
 	i32.call	$push0=, strlen@FUNCTION, $6
 	i32.const	$push1=, 10
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label25
+	br_if   	0, $pop2        # 0: down to label19
 # BB#1:
 .LBB7_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label27:
+	loop                            # label21:
 	i32.load8_u	$push18=, 0($6)
 	tee_local	$push17=, $7=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label26
+	br_if   	1, $pop27       # 1: down to label20
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB7_2 Depth=1
 	i32.load	$push24=, 12($9)
@@ -486,7 +486,7 @@ f6:                                     # @f6
 	tee_local	$push20=, $8=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label25
+	br_if   	2, $pop4        # 2: down to label19
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB7_2 Depth=1
 	i32.const	$push26=, 1
@@ -495,20 +495,20 @@ f6:                                     # @f6
 	i32.add 	$push5=, $8, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $7, $pop6
-	br_if   	0, $pop7        # 0: up to label27
+	br_if   	0, $pop7        # 0: up to label21
 # BB#5:                                 # %if.then5
-	end_loop                        # label28:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB7_6:                                # %while.end
-	end_block                       # label26:
+	end_block                       # label20:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $9, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB7_7:                                # %if.then.i
-	end_block                       # label25:
+	end_block                       # label19:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -535,16 +535,16 @@ f7:                                     # @f7
 	i32.call	$push0=, strlen@FUNCTION, $7
 	i32.const	$push1=, 9
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label29
+	br_if   	0, $pop2        # 0: down to label22
 # BB#1:
 .LBB8_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label31:
+	loop                            # label24:
 	i32.load8_u	$push18=, 0($7)
 	tee_local	$push17=, $8=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label30
+	br_if   	1, $pop27       # 1: down to label23
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB8_2 Depth=1
 	i32.load	$push24=, 12($10)
@@ -556,7 +556,7 @@ f7:                                     # @f7
 	tee_local	$push20=, $9=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label29
+	br_if   	2, $pop4        # 2: down to label22
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB8_2 Depth=1
 	i32.const	$push26=, 1
@@ -565,20 +565,20 @@ f7:                                     # @f7
 	i32.add 	$push5=, $9, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $8, $pop6
-	br_if   	0, $pop7        # 0: up to label31
+	br_if   	0, $pop7        # 0: up to label24
 # BB#5:                                 # %if.then5
-	end_loop                        # label32:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB8_6:                                # %while.end
-	end_block                       # label30:
+	end_block                       # label23:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $10, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB8_7:                                # %if.then.i
-	end_block                       # label29:
+	end_block                       # label22:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -605,16 +605,16 @@ f8:                                     # @f8
 	i32.call	$push0=, strlen@FUNCTION, $8
 	i32.const	$push1=, 8
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label33
+	br_if   	0, $pop2        # 0: down to label25
 # BB#1:
 .LBB9_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label35:
+	loop                            # label27:
 	i32.load8_u	$push18=, 0($8)
 	tee_local	$push17=, $9=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label34
+	br_if   	1, $pop27       # 1: down to label26
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB9_2 Depth=1
 	i32.load	$push24=, 12($11)
@@ -626,7 +626,7 @@ f8:                                     # @f8
 	tee_local	$push20=, $10=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label33
+	br_if   	2, $pop4        # 2: down to label25
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB9_2 Depth=1
 	i32.const	$push26=, 1
@@ -635,20 +635,20 @@ f8:                                     # @f8
 	i32.add 	$push5=, $10, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $9, $pop6
-	br_if   	0, $pop7        # 0: up to label35
+	br_if   	0, $pop7        # 0: up to label27
 # BB#5:                                 # %if.then5
-	end_loop                        # label36:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB9_6:                                # %while.end
-	end_block                       # label34:
+	end_block                       # label26:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $11, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB9_7:                                # %if.then.i
-	end_block                       # label33:
+	end_block                       # label25:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -675,16 +675,16 @@ f9:                                     # @f9
 	i32.call	$push0=, strlen@FUNCTION, $9
 	i32.const	$push1=, 7
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label37
+	br_if   	0, $pop2        # 0: down to label28
 # BB#1:
 .LBB10_2:                               # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label39:
+	loop                            # label30:
 	i32.load8_u	$push18=, 0($9)
 	tee_local	$push17=, $10=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label38
+	br_if   	1, $pop27       # 1: down to label29
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB10_2 Depth=1
 	i32.load	$push24=, 12($12)
@@ -696,7 +696,7 @@ f9:                                     # @f9
 	tee_local	$push20=, $11=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label37
+	br_if   	2, $pop4        # 2: down to label28
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB10_2 Depth=1
 	i32.const	$push26=, 1
@@ -705,20 +705,20 @@ f9:                                     # @f9
 	i32.add 	$push5=, $11, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $10, $pop6
-	br_if   	0, $pop7        # 0: up to label39
+	br_if   	0, $pop7        # 0: up to label30
 # BB#5:                                 # %if.then5
-	end_loop                        # label40:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB10_6:                               # %while.end
-	end_block                       # label38:
+	end_block                       # label29:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $12, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB10_7:                               # %if.then.i
-	end_block                       # label37:
+	end_block                       # label28:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -745,16 +745,16 @@ f10:                                    # @f10
 	i32.call	$push0=, strlen@FUNCTION, $10
 	i32.const	$push1=, 6
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label41
+	br_if   	0, $pop2        # 0: down to label31
 # BB#1:
 .LBB11_2:                               # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label43:
+	loop                            # label33:
 	i32.load8_u	$push18=, 0($10)
 	tee_local	$push17=, $11=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label42
+	br_if   	1, $pop27       # 1: down to label32
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB11_2 Depth=1
 	i32.load	$push24=, 12($13)
@@ -766,7 +766,7 @@ f10:                                    # @f10
 	tee_local	$push20=, $12=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label41
+	br_if   	2, $pop4        # 2: down to label31
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB11_2 Depth=1
 	i32.const	$push26=, 1
@@ -775,20 +775,20 @@ f10:                                    # @f10
 	i32.add 	$push5=, $12, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $11, $pop6
-	br_if   	0, $pop7        # 0: up to label43
+	br_if   	0, $pop7        # 0: up to label33
 # BB#5:                                 # %if.then5
-	end_loop                        # label44:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB11_6:                               # %while.end
-	end_block                       # label42:
+	end_block                       # label32:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $13, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB11_7:                               # %if.then.i
-	end_block                       # label41:
+	end_block                       # label31:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -815,16 +815,16 @@ f11:                                    # @f11
 	i32.call	$push0=, strlen@FUNCTION, $11
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label45
+	br_if   	0, $pop2        # 0: down to label34
 # BB#1:
 .LBB12_2:                               # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label47:
+	loop                            # label36:
 	i32.load8_u	$push18=, 0($11)
 	tee_local	$push17=, $12=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label46
+	br_if   	1, $pop27       # 1: down to label35
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB12_2 Depth=1
 	i32.load	$push24=, 12($14)
@@ -836,7 +836,7 @@ f11:                                    # @f11
 	tee_local	$push20=, $13=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label45
+	br_if   	2, $pop4        # 2: down to label34
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB12_2 Depth=1
 	i32.const	$push26=, 1
@@ -845,20 +845,20 @@ f11:                                    # @f11
 	i32.add 	$push5=, $13, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $12, $pop6
-	br_if   	0, $pop7        # 0: up to label47
+	br_if   	0, $pop7        # 0: up to label36
 # BB#5:                                 # %if.then5
-	end_loop                        # label48:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB12_6:                               # %while.end
-	end_block                       # label46:
+	end_block                       # label35:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $14, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB12_7:                               # %if.then.i
-	end_block                       # label45:
+	end_block                       # label34:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -885,16 +885,16 @@ f12:                                    # @f12
 	i32.call	$push0=, strlen@FUNCTION, $12
 	i32.const	$push14=, 4
 	i32.ne  	$push1=, $pop0, $pop14
-	br_if   	0, $pop1        # 0: down to label49
+	br_if   	0, $pop1        # 0: down to label37
 # BB#1:
 .LBB13_2:                               # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label51:
+	loop                            # label39:
 	i32.load8_u	$push18=, 0($12)
 	tee_local	$push17=, $13=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label50
+	br_if   	1, $pop27       # 1: down to label38
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB13_2 Depth=1
 	i32.load	$push24=, 12($15)
@@ -906,7 +906,7 @@ f12:                                    # @f12
 	tee_local	$push20=, $14=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push3=, $pop20, $pop19
-	br_if   	3, $pop3        # 3: down to label49
+	br_if   	2, $pop3        # 2: down to label37
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB13_2 Depth=1
 	i32.const	$push26=, 1
@@ -915,20 +915,20 @@ f12:                                    # @f12
 	i32.add 	$push4=, $14, $pop25
 	i32.load8_u	$push5=, 0($pop4)
 	i32.eq  	$push6=, $13, $pop5
-	br_if   	0, $pop6        # 0: up to label51
+	br_if   	0, $pop6        # 0: up to label39
 # BB#5:                                 # %if.then5
-	end_loop                        # label52:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB13_6:                               # %while.end
-	end_block                       # label50:
+	end_block                       # label38:
 	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $15, $pop11
 	i32.store	__stack_pointer($pop13), $pop12
 	return
 .LBB13_7:                               # %if.then.i
-	end_block                       # label49:
+	end_block                       # label37:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -955,16 +955,16 @@ f13:                                    # @f13
 	i32.call	$push0=, strlen@FUNCTION, $13
 	i32.const	$push1=, 3
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label53
+	br_if   	0, $pop2        # 0: down to label40
 # BB#1:
 .LBB14_2:                               # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label55:
+	loop                            # label42:
 	i32.load8_u	$push18=, 0($13)
 	tee_local	$push17=, $14=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label54
+	br_if   	1, $pop27       # 1: down to label41
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB14_2 Depth=1
 	i32.load	$push24=, 12($16)
@@ -976,7 +976,7 @@ f13:                                    # @f13
 	tee_local	$push20=, $15=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label53
+	br_if   	2, $pop4        # 2: down to label40
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB14_2 Depth=1
 	i32.const	$push26=, 1
@@ -985,20 +985,20 @@ f13:                                    # @f13
 	i32.add 	$push5=, $15, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $14, $pop6
-	br_if   	0, $pop7        # 0: up to label55
+	br_if   	0, $pop7        # 0: up to label42
 # BB#5:                                 # %if.then5
-	end_loop                        # label56:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB14_6:                               # %while.end
-	end_block                       # label54:
+	end_block                       # label41:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $16, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB14_7:                               # %if.then.i
-	end_block                       # label53:
+	end_block                       # label40:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -1025,16 +1025,16 @@ f14:                                    # @f14
 	i32.call	$push0=, strlen@FUNCTION, $14
 	i32.const	$push1=, 2
 	i32.ne  	$push2=, $pop0, $pop1
-	br_if   	0, $pop2        # 0: down to label57
+	br_if   	0, $pop2        # 0: down to label43
 # BB#1:
 .LBB15_2:                               # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label59:
+	loop                            # label45:
 	i32.load8_u	$push18=, 0($14)
 	tee_local	$push17=, $15=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label58
+	br_if   	1, $pop27       # 1: down to label44
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB15_2 Depth=1
 	i32.load	$push24=, 12($17)
@@ -1046,7 +1046,7 @@ f14:                                    # @f14
 	tee_local	$push20=, $16=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push4=, $pop20, $pop19
-	br_if   	3, $pop4        # 3: down to label57
+	br_if   	2, $pop4        # 2: down to label43
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB15_2 Depth=1
 	i32.const	$push26=, 1
@@ -1055,20 +1055,20 @@ f14:                                    # @f14
 	i32.add 	$push5=, $16, $pop25
 	i32.load8_u	$push6=, 0($pop5)
 	i32.eq  	$push7=, $15, $pop6
-	br_if   	0, $pop7        # 0: up to label59
+	br_if   	0, $pop7        # 0: up to label45
 # BB#5:                                 # %if.then5
-	end_loop                        # label60:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB15_6:                               # %while.end
-	end_block                       # label58:
+	end_block                       # label44:
 	i32.const	$push14=, 0
 	i32.const	$push12=, 16
 	i32.add 	$push13=, $17, $pop12
 	i32.store	__stack_pointer($pop14), $pop13
 	return
 .LBB15_7:                               # %if.then.i
-	end_block                       # label57:
+	end_block                       # label43:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -1095,16 +1095,16 @@ f15:                                    # @f15
 	i32.call	$push0=, strlen@FUNCTION, $15
 	i32.const	$push14=, 1
 	i32.ne  	$push1=, $pop0, $pop14
-	br_if   	0, $pop1        # 0: down to label61
+	br_if   	0, $pop1        # 0: down to label46
 # BB#1:
 .LBB16_2:                               # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label63:
+	loop                            # label48:
 	i32.load8_u	$push18=, 0($15)
 	tee_local	$push17=, $16=, $pop18
 	i32.eqz 	$push27=, $pop17
-	br_if   	2, $pop27       # 2: down to label62
+	br_if   	1, $pop27       # 1: down to label47
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB16_2 Depth=1
 	i32.load	$push24=, 12($18)
@@ -1116,7 +1116,7 @@ f15:                                    # @f15
 	tee_local	$push20=, $17=, $pop21
 	i32.const	$push19=, 16
 	i32.ge_u	$push3=, $pop20, $pop19
-	br_if   	3, $pop3        # 3: down to label61
+	br_if   	2, $pop3        # 2: down to label46
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB16_2 Depth=1
 	i32.const	$push26=, 1
@@ -1125,20 +1125,20 @@ f15:                                    # @f15
 	i32.add 	$push4=, $17, $pop25
 	i32.load8_u	$push5=, 0($pop4)
 	i32.eq  	$push6=, $16, $pop5
-	br_if   	0, $pop6        # 0: up to label63
+	br_if   	0, $pop6        # 0: up to label48
 # BB#5:                                 # %if.then5
-	end_loop                        # label64:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB16_6:                               # %while.end
-	end_block                       # label62:
+	end_block                       # label47:
 	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $18, $pop11
 	i32.store	__stack_pointer($pop13), $pop12
 	return
 .LBB16_7:                               # %if.then.i
-	end_block                       # label61:
+	end_block                       # label46:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -1549,7 +1549,7 @@ main:                                   # @main
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	strlen, i32, i32
 	.functype	exit, void, i32

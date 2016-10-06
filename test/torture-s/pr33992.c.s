@@ -48,7 +48,7 @@ do_test:                                # @do_test
 	i64.eqz 	$push4=, $pop3
 	br_if   	0, $pop4        # 0: up to label1
 # BB#2:                                 # %foo.exit
-	end_loop                        # label2:
+	end_loop
 	i64.const	$push5=, 32
 	i64.shr_s	$push6=, $4, $pop5
 	call    	bar@FUNCTION, $pop6
@@ -57,7 +57,7 @@ do_test:                                # @do_test
 	i64.const	$3=, 63
 .LBB1_3:                                # %for.cond.i.1
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop                            # label2:
 	i64.const	$push19=, 4294967296
 	i64.add 	$4=, $4, $pop19
 	i64.const	$push18=, 4294967295
@@ -69,9 +69,9 @@ do_test:                                # @do_test
 	i64.shl 	$push7=, $pop16, $2
 	i64.and 	$push8=, $pop7, $1
 	i64.eqz 	$push9=, $pop8
-	br_if   	0, $pop9        # 0: up to label3
+	br_if   	0, $pop9        # 0: up to label2
 # BB#4:                                 # %foo.exit.1
-	end_loop                        # label4:
+	end_loop
 	i64.const	$push10=, 32
 	i64.shr_s	$push11=, $4, $pop10
 	call    	bar@FUNCTION, $pop11
@@ -111,5 +111,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

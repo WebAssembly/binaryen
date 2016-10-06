@@ -222,7 +222,7 @@ varargs0:                               # @varargs0
 	loop                            # label1:
 	block
 	i32.eq  	$push14=, $1, $3
-	br_if   	0, $pop14       # 0: down to label3
+	br_if   	0, $pop14       # 0: down to label2
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.store	12($4), $1
@@ -240,10 +240,11 @@ varargs0:                               # @varargs0
 	i32.store	errors($pop38), $pop16
 .LBB1_3:                                # %for.inc.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	end_block                       # label3:
+	end_block                       # label2:
+	block
 	i32.const	$push41=, 10
 	i32.eq  	$push17=, $1, $pop41
-	br_if   	1, $pop17       # 1: down to label2
+	br_if   	0, $pop17       # 0: down to label3
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push35=, 1
@@ -252,9 +253,10 @@ varargs0:                               # @varargs0
 	i32.const	$push34=, 4
 	i32.add 	$push0=, $2, $pop34
 	copy_local	$2=, $pop0
-	br      	0               # 0: up to label1
+	br      	1               # 1: up to label1
 .LBB1_5:                                # %verify.exit
-	end_loop                        # label2:
+	end_block                       # label3:
+	end_loop
 	i32.const	$push24=, 0
 	i32.const	$push22=, 64
 	i32.add 	$push23=, $4, $pop22
@@ -317,7 +319,7 @@ varargs1:                               # @varargs1
 	loop                            # label4:
 	block
 	i32.eq  	$push14=, $2, $4
-	br_if   	0, $pop14       # 0: down to label6
+	br_if   	0, $pop14       # 0: down to label5
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.store	12($5), $2
@@ -335,10 +337,11 @@ varargs1:                               # @varargs1
 	i32.store	errors($pop37), $pop16
 .LBB2_3:                                # %for.inc.i
                                         #   in Loop: Header=BB2_1 Depth=1
-	end_block                       # label6:
+	end_block                       # label5:
+	block
 	i32.const	$push40=, 10
 	i32.eq  	$push17=, $2, $pop40
-	br_if   	1, $pop17       # 1: down to label5
+	br_if   	0, $pop17       # 0: down to label6
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push34=, 1
@@ -347,9 +350,10 @@ varargs1:                               # @varargs1
 	i32.const	$push33=, 4
 	i32.add 	$push0=, $3, $pop33
 	copy_local	$3=, $pop0
-	br      	0               # 0: up to label4
+	br      	1               # 1: up to label4
 .LBB2_5:                                # %verify.exit
-	end_loop                        # label5:
+	end_block                       # label6:
+	end_loop
 	i32.const	$push24=, 0
 	i32.const	$push22=, 64
 	i32.add 	$push23=, $5, $pop22
@@ -412,7 +416,7 @@ varargs2:                               # @varargs2
 	loop                            # label7:
 	block
 	i32.eq  	$push14=, $3, $5
-	br_if   	0, $pop14       # 0: down to label9
+	br_if   	0, $pop14       # 0: down to label8
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	i32.store	12($6), $3
@@ -430,10 +434,11 @@ varargs2:                               # @varargs2
 	i32.store	errors($pop37), $pop16
 .LBB3_3:                                # %for.inc.i
                                         #   in Loop: Header=BB3_1 Depth=1
-	end_block                       # label9:
+	end_block                       # label8:
+	block
 	i32.const	$push40=, 10
 	i32.eq  	$push17=, $3, $pop40
-	br_if   	1, $pop17       # 1: down to label8
+	br_if   	0, $pop17       # 0: down to label9
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB3_1 Depth=1
 	i32.const	$push34=, 1
@@ -442,9 +447,10 @@ varargs2:                               # @varargs2
 	i32.const	$push33=, 4
 	i32.add 	$push0=, $4, $pop33
 	copy_local	$4=, $pop0
-	br      	0               # 0: up to label7
+	br      	1               # 1: up to label7
 .LBB3_5:                                # %verify.exit
-	end_loop                        # label8:
+	end_block                       # label9:
+	end_loop
 	i32.const	$push24=, 0
 	i32.const	$push22=, 64
 	i32.add 	$push23=, $6, $pop22
@@ -507,7 +513,7 @@ varargs3:                               # @varargs3
 	loop                            # label10:
 	block
 	i32.eq  	$push14=, $4, $6
-	br_if   	0, $pop14       # 0: down to label12
+	br_if   	0, $pop14       # 0: down to label11
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB4_1 Depth=1
 	i32.store	12($7), $4
@@ -525,10 +531,11 @@ varargs3:                               # @varargs3
 	i32.store	errors($pop37), $pop16
 .LBB4_3:                                # %for.inc.i
                                         #   in Loop: Header=BB4_1 Depth=1
-	end_block                       # label12:
+	end_block                       # label11:
+	block
 	i32.const	$push40=, 10
 	i32.eq  	$push17=, $4, $pop40
-	br_if   	1, $pop17       # 1: down to label11
+	br_if   	0, $pop17       # 0: down to label12
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB4_1 Depth=1
 	i32.const	$push34=, 1
@@ -537,9 +544,10 @@ varargs3:                               # @varargs3
 	i32.const	$push33=, 4
 	i32.add 	$push0=, $5, $pop33
 	copy_local	$5=, $pop0
-	br      	0               # 0: up to label10
+	br      	1               # 1: up to label10
 .LBB4_5:                                # %verify.exit
-	end_loop                        # label11:
+	end_block                       # label12:
+	end_loop
 	i32.const	$push24=, 0
 	i32.const	$push22=, 64
 	i32.add 	$push23=, $7, $pop22
@@ -600,7 +608,7 @@ varargs4:                               # @varargs4
 	loop                            # label13:
 	block
 	i32.eq  	$push12=, $5, $7
-	br_if   	0, $pop12       # 0: down to label15
+	br_if   	0, $pop12       # 0: down to label14
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB5_1 Depth=1
 	i32.store	12($8), $5
@@ -618,10 +626,11 @@ varargs4:                               # @varargs4
 	i32.store	errors($pop36), $pop14
 .LBB5_3:                                # %for.inc.i
                                         #   in Loop: Header=BB5_1 Depth=1
-	end_block                       # label15:
+	end_block                       # label14:
+	block
 	i32.const	$push39=, 10
 	i32.eq  	$push15=, $5, $pop39
-	br_if   	1, $pop15       # 1: down to label14
+	br_if   	0, $pop15       # 0: down to label15
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB5_1 Depth=1
 	i32.const	$push33=, 1
@@ -630,9 +639,10 @@ varargs4:                               # @varargs4
 	i32.const	$push32=, 4
 	i32.add 	$push0=, $6, $pop32
 	copy_local	$6=, $pop0
-	br      	0               # 0: up to label13
+	br      	1               # 1: up to label13
 .LBB5_5:                                # %verify.exit
-	end_loop                        # label14:
+	end_block                       # label15:
+	end_loop
 	i32.const	$push22=, 0
 	i32.const	$push20=, 64
 	i32.add 	$push21=, $8, $pop20
@@ -691,7 +701,7 @@ varargs5:                               # @varargs5
 	loop                            # label16:
 	block
 	i32.eq  	$push12=, $6, $8
-	br_if   	0, $pop12       # 0: down to label18
+	br_if   	0, $pop12       # 0: down to label17
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB6_1 Depth=1
 	i32.store	12($9), $6
@@ -709,10 +719,11 @@ varargs5:                               # @varargs5
 	i32.store	errors($pop35), $pop14
 .LBB6_3:                                # %for.inc.i
                                         #   in Loop: Header=BB6_1 Depth=1
-	end_block                       # label18:
+	end_block                       # label17:
+	block
 	i32.const	$push38=, 10
 	i32.eq  	$push15=, $6, $pop38
-	br_if   	1, $pop15       # 1: down to label17
+	br_if   	0, $pop15       # 0: down to label18
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB6_1 Depth=1
 	i32.const	$push32=, 1
@@ -721,9 +732,10 @@ varargs5:                               # @varargs5
 	i32.const	$push31=, 4
 	i32.add 	$push0=, $7, $pop31
 	copy_local	$7=, $pop0
-	br      	0               # 0: up to label16
+	br      	1               # 1: up to label16
 .LBB6_5:                                # %verify.exit
-	end_loop                        # label17:
+	end_block                       # label18:
+	end_loop
 	i32.const	$push22=, 0
 	i32.const	$push20=, 64
 	i32.add 	$push21=, $9, $pop20
@@ -782,7 +794,7 @@ varargs6:                               # @varargs6
 	loop                            # label19:
 	block
 	i32.eq  	$push12=, $7, $9
-	br_if   	0, $pop12       # 0: down to label21
+	br_if   	0, $pop12       # 0: down to label20
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB7_1 Depth=1
 	i32.store	12($10), $7
@@ -800,10 +812,11 @@ varargs6:                               # @varargs6
 	i32.store	errors($pop35), $pop14
 .LBB7_3:                                # %for.inc.i
                                         #   in Loop: Header=BB7_1 Depth=1
-	end_block                       # label21:
+	end_block                       # label20:
+	block
 	i32.const	$push38=, 10
 	i32.eq  	$push15=, $7, $pop38
-	br_if   	1, $pop15       # 1: down to label20
+	br_if   	0, $pop15       # 0: down to label21
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB7_1 Depth=1
 	i32.const	$push32=, 1
@@ -812,9 +825,10 @@ varargs6:                               # @varargs6
 	i32.const	$push31=, 4
 	i32.add 	$push0=, $8, $pop31
 	copy_local	$8=, $pop0
-	br      	0               # 0: up to label19
+	br      	1               # 1: up to label19
 .LBB7_5:                                # %verify.exit
-	end_loop                        # label20:
+	end_block                       # label21:
+	end_loop
 	i32.const	$push22=, 0
 	i32.const	$push20=, 64
 	i32.add 	$push21=, $10, $pop20
@@ -871,7 +885,7 @@ varargs7:                               # @varargs7
 	loop                            # label22:
 	block
 	i32.eq  	$push11=, $8, $10
-	br_if   	0, $pop11       # 0: down to label24
+	br_if   	0, $pop11       # 0: down to label23
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB8_1 Depth=1
 	i32.store	12($11), $8
@@ -889,10 +903,11 @@ varargs7:                               # @varargs7
 	i32.store	errors($pop34), $pop13
 .LBB8_3:                                # %for.inc.i
                                         #   in Loop: Header=BB8_1 Depth=1
-	end_block                       # label24:
+	end_block                       # label23:
+	block
 	i32.const	$push37=, 10
 	i32.eq  	$push14=, $8, $pop37
-	br_if   	1, $pop14       # 1: down to label23
+	br_if   	0, $pop14       # 0: down to label24
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB8_1 Depth=1
 	i32.const	$push31=, 1
@@ -901,9 +916,10 @@ varargs7:                               # @varargs7
 	i32.const	$push30=, 4
 	i32.add 	$push0=, $9, $pop30
 	copy_local	$9=, $pop0
-	br      	0               # 0: up to label22
+	br      	1               # 1: up to label22
 .LBB8_5:                                # %verify.exit
-	end_loop                        # label23:
+	end_block                       # label24:
+	end_loop
 	i32.const	$push21=, 0
 	i32.const	$push19=, 64
 	i32.add 	$push20=, $11, $pop19
@@ -960,7 +976,7 @@ varargs8:                               # @varargs8
 	loop                            # label25:
 	block
 	i32.eq  	$push9=, $9, $11
-	br_if   	0, $pop9        # 0: down to label27
+	br_if   	0, $pop9        # 0: down to label26
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB9_1 Depth=1
 	i32.store	12($12), $9
@@ -978,10 +994,11 @@ varargs8:                               # @varargs8
 	i32.store	errors($pop33), $pop11
 .LBB9_3:                                # %for.inc.i
                                         #   in Loop: Header=BB9_1 Depth=1
-	end_block                       # label27:
+	end_block                       # label26:
+	block
 	i32.const	$push36=, 10
 	i32.eq  	$push12=, $9, $pop36
-	br_if   	1, $pop12       # 1: down to label26
+	br_if   	0, $pop12       # 0: down to label27
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB9_1 Depth=1
 	i32.const	$push30=, 1
@@ -990,9 +1007,10 @@ varargs8:                               # @varargs8
 	i32.const	$push29=, 4
 	i32.add 	$push0=, $10, $pop29
 	copy_local	$10=, $pop0
-	br      	0               # 0: up to label25
+	br      	1               # 1: up to label25
 .LBB9_5:                                # %verify.exit
-	end_loop                        # label26:
+	end_block                       # label27:
+	end_loop
 	i32.const	$push19=, 0
 	i32.const	$push17=, 64
 	i32.add 	$push18=, $12, $pop17
@@ -1044,7 +1062,7 @@ varargs9:                               # @varargs9
 	loop                            # label28:
 	block
 	i32.eq  	$push8=, $10, $12
-	br_if   	0, $pop8        # 0: down to label30
+	br_if   	0, $pop8        # 0: down to label29
 # BB#2:                                 # %if.then.i
                                         #   in Loop: Header=BB10_1 Depth=1
 	i32.store	12($13), $10
@@ -1062,10 +1080,11 @@ varargs9:                               # @varargs9
 	i32.store	errors($pop31), $pop10
 .LBB10_3:                               # %for.inc.i
                                         #   in Loop: Header=BB10_1 Depth=1
-	end_block                       # label30:
+	end_block                       # label29:
+	block
 	i32.const	$push34=, 10
 	i32.eq  	$push11=, $10, $pop34
-	br_if   	1, $pop11       # 1: down to label29
+	br_if   	0, $pop11       # 0: down to label30
 # BB#4:                                 # %for.inc.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB10_1 Depth=1
 	i32.const	$push28=, 1
@@ -1074,9 +1093,10 @@ varargs9:                               # @varargs9
 	i32.const	$push27=, 4
 	i32.add 	$push0=, $11, $pop27
 	copy_local	$11=, $pop0
-	br      	0               # 0: up to label28
+	br      	1               # 1: up to label28
 .LBB10_5:                               # %verify.exit
-	end_loop                        # label29:
+	end_block                       # label30:
+	end_loop
 	i32.const	$push18=, 0
 	i32.const	$push16=, 64
 	i32.add 	$push17=, $13, $pop16
@@ -1150,7 +1170,7 @@ errors:
 	.size	.L.str.10, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	printf, i32, i32

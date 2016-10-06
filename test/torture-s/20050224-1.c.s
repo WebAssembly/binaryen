@@ -64,42 +64,42 @@ main:                                   # @main
 	block
 	block
 	i32.ge_u	$push1=, $5, $1
-	br_if   	0, $pop1        # 0: down to label5
+	br_if   	0, $pop1        # 0: down to label4
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push23=, 1
 	i32.add 	$6=, $6, $pop23
-	br      	1               # 1: down to label4
+	br      	1               # 1: down to label3
 .LBB1_4:                                # %if.else
                                         #   in Loop: Header=BB1_2 Depth=1
-	end_block                       # label5:
+	end_block                       # label4:
 	block
 	i32.lt_u	$push2=, $5, $2
-	br_if   	0, $pop2        # 0: down to label6
+	br_if   	0, $pop2        # 0: down to label5
 # BB#5:                                 # %if.else
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.ge_u	$push3=, $5, $3
-	br_if   	0, $pop3        # 0: down to label6
+	br_if   	0, $pop3        # 0: down to label5
 # BB#6:                                 # %if.then4
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push24=, 1
 	i32.add 	$8=, $8, $pop24
-	br      	1               # 1: down to label4
+	br      	1               # 1: down to label3
 .LBB1_7:                                # %if.else6
                                         #   in Loop: Header=BB1_2 Depth=1
-	end_block                       # label6:
+	end_block                       # label5:
 	i32.lt_u	$push4=, $5, $4
 	i32.add 	$7=, $pop4, $7
 .LBB1_8:                                # %for.inc
                                         #   in Loop: Header=BB1_2 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push27=, 4096
 	i32.add 	$push26=, $5, $pop27
 	tee_local	$push25=, $5=, $pop26
 	i32.lt_u	$push5=, $pop25, $0
 	br_if   	0, $pop5        # 0: up to label2
 # BB#9:                                 # %for.end
-	end_loop                        # label3:
+	end_loop
 	i32.const	$push6=, 444
 	i32.ne  	$push7=, $6, $pop6
 	br_if   	0, $pop7        # 0: down to label1
@@ -177,5 +177,5 @@ f:
 	.size	f, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

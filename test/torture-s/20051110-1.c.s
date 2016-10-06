@@ -35,7 +35,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	copy_local	$0=, $1
 	br_if   	0, $1           # 0: up to label1
 .LBB0_3:                                # %while.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -67,4 +67,4 @@ bytes:
 	.size	bytes, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

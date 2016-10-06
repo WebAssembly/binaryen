@@ -28,37 +28,37 @@ invalidate_memory:                      # @invalidate_memory
 	i32.load	$push10=, 0($pop3)
 	tee_local	$push9=, $0=, $pop10
 	i32.eqz 	$push19=, $pop9
-	br_if   	0, $pop19       # 0: down to label3
+	br_if   	0, $pop19       # 0: down to label2
 .LBB0_2:                                # %for.body6
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label4:
+	loop                            # label3:
 	copy_local	$push14=, $0
 	tee_local	$push13=, $3=, $pop14
 	i32.load	$0=, 4($pop13)
 	block
 	i32.load8_u	$push4=, 36($3)
 	i32.eqz 	$push20=, $pop4
-	br_if   	0, $pop20       # 0: down to label6
+	br_if   	0, $pop20       # 0: down to label4
 # BB#3:                                 # %land.lhs.true
                                         #   in Loop: Header=BB0_2 Depth=2
-	br_if   	6, $1           # 6: down to label0
+	br_if   	4, $1           # 4: down to label0
 # BB#4:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.eqz 	$push21=, $2
-	br_if   	0, $pop21       # 0: down to label6
+	br_if   	0, $pop21       # 0: down to label4
 # BB#5:                                 # %land.lhs.true10
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.load8_u	$push5=, 37($3)
-	br_if   	6, $pop5        # 6: down to label0
+	br_if   	4, $pop5        # 4: down to label0
 .LBB0_6:                                # %for.cond5.backedge
                                         #   in Loop: Header=BB0_2 Depth=2
-	end_block                       # label6:
-	br_if   	0, $0           # 0: up to label4
+	end_block                       # label4:
+	br_if   	0, $0           # 0: up to label3
 .LBB0_7:                                # %for.inc15
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	i32.const	$push18=, 1
 	i32.add 	$push17=, $4, $pop18
 	tee_local	$push16=, $4=, $pop17
@@ -66,7 +66,7 @@ invalidate_memory:                      # @invalidate_memory
 	i32.lt_s	$push6=, $pop16, $pop15
 	br_if   	0, $pop6        # 0: up to label1
 # BB#8:                                 # %for.end16
-	end_loop                        # label2:
+	end_loop
 	return
 .LBB0_9:                                # %if.then
 	end_block                       # label0:
@@ -137,38 +137,39 @@ main:                                   # @main
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB3_2 Depth 2
 	block
-	loop                            # label8:
+	loop                            # label6:
 	block
 	i32.eqz 	$push31=, $2
-	br_if   	0, $pop31       # 0: down to label10
+	br_if   	0, $pop31       # 0: down to label7
 .LBB3_2:                                # %for.body6.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label11:
+	loop                            # label8:
 	i32.load	$0=, 4($2)
 	block
 	i32.load8_u	$push1=, 36($2)
 	i32.eqz 	$push32=, $pop1
-	br_if   	0, $pop32       # 0: down to label13
+	br_if   	0, $pop32       # 0: down to label9
 # BB#3:                                 # %land.lhs.true10.i
                                         #   in Loop: Header=BB3_2 Depth=2
 	i32.load8_u	$push2=, 37($2)
-	br_if   	6, $pop2        # 6: down to label7
+	br_if   	4, $pop2        # 4: down to label5
 .LBB3_4:                                # %for.cond5.backedge.i
                                         #   in Loop: Header=BB3_2 Depth=2
-	end_block                       # label13:
+	end_block                       # label9:
 	copy_local	$2=, $0
-	br_if   	0, $0           # 0: up to label11
+	br_if   	0, $0           # 0: up to label8
 .LBB3_5:                                # %for.inc15.i
                                         #   in Loop: Header=BB3_1 Depth=1
-	end_loop                        # label12:
-	end_block                       # label10:
+	end_loop
+	end_block                       # label7:
+	block
 	i32.const	$push30=, 1
 	i32.add 	$push29=, $1, $pop30
 	tee_local	$push28=, $1=, $pop29
 	i32.const	$push27=, 30
 	i32.gt_s	$push3=, $pop28, $pop27
-	br_if   	1, $pop3        # 1: down to label9
+	br_if   	0, $pop3        # 0: down to label10
 # BB#6:                                 # %for.inc15.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB3_1 Depth=1
 	i32.const	$push26=, 2
@@ -176,9 +177,10 @@ main:                                   # @main
 	i32.const	$push25=, table
 	i32.add 	$push6=, $pop5, $pop25
 	i32.load	$2=, 0($pop6)
-	br      	0               # 0: up to label8
+	br      	1               # 1: up to label6
 .LBB3_7:                                # %invalidate_memory.exit
-	end_loop                        # label9:
+	end_block                       # label10:
+	end_loop
 	i32.const	$push13=, 0
 	i32.const	$push11=, 48
 	i32.add 	$push12=, $3, $pop11
@@ -186,7 +188,7 @@ main:                                   # @main
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB3_8:                                # %if.then.i
-	end_block                       # label7:
+	end_block                       # label5:
 	call    	remove_from_table@FUNCTION, $2, $2
 	unreachable
 	.endfunc
@@ -201,5 +203,5 @@ table:
 	.size	table, 128
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
