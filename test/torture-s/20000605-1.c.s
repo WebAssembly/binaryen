@@ -11,14 +11,14 @@ main:                                   # @main
 	i32.const	$0=, 256
 .LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push3=, -1
 	i32.add 	$push2=, $0, $pop3
 	tee_local	$push1=, $0=, $pop2
 	br_if   	0, $pop1        # 0: up to label0
 # BB#2:                                 # %render_image_rgb_a.exit
 	end_loop
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label1
 # BB#3:                                 # %if.end
 	i32.const	$push0=, 0
@@ -33,6 +33,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

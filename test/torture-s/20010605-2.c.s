@@ -21,7 +21,7 @@ main:                                   # @main
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f64.load	$push0=, 0($0)
 	f64.const	$push1=, 0x1p0
 	f64.ne  	$push2=, $pop0, $pop1
@@ -48,7 +48,7 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f32.load	$push0=, 0($0)
 	f32.const	$push1=, 0x1.8p1
 	f32.ne  	$push2=, $pop0, $pop1
@@ -75,7 +75,7 @@ bar:                                    # @bar
 baz:                                    # @baz
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i64.load	$push3=, 0($0)
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
@@ -104,6 +104,6 @@ baz:                                    # @baz
 	.size	baz, .Lfunc_end3-baz
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

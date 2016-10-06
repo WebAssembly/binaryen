@@ -15,7 +15,7 @@ return_i32:
 return_i32_twice:
 	.param  	i32
 	.result 	i32
-	block
+	block   	
 	i32.eqz 	$push6=, $0
 	br_if   	0, $pop6
 	i32.const	$push3=, 0

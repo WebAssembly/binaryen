@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.const	$push55=, 0
 	i32.load	$0=, p($pop55)
 	i32.const	$1=, 1
-	block
+	block   	
 	i32.const	$push54=, 0
 	i32.load	$push53=, k($pop54)
 	tee_local	$push52=, $4=, $pop53
@@ -88,7 +88,7 @@ main:                                   # @main
 	end_block                       # label0:
 	i32.const	$push65=, 0
 	i32.store	g($pop65), $1
-	block
+	block   	
 	i32.const	$push64=, 0
 	i32.ne  	$push7=, $4, $pop64
 	i32.const	$push63=, 0
@@ -116,7 +116,7 @@ main:                                   # @main
 	i32.store	g($pop74), $5
 	i32.const	$5=, 1
 	i32.const	$1=, 1
-	block
+	block   	
 	i32.const	$push73=, 0
 	i32.ne  	$push12=, $4, $pop73
 	i32.const	$push72=, 0
@@ -142,7 +142,7 @@ main:                                   # @main
 	end_block                       # label2:
 	i32.const	$push83=, 0
 	i32.store	g($pop83), $1
-	block
+	block   	
 	i32.const	$push82=, 0
 	i32.ne  	$push17=, $4, $pop82
 	i32.const	$push81=, 0
@@ -170,7 +170,7 @@ main:                                   # @main
 	i32.store	g($pop92), $5
 	i32.const	$5=, 1
 	i32.const	$1=, 1
-	block
+	block   	
 	i32.const	$push91=, 0
 	i32.ne  	$push22=, $4, $pop91
 	i32.const	$push90=, 0
@@ -196,7 +196,7 @@ main:                                   # @main
 	end_block                       # label4:
 	i32.const	$push101=, 0
 	i32.store	g($pop101), $1
-	block
+	block   	
 	i32.const	$push100=, 0
 	i32.ne  	$push27=, $4, $pop100
 	i32.const	$push99=, 0
@@ -224,7 +224,7 @@ main:                                   # @main
 	i32.store	g($pop110), $5
 	i32.const	$5=, 1
 	i32.const	$1=, 1
-	block
+	block   	
 	i32.const	$push109=, 0
 	i32.ne  	$push32=, $4, $pop109
 	i32.const	$push108=, 0
@@ -252,7 +252,7 @@ main:                                   # @main
 	i32.store	g($pop122), $1
 	i32.const	$push121=, 0
 	i32.load	$1=, a($pop121)
-	block
+	block   	
 	i32.const	$push120=, 0
 	i32.ne  	$push37=, $4, $pop120
 	i32.const	$push119=, 0
@@ -368,5 +368,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	getpid, i32

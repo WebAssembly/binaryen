@@ -96,9 +96,9 @@ frame_index:
 drop_result:
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push0=, $3
 	br_if   	0, $pop0
 	i32.call	$0=, def@FUNCTION
@@ -125,9 +125,9 @@ drop_result:
 tail_dup_to_reuse_result:
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push1=, $3
 	br_if   	0, $pop1
 	i32.call	$0=, def@FUNCTION

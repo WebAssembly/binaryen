@@ -13,7 +13,7 @@ foo:                                    # @foo
 	i32.add 	$0=, $pop0, $pop1
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push24=, 0
 	i32.load8_s	$push2=, 0($0)
 	i32.store	n($pop24), $pop2
@@ -87,5 +87,5 @@ n:
 	.size	n, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

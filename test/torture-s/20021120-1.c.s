@@ -72,14 +72,14 @@ foo:                                    # @foo
 	f64.load	$130=, gd+240($pop67)
 	i32.const	$push66=, 0
 	f64.load	$129=, gd+248($pop66)
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push260=, 0
 	f32.load	$1=, gf($pop260)
 	i32.const	$push259=, 0
@@ -586,7 +586,7 @@ main:                                   # @main
 	i32.const	$3=, gf
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	f64.store	0($2), $0
 	f32.convert_s/i32	$push0=, $1
 	f32.store	0($3), $pop0
@@ -611,8 +611,8 @@ main:                                   # @main
 	i32.const	$3=, 0
 .LBB1_3:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label4:
+	block   	
+	loop    	                # label4:
 	f64.load	$push3=, 0($2)
 	f64.convert_s/i32	$push2=, $1
 	f64.ne  	$push4=, $pop3, $pop2
@@ -669,6 +669,6 @@ gf:
 	.size	gf, 128
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

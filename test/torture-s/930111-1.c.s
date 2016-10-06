@@ -23,8 +23,8 @@ wwrite:                                 # @wwrite
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i64.const	$push1=, -3
 	i64.add 	$push5=, $0, $pop1
 	tee_local	$push4=, $0=, $pop5
@@ -48,5 +48,5 @@ wwrite:                                 # @wwrite
 	.size	wwrite, .Lfunc_end1-wwrite
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

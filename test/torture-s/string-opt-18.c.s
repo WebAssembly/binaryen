@@ -21,7 +21,7 @@ test2:                                  # @test2
 # BB#0:                                 # %entry
 	i64.load	$push0=, 0($0):p2align=0
 	i64.store	0($0):p2align=0, $pop0
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.eqz 	$push2=, $pop1
 	br_if   	0, $pop2        # 0: down to label0
@@ -112,7 +112,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop6), $pop10
 	i64.load	$push0=, 4($0):p2align=2
 	i64.store	4($0):p2align=2, $pop0
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.eqz 	$push12=, $pop1
 	br_if   	0, $pop12       # 0: down to label1
@@ -132,6 +132,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end7-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	mempcpy, i32, i32, i32, i32

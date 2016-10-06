@@ -15,7 +15,7 @@ foo:                                    # @foo
 	i32.const	$17=, 0
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.add 	$push269=, $2, $17
 	tee_local	$push268=, $0=, $pop269
 	i32.const	$push267=, array5
@@ -571,4 +571,4 @@ vol:
 	.size	vol, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

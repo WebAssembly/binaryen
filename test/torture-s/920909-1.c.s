@@ -8,7 +8,7 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -1026
 	i32.add 	$push10=, $0, $pop0
 	tee_local	$push9=, $0=, $pop10
@@ -57,5 +57,5 @@ main:                                   # @main
 	.size	.Lswitch.table, 24
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

@@ -15,7 +15,7 @@ find:                                   # @find
 	i32.sub 	$push12=, $pop5, $pop6
 	tee_local	$push11=, $1=, $pop12
 	i32.store	__stack_pointer($pop7), $pop11
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.else
 	i32.const	$push0=, 42
@@ -23,7 +23,7 @@ find:                                   # @find
 	copy_local	$0=, $1
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	block
+	block   	
 	i32.load	$push1=, 12($0)
 	i32.const	$push2=, 42
 	i32.ne  	$push3=, $pop1, $pop2
@@ -49,7 +49,7 @@ find:                                   # @find
 aglChoosePixelFormat:                   # @aglChoosePixelFormat
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push0=, 12($0)
 	i32.const	$push1=, 42
 	i32.ne  	$push2=, $pop0, $pop1
@@ -78,5 +78,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

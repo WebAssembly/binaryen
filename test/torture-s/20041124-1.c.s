@@ -33,7 +33,7 @@ main:                                   # @main
 	i32.const	$push14=, 8
 	i32.add 	$push15=, $0, $pop14
 	call    	foo@FUNCTION, $pop15
-	block
+	block   	
 	i32.load16_u	$push3=, 8($0)
 	i32.const	$push16=, 0
 	i32.load16_u	$push2=, gs($pop16)
@@ -72,6 +72,6 @@ gs:
 	.size	gs, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

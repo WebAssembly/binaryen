@@ -2255,7 +2255,7 @@ testJ:                                  # @testJ
 	i32.add 	$push39=, $pop14, $pop40
 	tee_local	$push38=, $0=, $pop39
 	i32.store	myrnd.s($pop42), $pop38
-	block
+	block   	
 	i32.const	$push37=, 16
 	i32.shr_u	$push36=, $0, $pop37
 	tee_local	$push35=, $2=, $pop36
@@ -2676,7 +2676,7 @@ testL:                                  # @testL
 	i32.or  	$push40=, $pop20, $pop19
 	tee_local	$push39=, $1=, $pop40
 	i32.store	sL($pop46), $pop39
-	block
+	block   	
 	i32.const	$push38=, 16
 	i32.shr_u	$push37=, $0, $pop38
 	tee_local	$push36=, $3=, $pop37
@@ -2922,7 +2922,7 @@ testM:                                  # @testM
 	i32.or  	$push39=, $pop20, $pop40
 	tee_local	$push38=, $3=, $pop39
 	i32.store	sM+4($pop46), $pop38
-	block
+	block   	
 	i32.const	$push37=, 16
 	i32.shr_u	$push36=, $0, $pop37
 	tee_local	$push35=, $4=, $pop36
@@ -3181,7 +3181,7 @@ testN:                                  # @testN
 	i64.or  	$push77=, $pop26, $pop23
 	tee_local	$push76=, $5=, $pop77
 	i64.store	sN($pop84), $pop76
-	block
+	block   	
 	i64.const	$push75=, 6
 	i64.shr_u	$push27=, $5, $pop75
 	i32.wrap/i64	$push74=, $pop27
@@ -3571,7 +3571,7 @@ testO:                                  # @testO
 	i64.or  	$push90=, $pop43, $pop41
 	tee_local	$push89=, $3=, $pop90
 	i64.store	sO+8($pop95), $pop89
-	block
+	block   	
 	i32.wrap/i64	$push88=, $3
 	tee_local	$push87=, $5=, $pop88
 	i32.const	$push86=, 2047
@@ -3956,7 +3956,7 @@ testP:                                  # @testP
 	i64.or  	$push90=, $pop43, $pop41
 	tee_local	$push89=, $3=, $pop90
 	i64.store	sP($pop95), $pop89
-	block
+	block   	
 	i32.wrap/i64	$push88=, $3
 	tee_local	$push87=, $5=, $pop88
 	i32.const	$push86=, 2047
@@ -4518,7 +4518,7 @@ testR:                                  # @testR
 	i32.and 	$push35=, $2, $pop34
 	i32.or  	$push36=, $pop33, $pop35
 	i32.store16	sR($pop40), $pop36
-	block
+	block   	
 	i32.const	$push37=, 1
 	i32.eqz 	$push106=, $pop37
 	br_if   	0, $pop106      # 0: down to label6
@@ -4758,7 +4758,7 @@ testS:                                  # @testS
 	i32.and 	$push35=, $2, $pop34
 	i32.or  	$push36=, $pop33, $pop35
 	i32.store16	sS($pop40), $pop36
-	block
+	block   	
 	i32.const	$push37=, 1
 	i32.eqz 	$push106=, $pop37
 	br_if   	0, $pop106      # 0: down to label7
@@ -4936,7 +4936,7 @@ testT:                                  # @testT
 	i32.add 	$push37=, $pop14, $pop38
 	tee_local	$push36=, $0=, $pop37
 	i32.store	myrnd.s($pop40), $pop36
-	block
+	block   	
 	i32.const	$push35=, 16
 	i32.shr_u	$push34=, $0, $pop35
 	tee_local	$push33=, $2=, $pop34
@@ -5229,7 +5229,7 @@ testU:                                  # @testU
 	i32.or  	$push90=, $pop31, $pop91
 	tee_local	$push89=, $3=, $pop90
 	i32.store16	sU($pop98), $pop89
-	block
+	block   	
 	i32.const	$push32=, 65472
 	i32.and 	$push33=, $3, $pop32
 	i32.const	$push88=, 6
@@ -5522,7 +5522,7 @@ testV:                                  # @testV
 	i32.add 	$push70=, $pop15, $pop71
 	tee_local	$push69=, $0=, $pop70
 	i32.store	myrnd.s($pop73), $pop69
-	block
+	block   	
 	i32.const	$push68=, 16
 	i32.shr_u	$push67=, $0, $pop68
 	tee_local	$push66=, $3=, $pop67
@@ -6521,7 +6521,7 @@ testZ:                                  # @testZ
 	i32.or  	$push55=, $pop18, $pop56
 	tee_local	$push54=, $3=, $pop55
 	i32.store	sZ+16($pop64), $pop54
-	block
+	block   	
 	i32.const	$push53=, 16
 	i32.shr_u	$push19=, $0, $pop53
 	i32.const	$push52=, 2047
@@ -6882,6 +6882,6 @@ sZ:
 	.size	sZ, 20
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

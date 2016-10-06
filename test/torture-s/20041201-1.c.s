@@ -10,7 +10,7 @@ checkScc2:                              # @checkScc2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
-	block
+	block   	
 	i32.load8_u	$push1=, 0($0)
 	i32.const	$push14=, 1
 	i32.ne  	$push2=, $pop1, $pop14
@@ -49,7 +49,7 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$0=, 1
-	block
+	block   	
 	i32.const	$push15=, 0
 	i32.load8_u	$push1=, s($pop15)
 	i32.const	$push14=, 1
@@ -93,4 +93,4 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

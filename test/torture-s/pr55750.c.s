@@ -38,7 +38,7 @@ main:                                   # @main
 	call    	foo@FUNCTION, $pop11
 	i32.const	$push3=, 1
 	call    	foo@FUNCTION, $pop3
-	block
+	block   	
 	i32.const	$push10=, 0
 	i32.load8_u	$push4=, arr($pop10)
 	i32.const	$push5=, 129
@@ -71,5 +71,5 @@ arr:
 	.size	arr, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

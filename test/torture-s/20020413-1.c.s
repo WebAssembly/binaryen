@@ -22,9 +22,9 @@ test:                                   # @test
 	i64.const	$push97=, 0
 	i32.call	$3=, __lttf2@FUNCTION, $0, $1, $pop98, $pop97
 	i32.const	$4=, 0
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i64.load	$push4=, 0($5)
 	i32.const	$push96=, 0
 	i32.lt_s	$push95=, $3, $pop96
@@ -285,6 +285,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

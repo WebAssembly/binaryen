@@ -38,8 +38,8 @@ random_bitstring:                       # @random_bitstring
 	i64.const	$3=, 0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i64.const	$push20=, 1103515245
 	i64.mul 	$push0=, $2, $pop20
 	i64.const	$push19=, 12345
@@ -60,7 +60,7 @@ random_bitstring:                       # @random_bitstring
 	i64.const	$push22=, 15
 	i64.and 	$push2=, $0, $pop22
 	i64.shl 	$3=, $3, $pop2
-	block
+	block   	
 	i64.const	$push21=, 256
 	i64.and 	$push3=, $2, $pop21
 	i64.eqz 	$push4=, $pop3
@@ -105,18 +105,18 @@ main:                                   # @main
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
                                         #     Child Loop BB2_7 Depth 2
-	block
-	block
-	block
-	block
-	loop                            # label7:
+	block   	
+	block   	
+	block   	
+	block   	
+	loop    	                # label7:
 	i64.const	$9=, 0
 	i32.const	$10=, 0
 .LBB2_2:                                # %for.cond.i
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label9:
+	block   	
+	loop    	                # label9:
 	i64.const	$push86=, 1103515245
 	i64.mul 	$push0=, $2, $pop86
 	i64.const	$push85=, 12345
@@ -137,7 +137,7 @@ main:                                   # @main
 	i64.const	$push88=, 15
 	i64.and 	$push2=, $11, $pop88
 	i64.shl 	$9=, $9, $pop2
-	block
+	block   	
 	i64.const	$push87=, 256
 	i64.and 	$push3=, $2, $pop87
 	i64.eqz 	$push4=, $pop3
@@ -165,8 +165,8 @@ main:                                   # @main
 .LBB2_7:                                # %for.cond.i452
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label12:
+	block   	
+	loop    	                # label12:
 	i64.const	$push101=, 1103515245
 	i64.mul 	$push9=, $2, $pop101
 	i64.const	$push100=, 12345
@@ -187,7 +187,7 @@ main:                                   # @main
 	i64.const	$push103=, 15
 	i64.and 	$push11=, $3, $pop103
 	i64.shl 	$11=, $11, $pop11
-	block
+	block   	
 	i64.const	$push102=, 256
 	i64.and 	$push12=, $2, $pop102
 	i64.eqz 	$push13=, $pop12
@@ -210,12 +210,12 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop
 	end_block                       # label11:
-	block
+	block   	
 	i64.eqz 	$push18=, $11
 	br_if   	0, $pop18       # 0: down to label14
 # BB#12:                                # %cleanup.cont
                                         #   in Loop: Header=BB2_1 Depth=1
-	block
+	block   	
 	i64.const	$push108=, 9223372036854775807
 	i64.and 	$push19=, $9, $pop108
 	i64.const	$push107=, 0
@@ -251,7 +251,7 @@ main:                                   # @main
 	br_if   	0, $pop188      # 0: down to label14
 # BB#16:                                # %cleanup.cont65
                                         #   in Loop: Header=BB2_1 Depth=1
-	block
+	block   	
 	i32.wrap/i64	$push122=, $9
 	tee_local	$push121=, $1=, $pop122
 	i32.const	$push120=, 2147483647
@@ -281,7 +281,7 @@ main:                                   # @main
 	br_if   	3, $pop34       # 3: down to label5
 # BB#19:                                # %lor.lhs.false103
                                         #   in Loop: Header=BB2_1 Depth=1
-	block
+	block   	
 	i32.eqz 	$push189=, $4
 	br_if   	0, $pop189      # 0: down to label17
 # BB#20:                                # %lor.lhs.false103
@@ -445,6 +445,6 @@ simple_rand.seed:
 	.size	simple_rand.seed, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

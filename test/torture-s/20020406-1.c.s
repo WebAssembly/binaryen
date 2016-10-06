@@ -42,7 +42,7 @@ DUPFFnew:                               # @DUPFFnew
 	tee_local	$push11=, $1=, $pop12
 	i32.const	$push1=, 0
 	i32.store	8($pop11), $pop1
-	block
+	block   	
 	i32.const	$push10=, 0
 	i32.lt_s	$push2=, $0, $pop10
 	br_if   	0, $pop2        # 0: down to label0
@@ -135,7 +135,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.load	$7=, 4($2)
 .LBB7_1:                                # %tailrecurse
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	copy_local	$5=, $3
 	copy_local	$3=, $2
 	copy_local	$4=, $1
@@ -154,7 +154,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	br_if   	0, $pop1        # 0: up to label1
 # BB#2:                                 # %if.end
 	end_loop
-	block
+	block   	
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $6, $pop2
 	br_if   	0, $pop3        # 0: down to label2
@@ -163,7 +163,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.ne  	$push5=, $7, $pop4
 	br_if   	0, $pop5        # 0: down to label2
 # BB#4:                                 # %if.end11
-	block
+	block   	
 	i32.load	$push6=, 8($3)
 	i32.load	$push7=, 0($pop6)
 	i32.eqz 	$push43=, $pop7
@@ -189,7 +189,7 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i64.const	$push13=, -4294967294
 	i64.store	0($2):p2align=2, $pop13
 	i32.store	8($2), $7
-	block
+	block   	
 	i32.const	$push34=, 4
 	i32.add 	$push14=, $5, $pop34
 	i32.load	$push33=, 0($pop14)
@@ -204,12 +204,12 @@ DUPFFexgcd:                             # @DUPFFexgcd
 	i32.lt_s	$3=, $pop0, $5
 .LBB7_7:                                # %while.cond40.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label5:
+	loop    	                # label5:
 	br_if   	0, $3           # 0: up to label5
 .LBB7_8:                                # %while.cond40
                                         # =>This Inner Loop Header: Depth=1
 	end_loop
-	loop                            # label6:
+	loop    	                # label6:
 	br      	0               # 0: up to label6
 .LBB7_9:                                # %if.end57
 	end_loop
@@ -303,7 +303,7 @@ main:                                   # @main
 	.size	.L.str.1, 41
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	malloc, i32, i32
 	.functype	calloc, i32, i32, i32
 	.functype	printf, i32, i32

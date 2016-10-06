@@ -24,7 +24,7 @@ fdouble:                                # @fdouble
 	i32.const	$push4=, 8
 	i32.add 	$push5=, $pop17, $pop4
 	i32.store	12($2), $pop5
-	block
+	block   	
 	f64.const	$push6=, 0x1p0
 	f64.ne  	$push7=, $0, $pop6
 	br_if   	0, $pop7        # 0: down to label0
@@ -74,6 +74,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

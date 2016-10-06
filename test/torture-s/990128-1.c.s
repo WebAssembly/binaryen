@@ -50,13 +50,13 @@ main:                                   # @main
 .LBB0_1:                                # %for.inc.i.preheader.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
-	loop                            # label0:
+	loop    	                # label0:
 	copy_local	$0=, $2
 	copy_local	$2=, $1
 .LBB0_2:                                # %for.inc.i.i
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$push29=, 0($2)
 	tee_local	$push28=, $2=, $pop29
 	br_if   	0, $pop28       # 0: up to label1
@@ -75,7 +75,7 @@ main:                                   # @main
 	i32.add 	$push34=, $0, $pop11
 	tee_local	$push33=, $2=, $pop34
 	i32.store	count($pop35), $pop33
-	block
+	block   	
 	i32.const	$push12=, 12
 	i32.ne  	$push13=, $2, $pop12
 	br_if   	0, $pop13       # 0: down to label2
@@ -101,19 +101,19 @@ sub:                                    # @sub
 # BB#0:                                 # %entry
 	i32.const	$push3=, 0
 	i32.load	$2=, count($pop3)
-	block
+	block   	
 	i32.eqz 	$push12=, $0
 	br_if   	0, $pop12       # 0: down to label3
 # BB#1:                                 # %for.inc.i.preheader.preheader
 .LBB1_2:                                # %for.inc.i.preheader
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB1_3 Depth 2
-	loop                            # label4:
+	loop    	                # label4:
 	copy_local	$3=, $0
 .LBB1_3:                                # %for.inc.i
                                         #   Parent Loop BB1_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label5:
+	loop    	                # label5:
 	i32.load	$push5=, 0($3)
 	tee_local	$push4=, $3=, $pop5
 	br_if   	0, $pop4        # 0: up to label5
@@ -152,12 +152,12 @@ look:                                   # @look
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push9=, $0
 	br_if   	0, $pop9        # 0: down to label6
 .LBB2_1:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label7:
+	loop    	                # label7:
 	i32.load	$push5=, 0($0)
 	tee_local	$push4=, $0=, $pop5
 	br_if   	0, $pop4        # 0: up to label7
@@ -215,6 +215,6 @@ sss:
 	.size	sss, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

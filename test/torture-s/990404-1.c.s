@@ -12,8 +12,8 @@ main:                                   # @main
                                         # implicit-def: %vreg122
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push83=, 0
 	i32.load	$push82=, x+36($pop83)
 	tee_local	$push81=, $10=, $pop82
@@ -154,6 +154,6 @@ x:
 	.size	x, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

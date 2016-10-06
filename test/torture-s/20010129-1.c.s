@@ -44,7 +44,7 @@ baz3:                                   # @baz3
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push1=, $0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -74,8 +74,8 @@ foo:                                    # @foo
 	i32.const	$push25=, 1
 	i32.add 	$push4=, $pop26, $pop25
 	i32.store	baz1.l($pop29), $pop4
-	block
-	block
+	block   	
+	block   	
 	i32.ge_s	$push5=, $9, $1
 	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %if.then.lr.ph
@@ -108,10 +108,10 @@ foo:                                    # @foo
 	i32.const	$10=, 0
 .LBB3_2:                                # %if.then
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	copy_local	$2=, $10
 	i32.const	$10=, 0
-	block
+	block   	
 	i32.or  	$push17=, $2, $3
 	i32.eqz 	$push45=, $pop17
 	br_if   	0, $pop45       # 0: down to label4
@@ -119,7 +119,7 @@ foo:                                    # @foo
                                         #   in Loop: Header=BB3_2 Depth=1
 	i32.const	$push37=, 1
 	i32.select	$10=, $2, $pop37, $2
-	block
+	block   	
 	br_if   	0, $3           # 0: down to label5
 # BB#4:                                 # %land.lhs.true25
                                         #   in Loop: Header=BB3_2 Depth=1
@@ -210,6 +210,6 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

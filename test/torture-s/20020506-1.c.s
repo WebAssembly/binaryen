@@ -7,9 +7,9 @@
 test1:                                  # @test1
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label2
@@ -41,9 +41,9 @@ test1:                                  # @test1
 test2:                                  # @test2
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 24
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push5=, 24
@@ -79,9 +79,9 @@ test2:                                  # @test2
 test3:                                  # @test3
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label8
@@ -113,9 +113,9 @@ test3:                                  # @test3
 test4:                                  # @test4
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 16
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push5=, 16
@@ -151,9 +151,9 @@ test4:                                  # @test4
 test5:                                  # @test5
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label14
@@ -185,9 +185,9 @@ test5:                                  # @test5
 test6:                                  # @test6
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label17
@@ -219,9 +219,9 @@ test6:                                  # @test6
 test7:                                  # @test7
 	.param  	i64, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i64.const	$push0=, 0
 	i64.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label20
@@ -253,9 +253,9 @@ test7:                                  # @test7
 test8:                                  # @test8
 	.param  	i64, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i64.const	$push0=, 0
 	i64.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label23
@@ -294,5 +294,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end8-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

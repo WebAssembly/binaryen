@@ -33,7 +33,7 @@ msum_i4:                                # @msum_i4
 	i32.add 	$push5=, $7, $pop30
 	i32.load	$push6=, 0($pop5)
 	i32.sub 	$3=, $pop4, $pop6
-	block
+	block   	
 	i32.const	$push29=, 2
 	i32.lt_s	$push7=, $2, $pop29
 	br_if   	0, $pop7        # 0: down to label0
@@ -51,7 +51,7 @@ msum_i4:                                # @msum_i4
 	copy_local	$7=, $8
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$push11=, 0($2)
 	i32.const	$push52=, 1
 	i32.add 	$push12=, $pop11, $pop52
@@ -80,9 +80,9 @@ msum_i4:                                # @msum_i4
 .LBB0_4:                                # %do.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_6 Depth 2
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$7=, 0
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label3
 # BB#5:                                 # %for.body18.preheader
                                         #   in Loop: Header=BB0_4 Depth=1
@@ -92,7 +92,7 @@ msum_i4:                                # @msum_i4
 .LBB0_6:                                # %for.body18
                                         #   Parent Loop BB0_4 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label4:
+	loop    	                # label4:
 	i32.load	$push16=, 0($2)
 	i32.add 	$7=, $pop16, $7
 	i32.const	$push58=, 4
@@ -145,4 +145,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

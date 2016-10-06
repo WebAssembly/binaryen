@@ -7,7 +7,7 @@
 alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push28=, 0
 	i32.load	$push27=, pars($pop28)
 	tee_local	$push26=, $0=, $pop27
@@ -81,7 +81,7 @@ main:                                   # @main
 	i64.const	$push10=, 255
 	i64.and 	$push11=, $pop9, $pop10
 	i64.store	16($pop16), $pop11
-	block
+	block   	
 	i32.const	$push15=, 0
 	i64.load	$push12=, b+16($pop15)
 	i64.const	$push13=, 77
@@ -127,6 +127,6 @@ pars:
 	.size	pars, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

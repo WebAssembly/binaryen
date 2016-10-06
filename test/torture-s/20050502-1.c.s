@@ -46,7 +46,7 @@ foo:                                    # @foo
 	i32.call	$push1=, bar@FUNCTION, $0
 	i32.store8	0($1), $pop1
 	i32.const	$7=, 1
-	block
+	block   	
 	i32.call	$push21=, bar@FUNCTION, $0
 	tee_local	$push20=, $6=, $pop21
 	i32.const	$push2=, 255
@@ -66,8 +66,8 @@ foo:                                    # @foo
 	i32.const	$7=, 1
 .LBB2_3:                                # %if.end14
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
-	block
+	loop    	                # label1:
+	block   	
 	br_if   	0, $4           # 0: down to label2
 # BB#4:                                 # %land.lhs.true18
                                         #   in Loop: Header=BB2_3 Depth=1
@@ -136,7 +136,7 @@ main:                                   # @main
 	i32.const	$push2=, 1
 	i32.const	$push1=, 0
 	call    	foo@FUNCTION, $pop46, $pop48, $pop2, $pop1
-	block
+	block   	
 	i32.load	$push4=, 12($0)
 	i32.const	$push3=, .L.str.1
 	i32.call	$push5=, strcmp@FUNCTION, $pop4, $pop3
@@ -319,6 +319,6 @@ main:                                   # @main
 	.size	.L.str.14, 7
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

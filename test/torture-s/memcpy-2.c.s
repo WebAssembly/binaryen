@@ -16,8 +16,8 @@ main:                                   # @main
                                         #         Child Loop BB0_4 Depth 4
                                         #         Child Loop BB0_7 Depth 4
                                         #         Child Loop BB0_11 Depth 4
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push44=, u1
 	i32.add 	$2=, $1, $pop44
 	i32.const	$3=, 0
@@ -28,7 +28,7 @@ main:                                   # @main
                                         #         Child Loop BB0_4 Depth 4
                                         #         Child Loop BB0_7 Depth 4
                                         #         Child Loop BB0_11 Depth 4
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push46=, 65
 	i32.add 	$5=, $3, $pop46
 	i32.const	$push45=, u2
@@ -41,7 +41,7 @@ main:                                   # @main
                                         #         Child Loop BB0_4 Depth 4
                                         #         Child Loop BB0_7 Depth 4
                                         #         Child Loop BB0_11 Depth 4
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push49=, u1
 	i32.const	$push48=, 97
 	i32.const	$push47=, 96
@@ -53,7 +53,7 @@ main:                                   # @main
                                         #     Parent Loop BB0_2 Depth=2
                                         #       Parent Loop BB0_3 Depth=3
                                         # =>      This Inner Loop Header: Depth=4
-	loop                            # label4:
+	loop    	                # label4:
 	i32.const	$push60=, u2+96
 	i32.add 	$push3=, $7, $pop60
 	i32.const	$push59=, 65
@@ -77,7 +77,7 @@ main:                                   # @main
 	end_loop
 	i32.call	$drop=, memcpy@FUNCTION, $2, $4, $6
 	i32.const	$8=, u1
-	block
+	block   	
 	i32.const	$push61=, 1
 	i32.lt_s	$push4=, $1, $pop61
 	br_if   	0, $pop4        # 0: down to label5
@@ -89,7 +89,7 @@ main:                                   # @main
                                         #     Parent Loop BB0_2 Depth=2
                                         #       Parent Loop BB0_3 Depth=3
                                         # =>      This Inner Loop Header: Depth=4
-	loop                            # label6:
+	loop    	                # label6:
 	i32.add 	$push5=, $9, $0
 	i32.load8_u	$push6=, 0($pop5)
 	i32.const	$push62=, 97
@@ -116,7 +116,7 @@ main:                                   # @main
                                         #     Parent Loop BB0_2 Depth=2
                                         #       Parent Loop BB0_3 Depth=3
                                         # =>      This Inner Loop Header: Depth=4
-	loop                            # label7:
+	loop    	                # label7:
 	i32.add 	$push13=, $8, $9
 	i32.load8_u	$push14=, 0($pop13)
 	i32.const	$push72=, 65
@@ -260,6 +260,6 @@ u2:
 	.size	u2, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

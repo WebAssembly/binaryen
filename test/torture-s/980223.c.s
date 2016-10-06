@@ -28,9 +28,9 @@ foo:                                    # @foo
 	i32.sub 	$push18=, $pop6, $pop7
 	tee_local	$push17=, $4=, $pop18
 	i32.store	__stack_pointer($pop8), $pop17
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.load	$push16=, 0($1)
 	tee_local	$push15=, $1=, $pop16
 	i32.load8_u	$push0=, 4($pop15)
@@ -89,8 +89,8 @@ main:                                   # @main
 	i32.const	$push16=, 0
 	i64.load	$push0=, .Lmain.y($pop16)
 	i64.store	8($1), $pop0
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push15=, 0
 	i32.load8_u	$push1=, cons2+4($pop15)
 	i32.const	$push14=, 64
@@ -167,5 +167,5 @@ cons2:
 	.size	.Lmain.y, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

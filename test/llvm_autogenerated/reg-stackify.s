@@ -103,7 +103,7 @@ stack_uses:
 .Lfunc_begin7:
 	.param  	i32, i32, i32, i32
 	.result 	i32
-	block
+	block   	
 	i32.const	$push13=, 1
 	i32.lt_s	$push5=, $0, $pop13
 	i32.const	$push0=, 2
@@ -134,7 +134,7 @@ multiple_uses:
 .Lfunc_begin8:
 	.param  	i32, i32, i32
 	.local  	i32
-	block
+	block   	
 	i32.load	$push3=, 0($2)
 	tee_local	$push2=, $3=, $pop3
 	i32.ge_u	$push0=, $pop2, $1
@@ -291,8 +291,8 @@ multiple_defs:
 	f64.select	$5=, $pop11, $pop9, $pop8
 	f64.const	$7=, 0x0p0
 .LBB16_1:
-	loop
-	block
+	loop    	
+	block   	
 	f64.const	$push14=, 0x1.73c083126e979p4
 	f64.ge  	$push0=, $7, $pop14
 	f64.ne  	$push1=, $7, $7
@@ -300,7 +300,7 @@ multiple_defs:
 	br_if   	0, $pop2
 	copy_local	$8=, $6
 .LBB16_3:
-	loop
+	loop    	
 	f64.const	$push20=, -0x1.62cc8f5c28f5cp13
 	f64.const	$push19=, -0x1p0
 	f64.add 	$push18=, $7, $pop19
@@ -309,7 +309,7 @@ multiple_defs:
 	copy_local	$push16=, $8
 	tee_local	$push15=, $6=, $pop16
 	f64.add 	$8=, $pop4, $pop15
-	block
+	block   	
 	br_if   	0, $3
 	copy_local	$9=, $5
 .LBB16_5:
@@ -415,7 +415,7 @@ stackify_indvar:
 	.local  	i32
 	i32.const	$2=, 0
 .LBB22_1:
-	loop
+	loop    	
 	i32.load	$push0=, 0($1)
 	i32.add 	$push1=, $2, $pop0
 	i32.store	0($1), $pop1

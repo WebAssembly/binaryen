@@ -177,7 +177,7 @@ nltu:                                   # @nltu
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push34=, -2147483648
 	i32.const	$push33=, 2147483647
 	i32.call	$push0=, nge@FUNCTION, $pop34, $pop33
@@ -310,6 +310,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end10-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -27,7 +27,7 @@ f:                                      # @f
 	i32.sub 	$push17=, $pop8, $pop9
 	tee_local	$push16=, $1=, $pop17
 	i32.store	__stack_pointer($pop10), $pop16
-	block
+	block   	
 	i32.const	$push0=, 4
 	i32.call	$push15=, malloc@FUNCTION, $pop0
 	tee_local	$push14=, $0=, $pop15
@@ -69,7 +69,7 @@ main:                                   # @main
 	i32.sub 	$push17=, $pop11, $pop12
 	tee_local	$push16=, $1=, $pop17
 	i32.store	__stack_pointer($pop13), $pop16
-	block
+	block   	
 	i32.const	$push0=, 4
 	i32.call	$push15=, malloc@FUNCTION, $pop0
 	tee_local	$push14=, $0=, $pop15
@@ -86,7 +86,7 @@ main:                                   # @main
 	end_block                       # label1:
 	i32.const	$push6=, 256
 	i32.store16	2($0), $pop6
-	block
+	block   	
 	i32.load16_u	$push7=, 2($0)
 	i32.const	$push18=, 256
 	i32.ne  	$push8=, $pop7, $pop18
@@ -110,7 +110,7 @@ main:                                   # @main
 	.size	.L.str, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	malloc, i32, i32
 	.functype	printf, i32, i32
 	.functype	abort, void

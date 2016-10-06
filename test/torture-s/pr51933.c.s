@@ -22,7 +22,7 @@ bar:                                    # @bar
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, v1($pop0)
 	br_if   	0, $pop1        # 0: down to label0
@@ -30,7 +30,7 @@ bar:                                    # @bar
 	call    	foo@FUNCTION
 .LBB1_2:                                # %for.cond.preheader
 	end_block                       # label0:
-	block
+	block   	
 	i32.const	$push11=, 1
 	i32.lt_s	$push2=, $0, $pop11
 	br_if   	0, $pop2        # 0: down to label1
@@ -39,7 +39,7 @@ bar:                                    # @bar
 	copy_local	$5=, $2
 .LBB1_4:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.load16_u	$push22=, 0($1)
 	tee_local	$push21=, $3=, $pop22
 	i32.const	$push20=, v2
@@ -91,7 +91,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push39=, v3
 	i32.add 	$push0=, $1, $pop39
 	i32.const	$push38=, 1
@@ -142,7 +142,7 @@ main:                                   # @main
 	i32.const	$push28=, 48
 	i32.add 	$push29=, $2, $pop28
 	i32.call	$drop=, bar@FUNCTION, $pop17, $2, $pop29
-	block
+	block   	
 	i32.const	$push30=, 48
 	i32.add 	$push31=, $2, $pop30
 	i32.const	$push19=, .L.str
@@ -191,6 +191,6 @@ v3:
 	.size	.L.str, 18
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

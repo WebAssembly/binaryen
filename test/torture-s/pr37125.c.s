@@ -7,7 +7,7 @@
 func_44:                                # @func_44
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -9
 	i32.mul 	$push7=, $0, $pop0
 	tee_local	$push6=, $0=, $pop7
@@ -42,5 +42,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

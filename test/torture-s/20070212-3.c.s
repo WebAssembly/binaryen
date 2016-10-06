@@ -16,7 +16,7 @@ bar:                                    # @bar
 	i32.load	$2=, 0($pop4)
 	i32.const	$push2=, 1
 	i32.store	0($0), $pop2
-	block
+	block   	
 	i32.eqz 	$push6=, $3
 	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.then3
@@ -43,4 +43,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

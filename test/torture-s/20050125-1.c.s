@@ -23,8 +23,8 @@ bracket_empty:                          # @bracket_empty
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.load	$push9=, 0($0)
 	tee_local	$push8=, $1=, $pop9
 	i32.load	$push0=, 4($0)
@@ -64,4 +64,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

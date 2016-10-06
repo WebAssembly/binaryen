@@ -26,7 +26,7 @@ va_double:                              # @va_double
 	i32.add 	$push28=, $pop29, $pop3
 	tee_local	$push27=, $2=, $pop28
 	i32.store	12($4), $pop27
-	block
+	block   	
 	f64.load	$push4=, 0($1)
 	f64.const	$push5=, 0x1.921fafc8b007ap1
 	f64.ne  	$push6=, $pop4, $pop5
@@ -97,7 +97,7 @@ va_long_double:                         # @va_long_double
 	i32.add 	$push42=, $pop43, $pop3
 	tee_local	$push41=, $2=, $pop42
 	i32.store	12($4), $pop41
-	block
+	block   	
 	i64.load	$push5=, 0($1)
 	i64.load	$push4=, 8($1)
 	i64.const	$push7=, -7338557514379428662
@@ -227,6 +227,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,7 +7,7 @@
 merge_overlapping_regs:                 # @merge_overlapping_regs
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push0=, 0($0)
 	i32.const	$push4=, -1
 	i32.ne  	$push1=, $pop0, $pop4
@@ -44,7 +44,7 @@ regrename_optimize:                     # @regrename_optimize
 	i32.store	__stack_pointer($pop27), $pop35
 	i64.const	$push0=, 0
 	i64.store	8($6):p2align=2, $pop0
-	block
+	block   	
 	i32.load	$push34=, 0($0)
 	tee_local	$push33=, $5=, $pop34
 	i32.eqz 	$push54=, $pop33
@@ -55,7 +55,7 @@ regrename_optimize:                     # @regrename_optimize
 	i32.const	$4=, 0
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push48=, 1
 	i32.add 	$2=, $2, $pop48
 	i32.load	$push1=, 4($0)
@@ -172,5 +172,5 @@ reg_class_contents:
 	.size	reg_class_contents, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -63,7 +63,7 @@ t2:                                     # @t2
 f1:                                     # @f1
 	.param  	f64
 # BB#0:                                 # %entry
-	block
+	block   	
 	f64.const	$push0=, 0x1.8p1
 	f64.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -84,7 +84,7 @@ f1:                                     # @f1
 f2:                                     # @f2
 	.param  	f32, f32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f32.const	$push0=, 0x1.4p1
 	f32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label1
@@ -109,7 +109,7 @@ f2:                                     # @f2
 f3:                                     # @f3
 	.param  	f32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f32.const	$push0=, 0x1.8p2
 	f32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label2
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

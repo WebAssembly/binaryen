@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.const	$push17=, 8
 	i32.add 	$push18=, $0, $pop17
 	call    	bar@FUNCTION, $pop16, $pop18
-	block
+	block   	
 	f32.load	$push3=, 24($0)
 	f32.const	$push2=, 0x1.2p3
 	f32.ne  	$push4=, $pop3, $pop2
@@ -99,5 +99,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -11,7 +11,7 @@ f:                                      # @f
 	i32.const	$push0=, -1
 	i32.const	$push7=, 0
 	i32.select	$1=, $pop0, $pop7, $1
-	block
+	block   	
 	i32.const	$push6=, 0
 	i32.load	$push1=, yabba($pop6)
 	br_if   	0, $pop1        # 0: down to label0
@@ -37,7 +37,7 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push2=, 0
 	i32.load	$push0=, yabba($pop2)
 	br_if   	0, $pop0        # 0: down to label1
@@ -81,5 +81,5 @@ a_ptr:
 	.size	a_ptr, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

@@ -71,7 +71,7 @@ main:                                   # @main
 	i64.store	8($0), $pop0
 	i32.const	$push1=, 1048641535
 	i32.store	4($0), $pop1
-	block
+	block   	
 	i32.const	$push16=, 8
 	i32.add 	$push17=, $0, $pop16
 	i32.call	$push3=, xb@FUNCTION, $pop17
@@ -105,6 +105,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

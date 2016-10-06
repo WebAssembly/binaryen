@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.const	$push10=, 32
 	i32.const	$push3=, 238
 	i32.call	$drop=, memset@FUNCTION, $pop4, $pop10, $pop3
-	block
+	block   	
 	i32.wrap/i64	$push5=, $0
 	i32.const	$push6=, 255
 	i32.and 	$push7=, $pop5, $pop6
@@ -93,5 +93,5 @@ headline:
 	.size	headline, 256
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

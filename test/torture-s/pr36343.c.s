@@ -41,8 +41,8 @@ foo:                                    # @foo
 	i32.select	$push16=, $pop12, $pop14, $0
 	tee_local	$push15=, $1=, $pop16
 	call    	bar@FUNCTION, $pop15
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push19=, $0
 	br_if   	0, $pop19       # 0: down to label1
 # BB#1:                                 # %if.then2
@@ -72,7 +72,7 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push3=, 0
 	f32.call	$push0=, foo@FUNCTION, $pop3
 	f32.const	$push1=, 0x0p0
@@ -90,5 +90,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

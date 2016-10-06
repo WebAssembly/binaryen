@@ -54,7 +54,7 @@ check:                                  # @check
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push0=, 0($1)
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
@@ -98,8 +98,8 @@ foo:                                    # @foo
 	i32.const	$3=, 0
 	i32.const	$push6=, 0
 	i32.store	0($2), $pop6
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push10=, $1
 	br_if   	0, $pop10       # 0: down to label2
 # BB#1:                                 # %for.body
@@ -173,6 +173,6 @@ baz.v:
 	.size	baz.v, 44
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

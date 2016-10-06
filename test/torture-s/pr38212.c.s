@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop6), $pop14
 	i32.const	$push13=, 0
 	i32.store	12($0), $pop13
-	block
+	block   	
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $0, $pop10
 	i32.const	$push0=, 1
@@ -66,5 +66,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

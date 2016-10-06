@@ -13,15 +13,15 @@ pack_unpack:                            # @pack_unpack
 	i32.add 	$2=, $1, $pop0
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.ge_u	$push1=, $1, $2
 	br_if   	1, $pop1        # 1: down to label0
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push11=, 1
 	i32.add 	$3=, $1, $pop11
-	block
+	block   	
 	i32.load8_s	$push10=, 0($1)
 	tee_local	$push9=, $4=, $pop10
 	i32.const	$push8=, 108
@@ -83,8 +83,8 @@ main:                                   # @main
 	i32.const	$2=, .L.str.1
 .LBB2_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label4:
+	block   	
+	loop    	                # label4:
 	i32.const	$push8=, .L.str.1+2
 	i32.ge_u	$push0=, $2, $pop8
 	br_if   	1, $pop0        # 1: down to label3
@@ -92,7 +92,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push12=, 1
 	i32.add 	$0=, $2, $pop12
-	block
+	block   	
 	i32.load8_s	$push11=, 0($2)
 	tee_local	$push10=, $1=, $pop11
 	i32.const	$push9=, 108
@@ -124,7 +124,7 @@ main:                                   # @main
 .LBB2_6:                                # %pack_unpack.exit
 	end_loop
 	end_block                       # label3:
-	block
+	block   	
 	i32.load8_u	$push1=, 0($3)
 	br_if   	0, $pop1        # 0: down to label6
 # BB#7:                                 # %if.end
@@ -159,6 +159,6 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strlen, i32, i32
 	.functype	abort, void

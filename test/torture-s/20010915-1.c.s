@@ -29,7 +29,7 @@ main:                                   # @main
 	i64.store	0($2), $pop5
 	i32.const	$push16=, 5
 	i32.call	$drop=, x@FUNCTION, $pop16, $2
-	block
+	block   	
 	i32.const	$push15=, 0
 	i32.load	$push6=, check($pop15)
 	i32.const	$push7=, 2
@@ -62,8 +62,8 @@ x:                                      # @x
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 3
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label2
@@ -83,7 +83,7 @@ x:                                      # @x
 	i32.eqz 	$push69=, $pop33
 	br_if   	0, $pop69       # 0: down to label2
 # BB#3:                                 # %if.then
-	block
+	block   	
 	i32.const	$push6=, .L.str
 	i32.call	$push7=, strcmp@FUNCTION, $5, $pop6
 	br_if   	0, $pop7        # 0: down to label3
@@ -125,8 +125,8 @@ x:                                      # @x
 	i32.add 	$push46=, $4, $pop47
 	tee_local	$push45=, $5=, $pop46
 	i32.store	o($pop48), $pop45
-	block
-	block
+	block   	
+	block   	
 	i32.ge_s	$push21=, $5, $0
 	br_if   	0, $pop21       # 0: down to label5
 # BB#9:                                 # %while.body.preheader
@@ -137,7 +137,7 @@ x:                                      # @x
 	i32.load8_u	$4=, r.c.0($pop49)
 .LBB1_10:                               # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label6:
+	loop    	                # label6:
 	i32.load	$push52=, 0($3)
 	tee_local	$push51=, $1=, $pop52
 	i32.load8_u	$push25=, 0($pop51)
@@ -211,7 +211,7 @@ s:                                      # @s
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, .L.str
 	i32.call	$push1=, strcmp@FUNCTION, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label7
@@ -263,7 +263,7 @@ r:                                      # @r
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load8_u	$push11=, 0($0)
 	tee_local	$push10=, $1=, $pop11
 	i32.const	$push9=, 0
@@ -386,7 +386,7 @@ r.c.0:
 	.size	r.c.0, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	strcmp, i32, i32, i32

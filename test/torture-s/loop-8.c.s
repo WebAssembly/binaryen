@@ -7,7 +7,7 @@
 bar:                                    # @bar
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	f64.load	$push0=, 0($1)
@@ -39,8 +39,8 @@ main:                                   # @main
 	i32.sub 	$push21=, $pop9, $pop10
 	tee_local	$push20=, $1=, $pop21
 	i32.store	__stack_pointer($pop11), $pop20
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push19=, 0
 	f64.load	$push18=, a($pop19)
 	tee_local	$push17=, $0=, $pop18
@@ -101,6 +101,6 @@ a:
 	.size	a, 24
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

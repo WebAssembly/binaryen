@@ -7,7 +7,7 @@
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -1
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -29,7 +29,7 @@ foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	i32.load16_u	$0=, 0($0)
-	block
+	block   	
 	i32.eqz 	$push4=, $1
 	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %if.then
@@ -73,5 +73,5 @@ v:
 	.size	v, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

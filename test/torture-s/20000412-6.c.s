@@ -12,7 +12,7 @@ main:                                   # @main
 	i32.const	$0=, 512
 .LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.load16_u	$push0=, 0($1)
 	i32.sub 	$push1=, $0, $pop0
 	i32.const	$push10=, 65535
@@ -25,7 +25,7 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: up to label0
 # BB#2:                                 # %bug.exit
 	end_loop
-	block
+	block   	
 	i32.const	$push3=, 491
 	i32.ne  	$push4=, $0, $pop3
 	br_if   	0, $pop4        # 0: down to label1
@@ -49,13 +49,13 @@ bug:                                    # @bug
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.ge_u	$push0=, $1, $2
 	br_if   	0, $pop0        # 0: down to label2
 # BB#1:                                 # %for.body.preheader
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.load16_u	$push1=, 0($1)
 	i32.sub 	$push2=, $0, $pop1
 	i32.const	$push7=, 65535
@@ -88,6 +88,6 @@ buf:
 	.size	buf, 10
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

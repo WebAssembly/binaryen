@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push19=, 0
 	i32.load16_s	$push18=, global_bounds+2($pop19)
 	tee_local	$push17=, $0=, $pop18
@@ -85,6 +85,6 @@ global_saveRect:
 	.size	global_saveRect, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

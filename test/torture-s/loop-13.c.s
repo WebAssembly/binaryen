@@ -8,7 +8,7 @@ scale:                                  # @scale
 	.param  	i32, i32, i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push15=, 0($0)
 	tee_local	$push14=, $3=, $pop15
 	i32.const	$push13=, 1
@@ -35,7 +35,7 @@ scale:                                  # @scale
 	i32.add 	$2=, $2, $pop17
 .LBB0_4:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$push9=, 0($1)
 	i32.load	$push26=, 0($0)
 	tee_local	$push25=, $3=, $pop26
@@ -75,4 +75,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

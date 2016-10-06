@@ -132,7 +132,7 @@ fnear:                                  # @fnear
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 1
-	block
+	block   	
 	f32.sub 	$push5=, $0, $1
 	tee_local	$push4=, $1=, $pop5
 	f32.const	$push0=, 0x0p0
@@ -160,7 +160,7 @@ dnear:                                  # @dnear
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 1
-	block
+	block   	
 	f64.sub 	$push5=, $0, $1
 	tee_local	$push4=, $1=, $pop5
 	f64.const	$push0=, 0x0p0
@@ -198,7 +198,7 @@ ldnear:                                 # @ldnear
 	i32.add 	$push18=, $5, $pop17
 	call    	__subtf3@FUNCTION, $pop18, $0, $1, $2, $3
 	i32.const	$4=, 1
-	block
+	block   	
 	i64.load	$push26=, 16($5)
 	tee_local	$push25=, $2=, $pop26
 	i32.const	$push19=, 16
@@ -596,5 +596,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end31-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

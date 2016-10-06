@@ -10,7 +10,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.const	$push0=, 6513249
 	i32.store	buf($pop6), $pop0
-	block
+	block   	
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
 	i32.call	$push3=, strcmp@FUNCTION, $pop2, $pop1
@@ -55,6 +55,6 @@ buf:
 	.size	.L.str.1, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	strcmp, i32, i32, i32

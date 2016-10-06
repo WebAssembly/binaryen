@@ -231,7 +231,7 @@ main:                                   # @main
 	i32.const	$push49=, 12
 	i32.add 	$push50=, $4, $pop49
 	i32.store	g($pop51), $pop50
-	block
+	block   	
 	i32.eqz 	$push172=, $0
 	br_if   	0, $pop172      # 0: down to label0
 # BB#1:                                 # %if.end
@@ -329,5 +329,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -37,7 +37,7 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	i64.store32	12($2), $0
-	block
+	block   	
 	i32.load	$push0=, 12($2)
 	i32.ne  	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -63,6 +63,6 @@ val:
 	.size	val, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

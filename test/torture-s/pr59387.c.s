@@ -16,8 +16,8 @@ main:                                   # @main
 	i32.load8_u	$1=, c($pop4)
 .LBB0_1:                                # %for.cond1.preheader
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push10=, 0
 	i32.load	$push0=, e($pop10)
 	i32.const	$push9=, f
@@ -104,4 +104,4 @@ f:
 	.size	f, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

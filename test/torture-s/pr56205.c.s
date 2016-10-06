@@ -16,7 +16,7 @@ f4:                                     # @f4
 	tee_local	$push22=, $5=, $pop23
 	i32.store	__stack_pointer($pop16), $pop22
 	i32.store	28($5), $2
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$push24=, 0
@@ -43,8 +43,8 @@ f4:                                     # @f4
 	i32.const	$push26=, .L.str.3
 	i32.const	$push9=, .L.str.1
 	i32.select	$0=, $pop26, $pop9, $0
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push33=, $1
 	br_if   	0, $pop33       # 0: down to label2
 # BB#4:                                 # %land.rhs.i
@@ -111,7 +111,7 @@ main:                                   # @main
 	i32.const	$push20=, 0
 	i32.const	$push6=, .L.str
 	call    	f4@FUNCTION, $pop20, $pop6, $0
-	block
+	block   	
 	i32.const	$push19=, 0
 	i32.load	$push7=, a($pop19)
 	i32.const	$push18=, 1
@@ -158,7 +158,7 @@ f1:                                     # @f1
 	i32.add 	$push21=, $1, $pop0
 	tee_local	$push20=, $2=, $pop21
 	i32.store	12($4), $pop20
-	block
+	block   	
 	i32.load	$push1=, 0($1)
 	i32.const	$push2=, .L.str.1
 	i32.call	$push3=, strcmp@FUNCTION, $pop1, $pop2
@@ -201,7 +201,7 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	block
+	block   	
 	i32.const	$push0=, .L.str
 	i32.call	$push1=, strcmp@FUNCTION, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label5
@@ -285,6 +285,6 @@ a:
 	.size	.L.str.4, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	strcmp, i32, i32, i32

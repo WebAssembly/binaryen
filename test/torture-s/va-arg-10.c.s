@@ -8,7 +8,7 @@ to_hex:                                 # @to_hex
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 16
 	i32.ge_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -43,7 +43,7 @@ fap:                                    # @fap
 	i32.store	12($4), $2
 	i32.load	$push0=, 12($4)
 	i32.store	8($4), $pop0
-	block
+	block   	
 	i32.call	$push2=, strlen@FUNCTION, $1
 	i32.const	$push21=, 16
 	i32.sub 	$push1=, $pop21, $0
@@ -53,8 +53,8 @@ fap:                                    # @fap
 	copy_local	$0=, $1
 .LBB1_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.load8_u	$push25=, 0($0)
 	tee_local	$push24=, $2=, $pop25
 	i32.eqz 	$push44=, $pop24
@@ -88,8 +88,8 @@ fap:                                    # @fap
 	end_block                       # label2:
 .LBB1_7:                                # %while.cond6
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label5:
+	block   	
+	loop    	                # label5:
 	i32.load8_u	$push35=, 0($1)
 	tee_local	$push34=, $0=, $pop35
 	i32.eqz 	$push45=, $pop34
@@ -970,7 +970,7 @@ main:                                   # @main
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	strlen, i32, i32
 	.functype	exit, void, i32

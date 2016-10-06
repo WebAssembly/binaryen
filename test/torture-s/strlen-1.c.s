@@ -13,17 +13,17 @@ main:                                   # @main
 .LBB0_1:                                # %for.cond1.preheader
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push7=, u
 	i32.add 	$0=, $1, $pop7
 	i32.const	$3=, 0
 .LBB0_2:                                # %for.cond4.preheader
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$4=, u
-	block
+	block   	
 	i32.eqz 	$push23=, $1
 	br_if   	0, $pop23       # 0: down to label3
 # BB#3:                                 # %for.body6.preheader
@@ -35,7 +35,7 @@ main:                                   # @main
 .LBB0_4:                                # %for.cond7.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label3:
-	block
+	block   	
 	i32.eqz 	$push24=, $3
 	br_if   	0, $pop24       # 0: down to label4
 # BB#5:                                 # %for.body9.preheader
@@ -95,7 +95,7 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

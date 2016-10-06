@@ -37,7 +37,7 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 70
-	block
+	block   	
 	i32.load8_u	$push1=, 0($0)
 	i32.load8_u	$push0=, 0($1)
 	i32.ne  	$push2=, $pop1, $pop0
@@ -55,5 +55,5 @@ f:                                      # @f
 	.size	f, .Lfunc_end2-f
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

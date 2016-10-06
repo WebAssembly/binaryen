@@ -12,8 +12,8 @@ strtoul1:                               # @strtoul1
 	i32.add 	$push1=, $0, $pop0
 	i32.store	0($1), $pop1
 	i32.const	$1=, 192
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push2=, temp
 	i32.eq  	$push3=, $0, $pop2
 	br_if   	0, $pop3        # 0: down to label1
@@ -60,7 +60,7 @@ string_to_ip:                           # @string_to_ip
 	tee_local	$push35=, $2=, $pop36
 	i32.store	__stack_pointer($pop23), $pop35
 	i32.const	$1=, 0
-	block
+	block   	
 	i32.eqz 	$push57=, $0
 	br_if   	0, $pop57       # 0: down to label2
 # BB#1:                                 # %if.end9
@@ -71,8 +71,8 @@ string_to_ip:                           # @string_to_ip
 	i32.shl 	$push3=, $pop0, $pop42
 	i32.const	$push4=, 65280
 	i32.and 	$0=, $pop3, $pop4
-	block
-	block
+	block   	
+	block   	
 	i32.load	$push41=, 12($2)
 	tee_local	$push40=, $1=, $pop41
 	i32.const	$push39=, 1
@@ -174,7 +174,7 @@ main:                                   # @main
 	i32.store	0($1), $pop2
 	i32.const	$push16=, .L.str
 	i32.call	$drop=, printf@FUNCTION, $pop16, $1
-	block
+	block   	
 	i32.const	$push15=, 0
 	i32.load	$push3=, result($pop15)
 	i32.ne  	$push4=, $0, $pop3
@@ -226,7 +226,7 @@ result:
 	.size	.Lstr, 7
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	printf, i32, i32
 	.functype	puts, i32, i32

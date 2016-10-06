@@ -151,7 +151,7 @@ main:                                   # @main
 	i32.const	$push73=, 10
 	i32.store	0($0), $pop73
 	call    	varargs9@FUNCTION, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0
-	block
+	block   	
 	i32.const	$push72=, 0
 	i32.load	$push25=, errors($pop72)
 	br_if   	0, $pop25       # 0: down to label0
@@ -219,8 +219,8 @@ varargs0:                               # @varargs0
 	i32.const	$1=, 0
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
-	block
+	loop    	                # label1:
+	block   	
 	i32.eq  	$push14=, $1, $3
 	br_if   	0, $pop14       # 0: down to label2
 # BB#2:                                 # %if.then.i
@@ -241,7 +241,7 @@ varargs0:                               # @varargs0
 .LBB1_3:                                # %for.inc.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label2:
-	block
+	block   	
 	i32.const	$push41=, 10
 	i32.eq  	$push17=, $1, $pop41
 	br_if   	0, $pop17       # 0: down to label3
@@ -316,8 +316,8 @@ varargs1:                               # @varargs1
 	i32.const	$2=, 0
 .LBB2_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
-	block
+	loop    	                # label4:
+	block   	
 	i32.eq  	$push14=, $2, $4
 	br_if   	0, $pop14       # 0: down to label5
 # BB#2:                                 # %if.then.i
@@ -338,7 +338,7 @@ varargs1:                               # @varargs1
 .LBB2_3:                                # %for.inc.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label5:
-	block
+	block   	
 	i32.const	$push40=, 10
 	i32.eq  	$push17=, $2, $pop40
 	br_if   	0, $pop17       # 0: down to label6
@@ -413,8 +413,8 @@ varargs2:                               # @varargs2
 	i32.const	$3=, 0
 .LBB3_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label7:
-	block
+	loop    	                # label7:
+	block   	
 	i32.eq  	$push14=, $3, $5
 	br_if   	0, $pop14       # 0: down to label8
 # BB#2:                                 # %if.then.i
@@ -435,7 +435,7 @@ varargs2:                               # @varargs2
 .LBB3_3:                                # %for.inc.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_block                       # label8:
-	block
+	block   	
 	i32.const	$push40=, 10
 	i32.eq  	$push17=, $3, $pop40
 	br_if   	0, $pop17       # 0: down to label9
@@ -510,8 +510,8 @@ varargs3:                               # @varargs3
 	i32.const	$4=, 0
 .LBB4_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label10:
-	block
+	loop    	                # label10:
+	block   	
 	i32.eq  	$push14=, $4, $6
 	br_if   	0, $pop14       # 0: down to label11
 # BB#2:                                 # %if.then.i
@@ -532,7 +532,7 @@ varargs3:                               # @varargs3
 .LBB4_3:                                # %for.inc.i
                                         #   in Loop: Header=BB4_1 Depth=1
 	end_block                       # label11:
-	block
+	block   	
 	i32.const	$push40=, 10
 	i32.eq  	$push17=, $4, $pop40
 	br_if   	0, $pop17       # 0: down to label12
@@ -605,8 +605,8 @@ varargs4:                               # @varargs4
 	i32.const	$5=, 0
 .LBB5_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label13:
-	block
+	loop    	                # label13:
+	block   	
 	i32.eq  	$push12=, $5, $7
 	br_if   	0, $pop12       # 0: down to label14
 # BB#2:                                 # %if.then.i
@@ -627,7 +627,7 @@ varargs4:                               # @varargs4
 .LBB5_3:                                # %for.inc.i
                                         #   in Loop: Header=BB5_1 Depth=1
 	end_block                       # label14:
-	block
+	block   	
 	i32.const	$push39=, 10
 	i32.eq  	$push15=, $5, $pop39
 	br_if   	0, $pop15       # 0: down to label15
@@ -698,8 +698,8 @@ varargs5:                               # @varargs5
 	i32.const	$6=, 0
 .LBB6_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label16:
-	block
+	loop    	                # label16:
+	block   	
 	i32.eq  	$push12=, $6, $8
 	br_if   	0, $pop12       # 0: down to label17
 # BB#2:                                 # %if.then.i
@@ -720,7 +720,7 @@ varargs5:                               # @varargs5
 .LBB6_3:                                # %for.inc.i
                                         #   in Loop: Header=BB6_1 Depth=1
 	end_block                       # label17:
-	block
+	block   	
 	i32.const	$push38=, 10
 	i32.eq  	$push15=, $6, $pop38
 	br_if   	0, $pop15       # 0: down to label18
@@ -791,8 +791,8 @@ varargs6:                               # @varargs6
 	i32.const	$7=, 0
 .LBB7_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label19:
-	block
+	loop    	                # label19:
+	block   	
 	i32.eq  	$push12=, $7, $9
 	br_if   	0, $pop12       # 0: down to label20
 # BB#2:                                 # %if.then.i
@@ -813,7 +813,7 @@ varargs6:                               # @varargs6
 .LBB7_3:                                # %for.inc.i
                                         #   in Loop: Header=BB7_1 Depth=1
 	end_block                       # label20:
-	block
+	block   	
 	i32.const	$push38=, 10
 	i32.eq  	$push15=, $7, $pop38
 	br_if   	0, $pop15       # 0: down to label21
@@ -882,8 +882,8 @@ varargs7:                               # @varargs7
 	i32.const	$8=, 0
 .LBB8_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label22:
-	block
+	loop    	                # label22:
+	block   	
 	i32.eq  	$push11=, $8, $10
 	br_if   	0, $pop11       # 0: down to label23
 # BB#2:                                 # %if.then.i
@@ -904,7 +904,7 @@ varargs7:                               # @varargs7
 .LBB8_3:                                # %for.inc.i
                                         #   in Loop: Header=BB8_1 Depth=1
 	end_block                       # label23:
-	block
+	block   	
 	i32.const	$push37=, 10
 	i32.eq  	$push14=, $8, $pop37
 	br_if   	0, $pop14       # 0: down to label24
@@ -973,8 +973,8 @@ varargs8:                               # @varargs8
 	i32.const	$9=, 0
 .LBB9_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label25:
-	block
+	loop    	                # label25:
+	block   	
 	i32.eq  	$push9=, $9, $11
 	br_if   	0, $pop9        # 0: down to label26
 # BB#2:                                 # %if.then.i
@@ -995,7 +995,7 @@ varargs8:                               # @varargs8
 .LBB9_3:                                # %for.inc.i
                                         #   in Loop: Header=BB9_1 Depth=1
 	end_block                       # label26:
-	block
+	block   	
 	i32.const	$push36=, 10
 	i32.eq  	$push12=, $9, $pop36
 	br_if   	0, $pop12       # 0: down to label27
@@ -1059,8 +1059,8 @@ varargs9:                               # @varargs9
 	i32.const	$10=, 0
 .LBB10_1:                               # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label28:
-	block
+	loop    	                # label28:
+	block   	
 	i32.eq  	$push8=, $10, $12
 	br_if   	0, $pop8        # 0: down to label29
 # BB#2:                                 # %if.then.i
@@ -1081,7 +1081,7 @@ varargs9:                               # @varargs9
 .LBB10_3:                               # %for.inc.i
                                         #   in Loop: Header=BB10_1 Depth=1
 	end_block                       # label29:
-	block
+	block   	
 	i32.const	$push34=, 10
 	i32.eq  	$push11=, $10, $pop34
 	br_if   	0, $pop11       # 0: down to label30
@@ -1170,7 +1170,7 @@ errors:
 	.size	.L.str.10, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	printf, i32, i32

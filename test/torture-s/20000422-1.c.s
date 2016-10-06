@@ -8,8 +8,8 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push18=, 0
 	i32.load	$push17=, num($pop18)
 	tee_local	$push16=, $0=, $pop17
@@ -27,8 +27,8 @@ main:                                   # @main
 .LBB0_2:                                # %for.cond1.preheader
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_4 Depth 2
-	loop                            # label2:
-	block
+	loop    	                # label2:
+	block   	
 	i32.le_s	$push4=, $1, $6
 	br_if   	0, $pop4        # 0: down to label3
 # BB#3:                                 # %for.body3.preheader
@@ -38,8 +38,8 @@ main:                                   # @main
 .LBB0_4:                                # %for.body3
                                         #   Parent Loop BB0_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label4:
-	block
+	loop    	                # label4:
+	block   	
 	i32.load	$push26=, 0($7)
 	tee_local	$push25=, $3=, $pop26
 	i32.const	$push24=, 4
@@ -82,7 +82,7 @@ main:                                   # @main
 	i32.const	$8=, 0
 .LBB0_10:                               # %for.body17
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label6:
+	loop    	                # label6:
 	i32.const	$push36=, ops
 	i32.add 	$push11=, $7, $pop36
 	i32.load	$push12=, 0($pop11)
@@ -166,6 +166,6 @@ num:
 	.size	num, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

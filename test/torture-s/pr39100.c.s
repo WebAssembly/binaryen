@@ -18,8 +18,8 @@ foo:                                    # @foo
 	i32.store	12($pop21), $pop20
 	i32.const	$push19=, 0
 	i32.store	8($8), $pop19
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push31=, $1
 	br_if   	0, $pop31       # 0: down to label1
 # BB#1:                                 # %while.body.lr.ph
@@ -33,12 +33,12 @@ foo:                                    # @foo
 	i32.add 	$4=, $0, $pop2
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push24=, 4
 	i32.add 	$2=, $1, $pop24
 	i32.load	$3=, 4($1)
-	block
-	block
+	block   	
+	block   	
 	i32.load8_u	$push0=, 0($1)
 	i32.const	$push23=, 1
 	i32.and 	$push1=, $pop0, $pop23
@@ -123,7 +123,7 @@ main:                                   # @main
 	i32.store	12($2), $pop26
 	i32.const	$push25=, 1
 	i32.store	8($2), $pop25
-	block
+	block   	
 	i32.const	$push20=, 24
 	i32.add 	$push21=, $2, $pop20
 	i32.call	$push24=, foo@FUNCTION, $pop21, $2
@@ -164,5 +164,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

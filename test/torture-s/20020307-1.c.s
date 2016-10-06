@@ -7,7 +7,7 @@
 f3:                                     # @f3
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 6
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push3=, 6
@@ -30,7 +30,7 @@ f3:                                     # @f3
 f4:                                     # @f4
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 14
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 10
@@ -53,7 +53,7 @@ f4:                                     # @f4
 f5:                                     # @f5
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 30
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 18
@@ -76,7 +76,7 @@ f5:                                     # @f5
 f6:                                     # @f6
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 62
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 34
@@ -99,7 +99,7 @@ f6:                                     # @f6
 f7:                                     # @f7
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 126
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 66
@@ -122,7 +122,7 @@ f7:                                     # @f7
 f8:                                     # @f8
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 254
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 130
@@ -145,7 +145,7 @@ f8:                                     # @f8
 f9:                                     # @f9
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 510
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 258
@@ -168,7 +168,7 @@ f9:                                     # @f9
 f10:                                    # @f10
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 1022
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 514
@@ -191,7 +191,7 @@ f10:                                    # @f10
 f11:                                    # @f11
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 2046
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1026
@@ -214,7 +214,7 @@ f11:                                    # @f11
 f12:                                    # @f12
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 4094
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2050
@@ -237,7 +237,7 @@ f12:                                    # @f12
 f13:                                    # @f13
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 8190
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4098
@@ -260,7 +260,7 @@ f13:                                    # @f13
 f14:                                    # @f14
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 16382
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8194
@@ -283,7 +283,7 @@ f14:                                    # @f14
 f15:                                    # @f15
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 32766
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16386
@@ -306,7 +306,7 @@ f15:                                    # @f15
 f16:                                    # @f16
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 65534
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 32770
@@ -329,7 +329,7 @@ f16:                                    # @f16
 f17:                                    # @f17
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 131070
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 65538
@@ -352,7 +352,7 @@ f17:                                    # @f17
 f18:                                    # @f18
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 262142
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 131074
@@ -375,7 +375,7 @@ f18:                                    # @f18
 f19:                                    # @f19
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 524286
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 262146
@@ -398,7 +398,7 @@ f19:                                    # @f19
 f20:                                    # @f20
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 1048574
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 524290
@@ -421,7 +421,7 @@ f20:                                    # @f20
 f21:                                    # @f21
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 2097150
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1048578
@@ -444,7 +444,7 @@ f21:                                    # @f21
 f22:                                    # @f22
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 4194302
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2097154
@@ -467,7 +467,7 @@ f22:                                    # @f22
 f23:                                    # @f23
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 8388606
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4194306
@@ -490,7 +490,7 @@ f23:                                    # @f23
 f24:                                    # @f24
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 16777214
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8388610
@@ -513,7 +513,7 @@ f24:                                    # @f24
 f25:                                    # @f25
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 33554430
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16777218
@@ -536,7 +536,7 @@ f25:                                    # @f25
 f26:                                    # @f26
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 67108862
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 33554434
@@ -559,7 +559,7 @@ f26:                                    # @f26
 f27:                                    # @f27
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 134217726
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 67108866
@@ -582,7 +582,7 @@ f27:                                    # @f27
 f28:                                    # @f28
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 268435454
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 134217730
@@ -605,7 +605,7 @@ f28:                                    # @f28
 f29:                                    # @f29
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 536870910
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 268435458
@@ -628,7 +628,7 @@ f29:                                    # @f29
 f30:                                    # @f30
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 1073741822
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 536870914
@@ -651,7 +651,7 @@ f30:                                    # @f30
 f31:                                    # @f31
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 2147483646
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1073741826
@@ -682,6 +682,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end29-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

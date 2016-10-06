@@ -8,13 +8,13 @@ f:                                      # @f
 	.param  	i32, i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push9=, $3
 	br_if   	0, $pop9        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	f32.load	$push1=, 0($1)
 	f32.load	$push0=, 0($2)
 	f32.eq  	$push2=, $pop1, $pop0
@@ -53,5 +53,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

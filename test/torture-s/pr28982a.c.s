@@ -28,7 +28,7 @@ foo:                                    # @foo
 	f32.const	$58=, 0x0p0
 	f32.const	$59=, 0x0p0
 	f32.const	$60=, 0x0p0
-	block
+	block   	
 	i32.eqz 	$push143=, $0
 	br_if   	0, $pop143      # 0: down to label0
 # BB#1:                                 # %while.body.preheader
@@ -174,7 +174,7 @@ foo:                                    # @foo
 	f32.const	$41=, 0x0p0
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	f32.load	$push41=, 0($40)
 	f32.add 	$60=, $60, $pop41
 	f32.load	$push42=, 0($39)
@@ -436,7 +436,7 @@ main:                                   # @main
 	i32.store	incs+76($pop121), $pop35
 .LBB1_1:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	f32.convert_s/i32	$push36=, $1
 	f32.store	0($0), $pop36
 	i32.const	$push167=, 4
@@ -594,4 +594,4 @@ input:
 	.size	input, 320
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

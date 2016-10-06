@@ -21,9 +21,9 @@ f:                                      # @f
 	i32.add 	$push2=, $1, $pop18
 	i32.store	12($5), $pop2
 	i32.load	$4=, 0($1)
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push17=, 1
 	i32.lt_s	$push3=, $0, $pop17
 	br_if   	0, $pop3        # 0: down to label2
@@ -33,7 +33,7 @@ f:                                      # @f
 	i32.const	$1=, 10
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.ne  	$push5=, $1, $4
 	br_if   	2, $pop5        # 2: down to label1
 # BB#3:                                 # %for.cond
@@ -105,6 +105,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

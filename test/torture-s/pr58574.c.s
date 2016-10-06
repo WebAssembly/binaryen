@@ -10,77 +10,77 @@ foo:                                    # @foo
 	.local  	i32, f64
 # BB#0:                                 # %entry
 	f64.const	$2=, 0x1p0
-	block
+	block   	
 	i32.trunc_s/f64	$push1346=, $0
 	tee_local	$push1345=, $1=, $pop1346
 	i32.const	$push0=, 93
 	i32.gt_u	$push1=, $pop1345, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 64, 64, 64, 27, 64, 64, 64, 64, 64, 64, 64, 64, 64, 28, 64, 64, 64, 64, 64, 64, 64, 64, 64, 29, 64, 64, 64, 64, 64, 64, 64, 64, 64, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 0 # 0: down to label64
                                         # 1: down to label63
                                         # 2: down to label62
@@ -1825,7 +1825,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	f64
 # BB#0:                                 # %entry
-	block
+	block   	
 	f64.const	$push0=, 0x1.399999999999ap6
 	f64.call	$push9=, foo@FUNCTION, $pop0
 	tee_local	$push8=, $0=, $pop9
@@ -1851,5 +1851,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -17,7 +17,7 @@ foo1:                                   # @foo1
 	tee_local	$push88=, $6=, $pop89
 	i32.store	__stack_pointer($pop78), $pop88
 	i32.store	12($6), $2
-	block
+	block   	
 	i32.const	$push0=, 19
 	i32.gt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -51,12 +51,12 @@ foo1:                                   # @foo1
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	0, $pop12       # 0: down to label0
 # BB#4:                                 # %if.end13
-	block
+	block   	
 	i32.const	$push13=, 2
 	i32.eq  	$push14=, $0, $pop13
 	br_if   	0, $pop14       # 0: down to label1
 # BB#5:                                 # %if.end13
-	block
+	block   	
 	i32.const	$push15=, 1
 	i32.eq  	$push16=, $0, $pop15
 	br_if   	0, $pop16       # 0: down to label2
@@ -125,7 +125,7 @@ foo1:                                   # @foo1
 	i32.const	$push67=, 32
 	i32.add 	$push68=, $2, $pop67
 	i32.store	12($6), $pop68
-	block
+	block   	
 	i32.load	$push69=, 0($1)
 	i32.const	$push70=, 3
 	i32.ne  	$push71=, $pop69, $pop70
@@ -216,7 +216,7 @@ foo2:                                   # @foo2
 	tee_local	$push86=, $4=, $pop87
 	i32.store	__stack_pointer($pop70), $pop86
 	i32.store	12($4), $2
-	block
+	block   	
 	i32.const	$push0=, 19
 	i32.gt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label4
@@ -241,7 +241,7 @@ foo2:                                   # @foo2
 	i32.ne  	$push10=, $1, $pop9
 	br_if   	0, $pop10       # 0: down to label4
 # BB#3:                                 # %if.end9
-	block
+	block   	
 	i32.const	$push11=, 2
 	i32.eq  	$push12=, $0, $pop11
 	br_if   	0, $pop12       # 0: down to label5
@@ -453,7 +453,7 @@ main:                                   # @main
 	i32.const	$push72=, 160
 	i32.add 	$push73=, $4, $pop72
 	i32.store	148($4), $pop73
-	block
+	block   	
 	i32.const	$push94=, 0
 	i32.const	$push74=, 144
 	i32.add 	$push75=, $4, $pop74
@@ -676,7 +676,7 @@ cnt:
 	.size	cnt, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	bar, i32, i32

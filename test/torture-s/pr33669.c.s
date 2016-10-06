@@ -10,7 +10,7 @@ foo:                                    # @foo
 	.local  	i32, i64, i64
 # BB#0:                                 # %entry
 	i64.const	$5=, -1
-	block
+	block   	
 	i32.load	$push17=, 0($0)
 	tee_local	$push16=, $3=, $pop17
 	i32.add 	$push0=, $2, $3
@@ -57,4 +57,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

@@ -23,7 +23,7 @@ check_header:                           # @check_header
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push17=, 0($0)
 	tee_local	$push16=, $2=, $pop17
 	i32.load	$push15=, 4($0)
@@ -37,7 +37,7 @@ check_header:                           # @check_header
 	i32.store	0($0), $pop18
 .LBB1_2:                                # %for.inc
 	end_block                       # label0:
-	block
+	block   	
 	i32.ge_u	$push2=, $2, $1
 	br_if   	0, $pop2        # 0: down to label1
 # BB#3:                                 # %cond.true.1
@@ -47,7 +47,7 @@ check_header:                           # @check_header
 	i32.store	0($0), $pop20
 .LBB1_4:                                # %for.inc.1
 	end_block                       # label1:
-	block
+	block   	
 	i32.ge_u	$push4=, $2, $1
 	br_if   	0, $pop4        # 0: down to label2
 # BB#5:                                 # %cond.true.2
@@ -57,7 +57,7 @@ check_header:                           # @check_header
 	i32.store	0($0), $pop22
 .LBB1_6:                                # %for.inc.2
 	end_block                       # label2:
-	block
+	block   	
 	i32.ge_u	$push6=, $2, $1
 	br_if   	0, $pop6        # 0: down to label3
 # BB#7:                                 # %cond.true.3
@@ -67,7 +67,7 @@ check_header:                           # @check_header
 	i32.store	0($0), $pop24
 .LBB1_8:                                # %for.inc.3
 	end_block                       # label3:
-	block
+	block   	
 	i32.ge_u	$push8=, $2, $1
 	br_if   	0, $pop8        # 0: down to label4
 # BB#9:                                 # %cond.true.4
@@ -77,7 +77,7 @@ check_header:                           # @check_header
 	i32.store	0($0), $pop26
 .LBB1_10:                               # %for.inc.4
 	end_block                       # label4:
-	block
+	block   	
 	i32.ge_u	$push10=, $2, $1
 	br_if   	0, $pop10       # 0: down to label5
 # BB#11:                                # %cond.true.5
@@ -129,4 +129,4 @@ s:
 	.size	s, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

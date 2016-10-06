@@ -10,7 +10,7 @@ lisp_atan2:                             # @lisp_atan2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.store	12($0), $pop0
 	i32.const	$push1=, -77
 	i32.store	8($0), $pop1
-	block
+	block   	
 	i32.load	$push2=, 12($0)
 	i32.load	$push3=, 8($0)
 	i32.call	$push4=, lisp_atan2@FUNCTION, $pop2, $pop3
@@ -73,5 +73,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

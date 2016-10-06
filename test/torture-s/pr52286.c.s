@@ -11,7 +11,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 	#APP
 	#NO_APP
-	block
+	block   	
 	i32.const	$push0=, -1
 	i32.le_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -27,5 +27,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

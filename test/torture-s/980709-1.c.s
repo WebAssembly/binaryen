@@ -17,7 +17,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop15), $pop21
 	i64.const	$push0=, 4629700416936869888
 	i64.store	8($2), $pop0
-	block
+	block   	
 	f64.load	$push2=, 8($2)
 	f64.const	$push1=, 0x1.5555555555555p-2
 	f64.call	$push20=, pow@FUNCTION, $pop2, $pop1
@@ -52,6 +52,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

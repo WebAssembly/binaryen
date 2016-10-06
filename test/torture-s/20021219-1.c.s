@@ -43,9 +43,9 @@ main:                                   # @main
 	i32.const	$1=, 32
 .LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
-	block
+	block   	
+	loop    	                # label1:
+	block   	
 	i32.const	$push24=, 255
 	i32.and 	$push23=, $1, $pop24
 	tee_local	$push22=, $1=, $pop23
@@ -81,4 +81,4 @@ main:                                   # @main
 	.size	.Lmain.str, 11
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

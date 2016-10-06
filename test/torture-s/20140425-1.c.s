@@ -23,7 +23,7 @@ main:                                   # @main
 	tee_local	$push14=, $0=, $pop15
 	i32.shl 	$push1=, $pop0, $pop14
 	i32.store	12($1), $pop1
-	block
+	block   	
 	i32.const	$push2=, 30
 	i32.le_u	$push3=, $0, $pop2
 	br_if   	0, $pop3        # 0: down to label0
@@ -55,5 +55,5 @@ set:                                    # @set
 	.size	set, .Lfunc_end1-set
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

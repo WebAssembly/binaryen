@@ -17,24 +17,24 @@ inner:                                  # @inner
 	i32.store	__stack_pointer($pop67), $pop71
 	i32.store	12($2), $1
 	i32.store	8($2), $1
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 10
 	i32.gt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label3
 # BB#1:                                 # %entry
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$0, 0, 1, 2, 3, 4, 5, 6, 7, 11, 8, 9, 0 # 0: down to label13
                                         # 1: down to label12
                                         # 2: down to label11
@@ -330,6 +330,6 @@ main:                                   # @main
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	vprintf, i32, i32, i32
 	.functype	abort, void

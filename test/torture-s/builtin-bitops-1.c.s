@@ -10,14 +10,14 @@ my_ffs:                                 # @my_ffs
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-	block
+	block   	
 	i32.eqz 	$push11=, $0
 	br_if   	0, $pop11       # 0: down to label0
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$2=, 1
 .LBB0_2:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	copy_local	$push8=, $2
 	tee_local	$push7=, $3=, $pop8
 	i32.const	$push6=, -1
@@ -56,8 +56,8 @@ my_ctz:                                 # @my_ctz
 	i32.const	$1=, 0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.const	$push3=, 1
 	i32.shl 	$push0=, $pop3, $1
 	i32.and 	$push1=, $pop0, $0
@@ -92,8 +92,8 @@ my_clz:                                 # @my_clz
 	i32.const	$1=, 31
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label5:
+	block   	
+	loop    	                # label5:
 	i32.const	$push3=, 1
 	i32.shl 	$push0=, $pop3, $1
 	i32.and 	$push1=, $pop0, $0
@@ -132,8 +132,8 @@ my_clrsb:                               # @my_clrsb
 	i32.const	$3=, 1
 .LBB3_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label7:
+	block   	
+	loop    	                # label7:
 	i32.shr_u	$push1=, $0, $2
 	i32.const	$push7=, 1
 	i32.and 	$push2=, $pop1, $pop7
@@ -172,7 +172,7 @@ my_popcount:                            # @my_popcount
 	i32.const	$2=, 0
 .LBB4_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label8:
+	loop    	                # label8:
 	i32.const	$push9=, 1
 	i32.shl 	$push0=, $pop9, $2
 	i32.and 	$push1=, $pop0, $0
@@ -206,7 +206,7 @@ my_parity:                              # @my_parity
 	i32.const	$2=, 0
 .LBB5_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label9:
+	loop    	                # label9:
 	i32.const	$push11=, 1
 	i32.shl 	$push0=, $pop11, $2
 	i32.and 	$push1=, $pop0, $0
@@ -238,14 +238,14 @@ my_ffsl:                                # @my_ffsl
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-	block
+	block   	
 	i32.eqz 	$push11=, $0
 	br_if   	0, $pop11       # 0: down to label10
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$2=, 1
 .LBB6_2:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label11:
+	loop    	                # label11:
 	copy_local	$push8=, $2
 	tee_local	$push7=, $3=, $pop8
 	i32.const	$push6=, -1
@@ -284,8 +284,8 @@ my_ctzl:                                # @my_ctzl
 	i32.const	$1=, 0
 .LBB7_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label13:
+	block   	
+	loop    	                # label13:
 	i32.const	$push3=, 1
 	i32.shl 	$push0=, $pop3, $1
 	i32.and 	$push1=, $pop0, $0
@@ -320,8 +320,8 @@ my_clzl:                                # @my_clzl
 	i32.const	$1=, 31
 .LBB8_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label15:
+	block   	
+	loop    	                # label15:
 	i32.const	$push3=, 1
 	i32.shl 	$push0=, $pop3, $1
 	i32.and 	$push1=, $pop0, $0
@@ -360,8 +360,8 @@ my_clrsbl:                              # @my_clrsbl
 	i32.const	$3=, 1
 .LBB9_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label17:
+	block   	
+	loop    	                # label17:
 	i32.shr_u	$push1=, $0, $2
 	i32.const	$push7=, 1
 	i32.and 	$push2=, $pop1, $pop7
@@ -400,7 +400,7 @@ my_popcountl:                           # @my_popcountl
 	i32.const	$2=, 0
 .LBB10_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label18:
+	loop    	                # label18:
 	i32.const	$push9=, 1
 	i32.shl 	$push0=, $pop9, $2
 	i32.and 	$push1=, $pop0, $0
@@ -434,7 +434,7 @@ my_parityl:                             # @my_parityl
 	i32.const	$2=, 0
 .LBB11_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label19:
+	loop    	                # label19:
 	i32.const	$push11=, 1
 	i32.shl 	$push0=, $pop11, $2
 	i32.and 	$push1=, $pop0, $0
@@ -466,7 +466,7 @@ my_ffsll:                               # @my_ffsll
 	.local  	i64, i32, i64, i32
 # BB#0:                                 # %entry
 	i32.const	$4=, 0
-	block
+	block   	
 	i64.eqz 	$push1=, $0
 	br_if   	0, $pop1        # 0: down to label20
 # BB#1:                                 # %for.cond.preheader
@@ -474,7 +474,7 @@ my_ffsll:                               # @my_ffsll
 	i32.const	$2=, 1
 .LBB12_2:                               # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label21:
+	loop    	                # label21:
 	copy_local	$4=, $2
 	i64.const	$push5=, 63
 	i64.gt_u	$push2=, $3, $pop5
@@ -513,8 +513,8 @@ my_ctzll:                               # @my_ctzll
 	i64.const	$1=, 0
 .LBB13_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label23:
+	block   	
+	loop    	                # label23:
 	i64.const	$push5=, 1
 	i64.shl 	$push0=, $pop5, $1
 	i64.and 	$push1=, $pop0, $0
@@ -554,8 +554,8 @@ my_clzll:                               # @my_clzll
 	i64.const	$2=, 0
 .LBB14_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label25:
+	block   	
+	loop    	                # label25:
 	i64.const	$push5=, 1
 	i64.shl 	$push0=, $pop5, $1
 	i64.and 	$push1=, $pop0, $0
@@ -599,8 +599,8 @@ my_clrsbll:                             # @my_clrsbll
 	i32.const	$4=, 1
 .LBB15_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label27:
+	block   	
+	loop    	                # label27:
 	i64.shr_u	$push1=, $0, $2
 	i64.const	$push7=, 1
 	i64.and 	$push2=, $pop1, $pop7
@@ -641,7 +641,7 @@ my_popcountll:                          # @my_popcountll
 	i64.const	$1=, 0
 .LBB16_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label28:
+	loop    	                # label28:
 	i64.const	$push9=, 1
 	i64.shl 	$push0=, $pop9, $1
 	i64.and 	$push1=, $pop0, $0
@@ -675,7 +675,7 @@ my_parityll:                            # @my_parityll
 	i64.const	$1=, 0
 .LBB17_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label29:
+	loop    	                # label29:
 	i64.const	$push11=, 1
 	i64.shl 	$push0=, $pop11, $1
 	i64.and 	$push1=, $pop0, $0
@@ -714,9 +714,9 @@ main:                                   # @main
                                         #     Child Loop BB18_17 Depth 2
                                         #     Child Loop BB18_21 Depth 2
                                         #     Child Loop BB18_24 Depth 2
-	block
-	block
-	loop                            # label32:
+	block   	
+	block   	
+	loop    	                # label32:
 	i32.const	$push205=, 2
 	i32.shl 	$push1=, $0, $pop205
 	i32.const	$push204=, ints
@@ -731,7 +731,7 @@ main:                                   # @main
 	i32.const	$push196=, 0
 	i32.select	$6=, $pop2, $pop196, $10
 	i32.const	$3=, 0
-	block
+	block   	
 	i32.eqz 	$push397=, $10
 	br_if   	0, $pop397      # 0: down to label33
 # BB#2:                                 # %for.cond.i.preheader
@@ -740,8 +740,8 @@ main:                                   # @main
 .LBB18_3:                               # %for.cond.i
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label35:
+	block   	
+	loop    	                # label35:
 	copy_local	$push208=, $5
 	tee_local	$push207=, $3=, $pop208
 	i32.const	$push206=, 31
@@ -769,7 +769,7 @@ main:                                   # @main
 	br_if   	1, $pop6        # 1: down to label31
 # BB#7:                                 # %if.end
                                         #   in Loop: Header=BB18_1 Depth=1
-	block
+	block   	
 	i32.eqz 	$push399=, $10
 	br_if   	0, $pop399      # 0: down to label36
 # BB#8:                                 # %land.lhs.true
@@ -780,8 +780,8 @@ main:                                   # @main
 .LBB18_9:                               # %for.body.i816
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label38:
+	block   	
+	loop    	                # label38:
 	i32.const	$push212=, 1
 	i32.shl 	$push7=, $pop212, $3
 	i32.and 	$push8=, $pop7, $10
@@ -808,8 +808,8 @@ main:                                   # @main
 .LBB18_13:                              # %for.body.i875
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label40:
+	block   	
+	loop    	                # label40:
 	i32.const	$push218=, 1
 	i32.shl 	$push11=, $pop218, $3
 	i32.and 	$push12=, $pop11, $10
@@ -841,8 +841,8 @@ main:                                   # @main
 .LBB18_17:                              # %for.body.i948
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label42:
+	block   	
+	loop    	                # label42:
 	i32.shr_u	$push15=, $3, $10
 	i32.const	$push226=, 1
 	i32.and 	$push16=, $pop15, $pop226
@@ -873,7 +873,7 @@ main:                                   # @main
 .LBB18_21:                              # %for.body.i1030
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label43:
+	loop    	                # label43:
 	i32.const	$push238=, 1
 	i32.shl 	$push21=, $pop238, $10
 	i32.and 	$push22=, $pop21, $3
@@ -899,7 +899,7 @@ main:                                   # @main
 .LBB18_24:                              # %for.body.i1109
                                         #   Parent Loop BB18_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label44:
+	loop    	                # label44:
 	i32.const	$push244=, 1
 	i32.shl 	$push27=, $pop244, $10
 	i32.and 	$push28=, $pop27, $3
@@ -938,7 +938,7 @@ main:                                   # @main
                                         #     Child Loop BB18_44 Depth 2
                                         #     Child Loop BB18_48 Depth 2
                                         #     Child Loop BB18_51 Depth 2
-	loop                            # label45:
+	loop    	                # label45:
 	i32.const	$push259=, 2
 	i32.shl 	$push34=, $0, $pop259
 	i32.const	$push258=, longs
@@ -953,7 +953,7 @@ main:                                   # @main
 	i32.const	$push250=, 0
 	i32.select	$6=, $pop35, $pop250, $10
 	i32.const	$3=, 0
-	block
+	block   	
 	i32.eqz 	$push400=, $10
 	br_if   	0, $pop400      # 0: down to label46
 # BB#29:                                # %for.cond.i1185.preheader
@@ -962,8 +962,8 @@ main:                                   # @main
 .LBB18_30:                              # %for.cond.i1185
                                         #   Parent Loop BB18_28 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label48:
+	block   	
+	loop    	                # label48:
 	copy_local	$push262=, $5
 	tee_local	$push261=, $3=, $pop262
 	i32.const	$push260=, 31
@@ -991,7 +991,7 @@ main:                                   # @main
 	br_if   	1, $pop39       # 1: down to label31
 # BB#34:                                # %if.end49
                                         #   in Loop: Header=BB18_28 Depth=1
-	block
+	block   	
 	i32.eqz 	$push402=, $10
 	br_if   	0, $pop402      # 0: down to label49
 # BB#35:                                # %land.lhs.true52
@@ -1002,8 +1002,8 @@ main:                                   # @main
 .LBB18_36:                              # %for.body.i1266
                                         #   Parent Loop BB18_28 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label51:
+	block   	
+	loop    	                # label51:
 	i32.const	$push266=, 1
 	i32.shl 	$push40=, $pop266, $3
 	i32.and 	$push41=, $pop40, $10
@@ -1030,8 +1030,8 @@ main:                                   # @main
 .LBB18_40:                              # %for.body.i1345
                                         #   Parent Loop BB18_28 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label53:
+	block   	
+	loop    	                # label53:
 	i32.const	$push272=, 1
 	i32.shl 	$push44=, $pop272, $3
 	i32.and 	$push45=, $pop44, $10
@@ -1063,8 +1063,8 @@ main:                                   # @main
 .LBB18_44:                              # %for.body.i1426
                                         #   Parent Loop BB18_28 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label55:
+	block   	
+	loop    	                # label55:
 	i32.shr_u	$push48=, $3, $10
 	i32.const	$push280=, 1
 	i32.and 	$push49=, $pop48, $pop280
@@ -1095,7 +1095,7 @@ main:                                   # @main
 .LBB18_48:                              # %for.body.i1511
                                         #   Parent Loop BB18_28 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label56:
+	loop    	                # label56:
 	i32.const	$push292=, 1
 	i32.shl 	$push54=, $pop292, $10
 	i32.and 	$push55=, $pop54, $3
@@ -1121,7 +1121,7 @@ main:                                   # @main
 .LBB18_51:                              # %for.body.i1591
                                         #   Parent Loop BB18_28 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label57:
+	loop    	                # label57:
 	i32.const	$push298=, 1
 	i32.shl 	$push60=, $pop298, $10
 	i32.and 	$push61=, $pop60, $3
@@ -1160,7 +1160,7 @@ main:                                   # @main
                                         #     Child Loop BB18_70 Depth 2
                                         #     Child Loop BB18_74 Depth 2
                                         #     Child Loop BB18_77 Depth 2
-	loop                            # label58:
+	loop    	                # label58:
 	i32.const	$push315=, 0
 	i32.const	$push314=, 3
 	i32.shl 	$push67=, $5, $pop314
@@ -1178,7 +1178,7 @@ main:                                   # @main
 	tee_local	$push304=, $6=, $pop305
 	i32.select	$0=, $pop315, $pop69, $pop304
 	i32.const	$10=, 0
-	block
+	block   	
 	br_if   	0, $6           # 0: down to label59
 # BB#56:                                # %for.cond.i1667.preheader
                                         #   in Loop: Header=BB18_55 Depth=1
@@ -1187,7 +1187,7 @@ main:                                   # @main
 .LBB18_57:                              # %for.cond.i1667
                                         #   Parent Loop BB18_55 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label60:
+	loop    	                # label60:
 	copy_local	$10=, $3
 	i64.const	$push316=, 63
 	i64.gt_u	$push70=, $8, $pop316
@@ -1212,7 +1212,7 @@ main:                                   # @main
 	br_if   	1, $pop73       # 1: down to label31
 # BB#60:                                # %if.end100
                                         #   in Loop: Header=BB18_55 Depth=1
-	block
+	block   	
 	br_if   	0, $6           # 0: down to label61
 # BB#61:                                # %land.lhs.true103
                                         #   in Loop: Header=BB18_55 Depth=1
@@ -1224,8 +1224,8 @@ main:                                   # @main
 .LBB18_62:                              # %for.body.i1739
                                         #   Parent Loop BB18_55 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label63:
+	block   	
+	loop    	                # label63:
 	i64.const	$push321=, 1
 	i64.shl 	$push75=, $pop321, $8
 	i64.and 	$push76=, $pop75, $9
@@ -1258,8 +1258,8 @@ main:                                   # @main
 .LBB18_66:                              # %for.body.i1781
                                         #   Parent Loop BB18_55 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label65:
+	block   	
+	loop    	                # label65:
 	i64.const	$push329=, 1
 	i64.shl 	$push80=, $pop329, $8
 	i64.and 	$push81=, $pop80, $9
@@ -1296,8 +1296,8 @@ main:                                   # @main
 .LBB18_70:                              # %for.body.i1845
                                         #   Parent Loop BB18_55 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label67:
+	block   	
+	loop    	                # label67:
 	i64.shr_u	$push85=, $9, $8
 	i64.const	$push338=, 1
 	i64.and 	$push86=, $pop85, $pop338
@@ -1331,7 +1331,7 @@ main:                                   # @main
 .LBB18_74:                              # %for.body.i1928
                                         #   Parent Loop BB18_55 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label68:
+	loop    	                # label68:
 	i64.const	$push351=, 1
 	i64.shl 	$push91=, $pop351, $8
 	i64.and 	$push92=, $pop91, $9
@@ -1357,7 +1357,7 @@ main:                                   # @main
 .LBB18_77:                              # %for.body.i2005
                                         #   Parent Loop BB18_55 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label69:
+	loop    	                # label69:
 	i64.const	$push357=, 1
 	i64.shl 	$push97=, $pop357, $8
 	i64.and 	$push98=, $pop97, $9
@@ -1451,8 +1451,8 @@ main:                                   # @main
 	i32.const	$3=, 1
 .LBB18_92:                              # %for.body.i1769
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label71:
+	block   	
+	loop    	                # label71:
 	i32.const	$push365=, -1
 	i32.shr_u	$push140=, $pop365, $10
 	i32.const	$push364=, 1
@@ -1486,8 +1486,8 @@ main:                                   # @main
 # BB#96:                                # %for.body.i1691.preheader
 .LBB18_97:                              # %for.body.i1691
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label73:
+	block   	
+	loop    	                # label73:
 	i64.const	$push372=, 63
 	i64.eq  	$push149=, $8, $pop372
 	br_if   	1, $pop149      # 1: down to label72
@@ -1510,8 +1510,8 @@ main:                                   # @main
 	i64.const	$8=, 1
 .LBB18_101:                             # %for.body.i1655
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label75:
+	block   	
+	loop    	                # label75:
 	i32.const	$10=, 62
 	i64.const	$push378=, 63
 	i64.eq  	$push151=, $8, $pop378
@@ -1534,8 +1534,8 @@ main:                                   # @main
 	i64.const	$8=, 0
 .LBB18_105:                             # %for.body.i1598
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label77:
+	block   	
+	loop    	                # label77:
 	i64.const	$push383=, 63
 	i64.eq  	$push154=, $8, $pop383
 	br_if   	1, $pop154      # 1: down to label76
@@ -1612,8 +1612,8 @@ main:                                   # @main
 	i32.const	$10=, 1
 .LBB18_119:                             # %for.body.i810
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label79:
+	block   	
+	loop    	                # label79:
 	i64.const	$push390=, -1
 	i64.shr_u	$push188=, $pop390, $8
 	i64.const	$push389=, 1
@@ -1719,7 +1719,7 @@ longlongs:
 	.size	longlongs, 104
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	__builtin_clrsb, i32
 	.functype	__builtin_clrsbl, i32

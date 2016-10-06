@@ -31,7 +31,7 @@ main:                                   # @main
 	i64.and 	$push4=, $0, $pop3
 	i64.or  	$push9=, $pop8, $pop4
 	i64.store	sv($pop19), $pop9
-	block
+	block   	
 	i64.const	$push10=, 16777215
 	i64.and 	$push11=, $1, $pop10
 	i64.eqz 	$push12=, $pop11
@@ -58,5 +58,5 @@ sv:
 	.size	sv, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -13,8 +13,8 @@ sf:                                     # @sf
 	#NO_APP
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	copy_local	$push15=, $0
 	tee_local	$push14=, $2=, $pop15
 	i32.const	$push13=, -1
@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.const	$push32=, 0
 	i32.load	$push7=, .Lmain.s($pop32):p2align=0
 	i32.store	8($0), $pop7
-	block
+	block   	
 	i32.const	$push26=, 8
 	i32.add 	$push27=, $0, $pop26
 	i32.const	$push10=, 2
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	.L.str, 7
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

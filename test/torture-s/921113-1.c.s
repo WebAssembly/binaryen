@@ -24,7 +24,7 @@ f1:                                     # @f1
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f32.const	$push2=, 0x0p0
 	f32.ne  	$push0=, $0, $pop2
 	br_if   	0, $pop0        # 0: down to label0
@@ -51,7 +51,7 @@ f2:                                     # @f2
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f32.const	$push2=, 0x1p0
 	f32.ne  	$push0=, $0, $pop2
 	br_if   	0, $pop0        # 0: down to label1
@@ -78,7 +78,7 @@ gitter:                                 # @gitter
 	.result 	i32
 	.local  	f32, f64, f64
 # BB#0:                                 # %entry
-	block
+	block   	
 	f32.load	$push1=, 0($4)
 	f32.const	$push23=, 0x0p0
 	f32.ne  	$push2=, $pop1, $pop23
@@ -103,7 +103,7 @@ gitter:                                 # @gitter
 # BB#4:                                 # %f2.exit
 	i32.const	$push10=, 0
 	i32.store	0($3), $pop10
-	block
+	block   	
 	f32.load	$push28=, 0($1)
 	tee_local	$push27=, $6=, $pop28
 	f32.const	$push11=, 0x0p0
@@ -189,6 +189,6 @@ limit:
 	.size	limit, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

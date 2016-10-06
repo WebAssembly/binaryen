@@ -21,8 +21,8 @@ main:                                   # @main
                                         #     Child Loop BB0_2 Depth 2
                                         #       Child Loop BB0_4 Depth 3
                                         #     Child Loop BB0_9 Depth 2
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.load8_u	$push19=, 0($5)
 	tee_local	$push18=, $1=, $pop19
 	copy_local	$6=, $pop18
@@ -30,8 +30,8 @@ main:                                   # @main
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB0_4 Depth 3
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.const	$push21=, 255
 	i32.and 	$push0=, $6, $pop21
 	i32.const	$push20=, 97
@@ -45,7 +45,7 @@ main:                                   # @main
                                         #   Parent Loop BB0_1 Depth=1
                                         #     Parent Loop BB0_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	loop                            # label4:
+	loop    	                # label4:
 	copy_local	$push32=, $6
 	tee_local	$push31=, $8=, $pop32
 	i32.const	$push30=, 1
@@ -82,8 +82,8 @@ main:                                   # @main
 	i32.gt_u	$push6=, $5, $2
 	i32.select	$push7=, $5, $2, $pop6
 	i32.add 	$1=, $0, $pop7
-	block
-	block
+	block   	
+	block   	
 	i32.ge_u	$push8=, $5, $2
 	br_if   	0, $pop8        # 0: down to label6
 # BB#8:                                 # %while.body14.while.body14_crit_edge.i.preheader
@@ -93,7 +93,7 @@ main:                                   # @main
 .LBB0_9:                                # %while.body14.while.body14_crit_edge.i
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label7:
+	loop    	                # label7:
 	i32.load8_u	$push9=, 0($6)
 	i32.store8	0($4), $pop9
 	i32.const	$push41=, 1
@@ -122,7 +122,7 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	end_block                       # label2:
 	end_loop
-	loop                            # label8:
+	loop    	                # label8:
 	br      	0               # 0: up to label8
 .LBB0_14:                               # %test.exit
 	end_loop
@@ -140,4 +140,4 @@ main:                                   # @main
 	.size	.L.str, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

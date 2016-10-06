@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.load	$push1=, p($pop7)
 	i32.const	$push2=, 2
 	i32.store	0($pop1), $pop2
-	block
+	block   	
 	i32.const	$push6=, 0
 	i32.load	$push3=, x($pop6)
 	i32.const	$push5=, 2
@@ -51,6 +51,6 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

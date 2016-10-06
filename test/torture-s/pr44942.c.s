@@ -19,7 +19,7 @@ test1:                                  # @test1
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $9, $pop0
 	i32.store	12($10), $pop1
-	block
+	block   	
 	i32.load	$push2=, 0($9)
 	i32.const	$push3=, 1234
 	i32.ne  	$push4=, $pop2, $pop3
@@ -57,7 +57,7 @@ test2:                                  # @test2
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $18, $pop0
 	i32.store	12($19), $pop1
-	block
+	block   	
 	i32.load	$push2=, 0($18)
 	i32.const	$push3=, 1234
 	i32.ne  	$push4=, $pop2, $pop3
@@ -100,7 +100,7 @@ test3:                                  # @test3
 	i32.const	$push3=, 8
 	i32.add 	$push4=, $pop15, $pop3
 	i32.store	12($10), $pop4
-	block
+	block   	
 	f64.load	$push5=, 0($9)
 	f64.const	$push6=, 0x1.348p10
 	f64.ne  	$push7=, $pop5, $pop6
@@ -143,7 +143,7 @@ test4:                                  # @test4
 	i32.const	$push3=, 8
 	i32.add 	$push4=, $pop15, $pop3
 	i32.store	12($19), $pop4
-	block
+	block   	
 	f64.load	$push5=, 0($18)
 	f64.const	$push6=, 0x1.348p10
 	f64.ne  	$push7=, $pop5, $pop6
@@ -212,5 +212,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

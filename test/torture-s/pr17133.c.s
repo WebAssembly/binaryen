@@ -18,7 +18,7 @@ pure_alloc:                             # @pure_alloc
 	i32.store	foo($pop0), $pop10
 	i32.const	$push9=, 0
 	i32.load	$0=, bar($pop9)
-	block
+	block   	
 	i32.const	$push8=, 0
 	i32.load	$push7=, baz($pop8)
 	tee_local	$push6=, $1=, $pop7
@@ -29,7 +29,7 @@ pure_alloc:                             # @pure_alloc
 	i32.gt_u	$3=, $1, $pop16
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.eqz 	$push18=, $3
 	br_if   	0, $pop18       # 0: up to label1
 # BB#3:                                 # %while.cond.if.then_crit_edge
@@ -63,9 +63,9 @@ main:                                   # @main
 	i32.add 	$push11=, $pop1, $pop12
 	tee_local	$push10=, $0=, $pop11
 	i32.store	foo($pop0), $pop10
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push9=, 0
 	i32.load	$push8=, baz($pop9)
 	tee_local	$push7=, $1=, $pop8
@@ -92,7 +92,7 @@ main:                                   # @main
 .LBB1_6:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
 	end_block                       # label2:
-	loop                            # label5:
+	loop    	i32             # label5:
 	br      	0               # 0: up to label5
 .LBB1_7:
 	end_loop
@@ -128,5 +128,5 @@ baz:
 	.size	baz, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

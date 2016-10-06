@@ -55,7 +55,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push22=, 0
 	i32.load	$push21=, nums($pop22)
 	tee_local	$push20=, $0=, $pop21
@@ -118,6 +118,6 @@ nums:
 	.size	nums, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

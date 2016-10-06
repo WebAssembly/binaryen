@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop6), $pop7
 	i64.const	$push0=, 4621819117588971520
 	i64.store	8($0), $pop0
-	block
+	block   	
 	i32.load	$push1=, 8($0)
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -69,6 +69,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

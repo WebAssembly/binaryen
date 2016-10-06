@@ -12,13 +12,13 @@ num_lshift:                             # @num_lshift
 	i32.load	$push94=, __stack_pointer($pop93)
 	i32.const	$push95=, 16
 	i32.sub 	$12=, $pop94, $pop95
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.ge_u	$push0=, $3, $2
 	br_if   	0, $pop0        # 0: down to label6
 # BB#1:                                 # %if.else
@@ -29,7 +29,7 @@ num_lshift:                             # @num_lshift
 	tee_local	$push100=, $4=, $pop101
 	copy_local	$9=, $pop100
 	copy_local	$8=, $3
-	block
+	block   	
 	i32.const	$push9=, 32
 	i32.lt_u	$push10=, $3, $pop9
 	br_if   	0, $pop10       # 0: down to label7
@@ -77,8 +77,8 @@ num_lshift:                             # @num_lshift
 	i32.const	$push22=, 8
 	i32.add 	$push23=, $1, $pop22
 	i64.load	$6=, 0($pop23):p2align=2
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push20=, 33
 	i32.lt_u	$push21=, $2, $pop20
 	br_if   	0, $pop21       # 0: down to label9
@@ -154,9 +154,9 @@ num_lshift:                             # @num_lshift
 	i32.shl 	$push48=, $pop47, $pop46
 	i32.and 	$push49=, $pop42, $pop48
 	i32.select	$8=, $pop43, $pop50, $pop49
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push51=, 31
 	i32.gt_u	$push52=, $2, $pop51
 	br_if   	0, $pop52       # 0: down to label12
@@ -186,7 +186,7 @@ num_lshift:                             # @num_lshift
 	i32.store	0($7), $pop57
 .LBB0_22:                               # %if.end15.i
 	end_block                       # label10:
-	block
+	block   	
 	i32.const	$push58=, 32
 	i32.lt_u	$push59=, $3, $pop58
 	br_if   	0, $pop59       # 0: down to label13
@@ -198,8 +198,8 @@ num_lshift:                             # @num_lshift
 	i32.add 	$3=, $3, $pop61
 .LBB0_24:                               # %if.end22.i
 	end_block                       # label13:
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push128=, $3
 	br_if   	0, $pop128      # 0: down to label15
 # BB#25:                                # %if.end38.sink.split.i
@@ -226,8 +226,8 @@ num_lshift:                             # @num_lshift
 	i32.load	$3=, 8($12)
 .LBB0_27:                               # %if.end38.i
 	end_block                       # label14:
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push68=, 33
 	i32.lt_u	$push69=, $2, $pop68
 	br_if   	0, $pop69       # 0: down to label17
@@ -319,7 +319,7 @@ main:                                   # @main
 	i32.const	$push25=, 0
 	i32.load	$push11=, n($pop25)
 	call    	num_lshift@FUNCTION, $pop24, $0, $pop12, $pop11
-	block
+	block   	
 	i32.load	$push14=, 20($0)
 	i32.const	$push13=, 196608
 	i32.ne  	$push15=, $pop14, $pop13
@@ -373,6 +373,6 @@ num:
 	.size	num, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

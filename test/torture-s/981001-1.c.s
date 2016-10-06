@@ -9,8 +9,8 @@ sub:                                    # @sub
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 2
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label1
@@ -59,8 +59,8 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
 	i32.load	$0=, flg($pop7)
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 30
 	i32.call	$push1=, sub@FUNCTION, $pop0
 	i32.const	$push2=, 832040
@@ -98,6 +98,6 @@ flg:
 	.size	flg, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

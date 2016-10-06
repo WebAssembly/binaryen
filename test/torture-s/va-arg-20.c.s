@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 7
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, -8
@@ -42,7 +42,7 @@ bar:                                    # @bar
 	tee_local	$push14=, $3=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($3), $2
-	block
+	block   	
 	i32.const	$push0=, 7
 	i32.add 	$push1=, $2, $pop0
 	i32.const	$push2=, -8
@@ -93,6 +93,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

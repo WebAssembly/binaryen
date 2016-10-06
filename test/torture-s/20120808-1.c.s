@@ -34,18 +34,18 @@ main:                                   # @main
 	i32.const	$3=, 0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.add 	$push44=, $0, $3
 	tee_local	$push43=, $1=, $pop44
 	i32.load8_u	$2=, 0($pop43)
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push42=, 25
 	i32.eq  	$push7=, $3, $pop42
 	br_if   	0, $pop7        # 0: down to label2
 # BB#2:                                 # %for.body
                                         #   in Loop: Header=BB0_1 Depth=1
-	block
+	block   	
 	i32.const	$push45=, 2
 	i32.eq  	$push8=, $3, $pop45
 	br_if   	0, $pop8        # 0: down to label3
@@ -84,7 +84,7 @@ main:                                   # @main
 	br_if   	0, $pop12       # 0: up to label0
 # BB#8:                                 # %for.end
 	end_loop
-	block
+	block   	
 	i32.load8_u	$push14=, 0($5)
 	i32.const	$push13=, 255
 	i32.ne  	$push15=, $pop14, $pop13
@@ -160,6 +160,6 @@ cp:
 	.size	cp, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

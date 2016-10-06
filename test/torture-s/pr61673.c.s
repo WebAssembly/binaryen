@@ -7,8 +7,8 @@
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, -121
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label1
@@ -34,7 +34,7 @@ bar:                                    # @bar
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load8_s	$push4=, 0($0)
 	tee_local	$push3=, $0=, $pop4
 	i32.const	$push0=, -1
@@ -58,7 +58,7 @@ foo:                                    # @foo
 baz:                                    # @baz
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load8_s	$push4=, 0($0)
 	tee_local	$push3=, $0=, $pop4
 	i32.const	$push0=, -1
@@ -86,7 +86,7 @@ main:                                   # @main
 	i32.store8	e($pop19), $pop0
 	i32.const	$push1=, main.c
 	call    	foo@FUNCTION, $pop1
-	block
+	block   	
 	i32.const	$push18=, 0
 	i32.load8_u	$push2=, e($pop18)
 	i32.const	$push17=, 33
@@ -145,5 +145,5 @@ main.c:
 	.size	main.c, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

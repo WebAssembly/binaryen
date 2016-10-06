@@ -22,7 +22,7 @@ convert_like_real:                      # @convert_like_real
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load8_u	$push0=, 8($0)
 	i32.const	$push1=, 222
 	i32.ne  	$push2=, $pop0, $pop1
@@ -59,7 +59,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	malloc, i32, i32
 	.functype	exit, void, i32

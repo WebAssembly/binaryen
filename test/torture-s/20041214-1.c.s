@@ -9,7 +9,7 @@ g:                                      # @g
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load8_u	$push1=, 0($1)
 	i32.eqz 	$push7=, $pop1
 	br_if   	0, $pop7        # 0: down to label0
@@ -18,7 +18,7 @@ g:                                      # @g
 	i32.add 	$1=, $1, $pop4
 .LBB0_2:                                # %do_form_string
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$push2=, 0($2)
 	i32.call	$drop=, strcpy@FUNCTION, $0, $pop2
 	i32.const	$push6=, 4
@@ -53,7 +53,7 @@ f:                                      # @f
 	tee_local	$push10=, $4=, $pop11
 	i32.store	__stack_pointer($pop6), $pop10
 	i32.store	12($4), $2
-	block
+	block   	
 	i32.load8_u	$push1=, 0($1)
 	i32.eqz 	$push15=, $pop1
 	br_if   	0, $pop15       # 0: down to label2
@@ -63,7 +63,7 @@ f:                                      # @f
 	i32.load	$2=, 12($4)
 .LBB1_2:                                # %do_form_string.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.load	$push2=, 0($2)
 	i32.call	$drop=, strcpy@FUNCTION, $0, $pop2
 	i32.const	$push14=, 4
@@ -108,7 +108,7 @@ main:                                   # @main
 	i32.add 	$push11=, $0, $pop10
 	i32.const	$push1=, .L.str
 	call    	f@FUNCTION, $pop11, $pop1, $0
-	block
+	block   	
 	i32.const	$push12=, 22
 	i32.add 	$push13=, $0, $pop12
 	i32.const	$push14=, .L.str.1
@@ -141,7 +141,7 @@ main:                                   # @main
 	.size	.L.str.1, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcpy, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

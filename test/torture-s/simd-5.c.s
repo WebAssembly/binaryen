@@ -208,7 +208,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	call    	func2@FUNCTION
-	block
+	block   	
 	i32.const	$push14=, 0
 	i64.load	$push1=, w1($pop14)
 	i32.const	$push13=, 0
@@ -377,5 +377,5 @@ z4:
 	.size	z4, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -7,7 +7,7 @@
 test01:                                 # @test01
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push5=, 4
 	i32.le_u	$push0=, $0, $pop5
 	br_if   	0, $pop0        # 0: down to label0
@@ -37,8 +37,8 @@ test01:                                 # @test01
 test02:                                 # @test02
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push1=, 12
 	i32.lt_u	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label2
@@ -78,6 +78,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

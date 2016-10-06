@@ -1763,8 +1763,8 @@ main:                                   # @main
 	i32.const	$0=, u
 .LBB24_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push1071=, 16
 	i32.add 	$push1072=, $10, $pop1071
 	call    	uq44444444@FUNCTION, $pop1072, $0
@@ -3014,7 +3014,7 @@ main:                                   # @main
 	i32.const	$0=, s
 .LBB24_99:                              # %for.body919
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	call    	sq44444444@FUNCTION, $10, $0
 	i32.load16_u	$push190=, 0($10)
 	i32.load16_s	$push192=, 0($0)
@@ -4453,5 +4453,5 @@ s:
 	.size	s, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -19,7 +19,7 @@ foo:                                    # @foo
 # BB#2:                                 # %if.end
 	i32.gt_u	$push4=, $0, $1
 	i32.select	$2=, $0, $1, $pop4
-	block
+	block   	
 	i32.lt_u	$push5=, $0, $1
 	i32.select	$push6=, $0, $1, $pop5
 	i32.const	$push17=, 1
@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push1=, -2
 	i32.const	$push0=, 1
 	call    	foo@FUNCTION, $pop1, $pop0
-	block
+	block   	
 	i32.const	$push5=, 0
 	i32.load	$push2=, cnt($pop5)
 	i32.const	$push3=, 2
@@ -88,5 +88,5 @@ cnt:
 	.size	cnt, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

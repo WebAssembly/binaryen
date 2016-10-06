@@ -19,11 +19,11 @@ vafunction:                             # @vafunction
 	i32.const	$2=, 1
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	block
-	loop                            # label2:
-	block
-	block
+	block   	
+	block   	
+	loop    	                # label2:
+	block   	
+	block   	
 	i32.const	$push18=, -1
 	i32.add 	$push0=, $2, $pop18
 	i32.const	$push17=, 1
@@ -176,6 +176,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

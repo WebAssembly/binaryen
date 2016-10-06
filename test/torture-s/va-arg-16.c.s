@@ -16,7 +16,7 @@ vafunction:                             # @vafunction
 	tee_local	$push52=, $5=, $pop53
 	i32.store	__stack_pointer($pop48), $pop52
 	i32.store	12($5), $2
-	block
+	block   	
 	f64.const	$push0=, 0x1.bcp9
 	f64.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -182,6 +182,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,7 +7,7 @@
 bar:                                    # @bar
 	.param  	i64
 # BB#0:                                 # %entry
-	block
+	block   	
 	i64.eqz 	$push0=, $0
 	i32.eqz 	$push1=, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -34,7 +34,7 @@ do_test:                                # @do_test
 	i64.const	$3=, 63
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i64.const	$push15=, 4294967296
 	i64.add 	$4=, $4, $pop15
 	i64.const	$push14=, 4294967295
@@ -57,7 +57,7 @@ do_test:                                # @do_test
 	i64.const	$3=, 63
 .LBB1_3:                                # %for.cond.i.1
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i64.const	$push19=, 4294967296
 	i64.add 	$4=, $4, $pop19
 	i64.const	$push18=, 4294967295
@@ -111,5 +111,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -187,7 +187,7 @@ test6u:                                 # @test6u
 test:                                   # @test
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -2147483648
 	i32.xor 	$push1=, $0, $pop0
 	i32.ne  	$push2=, $pop1, $1
@@ -209,7 +209,7 @@ test:                                   # @test
 testu:                                  # @testu
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -2147483648
 	i32.xor 	$push1=, $0, $pop0
 	i32.ne  	$push2=, $pop1, $1
@@ -238,5 +238,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end14-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

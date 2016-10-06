@@ -17,7 +17,7 @@ stub:                                   # @stub
 	copy_local	$4=, $1
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push7=, 4
 	i32.add 	$push6=, $4, $pop7
 	tee_local	$push5=, $2=, $pop6
@@ -30,7 +30,7 @@ stub:                                   # @stub
 	i32.store	12($5), $1
 .LBB0_3:                                # %while.cond.1
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push10=, 4
 	i32.add 	$push9=, $1, $pop10
 	tee_local	$push8=, $4=, $pop9
@@ -93,5 +93,5 @@ main:                                   # @main
 	.size	.L.str.2, 3
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

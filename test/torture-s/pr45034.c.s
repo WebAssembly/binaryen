@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 128
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, 256
@@ -34,7 +34,7 @@ test_neg:                               # @test_neg
 	i32.const	$3=, 128
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push14=, 0
 	i32.const	$push13=, 255
 	i32.and 	$push12=, $3, $pop13
@@ -43,8 +43,8 @@ test_neg:                               # @test_neg
 	tee_local	$push9=, $2=, $pop10
 	i32.const	$push8=, 24
 	i32.shl 	$0=, $pop9, $pop8
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push7=, 128
 	i32.and 	$push0=, $2, $pop7
 	i32.const	$push6=, 127
@@ -92,7 +92,7 @@ main:                                   # @main
 	i32.const	$3=, 128
 .LBB2_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop    	                # label4:
 	i32.const	$push14=, 0
 	i32.const	$push13=, 255
 	i32.and 	$push12=, $3, $pop13
@@ -101,8 +101,8 @@ main:                                   # @main
 	tee_local	$push9=, $2=, $pop10
 	i32.const	$push8=, 24
 	i32.shl 	$0=, $pop9, $pop8
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push7=, 128
 	i32.and 	$push0=, $2, $pop7
 	i32.const	$push6=, 127
@@ -140,5 +140,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

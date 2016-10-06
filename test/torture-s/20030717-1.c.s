@@ -29,8 +29,8 @@ bar:                                    # @bar
 	copy_local	$7=, $2
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
-	block
+	loop    	                # label0:
+	block   	
 	i32.const	$push29=, 0
 	i32.gt_s	$push4=, $1, $pop29
 	br_if   	0, $pop4        # 0: down to label1
@@ -89,4 +89,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

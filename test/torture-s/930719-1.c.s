@@ -8,9 +8,9 @@ f:                                      # @f
 	.param  	i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	br_if   	0, $0           # 0: down to label2
 # BB#1:                                 # %while.cond.preheader
 	i32.const	$push0=, 1
@@ -26,7 +26,7 @@ f:                                      # @f
 .LBB0_4:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	end_block                       # label1:
-	loop                            # label3:
+	loop    	                # label3:
 	br      	0               # 0: up to label3
 .LBB0_5:                                # %if.end2
 	end_loop
@@ -52,5 +52,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

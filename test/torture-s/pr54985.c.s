@@ -9,8 +9,8 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push11=, $1
 	br_if   	0, $pop11       # 0: down to label1
 # BB#1:                                 # %while.body.preheader
@@ -19,7 +19,7 @@ foo:                                    # @foo
 	i32.load	$0=, 0($0)
 .LBB0_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push6=, -1
 	i32.add 	$push5=, $1, $pop6
 	tee_local	$push4=, $1=, $pop5
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop7), $pop13
 	i64.const	$push0=, 4294967298
 	i64.store	8($0), $pop0
-	block
+	block   	
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $0, $pop11
 	i32.const	$push1=, 2
@@ -90,5 +90,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

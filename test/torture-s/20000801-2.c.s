@@ -8,12 +8,12 @@ test:                                   # @test
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push3=, $0
 	br_if   	0, $pop3        # 0: down to label0
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$push2=, 0($0)
 	tee_local	$push1=, $0=, $pop2
 	br_if   	0, $pop1        # 0: up to label1
@@ -77,7 +77,7 @@ main:                                   # @main
 	copy_local	$0=, $pop9
 .LBB3_1:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.load	$push13=, 0($0)
 	tee_local	$push12=, $0=, $pop13
 	br_if   	0, $pop12       # 0: up to label2
@@ -91,5 +91,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

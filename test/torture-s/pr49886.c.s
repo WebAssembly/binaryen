@@ -52,16 +52,16 @@ mark_cell:                              # @mark_cell
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push49=, $0
 	br_if   	0, $pop49       # 0: down to label9
 # BB#1:                                 # %entry
@@ -227,5 +227,5 @@ gi:
 	.size	gi, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

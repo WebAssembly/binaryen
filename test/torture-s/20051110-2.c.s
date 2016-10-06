@@ -17,8 +17,8 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.load	$1=, flag($pop9)
 .LBB0_1:                                # %a
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	copy_local	$push17=, $0
 	tee_local	$push16=, $2=, $pop17
 	i32.const	$push15=, 7
@@ -66,8 +66,8 @@ main:                                   # @main
 	i32.const	$3=, 904
 .LBB1_1:                                # %a.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	copy_local	$push23=, $3
 	tee_local	$push22=, $1=, $pop23
 	i32.const	$push21=, 7
@@ -96,7 +96,7 @@ main:                                   # @main
 	i32.const	$push3=, 127
 	i32.and 	$push4=, $1, $pop3
 	i32.store8	0($pop6), $pop4
-	block
+	block   	
 	i32.const	$push24=, 0
 	i32.load8_u	$push7=, bytes($pop24)
 	i32.const	$push8=, 136
@@ -139,5 +139,5 @@ flag:
 	.size	flag, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

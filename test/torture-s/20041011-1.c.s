@@ -9,7 +9,7 @@ t1:                                     # @t1
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
@@ -20,7 +20,7 @@ t1:                                     # @t1
 	i64.shl 	$2=, $pop1, $pop2
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push68=, 0
 	i32.load	$3=, gvol+4($pop68)
 	i32.const	$push67=, 0
@@ -167,7 +167,7 @@ t2:                                     # @t2
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label2
 # BB#1:                                 # %while.body.preheader
@@ -176,7 +176,7 @@ t2:                                     # @t2
 	i64.extend_u/i32	$2=, $pop0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push67=, 0
 	i32.load	$3=, gvol+4($pop67)
 	i32.const	$push66=, 0
@@ -325,7 +325,7 @@ t3:                                     # @t3
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label4
 # BB#1:                                 # %while.body.preheader
@@ -336,7 +336,7 @@ t3:                                     # @t3
 	i64.shl 	$2=, $pop1, $pop2
 .LBB2_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label5:
+	loop    	                # label5:
 	i32.const	$push68=, 0
 	i32.load	$3=, gvol+4($pop68)
 	i32.const	$push67=, 0
@@ -483,7 +483,7 @@ t4:                                     # @t4
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label6
 # BB#1:                                 # %while.body.preheader
@@ -492,7 +492,7 @@ t4:                                     # @t4
 	i64.extend_u/i32	$2=, $pop0
 .LBB3_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label7:
+	loop    	                # label7:
 	i32.const	$push67=, 0
 	i32.load	$3=, gvol+4($pop67)
 	i32.const	$push66=, 0
@@ -641,7 +641,7 @@ t5:                                     # @t5
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push67=, $0
 	br_if   	0, $pop67       # 0: down to label8
 # BB#1:                                 # %while.body.preheader
@@ -650,7 +650,7 @@ t5:                                     # @t5
 	i64.extend_u/i32	$2=, $pop0
 .LBB4_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label9:
+	loop    	                # label9:
 	i32.const	$push66=, 0
 	i32.load	$3=, gvol+4($pop66)
 	i32.const	$push65=, 0
@@ -797,7 +797,7 @@ t6:                                     # @t6
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push67=, $0
 	br_if   	0, $pop67       # 0: down to label10
 # BB#1:                                 # %while.body.preheader
@@ -807,7 +807,7 @@ t6:                                     # @t6
 	i64.add 	$1=, $pop1, $1
 .LBB5_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label11:
+	loop    	                # label11:
 	i32.const	$push66=, 0
 	i32.load	$2=, gvol+4($pop66)
 	i32.const	$push65=, 0
@@ -953,7 +953,7 @@ t7:                                     # @t7
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label12
 # BB#1:                                 # %while.body.preheader
@@ -965,7 +965,7 @@ t7:                                     # @t7
 	i64.add 	$1=, $pop3, $1
 .LBB6_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label13:
+	loop    	                # label13:
 	i32.const	$push68=, 0
 	i32.load	$2=, gvol+4($pop68)
 	i32.const	$push67=, 0
@@ -1111,7 +1111,7 @@ t8:                                     # @t8
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label14
 # BB#1:                                 # %while.body.preheader
@@ -1123,7 +1123,7 @@ t8:                                     # @t8
 	i64.add 	$1=, $pop3, $1
 .LBB7_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label15:
+	loop    	                # label15:
 	i32.const	$push68=, 0
 	i32.load	$2=, gvol+4($pop68)
 	i32.const	$push67=, 0
@@ -1269,7 +1269,7 @@ t9:                                     # @t9
 	.result 	i64
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label16
 # BB#1:                                 # %while.body.preheader
@@ -1281,7 +1281,7 @@ t9:                                     # @t9
 	i64.add 	$1=, $pop3, $1
 .LBB8_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label17:
+	loop    	                # label17:
 	i32.const	$push68=, 0
 	i32.load	$2=, gvol+4($pop68)
 	i32.const	$push67=, 0
@@ -1427,7 +1427,7 @@ t10:                                    # @t10
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push70=, $0
 	br_if   	0, $pop70       # 0: down to label18
 # BB#1:                                 # %while.body.lr.ph
@@ -1441,7 +1441,7 @@ t10:                                    # @t10
 	i64.mul 	$2=, $pop4, $pop3
 .LBB9_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label19:
+	loop    	                # label19:
 	i32.const	$push69=, 0
 	i32.load	$3=, gvol+4($pop69)
 	i32.const	$push68=, 0
@@ -1586,7 +1586,7 @@ t11:                                    # @t11
 	.result 	i64
 	.local  	i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push70=, $0
 	br_if   	0, $pop70       # 0: down to label20
 # BB#1:                                 # %while.body.lr.ph
@@ -1600,7 +1600,7 @@ t11:                                    # @t11
 	i64.mul 	$2=, $pop4, $pop3
 .LBB10_2:                               # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label21:
+	loop    	                # label21:
 	i32.const	$push69=, 0
 	i32.load	$3=, gvol+4($pop69)
 	i32.const	$push68=, 0
@@ -1762,7 +1762,7 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i64.const	$push0=, 100
 	i64.store	gull($pop1), $pop0
-	block
+	block   	
 	i32.const	$push100=, 3
 	i64.const	$push2=, -1
 	i64.call	$push3=, t1@FUNCTION, $pop100, $pop2
@@ -1972,6 +1972,6 @@ gull:
 	.size	gull, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

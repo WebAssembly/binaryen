@@ -29,8 +29,8 @@ main:                                   # @main
 	i32.sub 	$push35=, $pop27, $pop28
 	tee_local	$push34=, $0=, $pop35
 	i32.store	__stack_pointer($pop29), $pop34
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push33=, 0
 	i32.load8_u	$push0=, i($pop33)
 	i32.eqz 	$push49=, $pop0
@@ -88,7 +88,7 @@ main:                                   # @main
 	i32.const	$push42=, 0
 	i32.const	$push24=, 1
 	i32.store	f+4($pop42), $pop24
-	block
+	block   	
 	i32.const	$push41=, 0
 	i32.load	$push25=, h+4($pop41)
 	br_if   	0, $pop25       # 0: down to label2
@@ -133,5 +133,5 @@ f:
 	.size	f, 20
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

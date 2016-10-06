@@ -7,7 +7,7 @@
 bug:                                    # @bug
 	.param  	i32, i32, i32, i32, i32, f64, i32, i32, i32, i32, f64, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.ne  	$push0=, $11, $0
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -34,5 +34,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -17,7 +17,7 @@ cbrtl:                                  # @cbrtl
 	i64.const	$push0=, 0
 	i64.store	8($pop68), $pop0
 	f64.store	0($6), $0
-	block
+	block   	
 	i64.reinterpret/f64	$push67=, $0
 	tee_local	$push66=, $1=, $pop67
 	i64.const	$push1=, 32
@@ -37,15 +37,15 @@ cbrtl:                                  # @cbrtl
 	return  	$pop70
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	block
+	block   	
 	i32.wrap/i64	$push6=, $1
 	i32.or  	$push7=, $pop6, $3
 	i32.eqz 	$push90=, $pop7
 	br_if   	0, $pop90       # 0: down to label1
 # BB#3:                                 # %if.end13
 	i32.store	4($6), $3
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push8=, 1048575
 	i32.gt_s	$push9=, $3, $pop8
 	br_if   	0, $pop9        # 0: down to label3
@@ -155,5 +155,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

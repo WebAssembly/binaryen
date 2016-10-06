@@ -15,7 +15,7 @@ main:                                   # @main
 	i32.const	$2=, 0
 .LBB0_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push24=, 1000
 	i32.rem_s	$push0=, $2, $pop24
 	i32.const	$push23=, 2
@@ -61,4 +61,4 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

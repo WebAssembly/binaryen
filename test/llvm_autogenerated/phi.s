@@ -5,7 +5,7 @@
 test0:
 	.param  	i32
 	.result 	i32
-	block
+	block   	
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1
@@ -28,7 +28,7 @@ test1:
 	i32.const	$3=, 1
 	i32.const	$4=, 0
 .LBB1_1:
-	loop
+	loop    	
 	copy_local	$1=, $2
 	copy_local	$2=, $3
 	copy_local	$3=, $1

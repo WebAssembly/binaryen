@@ -8,8 +8,8 @@ main:                                   # @main
 	.result 	i32
 	.local  	i64
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push37=, 0
 	i32.load8_u	$push0=, x($pop37)
 	i32.const	$push1=, 7
@@ -98,6 +98,6 @@ x:
 	.size	x, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -19,8 +19,8 @@ first:                                  # @first
 	i32.store	12($3), $2
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
-	block
+	loop    	                # label0:
+	block   	
 	i32.load8_u	$push21=, 0($1)
 	tee_local	$push20=, $2=, $pop21
 	i32.const	$push19=, 105
@@ -45,7 +45,7 @@ first:                                  # @first
 .LBB0_3:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label1:
-	block
+	block   	
 	i32.eqz 	$push24=, $2
 	br_if   	0, $pop24       # 0: down to label2
 # BB#4:                                 # %if.else
@@ -90,8 +90,8 @@ second:                                 # @second
 	i32.store	12($3), $2
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
-	block
+	loop    	                # label3:
+	block   	
 	i32.load8_u	$push21=, 0($1)
 	tee_local	$push20=, $2=, $pop21
 	i32.const	$push19=, 105
@@ -116,7 +116,7 @@ second:                                 # @second
 .LBB1_3:                                # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label4:
-	block
+	block   	
 	i32.eqz 	$push24=, $2
 	br_if   	0, $pop24       # 0: down to label5
 # BB#4:                                 # %if.else
@@ -171,7 +171,7 @@ main:                                   # @main
 	i32.add 	$push14=, $0, $pop13
 	i32.const	$push20=, .L.str.1
 	i32.call	$drop=, second@FUNCTION, $pop14, $pop20, $0
-	block
+	block   	
 	i32.const	$push19=, .L.str.2
 	i32.const	$push15=, 144
 	i32.add 	$push16=, $0, $pop15
@@ -212,7 +212,7 @@ main:                                   # @main
 	.size	.L.str.2, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strlen, i32, i32
 	.functype	strcmp, i32, i32, i32

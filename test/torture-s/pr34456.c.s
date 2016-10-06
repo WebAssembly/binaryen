@@ -56,7 +56,7 @@ compare:                                # @compare
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$2=, 4($0)
-	block
+	block   	
 	i32.load	$push8=, 0($1)
 	tee_local	$push7=, $1=, $pop8
 	i32.eqz 	$push10=, $pop7
@@ -103,5 +103,5 @@ errors:
 	.size	errors, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	qsort, void, i32, i32, i32, i32

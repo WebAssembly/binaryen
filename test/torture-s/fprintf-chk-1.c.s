@@ -16,7 +16,7 @@ __fprintf_chk:                          # @__fprintf_chk
 	i32.sub 	$push11=, $pop3, $pop4
 	tee_local	$push10=, $4=, $pop11
 	i32.store	__stack_pointer($pop5), $pop10
-	block
+	block   	
 	i32.const	$push9=, 0
 	i32.load	$push0=, should_optimize($pop9)
 	br_if   	0, $pop0        # 0: down to label0
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.const	$push89=, .L.str
 	i32.const	$push88=, 0
 	i32.call	$drop=, __fprintf_chk@FUNCTION, $pop90, $1, $pop89, $pop88
-	block
+	block   	
 	i32.const	$push87=, 0
 	i32.load	$push1=, should_optimize($pop87)
 	i32.eqz 	$push200=, $pop1
@@ -445,6 +445,6 @@ should_optimize:
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	vfprintf, i32, i32, i32, i32

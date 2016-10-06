@@ -29,7 +29,7 @@ sort:                                   # @sort
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 5
 	i32.call	$push1=, sort@FUNCTION, $pop0
 	i32.const	$push2=, 1
@@ -47,5 +47,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

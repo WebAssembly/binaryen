@@ -15,7 +15,7 @@ foo:                                    # @foo
 	i32.sub 	$push20=, $pop9, $pop10
 	tee_local	$push19=, $6=, $pop20
 	i32.store	__stack_pointer($pop11), $pop19
-	block
+	block   	
 	i32.eqz 	$push28=, $3
 	br_if   	0, $pop28       # 0: down to label0
 # BB#1:                                 # %for.body.preheader
@@ -23,7 +23,7 @@ foo:                                    # @foo
 	i64.const	$4=, 1
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	call    	__multi3@FUNCTION, $6, $1, $2, $4, $5
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $6, $pop15
@@ -100,5 +100,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -41,58 +41,46 @@
     )
   )
   (func $unreachable_loop_void
-    (block $label$1
-      (loop $label$0
-        (br $label$0)
-      )
+    (loop $label$0
+      (br $label$0)
     )
     (return
       (i32.const 6)
     )
-    (block $label$3
-      (loop $label$2
-        (br $label$2)
-      )
+    (loop $label$1
+      (br $label$1)
     )
   )
   (func $unreachable_loop_i32 (result i32)
     (return
       (i32.const 7)
     )
-    (block $label$1 i32
-      (loop $label$0 i32
-        (br $label$0)
-      )
+    (loop $label$0 i32
+      (br $label$0)
     )
   )
   (func $unreachable_loop_i64 (result i64)
     (return
       (i64.const 8)
     )
-    (block $label$1 i64
-      (loop $label$0 i64
-        (br $label$0)
-      )
+    (loop $label$0 i64
+      (br $label$0)
     )
   )
   (func $unreachable_loop_f32 (result f32)
     (return
       (f32.const 9.5)
     )
-    (block $label$1 f32
-      (loop $label$0 f32
-        (br $label$0)
-      )
+    (loop $label$0 f32
+      (br $label$0)
     )
   )
   (func $unreachable_loop_f64 (result f64)
     (return
       (f64.const 10.5)
     )
-    (block $label$1 f64
-      (loop $label$0 f64
-        (br $label$0)
-      )
+    (loop $label$0 f64
+      (br $label$0)
     )
   )
 )

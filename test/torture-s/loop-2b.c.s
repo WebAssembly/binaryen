@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 2147483647
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -22,7 +22,7 @@ f:                                      # @f
 	i32.add 	$0=, $pop4, $pop5
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push10=, -2
 	i32.store	0($0), $pop10
 	copy_local	$push9=, $2
@@ -73,5 +73,5 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

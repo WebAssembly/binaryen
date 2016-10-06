@@ -46,7 +46,7 @@ bar:                                    # @bar
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
 	i32.store	e($pop14), $pop13
-	block
+	block   	
 	i32.const	$push12=, 0
 	i32.load	$push8=, d($pop12)
 	i32.eqz 	$push30=, $pop8
@@ -100,7 +100,7 @@ baz:                                    # @baz
 	i32.const	$push16=, 0
 	i32.const	$push15=, 0
 	i32.store	e($pop16), $pop15
-	block
+	block   	
 	i32.const	$push14=, 0
 	i32.load	$push8=, d($pop14)
 	i32.eqz 	$push36=, $pop8
@@ -163,7 +163,7 @@ main:                                   # @main
 	i32.const	$push22=, 0
 	i32.const	$push21=, 0
 	i32.store	e($pop22), $pop21
-	block
+	block   	
 	i32.const	$push20=, 0
 	i32.load	$push8=, d($pop20)
 	i32.eqz 	$push44=, $pop8
@@ -185,7 +185,7 @@ main:                                   # @main
 	i32.const	$push40=, 0
 	i32.load	$push13=, b($pop40):p2align=0
 	i32.store	a($pop41), $pop13
-	block
+	block   	
 	i32.const	$push39=, 0
 	i64.load32_u	$push14=, a($pop39)
 	i64.const	$push15=, 33
@@ -256,5 +256,5 @@ b:
 	.size	b, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

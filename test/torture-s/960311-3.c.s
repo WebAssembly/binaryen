@@ -24,7 +24,7 @@ a1:                                     # @a1
 b:                                      # @b
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -37,7 +37,7 @@ b:                                      # @b
 	i32.store	count($pop2), $pop5
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
-	block
+	block   	
 	i32.const	$push6=, 1073741824
 	i32.and 	$push7=, $0, $pop6
 	i32.eqz 	$push21=, $pop7
@@ -51,7 +51,7 @@ b:                                      # @b
 	i32.store	count($pop8), $pop11
 .LBB1_4:                                # %if.end4
 	end_block                       # label1:
-	block
+	block   	
 	i32.const	$push12=, 536870912
 	i32.and 	$push13=, $0, $pop12
 	i32.eqz 	$push22=, $pop13
@@ -97,5 +97,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

@@ -7,7 +7,7 @@
 check:                                  # @check
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.call	$push0=, memcmp@FUNCTION, $0, $1, $2
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -31,7 +31,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push304=, src
 	i32.add 	$push24=, $0, $pop304
 	i32.const	$push303=, 26
@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.load16_u	$push306=, src($pop307)
 	tee_local	$push305=, $0=, $pop306
 	i32.store16	dst($pop308), $pop305
-	block
+	block   	
 	i32.ne  	$push28=, $0, $0
 	br_if   	0, $pop28       # 0: down to label2
 # BB#3:                                 # %check.exit13
@@ -1039,6 +1039,6 @@ dst:
 	.size	dst, 80
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

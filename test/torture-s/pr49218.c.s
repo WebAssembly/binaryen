@@ -18,7 +18,7 @@ main:                                   # @main
 	i32.const	$push26=, 0
 	f32.load	$push0=, f($pop26)
 	call    	__fixsfti@FUNCTION, $4, $pop0
-	block
+	block   	
 	i64.load	$push25=, 0($4)
 	tee_local	$push24=, $2=, $pop25
 	i64.const	$push4=, 10
@@ -35,7 +35,7 @@ main:                                   # @main
 # BB#1:                                 # %do.body.preheader
 .LBB0_2:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i64.const	$push36=, 1
 	i64.add 	$push35=, $2, $pop36
 	tee_local	$push34=, $0=, $pop35
@@ -78,4 +78,4 @@ f:
 	.size	f, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

@@ -20,7 +20,7 @@ main:                                   # @main
 	tee_local	$push7=, $0=, $pop8
 	i32.select	$push6=, $pop5, $pop4, $pop7
 	i32.store	x($pop10), $pop6
-	block
+	block   	
 	i32.eqz 	$push12=, $0
 	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %if.end
@@ -48,6 +48,6 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

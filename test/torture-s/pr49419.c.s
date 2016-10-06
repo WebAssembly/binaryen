@@ -10,8 +10,8 @@ foo:                                    # @foo
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$6=, 0
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, -1
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label1
@@ -19,7 +19,7 @@ foo:                                    # @foo
 	i32.const	$5=, 0
 	i32.const	$push23=, 0
 	i32.load	$4=, t($pop23)
-	block
+	block   	
 	i32.const	$push3=, 1
 	i32.lt_s	$push4=, $3, $pop3
 	br_if   	0, $pop4        # 0: down to label2
@@ -35,7 +35,7 @@ foo:                                    # @foo
 	copy_local	$6=, $0
 .LBB0_4:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push26=, 1
 	i32.add 	$push25=, $5, $pop26
 	tee_local	$push24=, $5=, $pop25
@@ -60,7 +60,7 @@ foo:                                    # @foo
 	i32.eq  	$push16=, $5, $3
 	br_if   	1, $pop16       # 1: down to label0
 # BB#7:                                 # %if.end7
-	block
+	block   	
 	i32.const	$push31=, 1
 	i32.lt_s	$push17=, $5, $pop31
 	br_if   	0, $pop17       # 0: down to label4
@@ -72,7 +72,7 @@ foo:                                    # @foo
 	i32.add 	$6=, $2, $pop19
 .LBB0_9:                                # %for.body10
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label5:
+	loop    	                # label5:
 	i32.const	$push40=, 12
 	i32.mul 	$push20=, $0, $pop40
 	i32.add 	$push39=, $4, $pop20
@@ -132,7 +132,7 @@ main:                                   # @main
 	i32.const	$push38=, 0
 	i32.store	t($pop38), $0
 	i32.const	$3=, 1
-	block
+	block   	
 	i32.load	$push2=, 12($0)
 	i32.const	$push37=, 1
 	i32.ne  	$push3=, $pop2, $pop37
@@ -142,8 +142,8 @@ main:                                   # @main
 	i32.const	$3=, 1
 .LBB1_2:                                # %for.body.i.for.body.i_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label8:
+	block   	
+	loop    	                # label8:
 	i32.const	$push47=, 1
 	i32.add 	$1=, $4, $pop47
 	i32.const	$push46=, 2
@@ -173,9 +173,9 @@ main:                                   # @main
 	i32.add 	$3=, $1, $pop12
 .LBB1_5:                                # %for.end.i
 	end_block                       # label6:
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push13=, 3
 	i32.eq  	$push14=, $3, $pop13
 	br_if   	0, $pop14       # 0: down to label11
@@ -193,7 +193,7 @@ main:                                   # @main
 	i32.const	$push55=, 2
 	i32.store	0($pop56), $pop55
 	i32.const	$5=, 1
-	block
+	block   	
 	i32.const	$push54=, 2
 	i32.lt_s	$push18=, $3, $pop54
 	br_if   	0, $pop18       # 0: down to label12
@@ -203,7 +203,7 @@ main:                                   # @main
 	i32.const	$5=, 1
 .LBB1_9:                                # %for.body10.i.for.body10.i_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label13:
+	loop    	                # label13:
 	i32.const	$push66=, 12
 	i32.mul 	$push19=, $5, $pop66
 	i32.add 	$push65=, $0, $pop19
@@ -266,5 +266,5 @@ t:
 	.size	t, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

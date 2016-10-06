@@ -29,9 +29,9 @@ main:                                   # @main
 	i32.load	$0=, array($pop13)
 .LBB0_1:                                # %for.cond1.preheader
                                         # =>This Inner Loop Header: Depth=1
-	block
-	block
-	loop                            # label2:
+	block   	
+	block   	
+	loop    	                # label2:
 	i32.eq  	$push0=, $0, $9
 	br_if   	1, $pop0        # 1: down to label1
 # BB#2:                                 # %for.cond1.preheader
@@ -112,6 +112,6 @@ array:
 	.size	array, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,22 +7,22 @@
 f:                                      # @f
 	.param  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.ge_s	$push1=, $3, $4
 	br_if   	0, $pop1        # 0: down to label0
 .LBB0_1:                                # %l0
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	br      	0               # 0: up to label1
 .LBB0_2:                                # %if.end.split
 	end_loop
 	end_block                       # label0:
 	i32.const	$4=, 0
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push16=, $3
 	br_if   	0, $pop16       # 0: down to label6
 # BB#3:                                 # %if.end3
@@ -133,7 +133,7 @@ main:                                   # @main
 	i32.const	$push41=, 32
 	i32.add 	$push42=, $1, $pop41
 	call    	f@FUNCTION, $pop45, $pop40, $1, $pop10, $pop9, $pop42
-	block
+	block   	
 	i32.load	$push11=, 12($1)
 	i32.const	$push43=, 32
 	i32.add 	$push44=, $1, $pop43
@@ -208,6 +208,6 @@ main:                                   # @main
 	.size	.Lmain.s, 20
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

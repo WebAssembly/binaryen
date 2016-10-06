@@ -10,7 +10,7 @@ check:                                  # @check
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 1
-	block
+	block   	
 	i32.load	$push0=, 12($0)
 	i32.const	$push1=, 99
 	i32.ne  	$push2=, $pop0, $pop1
@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.load	$push4=, .L.str($pop8):p2align=0
 	i32.store	cell($pop9), $pop4
-	block
+	block   	
 	i32.const	$push6=, cell
 	i32.const	$push5=, .L.str
 	i32.call	$push7=, strcmp@FUNCTION, $pop6, $pop5
@@ -85,7 +85,7 @@ cell:
 	.size	cell, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

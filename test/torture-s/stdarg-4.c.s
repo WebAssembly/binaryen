@@ -187,17 +187,17 @@ f3:                                     # @f3
 	tee_local	$push39=, $2=, $pop40
 	i32.store	__stack_pointer($pop35), $pop39
 	i32.store	12($2), $1
-	block
+	block   	
 	i32.const	$push0=, 4
 	i32.gt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
 	i32.const	$1=, 0
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$0, 4, 0, 1, 3, 2, 4 # 4: down to label1
                                         # 0: down to label5
                                         # 1: down to label4
@@ -298,9 +298,9 @@ f4:                                     # @f4
 	tee_local	$push41=, $4=, $pop42
 	i32.store	__stack_pointer($pop37), $pop41
 	i32.store	12($4), $1
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 5
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label8
@@ -406,7 +406,7 @@ main:                                   # @main
 	i32.const	$push85=, 192
 	i32.add 	$push86=, $0, $pop85
 	call    	f1@FUNCTION, $0, $pop86
-	block
+	block   	
 	i32.const	$push103=, 0
 	i32.load	$push4=, x($pop103)
 	i32.const	$push5=, 176
@@ -588,5 +588,5 @@ y:
 	.size	y, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

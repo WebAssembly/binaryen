@@ -78,7 +78,7 @@ f:                                      # @f
 	i32.const	$push6=, buf
 	i32.const	$push5=, .L.str
 	i32.call	$drop=, sprintf@FUNCTION, $pop6, $pop5, $1
-	block
+	block   	
 	i32.const	$push7=, 227
 	i32.ne  	$push8=, $0, $pop7
 	br_if   	0, $pop8        # 0: down to label0
@@ -135,7 +135,7 @@ buf:
 	.size	.L.str, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	sprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -9,16 +9,16 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.lt_u	$push0=, $3, $4
 	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %if.end.preheader
 	copy_local	$6=, $0
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
-	block
+	loop    	                # label2:
+	block   	
 	i32.load	$push6=, 0($3)
 	tee_local	$push5=, $5=, $pop6
 	i32.ge_u	$push1=, $pop5, $2
@@ -116,6 +116,6 @@ wm_SPB:
 	.size	wm_SPB, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

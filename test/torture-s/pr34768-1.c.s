@@ -61,7 +61,7 @@ main:                                   # @main
 	i32.const	$push3=, 0
 	i32.const	$push0=, 1
 	i32.store	x($pop3), $pop0
-	block
+	block   	
 	i32.const	$push2=, 1
 	i32.call	$push1=, test@FUNCTION, $pop2
 	br_if   	0, $pop1        # 0: down to label0
@@ -86,5 +86,5 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

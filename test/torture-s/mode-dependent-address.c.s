@@ -11,7 +11,7 @@ f883b:                                  # @f883b
 	i32.const	$6=, 0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.add 	$push12=, $0, $6
 	i32.load16_s	$push29=, 0($1)
 	tee_local	$push28=, $5=, $pop29
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.const	$1=, arg3
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push34=, arg4
 	i32.add 	$push0=, $4, $pop34
 	i32.store8	0($pop0), $4
@@ -101,7 +101,7 @@ main:                                   # @main
 	i32.const	$1=, -192
 .LBB1_3:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push50=, arg1+192
 	i32.add 	$push4=, $1, $pop50
 	i32.load16_s	$push49=, 0($pop4)
@@ -142,8 +142,8 @@ main:                                   # @main
 	i32.const	$3=, .Lmain.correct
 .LBB1_5:                                # %for.body10
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label4:
+	block   	
+	loop    	                # label4:
 	i32.const	$push51=, result
 	i32.add 	$push17=, $4, $pop51
 	i32.load8_s	$push18=, 0($pop17)
@@ -320,5 +320,5 @@ result:
 	.size	result, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -12,7 +12,7 @@ g:                                      # @g
 	i64.const	$5=, 0
 	i64.const	$push5=, 0
 	i64.store	0($0), $pop5
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.lt_s	$push2=, $1, $pop1
 	br_if   	0, $pop2        # 0: down to label0
@@ -21,7 +21,7 @@ g:                                      # @g
 	copy_local	$3=, $1
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i64.load32_u	$push4=, 0($2)
 	i64.mul 	$push3=, $5, $4
 	i64.add 	$5=, $pop4, $pop3
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

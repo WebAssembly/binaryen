@@ -16,7 +16,7 @@ check_fa_work:                          # @check_fa_work
 	tee_local	$push17=, $2=, $pop18
 	i32.const	$push0=, 0
 	i32.store8	15($pop17), $pop0
-	block
+	block   	
 	i32.const	$push11=, 15
 	i32.add 	$push12=, $2, $pop11
 	i32.le_u	$push1=, $pop12, $0
@@ -114,7 +114,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.call	$push0=, check_fa@FUNCTION, $0
 	i32.eqz 	$push2=, $pop0
 	br_if   	0, $pop2        # 0: down to label1
@@ -130,5 +130,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

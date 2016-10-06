@@ -9,7 +9,7 @@ bar:                                    # @bar
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push5=, 0($1)
 	tee_local	$push4=, $2=, $pop5
 	i32.load	$push0=, 4($1)
@@ -38,7 +38,7 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push5=, 0($0)
 	tee_local	$push4=, $2=, $pop5
 	i32.load	$push1=, 4($0)
@@ -101,6 +101,6 @@ main:                                   # @main
 	.size	.Lmain.t, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

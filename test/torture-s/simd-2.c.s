@@ -7,7 +7,7 @@
 verify:                                 # @verify
 	.param  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.ne  	$push0=, $0, $4
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %entry
@@ -887,6 +887,6 @@ res:
 	.size	res, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

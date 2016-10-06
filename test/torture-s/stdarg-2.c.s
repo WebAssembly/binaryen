@@ -15,10 +15,10 @@ foo:                                    # @foo
 	i32.sub 	$push50=, $pop39, $pop40
 	tee_local	$push49=, $2=, $pop50
 	i32.store	__stack_pointer($pop41), $pop49
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 11
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label3
@@ -118,8 +118,8 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 16386
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label5
@@ -194,8 +194,8 @@ f2:                                     # @f2
 # BB#0:                                 # %entry
 	i32.const	$push15=, 0
 	i32.store	gap($pop15), $1
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 16386
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label7
@@ -280,8 +280,8 @@ f4:                                     # @f4
 	tee_local	$push22=, $3=, $pop23
 	i32.store	__stack_pointer($pop18), $pop22
 	i32.store	16($3), $1
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 16386
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label9
@@ -345,10 +345,10 @@ f5:                                     # @f5
 	tee_local	$push49=, $2=, $pop50
 	i32.store	__stack_pointer($pop41), $pop49
 	i32.store	48($2), $1
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 11
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label13
@@ -481,8 +481,8 @@ f7:                                     # @f7
 	tee_local	$push22=, $3=, $pop23
 	i32.store	__stack_pointer($pop18), $pop22
 	i32.store	4($3), $1
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 16386
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label15
@@ -546,10 +546,10 @@ f8:                                     # @f8
 	tee_local	$push49=, $2=, $pop50
 	i32.store	__stack_pointer($pop41), $pop49
 	i32.store	36($2), $1
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 11
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label19
@@ -686,8 +686,8 @@ f11:                                    # @f11
 	i32.const	$push1=, 12
 	i32.add 	$push0=, $3, $pop1
 	i32.store	0($pop0), $1
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push2=, 16386
 	i32.ne  	$push3=, $0, $pop2
 	br_if   	0, $pop3        # 0: down to label21
@@ -753,10 +753,10 @@ f12:                                    # @f12
 	i32.const	$push1=, 44
 	i32.add 	$push0=, $2, $pop1
 	i32.store	0($pop0), $1
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push2=, 11
 	i32.eq  	$push3=, $0, $pop2
 	br_if   	0, $pop3        # 0: down to label25
@@ -868,7 +868,7 @@ main:                                   # @main
 	i32.const	$push58=, 160
 	i32.add 	$push59=, $0, $pop58
 	call    	f1@FUNCTION, $0, $pop59
-	block
+	block   	
 	i32.const	$push75=, 0
 	i32.load	$push1=, x($pop75)
 	i32.const	$push74=, 79
@@ -1060,5 +1060,5 @@ d:
 	.size	d, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

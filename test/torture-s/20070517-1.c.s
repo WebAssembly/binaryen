@@ -8,8 +8,8 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.call	$push12=, get_kind@FUNCTION
 	tee_local	$push11=, $0=, $pop12
 	i32.const	$push0=, 10
@@ -60,5 +60,5 @@ get_kind:                               # @get_kind
 	.size	get_kind, .Lfunc_end1-get_kind
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

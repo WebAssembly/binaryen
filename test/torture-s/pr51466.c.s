@@ -86,7 +86,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push0=, 3
 	i32.call	$drop=, foo@FUNCTION, $pop0
-	block
+	block   	
 	i32.const	$push1=, 2
 	i32.call	$push2=, bar@FUNCTION, $pop1
 	i32.const	$push12=, 8
@@ -116,5 +116,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

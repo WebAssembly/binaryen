@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.store16	0($pop20), $pop53
 	i64.const	$push52=, 0
 	i64.store	10($0):p2align=1, $pop52
-	block
+	block   	
 	i32.const	$push47=, 64
 	i32.add 	$push48=, $0, $pop47
 	i32.const	$push51=, 30
@@ -125,6 +125,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

@@ -136,7 +136,7 @@ main:                                   # @main
 	f64.const	$push18=, 0x1p0
 	i32.const	$push17=, 2
 	i32.call	$drop=, va@FUNCTION, $pop19, $pop18, $pop17, $0
-	block
+	block   	
 	i32.const	$push21=, .L.str.1
 	i32.const	$push20=, buf
 	i32.call	$push22=, strcmp@FUNCTION, $pop21, $pop20
@@ -174,7 +174,7 @@ buf:
 	.size	.L.str.1, 45
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

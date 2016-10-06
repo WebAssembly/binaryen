@@ -9,8 +9,8 @@ create_array_type:                      # @create_array_type
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push51=, $0
 	br_if   	0, $pop51       # 0: down to label1
 # BB#1:                                 # %if.end
@@ -21,7 +21,7 @@ create_array_type:                      # @create_array_type
 	i32.mul 	$push3=, $pop1, $pop2
 	i32.store	0($0), $pop3
 	i32.const	$7=, 0
-	block
+	block   	
 	i32.load	$push26=, 4($0)
 	tee_local	$push25=, $1=, $pop26
 	i32.eqz 	$push52=, $pop25
@@ -45,7 +45,7 @@ create_array_type:                      # @create_array_type
 	i32.add 	$push39=, $3, $pop40
 	tee_local	$push38=, $3=, $pop39
 	i32.store	0($7), $pop38
-	block
+	block   	
 	i32.const	$push9=, 12
 	i32.add 	$push37=, $1, $pop9
 	tee_local	$push36=, $4=, $pop37
@@ -171,6 +171,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,7 +7,7 @@
 f1:                                     # @f1
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -214748365
 	i32.mul 	$push1=, $0, $pop0
 	i32.const	$push2=, 2147483646
@@ -30,7 +30,7 @@ f1:                                     # @f1
 f2:                                     # @f2
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 214748365
 	i32.mul 	$push1=, $0, $pop0
 	i32.const	$push2=, 2147483646
@@ -53,7 +53,7 @@ f2:                                     # @f2
 f3:                                     # @f3
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -214748365
 	i32.mul 	$push1=, $0, $pop0
 	i32.const	$push2=, 2147483646
@@ -76,7 +76,7 @@ f3:                                     # @f3
 f4:                                     # @f4
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 214748365
 	i32.mul 	$push1=, $0, $pop0
 	i32.const	$push2=, 2147483646
@@ -114,5 +114,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

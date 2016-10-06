@@ -196,7 +196,7 @@ main:                                   # @main
 	i32.const	$push55=, 24
 	i32.add 	$push56=, $8, $pop55
 	call_indirect	$3, $pop54, $pop56, $2, $0, $8
-	block
+	block   	
 	i32.const	$push57=, 144
 	i32.add 	$push58=, $8, $pop57
 	i32.const	$push59=, out
@@ -420,7 +420,7 @@ fp:
 	.size	fp, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcpy, i32, i32, i32
 	.functype	strcmp, i32, i32, i32

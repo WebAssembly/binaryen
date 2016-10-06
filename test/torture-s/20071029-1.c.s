@@ -17,8 +17,8 @@ test:                                   # @test
 	i32.add 	$push17=, $pop18, $pop1
 	tee_local	$push16=, $1=, $pop17
 	i32.store	test.i($pop0), $pop16
-	block
-	block
+	block   	
+	block   	
 	i32.ne  	$push2=, $3, $2
 	br_if   	0, $pop2        # 0: down to label1
 # BB#1:                                 # %if.end
@@ -93,7 +93,7 @@ foo:                                    # @foo
 	i32.or  	$1=, $pop6, $pop0
 .LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.store	8($2), $0
 	i32.const	$push14=, 0
 	i32.const	$push13=, 52
@@ -132,6 +132,6 @@ test.i:
 	.size	test.i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

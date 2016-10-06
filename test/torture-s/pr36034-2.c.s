@@ -139,7 +139,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	call    	test@FUNCTION
-	block
+	block   	
 	i32.const	$push62=, 0
 	f64.load	$push29=, tmp($pop62)
 	f64.const	$push61=, -0x1p0
@@ -398,5 +398,5 @@ tmp:
 	.size	tmp, 240
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

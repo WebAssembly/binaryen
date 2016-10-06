@@ -42,7 +42,7 @@ f0:                                     # @f0
 	i32.const	$push0=, 1
 	i32.add 	$push1=, $pop6, $pop0
 	i32.store	f0.washere($pop9), $pop1
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push13=, 0
@@ -74,7 +74,7 @@ f0:                                     # @f0
 test:                                   # @test
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 0
 	i32.load	$push8=, i($pop0)
 	tee_local	$push7=, $0=, $pop8
@@ -137,6 +137,6 @@ f0.washere:
 	.size	f0.washere, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

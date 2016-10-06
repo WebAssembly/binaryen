@@ -8,7 +8,7 @@ f:                                      # @f
 	.param  	i32, i32, i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.gt_s	$push0=, $2, $3
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
@@ -24,7 +24,7 @@ f:                                      # @f
 	i32.const	$1=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$push5=, 0($2)
 	i32.const	$push21=, -4
 	i32.add 	$push3=, $2, $pop21
@@ -73,7 +73,7 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
 	call    	f@FUNCTION, $pop18, $pop2, $pop1, $pop0
-	block
+	block   	
 	i32.load	$push4=, 4($0)
 	i32.const	$push3=, 3
 	i32.ne  	$push5=, $pop4, $pop3
@@ -113,6 +113,6 @@ b:
 	.size	b, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

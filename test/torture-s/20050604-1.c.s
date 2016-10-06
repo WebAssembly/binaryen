@@ -118,7 +118,7 @@ main:                                   # @main
 	f32.add 	$push32=, $pop13, $pop33
 	tee_local	$push31=, $5=, $pop32
 	f32.store	v($pop34), $pop31
-	block
+	block   	
 	i32.const	$push30=, 65535
 	i32.and 	$push14=, $2, $pop30
 	i32.const	$push29=, 24
@@ -181,5 +181,5 @@ v:
 	.size	v, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

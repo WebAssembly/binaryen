@@ -27,7 +27,7 @@ foo:                                    # @foo
 	i32.or  	$push16=, $pop8, $pop6
 	tee_local	$push15=, $6=, $pop16
 	i32.store	4($0), $pop15
-	block
+	block   	
 	i32.const	$push10=, 2
 	i32.lt_s	$push11=, $2, $pop10
 	br_if   	0, $pop11       # 0: down to label0
@@ -40,7 +40,7 @@ foo:                                    # @foo
 	i32.add 	$2=, $5, $pop22
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$push12=, 0($3)
 	i32.load	$push13=, 0($pop12)
 	i32.add 	$push30=, $pop13, $2
@@ -117,7 +117,7 @@ main:                                   # @main
 	i32.const	$push13=, 65
 	i32.const	$push12=, 2
 	call    	foo@FUNCTION, $pop31, $pop13, $pop12, $0
-	block
+	block   	
 	i32.load	$push14=, 20($0)
 	i32.const	$push32=, 1434451954
 	i32.ne  	$push15=, $pop14, $pop32
@@ -156,5 +156,5 @@ main:                                   # @main
 	.size	.Lmain.e, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

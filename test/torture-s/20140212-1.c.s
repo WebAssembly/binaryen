@@ -35,9 +35,9 @@ fn1:                                    # @fn1
 	i32.load	$3=, d($pop7)
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
-	block
-	block
+	loop    	                # label0:
+	block   	
+	block   	
 	i32.eqz 	$push30=, $3
 	br_if   	0, $pop30       # 0: down to label2
 # BB#2:                                 # %if.then
@@ -107,9 +107,9 @@ main:                                   # @main
 	i32.const	$4=, 0
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
-	block
-	block
+	loop    	                # label3:
+	block   	
+	block   	
 	i32.eqz 	$push32=, $2
 	br_if   	0, $pop32       # 0: down to label5
 # BB#2:                                 # %if.then.i
@@ -143,7 +143,7 @@ main:                                   # @main
 	i32.const	$push5=, 147
 	i32.mul 	$push6=, $1, $pop5
 	i32.store8	g($pop28), $pop6
-	block
+	block   	
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $4, $pop7
 	br_if   	0, $pop8        # 0: down to label6
@@ -256,5 +256,5 @@ h:
 	.size	h, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -10,7 +10,7 @@ Sum:                                    # @Sum
 	.local  	i32, i32, i64
 # BB#0:                                 # %entry
 	i64.const	$3=, 0
-	block
+	block   	
 	i32.load	$push7=, 0($0):p2align=0
 	tee_local	$push6=, $1=, $pop7
 	i32.const	$push5=, 1
@@ -23,7 +23,7 @@ Sum:                                    # @Sum
 	i32.const	$2=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i64.load	$push3=, 0($0):p2align=0
 	i64.add 	$3=, $pop3, $3
 	i32.const	$push11=, 30
@@ -53,7 +53,7 @@ Sum2:                                   # @Sum2
 	.local  	i32, i32, i64
 # BB#0:                                 # %entry
 	i64.const	$3=, 0
-	block
+	block   	
 	i32.load	$push7=, 0($0):p2align=0
 	tee_local	$push6=, $1=, $pop7
 	i32.const	$push5=, 1
@@ -66,7 +66,7 @@ Sum2:                                   # @Sum2
 	i32.const	$2=, 0
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i64.load	$push3=, 0($0):p2align=0
 	i64.add 	$3=, $pop3, $3
 	i32.const	$push11=, 30
@@ -116,7 +116,7 @@ main:                                   # @main
 	i64.store	48($0):p2align=0, $pop16
 	i64.const	$push15=, 4311810305
 	i64.store	78($0):p2align=0, $pop15
-	block
+	block   	
 	i64.call	$push9=, Sum@FUNCTION, $0
 	i64.const	$push14=, 4311811859
 	i64.ne  	$push10=, $pop9, $pop14
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	malloc, i32, i32
 	.functype	abort, void

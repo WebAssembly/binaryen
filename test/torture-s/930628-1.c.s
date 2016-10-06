@@ -8,7 +8,7 @@ f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eq  	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -33,9 +33,9 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB1_1:                                # %for.cond4.preheader
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label2:
-	block
+	block   	
+	loop    	                # label2:
+	block   	
 	i32.eqz 	$push25=, $0
 	br_if   	0, $pop25       # 0: down to label3
 # BB#2:                                 # %for.cond15.preheader
@@ -59,8 +59,8 @@ main:                                   # @main
 	i32.const	$1=, 1
 .LBB1_5:                                # %for.cond4.preheader.1
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
-	block
+	loop    	                # label4:
+	block   	
 	i32.eqz 	$push27=, $0
 	br_if   	0, $pop27       # 0: down to label5
 # BB#6:                                 # %for.cond15.preheader.1
@@ -84,8 +84,8 @@ main:                                   # @main
 	i32.const	$0=, 0
 .LBB1_9:                                # %for.cond4.preheader.2
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label6:
-	block
+	loop    	                # label6:
+	block   	
 	i32.eqz 	$push29=, $0
 	br_if   	0, $pop29       # 0: down to label7
 # BB#10:                                # %for.cond15.preheader.2
@@ -109,8 +109,8 @@ main:                                   # @main
 	i32.const	$0=, 0
 .LBB1_13:                               # %for.cond4.preheader.3
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label8:
-	block
+	loop    	                # label8:
+	block   	
 	i32.eqz 	$push31=, $0
 	br_if   	0, $pop31       # 0: down to label9
 # BB#14:                                # %for.cond15.preheader.3
@@ -142,6 +142,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

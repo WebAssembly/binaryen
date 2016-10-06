@@ -20,7 +20,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push0=, 100
 	i32.call	$1=, memset@FUNCTION, $3, $pop64, $pop0
 	i32.const	$3=, 0
-	block
+	block   	
 	i32.eqz 	$push116=, $0
 	br_if   	0, $pop116      # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
@@ -35,7 +35,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #     Child Loop BB0_3 Depth 2
                                         #       Child Loop BB0_6 Depth 3
                                         #     Child Loop BB0_19 Depth 2
-	loop                            # label1:
+	loop    	                # label1:
 	copy_local	$push73=, $0
 	tee_local	$push72=, $3=, $pop73
 	i32.const	$push71=, 32
@@ -49,11 +49,11 @@ sort_pagelist:                          # @sort_pagelist
                                         #   Parent Loop BB0_2 Depth=1
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB0_6 Depth 3
-	block
-	block
-	block
-	block
-	loop                            # label6:
+	block   	
+	block   	
+	block   	
+	block   	
+	loop    	                # label6:
 	i32.const	$push78=, 2
 	i32.shl 	$push1=, $6, $pop78
 	i32.add 	$push77=, $1, $pop1
@@ -69,9 +69,9 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push56=, 112
 	i32.add 	$push57=, $1, $pop56
 	copy_local	$7=, $pop57
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push118=, $3
 	br_if   	0, $pop118      # 0: down to label9
 # BB#5:                                 # %while.body.i.preheader
@@ -83,9 +83,9 @@ sort_pagelist:                          # @sort_pagelist
                                         #   Parent Loop BB0_2 Depth=1
                                         #     Parent Loop BB0_3 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	loop                            # label10:
-	block
-	block
+	loop    	                # label10:
+	block   	
+	block   	
 	i32.load	$push3=, 4($8)
 	i32.load	$push2=, 4($3)
 	i32.ge_u	$push4=, $pop3, $pop2
@@ -115,7 +115,7 @@ sort_pagelist:                          # @sort_pagelist
 .LBB0_9:                                # %if.end.i
                                         #   in Loop: Header=BB0_6 Depth=3
 	end_block                       # label11:
-	block
+	block   	
 	i32.const	$push84=, 0
 	i32.load	$push9=, 0($2)
 	i32.load	$push10=, 0($pop9)
@@ -184,9 +184,9 @@ sort_pagelist:                          # @sort_pagelist
 .LBB0_19:                               # %while.body.i84
                                         #   Parent Loop BB0_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label14:
-	block
-	block
+	loop    	                # label14:
+	block   	
+	block   	
 	i32.load	$push16=, 4($8)
 	i32.load	$push15=, 4($3)
 	i32.ge_u	$push17=, $pop16, $pop15
@@ -266,7 +266,7 @@ sort_pagelist:                          # @sort_pagelist
 .LBB0_30:                               # %for.body17
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_33 Depth 2
-	loop                            # label17:
+	loop    	                # label17:
 	i32.const	$push104=, 2
 	i32.shl 	$push27=, $4, $pop104
 	i32.add 	$push28=, $1, $pop27
@@ -278,8 +278,8 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push50=, 112
 	i32.add 	$push51=, $1, $pop50
 	copy_local	$7=, $pop51
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push123=, $3
 	br_if   	0, $pop123      # 0: down to label19
 # BB#31:                                # %for.body17
@@ -294,9 +294,9 @@ sort_pagelist:                          # @sort_pagelist
 .LBB0_33:                               # %while.body.i54
                                         #   Parent Loop BB0_30 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label20:
-	block
-	block
+	loop    	                # label20:
+	block   	
+	block   	
 	i32.load	$push30=, 4($3)
 	i32.load	$push29=, 4($8)
 	i32.ge_u	$push31=, $pop30, $pop29
@@ -419,7 +419,7 @@ main:                                   # @main
 	i32.add 	$push23=, $1, $pop22
 	i32.const	$push37=, 0
 	i32.store	0($pop23), $pop37
-	block
+	block   	
 	i32.call	$push36=, sort_pagelist@FUNCTION, $1
 	tee_local	$push35=, $0=, $pop36
 	i32.const	$push34=, 32
@@ -461,5 +461,5 @@ vx:
 	.size	vx, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

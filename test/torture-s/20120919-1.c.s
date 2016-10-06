@@ -7,7 +7,7 @@
 init:                                   # @init
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.then
 	i32.const	$push0=, 0
@@ -41,7 +41,7 @@ main:                                   # @main
 	i32.const	$push19=, 16
 	i32.add 	$push20=, $7, $pop19
 	call    	init@FUNCTION, $pop18, $pop20
-	block
+	block   	
 	i32.load	$push23=, 12($7)
 	tee_local	$push22=, $0=, $pop23
 	i32.const	$push21=, 0
@@ -56,8 +56,8 @@ main:                                   # @main
 	i32.const	$5=, 0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
-	block
+	loop    	                # label2:
+	block   	
 	br_if   	0, $6           # 0: down to label3
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB1_2 Depth=1
@@ -142,5 +142,5 @@ pi:
 	.size	pi, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

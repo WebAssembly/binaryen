@@ -23,7 +23,7 @@ g2:                                     # @g2
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -559038737
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -47,7 +47,7 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push4=, 0
 	i32.load	$push1=, parsefile($pop4)
 	i32.load	$push3=, 0($pop1)
@@ -126,6 +126,6 @@ filler:
 	.size	filler, 522240
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

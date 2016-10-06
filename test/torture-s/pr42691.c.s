@@ -9,8 +9,8 @@ add:                                    # @add
 	.result 	i32
 	.local  	f64, f64
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	f64.load	$push8=, 0($1)
 	tee_local	$push7=, $3=, $pop8
 	f64.load	$push6=, 0($0)
@@ -22,7 +22,7 @@ add:                                    # @add
 	i32.add 	$1=, $1, $pop9
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	f64.const	$push10=, infinity
 	f64.ne  	$push2=, $3, $pop10
 	br_if   	2, $pop2        # 2: down to label0
@@ -71,8 +71,8 @@ main:                                   # @main
 	f64.const	$1=, infinity
 .LBB1_1:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label4:
+	block   	
+	loop    	                # label4:
 	f64.const	$push16=, infinity
 	f64.ne  	$push3=, $1, $pop16
 	br_if   	1, $pop3        # 1: down to label3
@@ -102,5 +102,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

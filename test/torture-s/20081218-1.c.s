@@ -43,8 +43,8 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.call	$push1=, foo@FUNCTION
 	i32.const	$push0=, 640034342
 	i32.ne  	$push2=, $pop1, $pop0
@@ -53,9 +53,9 @@ main:                                   # @main
 	i32.const	$0=, 0
 .LBB2_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	block
-	loop                            # label4:
+	block   	
+	block   	
+	loop    	                # label4:
 	i32.const	$push17=, a
 	i32.add 	$push3=, $0, $pop17
 	i32.load8_u	$push4=, 0($pop3)
@@ -85,7 +85,7 @@ main:                                   # @main
 	i32.store	a+4($pop23), $pop10
 .LBB2_6:                                # %for.body13
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label5:
+	loop    	                # label5:
 	i32.const	$push25=, a
 	i32.add 	$push11=, $0, $pop25
 	i32.load8_u	$push12=, 0($pop11)
@@ -134,5 +134,5 @@ a:
 	.size	a, 520
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

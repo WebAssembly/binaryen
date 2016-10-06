@@ -35,7 +35,7 @@ bar:                                    # @bar
 	i32.load	$0=, cp($pop15)
 .LBB1_1:                                # %top
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i64.const	$push19=, 1
 	i64.store	0($0), $pop19
 	i32.const	$push18=, 0
@@ -125,5 +125,5 @@ main.r:
 	.size	main.r, 512
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

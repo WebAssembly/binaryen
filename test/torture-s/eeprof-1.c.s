@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 0
 	i32.load	$push1=, last_fn_entered($pop0)
 	i32.const	$push2=, foo@FUNCTION
@@ -28,7 +28,7 @@ foo:                                    # @foo
 	.type	nfoo,@function
 nfoo:                                   # @nfoo
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push19=, 0
 	i32.load	$push1=, entry_calls($pop19)
 	i32.const	$push18=, 2
@@ -94,7 +94,7 @@ nfoo:                                   # @nfoo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push21=, 0
 	i32.load	$push1=, exit_calls($pop21)
 	i32.const	$push20=, 0
@@ -200,7 +200,7 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	.type	foo2,@function
 foo2:                                   # @foo2
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push17=, 0
 	i32.load	$push1=, entry_calls($pop17)
 	i32.const	$push2=, 1
@@ -288,5 +288,5 @@ last_fn_exited:
 	.size	last_fn_exited, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

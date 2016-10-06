@@ -22,7 +22,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push4=, 0
 	i32.load	$push0=, g($pop4)
 	i32.eqz 	$push19=, $pop0
@@ -52,7 +52,7 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.store	e($pop7), $pop6
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label1
 # BB#3:                                 # %if.end16
 	i32.const	$push3=, 0
@@ -146,5 +146,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

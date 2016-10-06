@@ -32,7 +32,7 @@ perform_access_checks:                  # @perform_access_checks
 pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push11=, 0
 	i32.load	$push10=, deferred_access_no_check($pop11)
 	tee_local	$push9=, $0=, $pop10
@@ -46,8 +46,8 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	return
 .LBB2_2:                                # %if.else
 	end_block                       # label0:
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push15=, 0
 	i32.load	$push14=, deferred_access_stack($pop15)
 	tee_local	$push13=, $0=, $pop14
@@ -138,6 +138,6 @@ deferred_access_stack:
 	.size	deferred_access_stack, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	__builtin_malloc, i32

@@ -31,7 +31,7 @@ main:                                   # @main
 	i32.store	a($pop16), $pop0
 	i32.const	$push15=, 0
 	i32.load16_u	$0=, e($pop15)
-	block
+	block   	
 	i32.const	$push14=, 0
 	i32.load	$push1=, c($pop14)
 	i32.eqz 	$push22=, $pop1
@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.const	$push20=, 16
 	i32.shr_s	$push5=, $pop4, $pop20
 	i32.store	d($pop21), $pop5
-	block
+	block   	
 	i64.extend_u/i32	$push6=, $0
 	i64.const	$push7=, 48
 	i64.shl 	$push8=, $pop6, $pop7
@@ -108,6 +108,6 @@ d:
 	.size	d, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

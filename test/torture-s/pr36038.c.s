@@ -7,7 +7,7 @@
 doit:                                   # @doit
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push19=, 0
 	i32.load	$push18=, markstack_ptr($pop19)
 	tee_local	$push17=, $0=, $pop18
@@ -35,7 +35,7 @@ doit:                                   # @doit
 	i32.add 	$1=, $1, $pop11
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.add 	$push12=, $2, $0
 	i32.const	$push27=, 16
 	i32.add 	$push13=, $pop12, $pop27
@@ -104,7 +104,7 @@ main:                                   # @main
 	i32.const	$push18=, 0
 	i64.const	$push17=, 4
 	i64.store	list+40($pop18), $pop17
-	block
+	block   	
 	i32.const	$push15=, expect
 	i32.const	$push14=, list
 	i32.const	$push13=, 80
@@ -176,6 +176,6 @@ indices:
 	.size	indices, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

@@ -20,7 +20,7 @@ vafunction:                             # @vafunction
 	i32.add 	$push45=, $1, $pop0
 	tee_local	$push44=, $2=, $pop45
 	i32.store	12($4), $pop44
-	block
+	block   	
 	i32.load	$push1=, 0($1)
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
@@ -150,6 +150,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

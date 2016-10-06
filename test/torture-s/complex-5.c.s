@@ -66,7 +66,7 @@ main:                                   # @main
 	f32.load	$push8=, 12($4)
 	f32.add 	$push9=, $2, $pop8
 	f32.store	y+4($pop23), $pop9
-	block
+	block   	
 	i32.const	$push22=, 0
 	f32.load	$push11=, z($pop22)
 	i32.const	$push21=, 0
@@ -132,7 +132,7 @@ z:
 	.size	z, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	__divsc3, void, i32, f32, f32, f32, f32
 	.functype	abort, void
 	.functype	exit, void, i32

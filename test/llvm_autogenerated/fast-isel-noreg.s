@@ -16,7 +16,7 @@ a:
 	.type	b,@function
 b:
 	.result 	i32
-	block
+	block   	
 	i32.const	$push0=, 1
 	br_if   	0, $pop0
 	unreachable

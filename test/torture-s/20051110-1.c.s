@@ -8,7 +8,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.param  	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -516
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 2
@@ -20,7 +20,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	i32.const	$2=, bytes
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push13=, 128
 	i32.or  	$push4=, $0, $pop13
 	i32.const	$push12=, 127
@@ -67,4 +67,4 @@ bytes:
 	.size	bytes, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

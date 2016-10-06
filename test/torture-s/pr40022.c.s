@@ -36,12 +36,12 @@ bar:                                    # @bar
 	i32.call	$push2=, foo@FUNCTION, $1
 	tee_local	$push1=, $1=, $pop2
 	i32.store	0($0), $pop1
-	block
+	block   	
 	i32.eqz 	$push9=, $1
 	br_if   	0, $pop9        # 0: down to label0
 .LBB1_1:                                # %while.cond.while.cond_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	copy_local	$0=, $1
 	i32.load	$push4=, 0($1)
 	tee_local	$push3=, $4=, $pop4
@@ -53,12 +53,12 @@ bar:                                    # @bar
 	i32.call	$push6=, foo@FUNCTION, $2
 	tee_local	$push5=, $1=, $pop6
 	i32.store	0($0), $pop5
-	block
+	block   	
 	i32.eqz 	$push10=, $1
 	br_if   	0, $pop10       # 0: down to label2
 .LBB1_3:                                # %while.cond2.while.cond2_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	copy_local	$0=, $1
 	i32.load	$push8=, 0($1)
 	tee_local	$push7=, $4=, $pop8
@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.const	$push2=, f
 	i32.const	$push10=, 0
 	call    	bar@FUNCTION, $pop4, $pop3, $pop2, $pop10
-	block
+	block   	
 	i32.const	$push9=, 0
 	i32.load	$push8=, d($pop9)
 	tee_local	$push7=, $0=, $pop8
@@ -157,5 +157,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

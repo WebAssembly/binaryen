@@ -13,9 +13,9 @@ f:                                      # @f
 	i32.const	$push11=, 0
 	i32.store	errflag($pop0), $pop11
 	i64.add 	$2=, $1, $0
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i64.const	$push10=, 0
 	i64.lt_s	$push1=, $0, $pop10
 	br_if   	0, $pop1        # 0: down to label2
@@ -78,5 +78,5 @@ errflag:
 	.size	errflag, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
