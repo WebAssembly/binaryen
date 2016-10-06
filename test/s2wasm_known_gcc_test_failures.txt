@@ -14,11 +14,3 @@ vfprintf-chk-1.c.s
 
 # Call has wrong number of parameters for function declaration.
 pr44942.c.s
-
-# New in 0xc:
-# return type check failures
-pr17133.c.s
-pr24716.c.s
-pr34415.c.s
-pr38051.c.s
-pr55875.c.s
