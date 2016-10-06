@@ -32,7 +32,12 @@ Binaryen's internal IR is an AST, designed to be
  * **Flexible and fast** for optimization.
  * **As close as possible to WebAssembly** so it is simple and fast to convert it to and from WebAssembly.
 
-Binaryen IR is essentially a subset of WebAssembly, [everything but some stack machine specific things that are cumbersome to represent in an AST](https://github.com/WebAssembly/binaryen/issues/663). (In particular, that means that if you use Binaryen to load WebAssembly that contains such stack machine specific code, it might be transformed a little, and when emitted you will not necessarily get the same thing you started out with.)
+The differences between Binaryen IR and WebAssembly are:
+
+ * Binaryen IR [is an AST](https://github.com/WebAssembly/binaryen/issues/663). This differs from the WebAssembly binary format which is a stack machine.
+ * Binaryen IR requires the names of blocks and loops to be unique. This differs from the WebAssembly s-expression format which allows duplicate names (and depends on scoping to disambiguate).
+
+As a result, you might notice that round-trip conversions (wasm => Binaryen IR => wasm) change code a little in some corner cases.
 
 ## Tools
 
