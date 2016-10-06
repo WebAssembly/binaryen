@@ -230,6 +230,9 @@ public:
       }
     }
   }
+  void visitGetLocal(GetLocal* curr) {
+    shouldBeTrue(isConcreteWasmType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
+  }
   void visitSetLocal(SetLocal *curr) {
     shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "set_local index must be small enough");
     if (curr->value->type != unreachable) {
