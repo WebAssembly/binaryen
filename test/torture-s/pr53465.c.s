@@ -24,19 +24,19 @@ foo:                                    # @foo
 	i32.load	$push5=, 0($0)
 	tee_local	$push4=, $4=, $pop5
 	i32.eqz 	$push10=, $pop4
-	br_if   	1, $pop10       # 1: down to label3
+	br_if   	1, $pop10       # 1: down to label1
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	block
 	i32.eqz 	$push11=, $5
-	br_if   	0, $pop11       # 0: down to label4
+	br_if   	0, $pop11       # 0: down to label3
 # BB#4:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.le_s	$push1=, $4, $2
-	br_if   	4, $pop1        # 4: down to label0
+	br_if   	3, $pop1        # 3: down to label0
 .LBB0_5:                                # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push9=, 4
 	i32.add 	$0=, $0, $pop9
 	i32.const	$5=, 1
@@ -46,7 +46,7 @@ foo:                                    # @foo
 	i32.lt_s	$push2=, $pop6, $1
 	br_if   	0, $pop2        # 0: up to label2
 .LBB0_6:                                # %for.end
-	end_loop                        # label3:
+	end_loop
 	end_block                       # label1:
 	return
 .LBB0_7:                                # %if.then3
@@ -71,5 +71,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

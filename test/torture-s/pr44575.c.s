@@ -32,7 +32,7 @@ check:                                  # @check
 	i32.or  	$push3=, $pop2, $2
 	i32.const	$push15=, 18
 	i32.ne  	$push4=, $pop3, $pop15
-	br_if   	0, $pop4        # 0: down to label4
+	br_if   	0, $pop4        # 0: down to label3
 # BB#2:                                 # %land.lhs.true
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.load	$push21=, 12($5)
@@ -44,16 +44,16 @@ check:                                  # @check
 	i32.load	$1=, fails($pop18)
 	f32.load	$push6=, 8($4)
 	f32.ne  	$push7=, $3, $pop6
-	br_if   	1, $pop7        # 1: down to label3
-	br      	2               # 2: down to label2
+	br_if   	1, $pop7        # 1: down to label2
+	br      	2               # 2: down to label1
 .LBB0_3:                                # %sw.epilog.thread
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push22=, 0
 	i32.load	$1=, fails($pop22)
 .LBB0_4:                                # %if.end.sink.split
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.const	$push26=, 0
 	i32.const	$push25=, 1
 	i32.add 	$push24=, $1, $pop25
@@ -61,8 +61,9 @@ check:                                  # @check
 	i32.store	fails($pop26), $pop23
 .LBB0_5:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label2:
-	br_if   	1, $1           # 1: down to label1
+	end_block                       # label1:
+	block
+	br_if   	0, $1           # 0: down to label4
 # BB#6:                                 # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push28=, 4
@@ -70,9 +71,10 @@ check:                                  # @check
 	i32.const	$push27=, 1
 	i32.add 	$push0=, $0, $pop27
 	copy_local	$0=, $pop0
-	br_if   	0, $1           # 0: up to label0
+	br_if   	1, $1           # 1: up to label0
 .LBB0_7:                                # %for.end
-	end_loop                        # label1:
+	end_block                       # label4:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -158,5 +160,5 @@ a:
 	.size	a, 60
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

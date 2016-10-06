@@ -40,7 +40,7 @@ test:                                   # @test
 	i32.gt_s	$push5=, $0, $pop13
 	br_if   	0, $pop5        # 0: up to label1
 # BB#3:                                 # %while.cond.while.end_crit_edge
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push6=, 0
 	i32.store	flag($pop6), $3
 .LBB0_4:                                # %while.end
@@ -94,5 +94,5 @@ flag:
 	.size	flag, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

@@ -96,7 +96,7 @@ load_data:                              # @load_data
 	i32.lt_s	$push6=, $pop28, $pop27
 	br_if   	0, $pop6        # 0: up to label1
 # BB#2:                                 # %while.cond.while.end_crit_edge
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push8=, 0
 	i32.const	$push7=, 100
 	i32.store	sqlca($pop8), $pop7
@@ -147,12 +147,12 @@ main:                                   # @main
 	i32.select	$push5=, $pop4, $pop17, $pop14
 	i32.store	sqlca($pop18), $pop5
 	block
-	br_if   	0, $3           # 0: down to label3
+	br_if   	0, $3           # 0: down to label2
 # BB#1:                                 # %while.body.lr.ph.i
 	copy_local	$3=, $0
 .LBB3_2:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	i32.const	$push37=, 404
 	i32.call	$drop=, memcpy@FUNCTION, $3, $1, $pop37
 	i32.const	$push36=, 85
@@ -165,9 +165,9 @@ main:                                   # @main
 	tee_local	$push31=, $2=, $pop32
 	i32.const	$push30=, 1
 	i32.lt_s	$push6=, $pop31, $pop30
-	br_if   	0, $pop6        # 0: up to label4
+	br_if   	0, $pop6        # 0: up to label3
 # BB#3:                                 # %while.cond.while.end_crit_edge.i
-	end_loop                        # label5:
+	end_loop
 	i32.const	$push8=, 0
 	i32.const	$push7=, 100
 	i32.store	sqlca($pop8), $pop7
@@ -175,18 +175,18 @@ main:                                   # @main
 	i32.const	$push9=, 2
 	i32.store	fetch.fetch_count($pop38), $pop9
 .LBB3_4:                                # %load_data.exit
-	end_block                       # label3:
+	end_block                       # label2:
 	block
 	i32.load	$push10=, 0($0)
 	i32.const	$push11=, 1431655765
 	i32.ne  	$push12=, $pop10, $pop11
-	br_if   	0, $pop12       # 0: down to label6
+	br_if   	0, $pop12       # 0: down to label4
 # BB#5:                                 # %if.end
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
 	unreachable
 .LBB3_6:                                # %if.then
-	end_block                       # label6:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -228,7 +228,7 @@ data_ptr:
 	.size	data_ptr, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

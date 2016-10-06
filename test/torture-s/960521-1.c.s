@@ -33,7 +33,7 @@ foo:                                    # @foo
 	i32.lt_s	$push3=, $pop11, $pop2
 	br_if   	0, $pop3        # 0: up to label1
 .LBB0_3:                                # %for.cond1.preheader
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push16=, 0
 	i32.load	$push4=, b($pop16)
@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.load	$2=, n($pop6)
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop                            # label2:
 	i32.const	$push23=, -1
 	i32.store	0($3), $pop23
 	i32.const	$push22=, 4
@@ -86,21 +86,21 @@ main:                                   # @main
 	i32.add 	$push20=, $4, $pop21
 	tee_local	$push19=, $4=, $pop20
 	i32.lt_s	$push2=, $pop19, $2
-	br_if   	0, $pop2        # 0: up to label3
+	br_if   	0, $pop2        # 0: up to label2
 # BB#2:                                 # %foo.exit
-	end_loop                        # label4:
+	end_loop
 	i32.load	$3=, 0($0)
 	i32.const	$push4=, 255
 	i32.const	$push3=, 522236
 	i32.call	$drop=, memset@FUNCTION, $1, $pop4, $pop3
 	block
-	br_if   	0, $3           # 0: down to label5
+	br_if   	0, $3           # 0: down to label3
 # BB#3:                                 # %if.end
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable
 .LBB1_4:                                # %if.then
-	end_block                       # label5:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -135,7 +135,7 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

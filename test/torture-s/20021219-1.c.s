@@ -43,7 +43,8 @@ main:                                   # @main
 	i32.const	$1=, 32
 .LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	block
+	loop                            # label1:
 	block
 	i32.const	$push24=, 255
 	i32.and 	$push23=, $1, $pop24
@@ -55,7 +56,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push25=, 13
 	i32.ne  	$push11=, $1, $pop25
-	br_if   	2, $pop11       # 2: down to label1
+	br_if   	2, $pop11       # 2: down to label0
 .LBB1_3:                                # %while.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label2:
@@ -63,9 +64,10 @@ main:                                   # @main
 	i32.const	$push20=, 1
 	i32.add 	$push0=, $0, $pop20
 	copy_local	$0=, $pop0
-	br      	0               # 0: up to label0
+	br      	0               # 0: up to label1
 .LBB1_4:                                # %while.end
-	end_loop                        # label1:
+	end_loop
+	end_block                       # label0:
 	i32.const	$push12=, 0
                                         # fallthrough-return: $pop12
 	.endfunc
@@ -79,4 +81,4 @@ main:                                   # @main
 	.size	.Lmain.str, 11
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

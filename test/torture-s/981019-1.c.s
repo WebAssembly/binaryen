@@ -23,14 +23,14 @@ ff:                                     # @ff
 	block
 	loop                            # label3:
 	i32.eqz 	$3=, $0
-	br_if   	2, $0           # 2: down to label2
+	br_if   	1, $0           # 1: down to label2
 # BB#4:                                 # %while.body
                                         #   in Loop: Header=BB0_3 Depth=1
 	copy_local	$0=, $3
 	i32.eqz 	$push4=, $2
 	br_if   	0, $pop4        # 0: up to label3
 # BB#5:                                 # %land.lhs.true
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push2=, 0
 	i32.store	f3.x($pop2), $3
 	i32.call	$drop=, f2@FUNCTION
@@ -107,14 +107,14 @@ main:                                   # @main
 	i32.load	$1=, f3.x($pop0)
 .LBB4_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label5:
+	loop                            # label4:
 	copy_local	$push3=, $1
 	tee_local	$push2=, $0=, $pop3
 	i32.eqz 	$1=, $pop2
 	i32.eqz 	$push5=, $0
-	br_if   	0, $pop5        # 0: up to label5
+	br_if   	0, $pop5        # 0: up to label4
 # BB#2:                                 # %ff.exit
-	end_loop                        # label6:
+	end_loop
 	i32.const	$push1=, 0
 	i32.store	f3.x($pop1), $1
 	i32.const	$push4=, 0
@@ -131,5 +131,5 @@ f3.x:
 	.size	f3.x, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

@@ -1102,26 +1102,15 @@ class S2WasmBuilder {
           recordLabel();
         } else s = strchr(s, '\n');
       } else if (match("loop")) {
-        // Allocate an explicit block. This replaces the exit label that was previously on the loop.
-        // Do this for now to keep LLVM's output compatible with both 0xb and 0xc Binaryen.
-        // TODO: Update LLVM to model the 0xc loop behavior
-        auto* explicitBlock = allocator->alloc<Block>();
-        addToBlock(explicitBlock);
-        bstack.push_back(explicitBlock);
         auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
         curr->name = getNextLabel();
-        explicitBlock->name = getNextLabel();
         auto implicitBlock = allocator->alloc<Block>();
         curr->body = implicitBlock;
         bstack.push_back(curr);
       } else if (match("end_loop")) {
         auto* loop = bstack.back()->cast<Loop>();
         bstack.pop_back();
-        auto* explicitBlock = bstack.back()->cast<Block>();
-        bstack.pop_back();
-
-        explicitBlock->finalize();
         loop->body->finalize();
         loop->finalize();
       } else if (match("br_table")) {

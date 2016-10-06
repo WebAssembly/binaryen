@@ -21,11 +21,11 @@ main:                                   # @main
 .LBB0_2:                                # %for.cond4.preheader
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label3:
+	loop                            # label2:
 	i32.const	$4=, u
 	block
 	i32.eqz 	$push23=, $1
-	br_if   	0, $pop23       # 0: down to label5
+	br_if   	0, $pop23       # 0: down to label3
 # BB#3:                                 # %for.body6.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push9=, u
@@ -34,10 +34,10 @@ main:                                   # @main
 	copy_local	$4=, $2
 .LBB0_4:                                # %for.cond7.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
-	end_block                       # label5:
+	end_block                       # label3:
 	block
 	i32.eqz 	$push24=, $3
-	br_if   	0, $pop24       # 0: down to label6
+	br_if   	0, $pop24       # 0: down to label4
 # BB#5:                                 # %for.body9.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push10=, 97
@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.add 	$4=, $pop0, $3
 .LBB0_6:                                # %for.end13
                                         #   in Loop: Header=BB0_2 Depth=2
-	end_block                       # label6:
+	end_block                       # label4:
 	i32.const	$push13=, 0
 	i32.store8	0($4), $pop13
 	i32.const	$push12=, 1
@@ -54,7 +54,7 @@ main:                                   # @main
 	i64.store	0($pop6):p2align=0, $pop11
 	i32.call	$push1=, strlen@FUNCTION, $0
 	i32.ne  	$push2=, $3, $pop1
-	br_if   	4, $pop2        # 4: down to label0
+	br_if   	2, $pop2        # 2: down to label0
 # BB#7:                                 # %for.cond1
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push17=, 1
@@ -62,10 +62,10 @@ main:                                   # @main
 	tee_local	$push15=, $3=, $pop16
 	i32.const	$push14=, 63
 	i32.le_u	$push3=, $pop15, $pop14
-	br_if   	0, $pop3        # 0: up to label3
+	br_if   	0, $pop3        # 0: up to label2
 # BB#8:                                 # %for.inc26
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push22=, 1
 	i32.add 	$2=, $2, $pop22
 	i32.const	$push21=, 1
@@ -75,7 +75,7 @@ main:                                   # @main
 	i32.lt_u	$push4=, $pop19, $pop18
 	br_if   	0, $pop4        # 0: up to label1
 # BB#9:                                 # %for.end28
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable
@@ -95,7 +95,7 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -45,7 +45,7 @@ f:                                      # @f
 	i32.lt_s	$push8=, $pop13, $3
 	br_if   	0, $pop8        # 0: up to label1
 .LBB0_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -77,23 +77,23 @@ main:                                   # @main
 	i32.load	$push4=, 4($0)
 	i32.const	$push3=, 3
 	i32.ne  	$push5=, $pop4, $pop3
-	br_if   	0, $pop5        # 0: down to label3
+	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %lor.lhs.false
 	i32.load	$push7=, 8($0)
 	i32.const	$push6=, 9
 	i32.ne  	$push8=, $pop7, $pop6
-	br_if   	0, $pop8        # 0: down to label3
+	br_if   	0, $pop8        # 0: down to label2
 # BB#2:                                 # %lor.lhs.false3
 	i32.load	$push10=, 12($0)
 	i32.const	$push9=, 21
 	i32.ne  	$push11=, $pop10, $pop9
-	br_if   	0, $pop11       # 0: down to label3
+	br_if   	0, $pop11       # 0: down to label2
 # BB#3:                                 # %if.end
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12
 	unreachable
 .LBB1_4:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -113,6 +113,6 @@ b:
 	.size	b, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

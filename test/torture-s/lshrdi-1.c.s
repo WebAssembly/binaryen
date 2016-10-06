@@ -18,7 +18,7 @@ main:                                   # @main
 	i64.shr_u	$push0=, $pop6, $0
 	i64.load	$push1=, 0($2)
 	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	2, $pop2        # 2: down to label0
+	br_if   	1, $pop2        # 1: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push11=, 8
@@ -30,16 +30,16 @@ main:                                   # @main
 	i64.lt_s	$push3=, $pop8, $pop7
 	br_if   	0, $pop3        # 0: up to label1
 # BB#3:                                 # %constant_shift.exit.preheader
-	end_loop                        # label2:
+	end_loop
 	i32.const	$2=, 0
 	i32.const	$1=, .Lswitch.table
 .LBB0_4:                                # %constant_shift.exit
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label4:
+	loop                            # label3:
 	i32.const	$push12=, 1
 	i32.eqz 	$push18=, $pop12
-	br_if   	2, $pop18       # 2: down to label3
+	br_if   	1, $pop18       # 1: down to label2
 # BB#5:                                 # %for.cond2
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$push17=, 8
@@ -49,14 +49,14 @@ main:                                   # @main
 	tee_local	$push14=, $2=, $pop15
 	i32.const	$push13=, 63
 	i32.le_s	$push4=, $pop14, $pop13
-	br_if   	0, $pop4        # 0: up to label4
+	br_if   	0, $pop4        # 0: up to label3
 # BB#6:                                 # %for.end13
-	end_loop                        # label5:
+	end_loop
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable
 .LBB0_7:                                # %if.then9
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_8:                                # %if.then
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	.Lswitch.table, 512
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

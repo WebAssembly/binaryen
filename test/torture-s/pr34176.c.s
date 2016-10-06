@@ -74,31 +74,31 @@ main:                                   # @main
 	i32.const	$1=, 0
 	block
 	i32.eqz 	$push18=, $0
-	br_if   	0, $pop18       # 0: down to label3
+	br_if   	0, $pop18       # 0: down to label2
 # BB#2:                                 # %while.body.preheader
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$1=, 0
 .LBB2_3:                                # %while.body
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label4:
+	loop                            # label3:
 	i32.const	$push17=, 8
 	i32.add 	$1=, $1, $pop17
 	i32.const	$push16=, -1
 	i32.add 	$push15=, $0, $pop16
 	tee_local	$push14=, $0=, $pop15
-	br_if   	0, $pop14       # 0: up to label4
+	br_if   	0, $pop14       # 0: up to label3
 .LBB2_4:                                # %cleanup.thread
                                         #   in Loop: Header=BB2_1 Depth=1
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	i32.const	$push10=, 12
 	i32.add 	$push11=, $2, $pop10
 	i32.call	$drop=, hash_find_entry@FUNCTION, $pop11
 	i32.eqz 	$push19=, $1
 	br_if   	0, $pop19       # 0: up to label1
 # BB#5:                                 # %for.end
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push7=, 0
 	i32.const	$push5=, 16
 	i32.add 	$push6=, $2, $pop5
@@ -117,5 +117,5 @@ foo.count:
 	.size	foo.count, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

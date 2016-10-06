@@ -25,19 +25,19 @@ main:                                   # @main
 	i32.and 	$push2=, $pop7, $pop6
 	br_if   	0, $pop2        # 0: up to label0
 # BB#2:                                 # %do.end
-	end_loop                        # label1:
+	end_loop
 	block
 	i32.const	$push13=, 0
 	i32.load	$push3=, i($pop13)
 	i32.const	$push4=, 65536
 	i32.ne  	$push5=, $pop3, $pop4
-	br_if   	0, $pop5        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label1
 # BB#3:                                 # %if.end
 	i32.const	$push14=, 0
 	call    	exit@FUNCTION, $pop14
 	unreachable
 .LBB0_4:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -54,6 +54,6 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

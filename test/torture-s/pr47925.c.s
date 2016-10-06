@@ -37,7 +37,7 @@ foo:                                    # @foo
 	tee_local	$push2=, $1=, $pop3
 	br_if   	0, $pop2        # 0: up to label1
 .LBB1_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	copy_local	$push5=, $1
                                         # fallthrough-return: $pop5
@@ -78,4 +78,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

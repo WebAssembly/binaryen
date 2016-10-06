@@ -29,7 +29,7 @@ g:                                      # @g
 	copy_local	$1=, $pop0
 	br_if   	0, $3           # 0: up to label1
 .LBB0_3:                                # %all_done
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push3=, 0
                                         # fallthrough-return: $pop3
@@ -56,14 +56,14 @@ f:                                      # @f
 	block
 	i32.load8_u	$push1=, 0($1)
 	i32.eqz 	$push15=, $pop1
-	br_if   	0, $pop15       # 0: down to label3
+	br_if   	0, $pop15       # 0: down to label2
 # BB#1:                                 # %do_form_string.i.preheader
 	i32.const	$push12=, 2
 	i32.add 	$1=, $1, $pop12
 	i32.load	$2=, 12($4)
 .LBB1_2:                                # %do_form_string.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	i32.load	$push2=, 0($2)
 	i32.call	$drop=, strcpy@FUNCTION, $0, $pop2
 	i32.const	$push14=, 4
@@ -72,10 +72,10 @@ f:                                      # @f
 	i32.const	$push13=, 2
 	i32.add 	$push0=, $1, $pop13
 	copy_local	$1=, $pop0
-	br_if   	0, $3           # 0: up to label4
+	br_if   	0, $3           # 0: up to label3
 .LBB1_3:                                # %g.exit
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $4, $pop7
@@ -113,7 +113,7 @@ main:                                   # @main
 	i32.add 	$push13=, $0, $pop12
 	i32.const	$push14=, .L.str.1
 	i32.call	$push2=, strcmp@FUNCTION, $pop13, $pop14
-	br_if   	0, $pop2        # 0: down to label6
+	br_if   	0, $pop2        # 0: down to label4
 # BB#1:                                 # %if.end
 	i32.const	$push9=, 0
 	i32.const	$push7=, 32
@@ -122,7 +122,7 @@ main:                                   # @main
 	i32.const	$push18=, 0
 	return  	$pop18
 .LBB2_2:                                # %if.then
-	end_block                       # label6:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -141,7 +141,7 @@ main:                                   # @main
 	.size	.L.str.1, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	strcpy, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

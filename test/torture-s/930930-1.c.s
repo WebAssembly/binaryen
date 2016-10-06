@@ -22,11 +22,11 @@ f:                                      # @f
 	i32.load	$push6=, 0($3)
 	tee_local	$push5=, $5=, $pop6
 	i32.ge_u	$push1=, $pop5, $2
-	br_if   	0, $pop1        # 0: down to label4
+	br_if   	0, $pop1        # 0: down to label3
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.lt_u	$push2=, $5, $1
-	br_if   	0, $pop2        # 0: down to label4
+	br_if   	0, $pop2        # 0: down to label3
 # BB#4:                                 # %if.then3
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push9=, -4
@@ -35,14 +35,14 @@ f:                                      # @f
 	i32.store	0($pop7), $5
 .LBB0_5:                                # %if.end4
                                         #   in Loop: Header=BB0_2 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push12=, -4
 	i32.add 	$push11=, $3, $pop12
 	tee_local	$push10=, $3=, $pop11
 	i32.ge_u	$push3=, $pop10, $4
 	br_if   	0, $pop3        # 0: up to label2
 # BB#6:                                 # %out
-	end_loop                        # label3:
+	end_loop
 	i32.ne  	$push4=, $6, $0
 	br_if   	1, $pop4        # 1: down to label0
 .LBB0_7:                                # %if.end8
@@ -116,6 +116,6 @@ wm_SPB:
 	.size	wm_SPB, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

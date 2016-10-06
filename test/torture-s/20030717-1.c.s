@@ -33,7 +33,7 @@ bar:                                    # @bar
 	block
 	i32.const	$push29=, 0
 	i32.gt_s	$push4=, $1, $pop29
-	br_if   	0, $pop4        # 0: down to label2
+	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %if.then
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push30=, 20
@@ -41,7 +41,7 @@ bar:                                    # @bar
 	i32.load	$1=, 0($pop5)
 .LBB0_3:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label2:
+	end_block                       # label1:
 	i32.const	$push39=, -1
 	i32.add 	$push38=, $1, $pop39
 	tee_local	$push37=, $1=, $pop38
@@ -61,7 +61,7 @@ bar:                                    # @bar
 	i32.ne  	$push12=, $1, $2
 	br_if   	0, $pop12       # 0: up to label0
 # BB#4:                                 # %do.end
-	end_loop                        # label1:
+	end_loop
 	i32.const	$push16=, 20
 	i32.mul 	$push17=, $7, $pop16
 	i32.add 	$push18=, $0, $pop17
@@ -89,4 +89,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

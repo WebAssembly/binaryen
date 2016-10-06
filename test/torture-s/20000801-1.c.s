@@ -40,7 +40,7 @@ foo:                                    # @foo
 	i32.lt_u	$push3=, $pop5, $2
 	br_if   	0, $pop3        # 0: up to label1
 .LBB0_3:                                # %while.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -72,13 +72,13 @@ main:                                   # @main
 	i32.load	$push1=, 12($0)
 	i32.const	$push7=, 1
 	i32.ne  	$push2=, $pop1, $pop7
-	br_if   	0, $pop2        # 0: down to label3
+	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push12=, 0
 	call    	exit@FUNCTION, $pop12
 	unreachable
 .LBB1_2:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -86,6 +86,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

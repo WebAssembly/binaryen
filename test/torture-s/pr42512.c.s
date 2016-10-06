@@ -25,7 +25,7 @@ main:                                   # @main
 	copy_local	$1=, $pop6
 	br_if   	0, $0           # 0: up to label0
 # BB#2:                                 # %for.end
-	end_loop                        # label1:
+	end_loop
 	i32.const	$push12=, 0
 	i32.store16	g_3($pop12), $2
 	block
@@ -33,12 +33,12 @@ main:                                   # @main
 	i32.and 	$push4=, $2, $pop3
 	i32.const	$push11=, 65535
 	i32.ne  	$push5=, $pop4, $pop11
-	br_if   	0, $pop5        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label1
 # BB#3:                                 # %if.end
 	i32.const	$push13=, 0
 	return  	$pop13
 .LBB0_4:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -55,5 +55,5 @@ g_3:
 	.size	g_3, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

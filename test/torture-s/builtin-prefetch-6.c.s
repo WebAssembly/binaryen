@@ -111,7 +111,7 @@ prefetch_for_read:                      # @prefetch_for_read
 	tee_local	$push0=, $0=, $pop1
 	br_if   	0, $pop0        # 0: up to label0
 # BB#2:                                 # %for.end
-	end_loop                        # label1:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -127,13 +127,13 @@ prefetch_for_write:                     # @prefetch_for_write
 	i32.const	$0=, -260
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop                            # label1:
 	i32.const	$push2=, 4
 	i32.add 	$push1=, $0, $pop2
 	tee_local	$push0=, $0=, $pop1
-	br_if   	0, $pop0        # 0: up to label2
+	br_if   	0, $pop0        # 0: up to label1
 # BB#2:                                 # %for.end
-	end_loop                        # label3:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -175,5 +175,5 @@ arr_used:
 	.size	arr_used, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

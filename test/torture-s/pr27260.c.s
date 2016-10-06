@@ -36,7 +36,7 @@ main:                                   # @main
 	i32.const	$push18=, buf
 	i32.add 	$push3=, $2, $pop18
 	i32.load8_u	$push4=, 0($pop3)
-	br_if   	2, $pop4        # 2: down to label0
+	br_if   	1, $pop4        # 1: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push22=, 1
@@ -46,7 +46,7 @@ main:                                   # @main
 	i32.le_s	$push5=, $pop20, $pop19
 	br_if   	0, $pop5        # 0: up to label1
 # BB#3:                                 # %for.end
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push7=, buf
 	i32.const	$push23=, 1
 	i32.const	$push6=, 64
@@ -55,10 +55,10 @@ main:                                   # @main
 .LBB1_4:                                # %for.cond3
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label4:
+	loop                            # label3:
 	i32.const	$push24=, 63
 	i32.gt_s	$push8=, $2, $pop24
-	br_if   	2, $pop8        # 2: down to label3
+	br_if   	1, $pop8        # 1: down to label2
 # BB#5:                                 # %for.cond3.for.body6_crit_edge
                                         #   in Loop: Header=BB1_4 Depth=1
 	i32.add 	$1=, $2, $0
@@ -68,13 +68,13 @@ main:                                   # @main
 	i32.load8_u	$push15=, 0($1)
 	i32.const	$push25=, 1
 	i32.eq  	$push16=, $pop15, $pop25
-	br_if   	0, $pop16       # 0: up to label4
+	br_if   	0, $pop16       # 0: up to label3
 # BB#6:                                 # %if.then11
-	end_loop                        # label5:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_7:                                # %for.end15
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.const	$push11=, buf
 	i32.const	$push10=, 0
 	i32.const	$push9=, 64
@@ -83,10 +83,10 @@ main:                                   # @main
 .LBB1_8:                                # %for.cond16
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label7:
+	loop                            # label5:
 	i32.const	$push27=, 63
 	i32.gt_s	$push12=, $2, $pop27
-	br_if   	2, $pop12       # 2: down to label6
+	br_if   	1, $pop12       # 1: down to label4
 # BB#9:                                 # %for.cond16.for.body19_crit_edge
                                         #   in Loop: Header=BB1_8 Depth=1
 	i32.add 	$1=, $2, $0
@@ -95,13 +95,13 @@ main:                                   # @main
 	copy_local	$2=, $pop1
 	i32.load8_u	$push14=, 0($1)
 	i32.eqz 	$push29=, $pop14
-	br_if   	0, $pop29       # 0: up to label7
+	br_if   	0, $pop29       # 0: up to label5
 # BB#10:                                # %if.then24
-	end_loop                        # label8:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_11:                               # %if.end33
-	end_block                       # label6:
+	end_block                       # label4:
 	i32.const	$push13=, 0
 	return  	$pop13
 .LBB1_12:                               # %if.then
@@ -122,5 +122,5 @@ buf:
 	.size	buf, 65
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

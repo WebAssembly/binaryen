@@ -54,7 +54,7 @@ scale:                                  # @scale
 	tee_local	$push18=, $2=, $pop19
 	br_if   	0, $pop18       # 0: up to label1
 .LBB0_5:                                # %if.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -75,4 +75,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

@@ -40,14 +40,14 @@ test:                                   # @test
 	tee_local	$push26=, $2=, $pop27
 	i32.load	$push2=, 0($1)
 	i32.ne  	$push3=, $pop26, $pop2
-	br_if   	3, $pop3        # 3: down to label0
+	br_if   	2, $pop3        # 2: down to label0
 # BB#4:                                 # %for.cond
                                         #   in Loop: Header=BB0_3 Depth=1
 	copy_local	$1=, $3
 	i32.lt_s	$push4=, $2, $0
 	br_if   	0, $pop4        # 0: up to label3
 .LBB0_5:                                # %for.end
-	end_loop                        # label4:
+	end_loop
 	end_block                       # label1:
 	i32.const	$push5=, 7
 	i32.add 	$push6=, $3, $pop5
@@ -257,6 +257,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

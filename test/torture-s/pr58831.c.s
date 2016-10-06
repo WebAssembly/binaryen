@@ -61,7 +61,7 @@ fn1:                                    # @fn1
 	i32.store	p($pop8), $pop4
 	br_if   	0, $1           # 0: up to label1
 .LBB2_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push12=, 0
 	i32.const	$push2=, d
@@ -174,4 +174,4 @@ j:
 	.size	j, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

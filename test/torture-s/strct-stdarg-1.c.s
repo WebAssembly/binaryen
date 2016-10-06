@@ -37,7 +37,7 @@ f:                                      # @f
 	i32.add 	$push5=, $1, $pop39
 	i32.load8_s	$push6=, 0($pop5)
 	i32.ne  	$push7=, $pop4, $pop6
-	br_if   	3, $pop7        # 3: down to label1
+	br_if   	2, $pop7        # 2: down to label1
 # BB#3:                                 # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push42=, 20
@@ -46,7 +46,7 @@ f:                                      # @f
 	i32.add 	$push12=, $1, $pop41
 	i32.load8_s	$push13=, 0($pop12)
 	i32.ne  	$push14=, $pop11, $pop13
-	br_if   	3, $pop14       # 3: down to label1
+	br_if   	2, $pop14       # 2: down to label1
 # BB#4:                                 # %if.end9
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push44=, 30
@@ -55,7 +55,7 @@ f:                                      # @f
 	i32.add 	$push10=, $1, $pop43
 	i32.load8_s	$push0=, 0($pop10)
 	i32.ne  	$push16=, $pop15, $pop0
-	br_if   	3, $pop16       # 3: down to label1
+	br_if   	2, $pop16       # 2: down to label1
 # BB#5:                                 # %if.end15
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push46=, 40
@@ -64,7 +64,7 @@ f:                                      # @f
 	i32.add 	$push9=, $1, $pop45
 	i32.load8_s	$push1=, 0($pop9)
 	i32.ne  	$push18=, $pop17, $pop1
-	br_if   	3, $pop18       # 3: down to label1
+	br_if   	2, $pop18       # 2: down to label1
 # BB#6:                                 # %if.end21
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push48=, 50
@@ -73,7 +73,7 @@ f:                                      # @f
 	i32.add 	$push8=, $1, $pop47
 	i32.load8_s	$push2=, 0($pop8)
 	i32.ne  	$push20=, $pop19, $pop2
-	br_if   	4, $pop20       # 4: down to label0
+	br_if   	3, $pop20       # 3: down to label0
 # BB#7:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push52=, 8
@@ -84,7 +84,7 @@ f:                                      # @f
 	i32.lt_s	$push21=, $pop49, $0
 	br_if   	0, $pop21       # 0: up to label3
 # BB#8:                                 # %for.end.loopexit
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push22=, -8
 	i32.add 	$1=, $1, $pop22
 .LBB0_9:                                # %for.end
@@ -220,6 +220,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

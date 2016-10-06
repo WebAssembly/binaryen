@@ -36,7 +36,7 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	__builtin_isinff, i32
 	.functype	__builtin_isinfl, i32

@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.lt_s	$push1=, $pop9, $0
 	br_if   	0, $pop1        # 0: up to label1
 # BB#3:                                 # %for.end
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
@@ -54,6 +54,6 @@ n:
 	.size	n, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

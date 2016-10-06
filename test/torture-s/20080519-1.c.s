@@ -81,7 +81,7 @@ regrename_optimize:                     # @regrename_optimize
 	tee_local	$push37=, $5=, $pop38
 	br_if   	0, $pop37       # 0: up to label2
 # BB#3:                                 # %for.end
-	end_loop                        # label3:
+	end_loop
 	i32.const	$push8=, 12
 	i32.add 	$push50=, $6, $pop8
 	tee_local	$push49=, $0=, $pop50
@@ -172,5 +172,5 @@ reg_class_contents:
 	.size	reg_class_contents, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

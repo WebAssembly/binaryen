@@ -86,11 +86,11 @@ main:                                   # @main
 	i32.ne  	$push11=, $pop109, $pop108
 	br_if   	0, $pop11       # 0: up to label0
 # BB#2:                                 # %for.body16.preheader
-	end_loop                        # label1:
+	end_loop
 	i32.const	$1=, 0
 .LBB0_3:                                # %for.body16
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop                            # label1:
 	i32.const	$push80=, 1568
 	i32.add 	$push81=, $5, $pop80
 	i32.add 	$push15=, $pop81, $1
@@ -106,13 +106,13 @@ main:                                   # @main
 	tee_local	$push114=, $1=, $pop115
 	i32.const	$push113=, 1024
 	i32.ne  	$push16=, $pop114, $pop113
-	br_if   	0, $pop16       # 0: up to label2
+	br_if   	0, $pop16       # 0: up to label1
 # BB#4:                                 # %for.body28.preheader
-	end_loop                        # label3:
+	end_loop
 	i32.const	$1=, 0
 .LBB0_5:                                # %for.body28
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label2:
 	i32.const	$push84=, 544
 	i32.add 	$push85=, $5, $pop84
 	i32.add 	$push21=, $pop85, $1
@@ -132,13 +132,13 @@ main:                                   # @main
 	tee_local	$push119=, $1=, $pop120
 	i32.const	$push118=, 512
 	i32.ne  	$push22=, $pop119, $pop118
-	br_if   	0, $pop22       # 0: up to label4
+	br_if   	0, $pop22       # 0: up to label2
 # BB#6:                                 # %for.body43.preheader
-	end_loop                        # label5:
+	end_loop
 	i32.const	$1=, 0
 .LBB0_7:                                # %for.body43
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label6:
+	loop                            # label3:
 	i32.const	$push88=, 32
 	i32.add 	$push89=, $5, $pop88
 	i32.add 	$push27=, $pop89, $1
@@ -158,9 +158,9 @@ main:                                   # @main
 	tee_local	$push127=, $1=, $pop128
 	i32.const	$push126=, 256
 	i32.ne  	$push28=, $pop127, $pop126
-	br_if   	0, $pop28       # 0: up to label6
+	br_if   	0, $pop28       # 0: up to label3
 # BB#8:                                 # %for.end55
-	end_loop                        # label7:
+	end_loop
 	i32.const	$push90=, 3616
 	i32.add 	$push91=, $5, $pop90
 	i32.store	12($5), $pop91
@@ -185,36 +185,36 @@ main:                                   # @main
 	i64.load	$push30=, 3616($5)
 	i64.const	$push29=, -1224658842671273011
 	i64.ne  	$push31=, $pop30, $pop29
-	br_if   	0, $pop31       # 0: down to label8
+	br_if   	0, $pop31       # 0: down to label4
 # BB#9:                                 # %lor.lhs.false
 	i64.load	$push32=, 3624($5)
 	i64.eqz 	$push33=, $pop32
 	i32.eqz 	$push134=, $pop33
-	br_if   	0, $pop134      # 0: down to label8
+	br_if   	0, $pop134      # 0: down to label4
 # BB#10:                                # %if.end
 	i32.load	$push35=, 1568($5)
 	i32.const	$push34=, 1728127813
 	i32.ne  	$push36=, $pop35, $pop34
-	br_if   	0, $pop36       # 0: down to label8
+	br_if   	0, $pop36       # 0: down to label4
 # BB#11:                                # %lor.lhs.false67
 	i32.load	$push37=, 1572($5)
-	br_if   	0, $pop37       # 0: down to label8
+	br_if   	0, $pop37       # 0: down to label4
 # BB#12:                                # %if.end71
 	i32.load16_u	$push39=, 544($5)
 	i32.const	$push38=, 45986
 	i32.ne  	$push40=, $pop39, $pop38
-	br_if   	0, $pop40       # 0: down to label8
+	br_if   	0, $pop40       # 0: down to label4
 # BB#13:                                # %lor.lhs.false76
 	i32.load16_u	$push41=, 546($5)
-	br_if   	0, $pop41       # 0: down to label8
+	br_if   	0, $pop41       # 0: down to label4
 # BB#14:                                # %if.end81
 	i32.load8_u	$push43=, 32($5)
 	i32.const	$push42=, 155
 	i32.ne  	$push44=, $pop43, $pop42
-	br_if   	0, $pop44       # 0: down to label8
+	br_if   	0, $pop44       # 0: down to label4
 # BB#15:                                # %lor.lhs.false86
 	i32.load8_u	$push45=, 33($5)
-	br_if   	0, $pop45       # 0: down to label8
+	br_if   	0, $pop45       # 0: down to label4
 # BB#16:                                # %if.end91
 	i32.const	$push53=, 0
 	i32.const	$push51=, 7712
@@ -223,7 +223,7 @@ main:                                   # @main
 	i32.const	$push46=, 0
 	return  	$pop46
 .LBB0_17:                               # %if.then90
-	end_block                       # label8:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -231,5 +231,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

@@ -49,7 +49,7 @@ foo:                                    # @foo
 	i32.store	n($pop14), $pop12
 	br      	0               # 0: up to label0
 .LBB0_2:
-	end_loop                        # label1:
+	end_loop
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -87,5 +87,5 @@ n:
 	.size	n, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

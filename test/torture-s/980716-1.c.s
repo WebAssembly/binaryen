@@ -26,20 +26,20 @@ stub:                                   # @stub
 	copy_local	$4=, $2
 	br_if   	0, $3           # 0: up to label0
 # BB#2:                                 # %while.end
-	end_loop                        # label1:
+	end_loop
 	i32.store	12($5), $1
 .LBB0_3:                                # %while.cond.1
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop                            # label1:
 	i32.const	$push10=, 4
 	i32.add 	$push9=, $1, $pop10
 	tee_local	$push8=, $4=, $pop9
 	i32.store	12($5), $pop8
 	i32.load	$2=, 0($1)
 	copy_local	$1=, $4
-	br_if   	0, $2           # 0: up to label2
+	br_if   	0, $2           # 0: up to label1
 # BB#4:                                 # %while.end.1
-	end_loop                        # label3:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -93,5 +93,5 @@ main:                                   # @main
 	.size	.L.str.2, 3
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

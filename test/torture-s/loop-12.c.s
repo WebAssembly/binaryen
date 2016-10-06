@@ -11,7 +11,8 @@ foo:                                    # @foo
 	i32.load	$1=, p($pop7)
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	block
+	loop                            # label1:
 	block
 	i32.load8_u	$push1=, 0($1)
 	i32.const	$push16=, -10
@@ -30,7 +31,7 @@ foo:                                    # @foo
 	i64.const	$push17=, 1
 	i64.and 	$push5=, $pop4, $pop17
 	i32.wrap/i64	$push6=, $pop5
-	br_if   	2, $pop6        # 2: down to label1
+	br_if   	2, $pop6        # 2: down to label0
 .LBB0_3:                                # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
@@ -39,9 +40,10 @@ foo:                                    # @foo
 	i32.add 	$push9=, $1, $pop10
 	tee_local	$push8=, $1=, $pop9
 	i32.store	p($pop11), $pop8
-	br      	0               # 0: up to label0
+	br      	0               # 0: up to label1
 .LBB0_4:                                # %while.end
-	end_loop                        # label1:
+	end_loop
+	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -58,7 +60,8 @@ main:                                   # @main
 	i32.const	$1=, .L.str
 .LBB1_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	block
+	loop                            # label4:
 	i32.const	$push14=, 0
 	i32.store	p($pop14), $1
 	block
@@ -79,15 +82,16 @@ main:                                   # @main
 	i64.const	$push15=, 1
 	i64.and 	$push5=, $pop4, $pop15
 	i32.wrap/i64	$push6=, $pop5
-	br_if   	2, $pop6        # 2: down to label4
+	br_if   	2, $pop6        # 2: down to label3
 .LBB1_3:                                # %while.body.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label5:
 	i32.const	$push8=, 1
 	i32.add 	$1=, $1, $pop8
-	br      	0               # 0: up to label3
+	br      	0               # 0: up to label4
 .LBB1_4:                                # %foo.exit
-	end_loop                        # label4:
+	end_loop
+	end_block                       # label3:
 	i32.const	$push7=, 0
                                         # fallthrough-return: $pop7
 	.endfunc
@@ -110,4 +114,4 @@ p:
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

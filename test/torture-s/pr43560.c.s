@@ -30,7 +30,7 @@ test:                                   # @test
 	i32.load8_u	$push3=, 0($pop10)
 	i32.const	$push9=, 47
 	i32.ne  	$push4=, $pop3, $pop9
-	br_if   	1, $pop4        # 1: down to label2
+	br_if   	1, $pop4        # 1: down to label0
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.store	0($2), $3
@@ -42,7 +42,7 @@ test:                                   # @test
 	i32.gt_s	$push6=, $pop17, $pop16
 	br_if   	0, $pop6        # 0: up to label1
 .LBB0_4:                                # %while.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -77,4 +77,4 @@ s:
 	.size	s, 20
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

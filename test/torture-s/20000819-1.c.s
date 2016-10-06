@@ -25,7 +25,7 @@ foo:                                    # @foo
 	i32.load	$push4=, 0($1)
 	i32.const	$push11=, 1
 	i32.le_s	$push5=, $pop4, $pop11
-	br_if   	3, $pop5        # 3: down to label0
+	br_if   	2, $pop5        # 2: down to label0
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push14=, 4
@@ -34,7 +34,7 @@ foo:                                    # @foo
 	i32.le_u	$push6=, $pop12, $0
 	br_if   	0, $pop6        # 0: up to label2
 .LBB0_4:                                # %for.end
-	end_loop                        # label3:
+	end_loop
 	end_block                       # label1:
 	return
 .LBB0_5:                                # %if.then
@@ -73,6 +73,6 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32
 	.functype	abort, void

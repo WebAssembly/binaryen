@@ -53,7 +53,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	tee_local	$push27=, $3=, $pop28
 	br_if   	0, $pop27       # 0: up to label1
 # BB#3:                                 # %for.cond.for.end_crit_edge
-	end_loop                        # label2:
+	end_loop
 	i32.store16	0($1), $4
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
@@ -112,12 +112,12 @@ main:                                   # @main
 	i32.load16_u	$push12=, bndpsd+2($pop15)
 	i32.const	$push13=, 140
 	i32.ne  	$push14=, $pop12, $pop13
-	br_if   	0, $pop14       # 0: down to label3
+	br_if   	0, $pop14       # 0: down to label2
 # BB#1:                                 # %if.end
 	i32.const	$push21=, 0
 	return  	$pop21
 .LBB2_2:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -167,5 +167,5 @@ bndpsd:
 	.size	bndpsd, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

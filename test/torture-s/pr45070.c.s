@@ -26,29 +26,29 @@ main:                                   # @main
 	loop                            # label1:
 	i32.call	$0=, next@FUNCTION, $2
 	block
-	br_if   	0, $1           # 0: down to label3
+	br_if   	0, $1           # 0: down to label2
 # BB#2:                                 # %for.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push18=, 65535
 	i32.and 	$push1=, $0, $pop18
 	i32.const	$push17=, 65535
 	i32.ne  	$push2=, $pop1, $pop17
-	br_if   	3, $pop2        # 3: down to label0
+	br_if   	2, $pop2        # 2: down to label0
 .LBB0_3:                                # %lor.lhs.false
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label3:
+	end_block                       # label2:
 	block
 	i32.const	$push19=, 1
 	i32.lt_s	$push3=, $1, $pop19
-	br_if   	0, $pop3        # 0: down to label4
+	br_if   	0, $pop3        # 0: down to label3
 # BB#4:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push20=, 65535
 	i32.and 	$push4=, $0, $pop20
-	br_if   	3, $pop4        # 3: down to label0
+	br_if   	2, $pop4        # 2: down to label0
 .LBB0_5:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push24=, 1
 	i32.add 	$push23=, $1, $pop24
 	tee_local	$push22=, $1=, $pop23
@@ -56,7 +56,7 @@ main:                                   # @main
 	i32.le_s	$push5=, $pop22, $pop21
 	br_if   	0, $pop5        # 0: up to label1
 # BB#6:                                 # %for.end
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push13=, 0
 	i32.const	$push11=, 16
 	i32.add 	$push12=, $2, $pop11
@@ -83,7 +83,7 @@ next:                                   # @next
 	i32.load	$push1=, 0($0)
 	i32.load	$push0=, 4($0)
 	i32.lt_s	$push2=, $pop1, $pop0
-	br_if   	0, $pop2        # 0: down to label5
+	br_if   	0, $pop2        # 0: down to label4
 # BB#1:                                 # %if.then.lr.ph
 	i32.const	$push3=, 8
 	i32.add 	$1=, $0, $pop3
@@ -91,10 +91,11 @@ next:                                   # @next
 	i32.add 	$2=, $0, $pop5
 .LBB1_2:                                # %if.then
                                         # =>This Inner Loop Header: Depth=1
+	block
 	loop                            # label6:
 	i32.load	$push4=, 0($1)
 	i32.eqz 	$push13=, $pop4
-	br_if   	1, $pop13       # 1: down to label7
+	br_if   	1, $pop13       # 1: down to label5
 # BB#3:                                 # %if.then1
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$3=, 0
@@ -105,16 +106,17 @@ next:                                   # @next
 	i32.load	$push6=, 0($2)
 	i32.ge_s	$push8=, $pop7, $pop6
 	br_if   	0, $pop8        # 0: up to label6
-	br      	2               # 2: down to label5
+	br      	2               # 2: down to label4
 .LBB1_4:                                # %if.end
-	end_loop                        # label7:
+	end_loop
+	end_block                       # label5:
 	i32.const	$push9=, 8
 	i32.add 	$push10=, $0, $pop9
 	i32.const	$push11=, 1
 	i32.store	0($pop10), $pop11
 	i32.const	$3=, 65535
 .LBB1_5:                                # %cleanup
-	end_block                       # label5:
+	end_block                       # label4:
 	copy_local	$push14=, $3
                                         # fallthrough-return: $pop14
 	.endfunc
@@ -134,5 +136,5 @@ fetch:                                  # @fetch
 	.size	fetch, .Lfunc_end2-fetch
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

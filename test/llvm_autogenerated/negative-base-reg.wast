@@ -10,21 +10,19 @@
     (set_local $0
       (i32.const -128)
     )
-    (block $label$1
-      (loop $label$0
-        (i32.store
+    (loop $label$0
+      (i32.store
+        (i32.add
+          (get_local $0)
+          (i32.const 144)
+        )
+        (i32.const 1)
+      )
+      (br_if $label$0
+        (tee_local $0
           (i32.add
             (get_local $0)
-            (i32.const 144)
-          )
-          (i32.const 1)
-        )
-        (br_if $label$0
-          (tee_local $0
-            (i32.add
-              (get_local $0)
-              (i32.const 4)
-            )
+            (i32.const 4)
           )
         )
       )

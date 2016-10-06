@@ -53,7 +53,7 @@ foo:                                    # @foo
 	tee_local	$push16=, $7=, $pop17
 	br_if   	0, $pop16       # 0: up to label1
 .LBB0_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -85,7 +85,7 @@ main:                                   # @main
 	copy_local	$2=, $6
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop                            # label2:
 	i32.const	$push48=, 7
 	i32.and 	$push47=, $5, $pop48
 	tee_local	$push46=, $0=, $pop47
@@ -112,9 +112,9 @@ main:                                   # @main
 	tee_local	$push36=, $5=, $pop37
 	i32.const	$push35=, 32
 	i32.ne  	$push5=, $pop36, $pop35
-	br_if   	0, $pop5        # 0: up to label3
+	br_if   	0, $pop5        # 0: up to label2
 # BB#2:                                 # %for.end
-	end_loop                        # label4:
+	end_loop
 	i32.const	$push27=, 512
 	i32.add 	$push28=, $6, $pop27
 	i32.const	$push29=, 256
@@ -128,7 +128,7 @@ main:                                   # @main
 .LBB1_3:                                # %for.body12
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label6:
+	loop                            # label4:
 	i32.const	$push31=, 512
 	i32.add 	$push32=, $6, $pop31
 	i32.add 	$push11=, $pop32, $5
@@ -137,7 +137,7 @@ main:                                   # @main
 	i32.add 	$push9=, $5, $pop49
 	f64.load	$push10=, 0($pop9)
 	f64.ne  	$push13=, $pop12, $pop10
-	br_if   	2, $pop13       # 2: down to label5
+	br_if   	1, $pop13       # 1: down to label3
 # BB#4:                                 # %for.cond9
                                         #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$push54=, 8
@@ -147,9 +147,9 @@ main:                                   # @main
 	tee_local	$push51=, $4=, $pop52
 	i32.const	$push50=, 31
 	i32.le_s	$push14=, $pop51, $pop50
-	br_if   	0, $pop14       # 0: up to label6
+	br_if   	0, $pop14       # 0: up to label4
 # BB#5:                                 # %for.end19
-	end_loop                        # label7:
+	end_loop
 	i32.const	$push22=, 0
 	i32.const	$push20=, 768
 	i32.add 	$push21=, $6, $pop20
@@ -157,7 +157,7 @@ main:                                   # @main
 	i32.const	$push15=, 0
 	return  	$pop15
 .LBB1_6:                                # %if.then
-	end_block                       # label5:
+	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -205,5 +205,5 @@ expected:
 	.size	expected, 256
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

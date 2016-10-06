@@ -32,10 +32,12 @@ main:                                   # @main
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop .LBB1_2 Depth 2
                                         #     Child Loop .LBB1_3 Depth 2
+        block
 	loop    	.LBB1_5
 	copy_local	$4=, $1
 .LBB1_2:                                  #   Parent Loop .LBB1_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
+        block
 	loop
 	i32.const	$10=, 0
 	i32.add 	$10=, $12, $10
@@ -49,6 +51,8 @@ main:                                   # @main
 	copy_local	$5=, $1
 	br_if   	0, $pop2
 	end_loop
+        end_block
+        block
 	loop
 	i32.const	$11=, 0
 	i32.add 	$11=, $12, $11
@@ -60,6 +64,7 @@ main:                                   # @main
 	i32.ne  	$push6=, $5, $3
 	br_if   	0, $pop6
 	end_loop
+        end_block
 	i32.const	$push7=, 3
 	i32.mul 	$push8=, $6, $pop7
 	i32.const	$push9=, 5
@@ -74,6 +79,7 @@ main:                                   # @main
 	i32.ne  	$push16=, $0, $pop15
 	br_if   	0, $pop16
 	end_loop
+        end_block
 	call    	_Z6reporti@FUNCTION, $6
 	i32.const	$push17=, 0
 	i32.const	$9=, 1048576

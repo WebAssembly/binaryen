@@ -56,7 +56,7 @@ main:                                   # @main
 	i64.ne  	$push13=, $pop12, $pop29
 	br_if   	0, $pop13       # 0: up to label1
 .LBB0_3:                                # %if.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push20=, 0
 	i32.const	$push18=, 16
@@ -78,4 +78,4 @@ f:
 	.size	f, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

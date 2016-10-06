@@ -20,15 +20,15 @@ main:                                   # @main
 	i32.const	$push10=, 1
 	i32.and 	$push0=, $2, $pop10
 	i32.eqz 	$push18=, $pop0
-	br_if   	0, $pop18       # 0: down to label4
+	br_if   	0, $pop18       # 0: down to label3
 # BB#2:                                 # %do.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push11=, 4
 	i32.eq  	$push1=, $0, $pop11
-	br_if   	3, $pop1        # 3: down to label1
+	br_if   	2, $pop1        # 2: down to label1
 .LBB0_3:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push14=, 4
 	i32.add 	$1=, $1, $pop14
 	i32.const	$push13=, 3
@@ -37,7 +37,7 @@ main:                                   # @main
 	i32.lt_s	$push2=, $0, $pop12
 	br_if   	0, $pop2        # 0: up to label2
 # BB#4:                                 # %do.endthread-pre-split
-	end_loop                        # label3:
+	end_loop
 	i32.const	$push3=, 0
 	i32.load	$0=, c($pop3)
 	br      	1               # 1: down to label0
@@ -55,12 +55,12 @@ main:                                   # @main
 	block
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $0, $pop7
-	br_if   	0, $pop8        # 0: down to label5
+	br_if   	0, $pop8        # 0: down to label4
 # BB#7:                                 # %if.end6
 	i32.const	$push9=, 0
 	return  	$pop9
 .LBB0_8:                                # %if.then5
-	end_block                       # label5:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -92,5 +92,5 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

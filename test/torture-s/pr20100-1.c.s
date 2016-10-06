@@ -56,7 +56,8 @@ get_n:                                  # @get_n
 	i32.const	$3=, 0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	block
+	loop                            # label2:
 	i32.const	$push28=, 0
 	i32.const	$push27=, 65535
 	i32.and 	$push26=, $2, $pop27
@@ -72,15 +73,16 @@ get_n:                                  # @get_n
 	i32.and 	$push5=, $pop21, $pop20
 	i32.const	$push19=, 4
 	i32.gt_u	$push6=, $pop5, $pop19
-	br_if   	1, $pop6        # 1: down to label2
+	br_if   	1, $pop6        # 1: down to label1
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push29=, 65535
 	i32.and 	$push7=, $2, $pop29
 	i32.ne  	$push8=, $0, $pop7
-	br_if   	0, $pop8        # 0: up to label1
+	br_if   	0, $pop8        # 0: up to label2
 .LBB1_4:                                # %while.cond.while.end_crit_edge
-	end_loop                        # label2:
+	end_loop
+	end_block                       # label1:
 	i32.const	$push9=, 0
 	i32.store16	g($pop9), $2
 .LBB1_5:                                # %while.end
@@ -138,5 +140,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	exit, void, i32

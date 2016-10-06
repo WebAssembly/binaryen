@@ -58,7 +58,7 @@ fap:                                    # @fap
 	i32.load8_u	$push25=, 0($0)
 	tee_local	$push24=, $2=, $pop25
 	i32.eqz 	$push44=, $pop24
-	br_if   	2, $pop44       # 2: down to label2
+	br_if   	1, $pop44       # 1: down to label2
 # BB#3:                                 # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.load	$push31=, 12($4)
@@ -70,7 +70,7 @@ fap:                                    # @fap
 	tee_local	$push27=, $3=, $pop28
 	i32.const	$push26=, 16
 	i32.ge_u	$push5=, $pop27, $pop26
-	br_if   	3, $pop5        # 3: down to label1
+	br_if   	2, $pop5        # 2: down to label1
 # BB#4:                                 # %to_hex.exit
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push33=, 1
@@ -81,7 +81,7 @@ fap:                                    # @fap
 	i32.eq  	$push8=, $2, $pop7
 	br_if   	0, $pop8        # 0: up to label3
 # BB#5:                                 # %if.then4
-	end_loop                        # label4:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_6:
@@ -89,11 +89,11 @@ fap:                                    # @fap
 .LBB1_7:                                # %while.cond6
                                         # =>This Inner Loop Header: Depth=1
 	block
-	loop                            # label6:
+	loop                            # label5:
 	i32.load8_u	$push35=, 0($1)
 	tee_local	$push34=, $0=, $pop35
 	i32.eqz 	$push45=, $pop34
-	br_if   	2, $pop45       # 2: down to label5
+	br_if   	1, $pop45       # 1: down to label4
 # BB#8:                                 # %while.body8
                                         #   in Loop: Header=BB1_7 Depth=1
 	i32.load	$push41=, 8($4)
@@ -105,7 +105,7 @@ fap:                                    # @fap
 	tee_local	$push37=, $2=, $pop38
 	i32.const	$push36=, 16
 	i32.ge_u	$push10=, $pop37, $pop36
-	br_if   	3, $pop10       # 3: down to label1
+	br_if   	2, $pop10       # 2: down to label1
 # BB#9:                                 # %to_hex.exit28
                                         #   in Loop: Header=BB1_7 Depth=1
 	i32.const	$push43=, 1
@@ -114,13 +114,13 @@ fap:                                    # @fap
 	i32.add 	$push11=, $2, $pop42
 	i32.load8_u	$push12=, 0($pop11)
 	i32.eq  	$push13=, $0, $pop12
-	br_if   	0, $pop13       # 0: up to label6
+	br_if   	0, $pop13       # 0: up to label5
 # BB#10:                                # %if.then16
-	end_loop                        # label7:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_11:                               # %while.end18
-	end_block                       # label5:
+	end_block                       # label4:
 	i32.const	$push20=, 0
 	i32.const	$push18=, 16
 	i32.add 	$push19=, $4, $pop18
@@ -970,7 +970,7 @@ main:                                   # @main
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	strlen, i32, i32
 	.functype	exit, void, i32

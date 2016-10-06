@@ -370,74 +370,70 @@
     (set_local $7
       (f64.const 0)
     )
-    (block $label$1
-      (loop $label$0
-        (block $label$2
-          (br_if $label$2
-            (i32.or
-              (f64.ge
-                (get_local $7)
-                (f64.const 23.2345)
+    (loop $label$0
+      (block $label$1
+        (br_if $label$1
+          (i32.or
+            (f64.ge
+              (get_local $7)
+              (f64.const 23.2345)
+            )
+            (f64.ne
+              (get_local $7)
+              (get_local $7)
+            )
+          )
+        )
+        (set_local $8
+          (get_local $6)
+        )
+        (loop $label$2
+          (set_local $8
+            (f64.add
+              (select
+                (f64.const -11353.57)
+                (tee_local $9
+                  (f64.add
+                    (get_local $7)
+                    (f64.const -1)
+                  )
+                )
+                (get_local $2)
               )
-              (f64.ne
-                (get_local $7)
-                (get_local $7)
+              (tee_local $6
+                (get_local $8)
               )
+            )
+          )
+          (block $label$3
+            (br_if $label$3
+              (get_local $3)
+            )
+            (set_local $9
+              (get_local $5)
             )
           )
           (set_local $8
-            (get_local $6)
+            (f64.add
+              (get_local $9)
+              (get_local $8)
+            )
           )
-          (block $label$4
-            (loop $label$3
-              (set_local $8
-                (f64.add
-                  (select
-                    (f64.const -11353.57)
-                    (tee_local $9
-                      (f64.add
-                        (get_local $7)
-                        (f64.const -1)
-                      )
-                    )
-                    (get_local $2)
-                  )
-                  (tee_local $6
-                    (get_local $8)
-                  )
-                )
-              )
-              (block $label$5
-                (br_if $label$5
-                  (get_local $3)
-                )
-                (set_local $9
-                  (get_local $5)
-                )
-              )
-              (set_local $8
-                (f64.add
-                  (get_local $9)
-                  (get_local $8)
-                )
-              )
-              (br_if $label$3
-                (f64.lt
-                  (get_local $7)
-                  (f64.const 23.2345)
-                )
-              )
+          (br_if $label$2
+            (f64.lt
+              (get_local $7)
+              (f64.const 23.2345)
             )
           )
         )
-        (set_local $7
-          (f64.add
-            (get_local $7)
-            (f64.const 1)
-          )
-        )
-        (br $label$0)
       )
+      (set_local $7
+        (f64.add
+          (get_local $7)
+          (f64.const 1)
+        )
+      )
+      (br $label$0)
     )
   )
   (func $no_stackify_call_past_load (result i32)
@@ -536,25 +532,23 @@
     (set_local $2
       (i32.const 0)
     )
-    (block $label$1
-      (loop $label$0
-        (i32.store
-          (get_local $1)
-          (i32.add
-            (get_local $2)
-            (i32.load
-              (get_local $1)
-            )
+    (loop $label$0
+      (i32.store
+        (get_local $1)
+        (i32.add
+          (get_local $2)
+          (i32.load
+            (get_local $1)
           )
         )
-        (br_if $label$0
-          (i32.ne
-            (get_local $0)
-            (tee_local $2
-              (i32.add
-                (get_local $2)
-                (i32.const 1)
-              )
+      )
+      (br_if $label$0
+        (i32.ne
+          (get_local $0)
+          (tee_local $2
+            (i32.add
+              (get_local $2)
+              (i32.const 1)
             )
           )
         )

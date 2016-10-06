@@ -86,7 +86,7 @@ main:                                   # @main
 	tee_local	$push14=, $10=, $pop15
 	i32.select	$push9=, $pop81, $pop16, $pop14
 	i32.eqz 	$push103=, $pop9
-	br_if   	2, $pop103      # 2: down to label0
+	br_if   	1, $pop103      # 1: down to label0
 # BB#2:                                 # %if.end7
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.const	$push102=, 9
@@ -123,7 +123,7 @@ main:                                   # @main
 	i32.lt_s	$push12=, $pop85, $pop84
 	br_if   	0, $pop12       # 0: up to label1
 # BB#3:                                 # %if.then11
-	end_loop                        # label2:
+	end_loop
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_4:                                # %for.end15
@@ -154,6 +154,6 @@ x:
 	.size	x, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

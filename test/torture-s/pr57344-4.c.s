@@ -97,7 +97,7 @@ main:                                   # @main
 	i32.lt_s	$push22=, $0, $pop34
 	br_if   	0, $pop22       # 0: up to label2
 .LBB1_4:                                # %for.end
-	end_loop                        # label3:
+	end_loop
 	end_block                       # label1:
 	i32.const	$push50=, 0
                                         # fallthrough-return: $pop50
@@ -145,5 +145,5 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void

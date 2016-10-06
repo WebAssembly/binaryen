@@ -70,7 +70,7 @@ main:                                   # @main
 	i32.ne  	$push5=, $3, $pop11
 	br_if   	0, $pop5        # 0: up to label1
 .LBB1_3:                                # %for.end
-	end_loop                        # label2:
+	end_loop
 	end_block                       # label0:
 	i32.const	$push23=, 0
                                         # fallthrough-return: $pop23
@@ -142,4 +142,4 @@ f:
 	.size	f, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

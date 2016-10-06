@@ -359,7 +359,7 @@ foo:                                    # @foo
 	i32.eqz 	$push270=, $pop134
 	br_if   	0, $pop270      # 0: up to label0
 # BB#2:                                 # %do.end
-	end_loop                        # label1:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -571,4 +571,4 @@ vol:
 	.size	vol, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"

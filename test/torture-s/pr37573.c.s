@@ -65,7 +65,7 @@ bar:                                    # @bar
 	i32.ne  	$push6=, $pop135, $pop134
 	br_if   	0, $pop6        # 0: up to label1
 # BB#2:                                 # %for.end
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push7=, 1
 	i32.store	12($3), $pop7
 	i32.const	$push9=, 0
@@ -274,7 +274,7 @@ foo:                                    # @foo
 	tee_local	$push37=, $4=, $pop38
 	i32.store	4($0), $pop37
 	block
-	br_if   	0, $4           # 0: down to label3
+	br_if   	0, $4           # 0: down to label2
 # BB#1:                                 # %if.then
 	i32.const	$push39=, 8
 	i32.add 	$push2=, $0, $pop39
@@ -283,7 +283,7 @@ foo:                                    # @foo
 	i32.const	$3=, 0
 .LBB2_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop                            # label3:
 	i32.add 	$push55=, $0, $3
 	tee_local	$push54=, $2=, $pop55
 	i32.const	$push53=, 8
@@ -316,10 +316,10 @@ foo:                                    # @foo
 	tee_local	$push41=, $3=, $pop42
 	i32.const	$push40=, 908
 	i32.ne  	$push16=, $pop41, $pop40
-	br_if   	0, $pop16       # 0: up to label4
+	br_if   	0, $pop16       # 0: up to label3
 .LBB2_3:                                # %if.end
-	end_loop                        # label5:
-	end_block                       # label3:
+	end_loop
+	end_block                       # label2:
 	i32.load	$push63=, 0($0)
 	tee_local	$push62=, $4=, $pop63
 	i32.const	$push17=, 4
@@ -369,6 +369,6 @@ q:
 	.size	q, 23
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

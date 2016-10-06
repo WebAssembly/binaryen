@@ -46,7 +46,7 @@ reset_palette:                          # @reset_palette
 	tee_local	$push17=, $2=, $pop18
 	br_if   	0, $pop17       # 0: up to label0
 # BB#2:                                 # %bar.exit
-	end_loop                        # label1:
+	end_loop
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -62,11 +62,11 @@ bar:                                    # @bar
 	block
 	i32.const	$push0=, 48
 	i32.ne  	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label2
+	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %if.end
 	return
 .LBB1_2:                                # %if.then
-	end_block                       # label2:
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -197,6 +197,6 @@ default_blu:
 	.size	default_blu, 64
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	abort, void
 	.functype	exit, void, i32

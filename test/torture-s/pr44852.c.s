@@ -24,13 +24,13 @@ sf:                                     # @sf
 	tee_local	$push9=, $3=, $pop10
 	i32.const	$push8=, 57
 	i32.ne  	$push0=, $pop9, $pop8
-	br_if   	2, $pop0        # 2: down to label0
+	br_if   	1, $pop0        # 1: down to label0
 # BB#2:                                 # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	i32.ne  	$push3=, $1, $0
 	br_if   	0, $pop3        # 0: up to label1
 # BB#3:                                 # %if.then
-	end_loop                        # label2:
+	end_loop
 	i32.const	$push4=, 48
 	i32.store8	0($1), $pop4
 	i32.const	$push6=, 49
@@ -90,13 +90,13 @@ main:                                   # @main
 	i32.const	$push8=, 1
 	i32.or  	$push9=, $pop25, $pop8
 	i32.ne  	$push13=, $pop12, $pop9
-	br_if   	0, $pop13       # 0: down to label3
+	br_if   	0, $pop13       # 0: down to label2
 # BB#1:                                 # %lor.lhs.false
 	i32.const	$push30=, 8
 	i32.add 	$push31=, $0, $pop30
 	i32.const	$push14=, .L.str
 	i32.call	$push15=, strcmp@FUNCTION, $pop31, $pop14
-	br_if   	0, $pop15       # 0: down to label3
+	br_if   	0, $pop15       # 0: down to label2
 # BB#2:                                 # %if.end
 	i32.const	$push23=, 0
 	i32.const	$push21=, 16
@@ -105,7 +105,7 @@ main:                                   # @main
 	i32.const	$push16=, 0
 	return  	$pop16
 .LBB1_3:                                # %if.then
-	end_block                       # label3:
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	.L.str, 7
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283501)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
