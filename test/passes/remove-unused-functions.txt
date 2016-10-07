@@ -1,10 +1,10 @@
 (module
-  (memory $0 0)
-  (start $start)
   (type $0 (func))
-  (export "exported" (func $exported))
   (table 1 1 anyfunc)
   (elem (i32.const 0) $called_indirect)
+  (memory $0 0)
+  (export "exported" (func $exported))
+  (start $start)
   (func $start (type $0)
     (call $called0)
   )

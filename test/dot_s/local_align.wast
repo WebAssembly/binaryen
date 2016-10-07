@@ -1,9 +1,8 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (export "memory" (memory $0))
   (export "main" (func $main))
-  (table 0 anyfunc)
-  
   (func $foo (param $0 i32)
   )
   (func $main (result i32)

@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 12) "\00\00\00\00")
   (data (i32.const 16) "\01\00\00\00")
@@ -7,8 +8,6 @@
   (export "foo" (func $foo))
   (export "bar" (func $bar))
   (export "qux" (func $qux))
-  (table 0 anyfunc)
-  
   (func $foo
     (return)
   )

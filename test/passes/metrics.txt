@@ -8,8 +8,8 @@ Counts
  drop           : 6       
  if             : 4       
 (module
-  (memory $0 256 256)
   (type $0 (func (param i32)))
+  (memory $0 256 256)
   (func $ifs (type $0) (param $x i32)
     (local $y f32)
     (block $block0

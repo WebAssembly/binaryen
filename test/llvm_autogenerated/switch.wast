@@ -1,6 +1,4 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$v (func))
   (import "env" "foo0" (func $foo0))
   (import "env" "foo1" (func $foo1))
@@ -8,11 +6,12 @@
   (import "env" "foo3" (func $foo3))
   (import "env" "foo4" (func $foo4))
   (import "env" "foo5" (func $foo5))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "bar32" (func $bar32))
   (export "bar64" (func $bar64))
-  (table 0 anyfunc)
-  
   (func $bar32 (param $0 i32)
     (block $label$0
       (br_if $label$0

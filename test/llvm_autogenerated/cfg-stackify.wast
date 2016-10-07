@@ -1,6 +1,4 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (import "env" "a" (func $a (result i32)))
@@ -8,6 +6,9 @@
   (import "env" "something" (func $something))
   (import "env" "test15_callee0" (func $test15_callee0))
   (import "env" "test15_callee1" (func $test15_callee1))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "test0" (func $test0))
   (export "test1" (func $test1))
@@ -34,8 +35,6 @@
   (export "test13" (func $test13))
   (export "test14" (func $test14))
   (export "test15" (func $test15))
-  (table 0 anyfunc)
-  
   (func $test0 (param $0 i32)
     (local $1 i32)
     (set_local $1

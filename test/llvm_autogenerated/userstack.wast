@@ -1,10 +1,11 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$vi (func (param i32)))
   (import "env" "ext_func" (func $ext_func (param i32)))
   (import "env" "ext_func_i32" (func $ext_func_i32 (param i32)))
   (import "env" "use_i8_star" (func $use_i8_star (param i32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "alloca32" (func $alloca32))
   (export "alloca3264" (func $alloca3264))
@@ -20,8 +21,6 @@
   (export "frameaddress_0" (func $frameaddress_0))
   (export "frameaddress_1" (func $frameaddress_1))
   (export "inline_asm" (func $inline_asm))
-  (table 0 anyfunc)
-  
   (func $alloca32
     (local $0 i32)
     (i32.store offset=4

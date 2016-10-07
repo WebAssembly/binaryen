@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -16,8 +17,6 @@
   (export "ule_f64" (func $ule_f64))
   (export "ugt_f64" (func $ugt_f64))
   (export "uge_f64" (func $uge_f64))
-  (table 0 anyfunc)
-  
   (func $ord_f64 (param $0 f64) (param $1 f64) (result i32)
     (return
       (i32.and

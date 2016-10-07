@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -10,8 +11,6 @@
   (export "test_urem_5" (func $test_urem_5))
   (export "test_srem_2" (func $test_srem_2))
   (export "test_srem_5" (func $test_srem_5))
-  (table 0 anyfunc)
-  
   (func $test_udiv_2 (param $0 i32) (result i32)
     (i32.shr_u
       (get_local $0)

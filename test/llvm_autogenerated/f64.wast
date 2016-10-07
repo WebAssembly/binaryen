@@ -1,8 +1,9 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$dddd (func (param f64 f64 f64) (result f64)))
   (import "env" "fma" (func $fma (param f64 f64 f64) (result f64)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "fadd64" (func $fadd64))
   (export "fsub64" (func $fsub64))
@@ -20,8 +21,6 @@
   (export "fmin64" (func $fmin64))
   (export "fmax64" (func $fmax64))
   (export "fma64" (func $fma64))
-  (table 0 anyfunc)
-  
   (func $fadd64 (param $0 f64) (param $1 f64) (result f64)
     (return
       (f64.add

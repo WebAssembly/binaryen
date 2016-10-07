@@ -7,9 +7,9 @@
   (import "env" "table" (table 0 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
+  (global $tempRet0 (mut i32) (i32.const 0))
   (export "illegalResult" (func $legalstub$illegalResult))
   (export "imports" (func $imports))
-  (global $tempRet0 (mut i32) (i32.const 0))
   (func $illegalResult (result i64)
     (return
       (i64.const 8589934593)

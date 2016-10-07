@@ -1,12 +1,11 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (export "memory" (memory $0))
   (export "main" (func $main))
   (export "malloc" (func $malloc))
   (export "free" (func $free))
   (export "realloc" (func $realloc))
-  (table 0 anyfunc)
-  
   (func $main (result i32)
     (i32.const 0)
   )

@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -8,8 +9,6 @@
   (export "bitcast_f32_i32" (func $bitcast_f32_i32))
   (export "bitcast_i64_f64" (func $bitcast_i64_f64))
   (export "bitcast_f64_i64" (func $bitcast_f64_i64))
-  (table 0 anyfunc)
-  
   (func $immediate_f32 (result f32)
     (f32.const 2.5)
   )

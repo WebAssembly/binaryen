@@ -1,6 +1,4 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (import "env" "big_byval_callee" (func $big_byval_callee (param i32)))
@@ -11,6 +9,9 @@
   (import "env" "ext_func" (func $ext_func (param i32)))
   (import "env" "ext_func_empty" (func $ext_func_empty (param i32)))
   (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "byval_arg" (func $byval_arg))
   (export "byval_arg_align8" (func $byval_arg_align8))
@@ -19,8 +20,6 @@
   (export "byval_empty_caller" (func $byval_empty_caller))
   (export "byval_empty_callee" (func $byval_empty_callee))
   (export "big_byval" (func $big_byval))
-  (table 0 anyfunc)
-  
   (func $byval_arg (param $0 i32)
     (local $1 i32)
     (i32.store offset=4

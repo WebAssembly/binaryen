@@ -1,6 +1,6 @@
 (module
-  (memory $0 0)
   (type $0 (func (param i32 i64)))
+  (memory $0 0)
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
     (if
       (i32.eqz

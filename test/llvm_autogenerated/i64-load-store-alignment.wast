@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -32,8 +33,6 @@
   (export "sti32_a2" (func $sti32_a2))
   (export "sti32_a4" (func $sti32_a4))
   (export "sti32_a8" (func $sti32_a8))
-  (table 0 anyfunc)
-  
   (func $ldi64_a1 (param $0 i32) (result i64)
     (return
       (i64.load align=1

@@ -1,6 +1,4 @@
 (module
-  (memory $0 4096 4096)
-  (data (i32.const 1026) "\14\00")
   (type $0 (func (param f32)))
   (type $1 (func))
   (type $2 (func (param f64) (result i32)))
@@ -14,9 +12,11 @@
   (import "env" "_emscripten_asm_const_vi" (func $import$0))
   (import "asm2wasm" "f64-to-int" (func $import$1 (param f64) (result i32)))
   (import "asm2wasm" "f64-rem" (func $import$2 (param f64 f64) (result f64)))
-  (export "big_negative" (func $big_negative))
   (table 10 anyfunc)
   (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (memory $0 4096 4096)
+  (data (i32.const 1026) "\14\00")
+  (export "big_negative" (func $big_negative))
   (func $big_negative (type $1)
     (local $var$0 f64)
     (block $label$0

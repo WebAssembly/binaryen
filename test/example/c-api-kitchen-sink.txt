@@ -7,18 +7,18 @@ BinaryenFloat64: 4
   (f32.const -33.61199951171875)
 )
 (module
-  (memory $0 1 256)
-  (data (i32.const 10) "hello, world")
-  (start $starter)
   (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
   (type $fiF (func (param i32 f64) (result f32)))
   (type $v (func))
   (type $3 (func))
   (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
-  (export "kitchen_sinker" (func "$kitchen()sinker"))
-  (export "mem" (memory $0))
   (table 1 1 anyfunc)
   (elem (i32.const 0) "$kitchen()sinker")
+  (memory $0 1 256)
+  (data (i32.const 10) "hello, world")
+  (export "kitchen_sinker" (func "$kitchen()sinker"))
+  (export "mem" (memory $0))
+  (start $starter)
   (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
     (local $4 i32)
     (block $the-body i32
@@ -538,11 +538,11 @@ BinaryenFloat64: 4
 )
 raw:
 (module
-  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
   (import "module" "check" (func $check (param i32)))
+  (memory $0 0)
   (func $just-one-block (type $v)
     (local $0 i32)
     (call $check
@@ -1025,11 +1025,11 @@ raw:
 )
 optimized:
 (module
-  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
   (import "module" "check" (func $check (param i32)))
+  (memory $0 0)
   (func $just-one-block (type $v)
     (call $check
       (i32.const 1337)
@@ -1182,8 +1182,8 @@ optimized:
 )
 module loaded from binary form:
 (module
-  (memory $0 0)
   (type $0 (func (param i32 i32) (result i32)))
+  (memory $0 0)
   (func $adder (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
     (i32.add
       (get_local $var$0)
@@ -1192,11 +1192,11 @@ module loaded from binary form:
   )
 )
 (module
-  (memory $0 0)
-  (start $starter)
   (type $vi (func (param i32)))
   (type $v (func))
   (import "spectest" "print" (func $print-i32 (param i32)))
+  (memory $0 0)
+  (start $starter)
   (func $starter (type $v)
     (call $print-i32
       (i32.const 1234)
@@ -1205,8 +1205,8 @@ module loaded from binary form:
 )
 (i32.const 1234)
 (module
-  (memory $0 0)
   (type $v (func))
+  (memory $0 0)
   (func $func (type $v)
     (local $0 i32)
     (set_local $0
@@ -1550,18 +1550,18 @@ int main() {
   BinaryenModuleValidate(the_module);
   BinaryenModulePrint(the_module);
 (module
-  (memory $0 1 256)
-  (data (i32.const 10) "hello, world")
-  (start $starter)
   (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
   (type $fiF (func (param i32 f64) (result f32)))
   (type $v (func))
   (type $3 (func))
   (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
-  (export "kitchen_sinker" (func "$kitchen()sinker"))
-  (export "mem" (memory $0))
   (table 1 1 anyfunc)
   (elem (i32.const 0) "$kitchen()sinker")
+  (memory $0 1 256)
+  (data (i32.const 10) "hello, world")
+  (export "kitchen_sinker" (func "$kitchen()sinker"))
+  (export "mem" (memory $0))
+  (start $starter)
   (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
     (local $4 i32)
     (block $the-body i32
@@ -2541,11 +2541,11 @@ int main() {
 raw:
   BinaryenModulePrint(the_module);
 (module
-  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
   (import "module" "check" (func $check (param i32)))
+  (memory $0 0)
   (func $just-one-block (type $v)
     (local $0 i32)
     (call $check
@@ -3032,11 +3032,11 @@ raw:
 optimized:
   BinaryenModulePrint(the_module);
 (module
-  (memory $0 0)
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
   (import "module" "check" (func $check (param i32)))
+  (memory $0 0)
   (func $just-one-block (type $v)
     (call $check
       (i32.const 1337)
