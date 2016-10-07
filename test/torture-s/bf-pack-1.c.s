@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 	.local  	i64
 # BB#0:                                 # %entry
-	block
+	block   	
 	i64.load	$push9=, 0($0):p2align=2
 	tee_local	$push8=, $1=, $pop9
 	i64.const	$push0=, 65535
@@ -61,6 +61,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,8 +7,8 @@ test0:
 	.local  	i32
 	i32.const	$1=, 1
 .LBB0_1:
-	loop
-	block
+	loop    	
+	block   	
 	i32.lt_s	$push0=, $1, $0
 	br_if   	0, $pop0
 	return
@@ -31,8 +31,8 @@ test1:
 	.local  	i32
 	i32.const	$1=, 1
 .LBB1_1:
-	loop
-	block
+	loop    	
+	block   	
 	i32.lt_s	$push0=, $1, $0
 	br_if   	0, $pop0
 	return
@@ -52,12 +52,12 @@ test1:
 	.type	test2,@function
 test2:
 	.param  	i32, i32
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $1, $pop0
 	br_if   	0, $pop1
 .LBB2_2:
-	loop
+	loop    	
 	f64.load	$push2=, 0($0)
 	f64.const	$push8=, 0x1.999999999999ap1
 	f64.mul 	$push3=, $pop2, $pop8
@@ -83,8 +83,8 @@ doublediamond:
 	.result 	i32
 	i32.const	$push0=, 0
 	i32.store	0($2), $pop0
-	block
-	block
+	block   	
+	block   	
 	br_if   	0, $0
 	i32.const	$push4=, 1
 	i32.store	0($2), $pop4
@@ -93,7 +93,7 @@ doublediamond:
 	end_block
 	i32.const	$push1=, 2
 	i32.store	0($2), $pop1
-	block
+	block   	
 	br_if   	0, $1
 	i32.const	$push3=, 3
 	i32.store	0($2), $pop3
@@ -119,7 +119,7 @@ triangle:
 	.result 	i32
 	i32.const	$push2=, 0
 	i32.store	0($0), $pop2
-	block
+	block   	
 	br_if   	0, $1
 	i32.const	$push0=, 1
 	i32.store	0($0), $pop0
@@ -140,8 +140,8 @@ diamond:
 	.result 	i32
 	i32.const	$push0=, 0
 	i32.store	0($0), $pop0
-	block
-	block
+	block   	
+	block   	
 	br_if   	0, $1
 	i32.const	$push2=, 1
 	i32.store	0($0), $pop2
@@ -177,10 +177,11 @@ single_block:
 	.type	minimal_loop,@function
 minimal_loop:
 	.param  	i32
+	.result 	i32
 	i32.const	$push0=, 0
 	i32.store	0($0), $pop0
 .LBB7_1:
-	loop
+	loop    	i32
 	i32.const	$push1=, 1
 	i32.store	0($0), $pop1
 	br      	0
@@ -198,7 +199,7 @@ simple_loop:
 	i32.const	$push0=, 0
 	i32.store	0($0), $pop0
 .LBB8_1:
-	loop
+	loop    	
 	i32.const	$push3=, 1
 	i32.store	0($0), $pop3
 	i32.eqz 	$push4=, $1
@@ -219,11 +220,11 @@ doubletriangle:
 	.result 	i32
 	i32.const	$push4=, 0
 	i32.store	0($2), $pop4
-	block
+	block   	
 	br_if   	0, $0
 	i32.const	$push0=, 2
 	i32.store	0($2), $pop0
-	block
+	block   	
 	br_if   	0, $1
 	i32.const	$push1=, 3
 	i32.store	0($2), $pop1
@@ -248,8 +249,8 @@ ifelse_earlyexits:
 	.result 	i32
 	i32.const	$push0=, 0
 	i32.store	0($2), $pop0
-	block
-	block
+	block   	
+	block   	
 	br_if   	0, $0
 	i32.const	$push3=, 1
 	i32.store	0($2), $pop3
@@ -275,11 +276,12 @@ ifelse_earlyexits:
 	.type	doublediamond_in_a_loop,@function
 doublediamond_in_a_loop:
 	.param  	i32, i32, i32
+	.result 	i32
 .LBB11_1:
-	loop
+	loop    	i32
 	i32.const	$push0=, 0
 	i32.store	0($2), $pop0
-	block
+	block   	
 	br_if   	0, $0
 	i32.const	$push2=, 1
 	i32.store	0($2), $pop2
@@ -290,7 +292,7 @@ doublediamond_in_a_loop:
 	end_block
 	i32.const	$push3=, 2
 	i32.store	0($2), $pop3
-	block
+	block   	
 	br_if   	0, $1
 	i32.const	$push5=, 3
 	i32.store	0($2), $pop5
@@ -314,16 +316,16 @@ doublediamond_in_a_loop:
 	.type	test3,@function
 test3:
 	.param  	i32
-	block
+	block   	
 	i32.const	$push0=, 0
 	br_if   	0, $pop0
 	i32.eq  	$0=, $0, $0
 .LBB12_2:
-	block
-	loop
+	block   	
+	loop    	
 	br_if   	1, $0
 .LBB12_3:
-	loop
+	loop    	
 	i32.eqz 	$push1=, $0
 	br_if   	0, $pop1
 	end_loop
@@ -344,8 +346,8 @@ test3:
 	.type	test4,@function
 test4:
 	.param  	i32
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 3
 	i32.gt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1
@@ -356,7 +358,7 @@ test4:
 	br      	1
 .LBB13_3:
 	end_block
-	block
+	block   	
 	i32.const	$push2=, 4
 	i32.eq  	$push3=, $0, $pop2
 	br_if   	0, $pop3
@@ -382,8 +384,8 @@ test5:
 	i32.const	$push4=, 1
 	i32.and 	$1=, $1, $pop4
 .LBB14_1:
-	block
-	loop
+	block   	
+	loop    	
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.store	0($pop7), $pop6
@@ -416,9 +418,9 @@ test6:
 	i32.const	$push6=, 1
 	i32.and 	$2=, $0, $pop6
 .LBB15_1:
-	block
-	block
-	loop
+	block   	
+	block   	
+	loop    	
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
 	i32.store	0($pop8), $pop7
@@ -466,11 +468,11 @@ test7:
 	i32.const	$push6=, 1
 	i32.and 	$0=, $0, $pop6
 .LBB16_1:
-	loop
+	loop    	
 	i32.const	$push10=, 0
 	i32.const	$push9=, 1
 	i32.store	0($pop10), $pop9
-	block
+	block   	
 	br_if   	0, $0
 	i32.const	$push13=, 0
 	i32.const	$push12=, 2
@@ -502,8 +504,9 @@ test7:
 	.globl	test8
 	.type	test8,@function
 test8:
+	.result 	i32
 .LBB17_1:
-	loop
+	loop    	i32
 	i32.const	$push0=, 0
 	br_if   	0, $pop0
 	br      	0
@@ -520,8 +523,8 @@ test9:
 	i32.const	$push10=, 0
 	i32.store	0($pop11), $pop10
 .LBB18_1:
-	block
-	loop
+	block   	
+	loop    	
 	i32.const	$push14=, 0
 	i32.const	$push13=, 1
 	i32.store	0($pop14), $pop13
@@ -531,11 +534,11 @@ test9:
 	i32.eqz 	$push24=, $pop1
 	br_if   	1, $pop24
 .LBB18_2:
-	loop
+	loop    	
 	i32.const	$push17=, 0
 	i32.const	$push16=, 2
 	i32.store	0($pop17), $pop16
-	block
+	block   	
 	i32.call	$push4=, a@FUNCTION
 	i32.const	$push15=, 1
 	i32.and 	$push5=, $pop4, $pop15
@@ -579,7 +582,7 @@ test10:
 	.local  	i32, i32, i32, i32, i32
 	i32.const	$0=, 2
 .LBB19_1:
-	loop
+	loop    	
 	copy_local	$2=, $1
 	copy_local	$3=, $0
 	i32.const	$1=, 0
@@ -587,18 +590,18 @@ test10:
 	br_if   	0, $2
 	i32.const	$2=, 4
 .LBB19_3:
-	block
-	loop
+	block   	
+	loop    	
 	copy_local	$4=, $3
 	copy_local	$3=, $2
 .LBB19_4:
-	loop
+	loop    	
 	copy_local	$push3=, $4
 	tee_local	$push2=, $2=, $pop3
 	i32.const	$push1=, 4
 	i32.gt_u	$push0=, $pop2, $pop1
 	br_if   	3, $pop0
-	block
+	block   	
 	copy_local	$4=, $3
 	br_table 	$2, 1, 0, 4, 2, 3, 1
 .LBB19_6:
@@ -622,16 +625,16 @@ test11:
 	i32.const	$push14=, 0
 	i32.const	$push13=, 0
 	i32.store	0($pop14), $pop13
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push12=, 0
 	br_if   	0, $pop12
 	i32.const	$push16=, 0
 	i32.const	$push5=, 1
 	i32.store	0($pop16), $pop5
-	block
+	block   	
 	i32.const	$push15=, 0
 	br_if   	0, $pop15
 	i32.const	$push7=, 0
@@ -686,10 +689,10 @@ test12:
 	.param  	i32
 	.local  	i32
 .LBB21_1:
-	block
-	loop
-	block
-	block
+	block   	
+	loop    	
+	block   	
+	block   	
 	i32.load8_u	$push7=, 0($0)
 	tee_local	$push6=, $1=, $pop7
 	i32.const	$push5=, 103
@@ -727,12 +730,12 @@ test12:
 	.type	test13,@function
 test13:
 	.local  	i32
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 0
 	br_if   	0, $pop0
 	i32.const	$0=, 0
-	block
+	block   	
 	i32.const	$push3=, 0
 	br_if   	0, $pop3
 	i32.const	$0=, 0
@@ -756,12 +759,12 @@ test13:
 	.type	test14,@function
 test14:
 .LBB23_1:
-	loop
+	loop    	
 	i32.const	$push0=, 0
 	br_if   	0, $pop0
 	end_loop
 .LBB23_3:
-	loop
+	loop    	
 	i32.const	$push1=, 0
 	br_if   	0, $pop1
 	end_loop
@@ -774,15 +777,15 @@ test14:
 	.type	test15,@function
 test15:
 	.local  	i32, i32
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 1
 	br_if   	0, $pop0
 	i32.const	$0=, 0
 .LBB24_2:
-	block
-	block
-	loop
+	block   	
+	block   	
+	loop    	
 	i32.const	$push1=, 1
 	br_if   	1, $pop1
 	i32.const	$1=, 0

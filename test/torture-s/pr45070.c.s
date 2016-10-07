@@ -22,10 +22,10 @@ main:                                   # @main
 	i64.store	0($2), $pop0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.call	$0=, next@FUNCTION, $2
-	block
+	block   	
 	br_if   	0, $1           # 0: down to label2
 # BB#2:                                 # %for.body
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -37,7 +37,7 @@ main:                                   # @main
 .LBB0_3:                                # %lor.lhs.false
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
-	block
+	block   	
 	i32.const	$push19=, 1
 	i32.lt_s	$push3=, $1, $pop19
 	br_if   	0, $pop3        # 0: down to label3
@@ -79,7 +79,7 @@ next:                                   # @next
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-	block
+	block   	
 	i32.load	$push1=, 0($0)
 	i32.load	$push0=, 4($0)
 	i32.lt_s	$push2=, $pop1, $pop0
@@ -91,8 +91,8 @@ next:                                   # @next
 	i32.add 	$2=, $0, $pop5
 .LBB1_2:                                # %if.then
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label6:
+	block   	
+	loop    	                # label6:
 	i32.load	$push4=, 0($1)
 	i32.eqz 	$push13=, $pop4
 	br_if   	1, $pop13       # 1: down to label5
@@ -136,5 +136,5 @@ fetch:                                  # @fetch
 	.size	fetch, .Lfunc_end2-fetch
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -10,8 +10,8 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$0=, 0($0)
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 16
 	i32.gt_s	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label1
@@ -21,7 +21,7 @@ foo:                                    # @foo
 # BB#2:                                 # %while.cond.preheader
 .LBB0_3:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	copy_local	$push8=, $0
 	tee_local	$push7=, $2=, $pop8
 	i32.const	$push6=, 1
@@ -65,14 +65,14 @@ main:                                   # @main
 	i32.const	$2=, 1
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label4:
+	block   	
+	loop    	                # label4:
 	i32.const	$push19=, 12
 	i32.add 	$push20=, $6, $pop19
 	i32.const	$push31=, 16
 	i32.call	$4=, foo@FUNCTION, $pop20, $pop31
 	copy_local	$5=, $0
-	block
+	block   	
 	i32.const	$push30=, -1
 	i32.add 	$push29=, $1, $pop30
 	tee_local	$push28=, $3=, $pop29
@@ -83,7 +83,7 @@ main:                                   # @main
 	br_if   	0, $pop2        # 0: down to label5
 # BB#2:                                 # %if.else
                                         #   in Loop: Header=BB1_1 Depth=1
-	block
+	block   	
 	i32.const	$push33=, -4
 	i32.and 	$push3=, $3, $pop33
 	i32.const	$push32=, 4
@@ -114,7 +114,7 @@ main:                                   # @main
 	i32.const	$push39=, 7
 	i32.call	$4=, foo@FUNCTION, $pop22, $pop39
 	copy_local	$5=, $2
-	block
+	block   	
 	i32.const	$push38=, 6
 	i32.gt_s	$push7=, $3, $pop38
 	br_if   	0, $pop7        # 0: down to label7
@@ -166,5 +166,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

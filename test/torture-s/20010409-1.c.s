@@ -26,7 +26,7 @@ bar:                                    # @bar
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 0
@@ -133,6 +133,6 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

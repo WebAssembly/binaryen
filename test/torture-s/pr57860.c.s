@@ -18,8 +18,8 @@ foo:                                    # @foo
 	i64.extend_s/i32	$1=, $0
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
-	block
+	loop    	                # label0:
+	block   	
 	i32.const	$push15=, 0
 	i32.load	$push0=, c($pop15)
 	i32.eqz 	$push27=, $pop0
@@ -32,7 +32,7 @@ foo:                                    # @foo
 .LBB0_3:                                # %for.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label1:
-	block
+	block   	
 	i64.load32_s	$push3=, 0($2)
 	i32.const	$push26=, 0
 	i64.load32_s	$push1=, a($pop26)
@@ -84,8 +84,8 @@ main:                                   # @main
 	i32.load	$0=, b($pop12)
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
-	block
+	loop    	                # label3:
+	block   	
 	i32.const	$push17=, 0
 	i32.load	$push0=, c($pop17)
 	i32.eqz 	$push32=, $pop0
@@ -98,7 +98,7 @@ main:                                   # @main
 .LBB1_3:                                # %for.end.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label4:
-	block
+	block   	
 	i64.load32_s	$push3=, 0($0)
 	i32.const	$push29=, 0
 	i64.load32_s	$push1=, a($pop29)
@@ -129,7 +129,7 @@ main:                                   # @main
 .LBB1_5:                                # %foo.exit
 	end_block                       # label5:
 	end_loop
-	block
+	block   	
 	i32.const	$push30=, 0
 	i32.load	$push8=, d($pop30)
 	i32.const	$push9=, 1
@@ -228,5 +228,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

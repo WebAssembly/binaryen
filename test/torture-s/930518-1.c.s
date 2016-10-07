@@ -9,7 +9,7 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push5=, 0
 	i32.load	$push4=, bar($pop5)
 	tee_local	$push3=, $1=, $pop4
@@ -20,7 +20,7 @@ f:                                      # @f
 	i32.const	$2=, 2
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.sub 	$push11=, $2, $1
 	tee_local	$push10=, $2=, $pop11
 	i32.store	0($0), $pop10
@@ -59,7 +59,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop17), $pop22
 	i64.const	$push0=, 0
 	i64.store	8($3):p2align=2, $pop0
-	block
+	block   	
 	i32.const	$push1=, 0
 	i32.load	$push21=, bar($pop1)
 	tee_local	$push20=, $0=, $pop21
@@ -73,7 +73,7 @@ main:                                   # @main
 	copy_local	$2=, $pop19
 .LBB1_2:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.sub 	$push27=, $1, $0
 	tee_local	$push26=, $1=, $pop27
 	i32.store	0($2), $pop26
@@ -121,6 +121,6 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

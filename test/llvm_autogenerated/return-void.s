@@ -11,7 +11,7 @@ return_void:
 	.type	return_void_twice,@function
 return_void_twice:
 	.param  	i32
-	block
+	block   	
 	i32.eqz 	$push4=, $0
 	br_if   	0, $pop4
 	i32.const	$push2=, 0

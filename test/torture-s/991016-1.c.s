@@ -9,9 +9,9 @@ doit:                                   # @doit
 	.result 	i32
 	.local  	i32, i64, i64
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push25=, $0
 	br_if   	0, $pop25       # 0: down to label2
 # BB#1:                                 # %entry
@@ -26,7 +26,7 @@ doit:                                   # @doit
 	i64.load	$5=, 0($2)
 .LBB0_4:                                # %do.body11
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	copy_local	$push12=, $5
 	tee_local	$push11=, $4=, $pop12
 	i64.const	$push10=, 1
@@ -45,7 +45,7 @@ doit:                                   # @doit
 	i32.load	$0=, 0($2)
 .LBB0_7:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop    	                # label4:
 	copy_local	$push18=, $0
 	tee_local	$push17=, $3=, $pop18
 	i32.const	$push16=, 1
@@ -64,7 +64,7 @@ doit:                                   # @doit
 	i32.load	$0=, 0($2)
 .LBB0_10:                               # %do.body2
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label5:
+	loop    	                # label5:
 	copy_local	$push24=, $0
 	tee_local	$push23=, $3=, $pop24
 	i32.const	$push22=, 1
@@ -101,6 +101,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

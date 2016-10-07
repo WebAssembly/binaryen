@@ -45,7 +45,7 @@ main:                                   # @main
 	i32.sub 	$push22=, $pop12, $pop13
 	tee_local	$push21=, $1=, $pop22
 	i32.store	__stack_pointer($pop14), $pop21
-	block
+	block   	
 	i32.const	$push20=, 0
 	i32.load	$push0=, endianness_test($pop20)
 	i32.const	$push1=, 2
@@ -65,7 +65,7 @@ main:                                   # @main
 	end_block                       # label0:
 	i64.const	$push6=, -4625196817309499392
 	i64.store	8($1), $pop6
-	block
+	block   	
 	i32.const	$push15=, 8
 	i32.add 	$push16=, $1, $pop15
 	i32.add 	$push7=, $pop16, $0
@@ -104,6 +104,6 @@ endianness_test:
 	.size	endianness_test, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

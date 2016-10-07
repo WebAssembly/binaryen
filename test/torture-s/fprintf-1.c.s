@@ -22,7 +22,7 @@ main:                                   # @main
 	i32.load	$push71=, stdout($pop72)
 	tee_local	$push70=, $0=, $pop71
 	i32.call	$drop=, fwrite@FUNCTION, $pop1, $pop0, $pop73, $pop70
-	block
+	block   	
 	i32.const	$push69=, .L.str
 	i32.const	$push68=, 0
 	i32.call	$push2=, fprintf@FUNCTION, $0, $pop69, $pop68
@@ -201,7 +201,7 @@ main:                                   # @main
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	fwrite, i32, i32, i32, i32, i32

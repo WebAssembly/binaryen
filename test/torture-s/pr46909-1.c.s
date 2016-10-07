@@ -37,8 +37,8 @@ main:                                   # @main
 	i32.const	$1=, -14
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push11=, 4
 	i32.add 	$push4=, $1, $pop11
 	i32.call	$push5=, foo@FUNCTION, $pop4
@@ -72,5 +72,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

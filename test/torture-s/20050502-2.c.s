@@ -61,7 +61,7 @@ main:                                   # @main
 	tee_local	$push27=, $0=, $pop28
 	i32.const	$push26=, 0
 	i32.store8	0($pop27), $pop26
-	block
+	block   	
 	i32.const	$push21=, 4
 	i32.add 	$push22=, $1, $pop21
 	i32.const	$push8=, .L.str
@@ -113,6 +113,6 @@ main:                                   # @main
 	.size	.L.str.1, 11
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

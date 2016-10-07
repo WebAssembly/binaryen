@@ -38,8 +38,8 @@ random_bitstring:                       # @random_bitstring
 	i32.const	$3=, 0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push15=, 1103515245
 	i32.mul 	$push0=, $1, $pop15
 	i32.const	$push14=, 12345
@@ -56,7 +56,7 @@ random_bitstring:                       # @random_bitstring
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.add 	$3=, $0, $3
 	i32.shl 	$2=, $2, $0
-	block
+	block   	
 	i32.const	$push16=, 256
 	i32.and 	$push2=, $1, $pop16
 	i32.eqz 	$push21=, $pop2
@@ -100,17 +100,17 @@ main:                                   # @main
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
                                         #     Child Loop BB2_7 Depth 2
-	block
-	block
-	block
-	loop                            # label6:
+	block   	
+	block   	
+	block   	
+	loop    	                # label6:
 	i32.const	$6=, 0
 	i32.const	$7=, 0
 .LBB2_2:                                # %for.cond.i
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label8:
+	block   	
+	loop    	                # label8:
 	i32.const	$push66=, 1103515245
 	i32.mul 	$push0=, $2, $pop66
 	i32.const	$push65=, 12345
@@ -127,7 +127,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_2 Depth=2
 	i32.add 	$7=, $1, $7
 	i32.shl 	$6=, $6, $1
-	block
+	block   	
 	i32.const	$push67=, 256
 	i32.and 	$push2=, $2, $pop67
 	i32.eqz 	$push147=, $pop2
@@ -154,8 +154,8 @@ main:                                   # @main
 .LBB2_7:                                # %for.cond.i339
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label11:
+	block   	
+	loop    	                # label11:
 	i32.const	$push78=, 1103515245
 	i32.mul 	$push6=, $2, $pop78
 	i32.const	$push77=, 12345
@@ -172,7 +172,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_7 Depth=2
 	i32.add 	$8=, $1, $8
 	i32.shl 	$7=, $7, $1
-	block
+	block   	
 	i32.const	$push79=, 256
 	i32.and 	$push8=, $2, $pop79
 	i32.eqz 	$push149=, $pop8
@@ -194,12 +194,12 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop
 	end_block                       # label10:
-	block
+	block   	
 	i32.eqz 	$push150=, $7
 	br_if   	0, $pop150      # 0: down to label13
 # BB#12:                                # %cleanup.cont
                                         #   in Loop: Header=BB2_1 Depth=1
-	block
+	block   	
 	i32.const	$push83=, 2147483647
 	i32.and 	$push12=, $6, $pop83
 	br_if   	0, $pop12       # 0: down to label14
@@ -373,6 +373,6 @@ simple_rand.seed:
 	.size	simple_rand.seed, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

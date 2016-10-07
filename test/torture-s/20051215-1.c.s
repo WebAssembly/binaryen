@@ -10,7 +10,7 @@ foo:                                    # @foo
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$5=, 0
-	block
+	block   	
 	i32.const	$push6=, 1
 	i32.lt_s	$push0=, $1, $pop6
 	br_if   	0, $pop0        # 0: down to label0
@@ -20,8 +20,8 @@ foo:                                    # @foo
 	i32.const	$5=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
-	block
+	loop    	                # label1:
+	block   	
 	i32.eqz 	$push12=, $2
 	br_if   	0, $pop12       # 0: down to label2
 # BB#3:                                 # %if.then
@@ -58,7 +58,7 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push1=, 3
 	i32.const	$push0=, 2
 	i32.const	$push3=, 0
@@ -76,5 +76,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

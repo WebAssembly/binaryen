@@ -10,7 +10,7 @@ loop:                                   # @loop
 # BB#0:                                 # %entry
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	copy_local	$push22=, $1
 	tee_local	$push21=, $2=, $pop22
 	i32.load8_u	$push20=, 0($pop21)
@@ -22,8 +22,8 @@ loop:                                   # @loop
 	i32.shl 	$push0=, $4, $pop17
 	i32.const	$push16=, 24
 	i32.shr_s	$3=, $pop0, $pop16
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push15=, 34
 	i32.eq  	$push1=, $4, $pop15
 	br_if   	0, $pop1        # 0: down to label2
@@ -52,7 +52,7 @@ loop:                                   # @loop
 	br_if   	0, $3           # 0: up to label0
 # BB#5:                                 # %loopDone2
 	end_loop
-	block
+	block   	
 	i32.const	$push5=, a
 	i32.sub 	$push6=, $pop5, $0
 	i32.const	$push9=, b
@@ -105,6 +105,6 @@ b:
 	.size	b, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

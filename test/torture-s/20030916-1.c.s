@@ -62,7 +62,7 @@ main:                                   # @main
 	i32.const	$0=, 0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.add 	$push0=, $2, $0
 	i32.const	$push31=, 1
 	i32.store	0($pop0), $pop31
@@ -108,8 +108,8 @@ main:                                   # @main
 	copy_local	$0=, $2
 .LBB1_3:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label2:
+	block   	
+	loop    	                # label2:
 	i32.load	$push17=, 0($0)
 	i32.const	$push41=, -8
 	i32.add 	$push15=, $1, $pop41
@@ -141,6 +141,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

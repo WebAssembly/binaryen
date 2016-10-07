@@ -41,7 +41,7 @@ fn1:                                    # @fn1
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push3=, 0
 	i32.load	$push0=, p($pop3)
 	i32.eqz 	$push13=, $pop0
@@ -49,7 +49,7 @@ fn1:                                    # @fn1
 # BB#1:                                 # %for.body.preheader
 .LBB2_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push9=, 1
 	i32.store	0($0), $pop9
 	i32.const	$push8=, 0
@@ -174,4 +174,4 @@ j:
 	.size	j, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

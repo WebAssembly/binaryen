@@ -38,7 +38,7 @@ rl_character_len:                       # @rl_character_len
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 97
 	i32.call	$push1=, isprint@FUNCTION, $pop0
 	i32.eqz 	$push5=, $pop1
@@ -59,6 +59,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	isprint, i32, i32
 	.functype	abort, void

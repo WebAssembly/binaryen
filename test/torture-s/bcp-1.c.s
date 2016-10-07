@@ -233,10 +233,10 @@ opt2:                                   # @opt2
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push35=, 0
 	i32.load	$push0=, bad_t0($pop35)
 	i32.call_indirect	$push1=, $pop0
@@ -297,7 +297,7 @@ main:                                   # @main
 	i32.call_indirect	$push22=, $pop21, $pop48
 	br_if   	2, $pop22       # 2: down to label1
 # BB#11:                                # %for.cond12.1
-	block
+	block   	
 	i32.const	$push50=, 0
 	i32.load	$push23=, good_t0($pop50)
 	i32.call_indirect	$push24=, $pop23
@@ -332,8 +332,8 @@ main:                                   # @main
 	unreachable
 .LBB17_18:                              # %for.cond23.2
 	end_block                       # label0:
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push53=, 0
 	i32.load	$push29=, opt_t0($pop53)
 	i32.call_indirect	$push30=, $pop29
@@ -436,6 +436,6 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

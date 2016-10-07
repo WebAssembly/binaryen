@@ -68,7 +68,7 @@ main:                                   # @main
 	#NO_APP
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push76=, 3616
 	i32.add 	$push77=, $5, $pop76
 	i32.add 	$push10=, $pop77, $1
@@ -90,7 +90,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB0_3:                                # %for.body16
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push80=, 1568
 	i32.add 	$push81=, $5, $pop80
 	i32.add 	$push15=, $pop81, $1
@@ -112,7 +112,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB0_5:                                # %for.body28
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push84=, 544
 	i32.add 	$push85=, $5, $pop84
 	i32.add 	$push21=, $pop85, $1
@@ -138,7 +138,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB0_7:                                # %for.body43
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push88=, 32
 	i32.add 	$push89=, $5, $pop88
 	i32.add 	$push27=, $pop89, $1
@@ -181,7 +181,7 @@ main:                                   # @main
 	i32.add 	$2=, $5, $pop100
 	#APP
 	#NO_APP
-	block
+	block   	
 	i64.load	$push30=, 3616($5)
 	i64.const	$push29=, -1224658842671273011
 	i64.ne  	$push31=, $pop30, $pop29
@@ -231,5 +231,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

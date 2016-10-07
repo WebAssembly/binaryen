@@ -29,5 +29,5 @@ adjust_xy:                              # @adjust_xy
 	.size	adjust_xy, .Lfunc_end1-adjust_xy
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

@@ -21,7 +21,7 @@ f:                                      # @f
 	i32.add 	$push19=, $9, $pop0
 	tee_local	$push18=, $10=, $pop19
 	i32.store	12($12), $pop18
-	block
+	block   	
 	i32.load	$push1=, 0($9)
 	i32.const	$push2=, 10
 	i32.ne  	$push3=, $pop1, $pop2
@@ -83,6 +83,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

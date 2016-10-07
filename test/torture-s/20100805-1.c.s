@@ -10,13 +10,13 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 1
 	i32.and 	$0=, $0, $pop0
-	block
+	block   	
 	i32.eqz 	$push5=, $1
 	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %for.body.preheader
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push4=, 1
 	i32.rotl	$0=, $0, $pop4
 	i32.const	$push3=, -1
@@ -46,4 +46,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

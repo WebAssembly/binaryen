@@ -54,8 +54,8 @@ foo:                                    # @foo
 	i32.sub 	$push19=, $pop8, $pop9
 	tee_local	$push18=, $2=, $pop19
 	i32.store	__stack_pointer($pop10), $pop18
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 6
 	i32.ne  	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label1
@@ -117,7 +117,7 @@ main:                                   # @main
 	i32.const	$push3=, b
 	i32.const	$push59=, 36
 	i32.call	$drop=, memcpy@FUNCTION, $pop3, $0, $pop59
-	block
+	block   	
 	i32.const	$push58=, 0
 	i32.load	$push4=, a($pop58)
 	i32.const	$push5=, 1
@@ -242,5 +242,5 @@ b:
 	.size	b, 36
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

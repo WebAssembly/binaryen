@@ -38,7 +38,7 @@ dn_skipname:                            # @dn_skipname
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, a
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
@@ -62,6 +62,6 @@ a:
 	.size	a, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

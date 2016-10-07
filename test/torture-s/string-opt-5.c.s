@@ -15,7 +15,7 @@ main:                                   # @main
 	i32.sub 	$push122=, $pop112, $pop113
 	tee_local	$push121=, $4=, $pop122
 	i32.store	__stack_pointer($pop114), $pop121
-	block
+	block   	
 	i32.const	$push120=, 0
 	i32.load	$push119=, bar($pop120)
 	tee_local	$push118=, $0=, $pop119
@@ -389,7 +389,7 @@ buf:
 	.size	.L.str.12, 11
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	strcmp, i32, i32, i32

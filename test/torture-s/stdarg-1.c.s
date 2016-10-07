@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 5
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -32,9 +32,9 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 16392
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label3
@@ -55,7 +55,7 @@ bar:                                    # @bar
 	i32.add 	$push45=, $pop46, $pop34
 	tee_local	$push44=, $2=, $pop45
 	i32.store	gap($pop49), $pop44
-	block
+	block   	
 	f64.load	$push35=, 0($1)
 	f64.const	$push36=, 0x1.1p4
 	f64.ne  	$push37=, $pop35, $pop36
@@ -258,7 +258,7 @@ f4:                                     # @f4
 	i32.add 	$push17=, $1, $pop5
 	tee_local	$push16=, $1=, $pop17
 	i32.store	12($2), $pop16
-	block
+	block   	
 	i32.const	$push6=, 5
 	i32.ne  	$push7=, $0, $pop6
 	br_if   	0, $pop7        # 0: down to label5
@@ -441,7 +441,7 @@ main:                                   # @main
 	i32.const	$push48=, 160
 	i32.add 	$push49=, $0, $pop48
 	call    	f2@FUNCTION, $0, $pop49
-	block
+	block   	
 	i32.const	$push67=, 0
 	i32.load	$push2=, bar_arg($pop67)
 	i32.const	$push66=, 28
@@ -643,5 +643,5 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

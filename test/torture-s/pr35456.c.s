@@ -24,7 +24,7 @@ not_fabs:                               # @not_fabs
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f64.const	$push0=, -0x0p0
 	f64.call	$push1=, not_fabs@FUNCTION, $pop0
 	i64.reinterpret/f64	$push2=, $pop1
@@ -43,5 +43,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

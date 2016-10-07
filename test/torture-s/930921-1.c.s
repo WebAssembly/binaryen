@@ -32,8 +32,8 @@ main:                                   # @main
 	i64.const	$2=, 0
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i64.const	$push7=, 33
 	i64.shr_u	$push1=, $0, $pop7
 	i32.wrap/i64	$push2=, $pop1
@@ -67,6 +67,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

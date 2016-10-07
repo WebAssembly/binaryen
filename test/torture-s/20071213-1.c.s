@@ -9,9 +9,9 @@ h:                                      # @h
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$2=, 0($1)
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 5
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label2
@@ -20,7 +20,7 @@ h:                                      # @h
 	i32.ne  	$push3=, $0, $pop2
 	br_if   	2, $pop3        # 2: down to label0
 # BB#2:                                 # %sw.bb
-	block
+	block   	
 	i32.const	$push9=, 3
 	i32.ne  	$push10=, $2, $pop9
 	br_if   	0, $pop10       # 0: down to label3
@@ -71,9 +71,9 @@ f1:                                     # @f1
 	i32.store	__stack_pointer($pop19), $pop23
 	i32.store	12($4), $2
 	i32.load	$3=, 0($2)
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label6
@@ -139,9 +139,9 @@ f2:                                     # @f2
 	i32.store	__stack_pointer($pop25), $pop29
 	i32.store	12($6), $4
 	i32.load	$5=, 0($4)
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 5
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label9
@@ -150,7 +150,7 @@ f2:                                     # @f2
 	i32.ne  	$push3=, $0, $pop2
 	br_if   	2, $pop3        # 2: down to label7
 # BB#2:                                 # %sw.bb.i
-	block
+	block   	
 	i32.const	$push9=, 3
 	i32.ne  	$push10=, $5, $pop9
 	br_if   	0, $pop10       # 0: down to label10
@@ -244,5 +244,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

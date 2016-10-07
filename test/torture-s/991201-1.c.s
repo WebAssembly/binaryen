@@ -16,7 +16,7 @@ reset_palette:                          # @reset_palette
 	i32.const	$2=, -64
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.load	$push3=, 0($1)
 	i32.add 	$push4=, $pop3, $0
 	i32.const	$push25=, -2
@@ -59,7 +59,7 @@ reset_palette:                          # @reset_palette
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 48
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label1
@@ -197,6 +197,6 @@ default_blu:
 	.size	default_blu, 64
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

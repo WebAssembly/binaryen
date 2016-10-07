@@ -22,7 +22,7 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push0=, 0($0)
 	i32.eqz 	$push6=, $pop0
 	br_if   	0, $pop6        # 0: down to label0
@@ -35,7 +35,7 @@ f:                                      # @f
 	i32.call	$1=, setjmp@FUNCTION, $pop4
 	#APP
 	#NO_APP
-	block
+	block   	
 	br_if   	0, $1           # 0: down to label1
 # BB#3:                                 # %if.end6
 	i32.const	$push5=, env
@@ -90,7 +90,7 @@ env:
 	.size	env, 156
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	setjmp, i32, i32
 	.functype	exit, void, i32
 	.functype	longjmp, void, i32, i32

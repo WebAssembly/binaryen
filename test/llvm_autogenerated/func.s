@@ -43,7 +43,7 @@ f3:
 f4:
 	.param  	i32
 	.result 	i32
-	block
+	block   	
 	i32.const	$push2=, 1
 	i32.and 	$push0=, $0, $pop2
 	i32.eqz 	$push4=, $pop0

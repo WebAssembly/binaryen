@@ -27,8 +27,8 @@ main:                                   # @main
 	i32.const	$2=, 21
 .LBB0_1:                                # %while.body.1
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	copy_local	$1=, $2
 	i32.const	$push66=, 4
 	i32.lt_s	$push3=, $0, $pop66
@@ -51,8 +51,8 @@ main:                                   # @main
 	copy_local	$0=, $pop32
 .LBB0_4:                                # %while.cond.2
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.load	$push73=, 0($0)
 	tee_local	$push72=, $2=, $pop73
 	i32.const	$push71=, -1
@@ -80,8 +80,8 @@ main:                                   # @main
 	copy_local	$1=, $pop34
 .LBB0_7:                                # %while.cond.3
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label5:
+	block   	
+	loop    	                # label5:
 	i32.load	$push79=, 0($1)
 	tee_local	$push78=, $0=, $pop79
 	i32.const	$push77=, -1
@@ -109,8 +109,8 @@ main:                                   # @main
 	copy_local	$1=, $pop36
 .LBB0_10:                               # %while.cond.4
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label7:
+	block   	
+	loop    	                # label7:
 	i32.load	$push85=, 0($1)
 	tee_local	$push84=, $0=, $pop85
 	i32.const	$push83=, -1
@@ -138,8 +138,8 @@ main:                                   # @main
 	copy_local	$1=, $pop38
 .LBB0_13:                               # %while.cond.5
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label9:
+	block   	
+	loop    	                # label9:
 	i32.load	$push91=, 0($1)
 	tee_local	$push90=, $0=, $pop91
 	i32.const	$push89=, -1
@@ -167,8 +167,8 @@ main:                                   # @main
 	copy_local	$1=, $pop40
 .LBB0_16:                               # %while.cond.6
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label11:
+	block   	
+	loop    	                # label11:
 	i32.load	$push97=, 0($1)
 	tee_local	$push96=, $0=, $pop97
 	i32.const	$push95=, -1
@@ -196,8 +196,8 @@ main:                                   # @main
 	copy_local	$1=, $pop42
 .LBB0_19:                               # %while.cond.7
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label13:
+	block   	
+	loop    	                # label13:
 	i32.load	$push103=, 0($1)
 	tee_local	$push102=, $0=, $pop103
 	i32.const	$push101=, -1
@@ -225,8 +225,8 @@ main:                                   # @main
 	copy_local	$1=, $pop44
 .LBB0_22:                               # %while.cond.8
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label15:
+	block   	
+	loop    	                # label15:
 	i32.load	$push109=, 0($1)
 	tee_local	$push108=, $0=, $pop109
 	i32.const	$push107=, -1
@@ -254,8 +254,8 @@ main:                                   # @main
 	copy_local	$1=, $pop46
 .LBB0_25:                               # %while.cond.9
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label17:
+	block   	
+	loop    	                # label17:
 	i32.load	$push115=, 0($1)
 	tee_local	$push114=, $0=, $pop115
 	i32.const	$push113=, -1
@@ -276,7 +276,7 @@ main:                                   # @main
 .LBB0_27:                               # %while.end.9
 	end_loop
 	end_block                       # label16:
-	block
+	block   	
 	i32.load	$push22=, 8($3)
 	i32.const	$push21=, -5
 	i32.ne  	$push23=, $pop22, $pop21
@@ -298,6 +298,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

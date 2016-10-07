@@ -9,7 +9,7 @@ g:                                      # @g
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	block
+	block   	
 	i64.ne  	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -107,5 +107,5 @@ main:                                   # @main
 	.size	.Lmain.t, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

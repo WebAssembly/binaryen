@@ -41,7 +41,7 @@ doit:                                   # @doit
 	i32.store	0($3), $1
 	i32.const	$push2=, .L.str
 	i32.call	$drop=, vprintf@FUNCTION, $pop2, $1
-	block
+	block   	
 	i32.eqz 	$push4=, $3
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -66,7 +66,7 @@ doit:                                   # @doit
 	.size	.L.str.1, 13
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	malloc, i32, i32
 	.functype	vprintf, i32, i32, i32

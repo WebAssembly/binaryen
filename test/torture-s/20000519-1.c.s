@@ -11,7 +11,7 @@ bar:                                    # @bar
 # BB#0:                                 # %entry
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.load	$2=, 0($1)
 	i32.const	$push4=, 4
 	i32.add 	$push0=, $1, $pop4
@@ -43,7 +43,7 @@ foo:                                    # @foo
 	i32.store	12($pop6), $1
 .LBB1_1:                                # %do.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load	$2=, 0($1)
 	i32.const	$push8=, 4
 	i32.add 	$push0=, $1, $pop8
@@ -76,7 +76,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop9), $pop13
 	i64.const	$push0=, 12884901890
 	i64.store	0($0), $pop0
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.call	$push2=, foo@FUNCTION, $pop1, $0
 	i32.const	$push3=, 3
@@ -98,5 +98,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

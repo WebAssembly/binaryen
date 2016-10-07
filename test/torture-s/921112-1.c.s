@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i64.const	$push6=, 8589934593
 	i64.store	v($pop7), $pop6
-	block
+	block   	
 	i32.const	$push5=, 0
 	br_if   	0, $pop5        # 0: down to label0
 # BB#1:                                 # %entry
@@ -68,6 +68,6 @@ v:
 	.size	v, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -12,8 +12,8 @@ main:                                   # @main
 	i32.const	$2=, .Lswitch.table
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i64.const	$push6=, -8690466092652643696
 	i64.shr_u	$push0=, $pop6, $0
 	i64.load	$push1=, 0($2)
@@ -35,8 +35,8 @@ main:                                   # @main
 	i32.const	$1=, .Lswitch.table
 .LBB0_4:                                # %constant_shift.exit
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.const	$push12=, 1
 	i32.eqz 	$push18=, $pop12
 	br_if   	1, $pop18       # 1: down to label2
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	.Lswitch.table, 512
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,7 +7,7 @@
 verify:                                 # @verify
 	.param  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.ne  	$push0=, $0, $2
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %entry
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.add 	$push85=, $pop89, $pop86
 	tee_local	$push84=, $4=, $pop85
 	i32.store	res($pop92), $pop84
-	block
+	block   	
 	i32.const	$push1=, 160
 	i32.ne  	$push2=, $4, $pop1
 	br_if   	0, $pop2        # 0: down to label1
@@ -313,6 +313,6 @@ k:
 	.size	k, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

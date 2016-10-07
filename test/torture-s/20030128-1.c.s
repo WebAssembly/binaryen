@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.div_s	$push6=, $pop0, $0
 	tee_local	$push5=, $0=, $pop6
 	i32.store8	x($pop8), $pop5
-	block
+	block   	
 	i32.const	$push1=, 255
 	i32.and 	$push2=, $0, $pop1
 	i32.const	$push3=, 246
@@ -52,6 +52,6 @@ y:
 	.size	y, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

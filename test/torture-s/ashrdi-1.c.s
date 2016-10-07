@@ -12,9 +12,9 @@ main:                                   # @main
 	i32.const	$2=, zext
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	block
-	loop                            # label2:
+	block   	
+	block   	
+	loop    	                # label2:
 	i64.const	$push17=, 8526495107234113920
 	i64.shr_u	$push0=, $pop17, $0
 	i64.load	$push1=, 0($2)
@@ -36,7 +36,7 @@ main:                                   # @main
 	i32.const	$2=, sext
 .LBB0_4:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i64.const	$push23=, -8152436031399644656
 	i64.shr_s	$push4=, $pop23, $0
 	i64.load	$push5=, 0($2)
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.const	$1=, zext
 .LBB0_7:                                # %for.body16
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop    	                # label4:
 	i64.const	$push29=, 8526495107234113920
 	i64.call	$push8=, constant_shift@FUNCTION, $pop29, $2
 	i64.load	$push9=, 0($1)
@@ -80,8 +80,8 @@ main:                                   # @main
 	i32.const	$1=, sext
 .LBB0_10:                               # %for.body28
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label6:
+	block   	
+	loop    	                # label6:
 	i64.const	$push35=, -8152436031399644656
 	i64.call	$push12=, constant_shift@FUNCTION, $pop35, $2
 	i64.load	$push13=, 0($1)
@@ -124,75 +124,75 @@ constant_shift:                         # @constant_shift
 	.param  	i64, i32
 	.result 	i64
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 63
 	i32.gt_u	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label7
 # BB#1:                                 # %entry
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$1, 1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 1 # 1: down to label70
                                         # 0: down to label71
                                         # 2: down to label69
@@ -723,6 +723,6 @@ sext:
 	.size	sext, 512
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

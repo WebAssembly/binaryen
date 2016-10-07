@@ -23,7 +23,7 @@ f:                                      # @f
 	.local  	i32
 # BB#0:                                 # %entry
 	call    	ff@FUNCTION, $0
-	block
+	block   	
 	i32.const	$push0=, 2
 	i32.add 	$push6=, $0, $pop0
 	tee_local	$push5=, $1=, $pop6
@@ -36,7 +36,7 @@ f:                                      # @f
 .LBB1_2:                                # %for.inc
 	end_block                       # label0:
 	call    	ff@FUNCTION, $0
-	block
+	block   	
 	i32.add 	$push2=, $1, $0
 	i32.const	$push7=, 65535
 	i32.and 	$push3=, $pop2, $pop7
@@ -75,4 +75,4 @@ nunmap:
 	.size	nunmap, 3
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

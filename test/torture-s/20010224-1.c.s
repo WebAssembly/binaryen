@@ -24,7 +24,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	i32.load16_u	$push16=, 0($pop6)
 	tee_local	$push15=, $4=, $pop16
 	i32.store16	0($pop18), $pop15
-	block
+	block   	
 	i32.const	$push14=, 1
 	i32.add 	$push13=, $0, $pop14
 	tee_local	$push12=, $2=, $pop13
@@ -40,7 +40,7 @@ ba_compute_psd:                         # @ba_compute_psd
 	i32.add 	$0=, $pop8, $pop24
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.load16_u	$push10=, 0($0)
 	i32.const	$push31=, 65535
 	i32.and 	$push9=, $4, $pop31
@@ -107,7 +107,7 @@ main:                                   # @main
 	i32.add 	$push9=, $pop8, $pop7
 	i32.add 	$push11=, $pop10, $pop9
 	i32.store16	0($pop4), $pop11
-	block
+	block   	
 	i32.const	$push15=, 0
 	i32.load16_u	$push12=, bndpsd+2($pop15)
 	i32.const	$push13=, 140
@@ -167,5 +167,5 @@ bndpsd:
 	.size	bndpsd, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

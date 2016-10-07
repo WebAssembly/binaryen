@@ -25,14 +25,14 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push7=, 0($1)
 	tee_local	$push6=, $2=, $pop7
 	i32.load	$push5=, 8($pop6)
 	tee_local	$push4=, $3=, $pop5
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then.i
-	block
+	block   	
 	i32.load	$push9=, 4($2)
 	tee_local	$push8=, $3=, $pop9
 	br_if   	0, $pop8        # 0: down to label1
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.const	$push0=, hash
 	i32.store	link_info($pop6), $pop0
-	block
+	block   	
 	i32.const	$push2=, abfd
 	i32.const	$push1=, link_info
 	i32.call	$push3=, elf64_ia64_check_relocs@FUNCTION, $pop2, $pop1
@@ -111,5 +111,5 @@ abfd:
 	.size	abfd, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

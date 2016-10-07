@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push3=, 0
 	i32.load	$push0=, b($pop3)
 	i32.eqz 	$push9=, $pop0
@@ -17,7 +17,7 @@ foo:                                    # @foo
 	i32.const	$0=, 1
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	#APP
 	#NO_APP
 	i32.const	$push8=, 0
@@ -45,7 +45,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push2=, 0
 	i32.load	$push0=, b($pop2)
 	i32.eqz 	$push9=, $pop0
@@ -54,7 +54,7 @@ main:                                   # @main
 	i32.const	$0=, 1
 .LBB1_2:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	#APP
 	#NO_APP
 	i32.const	$push7=, 0
@@ -84,4 +84,4 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

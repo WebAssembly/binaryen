@@ -46,8 +46,8 @@ line_hints:                             # @line_hints
 	tee_local	$push28=, $6=, $pop29
 	i32.add 	$push10=, $pop31, $pop28
 	i32.xor 	$6=, $pop10, $6
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push60=, $0
 	br_if   	0, $pop60       # 0: down to label1
 # BB#1:                                 # %entry
@@ -104,7 +104,7 @@ line_hints:                             # @line_hints
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push2=, main.fh
 	i32.const	$push1=, main.gsf
 	i32.const	$push0=, main.gsf+8
@@ -168,6 +168,6 @@ main.gsf:
 	.size	main.gsf, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

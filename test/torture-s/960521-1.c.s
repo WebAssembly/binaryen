@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push8=, 0
 	i32.load	$push0=, n($pop8)
 	i32.const	$push7=, 1
@@ -20,7 +20,7 @@ foo:                                    # @foo
 	i32.const	$1=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push15=, -1
 	i32.store	0($0), $pop15
 	i32.const	$push14=, 4
@@ -77,7 +77,7 @@ main:                                   # @main
 	i32.load	$2=, n($pop6)
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push23=, -1
 	i32.store	0($3), $pop23
 	i32.const	$push22=, 4
@@ -93,7 +93,7 @@ main:                                   # @main
 	i32.const	$push4=, 255
 	i32.const	$push3=, 522236
 	i32.call	$drop=, memset@FUNCTION, $1, $pop4, $pop3
-	block
+	block   	
 	br_if   	0, $3           # 0: down to label3
 # BB#3:                                 # %if.end
 	i32.const	$push5=, 0
@@ -135,7 +135,7 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -82,8 +82,8 @@ print_longlong:                         # @print_longlong
 	tee_local	$push15=, $4=, $pop16
 	i32.store	__stack_pointer($pop7), $pop15
 	i32.wrap/i64	$3=, $0
-	block
-	block
+	block   	
+	block   	
 	i64.const	$push0=, 32
 	i64.shr_u	$push1=, $0, $pop0
 	i32.wrap/i64	$push14=, $pop1
@@ -138,7 +138,7 @@ main:                                   # @main
 	i32.const	$push23=, 64
 	i32.add 	$push24=, $0, $pop23
 	i32.call	$drop=, sprintf@FUNCTION, $pop22, $pop49, $pop24
-	block
+	block   	
 	i32.const	$push1=, .L.str.2
 	i32.const	$push25=, 80
 	i32.add 	$push26=, $0, $pop25
@@ -247,7 +247,7 @@ main:                                   # @main
 	.size	.L.str.6, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

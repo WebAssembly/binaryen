@@ -24,7 +24,7 @@ check2848va:                            # @check2848va
 	i32.store	12($3), $pop4
 	i32.load	$2=, 8($1)
 	i32.load	$3=, 4($1)
-	block
+	block   	
 	i32.const	$push22=, 0
 	i32.load	$push6=, s2848($pop22)
 	i32.load	$push5=, 0($1)
@@ -39,8 +39,8 @@ check2848va:                            # @check2848va
 	i32.store	fails($pop28), $pop10
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push29=, 0
 	i32.load	$push12=, s2848+4($pop29)
 	i32.ne  	$push13=, $pop12, $3
@@ -99,7 +99,7 @@ main:                                   # @main
 	i32.add 	$push14=, $0, $pop13
 	i32.store	0($0), $pop14
 	call    	check2848va@FUNCTION, $0, $0
-	block
+	block   	
 	i32.const	$push15=, 0
 	i32.load	$push5=, fails($pop15)
 	br_if   	0, $pop5        # 0: down to label3
@@ -137,5 +137,5 @@ fails:
 	.size	fails, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

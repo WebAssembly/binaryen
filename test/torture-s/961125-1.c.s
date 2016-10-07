@@ -13,13 +13,13 @@ main:                                   # @main
 .LBB0_1:                                # %land.rhs.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_4 Depth 2
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.eqz 	$push20=, $1
 	br_if   	1, $pop20       # 1: down to label0
 # BB#2:                                 # %while.cond2.preheader.i
                                         #   in Loop: Header=BB0_1 Depth=1
-	block
+	block   	
 	i32.const	$push12=, .L.str+3
 	i32.ge_u	$push0=, $0, $pop12
 	br_if   	0, $pop0        # 0: down to label2
@@ -29,7 +29,7 @@ main:                                   # @main
 .LBB0_4:                                # %land.rhs4.i
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push14=, 1
 	i32.add 	$0=, $2, $pop14
 	i32.load8_u	$push1=, 0($2)
@@ -54,7 +54,7 @@ main:                                   # @main
 .LBB0_7:                                # %begfield.exit
 	end_loop
 	end_block                       # label0:
-	block
+	block   	
 	i32.const	$push5=, 1
 	i32.add 	$push19=, $0, $pop5
 	tee_local	$push18=, $2=, $pop19
@@ -83,6 +83,6 @@ main:                                   # @main
 	.size	.L.str, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

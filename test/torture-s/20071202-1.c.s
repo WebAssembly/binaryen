@@ -50,7 +50,7 @@ main:                                   # @main
 	i32.const	$push77=, 8
 	i32.add 	$push78=, $0, $pop77
 	call    	foo@FUNCTION, $pop78
-	block
+	block   	
 	i32.load	$push3=, 8($0)
 	i32.const	$push2=, 12
 	i32.ne  	$push4=, $pop3, $pop2
@@ -188,5 +188,5 @@ main:                                   # @main
 	.size	.Lmain.s, 68
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

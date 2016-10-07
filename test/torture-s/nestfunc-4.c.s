@@ -60,7 +60,7 @@ bar:                                    # @bar
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$1=, -42
-	block
+	block   	
 	i32.const	$push0=, 0
 	i32.load	$push5=, level($pop0)
 	tee_local	$push4=, $0=, $pop5
@@ -87,5 +87,5 @@ level:
 	.size	level, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

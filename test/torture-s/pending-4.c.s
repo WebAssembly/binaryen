@@ -26,8 +26,8 @@ main:                                   # @main
 	i32.const	$3=, 0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
-	block
+	loop    	                # label0:
+	block   	
 	i32.const	$push8=, 1
 	i32.ne  	$push0=, $4, $pop8
 	br_if   	0, $pop0        # 0: down to label1
@@ -41,7 +41,7 @@ main:                                   # @main
 .LBB1_3:                                # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label1:
-	block
+	block   	
 	i32.eqz 	$push11=, $4
 	br_if   	0, $pop11       # 0: down to label2
 # BB#4:                                 # %if.else
@@ -54,7 +54,7 @@ main:                                   # @main
 .LBB1_5:                                # %for.end
 	end_block                       # label2:
 	end_loop
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $2, $pop1
 	br_if   	0, $pop2        # 0: down to label3
@@ -75,6 +75,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -8,7 +8,7 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i64.load	$push0=, 0($0):p2align=0
 	i64.const	$push1=, 368664092428289
 	i64.ne  	$push2=, $pop0, $pop1
@@ -19,8 +19,8 @@ bar:                                    # @bar
 	i32.const	$0=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label2:
+	block   	
+	loop    	                # label2:
 	i32.add 	$push4=, $1, $0
 	i32.load8_u	$push5=, 0($pop4)
 	br_if   	1, $pop5        # 1: down to label1
@@ -73,7 +73,7 @@ foo:                                    # @foo
 	i32.const	$push14=, 0
 	i32.load	$push5=, .L.str.1($pop14):p2align=0
 	i32.store	a+1($pop15):p2align=0, $pop5
-	block
+	block   	
 	i32.const	$push13=, 0
 	i64.load	$push6=, a($pop13):p2align=0
 	i64.const	$push7=, 368664092428289
@@ -83,8 +83,8 @@ foo:                                    # @foo
 	i32.const	$1=, 8
 .LBB1_2:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label5:
+	block   	
+	loop    	                # label5:
 	i32.const	$push23=, -7
 	i32.add 	$push9=, $1, $pop23
 	i32.const	$push22=, 2040
@@ -142,7 +142,7 @@ main:                                   # @main
 	i32.const	$push14=, 0
 	i32.load	$push5=, .L.str.1($pop14):p2align=0
 	i32.store	a+1($pop15):p2align=0, $pop5
-	block
+	block   	
 	i32.const	$push13=, 0
 	i64.load	$push6=, a($pop13):p2align=0
 	i64.const	$push7=, 368664092428289
@@ -152,8 +152,8 @@ main:                                   # @main
 	i32.const	$1=, 8
 .LBB2_2:                                # %for.cond.i.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label8:
+	block   	
+	loop    	                # label8:
 	i32.const	$push23=, -7
 	i32.add 	$push9=, $1, $pop23
 	i32.const	$push22=, 2040
@@ -206,6 +206,6 @@ a:
 	.size	.L.str.1, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

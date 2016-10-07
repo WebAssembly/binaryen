@@ -16,7 +16,7 @@ f:                                      # @f
 	i32.const	$2=, 256
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push15=, 1
 	i32.shr_s	$push14=, $2, $pop15
 	tee_local	$push13=, $2=, $pop14
@@ -80,5 +80,5 @@ a:
 	.size	a, 1020
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

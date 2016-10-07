@@ -8,7 +8,7 @@ new_unit:                               # @new_unit
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push8=, 4($0)
 	tee_local	$push7=, $1=, $pop8
 	i32.const	$push6=, 1
@@ -22,7 +22,7 @@ new_unit:                               # @new_unit
 	i32.store	0($pop2), $pop9
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
-	block
+	block   	
 	i32.load	$push3=, 0($0)
 	i32.const	$push10=, 1
 	i32.ne  	$push4=, $pop3, $pop10
@@ -32,7 +32,7 @@ new_unit:                               # @new_unit
 	i32.store	0($0), $pop5
 .LBB0_4:                                # %if.end5
 	end_block                       # label1:
-	block
+	block   	
 	br_if   	0, $1           # 0: down to label2
 # BB#5:                                 # %sw.epilog
 	return
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -12,7 +12,7 @@ str2llu:                                # @str2llu
 	i64.load8_s	$push1=, 0($0)
 	i64.const	$push10=, -48
 	i64.add 	$2=, $pop1, $pop10
-	block
+	block   	
 	i32.load8_u	$push9=, 1($0)
 	tee_local	$push8=, $1=, $pop9
 	i32.eqz 	$push16=, $pop8
@@ -22,7 +22,7 @@ str2llu:                                # @str2llu
 	i32.add 	$0=, $0, $pop2
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i64.const	$push15=, 10
 	i64.mul 	$push3=, $2, $pop15
 	i64.extend_u/i32	$push4=, $1
@@ -60,7 +60,7 @@ sqrtllu:                                # @sqrtllu
 	i64.const	$2=, 0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i64.const	$push14=, 1
 	i64.add 	$2=, $2, $pop14
 	i64.const	$push13=, 1
@@ -86,7 +86,7 @@ sqrtllu:                                # @sqrtllu
 	i64.add 	$2=, $pop17, $pop6
 .LBB1_3:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i64.div_u	$push25=, $0, $2
 	tee_local	$push24=, $1=, $pop25
 	i64.add 	$push7=, $1, $2
@@ -113,7 +113,7 @@ plist:                                  # @plist
 	.local  	i32, i32, i64, i64, i32
 # BB#0:                                 # %entry
 	copy_local	$4=, $2
-	block
+	block   	
 	i64.gt_u	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label4
 # BB#1:                                 # %for.cond.i.preheader.preheader
@@ -123,13 +123,13 @@ plist:                                  # @plist
                                         #     Child Loop BB2_3 Depth 2
                                         #     Child Loop BB2_5 Depth 2
                                         #     Child Loop BB2_8 Depth 2
-	loop                            # label5:
+	loop    	                # label5:
 	copy_local	$5=, $0
 	i64.const	$6=, 0
 .LBB2_3:                                # %for.cond.i
                                         #   Parent Loop BB2_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label6:
+	loop    	                # label6:
 	i64.const	$push23=, 1
 	i64.add 	$6=, $6, $pop23
 	i64.const	$push22=, 1
@@ -157,7 +157,7 @@ plist:                                  # @plist
 .LBB2_5:                                # %do.body.i
                                         #   Parent Loop BB2_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label7:
+	loop    	                # label7:
 	i64.div_u	$push35=, $0, $6
 	tee_local	$push34=, $5=, $pop35
 	i64.add 	$push7=, $5, $6
@@ -169,8 +169,8 @@ plist:                                  # @plist
 # BB#6:                                 # %sqrtllu.exit
                                         #   in Loop: Header=BB2_2 Depth=1
 	end_loop
-	block
-	block
+	block   	
+	block   	
 	i32.wrap/i64	$push38=, $6
 	tee_local	$push37=, $3=, $pop38
 	i32.const	$push36=, 3
@@ -182,7 +182,7 @@ plist:                                  # @plist
 .LBB2_8:                                # %for.body3
                                         #   Parent Loop BB2_2 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label10:
+	loop    	                # label10:
 	i64.extend_u/i32	$push10=, $7
 	i64.rem_u	$push11=, $0, $pop10
 	i64.eqz 	$push12=, $pop11
@@ -245,13 +245,13 @@ main:                                   # @main
                                         #     Child Loop BB3_2 Depth 2
                                         #     Child Loop BB3_4 Depth 2
                                         #     Child Loop BB3_7 Depth 2
-	loop                            # label11:
+	loop    	                # label11:
 	copy_local	$5=, $4
 	i64.const	$6=, 0
 .LBB3_2:                                # %for.cond.i.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label12:
+	loop    	                # label12:
 	i64.const	$push37=, 1
 	i64.add 	$6=, $6, $pop37
 	i64.const	$push36=, 1
@@ -279,7 +279,7 @@ main:                                   # @main
 .LBB3_4:                                # %do.body.i.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label13:
+	loop    	                # label13:
 	i64.div_u	$push49=, $4, $6
 	tee_local	$push48=, $5=, $pop49
 	i64.add 	$push6=, $5, $6
@@ -291,8 +291,8 @@ main:                                   # @main
 # BB#5:                                 # %sqrtllu.exit.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop
-	block
-	block
+	block   	
+	block   	
 	i32.wrap/i64	$push52=, $6
 	tee_local	$push51=, $2=, $pop52
 	i32.const	$push50=, 3
@@ -304,7 +304,7 @@ main:                                   # @main
 .LBB3_7:                                # %for.body3.i
                                         #   Parent Loop BB3_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label16:
+	loop    	                # label16:
 	i64.extend_u/i32	$push9=, $7
 	i64.rem_u	$push10=, $4, $pop9
 	i64.eqz 	$push11=, $pop10
@@ -336,7 +336,7 @@ main:                                   # @main
 	end_loop
 	i64.const	$push14=, 0
 	i64.store	0($3), $pop14
-	block
+	block   	
 	i64.load	$push16=, 0($8)
 	i64.const	$push15=, 1234111117
 	i64.ne  	$push17=, $pop16, $pop15
@@ -369,6 +369,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -14,7 +14,7 @@ check_float:                            # @check_float
 	f32.load	$6=, 4($1)
 	i32.const	$push15=, 0
 	f32.load	$7=, f1+4($pop15)
-	block
+	block   	
 	f32.ne  	$push1=, $9, $8
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %entry
@@ -92,7 +92,7 @@ check_double:                           # @check_double
 	f64.load	$6=, 8($1)
 	i32.const	$push15=, 0
 	f64.load	$7=, d1+8($pop15)
-	block
+	block   	
 	f64.ne  	$push1=, $9, $8
 	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %entry
@@ -181,7 +181,7 @@ check_long_double:                      # @check_long_double
 	i64.load	$9=, ld1+24($pop36)
 	i32.const	$push35=, 0
 	i64.load	$6=, ld1+16($pop35)
-	block
+	block   	
 	br_if   	0, $10          # 0: down to label2
 # BB#1:                                 # %entry
 	i32.call	$push6=, __netf2@FUNCTION, $8, $7, $6, $9
@@ -781,6 +781,6 @@ ld5:
 	.size	ld5, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -13,8 +13,8 @@ buildargv:                              # @buildargv
 .LBB0_1:                                # %while.cond1
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_5 Depth 2
-	loop                            # label0:
-	block
+	loop    	                # label0:
+	block   	
 	i32.load8_u	$push12=, 0($0)
 	tee_local	$push11=, $1=, $pop12
 	i32.const	$push10=, 32
@@ -28,7 +28,7 @@ buildargv:                              # @buildargv
 .LBB0_3:                                # %while.cond1
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label1:
-	block
+	block   	
 	i32.eqz 	$push23=, $1
 	br_if   	0, $pop23       # 0: down to label2
 # BB#4:                                 # %if.end
@@ -43,14 +43,14 @@ buildargv:                              # @buildargv
 .LBB0_5:                                # %while.cond7
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label3:
+	loop    	                # label3:
 	i32.load8_u	$push18=, 0($0)
 	tee_local	$push17=, $1=, $pop18
 	i32.eqz 	$push24=, $pop17
 	br_if   	1, $pop24       # 1: down to label2
 # BB#6:                                 # %while.cond7
                                         #   in Loop: Header=BB0_5 Depth=2
-	block
+	block   	
 	i32.const	$push19=, 32
 	i32.eq  	$push3=, $1, $pop19
 	br_if   	0, $pop3        # 0: down to label4
@@ -109,8 +109,8 @@ main:                                   # @main
 .LBB1_1:                                # %while.cond1.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB1_5 Depth 2
-	loop                            # label5:
-	block
+	loop    	                # label5:
+	block   	
 	i32.load8_u	$push28=, 0($0)
 	tee_local	$push27=, $1=, $pop28
 	i32.const	$push26=, 32
@@ -124,7 +124,7 @@ main:                                   # @main
 .LBB1_3:                                # %while.cond1.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label6:
-	block
+	block   	
 	i32.eqz 	$push43=, $1
 	br_if   	0, $pop43       # 0: down to label7
 # BB#4:                                 # %if.end.i
@@ -139,8 +139,8 @@ main:                                   # @main
 .LBB1_5:                                # %while.cond7.i
                                         #   Parent Loop BB1_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	block
-	loop                            # label9:
+	block   	
+	loop    	                # label9:
 	i32.load8_u	$push35=, 0($0)
 	tee_local	$push34=, $1=, $pop35
 	i32.const	$push33=, 32
@@ -173,7 +173,7 @@ main:                                   # @main
 	i32.add 	$push9=, $pop7, $pop8
 	i32.const	$push39=, 0
 	i32.store	0($pop9), $pop39
-	block
+	block   	
 	i32.const	$push38=, 0
 	i32.load	$push10=, buildargv.arglist($pop38)
 	i32.const	$push11=, .L.str.1
@@ -225,7 +225,7 @@ buildargv.arglist:
 	.size	.L.str.2, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

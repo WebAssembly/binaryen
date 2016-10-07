@@ -22,7 +22,7 @@ main:                                   # @main
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 5
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -37,7 +37,7 @@ foo:                                    # @foo
 	.size	foo, .Lfunc_end1-foo
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	__builtin_apply, i32
 	.functype	__builtin_apply_args, i32
 	.functype	abort, void

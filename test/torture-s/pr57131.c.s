@@ -32,7 +32,7 @@ main:                                   # @main
 	i64.load32_u	$2=, 28($5)
 	i32.load	$3=, 24($5)
 	i32.load	$4=, 20($5)
-	block
+	block   	
 	i64.load	$push8=, 8($5)
 	i64.shl 	$push3=, $1, $2
 	i64.mul 	$push4=, $0, $pop3
@@ -59,5 +59,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

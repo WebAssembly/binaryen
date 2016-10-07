@@ -41,7 +41,7 @@ main:                                   # @main
 	i64.const	$push1=, 0
 	i64.const	$push0=, -4611967493404098560
 	call    	foo@FUNCTION, $0, $pop1, $pop0
-	block
+	block   	
 	i64.load	$push5=, 0($0)
 	i64.load	$push4=, 8($0)
 	i64.const	$push3=, -8905435550453399112
@@ -64,5 +64,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

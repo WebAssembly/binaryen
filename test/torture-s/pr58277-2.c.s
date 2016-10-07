@@ -10,8 +10,8 @@ main:                                   # @main
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.store8	n($pop7), $pop6
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push5=, 0
 	i32.load	$push0=, g($pop5)
 	i32.eqz 	$push16=, $pop0
@@ -121,4 +121,4 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

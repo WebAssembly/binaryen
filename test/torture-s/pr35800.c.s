@@ -10,13 +10,13 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
-	block
+	block   	
 	i32.const	$push0=, -34
 	i32.lt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$1=, .L.str
-	block
+	block   	
 	i32.const	$push2=, -2
 	i32.sub 	$push10=, $pop2, $0
 	tee_local	$push9=, $0=, $pop10
@@ -52,8 +52,8 @@ main:                                   # @main
 	i32.const	$0=, .Lswitch.table+8
 .LBB1_1:                                # %stab_xcoff_builtin_type.exit
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.load	$push0=, 0($0)
 	i32.load8_u	$push1=, 0($pop0)
 	i32.const	$push5=, 105
@@ -137,5 +137,5 @@ main:                                   # @main
 	.size	.Lswitch.table, 132
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

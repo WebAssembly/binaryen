@@ -30,9 +30,9 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.add 	$5=, $1, $pop0
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$6=, 1
-	block
+	block   	
 	i32.eqz 	$push9=, $4
 	br_if   	0, $pop9        # 0: down to label1
 # BB#2:                                 # %cond.false
@@ -41,7 +41,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 .LBB1_3:                                # %cond.end
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label1:
-	block
+	block   	
 	i32.ge_s	$push1=, $3, $6
 	br_if   	0, $pop1        # 0: down to label2
 # BB#4:                                 # %for.body
@@ -78,5 +78,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

@@ -4,16 +4,16 @@
 	.type	bar32,@function
 bar32:
 	.param  	i32
-	block
+	block   	
 	i32.const	$push0=, 23
 	i32.gt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
 .LBB0_2:
 	end_block
@@ -49,16 +49,16 @@ bar32:
 	.type	bar64,@function
 bar64:
 	.param  	i64
-	block
+	block   	
 	i64.const	$push1=, 23
 	i64.gt_u	$push2=, $0, $pop1
 	br_if   	0, $pop2
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.wrap/i64	$push0=, $0
 	br_table 	$pop0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0
 .LBB1_2:

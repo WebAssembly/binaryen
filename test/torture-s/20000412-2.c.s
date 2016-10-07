@@ -17,8 +17,8 @@ f:                                      # @f
 	tee_local	$push11=, $2=, $pop12
 	i32.store	__stack_pointer($pop5), $pop11
 	i32.store	12($2), $0
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push13=, $0
 	br_if   	0, $pop13       # 0: down to label1
 # BB#1:                                 # %if.end
@@ -51,7 +51,7 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 100
 	i32.const	$push4=, 0
 	i32.call	$push1=, f@FUNCTION, $pop0, $pop4
@@ -71,6 +71,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

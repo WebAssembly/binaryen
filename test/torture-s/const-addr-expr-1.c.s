@@ -8,7 +8,7 @@ main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push9=, 0
 	i32.load	$push0=, Upgd_minor_ID($pop9)
 	i32.load	$push1=, 0($pop0)
@@ -76,5 +76,5 @@ Upgd_minor_ID1:
 	.size	Upgd_minor_ID1, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

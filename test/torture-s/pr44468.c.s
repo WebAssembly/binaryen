@@ -70,7 +70,7 @@ main:                                   # @main
 	i32.const	$push12=, 0
 	i64.const	$push11=, 8589934593
 	i64.store	s+4($pop12):p2align=2, $pop11
-	block
+	block   	
 	i32.const	$push10=, s
 	i32.call	$push0=, test1@FUNCTION, $pop10
 	i32.const	$push9=, 3
@@ -115,5 +115,5 @@ s:
 	.size	s, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

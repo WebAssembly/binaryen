@@ -59,7 +59,7 @@ get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 build_int_cst:                          # @build_int_cst
 	.param  	i64
 # BB#0:                                 # %entry
-	block
+	block   	
 	i64.const	$push0=, 4
 	i64.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -74,5 +74,5 @@ build_int_cst:                          # @build_int_cst
 	.size	build_int_cst, .Lfunc_end3-build_int_cst
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

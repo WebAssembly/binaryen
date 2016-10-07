@@ -15,7 +15,7 @@ main:                                   # @main
 	i32.load16_u	$push20=, a($pop21)
 	tee_local	$push19=, $0=, $pop20
 	copy_local	$1=, $pop19
-	block
+	block   	
 	i32.const	$push18=, 0
 	i32.load	$push7=, e($pop18)
 	i32.const	$push4=, 24
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.load	$push13=, g($pop34)
 	i32.const	$push33=, 0
 	i32.store	0($pop13), $pop33
-	block
+	block   	
 	i32.const	$push14=, 65535
 	i32.and 	$push15=, $1, $pop14
 	br_if   	0, $pop15       # 0: down to label1
@@ -164,5 +164,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

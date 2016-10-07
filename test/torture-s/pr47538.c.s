@@ -16,7 +16,7 @@ foo:                                    # @foo
 	f64.store	8($0), $pop29
 	i32.load	$5=, 16($0)
 	f64.const	$11=, 0x0p0
-	block
+	block   	
 	i32.load	$push28=, 20($1)
 	tee_local	$push27=, $2=, $pop28
 	i32.eqz 	$push53=, $pop27
@@ -26,7 +26,7 @@ foo:                                    # @foo
 	f64.const	$push2=, 0x1p-2
 	f64.mul 	$4=, $pop1, $pop2
 	i32.load	$6=, 16($1)
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.add 	$push34=, $2, $pop0
 	tee_local	$push33=, $3=, $pop34
@@ -43,8 +43,8 @@ foo:                                    # @foo
 	return
 .LBB0_3:                                # %for.cond.preheader
 	end_block                       # label1:
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push5=, -1
 	i32.add 	$push38=, $2, $pop5
 	tee_local	$push37=, $7=, $pop38
@@ -59,7 +59,7 @@ foo:                                    # @foo
 	i32.const	$9=, 1
 .LBB0_5:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label4:
+	loop    	                # label4:
 	f64.load	$push8=, 0($1)
 	i32.const	$push47=, 16
 	i32.add 	$push6=, $1, $pop47
@@ -193,7 +193,7 @@ main:                                   # @main
 	i32.const	$push112=, 64
 	i32.add 	$push113=, $2, $pop112
 	call    	foo@FUNCTION, $pop111, $pop113
-	block
+	block   	
 	f64.load	$push24=, 0($2)
 	f64.const	$push23=, 0x0p0
 	f64.ne  	$push25=, $pop24, $pop23
@@ -389,5 +389,5 @@ main:                                   # @main
 	.size	.Lmain.e, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

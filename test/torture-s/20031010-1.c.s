@@ -8,11 +8,11 @@ foo:                                    # @foo
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push4=, $2
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.then
-	block
+	block   	
 	i32.eqz 	$push5=, $3
 	br_if   	0, $pop5        # 0: down to label1
 # BB#2:                                 # %if.then4
@@ -39,7 +39,7 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push2=, 2
 	i32.const	$push1=, 3
 	i32.const	$push0=, 1
@@ -60,5 +60,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

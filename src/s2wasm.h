@@ -351,11 +351,29 @@ class S2WasmBuilder {
     return str;
   }
 
-  WasmType getType() {
+  WasmType tryGetType() {
     if (match("i32")) return i32;
     if (match("i64")) return i64;
     if (match("f32")) return f32;
     if (match("f64")) return f64;
+    return none;
+  }
+
+  WasmType tryGetTypeWithoutNewline() {
+    const char* saved = s;
+    WasmType type = tryGetType();
+    if (type != none && strchr(saved, '\n') > s) {
+      s = saved;
+      type = none;
+    }
+    return type;
+  }
+
+  WasmType getType() {
+    WasmType t = tryGetType();
+    if (t != none) {
+      return t;
+    }
     abort_on("getType");
   }
 
@@ -1087,12 +1105,15 @@ class S2WasmBuilder {
       } else if (match("f64.")) {
         handleTyped(f64);
       } else if (match("block")) {
+        WasmType blockType = tryGetTypeWithoutNewline();
         auto curr = allocator->alloc<Block>();
+        curr->type = blockType;
         curr->name = getNextLabel();
         addToBlock(curr);
         bstack.push_back(curr);
       } else if (match("end_block")) {
-        bstack.back()->cast<Block>()->finalize();
+        auto* block = bstack.back()->cast<Block>();
+        block->finalize(block->type);
         bstack.pop_back();
       } else if (peek(".LBB")) {
         // FIXME legacy tests: it can be leftover from "loop" or "block", but it can be a label too
@@ -1102,8 +1123,10 @@ class S2WasmBuilder {
           recordLabel();
         } else s = strchr(s, '\n');
       } else if (match("loop")) {
+        WasmType loopType = tryGetTypeWithoutNewline();
         auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
+        curr->type = loopType;
         curr->name = getNextLabel();
         auto implicitBlock = allocator->alloc<Block>();
         curr->body = implicitBlock;
@@ -1112,7 +1135,7 @@ class S2WasmBuilder {
         auto* loop = bstack.back()->cast<Loop>();
         bstack.pop_back();
         loop->body->finalize();
-        loop->finalize();
+        loop->finalize(loop->type);
       } else if (match("br_table")) {
         auto curr = allocator->alloc<Switch>();
         curr->condition = getInput();

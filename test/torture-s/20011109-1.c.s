@@ -55,9 +55,9 @@ fail4:                                  # @fail4
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push0=, 6
 	i32.add 	$push4=, $0, $pop0
 	tee_local	$push3=, $0=, $pop4
@@ -65,9 +65,9 @@ foo:                                    # @foo
 	i32.gt_u	$push2=, $pop3, $pop1
 	br_if   	0, $pop2        # 0: down to label2
 # BB#1:                                 # %entry
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	br_table 	$0, 2, 3, 3, 3, 3, 3, 4, 0, 5, 1, 1, 1, 2 # 2: down to label3
                                         # 3: down to label2
                                         # 4: down to label1
@@ -116,6 +116,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

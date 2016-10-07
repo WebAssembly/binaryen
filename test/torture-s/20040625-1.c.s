@@ -8,7 +8,7 @@ maybe_next:                             # @maybe_next
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push0=, $1
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.then
@@ -37,7 +37,7 @@ main:                                   # @main
 	tee_local	$push10=, $0=, $pop11
 	i32.store	__stack_pointer($pop7), $pop10
 	i32.store	8($0), $0
-	block
+	block   	
 	i32.const	$push8=, 8
 	i32.add 	$push9=, $0, $pop8
 	i32.const	$push0=, 1
@@ -57,6 +57,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

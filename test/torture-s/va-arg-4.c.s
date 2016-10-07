@@ -15,7 +15,7 @@ f:                                      # @f
 	i32.sub 	$push28=, $pop21, $pop22
 	tee_local	$push27=, $4=, $pop28
 	i32.store	__stack_pointer($pop23), $pop27
-	block
+	block   	
 	i32.load8_u	$push0=, 0($0)
 	i32.const	$push1=, 97
 	i32.ne  	$push2=, $pop0, $pop1
@@ -123,6 +123,6 @@ main.x:
 	.size	main.x, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

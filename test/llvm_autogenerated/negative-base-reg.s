@@ -8,7 +8,7 @@ main:
 	.local  	i32
 	i32.const	$0=, -128
 .LBB0_1:
-	loop
+	loop    	
 	i32.const	$push6=, args+128
 	i32.add 	$push0=, $0, $pop6
 	i32.const	$push5=, 1

@@ -22,7 +22,7 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
                                         # implicit-def: %vreg14
-	block
+	block   	
 	i32.const	$push0=, -10
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 4
@@ -53,5 +53,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

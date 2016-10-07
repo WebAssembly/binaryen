@@ -8,7 +8,7 @@ gcc_crash:                              # @gcc_crash
 	.param  	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push4=, 0($0)
 	tee_local	$push3=, $2=, $pop4
 	i32.const	$push0=, 52
@@ -19,7 +19,7 @@ gcc_crash:                              # @gcc_crash
 	i32.gt_s	$1=, $2, $pop2
 .LBB0_2:                                # %top
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push5=, 1
 	i32.add 	$2=, $2, $pop5
 	br_if   	0, $1           # 0: up to label1
@@ -63,5 +63,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

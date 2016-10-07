@@ -17,7 +17,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop12), $pop15
 	i64.const	$push2=, 4295032832
 	i64.store	8($0), $pop2
-	block
+	block   	
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $0, $pop13
 	i32.call	$push4=, foo@FUNCTION, $pop14
@@ -57,7 +57,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.load	$1=, 4($0)
 	i32.const	$2=, 0
-	block
+	block   	
 	i32.load	$push10=, 0($0)
 	tee_local	$push9=, $0=, $pop10
 	i32.const	$push0=, 65535
@@ -71,7 +71,7 @@ foo:                                    # @foo
 	copy_local	$2=, $1
 .LBB1_2:                                # %if.end
 	end_block                       # label1:
-	block
+	block   	
 	i32.const	$push4=, 65536
 	i32.lt_u	$push5=, $0, $pop4
 	br_if   	0, $pop5        # 0: down to label2
@@ -107,6 +107,6 @@ lo:
 	.size	lo, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

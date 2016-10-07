@@ -8,13 +8,13 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.le_u	$push0=, $1, $0
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %while.body.preheader
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push5=, -4
 	i32.add 	$push4=, $1, $pop5
 	tee_local	$push3=, $2=, $pop4
@@ -61,10 +61,10 @@ main:                                   # @main
                                         #       Child Loop BB1_6 Depth 3
                                         #       Child Loop BB1_9 Depth 3
                                         #       Child Loop BB1_12 Depth 3
-	block
-	block
-	block
-	loop                            # label5:
+	block   	
+	block   	
+	block   	
+	loop    	                # label5:
 	i32.const	$push29=, 2
 	i32.shl 	$push1=, $3, $pop29
 	i32.add 	$4=, $11, $pop1
@@ -77,14 +77,14 @@ main:                                   # @main
                                         #       Child Loop BB1_6 Depth 3
                                         #       Child Loop BB1_9 Depth 3
                                         #       Child Loop BB1_12 Depth 3
-	loop                            # label6:
+	loop    	                # label6:
 	i32.const	$push32=, 4
 	i32.store	0($7), $pop32
 	i64.const	$push31=, 4294967296
 	i64.store	0($11), $pop31
 	i64.const	$push30=, 12884901890
 	i64.store	8($11), $pop30
-	block
+	block   	
 	i32.le_s	$push3=, $6, $3
 	br_if   	0, $pop3        # 0: down to label7
 # BB#3:                                 # %while.body.i.preheader
@@ -96,7 +96,7 @@ main:                                   # @main
                                         #   Parent Loop BB1_1 Depth=1
                                         #     Parent Loop BB1_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	loop                            # label8:
+	loop    	                # label8:
 	i32.const	$push36=, -4
 	i32.add 	$push35=, $10, $pop36
 	tee_local	$push34=, $9=, $pop35
@@ -115,7 +115,7 @@ main:                                   # @main
                                         #   Parent Loop BB1_1 Depth=1
                                         #     Parent Loop BB1_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	loop                            # label9:
+	loop    	                # label9:
 	i32.const	$push39=, 1
 	i32.add 	$push38=, $10, $pop39
 	tee_local	$push37=, $10=, $pop38
@@ -136,8 +136,8 @@ main:                                   # @main
                                         #   Parent Loop BB1_1 Depth=1
                                         #     Parent Loop BB1_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	block
-	loop                            # label11:
+	block   	
+	loop    	                # label11:
 	i32.const	$push43=, 1
 	i32.add 	$push42=, $10, $pop43
 	tee_local	$push41=, $10=, $pop42
@@ -156,7 +156,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB1_2 Depth=2
 	end_loop
 	end_block                       # label10:
-	block
+	block   	
 	copy_local	$10=, $5
 	i32.const	$push50=, 1
 	i32.add 	$push49=, $6, $pop50
@@ -170,7 +170,7 @@ main:                                   # @main
                                         #   Parent Loop BB1_1 Depth=1
                                         #     Parent Loop BB1_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	loop                            # label13:
+	loop    	                # label13:
 	i32.load	$push11=, 0($10)
 	i32.ne  	$push12=, $9, $pop11
 	br_if   	6, $pop12       # 6: down to label2
@@ -230,5 +230,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

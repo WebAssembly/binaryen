@@ -7,7 +7,7 @@
 brother:                                # @brother
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label0
 # BB#1:                                 # %if.end
 	return
@@ -26,7 +26,7 @@ brother:                                # @brother
 sister:                                 # @sister
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push0=, 4($0)
 	i32.eq  	$push1=, $pop0, $1
 	br_if   	0, $pop1        # 0: down to label1
@@ -84,6 +84,6 @@ main:                                   # @main
 	.size	.Lmain.f, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

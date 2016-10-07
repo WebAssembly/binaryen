@@ -8,7 +8,7 @@ to_hex:                                 # @to_hex
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 16
 	i32.ge_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -33,7 +33,7 @@ fap:                                    # @fap
 	.param  	i32, i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.call	$push1=, strlen@FUNCTION, $1
 	i32.const	$push7=, 16
 	i32.sub 	$push0=, $pop7, $0
@@ -42,8 +42,8 @@ fap:                                    # @fap
 # BB#1:
 .LBB1_2:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.load8_u	$push9=, 0($1)
 	tee_local	$push8=, $0=, $pop9
 	i32.eqz 	$push16=, $pop8
@@ -97,7 +97,7 @@ f0:                                     # @f0
 	tee_local	$push14=, $4=, $pop15
 	i32.store	__stack_pointer($pop9), $pop14
 	i32.store	12($4), $1
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $0
 	i32.const	$push13=, 16
 	i32.ne  	$push1=, $pop0, $pop13
@@ -106,8 +106,8 @@ f0:                                     # @f0
 	i32.load	$1=, 12($4)
 .LBB2_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label6:
+	block   	
+	loop    	                # label6:
 	i32.load8_u	$push17=, 0($0)
 	tee_local	$push16=, $2=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -165,7 +165,7 @@ f1:                                     # @f1
 	tee_local	$push14=, $5=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($5), $2
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $1
 	i32.const	$push1=, 15
 	i32.ne  	$push2=, $pop0, $pop1
@@ -174,8 +174,8 @@ f1:                                     # @f1
 	i32.load	$2=, 12($5)
 .LBB3_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label9:
+	block   	
+	loop    	                # label9:
 	i32.load8_u	$push17=, 0($1)
 	tee_local	$push16=, $3=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -233,7 +233,7 @@ f2:                                     # @f2
 	tee_local	$push14=, $6=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($6), $3
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $2
 	i32.const	$push1=, 14
 	i32.ne  	$push2=, $pop0, $pop1
@@ -242,8 +242,8 @@ f2:                                     # @f2
 	i32.load	$3=, 12($6)
 .LBB4_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label12:
+	block   	
+	loop    	                # label12:
 	i32.load8_u	$push17=, 0($2)
 	tee_local	$push16=, $4=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -301,7 +301,7 @@ f3:                                     # @f3
 	tee_local	$push14=, $7=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($7), $4
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $3
 	i32.const	$push1=, 13
 	i32.ne  	$push2=, $pop0, $pop1
@@ -310,8 +310,8 @@ f3:                                     # @f3
 	i32.load	$4=, 12($7)
 .LBB5_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label15:
+	block   	
+	loop    	                # label15:
 	i32.load8_u	$push17=, 0($3)
 	tee_local	$push16=, $5=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -369,7 +369,7 @@ f4:                                     # @f4
 	tee_local	$push14=, $8=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($8), $5
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $4
 	i32.const	$push1=, 12
 	i32.ne  	$push2=, $pop0, $pop1
@@ -378,8 +378,8 @@ f4:                                     # @f4
 	i32.load	$5=, 12($8)
 .LBB6_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label18:
+	block   	
+	loop    	                # label18:
 	i32.load8_u	$push17=, 0($4)
 	tee_local	$push16=, $6=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -437,7 +437,7 @@ f5:                                     # @f5
 	tee_local	$push14=, $9=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($9), $6
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $5
 	i32.const	$push1=, 11
 	i32.ne  	$push2=, $pop0, $pop1
@@ -446,8 +446,8 @@ f5:                                     # @f5
 	i32.load	$6=, 12($9)
 .LBB7_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label21:
+	block   	
+	loop    	                # label21:
 	i32.load8_u	$push17=, 0($5)
 	tee_local	$push16=, $7=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -505,7 +505,7 @@ f6:                                     # @f6
 	tee_local	$push14=, $10=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($10), $7
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $6
 	i32.const	$push1=, 10
 	i32.ne  	$push2=, $pop0, $pop1
@@ -514,8 +514,8 @@ f6:                                     # @f6
 	i32.load	$7=, 12($10)
 .LBB8_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label24:
+	block   	
+	loop    	                # label24:
 	i32.load8_u	$push17=, 0($6)
 	tee_local	$push16=, $8=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -573,7 +573,7 @@ f7:                                     # @f7
 	tee_local	$push14=, $11=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($11), $8
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $7
 	i32.const	$push1=, 9
 	i32.ne  	$push2=, $pop0, $pop1
@@ -582,8 +582,8 @@ f7:                                     # @f7
 	i32.load	$8=, 12($11)
 .LBB9_2:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label27:
+	block   	
+	loop    	                # label27:
 	i32.load8_u	$push17=, 0($7)
 	tee_local	$push16=, $9=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -641,7 +641,7 @@ f8:                                     # @f8
 	tee_local	$push14=, $12=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($12), $9
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $8
 	i32.const	$push1=, 8
 	i32.ne  	$push2=, $pop0, $pop1
@@ -650,8 +650,8 @@ f8:                                     # @f8
 	i32.load	$9=, 12($12)
 .LBB10_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label30:
+	block   	
+	loop    	                # label30:
 	i32.load8_u	$push17=, 0($8)
 	tee_local	$push16=, $10=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -709,7 +709,7 @@ f9:                                     # @f9
 	tee_local	$push14=, $13=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($13), $10
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $9
 	i32.const	$push1=, 7
 	i32.ne  	$push2=, $pop0, $pop1
@@ -718,8 +718,8 @@ f9:                                     # @f9
 	i32.load	$10=, 12($13)
 .LBB11_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label33:
+	block   	
+	loop    	                # label33:
 	i32.load8_u	$push17=, 0($9)
 	tee_local	$push16=, $11=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -777,7 +777,7 @@ f10:                                    # @f10
 	tee_local	$push14=, $14=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($14), $11
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $10
 	i32.const	$push1=, 6
 	i32.ne  	$push2=, $pop0, $pop1
@@ -786,8 +786,8 @@ f10:                                    # @f10
 	i32.load	$11=, 12($14)
 .LBB12_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label36:
+	block   	
+	loop    	                # label36:
 	i32.load8_u	$push17=, 0($10)
 	tee_local	$push16=, $12=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -845,7 +845,7 @@ f11:                                    # @f11
 	tee_local	$push14=, $15=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($15), $12
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $11
 	i32.const	$push1=, 5
 	i32.ne  	$push2=, $pop0, $pop1
@@ -854,8 +854,8 @@ f11:                                    # @f11
 	i32.load	$12=, 12($15)
 .LBB13_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label39:
+	block   	
+	loop    	                # label39:
 	i32.load8_u	$push17=, 0($11)
 	tee_local	$push16=, $13=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -913,7 +913,7 @@ f12:                                    # @f12
 	tee_local	$push14=, $16=, $pop15
 	i32.store	__stack_pointer($pop9), $pop14
 	i32.store	12($16), $13
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $12
 	i32.const	$push13=, 4
 	i32.ne  	$push1=, $pop0, $pop13
@@ -922,8 +922,8 @@ f12:                                    # @f12
 	i32.load	$13=, 12($16)
 .LBB14_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label42:
+	block   	
+	loop    	                # label42:
 	i32.load8_u	$push17=, 0($12)
 	tee_local	$push16=, $14=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -981,7 +981,7 @@ f13:                                    # @f13
 	tee_local	$push14=, $17=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($17), $14
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $13
 	i32.const	$push1=, 3
 	i32.ne  	$push2=, $pop0, $pop1
@@ -990,8 +990,8 @@ f13:                                    # @f13
 	i32.load	$14=, 12($17)
 .LBB15_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label45:
+	block   	
+	loop    	                # label45:
 	i32.load8_u	$push17=, 0($13)
 	tee_local	$push16=, $15=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -1049,7 +1049,7 @@ f14:                                    # @f14
 	tee_local	$push14=, $18=, $pop15
 	i32.store	__stack_pointer($pop10), $pop14
 	i32.store	12($18), $15
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $14
 	i32.const	$push1=, 2
 	i32.ne  	$push2=, $pop0, $pop1
@@ -1058,8 +1058,8 @@ f14:                                    # @f14
 	i32.load	$15=, 12($18)
 .LBB16_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label48:
+	block   	
+	loop    	                # label48:
 	i32.load8_u	$push17=, 0($14)
 	tee_local	$push16=, $16=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -1117,7 +1117,7 @@ f15:                                    # @f15
 	tee_local	$push14=, $19=, $pop15
 	i32.store	__stack_pointer($pop9), $pop14
 	i32.store	12($19), $16
-	block
+	block   	
 	i32.call	$push0=, strlen@FUNCTION, $15
 	i32.const	$push13=, 1
 	i32.ne  	$push1=, $pop0, $pop13
@@ -1126,8 +1126,8 @@ f15:                                    # @f15
 	i32.load	$16=, 12($19)
 .LBB17_2:                               # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label51:
+	block   	
+	loop    	                # label51:
 	i32.load8_u	$push17=, 0($15)
 	tee_local	$push16=, $17=, $pop17
 	i32.eqz 	$push24=, $pop16
@@ -1573,7 +1573,7 @@ main:                                   # @main
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	strlen, i32, i32
 	.functype	exit, void, i32

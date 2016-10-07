@@ -45,7 +45,7 @@ f:                                      # @f
 	i32.add 	$2=, $3, $pop8
 .LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push31=, -2
 	i32.add 	$1=, $2, $pop31
 	i32.const	$push30=, -1
@@ -60,7 +60,7 @@ f:                                      # @f
 	end_loop
 	i32.const	$push11=, 88
 	i32.store16	0($0):p2align=0, $pop11
-	block
+	block   	
 	i32.const	$push12=, 12
 	i32.add 	$push13=, $3, $pop12
 	i32.load8_u	$push14=, 0($pop13)
@@ -103,6 +103,6 @@ main:                                   # @main
 	.size	.Lf.s, 14
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

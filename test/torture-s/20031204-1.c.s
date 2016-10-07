@@ -28,15 +28,15 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 .LBB1_1:                                # %while.cond1.preheader
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB1_2 Depth 2
-	block
-	block
-	loop                            # label2:
+	block   	
+	block   	
+	loop    	                # label2:
 	i32.const	$5=, 0
 	copy_local	$6=, $4
 .LBB1_2:                                # %while.cond1
                                         #   Parent Loop BB1_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label3:
+	loop    	                # label3:
 	copy_local	$push30=, $6
 	tee_local	$push29=, $7=, $pop30
 	i32.const	$push28=, 1
@@ -58,7 +58,7 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 # BB#3:                                 # %while.end
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_loop
-	block
+	block   	
 	i32.const	$push31=, 1
 	i32.eq  	$push4=, $2, $pop31
 	br_if   	0, $pop4        # 0: down to label4
@@ -101,12 +101,12 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 .LBB1_8:                                # %while.end25
 	end_block                       # label0:
 	i32.const	$5=, -1
-	block
+	block   	
 	i32.const	$push14=, 4
 	i32.ne  	$push15=, $1, $pop14
 	br_if   	0, $pop15       # 0: down to label5
 # BB#9:                                 # %land.lhs.true
-	block
+	block   	
 	i32.load8_u	$push43=, 0($7)
 	tee_local	$push42=, $6=, $pop43
 	i32.eqz 	$push44=, $pop42
@@ -145,15 +145,15 @@ main:                                   # @main
 .LBB2_1:                                # %while.cond1.preheader.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
-	block
-	block
-	loop                            # label9:
+	block   	
+	block   	
+	loop    	                # label9:
 	i32.const	$4=, 0
 	copy_local	$5=, $3
 .LBB2_2:                                # %while.cond1.i
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label10:
+	loop    	                # label10:
 	copy_local	$push32=, $5
 	tee_local	$push31=, $6=, $pop32
 	i32.const	$push30=, 1
@@ -175,7 +175,7 @@ main:                                   # @main
 # BB#3:                                 # %while.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop
-	block
+	block   	
 	i32.const	$push33=, 1
 	i32.eq  	$push4=, $1, $pop33
 	br_if   	0, $pop4        # 0: down to label11
@@ -217,12 +217,12 @@ main:                                   # @main
 	i32.add 	$6=, $pop12, $pop13
 .LBB2_8:                                # %while.end25.i
 	end_block                       # label7:
-	block
+	block   	
 	i32.const	$push14=, 4
 	i32.ne  	$push15=, $0, $pop14
 	br_if   	0, $pop15       # 0: down to label12
 # BB#9:                                 # %land.lhs.true.i
-	block
+	block   	
 	i32.load8_u	$push45=, 0($6)
 	tee_local	$push44=, $4=, $pop45
 	i32.eqz 	$push46=, $pop44
@@ -258,6 +258,6 @@ main.addr:
 	.size	main.addr, 19
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void

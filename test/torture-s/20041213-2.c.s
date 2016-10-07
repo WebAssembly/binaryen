@@ -8,8 +8,8 @@ foo:                                    # @foo
 	.param  	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push9=, $0
 	br_if   	0, $pop9        # 0: down to label1
 # BB#1:                                 # %for.cond1.preheader.preheader
@@ -17,9 +17,9 @@ foo:                                    # @foo
 	i32.const	$3=, 1
 .LBB0_2:                                # %for.cond1.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
-	block
-	block
+	loop    	                # label2:
+	block   	
+	block   	
 	copy_local	$push4=, $3
 	tee_local	$push3=, $1=, $pop4
 	i32.ge_s	$push0=, $2, $pop3
@@ -73,6 +73,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

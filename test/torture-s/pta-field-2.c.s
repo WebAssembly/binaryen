@@ -84,7 +84,7 @@ main:                                   # @main
 	i32.const	$push2=, 4
 	i32.or  	$push3=, $pop16, $pop2
 	call    	bar@FUNCTION, $pop3
-	block
+	block   	
 	i32.load	$push4=, 4($0)
 	br_if   	0, $pop4        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -103,5 +103,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

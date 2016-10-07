@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 4
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -97,12 +97,12 @@ test:                                   # @test
 	i32.const	$push56=, 8
 	i32.add 	$push57=, $7, $pop56
 	copy_local	$5=, $pop57
-	block
+	block   	
 	i32.eqz 	$push82=, $0
 	br_if   	0, $pop82       # 0: down to label1
 # BB#1:                                 # %if.else
-	block
-	block
+	block   	
+	block   	
 	i32.load	$push65=, 4($0)
 	tee_local	$push64=, $6=, $pop65
 	i32.const	$push5=, 8191
@@ -128,7 +128,7 @@ test:                                   # @test
 	copy_local	$5=, $0
 .LBB3_5:                                # %if.end7
 	end_block                       # label1:
-	block
+	block   	
 	i32.call	$push14=, baz@FUNCTION, $5
 	i32.eqz 	$push83=, $pop14
 	br_if   	0, $pop83       # 0: down to label4
@@ -145,8 +145,8 @@ test:                                   # @test
 	i32.const	$push18=, 1
 	i32.shr_u	$push19=, $pop17, $pop18
 	i32.select	$0=, $pop21, $pop20, $pop19
-	block
-	block
+	block   	
+	block   	
 	i32.load	$push69=, 4($5)
 	tee_local	$push68=, $3=, $pop69
 	i32.const	$push22=, 8191
@@ -173,7 +173,7 @@ test:                                   # @test
 	copy_local	$6=, $0
 .LBB3_10:                               # %if.end24
 	end_block                       # label5:
-	block
+	block   	
 	i32.const	$push28=, 1
 	i32.and 	$push29=, $2, $pop28
 	i32.eqz 	$push85=, $pop29
@@ -210,7 +210,7 @@ test:                                   # @test
 	i32.lt_u	$push35=, $pop76, $pop74
 	br_if   	0, $pop35       # 0: down to label4
 # BB#14:                                # %land.lhs.true41
-	block
+	block   	
 	i32.ne  	$push36=, $2, $5
 	br_if   	0, $pop36       # 0: down to label8
 # BB#15:                                # %lor.lhs.false47
@@ -253,7 +253,7 @@ main:                                   # @main
 	#APP
 	#NO_APP
 	call    	test@FUNCTION, $0
-	block
+	block   	
 	i32.const	$push5=, 0
 	i32.load	$push2=, v($pop5)
 	i32.const	$push3=, 16384
@@ -307,5 +307,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

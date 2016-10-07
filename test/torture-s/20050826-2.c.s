@@ -12,9 +12,9 @@ inet_check_attr:                        # @inet_check_attr
 	i32.const	$3=, 1
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
-	block
+	block   	
+	loop    	                # label1:
+	block   	
 	i32.load	$push8=, 0($1)
 	tee_local	$push7=, $2=, $pop8
 	i32.eqz 	$push19=, $pop7
@@ -120,9 +120,9 @@ main:                                   # @main
 	i32.const	$push118=, 56
 	i32.add 	$push119=, $4, $pop118
 	i32.store	52($4), $pop119
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.call	$push2=, inet_check_attr@FUNCTION, $1, $4
 	br_if   	0, $pop2        # 0: down to label5
 # BB#1:                                 # %for.body9.preheader
@@ -283,9 +283,9 @@ main:                                   # @main
 	i32.load	$3=, 4($4)
 .LBB1_17:                               # %for.body43
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label7:
-	block
+	block   	
+	loop    	                # label7:
+	block   	
 	i32.const	$push157=, 1
 	i32.ne  	$push77=, $1, $pop157
 	br_if   	0, $pop77       # 0: down to label8
@@ -302,8 +302,8 @@ main:                                   # @main
 	i32.shl 	$push79=, $1, $pop159
 	i32.add 	$push80=, $4, $pop79
 	i32.load	$2=, 0($pop80)
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push158=, 5
 	i32.gt_s	$push78=, $1, $pop158
 	br_if   	0, $pop78       # 0: down to label10
@@ -357,5 +357,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

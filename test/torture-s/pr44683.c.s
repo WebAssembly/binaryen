@@ -9,8 +9,8 @@ copysign_bug:                           # @copysign_bug
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	f64.const	$push9=, 0x0p0
 	f64.eq  	$push2=, $0, $pop9
 	br_if   	0, $pop2        # 0: down to label1
@@ -44,7 +44,7 @@ copysign_bug:                           # @copysign_bug
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f64.const	$push0=, -0x0p0
 	i32.call	$push1=, copysign_bug@FUNCTION, $pop0
 	i32.const	$push2=, 2
@@ -62,5 +62,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

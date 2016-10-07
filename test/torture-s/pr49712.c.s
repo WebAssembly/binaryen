@@ -19,7 +19,7 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push4=, 0
 	i32.load	$push0=, d($pop4)
 	i32.const	$push3=, 0
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.const	$push5=, 0
 	i32.store	b($pop6), $pop5
-	block
+	block   	
 	i32.const	$push4=, 0
 	i32.load	$push0=, c($pop4)
 	i32.eqz 	$push18=, $pop0
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.lt_s	$0=, $pop1, $pop7
 .LBB2_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push15=, 1
 	i32.and 	$push2=, $0, $pop15
 	i32.eqz 	$push19=, $pop2
@@ -139,4 +139,4 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

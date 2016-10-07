@@ -20,7 +20,7 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push45=, 0
 	i32.const	$push0=, 100
 	i32.call	$1=, memset@FUNCTION, $11, $pop45, $pop0
-	block
+	block   	
 	i32.eqz 	$push103=, $0
 	br_if   	0, $pop103      # 0: down to label0
 # BB#1:                                 # %while.body.lr.ph
@@ -37,7 +37,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #         Child Loop BB0_7 Depth 4
                                         #     Child Loop BB0_17 Depth 2
                                         #       Child Loop BB0_18 Depth 3
-	loop                            # label1:
+	loop    	                # label1:
 	copy_local	$push51=, $0
 	tee_local	$push50=, $8=, $pop51
 	i32.load	$0=, 28($pop50)
@@ -49,13 +49,13 @@ sort_pagelist:                          # @sort_pagelist
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB0_6 Depth 3
                                         #         Child Loop BB0_7 Depth 4
-	block
-	block
-	block
-	block
-	block
-	block
-	loop                            # label8:
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	loop    	                # label8:
 	i32.const	$push56=, 2
 	i32.shl 	$push1=, $7, $pop56
 	i32.add 	$push55=, $1, $pop1
@@ -69,8 +69,8 @@ sort_pagelist:                          # @sort_pagelist
 	i32.const	$push37=, 104
 	i32.add 	$push38=, $1, $pop37
 	copy_local	$10=, $pop38
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push105=, $8
 	br_if   	0, $pop105      # 0: down to label10
 # BB#5:                                 # %while.body.lr.ph.i.preheader
@@ -83,7 +83,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #     Parent Loop BB0_3 Depth=2
                                         # =>    This Loop Header: Depth=3
                                         #         Child Loop BB0_7 Depth 4
-	loop                            # label11:
+	loop    	                # label11:
 	copy_local	$push58=, $4
 	tee_local	$push57=, $3=, $pop58
 	i32.load	$4=, 0($pop57)
@@ -92,9 +92,9 @@ sort_pagelist:                          # @sort_pagelist
                                         #     Parent Loop BB0_3 Depth=2
                                         #       Parent Loop BB0_6 Depth=3
                                         # =>      This Inner Loop Header: Depth=4
-	block
-	block
-	loop                            # label14:
+	block   	
+	block   	
+	loop    	                # label14:
 	copy_local	$push60=, $8
 	tee_local	$push59=, $11=, $pop60
 	i32.load	$push2=, 0($pop59)
@@ -171,7 +171,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #   Parent Loop BB0_2 Depth=1
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB0_18 Depth 3
-	loop                            # label15:
+	loop    	                # label15:
 	copy_local	$push74=, $4
 	tee_local	$push73=, $3=, $pop74
 	i32.load	$4=, 0($pop73)
@@ -179,8 +179,8 @@ sort_pagelist:                          # @sort_pagelist
                                         #   Parent Loop BB0_2 Depth=1
                                         #     Parent Loop BB0_17 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	block
-	loop                            # label17:
+	block   	
+	loop    	                # label17:
 	copy_local	$push76=, $11
 	tee_local	$push75=, $8=, $pop76
 	i32.load	$push9=, 0($pop75)
@@ -254,15 +254,15 @@ sort_pagelist:                          # @sort_pagelist
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_32 Depth 2
                                         #       Child Loop BB0_33 Depth 3
-	loop                            # label18:
+	loop    	                # label18:
 	i32.const	$push85=, 2
 	i32.shl 	$push14=, $10, $pop85
 	i32.add 	$push15=, $1, $pop14
 	i32.load	$11=, 0($pop15)
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push108=, $4
 	br_if   	0, $pop108      # 0: down to label22
 # BB#30:                                # %for.body15
@@ -279,7 +279,7 @@ sort_pagelist:                          # @sort_pagelist
                                         #   Parent Loop BB0_29 Depth=1
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB0_33 Depth 3
-	loop                            # label23:
+	loop    	                # label23:
 	copy_local	$push87=, $4
 	tee_local	$push86=, $3=, $pop87
 	i32.load	$4=, 0($pop86)
@@ -287,8 +287,8 @@ sort_pagelist:                          # @sort_pagelist
                                         #   Parent Loop BB0_29 Depth=1
                                         #     Parent Loop BB0_32 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
-	block
-	loop                            # label25:
+	block   	
+	loop    	                # label25:
 	copy_local	$push89=, $8
 	tee_local	$push88=, $11=, $pop89
 	i32.load	$push16=, 0($pop88)
@@ -404,7 +404,7 @@ main:                                   # @main
 	i32.add 	$push15=, $1, $pop14
 	i32.const	$push27=, 0
 	i32.store	0($pop15), $pop27
-	block
+	block   	
 	i32.call	$push26=, sort_pagelist@FUNCTION, $1
 	tee_local	$push25=, $0=, $pop26
 	i32.load	$push16=, 28($0)
@@ -426,5 +426,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

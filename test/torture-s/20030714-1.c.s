@@ -9,8 +9,8 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 16
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, 2
 	i32.add 	$push1=, $1, $pop0
 	i32.load8_u	$push2=, 0($pop1)
@@ -18,7 +18,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.and 	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %sw.default
-	block
+	block   	
 	i32.load16_u	$push26=, 26($0)
 	tee_local	$push25=, $3=, $pop26
 	i32.const	$push24=, 16
@@ -40,7 +40,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.and 	$push10=, $3, $pop9
 	i32.store16	0($pop12), $pop10
 	i32.load	$2=, 0($1)
-	block
+	block   	
 	i32.load	$push14=, 28($0)
 	i32.call_indirect	$push15=, $pop14, $0
 	br_if   	0, $pop15       # 0: down to label3
@@ -179,5 +179,5 @@ g__style:
 	.size	g__style, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

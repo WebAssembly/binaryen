@@ -31,8 +31,8 @@ main:                                   # @main
 	i32.store8	buf+64($pop17), $pop2
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$push18=, buf
 	i32.add 	$push3=, $2, $pop18
 	i32.load8_u	$push4=, 0($pop3)
@@ -54,8 +54,8 @@ main:                                   # @main
 	i32.const	$2=, 1
 .LBB1_4:                                # %for.cond3
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.const	$push24=, 63
 	i32.gt_s	$push8=, $2, $pop24
 	br_if   	1, $pop8        # 1: down to label2
@@ -82,8 +82,8 @@ main:                                   # @main
 	i32.const	$2=, 1
 .LBB1_8:                                # %for.cond16
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label5:
+	block   	
+	loop    	                # label5:
 	i32.const	$push27=, 63
 	i32.gt_s	$push12=, $2, $pop27
 	br_if   	1, $pop12       # 1: down to label4
@@ -122,5 +122,5 @@ buf:
 	.size	buf, 65
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

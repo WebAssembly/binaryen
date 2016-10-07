@@ -20,7 +20,7 @@ main:                                   # @main
 	call    	foo@FUNCTION, $pop8
 	i32.load8_s	$0=, 15($0)
 	call    	bar@FUNCTION
-	block
+	block   	
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -60,6 +60,6 @@ bar:                                    # @bar
 	.size	bar, .Lfunc_end2-bar
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

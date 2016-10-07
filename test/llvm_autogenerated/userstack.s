@@ -293,7 +293,7 @@ copytoreg_fi:
 	i32.const	$push6=, 1
 	i32.and 	$0=, $0, $pop6
 .LBB10_1:
-	loop
+	loop    	
 	i32.const	$push7=, 1
 	i32.store	0($2), $pop7
 	copy_local	$2=, $1

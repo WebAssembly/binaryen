@@ -7,7 +7,7 @@
 g:                                      # @g
 	.param  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push0=, 0($4)
 	i32.const	$push1=, g_list
 	i32.ne  	$push2=, $pop0, $pop1
@@ -32,7 +32,7 @@ g:                                      # @g
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push1=, 0
 	i32.load8_u	$push0=, g_list($pop1)
 	i32.eqz 	$push5=, $pop0
@@ -58,5 +58,5 @@ g_list:
 	.size	g_list, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

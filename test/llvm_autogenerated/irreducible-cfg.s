@@ -6,8 +6,8 @@ test0:
 	.param  	i32, i32, i32, i32
 	.local  	f64, i32, i32
 	i32.const	$5=, 0
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push18=, $2
 	br_if   	0, $pop18
 	i32.const	$push0=, 3
@@ -21,13 +21,13 @@ test0:
 	i32.const	$6=, 1
 .LBB0_4:
 	end_block
-	loop
-	block
-	block
-	block
-	block
-	block
-	block
+	loop    	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$6, 2, 0, 3, 1, 1
 .LBB0_5:
 	end_block
@@ -82,8 +82,8 @@ test1:
 	.param  	i32, i32, i32, i32
 	.local  	f64, i32, i32
 	i32.const	$5=, 0
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push23=, $2
 	br_if   	0, $pop23
 	i32.const	$push0=, 3
@@ -97,15 +97,15 @@ test1:
 	i32.const	$6=, 1
 .LBB1_4:
 	end_block
-	loop
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	loop    	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$6, 3, 0, 4, 1, 2, 2
 .LBB1_5:
 	end_block

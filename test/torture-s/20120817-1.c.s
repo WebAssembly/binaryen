@@ -28,7 +28,7 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i64.call	$push1=, f@FUNCTION
 	i64.const	$push0=, 16
 	i64.ne  	$push2=, $pop1, $pop0
@@ -55,6 +55,6 @@ foo:
 	.size	foo, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

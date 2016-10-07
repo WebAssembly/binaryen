@@ -464,7 +464,7 @@ fail:                                   # @fail
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %if.end11
-	block
+	block   	
 	i32.const	$push1=, 0
 	i32.load	$push0=, fail_count($pop1)
 	br_if   	0, $pop0        # 0: down to label0
@@ -496,7 +496,7 @@ fail_count:
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

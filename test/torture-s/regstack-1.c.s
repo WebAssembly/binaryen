@@ -269,7 +269,7 @@ main:                                   # @main
 	i64.load	$push138=, 0($16)
 	tee_local	$push137=, $0=, $pop138
 	i64.store	Y1($pop139), $pop137
-	block
+	block   	
 	i64.const	$push136=, 0
 	i64.const	$push39=, 4612354521497075712
 	i32.call	$push40=, __netf2@FUNCTION, $11, $10, $pop136, $pop39
@@ -422,6 +422,6 @@ S:
 	.size	S, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

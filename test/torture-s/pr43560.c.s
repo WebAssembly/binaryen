@@ -8,7 +8,7 @@ test:                                   # @test
 	.param  	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push8=, 4($0)
 	tee_local	$push7=, $3=, $pop8
 	i32.const	$push0=, 2
@@ -19,7 +19,7 @@ test:                                   # @test
 	i32.add 	$2=, $0, $pop5
 .LBB0_2:                                # %land.rhs
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push15=, -1
 	i32.add 	$push14=, $3, $pop15
 	tee_local	$push13=, $3=, $pop14
@@ -77,4 +77,4 @@ s:
 	.size	s, 20
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

@@ -9,7 +9,7 @@ add512:                                 # @add512
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 512
 	i32.add 	$push2=, $0, $pop0
 	tee_local	$push1=, $2=, $pop2
@@ -34,7 +34,7 @@ add513:                                 # @add513
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 513
 	i32.add 	$push2=, $0, $pop0
 	tee_local	$push1=, $2=, $pop2
@@ -68,7 +68,7 @@ main:                                   # @main
 	i32.store	12($0), $pop17
 	i32.const	$push16=, -1
 	i32.store	8($0), $pop16
-	block
+	block   	
 	i32.const	$push1=, -512
 	i32.const	$push12=, 12
 	i32.add 	$push13=, $0, $pop12
@@ -103,6 +103,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

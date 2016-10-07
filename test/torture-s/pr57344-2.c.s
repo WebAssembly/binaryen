@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -3161
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$push21=, 0
 	i64.const	$push0=, 562525691183104
 	i64.store	s+8($pop21), $pop0
-	block
+	block   	
 	i32.const	$push20=, 0
 	i32.load	$push1=, i($pop20)
 	i32.const	$push19=, 0
@@ -56,7 +56,7 @@ main:                                   # @main
 # BB#2:                                 # %for.body.for.body_crit_edge.preheader
 .LBB1_3:                                # %for.body.for.body_crit_edge
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push39=, 0
 	i64.load32_u	$push12=, s+8($pop39)
 	i32.const	$push38=, 0
@@ -113,5 +113,5 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

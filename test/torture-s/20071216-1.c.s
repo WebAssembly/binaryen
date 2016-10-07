@@ -48,7 +48,7 @@ main:                                   # @main
 	i32.const	$push28=, 0
 	i32.const	$push0=, 26
 	i32.store	x($pop28), $pop0
-	block
+	block   	
 	i32.call	$push27=, bar@FUNCTION
 	tee_local	$push26=, $0=, $pop27
 	i32.const	$push25=, -37
@@ -115,5 +115,5 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

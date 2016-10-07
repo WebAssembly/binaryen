@@ -88,7 +88,7 @@ main:                                   # @main
 	i64.xor 	$push42=, $pop43, $pop3
 	tee_local	$push41=, $1=, $pop42
 	i64.store	tmp2($pop46), $pop41
-	block
+	block   	
 	i64.const	$push4=, -4096
 	i64.and 	$push5=, $3, $pop4
 	i64.const	$push6=, -7687337405579571200
@@ -237,6 +237,6 @@ tmp4:
 	.size	tmp4, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

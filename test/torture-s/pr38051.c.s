@@ -15,20 +15,20 @@ mymemcmp:                               # @mymemcmp
 	i32.sub 	$10=, $pop104, $pop105
 	i32.const	$push26=, 2
 	i32.shr_u	$2=, $2, $pop26
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push146=, 3
 	i32.and 	$push27=, $0, $pop146
 	i32.eqz 	$push222=, $pop27
@@ -170,80 +170,80 @@ mymemcmp:                               # @mymemcmp
 	i32.const	$11=, 34
 .LBB0_22:                               # =>This Inner Loop Header: Depth=1
 	end_block                       # label0:
-	loop                            # label14:
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	loop    	i32             # label14:
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_table 	$11, 27, 35, 36, 37, 28, 38, 39, 40, 29, 30, 41, 42, 43, 31, 24, 32, 33, 34, 25, 26, 44, 45, 46, 47, 48, 3, 11, 12, 13, 4, 14, 15, 16, 5, 6, 17, 18, 19, 7, 0, 8, 9, 10, 1, 2, 20, 21, 22, 23, 23 # 27: down to label60
                                         # 35: down to label52
                                         # 36: down to label51
@@ -988,7 +988,7 @@ main:                                   # @main
 	i32.const	$push14=, 0
 	i64.load	$push7=, .L.str.1($pop14):p2align=0
 	i64.store	buf+168($pop15), $pop7
-	block
+	block   	
 	i32.const	$push10=, buf+25
 	i32.const	$push9=, buf+168
 	i32.const	$push8=, 33
@@ -1028,5 +1028,5 @@ buf:
 	.size	.L.str.1, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

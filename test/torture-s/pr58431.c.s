@@ -31,7 +31,7 @@ main:                                   # @main
 	i32.shl 	$push3=, $1, $pop2
 	i32.const	$push12=, 24
 	i32.shr_s	$1=, $pop3, $pop12
-	block
+	block   	
 	br_if   	0, $2           # 0: down to label0
 # BB#1:                                 # %lor.rhs
 	i32.const	$push25=, 0
@@ -42,9 +42,9 @@ main:                                   # @main
 	end_block                       # label0:
 	i32.const	$push26=, 0
 	i32.store	j($pop26), $3
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.ne  	$push5=, $0, $1
 	br_if   	0, $pop5        # 0: down to label3
 # BB#3:                                 # %if.else
@@ -76,7 +76,7 @@ main:                                   # @main
 	i32.const	$push36=, 0
 	i32.const	$push10=, 1
 	i32.store	b($pop36), $pop10
-	block
+	block   	
 	i32.const	$push35=, 0
 	i32.load8_u	$push11=, h($pop35)
 	br_if   	0, $pop11       # 0: down to label4
@@ -187,5 +187,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -8,8 +8,8 @@ t:                                      # @t
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push3=, $0
 	br_if   	0, $pop3        # 0: down to label1
 # BB#1:                                 # %if.end
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.const	$0=, 5
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	i32             # label2:
 	i32.const	$push2=, 255
 	i32.and 	$push0=, $0, $pop2
 	i32.call	$drop=, t@FUNCTION, $pop0
@@ -65,6 +65,6 @@ a:
 	.size	a, 1004
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

@@ -8,8 +8,8 @@ aim_callhandler:                        # @aim_callhandler
 	.param  	i32, i32, i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push11=, $1
 	br_if   	0, $pop11       # 0: down to label1
 # BB#1:                                 # %entry
@@ -67,6 +67,6 @@ aim_callhandler.i:
 	.size	aim_callhandler.i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

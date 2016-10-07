@@ -18,7 +18,7 @@ main:                                   # @main
 	i64.load	$push38=, .L.str($pop39):p2align=0
 	tee_local	$push37=, $1=, $pop38
 	i64.store	buf($pop40), $pop37
-	block
+	block   	
 	i32.const	$push36=, buf
 	i32.const	$push35=, .L.str
 	i32.call	$push0=, strcmp@FUNCTION, $pop36, $pop35
@@ -240,6 +240,6 @@ buf:
 	.size	.L.str, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

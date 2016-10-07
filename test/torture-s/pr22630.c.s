@@ -7,7 +7,7 @@
 bla:                                    # @bla
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, j
 	i32.select	$push1=, $0, $pop0, $0
 	i32.eq  	$push2=, $pop1, $0
@@ -49,4 +49,4 @@ j:
 	.size	j, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

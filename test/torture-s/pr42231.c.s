@@ -7,7 +7,7 @@
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.call	$push1=, CallFunctionRec@FUNCTION, $pop0
 	i32.eqz 	$push8=, $pop1
@@ -17,7 +17,7 @@ main:                                   # @main
 	call    	storemax@FUNCTION, $pop2
 .LBB0_2:                                # %CallFunction.exit
 	end_block                       # label0:
-	block
+	block   	
 	i32.const	$push6=, 0
 	i32.load	$push3=, max($pop6)
 	i32.const	$push4=, 10
@@ -43,7 +43,7 @@ CallFunctionRec:                        # @CallFunctionRec
 # BB#0:                                 # %entry
 	call    	storemax@FUNCTION, $0
 	i32.const	$1=, 0
-	block
+	block   	
 	i32.eqz 	$push5=, $0
 	br_if   	0, $pop5        # 0: down to label2
 # BB#1:                                 # %if.end
@@ -70,7 +70,7 @@ CallFunctionRec:                        # @CallFunctionRec
 storemax:                               # @storemax
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push2=, 0
 	i32.load	$push0=, max($pop2)
 	i32.ge_s	$push1=, $pop0, $0
@@ -93,5 +93,5 @@ max:
 	.size	max, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

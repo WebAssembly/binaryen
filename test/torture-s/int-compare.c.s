@@ -63,7 +63,7 @@ le:                                     # @le
 true:                                   # @true
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push0=, $0
 	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %if.end
@@ -83,7 +83,7 @@ true:                                   # @true
 false:                                  # @false
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label1
 # BB#1:                                 # %if.end
 	return
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end7-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push15=, 0
 	i32.load	$push14=, i($pop15)
 	tee_local	$push13=, $4=, $pop14
@@ -22,13 +22,13 @@ main:                                   # @main
 	i32.load	$0=, d($pop16)
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
-	block
+	loop    	                # label1:
+	block   	
 	br_if   	0, $0           # 0: down to label2
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
-	block
-	block
+	block   	
+	block   	
 	i32.eqz 	$push31=, $1
 	br_if   	0, $pop31       # 0: down to label4
 # BB#4:                                 # %if.then.if.end_crit_edge
@@ -79,7 +79,7 @@ main:                                   # @main
 	i32.load	$push28=, 0($pop10)
 	tee_local	$push27=, $4=, $pop28
 	i32.store	b($pop30), $pop27
-	block
+	block   	
 	br_if   	0, $4           # 0: down to label5
 # BB#10:                                # %if.end10
 	i32.const	$push11=, 0
@@ -155,5 +155,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

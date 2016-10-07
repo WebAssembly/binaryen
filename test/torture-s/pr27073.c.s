@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.eqz 	$push13=, $4
 	br_if   	0, $pop13       # 0: down to label0
 # BB#1:                                 # %while.body.preheader
@@ -15,7 +15,7 @@ foo:                                    # @foo
 	i32.sub 	$4=, $pop0, $4
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.store	0($0), $5
 	i32.const	$push12=, 4
 	i32.add 	$push1=, $0, $pop12
@@ -65,7 +65,7 @@ main:                                   # @main
 	i32.const	$push1=, 400
 	i32.const	$push0=, 500
 	call    	foo@FUNCTION, $0, $0, $0, $0, $pop4, $pop3, $pop39, $pop2, $pop1, $pop0
-	block
+	block   	
 	i32.load	$push5=, 0($0)
 	i32.const	$push38=, 100
 	i32.ne  	$push6=, $pop5, $pop38
@@ -128,6 +128,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

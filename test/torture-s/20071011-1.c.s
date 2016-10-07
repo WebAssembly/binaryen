@@ -11,7 +11,7 @@ foo:                                    # @foo
 	i32.load	$1=, 0($0)
 	i32.const	$push0=, 0
 	i32.store	0($0), $pop0
-	block
+	block   	
 	i32.eqz 	$push1=, $1
 	br_if   	0, $pop1        # 0: down to label0
 # BB#1:                                 # %if.then
@@ -38,5 +38,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

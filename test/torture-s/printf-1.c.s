@@ -18,7 +18,7 @@ main:                                   # @main
 	i32.const	$push72=, .Lstr
 	i32.const	$push71=, 0
 	i32.call	$drop=, printf@FUNCTION, $pop72, $pop71
-	block
+	block   	
 	i32.const	$push70=, .Lstr
 	i32.const	$push69=, 0
 	i32.call	$push0=, printf@FUNCTION, $pop70, $pop69
@@ -196,7 +196,7 @@ main:                                   # @main
 	.size	.Lstr, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	printf, i32, i32
 	.functype	abort, void
 	.functype	puts, i32, i32

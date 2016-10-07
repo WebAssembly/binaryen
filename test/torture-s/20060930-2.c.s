@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.const	$push6=, 0
 	i32.const	$push0=, t
 	i32.store	t($pop6), $pop0
-	block
+	block   	
 	i32.const	$push1=, s
 	i32.const	$push5=, s
 	i32.call	$push2=, bar@FUNCTION, $pop1, $pop5
@@ -66,5 +66,5 @@ t:
 	.size	t, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -7,7 +7,7 @@
 check:                                  # @check
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f64.load	$push3=, 0($0)
 	f64.load	$push2=, 0($1)
 	f64.ne  	$push4=, $pop3, $pop2
@@ -72,5 +72,5 @@ g1s:
 	.size	g1s, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

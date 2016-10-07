@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.const	$0=, buf
 	#APP
 	#NO_APP
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $0, $pop1
 	i32.const	$push0=, buf
@@ -57,6 +57,6 @@ buf:
 	.size	buf, 10
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

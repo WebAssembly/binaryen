@@ -43,8 +43,8 @@ check_a:                                # @check_a
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
 	i32.load	$push2=, 0($pop1)
@@ -74,7 +74,7 @@ check_a:                                # @check_a
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 42
 	i32.call	$push1=, try_a@FUNCTION, $pop0
 	i32.const	$push2=, -1
@@ -92,5 +92,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

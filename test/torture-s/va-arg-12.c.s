@@ -25,7 +25,7 @@ f:                                      # @f
 	i32.add 	$push24=, $pop25, $pop3
 	tee_local	$push23=, $10=, $pop24
 	i32.store	12($12), $pop23
-	block
+	block   	
 	f64.load	$push4=, 0($9)
 	f64.const	$push5=, 0x1.4p3
 	f64.ne  	$push6=, $pop4, $pop5
@@ -93,6 +93,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

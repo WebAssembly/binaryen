@@ -12,7 +12,7 @@ bar:                                    # @bar
 	i32.const	$0=, 4
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push10=, c
 	i32.add 	$push1=, $0, $pop10
 	i32.const	$push9=, 1
@@ -43,7 +43,7 @@ main:                                   # @main
 	i32.const	$0=, -2496
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push9=, c+2496
 	i32.add 	$push0=, $0, $pop9
 	i32.const	$push8=, 1
@@ -60,8 +60,8 @@ main:                                   # @main
 	i32.const	$1=, 1
 .LBB1_3:                                # %for.body3
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label3:
+	block   	
+	loop    	                # label3:
 	i32.load	$push1=, 0($0)
 	i32.ne  	$push2=, $pop1, $1
 	br_if   	1, $pop2        # 1: down to label2
@@ -99,5 +99,5 @@ c:
 	.size	c, 2496
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

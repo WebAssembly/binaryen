@@ -20,7 +20,7 @@ test:                                   # @test
 	i32.add 	$push25=, $1, $pop0
 	tee_local	$push24=, $2=, $pop25
 	i32.store	12($4), $pop24
-	block
+	block   	
 	i32.load	$push1=, 0($1)
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
@@ -111,6 +111,6 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

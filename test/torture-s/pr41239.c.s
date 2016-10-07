@@ -17,7 +17,7 @@ test:                                   # @test
 	tee_local	$push20=, $3=, $pop21
 	i32.store	__stack_pointer($pop14), $pop20
 	i32.load	$1=, 4($0)
-	block
+	block   	
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
 	i32.load	$push19=, 0($pop1)
@@ -82,7 +82,7 @@ fn2:                                    # @fn2
 # BB#0:                                 # %entry
 	#APP
 	#NO_APP
-	block
+	block   	
 	br_if   	0, $0           # 0: down to label1
 # BB#1:                                 # %if.end
 	return
@@ -184,6 +184,6 @@ main:                                   # @main
 	.size	.Lmain.s, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -16,7 +16,7 @@ exception:                              # @exception
 	i32.const	$push5=, 0
 	i32.const	$push4=, 0
 	i32.store	__THREW__($pop5), $pop4
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
@@ -58,7 +58,7 @@ setjmp_longjmp:                         # @setjmp_longjmp
 setThrew:                               # @setThrew
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push1=, 0
 	i32.load	$push0=, __THREW__($pop1)
 	br_if   	0, $pop0        # 0: down to label1

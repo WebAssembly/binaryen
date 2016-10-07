@@ -27,7 +27,7 @@ movegt:                                 # @movegt
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push32=, -1
 	i32.const	$push31=, 1
 	i32.const	$push30=, 0
@@ -122,5 +122,5 @@ tests:
 	.size	tests, 80
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -25,7 +25,7 @@ vat:                                    # @vat
 	i32.const	$push32=, 4
 	i32.add 	$push0=, $pop33, $pop32
 	i32.store	8($2), $pop0
-	block
+	block   	
 	i32.load	$push1=, 0($0)
 	i32.const	$push31=, 1
 	i32.ne  	$push2=, $pop1, $pop31
@@ -147,6 +147,6 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

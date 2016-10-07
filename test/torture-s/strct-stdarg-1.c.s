@@ -17,9 +17,9 @@ f:                                      # @f
 	tee_local	$push36=, $3=, $pop37
 	i32.store	__stack_pointer($pop31), $pop36
 	i32.store	12($3), $1
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push35=, 1
 	i32.lt_s	$push3=, $0, $pop35
 	br_if   	0, $pop3        # 0: down to label2
@@ -29,7 +29,7 @@ f:                                      # @f
 	i32.const	$2=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.store	12($3), $1
 	i32.const	$push40=, 10
 	i32.add 	$push4=, $2, $pop40
@@ -220,6 +220,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

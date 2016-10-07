@@ -22,7 +22,7 @@ baz:                                    # @baz
 bar:                                    # @bar
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push1=, 2
 	i32.ne  	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
@@ -51,7 +51,7 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
 	i32.store	c($pop0), $0
-	block
+	block   	
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label1
@@ -96,6 +96,6 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -10,7 +10,7 @@ sreal_compare:                          # @sreal_compare
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$4=, 1
-	block
+	block   	
 	i32.load	$push9=, 4($0)
 	tee_local	$push8=, $2=, $pop9
 	i32.load	$push7=, 4($1)
@@ -65,8 +65,8 @@ main:                                   # @main
 	i32.load	$0=, a+4($pop42)
 .LBB1_1:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label2:
+	block   	
+	loop    	                # label2:
 	i32.const	$push52=, 3
 	i32.shl 	$push51=, $6, $pop52
 	tee_local	$push50=, $7=, $pop51
@@ -74,15 +74,15 @@ main:                                   # @main
 	i32.add 	$8=, $pop50, $pop49
 	i32.const	$push48=, a+4
 	i32.add 	$7=, $7, $pop48
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.eqz 	$push74=, $6
 	br_if   	0, $pop74       # 0: down to label11
 # BB#2:                                 # %if.end14
@@ -92,7 +92,7 @@ main:                                   # @main
 	br_if   	1, $pop0        # 1: down to label10
 # BB#3:                                 # %land.lhs.true16
                                         #   in Loop: Header=BB1_1 Depth=1
-	block
+	block   	
 	i32.load	$push55=, 0($7)
 	tee_local	$push54=, $9=, $pop55
 	i32.gt_s	$push1=, $pop54, $0
@@ -159,7 +159,7 @@ main:                                   # @main
 	br_if   	0, $pop6        # 0: down to label8
 # BB#15:                                # %land.lhs.true16.1
                                         #   in Loop: Header=BB1_1 Depth=1
-	block
+	block   	
 	i32.load	$push61=, 0($7)
 	tee_local	$push60=, $9=, $pop61
 	i32.gt_s	$push7=, $pop60, $2
@@ -278,5 +278,5 @@ a:
 	.size	a, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

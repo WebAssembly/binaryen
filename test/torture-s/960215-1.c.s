@@ -259,7 +259,7 @@ main:                                   # @main
 	i32.const	$push132=, 0
 	i64.load	$push48=, 0($10)
 	i64.store	Y1($pop132), $pop48
-	block
+	block   	
 	i64.const	$push131=, 0
 	i64.const	$push49=, 4612108230892453888
 	i32.call	$push50=, __eqtf2@FUNCTION, $0, $1, $pop131, $pop49
@@ -378,6 +378,6 @@ S:
 	.size	S, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

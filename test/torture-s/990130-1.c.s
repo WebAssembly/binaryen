@@ -21,7 +21,7 @@ main:                                   # @main
 	#NO_APP
 	i32.const	$push2=, 0
 	i32.store	dummy($pop2), $0
-	block
+	block   	
 	br_if   	0, $1           # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0
@@ -54,6 +54,6 @@ dummy:
 	.size	dummy, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

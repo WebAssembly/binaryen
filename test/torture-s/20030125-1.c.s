@@ -116,5 +116,5 @@ sinf:                                   # @sinf
 	.size	sinf, .Lfunc_end7-sinf
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

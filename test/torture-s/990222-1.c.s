@@ -15,7 +15,7 @@ main:                                   # @main
 	i32.add 	$push24=, $pop0, $pop25
 	tee_local	$push23=, $1=, $pop24
 	i32.store8	line+2($pop27), $pop23
-	block
+	block   	
 	i32.const	$push22=, 24
 	i32.shl 	$push1=, $1, $pop22
 	i32.const	$push21=, 24
@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.const	$1=, line+1
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push36=, 1
 	i32.add 	$push4=, $1, $pop36
 	i32.const	$push35=, 48
@@ -53,7 +53,7 @@ main:                                   # @main
 	i32.load8_u	$1=, line+2($pop9)
 .LBB0_4:                                # %while.end
 	end_block                       # label0:
-	block
+	block   	
 	i32.const	$push37=, 0
 	i32.load8_u	$push11=, line($pop37)
 	i32.const	$push12=, 50
@@ -93,5 +93,5 @@ line:
 	.size	line, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

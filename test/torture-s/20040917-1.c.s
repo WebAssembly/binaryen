@@ -25,7 +25,7 @@ main:                                   # @main
 	i32.const	$push0=, 10
 	i32.store	test_var($pop5), $pop0
 	call    	not_inlinable@FUNCTION
-	block
+	block   	
 	i32.const	$push4=, 0
 	i32.load	$push1=, test_var($pop4)
 	i32.const	$push3=, 10
@@ -50,5 +50,5 @@ test_var:
 	.size	test_var, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

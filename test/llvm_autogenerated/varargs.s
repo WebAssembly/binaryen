@@ -136,7 +136,7 @@ caller_some:
 	.type	startbb,@function
 startbb:
 	.param  	i32, i32, i32
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.and 	$push1=, $0, $pop0
 	i32.eqz 	$push2=, $pop1

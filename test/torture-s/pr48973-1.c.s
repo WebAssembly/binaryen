@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -1
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -41,7 +41,7 @@ main:                                   # @main
 	tee_local	$push6=, $0=, $pop7
 	i32.or  	$push5=, $pop4, $pop6
 	i32.store8	s($pop10), $pop5
-	block
+	block   	
 	i32.eqz 	$push12=, $0
 	br_if   	0, $pop12       # 0: down to label1
 # BB#1:                                 # %foo.exit
@@ -74,5 +74,5 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

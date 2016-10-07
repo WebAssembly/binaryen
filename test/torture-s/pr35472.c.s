@@ -50,7 +50,7 @@ test:                                   # @test
 	i32.call	$push0=, memcpy@FUNCTION, $pop3, $pop19, $pop21
 	i32.const	$push20=, 64
 	i32.call	$drop=, memcpy@FUNCTION, $pop0, $0, $pop20
-	block
+	block   	
 	i32.load	$push5=, 0($0)
 	i32.const	$push4=, -1
 	i32.ne  	$push6=, $pop5, $pop4
@@ -104,7 +104,7 @@ main:                                   # @main
 	i32.call	$push0=, memcpy@FUNCTION, $pop2, $pop18, $pop20
 	i32.const	$push19=, 64
 	i32.call	$drop=, memcpy@FUNCTION, $pop0, $0, $pop19
-	block
+	block   	
 	i32.load	$push4=, 0($0)
 	i32.const	$push3=, -1
 	i32.ne  	$push5=, $pop4, $pop3
@@ -134,5 +134,5 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

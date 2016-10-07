@@ -11,9 +11,9 @@ foo:                                    # @foo
 	i32.load	$1=, p($pop7)
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label1:
-	block
+	block   	
+	loop    	                # label1:
+	block   	
 	i32.load8_u	$push1=, 0($1)
 	i32.const	$push16=, -10
 	i32.add 	$push0=, $pop1, $pop16
@@ -60,11 +60,11 @@ main:                                   # @main
 	i32.const	$1=, .L.str
 .LBB1_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label4:
+	block   	
+	loop    	                # label4:
 	i32.const	$push14=, 0
 	i32.store	p($pop14), $1
-	block
+	block   	
 	i32.load8_u	$push1=, 0($1)
 	i32.const	$push13=, -10
 	i32.add 	$push0=, $pop1, $pop13
@@ -114,4 +114,4 @@ p:
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

@@ -24,8 +24,8 @@ server_type:                            # @server_type
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-	block
-	block
+	block   	
+	block   	
 	i32.const	$push0=, .L.str
 	i32.call	$push1=, strcmp@FUNCTION, $2, $pop0
 	i32.eqz 	$push5=, $pop1
@@ -92,5 +92,5 @@ ap_standalone:
 	.size	.L.str.2, 50
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcmp, i32, i32, i32

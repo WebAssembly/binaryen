@@ -21,10 +21,10 @@ check:                                  # @check
 	i32.const	$0=, 3
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
-	block
-	block
-	block
+	loop    	                # label0:
+	block   	
+	block   	
+	block   	
 	i32.const	$push17=, -1
 	i32.add 	$push1=, $0, $pop17
 	i32.const	$push16=, -2
@@ -62,7 +62,7 @@ check:                                  # @check
 .LBB0_5:                                # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label1:
-	block
+	block   	
 	br_if   	0, $1           # 0: down to label4
 # BB#6:                                 # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -122,7 +122,7 @@ main:                                   # @main
 	i32.store	4($0), $pop21
 	i32.const	$push9=, 1
 	call    	check@FUNCTION, $pop9, $0
-	block
+	block   	
 	i32.const	$push22=, 0
 	i32.load	$push10=, fails($pop22)
 	br_if   	0, $pop10       # 0: down to label5
@@ -160,5 +160,5 @@ a:
 	.size	a, 60
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

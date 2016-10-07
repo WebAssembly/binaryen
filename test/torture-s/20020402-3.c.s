@@ -10,8 +10,8 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$7=, 0
-	block
-	block
+	block   	
+	block   	
 	i32.load	$push21=, 0($1)
 	tee_local	$push20=, $2=, $pop21
 	i32.load	$push19=, 0($pop20)
@@ -24,7 +24,7 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	copy_local	$6=, $1
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push34=, 1
 	i32.add 	$push1=, $1, $pop34
 	i32.const	$push33=, 1
@@ -66,8 +66,8 @@ blockvector_for_pc_sect:                # @blockvector_for_pc_sect
 	i32.add 	$1=, $pop11, $pop12
 .LBB0_5:                                # %while.body10
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label4:
+	block   	
+	loop    	                # label4:
 	i32.load	$push13=, 0($1)
 	i64.load	$push14=, 8($pop13)
 	i64.gt_u	$push15=, $pop14, $0
@@ -110,4 +110,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

@@ -39,7 +39,7 @@ get_n:                                  # @get_n
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
-	block
+	block   	
 	i32.const	$push17=, 0
 	i32.load16_u	$push16=, p($pop17)
 	tee_local	$push15=, $0=, $pop16
@@ -56,8 +56,8 @@ get_n:                                  # @get_n
 	i32.const	$3=, 0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label2:
+	block   	
+	loop    	                # label2:
 	i32.const	$push28=, 0
 	i32.const	$push27=, 65535
 	i32.and 	$push26=, $2, $pop27
@@ -140,5 +140,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

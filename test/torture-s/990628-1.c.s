@@ -77,11 +77,11 @@ load_data:                              # @load_data
 	tee_local	$push11=, $1=, $pop12
 	i32.select	$push5=, $pop4, $pop14, $pop11
 	i32.store	sqlca($pop15), $pop5
-	block
+	block   	
 	br_if   	0, $1           # 0: down to label0
 .LBB2_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.const	$push34=, 404
 	i32.call	$drop=, memcpy@FUNCTION, $3, $0, $pop34
 	i32.const	$push33=, 85
@@ -146,13 +146,13 @@ main:                                   # @main
 	tee_local	$push14=, $3=, $pop15
 	i32.select	$push5=, $pop4, $pop17, $pop14
 	i32.store	sqlca($pop18), $pop5
-	block
+	block   	
 	br_if   	0, $3           # 0: down to label2
 # BB#1:                                 # %while.body.lr.ph.i
 	copy_local	$3=, $0
 .LBB3_2:                                # %while.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push37=, 404
 	i32.call	$drop=, memcpy@FUNCTION, $3, $1, $pop37
 	i32.const	$push36=, 85
@@ -176,7 +176,7 @@ main:                                   # @main
 	i32.store	fetch.fetch_count($pop38), $pop9
 .LBB3_4:                                # %load_data.exit
 	end_block                       # label2:
-	block
+	block   	
 	i32.load	$push10=, 0($0)
 	i32.const	$push11=, 1431655765
 	i32.ne  	$push12=, $pop10, $pop11
@@ -228,7 +228,7 @@ data_ptr:
 	.size	data_ptr, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

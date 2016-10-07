@@ -27,7 +27,7 @@ main:                                   # @main
 	i32.store	b($pop18), $pop8
 	i32.const	$push11=, 0
 	i32.store	d($pop11), $0
-	block
+	block   	
 	i32.const	$push10=, 0
 	i32.load	$push9=, b($pop10)
 	br_if   	0, $pop9        # 0: down to label0
@@ -79,5 +79,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

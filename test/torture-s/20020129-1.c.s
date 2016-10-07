@@ -9,9 +9,9 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.load	$2=, 28($1)
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.load	$push0=, 28($0)
 	i32.eqz 	$push20=, $pop0
 	br_if   	0, $pop20       # 0: down to label2
@@ -32,7 +32,7 @@ foo:                                    # @foo
 	br_if   	0, $pop22       # 0: down to label1
 .LBB0_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.store	4($2), $0
 	i32.load	$push15=, 0($2)
 	tee_local	$push14=, $2=, $pop15
@@ -41,7 +41,7 @@ foo:                                    # @foo
 	end_loop
 	end_block                       # label1:
 	i32.load	$2=, 12($1)
-	block
+	block   	
 	i32.load	$push5=, 12($0)
 	i32.const	$push16=, -1
 	i32.eq  	$push6=, $pop5, $pop16
@@ -122,6 +122,6 @@ x:
 	.size	x, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

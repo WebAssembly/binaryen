@@ -37,7 +37,7 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push2=, 0
 	i32.load8_u	$push0=, next_buffer($pop2)
 	i32.eqz 	$push5=, $pop0
@@ -65,6 +65,6 @@ next_buffer:
 	.size	next_buffer, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

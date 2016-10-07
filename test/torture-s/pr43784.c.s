@@ -18,7 +18,7 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push22=, v
 	i32.add 	$push0=, $1, $pop22
 	i32.store8	0($pop0), $1
@@ -37,8 +37,8 @@ main:                                   # @main
 	i32.const	$1=, 0
 .LBB0_3:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label2:
+	block   	
+	loop    	                # label2:
 	i32.add 	$push4=, $1, $0
 	i32.load8_u	$push5=, 0($pop4)
 	i32.ne  	$push6=, $1, $pop5
@@ -88,5 +88,5 @@ v:
 	.size	v, 260
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

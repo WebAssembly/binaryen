@@ -8,7 +8,7 @@ tar:                                    # @tar
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 36863
 	i32.ne  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -37,8 +37,8 @@ bug:                                    # @bug
 	i32.const	$3=, 1
 .LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
-	block
-	loop                            # label2:
+	block   	
+	loop    	                # label2:
 	i32.const	$push6=, 1
 	i32.and 	$push1=, $3, $pop6
 	i32.eqz 	$push11=, $pop1
@@ -80,5 +80,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

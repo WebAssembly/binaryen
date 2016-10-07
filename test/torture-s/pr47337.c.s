@@ -15,7 +15,7 @@ main:                                   # @main
 	i32.const	$1=, -1024
 .LBB0_1:                                # %for.cond2.preheader
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label0:
+	loop    	                # label0:
 	i32.const	$push44=, a+1024
 	i32.add 	$push3=, $1, $pop44
 	i32.const	$push43=, 1
@@ -29,7 +29,7 @@ main:                                   # @main
 	i32.const	$push46=, 0
 	i32.const	$push45=, 0
 	i32.store	d($pop46), $pop45
-	block
+	block   	
 	i32.eqz 	$push71=, $0
 	br_if   	0, $pop71       # 0: down to label1
 # BB#3:                                 # %fnx.exit
@@ -144,5 +144,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcmp, i32, i32, i32

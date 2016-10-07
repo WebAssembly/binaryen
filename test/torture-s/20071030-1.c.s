@@ -9,7 +9,7 @@ CalcPing:                               # @CalcPing
 	.result 	i32
 	.local  	f32, i32, i32, i32, f32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push0=, 0($0)
 	i32.const	$push1=, 1
 	i32.ne  	$push2=, $pop0, $pop1
@@ -24,7 +24,7 @@ CalcPing:                               # @CalcPing
 	f32.const	$5=, 0x0p0
 .LBB0_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label1:
+	loop    	                # label1:
 	i32.add 	$push3=, $0, $3
 	f32.load	$push19=, 0($pop3)
 	tee_local	$push18=, $1=, $pop19
@@ -43,7 +43,7 @@ CalcPing:                               # @CalcPing
 # BB#4:                                 # %for.end
 	end_loop
 	i32.const	$3=, 9999
-	block
+	block   	
 	i32.eqz 	$push20=, $4
 	br_if   	0, $pop20       # 0: down to label2
 # BB#5:                                 # %if.end9
@@ -91,7 +91,7 @@ main:                                   # @main
 	f32.const	$4=, 0x0p0
 .LBB1_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label3:
+	loop    	                # label3:
 	i32.const	$push25=, 8
 	i32.add 	$push26=, $5, $pop25
 	i32.add 	$push3=, $pop26, $2
@@ -111,7 +111,7 @@ main:                                   # @main
 	br_if   	0, $pop5        # 0: up to label3
 # BB#2:                                 # %for.end.i
 	end_loop
-	block
+	block   	
 	i32.eqz 	$push40=, $3
 	br_if   	0, $pop40       # 0: down to label4
 # BB#3:                                 # %CalcPing.exit
@@ -139,5 +139,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

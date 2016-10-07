@@ -8,7 +8,7 @@ main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	call    	func_32@FUNCTION
-	block
+	block   	
 	i32.const	$push3=, 0
 	i32.load	$push0=, g_261($pop3)
 	i32.const	$push1=, -1
@@ -32,7 +32,7 @@ func_32:                                # @func_32
 	i32.const	$push1=, 0
 	i32.const	$push0=, -1
 	i32.store	g_261($pop1), $pop0
-	block
+	block   	
 	i32.const	$push5=, 0
 	i32.load	$push2=, g_211($pop5)
 	i32.const	$push4=, -1
@@ -43,7 +43,7 @@ func_32:                                # @func_32
 .LBB1_2:                                # %if.else
                                         # =>This Inner Loop Header: Depth=1
 	end_block                       # label1:
-	loop                            # label2:
+	loop    	                # label2:
 	br      	0               # 0: up to label2
 .LBB1_3:
 	end_loop
@@ -79,5 +79,5 @@ g_211:
 	.size	g_211, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

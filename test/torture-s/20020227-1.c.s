@@ -32,7 +32,7 @@ f1:                                     # @f1
 f2:                                     # @f2
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	f32.load	$push1=, 1($0):p2align=0
 	f32.const	$push2=, 0x1p0
 	f32.ne  	$push3=, $pop1, $pop2
@@ -60,6 +60,6 @@ f2:                                     # @f2
 	.size	f2, .Lfunc_end2-f2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

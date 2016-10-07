@@ -123,8 +123,8 @@ main:                                   # @main
 .LBB6_1:                                # %for.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB6_2 Depth 2
-	block
-	loop                            # label1:
+	block   	
+	loop    	                # label1:
 	i32.const	$2=, args
 	i32.const	$push35=, 2
 	i32.shl 	$push0=, $0, $pop35
@@ -135,7 +135,7 @@ main:                                   # @main
 .LBB6_2:                                # %for.body3
                                         #   Parent Loop BB6_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop                            # label2:
+	loop    	                # label2:
 	i32.const	$push39=, 13
 	i32.const	$push38=, 140
 	f32.load	$push37=, 0($2)
@@ -649,6 +649,6 @@ correct_results:
 	.size	correct_results, 1536
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

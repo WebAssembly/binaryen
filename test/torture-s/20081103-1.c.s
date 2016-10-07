@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.load	$push2=, 1($0):p2align=0
 	i32.const	$push0=, 0
 	i32.load	$push1=, A($pop0)
@@ -42,7 +42,7 @@ main:                                   # @main
 	i32.load	$push11=, A($pop12)
 	tee_local	$push10=, $0=, $pop11
 	i32.store	1($1):p2align=0, $pop10
-	block
+	block   	
 	i32.const	$push9=, 0
 	i32.load	$push0=, A($pop9)
 	i32.ne  	$push1=, $0, $pop0
@@ -72,6 +72,6 @@ A:
 	.size	A, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

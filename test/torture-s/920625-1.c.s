@@ -124,7 +124,7 @@ va1:                                    # @va1
 	i32.const	$push3=, 16
 	i32.add 	$push4=, $pop49, $pop3
 	i32.store	12($2), $pop4
-	block
+	block   	
 	i32.const	$push48=, 0
 	f64.load	$push6=, pts($pop48)
 	f64.load	$push5=, 0($1)
@@ -218,7 +218,7 @@ va2:                                    # @va2
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $1, $pop0
 	i32.store	12($2), $pop1
-	block
+	block   	
 	i32.const	$push45=, 0
 	i32.load	$push2=, ipts($pop45)
 	i32.load	$push3=, 0($1)
@@ -328,6 +328,6 @@ ipts:
 	.size	ipts, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

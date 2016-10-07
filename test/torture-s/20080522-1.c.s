@@ -56,7 +56,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop19), $pop28
 	i32.const	$push0=, 0
 	i32.store	12($0), $pop0
-	block
+	block   	
 	i32.const	$push27=, i
 	i32.call	$push1=, foo@FUNCTION, $pop27
 	i32.const	$push2=, 2
@@ -115,5 +115,5 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

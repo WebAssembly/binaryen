@@ -17,16 +17,16 @@ bar:                                    # @bar
 	i32.add 	$push3=, $4, $pop2
 	i32.const	$push14=, 255
 	i32.and 	$4=, $pop3, $pop14
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
 	i32.const	$push13=, 0
 	i32.load	$push12=, s($pop13)
 	tee_local	$push11=, $2=, $pop12
 	i32.eqz 	$push17=, $pop11
 	br_if   	0, $pop17       # 0: down to label2
 # BB#1:                                 # %if.else
-	block
+	block   	
 	i32.ne  	$push4=, $3, $1
 	br_if   	0, $pop4        # 0: down to label3
 # BB#2:                                 # %if.else
@@ -82,17 +82,17 @@ foo:                                    # @foo
 	i32.add 	$push4=, $4, $pop19
 	i32.const	$push18=, 255
 	i32.and 	$4=, $pop4, $pop18
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
 	i32.const	$push17=, 0
 	i32.load	$push16=, s($pop17)
 	tee_local	$push15=, $0=, $pop16
 	i32.eqz 	$push31=, $pop15
 	br_if   	0, $pop31       # 0: down to label7
 # BB#1:                                 # %if.else.i
-	block
+	block   	
 	i32.ne  	$push25=, $3, $2
 	tee_local	$push24=, $5=, $pop25
 	br_if   	0, $pop24       # 0: down to label8
@@ -163,7 +163,7 @@ main:                                   # @main
 	i32.store	v($pop4), $pop3
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label9:
+	loop    	                # label9:
 	i32.call	$drop=, foo@FUNCTION, $0
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
@@ -202,5 +202,5 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

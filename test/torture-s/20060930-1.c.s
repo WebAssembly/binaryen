@@ -8,7 +8,7 @@ bar:                                    # @bar
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label0
@@ -29,7 +29,7 @@ bar:                                    # @bar
 foo:                                    # @foo
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push3=, 1
 	i32.lt_s	$push4=, $1, $pop3
 	br_if   	0, $pop4        # 0: down to label1
@@ -48,7 +48,7 @@ foo:                                    # @foo
 	i32.select	$0=, $pop0, $pop6, $pop5
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	loop                            # label2:
+	loop    	                # label2:
 	i32.call	$drop=, bar@FUNCTION, $1, $0
 	i32.const	$push15=, -1
 	i32.add 	$push14=, $1, $pop15
@@ -79,5 +79,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

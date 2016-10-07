@@ -32,7 +32,7 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push3=, 0
 	i32.call	$push0=, foo@FUNCTION, $pop3
 	i32.const	$push1=, 1
@@ -50,6 +50,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	__builtin_malloc, i32
 	.functype	abort, void

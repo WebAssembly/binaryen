@@ -8,7 +8,7 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	block
+	block   	
 	i32.const	$push0=, -4
 	i32.add 	$push10=, $0, $pop0
 	tee_local	$push9=, $0=, $pop10
@@ -42,14 +42,14 @@ main:                                   # @main
 	i32.const	$1=, -1
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block
-	block
-	block
-	block
-	block
-	loop                            # label6:
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	loop    	                # label6:
 	i32.const	$3=, 31
-	block
+	block   	
 	i32.const	$push15=, -4
 	i32.add 	$push14=, $1, $pop15
 	tee_local	$push13=, $2=, $pop14
@@ -67,16 +67,16 @@ main:                                   # @main
 .LBB1_3:                                # %foo.exit
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label7:
-	block
-	block
-	block
-	block
-	block
-	block
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
+	block   	
 	br_if   	0, $4           # 0: down to label13
 # BB#4:                                 # %foo.exit
                                         #   in Loop: Header=BB1_1 Depth=1
-	block
+	block   	
 	br_table 	$2, 0, 1, 2, 1, 1, 3, 1, 4, 0 # 0: down to label14
                                         # 1: down to label13
                                         # 2: down to label12
@@ -174,5 +174,5 @@ main:                                   # @main
 	.size	.Lswitch.table, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283502)"
+	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
