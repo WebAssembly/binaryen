@@ -1,6 +1,4 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
@@ -9,6 +7,9 @@
   (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
   (import "env" "memmove" (func $memmove (param i32 i32 i32) (result i32)))
   (import "env" "memset" (func $memset (param i32 i32 i32) (result i32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "copy_yes" (func $copy_yes))
   (export "copy_no" (func $copy_no))
@@ -19,8 +20,6 @@
   (export "frame_index" (func $frame_index))
   (export "drop_result" (func $drop_result))
   (export "tail_dup_to_reuse_result" (func $tail_dup_to_reuse_result))
-  (table 0 anyfunc)
-  
   (func $copy_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
       (call $memcpy

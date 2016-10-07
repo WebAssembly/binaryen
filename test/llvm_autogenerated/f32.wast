@@ -1,8 +1,9 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$ffff (func (param f32 f32 f32) (result f32)))
   (import "env" "fmaf" (func $fmaf (param f32 f32 f32) (result f32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "fadd32" (func $fadd32))
   (export "fsub32" (func $fsub32))
@@ -20,8 +21,6 @@
   (export "fmin32" (func $fmin32))
   (export "fmax32" (func $fmax32))
   (export "fma32" (func $fma32))
-  (table 0 anyfunc)
-  
   (func $fadd32 (param $0 f32) (param $1 f32) (result f32)
     (return
       (f32.add

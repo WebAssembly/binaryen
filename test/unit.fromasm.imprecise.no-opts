@@ -20,8 +20,7 @@
   (import "env" "table" (table 10 10 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (export "big_negative" (func $big_negative))
-  (export "pick" (func $exportMe))
+  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (global $t (mut f64) (get_global $t$asm2wasm$import))
   (global $u (mut f64) (get_global $u$asm2wasm$import))
   (global $Int (mut i32) (i32.const 0))
@@ -29,7 +28,8 @@
   (global $tempDoublePtr (mut i32) (get_global $tempDoublePtr$asm2wasm$import))
   (global $n (mut i32) (get_global $n$asm2wasm$import))
   (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
-  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  (export "big_negative" (func $big_negative))
+  (export "pick" (func $exportMe))
   (func $big_negative
     (local $temp f64)
     (set_local $temp

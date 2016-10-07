@@ -1,11 +1,11 @@
 (module
-  (memory $0 10)
   (type $ii (func (param i32 i32)))
   (type $1 (func))
   (type $2 (func (result i32)))
   (type $3 (func (param i32) (result i32)))
   (table 1 1 anyfunc)
   (elem (i32.const 0) $call-me)
+  (memory $0 10)
   (func $call-me (type $ii) (param $0 i32) (param $1 i32)
     (nop)
   )

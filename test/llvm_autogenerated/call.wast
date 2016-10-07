@@ -1,6 +1,4 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
@@ -15,6 +13,9 @@
   (import "env" "i32_unary" (func $i32_unary (param i32) (result i32)))
   (import "env" "i64_nullary" (func $i64_nullary (result i64)))
   (import "env" "void_nullary" (func $void_nullary))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "call_i32_nullary" (func $call_i32_nullary))
   (export "call_i64_nullary" (func $call_i64_nullary))
@@ -28,8 +29,6 @@
   (export "tail_call_void_nullary" (func $tail_call_void_nullary))
   (export "fastcc_tail_call_void_nullary" (func $fastcc_tail_call_void_nullary))
   (export "coldcc_tail_call_void_nullary" (func $coldcc_tail_call_void_nullary))
-  (table 0 anyfunc)
-  
   (func $call_i32_nullary (result i32)
     (return
       (call $i32_nullary)

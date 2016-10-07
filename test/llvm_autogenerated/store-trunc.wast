@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -7,8 +8,6 @@
   (export "trunc_i8_i64" (func $trunc_i8_i64))
   (export "trunc_i16_i64" (func $trunc_i16_i64))
   (export "trunc_i32_i64" (func $trunc_i32_i64))
-  (table 0 anyfunc)
-  
   (func $trunc_i8_i32 (param $0 i32) (param $1 i32)
     (i32.store8
       (get_local $0)

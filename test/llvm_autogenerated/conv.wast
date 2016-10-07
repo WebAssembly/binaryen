@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -28,8 +29,6 @@
   (export "bitcast_float_to_i32" (func $bitcast_float_to_i32))
   (export "bitcast_i64_to_double" (func $bitcast_i64_to_double))
   (export "bitcast_double_to_i64" (func $bitcast_double_to_i64))
-  (table 0 anyfunc)
-  
   (func $i32_wrap_i64 (param $0 i64) (result i32)
     (return
       (i32.wrap/i64

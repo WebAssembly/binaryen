@@ -1,9 +1,10 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$vijji (func (param i32 i64 i64 i32)))
   (import "env" "__ashlti3" (func $__ashlti3 (param i32 i64 i64 i32)))
   (import "env" "__lshrti3" (func $__lshrti3 (param i32 i64 i64 i32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "shl_i3" (func $shl_i3))
   (export "shl_i53" (func $shl_i53))
@@ -11,8 +12,6 @@
   (export "fpext_f32_f64" (func $fpext_f32_f64))
   (export "fpconv_f64_f32" (func $fpconv_f64_f32))
   (export "bigshift" (func $bigshift))
-  (table 0 anyfunc)
-  
   (func $shl_i3 (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
     (return
       (i32.shl

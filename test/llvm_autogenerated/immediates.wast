@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -30,8 +31,6 @@
   (export "neginf_f64" (func $neginf_f64))
   (export "custom_nan_f64" (func $custom_nan_f64))
   (export "custom_nans_f64" (func $custom_nans_f64))
-  (table 0 anyfunc)
-  
   (func $zero_i32 (result i32)
     (return
       (i32.const 0)

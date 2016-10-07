@@ -1,8 +1,7 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (export "memory" (memory $0))
-  (table 0 anyfunc)
-  
   (func $unreachable_block_void
     (block $label$0
     )

@@ -1,7 +1,4 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
-  (data (i32.const 12) "\00\00\00\00")
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$v (func))
@@ -20,6 +17,10 @@
   (import "env" "use_a" (func $use_a (param i32)))
   (import "env" "use_b" (func $use_b (param i32)))
   (import "env" "use_memory" (func $use_memory (param i32) (result i32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
+  (data (i32.const 12) "\00\00\00\00")
   (export "memory" (memory $0))
   (export "no0" (func $no0))
   (export "no1" (func $no1))
@@ -45,8 +46,6 @@
   (export "no_stackify_past_epilogue" (func $no_stackify_past_epilogue))
   (export "stackify_indvar" (func $stackify_indvar))
   (export "stackpointer_dependency" (func $stackpointer_dependency))
-  (table 0 anyfunc)
-  
   (func $no0 (param $0 i32) (param $1 i32) (result i32)
     (set_local $1
       (i32.load

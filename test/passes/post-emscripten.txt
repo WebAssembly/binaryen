@@ -1,6 +1,6 @@
 (module
-  (memory $0 256 256)
   (type $0 (func (param i32)))
+  (memory $0 256 256)
   (func $b0 (type $0) (param $x i32)
     (drop
       (i32.load offset=1

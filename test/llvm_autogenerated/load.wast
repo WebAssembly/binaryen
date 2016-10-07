@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -6,8 +7,6 @@
   (export "ldi64" (func $ldi64))
   (export "ldf32" (func $ldf32))
   (export "ldf64" (func $ldf64))
-  (table 0 anyfunc)
-  
   (func $ldi32 (param $0 i32) (result i32)
     (return
       (i32.load

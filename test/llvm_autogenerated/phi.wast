@@ -1,11 +1,10 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "test0" (func $test0))
   (export "test1" (func $test1))
-  (table 0 anyfunc)
-  
   (func $test0 (param $0 i32) (result i32)
     (block $label$0
       (br_if $label$0

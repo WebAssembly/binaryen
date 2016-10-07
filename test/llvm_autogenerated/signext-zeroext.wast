@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -6,8 +7,6 @@
   (export "s2z_func" (func $s2z_func))
   (export "z2s_call" (func $z2s_call))
   (export "s2z_call" (func $s2z_call))
-  (table 0 anyfunc)
-  
   (func $z2s_func (param $0 i32) (result i32)
     (return
       (i32.shr_s

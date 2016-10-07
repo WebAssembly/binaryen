@@ -1,4 +1,5 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
@@ -6,8 +7,6 @@
   (export "sti64" (func $sti64))
   (export "stf32" (func $stf32))
   (export "stf64" (func $stf64))
-  (table 0 anyfunc)
-  
   (func $sti32 (param $0 i32) (param $1 i32)
     (i32.store
       (get_local $0)

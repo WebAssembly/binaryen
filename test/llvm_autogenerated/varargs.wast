@@ -1,9 +1,10 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$vi (func (param i32)))
   (import "env" "callee" (func $callee (param i32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "start" (func $start))
   (export "end" (func $end))
@@ -14,8 +15,6 @@
   (export "caller_none" (func $caller_none))
   (export "caller_some" (func $caller_some))
   (export "startbb" (func $startbb))
-  (table 0 anyfunc)
-  
   (func $start (param $0 i32) (param $1 i32)
     (i32.store
       (get_local $0)

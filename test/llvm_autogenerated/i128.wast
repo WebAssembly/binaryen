@@ -1,6 +1,4 @@
 (module
-  (memory $0 1)
-  (data (i32.const 4) "\10\04\00\00")
   (type $FUNCSIG$vijji (func (param i32 i64 i64 i32)))
   (type $FUNCSIG$vijjjj (func (param i32 i64 i64 i64 i64)))
   (import "env" "__ashlti3" (func $__ashlti3 (param i32 i64 i64 i32)))
@@ -11,6 +9,9 @@
   (import "env" "__multi3" (func $__multi3 (param i32 i64 i64 i64 i64)))
   (import "env" "__udivti3" (func $__udivti3 (param i32 i64 i64 i64 i64)))
   (import "env" "__umodti3" (func $__umodti3 (param i32 i64 i64 i64 i64)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 4) "\10\04\00\00")
   (export "memory" (memory $0))
   (export "add128" (func $add128))
   (export "sub128" (func $sub128))
@@ -35,8 +36,6 @@
   (export "masked_rotl" (func $masked_rotl))
   (export "rotr" (func $rotr))
   (export "masked_rotr" (func $masked_rotr))
-  (table 0 anyfunc)
-  
   (func $add128 (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64)
     (local $5 i64)
     (i64.store

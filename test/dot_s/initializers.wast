@@ -1,11 +1,10 @@
 (module
+  (table 0 anyfunc)
   (memory $0 1)
   (export "memory" (memory $0))
   (export "main" (func $main))
   (export "f1" (func $f1))
   (export "f2" (func $f2))
-  (table 0 anyfunc)
-  
   (func $main (result i32)
     (return
       (i32.const 5)

@@ -630,8 +630,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (!found) {
       doIndent(o, indent);
       printTableHeader(curr);
-      o << '\n';
     }
+    if (curr->segments.empty()) return;
+    if (!found) o << '\n';
     doIndent(o, indent);
     for (auto& segment : curr->segments) {
       // Don't print empty segments
@@ -698,12 +699,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     currModule = curr;
     printOpening(o, "module", true);
     incIndent();
-    visitMemory(&curr->memory);
-    if (curr->start.is()) {
-      doIndent(o, indent);
-      printOpening(o, "start") << ' ' << curr->start << ')';
-      o << maybeNewLine;
-    }
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
       printOpening(o, "type") << ' ';
@@ -716,18 +711,24 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitImport(child.get());
       o << maybeNewLine;
     }
-    for (auto& child : curr->exports) {
-      doIndent(o, indent);
-      visitExport(child.get());
+    if (curr->table.exists) {
+      visitTable(&curr->table);
       o << maybeNewLine;
     }
+    visitMemory(&curr->memory);
     for (auto& child : curr->globals) {
       doIndent(o, indent);
       visitGlobal(child.get());
       o << maybeNewLine;
     }
-    if (curr->table.exists) {
-      visitTable(&curr->table);
+    for (auto& child : curr->exports) {
+      doIndent(o, indent);
+      visitExport(child.get());
+      o << maybeNewLine;
+    }
+    if (curr->start.is()) {
+      doIndent(o, indent);
+      printOpening(o, "start") << ' ' << curr->start << ')';
       o << maybeNewLine;
     }
     for (auto& child : curr->functions) {
