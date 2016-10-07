@@ -191,6 +191,91 @@ struct ParseException {
   }
 };
 
+// Helper for parsers that may not have unique label names. This transforms
+// the names into unique ones, as required by Binaryen IR.
+struct UniqueNameMapper {
+  std::vector<Name> labelStack;
+  std::map<Name, std::vector<Name>> labelMappings; // name in source => stack of uniquified names
+  std::map<Name, Name> reverseLabelMapping; // uniquified name => name in source
+
+  Index otherIndex = 0;
+
+  Name getPrefixedName(Name prefix) {
+    if (reverseLabelMapping.find(prefix) == reverseLabelMapping.end()) return prefix;
+    // make sure to return a unique name not already on the stack
+    while (1) {
+      Name ret = Name(prefix.str + std::to_string(otherIndex++));
+      if (reverseLabelMapping.find(ret) == reverseLabelMapping.end()) return ret;
+    }
+  }
+
+  // receives a source name. generates a unique name, pushes it, and returns it
+  Name pushLabelName(Name sName) {
+    Name name = getPrefixedName(sName);
+    labelStack.push_back(name);
+    labelMappings[sName].push_back(name);
+    reverseLabelMapping[name] = sName;
+    return name;
+  }
+
+  void popLabelName(Name name) {
+    assert(labelStack.back() == name);
+    labelStack.pop_back();
+    labelMappings[reverseLabelMapping[name]].pop_back();
+  }
+
+  Name sourceToUnique(Name sName) {
+    return labelMappings.at(sName).back();
+  }
+
+  Name uniqueToSource(Name name) {
+    return reverseLabelMapping.at(name);
+  }
+
+  void clear() {
+    labelStack.clear();
+    labelMappings.clear();
+    reverseLabelMapping.clear();
+  }
+
+  // Given an expression, ensures all names are unique
+  static void uniquify(Expression* curr) {
+    struct Walker : public ControlFlowWalker<Walker, Visitor<Walker>> {
+      UniqueNameMapper mapper;
+
+      static void doPreVisitControlFlow(Walker* self, Expression** currp) {
+        auto* curr = *currp;
+        if (auto* block = curr->dynCast<Block>()) {
+          if (block->name.is()) block->name = self->mapper.pushLabelName(block->name);
+        } else if (auto* loop = curr->dynCast<Loop>()) {
+          if (loop->name.is()) loop->name = self->mapper.pushLabelName(loop->name);
+        }
+      }
+      static void doPostVisitControlFlow(Walker* self, Expression** currp) {
+        auto* curr = *currp;
+        if (auto* block = curr->dynCast<Block>()) {
+          if (block->name.is()) self->mapper.popLabelName(block->name);
+        } else if (auto* loop = curr->dynCast<Loop>()) {
+          if (loop->name.is()) self->mapper.popLabelName(loop->name);
+        }
+      }
+
+      void visitBreak(Break *curr) {
+        curr->name = mapper.sourceToUnique(curr->name);
+      }
+      void visitSwitch(Switch *curr) {
+        for (auto& target : curr->targets) {
+          target = mapper.sourceToUnique(target);
+        }
+        curr->default_ = mapper.sourceToUnique(curr->default_);
+      }
+    };
+
+    Walker walker;
+    walker.walk(curr);
+  }
+};
+
 } // namespace wasm
 
 #endif // wasm_parsing_h

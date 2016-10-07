@@ -724,11 +724,11 @@
   )
   (func $switch64 (param $$a444 i64) (result i32)
     (local $$waka i32)
-    (block $switch$0
-      (block $switch-default$3
-        (block $switch-case$2
-          (block $switch-case$1
-            (br_table $switch-case$2 $switch-default$3 $switch-case$1 $switch-default$3
+    (block $switch
+      (block $switch-default
+        (block $switch-case0
+          (block $switch-case
+            (br_table $switch-case0 $switch-default $switch-case $switch-default
               (i32.wrap/i64
                 (i64.sub
                   (get_local $$a444)
@@ -741,14 +741,14 @@
             (set_local $$waka
               (i32.const 11000)
             )
-            (br $switch$0)
+            (br $switch)
           )
         )
         (block
           (set_local $$waka
             (i32.const 10)
           )
-          (br $switch$0)
+          (br $switch)
         )
       )
       (set_local $$waka

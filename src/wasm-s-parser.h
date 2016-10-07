@@ -428,16 +428,9 @@ private:
   std::map<Name, WasmType> currLocalTypes;
   size_t localIndex; // params and vars
   size_t otherIndex;
-  std::vector<Name> labelStack;
   bool brokeToAutoBlock;
 
-  Name getPrefixedName(std::string prefix) {
-    // make sure to return a unique name not already on the stack
-    while (1) {
-      Name ret = IString((prefix + std::to_string(otherIndex++)).c_str(), false);
-      if (std::find(labelStack.begin(), labelStack.end(), ret) == labelStack.end()) return ret;
-    }
-  }
+  UniqueNameMapper nameMapper;
 
   Name getFunctionName(Element& s) {
     if (s.dollared()) {
@@ -642,7 +635,7 @@ private:
       wasm.addImport(im.release());
       assert(!currFunction);
       currLocalTypes.clear();
-      labelStack.clear();
+      nameMapper.clear();
       return;
     }
     assert(!preParseImport);
@@ -662,7 +655,7 @@ private:
     currFunction->type = type;
     wasm.addFunction(currFunction.release());
     currLocalTypes.clear();
-    labelStack.clear();
+    nameMapper.clear();
   }
 
   WasmType stringToWasmType(IString str, bool allowError=false, bool prefix=false) {
@@ -1085,18 +1078,18 @@ private:
       stack.emplace_back(sp, curr);
       auto& s = *sp;
       size_t i = 1;
+      Name sName;
       if (i < s.size() && s[i]->isStr()) {
         // could be a name or a type
         if (s[i]->dollared() || stringToWasmType(s[i]->str(), true /* allowError */) == none) {
-          curr->name = s[i]->str();
-          i++;
+          sName = s[i++]->str();
         } else {
-          curr->name = getPrefixedName("block");
+          sName = "block";
         }
       } else {
-        curr->name = getPrefixedName("block");
+        sName = "block";
       }
-      labelStack.push_back(curr->name);
+      curr->name = nameMapper.pushLabelName(sName);
       if (i >= s.size()) break; // empty block
       if (s[i]->isStr()) {
         // block signature
@@ -1133,8 +1126,7 @@ private:
           curr->list.push_back(parseExpression(s[i]));
         }
       }
-      assert(labelStack.back() == curr->name);
-      labelStack.pop_back();
+      nameMapper.popLabelName(curr->name);
       curr->finalize(curr->type);
     }
     return stack[0].second;
@@ -1240,14 +1232,14 @@ private:
   Expression* makeIf(Element& s) {
     auto ret = allocator.alloc<If>();
     Index i = 1;
-    Name label;
+    Name sName;
     if (s[i]->dollared()) {
       // the if is labeled
-      label = s[i++]->str();
+      sName = s[i++]->str();
     } else {
-      label = getPrefixedName("if");
+      sName = "if";
     }
-    labelStack.push_back(label);
+    auto label = nameMapper.pushLabelName(sName);
     WasmType type = none;
     if (s[i]->isStr()) {
       type = stringToWasmType(s[i++]->str());
@@ -1258,7 +1250,7 @@ private:
       ret->ifFalse = parseExpression(*s[i++]);
     }
     ret->finalize(type);
-    labelStack.pop_back();
+    nameMapper.popLabelName(label);
     // create a break target if we must
     if (BreakSeeker::has(ret, label)) {
       auto* block = allocator.alloc<Block>();
@@ -1288,33 +1280,21 @@ private:
   Expression* makeLoop(Element& s) {
     auto ret = allocator.alloc<Loop>();
     size_t i = 1;
-    Name out;
-    if (s.size() > i + 1 && s[i]->dollared() && s[i + 1]->dollared()) { // out can only be named if both are
-      out = s[i]->str();
-      i++;
-    }
+    Name sName;
     if (s.size() > i && s[i]->dollared()) {
-      ret->name = s[i]->str();
-      i++;
+      sName = s[i++]->str();
     } else {
-      ret->name = getPrefixedName("loop-in");
+      sName = "loop-in";
     }
+    ret->name = nameMapper.pushLabelName(sName);
     ret->type = none;
     if (i < s.size() && s[i]->isStr()) {
       // block signature
       ret->type = stringToWasmType(s[i++]->str());
     }
-    labelStack.push_back(ret->name);
     ret->body = makeMaybeBlock(s, i, ret->type);
-    labelStack.pop_back();
+    nameMapper.popLabelName(ret->name);
     ret->finalize(ret->type);
-    if (out.is()) {
-      auto* block = allocator.alloc<Block>();
-      block->name = out;
-      block->list.push_back(ret);
-      block->finalize();
-      return block;
-    }
     return ret;
   }
 
@@ -1367,17 +1347,17 @@ private:
   }
   Name getLabel(Element& s) {
     if (s.dollared()) {
-      return s.str();
+      return nameMapper.sourceToUnique(s.str());
     } else {
       // offset, break to nth outside label
       uint64_t offset = std::stoll(s.c_str(), nullptr, 0);
-      if (offset > labelStack.size()) throw ParseException("invalid label", s.line, s.col);
-      if (offset == labelStack.size()) {
+      if (offset > nameMapper.labelStack.size()) throw ParseException("invalid label", s.line, s.col);
+      if (offset == nameMapper.labelStack.size()) {
         // a break to the function's scope. this means we need an automatic block, with a name
         brokeToAutoBlock = true;
         return FAKE_RETURN;
       }
-      return labelStack[labelStack.size() - 1 - offset];
+      return nameMapper.labelStack[nameMapper.labelStack.size() - 1 - offset];
     }
   }
   Expression* makeBreak(Element& s) {

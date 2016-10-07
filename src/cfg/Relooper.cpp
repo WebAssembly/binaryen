@@ -24,6 +24,7 @@
 #include <string>
 
 #include "ast_utils.h"
+#include "parsing.h"
 
 namespace CFG {
 
@@ -939,7 +940,10 @@ void Relooper::Calculate(Block *Entry) {
 
 wasm::Expression* Relooper::Render(RelooperBuilder& Builder) {
   assert(Root);
-  return Root->Render(Builder, false);
+  auto* ret = Root->Render(Builder, false);
+  // we may use the same name for more than one block in HandleFollowupMultiples
+  wasm::UniqueNameMapper::uniquify(ret);
+  return ret;
 }
 
 #ifdef RELOOPER_DEBUG

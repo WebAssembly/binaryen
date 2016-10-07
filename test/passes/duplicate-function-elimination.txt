@@ -213,7 +213,7 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (block $foo
-      (block $block0
+      (block $block
         (drop
           (i32.const 0)
         )
@@ -223,7 +223,7 @@
   )
   (func $other (type $0)
     (block $bar
-      (block $block0
+      (block $block
         (drop
           (i32.const 1)
         )

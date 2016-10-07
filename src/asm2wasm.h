@@ -30,6 +30,7 @@
 #include "asm_v_wasm.h"
 #include "passes/passes.h"
 #include "pass.h"
+#include "parsing.h"
 #include "ast_utils.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
@@ -1106,17 +1107,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   Ref params = ast[2];
   Ref body = ast[3];
 
-  unsigned nextId = 0;
-  auto getNextId = [&nextId](std::string prefix) {
-    return IString((prefix + '$' + std::to_string(nextId++)).c_str(), false);
-  };
+  UniqueNameMapper nameMapper;
 
   // given an asm.js label, returns the wasm label for breaks or continues
   auto getBreakLabelName = [](IString label) {
-    return IString((std::string("label$break$") + label.str).c_str(), false);
+    return Name(std::string("label$break$") + label.str);
   };
   auto getContinueLabelName = [](IString label) {
-    return IString((std::string("label$continue$") + label.str).c_str(), false);
+    return Name(std::string("label$continue$") + label.str);
   };
 
   IStringSet functionVariables; // params or vars
@@ -1705,13 +1703,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     } else if (what == BLOCK) {
       Name name;
       if (parentLabel.is()) {
-        name = getBreakLabelName(parentLabel);
+        name = nameMapper.pushLabelName(getBreakLabelName(parentLabel));
         parentLabel = IString();
         breakStack.push_back(name);
       }
       auto ret = processStatements(ast[1], 0);
       if (name.is()) {
         breakStack.pop_back();
+        nameMapper.popLabelName(name);
         Block* block = ret->dynCast<Block>();
         if (block && block->name.isNull()) {
           block->name = name;
@@ -1727,12 +1726,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     } else if (what == BREAK) {
       auto ret = allocator.alloc<Break>();
       assert(breakStack.size() > 0);
-      ret->name = !!ast[1] ? getBreakLabelName(ast[1]->getIString()) : breakStack.back();
+      ret->name = !!ast[1] ? nameMapper.sourceToUnique(getBreakLabelName(ast[1]->getIString())) : breakStack.back();
       return ret;
     } else if (what == CONTINUE) {
       auto ret = allocator.alloc<Break>();
       assert(continueStack.size() > 0);
-      ret->name = !!ast[1] ? getContinueLabelName(ast[1]->getIString()) : continueStack.back();
+      ret->name = !!ast[1] ? nameMapper.sourceToUnique(getContinueLabelName(ast[1]->getIString())) : continueStack.back();
       return ret;
     } else if (what == WHILE) {
       bool forever = ast[1][0] == NUM && ast[1][1]->getInteger() == 1;
@@ -1743,9 +1742,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         in = getContinueLabelName(parentLabel);
         parentLabel = IString();
       } else {
-        out = getNextId("while-out");
-        in = getNextId("while-in");
+        out = "while-out";
+        in = "while-in";
       }
+      out = nameMapper.pushLabelName(out);
+      in = nameMapper.pushLabelName(in);
       ret->name = in;
       breakStack.push_back(out);
       continueStack.push_back(in);
@@ -1774,6 +1775,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->finalize();
       continueStack.pop_back();
       breakStack.pop_back();
+      nameMapper.popLabelName(in);
+      nameMapper.popLabelName(out);
       return ret;
     } else if (what == DO) {
       if (ast[1][0] == NUM && ast[1][1]->getNumber() == 0) {
@@ -1783,14 +1786,17 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           stop = getBreakLabelName(parentLabel);
           parentLabel = IString();
         } else {
-          stop = getNextId("do-once");
+          stop = "do-once";
         }
-        IString more = getNextId("unlikely-continue");
+        stop = nameMapper.pushLabelName(stop);
+        Name more = nameMapper.pushLabelName("unlikely-continue");
         breakStack.push_back(stop);
         continueStack.push_back(more);
         auto child = process(ast[2]);
         continueStack.pop_back();
         breakStack.pop_back();
+        nameMapper.popLabelName(more);
+        nameMapper.popLabelName(stop);
         // if we never continued, we don't need a loop
         BreakSeeker breakSeeker(more);
         breakSeeker.walk(child);
@@ -1819,15 +1825,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         in = getContinueLabelName(parentLabel);
         parentLabel = IString();
       } else {
-        out = getNextId("do-out");
-        in = getNextId("do-in");
+        out = "do-out";
+        in = "do-in";
       }
+      out = nameMapper.pushLabelName(out);
+      in = nameMapper.pushLabelName(in);
       loop->name = in;
       breakStack.push_back(out);
       continueStack.push_back(in);
       loop->body = process(ast[2]);
       continueStack.pop_back();
       breakStack.pop_back();
+      nameMapper.popLabelName(in);
+      nameMapper.popLabelName(out);
       Break *continuer = allocator.alloc<Break>();
       continuer->name = in;
       continuer->condition = process(ast[1]);
@@ -1847,9 +1857,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         in = getContinueLabelName(parentLabel);
         parentLabel = IString();
       } else {
-        out = getNextId("for-out");
-        in = getNextId("for-in");
+        out = "for-out";
+        in = "for-in";
       }
+      out = nameMapper.pushLabelName(out);
+      in = nameMapper.pushLabelName(in);
       ret->name = in;
       breakStack.push_back(out);
       continueStack.push_back(in);
@@ -1873,6 +1885,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->finalize();
       continueStack.pop_back();
       breakStack.pop_back();
+      nameMapper.popLabelName(in);
+      nameMapper.popLabelName(out);
       Block *outer = allocator.alloc<Block>();
       // add an outer block for the init as well
       outer->list.push_back(process(finit));
@@ -1957,8 +1971,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         name = getBreakLabelName(parentLabel);
         parentLabel = IString();
       } else {
-        name = getNextId("switch");
+        name = "switch";
       }
+      name = nameMapper.pushLabelName(name);
       breakStack.push_back(name);
 
       auto br = allocator.alloc<Switch>();
@@ -2009,14 +2024,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         auto case_ = processStatements(body, 0);
         Name name;
         if (condition->isNull()) {
-          name = br->default_ = getNextId("switch-default");
+          name = br->default_ = nameMapper.pushLabelName("switch-default");
         } else {
           auto index = getLiteral(condition).getInteger();
           assert(index >= min);
           index -= min;
           assert(index >= 0);
           uint64_t index_s = index;
-          name = getNextId("switch-case");
+          name = nameMapper.pushLabelName("switch-case");
           if (br->targets.size() <= index_s) {
             br->targets.resize(index_s + 1);
           }
@@ -2028,6 +2043,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         next->list.push_back(case_);
         next->finalize();
         top = next;
+        nameMapper.popLabelName(name);
       }
 
       // the outermost block can be branched to to exit the whole switch
@@ -2042,6 +2058,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       }
 
       breakStack.pop_back();
+      nameMapper.popLabelName(name);
 
       return top;
     }
