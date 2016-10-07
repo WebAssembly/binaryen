@@ -168,6 +168,12 @@ function integrateWasmJS(Module) {
       Module['printErr']('no native wasm support detected');
       return false;
     }
+    // prepare memory import
+    if (!(Module['wasmMemory'] instanceof WebAssembly.Memory)) {
+      Module['printErr']('no native wasm Memory in use');
+      return false;
+    }
+    env['memory'] = Module['wasmMemory'];
     // Load the wasm module and create an instance of using native support in the JS engine.
     info['global'] = {
       'NaN': NaN,
@@ -211,6 +217,11 @@ function integrateWasmJS(Module) {
 
     info.global = global;
     info.env = env;
+
+    // polyfill interpreter expects an ArrayBuffer
+    assert(providedBuffer === Module['buffer']);
+    env['memory'] = providedBuffer;
+    assert(env['memory'] instanceof ArrayBuffer);
 
     if (!('memoryBase' in env)) {
       env['memoryBase'] = STATIC_BASE; // tell the memory segments where to place themselves
@@ -277,12 +288,14 @@ function integrateWasmJS(Module) {
     global = fixImports(global);
     env = fixImports(env);
 
-    // import memory and table
-    if (!env['memory']) {
-      env['memory'] = providedBuffer;
-    }
+    // import table
     if (!env['table']) {
-      env['table'] = new Array(1024);
+      var TABLE_SIZE = 1024; // TODO
+      if (typeof WebAssembly === 'object' && typeof WebAssembly.Table === 'function') {
+        env['table'] = new WebAssembly.Table({ initial: TABLE_SIZE, maximum: TABLE_SIZE, element: 'anyfunc' });
+      } else {
+        env['table'] = new Array(TABLE_SIZE); // works in binaryen interpreter at least
+      }
     }
     
     // try the methods. each should return the exports if it succeeded
