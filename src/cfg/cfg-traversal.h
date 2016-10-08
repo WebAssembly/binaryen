@@ -56,7 +56,9 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   std::vector<std::unique_ptr<BasicBlock>> basicBlocks; // all the blocks
 
   // traversal state
-  BasicBlock* currBasicBlock; // the current block in play during traversal
+  BasicBlock* currBasicBlock; // the current block in play during traversal. can be nullptr if unreachable,
+                              // but note that we don't do a deep unreachability analysis - just enough
+                              // to be useful, given that DCE has run before.
   std::map<Expression*, std::vector<BasicBlock*>> branches; // a block or loop => its branches
   std::vector<BasicBlock*> ifStack;
   std::vector<BasicBlock*> loopStack;
@@ -66,11 +68,16 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     basicBlocks.push_back(std::unique_ptr<BasicBlock>(currBasicBlock));
   }
 
-  static void doStartBasicBlock(SubType* self, Expression** currp) {
-    self->startBasicBlock();
+  void startUnreachableBlock() {
+    currBasicBlock = nullptr;
+  }
+
+  static void doStartUnreachableBlock(SubType* self, Expression** currp) {
+    self->startUnreachableBlock();
   }
 
   void link(BasicBlock* from, BasicBlock* to) {
+    if (!from || !to) return; // if one of them is not reachable, ignore
     from->out.push_back(to);
     to->in.push_back(from);
   }
@@ -148,10 +155,12 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doEndBreak(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Break>();
     self->branches[self->findBreakTarget(curr->name)].push_back(self->currBasicBlock); // branch to the target
-    auto* last = self->currBasicBlock;
-    self->startBasicBlock();
     if (curr->condition) {
+      auto* last = self->currBasicBlock;
+      self->startBasicBlock();
       self->link(last, self->currBasicBlock); // we might fall through
+    } else {
+      self->startUnreachableBlock();
     }
   }
 
@@ -167,7 +176,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     if (!seen.count(curr->default_)) {
       self->branches[self->findBreakTarget(curr->default_)].push_back(self->currBasicBlock); // branch to the target
     }
-    self->startBasicBlock();
+    self->startUnreachableBlock();
   }
 
   static void scan(SubType* self, Expression** currp) {
@@ -203,11 +212,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::ReturnId: {
-        self->pushTask(SubType::doStartBasicBlock, currp);
+        self->pushTask(SubType::doStartUnreachableBlock, currp);
         break;
       }
       case Expression::Id::UnreachableId: {
-        self->pushTask(SubType::doStartBasicBlock, currp);
+        self->pushTask(SubType::doStartUnreachableBlock, currp);
         break;
       }
       default: {}
