@@ -61,9 +61,13 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   std::vector<BasicBlock*> ifStack;
   std::vector<BasicBlock*> loopStack;
 
+  void startBasicBlock() {
+    currBasicBlock = makeBasicBlock();
+    basicBlocks.push_back(std::unique_ptr<BasicBlock>(currBasicBlock));
+  }
+
   static void doStartBasicBlock(SubType* self, Expression** currp) {
-    self->currBasicBlock = self->makeBasicBlock();
-    self->basicBlocks.push_back(std::unique_ptr<BasicBlock>(self->currBasicBlock));
+    self->startBasicBlock();
   }
 
   void link(BasicBlock* from, BasicBlock* to) {
@@ -80,7 +84,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     if (origins.size() == 0) return;
     // we have branches to here, so we need a new block
     auto* last = self->currBasicBlock;
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
     self->link(last, self->currBasicBlock); // fallthrough
     // branches to the new one
     for (auto* origin : origins) {
@@ -91,20 +95,20 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
     self->link(last, self->currBasicBlock); // ifTrue
     self->ifStack.push_back(last); // the block before the ifTrue
   }
 
   static void doStartIfFalse(SubType* self, Expression** currp) {
     self->ifStack.push_back(self->currBasicBlock); // the ifTrue fallthrough
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
     self->link(self->ifStack[self->ifStack.size() - 2], self->currBasicBlock); // before if -> ifFalse
   }
 
   static void doEndIf(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
     self->link(last, self->currBasicBlock); // last one is ifFalse's fallthrough if there was one, otherwise it's the ifTrue fallthrough
     if ((*currp)->cast<If>()->ifFalse) {
       // we just linked ifFalse, need to link ifTrue to the end
@@ -119,14 +123,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doStartLoop(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
     self->link(last, self->currBasicBlock);
     self->loopStack.push_back(self->currBasicBlock);
   }
 
   static void doEndLoop(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
     self->link(last, self->currBasicBlock); // fallthrough
     auto* curr = (*currp)->cast<Loop>();
     // branches to the top of the loop
@@ -145,7 +149,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     auto* curr = (*currp)->cast<Break>();
     self->branches[self->findBreakTarget(curr->name)].push_back(self->currBasicBlock); // branch to the target
     auto* last = self->currBasicBlock;
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
     if (curr->condition) {
       self->link(last, self->currBasicBlock); // we might fall through
     }
@@ -163,7 +167,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     if (!seen.count(curr->default_)) {
       self->branches[self->findBreakTarget(curr->default_)].push_back(self->currBasicBlock); // branch to the target
     }
-    doStartBasicBlock(self, currp);
+    self->startBasicBlock();
   }
 
   static void scan(SubType* self, Expression** currp) {
@@ -223,7 +227,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   void doWalkFunction(Function* func) {
     basicBlocks.clear();
 
-    doStartBasicBlock(static_cast<SubType*>(this), nullptr);
+    startBasicBlock();
     entry = currBasicBlock;
     ControlFlowWalker<SubType, VisitorType>::doWalkFunction(func);
 
