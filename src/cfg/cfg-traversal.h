@@ -175,9 +175,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::IfId: {
-        self->pushTask(SubType::doPostVisitControlFlow, currp);
         self->pushTask(SubType::doEndIf, currp);
-        self->pushTask(SubType::doVisitIf, currp);
         auto* ifFalse = curr->cast<If>()->ifFalse;
         if (ifFalse) {
           self->pushTask(SubType::scan, &curr->cast<If>()->ifFalse);
@@ -186,7 +184,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
         self->pushTask(SubType::doStartIfTrue, currp);
         self->pushTask(SubType::scan, &curr->cast<If>()->condition);
-        self->pushTask(SubType::doPreVisitControlFlow, currp);
         return; // don't do anything else
       }
       case Expression::Id::LoopId: {
