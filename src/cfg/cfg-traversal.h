@@ -58,7 +58,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // traversal state
   BasicBlock* currBasicBlock; // the current block in play during traversal. can be nullptr if unreachable,
                               // but note that we don't do a deep unreachability analysis - just enough
-                              // to be useful, given that DCE has run before.
+                              // to avoid constructing obviously-unreachable blocks (we do a full reachability
+                              // analysis on the CFG once it is constructed).
   std::map<Expression*, std::vector<BasicBlock*>> branches; // a block or loop => its branches
   std::vector<BasicBlock*> ifStack;
   std::vector<BasicBlock*> loopStack;
