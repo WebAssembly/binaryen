@@ -79,34 +79,20 @@ struct LocalSet : std::vector<Index> {
   // TODO: binary search in all the following
 
   void insert(Index x) {
-    Index low = 0, high = size() - 1;
-    while (low < high) {
-      Index mid = (low + high) / 2;
-      if ((*this)[mid] >= x) high = mid;
-      else low = mid + 1;
-    }
-    if ((*this)[low] == x) return;
-    else if ((*this)[low] > x) {
+    auto it = std::lower_bound(begin(), end(), x);
+    if (it == end()) push_back(x);
+    else if (*it > x) {
+      Index i = it - begin();
       resize(size() + 1);
-      for (Index i = size() - 1; i > low; i--) {
-        (*this)[i] = (*this)[i - 1];
-      }
-      (*this)[low] = x;
+      std::move_backward(begin() + i, begin() + size() - 1, end());
+      (*this)[i] = x;
     }
-    else push_back(x);
   }
 
   bool erase(Index x) {
-    Index low = 0, high = size() - 1;
-    while (low < high) {
-      Index mid = (low + high) / 2;
-      if ((*this)[mid] >= x) high = mid;
-      else low = mid + 1;
-    }
-    if ((*this)[low] == x) {
-      for (Index i = low + 1; i < size(); i++) {
-        (*this)[i - 1] = (*this)[i];
-      }
+    auto it = std::lower_bound(begin(), end(), x);
+    if (it != end() && *it == x) {
+      std::move(it + 1, end(), it);
       resize(size() - 1);
       return true;
     }
@@ -114,13 +100,8 @@ struct LocalSet : std::vector<Index> {
   }
 
   bool has(Index x) {
-    Index low = 0, high = size() - 1;
-    while (low < high) {
-      Index mid = (low + high) / 2;
-      if ((*this)[mid] >= x) high = mid;
-      else low = mid + 1;
-    }
-    return (*this)[low] == x;
+    auto it = std::lower_bound(begin(), end(), x);
+    return it != end() && *it == x;
   }
 
   void verify() const {
