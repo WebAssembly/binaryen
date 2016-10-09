@@ -169,13 +169,22 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   static void doVisitGetLocal(CoalesceLocals* self, Expression** currp) {
     auto* curr = (*currp)->cast<GetLocal>();
+     // if in unreachable code, ignore
+    if (!self->currBasicBlock) {
+      ExpressionManipulator::convert<GetLocal, Unreachable>(curr);
+      return;
+    }
     self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, currp);
   }
 
   static void doVisitSetLocal(CoalesceLocals* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
+    // if in unreachable code, ignore
+    if (!self->currBasicBlock) {
+      ExpressionManipulator::nop(curr);
+      return;
+    }
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
-
     // if this is a copy, note it
     auto* get = curr->value->dynCast<GetLocal>();
     if (get) self->addCopy(curr->index, get->index);

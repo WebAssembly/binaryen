@@ -925,4 +925,33 @@
       (get_local $z)
     )
   )
+  (func $in-unreachable
+    (local $a i32)
+    (block $x
+      (return)
+      (set_local $a (i32.const 1))
+      (drop (get_local $a))
+      (set_local $a (get_local $a))
+    )
+    (block $y
+      (unreachable)
+      (set_local $a (i32.const 1))
+      (drop (get_local $a))
+      (set_local $a (get_local $a))
+    )
+    (block $z
+      (br $z)
+      (set_local $a (i32.const 1))
+      (drop (get_local $a))
+      (set_local $a (get_local $a))
+    )
+    (block $z
+      (br_table $z $z
+        (i32.const 100)
+      )
+      (set_local $a (i32.const 1))
+      (drop (get_local $a))
+      (set_local $a (get_local $a))
+    )
+  )
 )
