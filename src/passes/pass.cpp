@@ -143,10 +143,13 @@ void PassRunner::run() {
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
+    bool passDebug = getenv("BINARYEN_PASS_DEBUG") && getenv("BINARYEN_PASS_DEBUG")[0] != '0';
     for (auto* pass : passes) {
       // ignoring the time, save a printout of the module before, in case this pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
-      WasmPrinter::printModule(wasm, moduleBefore);
+      if (passDebug) {
+        WasmPrinter::printModule(wasm, moduleBefore);
+      }
       // prepare to run
       std::chrono::high_resolution_clock::time_point before;
       std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
@@ -169,7 +172,11 @@ void PassRunner::run() {
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
       if (!WasmValidator().validate(*wasm, false, validateGlobally)) {
-        std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
+        if (passDebug) {
+          std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
+        } else {
+          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=1 in the env to see the earlier state\n";
+        }
         abort();
       }
     }
