@@ -76,8 +76,6 @@ struct LocalSet : std::vector<Index> {
     return ret;
   }
 
-  // TODO: binary search in all the following
-
   void insert(Index x) {
     auto it = std::lower_bound(begin(), end(), x);
     if (it == end()) push_back(x);
