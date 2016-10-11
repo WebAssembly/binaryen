@@ -558,11 +558,11 @@ public:
     return ret;
   }
 
-  void writeResizableLimits(Address initial, Address maximum) {
-    uint32_t flags = maximum ? 1 : 0;
+  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum) {
+    uint32_t flags = hasMaximum ? 1 : 0;
     o << U32LEB(flags);
     o << U32LEB(initial);
-    if (flags) {
+    if (hasMaximum) {
       o << U32LEB(maximum);
     }
   }
@@ -590,8 +590,7 @@ public:
     if (debug) std::cerr << "== writeMemory" << std::endl;
     auto start = startSection(BinaryConsts::Section::Memory);
     o << U32LEB(1); // Define 1 memory
-    Address max = wasm->memory.max == Memory::kMaxSize ? Address(0) : wasm->memory.max;
-    writeResizableLimits(wasm->memory.initial, max);
+    writeResizableLimits(wasm->memory.initial, wasm->memory.max, wasm->memory.max != Memory::kMaxSize);
     finishSection(start);
   }
 
@@ -639,13 +638,12 @@ public:
         case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
         case ExternalKind::Table: {
           o << U32LEB(BinaryConsts::ElementType::AnyFunc);
-          auto max = wasm->table.max == Table::kMaxSize ? Address(0) : wasm->table.max;
-          writeResizableLimits(wasm->table.initial, max);
+          writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
           break;
         }
         case ExternalKind::Memory: {
-          auto max = wasm->memory.max == Memory::kMaxSize ? Address(0) : wasm->memory.max;
-          writeResizableLimits(wasm->memory.initial, max); break;
+          writeResizableLimits(wasm->memory.initial, wasm->memory.max, wasm->memory.max != Memory::kMaxSize);
+          break;
         }
         case ExternalKind::Global:
           o << binaryWasmType(import->globalType);
@@ -850,8 +848,7 @@ public:
     auto start = startSection(BinaryConsts::Section::Table);
     o << U32LEB(1); // Declare 1 table.
     o << U32LEB(BinaryConsts::ElementType::AnyFunc);
-    Address max = wasm->table.max == Table::kMaxSize ? Address(0) : wasm->table.max;
-    writeResizableLimits(wasm->table.initial, max);
+    writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
     finishSection(start);
   }
 
@@ -1562,7 +1559,7 @@ public:
     auto numMemories = getU32LEB();
     if (!numMemories) return;
     assert(numMemories == 1);
-    getResizableLimits(wasm.memory.initial, &wasm.memory.max);
+    getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
   }
 
   void readSignatures() {
@@ -1606,12 +1603,12 @@ public:
     }
   }
 
-  void getResizableLimits(Address& initial, Address* max) {
+  void getResizableLimits(Address& initial, Address& max, Address defaultIfNoMax) {
     auto flags = getU32LEB();
     initial = getU32LEB();
     bool hasMax = flags & 0x1;
-    assert(max || !hasMax);
-    if (hasMax) *max = getU32LEB();
+    if (hasMax) max = getU32LEB();
+    else max = defaultIfNoMax;
   }
 
   void readImports() {
@@ -1640,10 +1637,13 @@ public:
           if (elementType != BinaryConsts::ElementType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
           wasm.table.exists = true;
           wasm.table.imported = true;
-          getResizableLimits(wasm.table.initial, &wasm.table.max);
+          getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
           break;
         }
-        case ExternalKind::Memory: getResizableLimits(wasm.memory.initial, &wasm.memory.max); break;
+        case ExternalKind::Memory: {
+          getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
+          break;
+        }
         case ExternalKind::Global: {
           curr->globalType = getWasmType();
           auto globalMutable = getU32LEB();
@@ -1897,7 +1897,7 @@ public:
     wasm.table.exists = true;
     auto elemType = getU32LEB();
     if (elemType != BinaryConsts::ElementType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");
-    getResizableLimits(wasm.table.initial, &wasm.table.max);
+    getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
   }
 
   void readTableElements() {

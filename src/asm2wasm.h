@@ -664,6 +664,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }, debug, false /* do not validate globally yet */);
   }
 
+  // if we see no function tables in the processing below, then the table still exists and has size 0
+
+  wasm.table.initial = wasm.table.max = 0;
+
   // first pass - do almost everything, but function imports and indirect calls
 
   for (unsigned i = 1; i < body->size(); i++) {
@@ -784,7 +788,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           // TODO: when not using aliasing function pointers, we could merge them by noticing that
           //       index 0 in each table is the null func, and each other index should only have one
           //       non-null func. However, that breaks down when function pointer casts are emulated.
-          wasm.table.exists = true;
           if (wasm.table.segments.size() == 0) {
             wasm.table.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))));
           }

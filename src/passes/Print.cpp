@@ -615,7 +615,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void printTableHeader(Table* curr) {
     printOpening(o, "table") << ' ';
     o << curr->initial;
-    if (curr->max && curr->max != Table::kMaxSize) o << ' ' << curr->max;
+    if (curr->max != Table::kMaxSize) o << ' ' << curr->max;
     o << " anyfunc)";
   }
   void visitTable(Table *curr) {
