@@ -283,7 +283,8 @@ function integrateWasmJS(Module) {
 
     // import table
     if (!env['table']) {
-      var TABLE_SIZE = Module['wasmTableSize'] || 1024;
+      var TABLE_SIZE = Module['wasmTableSize'];
+      if (TABLE_SIZE === undefined) TABLE_SIZE = 1024; // works in binaryen interpreter at least
       if (typeof WebAssembly === 'object' && typeof WebAssembly.Table === 'function') {
         env['table'] = new WebAssembly.Table({ initial: TABLE_SIZE, maximum: TABLE_SIZE, element: 'anyfunc' });
       } else {
