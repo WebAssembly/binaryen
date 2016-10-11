@@ -1764,7 +1764,6 @@ private:
 
 
   void parseTable(Element& s, bool preParseImport = false) {
-    std::cerr << "ParseTable elem " << s << " import " << preParseImport<<"\n";
     if (wasm.table.exists) throw ParseException("more than one table");
     wasm.table.exists = true;
     wasm.table.isImported = preParseImport;
