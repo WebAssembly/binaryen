@@ -223,13 +223,6 @@ function integrateWasmJS(Module) {
     env['memory'] = providedBuffer;
     assert(env['memory'] instanceof ArrayBuffer);
 
-    if (!('memoryBase' in env)) {
-      env['memoryBase'] = STATIC_BASE; // tell the memory segments where to place themselves
-    }
-    if (!('tableBase' in env)) {
-      env['tableBase'] = 0; // tell the memory segments where to place themselves
-    }
-
     wasmJS['providedTotalMemory'] = Module['buffer'].byteLength;
 
     // Prepare to generate wasm, using either asm2wasm or s-exprs
@@ -296,6 +289,13 @@ function integrateWasmJS(Module) {
       } else {
         env['table'] = new Array(TABLE_SIZE); // works in binaryen interpreter at least
       }
+    }
+
+    if (!env['memoryBase']) {
+      env['memoryBase'] = STATIC_BASE; // tell the memory segments where to place themselves
+    }
+    if (!env['tableBase']) {
+      env['tableBase'] = 0; // table starts at 0 by default, in dynamic linking this will change
     }
     
     // try the methods. each should return the exports if it succeeded
