@@ -22,7 +22,6 @@ This is meant to be run using BINARYEN_SCRIPTS in emcc, and not standalone.
 '''
 
 import os
-import shutil
 import subprocess
 import sys
 
@@ -35,27 +34,11 @@ wast_target = sys.argv[2]
 
 wasm_target = wast_target[:-5] + '.wasm'
 
-base_wast_target = os.path.basename(wast_target)
-base_wasm_target = os.path.basename(wasm_target)
-
-
-def fix(js, before, after):
-  assert js.count(before) == 1
-  return js.replace(before, after)
-
-# fix up js
-js = open(js_target).read()
-# use the wasm, not wast
-js = js.replace('"' + base_wast_target + '"', '"' + base_wasm_target + '"')
-js = js.replace("'" + base_wast_target + "'", "'" + base_wasm_target + "'")
-open(js_target, 'w').write(js)
-shutil.copyfile(wast_target + '.mappedGlobals', wasm_target + '.mappedGlobals')
-
 # convert to binary using spidermonkey
 '''
 using something like
 mozjs -e 'os.file.writeTypedArrayToFile("moz.wasm",
-new Uint8Array(wasmTextToBinary(os.file.readFile("test/hello_world.wast"))))'
+new Uint8Array(wasmTextToBinary(os.file.readFile("a.out.wast"))))'
 investigate with
 >>> map(chr, map(ord, open('moz.wasm').read()))
 or
