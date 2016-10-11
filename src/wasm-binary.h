@@ -845,7 +845,7 @@ public:
   }
 
   void writeFunctionTableDeclaration() {
-    if (!wasm->table.exists || wasm->table.isImported) return;
+    if (!wasm->table.exists || wasm->table.imported) return;
     if (debug) std::cerr << "== writeFunctionTableDeclaration" << std::endl;
     auto start = startSection(BinaryConsts::Section::Table);
     o << U32LEB(1); // Declare 1 table.
@@ -1639,7 +1639,7 @@ public:
           WASM_UNUSED(elementType);
           if (elementType != BinaryConsts::ElementType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
           wasm.table.exists = true;
-          wasm.table.isImported = true;
+          wasm.table.imported = true;
           getResizableLimits(wasm.table.initial, &wasm.table.max);
           break;
         }

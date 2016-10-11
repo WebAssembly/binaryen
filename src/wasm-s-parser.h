@@ -1591,7 +1591,7 @@ private:
         im->kind = ExternalKind::Table;
         if (wasm.table.exists) throw ParseException("more than one table");
         wasm.table.exists = true;
-        wasm.table.isImported = true;
+        wasm.table.imported = true;
       } else if ((*s[3])[0]->str() == GLOBAL) {
         im->kind = ExternalKind::Global;
       } else {
@@ -1766,7 +1766,7 @@ private:
   void parseTable(Element& s, bool preParseImport = false) {
     if (wasm.table.exists) throw ParseException("more than one table");
     wasm.table.exists = true;
-    wasm.table.isImported = preParseImport;
+    wasm.table.imported = preParseImport;
     Index i = 1;
     if (i == s.size()) return; // empty table in old notation
     if (s[i]->dollared()) {

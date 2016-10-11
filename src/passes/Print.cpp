@@ -620,7 +620,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitTable(Table *curr) {
     // if table wasn't imported, declare it
-    if (!curr->isImported) {
+    if (!curr->imported) {
       doIndent(o, indent);
       printTableHeader(curr);
       o << maybeNewLine;

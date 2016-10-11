@@ -385,7 +385,7 @@ public:
       }
     }
     if (curr->kind == ExternalKind::Table) {
-      shouldBeTrue(getModule()->table.isImported, curr->name, "Table import record exists but table is not marked as imported");
+      shouldBeTrue(getModule()->table.imported, curr->name, "Table import record exists but table is not marked as imported");
     }
   }
 
