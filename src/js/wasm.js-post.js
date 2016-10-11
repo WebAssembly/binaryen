@@ -290,7 +290,7 @@ function integrateWasmJS(Module) {
 
     // import table
     if (!env['table']) {
-      var TABLE_SIZE = 1024; // TODO
+      var TABLE_SIZE = Module['wasmTableSize'] || 1024;
       if (typeof WebAssembly === 'object' && typeof WebAssembly.Table === 'function') {
         env['table'] = new WebAssembly.Table({ initial: TABLE_SIZE, maximum: TABLE_SIZE, element: 'anyfunc' });
       } else {
