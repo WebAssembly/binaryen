@@ -845,7 +845,7 @@ public:
   }
 
   void writeFunctionTableDeclaration() {
-    if (!wasm->table.exists) return; // or is imported!!
+    if (!wasm->table.exists) return;
     if (debug) std::cerr << "== writeFunctionTableDeclaration" << std::endl;
     auto start = startSection(BinaryConsts::Section::Table);
     o << U32LEB(1); // Declare 1 table.
@@ -1639,6 +1639,7 @@ public:
           WASM_UNUSED(elementType);
           if (elementType != BinaryConsts::ElementType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
           wasm.table.exists = true;
+          wasm.table.isImported = true;
           getResizableLimits(wasm.table.initial, &wasm.table.max);
           break;
         }
@@ -1892,6 +1893,7 @@ public:
     if (debug) std::cerr << "== readFunctionTableDeclaration" << std::endl;
     auto numTables = getU32LEB();
     if (numTables != 1) throw ParseException("Only 1 table definition allowed in MVP");
+    if (wasm.table.exists) throw ParseException("Table cannot be both imported and defined");
     wasm.table.exists = true;
     auto elemType = getU32LEB();
     if (elemType != BinaryConsts::ElementType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");

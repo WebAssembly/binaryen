@@ -1003,6 +1003,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   tableImport->base = TABLE;
   tableImport->kind = ExternalKind::Table;
   wasm.addImport(tableImport.release());
+  wasm.table.exists = true;
+  wasm.table.isImported = true;
 
   // Import memory offset
   {

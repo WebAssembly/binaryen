@@ -1591,6 +1591,7 @@ private:
         im->kind = ExternalKind::Table;
         if (wasm.table.exists) throw ParseException("more than one table");
         wasm.table.exists = true;
+        wasm.table.isImported = true;
       } else if ((*s[3])[0]->str() == GLOBAL) {
         im->kind = ExternalKind::Global;
       } else {
@@ -1763,8 +1764,10 @@ private:
 
 
   void parseTable(Element& s, bool preParseImport = false) {
+    std::cerr << "ParseTable elem " << s << " import " << preParseImport<<"\n";
     if (wasm.table.exists) throw ParseException("more than one table");
     wasm.table.exists = true;
+    wasm.table.isImported = preParseImport;
     Index i = 1;
     if (i == s.size()) return; // empty table in old notation
     if (s[i]->dollared()) {
@@ -1785,6 +1788,13 @@ private:
       } else if (inner[0]->str() == IMPORT) {
         importModule = inner[1]->str();
         importBase = inner[2]->str();
+        assert(preParseImport);
+        auto im = make_unique<Import>();
+        im->kind = ExternalKind::Table;
+        im->module = importModule;
+        im->base = importBase;
+        im->name = importModule;// + "." + importBase;
+        wasm.addImport(im.release());
         i++;
       } else {
         WASM_UNREACHABLE();
