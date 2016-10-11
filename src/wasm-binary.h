@@ -845,7 +845,7 @@ public:
   }
 
   void writeFunctionTableDeclaration() {
-    if (!wasm->table.exists) return;
+    if (!wasm->table.exists || wasm->table.isImported) return;
     if (debug) std::cerr << "== writeFunctionTableDeclaration" << std::endl;
     auto start = startSection(BinaryConsts::Section::Table);
     o << U32LEB(1); // Declare 1 table.
