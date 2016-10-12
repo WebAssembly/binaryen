@@ -269,8 +269,18 @@ function integrateWasmJS(Module) {
   Module['reallocBuffer'] = function(size) {
     size = Math.ceil(size / wasmPageSize) * wasmPageSize; // round up to wasm page size
     var old = Module['buffer'];
-    exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
-    return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+    var result = exports['__growWasmMemory'](size / wasmPageSize); // tiny wasm method that just does grow_memory
+    if (Module["usingWasm"]) {
+      if (result !== (-1 | 0)) {
+        // success in native wasm memory growth, get the buffer from the memory
+        return Module['buffer'] = Module['wasmMemory'].buffer;
+      } else {
+        return null;
+      }
+    } else {
+      // in interpreter, we replace Module.buffer if we allocate
+      return Module['buffer'] !== old ? Module['buffer'] : null; // if it was reallocated, it changed
+    }
   };
 
   // Provide an "asm.js function" for the application, called to "link" the asm.js module. We instantiate
