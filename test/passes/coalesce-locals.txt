@@ -931,4 +931,14 @@
       (nop)
     )
   )
+  (func $nop-in-unreachable (type $2)
+    (local $0 i32)
+    (block $block
+      (unreachable)
+      (i32.store
+        (unreachable)
+        (unreachable)
+      )
+    )
+  )
 )

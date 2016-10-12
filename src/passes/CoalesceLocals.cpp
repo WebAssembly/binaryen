@@ -168,7 +168,11 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     auto* curr = (*currp)->cast<SetLocal>();
     // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      ExpressionManipulator::nop(curr);
+      if (curr->isTee()) {
+        ExpressionManipulator::convert<SetLocal, Unreachable>(curr);
+      } else {
+        ExpressionManipulator::nop(curr);
+      }
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
