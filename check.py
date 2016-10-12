@@ -385,7 +385,7 @@ for t in spec_tests:
     wast = os.path.join('test', t)
 
     # skip checks for some tests
-    if os.path.basename(wast) in ['linking.wast', 'nop.wast', 'stack.wast', 'typecheck.wast']: # FIXME
+    if os.path.basename(wast) in ['linking.wast', 'nop.wast', 'stack.wast', 'typecheck.wast', 'unwind.wast']: # FIXME
       continue
 
     def run_spec_test(wast):
