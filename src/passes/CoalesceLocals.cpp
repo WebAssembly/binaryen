@@ -76,43 +76,30 @@ struct LocalSet : std::vector<Index> {
     return ret;
   }
 
-  // TODO: binary search in all the following
-
   void insert(Index x) {
-    for (Index i = 0; i < size(); i++) {
-      auto seen = (*this)[i];
-      if (seen == x) return;
-      if (seen > x) {
-        resize(size() + 1);
-        for (Index j = size() - 1; j > i; j--) {
-          (*this)[j] = (*this)[j - 1];
-        }
-        (*this)[i] = x;
-        return;
-      }
+    auto it = std::lower_bound(begin(), end(), x);
+    if (it == end()) push_back(x);
+    else if (*it > x) {
+      Index i = it - begin();
+      resize(size() + 1);
+      std::move_backward(begin() + i, begin() + size() - 1, end());
+      (*this)[i] = x;
     }
-    // we didn't find anything larger
-    push_back(x);
   }
 
   bool erase(Index x) {
-    for (Index i = 0; i < size(); i++) {
-      if ((*this)[i] == x) {
-        for (Index j = i + 1; j < size(); j++) {
-          (*this)[j - 1] = (*this)[j];
-        }
-        resize(size() - 1);
-        return true;
-      }
+    auto it = std::lower_bound(begin(), end(), x);
+    if (it != end() && *it == x) {
+      std::move(it + 1, end(), it);
+      resize(size() - 1);
+      return true;
     }
     return false;
   }
 
   bool has(Index x) {
-    for (Index i = 0; i < size(); i++) {
-      if ((*this)[i] == x) return true;
-    }
-    return false;
+    auto it = std::lower_bound(begin(), end(), x);
+    return it != end() && *it == x;
   }
 
   void verify() const {
