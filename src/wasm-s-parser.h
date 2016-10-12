@@ -1689,8 +1689,6 @@ private:
       }
       if (j < inner.size()) {
         wasm.memory.max = atoi(inner[j++]->c_str());
-      } else {
-        wasm.memory.max = wasm.memory.initial;
       }
     }
     wasm.addImport(im.release());
