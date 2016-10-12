@@ -954,4 +954,14 @@
       (set_local $a (get_local $a))
     )
   )
+  (func $nop-in-unreachable
+    (local $x i32)
+    (block
+      (unreachable)
+      (i32.store
+        (get_local $x)
+        (tee_local $x (i32.const 0))
+      )
+    )
+  )
 )
