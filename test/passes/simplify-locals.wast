@@ -801,4 +801,34 @@
       (i32.const 0)
     )
   )
+  (func $drop-br_if (param $label i32) (param $$cond2 i32) (param $$$0151 i32) (result i32)
+    (block $label$break$L4
+      (if
+        (i32.eq
+          (get_local $label)
+          (i32.const 15)
+        )
+        (block $block
+          (set_local $label
+            (i32.const 0)
+          )
+          (set_local $$cond2
+            (i32.eq
+              (get_local $$$0151)
+              (i32.const 0)
+            )
+          )
+          (br_if $label$break$L4 ;; when we add a value to this, its type changes as it returns the value too, so must be dropped
+            (i32.eqz
+              (get_local $$cond2)
+            )
+          )
+        )
+      )
+      (set_local $label
+        (i32.const 1)
+      )
+    )
+    (get_local $label)
+  )
 )
