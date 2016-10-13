@@ -129,15 +129,11 @@ std::string Archive::Child::getRawName() const {
 }
 
 Archive::Child Archive::Child::getNext(bool& error) const {
-  size_t toSkip = len;
-  // Members are aligned to even byte boundaries.
-  if (toSkip & 1) ++toSkip;
-  const uint8_t* nextLoc = data + toSkip;
-  if (nextLoc >= (uint8_t*)&*parent->data.end()) {  // End of the archive.
+  uint32_t nextOffset = len + (len & 1); // Members are aligned to even byte boundaries.
+  if ((size_t)(data - (const uint8_t*)parent->data.data() + nextOffset) >= parent->data.size()) {  // End of the archive.
     return Child();
   }
-
-  return Child(parent, nextLoc, &error);
+  return Child(parent, data + nextOffset, &error);
 }
 
 std::string Archive::Child::getName() const {
