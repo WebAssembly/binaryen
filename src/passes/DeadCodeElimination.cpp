@@ -193,6 +193,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
         case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
         case Expression::Id::GetLocalId: DELEGATE(GetLocal);
         case Expression::Id::SetLocalId: DELEGATE(SetLocal);
+        case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
+        case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
         case Expression::Id::LoadId: DELEGATE(Load);
         case Expression::Id::StoreId: DELEGATE(Store);
         case Expression::Id::ConstId: DELEGATE(Const);
