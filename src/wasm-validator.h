@@ -387,6 +387,9 @@ public:
     if (curr->kind == ExternalKind::Table) {
       shouldBeTrue(getModule()->table.imported, curr->name, "Table import record exists but table is not marked as imported");
     }
+    if (curr->kind == ExternalKind::Memory) {
+      shouldBeTrue(getModule()->memory.imported, curr->name, "Memory import record exists but memory is not marked as imported");
+    }
   }
 
   void visitExport(Export* curr) {
