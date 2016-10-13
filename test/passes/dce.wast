@@ -4,6 +4,7 @@
   (type $1 (func))
   (table 1 1 anyfunc)
   (elem (i32.const 0) $call-me)
+  (global $x (mut i32) (i32.const 0))
   (func $call-me (type $ii) (param $0 i32) (param $1 i32)
     (nop)
   )
@@ -428,5 +429,10 @@
     (return
       (i32.const 0)
     )
+  )
+  (func $global
+    (unreachable)
+    (drop (get_global $x))
+    (set_global $x (i32.const 1))
   )
 )
