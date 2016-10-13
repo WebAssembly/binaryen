@@ -243,7 +243,7 @@ print '[ checking --help is useful... ]\n'
 
 not_executable_suffix = ['.txt', '.js']
 executables = sorted(filter(lambda x: not any(x.endswith(s) for s in
-                                              not_executable_suffix),
+                                              not_executable_suffix) and os.path.isfile(x),
                             os.listdir('bin')))
 for e in executables:
   print '.. %s --help' % e

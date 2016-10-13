@@ -177,3 +177,11 @@ TARGET_LINK_LIBRARIES(wasm-dis passes support asmjs)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION bin)
+
+# Deploy scripts that are utilized at runtime to bin/ directory, so that the build directory can be packaged as a standalone toolchain.
+FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/scripts" DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/src/js" DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+IF(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+  FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/bin/binaryen.js" DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+  FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/bin/wasm.js" DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+ENDIF()
