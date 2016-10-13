@@ -649,14 +649,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitMemory(Memory* curr) {
     // if memory wasn't imported, declare it
-    bool found = false;
-    for (auto& import : currModule->imports) {
-      if (import->kind == ExternalKind::Memory) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
+    if (!curr->imported) {
       doIndent(o, indent);
       printMemoryHeader(curr);
       o << '\n';

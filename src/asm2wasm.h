@@ -998,6 +998,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   memoryImport->module = ENV;
   memoryImport->base = MEMORY;
   memoryImport->kind = ExternalKind::Memory;
+  wasm.memory.exists = true;
+  wasm.memory.imported = true;
   wasm.addImport(memoryImport.release());
 
   // import table

@@ -586,7 +586,7 @@ public:
   }
 
   void writeMemory() {
-    if (wasm->memory.max == 0) return;
+    if (!wasm->memory.exists || wasm->memory.imported) return;
     if (debug) std::cerr << "== writeMemory" << std::endl;
     auto start = startSection(BinaryConsts::Section::Memory);
     o << U32LEB(1); // Define 1 memory
@@ -1559,6 +1559,8 @@ public:
     auto numMemories = getU32LEB();
     if (!numMemories) return;
     assert(numMemories == 1);
+    if (wasm.memory.exists) throw ParseException("Memory cannot be both imported and defined");
+    wasm.memory.exists = true;
     getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
   }
 
@@ -1641,6 +1643,8 @@ public:
           break;
         }
         case ExternalKind::Memory: {
+          wasm.memory.exists = true;
+          wasm.memory.imported = true;
           getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
           break;
         }

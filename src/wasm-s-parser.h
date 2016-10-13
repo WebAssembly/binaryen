@@ -1447,11 +1447,10 @@ private:
     data.resize(actual);
   }
 
-  bool hasMemory = false;
-
   void parseMemory(Element& s, bool preParseImport = false) {
-    if (hasMemory) throw ParseException("too many memories");
-    hasMemory = true;
+    if (wasm.memory.exists) throw ParseException("too many memories");
+    wasm.memory.exists = true;
+    wasm.memory.imported = preParseImport;
     Index i = 1;
     if (s[i]->dollared()) {
       wasm.memory.name = s[i++]->str();
@@ -1470,6 +1469,12 @@ private:
       } else if (inner[0]->str() == IMPORT) {
         importModule = inner[1]->str();
         importBase = inner[2]->str();
+        auto im = make_unique<Import>();
+        im->kind = ExternalKind::Memory;
+        im->module = importModule;
+        im->base = importBase;
+        im->name = importModule;
+        wasm.addImport(im.release());
         i++;
       } else {
         assert(inner.size() > 0 ? inner[0]->str() != IMPORT : true);
@@ -1512,7 +1517,7 @@ private:
   }
 
   void parseData(Element& s) {
-    if (!hasMemory) throw ParseException("data but no memory");
+    if (!wasm.memory.exists) throw ParseException("data but no memory");
     Index i = 1;
     if (!s[i]->isList()) {
       // the memory is named
@@ -1545,7 +1550,7 @@ private:
       if (inner[0]->str() == FUNC) {
         ex->kind = ExternalKind::Function;
       } else if (inner[0]->str() == MEMORY) {
-        if (!hasMemory) throw ParseException("memory exported but no memory");
+        if (!wasm.memory.exists) throw ParseException("memory exported but no memory");
         ex->kind = ExternalKind::Memory;
       } else if (inner[0]->str() == TABLE) {
         ex->kind = ExternalKind::Table;
@@ -1558,7 +1563,7 @@ private:
     } else if (!s[2]->dollared() && !std::isdigit(s[2]->str()[0])) {
       ex->value = s[3]->str();
       if (s[2]->str() == MEMORY) {
-        if (!hasMemory) throw ParseException("memory exported but no memory");
+        if (!wasm.memory.exists) throw ParseException("memory exported but no memory");
         ex->kind = ExternalKind::Memory;
       } else if (s[2]->str() == TABLE) {
         ex->kind = ExternalKind::Table;
@@ -1585,8 +1590,9 @@ private:
         im->kind = ExternalKind::Function;
       } else if ((*s[3])[0]->str() == MEMORY) {
         im->kind = ExternalKind::Memory;
-        if (hasMemory) throw ParseException("too many memories");
-        hasMemory = true;
+        if (wasm.memory.exists) throw ParseException("more than one memory");
+        wasm.memory.exists = true;
+        wasm.memory.imported = true;
       } else if ((*s[3])[0]->str() == TABLE) {
         im->kind = ExternalKind::Table;
         if (wasm.table.exists) throw ParseException("more than one table");
@@ -1790,7 +1796,7 @@ private:
         im->kind = ExternalKind::Table;
         im->module = importModule;
         im->base = importBase;
-        im->name = importModule;// + "." + importBase;
+        im->name = importModule;
         wasm.addImport(im.release());
         i++;
       } else {
