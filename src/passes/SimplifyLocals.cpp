@@ -93,7 +93,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   // sinkables. For the final exit from a block (falling off)
   // exitter is null.
   struct BlockBreak {
-    Break* br;
+    Expression** brp;
     Sinkables sinkables;
   };
 
@@ -128,7 +128,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
       } else {
-        self->blockBreaks[br->name].push_back({ br, std::move(self->sinkables) });
+        self->blockBreaks[br->name].push_back({ currp, std::move(self->sinkables) });
       }
     } else if (curr->is<Block>()) {
       return; // handled in visitBlock
@@ -290,7 +290,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     auto breaks = std::move(blockBreaks[block->name]);
     blockBreaks.erase(block->name);
     if (breaks.size() == 0) return; // block has no branches TODO we might optimize trivial stuff here too
-    assert(!breaks[0].br->value); // block does not already have a return value (if one break has one, they all do)
+    assert(!(*breaks[0].brp)->cast<Break>()->value); // block does not already have a return value (if one break has one, they all do)
     // look for a set_local that is present in them all
     bool found = false;
     Index sharedIndex = -1;
@@ -328,7 +328,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break set_local's value to the break
       auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
-      auto* br = breaks[j].br;
+      auto* brp = breaks[j].brp;
+      auto* br = (*brp)->cast<Break>();
       assert(!br->value);
       // if the break is conditional, then we must set the value here - if the break is not taken, we must still have the new value in the local
       auto* set = (*breakSetLocalPointer)->cast<SetLocal>();
@@ -336,6 +337,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
         br->value = set;
         set->setTee(true);
         *breakSetLocalPointer = getModule()->allocator.alloc<Nop>();
+        // in addition, as this is a conditional br that now has a value, it now returns a value, so it must be dropped
+        br->finalize();
+        *brp = Builder(*getModule()).makeDrop(br);
       } else {
         br->value = set->value;
         ExpressionManipulator::nop(set);
