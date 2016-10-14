@@ -36,7 +36,9 @@ struct RemoveUnusedFunctions : public Pass {
     }
     // Exports are roots.
     for (auto& curr : module->exports) {
-      root.push_back(module->getFunction(curr->value));
+      if (curr->kind == ExternalKind::Function) {
+        root.push_back(module->getFunction(curr->value));
+      }
     }
     // For now, all functions that can be called indirectly are marked as roots.
     for (auto& segment : module->table.segments) {

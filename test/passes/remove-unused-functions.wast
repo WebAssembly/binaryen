@@ -2,6 +2,7 @@
   (memory 0)
   (start $start)
   (type $0 (func))
+  (export "memory" (memory $0))
   (export "exported" $exported)
   (table 1 1 anyfunc)
   (elem (i32.const 0) $called_indirect)
