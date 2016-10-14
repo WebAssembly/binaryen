@@ -434,10 +434,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
             if (!ifTrue.hasSideEffects()) {
               EffectAnalyzer ifFalse(curr->ifFalse);
               if (!ifFalse.hasSideEffects()) {
-                auto conditionCost = CostAnalyzer(curr->condition).cost;
-                auto ifTrueCost    = CostAnalyzer(curr->ifTrue).cost;
-                auto ifFalseCost   = CostAnalyzer(curr->ifFalse).cost;
-                if (conditionCost + ifTrueCost + ifFalseCost <= conditionCost + std::max(ifTrueCost, ifFalseCost) + 1) {
+                auto ifCost = CostAnalyzer(curr).cost;
+                // we could allocate a select here, but better to avoid it since it might not get used
+                auto selectCost = CostAnalyzer(curr->condition).cost + CostAnalyzer(curr->ifTrue).cost + CostAnalyzer(curr->ifFalse).cost;
+                if (selectCost <= ifCost) {
                   auto* select = getModule()->allocator.alloc<Select>();
                   select->condition = curr->condition;
                   select->ifTrue = curr->ifTrue;

@@ -84,7 +84,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     return 2;
   }
   Index visitConst(Const *curr) {
-    return 0;
+    return 1;
   }
   Index visitUnary(Unary *curr) {
     switch (curr->op) {
