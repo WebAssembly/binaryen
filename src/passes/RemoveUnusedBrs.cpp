@@ -22,6 +22,7 @@
 #include <pass.h>
 #include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/cost.h>
 
 namespace wasm {
 
