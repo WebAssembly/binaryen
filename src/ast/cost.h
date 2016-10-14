@@ -202,8 +202,12 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case GeSInt64:        return 1;
       case LtFloat32:       return 1;
       case GtFloat32:       return 1;
+      case LeFloat32:       return 1;
+      case GeFloat32:       return 1;
       case LtFloat64:       return 1;
       case GtFloat64:       return 1;
+      case LeFloat64:       return 1;
+      case GeFloat64:       return 1;
       case EqInt32:         return 1;
       case NeInt32:         return 1;
       case EqInt64:         return 1;
