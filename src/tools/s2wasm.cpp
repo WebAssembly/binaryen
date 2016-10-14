@@ -132,7 +132,8 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
 
   Linker linker(globalBase, stackAllocation, initialMem, maxMem,
-                ignoreUnknownSymbols, startFunction, options.debug);
+                generateEmscriptenGlue, ignoreUnknownSymbols, startFunction,
+                options.debug);
 
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
   linker.linkObject(mainbuilder);
