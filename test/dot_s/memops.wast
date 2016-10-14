@@ -1,10 +1,9 @@
 (module
   (type $FUNCSIG$vi (func (param i32)))
+  (import "env" "memory" (memory $0 1))
   (import "env" "emscripten_asm_const_vi" (func $emscripten_asm_const_vi (param i32)))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 16) "{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }\00")
-  (export "memory" (memory $0))
   (export "main" (func $main))
   (func $_Z6reporti (param $0 i32)
     (i32.store

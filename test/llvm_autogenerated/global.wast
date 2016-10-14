@@ -1,8 +1,8 @@
 (module
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
   (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\b0\08\00\00")
   (data (i32.const 12) "9\05\00\00")
   (data (i32.const 28) "\01\00\00\00")
@@ -16,7 +16,6 @@
   (data (i32.const 136) "\00\00\00\00\00\00\00@")
   (data (i32.const 656) "\e0\00\00\00")
   (data (i32.const 1192) "\a4\04\00\00")
-  (export "memory" (memory $0))
   (export "foo" (func $foo))
   (export "call_memcpy" (func $call_memcpy))
   (func $foo (result i32)

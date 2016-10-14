@@ -1,10 +1,9 @@
 (module
   (type $FUNCSIG$ffff (func (param f32 f32 f32) (result f32)))
   (import "env" "fmaf" (func $fmaf (param f32 f32 f32) (result f32)))
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "fadd32" (func $fadd32))
   (export "fsub32" (func $fsub32))
   (export "fmul32" (func $fmul32))

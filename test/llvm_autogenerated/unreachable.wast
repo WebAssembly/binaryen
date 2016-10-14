@@ -1,10 +1,9 @@
 (module
   (type $FUNCSIG$v (func))
   (import "env" "abort" (func $abort))
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "f1" (func $f1))
   (export "f2" (func $f2))
   (export "f3" (func $f3))
