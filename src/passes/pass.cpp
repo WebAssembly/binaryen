@@ -151,12 +151,11 @@ void PassRunner::run() {
         WasmPrinter::printModule(wasm, moduleBefore);
       }
       // prepare to run
-      std::chrono::high_resolution_clock::time_point before;
       std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
       for (size_t i = 0; i < padding - pass->name.size(); i++) {
         std::cerr << ' ';
       }
-      before = std::chrono::high_resolution_clock::now();
+      auto before = std::chrono::steady_clock::now();
       if (pass->isFunctionParallel()) {
         // function-parallel passes should get a new instance per function
         for (auto& func : wasm->functions) {
@@ -165,7 +164,7 @@ void PassRunner::run() {
       } else {
         pass->run(this, wasm);
       }
-      auto after = std::chrono::high_resolution_clock::now();
+      auto after = std::chrono::steady_clock::now();
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
       totalTime += diff;
