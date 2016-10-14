@@ -436,7 +436,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
               if (!ifFalse.hasSideEffects()) {
                 auto ifCost = CostAnalyzer(curr).cost;
                 // we could allocate a select here, but better to avoid it since it might not get used
-                auto selectCost = CostAnalyzer(curr->condition).cost + CostAnalyzer(curr->ifTrue).cost + CostAnalyzer(curr->ifFalse).cost;
+                auto selectCost = 2 + CostAnalyzer(curr->condition).cost + CostAnalyzer(curr->ifTrue).cost + CostAnalyzer(curr->ifFalse).cost;
                 if (selectCost <= ifCost) {
                   auto* select = getModule()->allocator.alloc<Select>();
                   select->condition = curr->condition;

@@ -19,7 +19,7 @@
 
 namespace wasm {
 
-// Measure the cost of an AST. Very handwave-ey
+// Measure the execution cost of an AST. Very handwave-ey
 
 struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   CostAnalyzer(Expression *ast) {
@@ -220,7 +220,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     }
   }
   Index visitSelect(Select *curr) {
-    return visit(curr->condition) + visit(curr->ifTrue) + visit(curr->ifFalse);
+    return 2 + visit(curr->condition) + visit(curr->ifTrue) + visit(curr->ifFalse);
   }
   Index visitDrop(Drop *curr) {
     return 0;
