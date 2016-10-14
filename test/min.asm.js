@@ -47,6 +47,6 @@ function (global, env, buffer) {
     return M | 0;
   }
 
-  return { floats: floats, getTempRet0: ub };
+  return { floats: floats, getTempRet0: ub, neg: neg, bitcasts: bitcasts, ctzzzz: ctzzzz };
 }
 

@@ -96,6 +96,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("duplicate-function-elimination");
   addDefaultFunctionOptimizationPasses();
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
+  add("remove-unused-functions");
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
@@ -118,6 +119,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPasses() {
   add("duplicate-function-elimination");
+  add("remove-unused-functions");
 }
 
 void PassRunner::run() {

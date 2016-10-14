@@ -8,6 +8,9 @@
   (global $M (mut i32) (i32.const 0))
   (export "floats" (func $floats))
   (export "getTempRet0" (func $ub))
+  (export "neg" (func $neg))
+  (export "bitcasts" (func $bitcasts))
+  (export "ctzzzz" (func $ctzzzz))
   (func $floats (param $f f32) (result f32)
     (local $t f32)
     (return

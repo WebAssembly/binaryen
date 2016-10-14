@@ -223,7 +223,20 @@ function asm(global, env, buffer) {
     }
     return $waka | 0;
   }
+  function keepAlive() {
+    loads();
+    stores();
+    test();
+    i64(imports());
+    arg(i64(0));
+    i64(call1(i64(0)));
+    i64(call2(i64(0)));
+    i64(returnCastConst());
+    i64(ifValue64(i64(0), i64(0)));
+    ifValue32(0, 0) | 0;
+    switch64(i64(0)) | 0;
+  }
 
-  return { test64: test64, illegalParam : illegalParam, illegalResult: illegalResult };
+  return { test64: test64, illegalParam : illegalParam, illegalResult: illegalResult, keepAlive: keepAlive };
 }
 
