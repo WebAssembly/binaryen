@@ -94,21 +94,7 @@ void PassRegistry::registerPasses() {
 
 void PassRunner::addDefaultOptimizationPasses() {
   add("duplicate-function-elimination");
-  add("dce");
-  add("remove-unused-brs");
-  add("remove-unused-names");
-  add("optimize-instructions");
-  add("precompute");
-  add("simplify-locals");
-  add("vacuum"); // previous pass creates garbage
-  add("remove-unused-brs"); // simplify-locals opens opportunities for phi optimizations
-  add("coalesce-locals");
-  add("vacuum"); // previous pass creates garbage
-  add("reorder-locals");
-  add("merge-blocks");
-  add("optimize-instructions");
-  add("precompute");
-  add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
+  addDefaultFunctionOptimizationPasses();
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
 }
 
