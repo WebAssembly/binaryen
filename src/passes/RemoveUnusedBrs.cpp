@@ -427,19 +427,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         // we may have simplified ifs enough to turn them into selects
         if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
-          // TODO: estimate cost
           EffectAnalyzer condition(curr->condition);
           if (!condition.hasSideEffects()) {
             EffectAnalyzer ifTrue(curr->ifTrue);
             if (!ifTrue.hasSideEffects()) {
               EffectAnalyzer ifFalse(curr->ifFalse);
               if (!ifFalse.hasSideEffects()) {
-                auto* select = getModule()->allocator.alloc<Select>();
-                select->condition = curr->condition;
-                select->ifTrue = curr->ifTrue;
-                select->ifFalse = curr->ifFalse;
-                select->finalize();
-                replaceCurrent(select);
+                auto conditionCost = CostAnalyzer(curr->condition).cost;
+                auto ifTrueCost    = CostAnalyzer(curr->ifTrue).cost;
+                auto ifFalseCost   = CostAnalyzer(curr->ifFalse).cost;
+                if (conditionCost + ifTrueCost + ifFalseCost <= conditionCost + std::max(ifTrueCost, ifFalseCost) + 1) {
+                  auto* select = getModule()->allocator.alloc<Select>();
+                  select->condition = curr->condition;
+                  select->ifTrue = curr->ifTrue;
+                  select->ifFalse = curr->ifFalse;
+                  select->finalize();
+                  replaceCurrent(select);
+                }
               }
             }
           }
