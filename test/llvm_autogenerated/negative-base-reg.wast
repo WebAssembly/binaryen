@@ -1,8 +1,7 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\90\04\00\00")
-  (export "memory" (memory $0))
   (export "main" (func $main))
   (func $main (result i32)
     (local $0 i32)

@@ -1,8 +1,7 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "ldi64_a1" (func $ldi64_a1))
   (export "ldi64_a2" (func $ldi64_a2))
   (export "ldi64_a4" (func $ldi64_a4))

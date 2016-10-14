@@ -1,10 +1,9 @@
 (module
   (type $FUNCSIG$dddd (func (param f64 f64 f64) (result f64)))
   (import "env" "fma" (func $fma (param f64 f64 f64) (result f64)))
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "fadd64" (func $fadd64))
   (export "fsub64" (func $fsub64))
   (export "fmul64" (func $fmul64))

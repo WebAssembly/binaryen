@@ -1,7 +1,6 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
-  (export "memory" (memory $0))
   (func $unreachable_block_void
     (block $label$0
     )

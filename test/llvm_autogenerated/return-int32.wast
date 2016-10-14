@@ -1,8 +1,7 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "return_i32" (func $return_i32))
   (export "return_i32_twice" (func $return_i32_twice))
   (func $return_i32 (param $0 i32) (result i32)

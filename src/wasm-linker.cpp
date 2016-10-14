@@ -107,14 +107,25 @@ void Linker::layout() {
   } else {
     out.wasm.memory.initial = initialMem / Memory::kPageSize;
   }
+  out.wasm.memory.exists = true;
 
   if (userMaxMemory) out.wasm.memory.max = userMaxMemory / Memory::kPageSize;
 
-  auto memoryExport = make_unique<Export>();
-  memoryExport->name = MEMORY;
-  memoryExport->value = Name::fromInt(0);
-  memoryExport->kind = ExternalKind::Memory;
-  out.wasm.addExport(memoryExport.release());
+  if (importMemory) {
+    auto memoryImport = make_unique<Import>();
+    memoryImport->name = MEMORY;
+    memoryImport->module = ENV;
+    memoryImport->base = MEMORY;
+    memoryImport->kind = ExternalKind::Memory;
+    out.wasm.memory.imported = true;
+    out.wasm.addImport(memoryImport.release());
+  } else {
+    auto memoryExport = make_unique<Export>();
+    memoryExport->name = MEMORY;
+    memoryExport->value = Name::fromInt(0);
+    memoryExport->kind = ExternalKind::Memory;
+    out.wasm.addExport(memoryExport.release());
+  }
 
   // XXX For now, export all functions marked .globl.
   for (Name name : out.globls) exportFunction(name, false);
