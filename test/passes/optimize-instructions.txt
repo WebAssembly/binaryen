@@ -290,4 +290,15 @@
       )
     )
   )
+  (func $and-neg1 (type $1)
+    (drop
+      (i32.const 100)
+    )
+    (drop
+      (i32.and
+        (i32.const 100)
+        (i32.const 1)
+      )
+    )
+  )
 )

@@ -224,10 +224,15 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         }
       } else if (binary->op == AndInt32) {
-        if (auto* load = binary->left->dynCast<Load>()) {
-          if (auto* right = binary->right->dynCast<Const>()) {
-            if (right->type == i32) {
-              auto mask = right->value.geti32();
+        if (auto* right = binary->right->dynCast<Const>()) {
+          if (right->type == i32) {
+            auto mask = right->value.geti32();
+            // and with -1 does nothing (common in asm.js output)
+            if (mask == -1) {
+              return binary->left;
+            }
+            // small loads do not need to be masted, the load itself masks
+            if (auto* load = binary->left->dynCast<Load>()) {
               if ((load->bytes == 1 && mask == 0xff) ||
                   (load->bytes == 2 && mask == 0xffff)) {
                 load->signed_ = false;
