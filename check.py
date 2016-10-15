@@ -106,13 +106,13 @@ S2WASM = os.path.join(options.binaryen_bin, 's2wasm')
 os.environ['BINARYEN'] = os.getcwd()
 
 def fetch_waterfall():
-  rev = open(os.path.join('test', 'revision')).read().strip()
+  rev = open(os.path.join(options.binaryen_test, 'revision')).read().strip()
   buildername = { 'linux2':'linux',
                   'darwin':'mac',
                   'win32':'windows',
                   'cygwin':'windows' }[sys.platform]
   try:
-    local_rev = open(os.path.join('test', 'local-revision')).read().strip()
+    local_rev = open(os.path.join(options.binaryen_test, 'local-revision')).read().strip()
   except:
     local_rev = None
   if local_rev == rev: return
@@ -121,7 +121,7 @@ def fetch_waterfall():
   url = '/'.join(['https://storage.googleapis.com/wasm-llvm/builds', buildername, rev, basename])
   print '(downloading waterfall %s: %s)' % (rev, url)
   downloaded = urllib2.urlopen(url).read().strip()
-  fullname = os.path.join('test', basename)
+  fullname = os.path.join(options.binaryen_test, basename)
   open(fullname, 'wb').write(downloaded)
   print '(unpacking)'
   if os.path.exists(WATERFALL_BUILD_DIR):
@@ -129,7 +129,7 @@ def fetch_waterfall():
   os.mkdir(WATERFALL_BUILD_DIR)
   subprocess.check_call(['tar', '-xf', os.path.abspath(fullname)], cwd=WATERFALL_BUILD_DIR)
   print '(noting local revision)'
-  with open(os.path.join('test', 'local-revision'), 'w') as o: o.write(rev)
+  with open(os.path.join(options.binaryen_test, 'local-revision'), 'w') as o: o.write(rev)
 
 has_vanilla_llvm = False
 
@@ -676,7 +676,7 @@ if options.run_gcc_tests:
   else:
     for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'example'))):
       output_file = os.path.join(options.binaryen_bin, 'example')
-      cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread', '-o', output_file]
+      cmd = ['-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-lasmjs', '-lsupport', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-pthread', '-o', output_file]
       if t.endswith('.txt'):
         # check if there is a trace in the file, if so, we should build it
         out = subprocess.Popen([os.path.join('scripts', 'clean_c_api_trace.py'), os.path.join(options.binaryen_test, 'example', t)], stdout=subprocess.PIPE).communicate()[0]
@@ -693,7 +693,7 @@ if options.run_gcc_tests:
       if src.endswith(('.c', '.cpp')):
         # build the C file separately
         extra = [NATIVECC, src, '-c', '-o', 'example.o',
-                 '-Isrc', '-g', '-Llib/.', '-pthread']
+                 '-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-pthread']
         print 'build: ', ' '.join(extra)
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using an executable-relative rpath
