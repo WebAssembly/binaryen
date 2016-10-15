@@ -223,6 +223,24 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             return Builder(*getModule()).makeUnary(EqZInt32, binary->right);
           }
         }
+      } else if (binary->op == AndInt32) {
+        if (auto* right = binary->right->dynCast<Const>()) {
+          if (right->type == i32) {
+            auto mask = right->value.geti32();
+            // and with -1 does nothing (common in asm.js output)
+            if (mask == -1) {
+              return binary->left;
+            }
+            // small loads do not need to be masted, the load itself masks
+            if (auto* load = binary->left->dynCast<Load>()) {
+              if ((load->bytes == 1 && mask == 0xff) ||
+                  (load->bytes == 2 && mask == 0xffff)) {
+                load->signed_ = false;
+                return load;
+              }
+            }
+          }
+        }
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
@@ -293,6 +311,21 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
     } else if (auto* br = curr->dynCast<Break>()) {
       if (br->condition) {
         br->condition = optimizeBoolean(br->condition);
+      }
+    } else if (auto* store = curr->dynCast<Store>()) {
+      // stores of fewer bits truncates anyhow
+      if (auto* value = store->value->dynCast<Binary>()) {
+        if (value->op == AndInt32) {
+          if (auto* right = value->right->dynCast<Const>()) {
+            if (right->type == i32) {
+              auto mask = right->value.geti32();
+              if ((store->bytes == 1 && mask == 0xff) ||
+                  (store->bytes == 2 && mask == 0xffff)) {
+                store->value = value->left;
+              }
+            }
+          }
+        }
       }
     }
     return nullptr;

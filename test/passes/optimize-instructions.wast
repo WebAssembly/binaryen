@@ -252,4 +252,23 @@
       )
     )
   )
+  (func $load-store
+    (drop (i32.and (i32.load8_s (i32.const 0)) (i32.const 255)))
+    (drop (i32.and (i32.load8_u (i32.const 1)) (i32.const 255)))
+    (drop (i32.and (i32.load8_s (i32.const 2)) (i32.const 254)))
+    (drop (i32.and (i32.load8_u (i32.const 3)) (i32.const 1)))
+    (drop (i32.and (i32.load16_s (i32.const 4)) (i32.const 65535)))
+    (drop (i32.and (i32.load16_u (i32.const 5)) (i32.const 65535)))
+    (drop (i32.and (i32.load16_s (i32.const 6)) (i32.const 65534)))
+    (drop (i32.and (i32.load16_u (i32.const 7)) (i32.const 1)))
+    ;;
+    (i32.store8 (i32.const 8) (i32.and (i32.const -1) (i32.const 255)))
+    (i32.store8 (i32.const 9) (i32.and (i32.const -2) (i32.const 254)))
+    (i32.store16 (i32.const 10) (i32.and (i32.const -3) (i32.const 65535)))
+    (i32.store16 (i32.const 11) (i32.and (i32.const -4) (i32.const 65534)))
+  )
+  (func $and-neg1
+    (drop (i32.and (i32.const 100) (i32.const -1)))
+    (drop (i32.and (i32.const 100) (i32.const  1)))
+  )
 )

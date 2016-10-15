@@ -254,12 +254,9 @@
     )
   )
   (func $big_uint_div_u (result i32)
-    (i32.and
-      (call $i32u-div
-        (i32.const -1)
-        (i32.const 2)
-      )
+    (call $i32u-div
       (i32.const -1)
+      (i32.const 2)
     )
   )
   (func $fr (param $0 f32)
