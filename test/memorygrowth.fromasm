@@ -9684,56 +9684,6 @@
     )
     (get_local $3)
   )
-  (func $Ka (param $0 i32)
-    (i32.store8
-      (get_global $t)
-      (i32.load8_s
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=1
-      (get_global $t)
-      (i32.load8_s offset=1
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=2
-      (get_global $t)
-      (i32.load8_s offset=2
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=3
-      (get_global $t)
-      (i32.load8_s offset=3
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=4
-      (get_global $t)
-      (i32.load8_s offset=4
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=5
-      (get_global $t)
-      (i32.load8_s offset=5
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=6
-      (get_global $t)
-      (i32.load8_s offset=6
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=7
-      (get_global $t)
-      (i32.load8_s offset=7
-        (get_local $0)
-      )
-    )
-  )
   (func $Oa (param $0 i32) (result i32)
     (local $1 i32)
     (local $2 i32)
@@ -9784,32 +9734,6 @@
         (i32.const -1)
       )
       (get_local $0)
-    )
-  )
-  (func $Ja (param $0 i32)
-    (i32.store8
-      (get_global $t)
-      (i32.load8_s
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=1
-      (get_global $t)
-      (i32.load8_s offset=1
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=2
-      (get_global $t)
-      (i32.load8_s offset=2
-        (get_local $0)
-      )
-    )
-    (i32.store8 offset=3
-      (get_global $t)
-      (i32.load8_s offset=3
-        (get_local $0)
-      )
     )
   )
   (func $Qa (result i32)
