@@ -6,6 +6,7 @@
   (type $3 (func (param i32 f32)))
   (type $4 (func (param i32)))
   (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
+  (import $get "env" "get" (result i32))
   (func $nothing-to-do (type $2)
     (local $x i32)
     (nop)
@@ -961,6 +962,40 @@
       (i32.store
         (get_local $x)
         (tee_local $x (i32.const 0))
+      )
+    )
+  )
+  (func $loop-backedge
+    (local $0 i32)
+    (local $1 i32)
+    (set_local $0
+      (i32.const 2)
+    )
+    (block $out
+      (loop $while-in7
+        (set_local $1
+          (i32.add
+            (get_local $0)
+            (i32.const 1)
+          )
+        )
+        (br_if $out
+          (i32.eqz
+            (i32.rem_s
+              (i32.const 1000)
+              (get_local $0)
+            )
+          )
+        )
+        (br_if $out
+          (i32.eqz
+            (get_local $1)
+          )
+        )
+        (set_local $0
+          (get_local $1)
+        )
+        (br $while-in7)
       )
     )
   )
