@@ -27,18 +27,18 @@ namespace wasm {
 
 class Timer {
   std::string name;
-  std::chrono::high_resolution_clock::time_point startTime;
+  std::chrono::steady_clock::time_point startTime;
   double total = 0;
 
 public:
   Timer(std::string name) : name(name) {}
 
   void start() {
-    startTime = std::chrono::high_resolution_clock::now();
+    startTime = std::chrono::steady_clock::now();
   }
 
   void stop() {
-    total += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - startTime).count();
+    total += std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
   }
 
   double getTotal() {
