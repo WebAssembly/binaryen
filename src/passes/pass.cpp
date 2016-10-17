@@ -124,7 +124,7 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 }
 
 void PassRunner::run() {
-  if (debug) {
+  if (options.debug) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
@@ -159,7 +159,7 @@ void PassRunner::run() {
       totalTime += diff;
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
-      if (!WasmValidator().validate(*wasm, false, validateGlobally)) {
+      if (!WasmValidator().validate(*wasm, false, options.validateGlobally)) {
         if (passDebug) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
@@ -171,7 +171,7 @@ void PassRunner::run() {
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
     // validate
     std::cerr << "[PassRunner] (final validation)\n";
-    if (!WasmValidator().validate(*wasm, false, validateGlobally)) {
+    if (!WasmValidator().validate(*wasm, false, options.validateGlobally)) {
       std::cerr << "final module does not validate\n";
       abort();
     }
@@ -222,7 +222,7 @@ void PassRunner::run() {
 }
 
 void PassRunner::runFunction(Function* func) {
-  if (debug) {
+  if (options.debug) {
     std::cerr << "[PassRunner] running passes on function " << func->name << std::endl;
   }
   for (auto* pass : passes) {
