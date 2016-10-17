@@ -185,6 +185,8 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   void doWalkFunction(Function* func);
 
+  void increaseBackEdgePriorities();
+
   void flowLiveness();
 
   void calculateInterferences();
@@ -251,6 +253,8 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
   liveBlocks = findLiveBlocks();
   unlinkDeadBlocks(liveBlocks);
+  // increase the cost of costly backedges
+  increaseBackEdgePriorities();
 #ifdef CFG_DEBUG
   dumpCFG("the cfg");
 #endif
@@ -271,6 +275,27 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   pickIndices(indices);
   // apply indices
   applyIndices(indices, func->body);
+}
+
+// A copy on a backedge can be especially costly, forcing us to branch just to do that copy.
+// Add weight to such copies, so we prioritize getting rid of them.
+void CoalesceLocals::increaseBackEdgePriorities() {
+  for (auto* loopTop : loopTops) {
+    // ignore the first edge, it is the initial entry, we just want backedges
+    auto& in = loopTop->in;
+    for (Index i = 1; i < in.size(); i++) {
+      auto* arrivingBlock = in[i];
+      for (auto& action : arrivingBlock->contents.actions) {
+        if (action.what == Action::Set) {
+          auto* set = (*action.origin)->cast<SetLocal>();
+          if (auto* get = set->value->dynCast<GetLocal>()) {
+            // this is indeed a copy, double the cost
+            addCopy(set->index, get->index);
+          }
+        }
+      }
+    }
+  }
 }
 
 void CoalesceLocals::flowLiveness() {
