@@ -27,6 +27,7 @@
 #include <sstream>
 
 #include "support/bits.h"
+#include "pass.h"
 #include "wasm.h"
 
 #ifdef WASM_INTERPRETER_DEBUG
@@ -76,28 +77,16 @@ typedef std::vector<Literal> LiteralList;
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
 class Indenter {
-static int indentLevel;
+  static int indentLevel;
 
-const char* _str;
+  const char* entryName;
 
 public:
-  Indenter(const char* str) : _str(str) {
-    ++indentLevel;
-  }
-  ~Indenter() {
-    print();
-    std::cout << "exit " << _str << '\n';
-    --indentLevel;
-  }
+  Indenter(const char* entry);
+  ~Indenter();
 
-  static void print() {
-    std::cout << indentLevel << ':';
-    for (int i = 0; i <= indentLevel; ++i) {
-      std::cout << ' ';
-    }
-  }
+  static void print();
 };
-int Indenter::indentLevel = 0;
 
 #define NOTE_ENTER(x) Indenter _int_blah(x); { \
     Indenter::print(); \
