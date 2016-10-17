@@ -7,6 +7,7 @@
   (type $4 (func (param i32)))
   (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
   (import $get "env" "get" (result i32))
+  (import $set "env" "set" (param i32))
   (func $nothing-to-do (type $2)
     (local $x i32)
     (nop)
@@ -966,35 +967,39 @@
     )
   )
   (func $loop-backedge
-    (local $0 i32)
-    (local $1 i32)
+    (local $0 i32) ;; loop phi
+    (local $1 i32) ;; value for next loop iteration
+    (local $2 i32) ;; a local that might be merged with with $1, perhaps making us prefer it to removing a backedge copy
     (set_local $0
       (i32.const 2)
     )
     (block $out
       (loop $while-in7
+        (set_local $2 (i32.const 0)) ;; 2 interferes with 0
+        (call $set (get_local $2))
         (set_local $1
           (i32.add
             (get_local $0)
             (i32.const 1)
           )
         )
-        (br_if $out
-          (i32.eqz
-            (i32.rem_s
-              (i32.const 1000)
-              (get_local $0)
-            )
+        (if (call $get)
+          (set_local $2 (get_local $1)) ;; copy for 1/2
+          (if (call $get)
+            (set_local $2 (get_local $1)) ;; another
+            (set_local $2 (get_local $1)) ;; another, total 3
           )
         )
-        (br_if $out
-          (i32.eqz
-            (get_local $1)
+        (br_if $out (get_local $2))
+        (if (call $get)
+          (block
+            (set_local $1 (i32.const 200))
+            (set_local $0 (get_local $1)) ;; one copy for 0/1, on a backedge, so expensive and best avoided
+            (br $while-in7)
           )
         )
-        (set_local $0
-          (get_local $1)
-        )
+        (set_local $1 (i32.const 100))
+        (set_local $0 (get_local $1)) ;; another, total 2, with double-weighting 4 (> 3)
         (br $while-in7)
       )
     )

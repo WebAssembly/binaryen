@@ -285,6 +285,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
     auto& in = loopTop->in;
     for (Index i = 1; i < in.size(); i++) {
       auto* arrivingBlock = in[i];
+      if (arrivingBlock->out.size() > 1) continue; // we just want unconditional branches to the loop top, true phi fragments
       for (auto& action : arrivingBlock->contents.actions) {
         if (action.what == Action::Set) {
           auto* set = (*action.origin)->cast<SetLocal>();
