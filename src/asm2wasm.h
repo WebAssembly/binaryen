@@ -230,6 +230,7 @@ class Asm2WasmBuilder {
   bool memoryGrowth;
   bool debug;
   bool imprecise;
+  PassOptions passOptions;
   bool optimize;
   bool wasmOnly;
 
@@ -330,14 +331,15 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, bool optimize, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, PassOptions passOptions, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
        memoryGrowth(memoryGrowth),
        debug(debug),
        imprecise(imprecise),
-       optimize(optimize),
+       passOptions(passOptions),
+       optimize(passOptions.optimizeLevel > 0),
        wasmOnly(wasmOnly) {}
 
  void processAsm(Ref ast);
@@ -653,7 +655,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, [&](PassRunner& passRunner) {
-      passRunner.options.setDefaultOptimizationOptions();
+      passRunner.options = passOptions;
       if (debug) {
         passRunner.setDebug(true);
         passRunner.setValidateGlobally(false);

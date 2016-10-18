@@ -47,24 +47,7 @@ int main(int argc, const char* argv[]) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      .add("", "-O", "execute default optimization passes",
-           Options::Arguments::Zero,
-           [&passes, &passOptions](Options*, const std::string&) {
-             passOptions.setDefaultOptimizationOptions();
-             passes.push_back("O");
-           })
-      .add("", "-Os", "execute default optimization passes, focusing on code size",
-           Options::Arguments::Zero,
-           [&passes, &passOptions](Options*, const std::string&) {
-             passOptions.setDefaultOptimizationOptions();
-             passOptions.shrinkLevel = 1;
-             passes.push_back("O");
-           })
-      .add("--shrink-level", "-s", "How much to focus on shrinking code size",
-           Options::Arguments::One,
-           [&passOptions](Options* o, const std::string& argument) {
-             passOptions.shrinkLevel = atoi(argument.c_str());
-           })
+      #include "optimization-options.h"
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;

@@ -30,7 +30,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  bool opts = true;
+  PassOptions passOptions;
   bool imprecise = false;
   bool wasmOnly = false;
 
@@ -54,10 +54,9 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
            })
+      #include "optimization-options.h"
       .add("--no-opts", "-n", "Disable optimization passes", Options::Arguments::Zero,
-           [&opts](Options *o, const std::string &) {
-             opts = false;
-           })
+           [](Options *o, const std::string &) {})
       .add("--imprecise", "-i", "Imprecise optimizations", Options::Arguments::Zero,
            [&imprecise](Options *o, const std::string &) {
              imprecise = true;
@@ -93,7 +92,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, opts, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, passOptions, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided
