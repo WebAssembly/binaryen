@@ -31,6 +31,7 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   PassOptions passOptions;
+  bool runOptimizationPasses = false;
   bool imprecise = false;
   bool wasmOnly = false;
 
@@ -92,7 +93,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, passOptions, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, runOptimizationPasses, passOptions, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided

@@ -37,6 +37,7 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
+  bool runOptimizationPasses = false;
   PassOptions passOptions;
 
   Options options("wasm-opt", "Optimize .wast files");
@@ -59,6 +60,10 @@ int main(int argc, const char* argv[]) {
         [&passes, p](Options*, const std::string&) { passes.push_back(p); });
   }
   options.parse(argc, argv);
+
+  if (runOptimizationPasses) {
+    passes.push_back("O");
+  }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
