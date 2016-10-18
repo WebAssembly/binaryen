@@ -60,6 +60,11 @@ int main(int argc, const char* argv[]) {
              passOptions.shrinkLevel = 1;
              passes.push_back("O");
            })
+      .add("--shrink-level", "-s", "How much to focus on shrinking code size",
+           Options::Arguments::One,
+           [&passOptions](Options* o, const std::string& argument) {
+             passOptions.shrinkLevel = atoi(argument.c_str());
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;

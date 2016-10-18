@@ -64,7 +64,7 @@ struct PassOptions {
 
   void setDefaultOptimizationOptions() {
     optimizeLevel = 2;
-    shrinkLevel = 0;
+    shrinkLevel = 1;
     ignoreImplicitTraps = true;
   }
 };

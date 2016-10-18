@@ -453,7 +453,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     };
     FinalOptimizer finalOptimizer;
     finalOptimizer.setModule(getModule());
-    finalOptimizer.selectify = getPassRunner()->options.shrinkLevel > 1;
+    finalOptimizer.selectify = getPassRunner()->options.shrinkLevel > 0;
     finalOptimizer.walkFunction(func);
   }
 };
