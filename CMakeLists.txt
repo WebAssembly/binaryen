@@ -122,6 +122,7 @@ TARGET_LINK_LIBRARIES(binaryen asmjs ${all_passes} support)
 
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
+  src/wasm-interpreter.cpp
   src/wasm.cpp
 )
 ADD_EXECUTABLE(wasm-shell
