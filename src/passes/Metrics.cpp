@@ -57,6 +57,23 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     // add functions
     keys.push_back("[funcs]");
     counts["[funcs]"] = module->functions.size();
+    // add memory and table
+    if (module->memory.exists) {
+      Index size = 0;
+      for (auto& segment: module->memory.segments) {
+        size += segment.data.size();
+      }
+      keys.push_back("[memory-data]");
+      counts["[memory-data]"] = size;
+    }
+    if (module->table.exists) {
+      Index size = 0;
+      for (auto& segment: module->table.segments) {
+        size += segment.data.size();
+      }
+      keys.push_back("[table-data]");
+      counts["[table-data]"] = size;
+    }
     // sort
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
       return strcmp(b, a) > 0;
