@@ -173,14 +173,14 @@
   )
   (func $b14 (type $2) (result i32)
     (block $topmost i32
-      (select
+      (if i32
+        (i32.const 1)
         (block $block1 i32
           (i32.const 12)
         )
         (block $block3 i32
           (i32.const 27)
         )
-        (i32.const 1)
       )
     )
   )

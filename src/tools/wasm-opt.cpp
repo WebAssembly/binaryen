@@ -37,6 +37,7 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
+  PassOptions passOptions;
 
   Options options("wasm-opt", "Optimize .wast files");
   options
@@ -48,8 +49,21 @@ int main(int argc, const char* argv[]) {
            })
       .add("", "-O", "execute default optimization passes",
            Options::Arguments::Zero,
-           [&passes](Options*, const std::string&) {
+           [&passes, &passOptions](Options*, const std::string&) {
+             passOptions.setDefaultOptimizationOptions();
              passes.push_back("O");
+           })
+      .add("", "-Os", "execute default optimization passes, focusing on code size",
+           Options::Arguments::Zero,
+           [&passes, &passOptions](Options*, const std::string&) {
+             passOptions.setDefaultOptimizationOptions();
+             passOptions.shrinkLevel = 1;
+             passes.push_back("O");
+           })
+      .add("--shrink-level", "-s", "How much to focus on shrinking code size",
+           Options::Arguments::One,
+           [&passOptions](Options* o, const std::string& argument) {
+             passOptions.shrinkLevel = atoi(argument.c_str());
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
@@ -84,7 +98,7 @@ int main(int argc, const char* argv[]) {
 
   if (passes.size() > 0) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner(&wasm);
+    PassRunner passRunner(&wasm, passOptions);
     if (options.debug) passRunner.setDebug(true);
     for (auto& passName : passes) {
       if (passName == "O") {

@@ -423,8 +423,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           }
         }
       }
+
+      bool selectify;
+
       void visitIf(If* curr) {
         // we may have simplified ifs enough to turn them into selects
+        // this is helpful for code size, but can be a tradeoff with performance as we run both code paths
+        if (!selectify) return;
         if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
           // TODO: estimate cost
@@ -448,6 +453,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     };
     FinalOptimizer finalOptimizer;
     finalOptimizer.setModule(getModule());
+    finalOptimizer.selectify = getPassRunner()->options.shrinkLevel > 0;
     finalOptimizer.walkFunction(func);
   }
 };
