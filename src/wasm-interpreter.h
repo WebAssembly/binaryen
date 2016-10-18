@@ -27,8 +27,8 @@
 #include <sstream>
 
 #include "support/bits.h"
-#include "pass.h"
 #include "wasm.h"
+#include "wasm-traversal.h"
 
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
