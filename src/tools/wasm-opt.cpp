@@ -62,7 +62,9 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   if (runOptimizationPasses) {
-    passes.push_back("O");
+    passes.resize(passes.size() + 1);
+    std::move_backward(passes.begin(), passes.begin() + passes.size() - 1, passes.end());
+    passes[0] = "O";
   }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));

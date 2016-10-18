@@ -73,7 +73,7 @@
              passOptions.ignoreImplicitTraps = true;
              runOptimizationPasses = true;
            })
-      .add("--optimize-level", "-op", "How much to focus on optimizing code",
+      .add("--optimize-level", "-ol", "How much to focus on optimizing code",
            Options::Arguments::One,
            [&passOptions](Options* o, const std::string& argument) {
              passOptions.optimizeLevel = atoi(argument.c_str());
