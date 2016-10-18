@@ -32,9 +32,11 @@ parser.add_argument('--no-abort-on-first-failure', dest='abort_on_first_failure'
 parser.add_argument('--run-gcc-tests', dest='run_gcc_tests', action='store_true', default=True, help='Chooses whether to run the tests that require building with native GCC. Default: true.')
 parser.add_argument('--no-run-gcc-tests', dest='run_gcc_tests', action='store_false', help='If set, disables the native GCC tests.')
 
-parser.add_argument('--interpreter', dest='interpreter', default='', help='Specifies the wasm interpreter exectuable to run tests on.')
+parser.add_argument('--interpreter', dest='interpreter', default='', help='Specifies the wasm interpreter executable to run tests on.')
 parser.add_argument('--binaryen-bin', dest='binaryen_bin', default='', help='Specifies a path to where the built Binaryen executables reside at. Default: bin/ of current directory (i.e. assume an in-tree build). If not specified, the environment variable BINARYEN_ROOT= can also be used to adjust this.')
 parser.add_argument('--binaryen-root', dest='binaryen_root', default='', help='Specifies a path to the root of the Binaryen repository tree. Default: the directory where this file check.py resides.')
+parser.add_argument('--valgrind', dest='valgrind', default='', help='Specifies a path to Valgrind tool, which will be used to validate execution if specified. (Pass --valgrind=valgrind to search in PATH)')
+parser.add_argument('--valgrind-full-leak-check', dest='valgrind_full_leak_check', action='store_true', default=False, help='If specified, all unfreed (but still referenced) pointers at the end of execution are considered memory leaks. Default: disabled.')
 
 parser.add_argument('positional_args', metavar='tests', nargs=argparse.REMAINDER, help='Names specific tests to run.')
 options = parser.parse_args()
@@ -96,12 +98,29 @@ NODEJS = which('nodejs') or which('node')
 MOZJS = which('mozjs')
 EMCC = which('emcc')
 
-WASM_OPT = os.path.join(options.binaryen_bin, 'wasm-opt')
-WASM_AS = os.path.join(options.binaryen_bin, 'wasm-as')
-WASM_DIS = os.path.join(options.binaryen_bin, 'wasm-dis')
-ASM2WASM = os.path.join(options.binaryen_bin, 'asm2wasm')
-WASM_SHELL = os.path.join(options.binaryen_bin, 'wasm-shell')
-S2WASM = os.path.join(options.binaryen_bin, 's2wasm')
+WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
+WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
+WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
+ASM2WASM = [os.path.join(options.binaryen_bin, 'asm2wasm')]
+WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
+S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
+
+S2WASM_EXE = S2WASM[0]
+WASM_SHELL_EXE = WASM_SHELL[0]
+
+def wrap_with_valgrind(cmd):
+  valgrind = [options.valgrind, '--quiet', '--error-exitcode=97'] # Exit code 97 is arbitrary, used to easily detect when an error occurs that is detected by Valgrind.
+  if options.valgrind_full_leak_check:
+    valgrind += ['--leak-check=full', '--show-leak-kinds=all']
+  return valgrind + cmd
+
+if options.valgrind:
+  WASM_OPT = wrap_with_valgrind(WASM_OPT)
+  WASM_AS = wrap_with_valgrind(WASM_AS)
+  WASM_DIS = wrap_with_valgrind(WASM_DIS)
+  ASM2WASM = wrap_with_valgrind(ASM2WASM)
+  WASM_SHELL = wrap_with_valgrind(WASM_SHELL)
+  S2WASM = wrap_with_valgrind(S2WASM)
 
 os.environ['BINARYEN'] = os.getcwd()
 
@@ -243,20 +262,20 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'], bin
   # checks we can convert the wast to binary and back
 
   print '     (binary format check)'
-  cmd = [WASM_AS, wast, '-o', 'a.wasm'] + wasm_as_args
+  cmd = WASM_AS + [wast, '-o', 'a.wasm'] + wasm_as_args
   print '      ', ' '.join(cmd)
   if os.path.exists('a.wasm'): os.unlink('a.wasm')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
   assert os.path.exists('a.wasm')
 
-  cmd = [WASM_DIS, 'a.wasm', '-o', 'ab.wast']
+  cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
   print '      ', ' '.join(cmd)
   if os.path.exists('ab.wast'): os.unlink('ab.wast')
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
   assert os.path.exists('ab.wast')
 
   # make sure it is a valid wast
-  cmd = [WASM_OPT, 'ab.wast']
+  cmd = WASM_OPT + ['ab.wast']
   print '      ', ' '.join(cmd)
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
@@ -272,11 +291,11 @@ def minify_check(wast, verify_final_result=True):
   # checks we can parse minified output
 
   print '     (minify check)'
-  cmd = [WASM_OPT, wast, '--print-minified']
+  cmd = WASM_OPT + [wast, '--print-minified']
   print '      ', ' '.join(cmd)
-  subprocess.check_call([WASM_OPT, wast, '--print-minified'], stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call(WASM_OPT + [wast, '--print-minified'], stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wasm')
-  subprocess.check_call([WASM_OPT, 'a.wasm', '--print-minified'], stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
+  subprocess.check_call(WASM_OPT + ['a.wasm', '--print-minified'], stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('b.wasm')
   if verify_final_result:
     expected = open('a.wasm').read()
@@ -307,7 +326,7 @@ print '\n[ checking wasm-opt -o notation... ]\n'
 
 wast = os.path.join(options.binaryen_test, 'hello_world.wast')
 delete_from_orbit('a.wast')
-cmd = [WASM_OPT, wast, '-o', 'a.wast']
+cmd = WASM_OPT + [wast, '-o', 'a.wast']
 run_command(cmd)
 fail_if_not_identical(open('a.wast').read(), open(wast).read())
 
@@ -323,7 +342,7 @@ for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
     for module, asserts in split_wast(t):
       assert len(asserts) == 0
       with open('split.wast', 'w') as o: o.write(module)
-      cmd = [WASM_OPT] + opts + ['split.wast', '--print']
+      cmd = WASM_OPT + opts + ['split.wast', '--print']
       actual += run_command(cmd)
       # also check debug mode output is valid
       debugged = run_command(cmd + ['--debug'], stderr=subprocess.PIPE)
@@ -336,7 +355,7 @@ for asm in tests:
   if asm.endswith('.asm.js'):
     for precise in [1, 0]:
       for opts in [1, 0]:
-        cmd = [ASM2WASM, os.path.join(options.binaryen_test, asm)]
+        cmd = ASM2WASM + [os.path.join(options.binaryen_test, asm)]
         wasm = asm.replace('.asm.js', '.fromasm')
         if not precise:
           cmd += ['--imprecise']
@@ -366,7 +385,7 @@ for asm in tests:
         # verify in wasm
         if options.interpreter:
           # remove imports, spec interpreter doesn't know what to do with them
-          subprocess.check_call([WASM_OPT, '--remove-imports', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
+          subprocess.check_call(WASM_OPT + ['--remove-imports', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
           proc = subprocess.Popen([options.interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
           out, err = proc.communicate()
           if proc.returncode != 0:
@@ -392,11 +411,11 @@ for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'print'))):
   if t.endswith('.wast'):
     print '..', t
     wasm = os.path.basename(t).replace('.wast', '')
-    cmd = [WASM_OPT, os.path.join(options.binaryen_test, 'print', t), '--print']
+    cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual, open(os.path.join(options.binaryen_test, 'print', wasm + '.txt')).read())
-    cmd = [WASM_OPT, os.path.join(options.binaryen_test, 'print', t), '--print-minified']
+    cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     fail_if_not_identical(actual.strip(), open(os.path.join(options.binaryen_test, 'print', wasm + '.minified.txt')).read().strip())
@@ -407,7 +426,7 @@ for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join(options.binaryen_test, t)
-    cmd = [WASM_OPT, t, '--print']
+    cmd = WASM_OPT + [t, '--print']
     actual = run_command(cmd)
     actual = actual.replace('printing before:\n', '')
 
@@ -438,7 +457,7 @@ for t in spec_tests:
       continue
 
     def run_spec_test(wast):
-      cmd = [WASM_SHELL, wast]
+      cmd = WASM_SHELL + [wast]
       # we must skip the stack machine portions of spec tests or apply other extra args
       extra = {
       }
@@ -532,7 +551,7 @@ for dot_s_dir in ['dot_s', 'llvm_autogenerated']:
     wasm = s.replace('.s', '.wast')
     full = os.path.join(options.binaryen_test, dot_s_dir, s)
     stack_alloc = ['--allocate-stack=1024'] if dot_s_dir == 'llvm_autogenerated' else []
-    cmd = [S2WASM, full, '--emscripten-glue'] + stack_alloc
+    cmd = S2WASM + [full, '--emscripten-glue'] + stack_alloc
     if s.startswith('start_'):
       cmd.append('--start')
     actual = run_command(cmd)
@@ -547,18 +566,18 @@ for dot_s_dir in ['dot_s', 'llvm_autogenerated']:
       fail(actual, expected)
 
     # verify with options
-    cmd = [S2WASM, full, '--global-base=1024'] + stack_alloc
+    cmd = S2WASM + [full, '--global-base=1024'] + stack_alloc
     run_command(cmd)
 
     # run wasm-shell on the .wast to verify that it parses
-    cmd = [WASM_SHELL, expected_file]
+    cmd = WASM_SHELL + [expected_file]
     run_command(cmd)
 
 print '\n[ running linker tests... ]\n'
 # The {main,foo,bar,baz}.s files were created by running clang over the respective
 # c files. The foobar.bar archive was created by running:
 # llvm-ar -format=gnu rc foobar.a quux.s foo.s bar.s baz.s
-cmd = [S2WASM, os.path.join(options.binaryen_test, 'linker', 'main.s'), '-l', os.path.join(options.binaryen_test, 'linker', 'archive', 'foobar.a')]
+cmd = S2WASM + [os.path.join(options.binaryen_test, 'linker', 'main.s'), '-l', os.path.join(options.binaryen_test, 'linker', 'archive', 'foobar.a')]
 output = run_command(cmd)
 # foo should come from main.s and return 42
 fail_if_not_contained(output, '(func $foo')
@@ -572,28 +591,28 @@ if 'baz' in output:
   fail_with_error('output should not contain "baz": ' + output)
 
 # Test an archive using a string table
-cmd = [S2WASM, os.path.join(options.binaryen_test, 'linker', 'main.s'), '-l', os.path.join(options.binaryen_test, 'linker', 'archive', 'barlong.a')]
+cmd = S2WASM + [os.path.join(options.binaryen_test, 'linker', 'main.s'), '-l', os.path.join(options.binaryen_test, 'linker', 'archive', 'barlong.a')]
 output = run_command(cmd)
 # bar should be linked from the archive
 fail_if_not_contained(output, '(func $bar')
 
 # Test exporting memory growth function
-cmd = [S2WASM, os.path.join(options.binaryen_test, 'linker', 'main.s'), '--emscripten-glue', '--allow-memory-growth']
+cmd = S2WASM + [os.path.join(options.binaryen_test, 'linker', 'main.s'), '--emscripten-glue', '--allow-memory-growth']
 output = run_command(cmd)
 fail_if_not_contained(output, '(export "__growWasmMemory" (func $__growWasmMemory))')
 fail_if_not_contained(output, '(func $__growWasmMemory (param $newSize i32)')
 
 print '\n[ running validation tests... ]\n'
 # Ensure the tests validate by default
-cmd = [WASM_AS, os.path.join(options.binaryen_test, 'validator', 'invalid_export.wast')]
+cmd = WASM_AS + [os.path.join(options.binaryen_test, 'validator', 'invalid_export.wast')]
 run_command(cmd)
-cmd = [WASM_AS, os.path.join(options.binaryen_test, 'validator', 'invalid_import.wast')]
+cmd = WASM_AS + [os.path.join(options.binaryen_test, 'validator', 'invalid_import.wast')]
 run_command(cmd)
-cmd = [WASM_AS, '--validate=web', os.path.join(options.binaryen_test, 'validator', 'invalid_export.wast')]
+cmd = WASM_AS + ['--validate=web', os.path.join(options.binaryen_test, 'validator', 'invalid_export.wast')]
 run_command(cmd, expected_status=1)
-cmd = [WASM_AS, '--validate=web', os.path.join(options.binaryen_test, 'validator', 'invalid_import.wast')]
+cmd = WASM_AS + ['--validate=web', os.path.join(options.binaryen_test, 'validator', 'invalid_import.wast')]
 run_command(cmd, expected_status=1)
-cmd = [WASM_AS, '--validate=none', os.path.join(options.binaryen_test, 'validator', 'invalid_return.wast')]
+cmd = WASM_AS + ['--validate=none', os.path.join(options.binaryen_test, 'validator', 'invalid_return.wast')]
 run_command(cmd)
 
 if options.torture and options.test_waterfall:
@@ -608,7 +627,7 @@ if options.torture and options.test_waterfall:
     shutil.rmtree(s2wasm_torture_out)
   os.mkdir(s2wasm_torture_out)
   unexpected_result_count += link_assembly_files.run(
-      linker=os.path.abspath(S2WASM),
+      linker=os.path.abspath(S2WASM_EXE),
       files=os.path.abspath(os.path.join(options.binaryen_test, 'torture-s', '*.s')),
       fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_gcc_test_failures.txt')),
       out=s2wasm_torture_out)
@@ -616,7 +635,7 @@ if options.torture and options.test_waterfall:
 
   import test.waterfall.src.execute_files as execute_files
   unexpected_result_count += execute_files.run(
-      runner=os.path.abspath(WASM_SHELL),
+      runner=os.path.abspath(WASM_SHELL_EXE),
       files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
       fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_binaryen_shell_test_failures.txt')),
       out='',
