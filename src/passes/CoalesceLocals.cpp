@@ -178,7 +178,11 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
     // if this is a copy, note it
     auto* get = curr->value->dynCast<GetLocal>();
-    if (get) self->addCopy(curr->index, get->index);
+    if (get) {
+      // add 2 units, so that backedge prioritization can decide ties, but not much more
+      self->addCopy(curr->index, get->index);
+      self->addCopy(curr->index, get->index);
+    }
   }
 
   // main entry point
@@ -290,7 +294,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
         if (action.what == Action::Set) {
           auto* set = (*action.origin)->cast<SetLocal>();
           if (auto* get = set->value->dynCast<GetLocal>()) {
-            // this is indeed a copy, double the cost
+            // this is indeed a copy, add to the cost (default cost is 2, so this adds 50%, and can mostly break ties)
             addCopy(set->index, get->index);
           }
         }
