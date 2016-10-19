@@ -970,28 +970,9 @@
           (set_local $1
             (get_local $0)
           )
-          (if
-            (call $get)
-            (set_local $1
-              (get_local $0)
-            )
-            (set_local $1
-              (get_local $0)
-            )
-          )
         )
         (br_if $out
           (get_local $1)
-        )
-        (if
-          (call $get)
-          (block $block
-            (set_local $0
-              (i32.const 200)
-            )
-            (nop)
-            (br $while-in7)
-          )
         )
         (set_local $0
           (i32.const 100)

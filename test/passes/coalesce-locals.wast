@@ -985,21 +985,10 @@
         )
         (if (call $get)
           (set_local $2 (get_local $1)) ;; copy for 1/2
-          (if (call $get)
-            (set_local $2 (get_local $1)) ;; another
-            (set_local $2 (get_local $1)) ;; another, total 3
-          )
         )
         (br_if $out (get_local $2))
-        (if (call $get)
-          (block
-            (set_local $1 (i32.const 200))
-            (set_local $0 (get_local $1)) ;; one copy for 0/1, on a backedge, so expensive and best avoided
-            (br $while-in7)
-          )
-        )
         (set_local $1 (i32.const 100))
-        (set_local $0 (get_local $1)) ;; another, total 2, with double-weighting 4 (> 3)
+        (set_local $0 (get_local $1)) ;; copy for 1/0, with extra weight should win the tie
         (br $while-in7)
       )
     )
