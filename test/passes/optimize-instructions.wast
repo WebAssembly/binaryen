@@ -269,7 +269,7 @@
     ;;
     (i32.store8 (i32.const 11) (i32.wrap/i64 (i64.const 1)))
     (i32.store16 (i32.const 11) (i32.wrap/i64 (i64.const 2)))
-    (i32.store32 (i32.const 11) (i32.wrap/i64 (i64.const 3)))
+    (i32.store (i32.const 11) (i32.wrap/i64 (i64.const 3)))
   )
   (func $and-neg1
     (drop (i32.and (i32.const 100) (i32.const -1)))
