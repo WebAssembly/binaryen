@@ -266,6 +266,10 @@
     (i32.store8 (i32.const 9) (i32.and (i32.const -2) (i32.const 254)))
     (i32.store16 (i32.const 10) (i32.and (i32.const -3) (i32.const 65535)))
     (i32.store16 (i32.const 11) (i32.and (i32.const -4) (i32.const 65534)))
+    ;;
+    (i32.store8 (i32.const 11) (i32.wrap/i64 (i64.const 1)))
+    (i32.store16 (i32.const 11) (i32.wrap/i64 (i64.const 2)))
+    (i32.store32 (i32.const 11) (i32.wrap/i64 (i64.const 3)))
   )
   (func $and-neg1
     (drop (i32.and (i32.const 100) (i32.const -1)))

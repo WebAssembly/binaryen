@@ -314,17 +314,23 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       }
     } else if (auto* store = curr->dynCast<Store>()) {
       // stores of fewer bits truncates anyhow
-      if (auto* value = store->value->dynCast<Binary>()) {
-        if (value->op == AndInt32) {
-          if (auto* right = value->right->dynCast<Const>()) {
+      if (auto* binary = store->value->dynCast<Binary>()) {
+        if (binary->op == AndInt32) {
+          if (auto* right = binary->right->dynCast<Const>()) {
             if (right->type == i32) {
               auto mask = right->value.geti32();
               if ((store->bytes == 1 && mask == 0xff) ||
                   (store->bytes == 2 && mask == 0xffff)) {
-                store->value = value->left;
+                store->value = binary->left;
               }
             }
           }
+        }
+      } else if (auto* unary = store->value->dynCast<Unary>()) {
+        if (unary->op == WrapInt64) {
+          // instead of wrapping to 32, just store some of the bits in the i64
+          store->valueType = i64;
+          store->value = unary->value;
         }
       }
     }
