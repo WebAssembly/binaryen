@@ -22,6 +22,7 @@
 #include <pass.h>
 #include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/cost.h>
 
 namespace wasm {
 
@@ -432,19 +433,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         if (!selectify) return;
         if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
-          // TODO: estimate cost
           EffectAnalyzer condition(curr->condition);
           if (!condition.hasSideEffects()) {
             EffectAnalyzer ifTrue(curr->ifTrue);
             if (!ifTrue.hasSideEffects()) {
               EffectAnalyzer ifFalse(curr->ifFalse);
               if (!ifFalse.hasSideEffects()) {
-                auto* select = getModule()->allocator.alloc<Select>();
-                select->condition = curr->condition;
-                select->ifTrue = curr->ifTrue;
-                select->ifFalse = curr->ifFalse;
-                select->finalize();
-                replaceCurrent(select);
+                auto ifCost = CostAnalyzer(curr).cost;
+                // we could allocate a select here, but better to avoid it since it might not get used
+                auto selectCost = 2 + CostAnalyzer(curr->condition).cost + CostAnalyzer(curr->ifTrue).cost + CostAnalyzer(curr->ifFalse).cost;
+                if (selectCost <= ifCost) {
+                  auto* select = getModule()->allocator.alloc<Select>();
+                  select->condition = curr->condition;
+                  select->ifTrue = curr->ifTrue;
+                  select->ifFalse = curr->ifFalse;
+                  select->finalize();
+                  replaceCurrent(select);
+                }
               }
             }
           }
