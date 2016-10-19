@@ -417,7 +417,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     void store(Store* store_, Address address, Literal value) override {
       uint32_t addr = address;
       // support int64 stores
-      if (value.type == WasmType::i64) {
+      if (value.type == WasmType::i64 && store_->bytes == 8) {
         Store fake = *store_;
         fake.bytes = 4;
         fake.type = i32;
@@ -456,11 +456,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       // nicely aligned
       if (!isWasmTypeFloat(store_->valueType)) {
         if (store_->bytes == 1) {
-          EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, value.geti32());
+          EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, (uint32_t)value.getInteger());
         } else if (store_->bytes == 2) {
-          EM_ASM_INT({ Module['info'].parent['HEAP16'][$0 >> 1] = $1 }, addr, value.geti32());
+          EM_ASM_INT({ Module['info'].parent['HEAP16'][$0 >> 1] = $1 }, addr, (uint32_t)value.getInteger());
         } else if (store_->bytes == 4) {
-          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, addr, value.geti32());
+          EM_ASM_INT({ Module['info'].parent['HEAP32'][$0 >> 2] = $1 }, addr, (uint32_t)value.getInteger());
         } else {
           abort();
         }
