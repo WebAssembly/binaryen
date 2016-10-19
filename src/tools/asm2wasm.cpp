@@ -30,7 +30,8 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  bool opts = true;
+  PassOptions passOptions;
+  bool runOptimizationPasses = false;
   bool imprecise = false;
   bool wasmOnly = false;
 
@@ -54,9 +55,10 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
            })
-      .add("--no-opts", "-n", "Disable optimization passes", Options::Arguments::Zero,
-           [&opts](Options *o, const std::string &) {
-             opts = false;
+      #include "optimization-options.h"
+      .add("--no-opts", "-n", "Disable optimization passes (deprecated)", Options::Arguments::Zero,
+           [](Options *o, const std::string &) {
+             std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
            })
       .add("--imprecise", "-i", "Imprecise optimizations", Options::Arguments::Zero,
            [&imprecise](Options *o, const std::string &) {
@@ -93,7 +95,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, opts, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, passOptions, runOptimizationPasses, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided

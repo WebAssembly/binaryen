@@ -37,6 +37,7 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
+  bool runOptimizationPasses = false;
   PassOptions passOptions;
 
   Options options("wasm-opt", "Optimize .wast files");
@@ -47,24 +48,7 @@ int main(int argc, const char* argv[]) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      .add("", "-O", "execute default optimization passes",
-           Options::Arguments::Zero,
-           [&passes, &passOptions](Options*, const std::string&) {
-             passOptions.setDefaultOptimizationOptions();
-             passes.push_back("O");
-           })
-      .add("", "-Os", "execute default optimization passes, focusing on code size",
-           Options::Arguments::Zero,
-           [&passes, &passOptions](Options*, const std::string&) {
-             passOptions.setDefaultOptimizationOptions();
-             passOptions.shrinkLevel = 1;
-             passes.push_back("O");
-           })
-      .add("--shrink-level", "-s", "How much to focus on shrinking code size",
-           Options::Arguments::One,
-           [&passOptions](Options* o, const std::string& argument) {
-             passOptions.shrinkLevel = atoi(argument.c_str());
-           })
+      #include "optimization-options.h"
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -76,6 +60,12 @@ int main(int argc, const char* argv[]) {
         [&passes, p](Options*, const std::string&) { passes.push_back(p); });
   }
   options.parse(argc, argv);
+
+  if (runOptimizationPasses) {
+    passes.resize(passes.size() + 1);
+    std::move_backward(passes.begin(), passes.begin() + passes.size() - 1, passes.end());
+    passes[0] = "O";
+  }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 

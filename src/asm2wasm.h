@@ -230,7 +230,8 @@ class Asm2WasmBuilder {
   bool memoryGrowth;
   bool debug;
   bool imprecise;
-  bool optimize;
+  PassOptions passOptions;
+  bool runOptimizationPasses;
   bool wasmOnly;
 
 public:
@@ -330,14 +331,15 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, bool optimize, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
        memoryGrowth(memoryGrowth),
        debug(debug),
        imprecise(imprecise),
-       optimize(optimize),
+       passOptions(passOptions),
+       runOptimizationPasses(runOptimizationPasses),
        wasmOnly(wasmOnly) {}
 
  void processAsm(Ref ast);
@@ -647,13 +649,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // set up optimization
 
-  if (optimize) {
+  if (runOptimizationPasses) {
     Index numFunctions = 0;
     for (unsigned i = 1; i < body->size(); i++) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, [&](PassRunner& passRunner) {
-      passRunner.options.setDefaultOptimizationOptions();
+      passRunner.options = passOptions;
       if (debug) {
         passRunner.setDebug(true);
         passRunner.setValidateGlobally(false);
@@ -807,7 +809,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     } else if (curr[0] == DEFUN) {
       // function
       auto* func = processFunction(curr);
-      if (optimize) {
+      if (runOptimizationPasses) {
         optimizingBuilder->addFunction(func);
       } else {
         wasm.addFunction(func);
@@ -846,7 +848,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   }
 
-  if (optimize) {
+  if (runOptimizationPasses) {
     optimizingBuilder->finish();
     PassRunner passRunner(&wasm);
     if (debug) {
@@ -971,7 +973,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     // we didn't legalize i64s in fastcomp, and so must legalize the interface to the outside
     passRunner.add("legalize-js-interface");
   }
-  if (optimize) {
+  if (runOptimizationPasses) {
     // autodrop can add some garbage
     passRunner.add("vacuum");
     passRunner.add("remove-unused-brs");
