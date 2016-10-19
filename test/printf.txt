@@ -1,0 +1,6 @@
+int a = 12345
+unsigned b = 123456
+long c = 1234567
+unsigned long d = 12345678
+long long e = 1234567891011
+unsigned long long f = 123456789101112
