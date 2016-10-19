@@ -417,7 +417,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     void store(Store* store_, Address address, Literal value) override {
       uint32_t addr = address;
       // support int64 stores
-      if (value.type == WasmType::i64 && store_->bytes > 4) {
+      if (value.type == WasmType::i64 && store_->bytes == 8) {
         Store fake = *store_;
         fake.bytes = 4;
         fake.type = i32;
