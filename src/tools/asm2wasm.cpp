@@ -56,8 +56,10 @@ int main(int argc, const char *argv[]) {
              o->extra["total memory"] = argument;
            })
       #include "optimization-options.h"
-      .add("--no-opts", "-n", "Disable optimization passes", Options::Arguments::Zero,
-           [](Options *o, const std::string &) {})
+      .add("--no-opts", "-n", "Disable optimization passes (deprecated)", Options::Arguments::Zero,
+           [](Options *o, const std::string &) {
+             std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
+           })
       .add("--imprecise", "-i", "Imprecise optimizations", Options::Arguments::Zero,
            [&imprecise](Options *o, const std::string &) {
              imprecise = true;
