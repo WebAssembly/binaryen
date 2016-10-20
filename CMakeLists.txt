@@ -119,6 +119,12 @@ ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
 TARGET_LINK_LIBRARIES(binaryen ${all_passes} wasm asmjs support)
+INSTALL(TARGETS binaryen DESTINATION lib)
+
+INSTALL(FILES src/binaryen-c.h DESTINATION include)
+INSTALL(FILES bin/wasm.js DESTINATION bin)
+INSTALL(FILES bin/binaryen.js DESTINATION bin)
+INSTALL(DIRECTORY src/js DESTINATION src)
 
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
