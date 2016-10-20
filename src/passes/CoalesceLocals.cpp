@@ -178,12 +178,18 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
     // if this is a copy, note it
     auto* get = curr->value->dynCast<GetLocal>();
-    if (get) self->addCopy(curr->index, get->index);
+    if (get) {
+      // add 2 units, so that backedge prioritization can decide ties, but not much more
+      self->addCopy(curr->index, get->index);
+      self->addCopy(curr->index, get->index);
+    }
   }
 
   // main entry point
 
   void doWalkFunction(Function* func);
+
+  void increaseBackEdgePriorities();
 
   void flowLiveness();
 
@@ -251,6 +257,8 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
   liveBlocks = findLiveBlocks();
   unlinkDeadBlocks(liveBlocks);
+  // increase the cost of costly backedges
+  increaseBackEdgePriorities();
 #ifdef CFG_DEBUG
   dumpCFG("the cfg");
 #endif
@@ -271,6 +279,28 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   pickIndices(indices);
   // apply indices
   applyIndices(indices, func->body);
+}
+
+// A copy on a backedge can be especially costly, forcing us to branch just to do that copy.
+// Add weight to such copies, so we prioritize getting rid of them.
+void CoalesceLocals::increaseBackEdgePriorities() {
+  for (auto* loopTop : loopTops) {
+    // ignore the first edge, it is the initial entry, we just want backedges
+    auto& in = loopTop->in;
+    for (Index i = 1; i < in.size(); i++) {
+      auto* arrivingBlock = in[i];
+      if (arrivingBlock->out.size() > 1) continue; // we just want unconditional branches to the loop top, true phi fragments
+      for (auto& action : arrivingBlock->contents.actions) {
+        if (action.what == Action::Set) {
+          auto* set = (*action.origin)->cast<SetLocal>();
+          if (auto* get = set->value->dynCast<GetLocal>()) {
+            // this is indeed a copy, add to the cost (default cost is 2, so this adds 50%, and can mostly break ties)
+            addCopy(set->index, get->index);
+          }
+        }
+      }
+    }
+  }
 }
 
 void CoalesceLocals::flowLiveness() {
