@@ -1539,8 +1539,8 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       Element& params = *inner[j];
       IString id = params[0]->str();
       if (id == PARAM) {
-        for (size_t i = 1; i < params.size(); i++) {
-          type->params.push_back(stringToWasmType(params[i]->str()));
+        for (size_t k = 1; k < params.size(); k++) {
+          type->params.push_back(stringToWasmType(params[k]->str()));
         }
       } else if (id == RESULT) {
         type->result = stringToWasmType(params[1]->str());
@@ -1755,8 +1755,8 @@ void SExpressionWasmBuilder::parseType(Element& s) {
   }
   Element& func = *s[i];
   assert(func.isList());
-  for (size_t i = 1; i < func.size(); i++) {
-    Element& curr = *func[i];
+  for (size_t k = 1; k < func.size(); k++) {
+    Element& curr = *func[k];
     if (curr[0]->str() == PARAM) {
       for (size_t j = 1; j < curr.size(); j++) {
         type->params.push_back(stringToWasmType(curr[j]->str()));
