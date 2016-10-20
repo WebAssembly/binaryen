@@ -22,19 +22,9 @@
 #ifndef wasm_wasm_s_parser_h
 #define wasm_wasm_s_parser_h
 
-#include <cmath>
-#include <cctype>
-#include <limits>
-
 #include "wasm.h"
-#include "wasm-binary.h"
-#include "shared-constants.h"
-#include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
-#include "parsing.h"
-#include "asm_v_wasm.h"
-#include "ast_utils.h"
-#include "wasm-builder.h"
+#include "parsing.h" // for UniqueNameMapper. TODO: move dependency to cpp file?
 
 namespace wasm {
 
@@ -53,7 +43,6 @@ class Element {
   bool dollared_;
   bool quoted_;
 
-  #define element_assert(condition) assert((condition) ? true : (std::cerr << "on: " << *this << '\n' && 0));
 
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
@@ -66,68 +55,23 @@ public:
   size_t line, col;
 
   // list methods
-
-  List& list() {
-    if (!isList()) throw ParseException("expected list", line, col);
-    return list_;
-  }
-
-  Element* operator[](unsigned i) {
-    if (i >= list().size()) element_assert(0 && "expected more elements in list");
-    return list()[i];
-  }
-
+  List& list();
+  Element* operator[](unsigned i);
   size_t size() {
     return list().size();
   }
 
   // string methods
-
-  IString str() {
-    element_assert(!isList_);
-    return str_;
-  }
-
-  const char* c_str() {
-    element_assert(!isList_);
-    return str_.str;
-  }
-
-  Element* setString(IString str__, bool dollared__, bool quoted__) {
-    isList_ = false;
-    str_ = str__;
-    dollared_ = dollared__;
-    quoted_ = quoted__;
-    return this;
-  }
-
-  Element* setMetadata(size_t line_, size_t col_) {
-    line = line_;
-    col = col_;
-    return this;
-  }
+  IString str();
+  const char* c_str();
+  Element* setString(IString str__, bool dollared__, bool quoted__);
+  Element* setMetadata(size_t line_, size_t col_);
 
   // printing
-
-  friend std::ostream& operator<<(std::ostream& o, Element& e) {
-    if (e.isList_) {
-      o << '(';
-      for (auto item : e.list_) o << ' ' << *item;
-      o << " )";
-    } else {
-      o << e.str_.str;
-    }
-    return o;
-  }
-
-  void dump() {
-    std::cout << "dumping " << this << " : " << *this << ".\n";
-  }
-
-  #undef element_assert
+  friend std::ostream& operator<<(std::ostream& o, Element& e);
+  void dump();
 };
 
-#define element_assert(condition, element) assert((condition) ? true : (std::cerr << "on: " << element << " at " << element.line << ":" << element.col << '\n' && 0));
 
 //
 // Generic S-Expression parsing into lists
@@ -208,7 +152,6 @@ public:
     return parseExpression(*s);
   }
 
-  #define abort_on(str) { throw ParseException(std::string("abort_on ") + str); }
 
   Expression* parseExpression(Element& s);
 

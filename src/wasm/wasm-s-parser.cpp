@@ -16,6 +16,20 @@
 
 #include "wasm-s-parser.h"
 
+#include <cmath>
+#include <cctype>
+#include <limits>
+
+#include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
+#include "ast_utils.h"
+#include "shared-constants.h"
+#include "wasm-binary.h"
+#include "wasm-builder.h"
+
+#define abort_on(str) { throw ParseException(std::string("abort_on ") + str); }
+#define element_assert(condition) assert((condition) ? true : (std::cerr << "on: " << *this << '\n' && 0));
+
 namespace {
 int unhex(char c) {
   if (c >= '0' && c <= '9') return c - '0';
@@ -26,6 +40,57 @@ int unhex(char c) {
 }
 
 namespace wasm {
+
+
+Element::List& Element::list() {
+  if (!isList()) throw ParseException("expected list", line, col);
+  return list_;
+}
+
+Element* Element::operator[](unsigned i) {
+  if (i >= list().size()) element_assert(0 && "expected more elements in list");
+  return list()[i];
+}
+
+IString Element::str() {
+  element_assert(!isList_);
+  return str_;
+}
+
+const char* Element::c_str() {
+  element_assert(!isList_);
+  return str_.str;
+}
+
+Element* Element::setString(IString str__, bool dollared__, bool quoted__) {
+  isList_ = false;
+  str_ = str__;
+  dollared_ = dollared__;
+  quoted_ = quoted__;
+  return this;
+}
+
+Element* Element::setMetadata(size_t line_, size_t col_) {
+  line = line_;
+  col = col_;
+  return this;
+}
+
+std::ostream& operator<<(std::ostream& o, Element& e) {
+  if (e.isList_) {
+    o << '(';
+    for (auto item : e.list_) o << ' ' << *item;
+    o << " )";
+  } else {
+    o << e.str_.str;
+  }
+  return o;
+}
+
+void Element::dump() {
+  std::cout << "dumping " << this << " : " << *this << ".\n";
+}
+
 
 SExpressionParser::SExpressionParser(char* input) : input(input) {
   root = nullptr;
@@ -512,7 +577,7 @@ WasmType SExpressionWasmBuilder::stringToWasmType(const char* str, bool allowErr
 }
 
 Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
-  element_assert(s.isList(), s);
+  assert(s.isList());
   IString id = s[0]->str();
   const char *str = id.str;
   const char *dot = strchr(str, '.');
