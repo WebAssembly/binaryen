@@ -78,6 +78,7 @@ void PassRegistry::registerPasses() {
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
+  registerPass("print-call-graph", "print call graph", createPrintCallGraphPass);
   registerPass("relooper-jump-threading", "thread relooper jumps (fastcomp output only)", createRelooperJumpThreadingPass);
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
