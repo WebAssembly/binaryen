@@ -15,7 +15,7 @@
  */
 
 //
-// Prints the call graph in .dot format.
+// Prints the call graph in .dot format. You can use http://www.graphviz.org/ to view .dot files.
 //
 
 
@@ -27,11 +27,9 @@
 
 namespace wasm {
 
-using namespace std;
-
 struct PrintCallGraph : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    ostream &o = cout;
+    std::ostream &o = std::cout;
     o << "digraph call {\n";
     o << "  rankdir = LR;\n";
     o << "  subgraph cluster_key {\n";
@@ -75,7 +73,7 @@ struct PrintCallGraph : public Pass {
         // Walk function bodies.
         for (auto& func : module->functions) {
           currFunction = func.get();
-          cout << "  \"" << func->name << "\";\n";
+          std::cout << "  \"" << func->name << "\";\n";
           visitedTargets.clear();
           walk(func.get()->body);
         }
@@ -84,22 +82,24 @@ struct PrintCallGraph : public Pass {
         auto* target = module->getFunction(curr->target);
         if (visitedTargets.count(target->name) > 0) return;
         visitedTargets.insert(target->name);
-        cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
+        std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
       }
       void visitCallImport(CallImport *curr) {
         auto name = curr->target;
         if (visitedTargets.count(name) > 0) return;
         visitedTargets.insert(name);
-        cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
+        std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
       }
       void visitCallIndirect(CallIndirect *curr) {
         // Find eligible indirect targets.
+        auto* currType = module->getFunctionType(curr->fullType);
         for (auto& target : allIndirectTargets) {
-          if (target->type != curr->fullType) continue;
+          auto* targetType = module->getFunctionType(target->type);
+          if (targetType->structuralComparison(*currType)) continue;
           auto name = target->name;
           if (visitedTargets.count(name) > 0) continue;
           visitedTargets.insert(name);
-          cout << "  \"" << currFunction->name << "\" -> \"" << name << "\" [style=\"dashed\"]; // callIndirect\n";
+          std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\" [style=\"dashed\"]; // callIndirect\n";
         }
       }
     };
