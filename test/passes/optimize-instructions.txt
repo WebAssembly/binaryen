@@ -289,6 +289,18 @@
         (i32.const 65534)
       )
     )
+    (i64.store8
+      (i32.const 11)
+      (i64.const 1)
+    )
+    (i64.store16
+      (i32.const 11)
+      (i64.const 2)
+    )
+    (i64.store32
+      (i32.const 11)
+      (i64.const 3)
+    )
   )
   (func $and-neg1 (type $1)
     (drop
