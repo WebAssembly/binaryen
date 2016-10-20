@@ -377,7 +377,7 @@ struct Value {
 
   void stringify(std::ostream &os, bool pretty=false) {
     static int indent = 0;
-    #define indentify() { for (int i = 0; i < indent; i++) os << "  "; }
+    #define indentify() { for (int i_ = 0; i_ < indent; i_++) os << "  "; }
     switch (type) {
       case String:
         if (str.str) {
