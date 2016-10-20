@@ -13,6 +13,7 @@ SET(passes_SOURCES
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
+  PrintCallGraph.cpp
   RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp

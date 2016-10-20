@@ -38,6 +38,7 @@ Pass *createNameManagerPass();
 Pass *createOptimizeInstructionsPass();
 Pass *createPostEmscriptenPass();
 Pass *createPrinterPass();
+Pass *createPrintCallGraphPass();
 Pass *createRelooperJumpThreadingPass();
 Pass *createRemoveImportsPass();
 Pass *createRemoveMemoryPass();
