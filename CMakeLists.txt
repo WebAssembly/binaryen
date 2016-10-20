@@ -118,7 +118,7 @@ IF(BUILD_STATIC_LIB)
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
-TARGET_LINK_LIBRARIES(binaryen asmjs ${all_passes} support wasm)
+TARGET_LINK_LIBRARIES(binaryen ${all_passes} wasm asmjs support)
 
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
@@ -126,7 +126,7 @@ SET(wasm-shell_SOURCES
 )
 ADD_EXECUTABLE(wasm-shell
                ${wasm-shell_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-shell asmjs emscripten-optimizer ${all_passes} support wasm)
+TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer ${all_passes} support)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-shell DESTINATION bin)
@@ -136,7 +136,7 @@ SET(wasm-opt_SOURCES
 )
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-opt asmjs emscripten-optimizer ${all_passes} support wasm)
+TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer ${all_passes} support)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION bin)
@@ -147,7 +147,7 @@ SET(asm2wasm_SOURCES
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(asm2wasm asmjs emscripten-optimizer ${all_passes} support wasm)
+TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer ${all_passes} wasm asmjs support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION bin)
@@ -159,7 +159,7 @@ SET(s2wasm_SOURCES
 )
 ADD_EXECUTABLE(s2wasm
                ${s2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(s2wasm asmjs passes support wasm)
+TARGET_LINK_LIBRARIES(s2wasm passes wasm asmjs support)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION bin)
@@ -169,7 +169,7 @@ SET(wasm_as_SOURCES
 )
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-as asmjs passes support wasm)
+TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes support)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION bin)
@@ -179,7 +179,7 @@ SET(wasm_dis_SOURCES
 )
 ADD_EXECUTABLE(wasm-dis
                ${wasm_dis_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-dis passes support asmjs wasm)
+TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs support)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION bin)
