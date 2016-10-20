@@ -28,21 +28,17 @@
 
 namespace wasm {
 
-using namespace cashew;
-
 //
 // An element in an S-Expression: a list or a string
 //
-
 class Element {
   typedef ArenaVector<Element*> List;
 
   bool isList_;
   List list_;
-  IString str_;
+  cashew::IString str_;
   bool dollared_;
   bool quoted_;
-
 
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
@@ -62,9 +58,9 @@ public:
   }
 
   // string methods
-  IString str();
+  cashew::IString str();
   const char* c_str();
-  Element* setString(IString str__, bool dollared__, bool quoted__);
+  Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_);
 
   // printing
@@ -76,7 +72,6 @@ public:
 //
 // Generic S-Expression parsing into lists
 //
-
 class SExpressionParser {
   char* input;
   size_t line;
@@ -98,7 +93,6 @@ private:
 //
 // SExpressions => WebAssembly module
 //
-
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
@@ -114,7 +108,6 @@ public:
   SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName = nullptr);
 
 private:
-
   // pre-parse types and function definitions, so we know function return types before parsing their contents
   void preParseFunctionType(Element& s);
   bool isImport(Element& curr);
@@ -139,11 +132,11 @@ private:
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
   void parseFunction(Element& s, bool preParseImport = false);
 
-  WasmType stringToWasmType(IString str, bool allowError=false, bool prefix=false) {
+  WasmType stringToWasmType(cashew::IString str, bool allowError=false, bool prefix=false) {
     return stringToWasmType(str.str, allowError, prefix);
   }
   WasmType stringToWasmType(const char* str, bool allowError=false, bool prefix=false);
-  bool isWasmType(IString str) {
+  bool isWasmType(cashew::IString str) {
     return stringToWasmType(str, true) != none;
   }
 
@@ -151,8 +144,6 @@ public:
   Expression* parseExpression(Element* s) {
     return parseExpression(*s);
   }
-
-
   Expression* parseExpression(Element& s);
 
 private:
@@ -189,7 +180,6 @@ private:
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
-
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

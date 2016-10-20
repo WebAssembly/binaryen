@@ -30,6 +30,8 @@
 #define abort_on(str) { throw ParseException(std::string("abort_on ") + str); }
 #define element_assert(condition) assert((condition) ? true : (std::cerr << "on: " << *this << '\n' && 0));
 
+using cashew::IString;
+
 namespace {
 int unhex(char c) {
   if (c >= '0' && c <= '9') return c - '0';
@@ -40,8 +42,6 @@ int unhex(char c) {
 }
 
 namespace wasm {
-
-
 Element::List& Element::list() {
   if (!isList()) throw ParseException("expected list", line, col);
   return list_;
