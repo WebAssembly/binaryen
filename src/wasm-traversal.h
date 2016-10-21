@@ -581,7 +581,9 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::InvalidId: abort();
       case Expression::Id::BlockId: {
         self->pushTask(SubType::doVisitBlock, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (curr->cast<Block>()->name.is()) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         auto& list = curr->cast<Block>()->list;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
@@ -622,6 +624,11 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitReturn, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
+        break;
+      }
+      case Expression::Id::UnreachableId: {
+        self->pushTask(SubType::doVisitUnreachable, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
         break;
       }
       default: {
