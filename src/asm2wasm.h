@@ -654,8 +654,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     for (unsigned i = 1; i < body->size(); i++) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
-    optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, [&](PassRunner& passRunner) {
-      passRunner.options = passOptions;
+    optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, passOptions, [&](PassRunner& passRunner) {
       if (debug) {
         passRunner.setDebug(true);
         passRunner.setValidateGlobally(false);
