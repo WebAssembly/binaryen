@@ -336,7 +336,7 @@ for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
-    opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
+    opts = ['-' + passname] if passname.startswith('O') else ['--' + p for p in passname.split('_')]
     t = os.path.join(options.binaryen_test, 'passes', t)
     actual = ''
     for module, asserts in split_wast(t):
