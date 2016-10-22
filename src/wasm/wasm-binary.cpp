@@ -636,11 +636,11 @@ void WasmBinaryWriter::visitConst(Const *curr) {
       break;
     }
     case f32: {
-      o << int8_t(BinaryConsts::F32Const) << curr->value.getf32();
+      o << int8_t(BinaryConsts::F32Const) << curr->value.reinterpreti32();
       break;
     }
     case f64: {
-      o << int8_t(BinaryConsts::F64Const) << curr->value.getf64();
+      o << int8_t(BinaryConsts::F64Const) << curr->value.reinterpreti64();
       break;
     }
     default: abort();
@@ -919,16 +919,18 @@ uint64_t WasmBinaryBuilder::getInt64() {
   return ret;
 }
 
-float WasmBinaryBuilder::getFloat32() {
+Literal WasmBinaryBuilder::getFloat32Literal() {
   if (debug) std::cerr << "<==" << std::endl;
-  auto ret = Literal(getInt32()).reinterpretf32();
+  auto ret = Literal(getInt32());
+  ret = ret.castToF32();
   if (debug) std::cerr << "getFloat32: " << ret << " ==>" << std::endl;
   return ret;
 }
 
-double WasmBinaryBuilder::getFloat64() {
+Literal WasmBinaryBuilder::getFloat64Literal() {
   if (debug) std::cerr << "<==" << std::endl;
-  auto ret = Literal(getInt64()).reinterpretf64();
+  auto ret = Literal(getInt64());
+  ret = ret.castToF64();
   if (debug) std::cerr << "getFloat64: " << ret << " ==>" << std::endl;
   return ret;
 }
@@ -1021,16 +1023,6 @@ void WasmBinaryBuilder::verifyInt32(int32_t x) {
 
 void WasmBinaryBuilder::verifyInt64(int64_t x) {
   int64_t y = getInt64();
-  if (x != y) throw ParseException("surprising value", 0, pos);
-}
-
-void WasmBinaryBuilder::verifyFloat32(float x) {
-  float y = getFloat32();
-  if (x != y) throw ParseException("surprising value", 0, pos);
-}
-
-void WasmBinaryBuilder::verifyFloat64(double x) {
-  double y = getFloat64();
   if (x != y) throw ParseException("surprising value", 0, pos);
 }
 
@@ -1704,8 +1696,8 @@ bool WasmBinaryBuilder::maybeVisitConst(Expression*& out, uint8_t code) {
   switch (code) {
     case BinaryConsts::I32Const: curr = allocator.alloc<Const>(); curr->value = Literal(getS32LEB()); break;
     case BinaryConsts::I64Const: curr = allocator.alloc<Const>(); curr->value = Literal(getS64LEB()); break;
-    case BinaryConsts::F32Const: curr = allocator.alloc<Const>(); curr->value = Literal(getFloat32()); break;
-    case BinaryConsts::F64Const: curr = allocator.alloc<Const>(); curr->value = Literal(getFloat64()); break;
+    case BinaryConsts::F32Const: curr = allocator.alloc<Const>(); curr->value = getFloat32Literal(); break;
+    case BinaryConsts::F64Const: curr = allocator.alloc<Const>(); curr->value = getFloat64Literal(); break;
     default: return false;
   }
   curr->type = curr->value.type;

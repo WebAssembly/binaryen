@@ -619,8 +619,9 @@ public:
   uint16_t getInt16();
   uint32_t getInt32();
   uint64_t getInt64();
-  float getFloat32();
-  double getFloat64();
+  // it is unsafe to return a float directly, due to ABI issues with the signalling bit
+  Literal getFloat32Literal();
+  Literal getFloat64Literal();
   uint32_t getU32LEB();
   uint64_t getU64LEB();
   int32_t getS32LEB();
@@ -632,8 +633,6 @@ public:
   void verifyInt16(int16_t x);
   void verifyInt32(int32_t x);
   void verifyInt64(int64_t x);
-  void verifyFloat32(float x);
-  void verifyFloat64(double x);
   void ungetInt8();
   void readHeader();
   void readStart();
