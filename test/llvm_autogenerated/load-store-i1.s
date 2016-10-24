@@ -16,12 +16,12 @@ load_u_i1_i32:
 load_s_i1_i32:
 	.param  	i32
 	.result 	i32
+	i32.const	$push3=, 0
 	i32.load8_u	$push0=, 0($0)
-	i32.const	$push1=, 31
-	i32.shl 	$push2=, $pop0, $pop1
-	i32.const	$push4=, 31
-	i32.shr_s	$push3=, $pop2, $pop4
-	return  	$pop3
+	i32.const	$push1=, 1
+	i32.and 	$push2=, $pop0, $pop1
+	i32.sub 	$push4=, $pop3, $pop2
+	return  	$pop4
 	.endfunc
 .Lfunc_end1:
 	.size	load_s_i1_i32, .Lfunc_end1-load_s_i1_i32
@@ -42,12 +42,12 @@ load_u_i1_i64:
 load_s_i1_i64:
 	.param  	i32
 	.result 	i64
+	i64.const	$push3=, 0
 	i64.load8_u	$push0=, 0($0)
-	i64.const	$push1=, 63
-	i64.shl 	$push2=, $pop0, $pop1
-	i64.const	$push4=, 63
-	i64.shr_s	$push3=, $pop2, $pop4
-	return  	$pop3
+	i64.const	$push1=, 1
+	i64.and 	$push2=, $pop0, $pop1
+	i64.sub 	$push4=, $pop3, $pop2
+	return  	$pop4
 	.endfunc
 .Lfunc_end3:
 	.size	load_s_i1_i64, .Lfunc_end3-load_s_i1_i64

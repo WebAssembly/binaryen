@@ -92,14 +92,34 @@ call_indirect_i32:
 .Lfunc_end8:
 	.size	call_indirect_i32, .Lfunc_end8-call_indirect_i32
 
+	.globl	call_indirect_arg
+	.type	call_indirect_arg,@function
+call_indirect_arg:
+	.param  	i32, i32
+	call_indirect	$1, $0
+	return
+	.endfunc
+.Lfunc_end9:
+	.size	call_indirect_arg, .Lfunc_end9-call_indirect_arg
+
+	.globl	call_indirect_arg_2
+	.type	call_indirect_arg_2,@function
+call_indirect_arg_2:
+	.param  	i32, i32, i32
+	i32.call_indirect	$drop=, $1, $2, $0
+	return
+	.endfunc
+.Lfunc_end10:
+	.size	call_indirect_arg_2, .Lfunc_end10-call_indirect_arg_2
+
 	.globl	tail_call_void_nullary
 	.type	tail_call_void_nullary,@function
 tail_call_void_nullary:
 	call    	void_nullary@FUNCTION
 	return
 	.endfunc
-.Lfunc_end9:
-	.size	tail_call_void_nullary, .Lfunc_end9-tail_call_void_nullary
+.Lfunc_end11:
+	.size	tail_call_void_nullary, .Lfunc_end11-tail_call_void_nullary
 
 	.globl	fastcc_tail_call_void_nullary
 	.type	fastcc_tail_call_void_nullary,@function
@@ -107,8 +127,8 @@ fastcc_tail_call_void_nullary:
 	call    	void_nullary@FUNCTION
 	return
 	.endfunc
-.Lfunc_end10:
-	.size	fastcc_tail_call_void_nullary, .Lfunc_end10-fastcc_tail_call_void_nullary
+.Lfunc_end12:
+	.size	fastcc_tail_call_void_nullary, .Lfunc_end12-fastcc_tail_call_void_nullary
 
 	.globl	coldcc_tail_call_void_nullary
 	.type	coldcc_tail_call_void_nullary,@function
@@ -116,8 +136,8 @@ coldcc_tail_call_void_nullary:
 	call    	void_nullary@FUNCTION
 	return
 	.endfunc
-.Lfunc_end11:
-	.size	coldcc_tail_call_void_nullary, .Lfunc_end11-coldcc_tail_call_void_nullary
+.Lfunc_end13:
+	.size	coldcc_tail_call_void_nullary, .Lfunc_end13-coldcc_tail_call_void_nullary
 
 
 	.functype	i32_nullary, i32
