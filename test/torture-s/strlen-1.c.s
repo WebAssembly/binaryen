@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -22,30 +22,33 @@ main:                                   # @main
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	                # label2:
-	i32.const	$4=, u
+	block   	
+	block   	
 	block   	
 	i32.eqz 	$push23=, $1
-	br_if   	0, $pop23       # 0: down to label3
+	br_if   	0, $pop23       # 0: down to label5
 # BB#3:                                 # %for.body6.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.const	$push9=, u
 	i32.const	$push8=, 0
 	i32.call	$drop=, memset@FUNCTION, $pop9, $pop8, $1
 	copy_local	$4=, $2
-.LBB0_4:                                # %for.cond7.preheader
-                                        #   in Loop: Header=BB0_2 Depth=2
-	end_block                       # label3:
-	block   	
+	br_if   	1, $3           # 1: down to label4
+	br      	2               # 2: down to label3
+.LBB0_4:                                #   in Loop: Header=BB0_2 Depth=2
+	end_block                       # label5:
+	i32.const	$4=, u
 	i32.eqz 	$push24=, $3
-	br_if   	0, $pop24       # 0: down to label4
-# BB#5:                                 # %for.body9.preheader
+	br_if   	1, $pop24       # 1: down to label3
+.LBB0_5:                                # %for.body9.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
+	end_block                       # label4:
 	i32.const	$push10=, 97
 	i32.call	$push0=, memset@FUNCTION, $4, $pop10, $3
 	i32.add 	$4=, $pop0, $3
 .LBB0_6:                                # %for.end13
                                         #   in Loop: Header=BB0_2 Depth=2
-	end_block                       # label4:
+	end_block                       # label3:
 	i32.const	$push13=, 0
 	i32.store8	0($4), $pop13
 	i32.const	$push12=, 1
@@ -95,7 +98,7 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

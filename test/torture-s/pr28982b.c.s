@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28982b.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28982b.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -38,29 +38,10 @@ foo:                                    # @foo
 	i32.const	$push73=, 0
 	i32.const	$push72=, 262144
 	i32.call	$drop=, memset@FUNCTION, $pop69, $pop73, $pop72
-	f32.const	$41=, 0x0p0
-	f32.const	$42=, 0x0p0
-	f32.const	$43=, 0x0p0
-	f32.const	$44=, 0x0p0
-	f32.const	$45=, 0x0p0
-	f32.const	$46=, 0x0p0
-	f32.const	$47=, 0x0p0
-	f32.const	$48=, 0x0p0
-	f32.const	$49=, 0x0p0
-	f32.const	$50=, 0x0p0
-	f32.const	$51=, 0x0p0
-	f32.const	$52=, 0x0p0
-	f32.const	$53=, 0x0p0
-	f32.const	$54=, 0x0p0
-	f32.const	$55=, 0x0p0
-	f32.const	$56=, 0x0p0
-	f32.const	$57=, 0x0p0
-	f32.const	$58=, 0x0p0
-	f32.const	$59=, 0x0p0
-	f32.const	$60=, 0x0p0
+	block   	
 	block   	
 	i32.eqz 	$push161=, $0
-	br_if   	0, $pop161      # 0: down to label0
+	br_if   	0, $pop161      # 0: down to label1
 # BB#1:                                 # %while.body.preheader
 	i32.const	$push134=, 0
 	i32.load	$push0=, incs($pop134)
@@ -204,7 +185,7 @@ foo:                                    # @foo
 	f32.const	$41=, 0x0p0
 .LBB1_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
-	loop    	                # label1:
+	loop    	                # label2:
 	f32.load	$push41=, 0($40)
 	f32.add 	$60=, $60, $pop41
 	f32.load	$push42=, 0($39)
@@ -288,9 +269,32 @@ foo:                                    # @foo
 	i32.const	$push137=, -1
 	i32.add 	$push136=, $0, $pop137
 	tee_local	$push135=, $0=, $pop136
-	br_if   	0, $pop135      # 0: up to label1
-.LBB1_3:                                # %while.end
+	br_if   	0, $pop135      # 0: up to label2
+	br      	2               # 2: down to label0
+.LBB1_3:
 	end_loop
+	end_block                       # label1:
+	f32.const	$41=, 0x0p0
+	f32.const	$42=, 0x0p0
+	f32.const	$43=, 0x0p0
+	f32.const	$44=, 0x0p0
+	f32.const	$45=, 0x0p0
+	f32.const	$46=, 0x0p0
+	f32.const	$47=, 0x0p0
+	f32.const	$48=, 0x0p0
+	f32.const	$49=, 0x0p0
+	f32.const	$50=, 0x0p0
+	f32.const	$51=, 0x0p0
+	f32.const	$52=, 0x0p0
+	f32.const	$53=, 0x0p0
+	f32.const	$54=, 0x0p0
+	f32.const	$55=, 0x0p0
+	f32.const	$56=, 0x0p0
+	f32.const	$57=, 0x0p0
+	f32.const	$58=, 0x0p0
+	f32.const	$59=, 0x0p0
+	f32.const	$60=, 0x0p0
+.LBB1_4:                                # %while.end
 	end_block                       # label0:
 	i32.const	$push160=, 0
 	f32.store	results+4($pop160), $42
@@ -476,7 +480,7 @@ main:                                   # @main
 	i32.store	incs+76($pop121), $pop35
 .LBB2_1:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	loop    	                # label2:
+	loop    	                # label3:
 	f32.convert_s/i32	$push36=, $1
 	f32.store	0($0), $pop36
 	i32.const	$push167=, 4
@@ -486,7 +490,7 @@ main:                                   # @main
 	tee_local	$push164=, $1=, $pop165
 	i32.const	$push163=, 80
 	i32.ne  	$push37=, $pop164, $pop163
-	br_if   	0, $pop37       # 0: up to label2
+	br_if   	0, $pop37       # 0: up to label3
 # BB#2:                                 # %for.end8
 	end_loop
 	i32.const	$push38=, 4
@@ -634,4 +638,4 @@ input:
 	.size	input, 320
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "

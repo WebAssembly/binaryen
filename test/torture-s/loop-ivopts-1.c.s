@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-ivopts-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-ivopts-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -27,15 +27,16 @@ foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %for.inc9.3
 	i32.const	$push1=, 0
-	i64.const	$push0=, 4838273375797772288
-	i64.store	foo.tmp+4($pop1):p2align=2, $pop0
-	i32.const	$push9=, 0
-	i32.const	$push2=, 1095761920
-	i32.store	foo.tmp($pop9), $pop2
-	i32.const	$push3=, 1118306304
+	i32.const	$push0=, 1095761920
+	i32.store	foo.tmp($pop1), $pop0
+	i32.const	$push10=, 0
+	i64.const	$push2=, 4838273375797772288
+	i64.store	foo.tmp+4($pop10):p2align=2, $pop2
+	i32.const	$push9=, 1095761920
+	i32.store	0($0), $pop9
+	i32.const	$push8=, 0
+	i32.load	$push3=, foo.tmp+4($pop8)
 	i32.store	4($0), $pop3
-	i32.const	$push8=, 1095761920
-	i32.store	0($0), $pop8
 	i32.const	$push7=, 0
 	i32.load	$push4=, foo.tmp+8($pop7)
 	i32.store	8($0), $pop4
@@ -55,4 +56,4 @@ foo.tmp:
 	.size	foo.tmp, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "

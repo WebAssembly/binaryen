@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000224-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000224-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -24,12 +24,12 @@ test:                                   # @test
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push19=, 31
-	i32.shl 	$2=, $3, $pop19
+	i32.const	$push19=, 1
+	i32.and 	$2=, $3, $pop19
 	i32.const	$push18=, 1
 	i32.add 	$3=, $3, $pop18
-	i32.const	$push17=, 31
-	i32.shr_s	$push3=, $2, $pop17
+	i32.const	$push17=, 0
+	i32.sub 	$push3=, $pop17, $2
 	i32.const	$push16=, 0
 	i32.const	$push15=, 1
 	i32.lt_s	$push1=, $1, $pop15
@@ -94,5 +94,5 @@ flag:
 	.size	flag, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

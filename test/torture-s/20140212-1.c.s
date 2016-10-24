@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20140212-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20140212-1.c"
 	.section	.text.fn1,"ax",@progbits
 	.hidden	fn1
 	.globl	fn1
@@ -35,8 +35,8 @@ fn1:                                    # @fn1
 	i32.load	$3=, d($pop7)
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
-	loop    	                # label0:
 	block   	
+	loop    	                # label1:
 	block   	
 	i32.eqz 	$push30=, $3
 	br_if   	0, $pop30       # 0: down to label2
@@ -45,7 +45,9 @@ fn1:                                    # @fn1
 	i32.const	$push23=, 0
 	i32.const	$push22=, 1
 	i32.store	c($pop23), $pop22
-	br      	1               # 1: down to label1
+	i32.eqz 	$push31=, $4
+	br_if   	1, $pop31       # 1: up to label1
+	br      	2               # 2: down to label0
 .LBB0_3:                                # %if.else
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label2:
@@ -55,13 +57,11 @@ fn1:                                    # @fn1
 	i32.const	$push25=, 0
 	i32.const	$push24=, 9
 	i32.store	i($pop25), $pop24
-.LBB0_4:                                # %if.end
-                                        #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label1:
-	i32.eqz 	$push31=, $4
-	br_if   	0, $pop31       # 0: up to label0
-# BB#5:                                 # %if.then15
+	i32.eqz 	$push32=, $4
+	br_if   	0, $pop32       # 0: up to label1
+.LBB0_4:                                # %if.then15
 	end_loop
+	end_block                       # label0:
 	i32.const	$push6=, 0
 	i32.store8	j($pop6), $1
 	i32.const	$push29=, 0
@@ -107,8 +107,8 @@ main:                                   # @main
 	i32.const	$4=, 0
 .LBB1_1:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	loop    	                # label3:
 	block   	
+	loop    	                # label4:
 	block   	
 	i32.eqz 	$push32=, $2
 	br_if   	0, $pop32       # 0: down to label5
@@ -118,7 +118,9 @@ main:                                   # @main
 	i32.const	$push23=, 0
 	i32.const	$push22=, 1
 	i32.store	c($pop23), $pop22
-	br      	1               # 1: down to label4
+	i32.eqz 	$push33=, $3
+	br_if   	1, $pop33       # 1: up to label4
+	br      	2               # 2: down to label3
 .LBB1_3:                                # %if.else.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	end_block                       # label5:
@@ -128,13 +130,11 @@ main:                                   # @main
 	i32.const	$push25=, 0
 	i32.const	$push24=, 9
 	i32.store	i($pop25), $pop24
-.LBB1_4:                                # %if.end.i
-                                        #   in Loop: Header=BB1_1 Depth=1
-	end_block                       # label4:
-	i32.eqz 	$push33=, $3
-	br_if   	0, $pop33       # 0: up to label3
-# BB#5:                                 # %fn1.exit
+	i32.eqz 	$push34=, $3
+	br_if   	0, $pop34       # 0: up to label4
+.LBB1_4:                                # %fn1.exit
 	end_loop
+	end_block                       # label3:
 	i32.const	$push30=, 0
 	i32.store8	j($pop30), $1
 	i32.const	$push29=, 0
@@ -147,10 +147,10 @@ main:                                   # @main
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $4, $pop7
 	br_if   	0, $pop8        # 0: down to label6
-# BB#6:                                 # %if.end
+# BB#5:                                 # %if.end
 	i32.const	$push31=, 0
 	return  	$pop31
-.LBB1_7:                                # %if.then
+.LBB1_6:                                # %if.then
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
@@ -256,5 +256,5 @@ h:
 	.size	h, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

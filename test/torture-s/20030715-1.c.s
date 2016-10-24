@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030715-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030715-1.c"
 	.section	.text.ap_check_cmd_context,"ax",@progbits
 	.hidden	ap_check_cmd_context
 	.globl	ap_check_cmd_context
@@ -21,7 +21,7 @@ ap_check_cmd_context:                   # @ap_check_cmd_context
 server_type:                            # @server_type
 	.param  	i32, i32, i32
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	block   	
@@ -31,19 +31,20 @@ server_type:                            # @server_type
 	i32.eqz 	$push5=, $pop1
 	br_if   	0, $pop5        # 0: down to label1
 # BB#1:                                 # %if.else
-	i32.const	$4=, .L.str.2
-	i32.const	$3=, 1
+	i32.const	$3=, .L.str.2
 	i32.const	$push2=, .L.str.1
 	i32.call	$push3=, strcmp@FUNCTION, $2, $pop2
 	br_if   	1, $pop3        # 1: down to label0
-.LBB1_2:                                # %if.end9
+# BB#2:
+	i32.const	$3=, 1
+.LBB1_3:                                # %if.end9
 	end_block                       # label1:
 	i32.const	$push4=, 0
 	i32.store	ap_standalone($pop4), $3
-	i32.const	$4=, 0
-.LBB1_3:                                # %cleanup
+	i32.const	$3=, 0
+.LBB1_4:                                # %cleanup
 	end_block                       # label0:
-	copy_local	$push6=, $4
+	copy_local	$push6=, $3
                                         # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end1:
@@ -92,5 +93,5 @@ ap_standalone:
 	.size	.L.str.2, 50
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	strcmp, i32, i32, i32

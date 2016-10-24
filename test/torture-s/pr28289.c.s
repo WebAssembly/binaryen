@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28289.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28289.c"
 	.section	.text.ix86_split_ashr,"ax",@progbits
 	.hidden	ix86_split_ashr
 	.globl	ix86_split_ashr
@@ -7,11 +7,11 @@
 ix86_split_ashr:                        # @ix86_split_ashr
 	.param  	i32
 # BB#0:                                 # %entry
+	i32.const	$push3=, 0
 	i32.const	$push1=, ok@FUNCTION
 	i32.const	$push0=, gen_x86_64_shrd@FUNCTION
 	i32.select	$push2=, $pop1, $pop0, $0
-	i32.const	$push3=, 0
-	i32.call_indirect	$drop=, $pop2, $pop3
+	i32.call_indirect	$drop=, $pop3, $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -50,13 +50,13 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
+	i32.const	$push0=, 0
 	i32.const	$push3=, ok@FUNCTION
 	i32.const	$push2=, gen_x86_64_shrd@FUNCTION
-	i32.const	$push0=, 0
-	i32.load	$push1=, one($pop0)
-	i32.select	$push4=, $pop3, $pop2, $pop1
 	i32.const	$push6=, 0
-	i32.call_indirect	$drop=, $pop4, $pop6
+	i32.load	$push1=, one($pop6)
+	i32.select	$push4=, $pop3, $pop2, $pop1
+	i32.call_indirect	$drop=, $pop0, $pop4
 	i32.const	$push5=, 1
                                         # fallthrough-return: $pop5
 	.endfunc
@@ -73,5 +73,5 @@ one:
 	.size	one, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

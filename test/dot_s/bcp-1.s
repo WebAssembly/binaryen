@@ -263,25 +263,25 @@ main:                                   # @main
 	i32.load	$1=, bad_t1($0)
 	i32.const	$2=, 1
 	block
-	i32.call_indirect	$push12=, $1, $2
+	i32.call_indirect	$push12=, $2, $1
 	br_if   	0, $pop12       # 0: down to label1
 # BB#7:                                 # %for.cond1
 	i32.load	$push13=, bad_t1+4($0)
-	i32.call_indirect	$push14=, $pop13, $2
+	i32.call_indirect	$push14=, $2, $pop13
 	br_if   	0, $pop14       # 0: down to label1
 # BB#8:                                 # %for.cond1.1
 	i32.load	$push15=, bad_t1+8($0)
-	i32.call_indirect	$push16=, $pop15, $2
+	i32.call_indirect	$push16=, $2, $pop15
 	br_if   	0, $pop16       # 0: down to label1
 # BB#9:                                 # %for.cond1.2
 	i32.load	$1=, bad_t2($0)
 	i32.const	$2=, .L.str
 	block
-	i32.call_indirect	$push17=, $1, $2
+	i32.call_indirect	$push17=, $2, $1
 	br_if   	0, $pop17       # 0: down to label2
 # BB#10:                                # %for.cond12
 	i32.load	$push18=, bad_t2+4($0)
-	i32.call_indirect	$push19=, $pop18, $2
+	i32.call_indirect	$push19=, $2, $pop18
 	br_if   	0, $pop19       # 0: down to label2
 # BB#11:                                # %for.cond12.1
 	block

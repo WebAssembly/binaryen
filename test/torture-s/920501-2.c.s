@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-2.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-2.c"
 	.section	.text.gcd_ll,"ax",@progbits
 	.hidden	gcd_ll
 	.globl	gcd_ll
@@ -50,29 +50,28 @@ powmod_ll:                              # @powmod_ll
 	.result 	i64
 	.local  	i32, i32, i64
 # BB#0:                                 # %entry
-	i64.const	$5=, 1
 	block   	
 	block   	
-	i32.eqz 	$push21=, $1
-	br_if   	0, $pop21       # 0: down to label4
+	i32.eqz 	$push22=, $1
+	br_if   	0, $pop22       # 0: down to label4
 # BB#1:                                 # %for.body.preheader
 	i32.const	$3=, 0
 	copy_local	$4=, $1
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label5:
+	i32.const	$push13=, 1
+	i32.add 	$3=, $3, $pop13
 	i32.const	$push12=, 1
-	i32.add 	$3=, $3, $pop12
-	i32.const	$push11=, 1
-	i32.shr_u	$push10=, $4, $pop11
-	tee_local	$push9=, $4=, $pop10
-	br_if   	0, $pop9        # 0: up to label5
+	i32.shr_u	$push11=, $4, $pop12
+	tee_local	$push10=, $4=, $pop11
+	br_if   	0, $pop10       # 0: up to label5
 # BB#3:                                 # %for.end
 	end_loop
-	i32.const	$push14=, -1
-	i32.add 	$push0=, $3, $pop14
-	i32.const	$push13=, 1
-	i32.lt_s	$push1=, $pop0, $pop13
+	i32.const	$push15=, -1
+	i32.add 	$push0=, $3, $pop15
+	i32.const	$push14=, 1
+	i32.lt_s	$push1=, $pop0, $pop14
 	br_if   	1, $pop1        # 1: down to label3
 # BB#4:                                 # %for.body4.preheader
 	copy_local	$5=, $0
@@ -82,13 +81,13 @@ powmod_ll:                              # @powmod_ll
 	i64.mul 	$push2=, $5, $5
 	i64.rem_u	$5=, $pop2, $2
 	block   	
-	i32.const	$push16=, 1
-	i32.const	$push15=, -2
-	i32.add 	$push3=, $3, $pop15
-	i32.shl 	$push4=, $pop16, $pop3
+	i32.const	$push17=, 1
+	i32.const	$push16=, -2
+	i32.add 	$push3=, $3, $pop16
+	i32.shl 	$push4=, $pop17, $pop3
 	i32.and 	$push5=, $pop4, $1
-	i32.eqz 	$push22=, $pop5
-	br_if   	0, $pop22       # 0: down to label7
+	i32.eqz 	$push23=, $pop5
+	br_if   	0, $pop23       # 0: down to label7
 # BB#6:                                 # %if.then5
                                         #   in Loop: Header=BB1_5 Depth=1
 	i64.mul 	$push6=, $5, $0
@@ -96,17 +95,20 @@ powmod_ll:                              # @powmod_ll
 .LBB1_7:                                # %for.inc9
                                         #   in Loop: Header=BB1_5 Depth=1
 	end_block                       # label7:
-	i32.const	$push20=, -1
-	i32.add 	$push19=, $3, $pop20
-	tee_local	$push18=, $3=, $pop19
-	i32.const	$push17=, 1
-	i32.gt_s	$push7=, $pop18, $pop17
+	i32.const	$push21=, -1
+	i32.add 	$push20=, $3, $pop21
+	tee_local	$push19=, $3=, $pop20
+	i32.const	$push18=, 1
+	i32.gt_s	$push7=, $pop19, $pop18
 	br_if   	0, $pop7        # 0: up to label6
-.LBB1_8:                                # %cleanup
+# BB#8:                                 # %cleanup
 	end_loop
-	end_block                       # label4:
 	return  	$5
 .LBB1_9:
+	end_block                       # label4:
+	i64.const	$push9=, 1
+	return  	$pop9
+.LBB1_10:
 	end_block                       # label3:
 	copy_local	$push8=, $0
                                         # fallthrough-return: $pop8
@@ -479,6 +481,6 @@ factab:
 	.size	factab, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

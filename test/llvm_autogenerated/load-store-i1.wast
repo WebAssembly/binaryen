@@ -17,14 +17,14 @@
   )
   (func $load_s_i1_i32 (param $0 i32) (result i32)
     (return
-      (i32.shr_s
-        (i32.shl
+      (i32.sub
+        (i32.const 0)
+        (i32.and
           (i32.load8_u
             (get_local $0)
           )
-          (i32.const 31)
+          (i32.const 1)
         )
-        (i32.const 31)
       )
     )
   )
@@ -37,14 +37,14 @@
   )
   (func $load_s_i1_i64 (param $0 i32) (result i64)
     (return
-      (i64.shr_s
-        (i64.shl
+      (i64.sub
+        (i64.const 0)
+        (i64.and
           (i64.load8_u
             (get_local $0)
           )
-          (i64.const 63)
+          (i64.const 1)
         )
-        (i64.const 63)
       )
     )
   )

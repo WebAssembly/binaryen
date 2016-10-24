@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20100827-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20100827-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -9,34 +9,36 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 0
 	block   	
 	block   	
 	i32.load8_u	$push0=, 0($0)
-	i32.eqz 	$push7=, $pop0
-	br_if   	0, $pop7        # 0: down to label1
+	i32.eqz 	$push8=, $pop0
+	br_if   	0, $pop8        # 0: down to label1
 # BB#1:                                 # %if.end.preheader
 	i32.const	$2=, 0
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.add 	$push4=, $0, $2
-	tee_local	$push3=, $1=, $pop4
-	i32.eqz 	$push8=, $pop3
-	br_if   	2, $pop8        # 2: down to label0
+	i32.add 	$push5=, $0, $2
+	tee_local	$push4=, $1=, $pop5
+	i32.eqz 	$push9=, $pop4
+	br_if   	2, $pop9        # 2: down to label0
 # BB#3:                                 # %if.end5
                                         #   in Loop: Header=BB0_2 Depth=1
+	i32.const	$push7=, 1
+	i32.add 	$2=, $2, $pop7
 	i32.const	$push6=, 1
-	i32.add 	$2=, $2, $pop6
-	i32.const	$push5=, 1
-	i32.add 	$push1=, $1, $pop5
+	i32.add 	$push1=, $1, $pop6
 	i32.load8_u	$push2=, 0($pop1)
 	br_if   	0, $pop2        # 0: up to label2
-.LBB0_4:                                # %do.end
+# BB#4:                                 # %do.end
 	end_loop
-	end_block                       # label1:
 	return  	$2
-.LBB0_5:                                # %if.then4
+.LBB0_5:
+	end_block                       # label1:
+	i32.const	$push3=, 0
+	return  	$pop3
+.LBB0_6:                                # %if.then4
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -75,5 +77,5 @@ main:                                   # @main
 	.size	.L.str, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
