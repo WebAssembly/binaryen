@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56799.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56799.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -55,34 +55,38 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.load	$1=, 4($0)
-	i32.const	$2=, 0
+	i32.load	$2=, 4($0)
+	block   	
 	block   	
 	i32.load	$push10=, 0($0)
-	tee_local	$push9=, $0=, $pop10
+	tee_local	$push9=, $1=, $pop10
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $pop9, $pop0
 	i32.eqz 	$push11=, $pop1
-	br_if   	0, $pop11       # 0: down to label1
+	br_if   	0, $pop11       # 0: down to label2
 # BB#1:                                 # %if.then
 	i32.const	$push3=, 0
 	i32.const	$push2=, 1
 	i32.store	lo($pop3), $pop2
-	copy_local	$2=, $1
-.LBB1_2:                                # %if.end
+	copy_local	$0=, $2
+	br      	1               # 1: down to label1
+.LBB1_2:
+	end_block                       # label2:
+	i32.const	$0=, 0
+.LBB1_3:                                # %if.end
 	end_block                       # label1:
 	block   	
 	i32.const	$push4=, 65536
-	i32.lt_u	$push5=, $0, $pop4
-	br_if   	0, $pop5        # 0: down to label2
-# BB#3:                                 # %if.then7
+	i32.lt_u	$push5=, $1, $pop4
+	br_if   	0, $pop5        # 0: down to label3
+# BB#4:                                 # %if.then7
 	i32.const	$push7=, 0
 	i32.const	$push6=, 1
 	i32.store	hi($pop7), $pop6
-	i32.add 	$2=, $2, $1
-.LBB1_4:                                # %if.end10
-	end_block                       # label2:
-	i32.add 	$push8=, $2, $1
+	i32.add 	$0=, $0, $2
+.LBB1_5:                                # %if.end10
+	end_block                       # label3:
+	i32.add 	$push8=, $0, $2
                                         # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end1:
@@ -107,6 +111,6 @@ lo:
 	.size	lo, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32
 	.functype	abort, void

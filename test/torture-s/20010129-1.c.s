@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010129-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010129-1.c"
 	.section	.text.baz1,"ax",@progbits
 	.hidden	baz1
 	.globl	baz1
@@ -65,96 +65,101 @@ baz3:                                   # @baz3
 foo:                                    # @foo
 	.param  	i32, i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push29=, 0
 	i32.const	$push28=, 0
-	i32.load	$push27=, baz1.l($pop28)
-	tee_local	$push26=, $9=, $pop27
-	i32.const	$push25=, 1
-	i32.add 	$push4=, $pop26, $pop25
-	i32.store	baz1.l($pop29), $pop4
+	i32.const	$push27=, 0
+	i32.load	$push26=, baz1.l($pop27)
+	tee_local	$push25=, $11=, $pop26
+	i32.const	$push24=, 1
+	i32.add 	$push3=, $pop25, $pop24
+	i32.store	baz1.l($pop28), $pop3
 	block   	
 	block   	
-	i32.ge_s	$push5=, $9, $1
-	br_if   	0, $pop5        # 0: down to label2
+	i32.ge_s	$push4=, $11, $1
+	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %if.then.lr.ph
-	i32.const	$push6=, 13834
-	i32.and 	$push7=, $2, $pop6
-	i32.const	$push36=, 0
-	i32.ne  	$push8=, $pop7, $pop36
-	i32.const	$push9=, 128
-	i32.and 	$push10=, $2, $pop9
-	i32.eqz 	$push11=, $pop10
+	i32.const	$push5=, 13834
+	i32.and 	$push6=, $2, $pop5
 	i32.const	$push35=, 0
-	i32.load	$push12=, bar($pop35)
-	i32.eqz 	$push13=, $pop12
-	i32.or  	$push34=, $pop11, $pop13
-	tee_local	$push33=, $4=, $pop34
-	i32.or  	$5=, $pop8, $pop33
-	i32.const	$push16=, 16
-	i32.and 	$3=, $2, $pop16
-	i32.const	$push32=, 2
-	i32.and 	$push1=, $2, $pop32
-	i32.const	$push31=, 0
-	i32.ne  	$6=, $pop1, $pop31
-	i32.const	$push15=, 16384
-	i32.and 	$push0=, $2, $pop15
-	i32.eqz 	$7=, $pop0
-	i32.const	$push14=, 13832
-	i32.and 	$push2=, $2, $pop14
+	i32.ne  	$push7=, $pop6, $pop35
+	i32.const	$push8=, 128
+	i32.and 	$push9=, $2, $pop8
+	i32.eqz 	$push10=, $pop9
+	i32.const	$push34=, 0
+	i32.load	$push11=, bar($pop34)
+	i32.eqz 	$push12=, $pop11
+	i32.or  	$push33=, $pop10, $pop12
+	tee_local	$push32=, $4=, $pop33
+	i32.or  	$5=, $pop7, $pop32
+	i32.const	$push15=, 16
+	i32.and 	$3=, $2, $pop15
+	i32.const	$push31=, 2
+	i32.and 	$push1=, $2, $pop31
 	i32.const	$push30=, 0
-	i32.ne  	$8=, $pop2, $pop30
-	i32.const	$10=, 0
+	i32.ne  	$8=, $pop1, $pop30
+	i32.const	$push14=, 16384
+	i32.and 	$push0=, $2, $pop14
+	i32.eqz 	$9=, $pop0
+	i32.const	$push13=, 13832
+	i32.and 	$push2=, $2, $pop13
+	i32.const	$push29=, 0
+	i32.ne  	$10=, $pop2, $pop29
+	i32.const	$2=, 0
 .LBB3_2:                                # %if.then
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
-	copy_local	$2=, $10
-	i32.const	$10=, 0
 	block   	
-	i32.or  	$push17=, $2, $3
-	i32.eqz 	$push45=, $pop17
-	br_if   	0, $pop45       # 0: down to label4
+	block   	
+	block   	
+	i32.or  	$push16=, $2, $3
+	i32.eqz 	$push44=, $pop16
+	br_if   	0, $pop44       # 0: down to label6
 # BB#3:                                 # %if.end17
                                         #   in Loop: Header=BB3_2 Depth=1
-	i32.const	$push37=, 1
-	i32.select	$10=, $2, $pop37, $2
-	block   	
-	br_if   	0, $3           # 0: down to label5
+	i32.const	$push36=, 1
+	i32.select	$6=, $2, $pop36, $2
+	br_if   	1, $3           # 1: down to label5
 # BB#4:                                 # %land.lhs.true25
                                         #   in Loop: Header=BB3_2 Depth=1
-	br_if   	1, $5           # 1: down to label4
-	br      	4               # 4: down to label1
-.LBB3_5:                                # %land.lhs.true20
+	copy_local	$2=, $6
+	br_if   	2, $5           # 2: down to label4
+	br      	5               # 5: down to label1
+.LBB3_5:                                #   in Loop: Header=BB3_2 Depth=1
+	end_block                       # label6:
+	i32.const	$2=, 0
+	br      	1               # 1: down to label4
+.LBB3_6:                                # %land.lhs.true20
                                         #   in Loop: Header=BB3_2 Depth=1
 	end_block                       # label5:
-	i32.eqz 	$push3=, $2
-	i32.const	$push38=, 1
-	i32.xor 	$push18=, $pop3, $pop38
-	i32.or  	$push19=, $7, $pop18
-	i32.and 	$push20=, $6, $pop19
-	i32.or  	$push21=, $8, $pop20
-	i32.or  	$push22=, $4, $pop21
-	i32.eqz 	$push46=, $pop22
-	br_if   	3, $pop46       # 3: down to label1
-.LBB3_6:                                # %while.cond.backedge
+	i32.eqz 	$7=, $2
+	copy_local	$2=, $6
+	i32.const	$push37=, 1
+	i32.xor 	$push17=, $7, $pop37
+	i32.or  	$push18=, $9, $pop17
+	i32.and 	$push19=, $8, $pop18
+	i32.or  	$push20=, $10, $pop19
+	i32.or  	$push21=, $4, $pop20
+	i32.eqz 	$push45=, $pop21
+	br_if   	3, $pop45       # 3: down to label1
+.LBB3_7:                                # %while.cond.backedge
                                         #   in Loop: Header=BB3_2 Depth=1
 	end_block                       # label4:
-	i32.const	$push43=, 0
-	i32.const	$push42=, 2
-	i32.add 	$push23=, $9, $pop42
-	i32.store	baz1.l($pop43), $pop23
-	i32.const	$push41=, 1
-	i32.add 	$push40=, $9, $pop41
-	tee_local	$push39=, $9=, $pop40
-	i32.lt_s	$push24=, $pop39, $1
-	br_if   	0, $pop24       # 0: up to label3
-.LBB3_7:                                # %while.end
+	i32.const	$push42=, 0
+	i32.const	$push41=, 2
+	i32.add 	$push22=, $11, $pop41
+	i32.store	baz1.l($pop42), $pop22
+	i32.const	$push40=, 1
+	i32.add 	$push39=, $11, $pop40
+	tee_local	$push38=, $11=, $pop39
+	i32.lt_s	$push23=, $pop38, $1
+	br_if   	0, $pop23       # 0: up to label3
+.LBB3_8:                                # %while.end
 	end_loop
 	end_block                       # label2:
-	i32.const	$push44=, 0
-	return  	$pop44
-.LBB3_8:                                # %for.body
+	i32.const	$push43=, 0
+	return  	$pop43
+.LBB3_9:                                # %for.body
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -210,6 +215,6 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

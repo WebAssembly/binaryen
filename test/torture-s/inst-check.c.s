@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/inst-check.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/inst-check.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -7,9 +7,7 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
 	block   	
 	i32.const	$push0=, 1
 	i32.lt_s	$push1=, $0, $pop0
@@ -26,11 +24,12 @@ f:                                      # @f
 	i64.shr_u	$push10=, $pop8, $pop9
 	i32.wrap/i64	$push11=, $pop10
 	i32.add 	$push12=, $pop11, $0
-	i32.const	$push13=, -1
-	i32.add 	$1=, $pop12, $pop13
-.LBB0_2:                                # %for.end
+	i32.const	$push15=, -1
+	i32.add 	$push13=, $pop12, $pop15
+	return  	$pop13
+.LBB0_2:
 	end_block                       # label0:
-	copy_local	$push14=, $1
+	i32.const	$push14=, 0
                                         # fallthrough-return: $pop14
 	.endfunc
 .Lfunc_end0:
@@ -51,5 +50,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

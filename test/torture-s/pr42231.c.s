@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42231.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42231.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -42,22 +42,25 @@ CallFunctionRec:                        # @CallFunctionRec
 	.local  	i32
 # BB#0:                                 # %entry
 	call    	storemax@FUNCTION, $0
-	i32.const	$1=, 0
+	block   	
 	block   	
 	i32.eqz 	$push5=, $0
-	br_if   	0, $pop5        # 0: down to label2
+	br_if   	0, $pop5        # 0: down to label3
 # BB#1:                                 # %if.end
 	i32.const	$1=, 1
 	i32.const	$push0=, 9
 	i32.gt_s	$push1=, $0, $pop0
-	br_if   	0, $pop1        # 0: down to label2
+	br_if   	1, $pop1        # 1: down to label2
 # BB#2:                                 # %if.then1
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $0, $pop2
 	i32.call	$drop=, CallFunctionRec@FUNCTION, $pop3
 	i32.const	$push4=, 1
 	return  	$pop4
-.LBB1_3:                                # %return
+.LBB1_3:
+	end_block                       # label3:
+	i32.const	$1=, 0
+.LBB1_4:                                # %return
 	end_block                       # label2:
 	copy_local	$push6=, $1
                                         # fallthrough-return: $pop6
@@ -74,12 +77,12 @@ storemax:                               # @storemax
 	i32.const	$push2=, 0
 	i32.load	$push0=, max($pop2)
 	i32.ge_s	$push1=, $pop0, $0
-	br_if   	0, $pop1        # 0: down to label3
+	br_if   	0, $pop1        # 0: down to label4
 # BB#1:                                 # %if.then
 	i32.const	$push3=, 0
 	i32.store	max($pop3), $0
 .LBB2_2:                                # %if.end
-	end_block                       # label3:
+	end_block                       # label4:
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -93,5 +96,5 @@ max:
 	.size	max, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

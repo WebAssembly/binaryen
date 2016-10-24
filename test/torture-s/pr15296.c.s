@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15296.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15296.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -17,61 +17,60 @@ f:                                      # @f
 .LBB0_2:                                # %if.end.split
 	end_loop
 	end_block                       # label0:
-	i32.const	$4=, 0
-	block   	
-	block   	
 	block   	
 	block   	
 	block   	
 	i32.eqz 	$push16=, $3
-	br_if   	0, $pop16       # 0: down to label6
+	br_if   	0, $pop16       # 0: down to label4
 # BB#3:                                 # %if.end3
-	copy_local	$4=, $5
-	i32.eqz 	$push17=, $5
-	br_if   	1, $pop17       # 1: down to label5
-.LBB0_4:                                # %l3
-	end_block                       # label6:
-	i32.const	$push4=, 4
-	i32.add 	$push5=, $1, $pop4
-	i32.store	0($pop5), $4
-	i32.const	$push6=, 8
-	i32.add 	$push7=, $1, $pop6
-	i32.load	$push13=, 0($pop7)
-	tee_local	$push12=, $3=, $pop13
-	br_if   	1, $pop12       # 1: down to label4
-# BB#5:                                 # %if.end19
-	i32.eqz 	$push18=, $4
-	br_if   	2, $pop18       # 2: down to label3
-# BB#6:                                 # %if.end24
-	i32.const	$push8=, 8
-	i32.add 	$push9=, $4, $pop8
-	i32.store	0($pop9), $3
-	return
-.LBB0_7:                                # %if.end6
-	end_block                       # label5:
+	br_if   	1, $5           # 1: down to label3
+# BB#4:                                 # %if.end6
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $1, $pop2
 	i32.load	$push0=, 0($1)
-	i32.load	$push15=, 0($pop0)
-	tee_local	$push14=, $3=, $pop15
-	i32.store	0($pop3), $pop14
-	br_if   	2, $3           # 2: down to label2
-# BB#8:
+	i32.load	$push13=, 0($pop0)
+	tee_local	$push12=, $5=, $pop13
+	i32.store	0($pop3), $pop12
+	br_if   	2, $5           # 2: down to label2
+# BB#5:
 	i32.const	$push10=, 12
 	i32.const	$push11=, -1
 	i32.store	0($pop10), $pop11
 	return
-.LBB0_9:                                # %if.then18
+.LBB0_6:
 	end_block                       # label4:
-	call    	g@FUNCTION, $3, $3
-	unreachable
-.LBB0_10:                               # %if.then23
+	i32.const	$5=, 0
+.LBB0_7:                                # %l3
 	end_block                       # label3:
-	call    	g@FUNCTION, $3, $3
+	i32.const	$push4=, 4
+	i32.add 	$push5=, $1, $pop4
+	i32.store	0($pop5), $5
+	block   	
+	block   	
+	i32.const	$push6=, 8
+	i32.add 	$push7=, $1, $pop6
+	i32.load	$push15=, 0($pop7)
+	tee_local	$push14=, $3=, $pop15
+	br_if   	0, $pop14       # 0: down to label6
+# BB#8:                                 # %if.end19
+	i32.eqz 	$push17=, $5
+	br_if   	1, $pop17       # 1: down to label5
+# BB#9:                                 # %if.end24
+	i32.const	$push8=, 8
+	i32.add 	$push9=, $5, $pop8
+	i32.store	0($pop9), $3
+	return
+.LBB0_10:                               # %if.then18
+	end_block                       # label6:
+	call    	g@FUNCTION, $5, $5
 	unreachable
-.LBB0_11:                               # %if.then11
+.LBB0_11:                               # %if.then23
+	end_block                       # label5:
+	call    	g@FUNCTION, $5, $5
+	unreachable
+.LBB0_12:                               # %if.then11
 	end_block                       # label2:
-	call    	g@FUNCTION, $3, $3
+	call    	g@FUNCTION, $5, $5
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -208,6 +207,6 @@ main:                                   # @main
 	.size	.Lmain.s, 20
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

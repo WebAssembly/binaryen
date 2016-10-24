@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49419.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49419.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -9,7 +9,6 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$6=, 0
 	block   	
 	block   	
 	i32.const	$push0=, -1
@@ -17,8 +16,8 @@ foo:                                    # @foo
 	br_if   	0, $pop1        # 0: down to label1
 # BB#1:                                 # %for.cond.preheader
 	i32.const	$5=, 0
-	i32.const	$push23=, 0
-	i32.load	$4=, t($pop23)
+	i32.const	$push25=, 0
+	i32.load	$4=, t($pop25)
 	block   	
 	i32.const	$push3=, 1
 	i32.lt_s	$push4=, $3, $pop3
@@ -36,20 +35,20 @@ foo:                                    # @foo
 .LBB0_4:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
-	i32.const	$push26=, 1
-	i32.add 	$push25=, $5, $pop26
-	tee_local	$push24=, $5=, $pop25
-	i32.ge_s	$push10=, $pop24, $3
+	i32.const	$push28=, 1
+	i32.add 	$push27=, $5, $pop28
+	tee_local	$push26=, $5=, $pop27
+	i32.ge_s	$push10=, $pop26, $3
 	br_if   	1, $pop10       # 1: down to label2
 # BB#5:                                 # %for.body
                                         #   in Loop: Header=BB0_4 Depth=1
-	i32.const	$push30=, 12
-	i32.mul 	$push11=, $6, $pop30
+	i32.const	$push32=, 12
+	i32.mul 	$push11=, $6, $pop32
 	i32.add 	$push12=, $4, $pop11
-	i32.load	$push29=, 4($pop12)
-	tee_local	$push28=, $6=, $pop29
-	i32.const	$push27=, 12
-	i32.mul 	$push13=, $pop28, $pop27
+	i32.load	$push31=, 4($pop12)
+	tee_local	$push30=, $6=, $pop31
+	i32.const	$push29=, 12
+	i32.mul 	$push13=, $pop30, $pop29
 	i32.add 	$push14=, $4, $pop13
 	i32.load	$push9=, 0($pop14)
 	i32.eq  	$push15=, $pop9, $1
@@ -61,42 +60,44 @@ foo:                                    # @foo
 	br_if   	1, $pop16       # 1: down to label0
 # BB#7:                                 # %if.end7
 	block   	
-	i32.const	$push31=, 1
-	i32.lt_s	$push17=, $5, $pop31
+	i32.const	$push33=, 1
+	i32.lt_s	$push17=, $5, $pop33
 	br_if   	0, $pop17       # 0: down to label4
 # BB#8:                                 # %for.body10.preheader
-	i32.const	$push32=, 1
-	i32.add 	$3=, $5, $pop32
+	i32.const	$push34=, 1
+	i32.add 	$3=, $5, $pop34
 	i32.const	$push18=, 2
 	i32.shl 	$push19=, $5, $pop18
 	i32.add 	$6=, $2, $pop19
 .LBB0_9:                                # %for.body10
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label5:
-	i32.const	$push40=, 12
-	i32.mul 	$push20=, $0, $pop40
-	i32.add 	$push39=, $4, $pop20
-	tee_local	$push38=, $0=, $pop39
-	i32.load	$push21=, 8($pop38)
+	i32.const	$push42=, 12
+	i32.mul 	$push20=, $0, $pop42
+	i32.add 	$push41=, $4, $pop20
+	tee_local	$push40=, $0=, $pop41
+	i32.load	$push21=, 8($pop40)
 	i32.store	0($6), $pop21
-	i32.const	$push37=, -4
-	i32.add 	$6=, $6, $pop37
+	i32.const	$push39=, -4
+	i32.add 	$6=, $6, $pop39
 	i32.load	$0=, 4($0)
-	i32.const	$push36=, -1
-	i32.add 	$push35=, $3, $pop36
-	tee_local	$push34=, $3=, $pop35
-	i32.const	$push33=, 1
-	i32.gt_s	$push22=, $pop34, $pop33
+	i32.const	$push38=, -1
+	i32.add 	$push37=, $3, $pop38
+	tee_local	$push36=, $3=, $pop37
+	i32.const	$push35=, 1
+	i32.gt_s	$push22=, $pop36, $pop35
 	br_if   	0, $pop22       # 0: up to label5
 .LBB0_10:                               # %for.end16
 	end_loop
 	end_block                       # label4:
-	i32.const	$push41=, 1
-	i32.add 	$6=, $5, $pop41
 	i32.store	0($2), $0
-.LBB0_11:                               # %cleanup
+	i32.const	$push43=, 1
+	i32.add 	$push24=, $5, $pop43
+	return  	$pop24
+.LBB0_11:
 	end_block                       # label1:
-	return  	$6
+	i32.const	$push23=, 0
+	return  	$pop23
 .LBB0_12:                               # %if.then6
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -266,5 +267,5 @@ t:
 	.size	t, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

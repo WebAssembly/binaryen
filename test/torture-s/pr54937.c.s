@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr54937.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr54937.c"
 	.section	.text.t,"ax",@progbits
 	.hidden	t
 	.globl	t
@@ -24,9 +24,9 @@ t:                                      # @t
 # BB#3:                                 # %if.then
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push5=, 0
-	i32.load	$push2=, terminate_me($pop5)
 	i32.const	$push4=, 0
-	call_indirect	$pop2, $pop4
+	i32.load	$push2=, terminate_me($pop4)
+	call_indirect	$pop5, $pop2
 .LBB0_4:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label2:
@@ -86,6 +86,6 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32
 	.functype	abort, void
