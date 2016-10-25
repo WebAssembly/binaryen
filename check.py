@@ -445,7 +445,8 @@ for t in tests:
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
 if len(requested) == 0:
-  BLACKLIST = ['memory.wast'] # FIXME we support old and new memory formats, for now, until 0xc, and so can't pass this old-style test
+  BLACKLIST = ['memory.wast', 'binary.wast'] # FIXME we support old and new memory formats, for now, until 0xc, and so can't pass this old-style test.
+  # FIXME to update the spec to 0xd, we need to implement (register "name") for import.wast
   spec_tests = [os.path.join('spec', t) for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'spec'))) if t not in BLACKLIST]
 else:
   spec_tests = requested[:]
