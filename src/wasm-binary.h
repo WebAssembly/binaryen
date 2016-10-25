@@ -270,7 +270,7 @@ namespace BinaryConsts {
 
 enum Meta {
   Magic = 0x6d736100,
-  Version = 0x0c
+  Version = 0x0d
 };
 
 enum Section {
@@ -288,8 +288,18 @@ enum Section {
   Data = 11
 };
 
-enum ElementType {
-  AnyFunc = 0x20
+enum EncodedType {
+  // value_type
+  i32 = -0x1, // 0x7f
+  i64 = -0x2, // 0x7e
+  f32 = -0x3, // 0x7d
+  f64 = -0x4, // 0x7c
+  // elem_type
+  AnyFunc = -0x10, // 0x70
+  // func_type form
+  Func = -0x20, // 0x60
+  // block_type
+  Empty = -0x40 // 0x40
 };
 
 namespace UserSections {
@@ -495,22 +505,21 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum TypeForms {
-  Basic = 0x40
-};
-
 } // namespace BinaryConsts
 
 
-inline int8_t binaryWasmType(WasmType type) {
+inline S32LEB binaryWasmType(WasmType type) {
+  int ret;
   switch (type) {
-    case none: return 0;
-    case i32: return 1;
-    case i64: return 2;
-    case f32: return 3;
-    case f64: return 4;
+    // None only used for block signatures. TODO: Separate out?
+    case none: ret = BinaryConsts::EncodedType::Empty; break;
+    case i32: ret = BinaryConsts::EncodedType::i32; break;
+    case i64: ret = BinaryConsts::EncodedType::i64; break;
+    case f32: ret = BinaryConsts::EncodedType::f32; break;
+    case f64: ret = BinaryConsts::EncodedType::f64; break;
     default: abort();
   }
+  return S32LEB(ret);
 }
 
 class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {

@@ -103,7 +103,7 @@ void WasmBinaryWriter::writeTypes() {
   o << U32LEB(wasm->functionTypes.size());
   for (auto& type : wasm->functionTypes) {
     if (debug) std::cerr << "write one" << std::endl;
-    o << int8_t(BinaryConsts::TypeForms::Basic);
+    o << S32LEB(BinaryConsts::EncodedType::Func);
     o << U32LEB(type->params.size());
     for (auto param : type->params) {
       o << binaryWasmType(param);
@@ -139,7 +139,7 @@ void WasmBinaryWriter::writeImports() {
     switch (import->kind) {
       case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
       case ExternalKind::Table: {
-        o << U32LEB(BinaryConsts::ElementType::AnyFunc);
+        o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
         writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
         break;
       }
@@ -344,7 +344,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   if (debug) std::cerr << "== writeFunctionTableDeclaration" << std::endl;
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
-  o << U32LEB(BinaryConsts::ElementType::AnyFunc);
+  o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
   writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
   finishSection(start);
 }
@@ -976,13 +976,13 @@ int64_t WasmBinaryBuilder::getS64LEB() {
 }
 
 WasmType WasmBinaryBuilder::getWasmType() {
-  int8_t type = getInt8();
+  int type = getS32LEB();
   switch (type) {
-    case 0: return none;
-    case 1: return i32;
-    case 2: return i64;
-    case 3: return f32;
-    case 4: return f64;
+    case BinaryConsts::EncodedType::Empty: return none;//abort?
+    case BinaryConsts::EncodedType::i32: return i32;
+    case BinaryConsts::EncodedType::i64: return i64;
+    case BinaryConsts::EncodedType::f32: return f32;
+    case BinaryConsts::EncodedType::f64: return f64;
     default: abort();
   }
 }
@@ -1060,9 +1060,9 @@ void WasmBinaryBuilder::readSignatures() {
   for (size_t i = 0; i < numTypes; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto curr = new FunctionType;
-    auto form = getU32LEB();
+    auto form = getS32LEB();
     WASM_UNUSED(form);
-    assert(form == BinaryConsts::TypeForms::Basic);
+    assert(form == BinaryConsts::EncodedType::Func);
     size_t numParams = getU32LEB();
     if (debug) std::cerr << "num params: " << numParams << std::endl;
     for (size_t j = 0; j < numParams; j++) {
@@ -1120,9 +1120,9 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Table: {
-        auto elementType = getU32LEB();
+        auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
-        if (elementType != BinaryConsts::ElementType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
+        if (elementType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
         wasm.table.exists = true;
         wasm.table.imported = true;
         getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
@@ -1358,8 +1358,8 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
   if (numTables != 1) throw ParseException("Only 1 table definition allowed in MVP");
   if (wasm.table.exists) throw ParseException("Table cannot be both imported and defined");
   wasm.table.exists = true;
-  auto elemType = getU32LEB();
-  if (elemType != BinaryConsts::ElementType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");
+  auto elemType = getS32LEB();
+  if (elemType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");
   getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
 }
 
@@ -1535,7 +1535,7 @@ WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset)
 }
 
 void WasmBinaryBuilder::visitBreak(Break *curr, uint8_t code) {
-  if (debug) std::cerr << "zz node: Break" << std::endl;
+  if (debug) std::cerr << "zz node: Break, code "<< int32_t(code) << std::endl;
   BreakTarget target = getBreakTarget(getU32LEB());
   curr->name = target.name;
   if (code == BinaryConsts::BrIf) curr->condition = popExpression();
@@ -1693,6 +1693,7 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code) {
 
 bool WasmBinaryBuilder::maybeVisitConst(Expression*& out, uint8_t code) {
   Const* curr;
+  if (debug) std::cerr << "zz node: Const, code " << code << std::endl;
   switch (code) {
     case BinaryConsts::I32Const: curr = allocator.alloc<Const>(); curr->value = Literal(getS32LEB()); break;
     case BinaryConsts::I64Const: curr = allocator.alloc<Const>(); curr->value = Literal(getS64LEB()); break;
@@ -1702,7 +1703,7 @@ bool WasmBinaryBuilder::maybeVisitConst(Expression*& out, uint8_t code) {
   }
   curr->type = curr->value.type;
   out = curr;
-  if (debug) std::cerr << "zz node: Const" << std::endl;
+
   return true;
 }
 
