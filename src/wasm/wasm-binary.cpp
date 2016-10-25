@@ -533,7 +533,9 @@ void WasmBinaryWriter::visitCallIndirect(CallIndirect *curr) {
     recurse(operand);
   }
   recurse(curr->target);
-  o << int8_t(BinaryConsts::CallIndirect) << U32LEB(getFunctionTypeIndex(curr->fullType));
+  o << int8_t(BinaryConsts::CallIndirect)
+    << U32LEB(getFunctionTypeIndex(curr->fullType))
+    << U32LEB(0); // Reserved flags field
 }
 
 void WasmBinaryWriter::visitGetLocal(GetLocal *curr) {
@@ -822,6 +824,7 @@ void WasmBinaryWriter::visitHost(Host *curr) {
     }
     default: abort();
   }
+  o << U32LEB(0); // Reserved flags field
 }
 
 void WasmBinaryWriter::visitNop(Nop *curr) {
@@ -978,7 +981,8 @@ int64_t WasmBinaryBuilder::getS64LEB() {
 WasmType WasmBinaryBuilder::getWasmType() {
   int type = getS32LEB();
   switch (type) {
-    case BinaryConsts::EncodedType::Empty: return none;//abort?
+    // None only used for block signatures. TODO: Separate out?
+    case BinaryConsts::EncodedType::Empty: return none;
     case BinaryConsts::EncodedType::i32: return i32;
     case BinaryConsts::EncodedType::i64: return i64;
     case BinaryConsts::EncodedType::f32: return f32;
@@ -1587,6 +1591,8 @@ Expression* WasmBinaryBuilder::visitCall() {
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
   auto* fullType = wasm.functionTypes.at(getU32LEB()).get();
+  auto flags = getU32LEB();
+  if (flags != 0) throw ParseException("Invalid flags field in call_indirect");
   curr->fullType = fullType->name;
   auto num = fullType->params.size();
   curr->operands.resize(num);
@@ -1866,6 +1872,8 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
     default: return false;
   }
   if (debug) std::cerr << "zz node: Host" << std::endl;
+  auto flags = getU32LEB();
+  if (flags != 0) throw ParseException("Invalid flags field on grow_memory/current_memory");
   curr->finalize();
   out = curr;
   return true;
