@@ -1591,8 +1591,8 @@ Expression* WasmBinaryBuilder::visitCall() {
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
   auto* fullType = wasm.functionTypes.at(getU32LEB()).get();
-  auto flags = getU32LEB();
-  if (flags != 0) throw ParseException("Invalid flags field in call_indirect");
+  auto reserved = getU32LEB();
+  if (reserved != 0) throw ParseException("Invalid flags field in call_indirect");
   curr->fullType = fullType->name;
   auto num = fullType->params.size();
   curr->operands.resize(num);
@@ -1872,8 +1872,8 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
     default: return false;
   }
   if (debug) std::cerr << "zz node: Host" << std::endl;
-  auto flags = getU32LEB();
-  if (flags != 0) throw ParseException("Invalid flags field on grow_memory/current_memory");
+  auto reserved = getU32LEB();
+  if (reserved != 0) throw ParseException("Invalid reserved field on grow_memory/current_memory");
   curr->finalize();
   out = curr;
   return true;
