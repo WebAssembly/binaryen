@@ -272,8 +272,8 @@
         (get_local $0)
       )
       (i32.add
-        (i32.const 1)
         (i32.const 8)
+        (i32.const 1)
       )
     )
   )
@@ -281,8 +281,8 @@
     (call_indirect $FUNCSIG$vf
       (get_local $0)
       (i32.add
-        (i32.const 1)
         (i32.const 8)
+        (i32.const 1)
       )
     )
   )
@@ -319,8 +319,8 @@
     (call_indirect $FUNCSIG$vi
       (i32.const 1)
       (i32.add
-        (i32.const 1)
         (i32.const 16)
+        (i32.const 1)
       )
     )
   )

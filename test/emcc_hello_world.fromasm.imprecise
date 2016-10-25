@@ -3378,11 +3378,11 @@
                           (i32.load8_s
                             (i32.add
                               (i32.add
-                                (i32.const 3611)
                                 (i32.mul
                                   (get_local $10)
                                   (i32.const 58)
                                 )
+                                (i32.const 3611)
                               )
                               (get_local $11)
                             )
@@ -5842,17 +5842,14 @@
                                       )
                                     )
                                     (set_local $29
-                                      (i32.and
-                                        (i32.ne
-                                          (tee_local $31
-                                            (i32.or
-                                              (get_local $5)
-                                              (get_local $17)
-                                            )
+                                      (i32.ne
+                                        (tee_local $31
+                                          (i32.or
+                                            (get_local $5)
+                                            (get_local $17)
                                           )
-                                          (i32.const 0)
                                         )
-                                        (i32.const 1)
+                                        (i32.const 0)
                                       )
                                     )
                                     (set_local $19
@@ -6770,11 +6767,11 @@
                                 )
                                 (set_local $10
                                   (i32.add
-                                    (i32.const 4091)
                                     (i32.shr_s
                                       (get_local $17)
                                       (i32.const 4)
                                     )
+                                    (i32.const 4091)
                                   )
                                 )
                                 (br $jumpthreading$inner$7)
@@ -8120,7 +8117,6 @@
                             (i32.add
                               (tee_local $3
                                 (i32.add
-                                  (i32.const 216)
                                   (i32.shl
                                     (i32.shl
                                       (tee_local $4
@@ -8139,6 +8135,7 @@
                                     )
                                     (i32.const 2)
                                   )
+                                  (i32.const 216)
                                 )
                               )
                               (i32.const 8)
@@ -8301,7 +8298,6 @@
                                 (i32.add
                                   (tee_local $2
                                     (i32.add
-                                      (i32.const 216)
                                       (i32.shl
                                         (i32.shl
                                           (tee_local $5
@@ -8381,6 +8377,7 @@
                                         )
                                         (i32.const 2)
                                       )
+                                      (i32.const 216)
                                     )
                                   )
                                   (i32.const 8)
@@ -8501,7 +8498,6 @@
                       )
                       (set_local $2
                         (i32.add
-                          (i32.const 216)
                           (i32.shl
                             (i32.shl
                               (tee_local $0
@@ -8514,6 +8510,7 @@
                             )
                             (i32.const 2)
                           )
+                          (i32.const 216)
                         )
                       )
                       (if
@@ -8992,7 +8989,6 @@
                             (i32.load
                               (tee_local $0
                                 (i32.add
-                                  (i32.const 480)
                                   (i32.shl
                                     (tee_local $1
                                       (i32.load offset=28
@@ -9001,6 +8997,7 @@
                                     )
                                     (i32.const 2)
                                   )
+                                  (i32.const 480)
                                 )
                               )
                             )
@@ -9212,7 +9209,6 @@
                           )
                           (set_local $2
                             (i32.add
-                              (i32.const 216)
                               (i32.shl
                                 (i32.shl
                                   (tee_local $0
@@ -9225,6 +9221,7 @@
                                 )
                                 (i32.const 2)
                               )
+                              (i32.const 216)
                             )
                           )
                           (if
@@ -10067,7 +10064,6 @@
                                 (i32.load
                                   (tee_local $0
                                     (i32.add
-                                      (i32.const 480)
                                       (i32.shl
                                         (tee_local $1
                                           (i32.load offset=28
@@ -10076,6 +10072,7 @@
                                         )
                                         (i32.const 2)
                                       )
+                                      (i32.const 480)
                                     )
                                   )
                                 )
@@ -10288,7 +10285,6 @@
                               (block
                                 (set_local $2
                                   (i32.add
-                                    (i32.const 216)
                                     (i32.shl
                                       (i32.shl
                                         (get_local $0)
@@ -10296,6 +10292,7 @@
                                       )
                                       (i32.const 2)
                                     )
+                                    (i32.const 216)
                                   )
                                 )
                                 (if
@@ -10378,7 +10375,6 @@
                             )
                             (set_local $2
                               (i32.add
-                                (i32.const 480)
                                 (i32.shl
                                   (tee_local $3
                                     (if i32
@@ -10479,6 +10475,7 @@
                                   )
                                   (i32.const 2)
                                 )
+                                (i32.const 480)
                               )
                             )
                             (i32.store offset=28
@@ -11814,7 +11811,6 @@
                                               )
                                               (tee_local $0
                                                 (i32.add
-                                                  (i32.const 216)
                                                   (i32.shl
                                                     (i32.shl
                                                       (get_local $1)
@@ -11822,6 +11818,7 @@
                                                     )
                                                     (i32.const 2)
                                                   )
+                                                  (i32.const 216)
                                                 )
                                               )
                                             )
@@ -12102,7 +12099,6 @@
                                               (i32.load
                                                 (tee_local $0
                                                   (i32.add
-                                                    (i32.const 480)
                                                     (i32.shl
                                                       (tee_local $1
                                                         (i32.load offset=28
@@ -12111,6 +12107,7 @@
                                                       )
                                                       (i32.const 2)
                                                     )
+                                                    (i32.const 480)
                                                   )
                                                 )
                                               )
@@ -12305,7 +12302,6 @@
                           (block
                             (set_local $2
                               (i32.add
-                                (i32.const 216)
                                 (i32.shl
                                   (i32.shl
                                     (get_local $0)
@@ -12313,6 +12309,7 @@
                                   )
                                   (i32.const 2)
                                 )
+                                (i32.const 216)
                               )
                             )
                             (block $do-once63
@@ -12400,7 +12397,6 @@
                         )
                         (set_local $2
                           (i32.add
-                            (i32.const 480)
                             (i32.shl
                               (tee_local $3
                                 (block $do-once65 i32
@@ -12507,6 +12503,7 @@
                               )
                               (i32.const 2)
                             )
+                            (i32.const 480)
                           )
                         )
                         (i32.store offset=28
@@ -13002,7 +12999,6 @@
                   (block
                     (set_local $3
                       (i32.add
-                        (i32.const 216)
                         (i32.shl
                           (i32.shl
                             (get_local $1)
@@ -13010,6 +13006,7 @@
                           )
                           (i32.const 2)
                         )
+                        (i32.const 216)
                       )
                     )
                     (if
@@ -13092,7 +13089,6 @@
                 )
                 (set_local $3
                   (i32.add
-                    (i32.const 480)
                     (i32.shl
                       (tee_local $4
                         (if i32
@@ -13193,6 +13189,7 @@
                       )
                       (i32.const 2)
                     )
+                    (i32.const 480)
                   )
                 )
                 (i32.store offset=28
@@ -13460,7 +13457,6 @@
               (i32.store offset=12
                 (tee_local $4
                   (i32.add
-                    (i32.const 216)
                     (i32.shl
                       (i32.shl
                         (get_local $3)
@@ -13468,6 +13464,7 @@
                       )
                       (i32.const 2)
                     )
+                    (i32.const 216)
                   )
                 )
                 (get_local $4)
@@ -13817,7 +13814,6 @@
                   )
                   (tee_local $3
                     (i32.add
-                      (i32.const 216)
                       (i32.shl
                         (i32.shl
                           (get_local $5)
@@ -13825,6 +13821,7 @@
                         )
                         (i32.const 2)
                       )
+                      (i32.const 216)
                     )
                   )
                 )
@@ -14109,7 +14106,6 @@
                   (i32.load
                     (tee_local $4
                       (i32.add
-                        (i32.const 480)
                         (i32.shl
                           (tee_local $5
                             (i32.load offset=28
@@ -14118,6 +14114,7 @@
                           )
                           (i32.const 2)
                         )
+                        (i32.const 480)
                       )
                     )
                   )
@@ -14481,7 +14478,6 @@
                   )
                   (tee_local $0
                     (i32.add
-                      (i32.const 216)
                       (i32.shl
                         (i32.shl
                           (get_local $3)
@@ -14489,6 +14485,7 @@
                         )
                         (i32.const 2)
                       )
+                      (i32.const 216)
                     )
                   )
                 )
@@ -14768,7 +14765,6 @@
                       (i32.load
                         (tee_local $0
                           (i32.add
-                            (i32.const 480)
                             (i32.shl
                               (tee_local $3
                                 (i32.load offset=28
@@ -14777,6 +14773,7 @@
                               )
                               (i32.const 2)
                             )
+                            (i32.const 480)
                           )
                         )
                       )
@@ -14971,7 +14968,6 @@
       (block
         (set_local $1
           (i32.add
-            (i32.const 216)
             (i32.shl
               (i32.shl
                 (get_local $0)
@@ -14979,6 +14975,7 @@
               )
               (i32.const 2)
             )
+            (i32.const 216)
           )
         )
         (if
@@ -15061,7 +15058,6 @@
     )
     (set_local $4
       (i32.add
-        (i32.const 480)
         (i32.shl
           (tee_local $5
             (if i32
@@ -15162,6 +15158,7 @@
           )
           (i32.const 2)
         )
+        (i32.const 480)
       )
     )
     (i32.store offset=28

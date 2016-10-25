@@ -25,6 +25,7 @@
 #include <wasm-s-parser.h>
 #include <support/threads.h>
 #include <ast_utils.h>
+#include <ast/properties.h>
 
 namespace wasm {
 
@@ -197,6 +198,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
   // Optimizations that don't yet fit in the pattern DSL, but could be eventually maybe
   Expression* handOptimize(Expression* curr) {
     if (auto* binary = curr->dynCast<Binary>()) {
+      if (Properties::isSymmetric(binary)) {
+        // canonicalize a const to the second position
+        if (binary->left->is<Const>() && !binary->right->is<Const>()) {
+          std::swap(binary->left, binary->right);
+        }
+      }
       // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
       if (binary->op == BinaryOp::ShrSInt32 && binary->right->is<Const>()) {
         auto shifts = binary->right->cast<Const>()->value.geti32();
@@ -238,6 +245,9 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
                 load->signed_ = false;
                 return load;
               }
+            } else if (mask == 1 && Properties::emitsBoolean(binary->left)) {
+              // (bool) & 1 does not need the outer mask
+              return binary->left;
             }
           }
         }

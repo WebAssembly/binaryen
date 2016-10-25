@@ -275,4 +275,16 @@
     (drop (i32.and (i32.const 100) (i32.const -1)))
     (drop (i32.and (i32.const 100) (i32.const  1)))
   )
+  (func $and-pos1
+    (drop (i32.and (i32.eqz (i32.const 1000)) (i32.const 1)))
+    (drop (i32.and (i32.const 1) (i32.eqz (i32.const 1000))))
+    (drop (i32.and (i32.const 100) (i32.const 1)))
+    (drop (i32.and (i32.lt_s (i32.const 2000) (i32.const 3000)) (i32.const 1)))
+  )
+  (func $canonicalize-binary
+    (drop (i32.and (unreachable) (i32.const 1))) ;; ok to reorder
+    (drop (i32.and (i32.const 1) (unreachable)))
+    (drop (i32.div_s (unreachable) (i32.const 1))) ;; not ok
+    (drop (i32.div_s (i32.const 1) (unreachable)))
+  )
 )
