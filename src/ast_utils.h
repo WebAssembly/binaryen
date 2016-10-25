@@ -209,7 +209,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitUnreachable(Unreachable *curr) { branches = true; }
 };
 
-// Meausure the size of an AST
+// Measure the size of an AST
+
 struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>> {
   Index size = 0;
 
