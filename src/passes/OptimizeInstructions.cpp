@@ -25,6 +25,7 @@
 #include <wasm-s-parser.h>
 #include <support/threads.h>
 #include <ast_utils.h>
+#include <ast/cost.h>
 #include <ast/properties.h>
 
 namespace wasm {
@@ -251,6 +252,9 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
+        return conditionalizeExpensiveOnBitwise(binary);
+      } else if (binary->op == OrInt32) {
+        return conditionalizeExpensiveOnBitwise(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
@@ -359,6 +363,48 @@ private:
       }
     }
     return boolean;
+  }
+
+  //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2, and
+  //   expensive | cheap     can be turned into cheap     ? 1 : expensive,
+  // so that we can avoid one expensive computation, if it has no side effects.
+  Expression* conditionalizeExpensiveOnBitwise(Binary* binary) {
+    // this operation can increase code size, so don't always do it
+    auto& options = getPassRunner()->options;
+    if (options.optimizeLevel < 2 || options.shrinkLevel > 0) return nullptr;
+    const auto MIN_COST = 7;
+    assert(binary->op == AndInt32 || binary->op == OrInt32);
+    if (binary->right->is<Const>()) return nullptr; // trivial
+    // bitwise logical operator on two non-numerical values, check if they are boolean
+    auto* left = binary->left;
+    auto* right = binary->right;
+    if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) return nullptr;
+    auto leftEffects = EffectAnalyzer(left).hasSideEffects();
+    auto rightEffects = EffectAnalyzer(right).hasSideEffects();
+    if (leftEffects && rightEffects) return nullptr; // both must execute
+   // canonicalize with side effects, if any, happening on the left
+    if (rightEffects) {
+      if (CostAnalyzer(left).cost < MIN_COST) return nullptr; // avoidable code is too cheap
+      std::swap(left, right);
+    } else if (leftEffects) {
+      if (CostAnalyzer(right).cost < MIN_COST) return nullptr; // avoidable code is too cheap
+    } else {
+      // no side effects, reorder based on cost estimation
+      auto leftCost = CostAnalyzer(left).cost;
+      auto rightCost = CostAnalyzer(right).cost;
+      if (std::max(leftCost, rightCost) < MIN_COST) return nullptr; // avoidable code is too cheap
+      // canonicalize with expensive code on the right
+      if (leftCost > rightCost) {
+        std::swap(left, right);
+      }
+    }
+    // worth it! perform conditionalization
+    Builder builder(*getModule());
+    if (binary->op == OrInt32) {
+      return builder.makeIf(left, builder.makeConst(Literal(int32_t(1))), right);
+    } else { // &
+      return builder.makeIf(left, right, builder.makeConst(Literal(int32_t(0))));
+    }
   }
 };
 
