@@ -94,7 +94,7 @@ void Element::dump() {
 
 SExpressionParser::SExpressionParser(char* input) : input(input) {
   root = nullptr;
-  line = 0;
+  line = 1;
   lineStart = input;
   while (!root) { // keep parsing until we pass an initial comment
     root = parse();
@@ -138,7 +138,7 @@ void SExpressionParser::skipWhitespace() {
     if (input[0] == ';' && input[1] == ';') {
       while (input[0] && input[0] != '\n') input++;
       line++;
-      lineStart = input;
+      lineStart = ++input;
     } else if (input[0] == '(' && input[1] == ';') {
       // Skip nested block comments.
       input += 2;
@@ -1438,7 +1438,6 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
     if (inner[0]->str() == FUNC) {
       ex->kind = ExternalKind::Function;
     } else if (inner[0]->str() == MEMORY) {
-      if (!wasm.memory.exists) throw ParseException("memory exported but no memory");
       ex->kind = ExternalKind::Memory;
     } else if (inner[0]->str() == TABLE) {
       ex->kind = ExternalKind::Table;

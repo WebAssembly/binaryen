@@ -270,7 +270,7 @@ namespace BinaryConsts {
 
 enum Meta {
   Magic = 0x6d736100,
-  Version = 0x0c
+  Version = 0x0d
 };
 
 enum Section {
@@ -288,8 +288,18 @@ enum Section {
   Data = 11
 };
 
-enum ElementType {
-  AnyFunc = 0x20
+enum EncodedType {
+  // value_type
+  i32 = -0x1, // 0x7f
+  i64 = -0x2, // 0x7e
+  f32 = -0x3, // 0x7d
+  f64 = -0x4, // 0x7c
+  // elem_type
+  AnyFunc = -0x10, // 0x70
+  // func_type form
+  Func = -0x20, // 0x60
+  // block_type
+  Empty = -0x40 // 0x40
 };
 
 namespace UserSections {
@@ -297,182 +307,196 @@ extern const char* Name;
 }
 
 enum ASTNodes {
-  CurrentMemory = 0x3b,
-  GrowMemory = 0x39,
-  I32Add = 0x40,
-  I32Sub = 0x41,
-  I32Mul = 0x42,
-  I32DivS = 0x43,
-  I32DivU = 0x44,
-  I32RemS = 0x45,
-  I32RemU = 0x46,
-  I32And = 0x47,
-  I32Or = 0x48,
-  I32Xor = 0x49,
-  I32Shl = 0x4a,
-  I32ShrU = 0x4b,
-  I32ShrS = 0x4c,
-  I32Eq = 0x4d,
-  I32Ne = 0x4e,
-  I32LtS = 0x4f,
-  I32LeS = 0x50,
-  I32LtU = 0x51,
-  I32LeU = 0x52,
-  I32GtS = 0x53,
-  I32GeS = 0x54,
-  I32GtU = 0x55,
-  I32GeU = 0x56,
-  I32Clz = 0x57,
-  I32Ctz = 0x58,
-  I32Popcnt = 0x59,
-  I32EqZ = 0x5a,
-  I64Add = 0x5b,
-  I64Sub = 0x5c,
-  I64Mul = 0x5d,
-  I64DivS = 0x5e,
-  I64DivU = 0x5f,
-  I64RemS = 0x60,
-  I64RemU = 0x61,
-  I64And = 0x62,
-  I64Or = 0x63,
-  I64Xor = 0x64,
-  I64Shl = 0x65,
-  I64ShrU = 0x66,
-  I64ShrS = 0x67,
-  I64Eq = 0x68,
-  I64Ne = 0x69,
-  I64LtS = 0x6a,
-  I64LeS = 0x6b,
-  I64LtU = 0x6c,
-  I64LeU = 0x6d,
-  I64GtS = 0x6e,
-  I64GeS = 0x6f,
-  I64GtU = 0x70,
-  I64GeU = 0x71,
-  I64Clz = 0x72,
-  I64Ctz = 0x73,
-  I64Popcnt = 0x74,
-  I64EqZ = 0xba,
-  F32Add = 0x75,
-  F32Sub = 0x76,
-  F32Mul = 0x77,
-  F32Div = 0x78,
-  F32Min = 0x79,
-  F32Max = 0x7a,
-  F32Abs = 0x7b,
-  F32Neg = 0x7c,
-  F32CopySign = 0x7d,
-  F32Ceil = 0x7e,
-  F32Floor = 0x7f,
-  F32Trunc = 0x80,
-  F32NearestInt = 0x81,
-  F32Sqrt = 0x82,
-  F32Eq = 0x83,
-  F32Ne = 0x84,
-  F32Lt = 0x85,
-  F32Le = 0x86,
-  F32Gt = 0x87,
-  F32Ge = 0x88,
-  F64Add = 0x89,
-  F64Sub = 0x8a,
-  F64Mul = 0x8b,
-  F64Div = 0x8c,
-  F64Min = 0x8d,
-  F64Max = 0x8e,
-  F64Abs = 0x8f,
-  F64Neg = 0x90,
-  F64CopySign = 0x91,
-  F64Ceil = 0x92,
-  F64Floor = 0x93,
-  F64Trunc = 0x94,
-  F64NearestInt = 0x95,
-  F64Sqrt = 0x96,
-  F64Eq = 0x97,
-  F64Ne = 0x98,
-  F64Lt = 0x99,
-  F64Le = 0x9a,
-  F64Gt = 0x9b,
-  F64Ge = 0x9c,
-
-  I32STruncF32        = 0x9d,
-  I32STruncF64        = 0x9e,
-  I32UTruncF32        = 0x9f,
-  I32UTruncF64        = 0xa0,
-  I32ConvertI64       = 0xa1,
-  I64STruncF32        = 0xa2,
-  I64STruncF64        = 0xa3,
-  I64UTruncF32        = 0xa4,
-  I64UTruncF64        = 0xa5,
-  I64STruncI32        = 0xa6,
-  I64UTruncI32        = 0xa7,
-  F32SConvertI32      = 0xa8,
-  F32UConvertI32      = 0xa9,
-  F32SConvertI64      = 0xaa,
-  F32UConvertI64      = 0xab,
-  F32ConvertF64       = 0xac,
-  F32ReinterpretI32   = 0xad,
-  F64SConvertI32      = 0xae,
-  F64UConvertI32      = 0xaf,
-  F64SConvertI64      = 0xb0,
-  F64UConvertI64      = 0xb1,
-  F64ConvertF32       = 0xb2,
-  F64ReinterpretI64   = 0xb3,
-  I32ReinterpretF32   = 0xb4,
-  I64ReinterpretF64   = 0xb5,
-  I32RotR             = 0xb6,
-  I32RotL             = 0xb7,
-  I64RotR             = 0xb8,
-  I64RotL             = 0xb9,
-
-  I32LoadMem8S = 0x20,
-  I32LoadMem8U = 0x21,
-  I32LoadMem16S = 0x22,
-  I32LoadMem16U = 0x23,
-  I64LoadMem8S = 0x24,
-  I64LoadMem8U = 0x25,
-  I64LoadMem16S = 0x26,
-  I64LoadMem16U = 0x27,
-  I64LoadMem32S = 0x28,
-  I64LoadMem32U = 0x29,
-  I32LoadMem = 0x2a,
-  I64LoadMem = 0x2b,
-  F32LoadMem = 0x2c,
-  F64LoadMem = 0x2d,
-  I32StoreMem8 = 0x2e,
-  I32StoreMem16 = 0x2f,
-  I64StoreMem8 = 0x30,
-  I64StoreMem16 = 0x31,
-  I64StoreMem32 = 0x32,
-  I32StoreMem = 0x33,
-  I64StoreMem = 0x34,
-  F32StoreMem = 0x35,
-  F64StoreMem = 0x36,
-
-  I32Const = 0x10,
-  I64Const = 0x11,
-  F64Const = 0x12,
-  F32Const = 0x13,
-  GetLocal = 0x14,
-  SetLocal = 0x15,
-  CallFunction = 0x16,
-  CallIndirect = 0x17,
-  TeeLocal = 0x19,
-  GetGlobal = 0xbb,
-  SetGlobal = 0xbc,
-
   Unreachable = 0x00,
-  Block = 0x01,
-  Loop = 0x02,
-  If = 0x03,
-  Else = 0x04,
-  Select = 0x05,
-  Br = 0x06,
-  BrIf = 0x07,
-  TableSwitch = 0x08,
-  Return = 0x09,
-  Nop = 0x0a,
-  Drop = 0x0b,
-  End = 0x0f
+  Nop = 0x01,
+  Block = 0x02,
+  Loop = 0x03,
+  If = 0x04,
+  Else = 0x05,
+
+  End = 0x0b,
+  Br = 0x0c,
+  BrIf = 0x0d,
+  TableSwitch = 0x0e, // TODO: Rename to BrTable
+  Return = 0x0f,
+
+  CallFunction = 0x10,
+  CallIndirect = 0x11,
+
+  Drop = 0x1a,
+  Select = 0x1b,
+
+  GetLocal = 0x20,
+  SetLocal = 0x21,
+  TeeLocal = 0x22,
+  GetGlobal = 0x23,
+  SetGlobal = 0x24,
+
+
+  I32LoadMem = 0x28,
+  I64LoadMem = 0x29,
+  F32LoadMem = 0x2a,
+  F64LoadMem = 0x2b,
+
+  I32LoadMem8S = 0x2c,
+  I32LoadMem8U = 0x2d,
+  I32LoadMem16S = 0x2e,
+  I32LoadMem16U = 0x2f,
+  I64LoadMem8S = 0x30,
+  I64LoadMem8U = 0x31,
+  I64LoadMem16S = 0x32,
+  I64LoadMem16U = 0x33,
+  I64LoadMem32S = 0x34,
+  I64LoadMem32U = 0x35,
+
+  I32StoreMem = 0x36,
+  I64StoreMem = 0x37,
+  F32StoreMem = 0x38,
+  F64StoreMem = 0x39,
+
+  I32StoreMem8 = 0x3a,
+  I32StoreMem16 = 0x3b,
+  I64StoreMem8 = 0x3c,
+  I64StoreMem16 = 0x3d,
+  I64StoreMem32 = 0x3e,
+
+  CurrentMemory = 0x3f,
+  GrowMemory = 0x40,
+
+  I32Const = 0x41,
+  I64Const = 0x42,
+  F32Const = 0x43,
+  F64Const = 0x44,
+
+  I32EqZ = 0x45,
+  I32Eq = 0x46,
+  I32Ne = 0x47,
+  I32LtS = 0x48,
+  I32LtU = 0x49,
+  I32GtS = 0x4a,
+  I32GtU = 0x4b,
+  I32LeS = 0x4c,
+  I32LeU = 0x4d,
+  I32GeS = 0x4e,
+  I32GeU = 0x4f,
+  I64EqZ = 0x50,
+  I64Eq = 0x51,
+  I64Ne = 0x52,
+  I64LtS = 0x53,
+  I64LtU = 0x54,
+  I64GtS = 0x55,
+  I64GtU = 0x56,
+  I64LeS = 0x57,
+  I64LeU = 0x58,
+  I64GeS = 0x59,
+  I64GeU = 0x5a,
+  F32Eq = 0x5b,
+  F32Ne = 0x5c,
+  F32Lt = 0x5d,
+  F32Gt = 0x5e,
+  F32Le = 0x5f,
+  F32Ge = 0x60,
+  F64Eq = 0x61,
+  F64Ne = 0x62,
+  F64Lt = 0x63,
+  F64Gt = 0x64,
+  F64Le = 0x65,
+  F64Ge = 0x66,
+
+  I32Clz = 0x67,
+  I32Ctz = 0x68,
+  I32Popcnt = 0x69,
+  I32Add = 0x6a,
+  I32Sub = 0x6b,
+  I32Mul = 0x6c,
+  I32DivS = 0x6d,
+  I32DivU = 0x6e,
+  I32RemS = 0x6f,
+  I32RemU = 0x70,
+  I32And = 0x71,
+  I32Or = 0x72,
+  I32Xor = 0x73,
+  I32Shl = 0x74,
+  I32ShrS = 0x75,
+  I32ShrU = 0x76,
+  I32RotL = 0x77,
+  I32RotR = 0x78,
+
+  I64Clz = 0x79,
+  I64Ctz = 0x7a,
+  I64Popcnt = 0x7b,
+  I64Add = 0x7c,
+  I64Sub = 0x7d,
+  I64Mul = 0x7e,
+  I64DivS = 0x7f,
+  I64DivU = 0x80,
+  I64RemS = 0x81,
+  I64RemU = 0x82,
+  I64And = 0x83,
+  I64Or = 0x84,
+  I64Xor = 0x85,
+  I64Shl = 0x86,
+  I64ShrS = 0x87,
+  I64ShrU = 0x88,
+  I64RotL = 0x89,
+  I64RotR = 0x8a,
+
+  F32Abs = 0x8b,
+  F32Neg = 0x8c,
+  F32Ceil = 0x8d,
+  F32Floor = 0x8e,
+  F32Trunc = 0x8f,
+  F32NearestInt = 0x90,
+  F32Sqrt = 0x91,
+  F32Add = 0x92,
+  F32Sub = 0x93,
+  F32Mul = 0x94,
+  F32Div = 0x95,
+  F32Min = 0x96,
+  F32Max = 0x97,
+  F32CopySign = 0x98,
+
+  F64Abs = 0x99,
+  F64Neg = 0x9a,
+  F64Ceil = 0x9b,
+  F64Floor = 0x9c,
+  F64Trunc = 0x9d,
+  F64NearestInt = 0x9e,
+  F64Sqrt = 0x9f,
+  F64Add = 0xa0,
+  F64Sub = 0xa1,
+  F64Mul = 0xa2,
+  F64Div = 0xa3,
+  F64Min = 0xa4,
+  F64Max = 0xa5,
+  F64CopySign = 0xa6,
+
+  I32ConvertI64 = 0xa7, // TODO: rename to I32WrapI64
+  I32STruncF32 = 0xa8,
+  I32UTruncF32 = 0xa9,
+  I32STruncF64 = 0xaa,
+  I32UTruncF64 = 0xab,
+  I64STruncI32 = 0xac, // TODO: rename to I64SExtendI32
+  I64UTruncI32 = 0xad, // TODO: likewise
+  I64STruncF32 = 0xae,
+  I64UTruncF32 = 0xaf,
+  I64STruncF64 = 0xb0,
+  I64UTruncF64 = 0xb1,
+  F32SConvertI32 = 0xb2,
+  F32UConvertI32 = 0xb3,
+  F32SConvertI64 = 0xb4,
+  F32UConvertI64 = 0xb5,
+  F32ConvertF64 = 0xb6, // TODO: rename to F32DemoteI64
+  F64SConvertI32 = 0xb7,
+  F64UConvertI32 = 0xb8,
+  F64SConvertI64 = 0xb9,
+  F64UConvertI64 = 0xba,
+  F64ConvertF32 = 0xbb, // TODO: rename to F64PromoteF32
+
+  I32ReinterpretF32 = 0xbc,
+  I64ReinterpretF64 = 0xbd,
+  F32ReinterpretI32 = 0xbe,
+  F64ReinterpretI64 = 0xbf
 };
 
 enum MemoryAccess {
@@ -481,22 +505,21 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum TypeForms {
-  Basic = 0x40
-};
-
 } // namespace BinaryConsts
 
 
-inline int8_t binaryWasmType(WasmType type) {
+inline S32LEB binaryWasmType(WasmType type) {
+  int ret;
   switch (type) {
-    case none: return 0;
-    case i32: return 1;
-    case i64: return 2;
-    case f32: return 3;
-    case f64: return 4;
+    // None only used for block signatures. TODO: Separate out?
+    case none: ret = BinaryConsts::EncodedType::Empty; break;
+    case i32: ret = BinaryConsts::EncodedType::i32; break;
+    case i64: ret = BinaryConsts::EncodedType::i64; break;
+    case f32: ret = BinaryConsts::EncodedType::f32; break;
+    case f64: ret = BinaryConsts::EncodedType::f64; break;
     default: abort();
   }
+  return S32LEB(ret);
 }
 
 class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
