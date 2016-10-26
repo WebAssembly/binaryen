@@ -165,6 +165,9 @@ private:
           // no point in looking further
           break;
         }
+      } else {
+        // something that can't be pushed, so it might block further pushing
+        cumulativeEffects.analyze(list[i]);
       }
       assert(i > 0);
       i--;
