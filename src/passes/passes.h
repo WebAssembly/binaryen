@@ -24,6 +24,7 @@ class Pass;
 // All passes:
 Pass *createCoalesceLocalsPass();
 Pass *createCoalesceLocalsWithLearningPass();
+Pass *createCodePushingPass();
 Pass *createDeadCodeEliminationPass();
 Pass *createDuplicateFunctionEliminationPass();
 Pass *createExtractFunctionPass();
