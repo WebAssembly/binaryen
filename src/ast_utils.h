@@ -102,10 +102,10 @@ struct DirectCallGraphAnalyzer : public PostWalker<DirectCallGraphAnalyzer, Visi
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer>> {
   EffectAnalyzer() {}
   EffectAnalyzer(Expression *ast) {
-    scan(ast);
+    analyze(ast);
   }
 
-  void scan(Expression *ast) {
+  void analyze(Expression *ast) {
     breakNames.clear();
     walk(ast);
     // if we are left with breaks, they are external

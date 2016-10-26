@@ -39,7 +39,7 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer, Visitor<LocalAnalyzer>> 
   std::vector<Index> numSets;
   std::vector<Index> numGets;
 
-  void scan(Function* func) {
+  void analyze(Function* func) {
     auto num = func->getNumLocals();
     numSets.resize(num);
     std::fill(numSets.begin(), numSets.end(), 0);
@@ -81,28 +81,29 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer, Visitor<LocalAnalyzer>> 
 // for each block
 class Pusher {
   ExpressionList& list;
-  SFAAnalyzer& analyzer;
+  LocalAnalyzer& analyzer;
   std::vector<Index>& numGetsSoFar;
 
 public:
-  Pusher(Block* block, SFAAnalyzer& analyzer, std::vector<Index>& numGetsSoFar) : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar), {
+  Pusher(Block* block, LocalAnalyzer& analyzer, std::vector<Index>& numGetsSoFar) : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar) {
     // Find an optimization segment: from the first pushable thing, to the first
     // point past which we want to push. We then push in that range before
     // continuing forward.
     Index relevant = list.size() - 1; // we never need to push past a final element, as
                                       // we couldn't be used after it.
+    Index nothing = -1;
     Index i = 0;
-    Index firstPushable = -1;
+    Index firstPushable = nothing;
     while (i < relevant) {
-      if (firstPushable == -1 && isPushable(list[i])) {
+      if (firstPushable == nothing && isPushable(list[i])) {
         firstPushable = i;
         i++;
         continue;
       }
-      if (firstPushable != -1 && isPushPoint(list[i])) {
+      if (firstPushable != nothing && isPushPoint(list[i])) {
         // optimize this segment, and proceed from where it tells us
         i = optimizeSegment(firstPushable, i);
-        firstPushable = -1;
+        firstPushable = nothing;
         continue;
       }
       i++;
@@ -137,10 +138,10 @@ private:
     // forward, that way we can push later things out of the way
     // of earlier ones. Once we know all we can push, we push it all
     // in one pass, keeping the order of the pushables intact.
-    assert(firstPushable != -1 && pushPoint != -1 && firstPushable < pushPoint);
+    assert(firstPushable != Index(-1) && pushPoint != Index(-1) && firstPushable < pushPoint);
     EffectAnalyzer cumulativeEffects; // everything that matters if you want
                                       // to be pushed past the pushPoint
-    cumulativeEffects.scan(list[pushPoint]);
+    cumulativeEffects.analyze(list[pushPoint]);
     cumulativeEffects.branches = false; // it is ok to ignore the branching here,
                                         // that is the crucial point of this opt
     std::vector<SetLocal*> toPush;
@@ -148,7 +149,7 @@ private:
     while (1) {
       auto* pushable = isPushable(list[i]);
       if (pushable) {
-        auto* iter = pushableEffects.find(pushable);
+        auto iter = pushableEffects.find(pushable);
         if (iter == pushableEffects.end()) {
           pushableEffects.emplace(pushable, pushable);
         }
@@ -173,22 +174,31 @@ private:
       return pushPoint + 1;
     }
     // we have work to do!
-    Index last = toPush.size() - 1;
+    Index total = toPush.size();
+    Index last = total - 1;
     Index skip = 0;
     for (Index i = firstPushable; i <= pushPoint; i++) {
       // we see the first elements at the end of toPush
-      if (list[i] == toPush[last - skip]) {
+      if (skip < total && list[i] == toPush[last - skip]) {
         // this is one of our elements to push, skip it
         skip++;
-      }
-      if (skip) {
-        list[i] = list[i + skip];
+      } else {
+        if (skip) {
+          list[i - skip] = list[i];
+        }
       }
     }
+    assert(skip == total);
+    // write out the skipped elements
+    for (Index i = 0; i < total; i++) {
+      list[pushPoint - i] = toPush[i];
+    }
+    // proceed right after the push point, we may push the pushed elements again
+    return pushPoint - total + 1;
   }
 
   // Pushables may need to be scanned more than once, so cache their effects.
-  set::unordered_map<SetLocal*, EffectAnalyzer> pushableEffects;
+  std::unordered_map<SetLocal*, EffectAnalyzer> pushableEffects;
 };
 
 struct CodePushing : public WalkerPass<PostWalker<CodePushing, Visitor<CodePushing>>> {
@@ -203,7 +213,7 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing, Visitor<CodePushi
 
   void doWalkFunction(Function* func) {
     // pre-scan to find which vars are sfa, and also count their gets&sets
-    analyzer.scan(func);
+    analyzer.analyze(func);
     // prepare to walk
     numGetsSoFar.resize(func->getNumLocals());
     std::fill(numGetsSoFar.begin(), numGetsSoFar.end(), 0);
