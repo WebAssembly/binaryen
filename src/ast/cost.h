@@ -78,15 +78,16 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     return 2;
   }
   Index visitLoad(Load *curr) {
-    return 1;
+    return 1 + visit(curr->ptr);
   }
   Index visitStore(Store *curr) {
-    return 2;
+    return 2 + visit(curr->ptr) + visit(curr->value);
   }
   Index visitConst(Const *curr) {
     return 1;
   }
   Index visitUnary(Unary *curr) {
+    Index ret = 0;
     switch (curr->op) {
       case ClzInt32:
       case CtzInt32:
@@ -132,98 +133,101 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case ConvertSInt32ToFloat64:
       case ConvertUInt32ToFloat64:
       case ConvertSInt64ToFloat64:
-      case ConvertUInt64ToFloat64: return 1;
+      case ConvertUInt64ToFloat64: ret = 1; break;
       case SqrtFloat32:
-      case SqrtFloat64: return 2;
+      case SqrtFloat64: ret = 2; break;
       default: WASM_UNREACHABLE();
     }
+    return ret + visit(curr->value);
   }
   Index visitBinary(Binary *curr) {
+    Index ret = 0;
     switch (curr->op) {
-      case AddInt32:        return 1;
-      case SubInt32:        return 1;
-      case MulInt32:        return 2;
-      case DivSInt32:       return 3;
-      case DivUInt32:       return 3;
-      case RemSInt32:       return 3;
-      case RemUInt32:       return 3;
-      case AndInt32:        return 1;
-      case OrInt32:         return 1;
-      case XorInt32:        return 1;
-      case ShlInt32:        return 1;
-      case ShrUInt32:       return 1;
-      case ShrSInt32:       return 1;
-      case RotLInt32:       return 1;
-      case RotRInt32:       return 1;
-      case AddInt64:        return 1;
-      case SubInt64:        return 1;
-      case MulInt64:        return 2;
-      case DivSInt64:       return 3;
-      case DivUInt64:       return 3;
-      case RemSInt64:       return 3;
-      case RemUInt64:       return 3;
-      case AndInt64:        return 1;
-      case OrInt64:         return 1;
-      case XorInt64:        return 1;
-      case ShlInt64:        return 1;
-      case ShrUInt64:       return 1;
-      case ShrSInt64:       return 1;
-      case RotLInt64:       return 1;
-      case RotRInt64:       return 1;
-      case AddFloat32:      return 1;
-      case SubFloat32:      return 1;
-      case MulFloat32:      return 2;
-      case DivFloat32:      return 3;
-      case CopySignFloat32: return 1;
-      case MinFloat32:      return 1;
-      case MaxFloat32:      return 1;
-      case AddFloat64:      return 1;
-      case SubFloat64:      return 1;
-      case MulFloat64:      return 2;
-      case DivFloat64:      return 3;
-      case CopySignFloat64: return 1;
-      case MinFloat64:      return 1;
-      case MaxFloat64:      return 1;
-      case LtUInt32:        return 1;
-      case LtSInt32:        return 1;
-      case LeUInt32:        return 1;
-      case LeSInt32:        return 1;
-      case GtUInt32:        return 1;
-      case GtSInt32:        return 1;
-      case GeUInt32:        return 1;
-      case GeSInt32:        return 1;
-      case LtUInt64:        return 1;
-      case LtSInt64:        return 1;
-      case LeUInt64:        return 1;
-      case LeSInt64:        return 1;
-      case GtUInt64:        return 1;
-      case GtSInt64:        return 1;
-      case GeUInt64:        return 1;
-      case GeSInt64:        return 1;
-      case LtFloat32:       return 1;
-      case GtFloat32:       return 1;
-      case LeFloat32:       return 1;
-      case GeFloat32:       return 1;
-      case LtFloat64:       return 1;
-      case GtFloat64:       return 1;
-      case LeFloat64:       return 1;
-      case GeFloat64:       return 1;
-      case EqInt32:         return 1;
-      case NeInt32:         return 1;
-      case EqInt64:         return 1;
-      case NeInt64:         return 1;
-      case EqFloat32:       return 1;
-      case NeFloat32:       return 1;
-      case EqFloat64:       return 1;
-      case NeFloat64:       return 1;
+      case AddInt32:        ret = 1; break;
+      case SubInt32:        ret = 1; break;
+      case MulInt32:        ret = 2; break;
+      case DivSInt32:       ret = 3; break;
+      case DivUInt32:       ret = 3; break;
+      case RemSInt32:       ret = 3; break;
+      case RemUInt32:       ret = 3; break;
+      case AndInt32:        ret = 1; break;
+      case OrInt32:         ret = 1; break;
+      case XorInt32:        ret = 1; break;
+      case ShlInt32:        ret = 1; break;
+      case ShrUInt32:       ret = 1; break;
+      case ShrSInt32:       ret = 1; break;
+      case RotLInt32:       ret = 1; break;
+      case RotRInt32:       ret = 1; break;
+      case AddInt64:        ret = 1; break;
+      case SubInt64:        ret = 1; break;
+      case MulInt64:        ret = 2; break;
+      case DivSInt64:       ret = 3; break;
+      case DivUInt64:       ret = 3; break;
+      case RemSInt64:       ret = 3; break;
+      case RemUInt64:       ret = 3; break;
+      case AndInt64:        ret = 1; break;
+      case OrInt64:         ret = 1; break;
+      case XorInt64:        ret = 1; break;
+      case ShlInt64:        ret = 1; break;
+      case ShrUInt64:       ret = 1; break;
+      case ShrSInt64:       ret = 1; break;
+      case RotLInt64:       ret = 1; break;
+      case RotRInt64:       ret = 1; break;
+      case AddFloat32:      ret = 1; break;
+      case SubFloat32:      ret = 1; break;
+      case MulFloat32:      ret = 2; break;
+      case DivFloat32:      ret = 3; break;
+      case CopySignFloat32: ret = 1; break;
+      case MinFloat32:      ret = 1; break;
+      case MaxFloat32:      ret = 1; break;
+      case AddFloat64:      ret = 1; break;
+      case SubFloat64:      ret = 1; break;
+      case MulFloat64:      ret = 2; break;
+      case DivFloat64:      ret = 3; break;
+      case CopySignFloat64: ret = 1; break;
+      case MinFloat64:      ret = 1; break;
+      case MaxFloat64:      ret = 1; break;
+      case LtUInt32:        ret = 1; break;
+      case LtSInt32:        ret = 1; break;
+      case LeUInt32:        ret = 1; break;
+      case LeSInt32:        ret = 1; break;
+      case GtUInt32:        ret = 1; break;
+      case GtSInt32:        ret = 1; break;
+      case GeUInt32:        ret = 1; break;
+      case GeSInt32:        ret = 1; break;
+      case LtUInt64:        ret = 1; break;
+      case LtSInt64:        ret = 1; break;
+      case LeUInt64:        ret = 1; break;
+      case LeSInt64:        ret = 1; break;
+      case GtUInt64:        ret = 1; break;
+      case GtSInt64:        ret = 1; break;
+      case GeUInt64:        ret = 1; break;
+      case GeSInt64:        ret = 1; break;
+      case LtFloat32:       ret = 1; break;
+      case GtFloat32:       ret = 1; break;
+      case LeFloat32:       ret = 1; break;
+      case GeFloat32:       ret = 1; break;
+      case LtFloat64:       ret = 1; break;
+      case GtFloat64:       ret = 1; break;
+      case LeFloat64:       ret = 1; break;
+      case GeFloat64:       ret = 1; break;
+      case EqInt32:         ret = 1; break;
+      case NeInt32:         ret = 1; break;
+      case EqInt64:         ret = 1; break;
+      case NeInt64:         ret = 1; break;
+      case EqFloat32:       ret = 1; break;
+      case NeFloat32:       ret = 1; break;
+      case EqFloat64:       ret = 1; break;
+      case NeFloat64:       ret = 1; break;
       default: WASM_UNREACHABLE();
     }
+    return ret + visit(curr->left) + visit(curr->right);
   }
   Index visitSelect(Select *curr) {
     return 2 + visit(curr->condition) + visit(curr->ifTrue) + visit(curr->ifFalse);
   }
   Index visitDrop(Drop *curr) {
-    return 0;
+    return visit(curr->value);
   }
   Index visitReturn(Return *curr) {
     return maybeVisit(curr->value);

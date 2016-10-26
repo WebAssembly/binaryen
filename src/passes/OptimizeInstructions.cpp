@@ -166,12 +166,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
 
   Pass* create() override { return new OptimizeInstructions; }
 
-  bool conditionalize;
-
   void prepareToRun(PassRunner* runner, Module* module) override {
     static DatabaseEnsurer ensurer;
-    // conditionalization increases code size
-    conditionalize = runner->options.optimizeLevel >= 2 && runner->options.shrinkLevel == 0;
   }
 
   void visitExpression(Expression* curr) {
@@ -373,7 +369,9 @@ private:
   //   expensive | cheap     can be turned into cheap     ? 1 : expensive,
   // so that we can avoid one expensive computation, if it has no side effects.
   Expression* conditionalizeExpensiveOnBitwise(Binary* binary) {
-    if (!conditionalize) return nullptr;
+    // this operation can increase code size, so don't always do it
+    auto& options = getPassRunner()->options;
+    if (options.optimizeLevel < 2 || options.shrinkLevel > 0) return nullptr;
     const auto MIN_COST = 7;
     assert(binary->op == AndInt32 || binary->op == OrInt32);
     if (binary->right->is<Const>()) return nullptr; // trivial
@@ -384,7 +382,7 @@ private:
     auto leftEffects = EffectAnalyzer(left).hasSideEffects();
     auto rightEffects = EffectAnalyzer(right).hasSideEffects();
     if (leftEffects && rightEffects) return nullptr; // both must execute
-    // canonicalize with side effects, if any, happening on the left
+   // canonicalize with side effects, if any, happening on the left
     if (rightEffects) {
       if (CostAnalyzer(left).cost < MIN_COST) return nullptr; // avoidable code is too cheap
       std::swap(left, right);
