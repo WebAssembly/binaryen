@@ -21,10 +21,10 @@
   (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
   (import "asm2wasm" "i32u-div" (func $i32u-div (param i32 i32) (result i32)))
   (import "env" "memory" (memory $0 256 256))
-  (import "env" "table" (table 10 10 anyfunc))
+  (import "env" "table" (table 24 24 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (elem (i32.const 0) $big_negative $big_negative $big_negative $big_negative $big_negative $big_negative $importedDoubles $big_negative $big_negative $cneg)
+  (elem (i32.const 0) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $fr $cneg $fr $fr $fr $fr $fr $fr $vi $vi $vi $vi $vi $vi $vi $vi)
   (data (get_global $memoryBase) "unit.asm.js")
   (global $t (mut f64) (get_global $t$asm2wasm$import))
   (global $u (mut f64) (get_global $u$asm2wasm$import))
@@ -272,8 +272,8 @@
         (get_local $0)
       )
       (i32.add
-        (i32.const 1)
         (i32.const 8)
+        (i32.const 1)
       )
     )
   )
@@ -281,8 +281,8 @@
     (call_indirect $FUNCSIG$vf
       (get_local $0)
       (i32.add
-        (i32.const 1)
         (i32.const 8)
+        (i32.const 1)
       )
     )
   )
@@ -319,8 +319,8 @@
     (call_indirect $FUNCSIG$vi
       (i32.const 1)
       (i32.add
+        (i32.const 16)
         (i32.const 1)
-        (i32.const 8)
       )
     )
   )
@@ -378,9 +378,7 @@
     )
     (drop
       (call $abort
-        (f64.promote/f32
-          (f32.const 56.779998779296875)
-        )
+        (f64.const 56.779998779296875)
       )
     )
   )
@@ -718,6 +716,9 @@
         (i32.const 16)
       )
     )
+  )
+  (func $w (result f64)
+    (f64.const 0)
   )
   (func $globalOpts
     (local $0 i32)
@@ -1071,5 +1072,8 @@
         )
       )
     )
+  )
+  (func $vi (param $0 i32)
+    (nop)
   )
 )

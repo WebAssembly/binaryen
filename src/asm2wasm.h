@@ -954,9 +954,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
       auto add = curr->target->cast<Binary>();
-      auto offset = add->right->cast<CallImport>();
-      auto tableName = offset->target;
-      add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+      if (add->right->is<CallImport>()) {
+        auto offset = add->right->cast<CallImport>();
+        auto tableName = offset->target;
+        add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+      } else {
+        auto offset = add->left->cast<CallImport>();
+        auto tableName = offset->target;
+        add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+      }
     }
   };
 
