@@ -3728,13 +3728,10 @@
                     )
                   )
                   (br_if $do-in41
-                    (i32.ne
-                      (tee_local $2
-                        (i32.load offset=8
-                          (get_local $2)
-                        )
+                    (tee_local $2
+                      (i32.load offset=8
+                        (get_local $2)
                       )
-                      (i32.const 0)
                     )
                   )
                 )

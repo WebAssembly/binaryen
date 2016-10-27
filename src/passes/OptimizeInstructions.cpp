@@ -352,14 +352,24 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
   }
 
 private:
-
+  // Optimize given that the expression is flowing into a boolean context
   Expression* optimizeBoolean(Expression* boolean) {
-    auto* condition = boolean->dynCast<Unary>();
-    if (condition && condition->op == EqZInt32) {
-      auto* condition2 = condition->value->dynCast<Unary>();
-      if (condition2 && condition2->op == EqZInt32) {
-        // double eqz
-        return condition2->value;
+    if (auto* unary = boolean->dynCast<Unary>()) {
+      if (unary && unary->op == EqZInt32) {
+        auto* unary2 = unary->value->dynCast<Unary>();
+        if (unary2 && unary2->op == EqZInt32) {
+          // double eqz
+          return unary2->value;
+        }
+      }
+    } else if (auto* binary = boolean->dynCast<Binary>()) {
+      // x != 0 is just x if it's used as a bool
+      if (binary->op == NeInt32) {
+        if (auto* num = binary->right->dynCast<Const>()) {
+          if (num->value.geti32() == 0) {
+            return binary->left;
+          }
+        }
       }
     }
     return boolean;
