@@ -65,6 +65,7 @@ std::string PassRegistry::getPassDescription(std::string name) {
 void PassRegistry::registerPasses() {
   registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
+  registerPass("code-pushing", "push code forward, potentially making it not always execute", createCodePushingPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
@@ -106,6 +107,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-names");
   add("optimize-instructions");
   add("precompute");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    add("code-pushing");
+  }
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");

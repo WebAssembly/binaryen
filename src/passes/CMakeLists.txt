@@ -1,6 +1,7 @@
 SET(passes_SOURCES
   pass.cpp
   CoalesceLocals.cpp
+  CodePushing.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
