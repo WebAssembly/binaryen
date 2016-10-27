@@ -107,7 +107,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-names");
   add("optimize-instructions");
   add("precompute");
-  add("code-pushing");
+  if (optimizeLevel >= 2 || shrinkLevel >= 2) {
+    add("code-pushing");
+  }
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
