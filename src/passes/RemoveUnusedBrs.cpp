@@ -393,6 +393,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
 
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer, Visitor<FinalOptimizer>> {
+      bool selectify;
+
       void visitBlock(Block* curr) {
         // if a block has an if br else br, we can un-conditionalize the latter, allowing
         // the if to become a br_if.
@@ -422,34 +424,54 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
             continue;
           }
         }
-        // Restructuring of ifs: if we have
-        //   (block $x
-        //     (br_if $x (cond))
-        //     .., no other references to $x
-        //   )
-        // then we can turn that into (if (!cond) ..).
-        // Code size wise, we turn the block into an if (no change), and
-        // lose the br_if (-2). .. turns into the body of the if in the binary
-        // format. We need to flip the condition, which at worst adds 1.
-        if (curr->name.is() && list.size() >= 2) {
-          auto* br = list[0]->dynCast<Break>();
-          if (br && br->condition && br->name == curr->name) {
-            assert(!br->value); // can't, it would be dropped or last in the block
-            if (BreakSeeker::count(curr, curr->name) == 1) {
-              // no other breaks to that name, so we can do this
-              Builder builder(*getModule());
-              replaceCurrent(builder.makeIf(
-                builder.makeUnary(EqZInt32, br->condition),
-                curr
-              ));
-              curr->name = Name();
-              ExpressionManipulator::nop(br);
+        if (list.size() >= 2) {
+          if (selectify) {
+            // Join adjacent br_ifs to the same target, making one br_if with
+            // a "selectified" condition that executes both.
+            for (Index i = 0; i < list.size() - 1; i++) {
+              auto* br1 = list[i]->dynCast<Break>();
+              if (!br1 || !br1->condition) continue;
+              auto* br2 = list[i + 1]->dynCast<Break>();
+              if (!br2 || !br2->condition) continue;
+              if (br1->name == br2->name) {
+                assert(!br1->value && !br2->value);
+                if (!EffectAnalyzer(br2->condition).hasSideEffects()) {
+                  // it's ok to execute them both, do it
+                  Builder builder(*getModule());
+                  br1->condition = builder.makeBinary(OrInt32, br1->condition, br2->condition);
+                  ExpressionManipulator::nop(br2);
+                }
+              }
+            }
+          }
+          // Restructuring of ifs: if we have
+          //   (block $x
+          //     (br_if $x (cond))
+          //     .., no other references to $x
+          //   )
+          // then we can turn that into (if (!cond) ..).
+          // Code size wise, we turn the block into an if (no change), and
+          // lose the br_if (-2). .. turns into the body of the if in the binary
+          // format. We need to flip the condition, which at worst adds 1.
+          if (curr->name.is()) {
+            auto* br = list[0]->dynCast<Break>();
+            if (br && br->condition && br->name == curr->name) {
+              assert(!br->value); // can't, it would be dropped or last in the block
+              if (BreakSeeker::count(curr, curr->name) == 1) {
+                // no other breaks to that name, so we can do this
+                Builder builder(*getModule());
+                replaceCurrent(builder.makeIf(
+                  builder.makeUnary(EqZInt32, br->condition),
+                  curr
+                ));
+                curr->name = Name();
+                ExpressionManipulator::nop(br);
+                return;
+              }
             }
           }
         }
       }
-
-      bool selectify;
 
       void visitIf(If* curr) {
         // we may have simplified ifs enough to turn them into selects
