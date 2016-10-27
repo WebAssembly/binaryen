@@ -371,7 +371,17 @@ private:
           }
         }
       }
+    } else if (auto* block = boolean->dynCast<Block>()) {
+      if (block->type == i32 && block->list.size() > 0) {
+        block->list.back() = optimizeBoolean(block->list.back());
+      }
+    } else if (auto* iff = boolean->dynCast<If>()) {
+      if (iff->type == i32) {
+        iff->ifTrue = optimizeBoolean(iff->ifTrue);
+        iff->ifFalse = optimizeBoolean(iff->ifFalse);
+      }
     }
+    // TODO: recurse into br values?
     return boolean;
   }
 
