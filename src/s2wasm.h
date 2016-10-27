@@ -1129,6 +1129,7 @@ class S2WasmBuilder {
         curr->name = getNextLabel();
         auto implicitBlock = allocator->alloc<Block>();
         curr->body = implicitBlock;
+        implicitBlock->type = loopType;
         bstack.push_back(curr);
       } else if (match("end_loop")) {
         auto* loop = bstack.back()->cast<Loop>();
