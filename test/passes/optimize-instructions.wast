@@ -287,4 +287,13 @@
     (drop (i32.div_s (unreachable) (i32.const 1))) ;; not ok
     (drop (i32.div_s (i32.const 1) (unreachable)))
   )
+  (func $ne0 (result i32)
+    (if (i32.ne (call $ne0) (i32.const 0))
+      (nop)
+    )
+    (if (i32.ne (i32.const 0) (call $ne0))
+      (nop)
+    )
+    (i32.const 1)
+  )
 )

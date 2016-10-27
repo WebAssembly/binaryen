@@ -1973,10 +1973,7 @@
                       )
                     )
                     (i32.const 0)
-                    (i32.ne
-                      (get_local $12)
-                      (i32.const 0)
-                    )
+                    (get_local $12)
                   )
                   (block
                     (if
@@ -3123,13 +3120,10 @@
     )
     (if
       (if i32
-        (i32.ne
-          (tee_local $10
-            (i32.load
-              (i32.const 616)
-            )
+        (tee_local $10
+          (i32.load
+            (i32.const 616)
           )
-          (i32.const 0)
         )
         (i32.or
           (i32.le_u
@@ -3399,10 +3393,7 @@
                                       )
                                     )
                                     (i32.const 0)
-                                    (i32.ne
-                                      (get_local $5)
-                                      (i32.const 0)
-                                    )
+                                    (get_local $5)
                                   )
                                 )
                                 (if
@@ -3695,13 +3686,10 @@
                     )
                   )
                   (br_if $do-in
-                    (i32.ne
-                      (tee_local $3
-                        (i32.load offset=8
-                          (get_local $3)
-                        )
+                    (tee_local $3
+                      (i32.load offset=8
+                        (get_local $3)
                       )
-                      (i32.const 0)
                     )
                   )
                 )

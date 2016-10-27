@@ -1,6 +1,7 @@
 (module
   (type $0 (func (param i32 i64)))
   (type $1 (func))
+  (type $2 (func (result i32)))
   (memory $0 0)
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
     (if
@@ -362,5 +363,16 @@
         (unreachable)
       )
     )
+  )
+  (func $ne0 (type $2) (result i32)
+    (if
+      (call $ne0)
+      (nop)
+    )
+    (if
+      (call $ne0)
+      (nop)
+    )
+    (i32.const 1)
   )
 )
