@@ -422,6 +422,31 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
             continue;
           }
         }
+        // Restructuring of ifs: if we have
+        //   (block $x
+        //     (br_if $x (cond))
+        //     .., no other references to $x
+        //   )
+        // then we can turn that into (if (!cond) ..).
+        // Code size wise, we turn the block into an if (no change), and
+        // lose the br_if (-2). .. turns into the body of the if in the binary
+        // format. We need to flip the condition, which at worst adds 1.
+        if (curr->name.is() && list.size() >= 2) {
+          auto* br = list[0]->dynCast<Break>();
+          if (br && br->condition && br->name == curr->name) {
+            assert(!br->value); // can't, it would be dropped or last in the block
+            if (BreakSeeker::count(curr, curr->name) == 1) {
+              // no other breaks to that name, so we can do this
+              Builder builder(*getModule());
+              replaceCurrent(builder.makeIf(
+                builder.makeUnary(EqZInt32, br->condition),
+                curr
+              ));
+              curr->name = Name();
+              ExpressionManipulator::nop(br);
+            }
+          }
+        }
       }
 
       bool selectify;
