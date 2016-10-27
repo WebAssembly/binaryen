@@ -9598,12 +9598,9 @@
               (i32.const 12)
             )
           )
-          (i32.ne
-            (call $___syscall54
-              (i32.const 54)
-              (get_local $3)
-            )
-            (i32.const 0)
+          (call $___syscall54
+            (i32.const 54)
+            (get_local $3)
           )
         )
       )

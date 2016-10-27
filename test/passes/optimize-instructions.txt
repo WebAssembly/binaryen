@@ -375,4 +375,21 @@
     )
     (i32.const 1)
   )
+  (func $recurse-bool (type $1)
+    (if
+      (if i32
+        (i32.const 1)
+        (call $ne0)
+        (call $ne0)
+      )
+      (nop)
+    )
+    (if
+      (block $block i32
+        (nop)
+        (call $ne0)
+      )
+      (nop)
+    )
+  )
 )
