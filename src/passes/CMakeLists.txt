@@ -5,6 +5,7 @@ SET(passes_SOURCES
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
+  Inlining.cpp
   LegalizeJSInterface.cpp
   MergeBlocks.cpp
   Metrics.cpp

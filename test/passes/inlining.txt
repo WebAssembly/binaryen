@@ -1,0 +1,110 @@
+(module
+  (type $0 (func))
+  (type $1 (func (result i32)))
+  (type $2 (func (result f64)))
+  (type $3 (func (param f32 i64)))
+  (table 1 1 anyfunc)
+  (elem (i32.const 0) $tabled)
+  (memory $0 0)
+  (export "user" (func $user))
+  (export "exported" (func $exported))
+  (func $user (type $0)
+    (local $x i32)
+    (local $y f64)
+    (local $2 f32)
+    (local $3 i64)
+    (local $4 f32)
+    (local $5 i64)
+    (local $6 f32)
+    (call $exported)
+    (call $tabled)
+    (call $multi)
+    (call $multi)
+    (block $__inlined_func$ok
+      (drop
+        (i32.const 1)
+      )
+    )
+    (drop
+      (block $__inlined_func$int i32
+        (i32.const 2)
+      )
+    )
+    (drop
+      (block $__inlined_func$double f64
+        (f64.const 3.14159)
+      )
+    )
+    (set_local $x
+      (block $__inlined_func$int2 i32
+        (i32.const 112)
+      )
+    )
+    (set_local $y
+      (block $__inlined_func$double2 f64
+        (f64.const 113.14159)
+      )
+    )
+    (block $__inlined_func$with-local
+      (set_local $2
+        (f32.const 2.1418280601501465)
+      )
+    )
+    (block $__inlined_func$with-local2
+      (set_local $3
+        (i64.const 4)
+      )
+    )
+    (drop
+      (block $__inlined_func$return i32
+        (br $__inlined_func$return
+          (i32.const 5)
+        )
+      )
+    )
+    (block $__inlined_func$multipass
+      (block $__inlined_func$multipass2
+        (drop
+          (i32.const 6)
+        )
+      )
+    )
+    (block $__inlined_func$param
+      (set_local $4
+        (f32.const 12.34000015258789)
+      )
+      (set_local $5
+        (i64.const 890005350012)
+      )
+      (block
+        (drop
+          (get_local $4)
+        )
+        (drop
+          (get_local $5)
+        )
+        (drop
+          (get_local $6)
+        )
+      )
+    )
+  )
+  (func $exported (type $0)
+    (nop)
+  )
+  (func $recursive (type $0)
+    (call $recursive)
+  )
+  (func $tabled (type $0)
+    (nop)
+  )
+  (func $cycle1 (type $0)
+    (call $cycle2)
+  )
+  (func $cycle2 (type $0)
+    (call $cycle1)
+  )
+  (func $multi (type $0)
+    (nop)
+  )
+)
