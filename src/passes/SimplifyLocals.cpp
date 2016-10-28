@@ -37,18 +37,11 @@
 #include <wasm-traversal.h>
 #include <pass.h>
 #include <ast_utils.h>
+#include <ast/count.h>
 
 namespace wasm {
 
 // Helper classes
-
-struct GetLocalCounter : public PostWalker<GetLocalCounter, Visitor<GetLocalCounter>> {
-  std::vector<Index>* numGetLocals;
-
-  void visitGetLocal(GetLocal *curr) {
-    (*numGetLocals)[curr->index]++;
-  }
-};
 
 struct SetLocalRemover : public PostWalker<SetLocalRemover, Visitor<SetLocalRemover>> {
   std::vector<Index>* numGetLocals;
@@ -118,7 +111,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   bool firstCycle;
 
   // local => # of get_locals for it
-  std::vector<Index> numGetLocals;
+  GetLocalCounter counter;
 
   static void doNoteNonLinear(SimplifyLocals* self, Expression** currp) {
     auto* curr = *currp;
@@ -195,7 +188,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       auto* set = (*found->second.item)->cast<SetLocal>();
       if (firstCycle) {
         // just one get_local of this, so just sink the value
-        assert(numGetLocals[curr->index] == 1);
+        assert(counter.num[curr->index] == 1);
         replaceCurrent(set->value);
       } else {
         replaceCurrent(set);
@@ -271,7 +264,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       self->checkInvalidations(effects);
     }
 
-    if (set && !set->isTee() && (!self->firstCycle || self->numGetLocals[set->index] == 1)) {
+    if (set && !set->isTee() && (!self->firstCycle || self->counter.num[set->index] == 1)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
       self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp)));
@@ -422,11 +415,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
 
   void doWalkFunction(Function* func) {
     // scan get_locals
-    numGetLocals.resize(func->getNumLocals());
-    std::fill(numGetLocals.begin(), numGetLocals.end(), 0);
-    GetLocalCounter counter;
-    counter.numGetLocals = &numGetLocals;
-    counter.walkFunction(func);
+    counter.analyze(func);
     // multiple passes may be required per function, consider this:
     //    x = load
     //    y = store
@@ -479,11 +468,10 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     // for a local with no remaining gets, in which case, we can
     // remove the set.
     // First, recount get_locals
-    std::fill(numGetLocals.begin(), numGetLocals.end(), 0);
-    counter.walkFunction(func);
+    counter.analyze(func);
     // Second, remove unneeded sets
     SetLocalRemover remover;
-    remover.numGetLocals = &numGetLocals;
+    remover.numGetLocals = &counter.num;
     remover.walkFunction(func);
   }
 };
