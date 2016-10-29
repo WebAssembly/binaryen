@@ -269,6 +269,10 @@ public:
     return index;
   }
 
+  static Index addVar(Function* func, WasmType type) {
+    return addVar(func, Name(), type);
+  }
+
   static void clearLocals(Function* func) {
     func->params.clear();
     func->vars.clear();
