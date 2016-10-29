@@ -68,29 +68,53 @@
 
 namespace wasm {
 
-struct SwitchFinder : public ControlFlowWalker<SwitchFinder, Visitor<SwitchFinder>> {
-  Expression* origin;
-  bool found = false;
+// Looks for reasons we can't remove the values from breaks to an origin
+// For example, if there is a switch targeting us, we can't do it - we can't remove the value from other targets
+struct ProblemFinder : public ControlFlowWalker<ProblemFinder, Visitor<ProblemFinder>> {
+  Name origin;
+  bool foundSwitch = false;
+  // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow value is used, and we can't drop it
+  Index brIfs = 0;
+  Index droppedBrIfs = 0;
+
+  void visitBreak(Break* curr) {
+    if (curr->name == origin && curr->condition) {
+      brIfs++;
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    if (auto* br = curr->value->dynCast<Break>()) {
+      if (br->name == origin && br->condition) {
+        droppedBrIfs++;
+      }
+    }
+  }
 
   void visitSwitch(Switch* curr) {
-    if (findBreakTarget(curr->default_) == origin) {
-      found = true;
+    if (curr->default_ == origin) {
+      foundSwitch = true;
       return;
     }
     for (auto& target : curr->targets) {
-      if (findBreakTarget(target) == origin) {
-        found = true;
+      if (target == origin) {
+        foundSwitch = true;
         return;
       }
     }
   }
+
+  bool found() {
+    assert(brIfs >= droppedBrIfs);
+    return foundSwitch || brIfs > droppedBrIfs;
+  }
 };
 
 struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper, Visitor<BreakValueDropper>> {
-  Expression* origin;
+  Name origin;
 
   void visitBreak(Break* curr) {
-    if (curr->value && findBreakTarget(curr->name) == origin) {
+    if (curr->value && curr->name == origin) {
       Builder builder(*getModule());
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value), curr));
       curr->value = nullptr;
@@ -118,16 +142,16 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
             if (child) {
               if (child->name.is()) {
                 Expression* expression = child;
-                // if there is a switch targeting us, we can't do it - we can't remove the value from other targets too
-                SwitchFinder finder;
-                finder.origin = child;
+                // check if it's ok to remove the value from all breaks to us
+                ProblemFinder finder;
+                finder.origin = child->name;
                 finder.walk(expression);
-                if (finder.found) {
+                if (finder.found()) {
                   child = nullptr;
                 } else {
                   // fix up breaks
                   BreakValueDropper fixer;
-                  fixer.origin = child;
+                  fixer.origin = child->name;
                   fixer.setModule(getModule());
                   fixer.walk(expression);
                 }
