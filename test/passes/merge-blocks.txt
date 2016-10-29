@@ -29,14 +29,12 @@
   (func $drop-block-br-if (type $0)
     (block $block
       (block $x
-        (drop
-          (block i32
-            (drop
-              (i32.const 1)
-            )
-            (br_if $x
-              (i32.const 2)
-            )
+        (block
+          (drop
+            (i32.const 1)
+          )
+          (br_if $x
+            (i32.const 2)
           )
         )
         (drop

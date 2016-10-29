@@ -116,8 +116,17 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper, Visitor<B
   void visitBreak(Break* curr) {
     if (curr->value && curr->name == origin) {
       Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value), curr));
+      auto* value = curr->value;
       curr->value = nullptr;
+      curr->finalize();
+      replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    // if we dropped a br_if whose value we removed, then we are now dropping a (block (drop value) (br_if)) with type none, which does not need a drop
+    if (curr->value->type == none) {
+      replaceCurrent(curr->value);
     }
   }
 };
