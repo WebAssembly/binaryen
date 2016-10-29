@@ -68,35 +68,140 @@
 
 namespace wasm {
 
-struct SwitchFinder : public ControlFlowWalker<SwitchFinder, Visitor<SwitchFinder>> {
-  Expression* origin;
-  bool found = false;
+// Looks for reasons we can't remove the values from breaks to an origin
+// For example, if there is a switch targeting us, we can't do it - we can't remove the value from other targets
+struct ProblemFinder : public ControlFlowWalker<ProblemFinder, Visitor<ProblemFinder>> {
+  Name origin;
+  bool foundSwitch = false;
+  // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow value is used, and we can't drop it
+  Index brIfs = 0;
+  Index droppedBrIfs = 0;
+
+  void visitBreak(Break* curr) {
+    if (curr->name == origin && curr->condition) {
+      brIfs++;
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    if (auto* br = curr->value->dynCast<Break>()) {
+      if (br->name == origin && br->condition) {
+        droppedBrIfs++;
+      }
+    }
+  }
 
   void visitSwitch(Switch* curr) {
-    if (findBreakTarget(curr->default_) == origin) {
-      found = true;
+    if (curr->default_ == origin) {
+      foundSwitch = true;
       return;
     }
     for (auto& target : curr->targets) {
-      if (findBreakTarget(target) == origin) {
-        found = true;
+      if (target == origin) {
+        foundSwitch = true;
         return;
       }
     }
   }
+
+  bool found() {
+    assert(brIfs >= droppedBrIfs);
+    return foundSwitch || brIfs > droppedBrIfs;
+  }
 };
 
+// Drops values from breaks to an origin.
+// While doing so it can create new blocks, so optimize blocks as well.
 struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper, Visitor<BreakValueDropper>> {
-  Expression* origin;
+  Name origin;
+
+  void visitBlock(Block* curr);
 
   void visitBreak(Break* curr) {
-    if (curr->value && findBreakTarget(curr->name) == origin) {
+    if (curr->value && curr->name == origin) {
       Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value), curr));
+      auto* value = curr->value;
       curr->value = nullptr;
+      curr->finalize();
+      replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    // if we dropped a br_if whose value we removed, then we are now dropping a (block (drop value) (br_if)) with type none, which does not need a drop
+    if (curr->value->type == none) {
+      replaceCurrent(curr->value);
     }
   }
 };
+
+// core block optimizer routine
+static void optimizeBlock(Block* curr, Module* module) {
+  bool more = true;
+  bool changed = false;
+  while (more) {
+    more = false;
+    for (size_t i = 0; i < curr->list.size(); i++) {
+      Block* child = curr->list[i]->dynCast<Block>();
+      if (!child) {
+        // if we have a child that is (drop (block ..)) then we can move the drop into the block, and remove br values. this allows more merging,
+        auto* drop = curr->list[i]->dynCast<Drop>();
+        if (drop) {
+          child = drop->value->dynCast<Block>();
+          if (child) {
+            if (child->name.is()) {
+              Expression* expression = child;
+              // check if it's ok to remove the value from all breaks to us
+              ProblemFinder finder;
+              finder.origin = child->name;
+              finder.walk(expression);
+              if (finder.found()) {
+                child = nullptr;
+              } else {
+                // fix up breaks
+                BreakValueDropper fixer;
+                fixer.origin = child->name;
+                fixer.setModule(module);
+                fixer.walk(expression);
+              }
+            }
+            if (child) {
+              // we can do it!
+              // reuse the drop
+              drop->value = child->list.back();
+              child->list.back() = drop;
+              child->finalize();
+              curr->list[i] = child;
+              more = true;
+              changed = true;
+            }
+          }
+        }
+      }
+      if (!child) continue;
+      if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
+      ExpressionList merged(module->allocator);
+      for (size_t j = 0; j < i; j++) {
+        merged.push_back(curr->list[j]);
+      }
+      for (auto item : child->list) {
+        merged.push_back(item);
+      }
+      for (size_t j = i + 1; j < curr->list.size(); j++) {
+        merged.push_back(curr->list[j]);
+      }
+      curr->list = merged;
+      more = true;
+      changed = true;
+      break;
+    }
+  }
+  if (changed) curr->finalize();
+}
+
+void BreakValueDropper::visitBlock(Block* curr) {
+  optimizeBlock(curr, getModule());
+}
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
@@ -104,66 +209,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
   Pass* create() override { return new MergeBlocks; }
 
   void visitBlock(Block *curr) {
-    bool more = true;
-    bool changed = false;
-    while (more) {
-      more = false;
-      for (size_t i = 0; i < curr->list.size(); i++) {
-        Block* child = curr->list[i]->dynCast<Block>();
-        if (!child) {
-          // if we have a child that is (drop (block ..)) then we can move the drop into the block, and remove br values. this allows more merging,
-          auto* drop = curr->list[i]->dynCast<Drop>();
-          if (drop) {
-            child = drop->value->dynCast<Block>();
-            if (child) {
-              if (child->name.is()) {
-                Expression* expression = child;
-                // if there is a switch targeting us, we can't do it - we can't remove the value from other targets too
-                SwitchFinder finder;
-                finder.origin = child;
-                finder.walk(expression);
-                if (finder.found) {
-                  child = nullptr;
-                } else {
-                  // fix up breaks
-                  BreakValueDropper fixer;
-                  fixer.origin = child;
-                  fixer.setModule(getModule());
-                  fixer.walk(expression);
-                }
-              }
-              if (child) {
-                // we can do it!
-                // reuse the drop
-                drop->value = child->list.back();
-                child->list.back() = drop;
-                child->finalize();
-                curr->list[i] = child;
-                more = true;
-                changed = true;
-              }
-            }
-          }
-        }
-        if (!child) continue;
-        if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
-        ExpressionList merged(getModule()->allocator);
-        for (size_t j = 0; j < i; j++) {
-          merged.push_back(curr->list[j]);
-        }
-        for (auto item : child->list) {
-          merged.push_back(item);
-        }
-        for (size_t j = i + 1; j < curr->list.size(); j++) {
-          merged.push_back(curr->list[j]);
-        }
-        curr->list = merged;
-        more = true;
-        changed = true;
-        break;
-      }
-    }
-    if (changed) curr->finalize();
+    optimizeBlock(curr, getModule());
   }
 
   Block* optimize(Expression* curr, Expression*& child, Block* outer = nullptr, Expression** dependency1 = nullptr, Expression** dependency2 = nullptr) {
