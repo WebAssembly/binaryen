@@ -14,12 +14,10 @@
   (func $drop-block-br (type $0)
     (block $block
       (block $x
-        (block
-          (drop
-            (i32.const 1)
-          )
-          (br $x)
+        (drop
+          (i32.const 1)
         )
+        (br $x)
         (drop
           (i32.const 0)
         )
@@ -29,13 +27,11 @@
   (func $drop-block-br-if (type $0)
     (block $block
       (block $x
-        (block
-          (drop
-            (i32.const 1)
-          )
-          (br_if $x
-            (i32.const 2)
-          )
+        (drop
+          (i32.const 1)
+        )
+        (br_if $x
+          (i32.const 2)
         )
         (drop
           (i32.const 0)
@@ -53,6 +49,27 @@
               (i32.const 2)
             )
           )
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $drop-block-nested-br-if (type $0)
+    (block $block
+      (block $x
+        (if
+          (i32.const 100)
+          (block $block0
+            (drop
+              (i32.const 1)
+            )
+            (br_if $x
+              (i32.const 2)
+            )
+            (nop)
+          )
+        )
+        (drop
           (i32.const 0)
         )
       )

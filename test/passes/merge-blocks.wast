@@ -38,5 +38,20 @@
       )
     )
   )
+  (func $drop-block-nested-br-if
+    (block
+      (drop
+        (block $x i32
+          (if (i32.const 100)
+            (block
+              (drop (br_if $x (i32.const 1) (i32.const 2)))
+              (nop)
+            )
+          )
+          (i32.const 0)
+        )
+      )
+    )
+  )
 )
 
