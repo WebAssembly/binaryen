@@ -632,6 +632,7 @@ static void removeIfCopy(Expression** origin, SetLocal* set, If* iff, Expression
     if (!iff->ifTrue) {
       Builder(*module).flip(iff);
     }
+    iff->finalize();
   }
 }
 
@@ -670,14 +671,15 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
           if (auto* get = iff->ifTrue->dynCast<GetLocal>()) {
             if (get->index == set->index) {
               removeIfCopy(action.origin, set, iff, iff->ifTrue, iff->ifFalse, getModule());
+              continue;
             }
           }
           if (auto* get = iff->ifFalse->dynCast<GetLocal>()) {
             if (get->index == set->index) {
               removeIfCopy(action.origin, set, iff, iff->ifFalse, iff->ifTrue, getModule());
+              continue;
             }
           }
-          continue;
         }
       }
     }
