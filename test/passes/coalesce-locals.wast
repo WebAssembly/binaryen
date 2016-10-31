@@ -993,4 +993,86 @@
       )
     )
   )
+  (func $if-copy1
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (get_local $x)
+          (get_local $y)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy2
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (get_local $y)
+          (get_local $x)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy3
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (unreachable)
+          (get_local $x)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy4
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (unreachable)
+          (get_local $y)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy-tee
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (drop
+        (tee_local $x
+          (if i32
+            (i32.const 1)
+            (get_local $x)
+            (i32.const 2)
+          )
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
 )
