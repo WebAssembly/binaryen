@@ -370,6 +370,8 @@ for asm in tests:
           # test mem init importing
           open('a.mem', 'wb').write(asm)
           cmd += ['--mem-init=a.mem']
+          if asm[0] == 'e':
+            cmd += ['--mem-base=1024']
         if 'i64' in asm or 'wasm-only' in asm:
           cmd += ['--wasm-only']
         wasm = os.path.join(options.binaryen_test, wasm)
