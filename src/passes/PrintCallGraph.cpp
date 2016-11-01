@@ -33,20 +33,25 @@ struct PrintCallGraph : public Pass {
     o << "digraph call {\n";
     o << "  rankdir = LR;\n";
     o << "  subgraph cluster_key {\n";
-    o << "    node [shape=box, style=rounded, fontname=courier, fontsize=10];\n";
+    o << "    node [shape=box, fontname=courier, fontsize=10];\n";
     o << "    edge [fontname=courier, fontsize=10];\n";
     o << "    label = \"Key\";\n";
-    o << "    \"Import\" [style=\"filled, rounded\", fillcolor=\"turquoise\"];\n";
-    o << "    \"Export\" [style=\"filled, rounded\", fillcolor=\"gray\"];\n";
+    o << "    \"Import\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
+    o << "    \"Export\" [style=\"filled\", fillcolor=\"gray\"];\n";
+    o << "    \"Indirect Target\" [style=\"filled, rounded\", fillcolor=\"white\"];\n";
     o << "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct Call\"];\n";
-    o << "    \"C\" -> \"D\" [style=\"filled, rounded, dashed\", label = \"Possible Indirect Call\"];\n";
     o << "  }\n\n";
-    o << "  node [shape=box,style=rounded, fontname=courier, fontsize=10];\n";
+    o << "  node [shape=box, fontname=courier, fontsize=10];\n";
+
+    // All Functions
+    for (auto& func : module->functions) {
+      std::cout << "  \"" << func.get()->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
+    }
 
     // Imports Nodes
     for (auto& curr : module->imports) {
       if (curr->kind == ExternalKind::Function) {
-        o << "  \"" << curr->name << "\" [style=\"filled, rounded\", fillcolor=\"turquoise\"];\n";
+        o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
       }
     }
 
@@ -54,7 +59,7 @@ struct PrintCallGraph : public Pass {
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         Function* func = module->getFunction(curr->value);
-        o << "  \"" << func->name << "\" [style=\"filled, rounded\", fillcolor=\"gray\"];\n";
+        o << "  \"" << func->name << "\" [style=\"filled\", fillcolor=\"gray\"];\n";
       }
     }
 
@@ -64,16 +69,9 @@ struct PrintCallGraph : public Pass {
       std::set<Name> visitedTargets; // Used to avoid printing duplicate edges.
       std::vector<Function*> allIndirectTargets;
       CallPrinter(Module *module) : module(module) {
-        // Gather targets of indirect calls.
-        for (auto& segment : module->table.segments) {
-          for (auto& curr : segment.data) {
-            allIndirectTargets.push_back(module->getFunction(curr));
-          }
-        }
         // Walk function bodies.
         for (auto& func : module->functions) {
           currFunction = func.get();
-          std::cout << "  \"" << func->name << "\";\n";
           visitedTargets.clear();
           walk(func.get()->body);
         }
@@ -90,20 +88,17 @@ struct PrintCallGraph : public Pass {
         visitedTargets.insert(name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
       }
-      void visitCallIndirect(CallIndirect *curr) {
-        // Find eligible indirect targets.
-        auto* currType = module->getFunctionType(curr->fullType);
-        for (auto& target : allIndirectTargets) {
-          auto* targetType = module->getFunctionType(target->type);
-          if (targetType->structuralComparison(*currType)) continue;
-          auto name = target->name;
-          if (visitedTargets.count(name) > 0) continue;
-          visitedTargets.insert(name);
-          std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\" [style=\"dashed\"]; // callIndirect\n";
-        }
-      }
     };
     CallPrinter printer(module);
+
+    // Indirect Targets
+    for (auto& segment : module->table.segments) {
+      for (auto& curr : segment.data) {
+        auto* func = module->getFunction(curr);
+        o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
+      }
+    }
+
     o << "}\n";
   }
 };
