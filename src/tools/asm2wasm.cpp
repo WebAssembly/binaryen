@@ -116,6 +116,11 @@ int main(int argc, const char *argv[]) {
       init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
     }
     wasm.memory.segments.emplace_back(init, data);
+    if (runOptimizationPasses) {
+      PassRunner runner(&wasm);
+      runner.add("memory-packing");
+      runner.run();
+    }
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
