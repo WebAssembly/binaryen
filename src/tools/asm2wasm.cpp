@@ -51,6 +51,10 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["mem init"] = argument;
            })
+      .add("--mem-base", "-mb", "Set the location to write the memory initialization (--mem-init) file (GLOBAL_BASE in emscripten). If not provided, the memoryBase global import is used.", Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["mem base"] = argument;
+           })
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
@@ -104,7 +108,19 @@ int main(int argc, const char *argv[]) {
     auto filename = memInit->second.c_str();
     auto data(read_file<std::vector<char>>(filename, Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
     // create the memory segment
-    wasm.memory.segments.emplace_back(Builder(wasm).makeGetGlobal(Name("memoryBase"), i32), data);
+    Expression* init;
+    const auto &memBase = options.extra.find("mem base");
+    if (memBase == options.extra.end()) {
+      init = Builder(wasm).makeGetGlobal(Name("memoryBase"), i32);
+    } else {
+      init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
+    }
+    wasm.memory.segments.emplace_back(init, data);
+    if (runOptimizationPasses) {
+      PassRunner runner(&wasm);
+      runner.add("memory-packing");
+      runner.run();
+    }
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;

@@ -71,6 +71,7 @@ void PassRegistry::registerPasses() {
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
   registerPass("inlining", "inlines functions (currently only ones with a single use)", createInliningPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
+  registerPass("memory-packing", "packs memory into separate segments, skipping zeros", createMemoryPackingPass);
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
@@ -100,6 +101,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   addDefaultFunctionOptimizationPasses();
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-functions");
+  add("memory-packing");
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
@@ -127,6 +129,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 void PassRunner::addDefaultGlobalOptimizationPasses() {
   add("duplicate-function-elimination");
   add("remove-unused-functions");
+  add("memory-packing");
 }
 
 void PassRunner::run() {
