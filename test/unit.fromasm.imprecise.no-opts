@@ -1677,6 +1677,11 @@
     )
     (return)
   )
+  (func $big_fround (result f32)
+    (return
+      (f32.const 4294967296)
+    )
+  )
   (func $dropIgnoredImportsInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
     (block $do-once
       (if
