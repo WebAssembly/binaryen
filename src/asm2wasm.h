@@ -443,9 +443,13 @@ private:
 
   std::map<unsigned, Ref> tempNums;
 
-  Literal checkLiteral(Ref ast) {
+  Literal checkLiteral(Ref ast, bool rawIsInteger = true) {
     if (ast[0] == NUM) {
-      return Literal((int32_t)ast[1]->getInteger());
+      if (rawIsInteger) {
+        return Literal((int32_t)ast[1]->getInteger());
+      } else {
+        return Literal(ast[1]->getNumber());
+      }
     } else if (ast[0] == UNARY_PREFIX) {
       if (ast[1] == PLUS && ast[2][0] == NUM) {
         return Literal((double)ast[2][1]->getNumber());
@@ -1475,10 +1479,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         if (name == Math_fround) {
           assert(ast[2]->size() == 1);
-          Literal lit = checkLiteral(ast[2][0]);
-          if (lit.type == i32) {
-            return builder.makeConst(Literal((float)lit.geti32()));
-          } else if (lit.type == f64) {
+          Literal lit = checkLiteral(ast[2][0], false /* raw is float */);
+          if (lit.type == f64) {
             return builder.makeConst(Literal((float)lit.getf64()));
           }
           auto ret = allocator.alloc<Unary>();

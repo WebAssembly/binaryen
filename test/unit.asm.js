@@ -589,6 +589,10 @@ function asm(global, env, buffer) {
    return;
   }
 
+  function big_fround() {
+    return Math_fround(4294967295);
+  }
+
   function dropIgnoredImportsInIf($0,$1,$2) {
    $0 = $0|0;
    $1 = $1|0;

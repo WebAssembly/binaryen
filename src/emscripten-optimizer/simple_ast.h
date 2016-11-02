@@ -225,9 +225,9 @@ struct Value {
     return boo;
   }
 
-  int getInteger() { // convenience function to get a known integer
+  int32_t getInteger() { // convenience function to get a known integer
     assert(fmod(getNumber(), 1) == 0);
-    int ret = int(getNumber());
+    int32_t ret = getNumber();
     assert(double(ret) == getNumber()); // no loss in conversion
     return ret;
   }
