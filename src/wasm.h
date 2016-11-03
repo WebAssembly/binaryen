@@ -1502,7 +1502,11 @@ public:
   Address initial, max; // sizes are in pages
   std::vector<Segment> segments;
 
-  Memory() : initial(0), max(kMaxSize) {
+  // See comment in Table.
+  bool exists;
+  bool imported;
+
+  Memory() : initial(0), max(kMaxSize), exists(false), imported(false) {
     name = Name::fromInt(0);
   }
 };

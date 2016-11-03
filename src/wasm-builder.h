@@ -245,6 +245,7 @@ public:
   }
 
   // Additional utility functions for building on top of nodes
+  // Convenient to have these on Builder, as it has allocation built in
 
   static Index addParam(Function* func, Name name, WasmType type) {
     // only ok to add a param if no vars, otherwise indices are invalidated
@@ -267,6 +268,10 @@ public:
     }
     func->vars.emplace_back(type);
     return index;
+  }
+
+  static Index addVar(Function* func, WasmType type) {
+    return addVar(func, Name(), type);
   }
 
   static void clearLocals(Function* func) {
@@ -363,6 +368,11 @@ public:
   Expression* dropIfConcretelyTyped(Expression* curr) {
     if (!isConcreteWasmType(curr->type)) return curr;
     return makeDrop(curr);
+  }
+
+  void flip(If* iff) {
+    std::swap(iff->ifTrue, iff->ifFalse);
+    iff->condition = makeUnary(EqZInt32, iff->condition);
   }
 };
 

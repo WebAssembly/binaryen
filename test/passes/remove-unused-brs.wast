@@ -795,5 +795,41 @@
       )
     )
   )
+  (func $iffify
+    (block $yes
+      (br_if $yes
+        (i32.const 0)
+      )
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+    )
+    (block $no
+      (br_if $no
+        (i32.const 0)
+      )
+      (drop (i32.const 1))
+      (br $no)
+      (drop (i32.const 2))
+    )
+    (block $no2
+      (br_if $no2
+        (i32.const 0)
+      )
+    )
+    (block $no3
+      (br $no3)
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+    )
+    (block $no5
+      (block $no4
+        (br_if $no5
+          (i32.const 0)
+        )
+        (drop (i32.const 1))
+        (drop (i32.const 2))
+      )
+    )
+  )
 )
 

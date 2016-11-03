@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
 	.section	.text.t1,"ax",@progbits
 	.hidden	t1
 	.globl	t1
@@ -9,7 +9,7 @@ t1:                                     # @t1
 	.result 	i32
 # BB#0:                                 # %entry
 	f64.const	$push0=, 0x1.8p1
-	call_indirect	$2, $pop0
+	call_indirect	$pop0, $2
 	i32.const	$push1=, 2
 	i32.shl 	$push2=, $1, $pop1
 	i32.add 	$push9=, $0, $pop2
@@ -20,7 +20,7 @@ t1:                                     # @t1
 	i32.store	0($pop8), $pop5
 	f32.const	$push7=, 0x1.4p1
 	f32.const	$push6=, 0x1.cp1
-	call_indirect	$3, $pop7, $pop6
+	call_indirect	$pop7, $pop6, $3
 	copy_local	$push10=, $3
                                         # fallthrough-return: $pop10
 	.endfunc
@@ -36,9 +36,9 @@ t2:                                     # @t2
 	.result 	i32
 # BB#0:                                 # %entry
 	f32.const	$push0=, 0x1.8p2
-	call_indirect	$4, $pop0
+	call_indirect	$pop0, $4
 	f64.const	$push1=, 0x1.8p1
-	call_indirect	$2, $pop1
+	call_indirect	$pop1, $2
 	i32.const	$push2=, 2
 	i32.shl 	$push3=, $1, $pop2
 	i32.add 	$push10=, $0, $pop3
@@ -49,7 +49,7 @@ t2:                                     # @t2
 	i32.store	0($pop9), $pop6
 	f32.const	$push8=, 0x1.4p1
 	f32.const	$push7=, 0x1.cp1
-	call_indirect	$3, $pop8, $pop7
+	call_indirect	$pop8, $pop7, $3
 	copy_local	$push11=, $3
                                         # fallthrough-return: $pop11
 	.endfunc
@@ -138,6 +138,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

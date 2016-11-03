@@ -55,6 +55,14 @@ private:
   std::map<std::string, PassInfo> passInfos;
 };
 
+struct PassOptions {
+  bool debug = false; // run passes in debug mode, doing extra validation and timing checks
+  bool validateGlobally = false; // when validating validate globally and not just locally
+  int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+  int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
+  bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
+};
+
 //
 // Runs a set of passes, in order
 //
@@ -62,17 +70,17 @@ struct PassRunner {
   Module* wasm;
   MixedArena* allocator;
   std::vector<Pass*> passes;
-  bool debug = false;
-  bool validateGlobally = false;
+  PassOptions options;
 
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
+  PassRunner(Module* wasm, PassOptions options) : wasm(wasm), allocator(&wasm->allocator), options(options) {}
 
   void setDebug(bool debug_) {
-    debug = debug_;
-    validateGlobally = debug; // validate everything by default if debugging
+    options.debug = debug_;
+    options.validateGlobally = debug_; // validate everything by default if debugging
   }
   void setValidateGlobally(bool validate) {
-    validateGlobally = validate;
+    options.validateGlobally = validate;
   }
 
   void add(std::string passName) {
@@ -173,14 +181,27 @@ protected:
 //
 template <typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
+  PassRunner *runner;
+
 public:
   void run(PassRunner* runner, Module* module) override {
+    setPassRunner(runner);
+    WalkerType::setModule(module);
     WalkerType::walkModule(module);
   }
 
   void runFunction(PassRunner* runner, Module* module, Function* func) override {
+    setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkFunction(func);
+  }
+
+  PassRunner* getPassRunner() {
+    return runner;
+  }
+
+  void setPassRunner(PassRunner* runner_) {
+    runner = runner_;
   }
 };
 

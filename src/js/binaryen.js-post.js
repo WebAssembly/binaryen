@@ -21,7 +21,8 @@ if (typeof exports != 'undefined') {
   ( process.argv &&
     Array.isArray(process.argv) &&
     process.argv[1] &&
-    process.argv[1].substr(-5) === '/a.js'
+    (process.argv[1].substr(-5) === '/a.js' ||
+     process.argv[1].substr(-5) === '\\a.js')
   )
 
  ) ? global :

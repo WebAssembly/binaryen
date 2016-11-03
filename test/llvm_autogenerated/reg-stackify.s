@@ -449,6 +449,22 @@ stackpointer_dependency:
 .Lfunc_end23:
 	.size	stackpointer_dependency, .Lfunc_end23-stackpointer_dependency
 
+	.globl	call_indirect_stackify
+	.type	call_indirect_stackify,@function
+call_indirect_stackify:
+.Lfunc_begin24:
+	.param  	i32, i32
+	.result 	i32
+	i32.load	$push4=, 0($0)
+	tee_local	$push3=, $0=, $pop4
+	i32.load	$push0=, 0($0)
+	i32.load	$push1=, 0($pop0)
+	i32.call_indirect	$push2=, $pop3, $1, $pop1
+	return  	$pop2
+	.endfunc
+.Lfunc_end24:
+	.size	call_indirect_stackify, .Lfunc_end24-call_indirect_stackify
+
 	.hidden	count
 	.type	count,@object
 	.bss

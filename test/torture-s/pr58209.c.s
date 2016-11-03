@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58209.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58209.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -33,21 +33,20 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, buf
 	block   	
-	i32.eqz 	$push4=, $0
-	br_if   	0, $pop4        # 0: down to label1
+	i32.eqz 	$push6=, $0
+	br_if   	0, $pop6        # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo@FUNCTION, $pop1
 	i32.const	$push3=, 4
-	i32.add 	$1=, $pop2, $pop3
-.LBB1_2:                                # %return
+	i32.add 	$push4=, $pop2, $pop3
+	return  	$pop4
+.LBB1_2:
 	end_block                       # label1:
-	copy_local	$push5=, $1
+	i32.const	$push5=, buf
                                         # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
@@ -59,7 +58,7 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32
+	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$2=, 0
 	i32.const	$1=, buf-4
@@ -67,43 +66,47 @@ main:                                   # @main
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label3:
-	i32.const	$push10=, 4
-	i32.add 	$push9=, $1, $pop10
-	tee_local	$push8=, $1=, $pop9
-	i32.call	$push7=, foo@FUNCTION, $2
-	tee_local	$push6=, $0=, $pop7
-	i32.ne  	$push0=, $pop8, $pop6
+	i32.const	$push13=, 4
+	i32.add 	$push12=, $1, $pop13
+	tee_local	$push11=, $1=, $pop12
+	i32.call	$push10=, foo@FUNCTION, $2
+	tee_local	$push9=, $0=, $pop10
+	i32.ne  	$push0=, $pop11, $pop9
 	br_if   	1, $pop0        # 1: down to label2
 # BB#2:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$3=, buf
 	block   	
-	i32.eqz 	$push17=, $2
-	br_if   	0, $pop17       # 0: down to label4
+	block   	
+	i32.eqz 	$push20=, $2
+	br_if   	0, $pop20       # 0: down to label5
 # BB#3:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$push12=, -1
-	i32.add 	$push1=, $2, $pop12
+	i32.const	$push15=, -1
+	i32.add 	$push1=, $2, $pop15
 	i32.call	$push2=, foo@FUNCTION, $pop1
-	i32.const	$push11=, 4
-	i32.add 	$3=, $pop2, $pop11
-.LBB2_4:                                # %bar.exit
+	i32.const	$push14=, 4
+	i32.add 	$push7=, $pop2, $pop14
+	i32.eq  	$push3=, $pop7, $0
+	br_if   	1, $pop3        # 1: down to label4
+	br      	3               # 3: down to label2
+.LBB2_4:                                #   in Loop: Header=BB2_1 Depth=1
+	end_block                       # label5:
+	i32.const	$push8=, buf
+	i32.ne  	$push4=, $pop8, $0
+	br_if   	2, $pop4        # 2: down to label2
+.LBB2_5:                                # %for.cond
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label4:
-	i32.ne  	$push3=, $3, $0
-	br_if   	1, $pop3        # 1: down to label2
-# BB#5:                                 # %for.cond
-                                        #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$push16=, 1
-	i32.add 	$push15=, $2, $pop16
-	tee_local	$push14=, $2=, $pop15
-	i32.const	$push13=, 26
-	i32.le_s	$push4=, $pop14, $pop13
-	br_if   	0, $pop4        # 0: up to label3
+	i32.const	$push19=, 1
+	i32.add 	$push18=, $2, $pop19
+	tee_local	$push17=, $2=, $pop18
+	i32.const	$push16=, 26
+	i32.le_s	$push5=, $pop17, $pop16
+	br_if   	0, $pop5        # 0: up to label3
 # BB#6:                                 # %for.end
 	end_loop
-	i32.const	$push5=, 0
-	return  	$pop5
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB2_7:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
@@ -122,5 +125,5 @@ buf:
 	.size	buf, 4096
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071030-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071030-1.c"
 	.section	.text.CalcPing,"ax",@progbits
 	.hidden	CalcPing
 	.globl	CalcPing
@@ -15,8 +15,8 @@ CalcPing:                               # @CalcPing
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.then
-	i32.load	$push10=, 4($0)
-	return  	$pop10
+	i32.load	$push12=, 4($0)
+	return  	$pop12
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	i32.const	$4=, 0
@@ -26,36 +26,36 @@ CalcPing:                               # @CalcPing
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
 	i32.add 	$push3=, $0, $3
-	f32.load	$push19=, 0($pop3)
-	tee_local	$push18=, $1=, $pop19
-	f32.add 	$push4=, $5, $pop18
-	f32.const	$push17=, 0x0p0
-	f32.gt  	$push16=, $1, $pop17
-	tee_local	$push15=, $2=, $pop16
-	f32.select	$5=, $pop4, $5, $pop15
+	f32.load	$push21=, 0($pop3)
+	tee_local	$push20=, $1=, $pop21
+	f32.add 	$push4=, $5, $pop20
+	f32.const	$push19=, 0x0p0
+	f32.gt  	$push18=, $1, $pop19
+	tee_local	$push17=, $2=, $pop18
+	f32.select	$5=, $pop4, $5, $pop17
 	i32.add 	$4=, $2, $4
-	i32.const	$push14=, 24
-	i32.add 	$push13=, $3, $pop14
-	tee_local	$push12=, $3=, $pop13
-	i32.const	$push11=, 1552
-	i32.ne  	$push5=, $pop12, $pop11
+	i32.const	$push16=, 24
+	i32.add 	$push15=, $3, $pop16
+	tee_local	$push14=, $3=, $pop15
+	i32.const	$push13=, 1552
+	i32.ne  	$push5=, $pop14, $pop13
 	br_if   	0, $pop5        # 0: up to label1
 # BB#4:                                 # %for.end
 	end_loop
-	i32.const	$3=, 9999
 	block   	
-	i32.eqz 	$push20=, $4
-	br_if   	0, $pop20       # 0: down to label2
+	i32.eqz 	$push22=, $4
+	br_if   	0, $pop22       # 0: down to label2
 # BB#5:                                 # %if.end9
 	f32.convert_s/i32	$push6=, $4
 	f32.div 	$push7=, $5, $pop6
 	f32.const	$push8=, 0x1.f4p9
 	f32.mul 	$push9=, $pop7, $pop8
-	i32.trunc_s/f32	$3=, $pop9
-.LBB0_6:                                # %cleanup
+	i32.trunc_s/f32	$push10=, $pop9
+	return  	$pop10
+.LBB0_6:
 	end_block                       # label2:
-	copy_local	$push21=, $3
-                                        # fallthrough-return: $pop21
+	i32.const	$push11=, 9999
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	CalcPing, .Lfunc_end0-CalcPing
@@ -139,5 +139,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

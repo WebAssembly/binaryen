@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
 	.section	.text.RenderBox_setStyle,"ax",@progbits
 	.hidden	RenderBox_setStyle
 	.globl	RenderBox_setStyle
@@ -42,7 +42,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.load	$2=, 0($1)
 	block   	
 	i32.load	$push14=, 28($0)
-	i32.call_indirect	$push15=, $pop14, $0
+	i32.call_indirect	$push15=, $0, $pop14
 	br_if   	0, $pop15       # 0: down to label3
 # BB#4:                                 # %if.end
 	i32.const	$3=, 8
@@ -179,5 +179,5 @@ g__style:
 	.size	g__style, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

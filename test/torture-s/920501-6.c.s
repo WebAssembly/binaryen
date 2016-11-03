@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-6.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-6.c"
 	.section	.text.str2llu,"ax",@progbits
 	.hidden	str2llu
 	.globl	str2llu
@@ -76,10 +76,10 @@ sqrtllu:                                # @sqrtllu
 	i64.shr_u	$push4=, $2, $pop19
 	i64.shl 	$push18=, $pop20, $pop4
 	tee_local	$push17=, $1=, $pop18
-	i64.const	$push1=, 63
-	i64.shl 	$push2=, $2, $pop1
-	i64.const	$push16=, 63
-	i64.shr_s	$push3=, $pop2, $pop16
+	i64.const	$push2=, 0
+	i64.const	$push16=, 1
+	i64.and 	$push1=, $2, $pop16
+	i64.sub 	$push3=, $pop2, $pop1
 	i64.const	$push15=, 1
 	i64.shr_u	$push5=, $1, $pop15
 	i64.and 	$push6=, $pop3, $pop5
@@ -141,10 +141,10 @@ plist:                                  # @plist
 # BB#4:                                 # %for.end.i
                                         #   in Loop: Header=BB2_2 Depth=1
 	end_loop
-	i64.const	$push30=, 63
-	i64.shl 	$push2=, $6, $pop30
-	i64.const	$push29=, 63
-	i64.shr_s	$push3=, $pop2, $pop29
+	i64.const	$push30=, 0
+	i64.const	$push29=, 1
+	i64.and 	$push2=, $6, $pop29
+	i64.sub 	$push3=, $pop30, $pop2
 	i64.const	$push28=, 1
 	i64.const	$push27=, 1
 	i64.shr_u	$push4=, $6, $pop27
@@ -263,10 +263,10 @@ main:                                   # @main
 # BB#3:                                 # %for.end.i.i
                                         #   in Loop: Header=BB3_1 Depth=1
 	end_loop
-	i64.const	$push44=, 63
-	i64.shl 	$push1=, $6, $pop44
-	i64.const	$push43=, 63
-	i64.shr_s	$push2=, $pop1, $pop43
+	i64.const	$push44=, 0
+	i64.const	$push43=, 1
+	i64.and 	$push1=, $6, $pop43
+	i64.sub 	$push2=, $pop44, $pop1
 	i64.const	$push42=, 1
 	i64.const	$push41=, 1
 	i64.shr_u	$push3=, $6, $pop41
@@ -369,6 +369,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

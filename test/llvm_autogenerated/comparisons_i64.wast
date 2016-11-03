@@ -1,8 +1,7 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "eq_i64" (func $eq_i64))
   (export "ne_i64" (func $ne_i64))
   (export "slt_i64" (func $slt_i64))

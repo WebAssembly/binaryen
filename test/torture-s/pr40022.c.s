@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40022.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40022.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -31,39 +31,38 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32, i32, i32
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.call	$push2=, foo@FUNCTION, $1
 	tee_local	$push1=, $1=, $pop2
 	i32.store	0($0), $pop1
 	block   	
-	i32.eqz 	$push9=, $1
-	br_if   	0, $pop9        # 0: down to label0
+	i32.eqz 	$push13=, $1
+	br_if   	0, $pop13       # 0: down to label0
 .LBB1_1:                                # %while.cond.while.cond_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	copy_local	$0=, $1
-	i32.load	$push4=, 0($1)
-	tee_local	$push3=, $4=, $pop4
-	copy_local	$1=, $pop3
-	br_if   	0, $4           # 0: up to label1
+	copy_local	$push6=, $1
+	tee_local	$push5=, $0=, $pop6
+	i32.load	$push4=, 0($pop5)
+	tee_local	$push3=, $1=, $pop4
+	br_if   	0, $pop3        # 0: up to label1
 .LBB1_2:                                # %while.end
 	end_loop
 	end_block                       # label0:
-	i32.call	$push6=, foo@FUNCTION, $2
-	tee_local	$push5=, $1=, $pop6
-	i32.store	0($0), $pop5
+	i32.call	$push8=, foo@FUNCTION, $2
+	tee_local	$push7=, $1=, $pop8
+	i32.store	0($0), $pop7
 	block   	
-	i32.eqz 	$push10=, $1
-	br_if   	0, $pop10       # 0: down to label2
+	i32.eqz 	$push14=, $1
+	br_if   	0, $pop14       # 0: down to label2
 .LBB1_3:                                # %while.cond2.while.cond2_crit_edge
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
-	copy_local	$0=, $1
-	i32.load	$push8=, 0($1)
-	tee_local	$push7=, $4=, $pop8
-	copy_local	$1=, $pop7
-	br_if   	0, $4           # 0: up to label3
+	copy_local	$push12=, $1
+	tee_local	$push11=, $0=, $pop12
+	i32.load	$push10=, 0($pop11)
+	tee_local	$push9=, $1=, $pop10
+	br_if   	0, $pop9        # 0: up to label3
 .LBB1_4:                                # %while.end6
 	end_loop
 	end_block                       # label2:
@@ -157,5 +156,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

@@ -230,7 +230,8 @@ class Asm2WasmBuilder {
   bool memoryGrowth;
   bool debug;
   bool imprecise;
-  bool optimize;
+  PassOptions passOptions;
+  bool runOptimizationPasses;
   bool wasmOnly;
 
 public:
@@ -330,14 +331,15 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, bool optimize, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
        memoryGrowth(memoryGrowth),
        debug(debug),
        imprecise(imprecise),
-       optimize(optimize),
+       passOptions(passOptions),
+       runOptimizationPasses(runOptimizationPasses),
        wasmOnly(wasmOnly) {}
 
  void processAsm(Ref ast);
@@ -441,9 +443,13 @@ private:
 
   std::map<unsigned, Ref> tempNums;
 
-  Literal checkLiteral(Ref ast) {
+  Literal checkLiteral(Ref ast, bool rawIsInteger = true) {
     if (ast[0] == NUM) {
-      return Literal((int32_t)ast[1]->getInteger());
+      if (rawIsInteger) {
+        return Literal((int32_t)ast[1]->getInteger());
+      } else {
+        return Literal(ast[1]->getNumber());
+      }
     } else if (ast[0] == UNARY_PREFIX) {
       if (ast[1] == PLUS && ast[2][0] == NUM) {
         return Literal((double)ast[2][1]->getNumber());
@@ -647,12 +653,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // set up optimization
 
-  if (optimize) {
+  if (runOptimizationPasses) {
     Index numFunctions = 0;
     for (unsigned i = 1; i < body->size(); i++) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
-    optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, [&](PassRunner& passRunner) {
+    optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, passOptions, [&](PassRunner& passRunner) {
       if (debug) {
         passRunner.setDebug(true);
         passRunner.setValidateGlobally(false);
@@ -806,7 +812,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     } else if (curr[0] == DEFUN) {
       // function
       auto* func = processFunction(curr);
-      if (optimize) {
+      if (runOptimizationPasses) {
         optimizingBuilder->addFunction(func);
       } else {
         wasm.addFunction(func);
@@ -845,7 +851,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   }
 
-  if (optimize) {
+  if (runOptimizationPasses) {
     optimizingBuilder->finish();
     PassRunner passRunner(&wasm);
     if (debug) {
@@ -952,9 +958,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
       auto add = curr->target->cast<Binary>();
-      auto offset = add->right->cast<CallImport>();
-      auto tableName = offset->target;
-      add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+      if (add->right->is<CallImport>()) {
+        auto offset = add->right->cast<CallImport>();
+        auto tableName = offset->target;
+        add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+      } else {
+        auto offset = add->left->cast<CallImport>();
+        auto tableName = offset->target;
+        add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+      }
     }
   };
 
@@ -970,7 +982,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     // we didn't legalize i64s in fastcomp, and so must legalize the interface to the outside
     passRunner.add("legalize-js-interface");
   }
-  if (optimize) {
+  if (runOptimizationPasses) {
     // autodrop can add some garbage
     passRunner.add("vacuum");
     passRunner.add("remove-unused-brs");
@@ -998,6 +1010,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   memoryImport->module = ENV;
   memoryImport->base = MEMORY;
   memoryImport->kind = ExternalKind::Memory;
+  wasm.memory.exists = true;
+  wasm.memory.imported = true;
   wasm.addImport(memoryImport.release());
 
   // import table
@@ -1465,10 +1479,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         if (name == Math_fround) {
           assert(ast[2]->size() == 1);
-          Literal lit = checkLiteral(ast[2][0]);
-          if (lit.type == i32) {
-            return builder.makeConst(Literal((float)lit.geti32()));
-          } else if (lit.type == f64) {
+          Literal lit = checkLiteral(ast[2][0], false /* raw is float */);
+          if (lit.type == f64) {
             return builder.makeConst(Literal((float)lit.getf64()));
           }
           auto ret = allocator.alloc<Unary>();

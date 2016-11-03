@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-ret-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-ret-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -195,7 +195,7 @@ main:                                   # @main
 	i32.add 	$push54=, $8, $pop53
 	i32.const	$push55=, 24
 	i32.add 	$push56=, $8, $pop55
-	call_indirect	$3, $pop54, $pop56, $2, $0, $8
+	call_indirect	$pop54, $pop56, $2, $0, $8, $3
 	block   	
 	i32.const	$push57=, 144
 	i32.add 	$push58=, $8, $pop57
@@ -420,7 +420,7 @@ fp:
 	.size	fp, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	sprintf, i32, i32, i32
 	.functype	strcpy, i32, i32, i32
 	.functype	strcmp, i32, i32, i32

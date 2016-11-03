@@ -37,6 +37,8 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
+  bool runOptimizationPasses = false;
+  PassOptions passOptions;
 
   Options options("wasm-opt", "Optimize .wast files");
   options
@@ -46,11 +48,7 @@ int main(int argc, const char* argv[]) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      .add("", "-O", "execute default optimization passes",
-           Options::Arguments::Zero,
-           [&passes](Options*, const std::string&) {
-             passes.push_back("O");
-           })
+      #include "optimization-options.h"
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -62,6 +60,12 @@ int main(int argc, const char* argv[]) {
         [&passes, p](Options*, const std::string&) { passes.push_back(p); });
   }
   options.parse(argc, argv);
+
+  if (runOptimizationPasses) {
+    passes.resize(passes.size() + 1);
+    std::move_backward(passes.begin(), passes.begin() + passes.size() - 1, passes.end());
+    passes[0] = "O";
+  }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
@@ -84,7 +88,7 @@ int main(int argc, const char* argv[]) {
 
   if (passes.size() > 0) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner(&wasm);
+    PassRunner passRunner(&wasm, passOptions);
     if (options.debug) passRunner.setDebug(true);
     for (auto& passName : passes) {
       if (passName == "O") {

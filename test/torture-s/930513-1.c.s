@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -20,7 +20,7 @@ f:                                      # @f
 	i64.store	0($1), $pop0
 	i32.const	$push2=, buf
 	i32.const	$push1=, .L.str
-	i32.call_indirect	$drop=, $0, $pop2, $pop1, $1
+	i32.call_indirect	$drop=, $pop2, $pop1, $1, $0
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $1, $pop7
@@ -90,7 +90,7 @@ buf:
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	sprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

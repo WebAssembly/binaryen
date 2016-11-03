@@ -25,6 +25,8 @@
 #include <wasm-s-parser.h>
 #include <support/threads.h>
 #include <ast_utils.h>
+#include <ast/cost.h>
+#include <ast/properties.h>
 
 namespace wasm {
 
@@ -197,6 +199,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
   // Optimizations that don't yet fit in the pattern DSL, but could be eventually maybe
   Expression* handOptimize(Expression* curr) {
     if (auto* binary = curr->dynCast<Binary>()) {
+      if (Properties::isSymmetric(binary)) {
+        // canonicalize a const to the second position
+        if (binary->left->is<Const>() && !binary->right->is<Const>()) {
+          std::swap(binary->left, binary->right);
+        }
+      }
       // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
       if (binary->op == BinaryOp::ShrSInt32 && binary->right->is<Const>()) {
         auto shifts = binary->right->cast<Const>()->value.geti32();
@@ -223,6 +231,30 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             return Builder(*getModule()).makeUnary(EqZInt32, binary->right);
           }
         }
+      } else if (binary->op == AndInt32) {
+        if (auto* right = binary->right->dynCast<Const>()) {
+          if (right->type == i32) {
+            auto mask = right->value.geti32();
+            // and with -1 does nothing (common in asm.js output)
+            if (mask == -1) {
+              return binary->left;
+            }
+            // small loads do not need to be masted, the load itself masks
+            if (auto* load = binary->left->dynCast<Load>()) {
+              if ((load->bytes == 1 && mask == 0xff) ||
+                  (load->bytes == 2 && mask == 0xffff)) {
+                load->signed_ = false;
+                return load;
+              }
+            } else if (mask == 1 && Properties::emitsBoolean(binary->left)) {
+              // (bool) & 1 does not need the outer mask
+              return binary->left;
+            }
+          }
+        }
+        return conditionalizeExpensiveOnBitwise(binary);
+      } else if (binary->op == OrInt32) {
+        return conditionalizeExpensiveOnBitwise(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
@@ -294,22 +326,105 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (br->condition) {
         br->condition = optimizeBoolean(br->condition);
       }
+    } else if (auto* store = curr->dynCast<Store>()) {
+      // stores of fewer bits truncates anyhow
+      if (auto* binary = store->value->dynCast<Binary>()) {
+        if (binary->op == AndInt32) {
+          if (auto* right = binary->right->dynCast<Const>()) {
+            if (right->type == i32) {
+              auto mask = right->value.geti32();
+              if ((store->bytes == 1 && mask == 0xff) ||
+                  (store->bytes == 2 && mask == 0xffff)) {
+                store->value = binary->left;
+              }
+            }
+          }
+        }
+      } else if (auto* unary = store->value->dynCast<Unary>()) {
+        if (unary->op == WrapInt64) {
+          // instead of wrapping to 32, just store some of the bits in the i64
+          store->valueType = i64;
+          store->value = unary->value;
+        }
+      }
     }
     return nullptr;
   }
 
 private:
-
+  // Optimize given that the expression is flowing into a boolean context
   Expression* optimizeBoolean(Expression* boolean) {
-    auto* condition = boolean->dynCast<Unary>();
-    if (condition && condition->op == EqZInt32) {
-      auto* condition2 = condition->value->dynCast<Unary>();
-      if (condition2 && condition2->op == EqZInt32) {
-        // double eqz
-        return condition2->value;
+    if (auto* unary = boolean->dynCast<Unary>()) {
+      if (unary && unary->op == EqZInt32) {
+        auto* unary2 = unary->value->dynCast<Unary>();
+        if (unary2 && unary2->op == EqZInt32) {
+          // double eqz
+          return unary2->value;
+        }
+      }
+    } else if (auto* binary = boolean->dynCast<Binary>()) {
+      // x != 0 is just x if it's used as a bool
+      if (binary->op == NeInt32) {
+        if (auto* num = binary->right->dynCast<Const>()) {
+          if (num->value.geti32() == 0) {
+            return binary->left;
+          }
+        }
+      }
+    } else if (auto* block = boolean->dynCast<Block>()) {
+      if (block->type == i32 && block->list.size() > 0) {
+        block->list.back() = optimizeBoolean(block->list.back());
+      }
+    } else if (auto* iff = boolean->dynCast<If>()) {
+      if (iff->type == i32) {
+        iff->ifTrue = optimizeBoolean(iff->ifTrue);
+        iff->ifFalse = optimizeBoolean(iff->ifFalse);
       }
     }
+    // TODO: recurse into br values?
     return boolean;
+  }
+
+  //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2, and
+  //   expensive | cheap     can be turned into cheap     ? 1 : expensive,
+  // so that we can avoid one expensive computation, if it has no side effects.
+  Expression* conditionalizeExpensiveOnBitwise(Binary* binary) {
+    // this operation can increase code size, so don't always do it
+    auto& options = getPassRunner()->options;
+    if (options.optimizeLevel < 2 || options.shrinkLevel > 0) return nullptr;
+    const auto MIN_COST = 7;
+    assert(binary->op == AndInt32 || binary->op == OrInt32);
+    if (binary->right->is<Const>()) return nullptr; // trivial
+    // bitwise logical operator on two non-numerical values, check if they are boolean
+    auto* left = binary->left;
+    auto* right = binary->right;
+    if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) return nullptr;
+    auto leftEffects = EffectAnalyzer(left).hasSideEffects();
+    auto rightEffects = EffectAnalyzer(right).hasSideEffects();
+    if (leftEffects && rightEffects) return nullptr; // both must execute
+   // canonicalize with side effects, if any, happening on the left
+    if (rightEffects) {
+      if (CostAnalyzer(left).cost < MIN_COST) return nullptr; // avoidable code is too cheap
+      std::swap(left, right);
+    } else if (leftEffects) {
+      if (CostAnalyzer(right).cost < MIN_COST) return nullptr; // avoidable code is too cheap
+    } else {
+      // no side effects, reorder based on cost estimation
+      auto leftCost = CostAnalyzer(left).cost;
+      auto rightCost = CostAnalyzer(right).cost;
+      if (std::max(leftCost, rightCost) < MIN_COST) return nullptr; // avoidable code is too cheap
+      // canonicalize with expensive code on the right
+      if (leftCost > rightCost) {
+        std::swap(left, right);
+      }
+    }
+    // worth it! perform conditionalization
+    Builder builder(*getModule());
+    if (binary->op == OrInt32) {
+      return builder.makeIf(left, builder.makeConst(Literal(int32_t(1))), right);
+    } else { // &
+      return builder.makeIf(left, right, builder.makeConst(Literal(int32_t(0))));
+    }
   }
 };
 

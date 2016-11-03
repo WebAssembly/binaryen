@@ -1,7 +1,6 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
-  (export "memory" (memory $0))
   (export "fib" (func $fib))
   (func $fib (param $0 i32) (result i32)
     (local $1 i32)

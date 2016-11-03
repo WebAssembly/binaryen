@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
 	.section	.text.debug,"ax",@progbits
 	.hidden	debug
 	.globl	debug
@@ -63,7 +63,7 @@ compare:                                # @compare
 	br_if   	0, $pop10       # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push0=, 0($0)
-	i32.call_indirect	$push1=, $2, $pop0
+	i32.call_indirect	$push1=, $pop0, $2
 	i32.eqz 	$push11=, $pop1
 	br_if   	0, $pop11       # 0: down to label0
 # BB#2:                                 # %if.then
@@ -75,7 +75,7 @@ compare:                                # @compare
 	i32.store	errors($pop2), $pop5
 .LBB3_3:                                # %if.end
 	end_block                       # label0:
-	i32.call_indirect	$push6=, $2, $1
+	i32.call_indirect	$push6=, $1, $2
                                         # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end3:
@@ -103,5 +103,5 @@ errors:
 	.size	errors, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	qsort, void, i32, i32, i32, i32

@@ -1,8 +1,7 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "sext_i8_i32" (func $sext_i8_i32))
   (export "zext_i8_i32" (func $zext_i8_i32))
   (export "sext_i16_i32" (func $sext_i16_i32))

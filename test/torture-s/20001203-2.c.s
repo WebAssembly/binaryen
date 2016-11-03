@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
 	.section	.text.create_array_type,"ax",@progbits
 	.hidden	create_array_type
 	.globl	create_array_type
@@ -11,8 +11,8 @@ create_array_type:                      # @create_array_type
 # BB#0:                                 # %entry
 	block   	
 	block   	
-	i32.eqz 	$push51=, $0
-	br_if   	0, $pop51       # 0: down to label1
+	i32.eqz 	$push52=, $0
+	br_if   	0, $pop52       # 0: down to label1
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 1
 	i32.store16	8($0), $pop0
@@ -20,38 +20,37 @@ create_array_type:                      # @create_array_type
 	i32.const	$push2=, 3
 	i32.mul 	$push3=, $pop1, $pop2
 	i32.store	0($0), $pop3
-	i32.const	$7=, 0
 	block   	
-	i32.load	$push26=, 4($0)
-	tee_local	$push25=, $1=, $pop26
-	i32.eqz 	$push52=, $pop25
-	br_if   	0, $pop52       # 0: down to label2
+	i32.load	$push27=, 4($0)
+	tee_local	$push26=, $1=, $pop27
+	i32.eqz 	$push53=, $pop26
+	br_if   	0, $pop53       # 0: down to label2
 # BB#2:                                 # %cond.true
 	i32.const	$push4=, 20
 	i32.add 	$push5=, $1, $pop4
-	i32.load	$push33=, 0($pop5)
-	tee_local	$push32=, $2=, $pop33
-	i32.const	$push31=, 16
-	i32.add 	$push30=, $1, $pop31
-	tee_local	$push29=, $7=, $pop30
-	i32.load	$push28=, 0($pop29)
-	tee_local	$push27=, $3=, $pop28
-	i32.sub 	$push6=, $pop32, $pop27
+	i32.load	$push34=, 0($pop5)
+	tee_local	$push33=, $2=, $pop34
+	i32.const	$push32=, 16
+	i32.add 	$push31=, $1, $pop32
+	tee_local	$push30=, $4=, $pop31
+	i32.load	$push29=, 0($pop30)
+	tee_local	$push28=, $3=, $pop29
+	i32.sub 	$push6=, $pop33, $pop28
 	i32.const	$push7=, 15
 	i32.le_s	$push8=, $pop6, $pop7
 	br_if   	2, $pop8        # 2: down to label0
 # BB#3:                                 # %if.end9
-	i32.const	$push40=, 16
-	i32.add 	$push39=, $3, $pop40
-	tee_local	$push38=, $3=, $pop39
-	i32.store	0($7), $pop38
+	i32.const	$push41=, 16
+	i32.add 	$push40=, $3, $pop41
+	tee_local	$push39=, $3=, $pop40
+	i32.store	0($4), $pop39
 	block   	
 	i32.const	$push9=, 12
-	i32.add 	$push37=, $1, $pop9
-	tee_local	$push36=, $4=, $pop37
-	i32.load	$push35=, 0($pop36)
-	tee_local	$push34=, $7=, $pop35
-	i32.ne  	$push10=, $3, $pop34
+	i32.add 	$push38=, $1, $pop9
+	tee_local	$push37=, $4=, $pop38
+	i32.load	$push36=, 0($pop37)
+	tee_local	$push35=, $7=, $pop36
+	i32.ne  	$push10=, $3, $pop35
 	br_if   	0, $pop10       # 0: down to label3
 # BB#4:                                 # %if.then16
 	i32.const	$push11=, 28
@@ -61,32 +60,35 @@ create_array_type:                      # @create_array_type
 .LBB0_5:                                # %if.end17
 	end_block                       # label3:
 	i32.const	$push19=, 16
-	i32.add 	$push50=, $1, $pop19
-	tee_local	$push49=, $6=, $pop50
+	i32.add 	$push51=, $1, $pop19
+	tee_local	$push50=, $6=, $pop51
 	i32.const	$push14=, 24
 	i32.add 	$push15=, $1, $pop14
-	i32.load	$push48=, 0($pop15)
-	tee_local	$push47=, $5=, $pop48
-	i32.add 	$push18=, $pop47, $3
+	i32.load	$push49=, 0($pop15)
+	tee_local	$push48=, $5=, $pop49
+	i32.add 	$push18=, $pop48, $3
 	i32.const	$push16=, -1
 	i32.xor 	$push17=, $5, $pop16
-	i32.and 	$push46=, $pop18, $pop17
-	tee_local	$push45=, $3=, $pop46
-	i32.store	0($pop49), $pop45
+	i32.and 	$push47=, $pop18, $pop17
+	tee_local	$push46=, $3=, $pop47
+	i32.store	0($pop50), $pop46
 	i32.const	$push20=, 8
 	i32.add 	$push21=, $1, $pop20
-	i32.load	$push44=, 0($pop21)
-	tee_local	$push43=, $1=, $pop44
-	i32.sub 	$push22=, $3, $pop43
+	i32.load	$push45=, 0($pop21)
+	tee_local	$push44=, $1=, $pop45
+	i32.sub 	$push22=, $3, $pop44
 	i32.sub 	$push23=, $2, $1
 	i32.gt_s	$push24=, $pop22, $pop23
-	i32.select	$push42=, $2, $3, $pop24
-	tee_local	$push41=, $1=, $pop42
-	i32.store	0($6), $pop41
+	i32.select	$push43=, $2, $3, $pop24
+	tee_local	$push42=, $1=, $pop43
+	i32.store	0($6), $pop42
 	i32.store	0($4), $1
-.LBB0_6:                                # %cond.end
-	end_block                       # label2:
 	i32.store	12($0), $7
+	return  	$0
+.LBB0_6:
+	end_block                       # label2:
+	i32.const	$push25=, 0
+	i32.store	12($0), $pop25
 	return  	$0
 .LBB0_7:                                # %if.then
 	end_block                       # label1:
@@ -171,6 +173,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

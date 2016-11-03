@@ -16,12 +16,17 @@ for asm in sorted(os.listdir('test')):
           cmd += ['--imprecise']
           wasm += '.imprecise'
         if not opts:
-          cmd += ['--no-opts']
           wasm += '.no-opts'
+          if precise:
+            cmd += ['-O0'] # test that -O0 does nothing
+        else:
+          cmd += ['-O']
         if precise and opts:
           # test mem init importing
           open('a.mem', 'wb').write(asm)
           cmd += ['--mem-init=a.mem']
+          if asm[0] == 'e':
+            cmd += ['--mem-base=1024']
         if 'i64' in asm or 'wasm-only' in asm:
           cmd += ['--wasm-only']
         print '..', asm, wasm
@@ -74,7 +79,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith('.wast'):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
-    opts = ['-O'] if passname == 'O' else ['--' + p for p in passname.split('_')]
+    opts = ['-' + passname] if passname.startswith('O') else ['--' + p for p in passname.split('_')]
     t = os.path.join('test', 'passes', t)
     actual = ''
     for module, asserts in split_wast(t):

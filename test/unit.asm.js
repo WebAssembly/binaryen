@@ -37,28 +37,28 @@ function asm(global, env, buffer) {
   function importedDoubles() {
     var temp = 0.0;
     temp = t + u + (-u) + (-t);
-    if (Int > 0) return -3.4;
+    if ((Int | 0) > 0) return -3.4;
     if (Double > 0.0) return 5.6;
     return 1.2;
   }
   function doubleCompares(x, y) {
     x = +x;
     y = +y;
-    var t = +0;
+    var t = 0.0;
     var Int = 0.0, Double = 0; // confusing with globals
     if (x > 0.0) return 1.2;
     if (Int > 0.0) return -3.4;
-    if (Double > 0) return 5.6;
+    if ((Double|0) > 0) return 5.6;
     if (x < y) return +x;
     return +y;
   }
   function intOps() {
     var x = 0;
-    return !x;
+    return (!x) | 0;
   }
   function hexLiterals() {
     var i = 0;
-    i = 0x0 + 0x12ABCdef + 0xFEDcba90;
+    i = 0x0 + 0x12ABCdef + 0xFEDcba90 | 0;
   }
   function conversions() {
     var i = 0, d = 0.0, f = Math_fround(0);
@@ -100,7 +100,7 @@ function asm(global, env, buffer) {
     }
 
     L1 : while (1) {
-     L3 : while (1) switch (x) {
+     L3 : while (1) switch (x | 0) {
      case -1:
       {
        break L1;
@@ -160,7 +160,7 @@ function asm(global, env, buffer) {
   }
   function neg() {
     var x = Math_fround(0);
-    x = -x;
+    x = Math_fround(-x);
     FUNCTION_TABLE_c[1 & 7](x);
   }
   function cneg(x) {
@@ -178,7 +178,7 @@ function asm(global, env, buffer) {
     return i | 0;
   }
   function cneg_nosemicolon() {
-    FUNCTION_TABLE_c[1 & 7](1) // no semicolon
+    FUNCTION_TABLE_vi[1 & 7](1) // no semicolon
   }
   function forLoop() {
     var i = 0;
@@ -198,14 +198,14 @@ function asm(global, env, buffer) {
     abort(55);
     abort();
     abort(12.34);
-    abort(Math_fround(56.78));
+    abort(+Math_fround(56.78));
   }
   function continues() {
     while (1) {
       print(1);
       do {
         print(5);
-        if (return_int()) continue;
+        if (return_int() | 0) continue;
       } while (0);
       print(2);
     }
@@ -221,7 +221,7 @@ function asm(global, env, buffer) {
   }
   function recursiveBlockMerging(x) {
     x = x | 0;
-    lb((1, x) + (2, 3) + (((4, 5), 6), 7) + (8, (9, (10, (11, 12))))) | 0;
+    lb((1, x) + (2, 3) + (((4, 5), 6), 7) + (8, (9, (10, (11, 12)))) | 0) | 0;
     x = (lb(1) | 0, x) + (lb(2) | 0, lb(3) | 0) + (((lb(4) | 0, lb(5) | 0), lb(6) | 0), lb(7) | 0) + (lb(8) | 0, (lb(9) | 0, (lb(10) | 0, (lb(11) | 0, lb(12) | 0)))) | 0;
     return x | 0;
   }
@@ -276,7 +276,7 @@ function asm(global, env, buffer) {
 
   function dropCall() {
     if (return_int() | 0) {
-      phi(); // drop this
+      phi() | 0; // drop this
       setTempRet0(10); // this too
       zeroInit(setTempRet0(10) | 0);
     }
@@ -327,7 +327,7 @@ function asm(global, env, buffer) {
   }
 
   function conditionalTypeFun() {
-    var x = 0, y = +0;
+    var x = 0, y = 0.0;
     x = return_int() | 0 ? abort(5) | 0 : 2;
     y = return_int() | 0 ? +abort(7) : 4.5;
   }
@@ -344,13 +344,15 @@ function asm(global, env, buffer) {
     loadSigned(HEAPU16[x >> 1] << 24 >> 16);
   }
 
-  function z() {
+  function z(x) {
+    x = Math_fround(x);
   }
   function w() {
+    return 0.0;
   }
 
   function globalOpts() {
-    var x = 0, y = +0;
+    var x = 0, y = 0.0;
     x = Int;
     y = Double;
     HEAP8[13] = HEAP32[3]; // access memory, should not confuse the global writes
@@ -384,7 +386,7 @@ function asm(global, env, buffer) {
      }
     }
     inc = loopvar + 1 | 0;
-    if (inc == y) {
+    if ((inc|0) == (y|0)) {
      loopvar = inc;
     } else {
      break;
@@ -430,7 +432,7 @@ function asm(global, env, buffer) {
    h(-1);
    // from loop
    while (1) {
-    x = x + 1;
+    x = x + 1 | 0;
     if (x) {
      h(2);
      label = 2;
@@ -444,7 +446,7 @@ function asm(global, env, buffer) {
    // if-else afterward
    if (x) {
     h(4);
-    if (x == 3) {
+    if ((x|0) == 3) {
      label = 3;
     } else {
      label = 4;
@@ -459,7 +461,7 @@ function asm(global, env, buffer) {
    // two ifs afterward
    if (x) {
     h(7);
-    if (x == 5) {
+    if ((x|0) == 5) {
      label = 5;
     } else {
      label = 6;
@@ -467,7 +469,7 @@ function asm(global, env, buffer) {
    }
    if ((label|0) == 5) {
     h(8);
-    if (x == 6) {
+    if ((x|0) == 6) {
      label = 6;
     }
    }
@@ -490,7 +492,7 @@ function asm(global, env, buffer) {
    // labeled if after normal if
    if (x) {
     h(12);
-    if (x == 8) {
+    if ((x|0) == 8) {
       label = 8;
     } else {
       label = 9;
@@ -511,7 +513,7 @@ function asm(global, env, buffer) {
    // labeled if after a first if
    // do-enclosed if after (?)
    // test multiple labels, some should be ignored initially by JumpUpdater
-   return x;
+   return x | 0;
   }
 
   function relooperJumpThreading__ZN4game14preloadweaponsEv() {
@@ -587,6 +589,10 @@ function asm(global, env, buffer) {
    return;
   }
 
+  function big_fround() {
+    return Math_fround(4294967295);
+  }
+
   function dropIgnoredImportsInIf($0,$1,$2) {
    $0 = $0|0;
    $1 = $1|0;
@@ -601,10 +607,17 @@ function asm(global, env, buffer) {
    return;
   }
 
-  var FUNCTION_TABLE_a = [ z, big_negative, z, z ];
-  var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
-  var FUNCTION_TABLE_c = [ z, cneg ];
+  function v() {
+  }
+  function vi(x) {
+    x = x | 0;
+  }
 
-  return { big_negative: big_negative, pick: forgetMe, pick: exportMe };
+  var FUNCTION_TABLE_a = [ v, big_negative, v, v ];
+  var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
+  var FUNCTION_TABLE_c = [ z, cneg, z, z, z, z, z, z ];
+  var FUNCTION_TABLE_vi = [ vi, vi, vi, vi, vi, vi, vi, vi ];
+
+  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf };
 }
 

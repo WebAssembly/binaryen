@@ -1,8 +1,7 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
-  (export "memory" (memory $0))
   (export "test_udiv_2" (func $test_udiv_2))
   (export "test_udiv_5" (func $test_udiv_5))
   (export "test_sdiv_2" (func $test_sdiv_2))

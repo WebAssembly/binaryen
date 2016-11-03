@@ -1,9 +1,8 @@
 (module
+  (import "env" "memory" (memory $0 1))
   (table 0 anyfunc)
-  (memory $0 1)
   (data (i32.const 4) "\10\04\00\00")
   (data (i32.const 12) "\00\00\00\00")
-  (export "memory" (memory $0))
   (export "load_i32_with_folded_offset" (func $load_i32_with_folded_offset))
   (export "load_i32_with_folded_gep_offset" (func $load_i32_with_folded_gep_offset))
   (export "load_i32_with_unfolded_gep_negative_offset" (func $load_i32_with_unfolded_gep_negative_offset))

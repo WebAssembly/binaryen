@@ -54,6 +54,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // internal details
 
   std::vector<std::unique_ptr<BasicBlock>> basicBlocks; // all the blocks
+  std::vector<BasicBlock*> loopTops; // blocks that are the tops of loops, i.e., have backedges to them
 
   // traversal state
   BasicBlock* currBasicBlock; // the current block in play during traversal. can be nullptr if unreachable,
@@ -132,6 +133,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doStartLoop(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
     self->startBasicBlock();
+    self->loopTops.push_back(self->currBasicBlock); // a loop with no backedges would still be counted here, but oh well
     self->link(last, self->currBasicBlock);
     self->loopStack.push_back(self->currBasicBlock);
   }

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980707-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980707-1.c"
 	.section	.text.buildargv,"ax",@progbits
 	.hidden	buildargv
 	.globl	buildargv
@@ -29,46 +29,49 @@ buildargv:                              # @buildargv
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label1:
 	block   	
-	i32.eqz 	$push23=, $1
-	br_if   	0, $pop23       # 0: down to label2
+	i32.eqz 	$push27=, $1
+	br_if   	0, $pop27       # 0: down to label2
 # BB#4:                                 # %if.end
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push15=, 2
-	i32.shl 	$push1=, $2, $pop15
-	i32.const	$push14=, buildargv.arglist
-	i32.add 	$push2=, $pop1, $pop14
+	i32.const	$push17=, 2
+	i32.shl 	$push1=, $2, $pop17
+	i32.const	$push16=, buildargv.arglist
+	i32.add 	$push2=, $pop1, $pop16
 	i32.store	0($pop2), $0
-	i32.const	$push13=, 1
-	i32.add 	$2=, $2, $pop13
+	i32.const	$push15=, 1
+	i32.add 	$2=, $2, $pop15
+	i32.load8_u	$push14=, 0($0)
+	tee_local	$push13=, $1=, $pop14
+	i32.eqz 	$push28=, $pop13
+	br_if   	0, $pop28       # 0: down to label2
 .LBB0_5:                                # %while.cond7
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	                # label3:
-	i32.load8_u	$push18=, 0($0)
-	tee_local	$push17=, $1=, $pop18
-	i32.eqz 	$push24=, $pop17
-	br_if   	1, $pop24       # 1: down to label2
-# BB#6:                                 # %while.cond7
-                                        #   in Loop: Header=BB0_5 Depth=2
 	block   	
-	i32.const	$push19=, 32
-	i32.eq  	$push3=, $1, $pop19
-	br_if   	0, $pop3        # 0: down to label4
-# BB#7:                                 # %while.body14
+	loop    	                # label4:
+	i32.const	$push23=, 32
+	i32.eq  	$push3=, $1, $pop23
+	br_if   	1, $pop3        # 1: down to label3
+# BB#6:                                 # %while.body14
                                         #   in Loop: Header=BB0_5 Depth=2
-	i32.const	$push16=, 1
-	i32.add 	$0=, $0, $pop16
-	br      	1               # 1: up to label3
-.LBB0_8:                                # %if.end21
+	i32.const	$push22=, 1
+	i32.add 	$push21=, $0, $pop22
+	tee_local	$push20=, $0=, $pop21
+	i32.load8_u	$push19=, 0($pop20)
+	tee_local	$push18=, $1=, $pop19
+	i32.eqz 	$push29=, $pop18
+	br_if   	2, $pop29       # 2: down to label2
+	br      	0               # 0: up to label4
+.LBB0_7:                                # %if.end21
                                         #   in Loop: Header=BB0_1 Depth=1
-	end_block                       # label4:
 	end_loop
-	i32.const	$push21=, 0
-	i32.store8	0($0), $pop21
-	i32.const	$push20=, 1
-	i32.add 	$0=, $0, $pop20
+	end_block                       # label3:
+	i32.const	$push25=, 0
+	i32.store8	0($0), $pop25
+	i32.const	$push24=, 1
+	i32.add 	$0=, $0, $pop24
 	br      	1               # 1: up to label0
-.LBB0_9:                                # %while.end23
+.LBB0_8:                                # %while.end23
 	end_block                       # label2:
 	end_loop
 	i32.const	$push4=, 2
@@ -77,8 +80,8 @@ buildargv:                              # @buildargv
 	i32.add 	$push7=, $pop5, $pop6
 	i32.const	$push8=, 0
 	i32.store	0($pop7), $pop8
-	i32.const	$push22=, buildargv.arglist
-                                        # fallthrough-return: $pop22
+	i32.const	$push26=, buildargv.arglist
+                                        # fallthrough-return: $pop26
 	.endfunc
 .Lfunc_end0:
 	.size	buildargv, .Lfunc_end0-buildargv
@@ -225,7 +228,7 @@ buildargv.arglist:
 	.size	.L.str.2, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

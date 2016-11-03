@@ -28,6 +28,7 @@
 
 #include "support/bits.h"
 #include "wasm.h"
+#include "wasm-traversal.h"
 
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
@@ -75,11 +76,33 @@ typedef std::vector<Literal> LiteralList;
 
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
-#define NOTE_ENTER(x) { std::cout << "visit " << x << " : " << curr << "\n"; }
-#define NOTE_ENTER_(x) { std::cout << "visit " << x << "\n"; }
-#define NOTE_NAME(p0) { std::cout << "name " << '('  << Name(p0) << ")\n"; }
-#define NOTE_EVAL1(p0) { std::cout << "eval " << '('  << p0 << ")\n"; }
-#define NOTE_EVAL2(p0, p1) { std::cout << "eval " << '('  << p0 << ", " << p1 << ")\n"; }
+class Indenter {
+  static int indentLevel;
+
+  const char* entryName;
+
+public:
+  Indenter(const char* entry);
+  ~Indenter();
+
+  static void print();
+};
+
+#define NOTE_ENTER(x) Indenter _int_blah(x); { \
+    Indenter::print(); \
+    std::cout << "visit " << x << " : " << curr << "\n"; }
+#define NOTE_ENTER_(x) Indenter _int_blah(x); { \
+    Indenter::print(); \
+    std::cout << "visit " << x << "\n"; }
+#define NOTE_NAME(p0) { \
+    Indenter::print(); \
+    std::cout << "name " << '(' << Name(p0) << ")\n"; }
+#define NOTE_EVAL1(p0) { \
+    Indenter::print(); \
+    std::cout << "eval " #p0 " (" << p0 << ")\n"; }
+#define NOTE_EVAL2(p0, p1) { \
+    Indenter::print(); \
+    std::cout << "eval " #p0 " (" << p0 << "), " #p1 " (" << p1 << ")\n"; }
 #else // WASM_INTERPRETER_DEBUG
 #define NOTE_ENTER(x)
 #define NOTE_ENTER_(x)
@@ -725,7 +748,12 @@ public:
         NOTE_ENTER("Load");
         Flow flow = visit(curr->ptr);
         if (flow.breaking()) return flow;
-        return instance.externalInterface->load(curr, instance.getFinalAddress(curr, flow.value));
+        NOTE_EVAL1(flow);
+        auto addr = instance.getFinalAddress(curr, flow.value);
+        auto ret = instance.externalInterface->load(curr, addr);
+        NOTE_EVAL1(addr);
+        NOTE_EVAL1(ret);
+        return ret;
       }
       Flow visitStore(Store *curr) {
         NOTE_ENTER("Store");
@@ -733,7 +761,10 @@ public:
         if (ptr.breaking()) return ptr;
         Flow value = visit(curr->value);
         if (value.breaking()) return value;
-        instance.externalInterface->store(curr, instance.getFinalAddress(curr, ptr.value), value.value);
+        auto addr = instance.getFinalAddress(curr, ptr.value);
+        NOTE_EVAL1(addr);
+        NOTE_EVAL1(value);
+        instance.externalInterface->store(curr, addr, value.value);
         return Flow();
       }
 
@@ -781,7 +812,11 @@ public:
     FunctionScope scope(function, arguments);
 
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "entering " << function->name << '\n';
+    std::cout << "entering " << function->name
+              << "\n  with arguments:\n";
+    for (unsigned i = 0; i < arguments.size(); ++i) {
+      std::cout << "    $" << i << ": " << arguments[i] << '\n';
+    }
 #endif
 
     Flow flow = RuntimeExpressionRunner(*this, scope).visit(function->body);

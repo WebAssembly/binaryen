@@ -15,3 +15,15 @@ return_void:
 .Lfunc_end0:
 	.size	return_void, .Lfunc_end0-return_void
 
+  .type fallthrough_return_nested_loop_i32,@function
+fallthrough_return_nested_loop_i32:
+  .result   i32
+  loop      i32
+  loop      i32
+  i32.const $push0=, 1
+  return    $pop0
+  end_loop
+  end_loop
+  .endfunc
+.Lfunc_end0:
+  .size fallthrough_return_nested_loop_i32, .Lfunc_end0-fallthrough_return_nested_loop_i32

@@ -102,6 +102,11 @@ struct DirectCallGraphAnalyzer : public PostWalker<DirectCallGraphAnalyzer, Visi
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer>> {
   EffectAnalyzer() {}
   EffectAnalyzer(Expression *ast) {
+    analyze(ast);
+  }
+
+  void analyze(Expression *ast) {
+    breakNames.clear();
     walk(ast);
     // if we are left with breaks, they are external
     if (breakNames.size() > 0) branches = true;
@@ -149,6 +154,17 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
       if (other.globalsWritten.count(global)) return true;
     }
     return false;
+  }
+
+  void mergeIn(EffectAnalyzer& other) {
+    branches = branches || other.branches;
+    calls = calls || other.calls;
+    readsMemory = readsMemory || other.readsMemory;
+    writesMemory = writesMemory || other.writesMemory;
+    for (auto i : other.localsRead) localsRead.insert(i);
+    for (auto i : other.localsWritten) localsWritten.insert(i);
+    for (auto i : other.globalsRead) globalsRead.insert(i);
+    for (auto i : other.globalsWritten) globalsWritten.insert(i);
   }
 
   // the checks above happen after the node's children were processed, in the order of execution
@@ -209,7 +225,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitUnreachable(Unreachable *curr) { branches = true; }
 };
 
-// Meausure the size of an AST
+// Measure the size of an AST
+
 struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>> {
   Index size = 0;
 

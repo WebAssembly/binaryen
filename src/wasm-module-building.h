@@ -73,6 +73,7 @@ static std::mutex debug;
 class OptimizingIncrementalModuleBuilder {
   Module* wasm;
   uint32_t numFunctions;
+  PassOptions passOptions;
   std::function<void (PassRunner&)> addPrePasses;
   Function* endMarker;
   std::atomic<Function*>* list;
@@ -89,8 +90,8 @@ class OptimizingIncrementalModuleBuilder {
 public:
   // numFunctions must be equal to the number of functions allocated, or higher. Knowing
   // this bounds helps avoid locking.
-  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, std::function<void (PassRunner&)> addPrePasses, bool debug, bool validateGlobally)
-      : wasm(wasm), numFunctions(numFunctions), addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr), nextFunction(0),
+  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, PassOptions passOptions, std::function<void (PassRunner&)> addPrePasses, bool debug, bool validateGlobally)
+      : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions), addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr), nextFunction(0),
         numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
         finishing(false), debug(debug), validateGlobally(validateGlobally) {
     if (numFunctions == 0 || debug) {
@@ -101,7 +102,7 @@ public:
     // Before parallelism, create all passes on the main thread here, to ensure
     // prepareToRun() is called for each pass before we start to optimize functions.
     {
-      PassRunner passRunner(wasm);
+      PassRunner passRunner(wasm, passOptions);
       addPrePasses(passRunner);
       passRunner.addDefaultFunctionOptimizationPasses();
     }
@@ -151,7 +152,7 @@ public:
     if (debug) {
       // in debug mode, optimize each function now that we are done adding functions,
       // then optimize globally
-      PassRunner passRunner(wasm);
+      PassRunner passRunner(wasm, passOptions);
       passRunner.setDebug(true);
       passRunner.setValidateGlobally(validateGlobally);
       addPrePasses(passRunner);
@@ -216,7 +217,7 @@ private:
   }
 
   void optimizeGlobally() {
-    PassRunner passRunner(wasm);
+    PassRunner passRunner(wasm, passOptions);
     passRunner.addDefaultGlobalOptimizationPasses();
     passRunner.run();
   }
@@ -224,7 +225,7 @@ private:
   // worker code
 
   void optimizeFunction(Function* func) {
-    PassRunner passRunner(wasm);
+    PassRunner passRunner(wasm, passOptions);
     addPrePasses(passRunner);
     passRunner.addDefaultFunctionOptimizationPasses();
     passRunner.runFunction(func);

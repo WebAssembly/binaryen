@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/bcp-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/bcp-1.c"
 	.section	.text.bad0,"ax",@progbits
 	.hidden	bad0
 	.globl	bad0
@@ -267,34 +267,34 @@ main:                                   # @main
 	i32.call_indirect	$push11=, $pop10
 	br_if   	0, $pop11       # 0: down to label3
 # BB#6:                                 # %for.cond.5
-	i32.const	$push42=, 0
-	i32.load	$push12=, bad_t1($pop42)
-	i32.const	$push41=, 1
-	i32.call_indirect	$push13=, $pop12, $pop41
+	i32.const	$push42=, 1
+	i32.const	$push41=, 0
+	i32.load	$push12=, bad_t1($pop41)
+	i32.call_indirect	$push13=, $pop42, $pop12
 	br_if   	1, $pop13       # 1: down to label2
 # BB#7:                                 # %for.cond1
-	i32.const	$push44=, 0
-	i32.load	$push14=, bad_t1+4($pop44)
-	i32.const	$push43=, 1
-	i32.call_indirect	$push15=, $pop14, $pop43
+	i32.const	$push44=, 1
+	i32.const	$push43=, 0
+	i32.load	$push14=, bad_t1+4($pop43)
+	i32.call_indirect	$push15=, $pop44, $pop14
 	br_if   	1, $pop15       # 1: down to label2
 # BB#8:                                 # %for.cond1.1
+	i32.const	$push17=, 1
 	i32.const	$push45=, 0
 	i32.load	$push16=, bad_t1+8($pop45)
-	i32.const	$push17=, 1
-	i32.call_indirect	$push18=, $pop16, $pop17
+	i32.call_indirect	$push18=, $pop17, $pop16
 	br_if   	1, $pop18       # 1: down to label2
 # BB#9:                                 # %for.cond1.2
-	i32.const	$push47=, 0
-	i32.load	$push19=, bad_t2($pop47)
-	i32.const	$push46=, .L.str
-	i32.call_indirect	$push20=, $pop19, $pop46
+	i32.const	$push47=, .L.str
+	i32.const	$push46=, 0
+	i32.load	$push19=, bad_t2($pop46)
+	i32.call_indirect	$push20=, $pop47, $pop19
 	br_if   	2, $pop20       # 2: down to label1
 # BB#10:                                # %for.cond12
-	i32.const	$push49=, 0
-	i32.load	$push21=, bad_t2+4($pop49)
-	i32.const	$push48=, .L.str
-	i32.call_indirect	$push22=, $pop21, $pop48
+	i32.const	$push49=, .L.str
+	i32.const	$push48=, 0
+	i32.load	$push21=, bad_t2+4($pop48)
+	i32.call_indirect	$push22=, $pop49, $pop21
 	br_if   	2, $pop22       # 2: down to label1
 # BB#11:                                # %for.cond12.1
 	block   	
@@ -436,6 +436,6 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

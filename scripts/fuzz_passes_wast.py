@@ -53,10 +53,11 @@ args = sys.argv[2:]
 
 def run():
   try:
-    print 'run', ['bin/wasm-opt', wast]
-    subprocess.check_call(['bin/wasm-opt', wast])
+    cmd = ['bin/wasm-opt', wast]
+    print 'run', cmd
+    subprocess.check_call(cmd, stderr=open('/dev/null'))
   except Exception, e:
-    print ">>> !!! ", e, " !!!"
+    return ">>> !!! ", e, " !!!"
   return 'ok'
 
 original_wast = None
@@ -105,6 +106,7 @@ try:
   tested = set()
 
   def pick_passes():
+    # return '--waka'.split(' ')
     ret = []
     while 1:
       str_ret = str(ret)

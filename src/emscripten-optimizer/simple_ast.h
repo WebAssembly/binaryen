@@ -225,9 +225,9 @@ struct Value {
     return boo;
   }
 
-  int getInteger() { // convenience function to get a known integer
+  int32_t getInteger() { // convenience function to get a known integer
     assert(fmod(getNumber(), 1) == 0);
-    int ret = int(getNumber());
+    int32_t ret = getNumber();
     assert(double(ret) == getNumber()); // no loss in conversion
     return ret;
   }
@@ -377,7 +377,7 @@ struct Value {
 
   void stringify(std::ostream &os, bool pretty=false) {
     static int indent = 0;
-    #define indentify() { for (int i = 0; i < indent; i++) os << "  "; }
+    #define indentify() { for (int i_ = 0; i_ < indent; i_++) os << "  "; }
     switch (type) {
       case String:
         if (str.str) {

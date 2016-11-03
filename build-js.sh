@@ -73,7 +73,9 @@ echo "building wasm.js"
   src/support/threads.cpp \
   src/asmjs/asm_v_wasm.cpp \
   src/asmjs/shared-constants.cpp \
-  src/wasm.cpp \
+  src/wasm/wasm.cpp \
+  src/wasm/wasm-s-parser.cpp \
+  src/wasm/wasm-binary.cpp \
   -Isrc/ \
   -o bin/wasm${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE=1 \
@@ -113,7 +115,9 @@ python "$EMSCRIPTEN/tools/webidl_binder.py" src/js/binaryen.idl glue
   src/support/threads.cpp \
   src/asmjs/asm_v_wasm.cpp \
   src/asmjs/shared-constants.cpp \
-  src/wasm.cpp \
+  src/wasm/wasm.cpp \
+  src/wasm/wasm-s-parser.cpp \
+  src/wasm/wasm-binary.cpp \
   -Isrc/ \
   -o bin/binaryen${OUT_FILE_SUFFIX}.js \
   -s 'EXPORT_NAME="Binaryen"' \

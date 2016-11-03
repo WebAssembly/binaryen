@@ -896,9 +896,8 @@ class S2WasmBuilder {
         Name assign = getAssign();
         int num = getNumInputs();
         auto inputs = getInputs(num);
-        auto input = inputs.begin();
-        auto* target = *input;
-        std::vector<Expression*> operands(++input, inputs.end());
+        auto* target = *(inputs.end() - 1);
+        std::vector<Expression*> operands(inputs.begin(), inputs.end() - 1);
         auto* funcType = ensureFunctionType(getSig(type, operands), wasm);
         assert(type == funcType->result);
         auto* indirect = builder.makeCallIndirect(funcType, target, std::move(operands));
@@ -1130,6 +1129,7 @@ class S2WasmBuilder {
         curr->name = getNextLabel();
         auto implicitBlock = allocator->alloc<Block>();
         curr->body = implicitBlock;
+        implicitBlock->type = loopType;
         bstack.push_back(curr);
       } else if (match("end_loop")) {
         auto* loop = bstack.back()->cast<Loop>();

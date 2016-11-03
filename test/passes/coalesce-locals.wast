@@ -6,6 +6,8 @@
   (type $3 (func (param i32 f32)))
   (type $4 (func (param i32)))
   (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
+  (import $get "env" "get" (result i32))
+  (import $set "env" "set" (param i32))
   (func $nothing-to-do (type $2)
     (local $x i32)
     (nop)
@@ -962,6 +964,115 @@
         (get_local $x)
         (tee_local $x (i32.const 0))
       )
+    )
+  )
+  (func $loop-backedge
+    (local $0 i32) ;; loop phi
+    (local $1 i32) ;; value for next loop iteration
+    (local $2 i32) ;; a local that might be merged with with $1, perhaps making us prefer it to removing a backedge copy
+    (set_local $0
+      (i32.const 2)
+    )
+    (block $out
+      (loop $while-in7
+        (set_local $2 (i32.const 0)) ;; 2 interferes with 0
+        (call $set (get_local $2))
+        (set_local $1
+          (i32.add
+            (get_local $0)
+            (i32.const 1)
+          )
+        )
+        (if (call $get)
+          (set_local $2 (get_local $1)) ;; copy for 1/2
+        )
+        (br_if $out (get_local $2))
+        (set_local $1 (i32.const 100))
+        (set_local $0 (get_local $1)) ;; copy for 1/0, with extra weight should win the tie
+        (br $while-in7)
+      )
+    )
+  )
+  (func $if-copy1
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (get_local $x)
+          (get_local $y)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy2
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (get_local $y)
+          (get_local $x)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy3
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (unreachable)
+          (get_local $x)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy4
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (set_local $x
+        (if i32
+          (i32.const 1)
+          (unreachable)
+          (get_local $y)
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
+    )
+  )
+  (func $if-copy-tee
+    (local $x i32)
+    (local $y i32)
+    (loop $top
+      (drop
+        (tee_local $x
+          (if i32
+            (i32.const 1)
+            (get_local $x)
+            (i32.const 2)
+          )
+        )
+      )
+      (drop (get_local $x))
+      (drop (get_local $y))
+      (br $top)
     )
   )
 )

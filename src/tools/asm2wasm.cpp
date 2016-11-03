@@ -30,7 +30,8 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  bool opts = true;
+  PassOptions passOptions;
+  bool runOptimizationPasses = false;
   bool imprecise = false;
   bool wasmOnly = false;
 
@@ -50,13 +51,18 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["mem init"] = argument;
            })
+      .add("--mem-base", "-mb", "Set the location to write the memory initialization (--mem-init) file (GLOBAL_BASE in emscripten). If not provided, the memoryBase global import is used.", Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["mem base"] = argument;
+           })
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
            })
-      .add("--no-opts", "-n", "Disable optimization passes", Options::Arguments::Zero,
-           [&opts](Options *o, const std::string &) {
-             opts = false;
+      #include "optimization-options.h"
+      .add("--no-opts", "-n", "Disable optimization passes (deprecated)", Options::Arguments::Zero,
+           [](Options *o, const std::string &) {
+             std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
            })
       .add("--imprecise", "-i", "Imprecise optimizations", Options::Arguments::Zero,
            [&imprecise](Options *o, const std::string &) {
@@ -93,7 +99,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, opts, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, passOptions, runOptimizationPasses, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided
@@ -102,7 +108,19 @@ int main(int argc, const char *argv[]) {
     auto filename = memInit->second.c_str();
     auto data(read_file<std::vector<char>>(filename, Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
     // create the memory segment
-    wasm.memory.segments.emplace_back(Builder(wasm).makeGetGlobal(Name("memoryBase"), i32), data);
+    Expression* init;
+    const auto &memBase = options.extra.find("mem base");
+    if (memBase == options.extra.end()) {
+      init = Builder(wasm).makeGetGlobal(Name("memoryBase"), i32);
+    } else {
+      init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
+    }
+    wasm.memory.segments.emplace_back(init, data);
+    if (runOptimizationPasses) {
+      PassRunner runner(&wasm);
+      runner.add("memory-packing");
+      runner.run();
+    }
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;

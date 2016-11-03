@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34176.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34176.c"
 	.section	.text.hash_find_entry,"ax",@progbits
 	.hidden	hash_find_entry
 	.globl	hash_find_entry
@@ -67,18 +67,15 @@ main:                                   # @main
 	i32.call	$drop=, hash_find_entry@FUNCTION, $pop9
 .LBB2_1:                                # %if.end
                                         # =>This Loop Header: Depth=1
-                                        #     Child Loop BB2_3 Depth 2
+                                        #     Child Loop BB2_2 Depth 2
 	loop    	                # label1:
 	i32.load	$0=, 12($2)
-	i32.call	$drop=, foo@FUNCTION, $1
+	i32.call	$drop=, foo@FUNCTION, $0
 	i32.const	$1=, 0
 	block   	
 	i32.eqz 	$push18=, $0
 	br_if   	0, $pop18       # 0: down to label2
-# BB#2:                                 # %while.body.preheader
-                                        #   in Loop: Header=BB2_1 Depth=1
-	i32.const	$1=, 0
-.LBB2_3:                                # %while.body
+.LBB2_2:                                # %while.body
                                         #   Parent Loop BB2_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	                # label3:
@@ -88,7 +85,7 @@ main:                                   # @main
 	i32.add 	$push15=, $0, $pop16
 	tee_local	$push14=, $0=, $pop15
 	br_if   	0, $pop14       # 0: up to label3
-.LBB2_4:                                # %cleanup.thread
+.LBB2_3:                                # %cleanup.thread
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_loop
 	end_block                       # label2:
@@ -97,7 +94,7 @@ main:                                   # @main
 	i32.call	$drop=, hash_find_entry@FUNCTION, $pop11
 	i32.eqz 	$push19=, $1
 	br_if   	0, $pop19       # 0: up to label1
-# BB#5:                                 # %for.end
+# BB#4:                                 # %for.end
 	end_loop
 	i32.const	$push7=, 0
 	i32.const	$push5=, 16
@@ -117,5 +114,5 @@ foo.count:
 	.size	foo.count, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void

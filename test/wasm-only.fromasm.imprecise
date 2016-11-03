@@ -14,6 +14,7 @@
   (export "test64" (func $test64))
   (export "illegalParam" (func $legalstub$illegalParam))
   (export "illegalResult" (func $legalstub$result))
+  (export "keepAlive" (func $keepAlive))
   (func $loads
     (nop)
   )
@@ -265,6 +266,47 @@
         )
       )
       (i32.const 1)
+    )
+  )
+  (func $keepAlive
+    (call $loads)
+    (call $stores)
+    (call $test)
+    (drop
+      (call $imports)
+    )
+    (call $arg
+      (i64.const 0)
+    )
+    (drop
+      (call $call1
+        (i64.const 0)
+      )
+    )
+    (drop
+      (call $call2
+        (i64.const 0)
+      )
+    )
+    (drop
+      (call $returnCastConst)
+    )
+    (drop
+      (call $ifValue64
+        (i64.const 0)
+        (i64.const 0)
+      )
+    )
+    (drop
+      (call $ifValue32
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $switch64
+        (i64.const 0)
+      )
     )
   )
   (func $legalstub$illegalParam (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)

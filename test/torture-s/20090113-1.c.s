@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090113-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090113-1.c"
 	.section	.text.msum_i4,"ax",@progbits
 	.hidden	msum_i4
 	.globl	msum_i4
@@ -81,9 +81,9 @@ msum_i4:                                # @msum_i4
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_6 Depth 2
 	loop    	                # label2:
-	i32.const	$7=, 0
 	block   	
-	br_if   	0, $0           # 0: down to label3
+	block   	
+	br_if   	0, $0           # 0: down to label4
 # BB#5:                                 # %for.body18.preheader
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$7=, 0
@@ -92,7 +92,7 @@ msum_i4:                                # @msum_i4
 .LBB0_6:                                # %for.body18
                                         #   Parent Loop BB0_4 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	loop    	                # label4:
+	loop    	                # label5:
 	i32.load	$push16=, 0($2)
 	i32.add 	$7=, $pop16, $7
 	i32.const	$push58=, 4
@@ -101,12 +101,16 @@ msum_i4:                                # @msum_i4
 	i32.const	$push57=, -1
 	i32.add 	$push56=, $6, $pop57
 	tee_local	$push55=, $6=, $pop56
-	br_if   	0, $pop55       # 0: up to label4
+	br_if   	0, $pop55       # 0: up to label5
 # BB#7:                                 # %for.end22.loopexit
                                         #   in Loop: Header=BB0_4 Depth=1
 	end_loop
 	i32.add 	$5=, $5, $4
-.LBB0_8:                                # %for.end22
+	br      	1               # 1: down to label3
+.LBB0_8:                                #   in Loop: Header=BB0_4 Depth=1
+	end_block                       # label4:
+	i32.const	$7=, 0
+.LBB0_9:                                # %for.end22
                                         #   in Loop: Header=BB0_4 Depth=1
 	end_block                       # label3:
 	i32.store	0($1), $7
@@ -120,7 +124,7 @@ msum_i4:                                # @msum_i4
 	i32.load	$push18=, 0($8)
 	i32.ne  	$push19=, $2, $pop18
 	br_if   	0, $pop19       # 0: up to label2
-# BB#9:                                 # %do.end
+# BB#10:                                # %do.end
 	end_loop
 	i32.const	$push26=, 0
 	i32.const	$push24=, 64
@@ -145,4 +149,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
