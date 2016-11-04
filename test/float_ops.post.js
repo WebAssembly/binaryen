@@ -21,6 +21,12 @@ function testUnary(name) {
   doTest(-1 | 0);
   doTest((-1 | 0) + 1);
   doTest((-1 | 0) - 1);
+  doTest((-1 >>> 0) + 1);
+  doTest((-1 >>> 0) - 1);
+  doTest((-1 | 0) + 2);
+  doTest((-1 | 0) - 2);
+  doTest((-1 >>> 0) + 2);
+  doTest((-1 >>> 0) - 2);
 }
 testUnary('dfloor');
 
@@ -73,6 +79,11 @@ testBinary('dge');
 testUnary('int_to_double');
 testUnary('uint_to_double');
 testUnary('double_to_int');
+testUnary('double_to_uint');
+testUnary('int_to_float');
+testUnary('uint_to_float');
+testUnary('float_to_int');
+testUnary('float_to_uint');
 
 Module.print('done.');
 
