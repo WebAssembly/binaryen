@@ -1488,7 +1488,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           if (ret->value->type == f64) {
             ret->op = DemoteFloat64;
           } else if (ret->value->type == i32) {
-            ret->op = ConvertSInt32ToFloat32;
+            if (isUnsignedCoercion(ast[2][0])) {
+              ret->op = ConvertUInt32ToFloat32;
+            } else {
+              ret->op = ConvertSInt32ToFloat32;
+            }
           } else if (ret->value->type == f32) {
             return ret->value;
           } else if (ret->value->type == none) { // call, etc.
