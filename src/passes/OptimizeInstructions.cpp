@@ -363,8 +363,12 @@ private:
         }
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
-      // x != 0 is just x if it's used as a bool
-      if (binary->op == NeInt32) {
+      if (binary->op == OrInt32) {
+        // an or flowing into a boolean context can consider each input as boolean
+        binary->left = optimizeBoolean(binary->left);
+        binary->right = optimizeBoolean(binary->right);
+      } else if (binary->op == NeInt32) {
+        // x != 0 is just x if it's used as a bool
         if (auto* num = binary->right->dynCast<Const>()) {
           if (num->value.geti32() == 0) {
             return binary->left;

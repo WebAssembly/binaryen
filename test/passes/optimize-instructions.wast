@@ -294,6 +294,22 @@
     (if (i32.ne (i32.const 0) (call $ne0))
       (nop)
     )
+    ;; through an or
+    (if
+      (i32.or
+        (i32.ne (i32.const 0) (call $ne0))
+        (i32.ne (i32.const 0) (call $ne0))
+      )
+      (nop)
+    )
+    ;; but not an and
+    (if
+      (i32.and
+        (i32.ne (i32.const 0) (call $ne0))
+        (i32.ne (i32.const 0) (call $ne0))
+      )
+      (nop)
+    )
     (i32.const 1)
   )
   (func $recurse-bool
