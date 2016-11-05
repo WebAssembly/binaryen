@@ -8573,13 +8573,11 @@
                 (i32.const 3)
               )
             )
-            (block
-              (set_local $1
-                (get_local $0)
-              )
-              (set_local $2
-                (i32.const 4)
-              )
+            (set_local $1
+              (get_local $0)
+            )
+            (set_local $2
+              (i32.const 4)
             )
           )
         )
