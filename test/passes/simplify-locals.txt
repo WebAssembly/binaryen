@@ -15,6 +15,36 @@
   (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
   (import "env" "lp" (func $lp (param i32 i32) (result i32)))
   (memory $0 256 256)
+  (func $contrast (type $FUNCSIG$v)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (nop)
+    (if
+      (tee_local $x
+        (i32.const 1)
+      )
+      (nop)
+    )
+    (if
+      (get_local $x)
+      (nop)
+    )
+    (nop)
+    (drop
+      (if i32
+        (i32.const 2)
+        (i32.const 3)
+        (i32.const 4)
+      )
+    )
+    (nop)
+    (drop
+      (block $block i32
+        (i32.const 5)
+      )
+    )
+  )
   (func $b0-yes (type $4) (param $i1 i32)
     (local $x i32)
     (local $y i32)

@@ -31,6 +31,15 @@
 // After this pass, some locals may be completely unused. reorder-locals
 // can get rid of those (the operation is trivial there after it sorts by use
 // frequency).
+//
+// This pass has two main options:
+//
+//   * Tee: allow teeing, i.e., sinking a local with more than one use,
+//          and so after sinking we have a tee for the first use.
+//   * Structure: allow sinking of locals whose value is a control flow
+//                structure, an if or a block (and the value is thus the
+//                return value of the if/block).
+//
 
 #include <wasm.h>
 #include <wasm-builder.h>
@@ -64,7 +73,11 @@ struct SetLocalRemover : public PostWalker<SetLocalRemover, Visitor<SetLocalRemo
 struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SimplifyLocals; }
+  Pass* create() override { return new SimplifyLocals(allowTee, allowStructure); }
+
+  bool allowTee, allowStructure;
+
+  SimplifyLocals(bool allowTee, bool allowStructure) : allowTee(allowTee), allowStructure(allowStructure) {}
 
   // information for a set_local we can sink
   struct SinkableInfo {
@@ -107,11 +120,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   // whether we need to run an additional cycle
   bool anotherCycle;
 
-  // whether this is the first cycle
+  // whether this is the first cycle, in which we always disallow teeing
   bool firstCycle;
 
   // local => # of get_locals for it
-  GetLocalCounter counter;
+  GetLocalCounter getCounter;
 
   static void doNoteNonLinear(SimplifyLocals* self, Expression** currp) {
     auto* curr = *currp;
@@ -186,9 +199,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     if (found != sinkables.end()) {
       // sink it, and nop the origin
       auto* set = (*found->second.item)->cast<SetLocal>();
-      if (firstCycle) {
-        // just one get_local of this, so just sink the value
-        assert(counter.num[curr->index] == 1);
+      if (firstCycle || getCounter.num[curr->index] == 1) {
         replaceCurrent(set->value);
       } else {
         replaceCurrent(set);
@@ -264,13 +275,22 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       self->checkInvalidations(effects);
     }
 
-    if (set && !set->isTee() && (!self->firstCycle || self->counter.num[set->index] == 1)) {
+    if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
       self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp)));
     }
 
     self->expressionStack.pop_back();
+  }
+
+  bool canSink(SetLocal* set) {
+    // we can never move a tee
+    if (set->isTee()) return false;
+    // if in the first cycle, or not allowing tees, then we cannot sink if >1 use as that would make a tee
+    if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1) return false;
+    if (!allowStructure && (set->value->is<If>() || set->value->is<Block>())) return false;
+    return true;
   }
 
   std::vector<Block*> blocksToEnlarge;
@@ -415,7 +435,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
 
   void doWalkFunction(Function* func) {
     // scan get_locals
-    counter.analyze(func);
+    getCounter.analyze(func);
     // multiple passes may be required per function, consider this:
     //    x = load
     //    y = store
@@ -468,16 +488,28 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     // for a local with no remaining gets, in which case, we can
     // remove the set.
     // First, recount get_locals
-    counter.analyze(func);
+    getCounter.analyze(func);
     // Second, remove unneeded sets
     SetLocalRemover remover;
-    remover.numGetLocals = &counter.num;
+    remover.numGetLocals = &getCounter.num;
     remover.walkFunction(func);
   }
 };
 
 Pass *createSimplifyLocalsPass() {
-  return new SimplifyLocals();
+  return new SimplifyLocals(true, true);
+}
+
+Pass *createSimplifyLocalsNoTeePass() {
+  return new SimplifyLocals(false, true);
+}
+
+Pass *createSimplifyLocalsNoStructurePass() {
+  return new SimplifyLocals(true, false);
+}
+
+Pass *createSimplifyLocalsNoTeeNoStructurePass() {
+  return new SimplifyLocals(false, false);
 }
 
 } // namespace wasm
