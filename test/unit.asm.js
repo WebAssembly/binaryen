@@ -607,6 +607,15 @@ function asm(global, env, buffer) {
    return;
   }
 
+  function f32_ucast(x) {
+    x = x | 0;
+    return Math_fround(x>>>0);
+  }
+  function f32_scast(x) {
+    x = x | 0;
+    return Math_fround(x|0);
+  }
+
   function v() {
   }
   function vi(x) {

@@ -41,5 +41,33 @@ int EMSCRIPTEN_KEEPALIVE double_to_int(double d) {
   return x;
 }
 
+int EMSCRIPTEN_KEEPALIVE double_to_uint(double d) {
+  d += 1.23;
+  unsigned x = d;
+  return x;
+}
+
+float EMSCRIPTEN_KEEPALIVE int_to_float(int x) {
+  float d = x;
+  return d + 1.23;
+}
+
+float EMSCRIPTEN_KEEPALIVE uint_to_float(unsigned x) {
+  float d = x;
+  return d + 1.23;
+}
+
+int EMSCRIPTEN_KEEPALIVE float_to_int(float d) {
+  d += 1.23;
+  int x = d;
+  return x;
+}
+
+int EMSCRIPTEN_KEEPALIVE float_to_uint(float d) {
+  d += 1.23;
+  unsigned x = d;
+  return x;
+}
+
 }
 

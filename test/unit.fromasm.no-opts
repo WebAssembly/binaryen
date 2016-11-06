@@ -1707,6 +1707,20 @@
     )
     (return)
   )
+  (func $f32_ucast (param $x i32) (result f32)
+    (return
+      (f32.convert_u/i32
+        (get_local $x)
+      )
+    )
+  )
+  (func $f32_scast (param $x i32) (result f32)
+    (return
+      (f32.convert_s/i32
+        (get_local $x)
+      )
+    )
+  )
   (func $v
     (nop)
   )
