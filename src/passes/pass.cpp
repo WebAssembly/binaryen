@@ -116,11 +116,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
   }
-  add("simplify-locals");
+  add("simplify-locals-nostructure"); // don't create if/block return values yet, as coalesce can remove copies that that could inhibit
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
   add("remove-unused-brs"); // simplify-locals opens opportunities for optimizations
   add("coalesce-locals");
+  add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations

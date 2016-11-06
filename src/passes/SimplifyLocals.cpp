@@ -36,9 +36,9 @@
 //
 //   * Tee: allow teeing, i.e., sinking a local with more than one use,
 //          and so after sinking we have a tee for the first use.
-//   * Structure: allow sinking of locals whose value is a control flow
-//                structure, an if or a block (and the value is thus the
-//                return value of the if/block).
+//   * Structure: create block and if return values, by merging the
+//                internal set_locals into one on the outside,
+//                that can itself then be sunk further.
 //
 
 #include <wasm.h>
@@ -169,7 +169,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     // mere with the ifTrue side and optimize a return value, if possible
     auto* iff = (*currp)->cast<If>();
     assert(iff->ifFalse);
-    self->optimizeIfReturn(iff, currp, self->ifStack.back());
+    if (self->allowStructure) {
+      self->optimizeIfReturn(iff, currp, self->ifStack.back());
+    }
     self->ifStack.pop_back();
     self->sinkables.clear();
   }
@@ -177,7 +179,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   void visitBlock(Block* curr) {
     bool hasBreaks = curr->name.is() && blockBreaks[curr->name].size() > 0;
 
-    optimizeBlockReturn(curr); // can modify blockBreaks
+    if (allowStructure) {
+      optimizeBlockReturn(curr); // can modify blockBreaks
+    }
 
     // post-block cleanups
     if (curr->name.is()) {
@@ -289,7 +293,6 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     if (set->isTee()) return false;
     // if in the first cycle, or not allowing tees, then we cannot sink if >1 use as that would make a tee
     if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1) return false;
-    if (!allowStructure && (set->value->is<If>() || set->value->is<Block>())) return false;
     return true;
   }
 

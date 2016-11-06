@@ -148,13 +148,12 @@
   (func $conversions
     (local $0 f64)
     (local $1 f32)
-    (local $2 i32)
     (drop
       (call $f64-to-int
         (get_local $0)
       )
     )
-    (set_local $2
+    (drop
       (call $f64-to-int
         (f64.promote/f32
           (get_local $1)
