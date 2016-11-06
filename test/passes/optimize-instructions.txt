@@ -373,6 +373,26 @@
       (call $ne0)
       (nop)
     )
+    (if
+      (i32.or
+        (call $ne0)
+        (call $ne0)
+      )
+      (nop)
+    )
+    (if
+      (i32.and
+        (i32.ne
+          (call $ne0)
+          (i32.const 0)
+        )
+        (i32.ne
+          (call $ne0)
+          (i32.const 0)
+        )
+      )
+      (nop)
+    )
     (i32.const 1)
   )
   (func $recurse-bool (type $1)
