@@ -23,12 +23,18 @@
 
 namespace wasm {
 
-Name TO_LEAVE("_bytearray_join"); // TODO: commandline param
 
 struct ExtractFunction : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    auto* leave = getenv("BYN_LEAVE");
+    if (!leave) {
+      std::cerr << "usage: set BYN_LEAVE in the env\n";
+      abort();
+    }
+    Name LEAVE(leave);
+    std::cerr << "keeping " << LEAVE << "\n";
     for (auto& func : module->functions) {
-      if (func->name != TO_LEAVE) {
+      if (func->name != LEAVE) {
         // wipe out the body
         func->body = module->allocator.alloc<Unreachable>();
       }

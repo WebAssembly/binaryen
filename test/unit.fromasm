@@ -74,6 +74,7 @@
   (export "jumpThreadDrop" (func $jumpThreadDrop))
   (export "dropIgnoredImportInIf" (func $dropIgnoredImportInIf))
   (export "dropIgnoredImportsInIf" (func $dropIgnoredImportsInIf))
+  (export "relooperJumpThreading_irreducible" (func $relooperJumpThreading_irreducible))
   (func $big_negative
     (nop)
   )
@@ -1025,6 +1026,58 @@
         )
       )
       (br $while-in)
+    )
+  )
+  (func $relooperJumpThreading_irreducible (param $0 i32)
+    (local $1 i32)
+    (if
+      (i32.eq
+        (get_local $0)
+        (i32.const 100)
+      )
+      (loop $while-in
+        (call $relooperJumpThreading_irreducible
+          (i32.const 1337)
+        )
+        (br $while-in)
+      )
+    )
+    (set_local $1
+      (select
+        (i32.const 2)
+        (i32.const 10)
+        (i32.eq
+          (get_local $0)
+          (i32.const 200)
+        )
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $0)
+        (i32.const 300)
+      )
+      (set_local $1
+        (i32.const 2)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $1)
+        (i32.const 2)
+      )
+      (call $relooperJumpThreading_irreducible
+        (i32.const 1448)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $1)
+        (i32.const 10)
+      )
+      (call $relooperJumpThreading_irreducible
+        (i32.const 2000)
+      )
     )
   )
   (func $__Z12multi_varargiz (param $0 i32)
