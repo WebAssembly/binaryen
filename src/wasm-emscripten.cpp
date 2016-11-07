@@ -58,7 +58,7 @@ static bool hasI64ResultOrParam(FunctionType* ft) {
 }
 
 std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData) {
-  wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+  wasm.removeImportsWithSubstring(EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
   std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
@@ -103,7 +103,7 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker
 };
 
 void AsmConstWalker::visitCallImport(CallImport* curr) {
-  if (curr->target == EMSCRIPTEN_ASM_CONST) {
+  if (curr->target.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto arg = curr->operands[0]->cast<Const>();
     auto address = arg->value.geti32();
     auto segmentIterator = segmentsByAddress.find(address);
@@ -122,7 +122,14 @@ void AsmConstWalker::visitCallImport(CallImport* curr) {
     } else {
       id = ids[code];
     }
-    std::string sig = getSig(curr);
+    std::string baseSig = getSig(curr);
+    std::string sig = "";
+    for (unsigned i = 0; i < baseSig.size(); ++i) {
+      // Omit the signature of the "code" parameter, taken as a string, as the first argument
+      if (i != 1) {
+        sig += baseSig[i];
+      }
+    }
     sigsForCode[code].insert(sig);
     std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
     curr->target = cashew::IString(fixedTarget.c_str(), false);

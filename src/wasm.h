@@ -86,6 +86,10 @@ struct Name : public cashew::IString {
   static Name fromInt(size_t i) {
     return cashew::IString(std::to_string(i).c_str(), false);
   }
+
+  bool hasSubstring(cashew::IString substring) {
+    return strstr(c_str(), substring.c_str()) != nullptr;
+  }
 };
 
 // An index in a wasm module
@@ -1619,6 +1623,14 @@ public:
       }
     }
     importsMap.erase(name);
+  }
+
+  void removeImportsWithSubstring(Name name) {
+    for (int i = imports.size() - 1; i >= 0; i--) {
+      if (imports[i]->name.hasSubstring(name)) {
+        imports.erase(imports.begin() + i);
+      }
+    }
   }
   // TODO: remove* for other elements
 
