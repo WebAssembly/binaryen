@@ -182,7 +182,21 @@ private:
       assert(labelChecksInOrigin[num] == 0);
       if (labelSetsInOrigin[num] != labelSets[num]) {
         assert(labelSetsInOrigin[num] < labelSets[num]);
-        return true; // label set somewhere outside of origin TODO: if set in the if body here, it might be safe in some cases
+        // the label is set outside of the origin
+        // if the only other location is inside the if body, then it is ok - it must be in a loop
+        // and returning to the top of the loop body, so we don't need to do anything for that
+        // label setting anyhow
+        std::map<Index, Index> labelChecksInIfTrue;
+        std::map<Index, Index> labelSetsInIfTrue;
+        LabelUseFinder finder(labelIndex, labelChecksInIfTrue, labelSetsInIfTrue);
+        finder.walk(iff->ifTrue);
+        if (labelSetsInOrigin[num] + labelSetsInIfTrue[num] < labelSets[num]) {
+          // label set somewhere we can't see now, could be irreducible control flow
+          // TODO: one case where this happens is instead of an if-chain, we have
+          //       ifs and a switch on label|0, in separate elements. perhaps not
+          //       emitting switches on label|0 in the relooper would avoid that.
+          return true;
+        }
       }
       iff = isLabelCheckingIf(iff->ifFalse, labelIndex);
     }

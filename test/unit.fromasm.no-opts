@@ -73,6 +73,7 @@
   (export "jumpThreadDrop" (func $jumpThreadDrop))
   (export "dropIgnoredImportInIf" (func $dropIgnoredImportInIf))
   (export "dropIgnoredImportsInIf" (func $dropIgnoredImportsInIf))
+  (export "relooperJumpThreading_irreducible" (func $relooperJumpThreading_irreducible))
   (func $big_negative
     (local $temp f64)
     (set_local $temp
@@ -1588,6 +1589,77 @@
           )
         )
         (br $while-in)
+      )
+    )
+  )
+  (func $relooperJumpThreading_irreducible (param $x i32)
+    (local $label i32)
+    (if
+      (i32.eq
+        (get_local $x)
+        (i32.const 100)
+      )
+      (set_local $label
+        (i32.const 1)
+      )
+      (set_local $label
+        (i32.const 10)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 1)
+      )
+      (loop $while-in
+        (block $while-out
+          (call $relooperJumpThreading_irreducible
+            (i32.const 1337)
+          )
+          (set_local $label
+            (i32.const 1)
+          )
+          (br $while-in)
+        )
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $x)
+        (i32.const 200)
+      )
+      (set_local $label
+        (i32.const 2)
+      )
+      (set_local $label
+        (i32.const 10)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $x)
+        (i32.const 300)
+      )
+      (set_local $label
+        (i32.const 2)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 2)
+      )
+      (call $relooperJumpThreading_irreducible
+        (i32.const 1448)
+      )
+    )
+    (if
+      (i32.eq
+        (get_local $label)
+        (i32.const 10)
+      )
+      (call $relooperJumpThreading_irreducible
+        (i32.const 2000)
       )
     )
   )
