@@ -1228,8 +1228,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             conv->value = ret->value;
             conv->type = WasmType::f32;
             ret->value = conv;
+          } else if (ret->valueType == f64 && ret->value->type == f32) {
+            auto conv = allocator.alloc<Unary>();
+            conv->op = PromoteFloat32;
+            conv->value = ret->value;
+            conv->type = WasmType::f64;
+            ret->value = conv;
           } else {
-            abort_on("bad subtract types", ast);
+            abort_on("bad sub[] types", ast);
           }
         }
         return ret;

@@ -74,6 +74,7 @@
   (export "dropIgnoredImportInIf" (func $dropIgnoredImportInIf))
   (export "dropIgnoredImportsInIf" (func $dropIgnoredImportsInIf))
   (export "relooperJumpThreading_irreducible" (func $relooperJumpThreading_irreducible))
+  (export "store_fround" (func $store_fround))
   (func $big_negative
     (local $temp f64)
     (set_local $temp
@@ -1790,6 +1791,16 @@
     (return
       (f32.convert_s/i32
         (get_local $x)
+      )
+    )
+  )
+  (func $store_fround (param $x i32)
+    (f64.store
+      (i32.const 80)
+      (f64.promote/f32
+        (f32.convert_s/i32
+          (get_local $x)
+        )
       )
     )
   )
