@@ -369,15 +369,38 @@ void WasmBinaryWriter::writeTableElements() {
 }
 
 void WasmBinaryWriter::writeNames() {
-  if (wasm->functions.size() == 0) return;
+  bool hasContents = false;
+  if (wasm->functions.size() > 0) {
+    hasContents = true;
+    getFunctionIndex(wasm->functions[0]->name); // generate mappedFunctions
+  } else {
+    for (auto& import : wasm->imports) {
+      if (import->kind == ExternalKind::Function) {
+        hasContents = true;
+        getFunctionIndex(import->name); // generate mappedFunctions
+        break;
+      }
+    }
+  }
+  if (!hasContents) return;
   if (debug) std::cerr << "== writeNames" << std::endl;
   auto start = startSection(BinaryConsts::Section::User);
   writeInlineString(BinaryConsts::UserSections::Name);
-  o << U32LEB(wasm->functions.size());
+  o << U32LEB(mappedFunctions.size());
+  Index emitted = 0;
+  for (auto& import : wasm->imports) {
+    if (import->kind == ExternalKind::Function) {
+      writeInlineString(import->name.str);
+      o << U32LEB(0); // TODO: locals
+      emitted++;
+    }
+  }
   for (auto& curr : wasm->functions) {
     writeInlineString(curr->name.str);
     o << U32LEB(0); // TODO: locals
+    emitted++;
   }
+  assert(emitted == mappedFunctions.size());
   finishSection(start);
 }
 
@@ -1400,7 +1423,16 @@ void WasmBinaryBuilder::readTableElements() {
 void WasmBinaryBuilder::readNames() {
   if (debug) std::cerr << "== readNames" << std::endl;
   auto num = getU32LEB();
-  assert(num == functions.size());
+  if (num == 0) return;
+  for (auto& import : wasm.imports) {
+    if (import->kind == ExternalKind::Function) {
+      getInlineString(); // TODO: use this
+      auto numLocals = getU32LEB();
+      WASM_UNUSED(numLocals);
+      assert(numLocals == 0); // TODO
+      if (--num == 0) return;
+    }
+  }
   for (size_t i = 0; i < num; i++) {
     functions[i]->name = getInlineString();
     auto numLocals = getU32LEB();
