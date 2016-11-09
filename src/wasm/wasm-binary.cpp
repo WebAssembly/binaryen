@@ -43,6 +43,7 @@ void WasmBinaryWriter::write() {
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
+  if (symbolMap.size() > 0) writeSymbolMap();
 
   finishUp();
 }
@@ -380,6 +381,18 @@ void WasmBinaryWriter::writeNames() {
   finishSection(start);
 }
 
+void WasmBinaryWriter::writeSymbolMap() {
+  std::ofstream file(symbolMap);
+  for (auto& import : wasm->imports) {
+    if (import->kind == ExternalKind::Function) {
+      file << getFunctionIndex(import->name) << ":" << import->name.str << std::endl;
+    }
+  }
+  for (auto& func : wasm->functions) {
+    file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
+  }
+  file.close();
+}
 
 void WasmBinaryWriter::writeInlineString(const char* name) {
   int32_t size = strlen(name);
