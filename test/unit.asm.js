@@ -542,6 +542,37 @@ function asm(global, env, buffer) {
    }
   }
 
+  function relooperJumpThreading_irreducible(x) {
+   x = x | 0;
+   var label = 0;
+   if ((x|0) == 100) {
+    label = 1;
+   } else {
+    label = 10;
+   }
+   if ((label|0) == 1) {
+    while (1) {
+     relooperJumpThreading_irreducible(1337);
+     label = 1; // this is ok - the if means the body of the if begins with the block for 1. so a setting inside the body of the if must return to the top of the if
+    }
+   }
+   // too many settings, we just look one back, so this one will not be optimized
+   if ((x|0) == 200) {
+    label = 2;
+   } else {
+    label = 10;
+   }
+   if ((x|0) == 300) {
+    label = 2;
+   }
+   if ((label|0) == 2) {
+    relooperJumpThreading_irreducible(1448);
+   }
+   if ((label|0) == 10) {
+    relooperJumpThreading_irreducible(2000);
+   }
+  }
+
   function __Z12multi_varargiz($0) {
    $0 = $0|0;
    var $2 = 0, $$06$i4 = 0, $exitcond$i6 = 0, $12 = 0, $20 = 0;
@@ -616,6 +647,11 @@ function asm(global, env, buffer) {
     return Math_fround(x|0);
   }
 
+  function store_fround(x) {
+    x = x | 0;
+    HEAPF64[10] = Math_fround(x|0);
+  }
+
   function v() {
   }
   function vi(x) {
@@ -627,6 +663,6 @@ function asm(global, env, buffer) {
   var FUNCTION_TABLE_c = [ z, cneg, z, z, z, z, z, z ];
   var FUNCTION_TABLE_vi = [ vi, vi, vi, vi, vi, vi, vi, vi ];
 
-  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf };
+  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround };
 }
 

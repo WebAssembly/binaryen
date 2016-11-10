@@ -15,6 +15,68 @@
   (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
   (import "env" "lp" (func $lp (param i32 i32) (result i32)))
   (memory $0 256 256)
+  (func $contrast (type $FUNCSIG$v)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $a i32)
+    (local $b i32)
+    (nop)
+    (if
+      (tee_local $x
+        (i32.const 1)
+      )
+      (nop)
+    )
+    (if
+      (get_local $x)
+      (nop)
+    )
+    (nop)
+    (drop
+      (if i32
+        (i32.const 2)
+        (i32.const 3)
+        (i32.const 4)
+      )
+    )
+    (nop)
+    (drop
+      (block $block i32
+        (i32.const 5)
+      )
+    )
+    (nop)
+    (drop
+      (if i32
+        (i32.const 6)
+        (block i32
+          (nop)
+          (i32.const 7)
+        )
+        (block i32
+          (nop)
+          (i32.const 8)
+        )
+      )
+    )
+    (nop)
+    (drop
+      (block $val i32
+        (if
+          (i32.const 10)
+          (block $block4
+            (nop)
+            (br $val
+              (i32.const 11)
+            )
+          )
+        )
+        (nop)
+        (i32.const 12)
+      )
+    )
+  )
   (func $b0-yes (type $4) (param $i1 i32)
     (local $x i32)
     (local $y i32)
@@ -225,7 +287,7 @@
       (nop)
       (set_local $a
         (block $block i32
-          (block $block4
+          (block $block5
             (nop)
             (i32.store
               (i32.const 104)
@@ -239,8 +301,8 @@
       )
       (call $waka)
       (set_local $a
-        (block $block5 i32
-          (block $block6
+        (block $block6 i32
+          (block $block7
             (nop)
             (i32.store
               (i32.const 106)
@@ -258,8 +320,8 @@
       )
       (call $waka)
       (set_local $a
-        (block $block7 i32
-          (block $block8
+        (block $block8 i32
+          (block $block9
             (nop)
             (i32.store
               (i32.const 108)
@@ -281,8 +343,8 @@
       )
       (call $waka)
       (set_local $a
-        (block $block9 i32
-          (block $block10
+        (block $block10 i32
+          (block $block11
             (nop)
             (i32.store
               (i32.const 110)
@@ -703,10 +765,10 @@
     (drop
       (get_local $x)
     )
-    (block $moar17
+    (block $moar18
       (set_local $y
-        (block $block18 i32
-          (br_if $moar17
+        (block $block19 i32
+          (br_if $moar18
             (get_local $y)
           )
           (i32.const 0)

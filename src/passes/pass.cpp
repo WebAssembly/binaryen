@@ -91,6 +91,9 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
+  registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
+  registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
+  registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeeNoStructurePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
 //  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
@@ -113,13 +116,15 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
   }
+  add("simplify-locals-nostructure"); // don't create if/block return values yet, as coalesce can remove copies that that could inhibit
+  add("vacuum"); // previous pass creates garbage
+  add("reorder-locals");
+  add("remove-unused-brs"); // simplify-locals opens opportunities for optimizations
+  add("coalesce-locals");
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
-  add("remove-unused-brs"); // simplify-locals opens opportunities for phi optimizations
-  add("coalesce-locals");
-  add("vacuum"); // previous pass creates garbage
-  add("reorder-locals");
+  add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
   add("merge-blocks");
   add("optimize-instructions");
   add("precompute");

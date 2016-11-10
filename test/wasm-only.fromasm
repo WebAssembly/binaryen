@@ -173,7 +173,6 @@
     (local $0 i64)
     (local $1 i64)
     (local $2 i32)
-    (local $3 f64)
     (drop
       (call $i64s-rem
         (call $i64u-rem
@@ -182,27 +181,27 @@
               (i64.mul
                 (i64.sub
                   (i64.add
-                    (tee_local $1
+                    (tee_local $0
                       (i64.const 128849018897)
                     )
                     (i64.const 100)
                   )
-                  (get_local $1)
+                  (get_local $0)
                 )
-                (get_local $1)
+                (get_local $0)
               )
-              (get_local $1)
+              (get_local $0)
             )
-            (get_local $1)
+            (get_local $0)
           )
-          (get_local $1)
+          (get_local $0)
         )
-        (get_local $1)
+        (get_local $0)
       )
     )
     (i64.store
       (i32.const 120)
-      (tee_local $0
+      (tee_local $1
         (i64.load
           (i32.const 120)
         )
@@ -210,33 +209,28 @@
     )
     (i64.store
       (i32.const 120)
-      (get_local $0)
+      (get_local $1)
     )
     (i64.store align=2
       (i32.const 120)
-      (get_local $0)
+      (get_local $1)
     )
     (i64.store align=4
       (i32.const 120)
-      (get_local $0)
+      (get_local $1)
     )
     (i64.store
       (i32.const 120)
-      (get_local $0)
+      (get_local $1)
     )
     (set_local $2
       (i32.wrap/i64
-        (get_local $0)
+        (get_local $1)
       )
     )
-    (set_local $0
+    (set_local $1
       (i64.extend_u/i32
         (get_local $2)
-      )
-    )
-    (set_local $3
-      (f64.convert_u/i64
-        (get_local $0)
       )
     )
   )
