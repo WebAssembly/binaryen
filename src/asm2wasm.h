@@ -531,6 +531,27 @@ private:
     call->type = i64;
     static std::set<Name> addedFunctions;
     if (addedFunctions.count(call->target) == 0) {
+      Expression* result = builder.makeBinary(op,
+        builder.makeGetLocal(0, i64),
+        builder.makeGetLocal(1, i64)
+      );
+      if (op == DivSInt64) {
+        // guard against signed division overflow
+        result = builder.makeIf(
+          builder.makeBinary(AndInt32,
+            builder.makeBinary(EqInt64,
+              builder.makeGetLocal(0, i64),
+              builder.makeConst(Literal(std::numeric_limits<int64_t>::min()))
+            ),
+            builder.makeBinary(EqInt64,
+              builder.makeGetLocal(1, i64),
+              builder.makeConst(Literal(int64_t(-1)))
+            )
+          ),
+          builder.makeConst(Literal(int64_t(0))),
+          result
+        );
+      }
       addedFunctions.insert(call->target);
       auto func = new Function;
       func->name = call->target;
@@ -542,10 +563,7 @@ private:
           builder.makeGetLocal(1, i64)
         ),
         builder.makeConst(Literal(int64_t(0))),
-        builder.makeBinary(op,
-          builder.makeGetLocal(0, i64),
-          builder.makeGetLocal(1, i64)
-        )
+        result
       );
       wasm.addFunction(func);
     }
