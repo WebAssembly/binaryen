@@ -43,9 +43,8 @@ void Colors::outputColorCode(std::ostream& stream, const char* colorCode) {
 
 void Colors::outputColorCode(std::ostream&stream, const WORD &colorCode) {
   const static bool has_color = []() {
-    return (getenv("COLORS") && getenv("COLORS")[0] == '1') ||  // forced
-           (_isatty(_fileno(stdout)) &&
-            (!getenv("COLORS") || getenv("COLORS")[0] != '0'));  // implicit
+    return _isatty(_fileno(stdout)) &&
+            (!getenv("COLORS") || getenv("COLORS")[0] != '0');  // implicit
   }();
   static HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
   static HANDLE hStderr = GetStdHandle(STD_ERROR_HANDLE);

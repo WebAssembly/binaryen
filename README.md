@@ -131,9 +131,9 @@ You should see something like this:
 
 ![example output](https://raw.github.com/WebAssembly/wasm-emscripten/master/media/example.png)
 
-On Linux and Mac you should see pretty colors as in that image. Set `COLORS=0` in the env to disable colors if you prefer that. Set `COLORS=1` in the env to force colors (useful when piping to `more`, for example).
+By default you should see pretty colors as in that image. Set `COLORS=0` in the env to disable colors if you prefer that. On Linux and Mac, you can set `COLORS=1` in the env to force colors (useful when piping to `more`, for example). For Windows, pretty colors are only available when `stdout/stderr` are not redirected/piped.
 
-Pass `--debug` on the command line to see debug info, about asm.js functions as they are parsed, etc. `--debug=2` will show even more info.
+Pass `--debug` on the command line to see debug info, about asm.js functions as they are parsed, etc.
 
 ### C/C++ Source ⇒ asm2wasm ⇒ WebAssembly
 
