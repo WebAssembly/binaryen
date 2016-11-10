@@ -1,10 +1,10 @@
 (module
   (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
-  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$vi (func (param i32)))
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$vii (func (param i32 i32)))
+  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (import "env" "STACKTOP" (global $r$asm2wasm$import i32))
   (import "env" "STACK_MAX" (global $s$asm2wasm$import i32))
   (import "env" "tempDoublePtr" (global $t$asm2wasm$import i32))
@@ -23,7 +23,6 @@
   (import "env" "___syscall54" (func $wa (param i32 i32) (result i32)))
   (import "env" "___unlock" (func $xa (param i32)))
   (import "env" "___syscall146" (func $ya (param i32 i32) (result i32)))
-  (import "asm2wasm" "i32u-div" (func $i32u-div (param i32 i32) (result i32)))
   (import "env" "memory" (memory $0 256))
   (import "env" "table" (table 8 8 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
@@ -11304,6 +11303,18 @@
     )
     (return
       (get_local $d)
+    )
+  )
+  (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
+    (if i32
+      (i32.eqz
+        (get_local $1)
+      )
+      (i32.const 0)
+      (i32.div_u
+        (get_local $0)
+        (get_local $1)
+      )
     )
   )
   (func $bb (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
