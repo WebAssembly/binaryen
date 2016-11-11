@@ -55,6 +55,10 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["mem base"] = argument;
            })
+      .add("--mem-max", "-mm", "Set the maximum size of memory in the wasm module (in bytes). Without this, TOTAL_MEMORY is used (as it is used for the initial value), or if memory growth is enabled, no limit is set. This overrides both of those.", Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["mem max"] = argument;
+           })
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
@@ -121,6 +125,12 @@ int main(int argc, const char *argv[]) {
       runner.add("memory-packing");
       runner.run();
     }
+  }
+
+  // Set the max memory size, if requested
+  const auto &memMax = options.extra.find("mem max");
+  if (memMax != options.extra.end()) {
+    wasm.memory.max = atoi(memMax->second.c_str()) / Memory::kPageSize;
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
