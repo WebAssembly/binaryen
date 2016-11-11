@@ -28,7 +28,7 @@ function integrateWasmJS(Module) {
 
   // inputs
 
-  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,interpret-s-expr'; // by default, try native and then .wast
+  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm'; // by default, use native support
   Module['wasmJSMethod'] = method;
 
   var wasmTextFile = Module['wasmTextFile'] || {{{ wasmTextFile }}};
