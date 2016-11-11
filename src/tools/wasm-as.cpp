@@ -29,6 +29,7 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   bool debugInfo = false;
+  std::string symbolMap;
   Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.extra["validate"] = "wasm";
   options
@@ -50,6 +51,9 @@ int main(int argc, const char *argv[]) {
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { debugInfo = true; })
+      .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
+           Options::Arguments::One,
+           [&](Options *o, const std::string &argument) { symbolMap = argument; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -83,6 +87,7 @@ int main(int argc, const char *argv[]) {
   BufferWithRandomAccess buffer(options.debug);
   WasmBinaryWriter writer(&wasm, buffer, options.debug);
   writer.setDebugInfo(debugInfo);
+  if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;

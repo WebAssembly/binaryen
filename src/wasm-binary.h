@@ -527,6 +527,7 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   BufferWithRandomAccess& o;
   bool debug;
   bool debugInfo = true;
+  std::string symbolMap;
 
   MixedArena allocator;
 
@@ -537,6 +538,7 @@ public:
   }
 
   void setDebugInfo(bool set) { debugInfo = set; }
+  void setSymbolMap(std::string set) { symbolMap = set; }
 
   void write();
   void writeHeader();
@@ -569,6 +571,7 @@ public:
   void writeFunctionTableDeclaration();
   void writeTableElements();
   void writeNames();
+  void writeSymbolMap();
 
   // helpers
   void writeInlineString(const char* name);
