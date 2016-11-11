@@ -186,6 +186,9 @@ function integrateWasmJS(Module) {
       instance = new WebAssembly.Instance(new WebAssembly.Module(getBinary()), info)
     } catch (e) {
       Module['printErr']('failed to compile wasm module: ' + e);
+      if (e.toString().indexOf('imported Memory with incompatible size') >= 0) {
+        Module['printErr']('Memory size incompatibility issues may be due to changing TOTAL_MEMORY at runtime to something too large. Use ALLOW_MEMORY_GROWTH to allow any size memory (and also make sure not to set TOTAL_MEMORY at runtime to something smaller than it was at compile time).');
+      }
       return false;
     }
     exports = instance.exports;
