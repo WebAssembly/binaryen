@@ -178,21 +178,27 @@ struct Asm2WasmPreProcessor {
     const char* START_FUNCS = "// EMSCRIPTEN_START_FUNCS";
     char *marker = strstr(input, START_FUNCS);
     if (marker) {
-      *marker = 0; // look for memory growth code just up to here
-      char *growthSign = strstr(input, "return true;"); // this can only show up in growth code, as normal asm.js lacks "true"
-      if (growthSign) {
-        memoryGrowth = true;
-        // clean out this function, we don't need it
-        char *growthFuncStart = strstr(input, "function ");
-        assert(strstr(growthFuncStart + 1, "function ") == 0); // should be only this one function in this area, so no confusion for us
-        char *growthFuncEnd = strchr(growthSign, '}');
-        assert(growthFuncEnd > growthFuncStart + 5);
-        growthFuncStart[0] = '/';
-        growthFuncStart[1] = '*';
-        growthFuncEnd--;
-        growthFuncEnd[0] = '*';
-        growthFuncEnd[1] = '/';
-      }
+      *marker = 0; // look for memory growth code just up to here, as an optimization
+    }
+    char *growthSign = strstr(input, "return true;"); // this can only show up in growth code, as normal asm.js lacks "true"
+    if (growthSign) {
+      memoryGrowth = true;
+      // clean out this function, we don't need it. first where it starts
+      char *growthFuncStart = growthSign;
+      while (*growthFuncStart != '{') growthFuncStart--; // skip body
+      while (*growthFuncStart != '(') growthFuncStart--; // skip params
+      while (*growthFuncStart != ' ') growthFuncStart--; // skip function name
+      while (*growthFuncStart != 'f') growthFuncStart--; // skip 'function'
+      assert(strstr(growthFuncStart, "function ") == growthFuncStart);
+      char *growthFuncEnd = strchr(growthSign, '}');
+      assert(growthFuncEnd > growthFuncStart + 5);
+      growthFuncStart[0] = '/';
+      growthFuncStart[1] = '*';
+      growthFuncEnd--;
+      growthFuncEnd[0] = '*';
+      growthFuncEnd[1] = '/';
+    }
+    if (marker) {
       *marker = START_FUNCS[0];
     }
 
