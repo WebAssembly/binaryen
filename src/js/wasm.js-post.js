@@ -28,7 +28,7 @@ function integrateWasmJS(Module) {
 
   // inputs
 
-  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm,interpret-s-expr'; // by default, try native and then .wast
+  var method = Module['wasmJSMethod'] || {{{ wasmJSMethod }}} || 'native-wasm'; // by default, use native support
   Module['wasmJSMethod'] = method;
 
   var wasmTextFile = Module['wasmTextFile'] || {{{ wasmTextFile }}};
@@ -333,7 +333,7 @@ function integrateWasmJS(Module) {
       }
     }
 
-    if (!exports) throw 'no binaryen method succeeded';
+    if (!exports) throw 'no binaryen method succeeded. consider enabling more options, like interpreting, if you want that: https://github.com/kripken/emscripten/wiki/WebAssembly#binaryen-methods';
 
     Module['printErr']('binaryen method succeeded.');
 
