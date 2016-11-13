@@ -38,8 +38,8 @@ void WasmBinaryWriter::write() {
   writeMemory();
   writeGlobals();
   writeExports();
-  writeTableElements();
   writeStart();
+  writeTableElements();
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
