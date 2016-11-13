@@ -1573,7 +1573,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     if (j < inner.size() - 1) {
       wasm.table.max = atoi(inner[j++]->c_str());
     } else {
-      wasm.table.max = wasm.table.initial;
+      wasm.table.max = Table::kMaxSize;
     }
     // ends with the table element type
   } else if (im->kind == ExternalKind::Memory) {
