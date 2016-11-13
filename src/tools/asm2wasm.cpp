@@ -55,13 +55,17 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["mem base"] = argument;
            })
-      .add("--mem-max", "-mm", "Set the maximum size of memory in the wasm module (in bytes). Without this, TOTAL_MEMORY is used (as it is used for the initial value), or if memory growth is enabled, no limit is set. This overrides both of those.", Options::Arguments::One,
+      .add("--mem-max", "-mm", "Set the maximum size of memory in the wasm module (in bytes). -1 means no limit. Without this, TOTAL_MEMORY is used (as it is used for the initial value), or if memory growth is enabled, no limit is set. This overrides both of those.", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              o->extra["mem max"] = argument;
            })
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
            [](Options *o, const std::string &argument) {
              o->extra["total memory"] = argument;
+           })
+      .add("--table-max", "-tM", "Set the maximum size of the table. Without this, it is set depending on how many functions are in the module. -1 means no limit", Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["table max"] = argument;
            })
       #include "optimization-options.h"
       .add("--no-opts", "-n", "Disable optimization passes (deprecated)", Options::Arguments::Zero,
@@ -130,7 +134,22 @@ int main(int argc, const char *argv[]) {
   // Set the max memory size, if requested
   const auto &memMax = options.extra.find("mem max");
   if (memMax != options.extra.end()) {
-    wasm.memory.max = atoi(memMax->second.c_str()) / Memory::kPageSize;
+    int max = atoi(memMax->second.c_str());
+    if (max >= 0) {
+      wasm.memory.max = max / Memory::kPageSize;
+    } else {
+      wasm.memory.max = Memory::kMaxSize;
+    }
+  }
+  // Set the table sizes, if requested
+  const auto &tableMax = options.extra.find("table max");
+  if (tableMax != options.extra.end()) {
+    int max = atoi(tableMax->second.c_str());
+    if (max >= 0) {
+      wasm.table.max = max;
+    } else {
+      wasm.table.max = Table::kMaxSize;
+    }
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
