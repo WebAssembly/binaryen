@@ -308,6 +308,7 @@ function integrateWasmJS(Module) {
       } else {
         env['table'] = new Array(TABLE_SIZE); // works in binaryen interpreter at least
       }
+      Module['wasmTable'] = env['table'];
     }
 
     if (!env['memoryBase']) {
