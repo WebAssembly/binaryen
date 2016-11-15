@@ -24,7 +24,7 @@
   (import "env" "table" (table 24 24 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (elem (i32.const 0) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $fr $cneg $fr $fr $fr $fr $fr $fr $vi $vi $vi $vi $vi $vi $vi $vi)
+  (elem (get_global $tableBase) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $fr $cneg $fr $fr $fr $fr $fr $fr $vi $vi $vi $vi $vi $vi $vi $vi)
   (data (get_global $memoryBase) "unit.asm.js")
   (global $t (mut f64) (get_global $t$asm2wasm$import))
   (global $u (mut f64) (get_global $u$asm2wasm$import))

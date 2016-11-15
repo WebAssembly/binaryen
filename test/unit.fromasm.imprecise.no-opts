@@ -20,7 +20,7 @@
   (import "env" "table" (table 24 24 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (elem (i32.const 0) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi)
+  (elem (get_global $tableBase) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi)
   (global $t (mut f64) (get_global $t$asm2wasm$import))
   (global $u (mut f64) (get_global $u$asm2wasm$import))
   (global $Int (mut i32) (i32.const 0))

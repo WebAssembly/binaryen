@@ -801,7 +801,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           //       index 0 in each table is the null func, and each other index should only have one
           //       non-null func. However, that breaks down when function pointer casts are emulated.
           if (wasm.table.segments.size() == 0) {
-            wasm.table.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))));
+            wasm.table.segments.emplace_back(builder.makeGetGlobal(Name("tableBase"), i32));
           }
           auto& segment = wasm.table.segments[0];
           functionTableStarts[name] = segment.data.size(); // this table starts here

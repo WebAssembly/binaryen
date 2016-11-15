@@ -27,7 +27,7 @@
   (import "env" "table" (table 8 8 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (elem (i32.const 0) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
+  (elem (get_global $tableBase) $nb $Oa $ob $Va $Ua $Ra $pb $Sa)
   (global $r (mut i32) (get_global $r$asm2wasm$import))
   (global $s (mut i32) (get_global $s$asm2wasm$import))
   (global $t (mut i32) (get_global $t$asm2wasm$import))

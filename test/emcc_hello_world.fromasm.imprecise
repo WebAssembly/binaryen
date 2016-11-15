@@ -35,7 +35,7 @@
   (import "env" "table" (table 18 18 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (elem (i32.const 0) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
+  (elem (get_global $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
   (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
   (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
   (global $tempDoublePtr (mut i32) (get_global $tempDoublePtr$asm2wasm$import))
