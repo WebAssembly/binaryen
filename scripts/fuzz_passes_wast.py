@@ -60,6 +60,7 @@ def run():
     return ">>> !!! ", e, " !!!"
   return 'ok'
 
+
 original_wast = None
 
 try:
