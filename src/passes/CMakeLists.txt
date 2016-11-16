@@ -22,7 +22,7 @@ SET(passes_SOURCES
   RemoveMemory.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
-  RemoveUnusedFunctions.cpp
+  RemoveUnusedModuleElements.cpp
   ReorderLocals.cpp
   ReorderFunctions.cpp
   SimplifyLocals.cpp

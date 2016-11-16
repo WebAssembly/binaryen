@@ -1021,6 +1021,5 @@
   (type $v (func))
   (type $vi (func (param i32)))
   (type $i (func (result i32)))
-  (import "module" "check" (func $check (param i32)))
   (memory $0 0)
 )

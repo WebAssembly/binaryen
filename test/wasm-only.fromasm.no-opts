@@ -11,6 +11,7 @@
   (import "env" "table" (table 0 0 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
+  (global $tempRet0 (mut i32) (i32.const 0))
   (export "test64" (func $test64))
   (export "illegalParam" (func $legalstub$illegalParam))
   (export "illegalResult" (func $legalstub$illegalResult))
@@ -823,7 +824,14 @@
     (set_local $0
       (call $illegalResult)
     )
-    (unreachable)
+    (set_global $tempRet0
+      (i32.wrap/i64
+        (i64.shr_u
+          (get_local $0)
+          (i64.const 32)
+        )
+      )
+    )
     (i32.wrap/i64
       (get_local $0)
     )
@@ -850,7 +858,7 @@
       )
       (i64.shl
         (i64.extend_u/i32
-          (unreachable)
+          (get_global $tempRet0)
         )
         (i64.const 32)
       )

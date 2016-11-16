@@ -126,14 +126,11 @@ private:
       auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
-      if (module->checkGlobal(TEMP_RET_0)) {
-        block->list.push_back(builder.makeSetGlobal(
-          TEMP_RET_0,
-          I64Utilities::getI64High(builder, index)
-        ));
-      } else {
-        block->list.push_back(builder.makeUnreachable()); // no way to emit the high bits :(
-      }
+      ensureTempRet0(module);
+      block->list.push_back(builder.makeSetGlobal(
+        TEMP_RET_0,
+        I64Utilities::getI64High(builder, index)
+      ));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
@@ -183,11 +180,8 @@ private:
     if (im->functionType->result == i64) {
       call->type = i32;
       Expression* get;
-      if (module->checkGlobal(TEMP_RET_0)) {
-        get = builder.makeGetGlobal(TEMP_RET_0, i32);
-      } else {
-        get = builder.makeUnreachable(); // no way to emit the high bits :(
-      }
+      ensureTempRet0(module);
+      get = builder.makeGetGlobal(TEMP_RET_0, i32);
       func->body = I64Utilities::recreateI64(builder, call, get);
       type->result = i32;
     } else {
@@ -200,6 +194,17 @@ private:
     module->addFunction(func);
     module->addFunctionType(type);
     return legal;
+  }
+
+  void ensureTempRet0(Module* module) {
+    if (!module->checkGlobal(TEMP_RET_0)) {
+      Global* global = new Global;
+      global->name = TEMP_RET_0;
+      global->type = i32;
+      global->init = module->allocator.alloc<Const>()->set(Literal(int32_t(0)));
+      global->mutable_ = true;
+      module->addGlobal(global);
+    }
   }
 };
 
