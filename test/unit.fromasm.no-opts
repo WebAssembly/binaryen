@@ -32,6 +32,7 @@
   (global $tempDoublePtr (mut i32) (get_global $tempDoublePtr$asm2wasm$import))
   (global $n (mut i32) (get_global $n$asm2wasm$import))
   (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
+  (global $exportedNumber i32 (i32.const 42))
   (export "big_negative" (func $big_negative))
   (export "pick" (func $exportMe))
   (export "doubleCompares" (func $doubleCompares))
@@ -75,6 +76,7 @@
   (export "dropIgnoredImportsInIf" (func $dropIgnoredImportsInIf))
   (export "relooperJumpThreading_irreducible" (func $relooperJumpThreading_irreducible))
   (export "store_fround" (func $store_fround))
+  (export "exportedNumber" (global $exportedNumber))
   (func $big_negative
     (local $temp f64)
     (set_local $temp

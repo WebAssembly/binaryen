@@ -831,25 +831,44 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       for (unsigned k = 0; k < contents->size(); k++) {
         Ref pair = contents[k];
         IString key = pair[0]->getIString();
-        assert(pair[1][0] == NAME);
-        IString value = pair[1][1]->getIString();
-        if (key == Name("_emscripten_replace_memory")) {
-          // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
-          assert(!wasm.checkFunction(value));
-          continue;
-        } else if (key == UDIVMODDI4) {
-          udivmoddi4 = value;
-        } else if (key == GET_TEMP_RET0) {
-          getTempRet0 = value;
-        }
-        if (exported.count(key) > 0) {
-          // asm.js allows duplicate exports, but not wasm. use the last, like asm.js
-          exported[key]->value = value;
+        if (pair[1][0] == NAME) {
+          // exporting a function
+          IString value = pair[1][1]->getIString();
+          if (key == Name("_emscripten_replace_memory")) {
+            // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
+            assert(!wasm.checkFunction(value));
+            continue;
+          } else if (key == UDIVMODDI4) {
+            udivmoddi4 = value;
+          } else if (key == GET_TEMP_RET0) {
+            getTempRet0 = value;
+          }
+          if (exported.count(key) > 0) {
+            // asm.js allows duplicate exports, but not wasm. use the last, like asm.js
+            exported[key]->value = value;
+          } else {
+            auto* export_ = new Export;
+            export_->name = key;
+            export_->value = value;
+            export_->kind = ExternalKind::Function;
+            wasm.addExport(export_);
+            exported[key] = export_;
+          }
         } else {
+          // export a number. create a global and export it
+          assert(pair[1][0] == NUM);
+          assert(exported.count(key) == 0);
+          auto value = pair[1][1]->getInteger();
+          auto global = new Global();
+          global->name = key;
+          global->type = i32;
+          global->init = builder.makeConst(Literal(int32_t(value)));
+          global->mutable_ = false;
+          wasm.addGlobal(global);
           auto* export_ = new Export;
           export_->name = key;
-          export_->value = value;
-          export_->kind = ExternalKind::Function;
+          export_->value = global->name;
+          export_->kind = ExternalKind::Global;
           wasm.addExport(export_);
           exported[key] = export_;
         }
