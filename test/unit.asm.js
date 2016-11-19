@@ -658,6 +658,13 @@ function asm(global, env, buffer) {
     return ftCall_idi(30, 1.5, 200) | 0; // with args
   }
 
+  function exported_f32_user(x, y, z) {
+    x = x | 0;
+    y = Math_fround(y);
+    z = +z;
+    return Math_fround(y);
+  }
+
   function v() {
   }
   function vi(x) {
@@ -669,6 +676,6 @@ function asm(global, env, buffer) {
   var FUNCTION_TABLE_c = [ z, cneg, z, z, z, z, z, z ];
   var FUNCTION_TABLE_vi = [ vi, vi, vi, vi, vi, vi, vi, vi ];
 
-  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround, exportedNumber: 42, relocatableAndModules: relocatableAndModules };
+  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround, exportedNumber: 42, relocatableAndModules: relocatableAndModules, exported_f32_user: exported_f32_user };
 }
 

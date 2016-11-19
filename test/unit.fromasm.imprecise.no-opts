@@ -39,16 +39,16 @@
   (export "switcher" (func $switcher))
   (export "frem" (func $frem))
   (export "big_uint_div_u" (func $big_uint_div_u))
-  (export "fr" (func $fr))
+  (export "fr" (func $legalstub$fr))
   (export "negZero" (func $negZero))
   (export "neg" (func $neg))
   (export "smallCompare" (func $smallCompare))
   (export "cneg_nosemicolon" (func $cneg_nosemicolon))
   (export "forLoop" (func $forLoop))
-  (export "ceiling_32_64" (func $ceiling_32_64))
+  (export "ceiling_32_64" (func $legalstub$ceiling_32_64))
   (export "aborts" (func $aborts))
   (export "continues" (func $continues))
-  (export "bitcasts" (func $bitcasts))
+  (export "bitcasts" (func $legalstub$bitcasts))
   (export "recursiveBlockMerging" (func $recursiveBlockMerging))
   (export "lb" (func $lb))
   (export "zeroInit" (func $zeroInit))
@@ -76,6 +76,7 @@
   (export "store_fround" (func $store_fround))
   (export "exportedNumber" (global $exportedNumber))
   (export "relocatableAndModules" (func $relocatableAndModules))
+  (export "exported_f32_user" (func $legalstub$exported_f32_user))
   (func $big_negative
     (local $temp f64)
     (set_local $temp
@@ -1818,10 +1819,49 @@
       )
     )
   )
+  (func $exported_f32_user (param $x i32) (param $y f32) (param $z f64) (result f32)
+    (return
+      (get_local $y)
+    )
+  )
   (func $v
     (nop)
   )
   (func $vi (param $x i32)
     (nop)
+  )
+  (func $legalstub$fr (param $0 f64)
+    (call $fr
+      (f32.demote/f64
+        (get_local $0)
+      )
+    )
+  )
+  (func $legalstub$ceiling_32_64 (param $0 f64) (param $1 f64)
+    (call $ceiling_32_64
+      (f32.demote/f64
+        (get_local $0)
+      )
+      (get_local $1)
+    )
+  )
+  (func $legalstub$bitcasts (param $0 i32) (param $1 f64)
+    (call $bitcasts
+      (get_local $0)
+      (f32.demote/f64
+        (get_local $1)
+      )
+    )
+  )
+  (func $legalstub$exported_f32_user (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
+    (f64.promote/f32
+      (call $exported_f32_user
+        (get_local $0)
+        (f32.demote/f64
+          (get_local $1)
+        )
+        (get_local $2)
+      )
+    )
   )
 )

@@ -22,6 +22,9 @@
 // stub methods added in this pass, that thunk i64s into i32, i32 and
 // vice versa as necessary.
 //
+// This pass also legalizes according to asm.js FFI rules, which
+// disallow f32s. TODO: an option to not do that, if it matters?
+//
 
 #include <wasm.h>
 #include <pass.h>
@@ -94,9 +97,9 @@ private:
   template<typename T>
   bool isIllegal(T* t) {
     for (auto param : t->params) {
-      if (param == i64) return true;
+      if (param == i64 || param == f32) return true;
     }
-    if (t->result == i64) return true;
+    if (t->result == i64 || t->result == f32) return true;
     return false;
   }
 
@@ -115,6 +118,9 @@ private:
         call->operands.push_back(I64Utilities::recreateI64(builder, legal->params.size(), legal->params.size() + 1));
         legal->params.push_back(i32);
         legal->params.push_back(i32);
+      } else if (param == f32) {
+        call->operands.push_back(builder.makeUnary(DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)));
+        legal->params.push_back(f64);
       } else {
         call->operands.push_back(builder.makeGetLocal(legal->params.size(), param));
         legal->params.push_back(param);
@@ -134,6 +140,9 @@ private:
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
+    } else if (func->result == f32) {
+      legal->result = f64;
+      legal->body = builder.makeUnary(PromoteFloat32, call);
     } else {
       legal->result = func->result;
       legal->body = call;
@@ -170,6 +179,9 @@ private:
         call->operands.push_back(I64Utilities::getI64High(builder, func->params.size()));
         type->params.push_back(i32);
         type->params.push_back(i32);
+      } else if (param == f32) {
+        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f64)));
+        type->params.push_back(f64);
       } else {
         call->operands.push_back(builder.makeGetLocal(func->params.size(), param));
         type->params.push_back(param);
@@ -184,6 +196,10 @@ private:
       get = builder.makeGetGlobal(TEMP_RET_0, i32);
       func->body = I64Utilities::recreateI64(builder, call, get);
       type->result = i32;
+    } else if (im->functionType->result == f32) {
+      call->type = f64;
+      func->body = builder.makeUnary(PromoteFloat32, call);
+      type->result = f64;
     } else {
       call->type = im->functionType->result;
       func->body = call;

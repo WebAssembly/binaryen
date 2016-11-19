@@ -6,10 +6,10 @@
   (import "env" "tableBase" (global $tableBase i32))
   (global $tDP (mut i32) (get_global $tDP$asm2wasm$import))
   (global $M (mut i32) (i32.const 0))
-  (export "floats" (func $floats))
+  (export "floats" (func $legalstub$floats))
   (export "getTempRet0" (func $ub))
-  (export "neg" (func $neg))
-  (export "bitcasts" (func $bitcasts))
+  (export "neg" (func $legalstub$neg))
+  (export "bitcasts" (func $legalstub$bitcasts))
   (export "ctzzzz" (func $ctzzzz))
   (func $floats (param $f f32) (result f32)
     (local $t f32)
@@ -71,6 +71,31 @@
     )
     (return
       (get_global $M)
+    )
+  )
+  (func $legalstub$floats (param $0 f64) (result f64)
+    (f64.promote/f32
+      (call $floats
+        (f32.demote/f64
+          (get_local $0)
+        )
+      )
+    )
+  )
+  (func $legalstub$neg (param $0 i32) (param $1 i32) (result f64)
+    (f64.promote/f32
+      (call $neg
+        (get_local $0)
+        (get_local $1)
+      )
+    )
+  )
+  (func $legalstub$bitcasts (param $0 i32) (param $1 f64)
+    (call $bitcasts
+      (get_local $0)
+      (f32.demote/f64
+        (get_local $1)
+      )
     )
   )
 )

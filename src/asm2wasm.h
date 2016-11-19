@@ -1003,10 +1003,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   passRunner.add<FinalizeCalls>(this);
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
-  if (wasmOnly) {
-    // we didn't legalize i64s in fastcomp, and so must legalize the interface to the outside
-    passRunner.add("legalize-js-interface");
-  }
+  passRunner.add("legalize-js-interface");
   if (runOptimizationPasses) {
     // autodrop can add some garbage
     passRunner.add("vacuum");
