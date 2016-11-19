@@ -40,7 +40,9 @@ void Linker::placeStackPointer(Address stackAllocation) {
     // stack pointer to point to one past-the-end of the stack allocation.
     std::vector<char> raw;
     raw.resize(pointerSize);
-    out.addRelocation(LinkerObject::Relocation::kData, (uint32_t*)&raw[0], ".stack", stackAllocation);
+    auto relocation = new LinkerObject::Relocation(
+      LinkerObject::Relocation::kData, (uint32_t*)&raw[0], ".stack", stackAllocation);
+    out.addRelocation(relocation);
     assert(out.wasm.memory.segments.empty());
     out.addSegment("__stack_pointer", raw);
   }
@@ -326,6 +328,8 @@ void Linker::emscriptenGlue(std::ostream& o) {
   for (auto f : emscripten::makeDynCallThunks(out.wasm, functionsToThunk)) {
     exportFunction(f->name, true);
   }
+
+  emscripten::addGlobalImports(out.wasm, out.symbolInfo.importedGlobals);
 
   auto staticBump = nextStatic - globalBase;
   emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);

@@ -86,6 +86,17 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
   return generatedFunctions;
 }
 
+void addGlobalImports(Module& wasm, std::unordered_set<cashew::IString> const& globalImports) {
+  for (Name name : globalImports) {
+    auto import = new Import;
+    import->name = import->base = name;
+    import->module = ENV;
+    import->kind = ExternalKind::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+  }
+}
+
 struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
   Module& wasm;
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index

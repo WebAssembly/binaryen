@@ -229,11 +229,11 @@ class S2WasmBuilder {
   // gets a constant, which may be a relocation for later.
   // returns whether this is a relocation
   // TODO: Clean up this and the way relocs are created from parsed objects
-  bool getRelocatableConst(uint32_t* target) {
+  LinkerObject::Relocation* getRelocatableConst(uint32_t* target) {
     if (isdigit(*s) || *s == '-') {
       int32_t val = getInt();
       memcpy(target, &val, sizeof(val));
-      return false;
+      return nullptr;
     } else {
       // a global constant, we need to fix it up later
       Name name = getStrToSep();
@@ -248,9 +248,8 @@ class S2WasmBuilder {
         s++;
         offset = -getInt();
       }
-      linkerObj->addRelocation(kind, target,
-                               fixEmLongjmp(cleanFunction(name)), offset);
-      return true;
+      return new LinkerObject::Relocation(
+          kind, target, fixEmLongjmp(cleanFunction(name)), offset);
     }
   }
 
@@ -416,6 +415,10 @@ class S2WasmBuilder {
           abort_on("unknown directive");
         }
       // add data aliases
+      } else if (match(".import_global")) {
+        Name name = getStr();
+        info->importedGlobals.insert(name);
+        s = strchr(s, '\n');
       } else {
         Name lhs = getStrToSep();
         // When the current line contains only one word, e.g.".text"
@@ -467,6 +470,7 @@ class S2WasmBuilder {
       else if (match("ident")) skipToEOL();
       else if (match("section")) parseToplevelSection();
       else if (match("align") || match("p2align")) skipToEOL();
+      else if (match("import_global")) parseImportGlobal();
       else if (match("globl")) parseGlobl();
       else if (match("functype")) parseFuncType();
       else skipObjectAlias(true);
@@ -564,6 +568,13 @@ class S2WasmBuilder {
     }
     s++;
     WASM_UNUSED(filename); // TODO: use the filename
+  }
+
+  void parseImportGlobal() {
+    // We already parsed the imported globals in getSymbolInfo, just skip
+    // over these sections
+    getStr();
+    skipWhitespace();
   }
 
   void parseGlobl() {
@@ -834,6 +845,34 @@ class S2WasmBuilder {
       curr->finalize();
       setOutput(curr, assign);
     };
+    auto fixRelocation = [&](LinkerObject::Relocation* relocation,
+                             Expression **expr) {
+      if (!relocation) {
+        return;
+      }
+      auto name = relocation->symbol;
+      if (!linkerObj->isGlobalImported(name)) {
+        linkerObj->addRelocation(relocation);
+        return;
+      }
+      auto g = allocator->alloc<GetGlobal>();
+      g->name = name;
+      g->type = i32;
+      if (!relocation->addend) {
+        *expr = g;
+      } else {
+        auto c = allocator->alloc<Const>();
+        c->type = i32;
+        c->value = Literal(relocation->addend);
+
+        auto add = allocator->alloc<Binary>();
+        add->type = i32;
+        add->op = AddInt32;
+        add->left = c;
+        add->right = g;
+        *expr = add;
+      }
+    };
     auto makeLoad = [&](WasmType type) {
       skipComma();
       auto curr = allocator->alloc<Load>();
@@ -843,7 +882,7 @@ class S2WasmBuilder {
       curr->signed_ = match("_s");
       match("_u");
       Name assign = getAssign();
-      getRelocatableConst(&curr->offset.addr);
+      auto relocation = getRelocatableConst(&curr->offset.addr);
       mustMatch("(");
       auto attributes = getAttributes(1);
       curr->ptr = getInput();
@@ -852,6 +891,7 @@ class S2WasmBuilder {
         assert(strncmp(attributes[0], "p2align=", 8) == 0);
         curr->align = 1U << getInt(attributes[0] + 8);
       }
+      fixRelocation(relocation, &curr->ptr);
       setOutput(curr, assign);
     };
     auto makeStore = [&](WasmType type) {
@@ -864,7 +904,7 @@ class S2WasmBuilder {
         curr->bytes = getWasmTypeSize(type);
       }
       skipWhitespace();
-      getRelocatableConst(&curr->offset.addr);
+      auto relocation = getRelocatableConst(&curr->offset.addr);
       mustMatch("(");
       auto attributes = getAttributes(2);
       auto inputs = getInputs(2);
@@ -876,6 +916,7 @@ class S2WasmBuilder {
       }
       curr->value = inputs[1];
       curr->finalize();
+      fixRelocation(relocation, &curr->ptr);
       addToBlock(curr);
     };
     auto makeSelect = [&](WasmType type) {
@@ -946,7 +987,8 @@ class S2WasmBuilder {
               // may be a relocation
               auto curr = allocator->alloc<Const>();
               curr->type = curr->value.type = i32;
-              getRelocatableConst((uint32_t*)curr->value.geti32Ptr());
+              auto relocation = getRelocatableConst((uint32_t*)curr->value.geti32Ptr());
+              fixRelocation(relocation, (Expression**)&curr);
               setOutput(curr, assign);
             } else {
               cashew::IString str = getStr();
@@ -1307,8 +1349,13 @@ class S2WasmBuilder {
       } else if (match(".int32")) {
         Address size = raw.size();
         raw.resize(size + 4);
-        if (getRelocatableConst((uint32_t*)&raw[size])) { // just the size, as we may reallocate; we must fix this later, if it's a relocation
-          currRelocations.emplace_back(linkerObj->getCurrentRelocation(), size);
+        auto relocation = getRelocatableConst((uint32_t*)&raw[size]); // just the size, as we may reallocate; we must fix this later, if it's a relocation
+        if (relocation) {
+          if (linkerObj->isGlobalImported(relocation->symbol)) {
+            abort_on("s2wasm is currently unable to model imported globals in data segment initializers");
+          }
+          linkerObj->addRelocation(relocation);
+          currRelocations.emplace_back(relocation, size);
         }
         zero = false;
       } else if (match(".int64")) {

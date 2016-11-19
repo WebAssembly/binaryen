@@ -58,6 +58,7 @@ class LinkerObject {
   struct SymbolInfo {
     std::unordered_set<cashew::IString> implementedFunctions;
     std::unordered_set<cashew::IString> undefinedFunctions;
+    std::unordered_set<cashew::IString> importedGlobals;
     // TODO: it's not clear that this really belongs here.
     std::unordered_map<cashew::IString, SymbolAlias> aliasedSymbols;
 
@@ -70,6 +71,8 @@ class LinkerObject {
       }
       implementedFunctions.insert(other.implementedFunctions.begin(),
                                   other.implementedFunctions.end());
+      importedGlobals.insert(other.importedGlobals.begin(),
+                             other.importedGlobals.end());
       aliasedSymbols.insert(other.aliasedSymbols.begin(),
                             other.aliasedSymbols.end());
     }
@@ -86,16 +89,16 @@ class LinkerObject {
     globls.push_back(name);
   }
 
-  void addRelocation(Relocation::Kind kind, uint32_t* target, Name name, int addend) {
-    relocations.emplace_back(new Relocation(kind, target, name, addend));
-  }
-
-  Relocation* getCurrentRelocation() {
-    return relocations.back().get();
+  void addRelocation(Relocation* relocation) {
+    relocations.emplace_back(relocation);
   }
 
   bool isFunctionImplemented(Name name) {
     return symbolInfo.implementedFunctions.count(name) != 0;
+  }
+
+  bool isGlobalImported(Name name) {
+    return symbolInfo.importedGlobals.count(name) != 0;
   }
 
   // If name is an alias, return what it points to. Otherwise return name.
