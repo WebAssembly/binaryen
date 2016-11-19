@@ -105,7 +105,9 @@ Name I32_CTTZ("i32_cttz"),
      STORE4("store4"),
      STORE8("store8"),
      STOREF("storef"),
-     STORED("stored");
+     STORED("stored"),
+     FTCALL("ftCall_"),
+     MFTCALL("mftCall_");
 
 // Utilities
 
@@ -975,14 +977,19 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
-      auto add = curr->target->cast<Binary>();
+      // note that for an ftCall or mftCall, we have no asm.js mask, so have nothing to do here
+      auto* add = curr->target->dynCast<Binary>();
+      if (!add) return;
       if (add->right->is<CallImport>()) {
-        auto offset = add->right->cast<CallImport>();
+        auto* offset = add->right->cast<CallImport>();
         auto tableName = offset->target;
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
         add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       } else {
-        auto offset = add->left->cast<CallImport>();
+        auto* offset = add->left->dynCast<CallImport>();
+        if (!offset) return;
         auto tableName = offset->target;
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
         add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       }
     }
@@ -1592,6 +1599,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           return ret;
         }
+        bool tableCall = false;
         if (wasmOnly) {
           auto num = ast[2]->size();
           switch (name.str[0]) {
@@ -1695,10 +1703,25 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             default: {}
           }
         }
+        // ftCall_* and mftCall_* represent function table calls, either from the outside, or
+        // from the inside of the module. when compiling to wasm, we can just convert those
+        // into table calls
+        if ((name.str[0] == 'f' && strncmp(name.str, FTCALL.str, 7) == 0) ||
+            (name.str[0] == 'm' && strncmp(name.str, MFTCALL.str, 8) == 0)) {
+          tableCall = true;
+        }
         Expression* ret;
         ExpressionList* operands;
         bool import = false;
-        if (wasm.checkImport(name)) {
+        Index firstOperand = 0;
+        Ref args = ast[2];
+        if (tableCall) {
+          auto specific = allocator.alloc<CallIndirect>();
+          specific->target = process(args[0]);
+          firstOperand = 1;
+          operands = &specific->operands;
+          ret = specific;
+        } else if (wasm.checkImport(name)) {
           import = true;
           auto specific = allocator.alloc<CallImport>();
           specific->target = name;
@@ -1710,9 +1733,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           operands = &specific->operands;
           ret = specific;
         }
-        Ref args = ast[2];
-        for (unsigned i = 0; i < args->size(); i++) {
+        for (unsigned i = firstOperand; i < args->size(); i++) {
           operands->push_back(process(args[i]));
+        }
+        if (tableCall) {
+          auto specific = ret->dynCast<CallIndirect>();
+          // note that we could also get the type from the suffix of the name, e.g., mftCall_vi
+          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands);
+          specific->fullType = fullType->name;
+          specific->type = fullType->result;
         }
         if (import) {
           Ref parent = astStackHelper.getParent();

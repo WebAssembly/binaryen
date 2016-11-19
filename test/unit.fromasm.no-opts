@@ -4,6 +4,8 @@
   (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
   (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vi (func (param i32)))
+  (type $FUNCSIG$v (func))
+  (type $FUNCSIG$idi (func (param f64 i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$dd (func (param f64) (result f64)))
   (type $FUNCSIG$i (func (result i32)))
@@ -77,6 +79,7 @@
   (export "relooperJumpThreading_irreducible" (func $relooperJumpThreading_irreducible))
   (export "store_fround" (func $store_fround))
   (export "exportedNumber" (global $exportedNumber))
+  (export "relocatableAndModules" (func $relocatableAndModules))
   (func $big_negative
     (local $temp f64)
     (set_local $temp
@@ -1803,6 +1806,21 @@
         (f32.convert_s/i32
           (get_local $x)
         )
+      )
+    )
+  )
+  (func $relocatableAndModules (result i32)
+    (call_indirect $FUNCSIG$v
+      (i32.const 10)
+    )
+    (call_indirect $FUNCSIG$v
+      (i32.const 20)
+    )
+    (return
+      (call_indirect $FUNCSIG$idi
+        (f64.const 1.5)
+        (i32.const 200)
+        (i32.const 30)
       )
     )
   )
