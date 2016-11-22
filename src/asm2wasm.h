@@ -516,7 +516,7 @@ private:
 
   // Some binary opts might trap, so emit them safely if we are precise
 
-  Expression* makeDangerousI32Binary(BinaryOp op, Expression* left, Expression* right) {
+  Expression* makePotentiallyTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
     if (imprecise) return builder.makeBinary(op, left, right);
     // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
@@ -571,7 +571,7 @@ private:
     return call;
   }
 
-  Expression* makeDangerousI64Binary(BinaryOp op, Expression* left, Expression* right) {
+  Expression* makePotentiallyTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
     if (imprecise) return builder.makeBinary(op, left, right);
     // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
@@ -626,7 +626,7 @@ private:
     return call;
   }
 
-  Expression* makeDangerousFloatToInt(Expression* value) {
+  Expression* makePotentiallyTrappingFloatToInt(Expression* value) {
     if (imprecise) {
       auto ret = allocator.alloc<Unary>();
       ret->value = value;
@@ -1417,7 +1417,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (!imprecise && (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
                                 ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
         // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
-        return makeDangerousI32Binary(ret->op, ret->left, ret->right);
+        return makePotentiallyTrappingI32Binary(ret->op, ret->left, ret->right);
       }
       return ret;
     } else if (what == NUM) {
@@ -1531,7 +1531,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2][0] == UNARY_PREFIX && ast[2][1] == B_NOT) {
-          return makeDangerousFloatToInt(process(ast[2][2]));
+          return makePotentiallyTrappingFloatToInt(process(ast[2][2]));
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
@@ -1733,10 +1733,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
                 if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
                 if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-                if (name == I64_UDIV) return makeDangerousI64Binary(BinaryOp::DivUInt64, left, right);
-                if (name == I64_SDIV) return makeDangerousI64Binary(BinaryOp::DivSInt64, left, right);
-                if (name == I64_UREM) return makeDangerousI64Binary(BinaryOp::RemUInt64, left, right);
-                if (name == I64_SREM) return makeDangerousI64Binary(BinaryOp::RemSInt64, left, right);
+                if (name == I64_UDIV) return makePotentiallyTrappingI64Binary(BinaryOp::DivUInt64, left, right);
+                if (name == I64_SDIV) return makePotentiallyTrappingI64Binary(BinaryOp::DivSInt64, left, right);
+                if (name == I64_UREM) return makePotentiallyTrappingI64Binary(BinaryOp::RemUInt64, left, right);
+                if (name == I64_SREM) return makePotentiallyTrappingI64Binary(BinaryOp::RemSInt64, left, right);
                 if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
                 if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
                 if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
