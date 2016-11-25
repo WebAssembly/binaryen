@@ -869,4 +869,36 @@
       (nop)
     )
   )
+  (func $do-reorder (param $x i32)
+    (local $y i32)
+    (if (i32.const 1)
+      (block
+        (set_local $x
+          (i32.le_u
+            (get_local $x)
+            (block i32
+              (set_local $y (i32.const 5))
+              (i32.const 10)
+            )
+          )
+        )
+      )
+    )
+  )
+  (func $do-not-reorder (param $x i32)
+    (local $y i32)
+    (if (i32.const 1)
+      (block
+        (set_local $x
+          (i32.le_u
+            (get_local $y)
+            (block i32
+              (set_local $y (i32.const 5))
+              (i32.const 10)
+            )
+          )
+        )
+      )
+    )
+  )
 )
