@@ -214,8 +214,12 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
 
   Block* optimize(Expression* curr, Expression*& child, Block* outer = nullptr, Expression** dependency1 = nullptr, Expression** dependency2 = nullptr) {
     if (!child) return outer;
-    if (dependency1 && *dependency1 && EffectAnalyzer(*dependency1).hasSideEffects()) return outer;
-    if (dependency2 && *dependency2 && EffectAnalyzer(*dependency2).hasSideEffects()) return outer;
+    if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
+      // there are dependencies, things we must be reordered through. make sure no problems there
+      EffectAnalyzer childEffects(child);
+      if (dependency1 && *dependency1 && EffectAnalyzer(*dependency1).invalidates(childEffects)) return outer;
+      if (dependency2 && *dependency2 && EffectAnalyzer(*dependency2).invalidates(childEffects)) return outer;
+    }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
         child = block->list.back();
