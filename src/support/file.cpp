@@ -16,6 +16,7 @@
 
 #include "support/file.h"
 
+#include <iostream>
 #include <cstdlib>
 #include <cstdint>
 #include <limits>

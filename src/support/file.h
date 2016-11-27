@@ -22,7 +22,6 @@
 #define wasm_support_file_h
 
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>

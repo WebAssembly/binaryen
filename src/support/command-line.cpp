@@ -18,25 +18,52 @@
 
 using namespace wasm;
 
+#ifndef SCREEN_WIDTH
+#define SCREEN_WIDTH 80
+#endif
+
+void printWrap(std::ostream& os, int leftPad, const std::string &content) {
+  int len = content.size();
+  int space = SCREEN_WIDTH - leftPad;
+  std::string nextWord;
+  std::string pad(leftPad, ' ');
+  for (int i = 0; i <= len; ++i) {
+    if (i != len && content[i] != ' ') {
+      nextWord += content[i];
+    } else {
+      if (static_cast<int>(nextWord.size()) > space) {
+        os << '\n' << pad;
+        space = SCREEN_WIDTH - leftPad;
+      }
+      os << nextWord;
+      space -= nextWord.size() + 1;
+      if (space > 0) os << ' ';
+      nextWord.clear();
+    }
+  }
+}
+
 Options::Options(const std::string &command, const std::string &description)
     : debug(false), positional(Arguments::Zero) {
   add("--help", "-h", "Show this help message and exit", Arguments::Zero,
       [this, command, description](Options *o, const std::string &) {
         std::cerr << command;
         if (positional != Arguments::Zero) std::cerr << ' ' << positionalName;
-        std::cerr << "\n\n" << description << "\n\nOptions:\n";
+        std::cerr << "\n\n";
+        printWrap(std::cerr, 0, description);
+        std::cerr << "\n\nOptions:\n";
         size_t optionWidth = 0;
         for (const auto &o : options) {
           optionWidth =
               std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
-        // TODO: line-wrap description.
         for (const auto &o : options) {
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
           std::cerr << "  " << o.longName << (long_n_short ? ',' : ' ')
-                    << o.shortName << std::string(pad, ' ') << o.description
-                    << '\n';
+                    << o.shortName << std::string(pad, ' ');
+          printWrap(std::cerr, optionWidth + 4, o.description);
+          std::cerr << '\n';
         }
         std::cerr << '\n';
         exit(EXIT_SUCCESS);
