@@ -86,8 +86,8 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
   return generatedFunctions;
 }
 
-void addGlobalImports(Module& wasm, std::unordered_set<Name> const& globalImports) {
-  for (auto name : globalImports) {
+void addGlobalImports(Module& wasm, std::unordered_set<cashew::IString> const& globalImports) {
+  for (Name name : globalImports) {
     auto import = new Import;
     import->name = import->base = name;
     import->module = ENV;

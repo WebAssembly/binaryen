@@ -29,7 +29,7 @@ void generateMemoryGrowthFunction(Module&);
 // signature in the indirect function table.
 std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData);
 
-void addGlobalImports(Module& wasm, std::unordered_set<Name> const& globalImports);
+void addGlobalImports(Module& wasm, std::unordered_set<cashew::IString> const& globalImports);
 
 void generateEmscriptenMetadata(std::ostream& o,
                                 Module& wasm,

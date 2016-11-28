@@ -58,7 +58,7 @@ class LinkerObject {
   struct SymbolInfo {
     std::unordered_set<cashew::IString> implementedFunctions;
     std::unordered_set<cashew::IString> undefinedFunctions;
-    std::unordered_set<Name> importedGlobals;
+    std::unordered_set<cashew::IString> importedGlobals;
     // TODO: it's not clear that this really belongs here.
     std::unordered_map<cashew::IString, SymbolAlias> aliasedSymbols;
 
