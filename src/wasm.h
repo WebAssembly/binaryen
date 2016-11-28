@@ -1625,6 +1625,18 @@ template<> struct hash<wasm::Address> {
     return std::hash<wasm::Address::address_t>()(a.addr);
   }
 };
-}
+
+template <> struct hash<wasm::Name> : public unary_function<wasm::Name, size_t> {
+  size_t operator()(const wasm::Name& name) const {
+    return std::hash<cashew::IString>()(name);
+  }
+};
+
+template <> struct equal_to<wasm::Name> : public binary_function<wasm::Name, wasm::Name, bool> {
+  bool operator()(const wasm::Name& x, const wasm::Name& y) const {
+    return x == y;
+  }
+};
+} // namespace std
 
 #endif // wasm_wasm_h
