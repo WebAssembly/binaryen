@@ -29,7 +29,7 @@ static Name LABEL("label");
 
 // We need to use new label names, which we cannot create in parallel, so pre-create them
 
-const Index MAX_NAME_INDEX = 1000;
+const Index MAX_NAME_INDEX = 10000;
 
 std::vector<Name>* innerNames = nullptr;
 std::vector<Name>* outerNames = nullptr;
@@ -41,8 +41,8 @@ struct NameEnsurer {
     innerNames = new std::vector<Name>;
     outerNames = new std::vector<Name>;
     for (Index i = 0; i < MAX_NAME_INDEX; i++) {
-      innerNames->push_back(Name(std::string("jumpthreading$inner$") + std::to_string(i)));
-      outerNames->push_back(Name(std::string("jumpthreading$outer$") + std::to_string(i)));
+      innerNames->push_back(Name(std::string("__rjti$") + std::to_string(i)));
+      outerNames->push_back(Name(std::string("__rjto$") + std::to_string(i)));
     }
   }
 };
