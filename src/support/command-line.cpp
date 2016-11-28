@@ -22,7 +22,7 @@ using namespace wasm;
 #define SCREEN_WIDTH 80
 #endif
 
-void printWrap(std::ostream& os, int leftPad, const std::string &content) {
+void printWrap(std::ostream& os, int leftPad, const std::string& content) {
   int len = content.size();
   int space = SCREEN_WIDTH - leftPad;
   std::string nextWord;
@@ -43,21 +43,21 @@ void printWrap(std::ostream& os, int leftPad, const std::string &content) {
   }
 }
 
-Options::Options(const std::string &command, const std::string &description)
+Options::Options(const std::string& command, const std::string& description)
     : debug(false), positional(Arguments::Zero) {
   add("--help", "-h", "Show this help message and exit", Arguments::Zero,
-      [this, command, description](Options *o, const std::string &) {
+      [this, command, description](Options* o, const std::string&) {
         std::cerr << command;
         if (positional != Arguments::Zero) std::cerr << ' ' << positionalName;
         std::cerr << "\n\n";
         printWrap(std::cerr, 0, description);
         std::cerr << "\n\nOptions:\n";
         size_t optionWidth = 0;
-        for (const auto &o : options) {
+        for (const auto& o : options) {
           optionWidth =
               std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
-        for (const auto &o : options) {
+        for (const auto& o : options) {
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
           std::cerr << "  " << o.longName << (long_n_short ? ',' : ' ')
@@ -69,30 +69,30 @@ Options::Options(const std::string &command, const std::string &description)
         exit(EXIT_SUCCESS);
       });
   add("--debug", "-d", "Print debug information to stderr", Arguments::Zero,
-      [&](Options *o, const std::string &arguments) { debug = true; });
+      [&](Options* o, const std::string& arguments) { debug = true; });
 }
 
 Options::~Options() {}
 
-Options &Options::add(const std::string &longName, const std::string &shortName,
-                      const std::string &description, Arguments arguments,
-                      const Action &action) {
+Options& Options::add(const std::string& longName, const std::string& shortName,
+                      const std::string& description, Arguments arguments,
+                      const Action& action) {
   options.push_back({longName, shortName, description, arguments, action, 0});
   return *this;
 }
 
-Options &Options::add_positional(const std::string &name, Arguments arguments,
-                                 const Action &action) {
+Options& Options::add_positional(const std::string& name, Arguments arguments,
+                                 const Action& action) {
   positional = arguments;
   positionalName = name;
   positionalAction = action;
   return *this;
 }
 
-void Options::parse(int argc, const char *argv[]) {
+void Options::parse(int argc, const char* argv[]) {
   assert(argc > 0 && "expect at least program name as an argument");
   size_t positionalsSeen = 0;
-  auto dashes = [](const std::string &s) {
+  auto dashes = [](const std::string& s) {
     for (size_t i = 0;; ++i) {
       if (s[i] != '-') return i;
     }
@@ -130,8 +130,8 @@ void Options::parse(int argc, const char *argv[]) {
       argument = currentOption.substr(equal + 1);
       currentOption = currentOption.substr(0, equal);
     }
-    Option *option = nullptr;
-    for (auto &o : options)
+    Option* option = nullptr;
+    for (auto& o : options)
       if (o.longName == currentOption || o.shortName == currentOption)
         option = &o;
     if (!option) {
