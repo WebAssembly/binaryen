@@ -2,7 +2,7 @@
 
 import os, sys, subprocess, difflib
 
-from scripts.support import run_command, split_wast
+from test.support import run_command, split_wast
 
 print '[ processing and updating testcases... ]\n'
 
