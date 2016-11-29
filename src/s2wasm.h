@@ -234,23 +234,58 @@ class S2WasmBuilder {
       int32_t val = getInt();
       memcpy(target, &val, sizeof(val));
       return nullptr;
-    } else {
-      // a global constant, we need to fix it up later
-      Name name = getStrToSep();
-      LinkerObject::Relocation::Kind kind = isFunctionName(name) ?
-          LinkerObject::Relocation::kFunction :
-          LinkerObject::Relocation::kData;
-      int offset = 0;
-      if (*s == '+') {
-        s++;
-        offset = getInt();
-      } else if (*s == '-') {
-        s++;
-        offset = -getInt();
-      }
-      return new LinkerObject::Relocation(
-          kind, target, fixEmLongjmp(cleanFunction(name)), offset);
     }
+
+    // a global constant, we need to fix it up later
+    Name name = getStrToSep();
+    LinkerObject::Relocation::Kind kind = isFunctionName(name) ?
+        LinkerObject::Relocation::kFunction :
+        LinkerObject::Relocation::kData;
+    int offset = 0;
+    if (*s == '+') {
+      s++;
+      offset = getInt();
+    } else if (*s == '-') {
+      s++;
+      offset = -getInt();
+    }
+    return new LinkerObject::Relocation(
+        kind, target, fixEmLongjmp(cleanFunction(name)), offset);
+  }
+  Expression* relocationToGetGlobal(LinkerObject::Relocation* relocation) {
+    if (!relocation) {
+      return nullptr;
+    }
+
+    auto name = relocation->symbol;
+    auto g = allocator->alloc<GetGlobal>();
+    g->name = name;
+    g->type = i32;
+    if (!relocation->addend) {
+      return g;
+    } else {
+      auto c = allocator->alloc<Const>();
+      c->type = i32;
+      c->value = Literal(relocation->addend);
+
+      auto add = allocator->alloc<Binary>();
+      add->type = i32;
+      add->op = AddInt32;
+      add->left = c;
+      add->right = g;
+      return add;
+    }
+  }
+  Expression* getRelocatableExpression(uint32_t* target) {
+    auto relocation = getRelocatableConst(target);
+    if (!relocation) {
+      return nullptr;
+    }
+    if (!linkerObj->isGlobalImported(relocation->symbol)) {
+      linkerObj->addRelocation(relocation);
+      return nullptr;
+    }
+    return relocationToGetGlobal(relocation);
   }
 
   int64_t getInt64() {
@@ -845,32 +880,12 @@ class S2WasmBuilder {
       curr->finalize();
       setOutput(curr, assign);
     };
-    auto fixRelocation = [&](LinkerObject::Relocation* relocation,
-                             Expression **expr) {
-      if (!relocation) {
-        return;
-      }
-      auto name = relocation->symbol;
-      if (!linkerObj->isGlobalImported(name)) {
-        linkerObj->addRelocation(relocation);
-        return;
-      }
-      auto g = allocator->alloc<GetGlobal>();
-      g->name = name;
-      g->type = i32;
-      if (!relocation->addend) {
-        *expr = g;
+    auto useRelocationExpression = [&](Expression *expr, Expression *reloc) {
+      if (!reloc) {
+        return expr;
       } else {
-        auto c = allocator->alloc<Const>();
-        c->type = i32;
-        c->value = Literal(relocation->addend);
-
-        auto add = allocator->alloc<Binary>();
-        add->type = i32;
-        add->op = AddInt32;
-        add->left = c;
-        add->right = g;
-        *expr = add;
+        // TODO: i32.add expr, reloc
+        return reloc;
       }
     };
     auto makeLoad = [&](WasmType type) {
@@ -882,16 +897,15 @@ class S2WasmBuilder {
       curr->signed_ = match("_s");
       match("_u");
       Name assign = getAssign();
-      auto relocation = getRelocatableConst(&curr->offset.addr);
+      auto relocation = getRelocatableExpression(&curr->offset.addr);
       mustMatch("(");
       auto attributes = getAttributes(1);
-      curr->ptr = getInput();
+      curr->ptr = useRelocationExpression(getInput(), relocation);
       curr->align = curr->bytes;
       if (attributes[0]) {
         assert(strncmp(attributes[0], "p2align=", 8) == 0);
         curr->align = 1U << getInt(attributes[0] + 8);
       }
-      fixRelocation(relocation, &curr->ptr);
       setOutput(curr, assign);
     };
     auto makeStore = [&](WasmType type) {
@@ -904,11 +918,11 @@ class S2WasmBuilder {
         curr->bytes = getWasmTypeSize(type);
       }
       skipWhitespace();
-      auto relocation = getRelocatableConst(&curr->offset.addr);
+      auto relocation = getRelocatableExpression(&curr->offset.addr);
       mustMatch("(");
       auto attributes = getAttributes(2);
       auto inputs = getInputs(2);
-      curr->ptr = inputs[0];
+      curr->ptr = useRelocationExpression(inputs[0], relocation);
       curr->align = curr->bytes;
       if (attributes[0]) {
         assert(strncmp(attributes[0], "p2align=", 8) == 0);
@@ -916,7 +930,6 @@ class S2WasmBuilder {
       }
       curr->value = inputs[1];
       curr->finalize();
-      fixRelocation(relocation, &curr->ptr);
       addToBlock(curr);
     };
     auto makeSelect = [&](WasmType type) {
@@ -987,9 +1000,9 @@ class S2WasmBuilder {
               // may be a relocation
               auto curr = allocator->alloc<Const>();
               curr->type = curr->value.type = i32;
-              auto relocation = getRelocatableConst((uint32_t*)curr->value.geti32Ptr());
-              fixRelocation(relocation, (Expression**)&curr);
-              setOutput(curr, assign);
+              auto relocation = getRelocatableExpression((uint32_t*)curr->value.geti32Ptr());
+              auto expr = useRelocationExpression(curr, relocation);
+              setOutput(expr, assign);
             } else {
               cashew::IString str = getStr();
               setOutput(parseConst(str, type, *allocator), assign);
