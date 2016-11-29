@@ -23,7 +23,7 @@ import sys
 from test.support import run_command, split_wast
 from test.shared import *
 
-from test.s2wasm import s2wasmTests, linkerTests
+import test.s2wasm as s2wasm
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
@@ -272,8 +272,8 @@ if NODEJS:
     if expected not in out:
       fail(out, expected)
 
-s2wasmTests()
-linkerTests()
+s2wasm.test_s2wasm()
+s2wasm.test_linker()
 
 print '\n[ running validation tests... ]\n'
 # Ensure the tests validate by default
