@@ -15,12 +15,12 @@
       (i32.const 7)
     )
     (drop
-      (i32.add
-        (i32.load offset=12
-          (i32.const 0)
-        )
-        (i32.const 12)
+      (i32.load offset=12
+        (i32.const 0)
       )
+    )
+    (drop
+      (i32.const 12)
     )
   )
   (func $import_globals
@@ -29,12 +29,12 @@
       (i32.const 7)
     )
     (drop
-      (i32.add
-        (i32.load
-          (get_global $imported_global)
-        )
+      (i32.load
         (get_global $imported_global)
       )
+    )
+    (drop
+      (get_global $imported_global)
     )
   )
   (func $globals_offset
@@ -43,12 +43,12 @@
       (i32.const 7)
     )
     (drop
-      (i32.add
-        (i32.load offset=8
-          (i32.const 8)
-        )
-        (i32.const 28)
+      (i32.load offset=8
+        (i32.const 8)
       )
+    )
+    (drop
+      (i32.const 28)
     )
   )
   (func $import_globals_offset
@@ -60,20 +60,20 @@
       (i32.const 7)
     )
     (drop
-      (i32.add
-        (i32.load
+      (i32.load
+        (i32.add
+          (i32.const 8)
           (i32.add
-            (i32.const 8)
-            (i32.add
-              (i32.const -4)
-              (get_global $imported_global)
-            )
+            (i32.const -4)
+            (get_global $imported_global)
           )
         )
-        (i32.add
-          (i32.const 16)
-          (get_global $imported_global)
-        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.const 16)
+        (get_global $imported_global)
       )
     )
   )
