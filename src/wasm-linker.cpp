@@ -329,7 +329,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
     exportFunction(f->name, true);
   }
 
-  emscripten::addGlobalImports(out.wasm, out.symbolInfo.importedGlobals);
+  emscripten::addObjectImports(out.wasm, out.symbolInfo.importedObjects);
 
   auto staticBump = nextStatic - globalBase;
   emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);

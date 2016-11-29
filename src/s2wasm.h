@@ -281,7 +281,7 @@ class S2WasmBuilder {
     if (!relocation) {
       return nullptr;
     }
-    if (!linkerObj->isGlobalImported(relocation->symbol)) {
+    if (linkerObj->isObjectImplemented(relocation->symbol)) {
       linkerObj->addRelocation(relocation);
       return nullptr;
     }
@@ -451,7 +451,7 @@ class S2WasmBuilder {
         }
       } else if (match(".import_global")) {
         Name name = getStr();
-        info->importedGlobals.insert(name);
+        info->importedObjects.insert(name);
         s = strchr(s, '\n');
       } else {
         // add data aliases
@@ -1357,7 +1357,7 @@ class S2WasmBuilder {
         raw.resize(size + 4);
         auto relocation = getRelocatableConst((uint32_t*)&raw[size]); // just the size, as we may reallocate; we must fix this later, if it's a relocation
         if (relocation) {
-          if (linkerObj->isGlobalImported(relocation->symbol)) {
+          if (!linkerObj->isObjectImplemented(relocation->symbol)) {
             abort_on("s2wasm is currently unable to model imported globals in data segment initializers");
           }
           linkerObj->addRelocation(relocation);
