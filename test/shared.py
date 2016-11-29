@@ -286,6 +286,7 @@ def delete_from_orbit(filename):
   if not os.path.exists(filename):
     return
   try:
+    import stat
     os.chmod(filename, os.stat(filename).st_mode | stat.S_IWRITE)
 
     def remove_readonly_and_try_again(func, path, exc_info):
