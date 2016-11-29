@@ -462,14 +462,12 @@ private:
       }
       break;
     }
-    // finally, optimize if ptr is a const
+    // finally, ptr may be a const, but it isn't worth folding that in (we still have the const); in fact,
+    // it's better to do the opposite for gzip purposes as well as for readability
     auto* last = ptr->dynCast<Const>();
     if (last) {
-      auto value = last->value.geti32();
-      if (value >= 0) {
-        offset = offset + value;
-        last->value = Literal(int32_t(0));
-      }
+      last->value = Literal(int32_t(last->value.geti32() + offset));
+      offset = 0;
     }
   }
 };
