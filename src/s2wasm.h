@@ -261,20 +261,25 @@ class S2WasmBuilder {
     auto g = allocator->alloc<GetGlobal>();
     g->name = name;
     g->type = i32;
-    if (!relocation->addend) {
-      return g;
-    } else {
-      auto c = allocator->alloc<Const>();
-      c->type = i32;
-      c->value = Literal(relocation->addend);
 
-      auto add = allocator->alloc<Binary>();
-      add->type = i32;
-      add->op = AddInt32;
-      add->left = c;
-      add->right = g;
-      return add;
+    // Optimization: store any nonnegative addends in their natural place.
+    // Only do this for positive addends because load/store offsets cannot be
+    // negative.
+    if (relocation->addend >= 0) {
+      *relocation->data = relocation->addend;
+      return g;
     }
+
+    auto c = allocator->alloc<Const>();
+    c->type = i32;
+    c->value = Literal(relocation->addend);
+
+    auto add = allocator->alloc<Binary>();
+    add->type = i32;
+    add->op = AddInt32;
+    add->left = c;
+    add->right = g;
+    return add;
   }
   Expression* getRelocatableExpression(uint32_t* target) {
     auto relocation = getRelocatableConst(target);
@@ -876,10 +881,20 @@ class S2WasmBuilder {
     auto useRelocationExpression = [&](Expression *expr, Expression *reloc) {
       if (!reloc) {
         return expr;
-      } else {
-        // TODO: i32.add expr, reloc
+      }
+      // Optimization: if the given expr is (i32.const 0), ignore it
+      if (expr->_id == Expression::ConstId &&
+          ((Const*)expr)->value.getInteger() == 0) {
         return reloc;
       }
+
+      // Otherwise, need to add relocation expr to given expr
+      auto add = allocator->alloc<Binary>();
+      add->type = i32;
+      add->op = AddInt32;
+      add->left = expr;
+      add->right = reloc;
+      return (Expression*)add;
     };
     auto makeLoad = [&](WasmType type) {
       skipComma();
