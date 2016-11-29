@@ -24,6 +24,7 @@ parser.add_argument('positional_args', metavar='tests', nargs=argparse.REMAINDER
 options = parser.parse_args()
 requested = options.positional_args
 
+num_failures = 0
 warnings = []
 
 def warn(text):

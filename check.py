@@ -26,8 +26,6 @@ if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
   assert os.path.exists(options.interpreter), 'interpreter not found'
 
-num_failures = 0
-
 # tests
 
 print '[ checking --help is useful... ]\n'
