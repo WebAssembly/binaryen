@@ -14,9 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, shutil, sys, subprocess, json, argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
 
-import scripts.storage
 from test.support import run_command, split_wast
 from test.shared import *
 
