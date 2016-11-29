@@ -89,6 +89,7 @@ class LinkerObject {
     globls.push_back(name);
   }
 
+  // This takes ownership of the added Relocation
   void addRelocation(Relocation* relocation) {
     relocations.emplace_back(relocation);
   }

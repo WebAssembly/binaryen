@@ -449,12 +449,12 @@ class S2WasmBuilder {
         } else {
           abort_on("unknown directive");
         }
-      // add data aliases
       } else if (match(".import_global")) {
         Name name = getStr();
         info->importedGlobals.insert(name);
         s = strchr(s, '\n');
       } else {
+        // add data aliases
         Name lhs = getStrToSep();
         // When the current line contains only one word, e.g.".text"
         if (match("\n"))
@@ -504,8 +504,8 @@ class S2WasmBuilder {
       else if (match("data")) {}
       else if (match("ident")) skipToEOL();
       else if (match("section")) parseToplevelSection();
-      else if (match("align") || match("p2align")) skipToEOL();
-      else if (match("import_global")) parseImportGlobal();
+      else if (match("align") || match("p2align") || match("import_global"))
+        skipToEOL();
       else if (match("globl")) parseGlobl();
       else if (match("functype")) parseFuncType();
       else skipObjectAlias(true);
@@ -603,13 +603,6 @@ class S2WasmBuilder {
     }
     s++;
     WASM_UNUSED(filename); // TODO: use the filename
-  }
-
-  void parseImportGlobal() {
-    // We already parsed the imported globals in getSymbolInfo, just skip
-    // over these sections
-    getStr();
-    skipWhitespace();
   }
 
   void parseGlobl() {
