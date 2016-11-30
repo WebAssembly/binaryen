@@ -290,7 +290,10 @@ class S2WasmBuilder {
       linkerObj->addRelocation(relocation);
       return nullptr;
     }
-    return relocationToGetGlobal(relocation);
+    auto expr = relocationToGetGlobal(relocation);
+    // If we don't add the relocation to the linker, we need to delete it
+    delete relocation;
+    return expr;
   }
 
   int64_t getInt64() {
