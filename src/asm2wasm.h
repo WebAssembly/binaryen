@@ -859,13 +859,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   if (runOptimizationPasses) {
     optimizingBuilder->finish();
-    PassRunner passRunner(&wasm);
-    if (debug) {
-      passRunner.setDebug(true);
-      passRunner.setValidateGlobally(false);
-    }
-    passRunner.add("post-emscripten");
-    passRunner.run();
   }
 
   // second pass. first, function imports
@@ -993,6 +986,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.add("vacuum");
     passRunner.add("remove-unused-brs");
     passRunner.add("optimize-instructions");
+    passRunner.add("post-emscripten");
   }
   passRunner.run();
 
