@@ -44,36 +44,49 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<Pos
   // it's 0 or an unused section of memory that was reserved for mapped globlas).
   // Thus it is ok to optimize such small constants into Load offsets.
 
-  template<typename T>
-  void visitMemoryOp(T *curr) {
-    if (curr->offset) return;
-    Expression* ptr = curr->ptr;
-    auto add = ptr->dynCast<Binary>();
-    if (!add || add->op != AddInt32) return;
-    assert(add->type == i32);
-    auto c = add->right->dynCast<Const>();
-    if (!c) {
-      c = add->left->dynCast<Const>();
-      if (c) {
-        // if one is a const, it's ok to swap
-        add->left = add->right;
-        add->right = c;
+  #define SAFE_MAX 1024
+
+  void optimizeMemoryAccess(Expression*& ptr, Address& offset) {
+    while (1) {
+      auto* add = ptr->dynCast<Binary>();
+      if (!add) break;
+      if (add->op != AddInt32) break;
+      auto* left = add->left->dynCast<Const>();
+      auto* right = add->right->dynCast<Const>();
+      // note: in optimized code, we shouldn't see an add of two constants, so don't worry about that much
+      // (precompute would optimize that)
+      if (left) {
+        auto value = left->value.geti32();
+        if (value >= 0 && value < SAFE_MAX) {
+          offset = offset + value;
+          ptr = add->right;
+          continue;
+        }
       }
+      if (right) {
+        auto value = right->value.geti32();
+        if (value >= 0 && value < SAFE_MAX) {
+          offset = offset + value;
+          ptr = add->left;
+          continue;
+        }
+      }
+      break;
     }
-    if (!c) return;
-    auto value = c->value.geti32();
-    if (value >= 0 && value < 1024) {
-      // foldable, by the above logic
-      curr->ptr = add->left;
-      curr->offset = value;
+    // finally ptr may be a const, but it isn't worth folding that in (we still have a const); in fact,
+    // it's better to do the opposite for gzip purposes as well as for readability.
+    auto* last = ptr->dynCast<Const>();
+    if (last) {
+      last->value = Literal(int32_t(last->value.geti32() + offset));
+      offset = 0;
     }
   }
 
   void visitLoad(Load* curr) {
-    visitMemoryOp(curr);
+    optimizeMemoryAccess(curr->ptr, curr->offset);
   }
   void visitStore(Store* curr) {
-    visitMemoryOp(curr);
+    optimizeMemoryAccess(curr->ptr, curr->offset);
   }
 };
 
