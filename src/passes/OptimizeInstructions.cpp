@@ -326,7 +326,10 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (br->condition) {
         br->condition = optimizeBoolean(br->condition);
       }
+    } else if (auto* load = curr->dynCast<Load>()) {
+      optimizeMemoryAccess(load->ptr, load->offset);
     } else if (auto* store = curr->dynCast<Store>()) {
+      optimizeMemoryAccess(store->ptr, store->offset);
       // stores of fewer bits truncates anyhow
       if (auto* binary = store->value->dynCast<Binary>()) {
         if (binary->op == AndInt32) {
@@ -428,6 +431,43 @@ private:
       return builder.makeIf(left, builder.makeConst(Literal(int32_t(1))), right);
     } else { // &
       return builder.makeIf(left, right, builder.makeConst(Literal(int32_t(0))));
+    }
+  }
+
+  // fold constant factors into the offset
+  void optimizeMemoryAccess(Expression*& ptr, Address& offset) {
+    while (1) {
+      auto* add = ptr->dynCast<Binary>();
+      if (!add) break;
+      if (add->op != AddInt32) break;
+      auto* left = add->left->dynCast<Const>();
+      auto* right = add->right->dynCast<Const>();
+      // note: in optimized code, we shouldn't see an add of two constants, so don't worry about that much
+      // (precompute would optimize that)
+      if (left) {
+        auto value = left->value.geti32();
+        if (value >= 0) {
+          offset = offset + value;
+          ptr = add->right;
+          continue;
+        }
+      }
+      if (right) {
+        auto value = right->value.geti32();
+        if (value >= 0) {
+          offset = offset + value;
+          ptr = add->left;
+          continue;
+        }
+      }
+      break;
+    }
+    // finally, ptr may be a const, but it isn't worth folding that in (we still have a const); in fact,
+    // it's better to do the opposite for gzip purposes as well as for readability.
+    auto* last = ptr->dynCast<Const>();
+    if (last) {
+      last->value = Literal(int32_t(last->value.geti32() + offset));
+      offset = 0;
     }
   }
 };

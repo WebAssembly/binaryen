@@ -2,7 +2,9 @@
   (type $0 (func (param i32 i64)))
   (type $1 (func))
   (type $2 (func (result i32)))
+  (type $3 (func (param i32) (result i32)))
   (memory $0 0)
+  (export "load-off-2" (func $load-off-2))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
     (if
       (i32.eqz
@@ -410,6 +412,77 @@
         (call $ne0)
       )
       (nop)
+    )
+  )
+  (func $load-off-2 (type $3) (param $0 i32) (result i32)
+    (i32.store
+      (i32.const 6)
+      (get_local $0)
+    )
+    (i32.store
+      (i32.const 6)
+      (get_local $0)
+    )
+    (i32.store offset=7
+      (get_local $0)
+      (get_local $0)
+    )
+    (i32.store offset=9
+      (get_local $0)
+      (get_local $0)
+    )
+    (i32.store offset=2
+      (i32.add
+        (get_local $0)
+        (i32.const -11)
+      )
+      (get_local $0)
+    )
+    (i32.store offset=2
+      (i32.add
+        (get_local $0)
+        (i32.const -13)
+      )
+      (get_local $0)
+    )
+    (i32.store
+      (i32.const 4)
+      (get_local $0)
+    )
+    (i32.store
+      (i32.const 0)
+      (get_local $0)
+    )
+    (i32.store
+      (i32.const 25)
+      (get_local $0)
+    )
+    (i32.store
+      (i32.const -23)
+      (get_local $0)
+    )
+    (drop
+      (i32.load
+        (i32.const 8)
+      )
+    )
+    (drop
+      (i32.load
+        (i32.const 8)
+      )
+    )
+    (drop
+      (i32.load offset=8
+        (get_local $0)
+      )
+    )
+    (drop
+      (i32.load
+        (i32.const 10)
+      )
+    )
+    (i32.load offset=12
+      (get_local $0)
     )
   )
 )

@@ -4349,14 +4349,11 @@
                                           (i32.store8
                                             (get_local $5)
                                             (i32.or
-                                              (i32.load8_u
-                                                (i32.add
-                                                  (tee_local $7
-                                                    (i32.trunc_s/f64
-                                                      (get_local $15)
-                                                    )
+                                              (i32.load8_u offset=4075
+                                                (tee_local $7
+                                                  (i32.trunc_s/f64
+                                                    (get_local $15)
                                                   )
-                                                  (i32.const 4075)
                                                 )
                                               )
                                               (get_local $13)
@@ -6585,13 +6582,10 @@
                                   )
                                 )
                                 (i32.or
-                                  (i32.load8_u
-                                    (i32.add
-                                      (i32.and
-                                        (get_local $5)
-                                        (i32.const 15)
-                                      )
-                                      (i32.const 4075)
+                                  (i32.load8_u offset=4075
+                                    (i32.and
+                                      (get_local $5)
+                                      (i32.const 15)
                                     )
                                   )
                                   (get_local $9)
