@@ -20,8 +20,8 @@ import shutil
 import subprocess
 import sys
 
-from test.support import run_command, split_wast
-from test.shared import *
+from scripts.test.support import run_command, split_wast
+from scripts.test.shared import *
 
 import test.s2wasm as s2wasm
 

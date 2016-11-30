@@ -109,8 +109,8 @@ if all(map(lambda f: not os.path.isfile(os.path.join(options.binaryen_bin, f)),
 
 # Locate Binaryen source directory if not specified.
 if not options.binaryen_root:
-  options.binaryen_root = os.path.dirname(os.path.dirname(
-      os.path.abspath(__file__)))
+  path_parts = os.path.abspath(__file__).split(os.path.sep)
+  options.binaryen_root = os.path.sep.join(path_parts[:-3])
 
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 

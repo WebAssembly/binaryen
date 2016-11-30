@@ -26,7 +26,6 @@ install:
 before_build:
   # Check the style of a subset of Python code until the other code is updated.
   - flake8 ./scripts/
-  - flake8 ./test/*.py
 
 build_script:
   - cmake .  -DCMAKE_BUILD_TYPE=%CONFIG% -G "%GENERATOR%"
