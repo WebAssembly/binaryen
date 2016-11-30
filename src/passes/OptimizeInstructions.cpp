@@ -462,8 +462,8 @@ private:
       }
       break;
     }
-    // finally, ptr may be a const, but it isn't worth folding that in (we still have the const); in fact,
-    // it's better to do the opposite for gzip purposes as well as for readability
+    // finally, ptr may be a const, but it isn't worth folding that in (we still have a const); in fact,
+    // it's better to do the opposite for gzip purposes as well as for readability.
     auto* last = ptr->dynCast<Const>();
     if (last) {
       last->value = Literal(int32_t(last->value.geti32() + offset));
