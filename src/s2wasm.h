@@ -282,18 +282,15 @@ class S2WasmBuilder {
     return add;
   }
   Expression* getRelocatableExpression(uint32_t* target) {
-    auto relocation = getRelocatableConst(target);
+    auto relocation = std::unique_ptr<LinkerObject::Relocation>(getRelocatableConst(target));
     if (!relocation) {
       return nullptr;
     }
     if (linkerObj->isObjectImplemented(relocation->symbol)) {
-      linkerObj->addRelocation(relocation);
+      linkerObj->addRelocation(relocation.release());
       return nullptr;
     }
-    auto expr = relocationToGetGlobal(relocation);
-    // If we don't add the relocation to the linker, we need to delete it
-    delete relocation;
-    return expr;
+    return relocationToGetGlobal(relocation.get());
   }
 
   int64_t getInt64() {
