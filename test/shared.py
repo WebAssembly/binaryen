@@ -88,6 +88,7 @@ def warn(text):
   warnings.append(text)
   print 'warning:', text
 
+
 # setup
 
 # Locate Binaryen build artifacts directory (bin/ by default)
@@ -137,6 +138,7 @@ def which(program):
         if is_exe(exe_file + '.bat'):
           return exe_file + '.bat'
 
+
 WATERFALL_BUILD_DIR = os.path.join(options.binaryen_test, 'wasm-install')
 BIN_DIR = os.path.abspath(os.path.join(
     WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
@@ -167,6 +169,7 @@ def wrap_with_valgrind(cmd):
   if options.valgrind_full_leak_check:
     valgrind += ['--leak-check=full', '--show-leak-kinds=all']
   return valgrind + cmd
+
 
 if options.valgrind:
   WASM_OPT = wrap_with_valgrind(WASM_OPT)
@@ -210,6 +213,7 @@ def fetch_waterfall():
   with open(os.path.join(options.binaryen_test, 'local-revision'), 'w') as o:
     o.write(rev)
 
+
 has_vanilla_llvm = False
 
 
@@ -225,6 +229,7 @@ def setup_waterfall():
   except Exception, e:
     warn('could not run vanilla LLVM from waterfall: ' + str(e) +
          ', looked for clang at ' + CLANG)
+
 
 if options.test_waterfall:
   fetch_waterfall()
@@ -327,6 +332,7 @@ def fail_if_not_identical(actual, expected):
 def fail_if_not_contained(actual, expected):
   if expected not in actual:
     fail(actual, expected)
+
 
 if len(requested) == 0:
   tests = sorted(os.listdir(os.path.join(options.binaryen_test)))
