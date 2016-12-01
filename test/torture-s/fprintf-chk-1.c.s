@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-chk-1.c"
+	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-chk-1.c"
 	.section	.text.__fprintf_chk,"ax",@progbits
 	.hidden	__fprintf_chk
 	.globl	__fprintf_chk
@@ -445,6 +445,7 @@ should_optimize:
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	vfprintf, i32, i32, i32, i32
+	.import_global	stdout

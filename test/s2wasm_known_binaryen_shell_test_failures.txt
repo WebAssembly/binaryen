@@ -148,3 +148,7 @@ va-arg-22.c.s.wast # memcpy
 va-arg-21.c.s.wast # malloc
 vprintf-chk-1.c.s.wast # vprintf
 vprintf-1.c.s.wast # vprintf
+fprintf-1.c.s.wast # stdout
+fprintf-chk-1.c.s.wast # stdout
+vfprintf-1.c.s.wast # stdout
+vfprintf-chk-1.c.s.wast # stdout
