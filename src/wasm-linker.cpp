@@ -48,7 +48,7 @@ void Linker::placeStackPointer(Address stackAllocation) {
   }
 }
 
-void Linker::ensureImport(Name target, std::string signature) {
+void Linker::ensureFunctionImport(Name target, std::string signature) {
   if (!out.wasm.checkImport(target)) {
     auto import = new Import;
     import->name = import->base = target;
@@ -59,13 +59,24 @@ void Linker::ensureImport(Name target, std::string signature) {
   }
 }
 
+void Linker::ensureObjectImport(Name target) {
+  if (!out.wasm.checkImport(target)) {
+    auto import = new Import;
+    import->name = import->base = target;
+    import->module = ENV;
+    import->kind = ExternalKind::Global;
+    import->globalType = i32;
+    out.wasm.addImport(import);
+  }
+}
+
 void Linker::layout() {
   // Convert calls to undefined functions to call_imports
   for (const auto& f : out.undefinedFunctionCalls) {
     Name target = f.first;
     if (!out.symbolInfo.undefinedFunctions.count(target)) continue;
     // Create an import for the target if necessary.
-    ensureImport(target, getSig(*f.second.begin()));
+    ensureFunctionImport(target, getSig(*f.second.begin()));
     // Change each call. The target is the same since it's still the name.
     // Delete and re-allocate the Expression as CallImport to avoid undefined
     // behavior.
@@ -127,6 +138,11 @@ void Linker::layout() {
     memoryExport->value = Name::fromInt(0);
     memoryExport->kind = ExternalKind::Memory;
     out.wasm.addExport(memoryExport.release());
+  }
+
+  // Add imports for any imported objects
+  for (const auto& obj : out.symbolInfo.importedObjects) {
+    ensureObjectImport(obj);
   }
 
   // XXX For now, export all functions marked .globl.
@@ -329,8 +345,6 @@ void Linker::emscriptenGlue(std::ostream& o) {
     exportFunction(f->name, true);
   }
 
-  emscripten::addObjectImports(out.wasm, out.symbolInfo.importedObjects);
-
   auto staticBump = nextStatic - globalBase;
   emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
 }
@@ -388,7 +402,7 @@ void Linker::makeDummyFunction() {
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   Name thunkName = std::string("__importThunk_") + name.c_str();
   if (Function* thunk = out.wasm.checkFunction(thunkName)) return thunk;
-  ensureImport(name, getSig(funcType));
+  ensureFunctionImport(name, getSig(funcType));
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;
   Index p = 0;
