@@ -1,13 +1,6 @@
 # Expected failures from running s2wasm on the linked GCC torture test output
 # files.
 
-# Unknown symbol ($abort, $stdout, $stderr).
-fprintf-1.c.s
-gofast.c.s
-fprintf-chk-1.c.s
-vfprintf-1.c.s
-vfprintf-chk-1.c.s
-
 # Block address taken.
 20071220-1.c.s
 20071220-2.c.s
