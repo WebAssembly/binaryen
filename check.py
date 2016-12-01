@@ -23,7 +23,7 @@ import sys
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import *
 
-import test.s2wasm as s2wasm
+import scripts.test.s2wasm as s2wasm
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
