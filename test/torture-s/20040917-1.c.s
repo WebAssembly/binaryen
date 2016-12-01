@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040917-1.c"
 	.section	.text.not_inlinable,"ax",@progbits
 	.hidden	not_inlinable
 	.globl	not_inlinable
@@ -50,5 +49,4 @@ test_var:
 	.size	test_var, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

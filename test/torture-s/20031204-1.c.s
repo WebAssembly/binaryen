@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031204-1.c"
 	.section	.text.in_aton,"ax",@progbits
 	.hidden	in_aton
 	.globl	in_aton
@@ -258,6 +257,5 @@ main.addr:
 	.size	main.addr, 19
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void

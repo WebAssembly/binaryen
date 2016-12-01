@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59747.c"
 	.section	.text.fn1,"ax",@progbits
 	.hidden	fn1
 	.globl	fn1
@@ -108,6 +107,5 @@ d:
 	.size	d, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

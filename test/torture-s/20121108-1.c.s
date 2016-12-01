@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20121108-1.c"
 	.section	.text.strtoul1,"ax",@progbits
 	.hidden	strtoul1
 	.globl	strtoul1
@@ -239,7 +238,6 @@ result:
 	.size	.Lstr, 7
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	printf, i32, i32
 	.functype	puts, i32, i32

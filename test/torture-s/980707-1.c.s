@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980707-1.c"
 	.section	.text.buildargv,"ax",@progbits
 	.hidden	buildargv
 	.globl	buildargv
@@ -228,7 +227,6 @@ buildargv.arglist:
 	.size	.L.str.2, 2
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

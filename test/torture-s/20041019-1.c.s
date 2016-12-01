@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041019-1.c"
 	.section	.text.test_store_ccp,"ax",@progbits
 	.hidden	test_store_ccp
 	.globl	test_store_ccp
@@ -90,4 +89,3 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

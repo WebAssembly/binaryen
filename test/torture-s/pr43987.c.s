@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43987.c"
 	.section	.text.add_input_file,"ax",@progbits
 	.hidden	add_input_file
 	.globl	add_input_file
@@ -46,4 +45,3 @@ B:
 	.size	B, 1024
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

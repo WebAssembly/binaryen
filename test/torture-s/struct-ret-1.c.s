@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-ret-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -420,7 +419,6 @@ fp:
 	.size	fp, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	sprintf, i32, i32, i32
 	.functype	strcpy, i32, i32, i32
 	.functype	strcmp, i32, i32, i32

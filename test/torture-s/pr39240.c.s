@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39240.c"
 	.section	.text.bar1,"ax",@progbits
 	.hidden	bar1
 	.globl	bar1
@@ -303,5 +302,4 @@ l6:
 	.size	l6, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

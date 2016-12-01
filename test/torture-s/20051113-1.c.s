@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051113-1.c"
 	.section	.text.Sum,"ax",@progbits
 	.hidden	Sum
 	.globl	Sum
@@ -140,6 +139,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	malloc, i32, i32
 	.functype	abort, void

@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr33870.c"
 	.section	.text.sort_pagelist,"ax",@progbits
 	.hidden	sort_pagelist
 	.globl	sort_pagelist
@@ -437,5 +436,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void

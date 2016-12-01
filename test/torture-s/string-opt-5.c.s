@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-5.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -389,7 +388,6 @@ buf:
 	.size	.L.str.12, 11
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	strcmp, i32, i32, i32

@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040709-1.c"
 	.section	.text.myrnd,"ax",@progbits
 	.hidden	myrnd
 	.globl	myrnd
@@ -7626,6 +7625,5 @@ sZ:
 	.size	sZ, 32
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

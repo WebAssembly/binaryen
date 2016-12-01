@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000815-1.c"
 	.section	.text.invalidate_memory,"ax",@progbits
 	.hidden	invalidate_memory
 	.globl	invalidate_memory
@@ -263,5 +262,4 @@ table:
 	.size	table, 128
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void

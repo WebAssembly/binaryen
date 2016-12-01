@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
 	.section	.text.debug,"ax",@progbits
 	.hidden	debug
 	.globl	debug
@@ -103,5 +102,4 @@ errors:
 	.size	errors, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	qsort, void, i32, i32, i32, i32

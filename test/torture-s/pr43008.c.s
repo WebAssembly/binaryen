@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43008.c"
 	.section	.text.my_alloc,"ax",@progbits
 	.hidden	my_alloc
 	.globl	my_alloc
@@ -67,6 +66,5 @@ i:
 	.size	i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	__builtin_malloc, i32
 	.functype	abort, void

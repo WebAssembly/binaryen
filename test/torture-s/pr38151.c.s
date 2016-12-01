@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr38151.c"
 	.section	.text.check2848va,"ax",@progbits
 	.hidden	check2848va
 	.globl	check2848va
@@ -137,5 +136,4 @@ fails:
 	.size	fails, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

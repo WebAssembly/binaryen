@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020615-1.c"
 	.section	.text.line_hints,"ax",@progbits
 	.hidden	line_hints
 	.globl	line_hints
@@ -167,6 +166,5 @@ main.gsf:
 	.size	main.gsf, 32
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

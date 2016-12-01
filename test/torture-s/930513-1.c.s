@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -90,7 +89,6 @@ buf:
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	sprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

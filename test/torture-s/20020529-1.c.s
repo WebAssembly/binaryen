@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020529-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -220,6 +219,5 @@ f1.beenhere:
 	.size	f1.beenhere, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

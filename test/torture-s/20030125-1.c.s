@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030125-1.c"
 	.section	.text.t,"ax",@progbits
 	.hidden	t
 	.globl	t
@@ -116,5 +115,4 @@ sinf:                                   # @sinf
 	.size	sinf, .Lfunc_end7-sinf
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

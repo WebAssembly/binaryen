@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040703-1.c"
 	.section	.text.num_lshift,"ax",@progbits
 	.hidden	num_lshift
 	.globl	num_lshift
@@ -373,6 +372,5 @@ num:
 	.size	num, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

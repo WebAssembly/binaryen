@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991228-1.c"
 	.section	.text.signbit,"ax",@progbits
 	.hidden	signbit
 	.globl	signbit
@@ -104,6 +103,5 @@ endianness_test:
 	.size	endianness_test, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

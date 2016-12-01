@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011008-3.c"
 	.section	.text.log_compare,"ax",@progbits
 	.hidden	log_compare
 	.globl	log_compare
@@ -116,5 +115,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

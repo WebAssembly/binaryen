@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010129-1.c"
 	.section	.text.baz1,"ax",@progbits
 	.hidden	baz1
 	.globl	baz1
@@ -215,6 +214,5 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

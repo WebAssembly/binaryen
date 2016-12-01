@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/941014-2.c"
 	.section	.text.a1,"ax",@progbits
 	.hidden	a1
 	.globl	a1
@@ -110,7 +109,6 @@ main:                                   # @main
 	.size	.L.str, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	malloc, i32, i32
 	.functype	printf, i32, i32
 	.functype	abort, void

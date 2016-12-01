@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981019-1.c"
 	.section	.text.ff,"ax",@progbits
 	.hidden	ff
 	.globl	ff
@@ -131,5 +130,4 @@ f3.x:
 	.size	f3.x, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

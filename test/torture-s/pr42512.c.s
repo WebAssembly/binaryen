@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42512.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -55,5 +54,4 @@ g_3:
 	.size	g_3, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-10.c"
 	.section	.text.to_hex,"ax",@progbits
 	.hidden	to_hex
 	.globl	to_hex
@@ -970,7 +969,6 @@ main:                                   # @main
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	strlen, i32, i32
 	.functype	exit, void, i32

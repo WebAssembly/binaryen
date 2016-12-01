@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36339.c"
 	.section	.text.try_a,"ax",@progbits
 	.hidden	try_a
 	.globl	try_a
@@ -89,5 +88,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void

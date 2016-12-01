@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-2.c"
 	.section	.text.verify,"ax",@progbits
 	.hidden	verify
 	.globl	verify
@@ -887,6 +886,5 @@ res:
 	.size	res, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

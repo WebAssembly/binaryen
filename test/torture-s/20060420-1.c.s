@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060420-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -459,5 +458,4 @@ buffer:
 	.size	buffer, 256
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void

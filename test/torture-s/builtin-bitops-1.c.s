@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-bitops-1.c"
 	.section	.text.my_ffs,"ax",@progbits
 	.hidden	my_ffs
 	.globl	my_ffs
@@ -1734,7 +1733,6 @@ longlongs:
 	.size	longlongs, 104
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	__builtin_clrsb, i32
 	.functype	__builtin_clrsbl, i32

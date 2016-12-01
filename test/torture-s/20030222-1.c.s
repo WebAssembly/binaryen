@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030222-1.c"
 	.section	.text.ll_to_int,"ax",@progbits
 	.hidden	ll_to_int
 	.globl	ll_to_int
@@ -63,6 +62,5 @@ val:
 	.size	val, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

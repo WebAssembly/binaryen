@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021111-1.c"
 	.section	.text.aim_callhandler,"ax",@progbits
 	.hidden	aim_callhandler
 	.globl	aim_callhandler
@@ -67,6 +66,5 @@ aim_callhandler.i:
 	.size	aim_callhandler.i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

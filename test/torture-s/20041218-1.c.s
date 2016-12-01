@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041218-1.c"
 	.section	.text.dummy1,"ax",@progbits
 	.hidden	dummy1
 	.globl	dummy1
@@ -173,6 +172,5 @@ baz.v:
 	.size	baz.v, 44
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	abort, void

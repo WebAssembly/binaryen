@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/inst-check.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -50,5 +49,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

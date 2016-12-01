@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-types-compatible-p.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -42,5 +41,4 @@ rootbeer:
 	.size	rootbeer, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

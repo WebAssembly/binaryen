@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56205.c"
 	.section	.text.f4,"ax",@progbits
 	.hidden	f4
 	.globl	f4
@@ -285,6 +284,5 @@ a:
 	.size	.L.str.4, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	strcmp, i32, i32, i32

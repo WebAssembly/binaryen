@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr23135.c"
 	.section	.text.verify,"ax",@progbits
 	.hidden	verify
 	.globl	verify
@@ -313,6 +312,5 @@ k:
 	.size	k, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

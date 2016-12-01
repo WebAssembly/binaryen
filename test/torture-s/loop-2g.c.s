@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2g.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -73,7 +72,6 @@ main:                                   # @main
 	.size	.L.str, 10
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	open, i32, i32, i32
 	.functype	mmap, i32, i32, i32, i32, i32, i32, i64
 	.functype	exit, void, i32

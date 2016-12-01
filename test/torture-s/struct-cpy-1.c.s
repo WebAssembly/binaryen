@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/struct-cpy-1.c"
 	.section	.text.ini,"ax",@progbits
 	.hidden	ini
 	.globl	ini
@@ -74,4 +73,3 @@ pty:
 	.size	pty, 88
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

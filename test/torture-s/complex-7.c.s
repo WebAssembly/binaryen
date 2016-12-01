@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-7.c"
 	.section	.text.check_float,"ax",@progbits
 	.hidden	check_float
 	.globl	check_float
@@ -781,6 +780,5 @@ ld5:
 	.size	ld5, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

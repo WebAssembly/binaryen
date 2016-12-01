@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060910-1.c"
 	.section	.text.input_getc_complicated,"ax",@progbits
 	.hidden	input_getc_complicated
 	.globl	input_getc_complicated
@@ -129,4 +128,3 @@ s:
 	.size	s, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

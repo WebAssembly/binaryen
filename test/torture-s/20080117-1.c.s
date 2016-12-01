@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080117-1.c"
 	.section	.text.gstate_path_memory,"ax",@progbits
 	.hidden	gstate_path_memory
 	.globl	gstate_path_memory
@@ -56,4 +55,3 @@ gstate_initial:
 	.size	gstate_initial, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

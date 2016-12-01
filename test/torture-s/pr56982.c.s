@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56982.c"
 	.section	.text.baz,"ax",@progbits
 	.hidden	baz
 	.globl	baz
@@ -90,7 +89,6 @@ env:
 	.size	env, 156
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	setjmp, i32, i32
 	.functype	exit, void, i32
 	.functype	longjmp, void, i32, i32

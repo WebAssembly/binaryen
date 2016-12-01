@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020402-3.c"
 	.section	.text.blockvector_for_pc_sect,"ax",@progbits
 	.hidden	blockvector_for_pc_sect
 	.globl	blockvector_for_pc_sect
@@ -110,4 +109,3 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "

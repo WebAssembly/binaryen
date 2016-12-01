@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010925-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -64,5 +63,4 @@ src:
 	.size	src, 40
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-2.c"
 	.section	.text.reset,"ax",@progbits
 	.hidden	reset
 	.globl	reset
@@ -907,6 +906,5 @@ u:
 	.size	u, 32
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

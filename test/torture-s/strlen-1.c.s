@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -98,7 +97,6 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

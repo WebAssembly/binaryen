@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr30778.c"
 	.section	.text.init_reg_last,"ax",@progbits
 	.hidden	init_reg_last
 	.globl	init_reg_last
@@ -83,5 +82,4 @@ reg_stat:
 	.size	reg_stat, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

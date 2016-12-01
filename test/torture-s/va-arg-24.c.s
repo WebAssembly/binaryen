@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-24.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -1570,7 +1569,6 @@ errors:
 	.size	.L.str.10, 9
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	printf, i32, i32

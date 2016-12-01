@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-pack-1.c"
 	.section	.text.foo1,"ax",@progbits
 	.hidden	foo1
 	.globl	foo1
@@ -676,7 +675,6 @@ cnt:
 	.size	cnt, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	bar, i32, i32

@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030715-1.c"
 	.section	.text.ap_check_cmd_context,"ax",@progbits
 	.hidden	ap_check_cmd_context
 	.globl	ap_check_cmd_context
@@ -93,5 +92,4 @@ ap_standalone:
 	.size	.L.str.2, 50
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	strcmp, i32, i32, i32

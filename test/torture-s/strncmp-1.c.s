@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strncmp-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -333,7 +332,6 @@ u2:
 	.size	u2, 80
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	strncmp, i32, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

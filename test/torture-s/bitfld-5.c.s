@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/bitfld-5.c"
 	.section	.text.g,"ax",@progbits
 	.hidden	g
 	.globl	g
@@ -107,5 +106,4 @@ main:                                   # @main
 	.size	.Lmain.t, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

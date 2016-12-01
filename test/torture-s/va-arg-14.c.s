@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-14.c"
 	.section	.text.vat,"ax",@progbits
 	.hidden	vat
 	.globl	vat
@@ -147,6 +146,5 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

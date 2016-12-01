@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-5.c"
 	.section	.text.p,"ax",@progbits
 	.hidden	p
 	.globl	p
@@ -132,7 +131,6 @@ z:
 	.size	z, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	__divsc3, void, i32, f32, f32, f32, f32
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/gofast.c"
 	.section	.text.fp_add,"ax",@progbits
 	.hidden	fp_add
 	.globl	fp_add
@@ -496,7 +495,6 @@ fail_count:
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

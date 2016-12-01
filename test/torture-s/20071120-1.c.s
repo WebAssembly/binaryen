@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
 	.section	.text.vec_assert_fail,"ax",@progbits
 	.hidden	vec_assert_fail
 	.globl	vec_assert_fail
@@ -138,6 +137,5 @@ deferred_access_stack:
 	.size	deferred_access_stack, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	__builtin_malloc, i32

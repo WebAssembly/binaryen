@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-5.c"
 	.section	.text.arg_ptr,"ax",@progbits
 	.hidden	arg_ptr
 	.globl	arg_ptr
@@ -113,5 +112,4 @@ s:
 	.size	s, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

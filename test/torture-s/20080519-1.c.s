@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080519-1.c"
 	.section	.text.merge_overlapping_regs,"ax",@progbits
 	.hidden	merge_overlapping_regs
 	.globl	merge_overlapping_regs
@@ -172,5 +171,4 @@ reg_class_contents:
 	.size	reg_class_contents, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

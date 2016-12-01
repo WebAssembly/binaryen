@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
 	.section	.text.w,"ax",@progbits
 	.hidden	w
 	.globl	w
@@ -189,6 +188,5 @@ limit:
 	.size	limit, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

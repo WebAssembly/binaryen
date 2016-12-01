@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020406-1.c"
 	.section	.text.FFmul,"ax",@progbits
 	.hidden	FFmul
 	.globl	FFmul
@@ -303,7 +302,6 @@ main:                                   # @main
 	.size	.L.str.1, 41
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	malloc, i32, i32
 	.functype	calloc, i32, i32, i32
 	.functype	printf, i32, i32

@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-9.c"
 	.section	.text.proc1,"ax",@progbits
 	.hidden	proc1
 	.globl	proc1
@@ -247,7 +246,6 @@ main:                                   # @main
 	.size	.L.str.6, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

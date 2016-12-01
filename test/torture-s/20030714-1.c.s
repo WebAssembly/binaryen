@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
 	.section	.text.RenderBox_setStyle,"ax",@progbits
 	.hidden	RenderBox_setStyle
 	.globl	RenderBox_setStyle
@@ -179,5 +178,4 @@ g__style:
 	.size	g__style, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

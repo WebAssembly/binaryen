@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-4.c"
 	.section	.text.f1i,"ax",@progbits
 	.hidden	f1i
 	.globl	f1i
@@ -588,5 +587,4 @@ y:
 	.size	y, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

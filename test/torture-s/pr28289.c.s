@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28289.c"
 	.section	.text.ix86_split_ashr,"ax",@progbits
 	.hidden	ix86_split_ashr
 	.globl	ix86_split_ashr
@@ -73,5 +72,4 @@ one:
 	.size	one, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	exit, void, i32

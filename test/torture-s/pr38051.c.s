@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr38051.c"
 	.section	.text.mymemcmp,"ax",@progbits
 	.hidden	mymemcmp
 	.globl	mymemcmp
@@ -1027,5 +1026,4 @@ buf:
 	.size	.L.str.1, 16
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void

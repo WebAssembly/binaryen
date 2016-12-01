@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111208-1.c"
 	.section	.text.pack_unpack,"ax",@progbits
 	.hidden	pack_unpack
 	.globl	pack_unpack
@@ -178,6 +177,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	strlen, i32, i32
 	.functype	abort, void

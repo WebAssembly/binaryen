@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
 	.section	.text.f883b,"ax",@progbits
 	.hidden	f883b
 	.globl	f883b
@@ -320,5 +319,4 @@ result:
 	.size	result, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

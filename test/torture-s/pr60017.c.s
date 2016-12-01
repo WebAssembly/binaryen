@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60017.c"
 	.section	.text.func,"ax",@progbits
 	.hidden	func
 	.globl	func
@@ -62,5 +61,4 @@ x:
 	.size	x, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

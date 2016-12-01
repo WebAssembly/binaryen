@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990326-1.c"
 	.section	.text.a1,"ax",@progbits
 	.hidden	a1
 	.globl	a1
@@ -457,5 +456,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end34-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32

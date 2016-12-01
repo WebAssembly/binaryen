@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980701-1.c"
 	.section	.text.ns_name_skip,"ax",@progbits
 	.hidden	ns_name_skip
 	.globl	ns_name_skip
@@ -62,6 +61,5 @@ a:
 	.size	a, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void
 	.functype	exit, void, i32

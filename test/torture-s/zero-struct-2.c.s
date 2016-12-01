@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-2.c"
 	.section	.text.one_raw_spinlock,"ax",@progbits
 	.hidden	one_raw_spinlock
 	.globl	one_raw_spinlock
@@ -55,5 +54,4 @@ ii:
 	.size	ii, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

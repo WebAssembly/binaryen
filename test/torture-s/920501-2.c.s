@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-2.c"
 	.section	.text.gcd_ll,"ax",@progbits
 	.hidden	gcd_ll
 	.globl	gcd_ll
@@ -481,6 +480,5 @@ factab:
 	.size	factab, 40
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

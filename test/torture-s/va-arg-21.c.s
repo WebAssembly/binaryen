@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-21.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -66,7 +65,6 @@ doit:                                   # @doit
 	.size	.L.str.1, 13
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	exit, void, i32
 	.functype	malloc, i32, i32
 	.functype	vprintf, i32, i32, i32

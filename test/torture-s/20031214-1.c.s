@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031214-1.c"
 	.section	.text.b,"ax",@progbits
 	.hidden	b
 	.globl	b
@@ -65,4 +64,3 @@ k:
 	.size	k, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

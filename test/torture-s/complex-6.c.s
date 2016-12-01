@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-6.c"
 	.section	.text.ctest_float,"ax",@progbits
 	.hidden	ctest_float
 	.globl	ctest_float
@@ -198,4 +197,3 @@ err:
 	.size	err, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"

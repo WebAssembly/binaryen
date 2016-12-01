@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/bcp-1.c"
 	.section	.text.bad0,"ax",@progbits
 	.hidden	bad0
 	.globl	bad0
@@ -436,6 +435,5 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	exit, void, i32

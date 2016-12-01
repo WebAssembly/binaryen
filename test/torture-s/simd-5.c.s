@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-5.c"
 	.section	.text.func0,"ax",@progbits
 	.hidden	func0
 	.globl	func0
@@ -377,5 +376,4 @@ z4:
 	.size	z4, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
 	.functype	abort, void

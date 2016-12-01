@@ -1,5 +1,4 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/vfprintf-chk-1.c"
 	.section	.text.__vfprintf_chk,"ax",@progbits
 	.hidden	__vfprintf_chk
 	.globl	__vfprintf_chk
@@ -560,7 +559,6 @@ should_optimize:
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
 	.functype	abort, void
 	.functype	vfprintf, i32, i32, i32, i32
 	.import_global	stdout
