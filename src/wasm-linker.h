@@ -271,7 +271,8 @@ class Linker {
   // relocation for it to point to the top of the stack.
   void placeStackPointer(Address stackAllocation);
 
-  void ensureImport(Name target, std::string signature);
+  void ensureFunctionImport(Name target, std::string signature);
+  void ensureObjectImport(Name target);
 
   // Makes sure the table has a single segment, with offset 0,
   // to which we can add content.
