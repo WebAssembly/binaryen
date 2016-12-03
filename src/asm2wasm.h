@@ -107,7 +107,9 @@ Name I32_CTTZ("i32_cttz"),
      STOREF("storef"),
      STORED("stored"),
      FTCALL("ftCall_"),
-     MFTCALL("mftCall_");
+     MFTCALL("mftCall_"),
+     MAX_("max"),
+     MIN_("min");
 
 // Utilities
 
@@ -280,6 +282,8 @@ private:
   IString Math_floor;
   IString Math_ceil;
   IString Math_sqrt;
+  IString Math_max;
+  IString Math_min;
 
   IString llvm_cttz_i32;
 
@@ -605,6 +609,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         } else if (imported[2] == SQRT) {
           assert(Math_sqrt.isNull());
           Math_sqrt = name;
+          return;
+        } else if (imported[2] == MAX_) {
+          assert(Math_max.isNull());
+          Math_max = name;
+          return;
+        } else if (imported[2] == MIN_) {
+          assert(Math_min.isNull());
+          Math_min = name;
           return;
         }
       }
@@ -1594,6 +1606,22 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else {
             abort();
           }
+          return ret;
+        }
+        if (name == Math_max || name == Math_min) {
+          // overloaded on type: f32 or f64
+          assert(ast[2]->size() == 2);
+          auto ret = allocator.alloc<Binary>();
+          ret->left = process(ast[2][0]);
+          ret->right = process(ast[2][1]);
+          if (ret->left->type == f32) {
+            ret->op = name == Math_max ? MaxFloat32 : MinFloat32;
+          } else if (ret->left->type == f64) {
+            ret->op = name == Math_max ? MaxFloat64 : MinFloat64;
+          } else {
+            abort();
+          }
+          ret->type = ret->left->type;
           return ret;
         }
         bool tableCall = false;

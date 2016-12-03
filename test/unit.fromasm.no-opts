@@ -462,6 +462,36 @@
       )
     )
   )
+  (func $minmax
+    (local $x f64)
+    (local $y f64)
+    (local $z f32)
+    (local $w f32)
+    (set_local $x
+      (f64.min
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $y
+      (f64.max
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (set_local $z
+      (f32.min
+        (get_local $z)
+        (get_local $w)
+      )
+    )
+    (set_local $w
+      (f32.max
+        (get_local $z)
+        (get_local $w)
+      )
+    )
+  )
   (func $neg
     (local $x f32)
     (set_local $x

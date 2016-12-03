@@ -7,6 +7,8 @@ function asm(global, env, buffer) {
   var Math_fround = global.Math.fround;
   var Math_abs = global.Math.abs;
   var Math_ceil = global.Math.ceil;
+  var Math_max = global.Math.max;
+  var Math_min = global.Math.min;
   var tempDoublePtr = env.tempDoublePtr | 0;
   var n = env.gb | 0;
   var STACKTOP = env.STACKTOP | 0;
@@ -157,6 +159,13 @@ function asm(global, env, buffer) {
     x = Math_abs(0) | 0;
     y = +Math_abs(0.0);
     z = Math_fround(Math_abs(Math_fround(0)));
+  }
+  function minmax() {
+    var x = 0.0, y = 0.0, z = Math_fround(0), w = Math_fround(0);
+    x = +Math_min(+x, +y);
+    y = +Math_max(+x, +y);
+    z = Math_fround(Math_min(Math_fround(z), Math_fround(w)));
+    w = Math_fround(Math_max(Math_fround(z), Math_fround(w)));
   }
   function neg() {
     var x = Math_fround(0);
