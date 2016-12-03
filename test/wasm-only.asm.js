@@ -237,6 +237,8 @@ function asm(global, env, buffer) {
     switch64(i64(0)) | 0;
   }
 
+  var FUNCTION_TABLE_X = [illegalImport]; // must stay ok in the table, not legalized, as it will be called internally by the true type
+
   return { test64: test64, illegalParam : illegalParam, illegalResult: illegalResult, keepAlive: keepAlive };
 }
 
