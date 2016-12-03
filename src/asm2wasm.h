@@ -910,7 +910,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       import->functionType = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm);
     } else if (import->module != ASM2WASM) { // special-case the special module
-      // never actually used
+      // never actually used, which means we don't know the function type since the usage tells us, so illegal for it to remain
       toErase.push_back(name);
     }
   }
