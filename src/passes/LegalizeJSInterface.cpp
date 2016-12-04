@@ -180,7 +180,7 @@ private:
         type->params.push_back(i32);
         type->params.push_back(i32);
       } else if (param == f32) {
-        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f64)));
+        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)));
         type->params.push_back(f64);
       } else {
         call->operands.push_back(builder.makeGetLocal(func->params.size(), param));
@@ -198,7 +198,7 @@ private:
       type->result = i32;
     } else if (im->functionType->result == f32) {
       call->type = f64;
-      func->body = builder.makeUnary(PromoteFloat32, call);
+      func->body = builder.makeUnary(DemoteFloat64, call);
       type->result = f64;
     } else {
       call->type = im->functionType->result;

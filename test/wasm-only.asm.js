@@ -21,6 +21,8 @@ function asm(global, env, buffer) {
   var illegalImport = env.illegalImport;
   var illegalImportResult = env.illegalImportResult;
 
+  var _fabsf = env._fabsf;
+
   function loads() {
     var i = 0, f = fround(0), d = +0;
     i = load1(100);
@@ -237,7 +239,11 @@ function asm(global, env, buffer) {
     switch64(i64(0)) | 0;
   }
 
-  var FUNCTION_TABLE_X = [illegalImport]; // must stay ok in the table, not legalized, as it will be called internally by the true type
+  function __emscripten_dceable_type_decls() { // dce-able, but this defines the type of fabsf which has no other use
+    fround(_fabsf(fround(0.0)));
+  }
+
+  var FUNCTION_TABLE_X = [illegalImport, _fabsf]; // must stay ok in the table, not legalized, as it will be called internally by the true type
 
   return { test64: test64, illegalParam : illegalParam, illegalResult: illegalResult, keepAlive: keepAlive };
 }
