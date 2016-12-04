@@ -57,6 +57,15 @@ struct LegalizeJSInterface : public Pass {
         auto* legal = makeLegalStub(im.get(), module, funcName);
         illegalToLegal[im->name] = funcName;
         newImports.push_back(legal);
+        // we need to use the legalized version in the table, as the import from JS
+        // is legal for JS. Our stub makes it look like a native wasm function.
+        for (auto& segment : module->table.segments) {
+          for (auto& name : segment.data) {
+            if (name == im->name) {
+              name = funcName;
+            }
+          }
+        }
       }
     }
     if (illegalToLegal.size() > 0) {
