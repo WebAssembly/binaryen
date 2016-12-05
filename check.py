@@ -21,7 +21,14 @@ import subprocess
 import sys
 
 from scripts.test.support import run_command, split_wast
-from scripts.test.shared import *
+from scripts.test.shared import (
+    ASM2WASM, BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
+    WASM_AS, WASM_OPT, WASM_SHELL, WASM_SHELL_EXE,
+    binary_format_check, delete_from_orbit, fail, fail_with_error,
+    fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
+    has_vanilla_llvm, minify_check, num_failures, options, tests,
+    requested, warnings
+)
 
 import scripts.test.s2wasm as s2wasm
 
