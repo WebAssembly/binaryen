@@ -39,7 +39,7 @@ install:
 
 before_script:
   # Check the style of a subset of Python code until the other code is updated.
-  - flake8 ./scripts/*
+  - flake8 ./scripts/
 
 script:
   - ./check.py --only-prepare
