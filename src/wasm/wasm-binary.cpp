@@ -890,6 +890,8 @@ void WasmBinaryBuilder::read() {
     uint32_t payloadLen = getU32LEB();
     if (pos + payloadLen > input.size()) throw ParseException("Section extends beyond end of input");
 
+    auto oldPos = pos;
+
     switch (sectionCode) {
       case BinaryConsts::Section::Start: readStart(); break;
       case BinaryConsts::Section::Memory: readMemory(); break;
@@ -909,23 +911,26 @@ void WasmBinaryBuilder::read() {
       }
       case BinaryConsts::Section::Data: readDataSegments(); break;
       case BinaryConsts::Section::Table: readFunctionTableDeclaration(); break;
-
-      default:
-        if (!readUserSection()) abort();
+      default: {
+        readUserSection();
+        pos = oldPos + payloadLen;
+      }
     }
+
+    // make sure we advanced exactly past this section
+    assert(pos == oldPos + payloadLen);
   }
 
   processFunctions();
 }
 
-bool WasmBinaryBuilder::readUserSection() {
+void WasmBinaryBuilder::readUserSection() {
   Name sectionName = getInlineString();
   if (sectionName.equals(BinaryConsts::UserSections::Name)) {
     readNames();
-    return true;
+  } else {
+    std::cerr << "unfamiliar section: " << sectionName << std::endl;
   }
-  std::cerr << "unfamiliar section: " << sectionName << std::endl;
-  return false;
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {

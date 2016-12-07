@@ -638,7 +638,7 @@ public:
   WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
 
   void read();
-  bool readUserSection();
+  void readUserSection();
   bool more() { return pos < input.size();}
 
   uint8_t getInt8();
