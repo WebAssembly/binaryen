@@ -104,7 +104,7 @@ function integrateWasmJS(Module) {
 
     // If we have a mem init file, do not trample it
     if (!memoryInitializer) {
-      oldView.set(newView.subarray(STATIC_BASE, STATIC_BASE + STATIC_BUMP), STATIC_BASE);
+      oldView.set(newView.subarray(Module['STATIC_BASE'], Module['STATIC_BASE'] + Module['STATIC_BUMP']), Module['STATIC_BASE']);
     }
 
     newView.set(oldView);
@@ -306,7 +306,7 @@ function integrateWasmJS(Module) {
     }
 
     if (!env['memoryBase']) {
-      env['memoryBase'] = STATIC_BASE; // tell the memory segments where to place themselves
+      env['memoryBase'] = Module['STATIC_BASE']; // tell the memory segments where to place themselves
     }
     if (!env['tableBase']) {
       env['tableBase'] = 0; // table starts at 0 by default, in dynamic linking this will change
