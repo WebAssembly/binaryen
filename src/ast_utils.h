@@ -742,6 +742,16 @@ struct ExpressionAnalyzer {
         continue;
       }
       hash(curr->_id);
+      // we often don't need to hash the type, as it is tied to other values
+      // we are hashing anyhow, but there are exceptions: for example, a
+      // get_local's type is determined by the function, so if we are
+      // hashing only expression fragments, then two from different
+      // functions may turn out the same even if the type differs. Likewise,
+      // if we hash between modules, then we need to take int account
+      // call_imports type, etc. The simplest thing is just to hash the
+      // type for all of them.
+      hash(curr->type);
+
       #define PUSH(clazz, what) \
         stack.push_back(curr->cast<clazz>()->what);
       #define HASH(clazz, what) \
