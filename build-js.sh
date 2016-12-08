@@ -63,6 +63,7 @@ echo "building wasm.js"
   src/wasm-js.cpp \
   src/passes/pass.cpp \
   src/passes/Print.cpp \
+  src/passes/LegalizeJSInterface.cpp \
   src/emscripten-optimizer/parser.cpp \
   src/emscripten-optimizer/simple_ast.cpp \
   src/emscripten-optimizer/optimizer-shared.cpp \
