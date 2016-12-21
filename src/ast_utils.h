@@ -324,7 +324,7 @@ struct ExpressionManipulator {
         return ret;
       }
       Expression* visitCallIndirect(CallIndirect *curr) {
-        auto* ret = builder.makeCallIndirect(curr->fullType, curr->target, {}, curr->type);
+        auto* ret = builder.makeCallIndirect(curr->fullType, copy(curr->target), {}, curr->type);
         for (Index i = 0; i < curr->operands.size(); i++) {
           ret->operands.push_back(copy(curr->operands[i]));
         }
