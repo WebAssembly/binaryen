@@ -227,9 +227,18 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
         assert(offset + segment.data.size() <= wasm.table.initial);
         for (size_t i = 0; i != segment.data.size(); ++i) {
-          EM_ASM_({
-            Module['outside']['wasmTable'][$0] = $1;
-          }, offset + i, wasm.getFunction(segment.data[i]));
+          Name name = segment.data[i];
+          auto* func = wasm.checkFunction(name);
+          if (func) {
+            EM_ASM_({
+              Module['outside']['wasmTable'][$0] = $1;
+            }, offset + i, func);
+          } else {
+            auto* import = wasm.getImport(name);
+            EM_ASM_({
+              Module['outside']['wasmTable'][$0] = Module['lookupImport'](Pointer_stringify($1), Pointer_stringify($2));
+            }, offset + i, import->module.str, import->base.str);
+          }
         }
       }
     }

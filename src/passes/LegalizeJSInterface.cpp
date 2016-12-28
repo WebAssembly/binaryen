@@ -22,6 +22,9 @@
 // stub methods added in this pass, that thunk i64s into i32, i32 and
 // vice versa as necessary.
 //
+// This pass also legalizes according to asm.js FFI rules, which
+// disallow f32s. TODO: an option to not do that, if it matters?
+//
 
 #include <wasm.h>
 #include <pass.h>
@@ -54,6 +57,15 @@ struct LegalizeJSInterface : public Pass {
         auto* legal = makeLegalStub(im.get(), module, funcName);
         illegalToLegal[im->name] = funcName;
         newImports.push_back(legal);
+        // we need to use the legalized version in the table, as the import from JS
+        // is legal for JS. Our stub makes it look like a native wasm function.
+        for (auto& segment : module->table.segments) {
+          for (auto& name : segment.data) {
+            if (name == im->name) {
+              name = funcName;
+            }
+          }
+        }
       }
     }
     if (illegalToLegal.size() > 0) {
@@ -94,9 +106,9 @@ private:
   template<typename T>
   bool isIllegal(T* t) {
     for (auto param : t->params) {
-      if (param == i64) return true;
+      if (param == i64 || param == f32) return true;
     }
-    if (t->result == i64) return true;
+    if (t->result == i64 || t->result == f32) return true;
     return false;
   }
 
@@ -115,6 +127,9 @@ private:
         call->operands.push_back(I64Utilities::recreateI64(builder, legal->params.size(), legal->params.size() + 1));
         legal->params.push_back(i32);
         legal->params.push_back(i32);
+      } else if (param == f32) {
+        call->operands.push_back(builder.makeUnary(DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)));
+        legal->params.push_back(f64);
       } else {
         call->operands.push_back(builder.makeGetLocal(legal->params.size(), param));
         legal->params.push_back(param);
@@ -126,17 +141,17 @@ private:
       auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
-      if (module->checkGlobal(TEMP_RET_0)) {
-        block->list.push_back(builder.makeSetGlobal(
-          TEMP_RET_0,
-          I64Utilities::getI64High(builder, index)
-        ));
-      } else {
-        block->list.push_back(builder.makeUnreachable()); // no way to emit the high bits :(
-      }
+      ensureTempRet0(module);
+      block->list.push_back(builder.makeSetGlobal(
+        TEMP_RET_0,
+        I64Utilities::getI64High(builder, index)
+      ));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
+    } else if (func->result == f32) {
+      legal->result = f64;
+      legal->body = builder.makeUnary(PromoteFloat32, call);
     } else {
       legal->result = func->result;
       legal->body = call;
@@ -173,6 +188,9 @@ private:
         call->operands.push_back(I64Utilities::getI64High(builder, func->params.size()));
         type->params.push_back(i32);
         type->params.push_back(i32);
+      } else if (param == f32) {
+        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)));
+        type->params.push_back(f64);
       } else {
         call->operands.push_back(builder.makeGetLocal(func->params.size(), param));
         type->params.push_back(param);
@@ -183,13 +201,14 @@ private:
     if (im->functionType->result == i64) {
       call->type = i32;
       Expression* get;
-      if (module->checkGlobal(TEMP_RET_0)) {
-        get = builder.makeGetGlobal(TEMP_RET_0, i32);
-      } else {
-        get = builder.makeUnreachable(); // no way to emit the high bits :(
-      }
+      ensureTempRet0(module);
+      get = builder.makeGetGlobal(TEMP_RET_0, i32);
       func->body = I64Utilities::recreateI64(builder, call, get);
       type->result = i32;
+    } else if (im->functionType->result == f32) {
+      call->type = f64;
+      func->body = builder.makeUnary(DemoteFloat64, call);
+      type->result = f64;
     } else {
       call->type = im->functionType->result;
       func->body = call;
@@ -200,6 +219,17 @@ private:
     module->addFunction(func);
     module->addFunctionType(type);
     return legal;
+  }
+
+  void ensureTempRet0(Module* module) {
+    if (!module->checkGlobal(TEMP_RET_0)) {
+      Global* global = new Global;
+      global->name = TEMP_RET_0;
+      global->type = i32;
+      global->init = module->allocator.alloc<Const>()->set(Literal(int32_t(0)));
+      global->mutable_ = true;
+      module->addGlobal(global);
+    }
   }
 };
 

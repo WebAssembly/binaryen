@@ -7,6 +7,8 @@ function asm(global, env, buffer) {
   var Math_fround = global.Math.fround;
   var Math_abs = global.Math.abs;
   var Math_ceil = global.Math.ceil;
+  var Math_max = global.Math.max;
+  var Math_min = global.Math.min;
   var tempDoublePtr = env.tempDoublePtr | 0;
   var n = env.gb | 0;
   var STACKTOP = env.STACKTOP | 0;
@@ -157,6 +159,13 @@ function asm(global, env, buffer) {
     x = Math_abs(0) | 0;
     y = +Math_abs(0.0);
     z = Math_fround(Math_abs(Math_fround(0)));
+  }
+  function minmax() {
+    var x = 0.0, y = 0.0, z = Math_fround(0), w = Math_fround(0);
+    x = +Math_min(+x, +y);
+    y = +Math_max(+x, +y);
+    z = Math_fround(Math_min(Math_fround(z), Math_fround(w)));
+    w = Math_fround(Math_max(Math_fround(z), Math_fround(w)));
   }
   function neg() {
     var x = Math_fround(0);
@@ -652,6 +661,19 @@ function asm(global, env, buffer) {
     HEAPF64[10] = Math_fround(x|0);
   }
 
+  function relocatableAndModules() {
+    ftCall_v(10); // function table call
+    mftCall_v(20); // possible inter-module function table call
+    return ftCall_idi(30, 1.5, 200) | 0; // with args
+  }
+
+  function exported_f32_user(x, y, z) {
+    x = x | 0;
+    y = Math_fround(y);
+    z = +z;
+    return Math_fround(y);
+  }
+
   function v() {
   }
   function vi(x) {
@@ -663,6 +685,6 @@ function asm(global, env, buffer) {
   var FUNCTION_TABLE_c = [ z, cneg, z, z, z, z, z, z ];
   var FUNCTION_TABLE_vi = [ vi, vi, vi, vi, vi, vi, vi, vi ];
 
-  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround };
+  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround, exportedNumber: 42, relocatableAndModules: relocatableAndModules, exported_f32_user: exported_f32_user };
 }
 

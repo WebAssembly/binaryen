@@ -86,7 +86,7 @@ void PassRegistry::registerPasses() {
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
   registerPass("remove-unused-brs", "removes breaks from locations that are not needed", createRemoveUnusedBrsPass);
-  registerPass("remove-unused-functions", "removes unused functions", createRemoveUnusedFunctionsPass);
+  registerPass("remove-unused-module-elements", "removes unused module elements", createRemoveUnusedModuleElementsPass);
   registerPass("remove-unused-names", "removes names from locations that are never branched to", createRemoveUnusedNamesPass);
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
@@ -103,7 +103,7 @@ void PassRunner::addDefaultOptimizationPasses() {
   add("duplicate-function-elimination");
   addDefaultFunctionOptimizationPasses();
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
-  add("remove-unused-functions");
+  add("remove-unused-module-elements");
   add("memory-packing");
 }
 
@@ -133,7 +133,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPasses() {
   add("duplicate-function-elimination");
-  add("remove-unused-functions");
+  add("remove-unused-module-elements");
   add("memory-packing");
 }
 

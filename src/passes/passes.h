@@ -46,7 +46,7 @@ Pass *createRelooperJumpThreadingPass();
 Pass *createRemoveImportsPass();
 Pass *createRemoveMemoryPass();
 Pass *createRemoveUnusedBrsPass();
-Pass *createRemoveUnusedFunctionsPass();
+Pass *createRemoveUnusedModuleElementsPass();
 Pass *createRemoveUnusedNamesPass();
 Pass *createReorderFunctionsPass();
 Pass *createReorderLocalsPass();

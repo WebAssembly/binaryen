@@ -1609,10 +1609,26 @@ public:
   }
   // TODO: remove* for other elements
 
-  void updateFunctionsMap() {
+  void updateMaps() {
     functionsMap.clear();
-    for (auto& func : functions) {
-      functionsMap[func->name] = func.get();
+    for (auto& curr : functions) {
+      functionsMap[curr->name] = curr.get();
+    }
+    functionTypesMap.clear();
+    for (auto& curr : functionTypes) {
+      functionTypesMap[curr->name] = curr.get();
+    }
+    importsMap.clear();
+    for (auto& curr : imports) {
+      importsMap[curr->name] = curr.get();
+    }
+    exportsMap.clear();
+    for (auto& curr : exports) {
+      exportsMap[curr->name] = curr.get();
+    }
+    globalsMap.clear();
+    for (auto& curr : globals) {
+      globalsMap[curr->name] = curr.get();
     }
   }
 };

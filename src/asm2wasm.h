@@ -105,7 +105,11 @@ Name I32_CTTZ("i32_cttz"),
      STORE4("store4"),
      STORE8("store8"),
      STOREF("storef"),
-     STORED("stored");
+     STORED("stored"),
+     FTCALL("ftCall_"),
+     MFTCALL("mftCall_"),
+     MAX_("max"),
+     MIN_("min");
 
 // Utilities
 
@@ -278,6 +282,8 @@ private:
   IString Math_floor;
   IString Math_ceil;
   IString Math_sqrt;
+  IString Math_max;
+  IString Math_min;
 
   IString llvm_cttz_i32;
 
@@ -604,6 +610,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(Math_sqrt.isNull());
           Math_sqrt = name;
           return;
+        } else if (imported[2] == MAX_) {
+          assert(Math_max.isNull());
+          Math_max = name;
+          return;
+        } else if (imported[2] == MIN_) {
+          assert(Math_min.isNull());
+          Math_min = name;
+          return;
         }
       }
       std::string fullName = module[1][1]->getCString();
@@ -801,7 +815,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           //       index 0 in each table is the null func, and each other index should only have one
           //       non-null func. However, that breaks down when function pointer casts are emulated.
           if (wasm.table.segments.size() == 0) {
-            wasm.table.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))));
+            wasm.table.segments.emplace_back(builder.makeGetGlobal(Name("tableBase"), i32));
           }
           auto& segment = wasm.table.segments[0];
           functionTableStarts[name] = segment.data.size(); // this table starts here
@@ -831,25 +845,44 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       for (unsigned k = 0; k < contents->size(); k++) {
         Ref pair = contents[k];
         IString key = pair[0]->getIString();
-        assert(pair[1][0] == NAME);
-        IString value = pair[1][1]->getIString();
-        if (key == Name("_emscripten_replace_memory")) {
-          // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
-          assert(!wasm.checkFunction(value));
-          continue;
-        } else if (key == UDIVMODDI4) {
-          udivmoddi4 = value;
-        } else if (key == GET_TEMP_RET0) {
-          getTempRet0 = value;
-        }
-        if (exported.count(key) > 0) {
-          // asm.js allows duplicate exports, but not wasm. use the last, like asm.js
-          exported[key]->value = value;
+        if (pair[1][0] == NAME) {
+          // exporting a function
+          IString value = pair[1][1]->getIString();
+          if (key == Name("_emscripten_replace_memory")) {
+            // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
+            assert(!wasm.checkFunction(value));
+            continue;
+          } else if (key == UDIVMODDI4) {
+            udivmoddi4 = value;
+          } else if (key == GET_TEMP_RET0) {
+            getTempRet0 = value;
+          }
+          if (exported.count(key) > 0) {
+            // asm.js allows duplicate exports, but not wasm. use the last, like asm.js
+            exported[key]->value = value;
+          } else {
+            auto* export_ = new Export;
+            export_->name = key;
+            export_->value = value;
+            export_->kind = ExternalKind::Function;
+            wasm.addExport(export_);
+            exported[key] = export_;
+          }
         } else {
+          // export a number. create a global and export it
+          assert(pair[1][0] == NUM);
+          assert(exported.count(key) == 0);
+          auto value = pair[1][1]->getInteger();
+          auto global = new Global();
+          global->name = key;
+          global->type = i32;
+          global->init = builder.makeConst(Literal(int32_t(value)));
+          global->mutable_ = false;
+          wasm.addGlobal(global);
           auto* export_ = new Export;
           export_->name = key;
-          export_->value = value;
-          export_->kind = ExternalKind::Function;
+          export_->value = global->name;
+          export_->kind = ExternalKind::Global;
           wasm.addExport(export_);
           exported[key] = export_;
         }
@@ -877,7 +910,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       import->functionType = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm);
     } else if (import->module != ASM2WASM) { // special-case the special module
-      // never actually used
+      // never actually used, which means we don't know the function type since the usage tells us, so illegal for it to remain
       toErase.push_back(name);
     }
   }
@@ -956,14 +989,19 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
-      auto add = curr->target->cast<Binary>();
+      // note that for an ftCall or mftCall, we have no asm.js mask, so have nothing to do here
+      auto* add = curr->target->dynCast<Binary>();
+      if (!add) return;
       if (add->right->is<CallImport>()) {
-        auto offset = add->right->cast<CallImport>();
+        auto* offset = add->right->cast<CallImport>();
         auto tableName = offset->target;
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
         add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       } else {
-        auto offset = add->left->cast<CallImport>();
+        auto* offset = add->left->dynCast<CallImport>();
+        if (!offset) return;
         auto tableName = offset->target;
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
         add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       }
     }
@@ -977,10 +1015,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   passRunner.add<FinalizeCalls>(this);
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
-  if (wasmOnly) {
-    // we didn't legalize i64s in fastcomp, and so must legalize the interface to the outside
-    passRunner.add("legalize-js-interface");
-  }
+  passRunner.add("legalize-js-interface");
   if (runOptimizationPasses) {
     // autodrop can add some garbage
     passRunner.add("vacuum");
@@ -1573,6 +1608,23 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           return ret;
         }
+        if (name == Math_max || name == Math_min) {
+          // overloaded on type: f32 or f64
+          assert(ast[2]->size() == 2);
+          auto ret = allocator.alloc<Binary>();
+          ret->left = process(ast[2][0]);
+          ret->right = process(ast[2][1]);
+          if (ret->left->type == f32) {
+            ret->op = name == Math_max ? MaxFloat32 : MinFloat32;
+          } else if (ret->left->type == f64) {
+            ret->op = name == Math_max ? MaxFloat64 : MinFloat64;
+          } else {
+            abort();
+          }
+          ret->type = ret->left->type;
+          return ret;
+        }
+        bool tableCall = false;
         if (wasmOnly) {
           auto num = ast[2]->size();
           switch (name.str[0]) {
@@ -1676,10 +1728,25 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             default: {}
           }
         }
+        // ftCall_* and mftCall_* represent function table calls, either from the outside, or
+        // from the inside of the module. when compiling to wasm, we can just convert those
+        // into table calls
+        if ((name.str[0] == 'f' && strncmp(name.str, FTCALL.str, 7) == 0) ||
+            (name.str[0] == 'm' && strncmp(name.str, MFTCALL.str, 8) == 0)) {
+          tableCall = true;
+        }
         Expression* ret;
         ExpressionList* operands;
         bool import = false;
-        if (wasm.checkImport(name)) {
+        Index firstOperand = 0;
+        Ref args = ast[2];
+        if (tableCall) {
+          auto specific = allocator.alloc<CallIndirect>();
+          specific->target = process(args[0]);
+          firstOperand = 1;
+          operands = &specific->operands;
+          ret = specific;
+        } else if (wasm.checkImport(name)) {
           import = true;
           auto specific = allocator.alloc<CallImport>();
           specific->target = name;
@@ -1691,9 +1758,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           operands = &specific->operands;
           ret = specific;
         }
-        Ref args = ast[2];
-        for (unsigned i = 0; i < args->size(); i++) {
+        for (unsigned i = firstOperand; i < args->size(); i++) {
           operands->push_back(process(args[i]));
+        }
+        if (tableCall) {
+          auto specific = ret->dynCast<CallIndirect>();
+          // note that we could also get the type from the suffix of the name, e.g., mftCall_vi
+          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands);
+          specific->fullType = fullType->name;
+          specific->type = fullType->result;
         }
         if (import) {
           Ref parent = astStackHelper.getParent();

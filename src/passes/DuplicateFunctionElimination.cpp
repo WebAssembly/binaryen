@@ -127,7 +127,7 @@ struct DuplicateFunctionElimination : public Pass {
         v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
           return duplicates.count(curr->name) > 0;
         }), v.end());
-        module->updateFunctionsMap();
+        module->updateMaps();
         // replace direct calls
         PassRunner replacerRunner(module);
         replacerRunner.add<FunctionReplacer>(&replacements);

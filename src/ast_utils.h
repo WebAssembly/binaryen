@@ -68,34 +68,6 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
   }
 };
 
-// Finds all functions that are reachable via direct calls.
-
-struct DirectCallGraphAnalyzer : public PostWalker<DirectCallGraphAnalyzer, Visitor<DirectCallGraphAnalyzer>> {
-  Module *module;
-  std::vector<Function*> queue;
-  std::unordered_set<Function*> reachable;
-
-  DirectCallGraphAnalyzer(Module* module, const std::vector<Function*>& root) : module(module) {
-    for (auto* curr : root) {
-      queue.push_back(curr);
-    }
-    while (queue.size()) {
-      auto* curr = queue.back();
-      queue.pop_back();
-      if (reachable.count(curr) == 0) {
-        reachable.insert(curr);
-        walk(curr->body);
-      }
-    }
-  }
-  void visitCall(Call *curr) {
-    auto* target = module->getFunction(curr->target);
-    if (reachable.count(target) == 0) {
-      queue.push_back(target);
-    }
-  }
-};
-
 // Look for side effects, including control flow
 // TODO: optimize
 
