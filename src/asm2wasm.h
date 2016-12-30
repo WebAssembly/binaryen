@@ -649,19 +649,24 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       type = WasmType::f64;
     }
     if (type != WasmType::none) {
-      // we need imported globals to be mutable, but wasm doesn't support that yet, so we must
-      // import an immutable and create a mutable global initialized to its value
-      import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
+      // this is a global
       import->kind = ExternalKind::Global;
       import->globalType = type;
       mappedGlobals.emplace(name, type);
-      {
-        auto global = new Global();
-        global->name = name;
-        global->type = type;
-        global->init = builder.makeGetGlobal(import->name, type);
-        global->mutable_ = true;
-        wasm.addGlobal(global);
+      // tableBase and memoryBase are used as segment/element offsets, and must be constant;
+      // otherwise, an asm.js import of a constant is mutable, e.g. STACKTOP
+      if (name != "tableBase" && name != "memoryBase") {
+        // we need imported globals to be mutable, but wasm doesn't support that yet, so we must
+        // import an immutable and create a mutable global initialized to its value
+        import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
+        {
+          auto global = new Global();
+          global->name = name;
+          global->type = type;
+          global->init = builder.makeGetGlobal(import->name, type);
+          global->mutable_ = true;
+          wasm.addGlobal(global);
+        }
       }
     } else {
       import->kind = ExternalKind::Function;
