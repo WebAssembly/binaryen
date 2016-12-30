@@ -698,15 +698,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitImport(child.get());
       o << maybeNewLine;
     }
-    if (curr->table.exists) {
-      visitTable(&curr->table); // Prints its own newlines
-    }
-    visitMemory(&curr->memory);
     for (auto& child : curr->globals) {
       doIndent(o, indent);
       visitGlobal(child.get());
       o << maybeNewLine;
     }
+    if (curr->table.exists) {
+      visitTable(&curr->table); // Prints its own newlines
+    }
+    visitMemory(&curr->memory);
     for (auto& child : curr->exports) {
       doIndent(o, indent);
       visitExport(child.get());
