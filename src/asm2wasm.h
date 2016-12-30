@@ -1064,8 +1064,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   wasm.table.exists = true;
   wasm.table.imported = true;
 
-  // Import memory offset
-  {
+  // Import memory offset, if not already there
+  if (!wasm.checkImport("memoryBase") && !wasm.checkGlobal("memoryBase")) {
     auto* import = new Import;
     import->name = Name("memoryBase");
     import->module = Name("env");
@@ -1075,8 +1075,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.addImport(import);
   }
 
-  // Import table offset
-  {
+  // Import table offset, if not already there
+  if (!wasm.checkImport("tableBase") && !wasm.checkGlobal("tableBase")) {
     auto* import = new Import;
     import->name = Name("tableBase");
     import->module = Name("env");
