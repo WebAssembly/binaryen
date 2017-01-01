@@ -1012,17 +1012,17 @@ void BinaryenSetAPITracing(int on) {
   tracing = on;
 
   if (tracing) {
-    std::cout << "// beginning a Binaryen API trace\n";
-    std::cout << "#include <math.h>\n";
-    std::cout << "#include <map>\n";
-    std::cout << "#include \"src/binaryen-c.h\"\n";
-    std::cout << "int main() {\n";
-    std::cout << "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n";
-    std::cout << "  std::map<size_t, BinaryenExpressionRef> expressions;\n";
-    std::cout << "  std::map<size_t, BinaryenFunctionRef> functions;\n";
-    std::cout << "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n";
-    std::cout << "  BinaryenModuleRef the_module = NULL;\n";
-    std::cout << "  RelooperRef the_relooper = NULL;\n";
+    std::cout << "// beginning a Binaryen API trace\n"
+                 "#include <math.h>\n"
+                 "#include <map>\n"
+                 "#include \"src/binaryen-c.h\"\n"
+                 "int main() {\n"
+                 "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n"
+                 "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
+                 "  std::map<size_t, BinaryenFunctionRef> functions;\n"
+                 "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
+                 "  BinaryenModuleRef the_module = NULL;\n"
+                 "  RelooperRef the_relooper = NULL;\n";
   } else {
     std::cout << "  return 0;\n";
     std::cout << "}\n";

@@ -30,18 +30,18 @@ namespace wasm {
 struct PrintCallGraph : public Pass {
   void run(PassRunner* runner, Module* module) override {
     std::ostream &o = std::cout;
-    o << "digraph call {\n";
-    o << "  rankdir = LR;\n";
-    o << "  subgraph cluster_key {\n";
-    o << "    node [shape=box, fontname=courier, fontsize=10];\n";
-    o << "    edge [fontname=courier, fontsize=10];\n";
-    o << "    label = \"Key\";\n";
-    o << "    \"Import\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
-    o << "    \"Export\" [style=\"filled\", fillcolor=\"gray\"];\n";
-    o << "    \"Indirect Target\" [style=\"filled, rounded\", fillcolor=\"white\"];\n";
-    o << "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct Call\"];\n";
-    o << "  }\n\n";
-    o << "  node [shape=box, fontname=courier, fontsize=10];\n";
+    o << "digraph call {\n"
+         "  rankdir = LR;\n"
+         "  subgraph cluster_key {\n"
+         "    node [shape=box, fontname=courier, fontsize=10];\n"
+         "    edge [fontname=courier, fontsize=10];\n"
+         "    label = \"Key\";\n"
+         "    \"Import\" [style=\"filled\", fillcolor=\"turquoise\"];\n"
+         "    \"Export\" [style=\"filled\", fillcolor=\"gray\"];\n"
+         "    \"Indirect Target\" [style=\"filled, rounded\", fillcolor=\"white\"];\n"
+         "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct Call\"];\n"
+         "  }\n\n"
+         "  node [shape=box, fontname=courier, fontsize=10];\n";
 
     // All Functions
     for (auto& func : module->functions) {
