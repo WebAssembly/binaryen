@@ -906,7 +906,7 @@ void WasmBinaryBuilder::read() {
         // imports can read global imports, so we run getGlobalName and create the mapping
         // but after we read globals, we need to add the internal globals too, so do that here
         mappedGlobals.clear(); // wipe the mapping
-        getGlobalName(0); // force rebuild
+        getGlobalName(-1); // force rebuild
         break;
       }
       case BinaryConsts::Section::Data: readDataSegments(); break;
@@ -1358,6 +1358,7 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
       mappedGlobals[index] = wasm.globals[i]->name;
     }
   }
+  if (index == Index(-1)) return Name("null"); // just a force-rebuild
   assert(mappedGlobals.count(index));
   return mappedGlobals[index];
 }
