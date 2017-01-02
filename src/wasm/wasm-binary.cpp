@@ -879,6 +879,9 @@ void WasmBinaryWriter::visitDrop(Drop *curr) {
   o << int8_t(BinaryConsts::Drop);
 }
 
+// reader
+
+static Name RETURN_BREAK("binaryen|break-to-return");
 
 void WasmBinaryBuilder::read() {
 
@@ -1244,15 +1247,22 @@ void WasmBinaryBuilder::readFunctions() {
       // process the function body
       if (debug) std::cerr << "processing function: " << i << std::endl;
       nextLabel = 0;
+      breaksToReturn = false;
       // process body
       assert(breakStack.empty());
+      breakStack.emplace_back(RETURN_BREAK, func->result != none); // the break target for the function scope
       assert(expressionStack.empty());
       assert(depth == 0);
       func->body = getMaybeBlock(func->result);
       assert(depth == 0);
-      assert(breakStack.empty());
+      assert(breakStack.size() == 1);
+      breakStack.pop_back();
       assert(expressionStack.empty());
       assert(pos == endOfFunction);
+      if (breaksToReturn) {
+        // we broke to return, so we need an outer block to break to
+        func->body = Builder(wasm).blockifyWithName(func->body, RETURN_BREAK);
+      }
     }
     currFunction = nullptr;
     functions.push_back(func);
@@ -1609,10 +1619,17 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
 }
 
 WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset) {
-  if (debug) std::cerr << "getBreakTarget "<<offset<<std::endl;
-  assert(breakStack.size() - 1 - offset < breakStack.size());
-  if (debug) std::cerr <<"breaktarget "<< breakStack[breakStack.size() - 1 - offset].name<< " arity "<<breakStack[breakStack.size() - 1 - offset].arity<< std::endl;
-  return breakStack[breakStack.size() - 1 - offset];
+  if (debug) std::cerr << "getBreakTarget " << offset << std::endl;
+  size_t index = breakStack.size() - 1 - offset;
+  assert(index < breakStack.size());
+  if (index == 0) {
+    // trying to access the topmost element means we break out
+    // to the function scope, doing in effect a return, we'll
+    // need to create a block for that.
+    breaksToReturn = true;
+  }
+  if (debug) std::cerr << "breaktarget "<< breakStack[index].name << " arity " << breakStack[index].arity <<  std::endl;
+  return breakStack[index];
 }
 
 void WasmBinaryBuilder::visitBreak(Break *curr, uint8_t code) {

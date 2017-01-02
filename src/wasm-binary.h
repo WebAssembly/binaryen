@@ -695,8 +695,13 @@ public:
   Expression* readExpression();
   void readGlobals();
 
-  struct BreakTarget { Name name; int arity;};
+  struct BreakTarget {
+    Name name;
+    int arity;
+    BreakTarget(Name name, int arity) : name(name), arity(arity) {}
+  };
   std::vector<BreakTarget> breakStack;
+  bool breaksToReturn; // whether a break is done to the function scope, which is in effect a return
 
   std::vector<Expression*> expressionStack;
 
