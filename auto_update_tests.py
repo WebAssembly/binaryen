@@ -177,4 +177,15 @@ for t in os.listdir('test'):
     actual = actual.replace('printing before:\n', '')
     open(t, 'w').write(actual)
 
+print '\n[ checking wasm-dis on provided binaries... ]\n'
+
+for t in os.listdir('test'):
+  if t.endswith('.wasm') and not t.startswith('spec'):
+    print '..', t
+    t = os.path.join('test', t)
+    cmd = [os.path.join('bin', 'wasm-dis'), t]
+    actual = run_command(cmd)
+
+    open(t + '.fromBinary', 'w').write(actual)
+
 print '\n[ success! ]'
