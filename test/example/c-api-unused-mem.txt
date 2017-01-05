@@ -1,0 +1,101 @@
+(module
+  (type $rustfn-0-3 (func))
+  (type $__wasm_start (func))
+  (memory $0 1024 1024)
+  (export "memory" (memory $0))
+  (export "main" (func $main))
+  (export "rust_entry" (func $__wasm_start))
+  (func $main (type $rustfn-0-3)
+    (local $0 i32)
+    (local $1 i32)
+    (local $2 i64)
+    (block $block$1$break
+      (set_local $0
+        (i32.load
+          (i32.const 0)
+        )
+      )
+      (block
+        (br $block$1$break)
+      )
+    )
+    (block
+      (block $block$2$break
+        (block $bb0
+        )
+        (block
+          (br $block$2$break)
+        )
+      )
+      (block
+        (block $bb1
+          (i32.store
+            (i32.const 0)
+            (get_local $0)
+          )
+          (return)
+        )
+      )
+    )
+  )
+  (func $__wasm_start (type $__wasm_start)
+    (i32.store
+      (i32.const 0)
+      (i32.const 65535)
+    )
+    (call $main)
+  )
+)
+195
+(module
+  (type $0 (func))
+  (type $1 (func))
+  (memory $0 1024 1024)
+  (export "memory" (memory $0))
+  (export "main" (func $main))
+  (export "rust_entry" (func $__wasm_start))
+  (func $main (type $0)
+    (local $var$0 i32)
+    (local $var$1 i32)
+    (local $var$2 i64)
+    (block $label$0
+      (block $label$1
+        (set_local $var$0
+          (i32.load
+            (i32.const 0)
+          )
+        )
+        (block $label$2
+          (br $label$1)
+        )
+      )
+      (block $label$3
+        (block $label$4
+          (block $label$5
+          )
+          (block $label$6
+            (br $label$4)
+          )
+        )
+        (block $label$7
+          (block $label$8
+            (i32.store
+              (i32.const 0)
+              (get_local $var$0)
+            )
+            (return)
+          )
+        )
+      )
+    )
+  )
+  (func $__wasm_start (type $1)
+    (block $label$0
+      (i32.store
+        (i32.const 0)
+        (i32.const 65535)
+      )
+      (call $main)
+    )
+  )
+)

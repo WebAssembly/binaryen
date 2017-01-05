@@ -808,6 +808,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   auto* wasm = (Module*)module;
   wasm->memory.initial = initial;
   wasm->memory.max = maximum;
+  wasm->memory.exists = true;
   if (exportName) {
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;
