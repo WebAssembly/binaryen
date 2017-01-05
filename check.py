@@ -23,7 +23,7 @@ import sys
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
     ASM2WASM, BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
-    WASM_AS, WASM_OPT, WASM_SHELL, WASM_SHELL_EXE,
+    WASM_AS, WASM_OPT, WASM_SHELL, WASM_SHELL_EXE, WASM_DIS,
     binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
@@ -174,6 +174,20 @@ for t in tests:
     binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo') # test without debuginfo
 
     minify_check(t)
+
+print '\n[ checking wasm-dis on provided binaries... ]\n'
+
+for t in tests:
+  if t.endswith('.wasm') and not t.startswith('spec'):
+    print '..', t
+    t = os.path.join(options.binaryen_test, t)
+    cmd = WASM_DIS + [t]
+    actual = run_command(cmd)
+
+    with open(t + '.fromBinary') as f:
+      expected = f.read()
+      if actual != expected:
+        fail(actual, expected)
 
 print '\n[ checking wasm-shell spec testcases... ]\n'
 

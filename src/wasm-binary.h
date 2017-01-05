@@ -704,6 +704,7 @@ public:
 
   void processExpressions();
   Expression* popExpression();
+  Expression* popNonVoidExpression();
 
   std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
 
@@ -736,7 +737,7 @@ public:
     auto num = type->params.size();
     call->operands.resize(num);
     for (size_t i = 0; i < num; i++) {
-      call->operands[num - i - 1] = popExpression();
+      call->operands[num - i - 1] = popNonVoidExpression();
     }
     call->type = type->result;
   }
