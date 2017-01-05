@@ -184,9 +184,9 @@ for t in tests:
     cmd = WASM_DIS + [t]
     actual = run_command(cmd)
 
-    expected = open(t + '.fromBinary').read()
-    if actual != expected:
-      fail(actual, expected)
+    with open(t + '.fromBinary') as expected:
+      if actual != expected:
+        fail(actual, expected)
 
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
