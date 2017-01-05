@@ -690,6 +690,7 @@ public:
   void readFunctions();
 
   std::map<Export*, Index> exportIndexes;
+  std::vector<Export*> exportOrder;
   void readExports();
 
   Expression* readExpression();

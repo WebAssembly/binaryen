@@ -1271,6 +1271,7 @@ void WasmBinaryBuilder::readExports() {
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
     exportIndexes[curr] = index;
+    exportOrder.push_back(curr);
   }
 }
 
@@ -1346,16 +1347,16 @@ void WasmBinaryBuilder::processFunctions() {
     wasm.start = getFunctionIndexName(startIndex);
   }
 
-  for (auto& iter : exportIndexes) {
-    Export* curr = iter.first;
+  for (auto* curr : exportOrder) {
+    auto index = exportIndexes[curr];
     switch (curr->kind) {
       case ExternalKind::Function: {
-        curr->value = getFunctionIndexName(iter.second);
+        curr->value = getFunctionIndexName(index);
         break;
       }
       case ExternalKind::Table: curr->value = Name::fromInt(0); break;
       case ExternalKind::Memory: curr->value = Name::fromInt(0); break;
-      case ExternalKind::Global: curr->value = getGlobalName(iter.second); break;
+      case ExternalKind::Global: curr->value = getGlobalName(index); break;
       default: WASM_UNREACHABLE();
     }
     wasm.addExport(curr);
