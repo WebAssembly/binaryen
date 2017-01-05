@@ -184,7 +184,8 @@ for t in tests:
     cmd = WASM_DIS + [t]
     actual = run_command(cmd)
 
-    with open(t + '.fromBinary') as expected:
+    with open(t + '.fromBinary') as f:
+      expected = f.read()
       if actual != expected:
         fail(actual, expected)
 
