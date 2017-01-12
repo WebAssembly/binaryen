@@ -2089,6 +2089,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Ref cases = ast[2];
       bool seen = false;
       int64_t min = 0; // the lowest index we see; we will offset to it
+      int64_t max = 0; // the highest, to check if the range is too big
       for (unsigned i = 0; i < cases->size(); i++) {
         Ref curr = cases[i];
         Ref condition = curr[0];
@@ -2097,71 +2098,130 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           if (!seen) {
             seen = true;
             min = index;
+            max = index;
           } else {
             if (index < min) min = index;
+            if (index > max) max = index;
           }
         }
       }
-      if (br->condition->type == i32) {
-        Binary* offsetor = allocator.alloc<Binary>();
-        offsetor->op = BinaryOp::SubInt32;
-        offsetor->left = br->condition;
-        offsetor->right = builder.makeConst(Literal(int32_t(min)));
-        offsetor->type = i32;
-        br->condition = offsetor;
-      } else {
-        assert(br->condition->type == i64);
-        // 64-bit condition. after offsetting it must be in a reasonable range, but the offsetting itself must be 64-bit
-        Binary* offsetor = allocator.alloc<Binary>();
-        offsetor->op = BinaryOp::SubInt64;
-        offsetor->left = br->condition;
-        offsetor->right = builder.makeConst(Literal(int64_t(min)));
-        offsetor->type = i64;
-        br->condition = builder.makeUnary(UnaryOp::WrapInt64, offsetor); // TODO: check this fits in 32 bits
-      }
+      // we can use a switch if it's not too big
+      auto range = double(max) - double(min); // test using doubles to avoid UB
+      bool canSwitch = 0 <= range && range < 10240;
 
       auto top = allocator.alloc<Block>();
-      top->list.push_back(br);
-      top->finalize();
-
-      for (unsigned i = 0; i < cases->size(); i++) {
-        Ref curr = cases[i];
-        Ref condition = curr[0];
-        Ref body = curr[1];
-        auto case_ = processStatements(body, 0);
-        Name name;
-        if (condition->isNull()) {
-          name = br->default_ = nameMapper.pushLabelName("switch-default");
+      if (canSwitch) {
+        if (br->condition->type == i32) {
+          Binary* offsetor = allocator.alloc<Binary>();
+          offsetor->op = BinaryOp::SubInt32;
+          offsetor->left = br->condition;
+          offsetor->right = builder.makeConst(Literal(int32_t(min)));
+          offsetor->type = i32;
+          br->condition = offsetor;
         } else {
-          auto index = getLiteral(condition).getInteger();
-          assert(index >= min);
-          index -= min;
-          assert(index >= 0);
-          uint64_t index_s = index;
-          name = nameMapper.pushLabelName("switch-case");
-          if (br->targets.size() <= index_s) {
-            br->targets.resize(index_s + 1);
-          }
-          br->targets[index_s] = name;
+          assert(br->condition->type == i64);
+          // 64-bit condition. after offsetting it must be in a reasonable range, but the offsetting itself must be 64-bit
+          Binary* offsetor = allocator.alloc<Binary>();
+          offsetor->op = BinaryOp::SubInt64;
+          offsetor->left = br->condition;
+          offsetor->right = builder.makeConst(Literal(int64_t(min)));
+          offsetor->type = i64;
+          br->condition = builder.makeUnary(UnaryOp::WrapInt64, offsetor); // TODO: check this fits in 32 bits
         }
-        auto next = allocator.alloc<Block>();
+
+        top->list.push_back(br);
+        top->finalize();
+
+        for (unsigned i = 0; i < cases->size(); i++) {
+          Ref curr = cases[i];
+          Ref condition = curr[0];
+          Ref body = curr[1];
+          auto case_ = processStatements(body, 0);
+          Name name;
+          if (condition->isNull()) {
+            name = br->default_ = nameMapper.pushLabelName("switch-default");
+          } else {
+            auto index = getLiteral(condition).getInteger();
+            assert(index >= min);
+            index -= min;
+            assert(index >= 0);
+            uint64_t index_s = index;
+            name = nameMapper.pushLabelName("switch-case");
+            if (br->targets.size() <= index_s) {
+              br->targets.resize(index_s + 1);
+            }
+            br->targets[index_s] = name;
+          }
+          auto next = allocator.alloc<Block>();
+          top->name = name;
+          next->list.push_back(top);
+          next->list.push_back(case_);
+          next->finalize();
+          top = next;
+          nameMapper.popLabelName(name);
+        }
+
+        // the outermost block can be branched to to exit the whole switch
         top->name = name;
-        next->list.push_back(top);
-        next->list.push_back(case_);
-        next->finalize();
-        top = next;
-        nameMapper.popLabelName(name);
-      }
 
-      // the outermost block can be branched to to exit the whole switch
-      top->name = name;
+        // ensure a default
+        if (br->default_.isNull()) {
+          br->default_ = top->name;
+        }
+        for (size_t i = 0; i < br->targets.size(); i++) {
+          if (br->targets[i].isNull()) br->targets[i] = br->default_;
+        }
+      } else {
+        // we can't switch, make an if-chain instead of br_table
+        auto var = Builder::addVar(function, br->condition->type);
+        top->list.push_back(builder.makeSetLocal(var, br->condition));
+        auto* brHolder = top;
+        If* chain = nullptr;
+        If* first = nullptr;
 
-      // ensure a default
-      if (br->default_.isNull()) {
-        br->default_ = top->name;
-      }
-      for (size_t i = 0; i < br->targets.size(); i++) {
-        if (br->targets[i].isNull()) br->targets[i] = br->default_;
+        for (unsigned i = 0; i < cases->size(); i++) {
+          Ref curr = cases[i];
+          Ref condition = curr[0];
+          Ref body = curr[1];
+          auto case_ = processStatements(body, 0);
+          Name name;
+          if (condition->isNull()) {
+            name = br->default_ = nameMapper.pushLabelName("switch-default");
+          } else {
+            name = nameMapper.pushLabelName("switch-case");
+            auto* iff = builder.makeIf(
+              builder.makeBinary(
+                br->condition->type == i32 ? EqInt32 : EqInt64,
+                builder.makeGetLocal(var, br->condition->type),
+                builder.makeConst(getLiteral(condition))
+              ),
+              builder.makeBreak(name),
+              chain
+            );
+            chain = iff;
+            if (!first) first = iff;
+          }
+          auto next = allocator.alloc<Block>();
+          top->name = name;
+          next->list.push_back(top);
+          next->list.push_back(case_);
+          next->finalize();
+          top = next;
+          nameMapper.popLabelName(name);
+        }
+
+        // the outermost block can be branched to to exit the whole switch
+        top->name = name;
+
+        // ensure a default
+        if (br->default_.isNull()) {
+          br->default_ = top->name;
+        }
+
+        first->ifFalse = builder.makeBreak(br->default_);
+
+        brHolder->list.push_back(chain);
+        brHolder->finalize();
       }
 
       breakStack.pop_back();

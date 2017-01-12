@@ -248,6 +248,42 @@ function asm(global, env, buffer) {
    }
    return;
   }
+  function switch64TOOMUCH($a444) {
+    $a444 = i64($a444);
+    var $waka = 0;
+    switch (i64($a444)) {
+     case i64_const(0,1073741824): // spread is huge here, we should not make a jump table!
+     case i64_const(0,2147483648):  {
+      return 40;
+     }
+     default: {
+      $waka = 1;
+     }
+    }
+    switch (100) {
+     case 107374182: // similar, but 32-bit
+     case 214748364:  {
+      return 41;
+     }
+     default: {
+      $waka = 1001;
+     }
+    }
+    // no defaults
+    switch (i64($a444)) {
+     case i64_const(0,1073741824): // spread is huge here, we should not make a jump table!
+     case i64_const(0,2147483648):  {
+      return 42;
+     }
+    }
+    switch (100) {
+     case 107374182: // similar, but 32-bit
+     case 214748364:  {
+      return 43;
+     }
+    }
+    return 44;
+  }
   function keepAlive() {
     loads();
     stores();
