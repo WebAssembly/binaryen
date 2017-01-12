@@ -757,6 +757,138 @@
     )
     (return)
   )
+  (func $switch64TOOMUCH (param $$a444 i64) (result i32)
+    (local $$waka i32)
+    (local $2 i64)
+    (local $3 i32)
+    (local $4 i64)
+    (local $5 i32)
+    (block $switch
+      (block $switch-default
+        (block $switch-case0
+          (block $switch-case
+            (set_local $2
+              (get_local $$a444)
+            )
+            (if
+              (i64.eq
+                (get_local $2)
+                (i64.const -9223372036854775808)
+              )
+              (br $switch-case0)
+              (if
+                (i64.eq
+                  (get_local $2)
+                  (i64.const 4611686018427387904)
+                )
+                (br $switch-case)
+                (br $switch-default)
+              )
+            )
+          )
+          (nop)
+        )
+        (return
+          (i32.const 40)
+        )
+      )
+      (set_local $$waka
+        (i32.const 1)
+      )
+    )
+    (block $switch1
+      (block $switch-default4
+        (block $switch-case3
+          (block $switch-case2
+            (set_local $3
+              (i32.const 100)
+            )
+            (if
+              (i32.eq
+                (get_local $3)
+                (i32.const 214748364)
+              )
+              (br $switch-case3)
+              (if
+                (i32.eq
+                  (get_local $3)
+                  (i32.const 107374182)
+                )
+                (br $switch-case2)
+                (br $switch-default4)
+              )
+            )
+          )
+          (nop)
+        )
+        (return
+          (i32.const 41)
+        )
+      )
+      (set_local $$waka
+        (i32.const 1001)
+      )
+    )
+    (block $switch5
+      (block $switch-case7
+        (block $switch-case6
+          (set_local $4
+            (get_local $$a444)
+          )
+          (if
+            (i64.eq
+              (get_local $4)
+              (i64.const -9223372036854775808)
+            )
+            (br $switch-case7)
+            (if
+              (i64.eq
+                (get_local $4)
+                (i64.const 4611686018427387904)
+              )
+              (br $switch-case6)
+              (br $switch5)
+            )
+          )
+        )
+        (nop)
+      )
+      (return
+        (i32.const 42)
+      )
+    )
+    (block $switch8
+      (block $switch-case10
+        (block $switch-case9
+          (set_local $5
+            (i32.const 100)
+          )
+          (if
+            (i32.eq
+              (get_local $5)
+              (i32.const 214748364)
+            )
+            (br $switch-case10)
+            (if
+              (i32.eq
+                (get_local $5)
+                (i32.const 107374182)
+              )
+              (br $switch-case9)
+              (br $switch8)
+            )
+          )
+        )
+        (nop)
+      )
+      (return
+        (i32.const 43)
+      )
+    )
+    (return
+      (i32.const 44)
+    )
+  )
   (func $keepAlive
     (call $loads)
     (call $stores)
