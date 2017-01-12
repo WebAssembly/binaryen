@@ -226,6 +226,28 @@ function asm(global, env, buffer) {
     }
     return $waka | 0;
   }
+  function unreachable_leftovers($0,$1,$2) {
+   $0 = $0|0;
+   $1 = $1|0;
+   $2 = $2|0;
+   var label = 0;
+   L1: do {
+    if ($1) {
+     label = 10;
+    } else {
+     if ($2) {
+      break L1;
+      return;
+     }
+     store4($0,-2);
+     return;
+    }
+   } while(0);
+   if ((label|0) == 10) {
+    store4($0,-1);
+   }
+   return;
+  }
   function keepAlive() {
     loads();
     stores();
@@ -238,6 +260,7 @@ function asm(global, env, buffer) {
     i64(ifValue64(i64(0), i64(0)));
     ifValue32(0, 0) | 0;
     switch64(i64(0)) | 0;
+    unreachable_leftovers(0, 0, 0);
   }
 
   function __emscripten_dceable_type_decls() { // dce-able, but this defines the type of fabsf which has no other use
