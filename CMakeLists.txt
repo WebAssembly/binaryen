@@ -71,7 +71,7 @@ IF(MSVC)
 
   ADD_NONDEBUG_COMPILE_FLAG("/UNDEBUG") # Keep asserts.
   # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
-  if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
+  if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
     foreach (flags_var_to_scrub
         CMAKE_CXX_FLAGS_RELEASE
         CMAKE_CXX_FLAGS_RELWITHDEBINFO
