@@ -60,11 +60,29 @@ IF(MSVC)
     ADD_COMPILE_FLAG("/arch:sse2")
   ENDIF()
   ADD_COMPILE_FLAG("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
+  # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
+  ADD_COMPILE_FLAG("/wd4267")
+  ADD_COMPILE_FLAG("/wd4244")
   ADD_COMPILE_FLAG("/WX-")
-  ADD_DEBUG_COMPILE_FLAG("/O0")
+  ADD_DEBUG_COMPILE_FLAG("/Od")
   ADD_NONDEBUG_COMPILE_FLAG("/O2")
-  ADD_COMPILE_FLAG("-D_CRT_SECURE_NO_WARNINGS")
-  ADD_COMPILE_FLAG("-D_SCL_SECURE_NO_WARNINGS")
+  ADD_COMPILE_FLAG("/D_CRT_SECURE_NO_WARNINGS")
+  ADD_COMPILE_FLAG("/D_SCL_SECURE_NO_WARNINGS")
+
+  ADD_NONDEBUG_COMPILE_FLAG("/UNDEBUG") # Keep asserts.
+  # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
+  if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
+    foreach (flags_var_to_scrub
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS_MINSIZEREL
+        CMAKE_C_FLAGS_RELEASE
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_C_FLAGS_MINSIZEREL)
+      string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
+        "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+    endforeach()
+  endif()
 
   IF(RUN_STATIC_ANALYZER)
     ADD_DEFINITIONS(/analyze)
