@@ -1027,8 +1027,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.add("remove-unused-brs");
     passRunner.add("optimize-instructions");
     passRunner.add("post-emscripten");
-    passRunner.add("dce"); // make sure to not emit unreachable code
   }
+  // make sure to not emit unreachable code at all, even in -O0, as wasm rules for it are complex
+  // and changing.
+  passRunner.add("dce");
   passRunner.run();
 
   // apply memory growth, if relevant

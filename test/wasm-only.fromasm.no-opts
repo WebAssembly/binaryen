@@ -780,10 +780,7 @@
         (block
           (if
             (get_local $$2)
-            (block
-              (br $label$break$L1)
-              (return)
-            )
+            (br $label$break$L1)
           )
           (i32.store
             (get_local $$0)
