@@ -5988,7 +5988,6 @@
                       (i32.const 9)
                     )
                     (br $label$break$L9)
-                    (br $switch)
                   )
                 )
                 (block
@@ -5999,7 +5998,6 @@
                     (get_local $$incdec$ptr169274)
                   )
                   (br $label$break$L9)
-                  (br $switch)
                 )
               )
               (nop)
@@ -7887,7 +7885,6 @@
                                                                             (get_local $$l10n$3)
                                                                           )
                                                                           (br $label$continue$L1)
-                                                                          (br $switch18)
                                                                         )
                                                                       )
                                                                       (block
@@ -7913,7 +7910,6 @@
                                                                           (get_local $$l10n$3)
                                                                         )
                                                                         (br $label$continue$L1)
-                                                                        (br $switch18)
                                                                       )
                                                                     )
                                                                     (block
@@ -7973,7 +7969,6 @@
                                                                         (get_local $$l10n$3)
                                                                       )
                                                                       (br $label$continue$L1)
-                                                                      (br $switch18)
                                                                     )
                                                                   )
                                                                   (block
@@ -8005,7 +8000,6 @@
                                                                       (get_local $$l10n$3)
                                                                     )
                                                                     (br $label$continue$L1)
-                                                                    (br $switch18)
                                                                   )
                                                                 )
                                                                 (block
@@ -8037,7 +8031,6 @@
                                                                     (get_local $$l10n$3)
                                                                   )
                                                                   (br $label$continue$L1)
-                                                                  (br $switch18)
                                                                 )
                                                               )
                                                               (block
@@ -8063,7 +8056,6 @@
                                                                   (get_local $$l10n$3)
                                                                 )
                                                                 (br $label$continue$L1)
-                                                                (br $switch18)
                                                               )
                                                             )
                                                             (block
@@ -8123,7 +8115,6 @@
                                                                 (get_local $$l10n$3)
                                                               )
                                                               (br $label$continue$L1)
-                                                              (br $switch18)
                                                             )
                                                           )
                                                           (block
@@ -8142,7 +8133,6 @@
                                                             (br $label$continue$L1)
                                                           )
                                                         )
-                                                        (br $switch17)
                                                       )
                                                     )
                                                     (block
@@ -13151,7 +13141,6 @@
                   (get_local $$l10n$3)
                 )
                 (br $label$continue$L1)
-                (br $switch17)
               )
             )
             (block
@@ -14772,7 +14761,6 @@
                                     (get_local $$6)
                                   )
                                   (br $label$break$L1)
-                                  (br $switch)
                                 )
                               )
                               (block
@@ -14889,7 +14877,6 @@
                                   (get_local $$15)
                                 )
                                 (br $label$break$L1)
-                                (br $switch)
                               )
                             )
                             (block
@@ -14991,7 +14978,6 @@
                                 (i32.const 0)
                               )
                               (br $label$break$L1)
-                              (br $switch)
                             )
                           )
                           (block
@@ -15113,7 +15099,6 @@
                               (get_local $$42)
                             )
                             (br $label$break$L1)
-                            (br $switch)
                           )
                         )
                         (block
@@ -15245,7 +15230,6 @@
                             (get_local $$56)
                           )
                           (br $label$break$L1)
-                          (br $switch)
                         )
                       )
                       (block
@@ -15353,7 +15337,6 @@
                           (i32.const 0)
                         )
                         (br $label$break$L1)
-                        (br $switch)
                       )
                     )
                     (block
@@ -15485,7 +15468,6 @@
                         (get_local $$81)
                       )
                       (br $label$break$L1)
-                      (br $switch)
                     )
                   )
                   (block
@@ -15593,7 +15575,6 @@
                       (i32.const 0)
                     )
                     (br $label$break$L1)
-                    (br $switch)
                   )
                 )
                 (block
@@ -15676,7 +15657,6 @@
                     (get_local $$103)
                   )
                   (br $label$break$L1)
-                  (br $switch)
                 )
               )
               (block
@@ -15759,7 +15739,6 @@
                   (get_local $$110)
                 )
                 (br $label$break$L1)
-                (br $switch)
               )
             )
             (br $label$break$L1)

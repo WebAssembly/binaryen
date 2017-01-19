@@ -301,7 +301,6 @@
           (loop $while-in
             (block $while-out
               (br $while-out)
-              (br $while-in)
             )
           )
           (br $label$break$Lout)
@@ -311,10 +310,8 @@
         (loop $while-in8
           (block $while-out7
             (br $label$break$Lout)
-            (br $while-in8)
           )
         )
-        (br $label$break$Lout)
       )
     )
     (loop $label$continue$L1
@@ -335,7 +332,6 @@
                     )
                     (block
                       (br $label$break$L1)
-                      (br $switch10)
                     )
                   )
                   (block
@@ -347,7 +343,6 @@
                 )
                 (block
                   (br $label$break$L3)
-                  (br $switch10)
                 )
               )
               (br $label$break$L1)
@@ -1736,7 +1731,6 @@
           (i32.const 14)
         )
         (br $while-out)
-        (br $while-in)
       )
     )
     (if
