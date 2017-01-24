@@ -266,7 +266,6 @@ void Linker::layout() {
     }
   }
 
-
   // finalize function table
   unsigned int tableSize = getTableData().size();
   if (tableSize > 0) {
