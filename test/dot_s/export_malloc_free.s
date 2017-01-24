@@ -36,4 +36,22 @@ realloc:
 	i32.const	$push0=, 0
 	.endfunc
 .Lfunc_end22:
-	.size	realloc, .Lfunc_end22-free
+	.size	realloc, .Lfunc_end22-realloc
+
+	.type	memalign,@function
+memalign:
+        .param          i32, i32
+        .result         i32
+        i32.const       $push0=, 0
+        .endfunc
+.Lfunc_end2:
+        .size   memalign, .Lfunc_end2-memalign
+
+        .type   not_a_malloc,@function
+not_a_malloc:
+        .param          i32, i32
+        .result         i32
+        i32.const       $push0=, 0
+        .endfunc
+.Lfunc_end2:
+        .size   not_a_malloc, .Lfunc_end2-not_a_malloc
