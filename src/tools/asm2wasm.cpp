@@ -34,6 +34,8 @@ int main(int argc, const char *argv[]) {
   bool runOptimizationPasses = false;
   bool imprecise = false;
   bool wasmOnly = false;
+  bool debugInfo = false;
+  std::string symbolMap;
 
   Options options("asm2wasm", "Translate asm.js files to .wast files");
   options
@@ -80,6 +82,12 @@ int main(int argc, const char *argv[]) {
            [&wasmOnly](Options *o, const std::string &) {
              wasmOnly = true;
            })
+      .add("--debuginfo", "-g", "Emit names section and debug info",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { debugInfo = true; })
+      .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
+           Options::Arguments::One,
+           [&](Options *o, const std::string &argument) { symbolMap = argument; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;

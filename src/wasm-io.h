@@ -31,7 +31,14 @@
 
 namespace wasm {
 
-class Reader {
+class ModuleIO {
+  bool debug = false;
+
+public:
+  void setDebug(bool debug_) { debug = debug_; }
+};
+
+class ModuleReader : public ModuleIO {
   void readText(std::string filename, Module& wasm);
   void readBinary(std::string filename, Module& wasm);
 
@@ -39,11 +46,17 @@ public:
   void read(std::string filename, Module& wasm);
 };
 
-class Writer {
+class ModuleWriter : public ModuleIO {
+  bool debugInfo = false;
+  std::string symbolMap;
+
   void writeText(Module& wasm, std::string filename);
   void writeBinary(Module& wasm, std::string filename);
 
 public:
+  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
+  void setSymbolMap(bool symbolMap_) { symbolMap = symbolMap_; }
+
   void write(Module& wasm, std::string filename);
 };
 

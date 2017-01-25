@@ -77,6 +77,8 @@ void Writer::writeText(Module& wasm, std::string filename) {
 void Writer::writeBinary(Module& wasm, std::string filename) {
   BufferWithRandomAccess buffer;
   WasmBinaryWriter writer(&wasm, buffer);
+  writer.setDebugInfo(debugInfo);
+  if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
   Output output(filename, Flags::Binary, Flags::Release);
   buffer.writeTo(output);
