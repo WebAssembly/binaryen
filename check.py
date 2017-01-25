@@ -498,7 +498,7 @@ if EMCC:
         asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
         with open('a.wasm.asm.js', 'w') as o: o.write(asm)
       if method.startswith('interpret-asm2wasm'):
-        os.unlink('a.wasm.wast') # we should not need the .wast
+        delete_from_orbit('a.wasm.wast') # we should not need the .wast
         if not success:
           break_cashew() # we need cashew
       elif method.startswith('interpret-s-expr'):
@@ -506,12 +506,12 @@ if EMCC:
         if not success:
           os.unlink('a.wasm.wast')
       elif method.startswith('asmjs'):
-        os.unlink('a.wasm.wast') # we should not need the .wast
+        delete_from_orbit('a.wasm.wast') # we should not need the .wast
         break_cashew() # we don't use cashew, so ok to break it
         if not success:
           os.unlink('a.wasm.js')
       elif method.startswith('interpret-binary'):
-        os.unlink('a.wasm.wast') # we should not need the .wast
+        delete_from_orbit('a.wasm.wast') # we should not need the .wast
         os.unlink('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
           os.unlink('a.wasm.wasm')
