@@ -37,20 +37,20 @@ static std::string getSuffix(std::string filename) {
   return filename.substr(index + 1);
 }
 
-void Reader::readText(std::string filename, Module& wasm) {
-  auto input(read_file<std::string>(filename, Flags::Text, Flags::Release));
+void ModuleReader::readText(std::string filename, Module& wasm) {
+  auto input(read_file<std::string>(filename, Flags::Text, debug ? Flags::Debug : Flags::Release));
   SExpressionParser parser(const_cast<char*>(input.c_str()));
   Element& root = *parser.root;
   SExpressionWasmBuilder builder(wasm, *root[0]);
 }
 
-void Reader::readBinary(std::string filename, Module& wasm) {
-  auto input(read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
-  WasmBinaryBuilder parser(wasm, input);
+void ModuleReader::readBinary(std::string filename, Module& wasm) {
+  auto input(read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release));
+  WasmBinaryBuilder parser(wasm, input, debug);
   parser.read();
 }
 
-void Reader::read(std::string filename, Module& wasm) {
+void ModuleReader::read(std::string filename, Module& wasm) {
   auto suffix = getSuffix(filename);
   if (suffix == "wast") {
     readText(filename, wasm);
@@ -58,7 +58,7 @@ void Reader::read(std::string filename, Module& wasm) {
     readBinary(filename, wasm);
   } else {
     // unclear suffix, see if this is a binary
-    auto contents = read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release);
+    auto contents = read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
     if (contents.size() >= 4 && contents[0] == '\0' && contents[0] == 'a' && contents[0] == 's' && contents[0] == 'm') {
       readBinary(filename, wasm);
     } else {
@@ -68,28 +68,28 @@ void Reader::read(std::string filename, Module& wasm) {
   }
 }
 
-void Writer::writeText(Module& wasm, std::string filename) {
-  Output output(filename, Flags::Text, Flags::Release);
+void ModuleWriter::writeText(Module& wasm, std::string filename) {
+  Output output(filename, Flags::Text, debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
   output << '\n';
 }
 
-void Writer::writeBinary(Module& wasm, std::string filename) {
-  BufferWithRandomAccess buffer;
-  WasmBinaryWriter writer(&wasm, buffer);
+void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
+  BufferWithRandomAccess buffer(debug);
+  WasmBinaryWriter writer(&wasm, buffer, debug);
   writer.setDebugInfo(debugInfo);
   if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
-  Output output(filename, Flags::Binary, Flags::Release);
+  Output output(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
   buffer.writeTo(output);
 }
 
-void Writer::write(Module& wasm, std::string filename) {
+void ModuleWriter::write(Module& wasm, std::string filename) {
   auto suffix = getSuffix(filename);
   if (suffix == "wasm") {
     writeBinary(wasm, filename);
   } else {
-    // default to text
+    // default to text for anything but suffix wasm
     writeText(wasm, filename);
   }
 }

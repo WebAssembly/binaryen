@@ -23,6 +23,8 @@
 // reading will check the magic number and default to text if not
 // binary.
 //
+// When no output file is given, we print text to stdout.
+//
 
 #ifndef wasm_wasm_io_h
 #define wasm_wasm_io_h
@@ -32,6 +34,7 @@
 namespace wasm {
 
 class ModuleIO {
+protected:
   bool debug = false;
 
 public:
@@ -55,7 +58,7 @@ class ModuleWriter : public ModuleIO {
 
 public:
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
-  void setSymbolMap(bool symbolMap_) { symbolMap = symbolMap_; }
+  void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }
 
   void write(Module& wasm, std::string filename);
 };

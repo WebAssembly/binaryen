@@ -23,6 +23,7 @@
 #include "support/file.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
+#include "wasm-io.h"
 
 #include "asm2wasm.h"
 
@@ -161,8 +162,11 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&wasm, output.getStream());
+  ModuleWriter writer;
+  writer.setDebug(options.debug);
+  writer.setDebugInfo(debugInfo);
+  writer.setSymbolMap(symbolMap);
+  writer.write(wasm, options.extra["output"]);
 
   if (options.debug) std::cerr << "done." << std::endl;
 }
