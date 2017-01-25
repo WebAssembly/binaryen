@@ -131,7 +131,7 @@ class BufferWithRandomAccess : public std::vector<uint8_t> {
   bool debug;
 
 public:
-  BufferWithRandomAccess(bool debug = false) : debug(debug) {}
+  BufferWithRandomAccess(bool debug) : debug(debug) {}
 
   BufferWithRandomAccess& operator<<(int8_t x) {
     if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
@@ -533,7 +533,7 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
 
   void prepare();
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false) : wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : wasm(input), o(o), debug(debug) {
     prepare();
   }
 
@@ -635,7 +635,7 @@ class WasmBinaryBuilder {
   Index startIndex = -1;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug = false) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
 
   void read();
   void readUserSection();
