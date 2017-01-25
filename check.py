@@ -61,6 +61,16 @@ cmd = WASM_OPT + [wast, '-o', 'a.wast']
 run_command(cmd)
 fail_if_not_identical(open('a.wast').read(), open(wast).read())
 
+print '\n[ checking wasm-opt binary reading/writing... ]\n'
+
+shutil.copyfile(os.path.join(options.binaryen_test, 'hello_world.wast'), 'a.wast')
+delete_from_orbit('a.wasm')
+delete_from_orbit('b.wast')
+run_command(WASM_OPT + ['a.wast', '-o', 'a.wasm'])
+assert open('a.wasm', 'rb').read()[0] == '\0', '.wasm output suffix means we emit binary'
+run_command(WASM_OPT + ['a.wasm', '-o', 'b.wast'])
+assert open('b.wast', 'rb').read()[0] != '\0', '.wast output suffix means we emit text'
+
 print '\n[ checking wasm-opt passes... ]\n'
 
 for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
@@ -140,6 +150,16 @@ for asm in tests:
             except Exception, e:
               fail_with_error('wasm interpreter error: ' + err) # failed to pretty-print
             fail_with_error('wasm interpreter error')
+
+print '\n[ checking asm2wasm binary reading/writing... ]\n'
+
+asmjs = os.path.join(options.binaryen_test, 'hello_world.asm.js')
+delete_from_orbit('a.wasm')
+delete_from_orbit('b.wast')
+run_command(ASM2WASM + [asmjs, '-o', 'a.wasm'])
+assert open('a.wasm', 'rb').read()[0] == '\0', '.wasm output suffix means we emit binary'
+run_command(ASM2WASM + [asmjs, '-o', 'b.wast'])
+assert open('b.wast', 'rb').read()[0] != '\0', '.wast output suffix means we emit text'
 
 print '\n[ checking wasm-opt parsing & printing... ]\n'
 
