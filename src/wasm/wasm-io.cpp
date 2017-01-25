@@ -37,44 +37,44 @@ static std::string getSuffix(std::string filename) {
   return filename.substr(index + 1);
 }
 
-void Reader::readText() {
+void Reader::readText(std::string filename, Module& wasm) {
   auto input(read_file<std::string>(filename, Flags::Text, Flags::Release));
   SExpressionParser parser(const_cast<char*>(input.c_str()));
   Element& root = *parser.root;
   SExpressionWasmBuilder builder(wasm, *root[0]);
 }
 
-void Reader::readBinary() {
-  auto input(read_file<std::vector<char>>(options.extra["infile"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
-  WasmBinaryBuilder parser(wasm, input, options.debug);
+void Reader::readBinary(std::string filename, Module& wasm) {
+  auto input(read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
+  WasmBinaryBuilder parser(wasm, input);
   parser.read();
 }
 
-void Reader::read(Module& wasm) {
+void Reader::read(std::string filename, Module& wasm) {
   auto suffix = getSuffix(filename);
   if (suffix == "wast") {
-    readText();
+    readText(filename, wasm);
   } else if (suffix == "wasm") {
-    readBinary();
+    readBinary(filename, wasm);
   } else {
     // unclear suffix, see if this is a binary
     auto contents = read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release);
     if (contents.size() >= 4 && contents[0] == '\0' && contents[0] == 'a' && contents[0] == 's' && contents[0] == 'm') {
-      readBinary();
+      readBinary(filename, wasm);
     } else {
       // default to text
-      readText();
+      readText(filename, wasm);
     }
   }
 }
 
-void Writer::writeText() {
+void Writer::writeText(const Module& wasm, std::string filename) {
   Output output(filename, Flags::Text, Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
   output << '\n';
 }
 
-void Writer::writeBinary() {
+void Writer::writeBinary(const Module& wasm, std::string filename) {
   BufferWithRandomAccess buffer();
   WasmBinaryWriter writer(&wasm, buffer);
   writer.write();
@@ -82,16 +82,15 @@ void Writer::writeBinary() {
   buffer.writeTo(output);
 }
 
-void Writer::write(const Module& wasm) {
+void Writer::write(const Module& wasm, std::string filename) {
   auto suffix = getSuffix(filename);
   if (suffix == "wasm") {
-    writeBinary();
+    writeBinary(wasm, filename);
   } else {
     // default to text
-    writeText();
+    writeText(wasm, filename);
   }
 }
 
 }
 
-#endif // wasm_wasm_io_h

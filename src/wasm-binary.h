@@ -635,7 +635,7 @@ class WasmBinaryBuilder {
   Index startIndex = -1;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug = false) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
 
   void read();
   void readUserSection();

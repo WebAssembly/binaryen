@@ -32,25 +32,19 @@
 namespace wasm {
 
 class Reader {
-  std::string filename;
-
-  void readText();
-  void readBinary();
+  void readText(std::string filename, Module& wasm);
+  void readBinary(std::string filename, Module& wasm);
 
 public:
-  Reader(std::string filename) : filename(filename) {}
-  void read(Module& wasm);
+  void read(std::string filename, Module& wasm);
 };
 
 class Writer {
-  std::string filename;
-
-  void writeText();
-  void writeBinary();
+  void writeText(const Module& wasm, std::string filename);
+  void writeBinary(const Module& wasm, std::string filename);
 
 public:
-  Writer(std::string filename) : filename(filename) {}
-  void write(const Module& wasm);
+  void write(const Module& wasm, std::string filename);
 };
 
 }
