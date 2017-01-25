@@ -71,7 +71,6 @@ void ModuleReader::read(std::string filename, Module& wasm) {
 void ModuleWriter::writeText(Module& wasm, std::string filename) {
   Output output(filename, Flags::Text, debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
-  output << '\n';
 }
 
 void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
