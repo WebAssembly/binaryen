@@ -40,11 +40,11 @@ public:
 };
 
 class Writer {
-  void writeText(const Module& wasm, std::string filename);
-  void writeBinary(const Module& wasm, std::string filename);
+  void writeText(Module& wasm, std::string filename);
+  void writeBinary(Module& wasm, std::string filename);
 
 public:
-  void write(const Module& wasm, std::string filename);
+  void write(Module& wasm, std::string filename);
 };
 
 }

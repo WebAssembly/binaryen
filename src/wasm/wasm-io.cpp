@@ -68,21 +68,21 @@ void Reader::read(std::string filename, Module& wasm) {
   }
 }
 
-void Writer::writeText(const Module& wasm, std::string filename) {
+void Writer::writeText(Module& wasm, std::string filename) {
   Output output(filename, Flags::Text, Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
   output << '\n';
 }
 
-void Writer::writeBinary(const Module& wasm, std::string filename) {
-  BufferWithRandomAccess buffer();
+void Writer::writeBinary(Module& wasm, std::string filename) {
+  BufferWithRandomAccess buffer;
   WasmBinaryWriter writer(&wasm, buffer);
   writer.write();
   Output output(filename, Flags::Binary, Flags::Release);
   buffer.writeTo(output);
 }
 
-void Writer::write(const Module& wasm, std::string filename) {
+void Writer::write(Module& wasm, std::string filename) {
   auto suffix = getSuffix(filename);
   if (suffix == "wasm") {
     writeBinary(wasm, filename);
