@@ -571,7 +571,7 @@ if EMCC:
 
             execute()
 
-            if method in ['interpret-asm2wasm', 'interpret-s-expr']:
+            if method in ['interpret-s-expr']:
               # binary and back
               shutil.copyfile('a.wasm.wast', 'a.wasm.original.wast')
               recreated = binary_format_check('a.wasm.wast', verify_final_result=False)
