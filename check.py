@@ -67,9 +67,9 @@ shutil.copyfile(os.path.join(options.binaryen_test, 'hello_world.wast'), 'a.wast
 delete_from_orbit('a.wasm')
 delete_from_orbit('b.wast')
 run_command(WASM_OPT + ['a.wast', '-o', 'a.wasm'])
-assert open('a.wasm', 'rb').read()[0] == '\0', '.wasm output suffix means we emit binary'
+assert open('a.wasm', 'rb').read()[0] == '\0', 'we emit binary by default'
 run_command(WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S'])
-assert open('b.wast', 'rb').read()[0] != '\0', '.wast output suffix means we emit text'
+assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
 
 print '\n[ checking wasm-opt passes... ]\n'
 
@@ -157,9 +157,9 @@ asmjs = os.path.join(options.binaryen_test, 'hello_world.asm.js')
 delete_from_orbit('a.wasm')
 delete_from_orbit('b.wast')
 run_command(ASM2WASM + [asmjs, '-o', 'a.wasm'])
-assert open('a.wasm', 'rb').read()[0] == '\0', '.wasm output suffix means we emit binary'
+assert open('a.wasm', 'rb').read()[0] == '\0', 'we emit binary by default'
 run_command(ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
-assert open('b.wast', 'rb').read()[0] != '\0', '.wast output suffix means we emit text'
+assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
 
 print '\n[ checking wasm-opt parsing & printing... ]\n'
 
