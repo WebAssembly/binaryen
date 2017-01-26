@@ -57,9 +57,19 @@ print '\n[ checking wasm-opt -o notation... ]\n'
 
 wast = os.path.join(options.binaryen_test, 'hello_world.wast')
 delete_from_orbit('a.wast')
-cmd = WASM_OPT + [wast, '-o', 'a.wast']
+cmd = WASM_OPT + [wast, '-o', 'a.wast', '-S']
 run_command(cmd)
 fail_if_not_identical(open('a.wast').read(), open(wast).read())
+
+print '\n[ checking wasm-opt binary reading/writing... ]\n'
+
+shutil.copyfile(os.path.join(options.binaryen_test, 'hello_world.wast'), 'a.wast')
+delete_from_orbit('a.wasm')
+delete_from_orbit('b.wast')
+run_command(WASM_OPT + ['a.wast', '-o', 'a.wasm'])
+assert open('a.wasm', 'rb').read()[0] == '\0', 'we emit binary by default'
+run_command(WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S'])
+assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
 
 print '\n[ checking wasm-opt passes... ]\n'
 
@@ -140,6 +150,16 @@ for asm in tests:
             except Exception, e:
               fail_with_error('wasm interpreter error: ' + err) # failed to pretty-print
             fail_with_error('wasm interpreter error')
+
+print '\n[ checking asm2wasm binary reading/writing... ]\n'
+
+asmjs = os.path.join(options.binaryen_test, 'hello_world.asm.js')
+delete_from_orbit('a.wasm')
+delete_from_orbit('b.wast')
+run_command(ASM2WASM + [asmjs, '-o', 'a.wasm'])
+assert open('a.wasm', 'rb').read()[0] == '\0', 'we emit binary by default'
+run_command(ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
+assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
 
 print '\n[ checking wasm-opt parsing & printing... ]\n'
 
@@ -478,7 +498,7 @@ if EMCC:
         asm = asm.replace("'almost asm'", '"use asm"; var not_in_asm = [].length + (true || { x: 5 }.x);')
         with open('a.wasm.asm.js', 'w') as o: o.write(asm)
       if method.startswith('interpret-asm2wasm'):
-        os.unlink('a.wasm.wast') # we should not need the .wast
+        delete_from_orbit('a.wasm.wast') # we should not need the .wast
         if not success:
           break_cashew() # we need cashew
       elif method.startswith('interpret-s-expr'):
@@ -486,12 +506,12 @@ if EMCC:
         if not success:
           os.unlink('a.wasm.wast')
       elif method.startswith('asmjs'):
-        os.unlink('a.wasm.wast') # we should not need the .wast
+        delete_from_orbit('a.wasm.wast') # we should not need the .wast
         break_cashew() # we don't use cashew, so ok to break it
         if not success:
           os.unlink('a.wasm.js')
       elif method.startswith('interpret-binary'):
-        os.unlink('a.wasm.wast') # we should not need the .wast
+        delete_from_orbit('a.wasm.wast') # we should not need the .wast
         os.unlink('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
           os.unlink('a.wasm.wasm')
@@ -551,7 +571,7 @@ if EMCC:
 
             execute()
 
-            if method in ['interpret-asm2wasm', 'interpret-s-expr']:
+            if method in ['interpret-s-expr']:
               # binary and back
               shutil.copyfile('a.wasm.wast', 'a.wasm.original.wast')
               recreated = binary_format_check('a.wasm.wast', verify_final_result=False)

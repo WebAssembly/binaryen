@@ -92,7 +92,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
 print '\n[ checking wasm-opt -o notation... ]\n'
 
 wast = os.path.join('test', 'hello_world.wast')
-cmd = [os.path.join('bin', 'wasm-opt'), wast, '-o', 'a.wast']
+cmd = [os.path.join('bin', 'wasm-opt'), wast, '-o', 'a.wast', '-S']
 run_command(cmd)
 open(wast, 'w').write(open('a.wast').read())
 

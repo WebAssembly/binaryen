@@ -27,6 +27,7 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "wasm-io.h"
 
 using namespace wasm;
 
@@ -39,6 +40,7 @@ int main(int argc, const char* argv[]) {
   std::vector<std::string> passes;
   bool runOptimizationPasses = false;
   PassOptions passOptions;
+  bool emitBinary = true;
 
   Options options("wasm-opt", "Optimize .wast files");
   options
@@ -49,6 +51,9 @@ int main(int argc, const char* argv[]) {
              Colors::disable();
            })
       #include "optimization-options.h"
+      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &argument) { emitBinary = false; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -71,15 +76,17 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
 
-  try {
-    if (options.debug) std::cerr << "s-parsing..." << std::endl;
-    SExpressionParser parser(const_cast<char*>(input.c_str()));
-    Element& root = *parser.root;
-    if (options.debug) std::cerr << "w-parsing..." << std::endl;
-    SExpressionWasmBuilder builder(wasm, *root[0]);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    Fatal() << "error in parsing input";
+  {
+    if (options.debug) std::cerr << "reading...\n";
+    ModuleReader reader;
+    reader.setDebug(options.debug);
+
+    try {
+      reader.read(options.extra["infile"], wasm);
+    } catch (ParseException& p) {
+      p.dump(std::cerr);
+      Fatal() << "error in parsing input";
+    }
   }
 
   if (!WasmValidator().validate(wasm)) {
@@ -103,7 +110,9 @@ int main(int argc, const char* argv[]) {
 
   if (options.extra.count("output") > 0) {
     if (options.debug) std::cerr << "writing..." << std::endl;
-    Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-    WasmPrinter::printModule(&wasm, output.getStream());
+    ModuleWriter writer;
+    writer.setDebug(options.debug);
+    writer.setBinary(emitBinary);
+    writer.write(wasm, options.extra["output"]);
   }
 }

@@ -23,6 +23,7 @@
 #include "support/file.h"
 #include "wasm-builder.h"
 #include "wasm-printing.h"
+#include "wasm-io.h"
 
 #include "asm2wasm.h"
 
@@ -34,6 +35,9 @@ int main(int argc, const char *argv[]) {
   bool runOptimizationPasses = false;
   bool imprecise = false;
   bool wasmOnly = false;
+  bool debugInfo = false;
+  std::string symbolMap;
+  bool emitBinary = true;
 
   Options options("asm2wasm", "Translate asm.js files to .wast files");
   options
@@ -80,6 +84,15 @@ int main(int argc, const char *argv[]) {
            [&wasmOnly](Options *o, const std::string &) {
              wasmOnly = true;
            })
+      .add("--debuginfo", "-g", "Emit names section and debug info",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { debugInfo = true; })
+      .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
+           Options::Arguments::One,
+           [&](Options *o, const std::string &argument) { symbolMap = argument; })
+      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &argument) { emitBinary = false; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -153,8 +166,12 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.debug) std::cerr << "printing..." << std::endl;
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&wasm, output.getStream());
+  ModuleWriter writer;
+  writer.setDebug(options.debug);
+  writer.setDebugInfo(debugInfo);
+  writer.setSymbolMap(symbolMap);
+  writer.setBinary(emitBinary);
+  writer.write(wasm, options.extra["output"]);
 
   if (options.debug) std::cerr << "done." << std::endl;
 }

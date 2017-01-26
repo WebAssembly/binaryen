@@ -389,18 +389,18 @@ def minify_check(wast, verify_final_result=True):
   print '      ', ' '.join(cmd)
   subprocess.check_call(
       WASM_OPT + [wast, '--print-minified'],
-      stdout=open('a.wasm', 'w'), stderr=subprocess.PIPE)
-  assert os.path.exists('a.wasm')
+      stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
+  assert os.path.exists('a.wast')
   subprocess.check_call(
-      WASM_OPT + ['a.wasm', '--print-minified'],
-      stdout=open('b.wasm', 'w'), stderr=subprocess.PIPE)
-  assert os.path.exists('b.wasm')
+      WASM_OPT + ['a.wast', '--print-minified'],
+      stdout=open('b.wast', 'w'), stderr=subprocess.PIPE)
+  assert os.path.exists('b.wast')
   if verify_final_result:
-    expected = open('a.wasm').read()
-    actual = open('b.wasm').read()
+    expected = open('a.wast').read()
+    actual = open('b.wast').read()
     if actual != expected:
       fail(actual, expected)
-  if os.path.exists('a.wasm'):
-    os.unlink('a.wasm')
-  if os.path.exists('b.wasm'):
-    os.unlink('b.wasm')
+  if os.path.exists('a.wast'):
+    os.unlink('a.wast')
+  if os.path.exists('b.wast'):
+    os.unlink('b.wast')
