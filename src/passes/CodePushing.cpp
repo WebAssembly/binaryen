@@ -115,7 +115,14 @@ private:
     auto* set = curr->dynCast<SetLocal>();
     if (!set) return nullptr;
     auto index = set->index;
-    return analyzer.isSFA(index) && numGetsSoFar[index] == analyzer.getNumGets(index) ? set : nullptr;
+    // to be pushable, this must be SFA and the right # of gets,
+    // but also have no side effects, as it may not execute if pushed.
+    if (analyzer.isSFA(index) &&
+        numGetsSoFar[index] == analyzer.getNumGets(index) &&
+        !EffectAnalyzer(set->value).hasSideEffects()) {
+      return set;
+    }
+    return nullptr;
   }
 
   // Push past conditional control flow.

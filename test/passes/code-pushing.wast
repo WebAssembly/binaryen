@@ -179,7 +179,7 @@
       (drop (get_local $x))
     )
   )
-  (func $values-might-interfere ;; but don't, as we keep the order
+  (func $values-might-interfere ;; they don't, as we keep the order - but here their side effects prevent pushing
     (local $x i32)
     (local $y i32)
     (block $out
@@ -206,13 +206,43 @@
     (local $x i32)
     (local $y i32)
     (block $out
-      (set_local $x (call $push-dropped))
-      (set_local $y (call $push-dropped))
+      (set_local $x (i32.const 1))
+      (set_local $y (i32.const 3))
       (br_if $out (i32.const 2))
       (drop (get_local $x))
       (drop (get_local $y))
     )
     (drop (get_local $x)) ;; $x can't be pushed, but y doesn't care
+  )
+  (func $unpushed-ignorable-side-effect
+    (local $x i32)
+    (local $y i32)
+    (block $out
+      (set_local $x (call $push-dropped)) ;; $x can't be pushed, but y doesn't care
+      (set_local $y (i32.const 3))
+      (br_if $out (i32.const 2))
+      (drop (get_local $x))
+      (drop (get_local $y))
+    )
+  )
+  (func $unpushed-side-effect-into-drop
+    (local $x i32)
+    (block $out
+      (set_local $x (call $push-dropped))
+      (br_if $out (i32.const 1))
+      (drop (get_local $x))
+    )
+  )
+  (func $unpushed-side-effect-into-if
+    (local $x i32)
+    (block $out
+      (set_local $x (call $push-dropped))
+      (br_if $out (i32.const 1))
+      (if
+        (get_local $x)
+        (nop)
+      )
+    )
   )
 )
 
