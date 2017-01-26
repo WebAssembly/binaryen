@@ -40,6 +40,7 @@ int main(int argc, const char* argv[]) {
   std::vector<std::string> passes;
   bool runOptimizationPasses = false;
   PassOptions passOptions;
+  bool emitBinary = true;
 
   Options options("wasm-opt", "Optimize .wast files");
   options
@@ -50,6 +51,9 @@ int main(int argc, const char* argv[]) {
              Colors::disable();
            })
       #include "optimization-options.h"
+      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &argument) { emitBinary = false; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -108,6 +112,7 @@ int main(int argc, const char* argv[]) {
     if (options.debug) std::cerr << "writing..." << std::endl;
     ModuleWriter writer;
     writer.setDebug(options.debug);
+    writer.setBinary(emitBinary);
     writer.write(wasm, options.extra["output"]);
   }
 }

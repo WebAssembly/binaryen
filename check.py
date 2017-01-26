@@ -57,7 +57,7 @@ print '\n[ checking wasm-opt -o notation... ]\n'
 
 wast = os.path.join(options.binaryen_test, 'hello_world.wast')
 delete_from_orbit('a.wast')
-cmd = WASM_OPT + [wast, '-o', 'a.wast']
+cmd = WASM_OPT + [wast, '-o', 'a.wast', '-S']
 run_command(cmd)
 fail_if_not_identical(open('a.wast').read(), open(wast).read())
 
@@ -68,7 +68,7 @@ delete_from_orbit('a.wasm')
 delete_from_orbit('b.wast')
 run_command(WASM_OPT + ['a.wast', '-o', 'a.wasm'])
 assert open('a.wasm', 'rb').read()[0] == '\0', '.wasm output suffix means we emit binary'
-run_command(WASM_OPT + ['a.wasm', '-o', 'b.wast'])
+run_command(WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S'])
 assert open('b.wast', 'rb').read()[0] != '\0', '.wast output suffix means we emit text'
 
 print '\n[ checking wasm-opt passes... ]\n'
@@ -158,7 +158,7 @@ delete_from_orbit('a.wasm')
 delete_from_orbit('b.wast')
 run_command(ASM2WASM + [asmjs, '-o', 'a.wasm'])
 assert open('a.wasm', 'rb').read()[0] == '\0', '.wasm output suffix means we emit binary'
-run_command(ASM2WASM + [asmjs, '-o', 'b.wast'])
+run_command(ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
 assert open('b.wast', 'rb').read()[0] != '\0', '.wast output suffix means we emit text'
 
 print '\n[ checking wasm-opt parsing & printing... ]\n'

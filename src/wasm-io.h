@@ -15,15 +15,7 @@
  */
 
 //
-// Abstracts reading and writing, supporting both text and binary
-// depending on the suffix.
-//
-// When the suffix is unclear, writing defaults to text (this
-// allows odd suffixes, which we use in the test suite), while
-// reading will check the magic number and default to text if not
-// binary.
-//
-// When no output file is given, we print text to stdout.
+// Abstracts reading and writing, supporting both text and binary.
 //
 
 #ifndef wasm_wasm_io_h
@@ -42,24 +34,32 @@ public:
 };
 
 class ModuleReader : public ModuleIO {
-  void readText(std::string filename, Module& wasm);
-  void readBinary(std::string filename, Module& wasm);
-
 public:
+  // read text
+  void readText(std::string filename, Module& wasm);
+  // read binary
+  void readBinary(std::string filename, Module& wasm);
+  // read text or binary, checking the contents for what it is
   void read(std::string filename, Module& wasm);
 };
 
 class ModuleWriter : public ModuleIO {
+  bool binary = true;
   bool debugInfo = false;
   std::string symbolMap;
 
-  void writeText(Module& wasm, std::string filename);
-  void writeBinary(Module& wasm, std::string filename);
-
 public:
+  void setBinary(bool binary_) { binary = binary_; }
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
   void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }
 
+  // write text
+  void writeText(Module& wasm, std::string filename);
+  // write binary
+  void writeBinary(Module& wasm, std::string filename);
+  // write text or binary, defaulting to binary unless setBinary(false),
+  // and unless there is no output file (in which case we write text
+  // to stdout).
   void write(Module& wasm, std::string filename);
 };
 

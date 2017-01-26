@@ -31,12 +31,6 @@
 
 namespace wasm {
 
-static std::string getSuffix(std::string filename) {
-  auto index = filename.rfind('.');
-  if (index == std::string::npos) return "";
-  return filename.substr(index + 1);
-}
-
 void ModuleReader::readText(std::string filename, Module& wasm) {
   if (debug) std::cerr << "reading text from " << filename << "\n";
   auto input(read_file<std::string>(filename, Flags::Text, debug ? Flags::Debug : Flags::Release));
@@ -53,20 +47,13 @@ void ModuleReader::readBinary(std::string filename, Module& wasm) {
 }
 
 void ModuleReader::read(std::string filename, Module& wasm) {
-  auto suffix = getSuffix(filename);
-  if (suffix == "wast") {
-    readText(filename, wasm);
-  } else if (suffix == "wasm") {
+  // see if this is a binary
+  auto contents = read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
+  if (contents.size() >= 4 && contents[0] == '\0' && contents[1] == 'a' && contents[2] == 's' && contents[3] == 'm') {
     readBinary(filename, wasm);
   } else {
-    // unclear suffix, see if this is a binary
-    auto contents = read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
-    if (contents.size() >= 4 && contents[0] == '\0' && contents[0] == 'a' && contents[0] == 's' && contents[0] == 'm') {
-      readBinary(filename, wasm);
-    } else {
-      // default to text
-      readText(filename, wasm);
-    }
+    // default to text
+    readText(filename, wasm);
   }
 }
 
@@ -88,11 +75,9 @@ void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
 }
 
 void ModuleWriter::write(Module& wasm, std::string filename) {
-  auto suffix = getSuffix(filename);
-  if (suffix == "wasm") {
+  if (binary && filename.size() > 0) {
     writeBinary(wasm, filename);
   } else {
-    // default to text for anything but suffix wasm
     writeText(wasm, filename);
   }
 }
