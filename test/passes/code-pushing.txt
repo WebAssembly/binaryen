@@ -342,14 +342,14 @@
     (local $x i32)
     (local $y i32)
     (block $out
-      (br_if $out
-        (i32.const 2)
-      )
       (set_local $x
         (call $push-dropped)
       )
       (set_local $y
         (call $push-dropped)
+      )
+      (br_if $out
+        (i32.const 2)
       )
       (drop
         (get_local $x)
@@ -388,13 +388,13 @@
     (local $y i32)
     (block $out
       (set_local $x
-        (call $push-dropped)
+        (i32.const 1)
       )
       (br_if $out
         (i32.const 2)
       )
       (set_local $y
-        (call $push-dropped)
+        (i32.const 3)
       )
       (drop
         (get_local $x)
@@ -405,6 +405,56 @@
     )
     (drop
       (get_local $x)
+    )
+  )
+  (func $unpushed-ignorable-side-effect (type $0)
+    (local $x i32)
+    (local $y i32)
+    (block $out
+      (set_local $x
+        (call $push-dropped)
+      )
+      (br_if $out
+        (i32.const 2)
+      )
+      (set_local $y
+        (i32.const 3)
+      )
+      (drop
+        (get_local $x)
+      )
+      (drop
+        (get_local $y)
+      )
+    )
+  )
+  (func $unpushed-side-effect-into-drop (type $0)
+    (local $x i32)
+    (block $out
+      (set_local $x
+        (call $push-dropped)
+      )
+      (br_if $out
+        (i32.const 1)
+      )
+      (drop
+        (get_local $x)
+      )
+    )
+  )
+  (func $unpushed-side-effect-into-if (type $0)
+    (local $x i32)
+    (block $out
+      (set_local $x
+        (call $push-dropped)
+      )
+      (br_if $out
+        (i32.const 1)
+      )
+      (if
+        (get_local $x)
+        (nop)
+      )
     )
   )
 )
