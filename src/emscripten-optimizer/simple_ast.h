@@ -204,6 +204,14 @@ struct Value {
 
   bool isBool(bool b) { return type == Bool && b == boo; } // avoid overloading == as it might overload over int
 
+  // convenience function to check if something is an array and
+  // also has a certain string as the first element. This is a
+  // very common operation as the first element defines the node
+  // type for most ast nodes
+  bool isArray(IString name) {
+    return isArray() && (*this)[0] == name;
+  }
+
   const char* getCString() {
     assert(isString());
     return str.str;
@@ -655,6 +663,10 @@ struct JSPrinter {
 
   void print(Ref node) {
     ensure();
+    if (node->isNumber()) {
+      printNum(node);
+      return;
+    }
     IString type = node[0]->getIString();
     //fprintf(stderr, "printing %s\n", type.str);
     switch (type.str[0]) {
@@ -697,7 +709,6 @@ struct JSPrinter {
       }
       case 'n': {
         if (type == NAME) printName(node);
-        else if (type == NUM) printNum(node);
         else if (type == NEW) printNew(node);
         else abort();
         break;
@@ -957,7 +968,7 @@ struct JSPrinter {
   }
 
   void printNum(Ref node) {
-    emit(numToString(node[1]->getNumber(), finalize));
+    emit(numToString(node->getNumber(), finalize));
   }
 
   void printString(Ref node) {
@@ -1030,8 +1041,8 @@ struct JSPrinter {
   }
 
   void printUnaryPrefix(Ref node) {
-    if (finalize && node[1] == PLUS && (node[2][0] == NUM ||
-                                       (node[2][0] == UNARY_PREFIX && node[2][1] == MINUS && node[2][2][0] == NUM))) {
+    if (finalize && node[1] == PLUS && (node[2]->isNumber() ||
+                                       (node[2][0] == UNARY_PREFIX && node[2][1] == MINUS && node[2][2]->isNumber()))) {
       // emit a finalized number
       int last = used;
       print(node[2]);
@@ -1449,7 +1460,7 @@ public:
   }
 
   static Ref makeStatement(Ref contents) {
-    if (statable.has(contents[0]->getIString())) {
+    if (contents->isNumber() || statable.has(contents[0]->getIString())) {
       return &makeRawArray(2)->push_back(makeRawString(STAT))
                               .push_back(contents);
     } else {
@@ -1458,8 +1469,7 @@ public:
   }
 
   static Ref makeDouble(double num) {
-    return &makeRawArray(2)->push_back(makeRawString(NUM))
-                            .push_back(&arena.alloc()->setNumber(num));
+    return &arena.alloc()->setNumber(num);
   }
   static Ref makeInt(uint32_t num) {
     return makeDouble(double(num));

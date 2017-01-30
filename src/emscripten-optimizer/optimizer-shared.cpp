@@ -53,12 +53,13 @@ HeapInfo parseHeap(const char *name) {
 }
 
 AsmType detectType(Ref node, AsmData *asmData, bool inVarDef, IString minifiedFround, bool allowI64) {
+  if (node->isNumber()) {
+    if (!wasm::isInteger(node->getNumber())) return ASM_DOUBLE;
+    return ASM_INT;
+  }
   switch (node[0]->getCString()[0]) {
     case 'n': {
-      if (node[0] == NUM) {
-        if (!wasm::isInteger(node[1]->getNumber())) return ASM_DOUBLE;
-        return ASM_INT;
-      } else if (node[0] == NAME) {
+      if (node[0] == NAME) {
         if (asmData) {
           AsmType ret = asmData->getType(node[1]->getCString());
           if (ret != ASM_NONE) return ret;
@@ -141,6 +142,13 @@ static void abort_on(Ref node) {
 }
 
 AsmSign detectSign(Ref node, IString minifiedFround) {
+  if (node->isNumber()) {
+    double value = node->getNumber();
+    if (value < 0) return ASM_SIGNED;
+    if (value > uint32_t(-1) || fmod(value, 1) != 0) return ASM_NONSIGNED;
+    if (wasm::isSInteger32(value)) return ASM_FLEXIBLE;
+    return ASM_UNSIGNED;
+  }
   IString type = node[0]->getIString();
   if (type == BINARY) {
     IString op = node[1]->getIString();
@@ -162,12 +170,6 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
       case '~': return ASM_SIGNED;
       default: abort_on(node);
     }
-  } else if (type == NUM) {
-    double value = node[1]->getNumber();
-    if (value < 0) return ASM_SIGNED;
-    if (value > uint32_t(-1) || fmod(value, 1) != 0) return ASM_NONSIGNED;
-    if (wasm::isSInteger32(value)) return ASM_FLEXIBLE;
-    return ASM_UNSIGNED;
   } else if (type == NAME) {
     return ASM_FLEXIBLE;
   } else if (type == CONDITIONAL) {
