@@ -104,36 +104,36 @@ struct Match {
     // compare seen to the pattern input, doing a special operation for our "wildcards"
     assert(wildcards.size() == 0);
     auto compare = [this](Expression* subInput, Expression* subSeen) {
-    CallImport* call = subInput->dynCast<CallImport>();
-    if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return false;
-    Index index = call->operands[0]->cast<Const>()->value.geti32();
-    // handle our special functions
-    auto checkMatch = [&](WasmType type) {
-      if (type != none && subSeen->type != type) return false;
-      while (index >= wildcards.size()) {
-        wildcards.push_back(nullptr);
-      }
-      if (!wildcards[index]) {
-        // new wildcard
-        wildcards[index] = subSeen; // NB: no need to copy
-        return true;
-      } else {
-        // We are seeing this index for a second or later time, check it matches
-        return ExpressionAnalyzer::equal(subSeen, wildcards[index]);
+      CallImport* call = subInput->dynCast<CallImport>();
+      if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return false;
+      Index index = call->operands[0]->cast<Const>()->value.geti32();
+      // handle our special functions
+      auto checkMatch = [&](WasmType type) {
+        if (type != none && subSeen->type != type) return false;
+        while (index >= wildcards.size()) {
+          wildcards.push_back(nullptr);
+        }
+        if (!wildcards[index]) {
+          // new wildcard
+          wildcards[index] = subSeen; // NB: no need to copy
+          return true;
+        } else {
+          // We are seeing this index for a second or later time, check it matches
+          return ExpressionAnalyzer::equal(subSeen, wildcards[index]);
+        };
       };
-    };
-    if (call->target == I32_EXPR) {
-      if (checkMatch(i32)) return true;
-    } else if (call->target == I64_EXPR) {
-      if (checkMatch(i64)) return true;
-    } else if (call->target == F32_EXPR) {
-      if (checkMatch(f32)) return true;
-    } else if (call->target == F64_EXPR) {
-      if (checkMatch(f64)) return true;
-    } else if (call->target == ANY_EXPR) {
-      if (checkMatch(none)) return true;
-    }
-    return false;
+      if (call->target == I32_EXPR) {
+        if (checkMatch(i32)) return true;
+      } else if (call->target == I64_EXPR) {
+        if (checkMatch(i64)) return true;
+      } else if (call->target == F32_EXPR) {
+        if (checkMatch(f32)) return true;
+      } else if (call->target == F64_EXPR) {
+        if (checkMatch(f64)) return true;
+      } else if (call->target == ANY_EXPR) {
+        if (checkMatch(none)) return true;
+      }
+      return false;
     };
 
     return ExpressionAnalyzer::flexibleEqual(pattern.input, seen, compare);
@@ -147,14 +147,14 @@ struct Match {
     // When copying a wildcard, perform the substitution.
     // TODO: we can reuse nodes, not copying a wildcard when it appears just once, and we can reuse other individual nodes when they are discarded anyhow.
     auto copy = [this](Expression* curr) -> Expression* {
-    CallImport* call = curr->dynCast<CallImport>();
-    if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return nullptr;
-    Index index = call->operands[0]->cast<Const>()->value.geti32();
-    // handle our special functions
-    if (call->target == I32_EXPR || call->target == I64_EXPR || call->target == F32_EXPR || call->target == F64_EXPR || call->target == ANY_EXPR) {
-      return ExpressionManipulator::copy(wildcards.at(index), wasm);
-    }
-    return nullptr;
+      CallImport* call = curr->dynCast<CallImport>();
+      if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return nullptr;
+      Index index = call->operands[0]->cast<Const>()->value.geti32();
+      // handle our special functions
+      if (call->target == I32_EXPR || call->target == I64_EXPR || call->target == F32_EXPR || call->target == F64_EXPR || call->target == ANY_EXPR) {
+        return ExpressionManipulator::copy(wildcards.at(index), wasm);
+      }
+      return nullptr;
     };
     return ExpressionManipulator::flexibleCopy(pattern.output, wasm, copy);
   }
