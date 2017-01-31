@@ -17,7 +17,6 @@
 #ifndef wasm_ast_utils_h
 #define wasm_ast_utils_h
 
-#include "support/hash.h"
 #include "wasm.h"
 #include "wasm-traversal.h"
 #include "wasm-builder.h"
