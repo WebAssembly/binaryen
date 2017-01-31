@@ -103,10 +103,7 @@ struct Match {
   bool check(Expression* seen) {
     // compare seen to the pattern input, doing a special operation for our "wildcards"
     assert(wildcards.size() == 0);
-    return ExpressionAnalyzer::flexibleEqual(pattern.input, seen, *this);
-  }
-
-  bool compare(Expression* subInput, Expression* subSeen) {
+    auto compare = [this](Expression* subInput, Expression* subSeen) {
     CallImport* call = subInput->dynCast<CallImport>();
     if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return false;
     Index index = call->operands[0]->cast<Const>()->value.geti32();
@@ -137,7 +134,11 @@ struct Match {
       if (checkMatch(none)) return true;
     }
     return false;
+    };
+
+    return ExpressionAnalyzer::flexibleEqual(pattern.input, seen, compare);
   }
+
 
   // Applying/copying
 
