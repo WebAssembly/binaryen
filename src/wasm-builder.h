@@ -33,11 +33,11 @@ struct NameType {
 // General AST node builder
 
 class Builder {
-  MixedArena& allocator;
-
 public:
   Builder(MixedArena& allocator) : allocator(allocator) {}
   Builder(Module& wasm) : allocator(wasm.allocator) {}
+
+  MixedArena& allocator;
 
   // make* functions, create nodes
 
@@ -71,7 +71,7 @@ public:
   Block* makeBlock(Expression* first = nullptr) {
     auto* ret = allocator.alloc<Block>();
     if (first) {
-      ret->list.push_back(first);
+      ret->list.push_back(first, allocator);
       ret->finalize();
     }
     return ret;
@@ -97,7 +97,7 @@ public:
   template<typename T>
   Switch* makeSwitch(T& list, Name default_, Expression* condition, Expression* value = nullptr) {
     auto* ret = allocator.alloc<Switch>();
-    ret->targets.set(list);
+    ret->targets.set(list, allocator);
     ret->default_ = default_; ret->value = value; ret->condition = condition;
     return ret;
   }
@@ -105,14 +105,14 @@ public:
     auto* call = allocator.alloc<Call>();
     call->type = type; // not all functions may exist yet, so type must be provided
     call->target = target;
-    call->operands.set(args);
+    call->operands.set(args, allocator);
     return call;
   }
   CallImport* makeCallImport(Name target, const std::vector<Expression*>& args, WasmType type) {
     auto* call = allocator.alloc<CallImport>();
     call->type = type; // similar to makeCall, for consistency
     call->target = target;
-    call->operands.set(args);
+    call->operands.set(args, allocator);
     return call;
   }
   template<typename T>
@@ -120,7 +120,7 @@ public:
     auto* call = allocator.alloc<Call>();
     call->type = type; // not all functions may exist yet, so type must be provided
     call->target = target;
-    call->operands.set(args);
+    call->operands.set(args, allocator);
     return call;
   }
   template<typename T>
@@ -128,7 +128,7 @@ public:
     auto* call = allocator.alloc<CallImport>();
     call->type = type; // similar to makeCall, for consistency
     call->target = target;
-    call->operands.set(args);
+    call->operands.set(args, allocator);
     return call;
   }
   CallIndirect* makeCallIndirect(FunctionType* type, Expression* target, const std::vector<Expression*>& args) {
@@ -136,7 +136,7 @@ public:
     call->fullType = type->name;
     call->type = type->result;
     call->target = target;
-    call->operands.set(args);
+    call->operands.set(args, allocator);
     return call;
   }
   CallIndirect* makeCallIndirect(Name fullType, Expression* target, const std::vector<Expression*>& args, WasmType type) {
@@ -144,7 +144,7 @@ public:
     call->fullType = fullType;
     call->type = type;
     call->target = target;
-    call->operands.set(args);
+    call->operands.set(args, allocator);
     return call;
   }
   // FunctionType
@@ -227,7 +227,7 @@ public:
     auto* ret = allocator.alloc<Host>();
     ret->op = op;
     ret->nameOperand = nameOperand;
-    ret->operands.set(operands);
+    ret->operands.set(operands, allocator);
     ret->finalize();
     return ret;
   }
@@ -287,7 +287,7 @@ public:
     if (any) block = any->dynCast<Block>();
     if (!block) block = makeBlock(any);
     if (append) {
-      block->list.push_back(append);
+      block->list.push_back(append, allocator);
       block->finalize(); // TODO: move out of if
     }
     return block;
@@ -301,7 +301,7 @@ public:
     if (!block || block->name.is()) block = makeBlock(any);
     block->name = name;
     if (append) {
-      block->list.push_back(append);
+      block->list.push_back(append, allocator);
       block->finalize(); // TODO: move out of if
     }
     return block;
@@ -319,10 +319,10 @@ public:
     }
     auto* other = append->dynCast<Block>();
     if (!other) {
-      block->list.push_back(append);
+      block->list.push_back(append, allocator);
     } else {
       for (auto* item : other->list) {
-        block->list.push_back(item);
+        block->list.push_back(item, allocator);
       }
     }
     block->finalize(); // TODO: move out of if
@@ -333,7 +333,7 @@ public:
   // blockify, but does *not* reuse a block if the first is one.
   Block* makeSequence(Expression* left, Expression* right) {
     auto* block = makeBlock(left);
-    block->list.push_back(right);
+    block->list.push_back(right, allocator);
     block->finalize();
     return block;
   }
@@ -348,13 +348,13 @@ public:
     } else {
       auto* block = allocator.alloc<Block>();
       for (Index i = from; i < to; i++) {
-        block->list.push_back(input->list[i]);
+        block->list.push_back(input->list[i], allocator);
       }
       block->finalize();
       ret = block;
     }
     if (to == input->list.size()) {
-      input->list.resize(from);
+      input->list.resize(from, allocator);
     } else {
       for (Index i = from; i < to; i++) {
         input->list[i] = allocator.alloc<Nop>();

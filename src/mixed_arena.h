@@ -123,7 +123,7 @@ struct MixedArena {
   template<class T>
   T* alloc() {
     auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
-    new (ret) T(*this); // allocated objects receive the allocator, so they can allocate more later if necessary
+    new (ret) T();
     return ret;
   }
 
@@ -144,37 +144,31 @@ struct MixedArena {
 //
 // A vector that allocates in an arena.
 //
-// TODO: consider not saving the allocator, but requiring it be
-//       passed in when needed, would make this (and thus Blocks etc.
-//       smaller)
-//
 // TODO: specialize on the initial size of the array
 
 template <typename T>
 class ArenaVector {
-  MixedArena& allocator;
   T* data = nullptr;
   size_t usedElements = 0,
          allocatedElements = 0;
 
-  void allocate(size_t size) {
+  void allocate(size_t size, MixedArena& allocator) {
     allocatedElements = size;
     data = static_cast<T*>(allocator.allocSpace(sizeof(T) * allocatedElements));
   }
 
-  void reallocate(size_t size) {
+  void reallocate(size_t size, MixedArena& allocator) {
     T* old = data;
-    allocate(size);
+    allocate(size, allocator);
     for (size_t i = 0; i < usedElements; i++) {
       data[i] = old[i];
     }
   }
 
 public:
-  ArenaVector(MixedArena& allocator) : allocator(allocator) {}
-
-  ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
-    *this = other;
+  ArenaVector() {}
+  ArenaVector(ArenaVector<T>&& other) {
+    *this = std::move(other);
   }
 
   T& operator[](size_t index) const {
@@ -186,9 +180,9 @@ public:
     return usedElements;
   }
 
-  void resize(size_t size) {
+  void resize(size_t size, MixedArena& allocator) {
     if (size > allocatedElements) {
-      reallocate(size);
+      reallocate(size, allocator);
     }
     // construct new elements
     for (size_t i = usedElements; i < size; i++) {
@@ -208,28 +202,24 @@ public:
     return data[usedElements];
   }
 
-  void push_back(T item) {
+  void push_back(T item, MixedArena& allocator) {
     if (usedElements == allocatedElements) {
-      reallocate((allocatedElements + 1) * 2); // TODO: optimize
+      reallocate((allocatedElements + 1) * 2, allocator); // TODO: optimize
     }
     data[usedElements] = item;
     usedElements++;
   }
 
   template<typename ListType>
-  void set(const ListType& list) {
+  void set(const ListType& list, MixedArena& allocator) {
     size_t size = list.size();
     if (allocatedElements < size) {
-      allocate(size);
+      allocate(size, allocator);
     }
     for (size_t i = 0; i < size; i++) {
       data[i] = list[i];
     }
     usedElements = size;
-  }
-
-  void operator=(ArenaVector<T>& other) {
-    set(other);
   }
 
   void operator=(ArenaVector<T>&& other) {

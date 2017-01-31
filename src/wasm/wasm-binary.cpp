@@ -1345,13 +1345,13 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   }
   auto* block = builder.makeBlock();
   while (!expressions.empty()) {
-    block->list.push_back(expressions.back());
+    block->list.push_back(expressions.back(), allocator);
     expressions.pop_back();
   }
   auto type = block->list[0]->type;
   auto local = builder.addVar(currFunction, type);
   block->list[0] = builder.makeSetLocal(local, block->list[0]);
-  block->list.push_back(builder.makeGetLocal(local, type));
+  block->list.push_back(builder.makeGetLocal(local, type), allocator);
   block->finalize();
   return block;
 }
@@ -1563,7 +1563,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     assert(end >= start);
     for (size_t i = start; i < end; i++) {
       if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      curr->list.push_back(expressionStack[i]);
+      curr->list.push_back(expressionStack[i], allocator);
     }
     expressionStack.resize(start);
     curr->finalize(curr->type);
@@ -1580,7 +1580,7 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
   }
   auto* block = allocator.alloc<Block>();
   for (size_t i = start; i < end; i++) {
-    block->list.push_back(expressionStack[i]);
+    block->list.push_back(expressionStack[i], allocator);
   }
   block->finalize(type);
   expressionStack.resize(start);
@@ -1649,7 +1649,7 @@ void WasmBinaryBuilder::visitSwitch(Switch *curr) {
   auto numTargets = getU32LEB();
   if (debug) std::cerr << "targets: "<< numTargets<<std::endl;
   for (size_t i = 0; i < numTargets; i++) {
-    curr->targets.push_back(getBreakTarget(getU32LEB()).name);
+    curr->targets.push_back(getBreakTarget(getU32LEB()).name, allocator);
   }
   auto defaultTarget = getBreakTarget(getU32LEB());
   curr->default_ = defaultTarget.name;
@@ -1690,7 +1690,7 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
   if (reserved != 0) throw ParseException("Invalid flags field in call_indirect");
   curr->fullType = fullType->name;
   auto num = fullType->params.size();
-  curr->operands.resize(num);
+  curr->operands.resize(num, allocator);
   curr->target = popNonVoidExpression();
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
@@ -1960,7 +1960,7 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
     case BinaryConsts::GrowMemory: {
       curr = allocator.alloc<Host>();
       curr->op = GrowMemory;
-      curr->operands.resize(1);
+      curr->operands.resize(1, allocator);
       curr->operands[0] = popNonVoidExpression();
       break;
     }

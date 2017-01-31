@@ -740,12 +740,12 @@ class S2WasmBuilder {
     // parse body
     func->body = allocator->alloc<Block>();
     std::vector<Expression*> bstack;
-    auto addToBlock = [&bstack](Expression* curr) {
+    auto addToBlock = [&bstack, this](Expression* curr) {
       Expression* last = bstack.back();
       if (last->is<Loop>()) {
         last = last->cast<Loop>()->body;
       }
-      last->cast<Block>()->list.push_back(curr);
+      last->cast<Block>()->list.push_back(curr, *allocator);
     };
     bstack.push_back(func->body);
     std::vector<Expression*> estack;
@@ -874,7 +874,7 @@ class S2WasmBuilder {
       Name assign = getAssign();
       auto curr = allocator->alloc<Host>();
       curr->op = op;
-      curr->operands.push_back(getInput());
+      curr->operands.push_back(getInput(), *allocator);
       curr->finalize();
       setOutput(curr, assign);
     };
@@ -976,7 +976,7 @@ class S2WasmBuilder {
           int num = getNumInputs();
           auto inputs = getInputs(num);
           for (int i = 0; i < num; i++) {
-            curr->operands.push_back(inputs[i]);
+            curr->operands.push_back(inputs[i], *allocator);
           }
         }
         Name target = linkerObj->resolveAlias(
@@ -1203,7 +1203,7 @@ class S2WasmBuilder {
         auto curr = allocator->alloc<Switch>();
         curr->condition = getInput();
         while (skipComma()) {
-          curr->targets.push_back(getBranchLabel(getInt()));
+          curr->targets.push_back(getBranchLabel(getInt()), *allocator);
         }
         assert(curr->targets.size() > 0);
         curr->default_ = curr->targets.back();

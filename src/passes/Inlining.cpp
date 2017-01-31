@@ -121,11 +121,11 @@ static Expression* doInlining(Module* module, Function* into, Action& action) {
   }
   // assign the operands into the params
   for (Index i = 0; i < action.contents->params.size(); i++) {
-    block->list.push_back(builder.makeSetLocal(updater.localMapping[i], action.call->operands[i]));
+    block->list.push_back(builder.makeSetLocal(updater.localMapping[i], action.call->operands[i]), module->allocator);
   }
   // update the inlined contents
   updater.walk(action.contents->body);
-  block->list.push_back(action.contents->body);
+  block->list.push_back(action.contents->body, module->allocator);
   action.contents->body = builder.makeUnreachable(); // not strictly needed, since it's going away
   return block;
 }

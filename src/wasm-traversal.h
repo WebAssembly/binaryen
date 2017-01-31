@@ -170,6 +170,11 @@ struct Walker : public VisitorType {
     return currFunction;
   }
 
+  // Convenience function to get the allocator
+  MixedArena& getAllocator() {
+    return currModule->allocator;
+  }
+
   // Walk starting
 
   void walkFunction(Function* func) {

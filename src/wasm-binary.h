@@ -741,7 +741,7 @@ public:
   void fillCall(T* call, FunctionType* type) {
     assert(type);
     auto num = type->params.size();
-    call->operands.resize(num);
+    call->operands.resize(num, allocator);
     for (size_t i = 0; i < num; i++) {
       call->operands[num - i - 1] = popNonVoidExpression();
     }

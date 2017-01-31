@@ -115,7 +115,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
         // drop a nop at the end of a block, which prevents a value flowing
         while (block->list.size() > 0 && block->list.back()->is<Nop>()) {
-          block->list.resize(block->list.size() - 1);
+          block->list.resize(block->list.size() - 1, self->getAllocator());
           self->anotherCycle = true;
         }
       }
@@ -411,7 +411,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
             ifTrueBreak->condition = iff->condition;
             ifTrueBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
-            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
+            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse, getAllocator());
             continue;
           }
           // otherwise, perhaps we can flip the if
@@ -420,7 +420,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
             ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
-            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
+            ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue, getAllocator());
             continue;
           }
         }

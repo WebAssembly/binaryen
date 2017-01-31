@@ -954,13 +954,10 @@ public:
 class Nop : public SpecificExpression<Expression::NopId> {
 public:
   Nop() {}
-  Nop(MixedArena& allocator) {}
 };
 
 class Block : public SpecificExpression<Expression::BlockId> {
 public:
-  Block(MixedArena& allocator) : list(allocator) {}
-
   Name name;
   ExpressionList list;
 
@@ -976,7 +973,6 @@ public:
 class If : public SpecificExpression<Expression::IfId> {
 public:
   If() : ifFalse(nullptr) {}
-  If(MixedArena& allocator) : If() {}
 
   Expression* condition;
   Expression* ifTrue;
@@ -994,7 +990,6 @@ public:
 class Loop : public SpecificExpression<Expression::LoopId> {
 public:
   Loop() {}
-  Loop(MixedArena& allocator) {}
 
   Name name;
   Expression* body;
@@ -1010,8 +1005,7 @@ public:
 
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
-  Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() {
+  Break() : value(nullptr), condition(nullptr) {
     type = unreachable;
   }
 
@@ -1034,7 +1028,7 @@ public:
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator), condition(nullptr), value(nullptr) {
+  Switch() : condition(nullptr), value(nullptr) {
     type = unreachable;
   }
 
@@ -1046,16 +1040,12 @@ public:
 
 class Call : public SpecificExpression<Expression::CallId> {
 public:
-  Call(MixedArena& allocator) : operands(allocator) {}
-
   ExpressionList operands;
   Name target;
 };
 
 class CallImport : public SpecificExpression<Expression::CallImportId> {
 public:
-  CallImport(MixedArena& allocator) : operands(allocator) {}
-
   ExpressionList operands;
   Name target;
 };
@@ -1088,8 +1078,6 @@ public:
 
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
-  CallIndirect(MixedArena& allocator) : operands(allocator) {}
-
   ExpressionList operands;
   Name fullType;
   Expression* target;
@@ -1097,17 +1085,11 @@ public:
 
 class GetLocal : public SpecificExpression<Expression::GetLocalId> {
 public:
-  GetLocal() {}
-  GetLocal(MixedArena& allocator) {}
-
   Index index;
 };
 
 class SetLocal : public SpecificExpression<Expression::SetLocalId> {
 public:
-  SetLocal() {}
-  SetLocal(MixedArena& allocator) {}
-
   Index index;
   Expression* value;
 
@@ -1123,26 +1105,17 @@ public:
 
 class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
 public:
-  GetGlobal() {}
-  GetGlobal(MixedArena& allocator) {}
-
   Name name;
 };
 
 class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
 public:
-  SetGlobal() {}
-  SetGlobal(MixedArena& allocator) {}
-
   Name name;
   Expression* value;
 };
 
 class Load : public SpecificExpression<Expression::LoadId> {
 public:
-  Load() {}
-  Load(MixedArena& allocator) {}
-
   uint8_t bytes;
   bool signed_;
   Address offset;
@@ -1154,9 +1127,6 @@ public:
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
-  Store() : valueType(none) {}
-  Store(MixedArena& allocator) : Store() {}
-
   uint8_t bytes;
   Address offset;
   Address align;
@@ -1171,9 +1141,6 @@ public:
 
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
-  Const() {}
-  Const(MixedArena& allocator) {}
-
   Literal value;
 
   Const* set(Literal value_) {
@@ -1185,9 +1152,6 @@ public:
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
 public:
-  Unary() {}
-  Unary(MixedArena& allocator) {}
-
   UnaryOp op;
   Expression* value;
 
@@ -1248,9 +1212,6 @@ public:
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
 public:
-  Binary() {}
-  Binary(MixedArena& allocator) {}
-
   BinaryOp op;
   Expression* left;
   Expression* right;
@@ -1308,9 +1269,6 @@ public:
 
 class Select : public SpecificExpression<Expression::SelectId> {
 public:
-  Select() {}
-  Select(MixedArena& allocator) {}
-
   Expression* ifTrue;
   Expression* ifFalse;
   Expression* condition;
@@ -1323,9 +1281,6 @@ public:
 
 class Drop : public SpecificExpression<Expression::DropId> {
 public:
-  Drop() {}
-  Drop(MixedArena& allocator) {}
-
   Expression* value;
 };
 
@@ -1334,15 +1289,12 @@ public:
   Return() : value(nullptr) {
     type = unreachable;
   }
-  Return(MixedArena& allocator) : Return() {}
 
   Expression* value;
 };
 
 class Host : public SpecificExpression<Expression::HostId> {
 public:
-  Host(MixedArena& allocator) : operands(allocator) {}
-
   HostOp op;
   Name nameOperand;
   ExpressionList operands;
@@ -1367,7 +1319,6 @@ public:
   Unreachable() {
     type = unreachable;
   }
-  Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
 // Globals

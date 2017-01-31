@@ -58,7 +58,7 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* P
       Shape* Body = iter.second;
       Curr->name = Builder.getBlockBreakName(Id);
       auto* Outer = Builder.makeBlock(Curr);
-      Outer->list.push_back(Body->Render(Builder, InLoop));
+      Outer->list.push_back(Body->Render(Builder, InLoop), Builder.allocator);
       Outer->finalize(); // TODO: not really necessary
       Curr = Outer;
     }
@@ -106,13 +106,13 @@ Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit
 
 wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block *Target, bool SetLabel) {
   auto* Ret = Builder.makeBlock();
-  if (Code) Ret->list.push_back(Code);
-  if (SetLabel) Ret->list.push_back(Builder.makeSetLabel(Target->Id));
+  if (Code) Ret->list.push_back(Code, Builder.allocator);
+  if (SetLabel) Ret->list.push_back(Builder.makeSetLabel(Target->Id), Builder.allocator);
   if (Type == Break) {
-    Ret->list.push_back(Builder.makeBlockBreak(Target->Id));
+    Ret->list.push_back(Builder.makeBlockBreak(Target->Id), Builder.allocator);
   } else if (Type == Continue) {
     assert(Ancestor);
-    Ret->list.push_back(Builder.makeShapeContinue(Ancestor->Id));
+    Ret->list.push_back(Builder.makeShapeContinue(Ancestor->Id), Builder.allocator);
   }
   Ret->finalize();
   return Ret;
@@ -144,9 +144,9 @@ void Block::AddSwitchBranchTo(Block *Target, std::vector<wasm::Index>&& Values, 
 wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   auto* Ret = Builder.makeBlock();
   if (IsCheckedMultipleEntry && InLoop) {
-    Ret->list.push_back(Builder.makeSetLabel(0));
+    Ret->list.push_back(Builder.makeSetLabel(0), Builder.allocator);
   }
-  if (Code) Ret->list.push_back(Code);
+  if (Code) Ret->list.push_back(Code, Builder.allocator);
 
   if (!ProcessedBranchesOut.size()) {
     Ret->finalize();
@@ -306,10 +306,10 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
       // generate a block to branch to, if we have content
       if (CurrContent) {
         auto* NextOuter = Builder.makeBlock();
-        NextOuter->list.push_back(Outer);
+        NextOuter->list.push_back(Outer, Builder.allocator);
         Outer->name = CurrName; // breaking on Outer leads to the content in NextOuter
-        NextOuter->list.push_back(CurrContent);
-        NextOuter->list.push_back(Builder.makeBreak(SwitchLeave));
+        NextOuter->list.push_back(CurrContent, Builder.allocator);
+        NextOuter->list.push_back(Builder.makeBreak(SwitchLeave), Builder.allocator);
         // prepare for more nesting
         Outer = NextOuter;
       } else {
@@ -331,12 +331,12 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
     }
     // finish up the whole pattern
     Outer->name = SwitchLeave;
-    Inner->list.push_back(Builder.makeSwitch(Table, SwitchDefault, SwitchCondition));
+    Inner->list.push_back(Builder.makeSwitch(Table, SwitchDefault, SwitchCondition), Builder.allocator);
     Root = Outer;
   }
 
   if (Root) {
-    Ret->list.push_back(Root);
+    Ret->list.push_back(Root, Builder.allocator);
   }
   Ret->finalize();
 

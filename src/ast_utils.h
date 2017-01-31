@@ -233,16 +233,6 @@ struct ExpressionManipulator {
     convert<InputType, Nop>(target);
   }
 
-  // Convert a node that allocates
-  template<typename InputType, typename OutputType>
-  static OutputType* convert(InputType *input, MixedArena& allocator) {
-    assert(sizeof(OutputType) <= sizeof(InputType));
-    input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
-    OutputType* output = (OutputType*)(input);
-    new (output) OutputType(allocator);
-    return output;
-  }
-
   template<typename T>
   static Expression* flexibleCopy(Expression* original, Module& wasm, T& custom) {
     struct Copier : public Visitor<Copier, Expression*> {
@@ -263,7 +253,7 @@ struct ExpressionManipulator {
       Expression* visitBlock(Block *curr) {
         auto* ret = builder.makeBlock();
         for (Index i = 0; i < curr->list.size(); i++) {
-          ret->list.push_back(copy(curr->list[i]));
+          ret->list.push_back(copy(curr->list[i]), wasm.allocator);
         }
         ret->name = curr->name;
         ret->finalize(curr->type);
@@ -284,21 +274,21 @@ struct ExpressionManipulator {
       Expression* visitCall(Call *curr) {
         auto* ret = builder.makeCall(curr->target, {}, curr->type);
         for (Index i = 0; i < curr->operands.size(); i++) {
-          ret->operands.push_back(copy(curr->operands[i]));
+          ret->operands.push_back(copy(curr->operands[i]), wasm.allocator);
         }
         return ret;
       }
       Expression* visitCallImport(CallImport *curr) {
         auto* ret = builder.makeCallImport(curr->target, {}, curr->type);
         for (Index i = 0; i < curr->operands.size(); i++) {
-          ret->operands.push_back(copy(curr->operands[i]));
+          ret->operands.push_back(copy(curr->operands[i]), wasm.allocator);
         }
         return ret;
       }
       Expression* visitCallIndirect(CallIndirect *curr) {
         auto* ret = builder.makeCallIndirect(curr->fullType, copy(curr->target), {}, curr->type);
         for (Index i = 0; i < curr->operands.size(); i++) {
-          ret->operands.push_back(copy(curr->operands[i]));
+          ret->operands.push_back(copy(curr->operands[i]), wasm.allocator);
         }
         return ret;
       }
@@ -368,13 +358,13 @@ struct ExpressionManipulator {
   }
 
   // Splice an item into the middle of a block's list
-  static void spliceIntoBlock(Block* block, Index index, Expression* add) {
+  static void spliceIntoBlock(Block* block, Index index, Expression* add, MixedArena& allocator) {
     auto& list = block->list;
     if (index == list.size()) {
-      list.push_back(add); // simple append
+      list.push_back(add, allocator); // simple append
     } else {
       // we need to make room
-      list.push_back(nullptr);
+      list.push_back(nullptr, allocator);
       for (Index i = list.size() - 1; i > index; i--) {
         list[i] = list[i - 1];
       }
