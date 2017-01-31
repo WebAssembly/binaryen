@@ -277,6 +277,6 @@ void traverseFunctions(Ref ast, std::function<void (Ref)> visit) {
 
 // ValueBuilder
 
-IStringSet ValueBuilder::statable("assign call binary unary-prefix name conditional dot new sub seq string object array");
+IStringSet ValueBuilder::statable("assign call binary unary-prefix conditional dot new sub seq string object array");
 
 } // namespace cashew

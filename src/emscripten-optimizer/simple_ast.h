@@ -663,6 +663,10 @@ struct JSPrinter {
 
   void print(Ref node) {
     ensure();
+    if (node->isString()) {
+      printName(node);
+      return;
+    }
     if (node->isNumber()) {
       printNum(node);
       return;
@@ -708,8 +712,7 @@ struct JSPrinter {
         break;
       }
       case 'n': {
-        if (type == NAME) printName(node);
-        else if (type == NEW) printNew(node);
+        if (type == NEW) printNew(node);
         else abort();
         break;
       }
@@ -842,7 +845,7 @@ struct JSPrinter {
   }
 
   void printName(Ref node) {
-    emit(node[1]->getCString());
+    emit(node->getCString());
   }
 
   static char* numToString(double d, bool finalize=true) {
@@ -1357,8 +1360,7 @@ public:
   }
 
   static Ref makeName(IString name) {
-    return &makeRawArray(2)->push_back(makeRawString(NAME))
-                            .push_back(makeRawString(name));
+    return makeRawString(name);
   }
 
   static void setBlockContent(Ref target, Ref block) {
@@ -1460,7 +1462,7 @@ public:
   }
 
   static Ref makeStatement(Ref contents) {
-    if (contents->isNumber() || statable.has(contents[0]->getIString())) {
+    if (contents->isNumber() || contents->isString() || statable.has(contents[0]->getIString())) {
       return &makeRawArray(2)->push_back(makeRawString(STAT))
                               .push_back(contents);
     } else {
@@ -1636,8 +1638,8 @@ public:
   }
 
   static Ref makeDot(Ref obj, Ref key) {
-    assert(key[0] == NAME);
-    return makeDot(obj, key[1]->getIString());
+    assert(key->isString());
+    return makeDot(obj, key->getIString());
   }
 
   static Ref makeNew(Ref call) {
