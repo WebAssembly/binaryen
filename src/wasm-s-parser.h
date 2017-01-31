@@ -41,7 +41,7 @@ class Element {
   bool quoted_;
 
 public:
-  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
+  Element() : isList_(true), line(-1), col(-1) {}
 
   bool isList() { return isList_; }
   bool isStr() { return !isList_; }
@@ -172,7 +172,7 @@ private:
   template<class T>
   void parseCallOperands(Element& s, Index i, Index j, T* call) {
     while (i < j) {
-      call->operands.push_back(parseExpression(s[i]));
+      call->operands.push_back(parseExpression(s[i]), allocator);
       i++;
     }
   }

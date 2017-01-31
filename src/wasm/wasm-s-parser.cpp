@@ -117,9 +117,9 @@ Element* SExpressionParser::parse() {
       curr = stack.back();
       assert(stack.size());
       stack.pop_back();
-      curr->list().push_back(last);
+      curr->list().push_back(last, allocator);
     } else {
-      curr->list().push_back(parseString());
+      curr->list().push_back(parseString(), allocator);
     }
   }
   if (stack.size() != 0) throw ParseException("stack is not empty", curr->line, curr->col);
@@ -451,7 +451,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   auto ensureAutoBlock = [&]() {
     if (!autoBlock) {
       autoBlock = allocator.alloc<Block>();
-      autoBlock->list.push_back(body);
+      autoBlock->list.push_back(body, allocator);
       body = autoBlock;
     }
   };
@@ -512,7 +512,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
         body = ex;
       } else {
         ensureAutoBlock();
-        autoBlock->list.push_back(ex);
+        autoBlock->list.push_back(ex, allocator);
       }
     }
   }
@@ -1011,11 +1011,11 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
       }
       if (t < int(stack.size()) - 1) {
         // first child is one of our recursions
-        curr->list.push_back(stack[t + 1].second);
+        curr->list.push_back(stack[t + 1].second, allocator);
         i++;
       }
       for (; i < s.size(); i++) {
-        curr->list.push_back(parseExpression(s[i]));
+        curr->list.push_back(parseExpression(s[i]), allocator);
       }
     }
     nameMapper.popLabelName(curr->name);
@@ -1032,7 +1032,7 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
     i++;
   }
   for (; i < s.size(); i++) {
-    ret->list.push_back(parseExpression(s[i]));
+    ret->list.push_back(parseExpression(s[i]), allocator);
   }
   ret->finalize();
   return ret;
@@ -1148,7 +1148,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   if (BreakSeeker::has(ret, label)) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
-    block->list.push_back(ret);
+    block->list.push_back(ret, allocator);
     block->finalize(ret->type);
     return block;
   }
@@ -1162,7 +1162,7 @@ Expression* SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, WasmTyp
   if (s.size() == i+1) return parseExpression(s[i]);
   auto ret = allocator.alloc<Block>();
   for (; i < s.size() && i < stopAt; i++) {
-    ret->list.push_back(parseExpression(s[i]));
+    ret->list.push_back(parseExpression(s[i]), allocator);
   }
   ret->finalize(type);
   // Note that we do not name these implicit/synthetic blocks. They
@@ -1271,7 +1271,7 @@ Expression* SExpressionWasmBuilder::makeBreakTable(Element& s) {
   auto ret = allocator.alloc<Switch>();
   size_t i = 1;
   while (!s[i]->isList()) {
-    ret->targets.push_back(getLabel(*s[i++]));
+    ret->targets.push_back(getLabel(*s[i++]), allocator);
   }
   ret->default_ = ret->targets.back();
   ret->targets.pop_back();
