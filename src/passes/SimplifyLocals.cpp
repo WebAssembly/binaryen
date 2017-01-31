@@ -352,7 +352,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       if (br->condition) {
         br->value = set;
         set->setTee(true);
-        *breakSetLocalPointer = getModule()->allocator.alloc<Nop>();
+        *breakSetLocalPointer = getAllocator().alloc<Nop>();
         // in addition, as this is a conditional br that now has a value, it now returns a value, so it must be dropped
         br->finalize();
         *brp = Builder(*getModule()).makeDrop(br);
@@ -456,7 +456,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       // enlarge blocks that were marked, for the next round
       if (blocksToEnlarge.size() > 0) {
         for (auto* block : blocksToEnlarge) {
-          block->list.push_back(getModule()->allocator.alloc<Nop>());
+          block->list.push_back(getAllocator().alloc<Nop>(), getAllocator());
         }
         blocksToEnlarge.clear();
         anotherCycle = true;
@@ -467,12 +467,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
           auto ifTrue = Builder(*getModule()).blockify(iff->ifTrue);
           iff->ifTrue = ifTrue;
           if (ifTrue->list.size() == 0 || !ifTrue->list.back()->is<Nop>()) {
-            ifTrue->list.push_back(getModule()->allocator.alloc<Nop>());
+            ifTrue->list.push_back(getAllocator().alloc<Nop>(), getAllocator());
           }
           auto ifFalse = Builder(*getModule()).blockify(iff->ifFalse);
           iff->ifFalse = ifFalse;
           if (ifFalse->list.size() == 0 || !ifFalse->list.back()->is<Nop>()) {
-            ifFalse->list.push_back(getModule()->allocator.alloc<Nop>());
+            ifFalse->list.push_back(getAllocator().alloc<Nop>(), getAllocator());
           }
         }
         ifsToEnlarge.clear();

@@ -121,7 +121,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
         // it would leave an element with type none as the last, that could be a problem,
         // see https://github.com/WebAssembly/spec/issues/355
         if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
-          block->list.resize(i + 1, self->getModule()->allocator);
+          block->list.resize(i + 1, self->getAllocator());
           // note that we do *not* finalize here. it is incorrect to re-finalize a block
           // after removing elements, as it may no longer have branches to it that would
           // determine its type, so re-finalizing would just wipe out an existing type
@@ -247,9 +247,9 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
     for (Index i = 0; i < curr->operands.size(); i++) {
       if (isDead(curr->operands[i])) {
         if (i > 0) {
-          auto* block = getModule()->allocator.alloc<Block>();
+          auto* block = getAllocator().alloc<Block>();
           Index newSize = i + 1;
-          block->list.resize(newSize, getModule()->allocator);
+          block->list.resize(newSize, getAllocator());
           Index j = 0;
           for (; j < newSize; j++) {
             block->list[j] = drop(curr->operands[j]);
@@ -275,11 +275,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
   void visitCallIndirect(CallIndirect* curr) {
     if (handleCall(curr) != curr) return;
     if (isDead(curr->target)) {
-      auto* block = getModule()->allocator.alloc<Block>();
+      auto* block = getAllocator().alloc<Block>();
       for (auto* operand : curr->operands) {
-        block->list.push_back(drop(operand), getModule()->allocator);
+        block->list.push_back(drop(operand), getAllocator());
       }
-      block->list.push_back(curr->target, getModule()->allocator);
+      block->list.push_back(curr->target, getAllocator());
       block->finalize();
       replaceCurrent(block);
     }
@@ -303,8 +303,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
       return;
     }
     if (isDead(curr->value)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2, getModule()->allocator);
+      auto* block = getAllocator().alloc<Block>();
+      block->list.resize(2, getAllocator());
       block->list[0] = drop(curr->ptr);
       block->list[1] = curr->value;
       block->finalize();
@@ -324,8 +324,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
       return;
     }
     if (isDead(curr->right)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2, getModule()->allocator);
+      auto* block = getAllocator().alloc<Block>();
+      block->list.resize(2, getAllocator());
       block->list[0] = drop(curr->left);
       block->list[1] = curr->right;
       block->finalize();
@@ -339,8 +339,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
       return;
     }
     if (isDead(curr->ifFalse)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2, getModule()->allocator);
+      auto* block = getAllocator().alloc<Block>();
+      block->list.resize(2, getAllocator());
       block->list[0] = drop(curr->ifTrue);
       block->list[1] = curr->ifFalse;
       block->finalize();
@@ -348,8 +348,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
       return;
     }
     if (isDead(curr->condition)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(3, getModule()->allocator);
+      auto* block = getAllocator().alloc<Block>();
+      block->list.resize(3, getAllocator());
       block->list[0] = drop(curr->ifTrue);
       block->list[1] = drop(curr->ifFalse);
       block->list[2] = curr->condition;

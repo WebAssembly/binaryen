@@ -168,7 +168,7 @@ class ArenaVector {
 public:
   ArenaVector() {}
   ArenaVector(ArenaVector<T>&& other) {
-    *this = other;
+    *this = std::move(other);
   }
 
   T& operator[](size_t index) const {
@@ -220,10 +220,6 @@ public:
       data[i] = list[i];
     }
     usedElements = size;
-  }
-
-  void operator=(ArenaVector<T>& other) {
-    set(other);
   }
 
   void operator=(ArenaVector<T>&& other) {

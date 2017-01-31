@@ -300,10 +300,11 @@ BinaryenOp BinaryenGrowMemory(void) { return GrowMemory; }
 BinaryenOp BinaryenHasFeature(void) { return HasFeature; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren) {
-  auto* ret = ((Module*)module)->allocator.alloc<Block>();
+  auto& allocator = ((Module*)module)->allocator;
+  auto* ret = allocator.alloc<Block>();
   if (name) ret->name = name;
   for (BinaryenIndex i = 0; i < numChildren; i++) {
-    ret->list.push_back((Expression*)children[i]);
+    ret->list.push_back((Expression*)children[i], allocator);
   }
   ret->finalize();
 
@@ -362,7 +363,8 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, 
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<Switch>();
+  auto& allocator = ((Module*)module)->allocator;
+  auto* ret = allocator.alloc<Switch>();
 
   if (tracing) {
     std::cout << "  {\n";
@@ -379,7 +381,7 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
   }
 
   for (BinaryenIndex i = 0; i < numNames; i++) {
-    ret->targets.push_back(names[i]);
+    ret->targets.push_back(names[i], allocator);
   }
   ret->default_ = defaultName;
   ret->condition = (Expression*)condition;
@@ -388,7 +390,8 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
-  auto* ret = ((Module*)module)->allocator.alloc<Call>();
+  auto& allocator = ((Module*)module)->allocator;
+  auto* ret = allocator.alloc<Call>();
 
   if (tracing) {
     std::cout << "  {\n";
@@ -406,14 +409,15 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target,
 
   ret->target = target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
-    ret->operands.push_back((Expression*)operands[i]);
+    ret->operands.push_back((Expression*)operands[i], allocator);
   }
   ret->type = WasmType(returnType);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
-  auto* ret = ((Module*)module)->allocator.alloc<CallImport>();
+  auto& allocator = ((Module*)module)->allocator;
+  auto* ret = allocator.alloc<CallImport>();
 
   if (tracing) {
     std::cout << "  {\n";
@@ -431,7 +435,7 @@ BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *t
 
   ret->target = target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
-    ret->operands.push_back((Expression*)operands[i]);
+    ret->operands.push_back((Expression*)operands[i], allocator);
   }
   ret->type = WasmType(returnType);
   ret->finalize();
@@ -439,7 +443,8 @@ BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *t
 }
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, const char* type) {
   auto* wasm = (Module*)module;
-  auto* ret = wasm->allocator.alloc<CallIndirect>();
+  auto& allocator = wasm->allocator;
+  auto* ret = allocator.alloc<CallIndirect>();
 
   if (tracing) {
     std::cout << "  {\n";
@@ -457,7 +462,7 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
 
   ret->target = (Expression*)target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
-    ret->operands.push_back((Expression*)operands[i]);
+    ret->operands.push_back((Expression*)operands[i], allocator);
   }
   ret->fullType = type;
   ret->type = wasm->getFunctionType(ret->fullType)->result;
@@ -625,11 +630,12 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, cons
     std::cout << "  TODO: host...\n";
   }
 
-  auto* ret = ((Module*)module)->allocator.alloc<Host>();
+  auto& allocator = ((Module*)module)->allocator;
+  auto* ret = allocator.alloc<Host>();
   ret->op = HostOp(op);
   if (name) ret->nameOperand = name;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
-    ret->operands.push_back((Expression*)operands[i]);
+    ret->operands.push_back((Expression*)operands[i], allocator);
   }
   ret->finalize();
   return static_cast<Expression*>(ret);

@@ -124,14 +124,14 @@ private:
 
     for (auto param : func->params) {
       if (param == i64) {
-        call->operands.push_back(I64Utilities::recreateI64(builder, legal->params.size(), legal->params.size() + 1));
+        call->operands.push_back(I64Utilities::recreateI64(builder, legal->params.size(), legal->params.size() + 1), module->allocator);
         legal->params.push_back(i32);
         legal->params.push_back(i32);
       } else if (param == f32) {
-        call->operands.push_back(builder.makeUnary(DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)));
+        call->operands.push_back(builder.makeUnary(DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)), module->allocator);
         legal->params.push_back(f64);
       } else {
-        call->operands.push_back(builder.makeGetLocal(legal->params.size(), param));
+        call->operands.push_back(builder.makeGetLocal(legal->params.size(), param), module->allocator);
         legal->params.push_back(param);
       }
     }
@@ -140,13 +140,13 @@ private:
       legal->result = i32;
       auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
-      block->list.push_back(builder.makeSetLocal(index, call));
+      block->list.push_back(builder.makeSetLocal(index, call), module->allocator);
       ensureTempRet0(module);
       block->list.push_back(builder.makeSetGlobal(
         TEMP_RET_0,
         I64Utilities::getI64High(builder, index)
-      ));
-      block->list.push_back(I64Utilities::getI64Low(builder, index));
+      ), module->allocator);
+      block->list.push_back(I64Utilities::getI64Low(builder, index), module->allocator);
       block->finalize();
       legal->body = block;
     } else if (func->result == f32) {
@@ -184,15 +184,15 @@ private:
 
     for (auto param : im->functionType->params) {
       if (param == i64) {
-        call->operands.push_back(I64Utilities::getI64Low(builder, func->params.size()));
-        call->operands.push_back(I64Utilities::getI64High(builder, func->params.size()));
+        call->operands.push_back(I64Utilities::getI64Low(builder, func->params.size()), module->allocator);
+        call->operands.push_back(I64Utilities::getI64High(builder, func->params.size()), module->allocator);
         type->params.push_back(i32);
         type->params.push_back(i32);
       } else if (param == f32) {
-        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)));
+        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)), module->allocator);
         type->params.push_back(f64);
       } else {
-        call->operands.push_back(builder.makeGetLocal(func->params.size(), param));
+        call->operands.push_back(builder.makeGetLocal(func->params.size(), param), module->allocator);
         type->params.push_back(param);
       }
       func->params.push_back(param);

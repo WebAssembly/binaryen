@@ -233,16 +233,6 @@ struct ExpressionManipulator {
     convert<InputType, Nop>(target);
   }
 
-  // Convert a node that allocates
-  template<typename InputType, typename OutputType>
-  static OutputType* convert(InputType *input, MixedArena& allocator) {
-    assert(sizeof(OutputType) <= sizeof(InputType));
-    input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
-    OutputType* output = (OutputType*)(input);
-    new (output) OutputType(allocator);
-    return output;
-  }
-
   template<typename T>
   static Expression* flexibleCopy(Expression* original, Module& wasm, T& custom) {
     struct Copier : public Visitor<Copier, Expression*> {

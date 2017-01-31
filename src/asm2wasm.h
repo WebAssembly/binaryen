@@ -515,7 +515,7 @@ private:
   Block* blockify(Expression* expression) {
     if (expression->is<Block>() && !expression->cast<Block>()->name.is()) return expression->dynCast<Block>();
     auto ret = allocator.alloc<Block>();
-    ret->list.push_back(expression);
+    ret->list.push_back(expression, allocator);
     ret->finalize();
     return ret;
   }
@@ -532,8 +532,8 @@ private:
       case BinaryOp::DivUInt64: call->target = I64U_DIV; break;
       default: WASM_UNREACHABLE();
     }
-    call->operands.push_back(left);
-    call->operands.push_back(right);
+    call->operands.push_back(left, allocator);
+    call->operands.push_back(right, allocator);
     call->type = i64;
     static std::set<Name> addedFunctions;
     if (addedFunctions.count(call->target) == 0) {
@@ -958,7 +958,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           // add a new param
           auto val = parent->allocator.alloc<Const>();
           val->type = val->value.type = type->params[i];
-          curr->operands.push_back(val);
+          curr->operands.push_back(val, parent->allocator);
         } else if (curr->operands[i]->type != type->params[i]) {
           // if the param is used, then we have overloading here and the combined type must be f64;
           // if this is an unreachable param, then it doesn't matter.
@@ -1119,8 +1119,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           x64 = Builder::addVar(func, "x64", i64),
           y64 = Builder::addVar(func, "y64", i64);
     auto* body = allocator.alloc<Block>();
-    body->list.push_back(builder.makeSetLocal(x64, I64Utilities::recreateI64(builder, xl, xh)));
-    body->list.push_back(builder.makeSetLocal(y64, I64Utilities::recreateI64(builder, yl, yh)));
+    body->list.push_back(builder.makeSetLocal(x64, I64Utilities::recreateI64(builder, xl, xh)), allocator);
+    body->list.push_back(builder.makeSetLocal(y64, I64Utilities::recreateI64(builder, yl, yh)), allocator);
     body->list.push_back(
       builder.makeIf(
         builder.makeGetLocal(r, i32),
@@ -1134,7 +1134,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           ),
           i64
         )
-      )
+      ), allocator
     );
     body->list.push_back(
       builder.makeSetLocal(
@@ -1144,15 +1144,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           builder.makeGetLocal(x64, i64),
           builder.makeGetLocal(y64, i64)
         )
-      )
+      ), allocator
     );
     body->list.push_back(
       builder.makeSetGlobal(
         tempRet0,
         I64Utilities::getI64High(builder, x64)
-      )
+      ), allocator
     );
-    body->list.push_back(I64Utilities::getI64Low(builder, x64));
+    body->list.push_back(I64Utilities::getI64Low(builder, x64), allocator);
     body->finalize();
     func->body = body;
   }
@@ -1301,8 +1301,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
         CallImport *call = allocator.alloc<CallImport>();
         call->target = F64_REM;
-        call->operands.push_back(ret->left);
-        call->operands.push_back(ret->right);
+        call->operands.push_back(ret->left, allocator);
+        call->operands.push_back(ret->right, allocator);
         call->type = f64;
         static bool addedImport = false;
         if (!addedImport) {
@@ -1327,8 +1327,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           case BinaryOp::DivUInt32: call->target = I32U_DIV; break;
           default: WASM_UNREACHABLE();
         }
-        call->operands.push_back(ret->left);
-        call->operands.push_back(ret->right);
+        call->operands.push_back(ret->left, allocator);
+        call->operands.push_back(ret->right, allocator);
         call->type = i32;
         static std::set<Name> addedImport;
         if (addedImport.count(call->target) == 0) {
@@ -1473,7 +1473,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               conv->type = WasmType::f64;
               input = conv;
             }
-            ret->operands.push_back(input);
+            ret->operands.push_back(input, allocator);
             ret->type = i32;
             static bool addedImport = false;
             if (!addedImport) {
@@ -1578,7 +1578,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             isNegative->right = builder.makeConst(Literal(0));
             isNegative->finalize();
             auto block = allocator.alloc<Block>();
-            block->list.push_back(set);
+            block->list.push_back(set, allocator);
             auto flip = allocator.alloc<Binary>();
             flip->op = SubInt32;
             flip->left = builder.makeConst(Literal(0));
@@ -1589,7 +1589,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             select->ifFalse = get();
             select->condition = isNegative;
             select->type = i32;
-            block->list.push_back(select);
+            block->list.push_back(select, allocator);
             block->finalize();
             return block;
           } else if (value->type == f32 || value->type == f64) {
@@ -1769,7 +1769,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret = specific;
         }
         for (unsigned i = firstOperand; i < args->size(); i++) {
-          operands->push_back(process(args[i]));
+          operands->push_back(process(args[i]), allocator);
         }
         if (tableCall) {
           auto specific = ret->dynCast<CallIndirect>();
@@ -1792,7 +1792,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->target = process(target[2]); // TODO: as an optimization, we could look through the mask
       Ref args = ast[2];
       for (unsigned i = 0; i < args->size(); i++) {
-        ret->operands.push_back(process(args[i]));
+        ret->operands.push_back(process(args[i]), allocator);
       }
       auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands);
       ret->fullType = fullType->name;
@@ -1828,7 +1828,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         } else {
           block = allocator.alloc<Block>();
           block->name = name;
-          block->list.push_back(ret);
+          block->list.push_back(ret, allocator);
           block->finalize();
           ret = block;
         }
@@ -1871,8 +1871,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         condition->ifTrue = breakOut;
         condition->finalize();
         auto body = allocator.alloc<Block>();
-        body->list.push_back(condition);
-        body->list.push_back(process(ast[2]));
+        body->list.push_back(condition, allocator);
+        body->list.push_back(process(ast[2]), allocator);
         body->finalize();
         ret->body = body;
       }
@@ -1880,7 +1880,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Block* block = builder.blockifyWithName(ret->body, out);
       auto continuer = allocator.alloc<Break>();
       continuer->name = ret->name;
-      block->list.push_back(continuer);
+      block->list.push_back(continuer, allocator);
       block->finalize();
       ret->body = block;
       ret->finalize();
@@ -1913,9 +1913,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         breakSeeker.walk(child);
         if (breakSeeker.found == 0) {
           auto block = allocator.alloc<Block>();
-          block->list.push_back(child);
+          block->list.push_back(child, allocator);
           if (isConcreteWasmType(child->type)) {
-            block->list.push_back(builder.makeNop()); // ensure a nop at the end, so the block has guaranteed none type and no values fall through
+            block->list.push_back(builder.makeNop(), allocator); // ensure a nop at the end, so the block has guaranteed none type and no values fall through
           }
           block->name = stop;
           block->finalize();
@@ -1983,9 +1983,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       condition->ifTrue = breakOut;
       condition->finalize();
       auto body = allocator.alloc<Block>();
-      body->list.push_back(condition);
-      body->list.push_back(process(fbody));
-      body->list.push_back(process(finc));
+      body->list.push_back(condition, allocator);
+      body->list.push_back(process(fbody), allocator);
+      body->list.push_back(process(finc), allocator);
       body->finalize();
       ret->body = body;
       // loops do not automatically loop, add a branch back
@@ -2000,8 +2000,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       nameMapper.popLabelName(out);
       Block *outer = allocator.alloc<Block>();
       // add an outer block for the init as well
-      outer->list.push_back(process(finit));
-      outer->list.push_back(ret);
+      outer->list.push_back(process(finit), allocator);
+      outer->list.push_back(ret, allocator);
       outer->finalize();
       return outer;
     } else if (what == LABEL) {
@@ -2072,8 +2072,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
       }
       auto ret = allocator.alloc<Block>();
-      ret->list.push_back(process(ast[1]));
-      ret->list.push_back(process(ast[2]));
+      ret->list.push_back(process(ast[1]), allocator);
+      ret->list.push_back(process(ast[2]), allocator);
       ret->finalize();
       return ret;
     } else if (what == SWITCH) {
@@ -2133,7 +2133,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           br->condition = builder.makeUnary(UnaryOp::WrapInt64, offsetor); // TODO: check this fits in 32 bits
         }
 
-        top->list.push_back(br);
+        top->list.push_back(br, allocator);
         top->finalize();
 
         for (unsigned i = 0; i < cases->size(); i++) {
@@ -2152,14 +2152,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             uint64_t index_s = index;
             name = nameMapper.pushLabelName("switch-case");
             if (br->targets.size() <= index_s) {
-              br->targets.resize(index_s + 1);
+              br->targets.resize(index_s + 1, allocator);
             }
             br->targets[index_s] = name;
           }
           auto next = allocator.alloc<Block>();
           top->name = name;
-          next->list.push_back(top);
-          next->list.push_back(case_);
+          next->list.push_back(top, allocator);
+          next->list.push_back(case_, allocator);
           next->finalize();
           top = next;
           nameMapper.popLabelName(name);
@@ -2178,7 +2178,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else {
         // we can't switch, make an if-chain instead of br_table
         auto var = Builder::addVar(function, br->condition->type);
-        top->list.push_back(builder.makeSetLocal(var, br->condition));
+        top->list.push_back(builder.makeSetLocal(var, br->condition), allocator);
         auto* brHolder = top;
         If* chain = nullptr;
         If* first = nullptr;
@@ -2207,8 +2207,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           auto next = allocator.alloc<Block>();
           top->name = name;
-          next->list.push_back(top);
-          next->list.push_back(case_);
+          next->list.push_back(top, allocator);
+          next->list.push_back(case_, allocator);
           next->finalize();
           top = next;
           nameMapper.popLabelName(name);
@@ -2224,7 +2224,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
         first->ifFalse = builder.makeBreak(br->default_);
 
-        brHolder->list.push_back(chain);
+        brHolder->list.push_back(chain, allocator);
         brHolder->finalize();
       }
 
@@ -2261,7 +2261,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     if (size == 1) return process(ast[from]);
     auto block = allocator.alloc<Block>();
     for (unsigned i = from; i < ast->size(); i++) {
-      block->list.push_back(process(ast[i]));
+      block->list.push_back(process(ast[i]), allocator);
     }
     block->finalize();
     return block;

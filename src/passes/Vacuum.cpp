@@ -158,10 +158,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
         Switch* sw = list[z - skip]->dynCast<Switch>();
         if ((br && !br->condition) || sw) {
           auto* last = list.back();
-          list.resize(z - skip + 1);
+          list.resize(z - skip + 1, getAllocator());
           // if we removed the last one, and it was a return value, it must be returned
           if (list.back() != last && isConcreteWasmType(last->type)) {
-            list.push_back(last);
+            list.push_back(last, getAllocator());
           }
           needResize = false;
           break;
@@ -169,7 +169,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
       }
     }
     if (needResize) {
-      list.resize(size - skip);
+      list.resize(size - skip, getAllocator());
     }
     if (!curr->name.is()) {
       if (list.size() == 1) {

@@ -33,11 +33,11 @@ struct NameType {
 // General AST node builder
 
 class Builder {
-  MixedArena& allocator;
-
 public:
   Builder(MixedArena& allocator) : allocator(allocator) {}
   Builder(Module& wasm) : allocator(wasm.allocator) {}
+
+  MixedArena& allocator;
 
   // make* functions, create nodes
 

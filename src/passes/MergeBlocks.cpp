@@ -180,17 +180,17 @@ static void optimizeBlock(Block* curr, Module* module) {
       }
       if (!child) continue;
       if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
-      ExpressionList merged(module->allocator);
+      ExpressionList merged;
       for (size_t j = 0; j < i; j++) {
-        merged.push_back(curr->list[j]);
+        merged.push_back(curr->list[j], module->allocator);
       }
       for (auto item : child->list) {
-        merged.push_back(item);
+        merged.push_back(item, module->allocator);
       }
       for (size_t j = i + 1; j < curr->list.size(); j++) {
-        merged.push_back(curr->list[j]);
+        merged.push_back(curr->list[j], module->allocator);
       }
-      curr->list = merged;
+      curr->list.set(merged, module->allocator);
       more = true;
       changed = true;
       break;
@@ -234,9 +234,9 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
           assert(outer->list.back() == curr);
           outer->list.pop_back();
           for (Index i = 0; i < block->list.size() - 1; i++) {
-            outer->list.push_back(block->list[i]);
+            outer->list.push_back(block->list[i], getAllocator());
           }
-          outer->list.push_back(curr);
+          outer->list.push_back(curr, getAllocator());
         }
       }
     }

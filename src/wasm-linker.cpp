@@ -84,7 +84,7 @@ void Linker::layout() {
       auto type = call->type;
       auto operands = std::move(call->operands);
       auto target = call->target;
-      CallImport* newCall = ExpressionManipulator::convert<Call, CallImport>(call, out.wasm.allocator);
+      CallImport* newCall = ExpressionManipulator::convert<Call, CallImport>(call);
       newCall->type = type;
       newCall->operands = std::move(operands);
       newCall->target = target;
@@ -241,7 +241,7 @@ void Linker::layout() {
       auto* call = builder.makeCall(startFunction, args, target->result);
       Expression* e = call;
       if (target->result != none) e = builder.makeDrop(call);
-      block->list.push_back(e);
+      block->list.push_back(e, builder.allocator);
       block->finalize();
     }
   }
