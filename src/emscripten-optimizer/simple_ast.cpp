@@ -54,32 +54,7 @@ bool Ref::operator!() {
 
 // Arena
 
-Arena arena;
-
-Arena::~Arena() {
-  for (auto* chunk : chunks) {
-    delete[] chunk;
-  }
-  for (auto* chunk : arr_chunks) {
-    delete[] chunk;
-  }
-}
-
-Ref Arena::alloc() {
-  if (chunks.size() == 0 || index == CHUNK_SIZE) {
-    chunks.push_back(new Value[CHUNK_SIZE]);
-    index = 0;
-  }
-  return &chunks.back()[index++];
-}
-
-ArrayStorage* Arena::allocArray() {
-  if (arr_chunks.size() == 0 || arr_index == CHUNK_SIZE) {
-    arr_chunks.push_back(new ArrayStorage[CHUNK_SIZE]);
-    arr_index = 0;
-  }
-  return &arr_chunks.back()[arr_index++];
-}
+GlobalMixedArena arena;
 
 // dump
 
@@ -161,7 +136,7 @@ void traversePre(Ref node, std::function<void (Ref)> visit) {
   int index = 0;
   ArrayStorage* arr = &node->getArray();
   int arrsize = (int)arr->size();
-  Ref* arrdata = arr->data();
+  Ref* arrdata = &(*arr)[0];
   stack.push_back(TraverseInfo(node, arr));
   while (1) {
     if (index < arrsize) {
@@ -173,7 +148,7 @@ void traversePre(Ref node, std::function<void (Ref)> visit) {
         visit(sub);
         arr = &sub->getArray();
         arrsize = (int)arr->size();
-        arrdata = arr->data();
+        arrdata = &(*arr)[0];
         stack.push_back(TraverseInfo(sub, arr));
       }
     } else {
@@ -183,7 +158,7 @@ void traversePre(Ref node, std::function<void (Ref)> visit) {
       index = back.index;
       arr = back.arr;
       arrsize = (int)arr->size();
-      arrdata = arr->data();
+      arrdata = &(*arr)[0];
     }
   }
 }
@@ -196,7 +171,7 @@ void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::function
   int index = 0;
   ArrayStorage* arr = &node->getArray();
   int arrsize = (int)arr->size();
-  Ref* arrdata = arr->data();
+  Ref* arrdata = &(*arr)[0];
   stack.push_back(TraverseInfo(node, arr));
   while (1) {
     if (index < arrsize) {
@@ -208,7 +183,7 @@ void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::function
         visitPre(sub);
         arr = &sub->getArray();
         arrsize = (int)arr->size();
-        arrdata = arr->data();
+        arrdata = &(*arr)[0];
         stack.push_back(TraverseInfo(sub, arr));
       }
     } else {
@@ -219,7 +194,7 @@ void traversePrePost(Ref node, std::function<void (Ref)> visitPre, std::function
       index = back.index;
       arr = back.arr;
       arrsize = (int)arr->size();
-      arrdata = arr->data();
+      arrdata = &(*arr)[0];
     }
   }
 }
@@ -232,7 +207,7 @@ void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, st
   int index = 0;
   ArrayStorage* arr = &node->getArray();
   int arrsize = (int)arr->size();
-  Ref* arrdata = arr->data();
+  Ref* arrdata = &(*arr)[0];
   stack.push_back(TraverseInfo(node, arr));
   while (1) {
     if (index < arrsize) {
@@ -244,7 +219,7 @@ void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, st
           index = 0;
           arr = &sub->getArray();
           arrsize = (int)arr->size();
-          arrdata = arr->data();
+          arrdata = &(*arr)[0];
           stack.push_back(TraverseInfo(sub, arr));
         }
       }
@@ -256,7 +231,7 @@ void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, st
       index = back.index;
       arr = back.arr;
       arrsize = (int)arr->size();
-      arrdata = arr->data();
+      arrdata = &(*arr)[0];
     }
   }
 }

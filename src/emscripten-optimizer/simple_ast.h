@@ -36,6 +36,7 @@
 #include "parser.h"
 #include "snprintf.h"
 #include "support/safe_integer.h"
+#include "mixed_arena.h"
 
 #define err(str) fprintf(stderr, str "\n");
 #define errv(str, ...) fprintf(stderr, str "\n", __VA_ARGS__);
@@ -73,24 +74,27 @@ struct Ref {
 
 // Arena allocation, free it all on process exit
 
-typedef std::vector<Ref> ArrayStorage;
-
-struct Arena {
-  #define CHUNK_SIZE 1000
-  std::vector<Value*> chunks;
-  int index; // in last chunk
-
-  std::vector<ArrayStorage*> arr_chunks;
-  int arr_index;
-
-  Arena() : index(0), arr_index(0) {}
-  ~Arena();
-
-  Ref alloc();
-  ArrayStorage* allocArray();
+// A mixed arena for global allocation only, so members do not
+// receive an allocator, they all use the global one anyhow
+class GlobalMixedArena : public MixedArena {
+public:
+  template<class T>
+  T* alloc() {
+    auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
+    new (ret) T();
+    return ret;
+  }
 };
 
-extern Arena arena;
+extern GlobalMixedArena arena;
+
+class ArrayStorage : public ArenaVectorBase<ArrayStorage, Ref> {
+public:
+  void allocate(size_t size) {
+    allocatedElements = size;
+    data = static_cast<Ref*>(arena.allocSpace(sizeof(Ref) * allocatedElements));
+  }
+};
 
 // Main value type
 struct Value {
@@ -139,7 +143,7 @@ struct Value {
   }
 
   void free() {
-    if (type == Array) { arr->clear(); arr->shrink_to_fit(); }
+    if (type == Array) { arr->clear(); }
     else if (type == Object) delete obj;
     type = Null;
     num = 0;
@@ -166,14 +170,14 @@ struct Value {
   Value& setArray(ArrayStorage &a) {
     free();
     type = Array;
-    arr = arena.allocArray();
+    arr = arena.alloc<ArrayStorage>();
     *arr = a;
     return *this;
   }
   Value& setArray(size_t size_hint=0) {
     free();
     type = Array;
-    arr = arena.allocArray();
+    arr = arena.alloc<ArrayStorage>();
     arr->reserve(size_hint);
     return *this;
   }
@@ -322,7 +326,7 @@ struct Value {
       skip();
       setArray();
       while (*curr != ']') {
-        Ref temp = arena.alloc();
+        Ref temp = arena.alloc<Value>();
         arr->push_back(temp);
         curr = temp->parse(curr);
         skip();
@@ -364,7 +368,7 @@ struct Value {
         assert(*curr == ':');
         curr++;
         skip();
-        Ref value = arena.alloc();
+        Ref value = arena.alloc<Value>();
         curr = value->parse(curr);
         (*obj)[key] = value;
         skip();
@@ -473,14 +477,14 @@ struct Value {
     if (old != size) arr->resize(size);
     if (old < size) {
       for (auto i = old; i < size; i++) {
-        (*arr)[i] = arena.alloc();
+        (*arr)[i] = arena.alloc<Value>();
       }
     }
   }
 
   Ref& operator[](unsigned x) {
     assert(isArray());
-    return arr->at(x);
+    return (*arr)[x];
   }
 
   Value& push_back(Ref r) {
@@ -501,18 +505,6 @@ struct Value {
     return arr->back();
   }
 
-  void splice(int x, int num) {
-    assert(isArray());
-    arr->erase(arr->begin() + x, arr->begin() + x + num);
-  }
-
-  void insert(int x, int num) {
-    arr->insert(arr->begin() + x, num, Ref());
-  }
-  void insert(int x, Ref node) {
-    arr->insert(arr->begin() + x, 1, node);
-  }
-
   int indexOf(Ref other) {
     assert(isArray());
     for (size_t i = 0; i < arr->size(); i++) {
@@ -523,7 +515,7 @@ struct Value {
 
   Ref map(std::function<Ref (Ref node)> func) {
     assert(isArray());
-    Ref ret = arena.alloc();
+    Ref ret = arena.alloc<Value>();
     ret->setArray();
     for (size_t i = 0; i < arr->size(); i++) {
       ret->push_back(func((*arr)[i]));
@@ -533,7 +525,7 @@ struct Value {
 
   Ref filter(std::function<bool (Ref node)> func) {
     assert(isArray());
-    Ref ret = arena.alloc();
+    Ref ret = arena.alloc<Value>();
     ret->setArray();
     for (size_t i = 0; i < arr->size(); i++) {
       Ref curr = (*arr)[i];
@@ -1332,16 +1324,16 @@ class ValueBuilder {
   static IStringSet statable;
 
   static Ref makeRawString(const IString& s) {
-    return &arena.alloc()->setString(s);
+    return &arena.alloc<Value>()->setString(s);
   }
 
   static Ref makeNull() {
-    return &arena.alloc()->setNull();
+    return &arena.alloc<Value>()->setNull();
   }
 
 public:
   static Ref makeRawArray(int size_hint=0) {
-    return &arena.alloc()->setArray(size_hint);
+    return &arena.alloc<Value>()->setArray(size_hint);
   }
 
   static Ref makeToplevel() {
@@ -1471,7 +1463,7 @@ public:
   }
 
   static Ref makeDouble(double num) {
-    return &arena.alloc()->setNumber(num);
+    return &arena.alloc<Value>()->setNumber(num);
   }
   static Ref makeInt(uint32_t num) {
     return makeDouble(double(num));
@@ -1489,7 +1481,7 @@ public:
   static Ref makeBinary(Ref left, IString op, Ref right) {
     if (op == SET) {
       return &makeRawArray(4)->push_back(makeRawString(ASSIGN))
-                              .push_back(&arena.alloc()->setBool(true))
+                              .push_back(&arena.alloc<Value>()->setBool(true))
                               .push_back(left)
                               .push_back(right);
     } else if (op == COMMA) {
@@ -1670,13 +1662,13 @@ public:
 
   static Ref makeAssign(Ref target, Ref value) {
     return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
-                            .push_back(&arena.alloc()->setBool(true))
+                            .push_back(&arena.alloc<Value>()->setBool(true))
                             .push_back(target)
                             .push_back(value);
   }
   static Ref makeAssign(IString target, Ref value) {
     return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
-                            .push_back(&arena.alloc()->setBool(true))
+                            .push_back(&arena.alloc<Value>()->setBool(true))
                             .push_back(makeName(target))
                             .push_back(value);
   }

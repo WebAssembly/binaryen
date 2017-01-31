@@ -190,7 +190,7 @@ static void optimizeBlock(Block* curr, Module* module) {
       for (size_t j = i + 1; j < curr->list.size(); j++) {
         merged.push_back(curr->list[j]);
       }
-      curr->list = merged;
+      curr->list.swap(merged);
       more = true;
       changed = true;
       break;
