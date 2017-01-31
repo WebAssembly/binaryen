@@ -144,12 +144,9 @@ struct Match {
 
   // Apply the match, generate an output expression from the matched input, performing substitutions as necessary
   Expression* apply() {
-    return ExpressionManipulator::flexibleCopy(pattern.output, wasm, *this);
-  }
-
-  // When copying a wildcard, perform the substitution.
-  // TODO: we can reuse nodes, not copying a wildcard when it appears just once, and we can reuse other individual nodes when they are discarded anyhow.
-  Expression* copy(Expression* curr) {
+    // When copying a wildcard, perform the substitution.
+    // TODO: we can reuse nodes, not copying a wildcard when it appears just once, and we can reuse other individual nodes when they are discarded anyhow.
+    auto copy = [this](Expression* curr) -> Expression* {
     CallImport* call = curr->dynCast<CallImport>();
     if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return nullptr;
     Index index = call->operands[0]->cast<Const>()->value.geti32();
@@ -158,7 +155,11 @@ struct Match {
       return ExpressionManipulator::copy(wildcards.at(index), wasm);
     }
     return nullptr;
+    };
+    return ExpressionManipulator::flexibleCopy(pattern.output, wasm, copy);
   }
+
+
 };
 
 // Main pass class
