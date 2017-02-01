@@ -1192,8 +1192,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   for (unsigned i = 0; i < params->size(); i++) {
     Ref curr = body[i];
-    auto* assign = curr->asAssign();
-    IString name = assign->target()->getIString();
+    auto* assign = curr->asAssignName();
+    IString name = assign->target();
     AsmType asmType = detectType(assign->value(), nullptr, false, Math_fround, wasmOnly);
     Builder::addParam(function, name, asmToWasmType(asmType));
     functionVariables.insert(name);
@@ -1273,60 +1273,60 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->type = ret->value.type;
       return ret;
     }
-    if (ast->isAssign()) {
-      auto* assign = ast->asAssign();
-      if (assign->target()->isString()) {
-        IString name = assign->target()->getIString();
-        if (functionVariables.has(name)) {
-          auto ret = allocator.alloc<SetLocal>();
-          ret->index = function->getLocalIndex(assign->target()->getIString());
-          ret->value = process(assign->value());
-          ret->setTee(false);
-          ret->finalize();
-          return ret;
-        }
-        // global var
-        assert(mappedGlobals.find(name) != mappedGlobals.end());
-        auto* ret = builder.makeSetGlobal(name, process(assign->value()));
-        // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
-        auto parent = astStackHelper.getParent();
-        if (!parent || parent->isArray(BLOCK) || parent->isArray(IF)) return ret;
-        return builder.makeSequence(ret, builder.makeGetGlobal(name, ret->value->type));
-      } else if (assign->target()->isArray(SUB)) {
-        Ref target = assign->target();
-        assert(target[1]->isString());
-        IString heap = target[1]->getIString();
-        assert(views.find(heap) != views.end());
-        View& view = views[heap];
-        auto ret = allocator.alloc<Store>();
-        ret->bytes = view.bytes;
-        ret->offset = 0;
-        ret->align = view.bytes;
-        ret->ptr = processUnshifted(target[2], view.bytes);
+    if (ast->isAssignName()) {
+      auto* assign = ast->asAssignName();
+      IString name = assign->target();
+      if (functionVariables.has(name)) {
+        auto ret = allocator.alloc<SetLocal>();
+        ret->index = function->getLocalIndex(assign->target());
         ret->value = process(assign->value());
-        ret->valueType = asmToWasmType(view.type);
+        ret->setTee(false);
         ret->finalize();
-        if (ret->valueType != ret->value->type) {
-          // in asm.js we have some implicit coercions that we must do explicitly here
-          if (ret->valueType == f32 && ret->value->type == f64) {
-            auto conv = allocator.alloc<Unary>();
-            conv->op = DemoteFloat64;
-            conv->value = ret->value;
-            conv->type = WasmType::f32;
-            ret->value = conv;
-          } else if (ret->valueType == f64 && ret->value->type == f32) {
-            auto conv = allocator.alloc<Unary>();
-            conv->op = PromoteFloat32;
-            conv->value = ret->value;
-            conv->type = WasmType::f64;
-            ret->value = conv;
-          } else {
-            abort_on("bad sub[] types", ast);
-          }
-        }
         return ret;
       }
-      abort_on("confusing assign", ast);
+      // global var
+      assert(mappedGlobals.find(name) != mappedGlobals.end());
+      auto* ret = builder.makeSetGlobal(name, process(assign->value()));
+      // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
+      auto parent = astStackHelper.getParent();
+      if (!parent || parent->isArray(BLOCK) || parent->isArray(IF)) return ret;
+      return builder.makeSequence(ret, builder.makeGetGlobal(name, ret->value->type));
+    }
+    if (ast->isAssign()) {
+      auto* assign = ast->asAssign();
+      assert(assign->target()->isArray(SUB));
+      Ref target = assign->target();
+      assert(target[1]->isString());
+      IString heap = target[1]->getIString();
+      assert(views.find(heap) != views.end());
+      View& view = views[heap];
+      auto ret = allocator.alloc<Store>();
+      ret->bytes = view.bytes;
+      ret->offset = 0;
+      ret->align = view.bytes;
+      ret->ptr = processUnshifted(target[2], view.bytes);
+      ret->value = process(assign->value());
+      ret->valueType = asmToWasmType(view.type);
+      ret->finalize();
+      if (ret->valueType != ret->value->type) {
+        // in asm.js we have some implicit coercions that we must do explicitly here
+        if (ret->valueType == f32 && ret->value->type == f64) {
+          auto conv = allocator.alloc<Unary>();
+          conv->op = DemoteFloat64;
+          conv->value = ret->value;
+          conv->type = WasmType::f32;
+          ret->value = conv;
+        } else if (ret->valueType == f64 && ret->value->type == f32) {
+          auto conv = allocator.alloc<Unary>();
+          conv->op = PromoteFloat32;
+          conv->value = ret->value;
+          conv->type = WasmType::f64;
+          ret->value = conv;
+        } else {
+          abort_on("bad sub[] types", ast);
+        }
+      }
+      return ret;
     }
     IString what = ast[0]->getIString();
     if (what == BINARY) {

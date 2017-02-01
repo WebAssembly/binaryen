@@ -97,6 +97,7 @@ public:
 };
 
 struct Assign;
+struct AssignName;
 
 // Main value type
 struct Value {
@@ -107,7 +108,8 @@ struct Value {
     Null = 3,
     Bool = 4,
     Object = 5,
-    Assign_ = 6 // ref = target
+    Assign_ = 6, // ref = target
+    AssignName_ = 7
   };
 
   Type type;
@@ -203,6 +205,7 @@ struct Value {
     return *this;
   }
   Value& setAssign(Ref target, Ref value);
+  Value& setAssignName(IString target, Ref value);
 
   bool isString() { return type == String; }
   bool isNumber() { return type == Number; }
@@ -211,6 +214,7 @@ struct Value {
   bool isBool()   { return type == Bool; }
   bool isObject() { return type == Object; }
   bool isAssign() { return type == Assign_; }
+  bool isAssignName() { return type == AssignName_; }
 
   bool isBool(bool b) { return type == Bool && b == boo; } // avoid overloading == as it might overload over int
 
@@ -244,6 +248,7 @@ struct Value {
   }
 
   Assign* asAssign();
+  AssignName* asAssignName();
 
   int32_t getInteger() { // convenience function to get a known integer
     assert(fmod(getNumber(), 1) == 0);
@@ -493,6 +498,25 @@ struct Assign : public Value {
   }
   Ref& value() {
     return value_;
+  }
+};
+
+struct AssignName : public Value {
+  IString target_;
+
+  AssignName(IString targetInit, Ref valueInit) {
+    type = AssignName_;
+    target() = targetInit;
+    value() = valueInit;
+  }
+
+  AssignName() : AssignName(IString(), nullptr) {}
+
+  IString& target() {
+    return target_;
+  }
+  Ref& value() {
+    return ref;
   }
 };
 
@@ -791,7 +815,11 @@ public:
 
   static Ref makeBinary(Ref left, IString op, Ref right) {
     if (op == SET) {
-      return &arena.alloc<Assign>()->setAssign(left, right);
+      if (left->isString()) {
+        return &arena.alloc<AssignName>()->setAssignName(left->getIString(), right);
+      } else {
+        return &arena.alloc<Assign>()->setAssign(left, right);
+      }
     } else if (op == COMMA) {
       return &makeRawArray(3)->push_back(makeRawString(SEQ))
                               .push_back(left)
@@ -966,13 +994,6 @@ public:
     assert(array[0] == OBJECT);
     array[1]->push_back(&makeRawArray(2)->push_back(makeRawString(key))
                                          .push_back(value));
-  }
-
-  static Ref makeAssign(Ref target, Ref value) {
-    return &arena.alloc<Assign>()->setAssign(target, value);
-  }
-  static Ref makeAssign(IString target, Ref value) {
-    return &arena.alloc<Assign>()->setAssign(makeName(target), value);
   }
 
   static Ref makeSub(Ref obj, Ref index) {

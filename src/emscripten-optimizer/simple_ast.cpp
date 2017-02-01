@@ -64,9 +64,20 @@ Value& Value::setAssign(Ref target, Ref value) {
   return *this;
 }
 
+Value& Value::setAssignName(IString target, Ref value) {
+  asAssignName()->target() = target;
+  asAssignName()->value() = value;
+  return *this;
+}
+
 Assign* Value::asAssign() {
   assert(isAssign());
   return static_cast<Assign*>(this);
+}
+
+AssignName* Value::asAssignName() {
+  assert(isAssignName());
+  return static_cast<AssignName*>(this);
 }
 
 void Value::stringify(std::ostream &os, bool pretty) {
@@ -150,6 +161,13 @@ void Value::stringify(std::ostream &os, bool pretty) {
       ref->stringify(os, pretty);
       os << ", ";
       asAssign()->value()->stringify(os, pretty);
+      os << "]";
+      break;
+    }
+    case AssignName_: {
+      os << "[\"" << asAssignName()->target().str << "\"";
+      os << ", ";
+      asAssignName()->value()->stringify(os, pretty);
       os << "]";
       break;
     }
