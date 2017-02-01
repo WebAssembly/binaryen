@@ -56,6 +56,106 @@ bool Ref::operator!() {
 
 GlobalMixedArena arena;
 
+// Value
+
+Value& Value::setAssign(Ref target, Ref value) {
+  asAssign()->target() = target;
+  asAssign()->value() = value;
+  return *this;
+}
+
+Assign* Value::asAssign() {
+  assert(isAssign());
+  return static_cast<Assign*>(this);
+}
+
+void Value::stringify(std::ostream &os, bool pretty) {
+  static int indent = 0;
+  #define indentify() { for (int i_ = 0; i_ < indent; i_++) os << "  "; }
+  switch (type) {
+    case String: {
+      if (str.str) {
+        os << '"' << str.str << '"';
+      } else {
+        os << "\"(null)\"";
+      }
+      break;
+    }
+    case Number: {
+      os << std::setprecision(17) << num; // doubles can have 17 digits of precision
+      break;
+    }
+    case Array: {
+      if (arr->size() == 0) {
+        os << "[]";
+        break;
+      }
+      os << '[';
+      if (pretty) {
+        os << std::endl;
+        indent++;
+      }
+      for (size_t i = 0; i < arr->size(); i++) {
+        if (i > 0) {
+          if (pretty) os << "," << std::endl;
+          else os << ", ";
+        }
+        indentify();
+        (*arr)[i]->stringify(os, pretty);
+      }
+      if (pretty) {
+        os << std::endl;
+        indent--;
+      }
+      indentify();
+      os << ']';
+      break;
+    }
+    case Null: {
+      os << "null";
+      break;
+    }
+    case Bool: {
+      os << (boo ? "true" : "false");
+      break;
+    }
+    case Object: {
+      os << '{';
+      if (pretty) {
+        os << std::endl;
+        indent++;
+      }
+      bool first = true;
+      for (auto i : *obj) {
+        if (first) {
+          first = false;
+        } else {
+          os << ", ";
+          if (pretty) os << std::endl;
+        }
+        indentify();
+        os << '"' << i.first.c_str() << "\": ";
+        i.second->stringify(os, pretty);
+      }
+      if (pretty) {
+        os << std::endl;
+        indent--;
+      }
+      indentify();
+      os << '}';
+      break;
+    }
+    case Assign_: {
+      os << "[";
+      ref->stringify(os, pretty);
+      os << ", ";
+      asAssign()->value()->stringify(os, pretty);
+      os << "]";
+      break;
+    }
+  }
+}
+
 // dump
 
 void dump(const char *str, Ref node, bool pretty) {
@@ -252,6 +352,6 @@ void traverseFunctions(Ref ast, std::function<void (Ref)> visit) {
 
 // ValueBuilder
 
-IStringSet ValueBuilder::statable("assign call binary unary-prefix conditional dot new sub seq string object array");
+IStringSet ValueBuilder::statable("call binary unary-prefix conditional dot new sub seq string object array");
 
 } // namespace cashew

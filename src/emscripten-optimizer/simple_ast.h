@@ -44,8 +44,8 @@
 
 namespace cashew {
 
-struct Ref;
 struct Value;
+struct Ref;
 
 void dump(const char *str, Ref node, bool pretty=false);
 
@@ -96,6 +96,8 @@ public:
   }
 };
 
+struct Assign;
+
 // Main value type
 struct Value {
   enum Type {
@@ -104,7 +106,8 @@ struct Value {
     Array = 2,
     Null = 3,
     Bool = 4,
-    Object = 5
+    Object = 5,
+    Assign_ = 6 // ref = target
   };
 
   Type type;
@@ -122,6 +125,7 @@ struct Value {
     ArrayStorage *arr;
     bool boo;
     ObjectStorage *obj;
+    Ref ref;
   };
 
   // constructors all copy their input
@@ -198,13 +202,15 @@ struct Value {
     obj = new ObjectStorage();
     return *this;
   }
+  Value& setAssign(Ref target, Ref value);
 
   bool isString() { return type == String; }
   bool isNumber() { return type == Number; }
   bool isArray()  { return type == Array; }
   bool isNull()   { return type == Null; }
   bool isBool()   { return type == Bool; }
-  bool isObject()  { return type == Object; }
+  bool isObject() { return type == Object; }
+  bool isAssign() { return type == Assign_; }
 
   bool isBool(bool b) { return type == Bool && b == boo; } // avoid overloading == as it might overload over int
 
@@ -237,6 +243,8 @@ struct Value {
     return boo;
   }
 
+  Assign* asAssign();
+
   int32_t getInteger() { // convenience function to get a known integer
     assert(fmod(getNumber(), 1) == 0);
     int32_t ret = getNumber();
@@ -262,7 +270,7 @@ struct Value {
       case Bool:
         setBool(other.boo);
         break;
-      case Object:
+      default:
         abort(); // TODO
     }
     return *this;
@@ -283,29 +291,10 @@ struct Value {
         return boo == other.boo;
       case Object:
         return this == &other; // if you want a deep compare, use deepCompare
+      default:
+        abort();
     }
     return true;
-  }
-
-  bool deepCompare(Ref ref) {
-    Value& other = *ref;
-    if (*this == other) return true; // either same pointer, or identical value type (string, number, null or bool)
-    if (type != other.type) return false;
-    if (type == Array) {
-      if (arr->size() != other.arr->size()) return false;
-      for (unsigned i = 0; i < arr->size(); i++) {
-        if (!(*arr)[i]->deepCompare((*other.arr)[i])) return false;
-      }
-      return true;
-    } else if (type == Object) {
-      if (obj->size() != other.obj->size()) return false;
-      for (auto i : *obj) {
-        if (other.obj->count(i.first) == 0) return false;
-        if (i.second->deepCompare((*other.obj)[i.first])) return false;
-      }
-      return true;
-    }
-    return false;
   }
 
   char* parse(char* curr) {
@@ -387,78 +376,7 @@ struct Value {
     return curr;
   }
 
-  void stringify(std::ostream &os, bool pretty=false) {
-    static int indent = 0;
-    #define indentify() { for (int i_ = 0; i_ < indent; i_++) os << "  "; }
-    switch (type) {
-      case String:
-        if (str.str) {
-          os << '"' << str.str << '"';
-        } else {
-          os << "\"(null)\"";
-        }
-        break;
-      case Number:
-        os << std::setprecision(17) << num; // doubles can have 17 digits of precision
-        break;
-      case Array:
-        if (arr->size() == 0) {
-          os << "[]";
-          break;
-        }
-        os << '[';
-        if (pretty) {
-          os << std::endl;
-          indent++;
-        }
-        for (size_t i = 0; i < arr->size(); i++) {
-          if (i > 0) {
-            if (pretty) os << "," << std::endl;
-            else os << ", ";
-          }
-          indentify();
-          (*arr)[i]->stringify(os, pretty);
-        }
-        if (pretty) {
-          os << std::endl;
-          indent--;
-        }
-        indentify();
-        os << ']';
-        break;
-      case Null:
-        os << "null";
-        break;
-      case Bool:
-        os << (boo ? "true" : "false");
-        break;
-      case Object:
-        os << '{';
-        if (pretty) {
-          os << std::endl;
-          indent++;
-        }
-        bool first = true;
-        for (auto i : *obj) {
-          if (first) {
-            first = false;
-          } else {
-            os << ", ";
-            if (pretty) os << std::endl;
-          }
-          indentify();
-          os << '"' << i.first.c_str() << "\": ";
-          i.second->stringify(os, pretty);
-        }
-        if (pretty) {
-          os << std::endl;
-          indent--;
-        }
-        indentify();
-        os << '}';
-        break;
-    }
-  }
+  void stringify(std::ostream &os, bool pretty=false);
 
   // String operations
 
@@ -556,6 +474,25 @@ struct Value {
   bool has(IString x) {
     assert(isObject());
     return obj->count(x) > 0;
+  }
+};
+
+struct Assign : public Value {
+  Ref value_;
+
+  Assign(Ref targetInit, Ref valueInit) {
+    type = Assign_;
+    target() = targetInit;
+    value() = valueInit;
+  }
+
+  Assign() : Assign(nullptr, nullptr) {}
+
+  Ref& target() {
+    return ref;
+  }
+  Ref& value() {
+    return value_;
   }
 };
 
@@ -663,12 +600,14 @@ struct JSPrinter {
       printNum(node);
       return;
     }
+    if (node->isAssign()) {
+      printAssign(node);
+    }
     IString type = node[0]->getIString();
     //fprintf(stderr, "printing %s\n", type.str);
     switch (type.str[0]) {
       case 'a': {
-        if (type == ASSIGN) printAssign(node);
-        else if (type == ARRAY) printArray(node);
+        if (type == ARRAY) printArray(node);
         else abort();
         break;
       }
@@ -829,11 +768,12 @@ struct JSPrinter {
   }
 
   void printAssign(Ref node) {
-    printChild(node[2], node, -1);
+    auto* assign = node->asAssign();
+    printChild(assign->target(), node, -1);
     space();
     emit('=');
     space();
-    printChild(node[3], node, 1);
+    printChild(assign->value(), node, 1);
   }
 
   void printName(Ref node) {
@@ -980,6 +920,9 @@ struct JSPrinter {
   }
 
   int getPrecedence(Ref node, bool parent) {
+    if (node->isAssign()) {
+      return OperatorClass::getPrecedence(OperatorClass::Binary, SET);
+    }
     Ref type = node[0];
     if (type == BINARY || type == UNARY_PREFIX) {
       return OperatorClass::getPrecedence(type == BINARY ? OperatorClass::Binary : OperatorClass::Prefix, node[1]->getIString());
@@ -987,8 +930,6 @@ struct JSPrinter {
       return OperatorClass::getPrecedence(OperatorClass::Binary, COMMA);
     } else if (type == CALL) {
       return parent ? OperatorClass::getPrecedence(OperatorClass::Binary, COMMA) : -1; // call arguments are split by commas, but call itself is safe
-    } else if (type == ASSIGN) {
-      return OperatorClass::getPrecedence(OperatorClass::Binary, SET);
     } else if (type == CONDITIONAL) {
       return OperatorClass::getPrecedence(OperatorClass::Tertiary, QUESTION);
     }
@@ -1454,7 +1395,7 @@ public:
   }
 
   static Ref makeStatement(Ref contents) {
-    if (contents->isNumber() || contents->isString() || statable.has(contents[0]->getIString())) {
+    if (contents->isNumber() || contents->isString() || contents->isAssign() || statable.has(contents[0]->getIString())) {
       return &makeRawArray(2)->push_back(makeRawString(STAT))
                               .push_back(contents);
     } else {
@@ -1480,10 +1421,7 @@ public:
 
   static Ref makeBinary(Ref left, IString op, Ref right) {
     if (op == SET) {
-      return &makeRawArray(4)->push_back(makeRawString(ASSIGN))
-                              .push_back(&arena.alloc<Value>()->setBool(true))
-                              .push_back(left)
-                              .push_back(right);
+      return &arena.alloc<Assign>()->setAssign(left, right);
     } else if (op == COMMA) {
       return &makeRawArray(3)->push_back(makeRawString(SEQ))
                               .push_back(left)
@@ -1661,16 +1599,10 @@ public:
   }
 
   static Ref makeAssign(Ref target, Ref value) {
-    return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
-                            .push_back(&arena.alloc<Value>()->setBool(true))
-                            .push_back(target)
-                            .push_back(value);
+    return &arena.alloc<Assign>()->setAssign(target, value);
   }
   static Ref makeAssign(IString target, Ref value) {
-    return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
-                            .push_back(&arena.alloc<Value>()->setBool(true))
-                            .push_back(makeName(target))
-                            .push_back(value);
+    return &arena.alloc<Assign>()->setAssign(makeName(target), value);
   }
 
   static Ref makeSub(Ref obj, Ref index) {

@@ -1194,9 +1194,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     Ref curr = body[i];
     assert(curr[0] == STAT);
     curr = curr[1];
-    assert(curr[0] == ASSIGN && curr[2]->isString());
-    IString name = curr[2]->getIString();
-    AsmType asmType = detectType(curr[3], nullptr, false, Math_fround, wasmOnly);
+    auto* assign = curr->asAssign();
+    IString name = assign->target()->getIString();
+    AsmType asmType = detectType(assign->value(), nullptr, false, Math_fround, wasmOnly);
     Builder::addParam(function, name, asmToWasmType(asmType));
     functionVariables.insert(name);
     asmData.addParam(name, asmType);
@@ -1275,28 +1275,26 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->type = ret->value.type;
       return ret;
     }
-    IString what = ast[0]->getIString();
-    if (what == STAT) {
-      return process(ast[1]); // and drop return value, if any
-    } else if (what == ASSIGN) {
-      if (ast[2]->isString()) {
-        IString name = ast[2]->getIString();
+    if (ast->isAssign()) {
+      auto* assign = ast->asAssign();
+      if (assign->target()->isString()) {
+        IString name = assign->target()->getIString();
         if (functionVariables.has(name)) {
           auto ret = allocator.alloc<SetLocal>();
-          ret->index = function->getLocalIndex(ast[2]->getIString());
-          ret->value = process(ast[3]);
+          ret->index = function->getLocalIndex(assign->target()->getIString());
+          ret->value = process(assign->value());
           ret->setTee(false);
           ret->finalize();
           return ret;
         }
         // global var
         assert(mappedGlobals.find(name) != mappedGlobals.end());
-        auto* ret = builder.makeSetGlobal(name, process(ast[3]));
+        auto* ret = builder.makeSetGlobal(name, process(assign->value()));
         // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
-        if (astStackHelper.getParent()[0] == STAT) return ret;
+        if (astStackHelper.getParent()->isArray(STAT)) return ret;
         return builder.makeSequence(ret, builder.makeGetGlobal(name, ret->value->type));
-      } else if (ast[2][0] == SUB) {
-        Ref target = ast[2];
+      } else if (assign->target()->isArray(SUB)) {
+        Ref target = assign->target();
         assert(target[1]->isString());
         IString heap = target[1]->getIString();
         assert(views.find(heap) != views.end());
@@ -1306,7 +1304,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         ret->offset = 0;
         ret->align = view.bytes;
         ret->ptr = processUnshifted(target[2], view.bytes);
-        ret->value = process(ast[3]);
+        ret->value = process(assign->value());
         ret->valueType = asmToWasmType(view.type);
         ret->finalize();
         if (ret->valueType != ret->value->type) {
@@ -1330,6 +1328,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       }
       abort_on("confusing assign", ast);
+    }
+    IString what = ast[0]->getIString();
+    if (what == STAT) {
+      return process(ast[1]); // and drop return value, if any
     } else if (what == BINARY) {
       if ((ast[1] == OR || ast[1] == TRSHIFT) && ast[3]->isNumber() && ast[3]->getNumber() == 0) {
         auto ret = process(ast[2]); // just look through the ()|0 or ()>>>0 coercion
@@ -2022,52 +2024,56 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       //  (HEAP32[tempDoublePtr >> 2] = i, Math_fround(HEAPF32[tempDoublePtr >> 2])); // i32->f32
       //  (HEAP32[tempDoublePtr >> 2] = i, +HEAPF32[tempDoublePtr >> 2]); // i32->f32, no fround
       //  (HEAPF32[tempDoublePtr >> 2] = f, HEAP32[tempDoublePtr >> 2] | 0); // f32->i32
-      if (ast[1]->isArray(ASSIGN) && ast[1][2]->isArray(SUB) && ast[1][2][1]->isString() && ast[1][2][2]->isArray(BINARY) && ast[1][2][2][1] == RSHIFT &&
-          ast[1][2][2][2]->isString() && ast[1][2][2][2] == tempDoublePtr && ast[1][2][2][3]->isNumber() && ast[1][2][2][3]->getNumber() == 2) {
-        // (?[tempDoublePtr >> 2] = ?, ?)  so far
-        auto heap = ast[1][2][1]->getIString();
-        if (views.find(heap) != views.end()) {
-          AsmType writeType = views[heap].type;
-          AsmType readType = ASM_NONE;
-          Ref readValue;
-          if (ast[2]->isArray(BINARY) && ast[2][1] == OR && ast[2][3]->isNumber() && ast[2][3]->getNumber() == 0) {
-            readType = ASM_INT;
-            readValue = ast[2][2];
-          } else if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == PLUS) {
-            readType = ASM_DOUBLE;
-            readValue = ast[2][2];
-          } else if (ast[2]->isArray(CALL) && ast[2][1]->isString() && ast[2][1] == Math_fround) {
-            readType = ASM_FLOAT;
-            readValue = ast[2][2][0];
-          }
-          if (readType != ASM_NONE) {
-            if (readValue->isArray(SUB) && readValue[1]->isString() && readValue[2]->isArray(BINARY) && readValue[2][1] == RSHIFT &&
-                readValue[2][2]->isString() && readValue[2][2] == tempDoublePtr && readValue[2][3]->isNumber() && readValue[2][3]->getNumber() == 2) {
-              // pattern looks right!
-              Ref writtenValue = ast[1][3];
-              if (writeType == ASM_INT && (readType == ASM_FLOAT || readType == ASM_DOUBLE)) {
-                auto conv = allocator.alloc<Unary>();
-                conv->op = ReinterpretInt32;
-                conv->value = process(writtenValue);
-                conv->type = WasmType::f32;
-                if (readType == ASM_DOUBLE) {
-                  auto promote = allocator.alloc<Unary>();
-                  promote->op = PromoteFloat32;
-                  promote->value = conv;
-                  promote->type = WasmType::f64;
-                  return promote;
+      if (ast[1]->isAssign()) {
+        auto* assign = ast[1]->asAssign();
+        Ref target = assign->target();
+        if (target->isArray(SUB) && target[1]->isString() && target[2]->isArray(BINARY) && target[2][1] == RSHIFT &&
+            target[2][2]->isString() && target[2][2] == tempDoublePtr && target[2][3]->isNumber() && target[2][3]->getNumber() == 2) {
+          // (?[tempDoublePtr >> 2] = ?, ?)  so far
+          auto heap = target[1]->getIString();
+          if (views.find(heap) != views.end()) {
+            AsmType writeType = views[heap].type;
+            AsmType readType = ASM_NONE;
+            Ref readValue;
+            if (ast[2]->isArray(BINARY) && ast[2][1] == OR && ast[2][3]->isNumber() && ast[2][3]->getNumber() == 0) {
+              readType = ASM_INT;
+              readValue = ast[2][2];
+            } else if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == PLUS) {
+              readType = ASM_DOUBLE;
+              readValue = ast[2][2];
+            } else if (ast[2]->isArray(CALL) && ast[2][1]->isString() && ast[2][1] == Math_fround) {
+              readType = ASM_FLOAT;
+              readValue = ast[2][2][0];
+            }
+            if (readType != ASM_NONE) {
+              if (readValue->isArray(SUB) && readValue[1]->isString() && readValue[2]->isArray(BINARY) && readValue[2][1] == RSHIFT &&
+                  readValue[2][2]->isString() && readValue[2][2] == tempDoublePtr && readValue[2][3]->isNumber() && readValue[2][3]->getNumber() == 2) {
+                // pattern looks right!
+                Ref writtenValue = assign->value();
+                if (writeType == ASM_INT && (readType == ASM_FLOAT || readType == ASM_DOUBLE)) {
+                  auto conv = allocator.alloc<Unary>();
+                  conv->op = ReinterpretInt32;
+                  conv->value = process(writtenValue);
+                  conv->type = WasmType::f32;
+                  if (readType == ASM_DOUBLE) {
+                    auto promote = allocator.alloc<Unary>();
+                    promote->op = PromoteFloat32;
+                    promote->value = conv;
+                    promote->type = WasmType::f64;
+                    return promote;
+                  }
+                  return conv;
+                } else if (writeType == ASM_FLOAT && readType == ASM_INT) {
+                  auto conv = allocator.alloc<Unary>();
+                  conv->op = ReinterpretFloat32;
+                  conv->value = process(writtenValue);
+                  if (conv->value->type == f64) {
+                    // this has an implicit f64->f32 in the write to memory
+                    conv->value = builder.makeUnary(DemoteFloat64, conv->value);
+                  }
+                  conv->type = WasmType::i32;
+                  return conv;
                 }
-                return conv;
-              } else if (writeType == ASM_FLOAT && readType == ASM_INT) {
-                auto conv = allocator.alloc<Unary>();
-                conv->op = ReinterpretFloat32;
-                conv->value = process(writtenValue);
-                if (conv->value->type == f64) {
-                  // this has an implicit f64->f32 in the write to memory
-                  conv->value = builder.makeUnary(DemoteFloat64, conv->value);
-                }
-                conv->type = WasmType::i32;
-                return conv;
               }
             }
           }
