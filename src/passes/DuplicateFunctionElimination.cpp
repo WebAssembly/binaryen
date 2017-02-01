@@ -20,9 +20,10 @@
 // identical when finally lowered into concrete wasm code.
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <ast_utils.h>
+#include "wasm.h"
+#include "pass.h"
+#include "ast_utils.h"
+#include "support/hash.h"
 
 namespace wasm {
 
@@ -181,4 +182,3 @@ Pass *createDuplicateFunctionEliminationPass() {
 }
 
 } // namespace wasm
-
