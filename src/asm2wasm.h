@@ -572,7 +572,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   Ref asmFunction = ast[1][0];
   assert(asmFunction[0] == DEFUN);
   Ref body = asmFunction[3];
-  assert(body[0][0] == STAT && body[0][1][0] == STRING && (body[0][1][1]->getIString() == IString("use asm") || body[0][1][1]->getIString() == IString("almost asm")));
+  assert(body[0][0] == STRING && (body[0][1]->getIString() == IString("use asm") || body[0][1]->getIString() == IString("almost asm")));
 
   auto addImport = [&](IString name, Ref imported, WasmType type) {
     assert(imported[0] == DOT);
@@ -1192,8 +1192,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   for (unsigned i = 0; i < params->size(); i++) {
     Ref curr = body[i];
-    assert(curr[0] == STAT);
-    curr = curr[1];
     auto* assign = curr->asAssign();
     IString name = assign->target()->getIString();
     AsmType asmType = detectType(assign->value(), nullptr, false, Math_fround, wasmOnly);
@@ -1202,7 +1200,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     asmData.addParam(name, asmType);
   }
   unsigned start = params->size();
-  while (start < body->size() && body[start][0] == VAR) {
+  while (start < body->size() && body[start]->isArray(VAR)) {
     Ref curr = body[start];
     for (unsigned j = 0; j < curr[1]->size(); j++) {
       Ref pair = curr[1][j];
@@ -1291,7 +1289,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         assert(mappedGlobals.find(name) != mappedGlobals.end());
         auto* ret = builder.makeSetGlobal(name, process(assign->value()));
         // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
-        if (astStackHelper.getParent()->isArray(STAT)) return ret;
+        auto parent = astStackHelper.getParent();
+        if (!parent || parent->isArray(BLOCK) || parent->isArray(IF)) return ret;
         return builder.makeSequence(ret, builder.makeGetGlobal(name, ret->value->type));
       } else if (assign->target()->isArray(SUB)) {
         Ref target = assign->target();
@@ -1330,9 +1329,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       abort_on("confusing assign", ast);
     }
     IString what = ast[0]->getIString();
-    if (what == STAT) {
-      return process(ast[1]); // and drop return value, if any
-    } else if (what == BINARY) {
+    if (what == BINARY) {
       if ((ast[1] == OR || ast[1] == TRSHIFT) && ast[3]->isNumber() && ast[3]->getNumber() == 0) {
         auto ret = process(ast[2]); // just look through the ()|0 or ()>>>0 coercion
         fixCallType(ret, i32);

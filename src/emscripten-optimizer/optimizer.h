@@ -144,11 +144,6 @@ enum AsmSign {
 
 extern AsmSign detectSign(cashew::Ref node, cashew::IString minifiedFround);
 
-inline cashew::Ref deStat(cashew::Ref node) {
-  if (node[0] == cashew::STAT) return node[1];
-  return node;
-}
-
 cashew::Ref makeAsmCoercedZero(AsmType type);
 cashew::Ref makeAsmCoercion(cashew::Ref node, AsmType type);
 

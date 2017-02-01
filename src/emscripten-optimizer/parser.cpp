@@ -23,7 +23,6 @@ namespace cashew {
 IString TOPLEVEL("toplevel"),
         DEFUN("defun"),
         BLOCK("block"),
-        STAT("stat"),
         VAR("var"),
         CONST("const"),
         CONDITIONAL("conditional"),

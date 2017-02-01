@@ -38,7 +38,6 @@ namespace cashew {
 extern IString TOPLEVEL,
                DEFUN,
                BLOCK,
-               STAT,
                VAR,
                CONST,
                CONDITIONAL,
