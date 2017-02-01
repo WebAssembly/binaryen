@@ -47,9 +47,14 @@ void ModuleReader::readBinary(std::string filename, Module& wasm) {
 }
 
 void ModuleReader::read(std::string filename, Module& wasm) {
-  // see if this is a binary
-  auto contents = read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
-  if (contents.size() >= 4 && contents[0] == '\0' && contents[1] == 'a' && contents[2] == 's' && contents[3] == 'm') {
+  // see if this is a wasm binary
+  std::ifstream infile;
+  std::ios_base::openmode flags = std::ifstream::in | std::ifstream::binary;
+  infile.open(filename, flags);
+  char buffer[4] = { 1, 2, 3, 4 };
+  infile.read(buffer, 4);
+  infile.close();
+  if (buffer[0] == '\0' && buffer[1] == 'a' && buffer[2] == 's' && buffer[3] == 'm') {
     readBinary(filename, wasm);
   } else {
     // default to text
