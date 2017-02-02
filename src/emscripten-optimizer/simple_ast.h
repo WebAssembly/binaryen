@@ -36,6 +36,7 @@
 #include "parser.h"
 #include "snprintf.h"
 #include "support/safe_integer.h"
+#include "mixed_arena.h"
 
 #define err(str) fprintf(stderr, str "\n");
 #define errv(str, ...) fprintf(stderr, str "\n", __VA_ARGS__);
@@ -43,8 +44,8 @@
 
 namespace cashew {
 
-struct Ref;
 struct Value;
+struct Ref;
 
 void dump(const char *str, Ref node, bool pretty=false);
 
@@ -73,24 +74,30 @@ struct Ref {
 
 // Arena allocation, free it all on process exit
 
-typedef std::vector<Ref> ArrayStorage;
-
-struct Arena {
-  #define CHUNK_SIZE 1000
-  std::vector<Value*> chunks;
-  int index; // in last chunk
-
-  std::vector<ArrayStorage*> arr_chunks;
-  int arr_index;
-
-  Arena() : index(0), arr_index(0) {}
-  ~Arena();
-
-  Ref alloc();
-  ArrayStorage* allocArray();
+// A mixed arena for global allocation only, so members do not
+// receive an allocator, they all use the global one anyhow
+class GlobalMixedArena : public MixedArena {
+public:
+  template<class T>
+  T* alloc() {
+    auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
+    new (ret) T();
+    return ret;
+  }
 };
 
-extern Arena arena;
+extern GlobalMixedArena arena;
+
+class ArrayStorage : public ArenaVectorBase<ArrayStorage, Ref> {
+public:
+  void allocate(size_t size) {
+    allocatedElements = size;
+    data = static_cast<Ref*>(arena.allocSpace(sizeof(Ref) * allocatedElements));
+  }
+};
+
+struct Assign;
+struct AssignName;
 
 // Main value type
 struct Value {
@@ -100,7 +107,9 @@ struct Value {
     Array = 2,
     Null = 3,
     Bool = 4,
-    Object = 5
+    Object = 5,
+    Assign_ = 6, // ref = target
+    AssignName_ = 7
   };
 
   Type type;
@@ -118,6 +127,7 @@ struct Value {
     ArrayStorage *arr;
     bool boo;
     ObjectStorage *obj;
+    Ref ref;
   };
 
   // constructors all copy their input
@@ -139,7 +149,7 @@ struct Value {
   }
 
   void free() {
-    if (type == Array) { arr->clear(); arr->shrink_to_fit(); }
+    if (type == Array) { arr->clear(); }
     else if (type == Object) delete obj;
     type = Null;
     num = 0;
@@ -166,14 +176,14 @@ struct Value {
   Value& setArray(ArrayStorage &a) {
     free();
     type = Array;
-    arr = arena.allocArray();
+    arr = arena.alloc<ArrayStorage>();
     *arr = a;
     return *this;
   }
   Value& setArray(size_t size_hint=0) {
     free();
     type = Array;
-    arr = arena.allocArray();
+    arr = arena.alloc<ArrayStorage>();
     arr->reserve(size_hint);
     return *this;
   }
@@ -194,15 +204,27 @@ struct Value {
     obj = new ObjectStorage();
     return *this;
   }
+  Value& setAssign(Ref target, Ref value);
+  Value& setAssignName(IString target, Ref value);
 
   bool isString() { return type == String; }
   bool isNumber() { return type == Number; }
   bool isArray()  { return type == Array; }
   bool isNull()   { return type == Null; }
   bool isBool()   { return type == Bool; }
-  bool isObject()  { return type == Object; }
+  bool isObject() { return type == Object; }
+  bool isAssign() { return type == Assign_; }
+  bool isAssignName() { return type == AssignName_; }
 
   bool isBool(bool b) { return type == Bool && b == boo; } // avoid overloading == as it might overload over int
+
+  // convenience function to check if something is an array and
+  // also has a certain string as the first element. This is a
+  // very common operation as the first element defines the node
+  // type for most ast nodes
+  bool isArray(IString name) {
+    return isArray() && (*this)[0] == name;
+  }
 
   const char* getCString() {
     assert(isString());
@@ -224,6 +246,9 @@ struct Value {
     assert(isBool());
     return boo;
   }
+
+  Assign* asAssign();
+  AssignName* asAssignName();
 
   int32_t getInteger() { // convenience function to get a known integer
     assert(fmod(getNumber(), 1) == 0);
@@ -250,7 +275,7 @@ struct Value {
       case Bool:
         setBool(other.boo);
         break;
-      case Object:
+      default:
         abort(); // TODO
     }
     return *this;
@@ -271,29 +296,10 @@ struct Value {
         return boo == other.boo;
       case Object:
         return this == &other; // if you want a deep compare, use deepCompare
+      default:
+        abort();
     }
     return true;
-  }
-
-  bool deepCompare(Ref ref) {
-    Value& other = *ref;
-    if (*this == other) return true; // either same pointer, or identical value type (string, number, null or bool)
-    if (type != other.type) return false;
-    if (type == Array) {
-      if (arr->size() != other.arr->size()) return false;
-      for (unsigned i = 0; i < arr->size(); i++) {
-        if (!(*arr)[i]->deepCompare((*other.arr)[i])) return false;
-      }
-      return true;
-    } else if (type == Object) {
-      if (obj->size() != other.obj->size()) return false;
-      for (auto i : *obj) {
-        if (other.obj->count(i.first) == 0) return false;
-        if (i.second->deepCompare((*other.obj)[i.first])) return false;
-      }
-      return true;
-    }
-    return false;
   }
 
   char* parse(char* curr) {
@@ -314,7 +320,7 @@ struct Value {
       skip();
       setArray();
       while (*curr != ']') {
-        Ref temp = arena.alloc();
+        Ref temp = arena.alloc<Value>();
         arr->push_back(temp);
         curr = temp->parse(curr);
         skip();
@@ -356,7 +362,7 @@ struct Value {
         assert(*curr == ':');
         curr++;
         skip();
-        Ref value = arena.alloc();
+        Ref value = arena.alloc<Value>();
         curr = value->parse(curr);
         (*obj)[key] = value;
         skip();
@@ -375,78 +381,7 @@ struct Value {
     return curr;
   }
 
-  void stringify(std::ostream &os, bool pretty=false) {
-    static int indent = 0;
-    #define indentify() { for (int i_ = 0; i_ < indent; i_++) os << "  "; }
-    switch (type) {
-      case String:
-        if (str.str) {
-          os << '"' << str.str << '"';
-        } else {
-          os << "\"(null)\"";
-        }
-        break;
-      case Number:
-        os << std::setprecision(17) << num; // doubles can have 17 digits of precision
-        break;
-      case Array:
-        if (arr->size() == 0) {
-          os << "[]";
-          break;
-        }
-        os << '[';
-        if (pretty) {
-          os << std::endl;
-          indent++;
-        }
-        for (size_t i = 0; i < arr->size(); i++) {
-          if (i > 0) {
-            if (pretty) os << "," << std::endl;
-            else os << ", ";
-          }
-          indentify();
-          (*arr)[i]->stringify(os, pretty);
-        }
-        if (pretty) {
-          os << std::endl;
-          indent--;
-        }
-        indentify();
-        os << ']';
-        break;
-      case Null:
-        os << "null";
-        break;
-      case Bool:
-        os << (boo ? "true" : "false");
-        break;
-      case Object:
-        os << '{';
-        if (pretty) {
-          os << std::endl;
-          indent++;
-        }
-        bool first = true;
-        for (auto i : *obj) {
-          if (first) {
-            first = false;
-          } else {
-            os << ", ";
-            if (pretty) os << std::endl;
-          }
-          indentify();
-          os << '"' << i.first.c_str() << "\": ";
-          i.second->stringify(os, pretty);
-        }
-        if (pretty) {
-          os << std::endl;
-          indent--;
-        }
-        indentify();
-        os << '}';
-        break;
-    }
-  }
+  void stringify(std::ostream &os, bool pretty=false);
 
   // String operations
 
@@ -465,14 +400,14 @@ struct Value {
     if (old != size) arr->resize(size);
     if (old < size) {
       for (auto i = old; i < size; i++) {
-        (*arr)[i] = arena.alloc();
+        (*arr)[i] = arena.alloc<Value>();
       }
     }
   }
 
   Ref& operator[](unsigned x) {
     assert(isArray());
-    return arr->at(x);
+    return (*arr)[x];
   }
 
   Value& push_back(Ref r) {
@@ -493,18 +428,6 @@ struct Value {
     return arr->back();
   }
 
-  void splice(int x, int num) {
-    assert(isArray());
-    arr->erase(arr->begin() + x, arr->begin() + x + num);
-  }
-
-  void insert(int x, int num) {
-    arr->insert(arr->begin() + x, num, Ref());
-  }
-  void insert(int x, Ref node) {
-    arr->insert(arr->begin() + x, 1, node);
-  }
-
   int indexOf(Ref other) {
     assert(isArray());
     for (size_t i = 0; i < arr->size(); i++) {
@@ -515,7 +438,7 @@ struct Value {
 
   Ref map(std::function<Ref (Ref node)> func) {
     assert(isArray());
-    Ref ret = arena.alloc();
+    Ref ret = arena.alloc<Value>();
     ret->setArray();
     for (size_t i = 0; i < arr->size(); i++) {
       ret->push_back(func((*arr)[i]));
@@ -525,7 +448,7 @@ struct Value {
 
   Ref filter(std::function<bool (Ref node)> func) {
     assert(isArray());
-    Ref ret = arena.alloc();
+    Ref ret = arena.alloc<Value>();
     ret->setArray();
     for (size_t i = 0; i < arr->size(); i++) {
       Ref curr = (*arr)[i];
@@ -559,6 +482,44 @@ struct Value {
   }
 };
 
+struct Assign : public Value {
+  Ref value_;
+
+  Assign(Ref targetInit, Ref valueInit) {
+    type = Assign_;
+    target() = targetInit;
+    value() = valueInit;
+  }
+
+  Assign() : Assign(nullptr, nullptr) {}
+
+  Ref& target() {
+    return ref;
+  }
+  Ref& value() {
+    return value_;
+  }
+};
+
+struct AssignName : public Value {
+  IString target_;
+
+  AssignName(IString targetInit, Ref valueInit) {
+    type = AssignName_;
+    target() = targetInit;
+    value() = valueInit;
+  }
+
+  AssignName() : AssignName(IString(), nullptr) {}
+
+  IString& target() {
+    return target_;
+  }
+  Ref& value() {
+    return ref;
+  }
+};
+
 // AST traversals
 
 // Traverse, calling visit before the children
@@ -573,267 +534,9 @@ void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, st
 // Traverses all the top-level functions in the document
 void traverseFunctions(Ref ast, std::function<void (Ref)> visit);
 
-// JS printer
+// JS printing support
 
 struct JSPrinter {
-  bool pretty, finalize;
-
-  char *buffer;
-  size_t size, used;
-
-  int indent;
-  bool possibleSpace; // add a space to separate identifiers
-
-  Ref ast;
-
-  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_) {}
-
-  void printAst() {
-    print(ast);
-    buffer[used] = 0;
-  }
-
-  // Utils
-
-  void ensure(int safety=100) {
-    if (size < used + safety) {
-      size = std::max((size_t)1024, size * 2) + safety;
-      if (!buffer) {
-        buffer = (char*)malloc(size);
-        if (!buffer) {
-          printf("Out of memory allocating %zd bytes for output buffer!", size);
-          abort();
-        }
-      } else {
-        char *buf = (char*)realloc(buffer, size);
-        if (!buf) {
-          free(buffer);
-          printf("Out of memory allocating %zd bytes for output buffer!", size);
-          abort();
-        }
-        buffer = buf;
-      }
-    }
-  }
-
-  void emit(char c) {
-    maybeSpace(c);
-    if (!pretty && c == '}' && buffer[used-1] == ';') used--; // optimize ;} into }, the ; is not separating anything
-    ensure(1);
-    buffer[used++] = c;
-  }
-
-  void emit(const char *s) {
-    maybeSpace(*s);
-    int len = strlen(s);
-    ensure(len+1);
-    strncpy(buffer + used, s, len+1);
-    used += len;
-  }
-
-  void newline() {
-    if (!pretty) return;
-    emit('\n');
-    for (int i = 0; i < indent; i++) emit(' ');
-  }
-
-  void space() {
-    if (pretty) emit(' ');
-  }
-
-  void safeSpace() {
-    if (pretty) emit(' ');
-    else possibleSpace = true;
-  }
-
-  void maybeSpace(char s) {
-    if (possibleSpace) {
-      possibleSpace = false;
-      if (isIdentPart(s)) emit(' ');
-    }
-  }
-
-  void print(Ref node) {
-    ensure();
-    IString type = node[0]->getIString();
-    //fprintf(stderr, "printing %s\n", type.str);
-    switch (type.str[0]) {
-      case 'a': {
-        if (type == ASSIGN) printAssign(node);
-        else if (type == ARRAY) printArray(node);
-        else abort();
-        break;
-      }
-      case 'b': {
-        if (type == BINARY) printBinary(node);
-        else if (type == BLOCK) printBlock(node);
-        else if (type == BREAK) printBreak(node);
-        else abort();
-        break;
-      }
-      case 'c': {
-        if (type == CALL) printCall(node);
-        else if (type == CONDITIONAL) printConditional(node);
-        else if (type == CONTINUE) printContinue(node);
-        else abort();
-        break;
-      }
-      case 'd': {
-        if (type == DEFUN) printDefun(node);
-        else if (type == DO) printDo(node);
-        else if (type == DOT) printDot(node);
-        else abort();
-        break;
-      }
-      case 'i': {
-        if (type == IF) printIf(node);
-        else abort();
-        break;
-      }
-      case 'l': {
-        if (type == LABEL) printLabel(node);
-        else abort();
-        break;
-      }
-      case 'n': {
-        if (type == NAME) printName(node);
-        else if (type == NUM) printNum(node);
-        else if (type == NEW) printNew(node);
-        else abort();
-        break;
-      }
-      case 'o': {
-        if (type == OBJECT) printObject(node);
-        break;
-      }
-      case 'r': {
-        if (type == RETURN) printReturn(node);
-        else abort();
-        break;
-      }
-      case 's': {
-        if (type == STAT) printStat(node);
-        else if (type == SUB) printSub(node);
-        else if (type == SEQ) printSeq(node);
-        else if (type == SWITCH) printSwitch(node);
-        else if (type == STRING) printString(node);
-        else abort();
-        break;
-      }
-      case 't': {
-        if (type == TOPLEVEL) printToplevel(node);
-        else abort();
-        break;
-      }
-      case 'u': {
-        if (type == UNARY_PREFIX) printUnaryPrefix(node);
-        else abort();
-        break;
-      }
-      case 'v': {
-        if (type == VAR) printVar(node);
-        else abort();
-        break;
-      }
-      case 'w': {
-        if (type == WHILE) printWhile(node);
-        else abort();
-        break;
-      }
-      default: {
-        printf("cannot yet print %s\n", type.str);
-        abort();
-      }
-    }
-  }
-
-  // print a node, and if nothing is emitted, emit something instead
-  void print(Ref node, const char *otherwise) {
-    auto last = used;
-    print(node);
-    if (used == last) emit(otherwise);
-  }
-
-  void printStats(Ref stats) {
-    bool first = true;
-    for (size_t i = 0; i < stats->size(); i++) {
-      Ref curr = stats[i];
-      if (!isNothing(curr)) {
-        if (first) first = false;
-        else newline();
-        print(stats[i]);
-      }
-    }
-  }
-
-  void printToplevel(Ref node) {
-    if (node[1]->size() > 0) {
-      printStats(node[1]);
-    }
-  }
-
-  void printBlock(Ref node) {
-    if (node->size() == 1 || node[1]->size() == 0) {
-      emit("{}");
-      return;
-    }
-    emit('{');
-    indent++;
-    newline();
-    printStats(node[1]);
-    indent--;
-    newline();
-    emit('}');
-  }
-
-  void printDefun(Ref node) {
-    emit("function ");
-    emit(node[1]->getCString());
-    emit('(');
-    Ref args = node[2];
-    for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0) (pretty ? emit(", ") : emit(','));
-      emit(args[i]->getCString());
-    }
-    emit(')');
-    space();
-    if (node->size() == 3 || node[3]->size() == 0) {
-      emit("{}");
-      return;
-    }
-    emit('{');
-    indent++;
-    newline();
-    printStats(node[3]);
-    indent--;
-    newline();
-    emit('}');
-    newline();
-  }
-
-  bool isNothing(Ref node) {
-    return (node[0] == TOPLEVEL && node[1]->size() == 0) || (node[0] == STAT && isNothing(node[1]));
-  }
-
-  void printStat(Ref node) {
-    if (!isNothing(node[1])) {
-      print(node[1]);
-      if (buffer[used-1] != ';') emit(';');
-    }
-  }
-
-  void printAssign(Ref node) {
-    printChild(node[2], node, -1);
-    space();
-    emit('=');
-    space();
-    printChild(node[3], node, 1);
-  }
-
-  void printName(Ref node) {
-    emit(node[1]->getCString());
-  }
-
   static char* numToString(double d, bool finalize=true) {
     bool neg = d < 0;
     if (neg) d = -d;
@@ -955,379 +658,22 @@ struct JSPrinter {
     }
     return ret;
   }
-
-  void printNum(Ref node) {
-    emit(numToString(node[1]->getNumber(), finalize));
-  }
-
-  void printString(Ref node) {
-    emit('"');
-    emit(node[1]->getCString());
-    emit('"');
-  }
-
-  // Parens optimizing
-
-  bool capturesOperators(Ref node) {
-    Ref type = node[0];
-    return type == CALL || type == ARRAY || type == OBJECT || type == SEQ;
-  }
-
-  int getPrecedence(Ref node, bool parent) {
-    Ref type = node[0];
-    if (type == BINARY || type == UNARY_PREFIX) {
-      return OperatorClass::getPrecedence(type == BINARY ? OperatorClass::Binary : OperatorClass::Prefix, node[1]->getIString());
-    } else if (type == SEQ) {
-      return OperatorClass::getPrecedence(OperatorClass::Binary, COMMA);
-    } else if (type == CALL) {
-      return parent ? OperatorClass::getPrecedence(OperatorClass::Binary, COMMA) : -1; // call arguments are split by commas, but call itself is safe
-    } else if (type == ASSIGN) {
-      return OperatorClass::getPrecedence(OperatorClass::Binary, SET);
-    } else if (type == CONDITIONAL) {
-      return OperatorClass::getPrecedence(OperatorClass::Tertiary, QUESTION);
-    }
-    // otherwise, this is something that fixes precedence explicitly, and we can ignore
-    return -1; // XXX
-  }
-
-  // check whether we need parens for the child, when rendered in the parent
-  // @param childPosition -1 means it is printed to the left of parent, 0 means "anywhere", 1 means right
-  bool needParens(Ref parent, Ref child, int childPosition) {
-    int parentPrecedence = getPrecedence(parent, true);
-    int childPrecedence = getPrecedence(child, false);
-
-    if (childPrecedence > parentPrecedence) return true;  // child is definitely a danger
-    if (childPrecedence < parentPrecedence) return false; //          definitely cool
-    // equal precedence, so associativity (rtl/ltr) is what matters
-    // (except for some exceptions, where multiple operators can combine into confusion)
-    if (parent[0] == UNARY_PREFIX) {
-      assert(child[0] == UNARY_PREFIX);
-      if ((parent[1] == PLUS || parent[1] == MINUS) && child[1] == parent[1]) {
-        // cannot emit ++x when we mean +(+x)
-        return true;
-      }
-    }
-    if (childPosition == 0) return true; // child could be anywhere, so always paren
-    if (childPrecedence < 0) return false; // both precedences are safe
-    // check if child is on the dangerous side
-    if (OperatorClass::getRtl(parentPrecedence)) return childPosition < 0;
-    else return childPosition > 0;
-  }
-
-  void printChild(Ref child, Ref parent, int childPosition=0) {
-    bool parens = needParens(parent, child, childPosition);
-    if (parens) emit('(');
-    print(child);
-    if (parens) emit(')');
-  }
-
-  void printBinary(Ref node) {
-    printChild(node[2], node, -1);
-    space();
-    emit(node[1]->getCString());
-    space();
-    printChild(node[3], node, 1);
-  }
-
-  void printUnaryPrefix(Ref node) {
-    if (finalize && node[1] == PLUS && (node[2][0] == NUM ||
-                                       (node[2][0] == UNARY_PREFIX && node[2][1] == MINUS && node[2][2][0] == NUM))) {
-      // emit a finalized number
-      int last = used;
-      print(node[2]);
-      ensure(1); // we temporarily append a 0
-      char *curr = buffer + last; // ensure might invalidate
-      buffer[used] = 0;
-      if (strchr(curr, '.')) return; // already a decimal point, all good
-      char *e = strchr(curr, 'e');
-      if (!e) {
-        emit(".0");
-        return;
-      }
-      ensure(3);
-      curr = buffer + last; // ensure might invalidate
-      char *end = strchr(curr, 0);
-      while (end >= e) {
-        end[2] = end[0];
-        end--;
-      }
-      e[0] = '.';
-      e[1] = '0';
-      used += 2;
-      return;
-    }
-    if ((buffer[used-1] == '-' && node[1] == MINUS) ||
-        (buffer[used-1] == '+' && node[1] == PLUS)) {
-      emit(' '); // cannot join - and - to --, looks like the -- operator
-    }
-    emit(node[1]->getCString());
-    printChild(node[2], node, 1);
-  }
-
-  void printConditional(Ref node) {
-    printChild(node[1], node, -1);
-    space();
-    emit('?');
-    space();
-    printChild(node[2], node, 0);
-    space();
-    emit(':');
-    space();
-    printChild(node[3], node, 1);
-  }
-
-  void printCall(Ref node) {
-    printChild(node[1], node, 0);
-    emit('(');
-    Ref args = node[2];
-    for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0) (pretty ? emit(", ") : emit(','));
-      printChild(args[i], node, 0);
-    }
-    emit(')');
-  }
-
-  void printSeq(Ref node) {
-    printChild(node[1], node, -1);
-    emit(',');
-    space();
-    printChild(node[2], node, 1);
-  }
-
-  void printDot(Ref node) {
-    print(node[1]);
-    emit('.');
-    emit(node[2]->getCString());
-  }
-
-  void printSwitch(Ref node) {
-    emit("switch");
-    space();
-    emit('(');
-    print(node[1]);
-    emit(')');
-    space();
-    emit('{');
-    newline();
-    Ref cases = node[2];
-    for (size_t i = 0; i < cases->size(); i++) {
-      Ref c = cases[i];
-      if (!c[0]) {
-        emit("default:");
-      } else {
-        emit("case ");
-        print(c[0]);
-        emit(':');
-      }
-      if (c[1]->size() > 0) {
-        indent++;
-        newline();
-        auto curr = used;
-        printStats(c[1]);
-        indent--;
-        if (curr != used) newline();
-        else used--; // avoid the extra indentation we added tentatively
-      } else {
-        newline();
-      }
-    }
-    emit('}');
-  }
-
-  void printSub(Ref node) {
-    printChild(node[1], node, -1);
-    emit('[');
-    print(node[2]);
-    emit(']');
-  }
-
-  void printVar(Ref node) {
-    emit("var ");
-    Ref args = node[1];
-    for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0) (pretty ? emit(", ") : emit(','));
-      emit(args[i][0]->getCString());
-      if (args[i]->size() > 1) {
-        space();
-        emit('=');
-        space();
-        print(args[i][1]);
-      }
-    }
-    emit(';');
-  }
-
-  static bool ifHasElse(Ref node) {
-    assert(node[0] == IF);
-    return node->size() >= 4 && !!node[3];
-  }
-
-  void printIf(Ref node) {
-    emit("if");
-    safeSpace();
-    emit('(');
-    print(node[1]);
-    emit(')');
-    space();
-    // special case: we need braces to save us from ambiguity, if () { if () } else. otherwise else binds to inner if
-    // also need to recurse for                                if () { if () { } else { if () } else
-    // (note that this is only a problem if the if body has a single element in it, not a block or such, as then
-    // the block would be braced)
-    // this analysis is a little conservative - it assumes any child if could be confused with us, which implies
-    // all other braces vanished (the worst case for us, we are not saved by other braces).
-    bool needBraces = false;
-    bool hasElse = ifHasElse(node);
-    if (hasElse) {
-      Ref child = node[2];
-      while (child[0] == IF) {
-        if (!ifHasElse(child)) {
-          needBraces = true;
-          break;
-        }
-        child = child[3]; // continue into the else
-      }
-    }
-    if (needBraces) {
-      emit('{');
-      indent++;
-      newline();
-      print(node[2]);
-      indent--;
-      newline();
-      emit('}');
-    } else {
-      print(node[2], "{}");
-    }
-    if (hasElse) {
-      space();
-      emit("else");
-      safeSpace();
-      print(node[3], "{}");
-    }
-  }
-
-  void printDo(Ref node) {
-    emit("do");
-    safeSpace();
-    print(node[2], "{}");
-    space();
-    emit("while");
-    space();
-    emit('(');
-    print(node[1]);
-    emit(')');
-    emit(';');
-  }
-
-  void printWhile(Ref node) {
-    emit("while");
-    space();
-    emit('(');
-    print(node[1]);
-    emit(')');
-    space();
-    print(node[2], "{}");
-  }
-
-  void printLabel(Ref node) {
-    emit(node[1]->getCString());
-    space();
-    emit(':');
-    space();
-    print(node[2]);
-  }
-
-  void printReturn(Ref node) {
-    emit("return");
-    if (!!node[1]) {
-      emit(' ');
-      print(node[1]);
-    }
-    emit(';');
-  }
-
-  void printBreak(Ref node) {
-    emit("break");
-    if (!!node[1]) {
-      emit(' ');
-      emit(node[1]->getCString());
-    }
-    emit(';');
-  }
-
-  void printContinue(Ref node) {
-    emit("continue");
-    if (!!node[1]) {
-      emit(' ');
-      emit(node[1]->getCString());
-    }
-    emit(';');
-  }
-
-  void printNew(Ref node) {
-    emit("new ");
-    print(node[1]);
-  }
-
-  void printArray(Ref node) {
-    emit('[');
-    Ref args = node[1];
-    for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0) (pretty ? emit(", ") : emit(','));
-      print(args[i]);
-    }
-    emit(']');
-  }
-
-  void printObject(Ref node) {
-    emit('{');
-    indent++;
-    newline();
-    Ref args = node[1];
-    for (size_t i = 0; i < args->size(); i++) {
-      if (i > 0) {
-        pretty ? emit(", ") : emit(',');
-        newline();
-      }
-      const char *str = args[i][0]->getCString();
-      const char *check = str;
-      bool needQuote = false;
-      while (*check) {
-        if (!isalnum(*check) && *check != '_' && *check != '$') {
-          needQuote = true;
-          break;
-        }
-        check++;
-      }
-      if (needQuote) emit('"');
-      emit(str);
-      if (needQuote) emit('"');
-      emit(":");
-      space();
-      print(args[i][1]);
-    }
-    indent--;
-    newline();
-    emit('}');
-  }
 };
 
 // cashew builder
 
 class ValueBuilder {
-  static IStringSet statable;
-
   static Ref makeRawString(const IString& s) {
-    return &arena.alloc()->setString(s);
+    return &arena.alloc<Value>()->setString(s);
   }
 
   static Ref makeNull() {
-    return &arena.alloc()->setNull();
+    return &arena.alloc<Value>()->setNull();
   }
 
 public:
   static Ref makeRawArray(int size_hint=0) {
-    return &arena.alloc()->setArray(size_hint);
+    return &arena.alloc<Value>()->setArray(size_hint);
   }
 
   static Ref makeToplevel() {
@@ -1346,8 +692,7 @@ public:
   }
 
   static Ref makeName(IString name) {
-    return &makeRawArray(2)->push_back(makeRawString(NAME))
-                            .push_back(makeRawString(name));
+    return makeRawString(name);
   }
 
   static void setBlockContent(Ref target, Ref block) {
@@ -1449,17 +794,11 @@ public:
   }
 
   static Ref makeStatement(Ref contents) {
-    if (statable.has(contents[0]->getIString())) {
-      return &makeRawArray(2)->push_back(makeRawString(STAT))
-                              .push_back(contents);
-    } else {
-      return contents; // only very specific things actually need to be stat'ed
-    }
+    return contents;
   }
 
   static Ref makeDouble(double num) {
-    return &makeRawArray(2)->push_back(makeRawString(NUM))
-                            .push_back(&arena.alloc()->setNumber(num));
+    return &arena.alloc<Value>()->setNumber(num);
   }
   static Ref makeInt(uint32_t num) {
     return makeDouble(double(num));
@@ -1476,10 +815,11 @@ public:
 
   static Ref makeBinary(Ref left, IString op, Ref right) {
     if (op == SET) {
-      return &makeRawArray(4)->push_back(makeRawString(ASSIGN))
-                              .push_back(&arena.alloc()->setBool(true))
-                              .push_back(left)
-                              .push_back(right);
+      if (left->isString()) {
+        return &arena.alloc<AssignName>()->setAssignName(left->getIString(), right);
+      } else {
+        return &arena.alloc<Assign>()->setAssign(left, right);
+      }
     } else if (op == COMMA) {
       return &makeRawArray(3)->push_back(makeRawString(SEQ))
                               .push_back(left)
@@ -1626,8 +966,8 @@ public:
   }
 
   static Ref makeDot(Ref obj, Ref key) {
-    assert(key[0] == NAME);
-    return makeDot(obj, key[1]->getIString());
+    assert(key->isString());
+    return makeDot(obj, key->getIString());
   }
 
   static Ref makeNew(Ref call) {
@@ -1654,19 +994,6 @@ public:
     assert(array[0] == OBJECT);
     array[1]->push_back(&makeRawArray(2)->push_back(makeRawString(key))
                                          .push_back(value));
-  }
-
-  static Ref makeAssign(Ref target, Ref value) {
-    return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
-                            .push_back(&arena.alloc()->setBool(true))
-                            .push_back(target)
-                            .push_back(value);
-  }
-  static Ref makeAssign(IString target, Ref value) {
-    return &makeRawArray(3)->push_back(makeRawString(ASSIGN))
-                            .push_back(&arena.alloc()->setBool(true))
-                            .push_back(makeName(target))
-                            .push_back(value);
   }
 
   static Ref makeSub(Ref obj, Ref index) {

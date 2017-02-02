@@ -144,39 +144,24 @@ struct MixedArena {
 //
 // A vector that allocates in an arena.
 //
-// TODO: consider not saving the allocator, but requiring it be
-//       passed in when needed, would make this (and thus Blocks etc.
-//       smaller)
-//
 // TODO: specialize on the initial size of the array
 
-template <typename T>
-class ArenaVector {
-  MixedArena& allocator;
+template <typename SubType, typename T>
+class ArenaVectorBase {
+protected:
   T* data = nullptr;
   size_t usedElements = 0,
          allocatedElements = 0;
 
-  void allocate(size_t size) {
-    allocatedElements = size;
-    data = static_cast<T*>(allocator.allocSpace(sizeof(T) * allocatedElements));
-  }
-
   void reallocate(size_t size) {
     T* old = data;
-    allocate(size);
+    static_cast<SubType*>(this)->allocate(size);
     for (size_t i = 0; i < usedElements; i++) {
       data[i] = old[i];
     }
   }
 
 public:
-  ArenaVector(MixedArena& allocator) : allocator(allocator) {}
-
-  ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
-    *this = other;
-  }
-
   T& operator[](size_t index) const {
     assert(index < usedElements);
     return data[index];
@@ -216,11 +201,21 @@ public:
     usedElements++;
   }
 
+  void clear() {
+    usedElements = 0;
+  }
+
+  void reserve(size_t size) {
+    if (size > allocatedElements) {
+      reallocate(size);
+    }
+  }
+
   template<typename ListType>
   void set(const ListType& list) {
     size_t size = list.size();
     if (allocatedElements < size) {
-      allocate(size);
+      static_cast<SubType*>(this)->allocate(size);
     }
     for (size_t i = 0; i < size; i++) {
       data[i] = list[i];
@@ -228,14 +223,15 @@ public:
     usedElements = size;
   }
 
-  void operator=(ArenaVector<T>& other) {
+  void operator=(SubType& other) {
     set(other);
   }
 
-  void operator=(ArenaVector<T>&& other) {
+  void swap(SubType& other) {
     data = other.data;
     usedElements = other.usedElements;
     allocatedElements = other.allocatedElements;
+
     other.data = nullptr;
     other.usedElements = other.allocatedElements = 0;
   }
@@ -243,10 +239,10 @@ public:
   // iteration
 
   struct Iterator {
-    const ArenaVector<T>* parent;
+    const SubType* parent;
     size_t index;
 
-    Iterator(const ArenaVector<T>* parent, size_t index) : parent(parent), index(index) {}
+    Iterator(const SubType* parent, size_t index) : parent(parent), index(index) {}
 
     bool operator!=(const Iterator& other) const {
       return index != other.index || parent != other.parent;
@@ -262,10 +258,38 @@ public:
   };
 
   Iterator begin() const {
-    return Iterator(this, 0);
+    return Iterator(static_cast<const SubType*>(this), 0);
   }
   Iterator end() const {
-    return Iterator(this, usedElements);
+    return Iterator(static_cast<const SubType*>(this), usedElements);
+  }
+
+  void allocate(size_t size) {
+    abort(); // must be implemented in children
+  }
+};
+
+// A vector that has an allocator for arena allocation
+//
+// TODO: consider not saving the allocator, but requiring it be
+//       passed in when needed, would make this (and thus Blocks etc.
+//       smaller)
+
+template <typename T>
+class ArenaVector : public ArenaVectorBase<ArenaVector<T>, T> {
+private:
+  MixedArena& allocator;
+
+public:
+  ArenaVector(MixedArena& allocator) : allocator(allocator) {}
+
+  ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
+    *this = other;
+  }
+
+  void allocate(size_t size) {
+    this->allocatedElements = size;
+    this->data = static_cast<T*>(allocator.allocSpace(sizeof(T) * this->allocatedElements));
   }
 };
 

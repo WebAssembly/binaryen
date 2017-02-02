@@ -82,11 +82,12 @@ void Linker::layout() {
     // behavior.
     for (auto* call : f.second) {
       auto type = call->type;
-      auto operands = std::move(call->operands);
+      ExpressionList operands(out.wasm.allocator);
+      operands.swap(call->operands);
       auto target = call->target;
       CallImport* newCall = ExpressionManipulator::convert<Call, CallImport>(call, out.wasm.allocator);
       newCall->type = type;
-      newCall->operands = std::move(operands);
+      newCall->operands.swap(operands);
       newCall->target = target;
     }
   }
