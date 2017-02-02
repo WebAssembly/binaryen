@@ -109,6 +109,7 @@ int main(int argc, const char *argv[]) {
   }
 
   Asm2WasmPreProcessor pre;
+  pre.debugInfo = debugInfo;
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
   char *start = pre.process(input.data());

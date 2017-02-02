@@ -155,6 +155,10 @@ std::vector<Ref> AstStackHelper::astStack;
 
 struct Asm2WasmPreProcessor {
   bool memoryGrowth = false;
+  bool debugInfo = false;
+
+  std::vector<std::string> debugInfoFileNames;
+  std::unordered_map<std::string, Index> debugInfoFileIndices;
 
   char* process(char* input) {
     // emcc --separate-asm modules can look like
@@ -204,6 +208,78 @@ struct Asm2WasmPreProcessor {
     }
     if (marker) {
       *marker = START_FUNCS[0];
+    }
+
+    // handle debug info, if this build wants that.
+    if (debugInfo) {
+      // asm.js debug info comments look like
+      //   ..command..; //@line 4 "tests/hello_world.c"
+      // we convert those into emscripten_debuginfo(file, line)
+      // calls, where the params are indices into a mapping. then
+      // the compiler and optimizer can operate on them. after
+      // that, we can apply the debug info to the wasm node right
+      // before it - this is guaranteed to be correct without opts,
+      // and is usually decently accurate with them.
+      auto size = strlen(input);
+      auto upperBound = Index(size * 1.25) + 100;
+      char* copy = (char*)malloc(upperBound);
+      char* end = copy + upperBound;
+      char* out = copy;
+      std::string DEBUGINFO_INTRINSIC = "emscripten_debuginfo";
+      auto DEBUGINFO_INTRINSIC_SIZE = DEBUGINFO_INTRINSIC.size();
+      bool seenUseAsm = false;
+      while (input[0]) {
+        if (out + 100 >= end) {
+          Fatal() << "error in handling debug info";
+        }
+        if (input[0] == '/' && input[1] == '/' && input[2] == '@' && input[3] == 'l' && input[4] == 'i' && input[5] == 'n' && input[6] == 'e') {
+          char* linePos = input + 8;
+          char* lineEnd = strchr(input + 8, ' ');
+          char* filePos = strchr(lineEnd, '"') + 1;
+          char* fileEnd = strchr(filePos, '"');
+          input = fileEnd + 1;
+          *lineEnd = 0;
+          *fileEnd = 0;
+          std::string line = linePos, file = filePos;
+          auto iter = debugInfoFileIndices.find(file);
+          if (iter == debugInfoFileIndices.end()) {
+            Index index = debugInfoFileNames.size();
+            debugInfoFileNames.push_back(file);
+            debugInfoFileIndices[file] = index;
+          }
+          std::string fileIndex = std::to_string(debugInfoFileIndices[file]);
+          // write out the intrinsic
+          strcpy(out, DEBUGINFO_INTRINSIC.c_str());
+          out += DEBUGINFO_INTRINSIC_SIZE;
+          *out++ = '(';
+          strcpy(out, fileIndex.c_str());
+          out += fileIndex.size();
+          *out++ = ',';
+          strcpy(out, line.c_str());
+          out += line.size();
+          *out++ = ')';
+          *out++ = ';';
+        } else if (!seenUseAsm && input[0] == 'a' && input[1] == 's' && input[2] == 'm' && (input[3] == '"' || input[3] == '\'') && input[4] == ';') {
+          // end of  "use asm"  or  "almost asm"
+          seenUseAsm = true;
+          *out++ = *input++;
+          *out++ = *input++;
+          *out++ = *input++;
+          *out++ = *input++;
+          *out++ = *input++;
+          // add a fake import for the intrinsic, so the module validates
+          std::string import = "\n var emscripten_debuginfo = env.emscripten_debuginfo;";
+          strcpy(out, import.c_str());
+          out += import.size();
+        } else {
+          *out++ = *input++;
+        }
+      }
+      if (out >= end) {
+        Fatal() << "error in handling debug info";
+      }
+      *out = 0;
+      input = copy;
     }
 
     return input;
