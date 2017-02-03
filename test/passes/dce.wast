@@ -435,4 +435,10 @@
     (drop (get_global $x))
     (set_global $x (i32.const 1))
   )
+  (func $ret (result i32)
+    (return
+      (i32.const 0)
+    )
+    (nop)
+  )
 )

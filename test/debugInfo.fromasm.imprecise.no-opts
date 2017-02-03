@@ -1,0 +1,75 @@
+(module
+  (type $FUNCSIG$vii (func (param i32 i32)))
+  (import "env" "memory" (memory $0 256 256))
+  (import "env" "table" (table 0 0 anyfunc))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (export "add" (func $add))
+  (export "ret" (func $ret))
+  (export "opts" (func $opts))
+  (func $add (param $x i32) (param $y i32) (result i32)
+    ;; tests/hello_world.c:5
+    (set_local $x
+      (get_local $x)
+    )
+    ;; tests/hello_world.c:6
+    (set_local $y
+      (get_local $y)
+    )
+    ;; tests/other_file.cpp:314159
+    (set_local $x
+      (get_local $y)
+    )
+    (return
+      (i32.add
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+  )
+  (func $ret (param $x i32) (result i32)
+    ;; return.cpp:50
+    (set_local $x
+      (i32.shl
+        (get_local $x)
+        (i32.const 1)
+      )
+    )
+    ;; return.cpp:100
+    (return
+      (i32.add
+        (get_local $x)
+        (i32.const 1)
+      )
+    )
+  )
+  (func $opts (param $x i32) (param $y i32) (result i32)
+    ;; even-opted.cpp:1
+    (set_local $x
+      (i32.add
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    ;; even-opted.cpp:2
+    (set_local $y
+      (i32.shr_s
+        (get_local $y)
+        (get_local $x)
+      )
+    )
+    ;; even-opted.cpp:3
+    (set_local $x
+      (i32.rem_s
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (return
+      (i32.add
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+  )
+)

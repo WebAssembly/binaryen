@@ -1385,6 +1385,9 @@ public:
   std::vector<Name> localNames;
   std::map<Name, Index> localIndices;
 
+  // node annotations, printed alongside the node in the text format
+  std::unordered_map<Expression*, std::string> annotations;
+
   Function() : result(none) {}
 
   size_t getNumParams() {

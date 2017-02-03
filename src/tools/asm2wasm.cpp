@@ -84,7 +84,7 @@ int main(int argc, const char *argv[]) {
            [&wasmOnly](Options *o, const std::string &) {
              wasmOnly = true;
            })
-      .add("--debuginfo", "-g", "Emit names section and debug info",
+      .add("--debuginfo", "-g", "Emit names section and debug info (you must emit text, -S, for this to work)",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { debugInfo = true; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
@@ -98,6 +98,16 @@ int main(int argc, const char *argv[]) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
+
+  // finalize arguments
+  if (options.extra["output"].size() == 0) {
+    // when no output file is specified, we emit text to stdout
+    emitBinary = false;
+  }
+  if (emitBinary) {
+    // wasm binaries can't contain debug info yet
+    debugInfo = false;
+  }
 
   const auto &tm_it = options.extra.find("total memory");
   size_t totalMemory =
@@ -121,7 +131,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre.memoryGrowth, options.debug, imprecise, passOptions, runOptimizationPasses, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, imprecise, passOptions, runOptimizationPasses, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided
