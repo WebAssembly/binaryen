@@ -61,9 +61,13 @@ echo "building wasm.js"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   src/wasm-js.cpp \
+  src/ast/ExpressionAnalyzer.cpp \
+  src/ast/ExpressionManipulator.cpp \
   src/passes/pass.cpp \
+  src/passes/DeadCodeElimination.cpp \
   src/passes/Print.cpp \
   src/passes/LegalizeJSInterface.cpp \
+  src/passes/Vacuum.cpp \
   src/emscripten-optimizer/parser.cpp \
   src/emscripten-optimizer/simple_ast.cpp \
   src/emscripten-optimizer/optimizer-shared.cpp \
