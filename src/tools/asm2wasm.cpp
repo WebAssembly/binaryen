@@ -84,7 +84,7 @@ int main(int argc, const char *argv[]) {
            [&wasmOnly](Options *o, const std::string &) {
              wasmOnly = true;
            })
-      .add("--debuginfo", "-g", "Emit names section and debug info (you must emit text, -S, for this to work)",
+      .add("--debuginfo", "-g", "Emit names section and debug info (for debug info you must emit text, -S, for this to work)",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { debugInfo = true; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
@@ -104,10 +104,6 @@ int main(int argc, const char *argv[]) {
     // when no output file is specified, we emit text to stdout
     emitBinary = false;
   }
-  if (emitBinary) {
-    // wasm binaries can't contain debug info yet
-    debugInfo = false;
-  }
 
   const auto &tm_it = options.extra.find("total memory");
   size_t totalMemory =
@@ -119,7 +115,8 @@ int main(int argc, const char *argv[]) {
   }
 
   Asm2WasmPreProcessor pre;
-  pre.debugInfo = debugInfo;
+  // wasm binaries can contain a names section, but not full debug info
+  pre.debugInfo = debugInfo && !emitBinary;
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
   char *start = pre.process(input.data());
