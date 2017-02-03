@@ -28,7 +28,7 @@
            })
       .add("", "-O0", "execute no optimization passes",
            Options::Arguments::Zero,
-           [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
+           [&passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 0;
              passOptions.shrinkLevel = 0;
              passOptions.ignoreImplicitTraps = false;
@@ -83,4 +83,3 @@
            [&passOptions](Options* o, const std::string& argument) {
              passOptions.shrinkLevel = atoi(argument.c_str());
            })
-

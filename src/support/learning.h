@@ -51,7 +51,7 @@ class GeneticLearner {
   std::vector<unique_ptr> population;
 
   void sort() {
-    std::sort(population.begin(), population.end(), [this](const unique_ptr& left, const unique_ptr& right) {
+    std::sort(population.begin(), population.end(), [](const unique_ptr& left, const unique_ptr& right) {
       return left->getFitness() > right->getFitness();
     });
   }
@@ -109,4 +109,3 @@ public:
 }  // namespace wasm
 
 #endif  // wasm_learning_h
-
