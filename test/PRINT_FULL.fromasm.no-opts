@@ -1,0 +1,48 @@
+(module
+  (type $FUNCSIG$vi (func (param i32)))
+  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
+  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
+  (import "env" "abortStackOverflow" (func $abortStackOverflow (param i32)))
+  (import "env" "memory" (memory $0 256 256))
+  (import "env" "table" (table 0 0 anyfunc))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
+  (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
+  (export "stackAlloc" (func $stackAlloc))
+  (func $stackAlloc (param $size i32) (result i32)
+    (local $ret i32)
+    [i32] [i32] (block i32
+      [none] (set_local $ret
+        [i32] (get_global $STACKTOP)
+      )
+      [none] (set_global $STACKTOP
+        [i32] (i32.add
+          [i32] (get_global $STACKTOP)
+          [i32] (get_local $size)
+        )
+      )
+      [none] (set_global $STACKTOP
+        [i32] (i32.and
+          [i32] (i32.add
+            [i32] (get_global $STACKTOP)
+            [i32] (i32.const 15)
+          )
+          [i32] (i32.const -16)
+        )
+      )
+      [none] (if
+        [i32] (i32.ge_s
+          [i32] (get_global $STACKTOP)
+          [i32] (get_global $STACK_MAX)
+        )
+        [none] (call $abortStackOverflow
+          [i32] (get_local $size)
+        )
+      )
+      [unreachable] (return
+        [i32] (get_local $ret)
+      )
+    )
+  )
+)
