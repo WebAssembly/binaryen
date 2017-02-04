@@ -130,6 +130,9 @@ for asm in tests:
         if actual != expected:
           fail(actual, expected)
 
+        if 'PRINT_FULL' in asm:
+          continue # that's it, we can't do binary checks on this special output format
+
         binary_format_check(wasm, verify_final_result=False)
 
         # verify in wasm
