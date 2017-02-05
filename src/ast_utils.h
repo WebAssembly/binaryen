@@ -95,9 +95,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   bool writesMemory = false;
   bool implicitTrap = false; // a load or div/rem, which may trap. we ignore trap
                              // differences, so it is ok to reorder these, and we
-                             // also allow reordering them with loads/stores etc.,
-                             // but we can't remove them, so they count as side
-                             // effects
+                             // also allow reordering them with other effects
+                             // (so a trap may occur later or earlier, if it is
+                             // going to occur anyhow), but we can't remove them,
+                             // they count as side effects
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
