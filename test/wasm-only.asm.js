@@ -284,6 +284,25 @@ function asm(global, env, buffer) {
     }
     return 44;
   }
+
+  function propagateFallthrough() {
+    var x = 0;
+    x = 1;
+    x = x + 2 | 0;
+    x = x * 3 | 0;
+    while (1) {
+      if (1) {
+        if (x) {
+          return x | 0;
+        } else {
+          return 0;
+        }
+      } else {
+        return 1;
+      }
+    }
+  }
+
   function keepAlive() {
     loads();
     stores();
@@ -297,6 +316,7 @@ function asm(global, env, buffer) {
     ifValue32(0, 0) | 0;
     switch64(i64(0)) | 0;
     unreachable_leftovers(0, 0, 0);
+    propagateFallthrough() | 0;
   }
 
   function __emscripten_dceable_type_decls() { // dce-able, but this defines the type of fabsf which has no other use

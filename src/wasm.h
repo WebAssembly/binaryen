@@ -968,7 +968,8 @@ public:
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // this does is to set the type to unreachable in the cases that is needed, and
+  // to propage a new concrete type to children as needed.
   void finalize(WasmType type_);
 
   // set the type purely based on its contents. this scans the block, so it is not fast.
@@ -990,7 +991,8 @@ public:
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // this does is to set the type to unreachable in the cases that is needed, and
+  // to propage a new concrete type to children as needed.
   void finalize(WasmType type_);
 
   // set the type purely based on its contents.
@@ -1011,7 +1013,8 @@ public:
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // this does is to set the type to unreachable in the cases that is needed, and
+  // to propage a new concrete type to children as needed.
   void finalize(WasmType type_);
 
   // set the type purely based on its contents.

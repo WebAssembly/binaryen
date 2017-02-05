@@ -934,50 +934,92 @@
       (i32.const 44)
     )
   )
+  (func $propagateFallthrough (result i32)
+    (local $x i32)
+    (set_local $x
+      (i32.const 1)
+    )
+    (set_local $x
+      (i32.add
+        (get_local $x)
+        (i32.const 2)
+      )
+    )
+    (set_local $x
+      (i32.mul
+        (get_local $x)
+        (i32.const 3)
+      )
+    )
+    (loop $while-in i32
+      (block $while-out i32
+        (if i32
+          (i32.const 1)
+          (if i32
+            (get_local $x)
+            (return
+              (get_local $x)
+            )
+            (return
+              (i32.const 0)
+            )
+          )
+          (return
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
   (func $keepAlive
-    (call $loads)
-    (call $stores)
-    (call $test)
     (drop
-      (call $imports)
-    )
-    (call $arg
-      (i64.const 0)
-    )
-    (drop
-      (call $call1
-        (i64.const 0)
+      (block i32
+        (call $loads)
+        (call $stores)
+        (call $test)
+        (drop
+          (call $imports)
+        )
+        (call $arg
+          (i64.const 0)
+        )
+        (drop
+          (call $call1
+            (i64.const 0)
+          )
+        )
+        (drop
+          (call $call2
+            (i64.const 0)
+          )
+        )
+        (drop
+          (call $returnCastConst)
+        )
+        (drop
+          (call $ifValue64
+            (i64.const 0)
+            (i64.const 0)
+          )
+        )
+        (drop
+          (call $ifValue32
+            (i32.const 0)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (call $switch64
+            (i64.const 0)
+          )
+        )
+        (call $unreachable_leftovers
+          (i32.const 0)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (call $propagateFallthrough)
       )
-    )
-    (drop
-      (call $call2
-        (i64.const 0)
-      )
-    )
-    (drop
-      (call $returnCastConst)
-    )
-    (drop
-      (call $ifValue64
-        (i64.const 0)
-        (i64.const 0)
-      )
-    )
-    (drop
-      (call $ifValue32
-        (i32.const 0)
-        (i32.const 0)
-      )
-    )
-    (drop
-      (call $switch64
-        (i64.const 0)
-      )
-    )
-    (call $unreachable_leftovers
-      (i32.const 0)
-      (i32.const 0)
-      (i32.const 0)
     )
   )
   (func $__emscripten_dceable_type_decls

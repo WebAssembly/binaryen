@@ -632,7 +632,7 @@ static void removeIfCopy(Expression** origin, SetLocal* set, If* iff, Expression
     if (!iff->ifTrue) {
       Builder(*module).flip(iff);
     }
-    iff->type = none;
+    iff->finalize(none);
   }
 }
 

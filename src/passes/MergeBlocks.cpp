@@ -170,7 +170,7 @@ static void optimizeBlock(Block* curr, Module* module) {
               // reuse the drop
               drop->value = child->list.back();
               child->list.back() = drop;
-              child->type = none;
+              child->finalize(none);
               curr->list[i] = child;
               more = true;
               changed = true;
@@ -226,7 +226,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
         if (outer == nullptr) {
           // reuse the block, move it out
           block->list.back() = curr;
-          block->type = curr->type; // last block element was our input, and is now our output
+          block->finalize(curr->type); // last block element was our input, and is now our output
           replaceCurrent(block);
           return block;
         } else {

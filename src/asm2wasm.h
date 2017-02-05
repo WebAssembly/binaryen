@@ -2297,27 +2297,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
 void Asm2WasmBuilder::fixFallthrough(Function* func) {
   if (func->result == none) return;
-  std::vector<Expression*> work;
-  work.push_back(func->body);
-  while (work.size() > 0) {
-    auto* curr = work.back();
-    work.pop_back();
-    if (curr->type != unreachable) continue;
-    if (auto* block = curr->dynCast<Block>()) {
-      block->type = func->result;
-      if (block->list.size() > 0) {
-        work.push_back(block->list.back());
-      }
-    } else if (auto* loop = curr->dynCast<Loop>()) {
-      loop->type = func->result;
-      work.push_back(loop->body);
-    } else if (auto* iff = curr->dynCast<If>()) {
-      assert(iff->ifFalse); // must be an if-else
-      iff->type = func->result;
-      work.push_back(iff->ifTrue);
-      work.push_back(iff->ifFalse);
-    }
-  }
+  Block* block = builder.blockify(func->body);
+  block->finalize(func->result);
+  func->body = block;
 }
 
 } // namespace wasm
