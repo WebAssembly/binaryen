@@ -959,7 +959,9 @@ public:
 
 class Block : public SpecificExpression<Expression::BlockId> {
 public:
-  Block(MixedArena& allocator) : list(allocator) {}
+  Block(MixedArena& allocator) : list(allocator) {
+    type = unreachable;
+  }
 
   Name name;
   ExpressionList list;
@@ -969,13 +971,17 @@ public:
   // this does is to set the type to unreachable in the cases that is needed.
   void finalize(WasmType type_);
 
-  // set the type purely based on its contents. this scans the block, so it is not fast
+  // set the type purely based on its contents. this scans the block, so it is not fast.
+  // if the type is already something concrete, we do not alter it, so that if our
+  // contents to not imply a result but the parent does, then we remain valid
   void finalize();
 };
 
 class If : public SpecificExpression<Expression::IfId> {
 public:
-  If() : ifFalse(nullptr) {}
+  If() : ifFalse(nullptr) {
+    type = unreachable;
+  }
   If(MixedArena& allocator) : If() {}
 
   Expression* condition;
@@ -988,13 +994,17 @@ public:
   void finalize(WasmType type_);
 
   // set the type purely based on its contents.
+  // if the type is already something concrete, we do not alter it, so that if our
+  // contents to not imply a result but the parent does, then we remain valid
   void finalize();
 };
 
 class Loop : public SpecificExpression<Expression::LoopId> {
 public:
-  Loop() {}
-  Loop(MixedArena& allocator) {}
+  Loop() {
+    type = unreachable;
+  }
+  Loop(MixedArena& allocator) : Loop() {}
 
   Name name;
   Expression* body;
@@ -1005,6 +1015,8 @@ public:
   void finalize(WasmType type_);
 
   // set the type purely based on its contents.
+  // if the type is already something concrete, we do not alter it, so that if our
+  // contents to not imply a result but the parent does, then we remain valid
   void finalize();
 };
 

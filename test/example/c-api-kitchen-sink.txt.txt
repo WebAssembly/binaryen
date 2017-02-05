@@ -394,12 +394,10 @@
             )
             (block
             )
-            (if
-              (i32.const 1)
-              (drop
+            (drop
+              (if i32
+                (i32.const 1)
                 (i32.const 2)
-              )
-              (drop
                 (i32.const 3)
               )
             )

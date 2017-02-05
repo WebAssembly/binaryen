@@ -565,6 +565,8 @@ private:
   }
 
   Function* processFunction(Ref ast);
+
+  void fixFallthrough(Function* func);
 };
 
 void Asm2WasmBuilder::processAsm(Ref ast) {
@@ -2276,7 +2278,46 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());
+  // fix up the fallthrough return value. asm2wasm output is structured statements,
+  // but the wasm toplevel scope is a fallthrough that must have the same type as
+  // the function return value, if there is one. We must propage that type up
+  // as far as necessary, replacing unreachable types with concrete ones, e.g.
+  //
+  // block
+  //   if
+  //     condition
+  //     return 1
+  //     return 2
+  //
+  // then naively they all have unreachable type, but if the function returns i32,
+  // the block *and* the if must be i32
+  fixFallthrough(function);
   return function;
+}
+
+void Asm2WasmBuilder::fixFallthrough(Function* func) {
+  if (func->result == none) return;
+  std::vector<Expression*> work;
+  work.push_back(func->body);
+  while (work.size() > 0) {
+    auto* curr = work.back();
+    work.pop_back();
+    if (curr->type != unreachable) continue;
+    if (auto* block = curr->dynCast<Block>()) {
+      block->type = func->result;
+      if (block->list.size() > 0) {
+        work.push_back(block->list.back());
+      }
+    } else if (auto* loop = curr->dynCast<Loop>()) {
+      loop->type = func->result;
+      work.push_back(loop->body);
+    } else if (auto* iff = curr->dynCast<If>()) {
+      assert(iff->ifFalse); // must be an if-else
+      iff->type = func->result;
+      work.push_back(iff->ifTrue);
+      work.push_back(iff->ifFalse);
+    }
+  }
 }
 
 } // namespace wasm

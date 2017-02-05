@@ -145,6 +145,8 @@ void Block::finalize(WasmType type_) {
 }
 
 void Block::finalize() {
+  // if already set to a concrete value, keep it
+  if (isConcreteWasmType(type)) return;
   if (!name.is()) {
     // nothing branches here, so this is easy
     if (list.size() > 0) {
@@ -167,6 +169,8 @@ void If::finalize(WasmType type_) {
 }
 
 void If::finalize() {
+  // if already set to a concrete value, keep it
+  if (isConcreteWasmType(type)) return;
   if (condition->type == unreachable) {
     type = unreachable;
   } else if (ifFalse) {
@@ -192,6 +196,8 @@ void Loop::finalize(WasmType type_) {
 }
 
 void Loop::finalize() {
+  // if already set to a concrete value, keep it
+  if (isConcreteWasmType(type)) return;
   type = body->type;
 }
 

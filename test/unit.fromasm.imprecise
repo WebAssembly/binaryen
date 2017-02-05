@@ -330,30 +330,32 @@
   )
   (func $aborts
     (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.convert_s/i32
-          (i32.const 55)
+      (block f64
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
         )
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 12.34)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 56.779998779296875)
+        (drop
+          (call $abort
+            (f64.convert_s/i32
+              (i32.const 55)
+            )
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 12.34)
+          )
+        )
+        (call $abort
+          (f64.const 56.779998779296875)
+        )
       )
     )
   )
@@ -517,11 +519,13 @@
     )
   )
   (func $smallIf
-    (if
-      (call $return_int)
-      (drop
-        (call $lb
-          (i32.const 3)
+    (block $do-once
+      (if
+        (call $return_int)
+        (drop
+          (call $lb
+            (i32.const 3)
+          )
         )
       )
     )
@@ -1078,11 +1082,13 @@
     (call $return_int)
   )
   (func $dropIgnoredImportInIf (param $0 i32) (param $1 i32) (param $2 i32)
-    (if
-      (get_local $0)
-      (drop
-        (call $lb
-          (get_local $2)
+    (block $do-once
+      (if
+        (get_local $0)
+        (drop
+          (call $lb
+            (get_local $2)
+          )
         )
       )
     )

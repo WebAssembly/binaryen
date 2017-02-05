@@ -335,26 +335,6 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
 
   AutoDrop() { name = "autodrop"; }
 
-  bool maybeDrop(Expression*& child) {
-    bool acted = false;
-    if (isConcreteWasmType(child->type)) {
-      expressionStack.push_back(child);
-      if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) && !ExpressionAnalyzer::isResultDropped(expressionStack)) {
-        child = Builder(*getModule()).makeDrop(child);
-        acted = true;
-      }
-      expressionStack.pop_back();
-    }
-    return acted;
-  }
-
-  void reFinalize() {
-    for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
-      auto* curr = expressionStack[i];
-      ReFinalize().visit(curr);
-    }
-  }
-
   void visitBlock(Block* curr) {
     if (curr->list.size() == 0) return;
     for (Index i = 0; i < curr->list.size() - 1; i++) {
@@ -363,21 +343,16 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
         curr->list[i] = Builder(*getModule()).makeDrop(child);
       }
     }
-    if (maybeDrop(curr->list.back())) {
-      reFinalize();
-      assert(curr->type == none);
-    }
   }
 
   void visitIf(If* curr) {
-    bool acted = false;
-    if (maybeDrop(curr->ifTrue)) acted = true;
-    if (curr->ifFalse) {
-      if (maybeDrop(curr->ifFalse)) acted = true;
+    if (isConcreteWasmType(curr->type)) return; // ok to return a value, no need to drop
+    // this is an if without an else, or an if-else with no return value - drop any values
+    if (isConcreteWasmType(curr->ifTrue->type)) {
+      curr->ifTrue = Builder(*getModule()).makeDrop(curr->ifTrue);
     }
-    if (acted) {
-      reFinalize();
-      assert(curr->type == none);
+    if (curr->ifFalse && isConcreteWasmType(curr->ifFalse->type)) {
+      curr->ifFalse = Builder(*getModule()).makeDrop(curr->ifFalse);
     }
   }
 

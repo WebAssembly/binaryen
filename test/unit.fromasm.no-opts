@@ -398,24 +398,26 @@
     (local $y f32)
     (local $z f64)
     (drop
-      (f32.demote/f64
-        (get_local $z)
+      (block f32
+        (drop
+          (f32.demote/f64
+            (get_local $z)
+          )
+        )
+        (drop
+          (get_local $y)
+        )
+        (drop
+          (f32.const 5)
+        )
+        (drop
+          (f32.const 0)
+        )
+        (drop
+          (f32.const 5)
+        )
+        (f32.const 0)
       )
-    )
-    (drop
-      (get_local $y)
-    )
-    (drop
-      (f32.const 5)
-    )
-    (drop
-      (f32.const 0)
-    )
-    (drop
-      (f32.const 5)
-    )
-    (drop
-      (f32.const 0)
     )
   )
   (func $negZero (result f64)
@@ -620,31 +622,33 @@
   )
   (func $aborts
     (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.convert_s/i32
-          (i32.const 55)
+      (block f64
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
         )
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 12.34)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.promote/f32
-          (f32.const 56.779998779296875)
+        (drop
+          (call $abort
+            (f64.convert_s/i32
+              (i32.const 55)
+            )
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 12.34)
+          )
+        )
+        (call $abort
+          (f64.promote/f32
+            (f32.const 56.779998779296875)
+          )
         )
       )
     )
@@ -676,26 +680,28 @@
   (func $bitcasts (param $i i32) (param $f f32)
     (local $d f64)
     (drop
-      (f32.reinterpret/i32
-        (get_local $i)
-      )
-    )
-    (drop
-      (f64.promote/f32
-        (f32.reinterpret/i32
-          (get_local $i)
+      (block i32
+        (drop
+          (f32.reinterpret/i32
+            (get_local $i)
+          )
         )
-      )
-    )
-    (drop
-      (i32.reinterpret/f32
-        (get_local $f)
-      )
-    )
-    (drop
-      (i32.reinterpret/f32
-        (f32.demote/f64
-          (get_local $d)
+        (drop
+          (f64.promote/f32
+            (f32.reinterpret/i32
+              (get_local $i)
+            )
+          )
+        )
+        (drop
+          (i32.reinterpret/f32
+            (get_local $f)
+          )
+        )
+        (i32.reinterpret/f32
+          (f32.demote/f64
+            (get_local $d)
+          )
         )
       )
     )
@@ -720,16 +726,16 @@
               )
             )
             (block i32
-              (block
-                (block
+              (drop
+                (block i32
                   (drop
-                    (i32.const 4)
+                    (block i32
+                      (drop
+                        (i32.const 4)
+                      )
+                      (i32.const 5)
+                    )
                   )
-                  (drop
-                    (i32.const 5)
-                  )
-                )
-                (drop
                   (i32.const 6)
                 )
               )
@@ -784,20 +790,20 @@
             )
           )
           (block i32
-            (block
-              (block
+            (drop
+              (block i32
                 (drop
-                  (call $lb
-                    (i32.const 4)
+                  (block i32
+                    (drop
+                      (call $lb
+                        (i32.const 4)
+                      )
+                    )
+                    (call $lb
+                      (i32.const 5)
+                    )
                   )
                 )
-                (drop
-                  (call $lb
-                    (i32.const 5)
-                  )
-                )
-              )
-              (drop
                 (call $lb
                   (i32.const 6)
                 )
@@ -926,14 +932,14 @@
   )
   (func $smallIf
     (block $do-once
-      (if
-        (call $return_int)
-        (drop
+      (drop
+        (if i32
+          (call $return_int)
           (call $lb
             (i32.const 3)
           )
+          (br $do-once)
         )
-        (br $do-once)
       )
       (nop)
     )
@@ -986,11 +992,11 @@
   (func $usesSetGlobal2 (result i32)
     (return
       (block i32
-        (block
-          (set_global $Int
-            (i32.const 40)
-          )
-          (drop
+        (drop
+          (block i32
+            (set_global $Int
+              (i32.const 40)
+            )
             (get_global $Int)
           )
         )
@@ -1000,23 +1006,23 @@
   )
   (func $breakThroughMany (param $$s i32)
     (block $label$break$L1
-      (if
-        (get_local $$s)
-        (loop $while-in
-          (block $while-out
-            (if
-              (i32.eqz
-                (get_local $$s)
+      (drop
+        (if i32
+          (get_local $$s)
+          (loop $while-in
+            (block $while-out
+              (if
+                (i32.eqz
+                  (get_local $$s)
+                )
+                (br $label$break$L1)
               )
-              (br $label$break$L1)
+              (call $zeroInit
+                (i32.const 0)
+              )
+              (br $while-in)
             )
-            (call $zeroInit
-              (i32.const 0)
-            )
-            (br $while-in)
           )
-        )
-        (drop
           (i32.const 1337)
         )
       )
@@ -1768,19 +1774,19 @@
   )
   (func $dropIgnoredImportInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
     (block $do-once
-      (if
-        (get_local $$0)
-        (block
-          (set_local $$0
-            (i32.const 1)
-          )
-          (drop
+      (drop
+        (if i32
+          (get_local $$0)
+          (block i32
+            (set_local $$0
+              (i32.const 1)
+            )
             (call $lb
               (get_local $$2)
             )
           )
+          (br $do-once)
         )
-        (br $do-once)
       )
       (nop)
     )
@@ -1793,14 +1799,12 @@
   )
   (func $dropIgnoredImportsInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
     (block $do-once
-      (if
-        (get_local $$0)
-        (drop
+      (drop
+        (if i32
+          (get_local $$0)
           (call $lb
             (get_local $$1)
           )
-        )
-        (drop
           (call $lb
             (get_local $$2)
           )

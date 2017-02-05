@@ -934,12 +934,14 @@
   )
   (func $__emscripten_dceable_type_decls
     (drop
-      (call $legalfunc$_fabsf
-        (f32.const 0)
+      (block i64
+        (drop
+          (call $legalfunc$_fabsf
+            (f32.const 0)
+          )
+        )
+        (call $legalfunc$do_i64)
       )
-    )
-    (drop
-      (call $legalfunc$do_i64)
     )
   )
   (func $legalstub$illegalParam (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
