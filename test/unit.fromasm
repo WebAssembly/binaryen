@@ -1106,13 +1106,11 @@
     (call $return_int)
   )
   (func $dropIgnoredImportInIf (param $0 i32) (param $1 i32) (param $2 i32)
-    (block $do-once
-      (if
-        (get_local $0)
-        (drop
-          (call $lb
-            (get_local $2)
-          )
+    (if
+      (get_local $0)
+      (drop
+        (call $lb
+          (get_local $2)
         )
       )
     )

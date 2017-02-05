@@ -392,26 +392,24 @@
     (local $y f32)
     (local $z f64)
     (drop
-      (block f32
-        (drop
-          (f32.demote/f64
-            (get_local $z)
-          )
-        )
-        (drop
-          (get_local $y)
-        )
-        (drop
-          (f32.const 5)
-        )
-        (drop
-          (f32.const 0)
-        )
-        (drop
-          (f32.const 5)
-        )
-        (f32.const 0)
+      (f32.demote/f64
+        (get_local $z)
       )
+    )
+    (drop
+      (get_local $y)
+    )
+    (drop
+      (f32.const 5)
+    )
+    (drop
+      (f32.const 0)
+    )
+    (drop
+      (f32.const 5)
+    )
+    (drop
+      (f32.const 0)
     )
   )
   (func $negZero (result f64)
@@ -674,28 +672,26 @@
   (func $bitcasts (param $i i32) (param $f f32)
     (local $d f64)
     (drop
-      (block i32
-        (drop
-          (f32.reinterpret/i32
-            (get_local $i)
-          )
+      (f32.reinterpret/i32
+        (get_local $i)
+      )
+    )
+    (drop
+      (f64.promote/f32
+        (f32.reinterpret/i32
+          (get_local $i)
         )
-        (drop
-          (f64.promote/f32
-            (f32.reinterpret/i32
-              (get_local $i)
-            )
-          )
-        )
-        (drop
-          (i32.reinterpret/f32
-            (get_local $f)
-          )
-        )
-        (i32.reinterpret/f32
-          (f32.demote/f64
-            (get_local $d)
-          )
+      )
+    )
+    (drop
+      (i32.reinterpret/f32
+        (get_local $f)
+      )
+    )
+    (drop
+      (i32.reinterpret/f32
+        (f32.demote/f64
+          (get_local $d)
         )
       )
     )
@@ -1768,21 +1764,20 @@
   )
   (func $dropIgnoredImportInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
     (block $do-once
-      (drop
-        (if i32
-          (get_local $$0)
-          (block i32
-            (set_local $$0
-              (i32.const 1)
-            )
+      (if
+        (get_local $$0)
+        (block
+          (set_local $$0
+            (i32.const 1)
+          )
+          (drop
             (call $lb
               (get_local $$2)
             )
           )
-          (br $do-once)
         )
+        (br $do-once)
       )
-      (nop)
     )
     (return)
   )

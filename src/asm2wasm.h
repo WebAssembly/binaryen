@@ -2270,6 +2270,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     for (unsigned i = from; i < ast->size(); i++) {
       block->list.push_back(process(ast[i]));
     }
+    // if the last element has a value, we must drop it - a list of statements never falls through in asm.js
+    if (isConcreteWasmType(block->list.back()->type)) {
+      block->list.back() = builder.makeDrop(block->list.back());
+    }
     block->finalize();
     return block;
   };

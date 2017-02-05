@@ -24,6 +24,8 @@ function asm(global, env, buffer) {
   var _fabsf = env._fabsf;
   var do_i64 = env.do_i64;
 
+  var STACKTOP = 0;
+
   function loads() {
     var i = 0, f = fround(0), d = +0;
     i = load1(100);
@@ -303,6 +305,28 @@ function asm(global, env, buffer) {
     }
   }
 
+  function _pthread_mutex_lock(x) { x = x | 0; return 0; }
+  function _pthread_cond_wait(x, y) { x = x | 0; y = y | 0; return 0; }
+
+  function __ZNSt3__211__call_onceERVmPvPFvS2_E($flag,$arg,$func) {
+   $flag = $flag|0;
+   $arg = $arg|0;
+   $func = $func|0;
+   var $0 = 0, $1 = 0, $cmp = 0, sp = 0;
+   sp = STACKTOP;
+   (_pthread_mutex_lock((21396|0))|0);
+   while(1) {
+    $0 = load4($flag);
+    $cmp = ($0|0)==(1);
+    if (!($cmp)) {
+     break;
+    }
+    (_pthread_cond_wait((21424|0),(21396|0))|0); // must be dropped properly
+   }
+   $1 = load4($flag);
+   return;
+  }
+
   function keepAlive() {
     loads();
     stores();
@@ -317,6 +341,7 @@ function asm(global, env, buffer) {
     switch64(i64(0)) | 0;
     unreachable_leftovers(0, 0, 0);
     propagateFallthrough() | 0;
+    __ZNSt3__211__call_onceERVmPvPFvS2_E(0, 0, 0);
   }
 
   function __emscripten_dceable_type_decls() { // dce-able, but this defines the type of fabsf which has no other use
