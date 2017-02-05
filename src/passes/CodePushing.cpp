@@ -83,9 +83,10 @@ class Pusher {
   ExpressionList& list;
   LocalAnalyzer& analyzer;
   std::vector<Index>& numGetsSoFar;
+  PassOptions& passOptions;
 
 public:
-  Pusher(Block* block, LocalAnalyzer& analyzer, std::vector<Index>& numGetsSoFar) : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar) {
+  Pusher(Block* block, LocalAnalyzer& analyzer, std::vector<Index>& numGetsSoFar, PassOptions& passOptions) : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar), passOptions(passOptions) {
     // Find an optimization segment: from the first pushable thing, to the first
     // point past which we want to push. We then push in that range before
     // continuing forward.
@@ -119,7 +120,7 @@ private:
     // but also have no side effects, as it may not execute if pushed.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
-        !EffectAnalyzer(set->value).hasSideEffects()) {
+        !EffectAnalyzer(passOptions, set->value).hasSideEffects()) {
       return set;
     }
     return nullptr;
@@ -146,8 +147,8 @@ private:
     // of earlier ones. Once we know all we can push, we push it all
     // in one pass, keeping the order of the pushables intact.
     assert(firstPushable != Index(-1) && pushPoint != Index(-1) && firstPushable < pushPoint);
-    EffectAnalyzer cumulativeEffects; // everything that matters if you want
-                                      // to be pushed past the pushPoint
+    EffectAnalyzer cumulativeEffects(passOptions); // everything that matters if you want
+                                                   // to be pushed past the pushPoint
     cumulativeEffects.analyze(list[pushPoint]);
     cumulativeEffects.branches = false; // it is ok to ignore the branching here,
                                         // that is the crucial point of this opt
@@ -158,9 +159,13 @@ private:
       if (pushable) {
         auto iter = pushableEffects.find(pushable);
         if (iter == pushableEffects.end()) {
-          pushableEffects.emplace(pushable, pushable);
+          iter = pushableEffects.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(pushable),
+            std::forward_as_tuple(passOptions, pushable)
+          ).first;
         }
-        auto& effects = pushableEffects[pushable];
+        auto& effects = iter->second;
         if (cumulativeEffects.invalidates(effects)) {
           // we can't push this, so further pushables must pass it
           cumulativeEffects.mergeIn(effects);
@@ -248,7 +253,7 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing, Visitor<CodePushi
     // ordering invalidation issue, since if this isn't a loop, it's fine (we're not
     // used outside), and if it is, we hit the assign before any use (as we can't
     // push it past a use).
-    Pusher pusher(curr, analyzer, numGetsSoFar);
+    Pusher pusher(curr, analyzer, numGetsSoFar, getPassOptions());
   }
 };
 

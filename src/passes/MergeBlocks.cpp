@@ -216,9 +216,9 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
     if (!child) return outer;
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
       // there are dependencies, things we must be reordered through. make sure no problems there
-      EffectAnalyzer childEffects(child);
-      if (dependency1 && *dependency1 && EffectAnalyzer(*dependency1).invalidates(childEffects)) return outer;
-      if (dependency2 && *dependency2 && EffectAnalyzer(*dependency2).invalidates(childEffects)) return outer;
+      EffectAnalyzer childEffects(getPassOptions(), child);
+      if (dependency1 && *dependency1 && EffectAnalyzer(getPassOptions(), *dependency1).invalidates(childEffects)) return outer;
+      if (dependency2 && *dependency2 && EffectAnalyzer(getPassOptions(), *dependency2).invalidates(childEffects)) return outer;
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
@@ -278,7 +278,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
   void handleCall(T* curr, Block* outer = nullptr) {
     for (Index i = 0; i < curr->operands.size(); i++) {
       outer = optimize(curr, curr->operands[i], outer);
-      if (EffectAnalyzer(curr->operands[i]).hasSideEffects()) return;
+      if (EffectAnalyzer(getPassOptions(), curr->operands[i]).hasSideEffects()) return;
     }
   }
 
@@ -292,7 +292,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
 
   void visitCallIndirect(CallIndirect* curr) {
     auto* outer = optimize(curr, curr->target);
-    if (EffectAnalyzer(curr->target).hasSideEffects()) return;
+    if (EffectAnalyzer(getPassOptions(), curr->target).hasSideEffects()) return;
     handleCall(curr, outer);
   }
 };

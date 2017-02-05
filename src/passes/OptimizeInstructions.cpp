@@ -317,8 +317,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       auto* condition = select->condition->dynCast<Unary>();
       if (condition && condition->op == EqZInt32) {
         // flip select to remove eqz, if we can reorder
-        EffectAnalyzer ifTrue(select->ifTrue);
-        EffectAnalyzer ifFalse(select->ifFalse);
+        EffectAnalyzer ifTrue(getPassOptions(), select->ifTrue);
+        EffectAnalyzer ifFalse(getPassOptions(), select->ifFalse);
         if (!ifTrue.invalidates(ifFalse)) {
           select->condition = condition->value;
           std::swap(select->ifTrue, select->ifFalse);
@@ -408,8 +408,8 @@ private:
     auto* left = binary->left;
     auto* right = binary->right;
     if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) return nullptr;
-    auto leftEffects = EffectAnalyzer(left).hasSideEffects();
-    auto rightEffects = EffectAnalyzer(right).hasSideEffects();
+    auto leftEffects = EffectAnalyzer(getPassOptions(), left).hasSideEffects();
+    auto rightEffects = EffectAnalyzer(getPassOptions(), right).hasSideEffects();
     if (leftEffects && rightEffects) return nullptr; // both must execute
    // canonicalize with side effects, if any, happening on the left
     if (rightEffects) {

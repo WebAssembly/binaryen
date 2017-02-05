@@ -28,11 +28,11 @@ namespace wasm {
 // to turn an if into a br-if, we must be able to reorder the
 // condition and possible value, and the possible value must
 // not have side effects (as they would run unconditionally)
-static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue) {
+static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue, PassOptions& options) {
   if (!brValue) return true;
-  EffectAnalyzer value(brValue);
+  EffectAnalyzer value(options, brValue);
   if (value.hasSideEffects()) return false;
-  return !EffectAnalyzer(ifCondition).invalidates(value);
+  return !EffectAnalyzer(options, ifCondition).invalidates(value);
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>> {
@@ -146,7 +146,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       // if without an else. try to reduce   if (condition) br  =>  br_if (condition)
       Break* br = curr->ifTrue->dynCast<Break>();
       if (br && !br->condition) { // TODO: if there is a condition, join them
-        if (canTurnIfIntoBrIf(curr->condition, br->value)) {
+        if (canTurnIfIntoBrIf(curr->condition, br->value, getPassOptions())) {
           br->condition = curr->condition;
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
@@ -263,7 +263,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         return false;
       }
       // if there is control flow, we must stop looking
-      if (EffectAnalyzer(curr).branches) {
+      if (EffectAnalyzer(getPassOptions(), curr).branches) {
         return false;
       }
       if (i == 0) return false;
@@ -394,6 +394,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer, Visitor<FinalOptimizer>> {
       bool selectify;
+      PassOptions& passOptions;
+
+      FinalOptimizer(PassOptions& passOptions) : passOptions(passOptions) {}
 
       void visitBlock(Block* curr) {
         // if a block has an if br else br, we can un-conditionalize the latter, allowing
@@ -406,7 +409,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           auto* iff = list[i]->dynCast<If>();
           if (!iff || !iff->ifFalse || isConcreteWasmType(iff->type)) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
-          if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value)) {
+          if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value, passOptions)) {
             // we are an if-else where the ifTrue is a break without a condition, so we can do this
             ifTrueBreak->condition = iff->condition;
             ifTrueBreak->finalize();
@@ -416,7 +419,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           }
           // otherwise, perhaps we can flip the if
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
-          if (ifFalseBreak && !ifFalseBreak->condition && canTurnIfIntoBrIf(iff->condition, ifFalseBreak->value)) {
+          if (ifFalseBreak && !ifFalseBreak->condition && canTurnIfIntoBrIf(iff->condition, ifFalseBreak->value, passOptions)) {
             ifFalseBreak->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
@@ -435,7 +438,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
               if (!br2 || !br2->condition) continue;
               if (br1->name == br2->name) {
                 assert(!br1->value && !br2->value);
-                if (!EffectAnalyzer(br2->condition).hasSideEffects()) {
+                if (!EffectAnalyzer(passOptions, br2->condition).hasSideEffects()) {
                   // it's ok to execute them both, do it
                   Builder builder(*getModule());
                   br1->condition = builder.makeBinary(OrInt32, br1->condition, br2->condition);
@@ -480,11 +483,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
           // TODO: estimate cost
-          EffectAnalyzer condition(curr->condition);
+          EffectAnalyzer condition(passOptions, curr->condition);
           if (!condition.hasSideEffects()) {
-            EffectAnalyzer ifTrue(curr->ifTrue);
+            EffectAnalyzer ifTrue(passOptions, curr->ifTrue);
             if (!ifTrue.hasSideEffects()) {
-              EffectAnalyzer ifFalse(curr->ifFalse);
+              EffectAnalyzer ifFalse(passOptions, curr->ifFalse);
               if (!ifFalse.hasSideEffects()) {
                 auto* select = getModule()->allocator.alloc<Select>();
                 select->condition = curr->condition;
@@ -498,7 +501,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
         }
       }
     };
-    FinalOptimizer finalOptimizer;
+    FinalOptimizer finalOptimizer(getPassOptions());
     finalOptimizer.setModule(getModule());
     finalOptimizer.selectify = getPassRunner()->options.shrinkLevel > 0;
     finalOptimizer.walkFunction(func);

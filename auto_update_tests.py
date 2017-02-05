@@ -13,7 +13,7 @@ for asm in sorted(os.listdir('test')):
         cmd = [os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)]
         wasm = asm.replace('.asm.js', '.fromasm')
         if not precise:
-          cmd += ['--imprecise']
+          cmd += ['--imprecise', '--ignore-implicit-traps']
           wasm += '.imprecise'
         if not opts:
           wasm += '.no-opts'

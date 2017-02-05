@@ -74,22 +74,22 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
           }
           // for unary, binary, and select, we need to check their arguments for side effects
           if (auto* unary = curr->dynCast<Unary>()) {
-            if (EffectAnalyzer(unary->value).hasSideEffects()) {
+            if (EffectAnalyzer(getPassOptions(), unary->value).hasSideEffects()) {
               curr = unary->value;
               continue;
             } else {
               return nullptr;
             }
           } else if (auto* binary = curr->dynCast<Binary>()) {
-            if (EffectAnalyzer(binary->left).hasSideEffects()) {
-              if (EffectAnalyzer(binary->right).hasSideEffects()) {
+            if (EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+              if (EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
                 return curr; // leave them
               } else {
                 curr = binary->left;
                 continue;
               }
             } else {
-              if (EffectAnalyzer(binary->right).hasSideEffects()) {
+              if (EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
                 curr = binary->right;
                 continue;
               } else {
@@ -99,11 +99,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
           } else {
             // TODO: if two have side effects, we could replace the select with say an add?
             auto* select = curr->cast<Select>();
-            if (EffectAnalyzer(select->ifTrue).hasSideEffects()) {
-              if (EffectAnalyzer(select->ifFalse).hasSideEffects()) {
+            if (EffectAnalyzer(getPassOptions(), select->ifTrue).hasSideEffects()) {
+              if (EffectAnalyzer(getPassOptions(), select->ifFalse).hasSideEffects()) {
                 return curr; // leave them
               } else {
-                if (EffectAnalyzer(select->condition).hasSideEffects()) {
+                if (EffectAnalyzer(getPassOptions(), select->condition).hasSideEffects()) {
                   return curr; // leave them
                 } else {
                   curr = select->ifTrue;
@@ -111,15 +111,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
                 }
               }
             } else {
-              if (EffectAnalyzer(select->ifFalse).hasSideEffects()) {
-                if (EffectAnalyzer(select->condition).hasSideEffects()) {
+              if (EffectAnalyzer(getPassOptions(), select->ifFalse).hasSideEffects()) {
+                if (EffectAnalyzer(getPassOptions(), select->condition).hasSideEffects()) {
                   return curr; // leave them
                 } else {
                   curr = select->ifFalse;
                   continue;
                 }
               } else {
-                if (EffectAnalyzer(select->condition).hasSideEffects()) {
+                if (EffectAnalyzer(getPassOptions(), select->condition).hasSideEffects()) {
                   curr = select->condition;
                   continue;
                 } else {
@@ -174,7 +174,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
     if (!curr->name.is()) {
       if (list.size() == 1) {
         // just one element. replace the block, either with it or with a nop if it's not needed
-        if (isConcreteWasmType(curr->type) || EffectAnalyzer(list[0]).hasSideEffects()) {
+        if (isConcreteWasmType(curr->type) || EffectAnalyzer(getPassOptions(), list[0]).hasSideEffects()) {
           replaceCurrent(list[0]);
         } else {
           if (curr->type == unreachable) {
@@ -307,7 +307,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum, Visitor<Vacuum>>
     } else {
       ExpressionManipulator::nop(curr->body);
     }
-    if (curr->result == none && !EffectAnalyzer(curr->body).hasSideEffects()) {
+    if (curr->result == none && !EffectAnalyzer(getPassOptions(), curr->body).hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }
   }

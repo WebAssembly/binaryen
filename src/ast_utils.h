@@ -71,10 +71,12 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
 // TODO: optimize
 
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer>> {
-  EffectAnalyzer() {}
-  EffectAnalyzer(Expression *ast) {
-    analyze(ast);
+  EffectAnalyzer(PassOptions& passOptions, Expression *ast = nullptr) {
+    ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
+    if (ast) analyze(ast);
   }
+
+  bool ignoreImplicitTraps;
 
   void analyze(Expression *ast) {
     breakNames.clear();
@@ -189,8 +191,48 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitSetGlobal(SetGlobal *curr) {
     globalsWritten.insert(curr->name);
   }
-  void visitLoad(Load *curr) { readsMemory = true; }
-  void visitStore(Store *curr) { writesMemory = true; }
+  void visitLoad(Load *curr) {
+    readsMemory = true;
+    if (!ignoreImplicitTraps) branches = true; // might trap
+  }
+  void visitStore(Store *curr) {
+    writesMemory = true;
+    if (!ignoreImplicitTraps) branches = true; // might trap
+  }
+  void visitUnary(Unary *curr) {
+    if (!ignoreImplicitTraps) {
+      switch (curr->op) {
+        case TruncSFloat32ToInt32:
+        case TruncSFloat32ToInt64:
+        case TruncUFloat32ToInt32:
+        case TruncUFloat32ToInt64:
+        case TruncSFloat64ToInt32:
+        case TruncSFloat64ToInt64:
+        case TruncUFloat64ToInt32:
+        case TruncUFloat64ToInt64: {
+          branches = true; // might trap
+        }
+        default: {}
+      }
+    }
+  }
+  void visitBinary(Binary *curr) {
+    if (!ignoreImplicitTraps) {
+      switch (curr->op) {
+        case DivSInt32:
+        case DivUInt32:
+        case RemSInt32:
+        case RemUInt32:
+        case DivSInt64:
+        case DivUInt64:
+        case RemSInt64:
+        case RemUInt64: {
+          branches = true; // might trap
+        }
+        default: {}
+      }
+    }
+  }
   void visitReturn(Return *curr) { branches = true; }
   void visitHost(Host *curr) { calls = true; }
   void visitUnreachable(Unreachable *curr) { branches = true; }

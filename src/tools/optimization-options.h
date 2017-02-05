@@ -23,7 +23,6 @@
            [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 2;
              passOptions.shrinkLevel = 1;
-             passOptions.ignoreImplicitTraps = true;
              runOptimizationPasses = true;
            })
       .add("", "-O0", "execute no optimization passes",
@@ -31,14 +30,12 @@
            [&passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 0;
              passOptions.shrinkLevel = 0;
-             passOptions.ignoreImplicitTraps = false;
            })
       .add("", "-O1", "execute -O1 optimization passes",
            Options::Arguments::Zero,
            [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 1;
              passOptions.shrinkLevel = 0;
-             passOptions.ignoreImplicitTraps = true;
              runOptimizationPasses = true;
            })
       .add("", "-O2", "execute -O2 optimization passes",
@@ -46,7 +43,6 @@
            [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 2;
              passOptions.shrinkLevel = 0;
-             passOptions.ignoreImplicitTraps = true;
              runOptimizationPasses = true;
            })
       .add("", "-O3", "execute -O3 optimization passes",
@@ -54,7 +50,6 @@
            [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 3;
              passOptions.shrinkLevel = 0;
-             passOptions.ignoreImplicitTraps = true;
              runOptimizationPasses = true;
            })
       .add("", "-Os", "execute default optimization passes, focusing on code size",
@@ -62,7 +57,6 @@
            [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 2;
              passOptions.shrinkLevel = 1;
-             passOptions.ignoreImplicitTraps = true;
              runOptimizationPasses = true;
            })
       .add("", "-Oz", "execute default optimization passes, super-focusing on code size",
@@ -70,7 +64,6 @@
            [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
              passOptions.optimizeLevel = 2;
              passOptions.shrinkLevel = 2;
-             passOptions.ignoreImplicitTraps = true;
              runOptimizationPasses = true;
            })
       .add("--optimize-level", "-ol", "How much to focus on optimizing code",
@@ -83,3 +76,9 @@
            [&passOptions](Options* o, const std::string& argument) {
              passOptions.shrinkLevel = atoi(argument.c_str());
            })
+      .add("--ignore-implicit-traps", "-iit", "Optimize under the helpful assumption that no surprising traps occur (from load, div/mod, etc.)",
+           Options::Arguments::Zero,
+           [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
+             passOptions.ignoreImplicitTraps = true;
+           })
+
