@@ -721,24 +721,11 @@
   )
   (func $globalOpts
     (local $0 i32)
-    (local $1 f64)
-    (set_local $0
-      (get_global $Int)
-    )
-    (set_local $1
-      (get_global $Double)
-    )
     (i32.store8
       (i32.const 13)
       (i32.load
         (i32.const 12)
       )
-    )
-    (set_global $Double
-      (get_local $1)
-    )
-    (set_global $Int
-      (get_local $0)
     )
     (call $globalOpts)
     (set_local $0

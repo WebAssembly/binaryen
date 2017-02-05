@@ -93,12 +93,17 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
+  bool implicitTrap = false; // a load or div/rem, which may trap. we ignore trap
+                             // differences, so it is ok to reorder these, and we
+                             // also allow reordering them with loads/stores etc.,
+                             // but we can't remove them, so they count as side
+                             // effects
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0; }
-  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal(); }
+  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0 || implicitTrap; }
+  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
@@ -125,6 +130,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
     }
     for (auto global : globalsRead) {
       if (other.globalsWritten.count(global)) return true;
+    }
+    // we are ok to reorder implicit traps, but not conditionalize them
+    if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
+      return true;
     }
     return false;
   }
@@ -193,11 +202,11 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   }
   void visitLoad(Load *curr) {
     readsMemory = true;
-    if (!ignoreImplicitTraps) branches = true; // might trap
+    if (!ignoreImplicitTraps) implicitTrap = true;
   }
   void visitStore(Store *curr) {
     writesMemory = true;
-    if (!ignoreImplicitTraps) branches = true; // might trap
+    if (!ignoreImplicitTraps) implicitTrap = true;
   }
   void visitUnary(Unary *curr) {
     if (!ignoreImplicitTraps) {
@@ -210,7 +219,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
         case TruncSFloat64ToInt64:
         case TruncUFloat64ToInt32:
         case TruncUFloat64ToInt64: {
-          branches = true; // might trap
+          implicitTrap = true;
         }
         default: {}
       }
@@ -227,7 +236,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
         case DivUInt64:
         case RemSInt64:
         case RemUInt64: {
-          branches = true; // might trap
+          implicitTrap = true;
         }
         default: {}
       }
