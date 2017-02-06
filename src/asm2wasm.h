@@ -691,7 +691,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         passRunner.setValidateGlobally(false);
       }
       // run autodrop first, before optimizations
-      passRunner.add<AutoDrop>();
+      passRunner.add<AutoDrop>(); // TODO: we can likely remove this, and speed up the build a little
       // optimize relooper label variable usage at the wasm level, where it is easy
       passRunner.add("relooper-jump-threading");
     }, debug, false /* do not validate globally yet */);
