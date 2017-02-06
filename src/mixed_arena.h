@@ -171,6 +171,10 @@ public:
     return usedElements;
   }
 
+  bool empty() const {
+    return size() == 0;
+  }
+
   void resize(size_t size) {
     if (size > allocatedElements) {
       reallocate(size);
