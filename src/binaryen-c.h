@@ -261,8 +261,8 @@ BinaryenOp BinaryenHasFeature(void);
 
 typedef void* BinaryenExpressionRef;
 
-// Block: name can be NULL
-BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren);
+// Block: name can be NULL. type must be explicitly provided, per the wasm type rules
+BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren, BinaryenType resultType);
 // If: ifFalse can be NULL
 BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef condition, BinaryenExpressionRef ifTrue, BinaryenExpressionRef ifFalse);
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* in, BinaryenExpressionRef body);

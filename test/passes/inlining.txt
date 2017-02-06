@@ -57,8 +57,10 @@
     )
     (drop
       (block $__inlined_func$return i32
-        (br $__inlined_func$return
-          (i32.const 5)
+        (block i32
+          (br $__inlined_func$return
+            (i32.const 5)
+          )
         )
       )
     )

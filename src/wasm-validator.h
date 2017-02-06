@@ -429,15 +429,13 @@ public:
   }
 
   void visitFunction(Function *curr) {
-    // if function has no result, it is ignored
-    // if body is unreachable, it might be e.g. a return
-    if (curr->body->type != unreachable) {
+    if (curr->result != none) {
       shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
-    }
-    if (curr->result != none) { // TODO: over previous too?
       if (returnType != unreachable) {
         shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function returns");
       }
+    } else {
+      shouldBeTrue(!isConcreteWasmType(curr->body->type), curr->body, "if function does not return, body cannot be concretely typed");
     }
     returnType = unreachable;
     labelNames.clear();

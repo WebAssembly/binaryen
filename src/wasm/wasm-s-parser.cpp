@@ -556,6 +556,13 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     body = allocator.alloc<Nop>();
   }
   if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
+  // if the function returns, the fallthrough must have the right type
+  if (currFunction->result != none && body->type != currFunction->result) {
+    auto* block = allocator.alloc<Block>();
+    block->list.push_back(body);
+    block->finalize(currFunction->result);
+    body = block;
+  }
   currFunction->body = body;
   currFunction->type = type;
   wasm.addFunction(currFunction.release());

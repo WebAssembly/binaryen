@@ -1005,7 +1005,7 @@
   )
   (func $return (type $i) (result i32)
     (local $0 i32)
-    (block $the-list
+    (block $the-list i32
       (call $check
         (i32.const 42)
       )

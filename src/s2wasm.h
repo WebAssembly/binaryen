@@ -1283,7 +1283,7 @@ class S2WasmBuilder {
     bstack.pop_back(); // remove the base block for the function body
     assert(bstack.empty());
     assert(estack.empty());
-    func->body->dynCast<Block>()->finalize();
+    func->body->dynCast<Block>()->finalize(func->result);
     wasm->addFunction(func);
   }
 
