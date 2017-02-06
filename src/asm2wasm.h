@@ -228,19 +228,28 @@ struct Asm2WasmPreProcessor {
       // that, we can apply the debug info to the wasm node right
       // before it - this is guaranteed to be correct without opts,
       // and is usually decently accurate with them.
+      const auto SCALE_FACTOR = 1.25; // an upper bound on how much more space we need as a multiple of the original
+      const auto ADD_FACTOR = 100; // an upper bound on how much we write for each debug info element itself
       auto size = strlen(input);
-      auto upperBound = Index(size * 1.25) + 100;
+      auto upperBound = Index(size * SCALE_FACTOR) + ADD_FACTOR;
       char* copy = allocatedCopy = (char*)malloc(upperBound);
       char* end = copy + upperBound;
       char* out = copy;
       std::string DEBUGINFO_INTRINSIC = EMSCRIPTEN_DEBUGINFO.str;
       auto DEBUGINFO_INTRINSIC_SIZE = DEBUGINFO_INTRINSIC.size();
       bool seenUseAsm = false;
+      auto startsWith = [&](const char *s) {
+        auto* check = input;
+        while (1) {
+          if (*s == 0) return true;
+          if (*check++ != *s++) return false;
+        }
+      };
       while (input[0]) {
-        if (out + 100 >= end) {
+        if (out + ADD_FACTOR >= end) {
           Fatal() << "error in handling debug info";
         }
-        if (input[0] == '/' && input[1] == '/' && input[2] == '@' && input[3] == 'l' && input[4] == 'i' && input[5] == 'n' && input[6] == 'e') {
+        if (startsWith("//@line")) {
           char* linePos = input + 8;
           char* lineEnd = strchr(input + 8, ' ');
           char* filePos = strchr(lineEnd, '"') + 1;
@@ -267,14 +276,12 @@ struct Asm2WasmPreProcessor {
           out += line.size();
           *out++ = ')';
           *out++ = ';';
-        } else if (!seenUseAsm && input[0] == 'a' && input[1] == 's' && input[2] == 'm' && (input[3] == '"' || input[3] == '\'') && input[4] == ';') {
+        } else if (!seenUseAsm && (startsWith("asm'") || startsWith("asm\""))) {
           // end of  "use asm"  or  "almost asm"
           seenUseAsm = true;
-          *out++ = *input++;
-          *out++ = *input++;
-          *out++ = *input++;
-          *out++ = *input++;
-          *out++ = *input++;
+          memcpy(out, input, 5);
+          out += 5;
+          input += 5;
           // add a fake import for the intrinsic, so the module validates
           std::string import = "\n var emscripten_debuginfo = env.emscripten_debuginfo;";
           strcpy(out, import.c_str());
@@ -651,7 +658,7 @@ private:
   Function* processFunction(Ref ast);
 
 public:
-  CallImport* isDebugInfo(Expression* curr) {
+  CallImport* checkDebugInfo(Expression* curr) {
     if (auto* call = curr->dynCast<CallImport>()) {
       if (call->target == EMSCRIPTEN_DEBUGINFO) {
         return call;
@@ -1123,7 +1130,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     Expression* lastExpression = nullptr;
 
     void visitExpression(Expression* curr) {
-      if (auto* call = parent->isDebugInfo(curr)) {
+      if (auto* call = parent->checkDebugInfo(curr)) {
         // this is a debuginfo node. turn it into an annotation on the last stack
         auto* last = lastExpression;
         lastExpression = nullptr;
@@ -2425,7 +2432,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     if (function->result != none) {
       if (auto* block = function->body->dynCast<Block>()) {
         if (block->list.size() > 0) {
-          if (isDebugInfo(block->list.back())) {
+          if (checkDebugInfo(block->list.back())) {
             // add an unreachable. both the debug info and it could be dce'd,
             // but it makes us validate properly.
             block->list.push_back(builder.makeUnreachable());
