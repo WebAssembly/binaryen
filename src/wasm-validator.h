@@ -134,8 +134,14 @@ public:
         shouldBeFalse(isConcreteWasmType(last->type), curr, "block with no value cannot have a last element with a value");
       } else {
         // if we return, then control flow children must have that type, not even unreachable
-        if (ExpressionAnalyzer::isControlFlowStructure(last)) shouldBeEqual(last->type, curr->type, curr, "block fallthrough must have right type");
+        // non-control flow lasts can be unreachable, but if they are not, must be equal
+        if (last->type != unreachable || ExpressionAnalyzer::isControlFlowStructure(last)) {
+          shouldBeEqual(last->type, curr->type, curr, "block fallthrough must have right type");
+        }
       }
+    }
+    if (isConcreteWasmType(curr->type)) {
+      shouldBeTrue(curr->list.size() > 0, curr, "a block with a type cannot be empty");
     }
   }
 
