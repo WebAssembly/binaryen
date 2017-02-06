@@ -1175,6 +1175,10 @@ class S2WasmBuilder {
         bstack.push_back(curr);
       } else if (match("end_block")) {
         auto* block = bstack.back()->cast<Block>();
+        // wasm disallows an empty block with a type
+        if (isConcreteWasmType(block->type) && block->list.empty()) {
+          block->list.push_back(builder.makeUnreachable());
+        }
         block->finalize(block->type);
         bstack.pop_back();
       } else if (peek(".LBB")) {
