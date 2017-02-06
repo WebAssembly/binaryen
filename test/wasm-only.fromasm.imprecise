@@ -337,6 +337,31 @@
       )
     )
   )
+  (func $lua_switch (param $0 i32) (result i32)
+    (block $switch
+      (block $switch-default
+        (block $switch-case
+          (br_table $switch-case $switch-default
+            (i32.sub
+              (call $_pthread_cond_wait
+                (get_local $0)
+                (i32.const 2)
+              )
+              (i32.const 0)
+            )
+          )
+        )
+        (br $switch)
+      )
+      (drop
+        (call $_pthread_cond_wait
+          (get_local $0)
+          (i32.const 11217)
+        )
+      )
+    )
+    (i32.const 1)
+  )
   (func $keepAlive
     (call $loads)
     (call $stores)
@@ -389,6 +414,11 @@
       (i32.const 0)
       (i32.const 0)
       (i32.const 0)
+    )
+    (drop
+      (call $lua_switch
+        (i32.const 0)
+      )
     )
   )
   (func $legalstub$illegalParam (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)

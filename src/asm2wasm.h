@@ -1833,7 +1833,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           block = allocator.alloc<Block>();
           block->name = name;
           block->list.push_back(ret);
-          block->finalize();
+          block->finalize(none);
           ret = block;
         }
       }
@@ -1877,7 +1877,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
-        body->finalize();
+        body->finalize(none);
         ret->body = body;
       }
       // loops do not automatically loop, add a branch back
@@ -1885,7 +1885,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto continuer = allocator.alloc<Break>();
       continuer->name = ret->name;
       block->list.push_back(continuer);
-      block->finalize();
+      block->finalize(none);
       ret->body = builder.dropIfConcretelyTyped(block);
       ret->finalize();
       continueStack.pop_back();
@@ -1922,13 +1922,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             block->list.push_back(builder.makeNop()); // ensure a nop at the end, so the block has guaranteed none type and no values fall through
           }
           block->name = stop;
-          block->finalize();
+          block->finalize(none);
           return block;
         } else {
           auto loop = allocator.alloc<Loop>();
           loop->body = child;
           loop->name = more;
-          loop->finalize();
+          loop->finalize(none);
           return builder.blockifyWithName(loop, stop);
         }
       }
@@ -1958,7 +1958,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       continuer->condition = process(ast[1]);
       Block *block = builder.blockifyWithName(loop->body, out, continuer);
       loop->body = block;
-      loop->finalize();
+      loop->finalize(none);
       return loop;
     } else if (what == FOR) {
       Ref finit = ast[1],
@@ -1990,7 +1990,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       body->list.push_back(condition);
       body->list.push_back(process(fbody));
       body->list.push_back(process(finc));
-      body->finalize();
+      body->finalize(none);
       ret->body = builder.dropIfConcretelyTyped(body);
       // loops do not automatically loop, add a branch back
       auto continuer = allocator.alloc<Break>();
@@ -2006,7 +2006,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       // add an outer block for the init as well
       outer->list.push_back(process(finit));
       outer->list.push_back(ret);
-      outer->finalize();
+      outer->finalize(none);
       return outer;
     } else if (what == LABEL) {
       assert(parentLabel.isNull());
@@ -2142,7 +2142,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
 
         top->list.push_back(br);
-        top->finalize();
+        top->finalize(none);
 
         for (unsigned i = 0; i < cases->size(); i++) {
           Ref curr = cases[i];
@@ -2166,9 +2166,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           auto next = allocator.alloc<Block>();
           top->name = name;
-          next->list.push_back(top);
-          next->list.push_back(case_);
-          next->finalize();
+          next->list.push_back(builder.dropIfConcretelyTyped(top));
+          next->list.push_back(builder.dropIfConcretelyTyped(case_));
+          next->finalize(none);
           top = next;
           nameMapper.popLabelName(name);
         }
@@ -2215,9 +2215,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           auto next = allocator.alloc<Block>();
           top->name = name;
-          next->list.push_back(top);
-          next->list.push_back(case_);
-          next->finalize();
+          next->list.push_back(builder.dropIfConcretelyTyped(top));
+          next->list.push_back(builder.dropIfConcretelyTyped(case_));
+          next->finalize(none);
           top = next;
           nameMapper.popLabelName(name);
         }
@@ -2233,7 +2233,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         first->ifFalse = builder.makeBreak(br->default_);
 
         brHolder->list.push_back(chain);
-        brHolder->finalize();
+        brHolder->finalize(none);
       }
 
       breakStack.pop_back();

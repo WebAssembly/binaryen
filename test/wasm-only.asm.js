@@ -327,6 +327,23 @@ function asm(global, env, buffer) {
    return;
   }
 
+  function vii(x, y) { x = x | 0; y = y | 0; return; }
+
+  function lua_switch($L) {
+   $L = $L|0;
+   var $call = 0;
+   $call = (_pthread_cond_wait($L,2)|0);
+   switch ($call|0) {
+   case 0:  {
+    break;
+   }
+   default: {
+    (_pthread_cond_wait($L,11217)|0);
+   }
+   }
+   return 1;
+  }
+
   function keepAlive() {
     loads();
     stores();
@@ -342,6 +359,7 @@ function asm(global, env, buffer) {
     unreachable_leftovers(0, 0, 0);
     propagateFallthrough() | 0;
     __ZNSt3__211__call_onceERVmPvPFvS2_E(0, 0, 0);
+    lua_switch(0) | 0;
   }
 
   function __emscripten_dceable_type_decls() { // dce-able, but this defines the type of fabsf which has no other use
