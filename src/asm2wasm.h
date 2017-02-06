@@ -1509,8 +1509,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       abort_on("bad unary", ast);
     } else if (what == IF) {
       auto* condition = process(ast[1]);
-      auto* ifTrue = process(ast[2]);
-      return builder.makeIf(truncateToInt32(condition), ifTrue, !!ast[3] ? process(ast[3]) : nullptr);
+      auto* ifTrue = builder.dropIfConcretelyTyped(process(ast[2]));
+      auto* ifFalse = !!ast[3] ? builder.dropIfConcretelyTyped(process(ast[3])) : nullptr;
+      return builder.makeIf(truncateToInt32(condition), ifTrue, ifFalse);
     } else if (what == CALL) {
       if (ast[1]->isString()) {
         IString name = ast[1]->getIString();
@@ -1885,7 +1886,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       continuer->name = ret->name;
       block->list.push_back(continuer);
       block->finalize();
-      ret->body = block;
+      ret->body = builder.dropIfConcretelyTyped(block);
       ret->finalize();
       continueStack.pop_back();
       breakStack.pop_back();
@@ -1906,7 +1907,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Name more = nameMapper.pushLabelName("unlikely-continue");
         breakStack.push_back(stop);
         continueStack.push_back(more);
-        auto child = process(ast[2]);
+        auto child = builder.dropIfConcretelyTyped(process(ast[2]));
         continueStack.pop_back();
         breakStack.pop_back();
         nameMapper.popLabelName(more);
@@ -1947,7 +1948,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       loop->name = in;
       breakStack.push_back(out);
       continueStack.push_back(in);
-      loop->body = process(ast[2]);
+      loop->body = builder.dropIfConcretelyTyped(process(ast[2]));
       continueStack.pop_back();
       breakStack.pop_back();
       nameMapper.popLabelName(in);
@@ -1990,7 +1991,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       body->list.push_back(process(fbody));
       body->list.push_back(process(finc));
       body->finalize();
-      ret->body = body;
+      ret->body = builder.dropIfConcretelyTyped(body);
       // loops do not automatically loop, add a branch back
       auto continuer = allocator.alloc<Break>();
       continuer->name = ret->name;
@@ -2271,9 +2272,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       block->list.push_back(process(ast[i]));
     }
     // if the last element has a value, we must drop it - a list of statements never falls through in asm.js
-    if (isConcreteWasmType(block->list.back()->type)) {
-      block->list.back() = builder.makeDrop(block->list.back());
-    }
+    block->list.back() = builder.dropIfConcretelyTyped(block->list.back());
     block->finalize();
     return block;
   };

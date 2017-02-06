@@ -519,13 +519,11 @@
     )
   )
   (func $smallIf
-    (block $do-once
-      (if
-        (call $return_int)
-        (drop
-          (call $lb
-            (i32.const 3)
-          )
+    (if
+      (call $return_int)
+      (drop
+        (call $lb
+          (i32.const 3)
         )
       )
     )

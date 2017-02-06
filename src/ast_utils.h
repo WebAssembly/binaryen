@@ -270,6 +270,10 @@ struct ExpressionAnalyzer {
     return !curr->condition && !curr->value;
   }
 
+  static bool isControlFlowStructure(Expression* curr) {
+    return curr->is<Block>() || curr->is<If>() || curr->is<Loop>();
+  }
+
   // Checks if an expression does not flow out in an obvious way.
   // We return true if it cannot flow out. If it can flow out, we
   // might still return true, as the analysis here is simple and fast.

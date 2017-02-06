@@ -928,16 +928,15 @@
   )
   (func $smallIf
     (block $do-once
-      (drop
-        (if i32
-          (call $return_int)
+      (if
+        (call $return_int)
+        (drop
           (call $lb
             (i32.const 3)
           )
-          (br $do-once)
         )
+        (br $do-once)
       )
-      (nop)
     )
   )
   (func $dropCall (result i32)
@@ -1002,27 +1001,26 @@
   )
   (func $breakThroughMany (param $$s i32)
     (block $label$break$L1
-      (drop
-        (if i32
-          (get_local $$s)
-          (loop $while-in
-            (block $while-out
-              (if
-                (i32.eqz
-                  (get_local $$s)
-                )
-                (br $label$break$L1)
+      (if
+        (get_local $$s)
+        (loop $while-in
+          (block $while-out
+            (if
+              (i32.eqz
+                (get_local $$s)
               )
-              (call $zeroInit
-                (i32.const 0)
-              )
-              (br $while-in)
+              (br $label$break$L1)
             )
+            (call $zeroInit
+              (i32.const 0)
+            )
+            (br $while-in)
           )
+        )
+        (drop
           (i32.const 1337)
         )
       )
-      (nop)
     )
   )
   (func $ifChainEmpty (param $label i32) (result i32)
@@ -1794,18 +1792,19 @@
   )
   (func $dropIgnoredImportsInIf (param $$0 i32) (param $$1 i32) (param $$2 i32)
     (block $do-once
-      (drop
-        (if i32
-          (get_local $$0)
+      (if
+        (get_local $$0)
+        (drop
           (call $lb
             (get_local $$1)
           )
+        )
+        (drop
           (call $lb
             (get_local $$2)
           )
         )
       )
-      (nop)
     )
     (return)
   )
