@@ -187,6 +187,10 @@ void Block::finalize() {
 
   TypeSeeker seeker(this, this->name);
   type = mergeTypes(seeker.types);
+
+  if (isConcreteWasmType(type)) {
+    propagateConcreteTypeToChildren(this, type);
+  }
 }
 
 void If::finalize(WasmType type_) {
@@ -209,8 +213,10 @@ void If::finalize() {
       type = ifTrue->type;
     } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
       type = ifTrue->type;
+      propagateConcreteTypeToChildren(this, type);
     } else if (isConcreteWasmType(ifFalse->type) && ifTrue->type == unreachable) {
       type = ifFalse->type;
+      propagateConcreteTypeToChildren(this, type);
     } else {
       type = none;
     }
@@ -233,6 +239,10 @@ void Loop::finalize() {
   // if already set to a concrete value, keep it
   if (isConcreteWasmType(type)) return;
   type = body->type;
+
+  if (isConcreteWasmType(type)) {
+    propagateConcreteTypeToChildren(this, type);
+  }
 }
 
 } // namespace wasm

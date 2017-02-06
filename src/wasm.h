@@ -975,6 +975,7 @@ public:
   // set the type purely based on its contents. this scans the block, so it is not fast.
   // if the type is already something concrete, we do not alter it, so that if our
   // contents to not imply a result but the parent does, then we remain valid
+  // we also propage a new concrete type to children as needed.
   void finalize();
 };
 
@@ -998,6 +999,7 @@ public:
   // set the type purely based on its contents.
   // if the type is already something concrete, we do not alter it, so that if our
   // contents to not imply a result but the parent does, then we remain valid
+  // we also propage a new concrete type to children as needed.
   void finalize();
 };
 
@@ -1020,6 +1022,7 @@ public:
   // set the type purely based on its contents.
   // if the type is already something concrete, we do not alter it, so that if our
   // contents to not imply a result but the parent does, then we remain valid
+  // we also propage a new concrete type to children as needed.
   void finalize();
 };
 
