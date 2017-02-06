@@ -430,7 +430,11 @@ public:
 
   void visitFunction(Function *curr) {
     if (curr->result != none) {
-      shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
+      // if the body is concretely typed, it must be correct.
+      // if it is a control flow structure, then it must always be correct, even unreachable is bad
+      if (curr->body->type != unreachable || ExpressionAnalyzer::isControlFlowStructure(curr->body)) {
+        shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
+      }
       if (returnType != unreachable) {
         shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function returns");
       }
