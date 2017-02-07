@@ -84,9 +84,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item) : item(item) {
-      effects.walk(*item);
-    }
+    SinkableInfo(Expression** item, PassOptions& passOptions) : item(item), effects(passOptions, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -246,7 +244,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
   static void visitPre(SimplifyLocals* self, Expression** currp) {
     Expression* curr = *currp;
 
-    EffectAnalyzer effects;
+    EffectAnalyzer effects(self->getPassOptions());
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -274,7 +272,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       }
     }
 
-    EffectAnalyzer effects;
+    EffectAnalyzer effects(self->getPassOptions());
     if (effects.checkPost(*currp)) {
       self->checkInvalidations(effects);
     }
@@ -282,7 +280,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp)));
+      self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
     }
 
     self->expressionStack.pop_back();

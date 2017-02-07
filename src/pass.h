@@ -200,6 +200,10 @@ public:
     return runner;
   }
 
+  PassOptions& getPassOptions() {
+    return runner->options;
+  }
+
   void setPassRunner(PassRunner* runner_) {
     runner = runner_;
   }

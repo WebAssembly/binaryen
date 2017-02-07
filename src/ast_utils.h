@@ -71,10 +71,12 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
 // TODO: optimize
 
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer>> {
-  EffectAnalyzer() {}
-  EffectAnalyzer(Expression *ast) {
-    analyze(ast);
+  EffectAnalyzer(PassOptions& passOptions, Expression *ast = nullptr) {
+    ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
+    if (ast) analyze(ast);
   }
+
+  bool ignoreImplicitTraps;
 
   void analyze(Expression *ast) {
     breakNames.clear();
@@ -91,12 +93,18 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
+  bool implicitTrap = false; // a load or div/rem, which may trap. we ignore trap
+                             // differences, so it is ok to reorder these, and we
+                             // also allow reordering them with other effects
+                             // (so a trap may occur later or earlier, if it is
+                             // going to occur anyhow), but we can't remove them,
+                             // they count as side effects
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0; }
-  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal(); }
+  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0 || implicitTrap; }
+  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
@@ -123,6 +131,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
     }
     for (auto global : globalsRead) {
       if (other.globalsWritten.count(global)) return true;
+    }
+    // we are ok to reorder implicit traps, but not conditionalize them
+    if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
+      return true;
     }
     return false;
   }
@@ -189,8 +201,48 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer
   void visitSetGlobal(SetGlobal *curr) {
     globalsWritten.insert(curr->name);
   }
-  void visitLoad(Load *curr) { readsMemory = true; }
-  void visitStore(Store *curr) { writesMemory = true; }
+  void visitLoad(Load *curr) {
+    readsMemory = true;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitStore(Store *curr) {
+    writesMemory = true;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitUnary(Unary *curr) {
+    if (!ignoreImplicitTraps) {
+      switch (curr->op) {
+        case TruncSFloat32ToInt32:
+        case TruncSFloat32ToInt64:
+        case TruncUFloat32ToInt32:
+        case TruncUFloat32ToInt64:
+        case TruncSFloat64ToInt32:
+        case TruncSFloat64ToInt64:
+        case TruncUFloat64ToInt32:
+        case TruncUFloat64ToInt64: {
+          implicitTrap = true;
+        }
+        default: {}
+      }
+    }
+  }
+  void visitBinary(Binary *curr) {
+    if (!ignoreImplicitTraps) {
+      switch (curr->op) {
+        case DivSInt32:
+        case DivUInt32:
+        case RemSInt32:
+        case RemUInt32:
+        case DivSInt64:
+        case DivUInt64:
+        case RemSInt64:
+        case RemUInt64: {
+          implicitTrap = true;
+        }
+        default: {}
+      }
+    }
+  }
   void visitReturn(Return *curr) { branches = true; }
   void visitHost(Host *curr) { calls = true; }
   void visitUnreachable(Unreachable *curr) { branches = true; }

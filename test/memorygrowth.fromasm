@@ -8170,17 +8170,17 @@
             )
           )
           (set_local $15
-            (select
+            (if i32
+              (i32.eq
+                (get_local $17)
+                (i32.const 2)
+              )
               (i32.const 0)
               (i32.sub
                 (get_local $2)
                 (i32.load offset=4
                   (get_local $16)
                 )
-              )
-              (i32.eq
-                (get_local $17)
-                (i32.const 2)
               )
             )
           )
