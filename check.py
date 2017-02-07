@@ -107,6 +107,10 @@ for asm in tests:
             cmd += ['-O0'] # test that -O0 does nothing
         else:
           cmd += ['-O']
+        if 'PRINT_FULL' in asm:
+          os.environ['BINARYEN_PRINT_FULL'] = '1'
+        else:
+          os.environ['BINARYEN_PRINT_FULL'] = '0'
         if precise and opts:
           # test mem init importing
           open('a.mem', 'wb').write(asm)
@@ -125,6 +129,9 @@ for asm in tests:
         expected = open(wasm, 'rb').read()
         if actual != expected:
           fail(actual, expected)
+
+        if 'PRINT_FULL' in asm:
+          continue # that's it, we can't do binary checks on this special output format
 
         binary_format_check(wasm, verify_final_result=False)
 
@@ -150,6 +157,8 @@ for asm in tests:
             except Exception, e:
               fail_with_error('wasm interpreter error: ' + err) # failed to pretty-print
             fail_with_error('wasm interpreter error')
+
+os.environ['BINARYEN_PRINT_FULL'] = '0'
 
 print '\n[ checking asm2wasm binary reading/writing... ]\n'
 

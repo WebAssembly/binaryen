@@ -2276,6 +2276,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());
+  // a wasm function with a return value must have a body of that type,
+  // it is not ok to have an unreachable
+  if (function->result != none && function->body->type == unreachable) {
+    // if it's already a block, can just set the type; otherwise, add a block
+    if (!function->body->is<Block>()) {
+      function->body = builder.makeBlock(function->body);
+    }
+    function->body->type = function->result;
+  }
   return function;
 }
 

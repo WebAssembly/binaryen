@@ -353,7 +353,15 @@ struct ExpressionAnalyzer {
 struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, Visitor<ReFinalize>>> {
   ReFinalize() { name = "refinalize"; }
 
-  void visitBlock(Block *curr) { curr->finalize(); }
+  void visitBlock(Block *curr) {
+    // a wasm function with a return value must have a body of that type
+    if (getFunction()->result != none && curr == getFunction()->body) {
+      // do nothing, leave the proper type here
+      assert(curr->type == getFunction()->result);
+      return;
+    }
+    curr->finalize();
+  }
   void visitIf(If *curr) { curr->finalize(); }
   void visitLoop(Loop *curr) { curr->finalize(); }
   void visitBreak(Break *curr) { curr->finalize(); }
@@ -403,7 +411,9 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<Auto
   void reFinalize() {
     for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
       auto* curr = expressionStack[i];
-      ReFinalize().visit(curr);
+      ReFinalize refinalizer;
+      refinalizer.setFunction(getFunction());
+      refinalizer.visit(curr);
     }
   }
 
