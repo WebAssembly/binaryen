@@ -138,7 +138,8 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 }
 
 void PassRunner::run() {
-  if (options.debug) {
+  static int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  if (options.debug || passDebug) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
@@ -146,11 +147,10 @@ void PassRunner::run() {
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
-    bool passDebug = getenv("BINARYEN_PASS_DEBUG") && getenv("BINARYEN_PASS_DEBUG")[0] != '0';
     for (auto* pass : passes) {
       // ignoring the time, save a printout of the module before, in case this pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
-      if (passDebug) {
+      if (passDebug >= 2) {
         WasmPrinter::printModule(wasm, moduleBefore);
       }
       // prepare to run
@@ -174,10 +174,10 @@ void PassRunner::run() {
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
       if (!WasmValidator().validate(*wasm, false, options.validateGlobally)) {
-        if (passDebug) {
+        if (passDebug >= 2) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=1 in the env to see the earlier state\n";
+          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state\n";
         }
         abort();
       }
