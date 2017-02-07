@@ -150,6 +150,13 @@ struct AstStackHelper {
 
 std::vector<Ref> AstStackHelper::astStack;
 
+static bool startsWith(const char* string, const char *prefix) {
+  while (1) {
+    if (*prefix == 0) return true;
+    if (*string++ != *prefix++) return false;
+  }
+};
+
 //
 // Asm2WasmPreProcessor - does some initial parsing/processing
 // of asm.js code.
@@ -238,18 +245,11 @@ struct Asm2WasmPreProcessor {
       std::string DEBUGINFO_INTRINSIC = EMSCRIPTEN_DEBUGINFO.str;
       auto DEBUGINFO_INTRINSIC_SIZE = DEBUGINFO_INTRINSIC.size();
       bool seenUseAsm = false;
-      auto startsWith = [&](const char *s) {
-        auto* check = input;
-        while (1) {
-          if (*s == 0) return true;
-          if (*check++ != *s++) return false;
-        }
-      };
       while (input[0]) {
         if (out + ADD_FACTOR >= end) {
           Fatal() << "error in handling debug info";
         }
-        if (startsWith("//@line")) {
+        if (startsWith(input, "//@line")) {
           char* linePos = input + 8;
           char* lineEnd = strchr(input + 8, ' ');
           char* filePos = strchr(lineEnd, '"') + 1;
@@ -276,7 +276,7 @@ struct Asm2WasmPreProcessor {
           out += line.size();
           *out++ = ')';
           *out++ = ';';
-        } else if (!seenUseAsm && (startsWith("asm'") || startsWith("asm\""))) {
+        } else if (!seenUseAsm && (startsWith(input, "asm'") || startsWith(input, "asm\""))) {
           // end of  "use asm"  or  "almost asm"
           seenUseAsm = true;
           memcpy(out, input, 5);
