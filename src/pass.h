@@ -242,8 +242,9 @@ protected:
   std::ostream& o;
 
 public:
-  Printer() : o(std::cout) {}
-  Printer(std::ostream* o) : o(*o) {}
+  Printer(std::ostream* o = nullptr) : o(o ? *o : std::cout) {
+    name = "printer";
+  }
 
   void run(PassRunner* runner, Module* module) override;
 };

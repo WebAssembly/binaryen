@@ -18,6 +18,7 @@
   (import "env" "table" (table 3 3 anyfunc))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
+  (global $STACKTOP (mut i32) (i32.const 0))
   (global $tempRet0 (mut i32) (i32.const 0))
   (elem (get_global $tableBase) $legalfunc$illegalImport $legalfunc$_fabsf $legalfunc$do_i64)
   (export "test64" (func $test64))
@@ -934,6 +935,135 @@
       (i32.const 44)
     )
   )
+  (func $propagateFallthrough (result i32)
+    (local $x i32)
+    (set_local $x
+      (i32.const 1)
+    )
+    (set_local $x
+      (i32.add
+        (get_local $x)
+        (i32.const 2)
+      )
+    )
+    (set_local $x
+      (i32.mul
+        (get_local $x)
+        (i32.const 3)
+      )
+    )
+    (loop $while-in i32
+      (block $while-out i32
+        (if i32
+          (i32.const 1)
+          (if i32
+            (get_local $x)
+            (return
+              (get_local $x)
+            )
+            (return
+              (i32.const 0)
+            )
+          )
+          (return
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+  (func $_pthread_mutex_lock (param $x i32) (result i32)
+    (return
+      (i32.const 0)
+    )
+  )
+  (func $_pthread_cond_wait (param $x i32) (param $y i32) (result i32)
+    (return
+      (i32.const 0)
+    )
+  )
+  (func $__ZNSt3__211__call_onceERVmPvPFvS2_E (param $$flag i32) (param $$arg i32) (param $$func i32)
+    (local $$0 i32)
+    (local $$1 i32)
+    (local $$cmp i32)
+    (local $sp i32)
+    (set_local $sp
+      (get_global $STACKTOP)
+    )
+    (drop
+      (call $_pthread_mutex_lock
+        (i32.const 21396)
+      )
+    )
+    (loop $while-in
+      (block $while-out
+        (set_local $$0
+          (i32.load
+            (get_local $$flag)
+          )
+        )
+        (set_local $$cmp
+          (i32.eq
+            (get_local $$0)
+            (i32.const 1)
+          )
+        )
+        (if
+          (i32.eqz
+            (get_local $$cmp)
+          )
+          (br $while-out)
+        )
+        (drop
+          (call $_pthread_cond_wait
+            (i32.const 21424)
+            (i32.const 21396)
+          )
+        )
+        (br $while-in)
+      )
+    )
+    (set_local $$1
+      (i32.load
+        (get_local $$flag)
+      )
+    )
+    (return)
+  )
+  (func $vii (param $x i32) (param $y i32)
+    (return)
+  )
+  (func $lua_switch (param $$L i32) (result i32)
+    (local $$call i32)
+    (set_local $$call
+      (call $_pthread_cond_wait
+        (get_local $$L)
+        (i32.const 2)
+      )
+    )
+    (block $switch
+      (block $switch-default
+        (block $switch-case
+          (br_table $switch-case $switch-default
+            (i32.sub
+              (get_local $$call)
+              (i32.const 0)
+            )
+          )
+        )
+        (br $switch)
+      )
+      (drop
+        (call $_pthread_cond_wait
+          (get_local $$L)
+          (i32.const 11217)
+        )
+      )
+    )
+    (return
+      (i32.const 1)
+    )
+  )
   (func $keepAlive
     (call $loads)
     (call $stores)
@@ -978,6 +1108,19 @@
       (i32.const 0)
       (i32.const 0)
       (i32.const 0)
+    )
+    (drop
+      (call $propagateFallthrough)
+    )
+    (call $__ZNSt3__211__call_onceERVmPvPFvS2_E
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 0)
+    )
+    (drop
+      (call $lua_switch
+        (i32.const 0)
+      )
     )
   )
   (func $__emscripten_dceable_type_decls

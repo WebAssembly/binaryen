@@ -394,12 +394,10 @@
             )
             (block
             )
-            (if
-              (i32.const 1)
-              (drop
+            (drop
+              (if i32
+                (i32.const 1)
                 (i32.const 2)
-              )
-              (drop
                 (i32.const 3)
               )
             )
@@ -1007,7 +1005,7 @@
   )
   (func $return (type $i) (result i32)
     (local $0 i32)
-    (block $the-list
+    (block $the-list i32
       (call $check
         (i32.const 42)
       )

@@ -41,6 +41,7 @@
 
 #include "wasm.h"
 #include "wasm-printing.h"
+#include "ast_utils.h"
 
 namespace wasm {
 
@@ -127,8 +128,20 @@ public:
         }
       }
     }
-    if (!isConcreteWasmType(curr->type) && curr->list.size() > 0) {
-      shouldBeFalse(isConcreteWasmType(curr->list.back()->type), curr, "block with no value cannot have a last element with a value");
+    if (curr->list.size() > 0) {
+      auto* last = curr->list.back();
+      if (!isConcreteWasmType(curr->type)) {
+        shouldBeFalse(isConcreteWasmType(last->type), curr, "block with no value cannot have a last element with a value");
+      } else {
+        // if we return, then control flow children must have that type, not even unreachable
+        // non-control flow lasts can be unreachable, but if they are not, must be equal
+        if (last->type != unreachable || ExpressionAnalyzer::isControlFlowStructure(last)) {
+          shouldBeEqual(last->type, curr->type, curr, "block fallthrough must have right type");
+        }
+      }
+    }
+    if (isConcreteWasmType(curr->type)) {
+      shouldBeTrue(curr->list.size() > 0, curr, "a block with a type cannot be empty");
     }
   }
 
@@ -149,12 +162,21 @@ public:
     if (curr->type == none) {
       shouldBeFalse(isConcreteWasmType(curr->body->type), curr, "bad body for a loop that has no value");
     }
+    // if we return, then control flow children must have that type, not even unreachable
+    if (isConcreteWasmType(curr->type)) {
+      if (ExpressionAnalyzer::isControlFlowStructure(curr->body)) shouldBeEqual(curr->body->type, curr->type, curr, "loop child must have right type");
+    }
   }
 
   void visitIf(If *curr) {
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32 || curr->condition->type == i64, curr, "if condition must be valid");
     if (!curr->ifFalse) {
       shouldBeFalse(isConcreteWasmType(curr->ifTrue->type), curr, "if without else must not return a value in body");
+    }
+    // if we return, then control flow children must have that type, not even unreachable
+    if (isConcreteWasmType(curr->type)) {
+      if (ExpressionAnalyzer::isControlFlowStructure(curr->ifTrue)) shouldBeEqual(curr->ifTrue->type, curr->type, curr, "ifTrue child must have right type");
+      if (ExpressionAnalyzer::isControlFlowStructure(curr->ifFalse)) shouldBeEqual(curr->ifFalse->type, curr->type, curr, "ifFalse child must have right type");
     }
   }
 
@@ -413,15 +435,17 @@ public:
   }
 
   void visitFunction(Function *curr) {
-    // if function has no result, it is ignored
-    // if body is unreachable, it might be e.g. a return
-    if (curr->body->type != unreachable) {
-      shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
-    }
-    if (curr->result != none) { // TODO: over previous too?
+    if (curr->result != none) {
+      // if the body is concretely typed, it must be correct.
+      // if it is a control flow structure, then it must always be correct, even unreachable is bad
+      if (curr->body->type != unreachable || ExpressionAnalyzer::isControlFlowStructure(curr->body)) {
+        shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
+      }
       if (returnType != unreachable) {
         shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function returns");
       }
+    } else {
+      shouldBeTrue(!isConcreteWasmType(curr->body->type), curr->body, "if function does not return, body cannot be concretely typed");
     }
     returnType = unreachable;
     labelNames.clear();

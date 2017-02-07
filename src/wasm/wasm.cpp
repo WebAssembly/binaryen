@@ -133,6 +133,31 @@ static WasmType mergeTypes(std::vector<WasmType>& types) {
   return type;
 }
 
+// when a block is changed none=>i32, then its last element may need to be changed as well, etc.
+static void propagateConcreteTypeToChildren(Expression* start, WasmType type) {
+  std::vector<Expression*> work;
+  work.push_back(start);
+  while (work.size() > 0) {
+    auto* curr = work.back();
+    work.pop_back();
+    if (curr != start && curr->type != unreachable) continue;
+    if (auto* block = curr->dynCast<Block>()) {
+      block->type = type;
+      if (block->list.size() > 0) {
+        work.push_back(block->list.back());
+      }
+    } else if (auto* loop = curr->dynCast<Loop>()) {
+      loop->type = type;
+      work.push_back(loop->body);
+    } else if (auto* iff = curr->dynCast<If>()) {
+      assert(iff->ifFalse); // must be an if-else
+      iff->type = type;
+      work.push_back(iff->ifTrue);
+      work.push_back(iff->ifFalse);
+    }
+  }
+}
+
 void Block::finalize(WasmType type_) {
   type = type_;
   if (type == none && list.size() > 0) {
@@ -142,9 +167,14 @@ void Block::finalize(WasmType type_) {
       }
     }
   }
+  if (isConcreteWasmType(type)) {
+    propagateConcreteTypeToChildren(this, type);
+  }
 }
 
 void Block::finalize() {
+  // if already set to a concrete value, keep it
+  if (isConcreteWasmType(type)) return;
   if (!name.is()) {
     // nothing branches here, so this is easy
     if (list.size() > 0) {
@@ -157,6 +187,10 @@ void Block::finalize() {
 
   TypeSeeker seeker(this, this->name);
   type = mergeTypes(seeker.types);
+
+  if (isConcreteWasmType(type)) {
+    propagateConcreteTypeToChildren(this, type);
+  }
 }
 
 void If::finalize(WasmType type_) {
@@ -164,9 +198,14 @@ void If::finalize(WasmType type_) {
   if (type == none && (condition->type == unreachable || (ifTrue->type == unreachable && (!ifFalse || ifFalse->type == unreachable)))) {
     type = unreachable;
   }
+  if (isConcreteWasmType(type)) {
+    propagateConcreteTypeToChildren(this, type);
+  }
 }
 
 void If::finalize() {
+  // if already set to a concrete value, keep it
+  if (isConcreteWasmType(type)) return;
   if (condition->type == unreachable) {
     type = unreachable;
   } else if (ifFalse) {
@@ -174,8 +213,10 @@ void If::finalize() {
       type = ifTrue->type;
     } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
       type = ifTrue->type;
+      propagateConcreteTypeToChildren(this, type);
     } else if (isConcreteWasmType(ifFalse->type) && ifTrue->type == unreachable) {
       type = ifFalse->type;
+      propagateConcreteTypeToChildren(this, type);
     } else {
       type = none;
     }
@@ -189,10 +230,19 @@ void Loop::finalize(WasmType type_) {
   if (type == none && body->type == unreachable) {
     type = unreachable;
   }
+  if (isConcreteWasmType(type)) {
+    propagateConcreteTypeToChildren(this, type);
+  }
 }
 
 void Loop::finalize() {
+  // if already set to a concrete value, keep it
+  if (isConcreteWasmType(type)) return;
   type = body->type;
+
+  if (isConcreteWasmType(type)) {
+    propagateConcreteTypeToChildren(this, type);
+  }
 }
 
 } // namespace wasm

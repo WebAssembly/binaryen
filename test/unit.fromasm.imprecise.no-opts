@@ -614,31 +614,33 @@
   )
   (func $aborts
     (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.convert_s/i32
-          (i32.const 55)
+      (block f64
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
         )
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 12.34)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.promote/f32
-          (f32.const 56.779998779296875)
+        (drop
+          (call $abort
+            (f64.convert_s/i32
+              (i32.const 55)
+            )
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 12.34)
+          )
+        )
+        (call $abort
+          (f64.promote/f32
+            (f32.const 56.779998779296875)
+          )
         )
       )
     )
@@ -714,16 +716,16 @@
               )
             )
             (block i32
-              (block
-                (block
+              (drop
+                (block i32
                   (drop
-                    (i32.const 4)
+                    (block i32
+                      (drop
+                        (i32.const 4)
+                      )
+                      (i32.const 5)
+                    )
                   )
-                  (drop
-                    (i32.const 5)
-                  )
-                )
-                (drop
                   (i32.const 6)
                 )
               )
@@ -778,20 +780,20 @@
             )
           )
           (block i32
-            (block
-              (block
+            (drop
+              (block i32
                 (drop
-                  (call $lb
-                    (i32.const 4)
+                  (block i32
+                    (drop
+                      (call $lb
+                        (i32.const 4)
+                      )
+                    )
+                    (call $lb
+                      (i32.const 5)
+                    )
                   )
                 )
-                (drop
-                  (call $lb
-                    (i32.const 5)
-                  )
-                )
-              )
-              (drop
                 (call $lb
                   (i32.const 6)
                 )
@@ -929,7 +931,6 @@
         )
         (br $do-once)
       )
-      (nop)
     )
   )
   (func $dropCall (result i32)
@@ -980,11 +981,11 @@
   (func $usesSetGlobal2 (result i32)
     (return
       (block i32
-        (block
-          (set_global $Int
-            (i32.const 40)
-          )
-          (drop
+        (drop
+          (block i32
+            (set_global $Int
+              (i32.const 40)
+            )
             (get_global $Int)
           )
         )
@@ -1014,7 +1015,6 @@
           (i32.const 1337)
         )
       )
-      (nop)
     )
   )
   (func $ifChainEmpty (param $label i32) (result i32)
@@ -1776,7 +1776,6 @@
         )
         (br $do-once)
       )
-      (nop)
     )
     (return)
   )
@@ -1800,7 +1799,6 @@
           )
         )
       )
-      (nop)
     )
     (return)
   )

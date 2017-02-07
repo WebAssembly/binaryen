@@ -3,6 +3,13 @@
   (memory $0 0)
   (func $return-i32-but-body-is-unreachable3 (type $0) (result i32)
     (local $label i32)
+    (loop $while-in$1 i32
+      (br $while-in$1)
+    )
+  )
+  (func $return-i32-but-body-is-unreachable4 (type $0) (result i32)
+    (local $label i32)
     (unreachable)
+    (i32.const 0)
   )
 )

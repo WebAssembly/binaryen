@@ -299,13 +299,13 @@ BinaryenOp BinaryenCurrentMemory(void) { return CurrentMemory; }
 BinaryenOp BinaryenGrowMemory(void) { return GrowMemory; }
 BinaryenOp BinaryenHasFeature(void) { return HasFeature; }
 
-BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren) {
+BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren, BinaryenType resultType) {
   auto* ret = ((Module*)module)->allocator.alloc<Block>();
   if (name) ret->name = name;
   for (BinaryenIndex i = 0; i < numChildren; i++) {
     ret->list.push_back((Expression*)children[i]);
   }
-  ret->finalize();
+  ret->finalize(WasmType(resultType));
 
   if (tracing) {
     std::cout << "  {\n";
@@ -319,7 +319,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenBlock(the_module, ";
     traceNameOrNULL(name);
-    std::cout << ", children, " << numChildren << ");\n";
+    std::cout << ", children, " << numChildren << ", " << resultType << ");\n";
     std::cout << "  }\n";
   }
 

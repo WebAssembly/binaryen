@@ -330,30 +330,32 @@
   )
   (func $aborts
     (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.convert_s/i32
-          (i32.const 55)
+      (block f64
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
         )
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 0)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 12.34)
-      )
-    )
-    (drop
-      (call $abort
-        (f64.const 56.779998779296875)
+        (drop
+          (call $abort
+            (f64.convert_s/i32
+              (i32.const 55)
+            )
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 0)
+          )
+        )
+        (drop
+          (call $abort
+            (f64.const 12.34)
+          )
+        )
+        (call $abort
+          (f64.const 56.779998779296875)
+        )
       )
     )
   )

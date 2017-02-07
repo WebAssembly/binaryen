@@ -565,6 +565,8 @@ private:
   }
 
   Function* processFunction(Ref ast);
+
+  void fixFallthrough(Function* func);
 };
 
 void Asm2WasmBuilder::processAsm(Ref ast) {
@@ -689,7 +691,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         passRunner.setValidateGlobally(false);
       }
       // run autodrop first, before optimizations
-      passRunner.add<AutoDrop>();
+      passRunner.add<AutoDrop>(); // TODO: we can likely remove this, and speed up the build a little
       // optimize relooper label variable usage at the wasm level, where it is easy
       passRunner.add("relooper-jump-threading");
     }, debug, false /* do not validate globally yet */);
@@ -1507,8 +1509,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       abort_on("bad unary", ast);
     } else if (what == IF) {
       auto* condition = process(ast[1]);
-      auto* ifTrue = process(ast[2]);
-      return builder.makeIf(truncateToInt32(condition), ifTrue, !!ast[3] ? process(ast[3]) : nullptr);
+      auto* ifTrue = builder.dropIfConcretelyTyped(process(ast[2]));
+      auto* ifFalse = !!ast[3] ? builder.dropIfConcretelyTyped(process(ast[3])) : nullptr;
+      return builder.makeIf(truncateToInt32(condition), ifTrue, ifFalse);
     } else if (what == CALL) {
       if (ast[1]->isString()) {
         IString name = ast[1]->getIString();
@@ -1830,7 +1833,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           block = allocator.alloc<Block>();
           block->name = name;
           block->list.push_back(ret);
-          block->finalize();
+          block->finalize(none);
           ret = block;
         }
       }
@@ -1874,7 +1877,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         auto body = allocator.alloc<Block>();
         body->list.push_back(condition);
         body->list.push_back(process(ast[2]));
-        body->finalize();
+        body->finalize(none);
         ret->body = body;
       }
       // loops do not automatically loop, add a branch back
@@ -1882,8 +1885,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto continuer = allocator.alloc<Break>();
       continuer->name = ret->name;
       block->list.push_back(continuer);
-      block->finalize();
-      ret->body = block;
+      block->finalize(none);
+      ret->body = builder.dropIfConcretelyTyped(block);
       ret->finalize();
       continueStack.pop_back();
       breakStack.pop_back();
@@ -1904,7 +1907,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         Name more = nameMapper.pushLabelName("unlikely-continue");
         breakStack.push_back(stop);
         continueStack.push_back(more);
-        auto child = process(ast[2]);
+        auto child = builder.dropIfConcretelyTyped(process(ast[2]));
         continueStack.pop_back();
         breakStack.pop_back();
         nameMapper.popLabelName(more);
@@ -1919,13 +1922,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             block->list.push_back(builder.makeNop()); // ensure a nop at the end, so the block has guaranteed none type and no values fall through
           }
           block->name = stop;
-          block->finalize();
+          block->finalize(none);
           return block;
         } else {
           auto loop = allocator.alloc<Loop>();
           loop->body = child;
           loop->name = more;
-          loop->finalize();
+          loop->finalize(none);
           return builder.blockifyWithName(loop, stop);
         }
       }
@@ -1945,7 +1948,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       loop->name = in;
       breakStack.push_back(out);
       continueStack.push_back(in);
-      loop->body = process(ast[2]);
+      loop->body = builder.dropIfConcretelyTyped(process(ast[2]));
       continueStack.pop_back();
       breakStack.pop_back();
       nameMapper.popLabelName(in);
@@ -1955,7 +1958,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       continuer->condition = process(ast[1]);
       Block *block = builder.blockifyWithName(loop->body, out, continuer);
       loop->body = block;
-      loop->finalize();
+      loop->finalize(none);
       return loop;
     } else if (what == FOR) {
       Ref finit = ast[1],
@@ -1987,8 +1990,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       body->list.push_back(condition);
       body->list.push_back(process(fbody));
       body->list.push_back(process(finc));
-      body->finalize();
-      ret->body = body;
+      body->finalize(none);
+      ret->body = builder.dropIfConcretelyTyped(body);
       // loops do not automatically loop, add a branch back
       auto continuer = allocator.alloc<Break>();
       continuer->name = ret->name;
@@ -2003,7 +2006,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       // add an outer block for the init as well
       outer->list.push_back(process(finit));
       outer->list.push_back(ret);
-      outer->finalize();
+      outer->finalize(none);
       return outer;
     } else if (what == LABEL) {
       assert(parentLabel.isNull());
@@ -2139,7 +2142,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
 
         top->list.push_back(br);
-        top->finalize();
+        top->finalize(none);
 
         for (unsigned i = 0; i < cases->size(); i++) {
           Ref curr = cases[i];
@@ -2163,9 +2166,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           auto next = allocator.alloc<Block>();
           top->name = name;
-          next->list.push_back(top);
-          next->list.push_back(case_);
-          next->finalize();
+          next->list.push_back(builder.dropIfConcretelyTyped(top));
+          next->list.push_back(builder.dropIfConcretelyTyped(case_));
+          next->finalize(none);
           top = next;
           nameMapper.popLabelName(name);
         }
@@ -2212,9 +2215,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           auto next = allocator.alloc<Block>();
           top->name = name;
-          next->list.push_back(top);
-          next->list.push_back(case_);
-          next->finalize();
+          next->list.push_back(builder.dropIfConcretelyTyped(top));
+          next->list.push_back(builder.dropIfConcretelyTyped(case_));
+          next->finalize(none);
           top = next;
           nameMapper.popLabelName(name);
         }
@@ -2230,7 +2233,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         first->ifFalse = builder.makeBreak(br->default_);
 
         brHolder->list.push_back(chain);
-        brHolder->finalize();
+        brHolder->finalize(none);
       }
 
       breakStack.pop_back();
@@ -2268,6 +2271,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     for (unsigned i = from; i < ast->size(); i++) {
       block->list.push_back(process(ast[i]));
     }
+    // if the last element has a value, we must drop it - a list of statements never falls through in asm.js
+    block->list.back() = builder.dropIfConcretelyTyped(block->list.back());
     block->finalize();
     return block;
   };
@@ -2276,7 +2281,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());
+  // fix up the fallthrough return value. asm2wasm output is structured statements,
+  // but the wasm toplevel scope is a fallthrough that must have the same type as
+  // the function return value, if there is one. We must propage that type up
+  // as far as necessary, replacing unreachable types with concrete ones, e.g.
+  //
+  // block
+  //   if
+  //     condition
+  //     return 1
+  //     return 2
+  //
+  // then naively they all have unreachable type, but if the function returns i32,
+  // the block *and* the if must be i32
+  fixFallthrough(function);
   return function;
+}
+
+void Asm2WasmBuilder::fixFallthrough(Function* func) {
+  if (func->result == none) return;
+  Block* block = builder.blockify(func->body);
+  block->finalize(func->result);
+  func->body = block;
 }
 
 } // namespace wasm

@@ -959,23 +959,31 @@ public:
 
 class Block : public SpecificExpression<Expression::BlockId> {
 public:
-  Block(MixedArena& allocator) : list(allocator) {}
+  Block(MixedArena& allocator) : list(allocator) {
+    type = unreachable;
+  }
 
   Name name;
   ExpressionList list;
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // this does is to set the type to unreachable in the cases that is needed, and
+  // to propage a new concrete type to children as needed.
   void finalize(WasmType type_);
 
-  // set the type purely based on its contents. this scans the block, so it is not fast
+  // set the type purely based on its contents. this scans the block, so it is not fast.
+  // if the type is already something concrete, we do not alter it, so that if our
+  // contents to not imply a result but the parent does, then we remain valid
+  // we also propage a new concrete type to children as needed.
   void finalize();
 };
 
 class If : public SpecificExpression<Expression::IfId> {
 public:
-  If() : ifFalse(nullptr) {}
+  If() : ifFalse(nullptr) {
+    type = unreachable;
+  }
   If(MixedArena& allocator) : If() {}
 
   Expression* condition;
@@ -984,27 +992,37 @@ public:
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // this does is to set the type to unreachable in the cases that is needed, and
+  // to propage a new concrete type to children as needed.
   void finalize(WasmType type_);
 
   // set the type purely based on its contents.
+  // if the type is already something concrete, we do not alter it, so that if our
+  // contents to not imply a result but the parent does, then we remain valid
+  // we also propage a new concrete type to children as needed.
   void finalize();
 };
 
 class Loop : public SpecificExpression<Expression::LoopId> {
 public:
-  Loop() {}
-  Loop(MixedArena& allocator) {}
+  Loop() {
+    type = unreachable;
+  }
+  Loop(MixedArena& allocator) : Loop() {}
 
   Name name;
   Expression* body;
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
+  // this does is to set the type to unreachable in the cases that is needed, and
+  // to propage a new concrete type to children as needed.
   void finalize(WasmType type_);
 
   // set the type purely based on its contents.
+  // if the type is already something concrete, we do not alter it, so that if our
+  // contents to not imply a result but the parent does, then we remain valid
+  // we also propage a new concrete type to children as needed.
   void finalize();
 };
 

@@ -219,6 +219,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           // we need the ifTrue to break, so it cannot reach the code we want to move
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            block->finalize(block->type);
             return true;
           }
         } else {
@@ -227,9 +228,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
           assert(!isConcreteWasmType(iff->type)); // can't be, since in the middle of a block
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = builder.blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            block->finalize(block->type);
             return true;
           } else if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifFalse)) {
             iff->ifTrue = builder.blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            block->finalize(block->type);
             return true;
           }
         }
@@ -256,6 +259,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
               // note that we could drop the last element here, it is a br we know for sure is removable,
               // but telling stealSlice to steal all to the end is more efficient, it can just truncate.
               list[i] = builder.makeIf(brIf->condition, builder.makeBreak(brIf->name), builder.stealSlice(block, i + 1, list.size()));
+              block->finalize(block->type);
               return true;
             }
           }
