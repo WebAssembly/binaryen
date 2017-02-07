@@ -31,6 +31,7 @@
 #include "ast_utils.h"
 #include "cfg/cfg-traversal.h"
 #include "wasm-builder.h"
+#include "support/permutation.h"
 #include "support/learning.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
@@ -537,41 +538,12 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   }
 }
 
-// Utilities for operating on permutation vectors
-
-static std::vector<Index> makeIdentity(Index num) {
-  std::vector<Index> ret;
-  ret.resize(num);
-  for (Index i = 0; i < num; i++) {
-    ret[i] = i;
-  }
-  return ret;
-}
-
-static void setIdentity(std::vector<Index>& ret) {
-  auto num = ret.size();
-  assert(num > 0); // must already be of the right size
-  for (Index i = 0; i < num; i++) {
-    ret[i] = i;
-  }
-}
-
-static std::vector<Index> makeReversed(std::vector<Index>& original) {
-  std::vector<Index> ret;
-  auto num = original.size();
-  ret.resize(num);
-  for (Index i = 0; i < num; i++) {
-    ret[original[i]] = i;
-  }
-  return ret;
-}
-
 // given a baseline order, adjust it based on an important order of priorities (higher values
 // are higher priority). The priorities take precedence, unless they are equal and then
 // the original order should be kept.
 std::vector<Index> adjustOrderByPriorities(std::vector<Index>& baseline, std::vector<Index>& priorities) {
   std::vector<Index> ret = baseline;
-  std::vector<Index> reversed = makeReversed(baseline);
+  std::vector<Index> reversed = Permutation::makeReversed(baseline);
   std::sort(ret.begin(), ret.end(), [&priorities, &reversed](Index x, Index y) {
     return priorities[x] > priorities[y] || (priorities[x] == priorities[y] && reversed[x] < reversed[y]);
   });
@@ -586,7 +558,7 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
   }
   if (getFunction()->getNumVars() <= 1) {
     // nothing to think about here, since we can't reorder params
-    indices = makeIdentity(numLocals);
+    indices = Permutation::makeIdentity(numLocals);
     return;
   }
   // take into account total copies. but we must keep params in place, so give them max priority
@@ -597,14 +569,14 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
   }
   // first try the natural order. this is less arbitrary than it seems, as the program
   // may have a natural order of locals inherent in it.
-  auto order = makeIdentity(numLocals);
+  auto order = Permutation::makeIdentity(numLocals);
   order = adjustOrderByPriorities(order, adjustedTotalCopies);
   Index removedCopies;
   pickIndicesFromOrder(order, indices, removedCopies);
   auto maxIndex = *std::max_element(indices.begin(), indices.end());
   // next try the reverse order. this both gives us another chance at something good,
   // and also the very naturalness of the simple order may be quite suboptimal
-  setIdentity(order);
+  Permutation::setIdentity(order);
   for (Index i = numParams; i < numLocals; i++) {
     order[i] = numParams + numLocals - 1 - i;
   }
