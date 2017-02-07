@@ -153,6 +153,7 @@ std::vector<Ref> AstStackHelper::astStack;
 static bool startsWith(const char* string, const char *prefix) {
   while (1) {
     if (*prefix == 0) return true;
+    if (*string == 0) return false;
     if (*string++ != *prefix++) return false;
   }
 };
@@ -278,10 +279,11 @@ struct Asm2WasmPreProcessor {
           *out++ = ';';
         } else if (!seenUseAsm && (startsWith(input, "asm'") || startsWith(input, "asm\""))) {
           // end of  "use asm"  or  "almost asm"
+          const auto SKIP = 5; // skip the end of "use asm"; (5 chars, a,s,m," or ',;)
           seenUseAsm = true;
-          memcpy(out, input, 5);
-          out += 5;
-          input += 5;
+          memcpy(out, input, SKIP);
+          out += SKIP;
+          input += SKIP;
           // add a fake import for the intrinsic, so the module validates
           std::string import = "\n var emscripten_debuginfo = env.emscripten_debuginfo;";
           strcpy(out, import.c_str());
