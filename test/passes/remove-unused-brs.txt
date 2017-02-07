@@ -937,4 +937,22 @@
       )
     )
   )
+  (func $loop-if (type $2) (result i32)
+    (block $outer i32
+      (loop $typed i32
+        (if i32
+          (i32.const 2)
+          (block $block i32
+            (drop
+              (call $loop-if)
+            )
+            (br $outer
+              (i32.const 0)
+            )
+          )
+          (br $typed)
+        )
+      )
+    )
+  )
 )
