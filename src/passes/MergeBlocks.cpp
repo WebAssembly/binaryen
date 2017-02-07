@@ -227,6 +227,11 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBloc
           // reuse the block, move it out
           block->list.back() = curr;
           block->finalize(curr->type); // last block element was our input, and is now our output
+          if (block->type == unreachable && curr == getFunction()->body && getFunction()->result != none) {
+            // corner case: if the block isn't typed (e.g. ends in a return now), and is about to
+            // be placed as the function's fallthrough, then it must be typed if the function returns
+            block->finalize(getFunction()->result);
+          }
           replaceCurrent(block);
           return block;
         } else {
