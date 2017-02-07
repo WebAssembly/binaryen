@@ -45,6 +45,19 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
   }
 
+  void visit(Expression* curr) {
+    if (currFunction) {
+      // show an annotation, if there is one
+      auto& annotations = currFunction->annotations;
+      auto iter = annotations.find(curr);
+      if (iter != annotations.end()) {
+        o << ";; " << iter->second << '\n';
+        doIndent(o, indent);
+      }
+    }
+    Visitor<PrintSExpression>::visit(curr);
+  }
+
   void setMinify(bool minify_) {
     minify = minify_;
     maybeSpace = minify ? "" : " ";

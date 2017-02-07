@@ -332,4 +332,9 @@
   (func $global (type $1)
     (unreachable)
   )
+  (func $ret (type $2) (result i32)
+    (return
+      (i32.const 0)
+    )
+  )
 )

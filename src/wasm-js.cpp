@@ -59,6 +59,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   prepare2wasm();
 
   Asm2WasmPreProcessor pre;
+  pre.debugInfo = true; // FIXME: we must do this, as the input asm.js might have debug info
   input = pre.process(input);
 
   // proceed to parse and wasmify
@@ -79,7 +80,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   module->memory.max = pre.memoryGrowth ? Address(Memory::kMaxSize) : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
-  asm2wasm = new Asm2WasmBuilder(*module, pre.memoryGrowth, debug, false /* TODO: support imprecise? */, PassOptions(), false /* TODO: support optimizing? */, false /* TODO: support asm2wasm-i64? */);
+  asm2wasm = new Asm2WasmBuilder(*module, pre, debug, false /* TODO: support imprecise? */, PassOptions(), false /* TODO: support optimizing? */, false /* TODO: support asm2wasm-i64? */);
   asm2wasm->processAsm(asmjs);
 }
 

@@ -34,6 +34,7 @@
 #include "ast_utils.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
+#include "wasm-printing.h"
 #include "wasm-validator.h"
 #include "wasm-module-building.h"
 
@@ -109,7 +110,8 @@ Name I32_CTTZ("i32_cttz"),
      FTCALL("ftCall_"),
      MFTCALL("mftCall_"),
      MAX_("max"),
-     MIN_("min");
+     MIN_("min"),
+     EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities
 
@@ -148,6 +150,14 @@ struct AstStackHelper {
 
 std::vector<Ref> AstStackHelper::astStack;
 
+static bool startsWith(const char* string, const char *prefix) {
+  while (1) {
+    if (*prefix == 0) return true;
+    if (*string == 0) return false;
+    if (*string++ != *prefix++) return false;
+  }
+};
+
 //
 // Asm2WasmPreProcessor - does some initial parsing/processing
 // of asm.js code.
@@ -155,6 +165,16 @@ std::vector<Ref> AstStackHelper::astStack;
 
 struct Asm2WasmPreProcessor {
   bool memoryGrowth = false;
+  bool debugInfo = false;
+
+  std::vector<std::string> debugInfoFileNames;
+  std::unordered_map<std::string, Index> debugInfoFileIndices;
+
+  char* allocatedCopy = nullptr;
+
+  ~Asm2WasmPreProcessor() {
+    if (allocatedCopy) free(allocatedCopy);
+  }
 
   char* process(char* input) {
     // emcc --separate-asm modules can look like
@@ -206,6 +226,79 @@ struct Asm2WasmPreProcessor {
       *marker = START_FUNCS[0];
     }
 
+    // handle debug info, if this build wants that.
+    if (debugInfo) {
+      // asm.js debug info comments look like
+      //   ..command..; //@line 4 "tests/hello_world.c"
+      // we convert those into emscripten_debuginfo(file, line)
+      // calls, where the params are indices into a mapping. then
+      // the compiler and optimizer can operate on them. after
+      // that, we can apply the debug info to the wasm node right
+      // before it - this is guaranteed to be correct without opts,
+      // and is usually decently accurate with them.
+      const auto SCALE_FACTOR = 1.25; // an upper bound on how much more space we need as a multiple of the original
+      const auto ADD_FACTOR = 100; // an upper bound on how much we write for each debug info element itself
+      auto size = strlen(input);
+      auto upperBound = Index(size * SCALE_FACTOR) + ADD_FACTOR;
+      char* copy = allocatedCopy = (char*)malloc(upperBound);
+      char* end = copy + upperBound;
+      char* out = copy;
+      std::string DEBUGINFO_INTRINSIC = EMSCRIPTEN_DEBUGINFO.str;
+      auto DEBUGINFO_INTRINSIC_SIZE = DEBUGINFO_INTRINSIC.size();
+      bool seenUseAsm = false;
+      while (input[0]) {
+        if (out + ADD_FACTOR >= end) {
+          Fatal() << "error in handling debug info";
+        }
+        if (startsWith(input, "//@line")) {
+          char* linePos = input + 8;
+          char* lineEnd = strchr(input + 8, ' ');
+          char* filePos = strchr(lineEnd, '"') + 1;
+          char* fileEnd = strchr(filePos, '"');
+          input = fileEnd + 1;
+          *lineEnd = 0;
+          *fileEnd = 0;
+          std::string line = linePos, file = filePos;
+          auto iter = debugInfoFileIndices.find(file);
+          if (iter == debugInfoFileIndices.end()) {
+            Index index = debugInfoFileNames.size();
+            debugInfoFileNames.push_back(file);
+            debugInfoFileIndices[file] = index;
+          }
+          std::string fileIndex = std::to_string(debugInfoFileIndices[file]);
+          // write out the intrinsic
+          strcpy(out, DEBUGINFO_INTRINSIC.c_str());
+          out += DEBUGINFO_INTRINSIC_SIZE;
+          *out++ = '(';
+          strcpy(out, fileIndex.c_str());
+          out += fileIndex.size();
+          *out++ = ',';
+          strcpy(out, line.c_str());
+          out += line.size();
+          *out++ = ')';
+          *out++ = ';';
+        } else if (!seenUseAsm && (startsWith(input, "asm'") || startsWith(input, "asm\""))) {
+          // end of  "use asm"  or  "almost asm"
+          const auto SKIP = 5; // skip the end of "use asm"; (5 chars, a,s,m," or ',;)
+          seenUseAsm = true;
+          memcpy(out, input, SKIP);
+          out += SKIP;
+          input += SKIP;
+          // add a fake import for the intrinsic, so the module validates
+          std::string import = "\n var emscripten_debuginfo = env.emscripten_debuginfo;";
+          strcpy(out, import.c_str());
+          out += import.size();
+        } else {
+          *out++ = *input++;
+        }
+      }
+      if (out >= end) {
+        Fatal() << "error in handling debug info";
+      }
+      *out = 0;
+      input = copy;
+    }
+
     return input;
   }
 };
@@ -237,7 +330,7 @@ class Asm2WasmBuilder {
   // function table
   std::map<IString, int> functionTableStarts; // each asm function table gets a range in the one wasm table, starting at a location
 
-  bool memoryGrowth;
+  Asm2WasmPreProcessor& preprocessor;
   bool debug;
   bool imprecise;
   PassOptions passOptions;
@@ -343,11 +436,11 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, bool memoryGrowth, bool debug, bool imprecise, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, bool imprecise, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
-       memoryGrowth(memoryGrowth),
+       preprocessor(preprocessor),
        debug(debug),
        imprecise(imprecise),
        passOptions(passOptions),
@@ -565,6 +658,16 @@ private:
   }
 
   Function* processFunction(Ref ast);
+
+public:
+  CallImport* checkDebugInfo(Expression* curr) {
+    if (auto* call = curr->dynCast<CallImport>()) {
+      if (call->target == EMSCRIPTEN_DEBUGINFO) {
+        return call;
+      }
+    }
+    return nullptr;
+  }
 };
 
 void Asm2WasmBuilder::processAsm(Ref ast) {
@@ -1014,6 +1117,43 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   };
 
+  // apply debug info, reducing intrinsic calls into annotations on the ast nodes
+  struct ApplyDebugInfo : public WalkerPass<PostWalker<ApplyDebugInfo, UnifiedExpressionVisitor<ApplyDebugInfo>>> {
+    bool isFunctionParallel() override { return true; }
+
+    Pass* create() override { return new ApplyDebugInfo(parent); }
+
+    Asm2WasmBuilder* parent;
+
+    ApplyDebugInfo(Asm2WasmBuilder* parent) : parent(parent) {
+      name = "apply-debug-info";
+    }
+
+    Expression* lastExpression = nullptr;
+
+    void visitExpression(Expression* curr) {
+      if (auto* call = parent->checkDebugInfo(curr)) {
+        // this is a debuginfo node. turn it into an annotation on the last stack
+        auto* last = lastExpression;
+        lastExpression = nullptr;
+        auto& annotations = getFunction()->annotations;
+        if (last) {
+          auto fileIndex = call->operands[0]->cast<Const>()->value.geti32();
+          auto lineNumber = call->operands[1]->cast<Const>()->value.geti32();
+          annotations[last] = parent->preprocessor.debugInfoFileNames[fileIndex] + ":" + std::to_string(lineNumber);
+        }
+        // eliminate the debug info call
+        ExpressionManipulator::nop(curr);
+        return;
+      }
+      // ignore const nodes, as they may be the children of the debug info calls, and they
+      // don't really need debug info anyhow
+      if (!curr->is<Const>()) {
+        lastExpression = curr;
+      }
+    }
+  };
+
   PassRunner passRunner(&wasm);
   if (debug) {
     passRunner.setDebug(true);
@@ -1030,13 +1170,22 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.add("optimize-instructions");
     passRunner.add("post-emscripten");
   }
+  if (preprocessor.debugInfo) {
+    passRunner.add<ApplyDebugInfo>(this);
+    passRunner.add("vacuum"); // FIXME maybe just remove the nops that were debuginfo nodes, if not optimizing?
+  }
   // make sure to not emit unreachable code at all, even in -O0, as wasm rules for it are complex
   // and changing.
   passRunner.add("dce");
   passRunner.run();
 
+  // remove the debug info intrinsic
+  if (preprocessor.debugInfo) {
+    wasm.removeImport(EMSCRIPTEN_DEBUGINFO);
+  }
+
   // apply memory growth, if relevant
-  if (memoryGrowth) {
+  if (preprocessor.memoryGrowth) {
     emscripten::generateMemoryGrowthFunction(wasm);
     wasm.memory.max = Memory::kMaxSize;
   }
@@ -2273,6 +2422,27 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   };
   // body
   function->body = processStatements(body, start);
+  // debug info cleanup: we add debug info calls after each instruction; as
+  // a result,
+  //   return 0; //@line file.cpp
+  // will have code after the return. if the function body is a block,
+  // it will be forced to the return type of the function, and then
+  // the unreachable type of the return makes things work, which we break
+  // if we add a none debug intrinsic call afterwards. so we need to fix
+  // that up.
+  if (preprocessor.debugInfo) {
+    if (function->result != none) {
+      if (auto* block = function->body->dynCast<Block>()) {
+        if (block->list.size() > 0) {
+          if (checkDebugInfo(block->list.back())) {
+            // add an unreachable. both the debug info and it could be dce'd,
+            // but it makes us validate properly.
+            block->list.push_back(builder.makeUnreachable());
+          }
+        }
+      }
+    }
+  }
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());
