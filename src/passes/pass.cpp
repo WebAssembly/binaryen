@@ -139,7 +139,8 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 
 void PassRunner::run() {
   static int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
-  if (options.debug || passDebug) {
+  // debug the passes if relevant. be careful to not debug a single print pass, as that is how we print (we would infinitely recurse)
+  if ((options.debug || passDebug) && !(passes.size() == 1 && passes[0]->name == "printer")) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
