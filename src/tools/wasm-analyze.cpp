@@ -263,9 +263,9 @@ public:
   Literal get(Index index, WasmType type) {
     // use low indexes to ensure we get representation of a few special values
     // TODO: get each of the MAX_LOCALS to all of its NUM_SPECIALS values
-    ssize_t special = seed; // start with 0-NS having them all taking the same value
+    int64_t special = seed; // start with 0-NS having them all taking the same value
     if (special >= NUM_SPECIALS) { // then give each a range for itself
-      special = ssize_t(seed) - ssize_t(NUM_SPECIALS * (index + 1));
+      special = int64_t(seed) - int64_t(NUM_SPECIALS * (index + 1));
     }
     if (special >= 0 && special < NUM_SPECIALS) {
       if (special < NUM_LIMITS) {
@@ -539,7 +539,7 @@ int main(int argc, const char *argv[]) {
     sorted.push_back(iter.first);
   }
   std::sort(sorted.begin(), sorted.end(), [&](const HashedExpression& a, const HashedExpression& b) {
-    auto diff = ssize_t(freqs[a]) - ssize_t(freqs[b]);
+    auto diff = int64_t(freqs[a]) - int64_t(freqs[b]);
     if (diff > 0) return true;
     if (diff < 0) return false;
     return size_t(a.expr) < size_t(b.expr);
@@ -674,7 +674,7 @@ int main(int argc, const char *argv[]) {
 
     auto ruleSorter = [](const Rule* a, const Rule* b) {
       // primary sorting criteria is the size benefit
-      auto diff = ssize_t(a->benefit) - ssize_t(b->benefit);
+      auto diff = int64_t(a->benefit) - int64_t(b->benefit);
       if (diff > 0) return true;
       if (diff < 0) return false;
       return size_t(a->from) < size_t(b->from);
