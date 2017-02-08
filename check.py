@@ -218,7 +218,7 @@ for t in sorted(os.listdir(os.path.join('test', 'analyze'))):
     print '..', t
     wast = os.path.join('test', 'analyze', t)
     cmd = [os.path.join('bin', 'wasm-analyze'), wast]
-    actual = run_command(cmd, stderr=open('/dev/null', 'w'))
+    actual = run_command(cmd, stderr=None)
     out = wast.replace('.wast', '.txt')
     with open(out) as f:
       expected = f.read()
