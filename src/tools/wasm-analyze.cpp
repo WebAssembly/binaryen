@@ -17,6 +17,8 @@
 //
 // Expression analyzer utility
 //
+// Superoptimization is based on Bansal, Sorav; Aiken, Alex (21–25 October 2006): "Automatic Generation of Peephole Superoptimizers".
+//
 
 #include "support/colors.h"
 #include "support/command-line.h"
