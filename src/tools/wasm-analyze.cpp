@@ -29,6 +29,7 @@
 #include "wasm-traversal.h"
 #include "wasm-printing.h"
 #include "wasm-interpreter.h"
+#include "wasm-io.h"
 #include "ast_utils.h"
 #include "ast/cost.h"
 
@@ -516,8 +517,8 @@ int main(int argc, const char *argv[]) {
     std::cerr << "[processing: " << filename << ']' << '\n';
 
     try {
-      SExpressionParser parser(const_cast<char*>(input.c_str()));
-      SExpressionWasmBuilder builder(wasm, *(*parser.root)[0]);
+      ModuleReader reader;
+      reader.read(filename, wasm);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing input " << filename;
