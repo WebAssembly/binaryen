@@ -422,6 +422,12 @@ static bool alreadyOptimizable(Expression* input, WasmType localTypes[MAX_LOCAL]
   }
   func->body = ExpressionManipulator::copy(input, temp);
   temp.addFunction(func);
+  // export the function, so optimizations don't kill it!
+  auto* export_ = new Export();
+  export_->name = Name("export");
+  export_->value = func->name;
+  export_->kind = ExternalKind::Function;
+  temp.addExport(export_);
   // run the optimizer
   PassRunner passRunner(&temp);
   passRunner.addDefaultOptimizationPasses();
