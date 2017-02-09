@@ -275,13 +275,11 @@
               (br $label$9)
             )
           )
-          (block $label$17
-            (loop $label$18
-              (br $label$9)
-              (br $label$18)
-            )
+          (loop $label$17
             (br $label$9)
+            (br $label$17)
           )
+          (br $label$9)
         )
         (nop)
       )
