@@ -461,10 +461,14 @@ void WasmBinaryWriter::recurse(Expression*& curr) {
   if (debug) std::cerr << "zz recurse from " << depth-- << " at " << o.size() << std::endl;
 }
 
+static bool brokenTo(Block* block) {
+  return block->name.is() && BreakSeeker::has(curr, block->name);
+}
+
 void WasmBinaryWriter::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
-  if (curr->type == unreachable) {
-    // an unreachable block is one that cannot be exited, and so it's last
+  if (curr->type == unreachable && !brokenTo(curr)) {
+    // an unreachable block with no breaks is one that cannot be exited, and so it's last
     // element must be unreachable as well. We cannot encode this directly
     // in wasm, where blocks must be none,i32,i64,f32,f64. Instead, we take
     // advantage of wasm's stacky encoding: we can just emit the block
@@ -491,7 +495,7 @@ void WasmBinaryWriter::visitBlock(Block *curr) {
 // emits a node, but if it is a block with no name, emit a list of its contents
 void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
-  if (!block || (block->name.is() && BreakSeeker::has(curr, block->name))) {
+  if (!block || !brokenTo(block)) {
     recurse(curr);
     return;
   }

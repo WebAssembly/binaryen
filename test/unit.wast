@@ -476,6 +476,13 @@
       (return (i32.const 2))
     )
   )
+  (func $unreachable-block-with-br (result i32)
+    (block $block ;; unreachable type due to last element having that type, but the block is exitable
+      (drop (i32.const 1))
+      (br $block)
+    )
+    (i32.const 1)
+  )
   (func $unreachable-if (result i32)
     (f64.abs
       (if ;; note no type - valid in binaryen IR, in wasm must be i32

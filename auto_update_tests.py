@@ -163,7 +163,7 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
     assert proc.returncode == 0, [proc.returncode, actual, err]
     with open(expected, 'w') as o: o.write(actual)
   finally:
-    os.remove(output_file)
+    #os.remove(output_file)
     if sys.platform == 'darwin':
       # Also removes debug directory produced on Mac OS
       shutil.rmtree(output_file + '.dSYM')

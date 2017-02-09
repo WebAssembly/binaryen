@@ -272,6 +272,7 @@
                 (br $label$15)
                 (br $label$16)
               )
+              (unreachable)
               (br $label$9)
             )
           )
@@ -279,6 +280,7 @@
             (br $label$9)
             (br $label$17)
           )
+          (unreachable)
           (br $label$9)
         )
         (nop)
@@ -454,6 +456,113 @@
       (get_local $var$0)
       (get_local $var$1)
     )
+  )
+  (func $23 (type $5) (result i32)
+    (return
+      (i32.const 1)
+    )
+  )
+  (func $24 (type $5) (result i32)
+    (drop
+      (i32.const 1)
+    )
+    (f64.abs
+      (return
+        (i32.const 2)
+      )
+    )
+  )
+  (func $25 (type $5) (result i32)
+    (drop
+      (i32.const 1)
+    )
+    (return
+      (i32.const 2)
+    )
+  )
+  (func $26 (type $5) (result i32)
+    (f64.abs
+      (return
+        (i32.const 2)
+      )
+    )
+  )
+  (func $27 (type $5) (result i32)
+    (return
+      (i32.const 2)
+    )
+  )
+  (func $28 (type $5) (result i32)
+    (f64.abs
+      (if
+        (i32.const 3)
+        (block $label$0
+          (return
+            (i32.const 2)
+          )
+        )
+        (block $label$1
+          (return
+            (i32.const 1)
+          )
+          (unreachable)
+        )
+      )
+    )
+  )
+  (func $29 (type $5) (result i32)
+    (if
+      (i32.const 3)
+      (block $label$0
+        (return
+          (i32.const 2)
+        )
+      )
+      (block $label$1
+        (return
+          (i32.const 1)
+        )
+        (unreachable)
+      )
+    )
+  )
+  (func $30 (type $5) (result i32)
+    (loop $label$0
+      (nop)
+      (return
+        (i32.const 1)
+      )
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $31 (type $5) (result i32)
+    (loop $label$0
+      (return
+        (i32.const 1)
+      )
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $32 (type $5) (result i32)
+    (loop $label$0
+      (nop)
+      (return
+        (i32.const 1)
+      )
+    )
+    (unreachable)
+  )
+  (func $33 (type $5) (result i32)
+    (loop $label$0
+      (return
+        (i32.const 1)
+      )
+    )
+    (unreachable)
   )
 )
 
