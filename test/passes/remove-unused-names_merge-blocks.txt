@@ -3,6 +3,7 @@
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))
   (type $3 (func))
+  (type $4 (func (result i32)))
   (table 1 1 anyfunc)
   (elem (i32.const 0) $call-i)
   (memory $0 256 256)
@@ -736,5 +737,18 @@
         )
       )
     )
+  )
+  (func $return-different-type (type $4) (result i32)
+    (drop
+      (i32.const 2)
+    )
+    (drop
+      (f64.abs
+        (return
+          (i32.const 1)
+        )
+      )
+    )
+    (unreachable)
   )
 )
