@@ -492,6 +492,17 @@
       (i32.const 2)
     )
   )
+  (func $unreachable-block-with-br (type $5) (result i32)
+    (block $label$0 i32
+      (block $label$1
+        (drop
+          (i32.const 1)
+        )
+        (br $label$1)
+      )
+      (i32.const 1)
+    )
+  )
   (func $unreachable-if (type $5) (result i32)
     (f64.abs
       (if

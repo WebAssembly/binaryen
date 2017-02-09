@@ -493,6 +493,17 @@
     )
   )
   (func $28 (type $5) (result i32)
+    (block $label$0 i32
+      (block $label$1
+        (drop
+          (i32.const 1)
+        )
+        (br $label$1)
+      )
+      (i32.const 1)
+    )
+  )
+  (func $29 (type $5) (result i32)
     (f64.abs
       (if
         (i32.const 3)
@@ -510,7 +521,7 @@
       )
     )
   )
-  (func $29 (type $5) (result i32)
+  (func $30 (type $5) (result i32)
     (if
       (i32.const 3)
       (block $label$0
@@ -526,19 +537,9 @@
       )
     )
   )
-  (func $30 (type $5) (result i32)
-    (loop $label$0
-      (nop)
-      (return
-        (i32.const 1)
-      )
-    )
-    (f64.abs
-      (unreachable)
-    )
-  )
   (func $31 (type $5) (result i32)
     (loop $label$0
+      (nop)
       (return
         (i32.const 1)
       )
@@ -549,6 +550,16 @@
   )
   (func $32 (type $5) (result i32)
     (loop $label$0
+      (return
+        (i32.const 1)
+      )
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $33 (type $5) (result i32)
+    (loop $label$0
       (nop)
       (return
         (i32.const 1)
@@ -556,7 +567,7 @@
     )
     (unreachable)
   )
-  (func $33 (type $5) (result i32)
+  (func $34 (type $5) (result i32)
     (loop $label$0
       (return
         (i32.const 1)

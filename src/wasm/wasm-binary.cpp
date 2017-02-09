@@ -462,7 +462,7 @@ void WasmBinaryWriter::recurse(Expression*& curr) {
 }
 
 static bool brokenTo(Block* block) {
-  return block->name.is() && BreakSeeker::has(curr, block->name);
+  return block->name.is() && BreakSeeker::has(block, block->name);
 }
 
 void WasmBinaryWriter::visitBlock(Block *curr) {
@@ -495,7 +495,7 @@ void WasmBinaryWriter::visitBlock(Block *curr) {
 // emits a node, but if it is a block with no name, emit a list of its contents
 void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
-  if (!block || !brokenTo(block)) {
+  if (!block || brokenTo(block)) {
     recurse(curr);
     return;
   }
