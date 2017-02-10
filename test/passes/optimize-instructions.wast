@@ -750,7 +750,7 @@
     (drop
       (i32.shr_s
         (i32.shl
-          (i32.shr_u ;; subtracts, here it is still too much
+          (i32.shr_u ;; subtracts, here it is ok
             (i32.const 256)
             (i32.const 2)
           )
@@ -765,6 +765,69 @@
           (i32.shr_u ;; subtracts, here it "overflows"
             (i32.const 128)
             (i32.const 35)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s ;; subtracts, here it is still too much
+            (i32.const 256)
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s ;; subtracts, here it is ok
+            (i32.const 256)
+            (i32.const 2)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s ;; subtracts, here it "overflows"
+            (i32.const 128)
+            (i32.const 35)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s ;; subtracts, here there is a sign bit, so it stays 32 bits no matter how much we shift
+            (i32.const -1)
+            (i32.const 32)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s ;; subtracts, here we mask out that sign bit
+            (i32.and
+              (i32.const -1)
+              (i32.const 2147483647)
+            )
+            (i32.const 32)
           )
           (i32.const 24)
         )
