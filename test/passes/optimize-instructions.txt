@@ -619,4 +619,18 @@
       )
     )
   )
+  (func $sign-ext-input (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (i32.const 100)
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
 )

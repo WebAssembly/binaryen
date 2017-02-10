@@ -166,7 +166,7 @@ struct Match {
 
 // returns the maximum amount of bits used in an integer expression
 // not extremely precise (doesn't look into add operands, etc.)
-static int maxBits(Expression* curr) {
+static Index getMaxBits(Expression* curr) {
   if (auto* const_ = curr->dynCast<Const>()) {
     switch (curr->type) {
       case i32: return 32 - const_->value.countLeadingZeroes().geti32();
@@ -179,62 +179,50 @@ static int maxBits(Expression* curr) {
       case AddInt32: case SubInt32: case MulInt32:
       case DivSInt32: case DivUInt32: case RemSInt32:
       case RemUInt32: case RotLInt32: case RotRInt32: return 32;
-      case AndInt32: case XorInt32: return std::min(maxBits(binary->left), maxBits(binary->right));
-      case OrInt32: return std::max(maxBits(binary->left), maxBits(binary->right));
+      case AndInt32: case XorInt32: return std::min(getMaxBits(binary->left), getMaxBits(binary->right));
+      case OrInt32: return std::max(getMaxBits(binary->left), getMaxBits(binary->right));
       case ShlInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::min(32, maxBits(binary->left) + shifts->value.geti32());
+          return std::min(Index(32), getMaxBits(binary->left) + shifts->value.geti32());
         }
         return 32;
       }
       case ShrUInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::max(0, maxBits(binary->left) - shifts->value.geti32());
+          return std::max(Index(0), getMaxBits(binary->left) - shifts->value.geti32());
         }
         return 32;
       }
       case ShrSInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
-          auto childMax = maxBits(binary->left);
+          auto childMax = getMaxBits(binary->left);
           if (childMax == 32) return 32;
-          return std::max(0, maxBits(binary->left) - shifts->value.geti32());
+          return std::max(Index(0), getMaxBits(binary->left) - shifts->value.geti32());
         }
         return 32;
       }
-      case EqInt32: case NeInt32: case LtSInt32:
-      case LtUInt32: case LeSInt32: case LeUInt32:
-      case GtSInt32: case GtUInt32: case GeSInt32:
-      case GeUInt32: return 1;
       // 64-bit
       case AddInt64: case SubInt64: case MulInt64:
       case DivSInt64: case DivUInt64: case RemSInt64:
-      case RemUInt64: case RotLInt64: case RotRInt64: return 64;
-      case AndInt64: case XorInt64: return std::min(maxBits(binary->left), maxBits(binary->right));
-      case OrInt64: return std::max(maxBits(binary->left), maxBits(binary->right));
-      case ShlInt64: {
-        if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::min(int64_t(64), maxBits(binary->left) + shifts->value.geti64());
-        }
-        return 64;
-      }
-      case ShrUInt64: {
-        if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::max(int64_t(0), maxBits(binary->left) - shifts->value.geti64());
-        }
-        return 64;
-      }
-      case ShrSInt64: {
-        if (auto* shifts = binary->right->dynCast<Const>()) {
-          auto childMax = maxBits(binary->left);
-          if (childMax == 64) return 64;
-          return std::max(int64_t(0), maxBits(binary->left) - shifts->value.geti64());
-        }
-        return 64;
-      }
+      case RemUInt64: case RotLInt64: case RotRInt64:
+      case AndInt64: case XorInt64:
+      case OrInt64:
+      case ShlInt64:
+      case ShrUInt64:
+      case ShrSInt64: return 64; // TODO
+      // comparisons
+      case EqInt32: case NeInt32: case LtSInt32:
+      case LtUInt32: case LeSInt32: case LeUInt32:
+      case GtSInt32: case GtUInt32: case GeSInt32:
+      case GeUInt32:
       case EqInt64: case NeInt64: case LtSInt64:
       case LtUInt64: case LeSInt64: case LeUInt64:
       case GtSInt64: case GtUInt64: case GeSInt64:
-      case GeUInt64: return 1;
+      case GeUInt64:
+      case EqFloat32: case NeFloat32:
+      case LtFloat32: case LeFloat32: case GtFloat32: case GeFloat32:
+      case EqFloat64: case NeFloat64:
+      case LtFloat64: case LeFloat64: case GtFloat64: case GeFloat64: return 1;
       default: WASM_UNREACHABLE();
     }
   } else if (auto* unary = curr->dynCast<Unary>()) {
@@ -243,19 +231,24 @@ static int maxBits(Expression* curr) {
       case ClzInt64: case CtzInt64: case PopcntInt64: return 6;
       case EqZInt32: case EqZInt64: return 1;
       case ExtendSInt32: {
-        auto childMax = maxBits(unary->value);
+        auto childMax = getMaxBits(unary->value);
         return childMax == 32 ? 64 : childMax;
       }
-      case ExtendUInt32: return maxBits(unary->value);
-      case WrapInt64: return std::min(32, maxBits(unary->value));
+      case ExtendUInt32: return getMaxBits(unary->value);
+      case WrapInt64: return std::min(Index(32), getMaxBits(unary->value));
       case TruncSFloat32ToInt32: case TruncUFloat32ToInt32: case TruncSFloat64ToInt32:
       case TruncUFloat64ToInt32: case ReinterpretFloat32: return 32;
       case TruncSFloat32ToInt64: case TruncUFloat32ToInt64: case TruncSFloat64ToInt64:
       case TruncUFloat64ToInt64: case ReinterpretFloat64: return 64;
-      default: WASM_UNREACHABLE();
+      default: std::cerr << "c " << curr << "\n"; WASM_UNREACHABLE();
     }
   }
-  WASM_UNREACHABLE();
+  switch (curr->type) {
+    case i32: return 32;
+    case i64: return 64;
+    case unreachable: return 64; // not interesting, but don't crash
+    default: WASM_UNREACHABLE();
+  }
 }
 
 // Check if an expression is a sign-extend, and if so, returns the value
@@ -342,13 +335,17 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           std::swap(binary->left, binary->right);
         }
       }
-      // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
       if (auto* ext = getSignExt(binary)) {
         auto bits = getSignExtBits(binary);
         auto* load = ext->dynCast<Load>();
+        // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
         if (load && ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16))) {
           load->signed_ = true;
           return load;
+        }
+        // if the sign-extend input cannot have a sign bit, we don't need it
+        if (getMaxBits(ext) < bits) {
+          return ext;
         }
       } else if (binary->op == EqInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
