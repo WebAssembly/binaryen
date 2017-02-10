@@ -703,8 +703,8 @@
       (i32.shr_s
         (i32.shl
           (i32.shl ;; adds, here it is too much
-            (i32.const 64)
-            (i32.const 1)
+            (i32.const 32)
+            (i32.const 2)
           )
           (i32.const 24)
         )
