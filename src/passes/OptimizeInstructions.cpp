@@ -204,15 +204,7 @@ static Index getMaxBits(Expression* curr) {
         }
         return 32;
       }
-      // 64-bit
-      case AddInt64: case SubInt64: case MulInt64:
-      case DivSInt64: case DivUInt64: case RemSInt64:
-      case RemUInt64: case RotLInt64: case RotRInt64:
-      case AndInt64: case XorInt64:
-      case OrInt64:
-      case ShlInt64:
-      case ShrUInt64:
-      case ShrSInt64: return 64; // TODO
+      // 64-bit TODO
       // comparisons
       case EqInt32: case NeInt32: case LtSInt32:
       case LtUInt32: case LeSInt32: case LeUInt32:
@@ -226,21 +218,15 @@ static Index getMaxBits(Expression* curr) {
       case LtFloat32: case LeFloat32: case GtFloat32: case GeFloat32:
       case EqFloat64: case NeFloat64:
       case LtFloat64: case LeFloat64: case GtFloat64: case GeFloat64: return 1;
-      default: WASM_UNREACHABLE();
+      default: {}
     }
   } else if (auto* unary = curr->dynCast<Unary>()) {
     switch (unary->op) {
       case ClzInt32: case CtzInt32: case PopcntInt32: return 5;
       case ClzInt64: case CtzInt64: case PopcntInt64: return 6;
       case EqZInt32: case EqZInt64: return 1;
-      case ExtendUInt32:
-      case ExtendSInt32: return 32; // TODO
       case WrapInt64: return std::min(Index(32), getMaxBits(unary->value));
-      case TruncSFloat32ToInt32: case TruncUFloat32ToInt32: case TruncSFloat64ToInt32:
-      case TruncUFloat64ToInt32: case ReinterpretFloat32: return 32;
-      case TruncSFloat32ToInt64: case TruncUFloat32ToInt64: case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt64: case ReinterpretFloat64: return 64;
-      default: std::cerr << "c " << curr << "\n"; WASM_UNREACHABLE();
+      default: {}
     }
   }
   switch (curr->type) {

@@ -917,5 +917,31 @@
         (i32.const 25)
       )
     )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.wrap/i64
+              (i64.extend_s/i32
+                (i32.const -1)
+              )
+            )
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.wrap/i64
+          (i64.extend_s/i32
+            (i32.const -1)
+          )
+        )
+        (i32.const 25)
+      )
+    )
   )
 )
