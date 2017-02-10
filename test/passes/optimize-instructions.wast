@@ -858,5 +858,89 @@
         (i32.const 24)
       )
     )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.clz ;; assumed 5 bits
+            (i32.const 0)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.clz ;; assumed 5 bits
+              (i32.const 0)
+            )
+            (i32.const 2) ;; + 2, so 7
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.clz ;; assumed 5 bits
+              (i32.const 0)
+            )
+            (i32.const 3) ;; + 3, so 8, too much
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.wrap/i64 ;; preserves 6
+            (i64.clz ;; assumed 6 bits
+              (i64.const 0)
+            )
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.wrap/i64 ;; preserves 6
+              (i64.clz ;; assumed 6 bits
+                (i64.const 0)
+              )
+            )
+            (i32.const 1) ;; + 1, so 7
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.wrap/i64 ;; preserves 6
+              (i64.clz ;; assumed 6 bits
+                (i64.const 0)
+              )
+            )
+            (i32.const 2) ;; + 2, so 8, too much
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
   )
 )
