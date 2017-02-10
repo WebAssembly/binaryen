@@ -834,5 +834,29 @@
         (i32.const 24)
       )
     )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.ne ;; 1 bit
+            (i32.const -1)
+            (i32.const -1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (f32.le
+            (f32.const -1)
+            (f32.const -1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
   )
 )
