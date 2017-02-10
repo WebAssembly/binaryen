@@ -357,6 +357,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         }
         // note that both left and right may be consts, but then we let precompute compute the constant result
+      } else if (binary->op == AddInt32 || binary->op == SubInt32) {
+        return optimizeAddedConstants(binary);
       } else if (binary->op == AndInt32) {
         if (auto* right = binary->right->dynCast<Const>()) {
           if (right->type == i32) {
@@ -516,6 +518,114 @@ private:
     }
     // TODO: recurse into br values?
     return boolean;
+  }
+
+  // find added constants in an expression tree, including multiplied/shifted, and combine them
+  // note that we ignore division/shift-right, as rounding makes this nonlinear, so not a valid opt
+  Expression* optimizeAddedConstants(Binary* binary) {
+    int32_t constant = 0;
+    std::vector<Const*> constants;
+    std::function<void (Expression*, int)> seek = [&](Expression* curr, int mul) {
+      if (auto* c = curr->dynCast<Const>()) {
+        auto value = c->value.geti32();
+        if (value != 0) {
+          constant += value * mul;
+          constants.push_back(c);
+        }
+      } else if (auto* binary = curr->dynCast<Binary>()) {
+        if (binary->op == AddInt32) {
+          seek(binary->left, mul);
+          seek(binary->right, mul);
+          return;
+        } else if (binary->op == SubInt32) {
+          // if the left is a zero, ignore it, it's how we negate ints
+          auto* left = binary->left->dynCast<Const>();
+          if (!left || left->value.geti32() != 0) {
+            seek(binary->left, mul);
+          }
+          seek(binary->right, -mul);
+          return;
+        } else if (binary->op == ShlInt32) {
+          if (auto* c = binary->right->dynCast<Const>()) {
+            seek(binary->left, mul * Pow2(c->value.geti32()));
+            return;
+          }
+        } else if (binary->op == MulInt32) {
+          if (auto* c = binary->left->dynCast<Const>()) {
+            seek(binary->right, mul * c->value.geti32());
+            return;
+          } else if (auto* c = binary->right->dynCast<Const>()) {
+            seek(binary->left, mul * c->value.geti32());
+            return;
+          }
+        }
+      }
+    };
+    // find all factors
+    seek(binary, 1);
+    if (constants.size() <= 1) return nullptr; // nothing to do
+    // wipe out all constants, we'll replace with a single added one
+    for (auto* c : constants) {
+      c->value = Literal(int32_t(0));
+    }
+    // remove added/subbed zeros
+    struct ZeroRemover : public PostWalker<ZeroRemover, Visitor<ZeroRemover>> {
+      // TODO: we could save the binarys and costs we drop, and reuse them later
+
+      PassOptions& passOptions;
+
+      ZeroRemover(PassOptions& passOptions) : passOptions(passOptions) {}
+
+      void visitBinary(Binary* curr) {
+        auto* left = curr->left->dynCast<Const>();
+        auto* right = curr->right->dynCast<Const>();
+        if (curr->op == AddInt32) {
+          if (left && left->value.geti32() == 0) {
+            replaceCurrent(curr->right);
+            return;
+          }
+          if (right && right->value.geti32() == 0) {
+            replaceCurrent(curr->left);
+            return;
+          }
+        } else if (curr->op == SubInt32) {
+          // we must leave a left zero, as it is how we negate ints
+          if (right && right->value.geti32() == 0) {
+            replaceCurrent(curr->left);
+            return;
+          }
+        } else if (curr->op == ShlInt32) {
+          // shifting a 0 is a 0, unless the shift has side effects
+          if (left && left->value.geti32() == 0 && !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
+            replaceCurrent(left);
+            return;
+          }
+        } else if (curr->op == MulInt32) {
+          // multiplying by zero is a zero, unless the other side has side effects
+          if (left && left->value.geti32() == 0 && !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
+            replaceCurrent(left);
+            return;
+          }
+          if (right && right->value.geti32() == 0 && !EffectAnalyzer(passOptions, curr->left).hasSideEffects()) {
+            replaceCurrent(right);
+            return;
+          }
+        }
+      }
+    };
+    Expression* walked = binary;
+    ZeroRemover(getPassOptions()).walk(walked);
+    if (constant == 0) return walked; // nothing more to do
+    if (auto* c = walked->dynCast<Const>()) {
+      assert(c->value.geti32() == 0);
+      c->value = Literal(constant);
+      return c;
+    }
+    Builder builder(*getModule());
+    return builder.makeBinary(AddInt32,
+      walked,
+      builder.makeConst(Literal(constant))
+    );
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2, and
