@@ -942,5 +942,44 @@
         (i32.const 24)
       )
     )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.eqz ;; 1 bit
+            (i32.const -1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.wrap/i64 ;; down to 32
+              (i64.const -1) ;; 64
+            )
+            (i32.const 24) ;; 32 - 24 = 8
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.wrap/i64 ;; down to 32
+              (i64.const -1) ;; 64
+            )
+            (i32.const 25) ;; 32 - 25 = 7, ok
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
   )
 )
