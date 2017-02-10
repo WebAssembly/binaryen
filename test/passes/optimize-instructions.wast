@@ -606,5 +606,170 @@
         (i32.const 24)
       )
     )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (unreachable) ;; ignore
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.div_s ;; this could be optimizable in theory, but currently we don't look into adds etc.
+            (i32.const 1)
+            (i32.const 2)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.and ;; takes the min, here it is ok
+            (i32.const 127)
+            (i32.const 128)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.and ;; takes the min, here it is not
+            (i32.const 128)
+            (i32.const 129)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.xor ;; takes the min, here it is ok
+            (i32.const 127)
+            (i32.const 128)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.xor ;; takes the min, here it is not
+            (i32.const 128)
+            (i32.const 129)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.or ;; takes the max, here it is ok
+            (i32.const 127)
+            (i32.const 126)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.or ;; takes the max, here it is not
+            (i32.const 127)
+            (i32.const 128)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl ;; adds, here it is too much
+            (i32.const 64)
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl ;; adds, here it is ok
+            (i32.const 32)
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl ;; adds, here it is too much and "overflows"
+            (i32.const 32)
+            (i32.const 35)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u ;; subtracts, here it is still too much
+            (i32.const 256)
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u ;; subtracts, here it is still too much
+            (i32.const 256)
+            (i32.const 2)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u ;; subtracts, here it "overflows"
+            (i32.const 128)
+            (i32.const 35)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
   )
 )

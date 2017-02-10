@@ -188,16 +188,19 @@ static Index getMaxBits(Expression* curr) {
         return 32;
       }
       case ShrUInt32: {
-        if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::max(Index(0), getMaxBits(binary->left) - shifts->value.geti32());
+        if (auto* shift = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left);
+          auto shifts = std::min(Index(shift->value.geti32()), maxBits); // can ignore more shifts than zero us out
+          return std::max(Index(0), maxBits - shifts);
         }
         return 32;
       }
       case ShrSInt32: {
-        if (auto* shifts = binary->right->dynCast<Const>()) {
-          auto childMax = getMaxBits(binary->left);
-          if (childMax == 32) return 32;
-          return std::max(Index(0), getMaxBits(binary->left) - shifts->value.geti32());
+        if (auto* shift = binary->right->dynCast<Const>()) {
+          auto maxBits = getMaxBits(binary->left);
+          if (maxBits == 32) return 32;
+          auto shifts = std::min(Index(shift->value.geti32()), maxBits); // can ignore more shifts than zero us out
+          return std::max(Index(0), maxBits - shifts);
         }
         return 32;
       }
