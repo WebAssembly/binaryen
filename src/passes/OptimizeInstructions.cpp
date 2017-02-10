@@ -234,7 +234,7 @@ static Index getMaxBits(Expression* curr) {
       case ClzInt64: case CtzInt64: case PopcntInt64: return 6;
       case EqZInt32: case EqZInt64: return 1;
       case ExtendUInt32:
-      case ExtendSInt32: return 64; // TODO
+      case ExtendSInt32: return 32; // TODO
       case WrapInt64: return std::min(Index(32), getMaxBits(unary->value));
       case TruncSFloat32ToInt32: case TruncUFloat32ToInt32: case TruncSFloat64ToInt32:
       case TruncUFloat64ToInt32: case ReinterpretFloat32: return 32;

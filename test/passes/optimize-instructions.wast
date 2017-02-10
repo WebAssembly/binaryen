@@ -981,5 +981,37 @@
         (i32.const 24)
       )
     )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.wrap/i64 ;; stay 32
+              (i64.extend_s/i32
+                (i32.const -1)
+              )
+            )
+            (i32.const 24) ;; 32 - 24 = 8
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.wrap/i64 ;; stay 32
+              (i64.extend_s/i32
+                (i32.const -1)
+              )
+            )
+            (i32.const 25) ;; 32 - 25 = 7, ok
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
   )
 )
