@@ -582,6 +582,24 @@
     (drop
       (i32.shr_s
         (i32.shl
+          (i32.const 127) ;; just small enough
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.const 128) ;; just too big
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
           (get-local $0) ;; who knows...
           (i32.const 24)
         )

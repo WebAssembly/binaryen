@@ -624,6 +624,18 @@
       (i32.const 100)
     )
     (drop
+      (i32.const 127)
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.const 128)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
       (i32.shr_s
         (i32.shl
           (get_local $0)
