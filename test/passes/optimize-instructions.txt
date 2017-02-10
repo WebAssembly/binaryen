@@ -3,6 +3,7 @@
   (type $1 (func))
   (type $2 (func (result i32)))
   (type $3 (func (param i32) (result i32)))
+  (type $4 (func (param i32 i32)))
   (memory $0 0)
   (export "load-off-2" (func $load-off-2))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
@@ -176,7 +177,8 @@
       )
     )
     (drop
-      (i32.eqz
+      (i32.eq
+        (i32.const 0)
         (i32.const 100)
       )
     )
@@ -512,6 +514,108 @@
       (i32.add
         (get_local $0)
         (i32.const 10)
+      )
+    )
+  )
+  (func $sign-ext (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (i32.eqz
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.and
+          (get_local $0)
+          (i32.const 65535)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.and
+          (get_local $0)
+          (i32.const 134217727)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+        (i32.and
+          (get_local $1)
+          (i32.const 255)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 65535)
+        )
+        (i32.and
+          (get_local $1)
+          (i32.const 65535)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 23)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.shr_u
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+    (drop
+      (i32.lt_s
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 0)
       )
     )
   )

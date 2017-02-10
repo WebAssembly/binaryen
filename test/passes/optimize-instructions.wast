@@ -192,6 +192,8 @@
         )
       )
     )
+    ;; we handle only 0 in the right position, as we assume a const is there, and don't care about if
+    ;; both are consts here (precompute does that, so no need)
     (drop
       (i32.eq
         (i32.const 100)
@@ -427,6 +429,143 @@
       (i32.add
         (i32.const 10)
         (get_local $0)
+      )
+    )
+  )
+  (func $sign-ext (param $0 i32) (param $1 i32)
+    ;; eq of sign-ext to const, can be a zext
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 5) ;; weird size, but still valid
+          )
+          (i32.const 5)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 100) ;; non-zero
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 32767) ;; non-zero and bigger than the mask
+      )
+    )
+    ;; eq of two sign-ext, can both be a zext
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+      )
+    )
+    ;; corner cases we should not opt
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 23) ;; different shift
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_u ;; unsigned
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.lt_s ;; non-eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 0)
       )
     )
   )
