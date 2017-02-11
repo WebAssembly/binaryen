@@ -1390,4 +1390,19 @@
       )
     )
   )
+  (func $sign-ext-boolean (param $0 i32) (param $1 i32)
+    (drop
+      (if i32
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 100)
+        (i32.const 200)
+      )
+    )
+  )
 )

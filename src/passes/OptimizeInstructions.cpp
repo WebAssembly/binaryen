@@ -561,6 +561,10 @@ private:
           }
         }
       }
+      if (auto* ext = getSignExt(binary)) {
+        // use a cheaper zero-extent, we just care about the boolean value anyhow
+        return makeZeroExt(ext, getSignExtBits(binary));
+      }
     } else if (auto* block = boolean->dynCast<Block>()) {
       if (block->type == i32 && block->list.size() > 0) {
         block->list.back() = optimizeBoolean(block->list.back());
