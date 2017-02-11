@@ -364,7 +364,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         if (getMaxBits(ext) + extraShifts < bits) {
           return removeAlmostSignExt(binary);
         }
-      } else if (binary->op == EqInt32) {
+      } else if (binary->op == EqInt32 || binary->op == NeInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
           if (auto* ext = getSignExt(binary->left)) {
             // we are comparing a sign extend to a constant, which means we can use a cheaper zext
@@ -374,7 +374,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             c->value = c->value.and_(Literal(lowBitMask(bits)));
             return binary;
           }
-          if (c->value.geti32() == 0) {
+          if (binary->op == EqInt32 && c->value.geti32() == 0) {
             // equal 0 => eqz
             return Builder(*getModule()).makeUnary(EqZInt32, binary->left);
           }

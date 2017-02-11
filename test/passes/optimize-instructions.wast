@@ -1332,4 +1332,49 @@
       )
     )
   )
+  (func $sign-ext-ne (param $0 i32) (param $1 i32)
+    ;; ne of sign-ext to const, can be a zext
+    (drop
+      (i32.ne
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 65000)
+      )
+    )
+    (drop
+      (i32.ne
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 111)
+      )
+    )
+    (drop
+      (i32.ne
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+  )
 )
