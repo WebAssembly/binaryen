@@ -8474,15 +8474,9 @@
           )
         )
         (if
-          (i32.shr_s
-            (i32.shl
-              (i32.and
-                (get_local $1)
-                (i32.const 255)
-              )
-              (i32.const 24)
-            )
-            (i32.const 24)
+          (i32.and
+            (get_local $1)
+            (i32.const 255)
           )
           (block
             (set_local $1

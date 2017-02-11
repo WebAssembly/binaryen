@@ -1111,4 +1111,14 @@
       )
     )
   )
+  (func $sign-ext-eqz (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (i32.eqz
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+      )
+    )
+  )
 )

@@ -468,6 +468,13 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             default: {}
           }
         }
+        // eqz of a sign extension can be of zero-extension
+        if (auto* ext = getSignExt(unary->value)) {
+          // we are comparing a sign extend to a constant, which means we can use a cheaper zext
+          auto bits = getSignExtBits(unary->value);
+          unary->value = makeZeroExt(ext, bits);
+          return unary;
+        }
       }
     } else if (auto* set = curr->dynCast<SetGlobal>()) {
       // optimize out a set of a get
