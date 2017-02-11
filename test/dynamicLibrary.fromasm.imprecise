@@ -44,10 +44,7 @@
     )
     (drop
       (call $_puts
-        (i32.add
-          (get_global $memoryBase)
-          (i32.const 0)
-        )
+        (get_global $memoryBase)
       )
     )
     (set_global $STACKTOP

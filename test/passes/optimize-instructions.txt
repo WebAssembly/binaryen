@@ -1133,4 +1133,12 @@
       )
     )
   )
+  (func $add-sub-zero (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (get_local $0)
+    )
+    (drop
+      (get_local $0)
+    )
+  )
 )

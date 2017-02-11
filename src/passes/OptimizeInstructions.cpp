@@ -622,7 +622,15 @@ private:
     };
     // find all factors
     seek(binary, 1);
-    if (constants.size() <= 1) return nullptr; // nothing to do
+    if (constants.size() <= 1) {
+      // nothing much to do, except for the trivial case of adding/subbing a zero
+      if (auto* c = binary->right->dynCast<Const>()) {
+        if (c->value.geti32() == 0) {
+          return binary->left;
+        }
+      }
+      return nullptr;
+    }
     // wipe out all constants, we'll replace with a single added one
     for (auto* c : constants) {
       c->value = Literal(int32_t(0));

@@ -1405,4 +1405,18 @@
       )
     )
   )
+  (func $add-sub-zero (param $0 i32) (param $1 i32)
+    (drop
+      (i32.add
+        (get_local $0)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.sub
+        (get_local $0)
+        (i32.const 0)
+      )
+    )
+  )
 )

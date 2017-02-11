@@ -115,10 +115,7 @@
                   (i32.add
                     (i32.mul
                       (tee_local $7
-                        (i32.add
-                          (get_local $0)
-                          (i32.const 0)
-                        )
+                        (get_local $0)
                       )
                       (get_local $0)
                     )
@@ -211,10 +208,7 @@
                   (i32.add
                     (i32.mul
                       (i32.eqz
-                        (i32.add
-                          (get_local $0)
-                          (i32.const 0)
-                        )
+                        (get_local $0)
                       )
                       (get_local $0)
                     )
