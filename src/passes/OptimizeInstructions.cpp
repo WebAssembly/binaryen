@@ -263,6 +263,36 @@ static Index getSignExtBits(Expression* curr) {
   return 32 - curr->cast<Binary>()->right->cast<Const>()->value.geti32();
 }
 
+// Check if an expression is almost a sign-extend: perhaps the inner shift
+// is too large. We can split the shifts in that case, which is sometimes
+// useful (e.g. if we can remove the signext)
+static Expression* getAlmostSignExt(Expression* curr) {
+  if (auto* outer = curr->dynCast<Binary>()) {
+    if (outer->op == ShrSInt32) {
+      if (auto* outerConst = outer->right->dynCast<Const>()) {
+        if (auto* inner = outer->left->dynCast<Binary>()) {
+          if (inner->op == ShlInt32) {
+            if (auto* innerConst = inner->right->dynCast<Const>()) {
+              if (outerConst->value.leU(innerConst->value).geti32()) {
+                return inner->left;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
+// gets the size of the almost sign-extended value, as well as the
+// extra shifts, if any
+static Index getAlmostSignExtBits(Expression* curr, Index& extraShifts) {
+  extraShifts = curr->cast<Binary>()->left->cast<Binary>()->right->cast<Const>()->value.geti32() -
+                curr->cast<Binary>()->right->cast<Const>()->value.geti32();
+  return getSignExtBits(curr);
+}
+
 // get a mask to keep only the low # of bits
 static int32_t lowBitMask(int32_t bits) {
   uint32_t ret = -1;
@@ -321,17 +351,18 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           std::swap(binary->left, binary->right);
         }
       }
-      if (auto* ext = getSignExt(binary)) {
-        auto bits = getSignExtBits(binary);
+      if (auto* ext = getAlmostSignExt(binary)) {
+        Index extraShifts;
+        auto bits = getAlmostSignExtBits(binary, extraShifts);
         auto* load = ext->dynCast<Load>();
         // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
         if (load && ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16))) {
           load->signed_ = true;
-          return load;
+          return removeAlmostSignExt(binary);
         }
         // if the sign-extend input cannot have a sign bit, we don't need it
-        if (getMaxBits(ext) < bits) {
-          return ext;
+        if (getMaxBits(ext) + extraShifts < bits) {
+          return removeAlmostSignExt(binary);
         }
       } else if (binary->op == EqInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
@@ -359,29 +390,46 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         // note that both left and right may be consts, but then we let precompute compute the constant result
       } else if (binary->op == AddInt32 || binary->op == SubInt32) {
         return optimizeAddedConstants(binary);
-      } else if (binary->op == AndInt32) {
-        if (auto* right = binary->right->dynCast<Const>()) {
-          if (right->type == i32) {
-            auto mask = right->value.geti32();
-            // and with -1 does nothing (common in asm.js output)
-            if (mask == -1) {
-              return binary->left;
+      }
+      // a bunch of operations on a constant right side can be simplified
+      if (auto* right = binary->right->dynCast<Const>()) {
+        if (binary->op == AndInt32) {
+          auto mask = right->value.geti32();
+          // and with -1 does nothing (common in asm.js output)
+          if (mask == -1) {
+            return binary->left;
+          }
+          // small loads do not need to be masted, the load itself masks
+          if (auto* load = binary->left->dynCast<Load>()) {
+            if ((load->bytes == 1 && mask == 0xff) ||
+                (load->bytes == 2 && mask == 0xffff)) {
+              load->signed_ = false;
+              return load;
             }
-            // small loads do not need to be masted, the load itself masks
-            if (auto* load = binary->left->dynCast<Load>()) {
-              if ((load->bytes == 1 && mask == 0xff) ||
-                  (load->bytes == 2 && mask == 0xffff)) {
-                load->signed_ = false;
-                return load;
+          } else if (mask == 1 && Properties::emitsBoolean(binary->left)) {
+            // (bool) & 1 does not need the outer mask
+            return binary->left;
+          }
+        }
+        // the square of some operations can be merged
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == binary->op) {
+            if (auto* leftRight = left->right->dynCast<Const>()) {
+              if (left->op == AndInt32) {
+                leftRight->value = leftRight->value.and_(right->value);
+                return left;
+              } else if (left->op == OrInt32) {
+                leftRight->value = leftRight->value.or_(right->value);
+                return left;
+              } else if (left->op == ShlInt32 || left->op == ShrUInt32 || left->op == ShrSInt32) {
+                leftRight->value = leftRight->value.add(right->value);
+                return left;
               }
-            } else if (mask == 1 && Properties::emitsBoolean(binary->left)) {
-              // (bool) & 1 does not need the outer mask
-              return binary->left;
             }
           }
         }
-        return conditionalizeExpensiveOnBitwise(binary);
-      } else if (binary->op == OrInt32) {
+      }
+      if (binary->op == AndInt32 || binary->op == OrInt32) {
         return conditionalizeExpensiveOnBitwise(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
@@ -684,6 +732,21 @@ private:
   Expression* makeZeroExt(Expression* curr, int32_t bits) {
     Builder builder(*getModule());
     return builder.makeBinary(AndInt32, curr, builder.makeConst(Literal(lowBitMask(bits))));
+  }
+
+  // given an "almost" sign extend - either a proper one, or it
+  // has too many shifts left - we remove the sig extend. If there are
+  // too many shifts, we split the shifts first, so this removes the
+  // two sign extend shifts and adds one (smaller one)
+  Expression* removeAlmostSignExt(Binary* outer) {
+    auto* inner = outer->left->cast<Binary>();
+    auto* outerConst = outer->right->cast<Const>();
+    auto* innerConst = inner->right->cast<Const>();
+    auto* value = inner->left;
+    if (outerConst->value == innerConst->value) return value;
+    // add a shift, by reusing the existing node
+    innerConst->value = innerConst->value.sub(outerConst->value);
+    return inner;
   }
 };
 

@@ -539,7 +539,7 @@
             (get_local $0)
             (i32.const 24)
           )
-          (i32.const 23) ;; different shift
+          (i32.const 23) ;; different shift, smaller
         )
         (i32.const 0)
       )
@@ -1235,6 +1235,26 @@
           (i32.const -5)
           (i32.const 5)
         )
+      )
+    )
+  )
+  (func $almost-sign-ext (param $0 i32) (param $0 i32)
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.const 100) ;; too big, there is a sign bit, due to the extra shift
+          (i32.const 25)
+        )
+        (i32.const 24) ;; different shift, but larger, so ok to opt if we leave a shift, in theory
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.const 50) ;; small enough, no sign bit
+          (i32.const 25)
+        )
+        (i32.const 24) ;; different shift, but larger, so ok to opt if we leave a shift
       )
     )
   )
