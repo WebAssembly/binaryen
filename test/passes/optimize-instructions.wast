@@ -1258,4 +1258,78 @@
       )
     )
   )
+  (func $squaring (param $0 i32) (param $1 i32)
+    (drop
+      (i32.and
+        (i32.and
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.and
+          (get_local $0)
+          (i32.const 11)
+        )
+        (get_local $0) ;; non-const, cannot optimize this!
+      )
+    )
+    (drop
+      (i32.and
+        (i32.and
+          (i32.const 11) ;; flipped order
+          (get_local $0)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.or
+        (i32.or
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shl
+        (i32.shl
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shr_s
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.shr_u
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.shr_s ;; but do not optimize a mixture or different shifts!
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+  )
 )
