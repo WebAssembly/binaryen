@@ -228,6 +228,9 @@ static Index getMaxBits(Expression* curr) {
       case WrapInt64: return std::min(Index(32), getMaxBits(unary->value));
       default: {}
     }
+  } else if (auto* set = curr->dynCast<SetLocal>()) {
+    // a tee passes through the value
+    return getMaxBits(set->value);
   }
   switch (curr->type) {
     case i32: return 32;
