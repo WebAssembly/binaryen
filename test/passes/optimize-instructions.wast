@@ -1419,4 +1419,86 @@
       )
     )
   )
+  (func $store-signext (param $0 i32)
+    (i32.store8
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24) ;; exact size we store, sign-ext of 8 bits
+        )
+        (i32.const 24)
+      )
+    )
+    (i32.store8
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 25) ;; 7 bits. so the ext can alter a bit we store, do not optimize
+        )
+        (i32.const 25)
+      )
+    )
+    (i32.store8
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 23) ;; 9 bits, this is good to optimize
+        )
+        (i32.const 23)
+      )
+    )
+    (i32.store16
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 16) ;; exact size we store, sign-ext of 16 bits
+        )
+        (i32.const 16)
+      )
+    )
+    (i32.store16
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 17) ;; 15 bits. so the ext can alter a bit we store, do not optimize
+        )
+        (i32.const 17)
+      )
+    )
+    (i32.store16
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 14) ;; 17 bits, this is good to optimize
+        )
+        (i32.const 14)
+      )
+    )
+    (i32.store
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 16) ;; 4 bytes stored, do nothing
+        )
+        (i32.const 16)
+      )
+    )
+    (i32.store
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 8) ;; 4 bytes stored, do nothing
+        )
+        (i32.const 8)
+      )
+    )
+  )
 )

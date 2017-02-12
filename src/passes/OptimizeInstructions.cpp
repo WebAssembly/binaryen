@@ -525,6 +525,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
               }
             }
           }
+        } else if (auto* ext = getSignExt(binary)) {
+          // if sign extending the exact bit size we store, we can skip the extension
+          // if extending something bigger, then we just alter bits we don't save anyhow
+          if (getSignExtBits(binary) >= store->bytes * 8) {
+            store->value = ext;
+          }
         }
       } else if (auto* unary = store->value->dynCast<Unary>()) {
         if (unary->op == WrapInt64) {

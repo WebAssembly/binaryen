@@ -4,6 +4,7 @@
   (type $2 (func (result i32)))
   (type $3 (func (param i32) (result i32)))
   (type $4 (func (param i32 i32)))
+  (type $5 (func (param i32)))
   (memory $0 0)
   (export "load-off-2" (func $load-off-2))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
@@ -1139,6 +1140,64 @@
     )
     (drop
       (get_local $0)
+    )
+  )
+  (func $store-signext (type $5) (param $0 i32)
+    (i32.store8
+      (i32.const 8)
+      (get_local $0)
+    )
+    (i32.store8
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 25)
+        )
+        (i32.const 25)
+      )
+    )
+    (i32.store8
+      (i32.const 8)
+      (get_local $0)
+    )
+    (i32.store16
+      (i32.const 8)
+      (get_local $0)
+    )
+    (i32.store16
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 17)
+        )
+        (i32.const 17)
+      )
+    )
+    (i32.store16
+      (i32.const 8)
+      (get_local $0)
+    )
+    (i32.store
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+    (i32.store
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 8)
+        )
+        (i32.const 8)
+      )
     )
   )
 )
