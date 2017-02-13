@@ -5507,10 +5507,7 @@
                                                               (tee_local $5
                                                                 (i32.add
                                                                   (i32.xor
-                                                                    (i32.and
-                                                                      (get_local $32)
-                                                                      (i32.const 1)
-                                                                    )
+                                                                    (get_local $32)
                                                                     (i32.const 1)
                                                                   )
                                                                   (get_local $17)

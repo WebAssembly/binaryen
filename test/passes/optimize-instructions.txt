@@ -1240,8 +1240,22 @@
       )
     )
     (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.load8_s
+              (i32.const 256)
+            )
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
       (i32.shr_u
-        (i32.load8_s
+        (i32.load8_u
           (i32.const 256)
         )
         (i32.const 1)
@@ -1341,6 +1355,249 @@
           (i32.const 128)
         )
         (i32.const 127)
+      )
+    )
+  )
+  (func $local-info-zero-ext (type $4) (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.const 212)
+    )
+    (drop
+      (get_local $x)
+    )
+    (set_local $y
+      (i32.const 500)
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (set_local $0
+      (i32.const 212)
+    )
+    (drop
+      (i32.and
+        (get_local $0)
+        (i32.const 255)
+      )
+    )
+    (set_local $z
+      (i32.const 212)
+    )
+    (set_local $z
+      (i32.const 220)
+    )
+    (drop
+      (get_local $z)
+    )
+    (set_local $w
+      (i32.const 212)
+    )
+    (set_local $w
+      (i32.const 1000)
+    )
+    (drop
+      (i32.and
+        (get_local $w)
+        (i32.const 255)
+      )
+    )
+  )
+  (func $local-info-sign-ext-bitsize (type $4) (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.const 127)
+    )
+    (drop
+      (get_local $x)
+    )
+    (set_local $y
+      (i32.const 128)
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $0
+      (i32.const 127)
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.const 127)
+    )
+    (set_local $z
+      (i32.const 100)
+    )
+    (drop
+      (get_local $z)
+    )
+    (set_local $w
+      (i32.const 127)
+    )
+    (set_local $w
+      (i32.const 150)
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $w)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $local-info-sign-ext-already-exted (type $4) (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (get_local $x)
+    )
+    (set_local $y
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $0
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.shr_s
+        (i32.shl
+          (get_local $1)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (get_local $z)
+    )
+    (set_local $w
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $w
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 23)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $w)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 23)
+      )
+    )
+  )
+  (func $signed-loads-fill-the-bits (type $3) (param $$e i32) (result i32)
+    (local $$0 i32)
+    (local $$conv i32)
+    (set_local $$0
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (set_local $$conv
+      (i32.and
+        (get_local $$0)
+        (i32.const 255)
+      )
+    )
+    (return
+      (i32.eq
+        (get_local $$conv)
+        (get_local $$e)
       )
     )
   )
