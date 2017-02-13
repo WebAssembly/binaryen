@@ -377,13 +377,14 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (auto* ext = getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = getAlmostSignExtBits(binary, extraShifts);
-        auto* load = getFallthroughDynCast<Load>(ext);
-        // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
-        if (load && ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16))) {
-          // if the value falls through, we can't alter the load, as it might be captured in a tee
-          if (load->signed_ == true || load == ext) {
-            load->signed_ = true;
-            return removeAlmostSignExt(binary);
+        if (auto* load = getFallthroughDynCast<Load>(ext)) {
+          // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
+          if ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16)) {
+            // if the value falls through, we can't alter the load, as it might be captured in a tee
+            if (load->signed_ == true || load == ext) {
+              load->signed_ = true;
+              return removeAlmostSignExt(binary);
+            }
           }
         }
         // if the sign-extend input cannot have a sign bit, we don't need it
