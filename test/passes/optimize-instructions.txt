@@ -1290,4 +1290,58 @@
       )
     )
   )
+  (func $mask-bits (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (tee_local $0
+        (i32.const 127)
+      )
+    )
+    (drop
+      (tee_local $0
+        (i32.const 128)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 254)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 1279)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 1290)
+      )
+    )
+    (drop
+      (tee_local $0
+        (i32.const 128)
+      )
+    )
+    (drop
+      (tee_local $0
+        (i32.const 128)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 127)
+      )
+    )
+  )
 )

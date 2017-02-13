@@ -1625,4 +1625,70 @@
       )
     )
   )
+  (func $mask-bits (param $0 i32) (param $1 i32)
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 127) ;; 7 bits
+        )
+        (i32.const 255) ;; mask 8, so we don't need this
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128) ;; 8 bits
+        )
+        (i32.const 255) ;; mask 8, so we don't need this
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 254) ;; improper mask, small
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 1279) ;; improper mask, large
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 1290) ;; improper mask, large
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 4095) ;; proper mask, huge
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 511) ;; proper mask, large
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 127) ;; proper mask, just too small
+      )
+    )
+  )
 )

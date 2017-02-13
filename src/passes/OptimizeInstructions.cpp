@@ -305,6 +305,17 @@ static int32_t lowBitMask(int32_t bits) {
   return ret >> (32 - bits);
 }
 
+// checks if the input is a mask of lower bits, i.e., all 1s up to some high bit, and all zeros
+// from there. returns the number of masked bits, or 0 if this is not such a mask
+static uint32_t getMaskedBits(int32_t mask) {
+  if (mask == -1) return 32; // all the bits
+  if (mask == 0) return 0; // trivially not a mask
+  // otherwise, see if adding one turns this into a 1-bit thing, 00011111 + 1 => 00100000
+  if (PopCount(mask + 1) != 1) return 0;
+  // this is indeed a mask
+  return 32 - CountLeadingZeroes(mask);
+}
+
 // performs a dynCast on the fallthrough value, i.e., looks through
 // too and block fallthroughs, etc.
 template<typename T>
@@ -436,9 +447,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
                 return binary->left;
               }
             }
-          } else if (mask == 1 && Properties::emitsBoolean(binary->left)) {
-            // (bool) & 1 does not need the outer mask
-            return binary->left;
+          } else if (auto maskedBits = getMaskedBits(mask)) {
+            if (getMaxBits(binary->left) <= maskedBits) {
+              // a mask of lower bits is not needed if we are already smaller
+              return binary->left;
+            }
           }
         }
         // the square of some operations can be merged
