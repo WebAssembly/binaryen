@@ -305,6 +305,24 @@ static int32_t lowBitMask(int32_t bits) {
   return ret >> (32 - bits);
 }
 
+// performs a dynCast on the fallthrough value, i.e., looks through
+// too and block fallthroughs, etc.
+template<typename T>
+T* getFallthroughDynCast(Expression* curr) {
+  if (T* ret = curr->dynCast<T>()) {
+    return ret;
+  }
+  if (auto* set = curr->dynCast<SetLocal>()) {
+    if (set->isTee()) return getFallthroughDynCast<T>(set->value);
+  } else if (auto* block = curr->dynCast<Block>()) {
+    // if no name, we can't be broken to, and then can look at the fallthrough
+    if (!block->name.is() && block->list.size() > 0) {
+      return getFallthroughDynCast<T>(block->list.back());
+    }
+  }
+  return nullptr;
+}
+
 // Main pass class
 struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions, UnifiedExpressionVisitor<OptimizeInstructions>>> {
   bool isFunctionParallel() override { return true; }
@@ -359,11 +377,14 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (auto* ext = getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = getAlmostSignExtBits(binary, extraShifts);
-        auto* load = ext->dynCast<Load>();
+        auto* load = getFallthroughDynCast<Load>(ext);
         // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
         if (load && ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16))) {
-          load->signed_ = true;
-          return removeAlmostSignExt(binary);
+          // if the value falls through, we can't alter the load, as it might be captured in a tee
+          if (load->signed_ == true || load == ext) {
+            load->signed_ = true;
+            return removeAlmostSignExt(binary);
+          }
         }
         // if the sign-extend input cannot have a sign bit, we don't need it
         if (getMaxBits(ext) + extraShifts < bits) {
@@ -405,11 +426,14 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             return binary->left;
           }
           // small loads do not need to be masted, the load itself masks
-          if (auto* load = binary->left->dynCast<Load>()) {
+          if (auto* load = getFallthroughDynCast<Load>(binary->left)) {
             if ((load->bytes == 1 && mask == 0xff) ||
                 (load->bytes == 2 && mask == 0xffff)) {
-              load->signed_ = false;
-              return load;
+              // if the value falls through, we can't alter the load, as it might be captured in a tee
+              if (load->signed_ == false || load == binary->left) {
+                load->signed_ = false;
+                return binary->left;
+              }
             }
           } else if (mask == 1 && Properties::emitsBoolean(binary->left)) {
             // (bool) & 1 does not need the outer mask

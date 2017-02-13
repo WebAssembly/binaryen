@@ -1562,5 +1562,52 @@
         (i32.const 16)
       )
     )
+    ;; through tees, we cannot alter the load sign
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (tee_local $1
+            (i32.load8_s
+              (i32.const 1)
+            )
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (tee_local $1
+            (i32.load8_u
+              (i32.const 1)
+            )
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $1
+          (i32.load8_s
+            (i32.const 1)
+          )
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $1
+          (i32.load8_u
+            (i32.const 1)
+          )
+        )
+        (i32.const 255)
+      )
+    )
   )
 )

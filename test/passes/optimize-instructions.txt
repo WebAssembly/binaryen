@@ -1237,5 +1237,42 @@
         (i32.const 256)
       )
     )
+    (drop
+      (tee_local $1
+        (i32.load8_s
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (tee_local $1
+            (i32.load8_u
+              (i32.const 1)
+            )
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $1
+          (i32.load8_s
+            (i32.const 1)
+          )
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (tee_local $1
+        (i32.load8_u
+          (i32.const 1)
+        )
+      )
+    )
   )
 )
