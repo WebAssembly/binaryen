@@ -669,15 +669,15 @@
     (drop
       (i32.xor
         (i32.const 127)
-        (i32.const 128)
+        (i32.const 126)
       )
     )
     (drop
       (i32.shr_s
         (i32.shl
           (i32.xor
+            (i32.const 127)
             (i32.const 128)
-            (i32.const 129)
           )
           (i32.const 24)
         )
@@ -912,6 +912,21 @@
           )
         )
         (i32.const 25)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.xor
+            (i32.le_u
+              (get_local $0)
+              (i32.const 2)
+            )
+            (get_local $0)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
       )
     )
   )

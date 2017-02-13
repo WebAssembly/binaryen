@@ -654,9 +654,9 @@
     (drop
       (i32.shr_s
         (i32.shl
-          (i32.xor ;; takes the min, here it is ok
+          (i32.xor ;; takes the max, here it is ok
             (i32.const 127)
-            (i32.const 128)
+            (i32.const 126)
           )
           (i32.const 24)
         )
@@ -666,9 +666,9 @@
     (drop
       (i32.shr_s
         (i32.shl
-          (i32.xor ;; takes the min, here it is not
+          (i32.xor ;; takes the max, here it is not
+            (i32.const 127)
             (i32.const 128)
-            (i32.const 129)
           )
           (i32.const 24)
         )
@@ -1007,6 +1007,21 @@
               )
             )
             (i32.const 25) ;; 32 - 25 = 7, ok
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop ;; fuzz testcase
+      (i32.shr_s
+        (i32.shl
+          (i32.xor ;; should be 32 bits
+            (i32.le_u ;; 1 bit
+              (get_local $0)
+              (i32.const 2)
+            )
+            (get_local $0) ;; unknown, so 32 bits
           )
           (i32.const 24)
         )

@@ -179,8 +179,8 @@ static Index getMaxBits(Expression* curr) {
       case AddInt32: case SubInt32: case MulInt32:
       case DivSInt32: case DivUInt32: case RemSInt32:
       case RemUInt32: case RotLInt32: case RotRInt32: return 32;
-      case AndInt32: case XorInt32: return std::min(getMaxBits(binary->left), getMaxBits(binary->right));
-      case OrInt32: return std::max(getMaxBits(binary->left), getMaxBits(binary->right));
+      case AndInt32: return std::min(getMaxBits(binary->left), getMaxBits(binary->right));
+      case OrInt32: case XorInt32: return std::max(getMaxBits(binary->left), getMaxBits(binary->right));
       case ShlInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
           return std::min(Index(32), getMaxBits(binary->left) + shifts->value.geti32());
