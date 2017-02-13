@@ -1218,4 +1218,24 @@
       )
     )
   )
+  (func $sign-ext-load (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (i32.load8_s
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.load8_s
+          (i32.const 256)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i32.load16_s
+        (i32.const 256)
+      )
+    )
+  )
 )

@@ -231,6 +231,8 @@ static Index getMaxBits(Expression* curr) {
   } else if (auto* set = curr->dynCast<SetLocal>()) {
     // a tee passes through the value
     return getMaxBits(set->value);
+  } else if (auto* load = curr->dynCast<Load>()) {
+    return 8 * load->bytes;
   }
   switch (curr->type) {
     case i32: return 32;

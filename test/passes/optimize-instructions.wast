@@ -1525,4 +1525,42 @@
       )
     )
   )
+  (func $sign-ext-load (param $0 i32) (param $1 i32)
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_s ;; one byte, so perfect
+            (i32.const 256)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.load8_s ;; one byte, but reduced to 7
+              (i32.const 256)
+            )
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_s ;; two, so perfect
+            (i32.const 256)
+          )
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+  )
 )
