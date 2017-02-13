@@ -613,8 +613,63 @@ private:
     return ret;
   }
 
+  Expression* makePotentiallyTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
+    if (imprecise) return builder.makeBinary(op, left, right);
+    // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
+    auto *call = allocator.alloc<Call>();
+    switch (op) {
+      case BinaryOp::RemSInt32: call->target = I32S_REM; break;
+      case BinaryOp::RemUInt32: call->target = I32U_REM; break;
+      case BinaryOp::DivSInt32: call->target = I32S_DIV; break;
+      case BinaryOp::DivUInt32: call->target = I32U_DIV; break;
+      default: WASM_UNREACHABLE();
+    }
+    call->operands.push_back(left);
+    call->operands.push_back(right);
+    call->type = i32;
+    static std::set<Name> addedFunctions;
+    if (addedFunctions.count(call->target) == 0) {
+      Expression* result = builder.makeBinary(op,
+        builder.makeGetLocal(0, i32),
+        builder.makeGetLocal(1, i32)
+      );
+      if (op == DivSInt32) {
+        // guard against signed division overflow
+        result = builder.makeIf(
+          builder.makeBinary(AndInt32,
+            builder.makeBinary(EqInt32,
+              builder.makeGetLocal(0, i32),
+              builder.makeConst(Literal(std::numeric_limits<int32_t>::min()))
+            ),
+            builder.makeBinary(EqInt32,
+              builder.makeGetLocal(1, i32),
+              builder.makeConst(Literal(int32_t(-1)))
+            )
+          ),
+          builder.makeConst(Literal(int32_t(0))),
+          result
+        );
+      }
+      addedFunctions.insert(call->target);
+      auto func = new Function;
+      func->name = call->target;
+      func->params.push_back(i32);
+      func->params.push_back(i32);
+      func->result = i32;
+      func->body = builder.makeIf(
+        builder.makeUnary(EqZInt32,
+          builder.makeGetLocal(1, i32)
+        ),
+        builder.makeConst(Literal(int32_t(0))),
+        result
+      );
+      wasm.addFunction(func);
+    }
+    return call;
+  }
+
   // Some binary opts might trap, so emit them safely if we are precise
-  Expression* makeDangerousI64Binary(BinaryOp op, Expression* left, Expression* right) {
+  Expression* makePotentiallyTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
     if (imprecise) return builder.makeBinary(op, left, right);
     // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
@@ -630,6 +685,27 @@ private:
     call->type = i64;
     static std::set<Name> addedFunctions;
     if (addedFunctions.count(call->target) == 0) {
+      Expression* result = builder.makeBinary(op,
+        builder.makeGetLocal(0, i64),
+        builder.makeGetLocal(1, i64)
+      );
+      if (op == DivSInt64) {
+        // guard against signed division overflow
+        result = builder.makeIf(
+          builder.makeBinary(AndInt32,
+            builder.makeBinary(EqInt64,
+              builder.makeGetLocal(0, i64),
+              builder.makeConst(Literal(std::numeric_limits<int64_t>::min()))
+            ),
+            builder.makeBinary(EqInt64,
+              builder.makeGetLocal(1, i64),
+              builder.makeConst(Literal(int64_t(-1)))
+            )
+          ),
+          builder.makeConst(Literal(int64_t(0))),
+          result
+        );
+      }
       addedFunctions.insert(call->target);
       auto func = new Function;
       func->name = call->target;
@@ -641,10 +717,7 @@ private:
           builder.makeGetLocal(1, i64)
         ),
         builder.makeConst(Literal(int64_t(0))),
-        builder.makeBinary(op,
-          builder.makeGetLocal(0, i64),
-          builder.makeGetLocal(1, i64)
-        )
+        result
       );
       wasm.addFunction(func);
     }
@@ -1511,29 +1584,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (!imprecise && (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
                                 ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
         // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
-        CallImport *call = allocator.alloc<CallImport>();
-        switch (ret->op) {
-          case BinaryOp::RemSInt32: call->target = I32S_REM; break;
-          case BinaryOp::RemUInt32: call->target = I32U_REM; break;
-          case BinaryOp::DivSInt32: call->target = I32S_DIV; break;
-          case BinaryOp::DivUInt32: call->target = I32U_DIV; break;
-          default: WASM_UNREACHABLE();
-        }
-        call->operands.push_back(ret->left);
-        call->operands.push_back(ret->right);
-        call->type = i32;
-        static std::set<Name> addedImport;
-        if (addedImport.count(call->target) == 0) {
-          addedImport.insert(call->target);
-          auto import = new Import;
-          import->name = call->target;
-          import->module = ASM2WASM;
-          import->base = call->target;
-          import->functionType = ensureFunctionType("iii", &wasm);
-          import->kind = ExternalKind::Function;
-          wasm.addImport(import);
-        }
-        return call;
+        return makePotentiallyTrappingI32Binary(ret->op, ret->left, ret->right);
       }
       return ret;
     } else if (what == SUB) {
@@ -1856,10 +1907,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
                 if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
                 if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-                if (name == I64_UDIV) return makeDangerousI64Binary(BinaryOp::DivUInt64, left, right);
-                if (name == I64_SDIV) return makeDangerousI64Binary(BinaryOp::DivSInt64, left, right);
-                if (name == I64_UREM) return makeDangerousI64Binary(BinaryOp::RemUInt64, left, right);
-                if (name == I64_SREM) return makeDangerousI64Binary(BinaryOp::RemSInt64, left, right);
+                if (name == I64_UDIV) return makePotentiallyTrappingI64Binary(BinaryOp::DivUInt64, left, right);
+                if (name == I64_SDIV) return makePotentiallyTrappingI64Binary(BinaryOp::DivSInt64, left, right);
+                if (name == I64_UREM) return makePotentiallyTrappingI64Binary(BinaryOp::RemUInt64, left, right);
+                if (name == I64_SREM) return makePotentiallyTrappingI64Binary(BinaryOp::RemSInt64, left, right);
                 if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
                 if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
                 if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
