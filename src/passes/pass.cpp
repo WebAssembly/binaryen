@@ -113,6 +113,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    add("pick-load-signs");
+  }
   add("precompute");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");

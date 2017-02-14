@@ -66,8 +66,9 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns, Vi
 
   void visitGetLocal(GetLocal* curr) {
     // this is a use. check from the context what it is, signed or unsigned, etc.
+    auto& usage = usages[curr->index];
+    usage.totalUsages++;
     if (expressionStack.size() >= 2) {
-      auto& usage = usages[curr->index];
       auto* parent = expressionStack[expressionStack.size() - 2];
       if (Properties::getZeroExtValue(parent)) {
         auto bits = Properties::getZeroExtBits(parent);
@@ -77,18 +78,16 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns, Vi
           usage.unsignedBits = 0;
         }
         usage.unsignedUsages++;
-        usage.totalUsages++;
       } else if (expressionStack.size() >= 3) {
         auto* grandparent = expressionStack[expressionStack.size() - 3];
         if (Properties::getSignExtValue(grandparent)) {
           auto bits = Properties::getSignExtBits(grandparent);
-          if (usage.unsignedUsages == 0) {
-            usage.unsignedBits = bits;
-          } else if (usage.unsignedBits != bits) {
-            usage.unsignedBits = 0;
+          if (usage.signedUsages == 0) {
+            usage.signedBits = bits;
+          } else if (usage.signedBits != bits) {
+            usage.signedBits = 0;
           }
-          usage.unsignedUsages++;
-          usage.totalUsages++;
+          usage.signedUsages++;
         }
       }
     }
