@@ -324,22 +324,20 @@ static uint32_t getMaskedBits(int32_t mask) {
   return 32 - CountLeadingZeroes(mask);
 }
 
-// performs a dynCast on the fallthrough value, i.e., looks through
+// looks through fallthrough operations, like tee_local, block fallthrough, etc.
 // too and block fallthroughs, etc.
-template<typename T>
-T* getFallthroughDynCast(Expression* curr) {
-  if (T* ret = curr->dynCast<T>()) {
-    return ret;
-  }
+Expression* getFallthrough(Expression* curr) {
   if (auto* set = curr->dynCast<SetLocal>()) {
-    if (set->isTee()) return getFallthroughDynCast<T>(set->value);
+    if (set->isTee()) {
+      return getFallthrough(set->value);
+    }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return getFallthroughDynCast<T>(block->list.back());
+      return getFallthrough(block->list.back());
     }
   }
-  return nullptr;
+  return curr;
 }
 
 // Useful information about locals
@@ -384,12 +382,13 @@ struct LocalScanner : PostWalker<LocalScanner, Visitor<LocalScanner>> {
     auto type = getFunction()->getLocalType(curr->index);
     if (type != i32 && type != i64) return;
     // an integer var, worth processing
+    auto* value = getFallthrough(curr->value);
     auto& info = localInfo[curr->index];
-    info.maxBits = std::max(info.maxBits, getMaxBits(curr->value, this));
+    info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
-    if (getSignExt(curr->value)) {
-      signExtBits = getSignExtBits(curr->value);
-    } else if (auto* load = getFallthroughDynCast<Load>(curr->value)) {
+    if (getSignExt(value)) {
+      signExtBits = getSignExtBits(value);
+    } else if (auto* load = value->dynCast<Load>()) {
       if (load->signed_) {
         signExtBits = load->bytes * 8;
       }
@@ -479,7 +478,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (auto* ext = getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = getAlmostSignExtBits(binary, extraShifts);
-        if (auto* load = getFallthroughDynCast<Load>(ext)) {
+        if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
           // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
           if ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16)) {
             // if the value falls through, we can't alter the load, as it might be captured in a tee
@@ -515,7 +514,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             binary->left = makeZeroExt(left, bits);
             binary->right = makeZeroExt(right, bits);
             return binary;
-          } else if (auto* load = getFallthroughDynCast<Load>(binary->right)) {
+          } else if (auto* load = binary->right->dynCast<Load>()) {
             // we are comparing a load to a sign-ext, we may be able to switch to zext
             auto leftBits = getSignExtBits(binary->left);
             if (load->signed_ && leftBits == load->bytes * 8) {
@@ -524,7 +523,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
               return binary;
             }
           }
-        } else if (auto* load = getFallthroughDynCast<Load>(binary->left)) {
+        } else if (auto* load = binary->left->dynCast<Load>()) {
           if (auto* right = getSignExt(binary->right)) {
             // we are comparing a load to a sign-ext, we may be able to switch to zext
             auto rightBits = getSignExtBits(binary->right);
@@ -548,14 +547,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             return binary->left;
           }
           // small loads do not need to be masted, the load itself masks
-          if (auto* load = getFallthroughDynCast<Load>(binary->left)) {
+          if (auto* load = binary->left->dynCast<Load>()) {
             if ((load->bytes == 1 && mask == 0xff) ||
                 (load->bytes == 2 && mask == 0xffff)) {
-              // if the value falls through, we can't alter the load, as it might be captured in a tee
-              if (load->signed_ == false || load == binary->left) {
-                load->signed_ = false;
-                return binary->left;
-              }
+              load->signed_ = false;
+              return binary->left;
             }
           } else if (auto maskedBits = getMaskedBits(mask)) {
             if (getMaxBits(binary->left, this) <= maskedBits) {
