@@ -515,6 +515,24 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             binary->left = makeZeroExt(left, bits);
             binary->right = makeZeroExt(right, bits);
             return binary;
+          } else if (auto* load = getFallthroughDynCast<Load>(binary->right)) {
+            // we are comparing a load to a sign-ext, we may be able to switch to zext
+            auto leftBits = getSignExtBits(binary->left);
+            if (load->signed_ && leftBits == load->bytes * 8) {
+              load->signed_ = false;
+              binary->left = makeZeroExt(left, leftBits);
+              return binary;
+            }
+          }
+        } else if (auto* load = getFallthroughDynCast<Load>(binary->left)) {
+          if (auto* right = getSignExt(binary->right)) {
+            // we are comparing a load to a sign-ext, we may be able to switch to zext
+            auto rightBits = getSignExtBits(binary->right);
+            if (load->signed_ && rightBits == load->bytes * 8) {
+              load->signed_ = false;
+              binary->right = makeZeroExt(right, rightBits);
+              return binary;
+            }
           }
         }
         // note that both left and right may be consts, but then we let precompute compute the constant result

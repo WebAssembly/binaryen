@@ -2020,4 +2020,90 @@
       )
     )
   )
+  (func $compare-load-s-sign-extend (param $0 i32) (param $1 i32)
+    (drop
+      (i32.eq
+        (i32.load8_s
+          (get_local $0)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.load8_s
+          (get_local $0) ;; flip order, we should canonicalize
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.load8_u ;; unsigned, bad
+          (get_local $0)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.load8_s
+          (get_local $0)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 16) ;; wrong size
+          )
+          (i32.const 16)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.load8_u ;; unsigned, bad
+          (get_local $0)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 16) ;; wrong size
+          )
+          (i32.const 16)
+        )
+        (i32.load8_s
+          (get_local $0)
+        )
+      )
+    )
+  )
 )

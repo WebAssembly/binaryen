@@ -1864,15 +1864,12 @@
               (loop $while-in
                 (if
                   (i32.eq
-                    (i32.load8_s
+                    (i32.load8_u
                       (get_local $2)
                     )
-                    (i32.shr_s
-                      (i32.shl
-                        (get_local $4)
-                        (i32.const 24)
-                      )
-                      (i32.const 24)
+                    (i32.and
+                      (get_local $4)
+                      (i32.const 255)
                     )
                   )
                   (block
@@ -1941,20 +1938,14 @@
       )
       (if
         (i32.ne
-          (i32.load8_s
+          (i32.load8_u
             (get_local $2)
           )
-          (i32.shr_s
-            (i32.shl
-              (tee_local $1
-                (i32.and
-                  (get_local $1)
-                  (i32.const 255)
-                )
-              )
-              (i32.const 24)
+          (tee_local $1
+            (i32.and
+              (get_local $1)
+              (i32.const 255)
             )
-            (i32.const 24)
           )
         )
         (block
@@ -2035,15 +2026,12 @@
           (loop $while-in5
             (br_if $label$break$L8
               (i32.eq
-                (i32.load8_s
+                (i32.load8_u
                   (get_local $2)
                 )
-                (i32.shr_s
-                  (i32.shl
-                    (get_local $1)
-                    (i32.const 24)
-                  )
-                  (i32.const 24)
+                (i32.and
+                  (get_local $1)
+                  (i32.const 255)
                 )
               )
             )
