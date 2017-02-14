@@ -18,6 +18,7 @@
 #define wasm_ast_properties_h
 
 #include "wasm.h"
+#include "ast/bits.h"
 
 namespace wasm {
 
@@ -51,6 +52,82 @@ struct Properties {
 
       default: return false;
     }
+  }
+
+  // Check if an expression is a sign-extend, and if so, returns the value
+  // that is extended, otherwise nullptr
+  static Expression* getSignExtValue(Expression* curr) {
+    if (auto* outer = curr->dynCast<Binary>()) {
+      if (outer->op == ShrSInt32) {
+        if (auto* outerConst = outer->right->dynCast<Const>()) {
+          if (auto* inner = outer->left->dynCast<Binary>()) {
+            if (inner->op == ShlInt32) {
+              if (auto* innerConst = inner->right->dynCast<Const>()) {
+                if (outerConst->value == innerConst->value) {
+                  return inner->left;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  // gets the size of the sign-extended value
+  static Index getSignExtBits(Expression* curr) {
+    return 32 - curr->cast<Binary>()->right->cast<Const>()->value.geti32();
+  }
+
+  // Check if an expression is almost a sign-extend: perhaps the inner shift
+  // is too large. We can split the shifts in that case, which is sometimes
+  // useful (e.g. if we can remove the signext)
+  static Expression* getAlmostSignExt(Expression* curr) {
+    if (auto* outer = curr->dynCast<Binary>()) {
+      if (outer->op == ShrSInt32) {
+        if (auto* outerConst = outer->right->dynCast<Const>()) {
+          if (auto* inner = outer->left->dynCast<Binary>()) {
+            if (inner->op == ShlInt32) {
+              if (auto* innerConst = inner->right->dynCast<Const>()) {
+                if (outerConst->value.leU(innerConst->value).geti32()) {
+                  return inner->left;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  // gets the size of the almost sign-extended value, as well as the
+  // extra shifts, if any
+  static Index getAlmostSignExtBits(Expression* curr, Index& extraShifts) {
+    extraShifts = curr->cast<Binary>()->left->cast<Binary>()->right->cast<Const>()->value.geti32() -
+                  curr->cast<Binary>()->right->cast<Const>()->value.geti32();
+    return getSignExtBits(curr);
+  }
+
+  // Check if an expression is a zero-extend, and if so, returns the value
+  // that is extended, otherwise nullptr
+  static Expression* getZeroExtValue(Expression* curr) {
+    if (auto* binary = curr->dynCast<Binary>()) {
+      if (binary->op == AndInt32) {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (Bits::getMaskedBits(c->value.geti32())) {
+            return binary->right;
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  // gets the size of the sign-extended value
+  static Index getZeroExtBits(Expression* curr) {
+    return Bits::getMaskedBits(curr->cast<Binary>()->right->cast<Const>()->value.geti32());
   }
 };
 

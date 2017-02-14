@@ -39,6 +39,7 @@ Pass *createMetricsPass();
 Pass *createNameListPass();
 Pass *createNameManagerPass();
 Pass *createOptimizeInstructionsPass();
+Pass *createPickLoadSignsPass();
 Pass *createPostEmscriptenPass();
 Pass *createPrinterPass();
 Pass *createPrintCallGraphPass();

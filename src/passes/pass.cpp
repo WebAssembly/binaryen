@@ -77,6 +77,7 @@ void PassRegistry::registerPasses() {
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-manager", "utility pass to manage names in modules", createNameManagerPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
+  registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
   registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
