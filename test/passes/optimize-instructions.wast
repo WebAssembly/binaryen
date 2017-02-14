@@ -1978,4 +1978,46 @@
       )
     )
   )
+  (func $local-info-sign-ext-already-exted-by-load (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.load8_s (i32.const 1024)) ;; 8 bits, sign extended, no need to do it again
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $x)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $y
+      (i32.load8_u (i32.const 1024)) ;; 8 bits, zext, so bad
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.load16_s (i32.const 1024)) ;; 16 bits sign-extended, wrong size
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $z)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
 )

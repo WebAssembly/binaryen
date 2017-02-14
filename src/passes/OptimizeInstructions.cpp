@@ -386,15 +386,18 @@ struct LocalScanner : PostWalker<LocalScanner, Visitor<LocalScanner>> {
     // an integer var, worth processing
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, getMaxBits(curr->value, this));
+    auto signExtBits = LocalInfo::kUnknown;
     if (getSignExt(curr->value)) {
-      auto bits = getSignExtBits(curr->value);
-      if (info.signExtedBits == 0) {
-        info.signExtedBits = bits; // first info we see
-      } else if (info.signExtedBits != bits) {
-        info.signExtedBits = LocalInfo::kUnknown; // contradictory information, give up
+      signExtBits = getSignExtBits(curr->value);
+    } else if (auto* load = getFallthroughDynCast<Load>(curr->value)) {
+      if (load->signed_) {
+        signExtBits = load->bytes * 8;
       }
-    } else {
-      info.signExtedBits = LocalInfo::kUnknown; // an input which isn't even a sign ext, give up
+    }
+    if (info.signExtedBits == 0) {
+      info.signExtedBits = signExtBits; // first info we see
+    } else if (info.signExtedBits != signExtBits) {
+      info.signExtedBits = LocalInfo::kUnknown; // contradictory information, give up
     }
   }
 
