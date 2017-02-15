@@ -128,7 +128,9 @@ public:
       }
     }
     if (!isConcreteWasmType(curr->type) && curr->list.size() > 0) {
-      shouldBeFalse(isConcreteWasmType(curr->list.back()->type), curr, "block with no value cannot have a last element with a value");
+      if (isConcreteWasmType(curr->list.back()->type)) {
+        shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
+      }
     }
   }
 
