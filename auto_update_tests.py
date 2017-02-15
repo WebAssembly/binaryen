@@ -174,10 +174,11 @@ for t in os.listdir('test'):
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join('test', t)
+    f = t + '.from-wast'
     cmd = [os.path.join('bin', 'wasm-opt'), t, '--print']
     actual = run_command(cmd)
     actual = actual.replace('printing before:\n', '')
-    open(t, 'w').write(actual)
+    open(f, 'w').write(actual)
 
 print '\n[ checking wasm-dis on provided binaries... ]\n'
 
