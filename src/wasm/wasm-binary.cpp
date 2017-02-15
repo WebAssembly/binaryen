@@ -467,12 +467,11 @@ static bool brokenTo(Block* block) {
 
 void WasmBinaryWriter::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
-  if (curr->type == unreachable && !brokenTo(curr)) {
-    // an unreachable block with no breaks is one that cannot be exited, and so it's last
-    // element must be unreachable as well. We cannot encode this directly
+  if (curr->type == unreachable) {
+    // an unreachable block is one that cannot be exited. We cannot encode this directly
     // in wasm, where blocks must be none,i32,i64,f32,f64. Instead, we take
     // advantage of wasm's stacky encoding: we can just emit the block
-    // contents, without an enclosing block (it ends in unreachable anyhow)
+    // contents, without an enclosing block (it ends in unreachable code anyhow)
     Index i = 0;
     for (auto* child : curr->list) {
       if (debug) std::cerr << "  " << size_t(curr) << "\n zz (unreachable) Block element " << i++ << std::endl;

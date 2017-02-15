@@ -140,8 +140,13 @@ static void handleUnreachable(Block* block) {
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
-      if (!BreakSeeker::has(block, block->name)) {
+      BreakSeeker seeker(block->name);
+      Expression* expr = block;
+      seeker.walk(expr);
+      if (!seeker.found) {
         block->type = unreachable;
+      } else {
+        block->type = seeker.valueType;
       }
       return;
     }
