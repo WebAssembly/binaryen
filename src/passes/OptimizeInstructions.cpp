@@ -44,6 +44,7 @@ struct Pattern {
   Pattern(Expression* input, Expression* output) : input(input), output(output) {}
 };
 
+#if 0
 // Database of patterns
 struct PatternDatabase {
   Module wasm;
@@ -87,6 +88,7 @@ struct DatabaseEnsurer {
     database = new PatternDatabase;
   }
 };
+#endif
 
 // Check for matches and apply them
 struct Match {
@@ -169,7 +171,9 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
   Pass* create() override { return new OptimizeInstructions; }
 
   void prepareToRun(PassRunner* runner, Module* module) override {
+#if 0
     static DatabaseEnsurer ensurer;
+#endif
   }
 
   void visitExpression(Expression* curr) {
@@ -181,6 +185,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         replaceCurrent(curr);
         continue;
       }
+#if 0
       auto iter = database->patternMap.find(curr->_id);
       if (iter == database->patternMap.end()) return;
       auto& patterns = iter->second;
@@ -195,6 +200,9 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         }
       }
       if (!more) break;
+#else
+      break;
+#endif
     }
   }
 
