@@ -133,14 +133,25 @@ static WasmType mergeTypes(std::vector<WasmType>& types) {
   return type;
 }
 
+// a block is unreachable if one of its elements in unreachable,
+// and there are no branches to it
+static void handleUnreachable(Block* block) {
+  if (block->type == unreachable) return; // nothing to do
+  for (auto* child : block->list) {
+    if (child->type == unreachable) {
+      // there is an unreachable child, so we are unreachable, unless we have a break
+      if (!BreakSeeker::has(block, block->name)) {
+        block->type = unreachable;
+      }
+      return;
+    }
+  }
+}
+
 void Block::finalize(WasmType type_) {
   type = type_;
   if (type == none && list.size() > 0) {
-    if (list.back()->type == unreachable) {
-      if (!BreakSeeker::has(this, name)) {
-        type = unreachable; // the last element is unreachable, and this block truly cannot be exited, so it is unreachable itself
-      }
-    }
+    handleUnreachable(this);
   }
 }
 
@@ -157,6 +168,7 @@ void Block::finalize() {
 
   TypeSeeker seeker(this, this->name);
   type = mergeTypes(seeker.types);
+  handleUnreachable(this);
 }
 
 void If::finalize(WasmType type_) {
