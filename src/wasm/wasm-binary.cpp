@@ -467,20 +467,8 @@ static bool brokenTo(Block* block) {
 
 void WasmBinaryWriter::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
-  if (curr->type == unreachable) {
-    // an unreachable block is one that cannot be exited. We cannot encode this directly
-    // in wasm, where blocks must be none,i32,i64,f32,f64. Instead, we take
-    // advantage of wasm's stacky encoding: we can just emit the block
-    // contents, without an enclosing block (it ends in unreachable code anyhow)
-    Index i = 0;
-    for (auto* child : curr->list) {
-      if (debug) std::cerr << "  " << size_t(curr) << "\n zz (unreachable) Block element " << i++ << std::endl;
-      recurse(child);
-    }
-    return;
-  }
   o << int8_t(BinaryConsts::Block);
-  o << binaryWasmType(curr->type);
+  o << binaryWasmType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(curr->name);
   Index i = 0;
   for (auto* child : curr->list) {
@@ -488,7 +476,18 @@ void WasmBinaryWriter::visitBlock(Block *curr) {
     recurse(child);
   }
   breakStack.pop_back();
+  if (curr->type == unreachable) {
+    // an unreachable block is one that cannot be exited. We cannot encode this directly
+    // in wasm, where blocks must be none,i32,i64,f32,f64. Since the block cannot be
+    // exited, we can emit an unreachable at the end, and that will always be valid,
+    // and then the block is ok as a none
+    o << int8_t(BinaryConsts::Unreachable);
+  }
   o << int8_t(BinaryConsts::End);
+  if (curr->type == unreachable) {
+    // and emit an unreachable *outside* the block too, so later things can pop anything
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 // emits a node, but if it is a block with no name, emit a list of its contents
