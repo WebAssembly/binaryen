@@ -328,7 +328,7 @@
         )
       )
       (if
-        (block $block6 i32
+        (block $block6
           (block $block15
             (drop
               (i32.const 2)
