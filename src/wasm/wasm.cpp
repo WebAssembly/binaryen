@@ -166,7 +166,7 @@ void Block::finalize() {
     if (list.size() > 0) {
       type = list.back()->type;
     } else {
-      type = unreachable;
+      type = none;
     }
     return;
   }
