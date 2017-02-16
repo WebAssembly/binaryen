@@ -140,6 +140,9 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 void PassRunner::run() {
   static int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
   if (options.debug || passDebug) {
+    // don't recurse pass debug into sub-passes, as it doesn't help anyhow and also is bad for e.g. printing which is a pass
+    auto currPassDebug = passDebug;
+    passDebug = 0;
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
@@ -150,7 +153,7 @@ void PassRunner::run() {
     for (auto* pass : passes) {
       // ignoring the time, save a printout of the module before, in case this pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
-      if (passDebug >= 2) {
+      if (currPassDebug == 2) {
         WasmPrinter::printModule(wasm, moduleBefore);
       }
       // prepare to run
@@ -174,7 +177,7 @@ void PassRunner::run() {
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
       if (!WasmValidator().validate(*wasm, false, options.validateGlobally)) {
-        if (passDebug >= 2) {
+        if (currPassDebug >= 2) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state (FIXME: this is broken, need to prevent recursion of the print pass\n";
@@ -189,6 +192,7 @@ void PassRunner::run() {
       std::cerr << "final module does not validate\n";
       abort();
     }
+    passDebug = currPassDebug;
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better
     // to run as many passes as possible on a single function before moving to the next
