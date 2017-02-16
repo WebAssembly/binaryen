@@ -524,21 +524,21 @@
     )
   )
   (func $unreachable-if (type $5) (result i32)
-    (f64.abs
-      (if
-        (i32.const 3)
-        (block $label$0
-          (return
-            (i32.const 2)
-          )
-        )
-        (block $label$1
-          (return
-            (i32.const 1)
-          )
-          (unreachable)
+    (if
+      (i32.const 3)
+      (block $label$0
+        (return
+          (i32.const 2)
         )
       )
+      (block $label$1
+        (return
+          (i32.const 1)
+        )
+      )
+    )
+    (f64.abs
+      (unreachable)
     )
   )
   (func $unreachable-if-toplevel (type $5) (result i32)
@@ -553,9 +553,9 @@
         (return
           (i32.const 1)
         )
-        (unreachable)
       )
     )
+    (unreachable)
   )
   (func $unreachable-loop (type $5) (result i32)
     (loop $label$0

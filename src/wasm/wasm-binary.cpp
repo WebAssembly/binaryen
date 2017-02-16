@@ -527,12 +527,13 @@ void WasmBinaryWriter::visitIf(If *curr) {
     breakStack.push_back(IMPOSSIBLE_CONTINUE); // TODO ditto
     recursePossibleBlockContents(curr->ifFalse);
     breakStack.pop_back();
-    if (curr->type == unreachable) {
-      // see explanation above - we emitted an if without a return type, so it must not be consumed
-      o << int8_t(BinaryConsts::Unreachable);
-    }
   }
   o << int8_t(BinaryConsts::End);
+  if (curr->type == unreachable) {
+    // see explanation above - we emitted an if without a return type, so it must not be consumed
+    assert(curr->ifFalse); // otherwise, if without else, that is unreachable, must have an unreachable condition, which was handled earlier
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 void WasmBinaryWriter::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
