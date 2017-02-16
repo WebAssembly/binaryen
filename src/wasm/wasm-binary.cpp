@@ -461,24 +461,39 @@ void WasmBinaryWriter::recurse(Expression*& curr) {
   if (debug) std::cerr << "zz recurse from " << depth-- << " at " << o.size() << std::endl;
 }
 
+static bool brokenTo(Block* block) {
+  return block->name.is() && BreakSeeker::has(block, block->name);
+}
+
 void WasmBinaryWriter::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
   o << int8_t(BinaryConsts::Block);
   o << binaryWasmType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(curr->name);
-  size_t i = 0;
+  Index i = 0;
   for (auto* child : curr->list) {
     if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i++ << std::endl;
     recurse(child);
   }
   breakStack.pop_back();
+  if (curr->type == unreachable) {
+    // an unreachable block is one that cannot be exited. We cannot encode this directly
+    // in wasm, where blocks must be none,i32,i64,f32,f64. Since the block cannot be
+    // exited, we can emit an unreachable at the end, and that will always be valid,
+    // and then the block is ok as a none
+    o << int8_t(BinaryConsts::Unreachable);
+  }
   o << int8_t(BinaryConsts::End);
+  if (curr->type == unreachable) {
+    // and emit an unreachable *outside* the block too, so later things can pop anything
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 // emits a node, but if it is a block with no name, emit a list of its contents
 void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
-  if (!block || (block->name.is() && BreakSeeker::has(curr, block->name))) {
+  if (!block || brokenTo(block)) {
     recurse(curr);
     return;
   }
@@ -489,6 +504,18 @@ void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
 
 void WasmBinaryWriter::visitIf(If *curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
+  if (curr->type == unreachable && curr->ifFalse) {
+    if (curr->condition->type == unreachable) {
+      // this if-else is unreachable because of the condition, i.e., the condition
+      // does not exit. So don't emit the if, but do consume the condition
+      recurse(curr->condition);
+      o << int8_t(BinaryConsts::Unreachable);
+      return;
+    }
+    // an unreachable if-else (with reachable condition) is one where both sides do not fall through.
+    // wasm does not allow this to be emitted directly, so we must do something more. we could do
+    // better, but for now we emit an extra unreachable instruction after the if, so it is not consumed itself
+  }
   recurse(curr->condition);
   o << int8_t(BinaryConsts::If);
   o << binaryWasmType(curr->type != unreachable ? curr->type : none);
@@ -502,6 +529,11 @@ void WasmBinaryWriter::visitIf(If *curr) {
     breakStack.pop_back();
   }
   o << int8_t(BinaryConsts::End);
+  if (curr->type == unreachable) {
+    // see explanation above - we emitted an if without a return type, so it must not be consumed
+    assert(curr->ifFalse); // otherwise, if without else, that is unreachable, must have an unreachable condition, which was handled earlier
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 void WasmBinaryWriter::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
@@ -511,6 +543,10 @@ void WasmBinaryWriter::visitLoop(Loop *curr) {
   recursePossibleBlockContents(curr->body);
   breakStack.pop_back();
   o << int8_t(BinaryConsts::End);
+  if (curr->type == unreachable) {
+    // we emitted a loop without a return type, so it must not be consumed
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 int32_t WasmBinaryWriter::getBreakIndex(Name name) { // -1 if not found

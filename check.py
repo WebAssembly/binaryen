@@ -184,11 +184,12 @@ for t in tests:
   if t.endswith('.wast') and not t.startswith('spec'):
     print '..', t
     t = os.path.join(options.binaryen_test, t)
+    f = t + '.from-wast'
     cmd = WASM_OPT + [t, '--print']
     actual = run_command(cmd)
     actual = actual.replace('printing before:\n', '')
 
-    expected = open(t, 'rb').read()
+    expected = open(f, 'rb').read()
     if actual != expected:
       fail(actual, expected)
 

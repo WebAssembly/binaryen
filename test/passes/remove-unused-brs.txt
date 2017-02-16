@@ -328,7 +328,7 @@
         )
       )
       (if
-        (block $block6 i32
+        (block $block6
           (block $block15
             (drop
               (i32.const 2)
@@ -933,6 +933,25 @@
         )
         (drop
           (i32.const 2)
+        )
+      )
+    )
+  )
+  (func $loop-if (type $2) (result i32)
+    (block $outer i32
+      (loop $typed
+        (br_if $typed
+          (i32.eqz
+            (i32.const 2)
+          )
+        )
+        (block $block
+          (drop
+            (call $loop-if)
+          )
+          (br $outer
+            (i32.const 0)
+          )
         )
       )
     )

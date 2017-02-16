@@ -128,7 +128,9 @@ public:
       }
     }
     if (!isConcreteWasmType(curr->type) && curr->list.size() > 0) {
-      shouldBeFalse(isConcreteWasmType(curr->list.back()->type), curr, "block with no value cannot have a last element with a value");
+      if (isConcreteWasmType(curr->list.back()->type)) {
+        shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
+      }
     }
   }
 
@@ -155,6 +157,9 @@ public:
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32 || curr->condition->type == i64, curr, "if condition must be valid");
     if (!curr->ifFalse) {
       shouldBeFalse(isConcreteWasmType(curr->ifTrue->type), curr, "if without else must not return a value in body");
+      if (curr->condition->type != unreachable) {
+        shouldBeEqual(curr->type, none, curr, "if without else and reachable condition must be none");
+      }
     }
   }
 

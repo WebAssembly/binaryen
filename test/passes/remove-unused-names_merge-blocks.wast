@@ -901,4 +901,17 @@
       )
     )
   )
+  (func $return-different-type (result i32)
+    (drop
+      (f64.abs
+        (return
+          (block i32 ;; when we flip the block out, it should have an ok type for the (dead) f64 op
+            (drop (i32.const 2))
+            (i32.const 1)
+          )
+        )
+      )
+    )
+    (unreachable)
+  )
 )

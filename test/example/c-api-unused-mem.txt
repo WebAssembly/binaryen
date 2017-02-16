@@ -46,7 +46,7 @@
     (call $main)
   )
 )
-195
+207
 (module
   (type $0 (func))
   (type $1 (func))
@@ -67,7 +67,9 @@
         )
         (block $label$2
           (br $label$1)
+          (unreachable)
         )
+        (unreachable)
       )
       (block $label$3
         (block $label$4
@@ -75,7 +77,9 @@
           )
           (block $label$6
             (br $label$4)
+            (unreachable)
           )
+          (unreachable)
         )
         (block $label$7
           (block $label$8
@@ -84,10 +88,18 @@
               (get_local $var$0)
             )
             (return)
+            (unreachable)
           )
+          (unreachable)
+          (unreachable)
         )
+        (unreachable)
+        (unreachable)
       )
+      (unreachable)
+      (unreachable)
     )
+    (unreachable)
   )
   (func $__wasm_start (type $1)
     (block $label$0
