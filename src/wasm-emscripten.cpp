@@ -124,7 +124,7 @@ void AsmConstWalker::visitCallImport(CallImport* curr) {
     }
     std::string baseSig = getSig(curr);
     std::string sig = "";
-    for (unsigned i = 0; i < baseSig.size(); ++i) {
+    for (size_t i = 0; i < baseSig.size(); ++i) {
       // Omit the signature of the "code" parameter, taken as a string, as the first argument
       if (i != 1) {
         sig += baseSig[i];

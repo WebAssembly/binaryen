@@ -1626,9 +1626,12 @@ public:
   }
 
   void removeImportsWithSubstring(Name name) {
-    for (int i = imports.size() - 1; i >= 0; i--) {
-      if (imports[i]->name.hasSubstring(name)) {
-        imports.erase(imports.begin() + i);
+    for (size_t i = imports.size(); i > 0; --i) {
+      int index = i - 1;
+      Name importName = imports[index]->name;
+      if (importName.hasSubstring(name)) {
+        imports.erase(imports.begin() + index);
+        importsMap.erase(importName);
       }
     }
   }
