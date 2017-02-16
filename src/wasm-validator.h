@@ -157,6 +157,9 @@ public:
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32 || curr->condition->type == i64, curr, "if condition must be valid");
     if (!curr->ifFalse) {
       shouldBeFalse(isConcreteWasmType(curr->ifTrue->type), curr, "if without else must not return a value in body");
+      if (curr->condition->type != unreachable) {
+        shouldBeEqual(curr->type, none, curr, "if without else and reachable condition must be none");
+      }
     }
   }
 

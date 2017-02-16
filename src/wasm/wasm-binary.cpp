@@ -507,7 +507,7 @@ void WasmBinaryWriter::visitIf(If *curr) {
   if (curr->type == unreachable && curr->ifFalse) {
     if (curr->condition->type == unreachable) {
       // this if-else is unreachable because of the condition, i.e., the condition
-      // does not exit. So don't emit the if, but do consome the condition
+      // does not exit. So don't emit the if, but do consume the condition
       recurse(curr->condition);
       o << int8_t(BinaryConsts::Drop);
       return;

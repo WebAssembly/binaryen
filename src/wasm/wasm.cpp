@@ -178,7 +178,7 @@ void Block::finalize() {
 
 void If::finalize(WasmType type_) {
   type = type_;
-  if (type == none && (condition->type == unreachable || (ifTrue->type == unreachable && (!ifFalse || ifFalse->type == unreachable)))) {
+  if (type == none && (condition->type == unreachable || (ifFalse && ifTrue->type && ifFalse->type == unreachable))) {
     type = unreachable;
   }
 }
