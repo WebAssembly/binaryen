@@ -133,7 +133,7 @@ static WasmType mergeTypes(std::vector<WasmType>& types) {
   return type;
 }
 
-// a block is unreachable if one of its elements in unreachable,
+// a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
 static void handleUnreachable(Block* block) {
   if (block->type == unreachable) return; // nothing to do
