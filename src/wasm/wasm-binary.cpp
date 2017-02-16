@@ -509,7 +509,7 @@ void WasmBinaryWriter::visitIf(If *curr) {
       // this if-else is unreachable because of the condition, i.e., the condition
       // does not exit. So don't emit the if, but do consume the condition
       recurse(curr->condition);
-      o << int8_t(BinaryConsts::Drop);
+      o << int8_t(BinaryConsts::Unreachable);
       return;
     }
     // an unreachable if-else (with reachable condition) is one where both sides do not fall through.
