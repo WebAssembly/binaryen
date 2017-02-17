@@ -26,10 +26,8 @@
 #include "pass.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-printing.h"
-#include "wasm-s-parser.h"
-#include "wasm-validator.h"
 #include "wasm-io.h"
+#include "wasm-builder.h"
 
 using namespace wasm;
 
@@ -49,18 +47,34 @@ Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
   }
 }
 
+// gets the relative offset, assuming the form (add (global) (const offset)) or just (global) which has offset 0
+bool getRelativeOffset(Expression* curr) {
+  if (auto* binary = curr->dynCast<Binary>()) {
+    assert(binary->op == AddInt32;
+    assert(binary->left->is<GetGlobal>());
+    return binary->right->cast<Const>()->value.geti32();
+  }
+  assert(curr->is<GetGlobal>());
+  return 0; // no offset
+}
+
 // Merges input into output.
 // May destructively modify input, we don't expect to use it later
 // We don't copy into the new module, we assume both stay alive forever
 void mergeIn(Module& output, Module& input) {
   // we will need to update names
-  struct Updater : public PostWalker<Updater, Visitor<Updater>> {
+  struct Updater : public ExpressionStackWalker<Updater, Visitor<Updater>> {
     // mappings, old name => new name
     std::unordered_map<Name, Name> ftNames; // function types
     std::unordered_map<Name, Name> iNames; // imports
     std::unordered_map<Name, Name> eNames; // exports
     std::unordered_map<Name, Name> fNames; // functions
     std::unordered_map<Name, Name> gNames; // globals
+
+    // memory and table base are imported into these globals
+    std::unordered_set<Name> memoryBaseGlobals,
+                             tableBaseGlobals;
+
     // memory base and table base bumps
     Index memoryBaseBump,
           tableBaseBump;
@@ -79,13 +93,45 @@ void mergeIn(Module& output, Module& input) {
 
     void visitGetGlobal(GetGlobal* curr) {
       curr->name = gNames[curr->name];
+      // if this is the memory or table base, add the bump
+      if (memoryBaseGlobals.count(curr->name)) {
+        addBump(memoryBaseBump);
+      } else if (tableBaseGlobals.count(curr->name)) {
+        addBump(tableBaseBump);
+      }
     }
 
     void visitSetGlobal(SetGlobal* curr) {
       curr->name = gNames[curr->name];
     }
+
+  private:
+    // add an offset to a get_global. we look above, and if there is already an add,
+    // we can add into it, avoiding creating a new node
+    void addBump(Index bump) {
+      if (expressionStack.size() >= 2) {
+        auto* parent = expressionStack[expressionStack.size() - 2];
+        if (auto* binary = parent->dynCast<Binary>()) {
+          if (binary->op == AddInt32) {
+            if (auto* num = binary->right->dynCast<Const>()) {
+              num += bump;
+              return;
+            }
+          }
+        }
+      }
+      Builder builder(*getModule());
+      replaceCurrent(
+        builder.makeBinary(
+          AddInt32,
+          expressionStack.back(),
+          builder.makeConst(Literal(int32_t(bump)))
+        )
+      );
+    }
   };
   Updater updater;
+
   // find new names
   for (auto& curr : input.functionTypes) {
     curr->name = updater.ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
@@ -112,8 +158,39 @@ void mergeIn(Module& output, Module& input) {
       return output.checkGlobal(name);
     });
   }
-  // update new names
+
+  // memory: we place the new memory segments at a higher position. after the existing ones.
+  //         that means we need to update usage of gb, which we did earlier.
+  // first, find the highest relative offset (to memoryBase)
+  updater.memoryBaseBump = 0;
+  for (auto& segment : input.memory.segments) {
+    updater.memoryBaseBump = std::max(updater.memoryBaseBump, getRelativeOffset(segment.offset));
+  }
+  // align to 16 bytes
+  updater.memoryBaseBump = (updater.memoryBaseBump + 15) & -16;
+
+  // table
+  updater.tableBaseBump = 0;
+  for (auto& segment : input.table.segments) {
+    updater.tableBaseBump = std::max(updater.tableBaseBump, getRelativeOffset(segment.offset));
+  }
+  // align to 16 bytes
+  updater.tableBaseBump = (updater.tableBaseBump + 15) & -16;
+
+  // find the memory/table base globals, so we know how to update them
+  for (auto& curr : input.imports) {
+    if (curr->module == ENV) {
+      if (curr->base == MEMORY_BASE) {
+        updater.memoryBaseGlobals.insert(curr->name);
+      } else if (curr->base == TABLE_BASE) {
+        updater.tableBaseGlobals.insert(curr->name);
+      }
+    }
+  }
+
+  // update the contents we are about to merge
   updater.walk(input);
+
   // copy in the data
   for (auto& curr : input.functionTypes) {
     output.addFunctionType(curr);
@@ -132,9 +209,6 @@ void mergeIn(Module& output, Module& input) {
   for (auto& curr : input.globals) {
     output.addGlobal(curr);
   }
-  // memory: we place the new memory segments at a higher position. after the existing ones.
-  //         that means we need to update usage of gb, which we did earlier
-  // table
 }
 
 //
