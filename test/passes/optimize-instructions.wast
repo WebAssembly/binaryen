@@ -539,7 +539,7 @@
             (get_local $0)
             (i32.const 24)
           )
-          (i32.const 23) ;; different shift
+          (i32.const 23) ;; different shift, smaller
         )
         (i32.const 0)
       )
@@ -1235,6 +1235,100 @@
           (i32.const -5)
           (i32.const 5)
         )
+      )
+    )
+  )
+  (func $almost-sign-ext (param $0 i32) (param $0 i32)
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.const 100) ;; too big, there is a sign bit, due to the extra shift
+          (i32.const 25)
+        )
+        (i32.const 24) ;; different shift, but larger, so ok to opt if we leave a shift, in theory
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.const 50) ;; small enough, no sign bit
+          (i32.const 25)
+        )
+        (i32.const 24) ;; different shift, but larger, so ok to opt if we leave a shift
+      )
+    )
+  )
+  (func $squaring (param $0 i32) (param $1 i32)
+    (drop
+      (i32.and
+        (i32.and
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.and
+          (get_local $0)
+          (i32.const 11)
+        )
+        (get_local $0) ;; non-const, cannot optimize this!
+      )
+    )
+    (drop
+      (i32.and
+        (i32.and
+          (i32.const 11) ;; flipped order
+          (get_local $0)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.or
+        (i32.or
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shl
+        (i32.shl
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shr_s
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.shr_u
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.shr_s ;; but do not optimize a mixture or different shifts!
+          (get_local $0)
+          (i32.const 11)
+        )
+        (i32.const 200)
       )
     )
   )
