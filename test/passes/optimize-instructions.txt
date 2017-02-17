@@ -3,6 +3,7 @@
   (type $1 (func))
   (type $2 (func (result i32)))
   (type $3 (func (param i32) (result i32)))
+  (type $4 (func (param i32 i32)))
   (memory $0 0)
   (export "load-off-2" (func $load-off-2))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
@@ -176,7 +177,8 @@
       )
     )
     (drop
-      (i32.eqz
+      (i32.eq
+        (i32.const 0)
         (i32.const 100)
       )
     )
@@ -512,6 +514,433 @@
       (i32.add
         (get_local $0)
         (i32.const 10)
+      )
+    )
+  )
+  (func $sign-ext (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (i32.eqz
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.and
+          (get_local $0)
+          (i32.const 65535)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.and
+          (get_local $0)
+          (i32.const 134217727)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 255)
+        )
+        (i32.and
+          (get_local $1)
+          (i32.const 255)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.and
+          (get_local $0)
+          (i32.const 65535)
+        )
+        (i32.and
+          (get_local $1)
+          (i32.const 65535)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 23)
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.shr_u
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+    (drop
+      (i32.lt_s
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 0)
+      )
+    )
+  )
+  (func $sign-ext-input (type $4) (param $0 i32) (param $1 i32)
+    (drop
+      (i32.const 100)
+    )
+    (drop
+      (i32.const 127)
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.const 128)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (unreachable)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.div_s
+            (i32.const 1)
+            (i32.const 2)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.const 127)
+        (i32.const 128)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.and
+            (i32.const 128)
+            (i32.const 129)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.xor
+        (i32.const 127)
+        (i32.const 128)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.xor
+            (i32.const 128)
+            (i32.const 129)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.or
+        (i32.const 127)
+        (i32.const 126)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.or
+            (i32.const 127)
+            (i32.const 128)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.const 32)
+            (i32.const 2)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shl
+        (i32.const 32)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.const 32)
+            (i32.const 35)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.const 256)
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.const 256)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.const 128)
+        (i32.const 35)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s
+            (i32.const 256)
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.const 256)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.const 128)
+        (i32.const 35)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s
+            (i32.const -1)
+            (i32.const 32)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.and
+          (i32.const -1)
+          (i32.const 2147483647)
+        )
+        (i32.const 32)
+      )
+    )
+    (drop
+      (i32.ne
+        (i32.const -1)
+        (i32.const -1)
+      )
+    )
+    (drop
+      (f32.le
+        (f32.const -1)
+        (f32.const -1)
+      )
+    )
+    (drop
+      (i32.clz
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.shl
+        (i32.clz
+          (i32.const 0)
+        )
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.clz
+              (i32.const 0)
+            )
+            (i32.const 3)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.wrap/i64
+        (i64.clz
+          (i64.const 0)
+        )
+      )
+    )
+    (drop
+      (i32.shl
+        (i32.wrap/i64
+          (i64.clz
+            (i64.const 0)
+          )
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.wrap/i64
+              (i64.clz
+                (i64.const 0)
+              )
+            )
+            (i32.const 2)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.eqz
+        (i32.const -1)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.wrap/i64
+              (i64.const -1)
+            )
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.wrap/i64
+          (i64.const -1)
+        )
+        (i32.const 25)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.wrap/i64
+              (i64.extend_s/i32
+                (i32.const -1)
+              )
+            )
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.wrap/i64
+          (i64.extend_s/i32
+            (i32.const -1)
+          )
+        )
+        (i32.const 25)
       )
     )
   )
