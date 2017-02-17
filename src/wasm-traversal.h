@@ -176,6 +176,7 @@ struct Walker : public VisitorType {
     setFunction(func);
     static_cast<SubType*>(this)->doWalkFunction(func);
     static_cast<SubType*>(this)->visitFunction(func);
+    setFunction(nullptr);
   }
 
   // override this to provide custom functionality
@@ -183,10 +184,25 @@ struct Walker : public VisitorType {
     walk(func->body);
   }
 
+  void walkTable(Table* table) {
+    for (auto& segment : table->segments) {
+      walk(segment.offset);
+    }
+    static_cast<SubType*>(this)->visitTable(table);
+  }
+
+  void walkMemory(Memory* memory) {
+    for (auto& segment : memory->segments) {
+      walk(segment.offset);
+    }
+    static_cast<SubType*>(this)->visitMemory(memory);
+  }
+
   void walkModule(Module* module) {
     setModule(module);
     static_cast<SubType*>(this)->doWalkModule(module);
     static_cast<SubType*>(this)->visitModule(module);
+    setModule(nullptr);
   }
 
   // override this to provide custom functionality
@@ -208,8 +224,8 @@ struct Walker : public VisitorType {
     for (auto& curr : module->functions) {
       self->walkFunction(curr.get());
     }
-    self->visitTable(&module->table);
-    self->visitMemory(&module->memory);
+    self->walkTable(&module->table);
+    self->walkMemory(&module->memory);
   }
 
   // Walk implementation. We don't use recursion as ASTs may be highly
