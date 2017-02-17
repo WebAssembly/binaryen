@@ -226,8 +226,8 @@ public:
     if (!validateGlobally) return;
     auto* import = getModule()->checkImport(curr->target);
     if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
-    if (!shouldBeTrue(import->functionType, curr, "called import must be function")) return;
-    auto* type = import->functionType;
+    if (!shouldBeTrue(!!import->functionType.is(), curr, "called import must be function")) return;
+    auto* type = getModule()->getFunctionType(import->functionType);
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
       if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
@@ -383,8 +383,9 @@ public:
     if (!validateGlobally) return;
     if (curr->kind == ExternalKind::Function) {
       if (validateWeb) {
-        shouldBeUnequal(curr->functionType->result, i64, curr->name, "Imported function must not have i64 return type");
-        for (WasmType param : curr->functionType->params) {
+        auto* functionType = getModule()->getFunctionType(curr->functionType);
+        shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
+        for (WasmType param : functionType->params) {
           shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
         }
       }

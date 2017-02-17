@@ -53,7 +53,7 @@ void Linker::ensureFunctionImport(Name target, std::string signature) {
     auto import = new Import;
     import->name = import->base = target;
     import->module = ENV;
-    import->functionType = ensureFunctionType(signature, &out.wasm);
+    import->functionType = ensureFunctionType(signature, &out.wasm)->name;
     import->kind = ExternalKind::Function;
     out.wasm.addImport(import);
   }

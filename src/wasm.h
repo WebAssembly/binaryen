@@ -1445,11 +1445,11 @@ enum class ExternalKind {
 
 class Import {
 public:
-  Import() : functionType(nullptr), globalType(none) {}
+  Import() : globalType(none) {}
 
   Name name, module, base; // name = module.base
   ExternalKind kind;
-  FunctionType* functionType; // for Function imports
+  Name functionType; // for Function imports
   WasmType globalType; // for Global imports
 };
 

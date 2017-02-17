@@ -1086,10 +1086,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       // special math builtins
       FunctionType* builtin = getBuiltinFunctionType(import->module, import->base);
       if (builtin) {
-        import->functionType = builtin;
+        import->functionType = builtin->name;
         continue;
       }
-      import->functionType = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm);
+      import->functionType = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm)->name;
     } else if (import->module != ASM2WASM) { // special-case the special module
       // never actually used, which means we don't know the function type since the usage tells us, so illegal for it to remain
       toErase.push_back(name);
@@ -1147,7 +1147,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           }
         }
       }
-      auto importResult = getModule()->getImport(curr->target)->functionType->result;
+      auto importResult = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
       if (curr->type != importResult) {
         if (importResult == f64) {
           // we use a JS f64 value which is the most general, and convert to it
@@ -1471,7 +1471,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = DEBUGGER;
           import->module = ASM2WASM;
           import->base = DEBUGGER;
-          import->functionType = ensureFunctionType("v", &wasm);
+          import->functionType = ensureFunctionType("v", &wasm)->name;
           import->kind = ExternalKind::Function;
           wasm.addImport(import);
         }
@@ -1576,7 +1576,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
-          import->functionType = ensureFunctionType("ddd", &wasm);
+          import->functionType = ensureFunctionType("ddd", &wasm)->name;
           import->kind = ExternalKind::Function;
           wasm.addImport(import);
         }
@@ -1683,7 +1683,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               import->name = F64_TO_INT;
               import->module = ASM2WASM;
               import->base = F64_TO_INT;
-              import->functionType = ensureFunctionType("id", &wasm);
+              import->functionType = ensureFunctionType("id", &wasm)->name;
               import->kind = ExternalKind::Function;
               wasm.addImport(import);
             }
