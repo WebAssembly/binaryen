@@ -1,4 +1,7 @@
 (module
-  (func $y)
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (func $only-b)
+  (func $willCollide)
 )
 
