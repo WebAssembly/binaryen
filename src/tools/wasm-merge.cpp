@@ -238,11 +238,13 @@ int main(int argc, const char* argv[]) {
                       [&](Options *o, const std::string &argument) {
                         filenames.push_back(argument);
                       });
+  options.parse(argc, argv);
 
   Module output;
   std::vector<std::unique_ptr<Module>> otherModules; // keep all inputs alive, to save copies
   bool first = true;
   for (auto& filename : filenames) {
+std::cerr << "in: " << filename << "\n";
     ModuleReader reader;
     if (first) {
       // read the first right into output, don't waste time merging into an empty module
@@ -270,7 +272,9 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in validating output";
   }
 
+std::cerr << "out?\n";
   if (options.extra.count("output") > 0) {
+std::cerr << "out: " << options.extra["output"] << "\n";
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);

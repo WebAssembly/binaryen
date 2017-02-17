@@ -1,0 +1,11 @@
+(module
+  (type $0 (func))
+  (type $0$0 (func))
+  (memory $0 0)
+  (func $x (type $0)
+    (nop)
+  )
+  (func $y (type $0$0)
+    (nop)
+  )
+)

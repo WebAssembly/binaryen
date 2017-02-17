@@ -1,0 +1,4 @@
+(module
+  (func $x)
+)
+

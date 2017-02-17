@@ -4,6 +4,19 @@ import os, sys, subprocess, difflib
 
 from scripts.test.support import run_command, split_wast
 
+print '\n[ checking wasm-merge... ]\n'
+
+for t in os.listdir(os.path.join('test', 'merge')):
+  if t.endswith('.wast'):
+    print '..', t
+    t = os.path.join('test', 'merge', t)
+    u = t + '.toMerge'
+    cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S']
+    run_command(cmd)
+    actual = open('a.wast').read()
+    out = t + '.combined'
+    with open(out, 'w') as o: o.write(actual)
+
 print '[ processing and updating testcases... ]\n'
 
 for asm in sorted(os.listdir('test')):
