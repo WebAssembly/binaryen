@@ -77,6 +77,7 @@
   (export "exportedNumber" (global $exportedNumber))
   (export "relocatableAndModules" (func $relocatableAndModules))
   (export "exported_f32_user" (func $legalstub$exported_f32_user))
+  (export "keepAlive" (func $keepAlive))
   (func $big_negative
     (local $temp f64)
     (set_local $temp
@@ -1846,6 +1847,29 @@
   (func $exported_f32_user (param $x i32) (param $y f32) (param $z f64) (result f32)
     (return
       (get_local $y)
+    )
+  )
+  (func $sqrts (param $x f64) (result f64)
+    (return
+      (f64.add
+        (f64.sqrt
+          (get_local $x)
+        )
+        (f64.promote/f32
+          (f32.sqrt
+            (f32.demote/f64
+              (get_local $x)
+            )
+          )
+        )
+      )
+    )
+  )
+  (func $keepAlive
+    (drop
+      (call $sqrts
+        (f64.const 3.14159)
+      )
     )
   )
   (func $v
