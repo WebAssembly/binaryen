@@ -138,11 +138,12 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 }
 
 void PassRunner::run() {
-  static int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
   if (options.debug || passDebug) {
     // don't recurse pass debug into sub-passes, as it doesn't help anyhow and also is bad for e.g. printing which is a pass
-    auto currPassDebug = passDebug;
-    passDebug = 0;
+    static int recursion = 0;
+    auto currPassDebug = recursion == 0 ? passDebug : 0;
+    recursion++;
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
@@ -192,7 +193,7 @@ void PassRunner::run() {
       std::cerr << "final module does not validate\n";
       abort();
     }
-    passDebug = currPassDebug;
+    recursion--;
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better
     // to run as many passes as possible on a single function before moving to the next
