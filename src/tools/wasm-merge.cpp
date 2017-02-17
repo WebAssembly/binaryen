@@ -23,11 +23,15 @@
 
 #include <memory>
 
+#include "parsing.h"
 #include "pass.h"
+#include "shared-constants.h"
+#include "asmjs/shared-constants.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
+#include "wasm-validator.h"
 
 using namespace wasm;
 
@@ -48,9 +52,9 @@ Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
 }
 
 // gets the relative offset, assuming the form (add (global) (const offset)) or just (global) which has offset 0
-bool getRelativeOffset(Expression* curr) {
+Index getRelativeOffset(Expression* curr) {
   if (auto* binary = curr->dynCast<Binary>()) {
-    assert(binary->op == AddInt32;
+    assert(binary->op == AddInt32);
     assert(binary->left->is<GetGlobal>());
     return binary->right->cast<Const>()->value.geti32();
   }
@@ -65,15 +69,15 @@ void mergeIn(Module& output, Module& input) {
   // we will need to update names
   struct Updater : public ExpressionStackWalker<Updater, Visitor<Updater>> {
     // mappings, old name => new name
-    std::unordered_map<Name, Name> ftNames; // function types
-    std::unordered_map<Name, Name> iNames; // imports
-    std::unordered_map<Name, Name> eNames; // exports
-    std::unordered_map<Name, Name> fNames; // functions
-    std::unordered_map<Name, Name> gNames; // globals
+    std::map<Name, Name> ftNames; // function types
+    std::map<Name, Name> iNames; // imports
+    std::map<Name, Name> eNames; // exports
+    std::map<Name, Name> fNames; // functions
+    std::map<Name, Name> gNames; // globals
 
     // memory and table base are imported into these globals
-    std::unordered_set<Name> memoryBaseGlobals,
-                             tableBaseGlobals;
+    std::set<Name> memoryBaseGlobals,
+                   tableBaseGlobals;
 
     // memory base and table base bumps
     Index memoryBaseBump,
@@ -189,25 +193,25 @@ void mergeIn(Module& output, Module& input) {
   }
 
   // update the contents we are about to merge
-  updater.walk(input);
+  updater.walkModule(&input);
 
   // copy in the data
   for (auto& curr : input.functionTypes) {
-    output.addFunctionType(curr);
+    output.addFunctionType(curr.release());
   }
   for (auto& curr : input.imports) {
-    curr->functionType = ftNames[curr->functionType];
-    output.addImport(curr);
+    curr->functionType = updater.ftNames[curr->functionType];
+    output.addImport(curr.release());
   }
   for (auto& curr : input.exports) {
-    output.addExport(curr);
+    output.addExport(curr.release());
   }
   for (auto& curr : input.functions) {
-    curr->type = ftNames[curr->type];
-    output.addFunction(curr);
+    curr->type = updater.ftNames[curr->type];
+    output.addFunction(curr.release());
   }
   for (auto& curr : input.globals) {
-    output.addGlobal(curr);
+    output.addGlobal(curr.release());
   }
 }
 
@@ -252,13 +256,13 @@ int main(int argc, const char* argv[]) {
     } else {
       std::unique_ptr<Module> input = wasm::make_unique<Module>();
       try {
-        reader.read(filename, input);
+        reader.read(filename, *input);
       } catch (ParseException& p) {
         p.dump(std::cerr);
         Fatal() << "error in parsing input";
       }
       mergeIn(output, *input);
-      otherModules.push_back(input);
+      otherModules.push_back(std::unique_ptr<Module>(input.release()));
     }
   }
 
