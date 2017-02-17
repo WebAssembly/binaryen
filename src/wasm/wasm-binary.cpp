@@ -138,7 +138,7 @@ void WasmBinaryWriter::writeImports() {
     writeInlineString(import->base.str);
     o << U32LEB(int32_t(import->kind));
     switch (import->kind) {
-      case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType->name)); break;
+      case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType)); break;
       case ExternalKind::Table: {
         o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
         writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
@@ -1198,8 +1198,8 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         auto index = getU32LEB();
         assert(index < wasm.functionTypes.size());
-        curr->functionType = wasm.functionTypes[index].get();
-        assert(curr->functionType->name.is());
+        curr->functionType = wasm.functionTypes[index]->name;
+        assert(curr->functionType.is());
         functionImportIndexes.push_back(curr->name);
         break;
       }
@@ -1703,7 +1703,7 @@ Expression* WasmBinaryBuilder::visitCall() {
     auto* call = allocator.alloc<CallImport>();
     auto* import = wasm.getImport(functionImportIndexes[index]);
     call->target = import->name;
-    type = import->functionType;
+    type = wasm.getFunctionType(import->functionType);
     fillCall(call, type);
     ret = call;
   } else {

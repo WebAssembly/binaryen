@@ -133,7 +133,7 @@ void AsmConstWalker::visitCallImport(CallImport* curr) {
       auto import = new Import;
       import->name = import->base = curr->target;
       import->module = ENV;
-      import->functionType = ensureFunctionType(getSig(curr), &wasm);
+      import->functionType = ensureFunctionType(getSig(curr), &wasm)->name;
       import->kind = ExternalKind::Function;
       wasm.addImport(import);
     }
