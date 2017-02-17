@@ -61,6 +61,9 @@ void mergeIn(Module& output, Module& input) {
     std::unordered_map<Name, Name> eNames; // exports
     std::unordered_map<Name, Name> fNames; // functions
     std::unordered_map<Name, Name> gNames; // globals
+    // memory base and table base bumps
+    Index memoryBaseBump,
+          tableBaseBump;
 
     void visitCall(Call* curr) {
       curr->target = fNames[curr->target];
@@ -129,7 +132,8 @@ void mergeIn(Module& output, Module& input) {
   for (auto& curr : input.globals) {
     output.addGlobal(curr);
   }
-  // memory
+  // memory: we place the new memory segments at a higher position. after the existing ones.
+  //         that means we need to update usage of gb, which we did earlier
   // table
 }
 
