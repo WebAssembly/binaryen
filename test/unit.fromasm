@@ -279,19 +279,13 @@
       (f32.neg
         (get_local $0)
       )
-      (i32.add
-        (i32.const 8)
-        (i32.const 1)
-      )
+      (i32.const 9)
     )
   )
   (func $cneg (param $0 f32)
     (call_indirect $FUNCSIG$vf
       (get_local $0)
-      (i32.add
-        (i32.const 8)
-        (i32.const 1)
-      )
+      (i32.const 9)
     )
   )
   (func $smallCompare (result i32)
@@ -326,10 +320,7 @@
   (func $cneg_nosemicolon
     (call_indirect $FUNCSIG$vi
       (i32.const 1)
-      (i32.add
-        (i32.const 16)
-        (i32.const 1)
-      )
+      (i32.const 17)
     )
   )
   (func $forLoop
@@ -416,14 +407,8 @@
     (drop
       (call $lb
         (i32.add
-          (i32.add
-            (i32.add
-              (get_local $0)
-              (i32.const 3)
-            )
-            (i32.const 7)
-          )
-          (i32.const 12)
+          (get_local $0)
+          (i32.const 22)
         )
       )
     )
@@ -497,11 +482,8 @@
     (i32.store
       (get_local $0)
       (i32.add
-        (i32.add
-          (get_global $n)
-          (i32.const 136)
-        )
-        (i32.const 8)
+        (get_global $n)
+        (i32.const 144)
       )
     )
     (i32.const 0)

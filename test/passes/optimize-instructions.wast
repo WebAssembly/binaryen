@@ -1014,4 +1014,228 @@
       )
     )
   )
+  (func $linear-sums (param $0 i32) (param $1 i32)
+    (drop
+      (i32.add
+        (i32.add
+          (get_local $1)
+          (i32.const 16)
+        )
+        (i32.shl
+          (i32.add
+            (get_local $0)
+            (i32.const -1) ;; -16, so cancels out!
+          )
+          (i32.const 4)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.add
+          (get_local $1)
+          (i32.const 20)
+        )
+        (i32.shl
+          (i32.add
+            (get_local $0)
+            (i32.const -1) ;; -8, so sum is +12
+          )
+          (i32.const 3)
+        )
+      )
+    )
+    (drop
+      (i32.add ;; simple sum
+        (i32.const 1)
+        (i32.const 3)
+      )
+    )
+    (drop
+      (i32.add ;; nested sum
+        (i32.add
+          (i32.const 1)
+          (i32.const 3)
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 9)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.add
+          (i32.const 1)
+          (i32.const 3)
+        )
+        (i32.sub ;; internal sub
+          (i32.const 5)
+          (i32.const 3)
+        )
+      )
+    )
+    (drop
+      (i32.sub ;; external sub
+        (i32.add
+          (i32.const 1)
+          (i32.const 3)
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 3)
+        )
+      )
+    )
+    (drop
+      (i32.sub ;; external sub
+        (i32.add
+          (i32.const 1)
+          (i32.const 3)
+        )
+        (i32.sub ;; and also internal sub
+          (i32.const 5)
+          (i32.const 3)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.add
+          (i32.const 1)
+          (i32.const 3)
+        )
+        (i32.sub ;; negating sub
+          (i32.const 0)
+          (i32.const 3)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.sub
+          (i32.const 0)
+          (i32.sub ;; two negating subs
+            (i32.const 0)
+            (i32.add
+              (i32.const 3)
+              (i32.const 20)
+            )
+          )
+        )
+        (i32.add
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.add
+          (i32.const 0)
+          (i32.sub ;; one negating sub
+            (i32.const 0)
+            (i32.add
+              (i32.const 3)
+              (i32.const 20)
+            )
+          )
+        )
+        (i32.add
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.shl ;; shifted value
+          (i32.const 1)
+          (i32.const 3)
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 9)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.shl ;; shifted value
+          (i32.const 1)
+          (get_local $0) ;; but not by const
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 9)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.shl ;; shifted nested value
+          (i32.sub
+            (get_local $1)
+            (i32.const 10)
+          )
+          (i32.const 3)
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 9)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.mul ;; multiplied
+          (i32.const 10)
+          (i32.const 3)
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 9)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.mul ;; multiplied by nonconstant - can't recurse
+          (i32.const 10)
+          (get_local $0)
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 9)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.mul ;; nested mul
+          (i32.add
+            (i32.const 10)
+            (get_local $0)
+          )
+          (i32.const 2)
+        )
+        (i32.add
+          (i32.const 5)
+          (i32.const 9)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.add
+          (get_local $0)
+          (i32.const 10) ;; cancelled out with the below
+        )
+        (i32.sub
+          (i32.const -5)
+          (i32.const 5)
+        )
+      )
+    )
+  )
 )
