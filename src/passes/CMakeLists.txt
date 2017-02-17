@@ -13,6 +13,7 @@ SET(passes_SOURCES
   NameManager.cpp
   NameList.cpp
   OptimizeInstructions.cpp
+  PickLoadSigns.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp

@@ -654,9 +654,9 @@
     (drop
       (i32.shr_s
         (i32.shl
-          (i32.xor ;; takes the min, here it is ok
+          (i32.xor ;; takes the max, here it is ok
             (i32.const 127)
-            (i32.const 128)
+            (i32.const 126)
           )
           (i32.const 24)
         )
@@ -666,9 +666,9 @@
     (drop
       (i32.shr_s
         (i32.shl
-          (i32.xor ;; takes the min, here it is not
+          (i32.xor ;; takes the max, here it is not
+            (i32.const 127)
             (i32.const 128)
-            (i32.const 129)
           )
           (i32.const 24)
         )
@@ -1013,6 +1013,21 @@
         (i32.const 24)
       )
     )
+    (drop ;; fuzz testcase
+      (i32.shr_s
+        (i32.shl
+          (i32.xor ;; should be 32 bits
+            (i32.le_u ;; 1 bit
+              (get_local $0)
+              (i32.const 2)
+            )
+            (get_local $0) ;; unknown, so 32 bits
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
   )
   (func $linear-sums (param $0 i32) (param $1 i32)
     (drop
@@ -1329,6 +1344,765 @@
           (i32.const 11)
         )
         (i32.const 200)
+      )
+    )
+  )
+  (func $sign-ext-ne (param $0 i32) (param $1 i32)
+    ;; ne of sign-ext to const, can be a zext
+    (drop
+      (i32.ne
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 65000)
+      )
+    )
+    (drop
+      (i32.ne
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 111)
+      )
+    )
+    (drop
+      (i32.ne
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+  )
+  (func $sign-ext-eqz (param $0 i32) (param $1 i32)
+    (drop
+      (i32.eqz
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+  )
+  (func $sign-ext-boolean (param $0 i32) (param $1 i32)
+    (drop
+      (if i32
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 100)
+        (i32.const 200)
+      )
+    )
+  )
+  (func $add-sub-zero (param $0 i32) (param $1 i32)
+    (drop
+      (i32.add
+        (get_local $0)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.sub
+        (get_local $0)
+        (i32.const 0)
+      )
+    )
+  )
+  (func $store-signext (param $0 i32)
+    (i32.store8
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24) ;; exact size we store, sign-ext of 8 bits
+        )
+        (i32.const 24)
+      )
+    )
+    (i32.store8
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 25) ;; 7 bits. so the ext can alter a bit we store, do not optimize
+        )
+        (i32.const 25)
+      )
+    )
+    (i32.store8
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 23) ;; 9 bits, this is good to optimize
+        )
+        (i32.const 23)
+      )
+    )
+    (i32.store16
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 16) ;; exact size we store, sign-ext of 16 bits
+        )
+        (i32.const 16)
+      )
+    )
+    (i32.store16
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 17) ;; 15 bits. so the ext can alter a bit we store, do not optimize
+        )
+        (i32.const 17)
+      )
+    )
+    (i32.store16
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 14) ;; 17 bits, this is good to optimize
+        )
+        (i32.const 14)
+      )
+    )
+    (i32.store
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 16) ;; 4 bytes stored, do nothing
+        )
+        (i32.const 16)
+      )
+    )
+    (i32.store
+      (i32.const 8)
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 8) ;; 4 bytes stored, do nothing
+        )
+        (i32.const 8)
+      )
+    )
+  )
+  (func $sign-ext-tee (param $0 i32) (param $1 i32)
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (tee_local $0
+            (i32.const 128) ;; too big
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (tee_local $0
+            (i32.const 127) ;; just right
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $sign-ext-load (param $0 i32) (param $1 i32)
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.load8_s ;; one byte, so perfect
+            (i32.const 256)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.load8_s ;; one byte, but sexted to 32
+              (i32.const 256)
+            )
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_u
+            (i32.load8_u ;; one byte, but reduced to 7
+              (i32.const 256)
+            )
+            (i32.const 1)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_s ;; two, so perfect
+            (i32.const 256)
+          )
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+    ;; through tees, we cannot alter the load sign
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (tee_local $1
+            (i32.load8_s
+              (i32.const 1)
+            )
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (tee_local $1
+            (i32.load8_u
+              (i32.const 1)
+            )
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $1
+          (i32.load8_s
+            (i32.const 1)
+          )
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $1
+          (i32.load8_u
+            (i32.const 1)
+          )
+        )
+        (i32.const 255)
+      )
+    )
+  )
+  (func $mask-bits (param $0 i32) (param $1 i32)
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 127) ;; 7 bits
+        )
+        (i32.const 255) ;; mask 8, so we don't need this
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128) ;; 8 bits
+        )
+        (i32.const 255) ;; mask 8, so we don't need this
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 254) ;; improper mask, small
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 1279) ;; improper mask, large
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 1290) ;; improper mask, large
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 4095) ;; proper mask, huge
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 511) ;; proper mask, large
+      )
+    )
+    (drop
+      (i32.and
+        (tee_local $0
+          (i32.const 128)
+        )
+        (i32.const 127) ;; proper mask, just too small
+      )
+    )
+  )
+  (func $local-info-zero-ext (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.const 212) ;; mask is unneeded, we are small
+    )
+    (drop
+      (i32.and
+        (get_local $x)
+        (i32.const 255)
+      )
+    )
+    (set_local $y
+      (i32.const 500) ;; mask is needed, we are too big
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (set_local $0
+      (i32.const 212) ;; mask is unneeded, but we are a param, not a var, so no
+    )
+    (drop
+      (i32.and
+        (get_local $0)
+        (i32.const 255)
+      )
+    )
+    (set_local $z
+      (i32.const 212) ;; mask is unneeded, we are small
+    )
+    (set_local $z
+      (i32.const 220) ;; mask is still unneeded even with 2 uses
+    )
+    (drop
+      (i32.and
+        (get_local $z)
+        (i32.const 255)
+      )
+    )
+    (set_local $w
+      (i32.const 212) ;; mask is unneeded, we are small
+    )
+    (set_local $w
+      (i32.const 1000) ;; mask is needed, one use is too big
+    )
+    (drop
+      (i32.and
+        (get_local $w)
+        (i32.const 255)
+      )
+    )
+  )
+  (func $local-info-sign-ext-bitsize (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.const 127) ;; mask is unneeded, we are small
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $x)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $y
+      (i32.const 128) ;; mask is needed, we are too big
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $0
+      (i32.const 127) ;; mask is unneeded, but we are a param, not a var, so no
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.const 127) ;; mask is unneeded, we are small
+    )
+    (set_local $z
+      (i32.const 100) ;; mask is still unneeded even with 2 uses
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $z)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $w
+      (i32.const 127) ;; mask is unneeded, we are small
+    )
+    (set_local $w
+      (i32.const 150) ;; mask is needed, one use is too big
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $w)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $local-info-sign-ext-already-exted (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.shr_s
+        (i32.shl
+          (get_local $0) ;; already sign-exted here, so no need later
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $x)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $y
+      (i32.shr_s
+        (i32.shl
+          (get_local $0) ;; already sign-exted here, but wrong bit size
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $0
+      (i32.shr_s
+        (i32.shl
+          (get_local $0) ;; already sign-exted here, so no need later, but we are a param
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $0)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.shr_s
+        (i32.shl
+          (get_local $0) ;; already sign-exted here, so no need later
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.shr_s
+        (i32.shl
+          (get_local $1) ;; already sign-exted here, so no need later
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $z)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $w
+      (i32.shr_s
+        (i32.shl
+          (get_local $0) ;; already sign-exted here, so no need later
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $w
+      (i32.shr_s
+        (i32.shl
+          (get_local $0) ;; not quite a sign-ext
+          (i32.const 23)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $w)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (drop ;; odd corner case
+      (i32.shr_s
+        (i32.shl
+          (get_local $0) ;; param, so we should know nothing
+          (i32.const 24)
+        )
+        (i32.const 23) ;; different shift, smaller
+      )
+    )
+  )
+  (func $signed-loads-fill-the-bits (param $$e i32) (result i32)
+    (local $$0 i32)
+    (local $$conv i32)
+    (set_local $$0
+      (i32.load8_s ;; one byte, but 32 bits due to sign-extend
+        (i32.const 1024)
+      )
+    )
+    (set_local $$conv
+      (i32.and
+        (get_local $$0)
+        (i32.const 255) ;; so we need this zexting!
+      )
+    )
+    (return
+      (i32.eq
+        (get_local $$conv)
+        (get_local $$e)
+      )
+    )
+  )
+  (func $local-info-sign-ext-already-exted-by-load (param $0 i32) (param $1 i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x
+      (i32.load8_s (i32.const 1024)) ;; 8 bits, sign extended, no need to do it again
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $x)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $y
+      (i32.load8_u (i32.const 1024)) ;; 8 bits, zext, so bad
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    (set_local $z
+      (i32.load16_s (i32.const 1024)) ;; 16 bits sign-extended, wrong size
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $z)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $compare-load-s-sign-extend (param $0 i32) (param $1 i32)
+    (drop
+      (i32.eq
+        (i32.load8_s
+          (get_local $0)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.load8_s
+          (get_local $0) ;; flip order, we should canonicalize
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.load8_u ;; unsigned, bad
+          (get_local $0)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.load8_s
+          (get_local $0)
+        )
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 16) ;; wrong size
+          )
+          (i32.const 16)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.load8_u ;; unsigned, bad
+          (get_local $0)
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $1)
+            (i32.const 16) ;; wrong size
+          )
+          (i32.const 16)
+        )
+        (i32.load8_s
+          (get_local $0)
+        )
       )
     )
   )

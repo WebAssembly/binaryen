@@ -1,0 +1,263 @@
+(module
+  (type $0 (func))
+  (type $1 (func (result i32)))
+  (memory $0 0)
+  (func $a (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_u
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+  )
+  (func $b (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load16_u
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 65535)
+      )
+    )
+  )
+  (func $c (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_u
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+  )
+  (func $d (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load16_u
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 65535)
+      )
+    )
+  )
+  (func $one-of-each (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $more-of-one (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $many-more-of-one (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_u
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $a-sign (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $multivar (type $0)
+    (local $x i32)
+    (local $y i32)
+    (set_local $x
+      (i32.load8_u
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $x)
+        (i32.const 255)
+      )
+    )
+    (set_local $y
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $corners (type $0)
+    (local $y i32)
+    (drop
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.load8_u
+        (i32.const 1024)
+      )
+    )
+    (set_local $y
+      (i32.const 1024)
+    )
+  )
+  (func $wrong-size (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 65535)
+      )
+    )
+  )
+  (func $wrong-size_s (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_u
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (get_local $y)
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+  )
+  (func $non-sign-or-unsigned-use (type $0)
+    (local $y i32)
+    (set_local $y
+      (i32.load8_s
+        (i32.const 1024)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+    (drop
+      (get_local $y)
+    )
+  )
+  (func $toplevel-load (type $1) (result i32)
+    (i32.load8_s
+      (i32.const 1024)
+    )
+  )
+)
