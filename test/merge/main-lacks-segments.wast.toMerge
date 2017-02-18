@@ -1,0 +1,13 @@
+(module
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 anyfunc))
+  (elem (get_global $tableBase) $foo)
+  (data (get_global $memoryBase) "hello, this is some data!")
+  (func $foo
+    (drop (get_global $tableBase))
+    (drop (get_global $memoryBase))
+  )
+)
+

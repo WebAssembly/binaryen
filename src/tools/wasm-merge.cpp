@@ -57,7 +57,7 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
   for (auto& inputSegment : input.segments) {
     Expression* inputOffset = inputSegment.offset;
     if (inputOffset->is<GetGlobal>()) {
-      // this is the relocatable one
+      // this is the relocatable one. find the output's relocatable
       for (auto& segment : output.segments) {
         Expression* offset = segment.offset;
         if (offset->is<GetGlobal>()) {
@@ -70,10 +70,15 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
           for (auto item : inputSegment.data) {
             segment.data.push_back(updater(item));
           }
-          break; // there can be only one
+          return; // there can be only one
         }
       }
-      break; // there can be only one
+      // output lacks a relocatable segment, add one
+      bump = 0;
+      output.segments.push_back(inputSegment); // TODO: optimize
+      return; // there can be only one
+    } else {
+      Fatal() << "cannot merge in an input with a non-relocatable segment";
     }
   }
 }

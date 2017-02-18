@@ -6,7 +6,6 @@
   (import "env" "table" (table 0 anyfunc))
   (import "env" "some-func-b" (func $some-func-b))
   (import "env" "some-collide" (func $some-collide))
-  (data (i32.const 100) "constant location")
   (data (get_global $memoryBase) "hello, B!\n")
   (global $global-collide i32 (i32.const 0))
   (global $global-collide-mut (mut i32) (i32.const 0))
