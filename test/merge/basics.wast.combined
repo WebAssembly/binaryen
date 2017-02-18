@@ -14,8 +14,10 @@
   (import "env" "some-func-b" (func $some-func-b))
   (import "env" "some-collide" (func $some-collide$0))
   (global $global-collide i32 (i32.const 0))
+  (global $global-collide-mut (mut i32) (i32.const 0))
   (global $global-a i32 (i32.const 1))
   (global $global-collide$0 i32 (i32.const 0))
+  (global $global-collide-mut$0 (mut i32) (i32.const 0))
   (global $global-b i32 (i32.const 1))
   (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n")
   (func $only-a (type $FUNCSIG$v)
@@ -41,6 +43,9 @@
     )
     (drop
       (get_global $tableBase)
+    )
+    (set_global $global-collide-mut
+      (i32.const 1234)
     )
   )
   (func $willCollide (type $FUNCSIG$v)
@@ -108,6 +113,9 @@
         )
         (i32.const 1000)
       )
+    )
+    (set_global $global-collide-mut$0
+      (i32.const 5678)
     )
   )
   (func $willCollide$0 (type $FUNCSIG$v$0)

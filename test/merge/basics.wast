@@ -8,6 +8,7 @@
   (import "env" "some-collide" (func $some-collide))
   (data (get_global $memoryBase) "hello, A!\n")
   (global $global-collide i32 (i32.const 0))
+  (global $global-collide-mut (mut i32) (i32.const 0))
   (global $global-a i32 (i32.const 1))
   (func $only-a
     (drop (i32.const 100))
@@ -23,6 +24,7 @@
     (drop (get_global $global-a))
     (drop (get_global $memoryBase))
     (drop (get_global $tableBase))
+    (set_global $global-collide-mut (i32.const 1234))
   )
   (func $willCollide
     (drop (i32.const 200))
