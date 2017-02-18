@@ -81,6 +81,8 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
       Fatal() << "cannot merge in an input with a non-relocatable segment";
     }
   }
+
+  // TODO: merge post_instantiates
 }
 
 // Merges input into output.
