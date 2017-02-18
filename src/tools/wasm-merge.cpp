@@ -83,6 +83,9 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
   }
 
   // TODO: merge post_instantiates
+  // TODO: post_instantiate must be called from the outside
+  // TODO: finalize memorybase, tablebase
+  // TODO: figure out how to handle the memory size bump and table size bump from dynamic linking section
 }
 
 // Merges input into output.
