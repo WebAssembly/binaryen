@@ -198,6 +198,16 @@ void mergeIn(Module& output, Module& input) {
         assert(curr->name.is());
       }
     }
+
+    void visitModule(Module* curr) {
+      // remove imports that are being implemented
+      for (auto& pair : implementedFunctionImports) {
+        curr->removeImport(pair.first);
+      }
+      for (auto& pair : implementedGlobalImports) {
+        curr->removeImport(pair.first);
+      }
+    }
   };
   OutputUpdater outputUpdater;
 
