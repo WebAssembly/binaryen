@@ -90,6 +90,9 @@ void mergeIn(Module& output, Module& input) {
     std::map<Name, Name> fNames; // functions
     std::map<Name, Name> gNames; // globals
 
+    // An import of something provided on the other side becomes a direct usage
+    std::map<Name, Name> implementedFunctionImports;
+
     // memory and table base are imported into these globals
     std::set<Name> memoryBaseGlobals,
                    tableBaseGlobals;
@@ -104,6 +107,12 @@ void mergeIn(Module& output, Module& input) {
     }
 
     void visitCallImport(CallImport* curr) {
+      auto iter = implementedFunctionImports.find(curr->target);
+      if (iter != implementedFunctionImports.end()) {
+        // this import is now in the module - call it
+        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+        return;
+      }
       curr->target = fNames[curr->target];
       assert(curr->target.is());
     }
@@ -183,7 +192,21 @@ void mergeIn(Module& output, Module& input) {
       return output.checkGlobal(name);
     });
   }
-  // FIXME: handle the case of an import in one being connected to an export in another
+  // find function imports in input that are implemented in the output
+  // TODO make maps, avoid N^2
+  for (auto& imp : input.imports) {
+    // per wasm dynamic library rules, we expect to see exports on 'env'
+    if (imp->kind == ExternalKind::Function && imp->module == ENV) {
+      // seek an export on the other side that matches
+      for (auto& exp : output.exports) {
+        if (exp->kind == ExternalKind::Function && exp->name == imp->base) {
+          // fits!
+          updater.implementedFunctionImports[imp->name] = exp->value;
+          break;
+        }
+      }
+    }
+  }
 
   // memory&table: we place the new memory segments at a higher position. after the existing ones.
   // that means we need to update usage of gb, which we did earlier.
