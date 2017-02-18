@@ -19,6 +19,7 @@
   (global $global-collide$0 i32 (i32.const 0))
   (global $global-collide-mut$0 (mut i32) (i32.const 0))
   (global $global-b i32 (i32.const 1))
+  (elem (get_global $tableBase) $only-a $willCollide $some-func $some-collide $only-a $only-b $only-b $willCollide$0 $some-func-b $some-collide$0)
   (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n")
   (func $only-a (type $FUNCSIG$v)
     (drop
@@ -81,7 +82,7 @@
     (drop
       (i32.add
         (get_global $tableBase$0)
-        (i32.const 0)
+        (i32.const 6)
       )
     )
     (drop
@@ -93,14 +94,14 @@
     (drop
       (i32.add
         (get_global $tableBase$0)
-        (i32.const 1000)
+        (i32.const 1006)
       )
     )
     (drop
       (i32.add
         (i32.add
           (get_global $tableBase$0)
-          (i32.const 0)
+          (i32.const 6)
         )
         (unreachable)
       )
@@ -109,7 +110,7 @@
       (i32.sub
         (i32.add
           (get_global $tableBase$0)
-          (i32.const 0)
+          (i32.const 6)
         )
         (i32.const 1000)
       )

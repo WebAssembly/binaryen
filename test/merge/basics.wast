@@ -10,6 +10,7 @@
   (global $global-collide i32 (i32.const 0))
   (global $global-collide-mut (mut i32) (i32.const 0))
   (global $global-a i32 (i32.const 1))
+  (elem (get_global $tableBase) $only-a $willCollide $some-func $some-collide $only-a)
   (func $only-a
     (drop (i32.const 100))
     (call $only-a)

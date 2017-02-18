@@ -52,9 +52,8 @@ Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
 }
 
 // copies a relocatable segment from the input to the output, and sets the necessary bump
-template<typename T>
-void handleSegments(T& output, T& input, Index& bump) {
-  bump = 0;
+template<typename T, typename U, typename V>
+void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V updater) {
   for (auto& inputSegment : input.segments) {
     Expression* inputOffset = inputSegment.offset;
     if (inputOffset->is<GetGlobal>()) {
@@ -63,13 +62,13 @@ void handleSegments(T& output, T& input, Index& bump) {
         Expression* offset = segment.offset;
         if (offset->is<GetGlobal>()) {
           // align to 16 bytes
-          while (segment.data.size() % 16 != 0) {
-            segment.data.push_back(0);
+          while (segment.data.size() % align != 0) {
+            segment.data.push_back(zero);
           }
           bump = segment.data.size();
           // copy our data in
           for (auto item : inputSegment.data) {
-            segment.data.push_back(item);
+            segment.data.push_back(updater(item));
           }
           break; // there can be only one
         }
@@ -96,8 +95,8 @@ void mergeIn(Module& output, Module& input) {
                    tableBaseGlobals;
 
     // memory base and table base bumps
-    Index memoryBaseBump,
-          tableBaseBump;
+    Index memoryBaseBump = 0,
+          tableBaseBump = 0;
 
     void visitCall(Call* curr) {
       curr->target = fNames[curr->target];
@@ -128,6 +127,15 @@ void mergeIn(Module& output, Module& input) {
     void visitSetGlobal(SetGlobal* curr) {
       curr->name = gNames[curr->name];
       assert(curr->name.is());
+    }
+
+    void visitTable(Table* table) {
+      for (auto& segment : table->segments) {
+        for (auto& name : segment.data) {
+          name = fNames[name];
+          assert(name.is());
+        }
+      }
     }
 
   private:
@@ -196,13 +204,17 @@ void mergeIn(Module& output, Module& input) {
     });
   }
   // FIXME: handle the case of an import in one being connected to an export in another
+  // TODO: exports
 
   // memory&table: we place the new memory segments at a higher position. after the existing ones.
   // that means we need to update usage of gb, which we did earlier.
   // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
   // memory segment at most.
-  handleSegments<Memory>(output.memory, input.memory, updater.memoryBaseBump);
-  handleSegments<Table>(output.table, input.table, updater.tableBaseBump);
+  handleSegments<Memory>(output.memory, input.memory, updater.memoryBaseBump, 16, 0, [](char x) -> char { return x; });
+  // if no functions, even imported, then nothing to do (and no zero element anyhow)
+  if (updater.fNames.size() > 0) {
+    handleSegments<Table>(output.table, input.table, updater.tableBaseBump, 2, updater.fNames.begin()->second, [&](Name x) -> Name { return updater.fNames[x]; });
+  }
 
   // find the memory/table base globals, so we know how to update them
   for (auto& curr : input.imports) {
