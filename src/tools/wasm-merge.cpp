@@ -82,8 +82,7 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
 // May destructively modify input, we don't expect to use it later
 // We don't copy into the new module, we assume both stay alive forever
 void mergeIn(Module& output, Module& input) {
-  // we will need to update names
-  struct Updater : public ExpressionStackWalker<Updater, Visitor<Updater>> {
+  struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUpdater>> {
     // mappings, old name => new name
     std::map<Name, Name> ftNames; // function types
     std::map<Name, Name> eNames; // exports
@@ -163,36 +162,50 @@ void mergeIn(Module& output, Module& input) {
       );
     }
   };
-  Updater updater;
+  InputUpdater inputUpdater;
+
+  struct OutputUpdater : public ExpressionStackWalker<OutputUpdater, Visitor<OutputUpdater>> {
+    // An import of something provided on the other side becomes a direct usage
+    std::map<Name, Name> implementedFunctionImports;
+
+    void visitCallImport(CallImport* curr) {
+      auto iter = implementedFunctionImports.find(curr->target);
+      if (iter != implementedFunctionImports.end()) {
+        // this import is now in the module - call it
+        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+      }
+    }
+  };
+  OutputUpdater outputUpdater;
 
   // find new names
   for (auto& curr : input.functionTypes) {
-    curr->name = updater.ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+    curr->name = inputUpdater.ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
       return output.checkFunctionType(name);
     });
   }
   for (auto& curr : input.imports) {
     if (curr->kind == ExternalKind::Function) {
-      curr->name = updater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+      curr->name = inputUpdater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return !!output.checkImport(name) || !!output.checkFunction(name);
       });
     } else if (curr->kind == ExternalKind::Global) {
-      curr->name = updater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+      curr->name = inputUpdater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return !!output.checkImport(name) || !!output.checkGlobal(name);
       });
     }
   }
   for (auto& curr : input.functions) {
-    curr->name = updater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+    curr->name = inputUpdater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
       return output.checkFunction(name);
     });
   }
   for (auto& curr : input.globals) {
-    curr->name = updater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+    curr->name = inputUpdater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
       return output.checkGlobal(name);
     });
   }
-  // find function imports in input that are implemented in the output
+  // find function imports in input that are implemented in the output, and vice versa
   // TODO make maps, avoid N^2
   for (auto& imp : input.imports) {
     // per wasm dynamic library rules, we expect to see exports on 'env'
@@ -201,36 +214,52 @@ void mergeIn(Module& output, Module& input) {
       for (auto& exp : output.exports) {
         if (exp->kind == ExternalKind::Function && exp->name == imp->base) {
           // fits!
-          updater.implementedFunctionImports[imp->name] = exp->value;
+          inputUpdater.implementedFunctionImports[imp->name] = exp->value;
+          break;
+        }
+      }
+    }
+  }
+  for (auto& imp : output.imports) {
+    // per wasm dynamic library rules, we expect to see exports on 'env'
+    if (imp->kind == ExternalKind::Function && imp->module == ENV) {
+      // seek an export on the other side that matches
+      for (auto& exp : input.exports) {
+        if (exp->kind == ExternalKind::Function && exp->name == imp->base) {
+          // fits!
+          outputUpdater.implementedFunctionImports[imp->name] = inputUpdater.fNames[exp->value];
           break;
         }
       }
     }
   }
 
+  // update the output before bringing anything in
+  outputUpdater.walkModule(&output);
+
   // memory&table: we place the new memory segments at a higher position. after the existing ones.
   // that means we need to update usage of gb, which we did earlier.
   // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
   // memory segment at most.
-  handleSegments<Memory>(output.memory, input.memory, updater.memoryBaseBump, 16, 0, [](char x) -> char { return x; });
+  handleSegments<Memory>(output.memory, input.memory, inputUpdater.memoryBaseBump, 16, 0, [](char x) -> char { return x; });
   // if no functions, even imported, then nothing to do (and no zero element anyhow)
-  if (updater.fNames.size() > 0) {
-    handleSegments<Table>(output.table, input.table, updater.tableBaseBump, 2, updater.fNames.begin()->second, [&](Name x) -> Name { return updater.fNames[x]; });
+  if (inputUpdater.fNames.size() > 0) {
+    handleSegments<Table>(output.table, input.table, inputUpdater.tableBaseBump, 2, inputUpdater.fNames.begin()->second, [&](Name x) -> Name { return inputUpdater.fNames[x]; });
   }
 
   // find the memory/table base globals, so we know how to update them
   for (auto& curr : input.imports) {
     if (curr->module == ENV) {
       if (curr->base == MEMORY_BASE) {
-        updater.memoryBaseGlobals.insert(curr->name);
+        inputUpdater.memoryBaseGlobals.insert(curr->name);
       } else if (curr->base == TABLE_BASE) {
-        updater.tableBaseGlobals.insert(curr->name);
+        inputUpdater.tableBaseGlobals.insert(curr->name);
       }
     }
   }
 
-  // update the contents we are about to merge
-  updater.walkModule(&input);
+  // update the new contents about to be merged in
+  inputUpdater.walkModule(&input);
 
   // copy in the data
   for (auto& curr : input.functionTypes) {
@@ -241,7 +270,7 @@ void mergeIn(Module& output, Module& input) {
       continue; // wasm has just 1 of each, they must match
     }
     if (curr->functionType.is()) {
-      curr->functionType = updater.ftNames[curr->functionType];
+      curr->functionType = inputUpdater.ftNames[curr->functionType];
       assert(curr->functionType.is());
     }
     output.addImport(curr.release());
@@ -254,10 +283,10 @@ void mergeIn(Module& output, Module& input) {
     // TODO: warning/error mode?
     if (!output.checkExport(curr->name)) {
       if (curr->kind == ExternalKind::Function) {
-        curr->value = updater.fNames[curr->value];
+        curr->value = inputUpdater.fNames[curr->value];
         output.addExport(curr.release());
       } else if (curr->kind == ExternalKind::Global) {
-        curr->value = updater.gNames[curr->value];
+        curr->value = inputUpdater.gNames[curr->value];
         output.addExport(curr.release());
       } else {
         WASM_UNREACHABLE();
@@ -265,7 +294,7 @@ void mergeIn(Module& output, Module& input) {
     }
   }
   for (auto& curr : input.functions) {
-    curr->type = updater.ftNames[curr->type];
+    curr->type = inputUpdater.ftNames[curr->type];
     assert(curr->type.is());
     output.addFunction(curr.release());
   }

@@ -4,8 +4,12 @@
   (import "env" "memory" (memory $0 256))
   (import "env" "table" (table 0 anyfunc))
   (import "env" "foo" (func $b-foo))
+  (export "bar" (func $bar-func))
   (func $b
     (call $b-foo)
+  )
+  (func $bar-func
+    (drop (f64.const 3.14159))
   )
 )
 
