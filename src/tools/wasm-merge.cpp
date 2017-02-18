@@ -139,7 +139,7 @@ void mergeIn(Module& output, Module& input) {
         if (auto* binary = parent->dynCast<Binary>()) {
           if (binary->op == AddInt32) {
             if (auto* num = binary->right->dynCast<Const>()) {
-              num += bump;
+              num->value = num->value.add(Literal(bump));
               return;
             }
           }
@@ -202,7 +202,7 @@ void mergeIn(Module& output, Module& input) {
   // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
   // memory segment at most.
   handleSegments<Memory>(output.memory, input.memory, updater.memoryBaseBump);
-  handleSegments<Table>(output.table, input.table, updater.memoryBaseBump);
+  handleSegments<Table>(output.table, input.table, updater.tableBaseBump);
 
   // find the memory/table base globals, so we know how to update them
   for (auto& curr : input.imports) {

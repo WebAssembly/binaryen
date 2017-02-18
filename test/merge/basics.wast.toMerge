@@ -24,6 +24,30 @@
     (drop (get_global $global-b))
     (drop (get_global $memoryBase))
     (drop (get_global $tableBase))
+    (drop
+      (i32.add
+        (get_global $memoryBase)
+        (i32.const 1000)
+      )
+    )
+    (drop
+      (i32.add
+        (get_global $tableBase)
+        (i32.const 1000)
+      )
+    )
+    (drop
+      (i32.add
+        (get_global $tableBase)
+        (unreachable) ;; bad!
+      )
+    )
+    (drop
+      (i32.sub ;; bad!
+        (get_global $tableBase)
+        (i32.const 1000)
+      )
+    )
   )
   (func $willCollide
     (drop (i32.const 222))
