@@ -87,7 +87,6 @@ void mergeIn(Module& output, Module& input) {
   struct Updater : public ExpressionStackWalker<Updater, Visitor<Updater>> {
     // mappings, old name => new name
     std::map<Name, Name> ftNames; // function types
-    std::map<Name, Name> iNames; // imports
     std::map<Name, Name> eNames; // exports
     std::map<Name, Name> fNames; // functions
     std::map<Name, Name> gNames; // globals
@@ -102,18 +101,22 @@ void mergeIn(Module& output, Module& input) {
 
     void visitCall(Call* curr) {
       curr->target = fNames[curr->target];
+      assert(curr->target.is());
     }
 
     void visitCallImport(CallImport* curr) {
-      curr->target = iNames[curr->target];
+      curr->target = fNames[curr->target];
+      assert(curr->target.is());
     }
 
     void visitCallIndirect(CallIndirect* curr) {
       curr->fullType = ftNames[curr->fullType];
+      assert(curr->fullType.is());
     }
 
     void visitGetGlobal(GetGlobal* curr) {
       curr->name = gNames[curr->name];
+      assert(curr->name.is());
       // if this is the memory or table base, add the bump
       if (memoryBaseGlobals.count(curr->name)) {
         addBump(memoryBaseBump);
@@ -124,6 +127,7 @@ void mergeIn(Module& output, Module& input) {
 
     void visitSetGlobal(SetGlobal* curr) {
       curr->name = gNames[curr->name];
+      assert(curr->name.is());
     }
 
   private:
@@ -160,14 +164,26 @@ void mergeIn(Module& output, Module& input) {
     });
   }
   for (auto& curr : input.imports) {
-    curr->name = updater.iNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.checkImport(name);
-    });
+    if (curr->kind == ExternalKind::Function) {
+      curr->name = updater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return !!output.checkImport(name) || !!output.checkFunction(name);
+      });
+    } else if (curr->kind == ExternalKind::Global) {
+      curr->name = updater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return !!output.checkImport(name) || !!output.checkGlobal(name);
+      });
+    }
   }
   for (auto& curr : input.exports) {
-    curr->name = updater.eNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.checkExport(name);
-    });
+    if (curr->kind == ExternalKind::Function) {
+      curr->name = updater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return !!output.checkExport(name) || !!output.checkFunction(name);
+      });
+    } else if (curr->kind == ExternalKind::Global) {
+      curr->name = updater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return !!output.checkExport(name) || !!output.checkGlobal(name);
+      });
+    }
   }
   for (auto& curr : input.functions) {
     curr->name = updater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
@@ -207,7 +223,13 @@ void mergeIn(Module& output, Module& input) {
     output.addFunctionType(curr.release());
   }
   for (auto& curr : input.imports) {
-    curr->functionType = updater.ftNames[curr->functionType];
+    if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
+      continue; // wasm has just 1 of each, they must match
+    }
+    if (curr->functionType.is()) {
+      curr->functionType = updater.ftNames[curr->functionType];
+      assert(curr->functionType.is());
+    }
     output.addImport(curr.release());
   }
   for (auto& curr : input.exports) {
@@ -215,6 +237,7 @@ void mergeIn(Module& output, Module& input) {
   }
   for (auto& curr : input.functions) {
     curr->type = updater.ftNames[curr->type];
+    assert(curr->type.is());
     output.addFunction(curr.release());
   }
   for (auto& curr : input.globals) {

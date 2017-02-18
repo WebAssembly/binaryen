@@ -11,10 +11,12 @@
   (import "env" "some-collide" (func $some-collide))
   (import "env" "memoryBase" (global $memoryBase$0 i32))
   (import "env" "tableBase" (global $tableBase$0 i32))
-  (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 0 anyfunc))
   (import "env" "some-func-b" (func $some-func-b))
   (import "env" "some-collide" (func $some-collide$0))
+  (global $global-collide i32 (i32.const 0))
+  (global $global-a i32 (i32.const 1))
+  (global $global-collide$0 i32 (i32.const 0))
+  (global $global-b i32 (i32.const 1))
   (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n")
   (func $only-a (type $FUNCSIG$v)
     (drop
@@ -27,6 +29,18 @@
       (i32.const 123)
       (i32.const 456)
       (i32.const 789)
+    )
+    (drop
+      (get_global $global-collide)
+    )
+    (drop
+      (get_global $global-a)
+    )
+    (drop
+      (get_global $memoryBase)
+    )
+    (drop
+      (get_global $tableBase)
     )
   )
   (func $willCollide (type $FUNCSIG$v)
@@ -46,6 +60,24 @@
       (i32.const 12)
       (i32.const 34)
       (i32.const 56)
+    )
+    (drop
+      (get_global $global-collide$0)
+    )
+    (drop
+      (get_global $global-b)
+    )
+    (drop
+      (i32.add
+        (get_global $memoryBase$0)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.add
+        (get_global $tableBase$0)
+        (i32.const 0)
+      )
     )
   )
   (func $willCollide$0 (type $FUNCSIG$v$0)
