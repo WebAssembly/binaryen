@@ -172,6 +172,11 @@ struct Walker : public VisitorType {
 
   // Walk starting
 
+  void walkGlobal(Global* global) {
+    walk(global->init);
+    static_cast<SubType*>(this)->visitGlobal(global);
+  }
+
   void walkFunction(Function* func) {
     setFunction(func);
     static_cast<SubType*>(this)->doWalkFunction(func);
@@ -219,7 +224,7 @@ struct Walker : public VisitorType {
       self->visitExport(curr.get());
     }
     for (auto& curr : module->globals) {
-      self->visitGlobal(curr.get());
+      self->walkGlobal(curr.get());
     }
     for (auto& curr : module->functions) {
       self->walkFunction(curr.get());
