@@ -735,6 +735,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitFunction(child.get());
       o << maybeNewLine;
     }
+    for (auto& section : curr->userSections) {
+      doIndent(o, indent);
+      o << ";; custom section \"" << section.name << "\", size " << section.data.size();
+      o << maybeNewLine;
+    }
     decIndent();
     o << maybeNewLine;
     currModule = nullptr;
