@@ -1,4 +1,5 @@
 (module
+  (type $ii (func (param i32 i32)))
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
   (import "env" "memory" (memory $0 256))
@@ -12,6 +13,11 @@
     (call $only-b)
     (call $some-func-b)
     (call_import $some-collide)
+    (call_indirect $ii
+      (i32.const 12)
+      (i32.const 34)
+      (i32.const 56)
+    )
   )
   (func $willCollide
     (drop (i32.const 222))
