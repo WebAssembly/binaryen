@@ -302,6 +302,14 @@ void mergeIn(Module& output, Module& input) {
     if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
       continue; // wasm has just 1 of each, they must match
     }
+    // don't add in no-longer needed imports
+    if (curr->kind == ExternalKind::Function && inputUpdater.implementedFunctionImports.find(curr->name) != inputUpdater.implementedFunctionImports.end()) {
+      continue;
+    }
+    if (curr->kind == ExternalKind::Global && inputUpdater.implementedGlobalImports.find(curr->name) != inputUpdater.implementedGlobalImports.end()) {
+      continue;
+    }
+    // update and add
     if (curr->functionType.is()) {
       curr->functionType = inputUpdater.ftNames[curr->functionType];
       assert(curr->functionType.is());
