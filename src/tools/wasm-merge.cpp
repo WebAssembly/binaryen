@@ -257,8 +257,11 @@ void mergeIn(Module& output, Module& input) {
     }
   }
 
-  // update the output before bringing anything in
-  outputUpdater.walkModule(&output);
+  // update the output before bringing anything in. avoid doing so when possible, as in the
+  // common case the output module is very large.
+  if (outputUpdater.implementedFunctionImports.size() + outputUpdater.implementedGlobalImports.size() > 0) {
+    outputUpdater.walkModule(&output);
+  }
 
   // memory&table: we place the new memory segments at a higher position. after the existing ones.
   // that means we need to update usage of gb, which we did earlier.
