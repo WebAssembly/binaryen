@@ -9,6 +9,6 @@
   (import "env" "globally" (global $i-collide$0 f64))
   (global $a i32 (get_global $i-collide))
   (global $g-collide i32 (get_global $i-collide))
-  (global $b f64 (get_global $i-collide))
-  (global $g-collide$0 f64 (get_global $i-collide))
+  (global $b f64 (get_global $i-collide$0))
+  (global $g-collide$0 f64 (get_global $i-collide$0))
 )
