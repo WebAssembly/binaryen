@@ -5,11 +5,16 @@
   (import "env" "table" (table 0 anyfunc))
   (import "env" "foo" (func $b-foo))
   (export "bar" (func $bar-func))
+  (global $b-global f64 (f64.const 2.14281428))
+  (export "bglobal" (global $b-global))
+  (import "env" "aglobal" (global $a-global i32))
   (func $b
     (call $b-foo)
   )
   (func $bar-func
     (drop (f64.const 3.14159))
+    (drop (get_global $a-global))
+    (drop (get_global $b-global))
   )
 )
 

@@ -91,6 +91,7 @@ void mergeIn(Module& output, Module& input) {
 
     // An import of something provided on the other side becomes a direct usage
     std::map<Name, Name> implementedFunctionImports;
+    std::map<Name, Name> implementedGlobalImports;
 
     // memory and table base are imported into these globals
     std::set<Name> memoryBaseGlobals,
@@ -122,6 +123,12 @@ void mergeIn(Module& output, Module& input) {
     }
 
     void visitGetGlobal(GetGlobal* curr) {
+      auto iter = implementedGlobalImports.find(curr->name);
+      if (iter != implementedGlobalImports.end()) {
+        // this import is now in the module - use it
+        curr->name = iter->second;
+        return;
+      }
       curr->name = gNames[curr->name];
       assert(curr->name.is());
       // if this is the memory or table base, add the bump
@@ -167,6 +174,7 @@ void mergeIn(Module& output, Module& input) {
   struct OutputUpdater : public ExpressionStackWalker<OutputUpdater, Visitor<OutputUpdater>> {
     // An import of something provided on the other side becomes a direct usage
     std::map<Name, Name> implementedFunctionImports;
+    std::map<Name, Name> implementedGlobalImports;
 
     void visitCallImport(CallImport* curr) {
       auto iter = implementedFunctionImports.find(curr->target);
@@ -175,9 +183,36 @@ void mergeIn(Module& output, Module& input) {
         replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
       }
     }
+
+    void visitGetGlobal(GetGlobal* curr) {
+      auto iter = implementedGlobalImports.find(curr->name);
+      if (iter != implementedGlobalImports.end()) {
+        curr->name = iter->second;
+        assert(curr->name.is());
+      }
+    }
   };
   OutputUpdater outputUpdater;
 
+  // find function imports in input that are implemented in the output
+  // TODO make maps, avoid N^2
+  for (auto& imp : input.imports) {
+    // per wasm dynamic library rules, we expect to see exports on 'env'
+    if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+      // seek an export on the other side that matches
+      for (auto& exp : output.exports) {
+        if (exp->kind == imp->kind && exp->name == imp->base) {
+          // fits!
+          if (imp->kind == ExternalKind::Function) {
+            inputUpdater.implementedFunctionImports[imp->name] = exp->value;
+          } else {
+            inputUpdater.implementedGlobalImports[imp->name] = exp->value;
+          }
+          break;
+        }
+      }
+    }
+  }
   // find new names
   for (auto& curr : input.functionTypes) {
     curr->name = inputUpdater.ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
@@ -205,29 +240,17 @@ void mergeIn(Module& output, Module& input) {
       return output.checkGlobal(name);
     });
   }
-  // find function imports in input that are implemented in the output, and vice versa
-  // TODO make maps, avoid N^2
-  for (auto& imp : input.imports) {
-    // per wasm dynamic library rules, we expect to see exports on 'env'
-    if (imp->kind == ExternalKind::Function && imp->module == ENV) {
-      // seek an export on the other side that matches
-      for (auto& exp : output.exports) {
-        if (exp->kind == ExternalKind::Function && exp->name == imp->base) {
-          // fits!
-          inputUpdater.implementedFunctionImports[imp->name] = exp->value;
-          break;
-        }
-      }
-    }
-  }
+
+  // find function imports in output that are implemented in the input
   for (auto& imp : output.imports) {
-    // per wasm dynamic library rules, we expect to see exports on 'env'
-    if (imp->kind == ExternalKind::Function && imp->module == ENV) {
-      // seek an export on the other side that matches
+    if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
       for (auto& exp : input.exports) {
-        if (exp->kind == ExternalKind::Function && exp->name == imp->base) {
-          // fits!
-          outputUpdater.implementedFunctionImports[imp->name] = inputUpdater.fNames[exp->value];
+        if (exp->kind == imp->kind && exp->name == imp->base) {
+          if (imp->kind == ExternalKind::Function) {
+            outputUpdater.implementedFunctionImports[imp->name] = inputUpdater.fNames[exp->value];
+          } else {
+            outputUpdater.implementedGlobalImports[imp->name] = inputUpdater.gNames[exp->value];
+          }
           break;
         }
       }
