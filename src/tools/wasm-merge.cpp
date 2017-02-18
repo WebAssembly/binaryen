@@ -129,15 +129,6 @@ void mergeIn(Module& output, Module& input) {
       assert(curr->name.is());
     }
 
-    void visitTable(Table* table) {
-      for (auto& segment : table->segments) {
-        for (auto& name : segment.data) {
-          name = fNames[name];
-          assert(name.is());
-        }
-      }
-    }
-
   private:
     // add an offset to a get_global. we look above, and if there is already an add,
     // we can add into it, avoiding creating a new node
