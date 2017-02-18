@@ -1,7 +1,17 @@
 (module
   (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "tableBase" (global $tableBase i32))
-  (func $only-b)
-  (func $willCollide)
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 anyfunc))
+  (data (i32.const 100) "constant location")
+  (data (get_global $memoryBase) "hello, B!\n")
+  (func $only-b
+    (drop (i32.const 111))
+    (call $only-b)
+  )
+  (func $willCollide
+    (drop (i32.const 222))
+    (call $willCollide)
+  )
 )
 

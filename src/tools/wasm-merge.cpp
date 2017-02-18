@@ -51,15 +51,32 @@ Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
   }
 }
 
-// gets the relative offset, assuming the form (add (global) (const offset)) or just (global) which has offset 0
-Index getRelativeOffset(Expression* curr) {
-  if (auto* binary = curr->dynCast<Binary>()) {
-    assert(binary->op == AddInt32);
-    assert(binary->left->is<GetGlobal>());
-    return binary->right->cast<Const>()->value.geti32();
+// copies a relocatable segment from the input to the output, and sets the necessary bump
+template<typename T>
+void handleSegments(T& output, T& input, Index& bump) {
+  bump = 0;
+  for (auto& inputSegment : input.segments) {
+    Expression* inputOffset = inputSegment.offset;
+    if (inputOffset->is<GetGlobal>()) {
+      // this is the relocatable one
+      for (auto& segment : output.segments) {
+        Expression* offset = segment.offset;
+        if (offset->is<GetGlobal>()) {
+          // align to 16 bytes
+          while (segment.data.size() % 16 != 0) {
+            segment.data.push_back(0);
+          }
+          bump = segment.data.size();
+          // copy our data in
+          for (auto item : inputSegment.data) {
+            segment.data.push_back(item);
+          }
+          break; // there can be only one
+        }
+      }
+      break; // there can be only one
+    }
   }
-  assert(curr->is<GetGlobal>());
-  return 0; // no offset
 }
 
 // Merges input into output.
@@ -162,24 +179,14 @@ void mergeIn(Module& output, Module& input) {
       return output.checkGlobal(name);
     });
   }
+  // FIXME: handle the case of an import in one being connected to an export in another
 
-  // memory: we place the new memory segments at a higher position. after the existing ones.
-  //         that means we need to update usage of gb, which we did earlier.
-  // first, find the highest relative offset (to memoryBase)
-  updater.memoryBaseBump = 0;
-  for (auto& segment : input.memory.segments) {
-    updater.memoryBaseBump = std::max(updater.memoryBaseBump, getRelativeOffset(segment.offset));
-  }
-  // align to 16 bytes
-  updater.memoryBaseBump = (updater.memoryBaseBump + 15) & -16;
-
-  // table
-  updater.tableBaseBump = 0;
-  for (auto& segment : input.table.segments) {
-    updater.tableBaseBump = std::max(updater.tableBaseBump, getRelativeOffset(segment.offset));
-  }
-  // align to 16 bytes
-  updater.tableBaseBump = (updater.tableBaseBump + 15) & -16;
+  // memory&table: we place the new memory segments at a higher position. after the existing ones.
+  // that means we need to update usage of gb, which we did earlier.
+  // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
+  // memory segment at most.
+  handleSegments<Memory>(output.memory, input.memory, updater.memoryBaseBump);
+  handleSegments<Table>(output.table, input.table, updater.memoryBaseBump);
 
   // find the memory/table base globals, so we know how to update them
   for (auto& curr : input.imports) {
@@ -244,7 +251,6 @@ int main(int argc, const char* argv[]) {
   std::vector<std::unique_ptr<Module>> otherModules; // keep all inputs alive, to save copies
   bool first = true;
   for (auto& filename : filenames) {
-std::cerr << "in: " << filename << "\n";
     ModuleReader reader;
     if (first) {
       // read the first right into output, don't waste time merging into an empty module
@@ -272,9 +278,7 @@ std::cerr << "in: " << filename << "\n";
     Fatal() << "error in validating output";
   }
 
-std::cerr << "out?\n";
   if (options.extra.count("output") > 0) {
-std::cerr << "out: " << options.extra["output"] << "\n";
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
