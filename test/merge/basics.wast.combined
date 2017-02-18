@@ -21,6 +21,11 @@
   (global $global-b i32 (i32.const 1))
   (elem (get_global $tableBase) $only-a $willCollide $some-func $some-collide $only-a $only-b $only-b $willCollide$0 $some-func-b $some-collide$0)
   (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n")
+  (export "exp-a" (func $only-a))
+  (export "exp-collide" (func $only-a))
+  (export "exp-collide2" (func $willCollide))
+  (export "exp-b" (func $only-b))
+  (export "exp-b-nameCollided" (func $willCollide$0))
   (func $only-a (type $FUNCSIG$v)
     (drop
       (i32.const 100)

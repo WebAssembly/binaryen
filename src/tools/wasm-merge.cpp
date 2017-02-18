@@ -173,17 +173,6 @@ void mergeIn(Module& output, Module& input) {
       });
     }
   }
-  for (auto& curr : input.exports) {
-    if (curr->kind == ExternalKind::Function) {
-      curr->name = updater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return !!output.checkExport(name) || !!output.checkFunction(name);
-      });
-    } else if (curr->kind == ExternalKind::Global) {
-      curr->name = updater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return !!output.checkExport(name) || !!output.checkGlobal(name);
-      });
-    }
-  }
   for (auto& curr : input.functions) {
     curr->name = updater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
       return output.checkFunction(name);
@@ -195,7 +184,6 @@ void mergeIn(Module& output, Module& input) {
     });
   }
   // FIXME: handle the case of an import in one being connected to an export in another
-  // TODO: exports
 
   // memory&table: we place the new memory segments at a higher position. after the existing ones.
   // that means we need to update usage of gb, which we did earlier.
@@ -236,7 +224,22 @@ void mergeIn(Module& output, Module& input) {
     output.addImport(curr.release());
   }
   for (auto& curr : input.exports) {
-    output.addExport(curr.release());
+    if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
+      continue; // wasm has just 1 of each, they must match
+    }
+    // if an export would collide, do not add the new one, ignore it
+    // TODO: warning/error mode?
+    if (!output.checkExport(curr->name)) {
+      if (curr->kind == ExternalKind::Function) {
+        curr->value = updater.fNames[curr->value];
+        output.addExport(curr.release());
+      } else if (curr->kind == ExternalKind::Global) {
+        curr->value = updater.gNames[curr->value];
+        output.addExport(curr.release());
+      } else {
+        WASM_UNREACHABLE();
+      }
+    }
   }
   for (auto& curr : input.functions) {
     curr->type = updater.ftNames[curr->type];

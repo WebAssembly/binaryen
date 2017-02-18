@@ -12,6 +12,10 @@
   (global $global-collide-mut (mut i32) (i32.const 0))
   (global $global-b i32 (i32.const 1))
   (elem (get_global $tableBase) $only-b $willCollide $some-func-b $some-collide)
+  (export "exp-b" (func $only-b))
+  (export "exp-collide" (func $only-b))
+  (export "exp-collide2" (func $willCollide))
+  (export "exp-b-nameCollided" (func $willCollide))
   (func $only-b
     (drop (i32.const 111))
     (call $only-b)
