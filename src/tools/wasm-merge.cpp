@@ -501,6 +501,7 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   Index finalizeMemoryBase = Index(-1),
         finalizeTableBase = Index(-1);
+  bool optimize = false;
 
   Options options("wasm-merge", "Merge wasm files");
   options
@@ -522,6 +523,11 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              finalizeTableBase = atoi(argument.c_str());
+           })
+      .add("-O", "-O", "Perform merge-time/finalize-time optimizations",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             optimize = true;
            })
       .add_positional("INFILES", Options::Arguments::N,
                       [&](Options *o, const std::string &argument) {
@@ -558,6 +564,16 @@ int main(int argc, const char* argv[]) {
 
   if (finalizeMemoryBase != Index(-1) || finalizeTableBase != Index(-1)) {
     finalizeBases(output, finalizeMemoryBase, finalizeTableBase);
+  }
+
+  if (optimize) {
+    // merge-time/finalize-time optimization
+    // it is beneficial to do global optimizations, as well as precomputing to get rid of finalized constants
+    PassRunner passRunner(&output);
+    passRunner.add("precompute");
+    passRunner.add("optimize-instructions"); // things now-constant may be further optimized
+    passRunner.addDefaultGlobalOptimizationPasses();
+    passRunner.run();
   }
 
   if (!WasmValidator().validate(output)) {
