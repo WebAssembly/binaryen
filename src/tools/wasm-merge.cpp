@@ -30,6 +30,7 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-validator.h"
 
@@ -83,9 +84,18 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
   }
 
   // TODO: merge post_instantiates
-  // TODO: post_instantiate must be called from the outside
-  // TODO: finalize memorybase, tablebase
-  // TODO: figure out how to handle the memory size bump and table size bump from dynamic linking section
+  // TODO: finalize memorybase, tablebase.
+}
+
+void handleDylinkSection(Module& input, Index& memoryBaseBump, Index& tableBaseBump) {
+  for (auto& section : input.userSections) {
+    if (section.name == "dylink") {
+      WasmBinaryBuilder builder(input, section.data, false);
+      memoryBaseBump = std::max(memoryBaseBump, builder.getU32LEB());
+      tableBaseBump = std::max(tableBaseBump, builder.getU32LEB());
+      break; // there can be only one
+    }
+  }
 }
 
 // Merges input into output.
@@ -300,6 +310,9 @@ void mergeIn(Module& output, Module& input) {
   if (inputUpdater.fNames.size() > 0) {
     handleSegments<Table>(output.table, input.table, inputUpdater.tableBaseBump, 2, inputUpdater.fNames.begin()->second, [&](Name x) -> Name { return inputUpdater.fNames[x]; });
   }
+
+  // read info from dylink section, if present
+  handleDylinkSection(input, inputUpdater.memoryBaseBump, inputUpdater.tableBaseBump);
 
   // find the memory/table base globals, so we know how to update them
   for (auto& curr : input.imports) {

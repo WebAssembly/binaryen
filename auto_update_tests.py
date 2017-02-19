@@ -7,7 +7,7 @@ from scripts.test.support import run_command, split_wast
 print '\n[ checking wasm-merge... ]\n'
 
 for t in os.listdir(os.path.join('test', 'merge')):
-  if t.endswith('.wast'):
+  if t.endswith(('.wast', '.wasm')):
     print '..', t
     t = os.path.join('test', 'merge', t)
     u = t + '.toMerge'
