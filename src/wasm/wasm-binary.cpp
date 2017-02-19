@@ -951,7 +951,8 @@ void WasmBinaryBuilder::read() {
       case BinaryConsts::Section::Data: readDataSegments(); break;
       case BinaryConsts::Section::Table: readFunctionTableDeclaration(); break;
       default: {
-        readUserSection();
+        readUserSection(payloadLen);
+        assert(pos <= oldPos + payloadLen);
         pos = oldPos + payloadLen;
       }
     }
@@ -963,12 +964,21 @@ void WasmBinaryBuilder::read() {
   processFunctions();
 }
 
-void WasmBinaryBuilder::readUserSection() {
+void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
+  auto oldPos = pos;
   Name sectionName = getInlineString();
   if (sectionName.equals(BinaryConsts::UserSections::Name)) {
     readNames();
   } else {
-    std::cerr << "unfamiliar section: " << sectionName << std::endl;
+    // an unfamiliar custom section
+    wasm.userSections.resize(wasm.userSections.size() + 1);
+    auto& section = wasm.userSections.back();
+    section.name = sectionName.str;
+    auto sectionSize = payloadLen - (pos - oldPos);
+    section.data.resize(sectionSize);
+    for (size_t i = 0; i < sectionSize; i++) {
+      section.data[i] = getInt8();
+    }
   }
 }
 
