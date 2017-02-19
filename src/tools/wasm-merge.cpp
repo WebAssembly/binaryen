@@ -52,9 +52,80 @@ Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
   }
 }
 
-// copies a relocatable segment from the input to the output, and sets the necessary bump
-template<typename T, typename U, typename V>
-void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V updater) {
+// find the memory and table bumps. if there are relocatable sections for them,
+// that is the base size, and a dylink section may increase things further
+void findBumps(Module& wasm, Index& memoryBaseBump, Index& tableBaseBump) {
+  memoryBaseBump = 0;
+  tableBaseBump = 0;
+  for (auto& segment : wasm.memory.segments) {
+    Expression* offset = segment.offset;
+    if (offset->is<GetGlobal>()) {
+      memoryBaseBump = segment.data.size();
+      break;
+    }
+  }
+  for (auto& segment : wasm.table.segments) {
+    Expression* offset = segment.offset;
+    if (offset->is<GetGlobal>()) {
+      tableBaseBump = segment.data.size();
+      break;
+    }
+  }
+  for (auto& section : wasm.userSections) {
+    if (section.name == "dylink") {
+      WasmBinaryBuilder builder(wasm, section.data, false);
+      memoryBaseBump = std::max(memoryBaseBump, builder.getU32LEB());
+      tableBaseBump = std::max(tableBaseBump, builder.getU32LEB());
+      break; // there can be only one
+    }
+  }
+  // align them
+  while (memoryBaseBump % 16 != 0) memoryBaseBump++;
+  while (tableBaseBump % 2 != 0) tableBaseBump++;
+}
+
+void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
+  bool found = false;
+  for (auto& curr : wasm.imports) {
+    if (curr->module == ENV) {
+      if (curr->base == base) {
+        note(curr->name);
+        found = true;
+      }
+    }
+  }
+  assert(found);
+}
+
+// ensure a relocatable segment exists, of the proper size, including
+// the dylink bump applied into it (as we are dropping dylink sections)
+// if we create a new segment, we need to know the import global to use in the offset.
+template<typename T, typename U, typename Segment>
+void ensureSegment(Module& wasm, T& what, Index size, U zero, Name globalName) {
+  Segment* relocatable = nullptr;
+  for (auto& segment : what.segments) {
+    Expression* offset = segment.offset;
+    if (offset->is<GetGlobal>()) {
+      // this is the relocatable one.
+      relocatable = &segment;
+      break;
+    }
+  }
+  if (!relocatable) {
+    // none existing, add one
+    what.segments.resize(what.segments.size() + 1);
+    relocatable = &what.segments.back();
+    relocatable->offset = Builder(wasm).makeGetGlobal(globalName, i32);
+  }
+  // make sure it is the right size
+  while (relocatable->data.size() < size) {
+    relocatable->data.push_back(zero);
+  }
+}
+
+// copies a relocatable segment from the input to the output
+template<typename T, typename V>
+void copySegment(T& output, T& input, V updater) {
   for (auto& inputSegment : input.segments) {
     Expression* inputOffset = inputSegment.offset;
     if (inputOffset->is<GetGlobal>()) {
@@ -62,11 +133,6 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
       for (auto& segment : output.segments) {
         Expression* offset = segment.offset;
         if (offset->is<GetGlobal>()) {
-          // align to 16 bytes
-          while (segment.data.size() % align != 0) {
-            segment.data.push_back(zero);
-          }
-          bump = segment.data.size();
           // copy our data in
           for (auto item : inputSegment.data) {
             segment.data.push_back(updater(item));
@@ -74,28 +140,12 @@ void handleSegments(T& output, T& input, Index& bump, Index align, U zero, V upd
           return; // there can be only one
         }
       }
-      // output lacks a relocatable segment, add one
-      bump = 0;
-      output.segments.push_back(inputSegment); // TODO: optimize
-      return; // there can be only one
-    } else {
-      Fatal() << "cannot merge in an input with a non-relocatable segment";
+      WASM_UNREACHABLE(); // we must find a relocatable one in the output
     }
   }
 
   // TODO: merge post_instantiates
   // TODO: finalize memorybase, tablebase.
-}
-
-void handleDylinkSection(Module& input, Index& memoryBaseBump, Index& tableBaseBump) {
-  for (auto& section : input.userSections) {
-    if (section.name == "dylink") {
-      WasmBinaryBuilder builder(input, section.data, false);
-      memoryBaseBump = std::max(memoryBaseBump, builder.getU32LEB());
-      tableBaseBump = std::max(tableBaseBump, builder.getU32LEB());
-      break; // there can be only one
-    }
-  }
 }
 
 // Merges input into output.
@@ -224,6 +274,22 @@ void mergeIn(Module& output, Module& input) {
   };
   OutputUpdater outputUpdater;
 
+  // find imports in the modules for the relocatable bases
+  Name outputMemoryBase, outputTableBase;
+  findImportsByBase(output, MEMORY_BASE, [&](Name name) {
+    outputMemoryBase = name;
+  });
+  findImportsByBase(output, TABLE_BASE, [&](Name name) {
+    outputTableBase = name;
+  });
+  Name inputMemoryBase, inputTableBase;
+  findImportsByBase(input, MEMORY_BASE, [&](Name name) {
+    inputMemoryBase = name;
+  });
+  findImportsByBase(input, TABLE_BASE, [&](Name name) {
+    inputTableBase = name;
+  });
+
   // find function imports in input that are implemented in the output
   // TODO make maps, avoid N^2
   for (auto& imp : input.imports) {
@@ -301,29 +367,38 @@ void mergeIn(Module& output, Module& input) {
     outputUpdater.walkModule(&output);
   }
 
+  // output memory and table sizes may increase the bump we need for the input
+  findBumps(output, inputUpdater.memoryBaseBump, inputUpdater.tableBaseBump);
+  // ensure relocatable segments in the output for us to write to
+  ensureSegment<Memory, char, Memory::Segment>(output, output.memory, inputUpdater.memoryBaseBump, 0, outputMemoryBase);
+  if (inputUpdater.fNames.size() > 0) {
+    ensureSegment<Table, Name, Table::Segment>(output, output.table, inputUpdater.tableBaseBump, inputUpdater.fNames.begin()->second, outputTableBase);
+  }
+
+  // read the input dylink section too, as we currently don't emit a dylink section,
+  // we just add zeros
+  Index inputMemoryBump = 0, inputTableBump = 0;
+  findBumps(input, inputMemoryBump, inputTableBump);
+  ensureSegment<Memory, char, Memory::Segment>(input, input.memory, inputMemoryBump, 0, inputMemoryBase);
+  if (inputUpdater.fNames.size() > 0) {
+    ensureSegment<Table, Name, Table::Segment>(input, input.table, inputTableBump, inputUpdater.fNames.begin()->first, inputTableBase);
+  }
+
   // memory&table: we place the new memory segments at a higher position. after the existing ones.
   // that means we need to update usage of gb, which we did earlier.
   // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
-  // memory segment at most.
-  handleSegments<Memory>(output.memory, input.memory, inputUpdater.memoryBaseBump, 16, 0, [](char x) -> char { return x; });
+  // segment at most.
+  copySegment(output.memory, input.memory, [](char x) -> char { return x; });
   // if no functions, even imported, then nothing to do (and no zero element anyhow)
-  if (inputUpdater.fNames.size() > 0) {
-    handleSegments<Table>(output.table, input.table, inputUpdater.tableBaseBump, 2, inputUpdater.fNames.begin()->second, [&](Name x) -> Name { return inputUpdater.fNames[x]; });
-  }
-
-  // read info from dylink section, if present
-  handleDylinkSection(input, inputUpdater.memoryBaseBump, inputUpdater.tableBaseBump);
+  copySegment(output.table, input.table, [&](Name x) -> Name { return inputUpdater.fNames[x]; });
 
   // find the memory/table base globals, so we know how to update them
-  for (auto& curr : input.imports) {
-    if (curr->module == ENV) {
-      if (curr->base == MEMORY_BASE) {
-        inputUpdater.memoryBaseGlobals.insert(curr->name);
-      } else if (curr->base == TABLE_BASE) {
-        inputUpdater.tableBaseGlobals.insert(curr->name);
-      }
-    }
-  }
+  findImportsByBase(input, MEMORY_BASE, [&](Name name) {
+    inputUpdater.memoryBaseGlobals.insert(name);
+  });
+  findImportsByBase(input, TABLE_BASE, [&](Name name) {
+    inputUpdater.tableBaseGlobals.insert(name);
+  });
 
   // update the new contents about to be merged in
   inputUpdater.walkModule(&input);

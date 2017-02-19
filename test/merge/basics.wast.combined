@@ -20,7 +20,7 @@
   (global $global-collide-mut$0 (mut i32) (i32.const 0))
   (global $global-b i32 (i32.const 1))
   (elem (get_global $tableBase) $only-a $willCollide $some-func $some-collide $only-a $only-b $only-b $willCollide$0 $some-func-b $some-collide$0)
-  (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n")
+  (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n\00\00\00\00\00\00")
   (export "exp-a" (func $only-a))
   (export "exp-collide" (func $only-a))
   (export "exp-collide2" (func $willCollide))
