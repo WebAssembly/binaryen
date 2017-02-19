@@ -85,16 +85,13 @@ void findBumps(Module& wasm, Index& memoryBaseBump, Index& tableBaseBump) {
 }
 
 void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
-  bool found = false;
   for (auto& curr : wasm.imports) {
     if (curr->module == ENV) {
       if (curr->base == base) {
         note(curr->name);
-        found = true;
       }
     }
   }
-  assert(found);
 }
 
 // ensure a relocatable segment exists, of the proper size, including
@@ -144,7 +141,6 @@ void copySegment(T& output, T& input, V updater) {
     }
   }
 
-  // TODO: merge post_instantiates
   // TODO: finalize memorybase, tablebase.
 }
 
@@ -367,20 +363,26 @@ void mergeIn(Module& output, Module& input) {
     outputUpdater.walkModule(&output);
   }
 
+  // Find input memory bumps. if the exist, we must have output segments to copy them into
+  Index inputMemoryBump = 0, inputTableBump = 0;
+  findBumps(input, inputMemoryBump, inputTableBump);
+
   // output memory and table sizes may increase the bump we need for the input
   findBumps(output, inputUpdater.memoryBaseBump, inputUpdater.tableBaseBump);
   // ensure relocatable segments in the output for us to write to
-  ensureSegment<Memory, char, Memory::Segment>(output, output.memory, inputUpdater.memoryBaseBump, 0, outputMemoryBase);
-  if (inputUpdater.fNames.size() > 0) {
+  if (inputUpdater.memoryBaseBump > 0 || inputMemoryBump > 0) {
+    ensureSegment<Memory, char, Memory::Segment>(output, output.memory, inputUpdater.memoryBaseBump, 0, outputMemoryBase);
+  }
+  if ((inputUpdater.tableBaseBump > 0 || inputTableBump > 0) && inputUpdater.fNames.size() > 0) {
     ensureSegment<Table, Name, Table::Segment>(output, output.table, inputUpdater.tableBaseBump, inputUpdater.fNames.begin()->second, outputTableBase);
   }
 
   // read the input dylink section too, as we currently don't emit a dylink section,
   // we just add zeros
-  Index inputMemoryBump = 0, inputTableBump = 0;
-  findBumps(input, inputMemoryBump, inputTableBump);
-  ensureSegment<Memory, char, Memory::Segment>(input, input.memory, inputMemoryBump, 0, inputMemoryBase);
-  if (inputUpdater.fNames.size() > 0) {
+  if (inputMemoryBump > 0) {
+    ensureSegment<Memory, char, Memory::Segment>(input, input.memory, inputMemoryBump, 0, inputMemoryBase);
+  }
+  if (inputTableBump > 0 && inputUpdater.fNames.size() > 0) {
     ensureSegment<Table, Name, Table::Segment>(input, input.table, inputTableBump, inputUpdater.fNames.begin()->first, inputTableBase);
   }
 
@@ -402,6 +404,19 @@ void mergeIn(Module& output, Module& input) {
 
   // update the new contents about to be merged in
   inputUpdater.walkModule(&input);
+
+  // handle post-instantiate. this is special, as if it exists in both, we must in fact call both
+  Name POST_INSTANTIATE("__post_instantiate");
+  if (inputUpdater.fNames.find(POST_INSTANTIATE) != inputUpdater.fNames.end() &&
+      output.checkExport(POST_INSTANTIATE)) {
+    // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
+    auto* func = output.getFunction(output.getExport(POST_INSTANTIATE)->value);
+    Builder builder(output);
+    func->body = builder.makeSequence(
+      builder.makeCall(inputUpdater.fNames[POST_INSTANTIATE], {}, none),
+      func->body
+    );
+  }
 
   // copy in the data
   for (auto& curr : input.functionTypes) {
