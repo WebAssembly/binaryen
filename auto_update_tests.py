@@ -12,10 +12,13 @@ for t in os.listdir(os.path.join('test', 'merge')):
     t = os.path.join('test', 'merge', t)
     u = t + '.toMerge'
     cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S']
-    run_command(cmd)
-    actual = open('a.wast').read()
-    out = t + '.combined'
-    with open(out, 'w') as o: o.write(actual)
+    for finalize in [0, 1]:
+      if finalize: cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
+      run_command(cmd)
+      actual = open('a.wast').read()
+      out = t + '.combined'
+      if finalize: out += '.finalized'
+      with open(out, 'w') as o: o.write(actual)
 
 print '[ processing and updating testcases... ]\n'
 

@@ -140,8 +140,6 @@ void copySegment(T& output, T& input, V updater) {
       WASM_UNREACHABLE(); // we must find a relocatable one in the output
     }
   }
-
-  // TODO: finalize memorybase, tablebase.
 }
 
 // Merges input into output.
@@ -237,7 +235,7 @@ void mergeIn(Module& output, Module& input) {
   };
   InputUpdater inputUpdater;
 
-  struct OutputUpdater : public ExpressionStackWalker<OutputUpdater, Visitor<OutputUpdater>> {
+  struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>> {
     // An import of something provided on the other side becomes a direct usage
     std::map<Name, Name> implementedFunctionImports;
     std::map<Name, Name> implementedGlobalImports;
@@ -461,6 +459,39 @@ void mergeIn(Module& output, Module& input) {
   }
 }
 
+// Finalize the memory/table bases
+void finalizeBases(Module& wasm, Index memory, Index table) {
+  struct Updater : public PostWalker<Updater, Visitor<Updater>> {
+    Index memory, table;
+
+    std::set<Name> memoryBaseGlobals,
+                   tableBaseGlobals;
+
+    void visitGetGlobal(GetGlobal* curr) {
+      if (memory != Index(-1) && memoryBaseGlobals.count(curr->name)) {
+        finalize(memory);
+      } else if (table != Index(-1) && tableBaseGlobals.count(curr->name)) {
+        finalize(table);
+      }
+    }
+
+  private:
+    void finalize(Index value) {
+      replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(value))));
+    }
+  };
+  Updater updater;
+  updater.memory = memory;
+  updater.table = table;
+  findImportsByBase(wasm, MEMORY_BASE, [&](Name name) {
+    updater.memoryBaseGlobals.insert(name);
+  });
+  findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
+    updater.tableBaseGlobals.insert(name);
+  });
+  updater.walkModule(&wasm);
+}
+
 //
 // main
 //
@@ -468,6 +499,8 @@ void mergeIn(Module& output, Module& input) {
 int main(int argc, const char* argv[]) {
   std::vector<std::string> filenames;
   bool emitBinary = true;
+  Index finalizeMemoryBase = Index(-1),
+        finalizeTableBase = Index(-1);
 
   Options options("wasm-merge", "Merge wasm files");
   options
@@ -480,6 +513,16 @@ int main(int argc, const char* argv[]) {
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { emitBinary = false; })
+      .add("--finalize-memory-base", "-fmb", "Finalize the env.memoryBase import",
+           Options::Arguments::One,
+           [&](Options* o, const std::string& argument) {
+             finalizeMemoryBase = atoi(argument.c_str());
+           })
+      .add("--finalize-table-base", "-fmb", "Finalize the env.tableBase import",
+           Options::Arguments::One,
+           [&](Options* o, const std::string& argument) {
+             finalizeTableBase = atoi(argument.c_str());
+           })
       .add_positional("INFILES", Options::Arguments::N,
                       [&](Options *o, const std::string &argument) {
                         filenames.push_back(argument);
@@ -511,6 +554,10 @@ int main(int argc, const char* argv[]) {
       mergeIn(output, *input);
       otherModules.push_back(std::unique_ptr<Module>(input.release()));
     }
+  }
+
+  if (finalizeMemoryBase != Index(-1) || finalizeTableBase != Index(-1)) {
+    finalizeBases(output, finalizeMemoryBase, finalizeTableBase);
   }
 
   if (!WasmValidator().validate(output)) {
