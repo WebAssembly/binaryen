@@ -212,6 +212,26 @@ for t in tests:
       if actual != expected:
         fail(actual, expected)
 
+print '\n[ checking wasm-merge... ]\n'
+
+for t in os.listdir(os.path.join('test', 'merge')):
+  if t.endswith(('.wast', '.wasm')):
+    print '..', t
+    t = os.path.join('test', 'merge', t)
+    u = t + '.toMerge'
+    for finalize in [0, 1]:
+      for opt in [0, 1]:
+        cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S']
+        if finalize: cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
+        if opt: cmd += ['-O']
+        run_command(cmd)
+        actual = open('a.wast').read()
+        out = t + '.combined'
+        if finalize: out += '.finalized'
+        if opt: out += '.opt'
+        with open(out) as f:
+          fail_if_not_identical(f.read(), actual)
+
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
 if len(requested) == 0:

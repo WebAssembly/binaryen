@@ -4,25 +4,6 @@ import os, sys, subprocess, difflib
 
 from scripts.test.support import run_command, split_wast
 
-print '\n[ checking wasm-merge... ]\n'
-
-for t in os.listdir(os.path.join('test', 'merge')):
-  if t.endswith(('.wast', '.wasm')):
-    print '..', t
-    t = os.path.join('test', 'merge', t)
-    u = t + '.toMerge'
-    for finalize in [0, 1]:
-      for opt in [0, 1]:
-        cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S']
-        if finalize: cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
-        if opt: cmd += ['-O']
-        run_command(cmd)
-        actual = open('a.wast').read()
-        out = t + '.combined'
-        if finalize: out += '.finalized'
-        if opt: out += '.opt'
-        with open(out, 'w') as o: o.write(actual)
-
 print '[ processing and updating testcases... ]\n'
 
 for asm in sorted(os.listdir('test')):
@@ -209,5 +190,24 @@ for t in os.listdir('test'):
     actual = run_command(cmd)
 
     open(t + '.fromBinary', 'w').write(actual)
+
+print '\n[ checking wasm-merge... ]\n'
+
+for t in os.listdir(os.path.join('test', 'merge')):
+  if t.endswith(('.wast', '.wasm')):
+    print '..', t
+    t = os.path.join('test', 'merge', t)
+    u = t + '.toMerge'
+    for finalize in [0, 1]:
+      for opt in [0, 1]:
+        cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S']
+        if finalize: cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
+        if opt: cmd += ['-O']
+        run_command(cmd)
+        actual = open('a.wast').read()
+        out = t + '.combined'
+        if finalize: out += '.finalized'
+        if opt: out += '.opt'
+        with open(out, 'w') as o: o.write(actual)
 
 print '\n[ success! ]'
