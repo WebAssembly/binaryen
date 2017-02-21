@@ -1948,7 +1948,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         Expression* ret;
         ExpressionList* operands;
-        CallImport* import = nullptr;
+        CallImport* callImport = nullptr;
         Index firstOperand = 0;
         Ref args = ast[2];
         if (tableCall) {
@@ -1958,10 +1958,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           operands = &specific->operands;
           ret = specific;
         } else if (wasm.checkImport(name)) {
-          import = allocator.alloc<CallImport>();
-          import->target = name;
-          operands = &import->operands;
-          ret = import;
+          callImport = allocator.alloc<CallImport>();
+          callImport->target = name;
+          operands = &callImport->operands;
+          ret = callImport;
         } else {
           auto specific = allocator.alloc<Call>();
           specific->target = name;
@@ -1978,7 +1978,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           specific->fullType = fullType->name;
           specific->type = fullType->result;
         }
-        if (import) {
+        if (callImport) {
           // apply the detected type from the parent
           // note that this may not be complete, e.g. we may see f(); but f is an
           // import which does return a value, and we use that elsewhere. finalizeCalls
@@ -1988,8 +1988,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // to finalizeCalls (which we can only do once we've read all the functions,
           // and we optimize in parallel starting earlier).
           Ref parent = astStackHelper.getParent();
-          import->type = !!parent ? detectWasmType(parent, &asmData) : none;
-          noteImportedFunctionCall(ast, import->type, ret->cast<CallImport>());
+          callImport->type = !!parent ? detectWasmType(parent, &asmData) : none;
+          noteImportedFunctionCall(ast, callImport->type, callImport);
         }
         return ret;
       }
