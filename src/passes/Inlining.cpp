@@ -144,7 +144,7 @@ struct Inlining : public Pass {
       uses[func->name] = 0;
     }
     {
-      PassRunner runner(module);
+      NestedPassRunner runner(module);
       runner.add<FunctionUseCounter>(&uses);
       runner.run();
     }
@@ -171,7 +171,7 @@ struct Inlining : public Pass {
     }
     // find and plan inlinings
     {
-      PassRunner runner(module);
+      NestedPassRunner runner(module);
       runner.add<Planner>(&state);
       runner.run();
     }

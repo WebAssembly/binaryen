@@ -138,12 +138,12 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
 }
 
 void PassRunner::run() {
+  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
+  //                     and validate between each pass.
+  //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
+  //                     also is bad for e.g. printing which is a pass)
   static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
-  if (options.debug || passDebug) {
-    // don't recurse pass debug into sub-passes, as it doesn't help anyhow and also is bad for e.g. printing which is a pass
-    static int recursion = 0;
-    auto currPassDebug = recursion == 0 ? passDebug : 0;
-    recursion++;
+  if (!isNested() && (options.debug || passDebug)) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
@@ -154,7 +154,7 @@ void PassRunner::run() {
     for (auto* pass : passes) {
       // ignoring the time, save a printout of the module before, in case this pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
-      if (currPassDebug == 2) {
+      if (passDebug == 2) {
         WasmPrinter::printModule(wasm, moduleBefore);
       }
       // prepare to run
@@ -178,7 +178,7 @@ void PassRunner::run() {
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
       if (!WasmValidator().validate(*wasm, false, options.validateGlobally)) {
-        if (currPassDebug >= 2) {
+        if (passDebug >= 2) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state (FIXME: this is broken, need to prevent recursion of the print pass\n";
@@ -193,7 +193,6 @@ void PassRunner::run() {
       std::cerr << "final module does not validate\n";
       abort();
     }
-    recursion--;
   } else {
     // non-debug normal mode, run them in an optimal manner - for locality it is better
     // to run as many passes as possible on a single function before moving to the next

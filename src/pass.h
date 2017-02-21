@@ -123,10 +123,20 @@ struct PassRunner {
 
   ~PassRunner();
 
+  virtual bool isNested() { return false; }
+
 private:
   void doAdd(Pass* pass);
 
   void runPassOnFunction(Pass* pass, Function* func);
+};
+
+// A pass runner that is safe to run inside a pass
+struct NestedPassRunner : public PassRunner {
+  NestedPassRunner(Module* wasm) : PassRunner(wasm) {}
+  NestedPassRunner(Module* wasm, PassOptions options) : PassRunner(wasm, options) {}
+
+  virtual bool isNested() { return true; }
 };
 
 //

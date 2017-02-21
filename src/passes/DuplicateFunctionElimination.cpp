@@ -88,7 +88,7 @@ struct DuplicateFunctionElimination : public Pass {
       for (auto& func : module->functions) {
         hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
       }
-      PassRunner hasherRunner(module);
+      NestedPassRunner hasherRunner(module);
       hasherRunner.add<FunctionHasher>(&hashes);
       hasherRunner.run();
       // Find hash-equal groups
@@ -130,7 +130,7 @@ struct DuplicateFunctionElimination : public Pass {
         }), v.end());
         module->updateMaps();
         // replace direct calls
-        PassRunner replacerRunner(module);
+        NestedPassRunner replacerRunner(module);
         replacerRunner.add<FunctionReplacer>(&replacements);
         replacerRunner.run();
         // replace in table
