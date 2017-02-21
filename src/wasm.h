@@ -1528,6 +1528,14 @@ public:
   bool mutable_;
 };
 
+// "Opaque" data, not part of the core wasm spec, that is held in binaries.
+// May be parsed/handled by utility code elsewhere, but not in wasm.h
+class UserSection {
+public:
+  std::string name;
+  std::vector<char> data;
+};
+
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
@@ -1540,6 +1548,8 @@ public:
   Table table;
   Memory memory;
   Name start;
+
+  std::vector<UserSection> userSections;
 
   MixedArena allocator;
 
