@@ -1948,7 +1948,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         Expression* ret;
         ExpressionList* operands;
-        bool import = false;
+        CallImport* callImport = nullptr;
         Index firstOperand = 0;
         Ref args = ast[2];
         if (tableCall) {
@@ -1958,11 +1958,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           operands = &specific->operands;
           ret = specific;
         } else if (wasm.checkImport(name)) {
-          import = true;
-          auto specific = allocator.alloc<CallImport>();
-          specific->target = name;
-          operands = &specific->operands;
-          ret = specific;
+          callImport = allocator.alloc<CallImport>();
+          callImport->target = name;
+          operands = &callImport->operands;
+          ret = callImport;
         } else {
           auto specific = allocator.alloc<Call>();
           specific->target = name;
@@ -1979,10 +1978,18 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           specific->fullType = fullType->name;
           specific->type = fullType->result;
         }
-        if (import) {
+        if (callImport) {
+          // apply the detected type from the parent
+          // note that this may not be complete, e.g. we may see f(); but f is an
+          // import which does return a value, and we use that elsewhere. finalizeCalls
+          // fixes that up. what we do here is wherever a value is used, we set the right
+          // value, which is enough to ensure that the wasm ast is valid for such uses.
+          // this is important as we run the optimizer on functions before we get
+          // to finalizeCalls (which we can only do once we've read all the functions,
+          // and we optimize in parallel starting earlier).
           Ref parent = astStackHelper.getParent();
-          WasmType type = !!parent ? detectWasmType(parent, &asmData) : none;
-          noteImportedFunctionCall(ast, type, ret->cast<CallImport>());
+          callImport->type = !!parent ? detectWasmType(parent, &asmData) : none;
+          noteImportedFunctionCall(ast, callImport->type, callImport);
         }
         return ret;
       }
