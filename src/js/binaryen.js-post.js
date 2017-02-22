@@ -159,14 +159,14 @@
       Module['_BinaryenModuleDispose'](module);
     };
     this['addFunctionType'] = function(name, result, paramTypes) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_BinaryenAddFunctionType'](module, strToStack(name), result,
                                                   ptrsToStack(paramTypes), paramTypes.length);
       });
     };
 
     this['block'] = function(name, children) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
                                         ptrsToStack(children), children.length);
       });
@@ -175,17 +175,17 @@
       return Module['_BinaryenIf'](module, condition, ifTrue, ifFalse);
     };
     this['loop'] = function(label, body) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_BinaryenLoop'](module, strToStack(label), body);
       });
     };
     this['break'] = function(label, condition, value) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_BinaryenBreak'](module, strToStack(label), condition, value);
       });
     };
     this['switch'] = function(names, defaultName, condition, value) {
-      preserveStack(function() {
+      return preserveStack(function() {
         var namePtrs = [];
         names.forEach(function(name) {
           namePtrs.push_back(strToStack(name));
@@ -195,17 +195,17 @@
       });
     };
     this['call'] = function(name, operands, type) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_BinaryenCall'](module, strToStack(name), ptrsToStack(operands), operands.length, type);
       });
     };
     this['callImport'] = function(name, operands, type) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_BinaryenCallImport'](module, strToStack(name), ptrsToStack(operands), operands.length, type);
       });
     };
     this['callIndirect'] = function(target, operands, type) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_BinaryenCallIndirect'](module, target, ptrsToStack(operands), operands.length, type);
       });
     };
@@ -274,39 +274,39 @@
     this['host'] = function() {
       throw 'TODO';
     };
-    Module['nop'] = function() {
-      return this['_BinaryenNop'](module);
+    this['nop'] = function() {
+      return Module['_BinaryenNop'](module);
     };
-    Module['unreachable'] = function() {
-      return this['_BinaryenUnreachable'](module);
+    this['unreachable'] = function() {
+      return Module['_BinaryenUnreachable'](module);
     };
-    Module['printExpression'] = function(expr) {
-      return this['_BinaryenExpressionPrint'](module, expr);
+    this['printExpression'] = function(expr) {
+      return Module['_BinaryenExpressionPrint'](module, expr);
     };
-    Module['addFunction'] = function(name, functionType, varTypes, body) {
-      preserveStack(function() {
-        return this['_BinaryenAddFunction'](module, strToStack(name), functionType, ptrsToStack(varTypes), varTypes.length, body);
+    this['addFunction'] = function(name, functionType, varTypes, body) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, ptrsToStack(varTypes), varTypes.length, body);
       });
     };
-    Module['addImport'] = function(internalName, externalModuleName, externalBaseName, type) {
-      preserveStack(function() {
-        return this['_BinaryenAddImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), type);
+    this['addImport'] = function(internalName, externalModuleName, externalBaseName, type) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), type);
       });
     };
-    Module['addExport'] = function(internalName, externalName) {
-      preserveStack(function() {
-        return this['_BinaryenAddExport'](module, strToStack(internalName), strToStack(externalName));
+    this['addExport'] = function(internalName, externalName) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddExport'](module, strToStack(internalName), strToStack(externalName));
       });
     };
-    Module['setFunctionTable'] = function(funcs) {
-      preserveStack(function() {
-        return this['_BinaryenSetFunctionTable'](module, ptrsToStack(funcs), funcs.length);
+    this['setFunctionTable'] = function(funcs) {
+      return preserveStack(function() {
+        return Module['_BinaryenSetFunctionTable'](module, ptrsToStack(funcs), funcs.length);
       });
     };
-    Module['setMemory'] = function(initial, maximum, exportName, segments) {
+    this['setMemory'] = function(initial, maximum, exportName, segments) {
       // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
-      preserveStack(function() {
-        return this['_BinaryenSetMemory'](
+      return preserveStack(function() {
+        return Module['_BinaryenSetMemory'](
           module, initial, maximum, strToStack(exportName),
           ptrsToStack(
             segments.map(function(segment) {
@@ -327,28 +327,30 @@
         );
       });
     };
-    Module['setStart'] = function(start) {
-      return this['_BinaryenSetStart'](module, start);
+    this['setStart'] = function(start) {
+      return Module['_BinaryenSetStart'](module, start);
     };
-    Module['print'] = function() {
-      return this['_BinaryenPrint'](module);
+    this['print'] = function() {
+      return Module['_BinaryenModulePrint'](module);
     };
-    Module['validate'] = function() {
-      return this['_BinaryenValidate'](module);
+    this['validate'] = function() {
+      return Module['_BinaryenModuleValidate'](module);
     };
-    Module['optimize'] = function() {
-      return this['_BinaryenOptimize'](module);
+    this['optimize'] = function() {
+      return Module['_BinaryenModuleOptimize'](module);
     };
-    Module['autoDrop'] = function() {
-      return this['_BinaryenAutoDrop'](module);
+    this['autoDrop'] = function() {
+      return Module['_BinaryenModuleAutoDrop'](module);
     };
-    Module['writeToBinary'] = function() {
-      // TODO: fix this hard-wired limit
-      const MAX = 1024*1024;
-      if (!this['ModuleWrite$buffer']) Module['ModuleWrite$buffer'] = _malloc(MAX);
-      var bytes = Module['_BinaryenModuleWrite'](module, Module['ModuleWrite$buffer'], MAX);
+
+    // TODO: fix this hard-wired limit
+    const MAX = 1024*1024;
+    var writeBuffer = null;
+    this['writeToBinary'] = function() {
+      if (!writeBuffer) writeBuffer = _malloc(MAX);
+      var bytes = Module['_BinaryenModuleWrite'](module, writeBuffer, MAX);
       assert(bytes < MAX, 'FIXME: hardcoded limit on module size'); // we should not use the whole buffer
-      return new UInt8Array(HEAPU8.subarray(Module['ModuleWrite$buffer'], Module['ModuleWrite$buffer'] + bytes));
+      return new UInt8Array(HEAPU8.subarray(writeBuffer, writeBuffer + bytes));
     };
     this['readFromBinary'] = function(data) {
       var buffer = allocate(data, 'i8', ALLOC_MALLOC);
@@ -374,7 +376,7 @@
       return Module['_RelooperAddBlockWithSwitch'](relooper, code, condition);
     };
     this['addBranchForSwitch'] = function(from, to, indexes, code) {
-      preserveStack(function() {
+      return preserveStack(function() {
         return Module['_RelooperAddBranchForSwitch'](from, to, ptrsToStack(indexes), indexes.length, code);
       });
     };
@@ -417,4 +419,4 @@ if (typeof exports != 'undefined') {
 
  ) ? global :
  this
-)['Binaryen'] = Binaryen;
+)['Binaryen'] = Binaryen();
