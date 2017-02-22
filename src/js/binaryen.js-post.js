@@ -9,6 +9,14 @@ function preserveStack(func) {
   }
 };
 
+function strToStack(str) {
+  return allocate(intArrayFromString(str), 'i8', ALLOC_STACK);
+}
+
+function ptrsToStack(ptrs) {
+  return allocate(ptrs, 'i32', ALLOC_STACK);
+}
+
 Module['None'] = function() {
   return Module['_BinaryenNone']();
 };
@@ -32,57 +40,54 @@ Module['ModuleDispose]' = function(module) {
 };
 Module['AddFunctionType]' = function(module, name, result, paramTypes) {
   preserveStack(function() {
-    return Module['_BinaryenAddFunctionType'](module, allocate(intArrayFromString(name), 'i8', ALLOC_STACK), result,
-                                              allocate(paramTypes, 'i32', ALLOC_STACK), paramTypes.length);
+    return Module['_BinaryenAddFunctionType'](module, strToStack(name), result,
+                                              ptrsToStack(paramTypes), paramTypes.length);
   });
 };
 // Literals: we keep a mapping. These stay alive as long as we do.
 var Literals = {
-  i32: [],
-  i64: [],
-  f32: [],
-  f64: []
+  map: []
 };
 Module['LiteralInt32'] = function(x) {
   // Literals: the LLVM ABI requires that we pass in a pointer to the struct we "return"
   var ptr = _malloc(16);
-  var ret = Literals.i32.length;
-  Literals.i32[ret] = ptr;
+  var ret = Literals.map.length;
+  Literals.map[ret] = ptr;
   Module['_BinaryenLiteralInt32'](ptr, x);
   return ret;
 };
 Module['LiteralInt64'] = function(l, h) {
   var ptr = _malloc(16);
-  var ret = Literals.i64.length;
-  Literals.i64[ret] = ptr;
+  var ret = Literals.map.length;
+  Literals.map[ret] = ptr;
   Module['_BinaryenLiteralInt64'](ptr, l, h);
   return ret;
 };
 Module['LiteralFloat32'] = function(x) {
   var ptr = _malloc(16);
-  var ret = Literals.f32.length;
-  Literals.f32[ret] = ptr;
+  var ret = Literals.map.length;
+  Literals.map[ret] = ptr;
   Module['_BinaryenLiteralFloat32'](ptr, x);
   return ret;
 };
 Module['LiteralFloat64'] = function(x) {
   var ptr = _malloc(16);
-  var ret = Literals.f64.length;
-  Literals.f64[ret] = ptr;
+  var ret = Literals.map.length;
+  Literals.map[ret] = ptr;
   Module['_BinaryenLiteralFloat64'](ptr, x);
   return ret;
 };
 Module['LiteralFloat32Bits'] = function(x) {
   var ptr = _malloc(16);
-  var ret = Literals.f32.length;
-  Literals.f32[ret] = ptr;
+  var ret = Literals.map.length;
+  Literals.map[ret] = ptr;
   Module['_BinaryenLiteralFloat32Bits'](ptr, x);
   return ret;
 };
 Module['LiteralFloat64Bits'] = function(l, h) {
   var ptr = _malloc(16);
-  var ret = Literals.f64.length;
-  Literals.f64[ret] = ptr;
+  var ret = Literals.map.length;
+  Literals.map[ret] = ptr;
   Module['_BinaryenLiteralFloat64Bits'](ptr, l, h);
   return ret;
 };
@@ -469,79 +474,92 @@ Module['HasFeature'] = function() {
 };
 Module['Block'] = function(module, name, children) {
   preserveStack(function() {
-    return Module['_BinaryenBlock'](module, name ? allocate(intArrayFromString(name), 'i8', ALLOC_STACK) : 0,
-                                    allocate(children, 'i32', ALLOC_STACK), children.length);
+    return Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
+                                    ptrsToStack(children), children.length);
   });
 };
 Module['If'] = function(module, condition, ifTrue, ifFalse) {
   return Module['_BinaryenIf'](module, condition, ifTrue, ifFalse);
 };
-Module['Loop'] = function(label, body) {
+Module['Loop'] = function(module, label, body) {
   preserveStack(function() {
-    return Module['_BinaryenLoop'](module, allocate(intArrayFromString(label), 'i8', ALLOC_STACK), body);
+    return Module['_BinaryenLoop'](module, strToStack(label), body);
   });
 };
-Module['Break'] = function(label, condition, value) {
+Module['Break'] = function(module, label, condition, value) {
   preserveStack(function() {
-    return Module['_BinaryenBreak'](module, allocate(intArrayFromString(label), 'i8', ALLOC_STACK), condition, value);
+    return Module['_BinaryenBreak'](module, strToStack(label), condition, value);
   });
 };
-Module['Switch'] = function() {
-  return Module['_Binaryen']();
+Module['Switch'] = function(module, names, defaultName, condition, value) {
+  preserveStack(function() {
+    var namePtrs = [];
+    names.forEach(function(name) {
+      namePtrs.push_back(strToStack(name));
+    });
+    return Module['_BinaryenSwitch'](module, ptrsToStack(namePtrs), namePtrs.length
+                                     strToStack(defaultName), condition, value);
+  });
 };
-Module['Call'] = function() {
-  return Module['_Binaryen']();
+Module['Call'] = function(module, name, operands, type) {
+  preserveStack(function() {
+    return Module['_BinaryenCall'](module, strToStack(name), ptrsToStack(operands), operands.length, type);
+  });
 };
-Module['CallImport'] = function() {
-  return Module['_Binaryen']();
+Module['CallImport'] = function(module, name, operands, type) {
+  preserveStack(function() {
+    return Module['_BinaryenCallImport'](module, strToStack(name), ptrsToStack(operands), operands.length, type);
+  });
 };
-Module['CallIndirect'] = function() {
-  return Module['_Binaryen']();
+Module['CallIndirect'] = function(module, target, operands, type) {
+  preserveStack(function() {
+    return Module['_BinaryenCallIndirect'](module, target, ptrsToStack(operands), operands.length, type);
+  });
 };
-Module['GetLocal'] = function() {
-  return Module['_Binaryen']();
+Module['GetLocal'] = function(module, type) {
+  return Module['_BinaryenGetLocal'](module, type);
 };
-Module['SetLocal'] = function() {
-  return Module['_Binaryen']();
+Module['SetLocal'] = function(module, value) {
+  return Module['_Binaryen'](module, value);
 };
-Module['TeeLocal'] = function() {
-  return Module['_Binaryen']();
+Module['TeeLocal'] = function(module, value) {
+  return Module['_Binaryen'](module, value);
 };
-Module['Load'] = function() {
-  return Module['_Binaryen']();
+Module['Load'] = function(module, bytes, signed, offset, align, type, ptr) {
+  return Module['_BinaryenLoad'](module, bytes, signed, offset, align, type, ptr);
 };
-Module['Store'] = function() {
-  return Module['_Binaryen']();
+Module['Store'] = function(module, bytes, offset, align, type, ptr, value) {
+  return Module['_BinaryenStore'](module, bytes, offset, align, type, ptr, value);
 };
-Module['Const'] = function() {
-  return Module['_Binaryen']();
+Module['Const'] = function(module, value) {
+  return Module['_BinaryenConst'](module, Literals.map[value]);
 };
-Module['Unary'] = function() {
-  return Module['_Binaryen']();
+Module['Unary'] = function(module, op, value) {
+  return Module['_BinaryenUnary'](module, op, value);
 };
-Module['Binary'] = function() {
-  return Module['_Binaryen']();
+Module['Binary'] = function(module, op, left, right) {
+  return Module['_BinaryenBinary'](module, op, left, right);
 };
-Module['Select'] = function() {
-  return Module['_Binaryen']();
+Module['Select'] = function(module, condition, ifTrue, ifFalse) {
+  return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
 };
-Module['Drop'] = function() {
-  return Module['_Binaryen']();
+Module['Drop'] = function(module, value) {
+  return Module['_BinaryenDrop'](module, value);
 };
-Module['Return'] = function() {
-  return Module['_Binaryen']();
+Module['Return'] = function(module, value) {
+  return Module['_BinaryenReturn'](module, value);
 };
 Module['Host'] = function() {
-  return Module['_Binaryen']();
+  throw 'TODO';
 };
-Module['Nop'] = function() {
-  return Module['_Binaryen']();
+Module['Nop'] = function(module) {
+  return Module['_BinaryenNop'](module);
 };
-Module['Unreachable'] = function() {
-  return Module['_Binaryen']();
+Module['Unreachable'] = function(module) {
+  return Module['_BinaryenUnreachable'](module);
 };
-Module['ExpressionPrint'] = function() {
-  return Module['_Binaryen']();
+Module['ExpressionPrint'] = function(module, expr) {
+  return Module['_BinaryenExpressionPrint'](module, expr);
 };
 Module['AddFunction'] = function() {
   return Module['_Binaryen']();
