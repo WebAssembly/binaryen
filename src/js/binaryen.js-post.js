@@ -1,9 +1,9 @@
 // export friendly API methods
 
-function preservedStack(func) {
+function preserveStack(func) {
   try {
     var stack = Runtime.stackSave();
-    func();
+    return func();
   } finally {
     Runtime.stackRestore(stack);
   }
@@ -31,8 +31,8 @@ Module['ModuleDispose]' = function(module) {
   Module['_BinaryenModuleDispose'](module);
 };
 Module['AddFunctionType]' = function(module, name, result, paramTypes) {
-  preservedStack(function() {
-    return Module['_BinaryenAddFunctionType'](module, allocate(intArrayFromString(name), 'i32', ALLOC_STACK), result,
+  preserveStack(function() {
+    return Module['_BinaryenAddFunctionType'](module, allocate(intArrayFromString(name), 'i8', ALLOC_STACK), result,
                                               allocate(paramTypes, 'i32', ALLOC_STACK), paramTypes.length);
   });
 };
@@ -467,17 +467,24 @@ Module['GrowMemory'] = function() {
 Module['HasFeature'] = function() {
   return Module['_BinaryenHasFeature']();
 };
-Module['Block'] = function() {
-  return Module['_BinaryenBlock']();
+Module['Block'] = function(module, name, children) {
+  preserveStack(function() {
+    return Module['_BinaryenBlock'](module, name ? allocate(intArrayFromString(name), 'i8', ALLOC_STACK) : 0,
+                                    allocate(children, 'i32', ALLOC_STACK), children.length);
+  });
 };
-Module['If'] = function() {
-  return Module['_Binaryen']();
+Module['If'] = function(module, condition, ifTrue, ifFalse) {
+  return Module['_BinaryenIf'](module, condition, ifTrue, ifFalse);
 };
-Module['Loop'] = function() {
-  return Module['_Binaryen']();
+Module['Loop'] = function(label, body) {
+  preserveStack(function() {
+    return Module['_BinaryenLoop'](module, allocate(intArrayFromString(label), 'i8', ALLOC_STACK), body);
+  });
 };
-Module['Break'] = function() {
-  return Module['_Binaryen']();
+Module['Break'] = function(label, condition, value) {
+  preserveStack(function() {
+    return Module['_BinaryenBreak'](module, allocate(intArrayFromString(label), 'i8', ALLOC_STACK), condition, value);
+  });
 };
 Module['Switch'] = function() {
   return Module['_Binaryen']();
