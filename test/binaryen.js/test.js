@@ -12,7 +12,7 @@ var iii = module.addFunctionType('iii', Binaryen.Int32, [Binaryen.Int32, Binarye
 // 1 arguments, and add them
 var left = module.getLocal(0, Binaryen.Int32);
 var right = module.getLocal(1, Binaryen.Int32);
-var add = module.binary(module, Binaryen.AddInt32, left, right);
+var add = module.binary(Binaryen.AddInt32, left, right);
 
 // Create the add function
 // Note: no additional local variables (that's the [])
