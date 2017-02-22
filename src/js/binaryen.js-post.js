@@ -44,7 +44,7 @@ Module['AddFunctionType]' = function(module, name, result, paramTypes) {
                                               ptrsToStack(paramTypes), paramTypes.length);
   });
 };
-// Literals: we keep a mapping. These stay alive as long as we do.
+// TODO: cache, as people may not reuse these
 var Literals = {
   map: []
 };
@@ -620,35 +620,45 @@ Module['ModuleOptimize'] = function(module) {
 Module['ModuleAutoDrop'] = function(module) {
   return Module['_BinaryenAutoDrop'](module);
 };
-Module['ModuleWrite'] = function() {
-  return Module['_Binaryen']();
+Module['ModuleWrite'] = function(module) {
+  // TODO: fix this hard-wired limit
+  const MAX = 1024*1024;
+  if (!Module['ModuleWrite$buffer']) Module['ModuleWrite$buffer'] = _malloc(MAX);
+  var bytes = Module['_BinaryenModuleWrite'](module, Module['ModuleWrite$buffer'], MAX);
+  assert(bytes < MAX, 'FIXME: hardcoded limit on module size'); // we should not use the whole buffer
+  return new UInt8Array(HEAPU8.subarray(Module['ModuleWrite$buffer'], Module['ModuleWrite$buffer'] + bytes));
 };
-Module['ModuleRead'] = function() {
-  return Module['_Binaryen']();
+Module['ModuleRead'] = function(data) {
+  var buffer = allocate(data, 'i8', ALLOC_MALLOC);
+  var ret = Module['_BinaryenModuleRead'](buffer, data.length);
+  _free(buffer);
+  return ret;
 };
-Module['ModuleInterpret'] = function() {
-  return Module['_Binaryen']();
+Module['ModuleInterpret'] = function(module) {
+  return Module['_BinaryenInterpret'](module);
 };
 Module['RelooperCreate'] = function() {
-  return Module['_Binaryen']();
+  return Module['_RelooperCreate']();
 };
-Module['RelooperAddBlock'] = function() {
-  return Module['_Binaryen']();
+Module['RelooperAddBlock'] = function(relooper, code) {
+  return Module['_RelooperAddBlock'](relooper, code);
 };
-Module['RelooperAddBranch'] = function() {
-  return Module['_Binaryen']();
+Module['RelooperAddBranch'] = function(from, to, condition, code) {
+  return Module['_RelooperAddBranch'](from, to, condition, code);
 };
-Module['RelooperAddBlockWithSwitch'] = function() {
-  return Module['_Binaryen']();
+Module['RelooperAddBlockWithSwitch'] = function(relooper, code, condition) {
+  return Module['_RelooperAddBlockWithSwitch'](relooper, code, condition);
 };
-Module['RelooperAddBranchForSwitch'] = function() {
-  return Module['_Binaryen']();
+Module['RelooperAddBranchForSwitch'] = function(from, to, indexes, code) {
+  preserveStack(function() {
+    return Module['_RelooperAddBranchForSwitch'](from, to, ptrsToStack(indexes), indexes.length, code);
+  });
 };
-Module['RelooperRenderAndDispose'] = function() {
-  return Module['_Binaryen']();
+Module['RelooperRenderAndDispose'] = function(relooper, entry, labelHelper, module) {
+  return Module['_RelooperRelooperRenderAndDispose'](relooper, entry, labelHelper, module);
 };
-Module['SetAPITracing'] = function() {
-  return Module['_Binaryen']();
+Module['SetAPITracing'] = function(on) {
+  return Module['_BinaryenSetAPITracing'](on);
 };
 Module['
 
