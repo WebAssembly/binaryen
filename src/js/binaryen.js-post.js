@@ -344,7 +344,7 @@
     };
 
     // TODO: fix this hard-wired limit
-    const MAX = 1024*1024;
+    var MAX = 1024*1024;
     var writeBuffer = null;
     this['writeToBinary'] = function() {
       if (!writeBuffer) writeBuffer = _malloc(MAX);

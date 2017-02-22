@@ -171,7 +171,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   if (wasmJSDebug) std::cerr << "creating instance...\n";
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
+    Module* module = nullptr;
+
     void init(Module& wasm, ModuleInstance& instance) override {
+      module = &wasm;
       // look for imported memory
       {
         bool found = false;
@@ -302,7 +305,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
       if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
 
-      return getResultFromJS(ret, import->functionType->result);
+      return getResultFromJS(ret, module->getFunctionType(import->functionType)->result);
     }
 
     Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
