@@ -23,49 +23,6 @@
   Module['Float32'] = Module['_BinaryenFloat32']();
   Module['Float64'] = Module['_BinaryenFloat64']();
 
-  // TODO: cache, as people may not reuse these
-  var Literals = {
-    map: []
-  };
-  Module['LiteralInt32'] = function(x) {
-    // Literals: the LLVM ABI requires that we pass in a pointer to the struct we "return"
-    var ptr = _malloc(16);
-    var ret = Literals.map.length;
-    Literals.map[ret] = ptr;
-    Module['_BinaryenLiteralInt32'](ptr, x);
-    return ret;
-  Module['LiteralInt64'] = function(l, h) {
-    var ptr = _malloc(16);
-    var ret = Literals.map.length;
-    Literals.map[ret] = ptr;
-    Module['_BinaryenLiteralInt64'](ptr, l, h);
-    return ret;
-  Module['LiteralFloat32'] = function(x) {
-    var ptr = _malloc(16);
-    var ret = Literals.map.length;
-    Literals.map[ret] = ptr;
-    Module['_BinaryenLiteralFloat32'](ptr, x);
-    return ret;
-  Module['LiteralFloat64'] = function(x) {
-    var ptr = _malloc(16);
-    var ret = Literals.map.length;
-    Literals.map[ret] = ptr;
-    Module['_BinaryenLiteralFloat64'](ptr, x);
-    return ret;
-  Module['LiteralFloat32Bits'] = function(x) {
-    var ptr = _malloc(16);
-    var ret = Literals.map.length;
-    Literals.map[ret] = ptr;
-    Module['_BinaryenLiteralFloat32Bits'](ptr, x);
-    return ret;
-  Module['LiteralFloat64Bits'] = function(l, h) {
-    var ptr = _malloc(16);
-    var ret = Literals.map.length;
-    Literals.map[ret] = ptr;
-    Module['_BinaryenLiteralFloat64Bits'](ptr, l, h);
-    return ret;
-  };
-
   Module['ClzInt32'] = Module['_BinaryenClzInt32']();
   Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
   Module['PopcntInt32'] = Module['_BinaryenPopcntInt32']();
@@ -193,7 +150,6 @@
   Module['CurrentMemory'] = Module['_BinaryenCurrentMemory']();
   Module['GrowMemory'] = Module['_BinaryenGrowMemory']();
   Module['HasFeature'] = Module['_BinaryenHasFeature']();
-  };
 
   // we provide a JS Module() object interface
   Module['Module'] = function() {
@@ -268,9 +224,38 @@
     this['store'] = function(bytes, offset, align, type, ptr, value) {
       return Module['_BinaryenStore'](module, bytes, offset, align, type, ptr, value);
     };
-    this['const'] = function(value) {
-      return Module['_BinaryenConst'](module, Literals.map[value]);
+
+    // The Const creation API is a little different: we don't want users to
+    // need to make their own Literals, as the C API handles them by value,
+    // which means we would leak them. Instead, this is the only API that
+    // accepts Literals, so fuse it with Literal creation
+    var literal = _malloc(16); // a single literal in memory. the LLVM C ABI
+                               // makes us pass pointers to this.
+    this['constInt32'] = function(x) {
+      Module['_BinaryenLiteralInt32'](ptr, x);
+      return Module['_BinaryenConst'](module, literal);
     };
+    this['constInt64'] = function(l, h) {
+      Module['_BinaryenLiteralInt64'](ptr, l, h);
+      return Module['_BinaryenConst'](module, literal);
+    };
+    this['constFloat32'] = function(x) {
+      Module['_BinaryenLiteralFloat32'](ptr, x);
+      return Module['_BinaryenConst'](module, literal);
+    };
+    this['constFloat64'] = function(x) {
+      Module['_BinaryenLiteralFloat64'](ptr, x);
+      return Module['_BinaryenConst'](module, literal);
+    };
+    this['constFloat32Bits'] = function(x) {
+      Module['_BinaryenLiteralFloat32Bits'](ptr, x);
+      return Module['_BinaryenConst'](module, literal);
+    };
+    this['constFloat64Bits'] = function(l, h) {
+      Module['_BinaryenLiteralFloat64Bits'](ptr, l, h);
+      return Module['_BinaryenConst'](module, literal);
+    };
+
     this['unary'] = function(op, value) {
       return Module['_BinaryenUnary'](module, op, value);
     };
