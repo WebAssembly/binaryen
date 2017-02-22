@@ -13,8 +13,12 @@
     return allocate(intArrayFromString(str), 'i8', ALLOC_STACK);
   }
 
-  function ptrsToStack(ptrs) {
-    return allocate(ptrs, 'i32', ALLOC_STACK);
+  function i32sToStack(i32s) {
+    var ret = Runtime.stackAlloc(i32s.length << 2);
+    for (var i = 0; i < i32s.length; i++) {
+      HEAP32[ret + (i << 2) >> 2] = i32s[i];
+    }
+    return ret;
   }
 
   Module['None'] = Module['_BinaryenNone'];
@@ -161,14 +165,14 @@
     this['addFunctionType'] = function(name, result, paramTypes) {
       return preserveStack(function() {
         return Module['_BinaryenAddFunctionType'](module, strToStack(name), result,
-                                                  ptrsToStack(paramTypes), paramTypes.length);
+                                                  i32sToStack(paramTypes), paramTypes.length);
       });
     };
 
     this['block'] = function(name, children) {
       return preserveStack(function() {
         return Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
-                                        ptrsToStack(children), children.length);
+                                        i32sToStack(children), children.length);
       });
     };
     this['if'] = function(condition, ifTrue, ifFalse) {
@@ -186,27 +190,27 @@
     };
     this['switch'] = function(names, defaultName, condition, value) {
       return preserveStack(function() {
-        var namePtrs = [];
+        var namei32s = [];
         names.forEach(function(name) {
-          namePtrs.push_back(strToStack(name));
+          namei32s.push_back(strToStack(name));
         });
-        return Module['_BinaryenSwitch'](module, ptrsToStack(namePtrs), namePtrs.length,
+        return Module['_BinaryenSwitch'](module, i32sToStack(namePtrs), namePtrs.length,
                                          strToStack(defaultName), condition, value);
       });
     };
     this['call'] = function(name, operands, type) {
       return preserveStack(function() {
-        return Module['_BinaryenCall'](module, strToStack(name), ptrsToStack(operands), operands.length, type);
+        return Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
       });
     };
     this['callImport'] = function(name, operands, type) {
       return preserveStack(function() {
-        return Module['_BinaryenCallImport'](module, strToStack(name), ptrsToStack(operands), operands.length, type);
+        return Module['_BinaryenCallImport'](module, strToStack(name), i32sToStack(operands), operands.length, type);
       });
     };
     this['callIndirect'] = function(target, operands, type) {
       return preserveStack(function() {
-        return Module['_BinaryenCallIndirect'](module, target, ptrsToStack(operands), operands.length, type);
+        return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, type);
       });
     };
     this['getLocal'] = function(type) {
@@ -285,7 +289,7 @@
     };
     this['addFunction'] = function(name, functionType, varTypes, body) {
       return preserveStack(function() {
-        return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, ptrsToStack(varTypes), varTypes.length, body);
+        return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
       });
     };
     this['addImport'] = function(internalName, externalModuleName, externalBaseName, type) {
@@ -300,7 +304,7 @@
     };
     this['setFunctionTable'] = function(funcs) {
       return preserveStack(function() {
-        return Module['_BinaryenSetFunctionTable'](module, ptrsToStack(funcs), funcs.length);
+        return Module['_BinaryenSetFunctionTable'](module, i32sToStack(funcs), funcs.length);
       });
     };
     this['setMemory'] = function(initial, maximum, exportName, segments) {
@@ -308,17 +312,17 @@
       return preserveStack(function() {
         return Module['_BinaryenSetMemory'](
           module, initial, maximum, strToStack(exportName),
-          ptrsToStack(
+          i32sToStack(
             segments.map(function(segment) {
               return allocate(segment.data, 'i8', ALLOC_STACK);
             })
           ),
-          ptrsToStack(
+          i32sToStack(
             segments.map(function(segment) {
               return segment.offset;
             })
           ),
-          ptrsToStack(
+          i32sToStack(
             segments.map(function(segment) {
               return segment.data.length;
             })
@@ -377,7 +381,7 @@
     };
     this['addBranchForSwitch'] = function(from, to, indexes, code) {
       return preserveStack(function() {
-        return Module['_RelooperAddBranchForSwitch'](from, to, ptrsToStack(indexes), indexes.length, code);
+        return Module['_RelooperAddBranchForSwitch'](from, to, i32sToStack(indexes), indexes.length, code);
       });
     };
     this['renderAndDispose'] = function(entry, labelHelper, module) {
