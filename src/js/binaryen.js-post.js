@@ -561,35 +561,64 @@ Module['Unreachable'] = function(module) {
 Module['ExpressionPrint'] = function(module, expr) {
   return Module['_BinaryenExpressionPrint'](module, expr);
 };
-Module['AddFunction'] = function() {
-  return Module['_Binaryen']();
+Module['AddFunction'] = function(module, name, functionType, varTypes, body) {
+  preserveStack(function() {
+    return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, ptrsToStack(varTypes), varTypes.length, body);
+  });
 };
-Module['AddImport'] = function() {
-  return Module['_Binaryen']();
+Module['AddImport'] = function(module, internalName, externalModuleName, externalBaseName, type) {
+  preserveStack(function() {
+    return Module['_BinaryenAddImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), type);
+  });
 };
-Module['AddExport'] = function() {
-  return Module['_Binaryen']();
+Module['AddExport'] = function(module, internalName, externalName) {
+  preserveStack(function() {
+    return Module['_BinaryenAddExport'](module, strToStack(internalName), strToStack(externalName));
+  });
 };
-Module['SetFunctionTable'] = function() {
-  return Module['_Binaryen']();
+Module['SetFunctionTable'] = function(module, funcs) {
+  preserveStack(function() {
+    return Module['_BinaryenSetFunctionTable'](module, ptrsToStack(funcs), funcs.length);
+  });
 };
-Module['SetMemory'] = function() {
-  return Module['_Binaryen']();
+Module['SetMemory'] = function(module, initial, maximum, exportName, segments) {
+  // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
+  preserveStack(function() {
+    return Module['_BinaryenSetMemory'](
+      module, initial, maximum, strToStack(exportName),
+      ptrsToStack(
+        segments.map(function(segment) {
+          return allocate(segment.data, 'i8', ALLOC_STACK);
+        })
+      ),
+      ptrsToStack(
+        segments.map(function(segment) {
+          return segment.offset;
+        })
+      ),
+      ptrsToStack(
+        segments.map(function(segment) {
+          return segment.data.length;
+        })
+      ),
+      segments.length
+    );
+  });
 };
-Module['SetStart'] = function() {
-  return Module['_Binaryen']();
+Module['SetStart'] = function(module, start) {
+  return Module['_BinaryenSetStart'](module, start);
 };
-Module['ModulePrint'] = function() {
-  return Module['_Binaryen']();
+Module['ModulePrint'] = function(module) {
+  return Module['_BinaryenPrint'](module);
 };
-Module['ModuleValidate'] = function() {
-  return Module['_Binaryen']();
+Module['ModuleValidate'] = function(module) {
+  return Module['_BinaryenValidate'](module);
 };
-Module['ModuleOptimize'] = function() {
-  return Module['_Binaryen']();
+Module['ModuleOptimize'] = function(module) {
+  return Module['_BinaryenOptimize'](module);
 };
-Module['ModuleAutoDrop'] = function() {
-  return Module['_Binaryen']();
+Module['ModuleAutoDrop'] = function(module) {
+  return Module['_BinaryenAutoDrop'](module);
 };
 Module['ModuleWrite'] = function() {
   return Module['_Binaryen']();
