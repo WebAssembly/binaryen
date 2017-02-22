@@ -1595,17 +1595,6 @@ public:
     }
     importsMap.erase(name);
   }
-
-  void removeImportsWithSubstring(Name name) {
-    for (size_t i = imports.size(); i > 0; --i) {
-      int index = i - 1;
-      Name importName = imports[index]->name;
-      if (importName.hasSubstring(name)) {
-        imports.erase(imports.begin() + index);
-        importsMap.erase(importName);
-      }
-    }
-  }
   // TODO: remove* for other elements
 
   void updateMaps() {

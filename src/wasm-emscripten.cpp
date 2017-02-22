@@ -57,8 +57,20 @@ static bool hasI64ResultOrParam(FunctionType* ft) {
   return false;
 }
 
+void removeImportsWithSubstring(Module& module, Name name) {
+  std::vector<Name> toRemove;
+  for (auto& import : module.imports) {
+    if (import->name.hasSubstring(name)) {
+      toRemove.push_back(import->name);
+    }
+  }
+  for (auto importName : toRemove) {
+    module.removeImport(importName);
+  }
+}
+
 std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData) {
-  wasm.removeImportsWithSubstring(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+  removeImportsWithSubstring(wasm, EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
   std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
