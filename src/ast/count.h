@@ -19,7 +19,7 @@
 
 namespace wasm {
 
-struct GetLocalCounter : public PostWalker<GetLocalCounter, Visitor<GetLocalCounter>> {
+struct GetLocalCounter : public PostWalker<GetLocalCounter> {
   std::vector<Index> num;
 
   GetLocalCounter() {}

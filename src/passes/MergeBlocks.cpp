@@ -70,7 +70,7 @@ namespace wasm {
 
 // Looks for reasons we can't remove the values from breaks to an origin
 // For example, if there is a switch targeting us, we can't do it - we can't remove the value from other targets
-struct ProblemFinder : public ControlFlowWalker<ProblemFinder, Visitor<ProblemFinder>> {
+struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
   Name origin;
   bool foundSwitch = false;
   // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow value is used, and we can't drop it
@@ -112,7 +112,7 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder, Visitor<ProblemFi
 
 // Drops values from breaks to an origin.
 // While doing so it can create new blocks, so optimize blocks as well.
-struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper, Visitor<BreakValueDropper>> {
+struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   Name origin;
 
   void visitBlock(Block* curr);
@@ -203,7 +203,7 @@ void BreakValueDropper::visitBlock(Block* curr) {
   optimizeBlock(curr, getModule());
 }
 
-struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, Visitor<MergeBlocks>>> {
+struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new MergeBlocks; }

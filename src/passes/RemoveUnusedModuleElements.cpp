@@ -37,7 +37,7 @@ typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
 // Finds reachabilities
 
-struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer, Visitor<ReachabilityAnalyzer>> {
+struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;

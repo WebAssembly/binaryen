@@ -25,7 +25,7 @@ namespace wasm {
 // help remove the most sign/unsign operations
 // unsigned, then it could be either
 
-struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns, Visitor<PickLoadSigns>>> {
+struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new PickLoadSigns; }
@@ -45,7 +45,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns, Vi
     // prepare
     usages.resize(func->getNumLocals());
     // walk
-    ExpressionStackWalker<PickLoadSigns, Visitor<PickLoadSigns>>::doWalkFunction(func);
+    ExpressionStackWalker<PickLoadSigns>::doWalkFunction(func);
     // optimize based on the info we saw
     for (auto& pair : loads) {
       auto* load = pair.first;

@@ -28,7 +28,7 @@
 
 namespace wasm {
 
-struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions, Visitor<ReorderFunctions>>> {
+struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions>> {
   std::map<Name, uint32_t> counts;
 
   void visitModule(Module *module) {

@@ -52,7 +52,7 @@ namespace wasm {
 
 // Helper classes
 
-struct SetLocalRemover : public PostWalker<SetLocalRemover, Visitor<SetLocalRemover>> {
+struct SetLocalRemover : public PostWalker<SetLocalRemover> {
   std::vector<Index>* numGetLocals;
 
   void visitSetLocal(SetLocal *curr) {
@@ -70,7 +70,7 @@ struct SetLocalRemover : public PostWalker<SetLocalRemover, Visitor<SetLocalRemo
 
 // Main class
 
-struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>> {
+struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new SimplifyLocals(allowTee, allowStructure); }
@@ -428,7 +428,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
       self->pushTask(SimplifyLocals::doNoteIfElseCondition, currp);
       self->pushTask(SimplifyLocals::scan, &curr->cast<If>()->condition);
     } else {
-      WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>>::scan(self, currp);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::scan(self, currp);
     }
 
     self->pushTask(visitPre, currp);
@@ -450,7 +450,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals, 
     do {
       anotherCycle = false;
       // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals, Visitor<SimplifyLocals>>>::doWalkFunction(func);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::doWalkFunction(func);
       // enlarge blocks that were marked, for the next round
       if (blocksToEnlarge.size() > 0) {
         for (auto* block : blocksToEnlarge) {

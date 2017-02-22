@@ -35,7 +35,7 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue, Pass
   return !EffectAnalyzer(options, ifCondition).invalidates(value);
 }
 
-struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>> {
+struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RemoveUnusedBrs; }
@@ -174,7 +174,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
     } else {
-      WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::scan(self, currp);
+      WalkerPass<PostWalker<RemoveUnusedBrs>>::scan(self, currp);
     }
   }
 
@@ -276,7 +276,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     bool worked = false;
     do {
       anotherCycle = false;
-      WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<RemoveUnusedBrs>>>::doWalkFunction(func);
+      WalkerPass<PostWalker<RemoveUnusedBrs>>::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be optimized
       for (size_t i = 0; i < flows.size(); i++) {
@@ -303,7 +303,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
 
     if (worked) {
       // Our work may alter block and if types, they may now return values that we made flow through them
-      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater, Visitor<TypeUpdater>>> {
+      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater>> {
         void visitBlock(Block* curr) {
           curr->finalize();
         }
@@ -319,7 +319,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     }
 
     // thread trivial jumps
-    struct JumpThreader : public ControlFlowWalker<JumpThreader, Visitor<JumpThreader>> {
+    struct JumpThreader : public ControlFlowWalker<JumpThreader> {
       // map of all value-less breaks going to a block (and not a loop)
       std::map<Block*, std::vector<Break*>> breaksToBlock;
 
@@ -392,7 +392,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs, Visitor<R
     jumpThreader.finish();
 
     // perform some final optimizations
-    struct FinalOptimizer : public PostWalker<FinalOptimizer, Visitor<FinalOptimizer>> {
+    struct FinalOptimizer : public PostWalker<FinalOptimizer> {
       bool selectify;
       PassOptions& passOptions;
 

@@ -86,7 +86,7 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
   return generatedFunctions;
 }
 
-struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
+struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   Module& wasm;
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
 

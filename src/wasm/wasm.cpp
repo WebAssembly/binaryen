@@ -69,7 +69,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
 
 // core AST type checking
 
-struct TypeSeeker : public PostWalker<TypeSeeker, Visitor<TypeSeeker>> {
+struct TypeSeeker : public PostWalker<TypeSeeker> {
   Expression* target; // look for this one
   Name targetName;
   std::vector<WasmType> types;
