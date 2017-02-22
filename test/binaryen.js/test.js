@@ -1,44 +1,26 @@
 
-Binaryen = Binaryen(); // instantiate the module
-
-var input =
-  '(module\n' +
-  '  (export "add" $add)\n' +
-  '  (func $add (param $x f64) (param $y f64) (result f64)\n' +
-  '    (f64.add\n' +
-  '      (get_local $x)\n' +
-  '      (get_local $y)\n' +
-  '    )\n' +
-  '  )\n' +
-  ')\n';
-
-console.log('input:');
-console.log(input);
-console.log('================');
+// "hello world" type example: create a function that adds two i32s and
+// returns the result
 
 var module = new Binaryen.Module();
-var parser = new Binaryen.SExpressionParser(input);
 
-console.log('s-expr dump:');
-parser.get_root().dump();
-var s_module = parser.get_root().getChild(0);
-console.log('================');
+// Create a function type for  i32 (i32, i32)  (i.e., return i32, pass two
+// i32 params)
+var iii = module.addFunctionType('iii', Binaryen.Int32, [Binaryen.Int32, Binaryen.Int32]);
 
-var builder = new Binaryen.SExpressionWasmBuilder(module, s_module);
+// Start to create the function, starting with the contents: Get the 0 and
+// 1 arguments, and add them
+var left = module.getLocal(0, Binaryen.Int32);
+var right = module.getLocal(1, Binaryen.Int32);
+var add = module.binary(module, Binaryen.AddInt32, left, right);
 
-console.log('module:');
-Binaryen.WasmPrinter.prototype.printModule(module);
-console.log('================');
+// Create the add function
+// Note: no additional local variables (that's the [])
+module.addFunction("adder", iii, [], add);
 
-var interface_ = new Binaryen.ShellExternalInterface();
-var instance = new Binaryen.ModuleInstance(module, interface_);
+// Print it out
+module.print(module);
 
-var name = new Binaryen.Name('add');
-console.log('name: ' + name.c_str());
-
-var args = new Binaryen.LiteralList();
-args.push_back(new Binaryen.Literal(40));
-args.push_back(new Binaryen.Literal(2));
-
-console.log('answer is ' + instance.callExport(name, args).getf64() + '.');
+// Clean up the module, which owns all the objects we created above
+module.dispose();
 
