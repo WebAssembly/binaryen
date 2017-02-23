@@ -2,6 +2,7 @@
 // "hello world" type example: create a function that adds two i32s and
 // returns the result
 
+// Create a module to work on
 var module = new Binaryen.Module();
 
 // Create a function type for  i32 (i32, i32)  (i.e., return i32, pass two
@@ -19,7 +20,7 @@ var add = module.binary(Binaryen.AddInt32, left, right);
 module.addFunction("adder", iii, [], add);
 
 // Print it out
-module.print(module);
+module.print();
 
 // Clean up the module, which owns all the objects we created above
 module.dispose();
