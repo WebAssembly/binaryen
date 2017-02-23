@@ -334,8 +334,13 @@
     this['setStart'] = function(start) {
       return Module['_BinaryenSetStart'](module, start);
     };
-    this['print'] = function() {
-      return Module['_BinaryenModulePrint'](module);
+    this['emitText'] = function() {
+      var old = Module['print'];
+      var ret = '';
+      Module['print'] = function(x) { ret += x + '\n' };
+      Module['_BinaryenModulePrint'](module);
+      Module['print'] = old;
+      return ret;
     };
     this['validate'] = function() {
       return Module['_BinaryenModuleValidate'](module);
@@ -350,11 +355,11 @@
     // TODO: fix this hard-wired limit
     var MAX = 1024*1024;
     var writeBuffer = null;
-    this['writeToBinary'] = function() {
+    this['emitBinary'] = function() {
       if (!writeBuffer) writeBuffer = _malloc(MAX);
       var bytes = Module['_BinaryenModuleWrite'](module, writeBuffer, MAX);
       assert(bytes < MAX, 'FIXME: hardcoded limit on module size'); // we should not use the whole buffer
-      return new UInt8Array(HEAPU8.subarray(writeBuffer, writeBuffer + bytes));
+      return new Uint8Array(HEAPU8.subarray(writeBuffer, writeBuffer + bytes));
     };
     this['readFromBinary'] = function(data) {
       var buffer = allocate(data, 'i8', ALLOC_MALLOC);

@@ -17,10 +17,27 @@ var add = module.binary(Binaryen.AddInt32, left, right);
 
 // Create the add function
 // Note: no additional local variables (that's the [])
-module.addFunction("adder", iii, [], add);
+module.addFunction('adder', iii, [], add);
 
-// Print it out
-module.print();
+// Export the function, so we can call it later (for simplicity we
+// export it as the same name as it has internally)
+module.addExport('adder', 'adder');
+
+// Print out the text
+console.log(module.emitText());
+
+// Get the binary in typed array form
+var binary = module.emitBinary();
+console.log('binary size: ' + binary.length);
+console.log();
+
+// Compile it and create an instance
+var wasm = new WebAssembly.Instance(new WebAssembly.Module(binary), {})
+console.log(wasm); // prints something like "[object WebAssembly.Instance]"
+console.log();
+
+// Call the code!
+console.log('an addition: ' + wasm.exports.adder(40, 2));
 
 // Clean up the module, which owns all the objects we created above
 module.dispose();
