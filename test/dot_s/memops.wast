@@ -1,7 +1,7 @@
 (module
   (type $FUNCSIG$vi (func (param i32)))
   (import "env" "memory" (memory $0 1))
-  (import "env" "emscripten_asm_const_vi" (func $emscripten_asm_const_vi (param i32)))
+  (import "env" "emscripten_asm_const_v" (func $emscripten_asm_const_v (param i32)))
   (table 0 anyfunc)
   (data (i32.const 16) "{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }\00")
   (export "main" (func $main))
@@ -10,7 +10,7 @@
       (i32.const 8)
       (get_local $0)
     )
-    (call $emscripten_asm_const_vi
+    (call $emscripten_asm_const_v
       (i32.const 0)
     )
     (return)
@@ -206,4 +206,4 @@
     )
   )
 )
-;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["vi"]]},"staticBump": 67, "initializers": [] }
+;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }", ["v"]]},"staticBump": 67, "initializers": [] }
