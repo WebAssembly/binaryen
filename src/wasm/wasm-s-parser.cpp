@@ -536,7 +536,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->module = importModule;
     im->base = importBase;
     im->kind = ExternalKind::Function;
-    im->functionType = wasm.getFunctionType(type);
+    im->functionType = wasm.getFunctionType(type)->name;
     wasm.addImport(im.release());
     assert(!currFunction);
     currLocalTypes.clear();
@@ -1199,7 +1199,7 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s) {
     auto ret = allocator.alloc<CallImport>();
     ret->target = target;
     Import* import = wasm.getImport(ret->target);
-    ret->type = import->functionType->result;
+    ret->type = wasm.getFunctionType(import->functionType)->result;
     parseCallOperands(s, 2, s.size(), ret);
     return ret;
   }
@@ -1214,7 +1214,7 @@ Expression* SExpressionWasmBuilder::makeCallImport(Element& s) {
   auto ret = allocator.alloc<CallImport>();
   ret->target = s[1]->str();
   Import* import = wasm.getImport(ret->target);
-  ret->type = import->functionType->result;
+  ret->type = wasm.getFunctionType(import->functionType)->result;
   parseCallOperands(s, 2, s.size(), ret);
   return ret;
 }
@@ -1556,7 +1556,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
         type->result = stringToWasmType(result[1]->str());
       }
     }
-    im->functionType = ensureFunctionType(getSig(type.get()), &wasm);
+    im->functionType = ensureFunctionType(getSig(type.get()), &wasm)->name;
   } else if (im->kind == ExternalKind::Global) {
     if (inner[j]->isStr()) {
       im->globalType = stringToWasmType(inner[j]->str());

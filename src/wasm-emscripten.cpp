@@ -57,8 +57,20 @@ static bool hasI64ResultOrParam(FunctionType* ft) {
   return false;
 }
 
+void removeImportsWithSubstring(Module& module, Name name) {
+  std::vector<Name> toRemove;
+  for (auto& import : module.imports) {
+    if (import->name.hasSubstring(name)) {
+      toRemove.push_back(import->name);
+    }
+  }
+  for (auto importName : toRemove) {
+    module.removeImport(importName);
+  }
+}
+
 std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData) {
-  wasm.removeImport(EMSCRIPTEN_ASM_CONST); // we create _sig versions
+  removeImportsWithSubstring(wasm, EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
   std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
@@ -86,7 +98,7 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
   return generatedFunctions;
 }
 
-struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker>> {
+struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   Module& wasm;
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
 
@@ -99,45 +111,42 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker, Visitor<AsmConstWalker
 
   void visitCallImport(CallImport* curr);
 
+private:
+  std::string codeForConstAddr(Const* addrConst);
+  Literal idLiteralForCode(std::string code);
+  std::string asmConstSig(std::string baseSig);
+  Name nameForImportWithSig(std::string sig);
+  void addImport(Name importName, std::string baseSig);
   std::string escape(const char *input);
 };
 
 void AsmConstWalker::visitCallImport(CallImport* curr) {
-  if (curr->target == EMSCRIPTEN_ASM_CONST) {
+  if (curr->target.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto arg = curr->operands[0]->cast<Const>();
-    auto address = arg->value.geti32();
-    auto segmentIterator = segmentsByAddress.find(address);
-    std::string code;
-    if (segmentIterator != segmentsByAddress.end()) {
-      Address segmentIndex = segmentsByAddress[address];
-      code = escape(&wasm.memory.segments[segmentIndex].data[0]);
-    } else {
-      // If we can't find the segment corresponding with the address, then we omitted the segment and the address points to an empty string.
-      code = escape("");
-    }
-    int32_t id;
-    if (ids.count(code) == 0) {
-      id = ids.size();
-      ids[code] = id;
-    } else {
-      id = ids[code];
-    }
-    std::string sig = getSig(curr);
+    auto code = codeForConstAddr(arg);
+    arg->value = idLiteralForCode(code);
+    auto baseSig = getSig(curr);
+    auto sig = asmConstSig(baseSig);
     sigsForCode[code].insert(sig);
-    std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
-    curr->target = cashew::IString(fixedTarget.c_str(), false);
-    arg->value = Literal(id);
-    // add import, if necessary
+    auto importName = nameForImportWithSig(sig);
+    curr->target = importName;
+
     if (allSigs.count(sig) == 0) {
       allSigs.insert(sig);
-      auto import = new Import;
-      import->name = import->base = curr->target;
-      import->module = ENV;
-      import->functionType = ensureFunctionType(getSig(curr), &wasm);
-      import->kind = ExternalKind::Function;
-      wasm.addImport(import);
+      addImport(importName, baseSig);
     }
   }
+}
+
+std::string AsmConstWalker::codeForConstAddr(Const* addrConst) {
+  auto address = addrConst->value.geti32();
+  auto segmentIterator = segmentsByAddress.find(address);
+  if (segmentIterator == segmentsByAddress.end()) {
+    // If we can't find the segment corresponding with the address, then we omitted the segment and the address points to an empty string.
+    return escape("");
+  }
+  Address segmentIndex = segmentsByAddress[address];
+  return escape(&wasm.memory.segments[segmentIndex].data[0]);
 }
 
 std::string AsmConstWalker::escape(const char *input) {
@@ -160,6 +169,42 @@ std::string AsmConstWalker::escape(const char *input) {
     }
   }
   return code;
+}
+
+Literal AsmConstWalker::idLiteralForCode(std::string code) {
+  int32_t id;
+  if (ids.count(code) == 0) {
+    id = ids.size();
+    ids[code] = id;
+  } else {
+    id = ids[code];
+  }
+  return Literal(id);
+}
+
+std::string AsmConstWalker::asmConstSig(std::string baseSig) {
+  std::string sig = "";
+  for (size_t i = 0; i < baseSig.size(); ++i) {
+    // Omit the signature of the "code" parameter, taken as a string, as the first argument
+    if (i != 1) {
+      sig += baseSig[i];
+    }
+  }
+  return sig;
+}
+
+Name AsmConstWalker::nameForImportWithSig(std::string sig) {
+  std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
+  return Name(fixedTarget.c_str());
+}
+
+void AsmConstWalker::addImport(Name importName, std::string baseSig) {
+  auto import = new Import;
+  import->name = import->base = importName;
+  import->module = ENV;
+  import->functionType = ensureFunctionType(baseSig, &wasm)->name;
+  import->kind = ExternalKind::Function;
+  wasm.addImport(import);
 }
 
 template<class C>

@@ -35,7 +35,7 @@
 
 namespace wasm {
 
-struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, Visitor<DeadCodeElimination>>> {
+struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DeadCodeElimination; }
@@ -231,7 +231,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination, V
       }
       self->pushTask(DeadCodeElimination::doPreBlock, currp);
     } else {
-      WalkerPass<PostWalker<DeadCodeElimination, Visitor<DeadCodeElimination>>>::scan(self, currp);
+      WalkerPass<PostWalker<DeadCodeElimination>>::scan(self, currp);
     }
   }
 

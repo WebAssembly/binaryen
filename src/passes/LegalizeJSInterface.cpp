@@ -52,7 +52,7 @@ struct LegalizeJSInterface : public Pass {
     // for each illegal import, we must call a legalized stub instead
     std::vector<Import*> newImports; // add them at the end, to not invalidate the iter
     for (auto& im : module->imports) {
-      if (im->kind == ExternalKind::Function && isIllegal(im->functionType)) {
+      if (im->kind == ExternalKind::Function && isIllegal(module->getFunctionType(im->functionType))) {
         Name funcName;
         auto* legal = makeLegalStub(im.get(), module, funcName);
         illegalToLegal[im->name] = funcName;
@@ -75,7 +75,7 @@ struct LegalizeJSInterface : public Pass {
 
       // fix up imports: call_import of an illegal must be turned to a call of a legal
 
-      struct FixImports : public WalkerPass<PostWalker<FixImports, Visitor<FixImports>>> {
+      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
         bool isFunctionParallel() override { return true; }
 
         Pass* create() override { return new FixImports(illegalToLegal); }
@@ -174,7 +174,7 @@ private:
     legal->module = im->module;
     legal->base = im->base;
     legal->kind = ExternalKind::Function;
-    legal->functionType = type;
+    legal->functionType = type->name;
     auto* func = new Function();
     func->name = Name(std::string("legalfunc$") + im->name.str);
     funcName = func->name;
@@ -182,7 +182,9 @@ private:
     auto* call = module->allocator.alloc<CallImport>();
     call->target = legal->name;
 
-    for (auto param : im->functionType->params) {
+    auto* imFunctionType = module->getFunctionType(im->functionType);
+
+    for (auto param : imFunctionType->params) {
       if (param == i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, func->params.size()));
         call->operands.push_back(I64Utilities::getI64High(builder, func->params.size()));
@@ -198,23 +200,23 @@ private:
       func->params.push_back(param);
     }
 
-    if (im->functionType->result == i64) {
+    if (imFunctionType->result == i64) {
       call->type = i32;
       Expression* get;
       ensureTempRet0(module);
       get = builder.makeGetGlobal(TEMP_RET_0, i32);
       func->body = I64Utilities::recreateI64(builder, call, get);
       type->result = i32;
-    } else if (im->functionType->result == f32) {
+    } else if (imFunctionType->result == f32) {
       call->type = f64;
       func->body = builder.makeUnary(DemoteFloat64, call);
       type->result = f64;
     } else {
-      call->type = im->functionType->result;
+      call->type = imFunctionType->result;
       func->body = call;
-      type->result = im->functionType->result;
+      type->result = imFunctionType->result;
     }
-    func->result = im->functionType->result;
+    func->result = imFunctionType->result;
 
     module->addFunction(func);
     module->addFunctionType(type);

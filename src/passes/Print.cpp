@@ -558,7 +558,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str) << ' ';
     switch (curr->kind) {
-      case ExternalKind::Function: if (curr->functionType) visitFunctionType(curr->functionType, &curr->name); break;
+      case ExternalKind::Function: if (curr->functionType.is()) visitFunctionType(currModule->getFunctionType(curr->functionType), &curr->name); break;
       case ExternalKind::Table:    printTableHeader(&currModule->table); break;
       case ExternalKind::Memory:   printMemoryHeader(&currModule->memory); break;
       case ExternalKind::Global:   o << "(global " << curr->name << ' ' << printWasmType(curr->globalType) << ")"; break;
@@ -733,6 +733,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     for (auto& child : curr->functions) {
       doIndent(o, indent);
       visitFunction(child.get());
+      o << maybeNewLine;
+    }
+    for (auto& section : curr->userSections) {
+      doIndent(o, indent);
+      o << ";; custom section \"" << section.name << "\", size " << section.data.size();
       o << maybeNewLine;
     }
     decIndent();

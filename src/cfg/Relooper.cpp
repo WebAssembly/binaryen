@@ -90,6 +90,7 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* P
       }
     }
   }
+  Curr->finalize();
   return Curr;
 }
 

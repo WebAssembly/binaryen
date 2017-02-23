@@ -4,6 +4,9 @@
   (type $2 (func))
   (memory $0 0)
   (func $x (type $0) (param $x i32)
+    (call $x
+      (i32.const 2300)
+    )
     (nop)
     (drop
       (i32.add

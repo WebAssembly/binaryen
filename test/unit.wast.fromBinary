@@ -272,6 +272,7 @@
                 (br $label$15)
                 (br $label$16)
               )
+              (unreachable)
               (br $label$9)
             )
           )
@@ -280,8 +281,11 @@
               (br $label$9)
               (br $label$18)
             )
+            (unreachable)
             (br $label$9)
+            (unreachable)
           )
+          (unreachable)
         )
         (nop)
       )
@@ -456,6 +460,140 @@
       (get_local $var$0)
       (get_local $var$1)
     )
+  )
+  (func $return-unreachable (type $5) (result i32)
+    (return
+      (i32.const 1)
+    )
+  )
+  (func $unreachable-block (type $5) (result i32)
+    (block $label$0
+      (drop
+        (i32.const 1)
+      )
+      (return
+        (i32.const 2)
+      )
+      (unreachable)
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $unreachable-block-toplevel (type $5) (result i32)
+    (block $label$0
+      (drop
+        (i32.const 1)
+      )
+      (return
+        (i32.const 2)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $unreachable-block0 (type $5) (result i32)
+    (block $label$0
+      (return
+        (i32.const 2)
+      )
+      (unreachable)
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $unreachable-block0-toplevel (type $5) (result i32)
+    (block $label$0
+      (return
+        (i32.const 2)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $unreachable-block-with-br (type $5) (result i32)
+    (block $label$0 i32
+      (block $label$1
+        (drop
+          (i32.const 1)
+        )
+        (br $label$1)
+      )
+      (i32.const 1)
+    )
+  )
+  (func $unreachable-if (type $5) (result i32)
+    (if
+      (i32.const 3)
+      (block $label$0
+        (return
+          (i32.const 2)
+        )
+      )
+      (block $label$1
+        (return
+          (i32.const 1)
+        )
+      )
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $unreachable-if-toplevel (type $5) (result i32)
+    (if
+      (i32.const 3)
+      (block $label$0
+        (return
+          (i32.const 2)
+        )
+      )
+      (block $label$1
+        (return
+          (i32.const 1)
+        )
+      )
+    )
+    (unreachable)
+  )
+  (func $unreachable-loop (type $5) (result i32)
+    (loop $label$0
+      (nop)
+      (return
+        (i32.const 1)
+      )
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $unreachable-loop0 (type $5) (result i32)
+    (loop $label$0
+      (return
+        (i32.const 1)
+      )
+    )
+    (f64.abs
+      (unreachable)
+    )
+  )
+  (func $unreachable-loop-toplevel (type $5) (result i32)
+    (loop $label$0
+      (nop)
+      (return
+        (i32.const 1)
+      )
+    )
+    (unreachable)
+  )
+  (func $unreachable-loop0-toplevel (type $5) (result i32)
+    (loop $label$0
+      (return
+        (i32.const 1)
+      )
+    )
+    (unreachable)
   )
 )
 

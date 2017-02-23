@@ -25,6 +25,7 @@
 #define WASM_WASM_LINK_H
 
 #include "support/archive.h"
+#include "support/name.h"
 #include "support/utilities.h"
 #include "wasm.h"
 

@@ -157,22 +157,19 @@
                               (tee_local $1
                                 (i32.add
                                   (i32.shl
-                                    (i32.shl
-                                      (tee_local $10
-                                        (i32.add
-                                          (i32.xor
-                                            (i32.and
-                                              (get_local $2)
-                                              (i32.const 1)
-                                            )
+                                    (tee_local $10
+                                      (i32.add
+                                        (i32.xor
+                                          (i32.and
+                                            (get_local $2)
                                             (i32.const 1)
                                           )
-                                          (get_local $6)
+                                          (i32.const 1)
                                         )
+                                        (get_local $6)
                                       )
-                                      (i32.const 1)
                                     )
-                                    (i32.const 2)
+                                    (i32.const 3)
                                   )
                                   (i32.const 216)
                                 )
@@ -338,83 +335,80 @@
                                   (tee_local $11
                                     (i32.add
                                       (i32.shl
-                                        (i32.shl
-                                          (tee_local $10
-                                            (i32.add
+                                        (tee_local $10
+                                          (i32.add
+                                            (i32.or
                                               (i32.or
                                                 (i32.or
                                                   (i32.or
-                                                    (i32.or
-                                                      (tee_local $2
-                                                        (i32.and
-                                                          (i32.shr_u
-                                                            (tee_local $7
-                                                              (i32.shr_u
-                                                                (get_local $2)
-                                                                (get_local $1)
-                                                              )
-                                                            )
-                                                            (i32.const 5)
-                                                          )
-                                                          (i32.const 8)
-                                                        )
-                                                      )
-                                                      (get_local $1)
-                                                    )
-                                                    (tee_local $7
+                                                    (tee_local $2
                                                       (i32.and
                                                         (i32.shr_u
-                                                          (tee_local $0
+                                                          (tee_local $7
                                                             (i32.shr_u
-                                                              (get_local $7)
                                                               (get_local $2)
+                                                              (get_local $1)
                                                             )
                                                           )
-                                                          (i32.const 2)
+                                                          (i32.const 5)
                                                         )
-                                                        (i32.const 4)
+                                                        (i32.const 8)
                                                       )
                                                     )
+                                                    (get_local $1)
                                                   )
-                                                  (tee_local $0
+                                                  (tee_local $7
                                                     (i32.and
                                                       (i32.shr_u
-                                                        (tee_local $11
+                                                        (tee_local $0
                                                           (i32.shr_u
-                                                            (get_local $0)
                                                             (get_local $7)
+                                                            (get_local $2)
                                                           )
                                                         )
-                                                        (i32.const 1)
+                                                        (i32.const 2)
                                                       )
-                                                      (i32.const 2)
+                                                      (i32.const 4)
                                                     )
                                                   )
                                                 )
-                                                (tee_local $11
+                                                (tee_local $0
                                                   (i32.and
                                                     (i32.shr_u
-                                                      (tee_local $19
+                                                      (tee_local $11
                                                         (i32.shr_u
-                                                          (get_local $11)
                                                           (get_local $0)
+                                                          (get_local $7)
                                                         )
                                                       )
                                                       (i32.const 1)
                                                     )
-                                                    (i32.const 1)
+                                                    (i32.const 2)
                                                   )
                                                 )
                                               )
-                                              (i32.shr_u
-                                                (get_local $19)
-                                                (get_local $11)
+                                              (tee_local $11
+                                                (i32.and
+                                                  (i32.shr_u
+                                                    (tee_local $19
+                                                      (i32.shr_u
+                                                        (get_local $11)
+                                                        (get_local $0)
+                                                      )
+                                                    )
+                                                    (i32.const 1)
+                                                  )
+                                                  (i32.const 1)
+                                                )
                                               )
                                             )
+                                            (i32.shr_u
+                                              (get_local $19)
+                                              (get_local $11)
+                                            )
                                           )
-                                          (i32.const 1)
                                         )
-                                        (i32.const 2)
+                                        (i32.const 3)
                                       )
                                       (i32.const 216)
                                     )
@@ -538,16 +532,13 @@
                       (set_local $11
                         (i32.add
                           (i32.shl
-                            (i32.shl
-                              (tee_local $19
-                                (i32.shr_u
-                                  (get_local $17)
-                                  (i32.const 3)
-                                )
+                            (tee_local $19
+                              (i32.shr_u
+                                (get_local $17)
+                                (i32.const 3)
                               )
-                              (i32.const 1)
                             )
-                            (i32.const 2)
+                            (i32.const 3)
                           )
                           (i32.const 216)
                         )
@@ -1258,16 +1249,13 @@
                           (set_local $1
                             (i32.add
                               (i32.shl
-                                (i32.shl
-                                  (tee_local $7
-                                    (i32.shr_u
-                                      (get_local $1)
-                                      (i32.const 3)
-                                    )
+                                (tee_local $7
+                                  (i32.shr_u
+                                    (get_local $1)
+                                    (i32.const 3)
                                   )
-                                  (i32.const 1)
                                 )
-                                (i32.const 2)
+                                (i32.const 3)
                               )
                               (i32.const 216)
                             )
@@ -2345,11 +2333,8 @@
                               (set_local $11
                                 (i32.add
                                   (i32.shl
-                                    (i32.shl
-                                      (get_local $6)
-                                      (i32.const 1)
-                                    )
-                                    (i32.const 2)
+                                    (get_local $6)
+                                    (i32.const 3)
                                   )
                                   (i32.const 216)
                                 )
@@ -4369,11 +4354,8 @@
                                           (tee_local $23
                                             (i32.add
                                               (i32.shl
-                                                (i32.shl
-                                                  (get_local $6)
-                                                  (i32.const 1)
-                                                )
-                                                (i32.const 2)
+                                                (get_local $6)
+                                                (i32.const 3)
                                               )
                                               (i32.const 216)
                                             )
@@ -4534,11 +4516,8 @@
                               (set_local $0
                                 (i32.add
                                   (i32.shl
-                                    (i32.shl
-                                      (get_local $6)
-                                      (i32.const 1)
-                                    )
-                                    (i32.const 2)
+                                    (get_local $6)
+                                    (i32.const 3)
                                   )
                                   (i32.const 216)
                                 )
@@ -5280,11 +5259,8 @@
                       (set_local $18
                         (i32.add
                           (i32.shl
-                            (i32.shl
-                              (get_local $3)
-                              (i32.const 1)
-                            )
-                            (i32.const 2)
+                            (get_local $3)
+                            (i32.const 3)
                           )
                           (i32.const 216)
                         )
@@ -5759,11 +5735,8 @@
                   (tee_local $0
                     (i32.add
                       (i32.shl
-                        (i32.shl
-                          (get_local $2)
-                          (i32.const 1)
-                        )
-                        (i32.const 2)
+                        (get_local $2)
+                        (i32.const 3)
                       )
                       (i32.const 216)
                     )
@@ -6121,11 +6094,8 @@
                   (tee_local $4
                     (i32.add
                       (i32.shl
-                        (i32.shl
-                          (get_local $7)
-                          (i32.const 1)
-                        )
-                        (i32.const 2)
+                        (get_local $7)
+                        (i32.const 3)
                       )
                       (i32.const 216)
                     )
@@ -7142,11 +7112,8 @@
                   (tee_local $7
                     (i32.add
                       (i32.shl
-                        (i32.shl
-                          (get_local $14)
-                          (i32.const 1)
-                        )
-                        (i32.const 2)
+                        (get_local $14)
+                        (i32.const 3)
                       )
                       (i32.const 216)
                     )
@@ -7297,11 +7264,8 @@
         (set_local $1
           (i32.add
             (i32.shl
-              (i32.shl
-                (get_local $3)
-                (i32.const 1)
-              )
-              (i32.const 2)
+              (get_local $3)
+              (i32.const 3)
             )
             (i32.const 216)
           )
@@ -8590,15 +8554,9 @@
           )
         )
         (if
-          (i32.shr_s
-            (i32.shl
-              (i32.and
-                (get_local $1)
-                (i32.const 255)
-              )
-              (i32.const 24)
-            )
-            (i32.const 24)
+          (i32.and
+            (get_local $1)
+            (i32.const 255)
           )
           (block
             (set_local $1
@@ -9709,12 +9667,9 @@
   (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)
     (call_indirect $FUNCSIG$ii
       (get_local $1)
-      (i32.add
-        (i32.and
-          (get_local $0)
-          (i32.const 1)
-        )
-        (i32.const 0)
+      (i32.and
+        (get_local $0)
+        (i32.const 1)
       )
     )
   )

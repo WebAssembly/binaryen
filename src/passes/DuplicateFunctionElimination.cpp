@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher, Visitor<FunctionHasher>>> {
+struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
   FunctionHasher(std::map<Function*, uint32_t>* output) : output(output) {}
@@ -60,7 +60,7 @@ private:
   };
 };
 
-struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer, Visitor<FunctionReplacer>>> {
+struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer>> {
   bool isFunctionParallel() override { return true; }
 
   FunctionReplacer(std::map<Name, Name>* replacements) : replacements(replacements) {}

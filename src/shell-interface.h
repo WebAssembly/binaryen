@@ -23,6 +23,7 @@
 
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
+#include "support/name.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"
 

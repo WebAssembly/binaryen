@@ -2,15 +2,16 @@ Counts
  [funcs]        : 1       
  [memory-data]  : 9       
  [table-data]   : 3       
- [total]        : 24      
+ [total]        : 27      
  [vars]         : 1       
  binary         : 1       
  block          : 1       
- const          : 12      
+ const          : 15      
  drop           : 6       
  if             : 4       
 (module
   (type $0 (func (param i32)))
+  (global $glob i32 (i32.const 1337))
   (table 256 256 anyfunc)
   (elem (i32.const 0) $ifs $ifs $ifs)
   (memory $0 256 256)

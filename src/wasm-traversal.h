@@ -172,10 +172,16 @@ struct Walker : public VisitorType {
 
   // Walk starting
 
+  void walkGlobal(Global* global) {
+    walk(global->init);
+    static_cast<SubType*>(this)->visitGlobal(global);
+  }
+
   void walkFunction(Function* func) {
     setFunction(func);
     static_cast<SubType*>(this)->doWalkFunction(func);
     static_cast<SubType*>(this)->visitFunction(func);
+    setFunction(nullptr);
   }
 
   // override this to provide custom functionality
@@ -183,10 +189,25 @@ struct Walker : public VisitorType {
     walk(func->body);
   }
 
+  void walkTable(Table* table) {
+    for (auto& segment : table->segments) {
+      walk(segment.offset);
+    }
+    static_cast<SubType*>(this)->visitTable(table);
+  }
+
+  void walkMemory(Memory* memory) {
+    for (auto& segment : memory->segments) {
+      walk(segment.offset);
+    }
+    static_cast<SubType*>(this)->visitMemory(memory);
+  }
+
   void walkModule(Module* module) {
     setModule(module);
     static_cast<SubType*>(this)->doWalkModule(module);
     static_cast<SubType*>(this)->visitModule(module);
+    setModule(nullptr);
   }
 
   // override this to provide custom functionality
@@ -203,13 +224,13 @@ struct Walker : public VisitorType {
       self->visitExport(curr.get());
     }
     for (auto& curr : module->globals) {
-      self->visitGlobal(curr.get());
+      self->walkGlobal(curr.get());
     }
     for (auto& curr : module->functions) {
       self->walkFunction(curr.get());
     }
-    self->visitTable(&module->table);
-    self->visitMemory(&module->memory);
+    self->walkTable(&module->table);
+    self->walkMemory(&module->memory);
   }
 
   // Walk implementation. We don't use recursion as ASTs may be highly
@@ -299,7 +320,7 @@ private:
 // Walks in post-order, i.e., children first. When there isn't an obvious
 // order to operands, we follow them in order of execution.
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct PostWalker : public Walker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
@@ -448,7 +469,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 // Traversal with a control-flow stack.
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   ControlFlowWalker() {}
 
@@ -511,7 +532,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
 
 // Traversal with an expression stack.
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
   ExpressionStackWalker() {}
 
@@ -562,7 +583,7 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
 // When execution is no longer linear, this notifies via a call
 // to noteNonLinear().
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   LinearExecutionWalker() {}
 

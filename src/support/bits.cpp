@@ -114,13 +114,13 @@ uint32_t Log2(uint32_t v) {
 
 uint32_t Pow2(uint32_t v) {
   switch (v) {
-    default: WASM_UNREACHABLE();
     case 0: return 1;
     case 1: return 2;
     case 2: return 4;
     case 3: return 8;
     case 4: return 16;
     case 5: return 32;
+    default: return 1 << v;
   }
 }
 

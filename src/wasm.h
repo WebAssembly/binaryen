@@ -58,35 +58,10 @@
 #include "mixed_arena.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
+#include "support/name.h"
 #include "support/utilities.h"
 
 namespace wasm {
-
-// We use a Name for all of the identifiers. These are IStrings, so they are
-// all interned - comparisons etc are just pointer comparisons, so there is no
-// perf loss. Having names everywhere makes using the AST much nicer (for
-// example, block names are strings and not offsets, which makes composition
-// - adding blocks, removing blocks - easy). One exception is local variables,
-// where we do use indices, as they are a large proportion of the AST,
-// perf matters a lot there, and compositionality is not a problem.
-// TODO: as an optimization, IString values < some threshold could be considered
-//       numerical indices directly.
-
-struct Name : public cashew::IString {
-  Name() : cashew::IString() {}
-  Name(const char* str) : cashew::IString(str, false) {}
-  Name(cashew::IString str) : cashew::IString(str) {}
-  Name(const std::string& str) : cashew::IString(str.c_str(), false) {}
-
-  friend std::ostream& operator<<(std::ostream& o, Name name) {
-    assert(name.str);
-    return o << '$' << name.str; // reference interpreter requires we prefix all names
-  }
-
-  static Name fromInt(size_t i) {
-    return cashew::IString(std::to_string(i).c_str(), false);
-  }
-};
 
 // An index in a wasm module
 typedef uint32_t Index;
@@ -1445,11 +1420,11 @@ enum class ExternalKind {
 
 class Import {
 public:
-  Import() : functionType(nullptr), globalType(none) {}
+  Import() : globalType(none) {}
 
   Name name, module, base; // name = module.base
   ExternalKind kind;
-  FunctionType* functionType; // for Function imports
+  Name functionType; // for Function imports
   WasmType globalType; // for Global imports
 };
 
@@ -1528,6 +1503,14 @@ public:
   bool mutable_;
 };
 
+// "Opaque" data, not part of the core wasm spec, that is held in binaries.
+// May be parsed/handled by utility code elsewhere, but not in wasm.h
+class UserSection {
+public:
+  std::string name;
+  std::vector<char> data;
+};
+
 class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
@@ -1540,6 +1523,8 @@ public:
   Table table;
   Memory memory;
   Name start;
+
+  std::vector<UserSection> userSections;
 
   MixedArena allocator;
 

@@ -44,7 +44,7 @@
 
 namespace wasm {
 
-struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> {
+struct WasmValidator : public PostWalker<WasmValidator> {
   bool valid = true;
 
   // what to validate, see comment up top
@@ -128,7 +128,9 @@ public:
       }
     }
     if (!isConcreteWasmType(curr->type) && curr->list.size() > 0) {
-      shouldBeFalse(isConcreteWasmType(curr->list.back()->type), curr, "block with no value cannot have a last element with a value");
+      if (isConcreteWasmType(curr->list.back()->type)) {
+        shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
+      }
     }
   }
 
@@ -155,12 +157,15 @@ public:
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32 || curr->condition->type == i64, curr, "if condition must be valid");
     if (!curr->ifFalse) {
       shouldBeFalse(isConcreteWasmType(curr->ifTrue->type), curr, "if without else must not return a value in body");
+      if (curr->condition->type != unreachable) {
+        shouldBeEqual(curr->type, none, curr, "if without else and reachable condition must be none");
+      }
     }
   }
 
   // override scan to add a pre and a post check task to all nodes
   static void scan(WasmValidator* self, Expression** currp) {
-    PostWalker<WasmValidator, Visitor<WasmValidator>>::scan(self, currp);
+    PostWalker<WasmValidator>::scan(self, currp);
 
     auto* curr = *currp;
     if (curr->is<Block>()) self->pushTask(visitPreBlock, currp);
@@ -221,8 +226,8 @@ public:
     if (!validateGlobally) return;
     auto* import = getModule()->checkImport(curr->target);
     if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
-    if (!shouldBeTrue(import->functionType, curr, "called import must be function")) return;
-    auto* type = import->functionType;
+    if (!shouldBeTrue(!!import->functionType.is(), curr, "called import must be function")) return;
+    auto* type = getModule()->getFunctionType(import->functionType);
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
       if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
@@ -378,8 +383,9 @@ public:
     if (!validateGlobally) return;
     if (curr->kind == ExternalKind::Function) {
       if (validateWeb) {
-        shouldBeUnequal(curr->functionType->result, i64, curr->name, "Imported function must not have i64 return type");
-        for (WasmType param : curr->functionType->params) {
+        auto* functionType = getModule()->getFunctionType(curr->functionType);
+        shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
+        for (WasmType param : functionType->params) {
           shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
         }
       }
@@ -494,7 +500,7 @@ public:
   }
 
   void doWalkFunction(Function* func) {
-    PostWalker<WasmValidator, Visitor<WasmValidator>>::doWalkFunction(func);
+    PostWalker<WasmValidator>::doWalkFunction(func);
   }
 
 private:

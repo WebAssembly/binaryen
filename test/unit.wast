@@ -447,4 +447,82 @@
       (get_local $1)
     )
   )
+  (func $return-unreachable (result i32)
+    (return (i32.const 1))
+  )
+  (func $unreachable-block (result i32)
+    (f64.abs
+      (block ;; note no type - valid in binaryen IR, in wasm must be i32
+        (drop (i32.const 1))
+        (return (i32.const 2))
+      )
+    )
+  )
+  (func $unreachable-block-toplevel (result i32)
+    (block ;; note no type - valid in binaryen IR, in wasm must be i32
+      (drop (i32.const 1))
+      (return (i32.const 2))
+    )
+  )
+  (func $unreachable-block0 (result i32)
+    (f64.abs
+      (block ;; note no type - valid in binaryen IR, in wasm must be i32
+        (return (i32.const 2))
+      )
+    )
+  )
+  (func $unreachable-block0-toplevel (result i32)
+    (block ;; note no type - valid in binaryen IR, in wasm must be i32
+      (return (i32.const 2))
+    )
+  )
+  (func $unreachable-block-with-br (result i32)
+    (block $block ;; unreachable type due to last element having that type, but the block is exitable
+      (drop (i32.const 1))
+      (br $block)
+    )
+    (i32.const 1)
+  )
+  (func $unreachable-if (result i32)
+    (f64.abs
+      (if ;; note no type - valid in binaryen IR, in wasm must be i32
+        (i32.const 3)
+        (return (i32.const 2))
+        (return (i32.const 1))
+      )
+    )
+  )
+  (func $unreachable-if-toplevel (result i32)
+    (if ;; note no type - valid in binaryen IR, in wasm must be i32
+      (i32.const 3)
+      (return (i32.const 2))
+      (return (i32.const 1))
+    )
+  )
+  (func $unreachable-loop (result i32)
+    (f64.abs
+      (loop ;; note no type - valid in binaryen IR, in wasm must be i32
+        (nop)
+        (return (i32.const 1))
+      )
+    )
+  )
+  (func $unreachable-loop0 (result i32)
+    (f64.abs
+      (loop ;; note no type - valid in binaryen IR, in wasm must be i32
+        (return (i32.const 1))
+      )
+    )
+  )
+  (func $unreachable-loop-toplevel (result i32)
+    (loop ;; note no type - valid in binaryen IR, in wasm must be i32
+      (nop)
+      (return (i32.const 1))
+    )
+  )
+  (func $unreachable-loop0-toplevel (result i32)
+    (loop ;; note no type - valid in binaryen IR, in wasm must be i32
+      (return (i32.const 1))
+    )
+  )
 )
