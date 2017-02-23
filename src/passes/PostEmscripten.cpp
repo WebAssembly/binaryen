@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<PostEmscripten>>> {
+struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new PostEmscripten; }

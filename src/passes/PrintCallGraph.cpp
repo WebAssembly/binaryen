@@ -63,7 +63,7 @@ struct PrintCallGraph : public Pass {
       }
     }
 
-    struct CallPrinter : public PostWalker<CallPrinter, Visitor<CallPrinter>> {
+    struct CallPrinter : public PostWalker<CallPrinter> {
       Module *module;
       Function *currFunction;
       std::set<Name> visitedTargets; // Used to avoid printing duplicate edges.

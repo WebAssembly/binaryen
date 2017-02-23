@@ -74,7 +74,7 @@ static Index getSetLabelValue(SetLocal* set) {
   return set->value->cast<Const>()->value.geti32();
 }
 
-struct LabelUseFinder : public PostWalker<LabelUseFinder, Visitor<LabelUseFinder>> {
+struct LabelUseFinder : public PostWalker<LabelUseFinder> {
   Index labelIndex;
   std::map<Index, Index>& checks; // label value => number of checks on it
   std::map<Index, Index>& sets;   // label value => number of sets to it
@@ -94,7 +94,7 @@ struct LabelUseFinder : public PostWalker<LabelUseFinder, Visitor<LabelUseFinder
   }
 };
 
-struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJumpThreading, Visitor<RelooperJumpThreading>>> {
+struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJumpThreading>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RelooperJumpThreading; }
@@ -159,7 +159,7 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
       labelIndex = func->getLocalIndex(LABEL);
       LabelUseFinder finder(labelIndex, labelChecks, labelSets);
       finder.walk(func->body);
-      WalkerPass<ExpressionStackWalker<RelooperJumpThreading, Visitor<RelooperJumpThreading>>>::doWalkFunction(func);
+      WalkerPass<ExpressionStackWalker<RelooperJumpThreading>>::doWalkFunction(func);
     }
   }
 
@@ -221,7 +221,7 @@ private:
     auto outerName = outerNames->at(nameCounter);
     auto* ifFalse = iff->ifFalse;
     // all assignments of label to the target can be replaced with breaks to the target, via innerName
-    struct JumpUpdater : public PostWalker<JumpUpdater, Visitor<JumpUpdater>> {
+    struct JumpUpdater : public PostWalker<JumpUpdater> {
       Index labelIndex;
       Index targetNum;
       Name targetName;

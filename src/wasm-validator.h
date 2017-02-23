@@ -44,7 +44,7 @@
 
 namespace wasm {
 
-struct WasmValidator : public PostWalker<WasmValidator, Visitor<WasmValidator>> {
+struct WasmValidator : public PostWalker<WasmValidator> {
   bool valid = true;
 
   // what to validate, see comment up top
@@ -165,7 +165,7 @@ public:
 
   // override scan to add a pre and a post check task to all nodes
   static void scan(WasmValidator* self, Expression** currp) {
-    PostWalker<WasmValidator, Visitor<WasmValidator>>::scan(self, currp);
+    PostWalker<WasmValidator>::scan(self, currp);
 
     auto* curr = *currp;
     if (curr->is<Block>()) self->pushTask(visitPreBlock, currp);
@@ -500,7 +500,7 @@ public:
   }
 
   void doWalkFunction(Function* func) {
-    PostWalker<WasmValidator, Visitor<WasmValidator>>::doWalkFunction(func);
+    PostWalker<WasmValidator>::doWalkFunction(func);
   }
 
 private:
