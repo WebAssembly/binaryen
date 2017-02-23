@@ -285,7 +285,12 @@
       return Module['_BinaryenUnreachable'](module);
     };
     this['printExpression'] = function(expr) {
-      return Module['_BinaryenExpressionPrint'](module, expr);
+      var old = Module['print'];
+      var ret = '';
+      Module['print'] = function(x) { ret += x + '\n' };
+      Module['_BinaryenExpressionPrint'](module, expr);
+      Module['print'] = old;
+      return ret;
     };
     this['addFunction'] = function(name, functionType, varTypes, body) {
       return preserveStack(function() {
