@@ -73,7 +73,7 @@ void test_core() {
 
   // Module creation
 
-  module = BinaryenModuleCreate();
+  module = new Binaryen.Module();
 
   // Literals and consts
 
@@ -264,213 +264,209 @@ function makeCallCheck(x) {
 }
 
 function test_relooper() {
-  module = BinaryenModuleCreate();
-  var v = module.addFunctionType("v", Binaryen.None, null, 0);
+  module = new Binaryen.Module();
+  var v = module.addFunctionType("v", Binaryen.None, []);
   localTypes[] = [ Binaryen.Int32 ];
 
   {
-    iparams[1] = [ Binaryen.Int32 ];
-    var vi = module.addFunctionType("vi", Binaryen.None, iparams, 1);
+    var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.Int32 ]);
     module.addImport("check", "module", "check", vi);
   }
 
   { // trivial: just one block
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block = RelooperAddBlock(relooper, makeCallCheck(1337));
-    body = RelooperRenderAndDispose(relooper, block, 0, module);
-    var sinker = BinaryenAddFunction("just-one-block", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block = relooper.addBlock(makeCallCheck(1337));
+    var body = relooper.renderAndDispose(block, 0, module);
+    BinaryenAddFunction("just-one-block", v, localTypes, body);
   }
   { // two blocks
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperAddBranch(block0, block1, null, null); // no condition, no code on branch
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("two-blocks", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    relooper.addBranch(block0, block1); // no condition, no code on branch
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("two-blocks", v, localTypes, body);
   }
   { // two blocks with code between them
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperAddBranch(block0, block1, null, makeDroppedInt32(77)); // code on branch
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("two-blocks-plus-code", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    relooper.addBranch(block0, block1, null, makeDroppedInt32(77)); // code on branch
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("two-blocks-plus-code", v, localTypes, body);
   }
   { // two blocks in a loop
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperAddBranch(block0, block1, null, null);
-    RelooperAddBranch(block1, block0, null, null);
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("loop", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    relooper.addBranch(block0, block1, null, null);
+    relooper.addBranch(block1, block0, null, null);
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("loop", v, localTypes, body);
   }
   { // two blocks in a loop with codes
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperAddBranch(block0, block1, null, makeDroppedInt32(33));
-    RelooperAddBranch(block1, block0, null, makeDroppedInt32(-66));
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("loop-plus-code", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    relooper.addBranch(block0, block1, null, makeDroppedInt32(33));
+    relooper.addBranch(block1, block0, null, makeDroppedInt32(-66));
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("loop-plus-code", v, localTypes, body);
   }
   { // split
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
-    RelooperAddBranch(block0, block1, makeInt32(55), null);
-    RelooperAddBranch(block0, block2, null, null);
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("split", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
+    relooper.addBranch(block0, block1, makeInt32(55), null);
+    relooper.addBranch(block0, block2, null, null);
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("split", v, localTypes, body);
   }
   { // split + code
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
     temp = makeDroppedInt32(10);
-    RelooperAddBranch(block0, block1, makeInt32(55), temp);
-    RelooperAddBranch(block0, block2, null, makeDroppedInt32(20));
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("split-plus-code", v, localTypes, 1, body);
+    relooper.addBranch(block0, block1, makeInt32(55), temp);
+    relooper.addBranch(block0, block2, null, makeDroppedInt32(20));
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("split-plus-code", v, localTypes, body);
   }
   { // if
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
-    RelooperAddBranch(block0, block1, makeInt32(55), null);
-    RelooperAddBranch(block0, block2, null, null);
-    RelooperAddBranch(block1, block2, null, null);
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("if", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
+    relooper.addBranch(block0, block1, makeInt32(55), null);
+    relooper.addBranch(block0, block2, null, null);
+    relooper.addBranch(block1, block2, null, null);
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("if", v, localTypes, body);
   }
   { // if + code
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
     temp = makeDroppedInt32(-1);
-    RelooperAddBranch(block0, block1, makeInt32(55), temp);
-    RelooperAddBranch(block0, block2, null, makeDroppedInt32(-2));
-    RelooperAddBranch(block1, block2, null, makeDroppedInt32(-3));
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("if-plus-code", v, localTypes, 1, body);
+    relooper.addBranch(block0, block1, makeInt32(55), temp);
+    relooper.addBranch(block0, block2, null, makeDroppedInt32(-2));
+    relooper.addBranch(block1, block2, null, makeDroppedInt32(-3));
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("if-plus-code", v, localTypes, body);
   }
   { // if-else
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
-    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeCallCheck( 3));
-    RelooperAddBranch(block0, block1, makeInt32(55), null);
-    RelooperAddBranch(block0, block2, null, null);
-    RelooperAddBranch(block1, block3, null, null);
-    RelooperAddBranch(block2, block3, null, null);
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("if-else", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
+    RelooperBlockRef block3 = relooper.addBlock(makeCallCheck(3));
+    relooper.addBranch(block0, block1, makeInt32(55), null);
+    relooper.addBranch(block0, block2, null, null);
+    relooper.addBranch(block1, block3, null, null);
+    relooper.addBranch(block2, block3, null, null);
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("if-else", v, localTypes, body);
   }
   { // loop+tail
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
-    RelooperAddBranch(block0, block1, null, null);
-    RelooperAddBranch(block1, block0, makeInt32(10), null);
-    RelooperAddBranch(block1, block2, null, null);
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("loop-tail", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
+    relooper.addBranch(block0, block1, null, null);
+    relooper.addBranch(block1, block0, makeInt32(10), null);
+    relooper.addBranch(block1, block2, null, null);
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("loop-tail", v, localTypes, body);
   }
   { // nontrivial loop + phi to head
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
-    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeCallCheck( 3));
-    RelooperBlockRef block4 = RelooperAddBlock(relooper, makeCallCheck( 4));
-    RelooperBlockRef block5 = RelooperAddBlock(relooper, makeCallCheck( 5));
-    RelooperBlockRef block6 = RelooperAddBlock(relooper, makeCallCheck( 6));
-    RelooperAddBranch(block0, block1, null, makeDroppedInt32(10));
-    RelooperAddBranch(block1, block2, makeInt32(-2), null);
-    RelooperAddBranch(block1, block6, null, makeDroppedInt32(20));
-    RelooperAddBranch(block2, block3, makeInt32(-6), null);
-    RelooperAddBranch(block2, block1, null, makeDroppedInt32(30));
-    RelooperAddBranch(block3, block4, makeInt32(-10), null);
-    RelooperAddBranch(block3, block5, null, null);
-    RelooperAddBranch(block4, block5, null, null);
-    RelooperAddBranch(block5, block6, null, makeDroppedInt32(40));
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("nontrivial-loop-plus-phi-to-head", v, localTypes, 1, body);
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
+    RelooperBlockRef block3 = relooper.addBlock(makeCallCheck(3));
+    RelooperBlockRef block4 = relooper.addBlock(makeCallCheck(4));
+    RelooperBlockRef block5 = relooper.addBlock(makeCallCheck(5));
+    RelooperBlockRef block6 = relooper.addBlock(makeCallCheck(6));
+    relooper.addBranch(block0, block1, null, makeDroppedInt32(10));
+    relooper.addBranch(block1, block2, makeInt32(-2), null);
+    relooper.addBranch(block1, block6, null, makeDroppedInt32(20));
+    relooper.addBranch(block2, block3, makeInt32(-6), null);
+    relooper.addBranch(block2, block1, null, makeDroppedInt32(30));
+    relooper.addBranch(block3, block4, makeInt32(-10), null);
+    relooper.addBranch(block3, block5, null, null);
+    relooper.addBranch(block4, block5, null, null);
+    relooper.addBranch(block5, block6, null, makeDroppedInt32(40));
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("nontrivial-loop-plus-phi-to-head", v, localTypes, body);
   }
   { // switch
-    RelooperRef relooper = RelooperCreate();
+    var relooper = Binaryen.Relooper();
     temp = makeInt32(-99);
-    RelooperBlockRef block0 = RelooperAddBlockWithSwitch(relooper, makeCallCheck( 0), temp);
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
-    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeCallCheck( 3));
-    BinaryenIndex to_block1[] = [ 2, 5 ];
-    RelooperAddBranchForSwitch(block0, block1, to_block1, 2, null);
-    BinaryenIndex to_block2[] = [ 4 ];
-    RelooperAddBranchForSwitch(block0, block2, to_block2, 1, makeDroppedInt32(55));
-    RelooperAddBranchForSwitch(block0, block3, null, 0, null);
-    body = RelooperRenderAndDispose(relooper, block0, 0, module);
-    var sinker = BinaryenAddFunction("switch", v, localTypes, 1, body);
+    RelooperBlockRef block0 = relooper.addBlockWithSwitch(makeCallCheck(0), temp);
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
+    RelooperBlockRef block3 = relooper.addBlock(makeCallCheck(3));
+    relooper.addBranchForSwitch(block0, block1, [ 2, 5 ]);
+    relooper.addBranchForSwitch(block0, block2, [4], makeDroppedInt32(55));
+    relooper.addBranchForSwitch(block0, block3, [], null);
+    var body = relooper.renderAndDispose(block0, 0, module);
+    BinaryenAddFunction("switch", v, localTypes, body);
   }
   { // duff's device
-    RelooperRef relooper = RelooperCreate();
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck( 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck( 1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck( 2));
-    RelooperAddBranch(block0, block1, makeInt32(10), null);
-    RelooperAddBranch(block0, block2, null, null);
-    RelooperAddBranch(block1, block2, null, null);
-    RelooperAddBranch(block2, block1, null, null);
-    body = RelooperRenderAndDispose(relooper, block0, 3, module); // use $3 as the helper var
+    var relooper = Binaryen.Relooper();
+    RelooperBlockRef block0 = relooper.addBlock(makeCallCheck(0));
+    RelooperBlockRef block1 = relooper.addBlock(makeCallCheck(1));
+    RelooperBlockRef block2 = relooper.addBlock(makeCallCheck(2));
+    relooper.addBranch(block0, block1, makeInt32(10), null);
+    relooper.addBranch(block0, block2, null, null);
+    relooper.addBranch(block1, block2, null, null);
+    relooper.addBranch(block2, block1, null, null);
+    var body = relooper.renderAndDispose(block0, 3, module); // use $3 as the helper var
     localTypes[] = [ Binaryen.Int32, Binaryen.Int32, Binaryen.Int64, Binaryen.Int32, Binaryen.Float32, Binaryen.Float64, Binaryen.Int32 };
-    var sinker = BinaryenAddFunction("duffs-device", v, localTypes, body);
+    BinaryenAddFunction("duffs-device", v, localTypes, body);
   }
 
-  var i = module.addFunctionType("i", Binaryen.Int32, null, 0);
+  var i = module.addFunctionType("i", Binaryen.Int32, []);
 
   { // return in a block
-    RelooperRef relooper = RelooperCreate();
-    listList[] = [ makeCallCheck( 42), module.return(makeInt32(1337)) };
+    var relooper = Binaryen.Relooper();
+    listList[] = [ makeCallCheck(42), module.return(makeInt32(1337)) };
     list = module.block("the-list", listList, 2);
-    RelooperBlockRef block = RelooperAddBlock(relooper, list);
-    body = RelooperRenderAndDispose(relooper, block, 0, module);
-    var sinker = BinaryenAddFunction("return", i, localTypes, 1, body);
+    RelooperBlockRef block = relooper.addBlock(list);
+    var body = relooper.renderAndDispose(block, 0, module);
+    BinaryenAddFunction("return", i, localTypes, body);
   }
 
   printf("raw:\n");
-  console.log(module.emitText();
+  console.log(module.emitText());
 
   assert(module.validate());
 
-  BinaryenModuleOptimize();
+  module.optimize();
 
   assert(module.validate());
 
   printf("optimized:\n");
-  console.log(module.emitText();
+  console.log(module.emitText());
 
   module.dispose();
 }
 
 void test_binaries() {
-  char buffer[1024];
-  size_t size;
+  var buffer, size;
 
   { // create a module and write it to binary
-    module = BinaryenModuleCreate();
-    params[2] = [ Binaryen.Int32, Binaryen.Int32 ];
-    var iii = module.addFunctionType("iii", Binaryen.Int32, params, 2);
-    x = BinaryenGetLocal(0, Binaryen.Int32),
-                          y = BinaryenGetLocal(1, Binaryen.Int32);
-    add = module.binary(Binaryen.AddInt32, x, y);
-    var adder = BinaryenAddFunction("adder", iii, null, 0, add);
-    size = BinaryenModuleWrite(buffer, 1024); // write out the module
+    module = new Binaryen.Module();
+    var iii = module.addFunctionType("iii", Binaryen.Int32, [ Binaryen.Int32, Binaryen.Int32 ]);
+    var x = BinaryenGetLocal(0, Binaryen.Int32),
+        y = BinaryenGetLocal(1, Binaryen.Int32);
+    var add = module.binary(Binaryen.AddInt32, x, y);
+    var adder = BinaryenAddFunction("adder", iii, [], add);
+    buffer = module.emitBinary();
+    size = buffer.length; // write out the module
     module.dispose();
   }
 
@@ -483,51 +479,48 @@ void test_binaries() {
   // validate, print, and free
   assert(module.validate());
   printf("module loaded from binary form:\n");
-  console.log(module.emitText();
+  console.log(module.emitText());
   module.dispose();
 }
 
 void test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
-  module = BinaryenModuleCreate();
+  module = new Binaryen.Module();
 
-  iparams[2] = [ Binaryen.Int32 ];
-  var vi = module.addFunctionType("vi", Binaryen.None, iparams, 1);
+  var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.Int32 ]);
   module.addImport("print-i32", "spectest", "print", vi);
 
-  var v = module.addFunctionType("v", Binaryen.None, null, 0);
-  callOperands[] = [ makeInt32(1234) ];
-  call = module.callImport("print-i32", callOperands, 1, Binaryen.None);
-  var starter = BinaryenAddFunction("starter", v, null, 0, call);
+  var v = module.addFunctionType("v", Binaryen.None, []);
+  call = module.callImport("print-i32", [ makeInt32(1234) ], Binaryen.None);
+  var starter = BinaryenAddFunction("starter", v, [], call);
   module.setStart(starter);
 
-  console.log(module.emitText();
+  console.log(module.emitText());
   assert(module.validate());
-  BinaryenModuleInterpret();
+  module.interpret();
   module.dispose();
 }
 
 void test_nonvalid() {
   // create a module that fails to validate
-  module = BinaryenModuleCreate();
+  module = new Binaryen.Module();
 
-  var v = module.addFunctionType("v", Binaryen.None, null, 0);
-  localTypes[] = [ Binaryen.Int32 ];
-  var func = BinaryenAddFunction("func", v, localTypes, 1,
+  var v = module.addFunctionType("v", Binaryen.None, []);
+  var func = BinaryenAddFunction("func", v, [ Binaryen.Int32 ],
     module.setLocal(0, makeInt64(1234)) // wrong type!
   );
 
-  console.log(module.emitText();
+  console.log(module.emitText());
   printf("validation: %d\n", BinaryenModuleValidate());
 
   module.dispose();
 }
 
 void test_tracing() {
-  BinaryenSetAPITracing(1);
+  Binaryen.setAPITracing(1);
   test_core();
   test_relooper();
-  BinaryenSetAPITracing(0);
+  Binaryen.setAPITracing(0);
 }
 
 function main() {

@@ -10,14 +10,15 @@ var module = new Binaryen.Module();
 var iii = module.addFunctionType('iii', Binaryen.Int32, [Binaryen.Int32, Binaryen.Int32]);
 
 // Start to create the function, starting with the contents: Get the 0 and
-// 1 arguments, and add them
+// 1 arguments, and add them, then return them
 var left = module.getLocal(0, Binaryen.Int32);
 var right = module.getLocal(1, Binaryen.Int32);
 var add = module.binary(Binaryen.AddInt32, left, right);
+var ret = module.return(add);
 
 // Create the add function
 // Note: no additional local variables (that's the [])
-module.addFunction('adder', iii, [], add);
+module.addFunction('adder', iii, [], ret);
 
 // Export the function, so we can call it later (for simplicity we
 // export it as the same name as it has internally)
@@ -25,6 +26,13 @@ module.addExport('adder', 'adder');
 
 // Print out the text
 console.log(module.emitText());
+
+// Optimize the module! This removes the 'return', since the
+// output of the add can just fall through
+module.optimize();
+
+// Print out the optimized module's text
+console.log('optimized:\n\n' + module.emitText());
 
 // Get the binary in typed array form
 var binary = module.emitBinary();
