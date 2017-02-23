@@ -115,8 +115,8 @@ private:
   std::string codeForConstAddr(Const* addrConst);
   Literal idLiteralForCode(std::string code);
   std::string asmConstSig(std::string baseSig);
-  cashew::IString nameForImportWithSig(std::string sig);
-  void addImport(cashew::IString importName, std::string baseSig);
+  Name nameForImportWithSig(std::string sig);
+  void addImport(Name importName, std::string baseSig);
   std::string escape(const char *input);
 };
 
@@ -193,12 +193,12 @@ std::string AsmConstWalker::asmConstSig(std::string baseSig) {
   return sig;
 }
 
-cashew::IString AsmConstWalker::nameForImportWithSig(std::string sig) {
+Name AsmConstWalker::nameForImportWithSig(std::string sig) {
   std::string fixedTarget = EMSCRIPTEN_ASM_CONST.str + std::string("_") + sig;
-  return cashew::IString(fixedTarget.c_str(), false);
+  return Name(fixedTarget.c_str());
 }
 
-void AsmConstWalker::addImport(cashew::IString importName, std::string baseSig) {
+void AsmConstWalker::addImport(Name importName, std::string baseSig) {
   auto import = new Import;
   import->name = import->base = importName;
   import->module = ENV;
