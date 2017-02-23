@@ -34,7 +34,7 @@ namespace wasm {
 // This is a much weaker property than SSA, obviously, but together with
 // our implicit dominance properties in the structured AST is quite useful.
 //
-struct LocalAnalyzer : public PostWalker<LocalAnalyzer, Visitor<LocalAnalyzer>> {
+struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
   std::vector<bool> sfa;
   std::vector<Index> numSets;
   std::vector<Index> numGets;
@@ -216,7 +216,7 @@ private:
   std::unordered_map<SetLocal*, EffectAnalyzer> pushableEffects;
 };
 
-struct CodePushing : public WalkerPass<PostWalker<CodePushing, Visitor<CodePushing>>> {
+struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new CodePushing; }

@@ -394,7 +394,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
 }
 
 void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
-  struct ExpressionScanner : public PostWalker<ExpressionScanner, Visitor<ExpressionScanner>> {
+  struct ExpressionScanner : public PostWalker<ExpressionScanner> {
     Wasm2AsmBuilder* parent;
 
     ExpressionScanner(Wasm2AsmBuilder* parent) : parent(parent) {}

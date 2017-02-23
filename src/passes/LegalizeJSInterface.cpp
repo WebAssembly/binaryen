@@ -75,7 +75,7 @@ struct LegalizeJSInterface : public Pass {
 
       // fix up imports: call_import of an illegal must be turned to a call of a legal
 
-      struct FixImports : public WalkerPass<PostWalker<FixImports, Visitor<FixImports>>> {
+      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
         bool isFunctionParallel() override { return true; }
 
         Pass* create() override { return new FixImports(illegalToLegal); }

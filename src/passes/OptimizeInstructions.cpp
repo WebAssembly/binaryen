@@ -274,7 +274,7 @@ struct LocalInfo {
   Index signExtedBits;
 };
 
-struct LocalScanner : PostWalker<LocalScanner, Visitor<LocalScanner>> {
+struct LocalScanner : PostWalker<LocalScanner> {
   std::vector<LocalInfo>& localInfo;
 
   LocalScanner(std::vector<LocalInfo>& localInfo) : localInfo(localInfo) {}
@@ -292,7 +292,7 @@ struct LocalScanner : PostWalker<LocalScanner, Visitor<LocalScanner>> {
       }
     }
     // walk
-    PostWalker<LocalScanner, Visitor<LocalScanner>>::doWalkFunction(func);
+    PostWalker<LocalScanner>::doWalkFunction(func);
     // finalize
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
@@ -725,7 +725,7 @@ private:
       c->value = Literal(int32_t(0));
     }
     // remove added/subbed zeros
-    struct ZeroRemover : public PostWalker<ZeroRemover, Visitor<ZeroRemover>> {
+    struct ZeroRemover : public PostWalker<ZeroRemover> {
       // TODO: we could save the binarys and costs we drop, and reuse them later
 
       PassOptions& passOptions;

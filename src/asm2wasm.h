@@ -1102,7 +1102,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // Finalize calls now that everything is known and generated
 
-  struct FinalizeCalls : public WalkerPass<PostWalker<FinalizeCalls, Visitor<FinalizeCalls>>> {
+  struct FinalizeCalls : public WalkerPass<PostWalker<FinalizeCalls>> {
     bool isFunctionParallel() override { return true; }
 
     Pass* create() override { return new FinalizeCalls(parent); }
