@@ -94,6 +94,7 @@ struct LegalizeJSInterface : public Pass {
       };
 
       PassRunner passRunner(module);
+      passRunner.setIsNested(true);
       passRunner.add<FixImports>(&illegalToLegal);
       passRunner.run();
     }
