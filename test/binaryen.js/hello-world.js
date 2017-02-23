@@ -31,14 +31,15 @@ var binary = module.emitBinary();
 console.log('binary size: ' + binary.length);
 console.log();
 
-// Compile it and create an instance
+// We don't need the Binaryen module anymore, so we can tell it to
+// clean itself up
+module.dispose();
+
+// Compile the binary and create an instance
 var wasm = new WebAssembly.Instance(new WebAssembly.Module(binary), {})
 console.log(wasm); // prints something like "[object WebAssembly.Instance]"
 console.log();
 
 // Call the code!
 console.log('an addition: ' + wasm.exports.adder(40, 2));
-
-// Clean up the module, which owns all the objects we created above
-module.dispose();
 
