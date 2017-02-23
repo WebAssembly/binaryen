@@ -123,20 +123,20 @@ struct PassRunner {
 
   ~PassRunner();
 
-  virtual bool isNested() { return false; }
+  // When running a pass runner within another pass runner, this
+  // flag should be set. This influences how pass debugging works,
+  // and may influence other things in the future too.
+  void setIsNested(bool nested) {
+    isNested = nested;
+  }
+
+protected:
+  bool isNested = false;
 
 private:
   void doAdd(Pass* pass);
 
   void runPassOnFunction(Pass* pass, Function* func);
-};
-
-// A pass runner that is safe to run inside a pass
-struct NestedPassRunner : public PassRunner {
-  NestedPassRunner(Module* wasm) : PassRunner(wasm) {}
-  NestedPassRunner(Module* wasm, PassOptions options) : PassRunner(wasm, options) {}
-
-  virtual bool isNested() { return true; }
 };
 
 //

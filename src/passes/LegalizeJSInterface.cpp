@@ -93,7 +93,8 @@ struct LegalizeJSInterface : public Pass {
         }
       };
 
-      NestedPassRunner passRunner(module);
+      PassRunner passRunner(module);
+      passRunner.setIsNested(true);
       passRunner.add<FixImports>(&illegalToLegal);
       passRunner.run();
     }

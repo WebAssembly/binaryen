@@ -147,7 +147,7 @@ void PassRunner::run() {
   //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
   //                     also is bad for e.g. printing which is a pass)
   static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
-  if (!isNested() && (options.debug || passDebug)) {
+  if (!isNested && (options.debug || passDebug)) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
