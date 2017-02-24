@@ -214,14 +214,14 @@
         return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
       });
     };
-    this['getLocal'] = function(type) {
-      return Module['_BinaryenGetLocal'](module, type);
+    this['getLocal'] = function(index, type) {
+      return Module['_BinaryenGetLocal'](module, index, type);
     };
-    this['setLocal'] = function(value) {
-      return Module['_BinaryenSetLocal'](module, value);
+    this['setLocal'] = function(index, value) {
+      return Module['_BinaryenSetLocal'](module, index, value);
     };
-    this['teeLocal'] = function(value) {
-      return Module['_BinaryenTeeLocal'](module, value);
+    this['teeLocal'] = function(index, value) {
+      return Module['_BinaryenTeeLocal'](module, index, value);
     };
     this['load'] = function(bytes, signed, offset, align, type, ptr) {
       return Module['_BinaryenLoad'](module, bytes, signed, offset, align, type, ptr);
@@ -359,12 +359,6 @@
       assert(bytes < MAX, 'FIXME: hardcoded limit on module size'); // we should not use the whole buffer
       return new Uint8Array(HEAPU8.subarray(writeBuffer, writeBuffer + bytes));
     };
-    this['readFromBinary'] = function(data) {
-      var buffer = allocate(data, 'i8', ALLOC_MALLOC);
-      var ret = Module['_BinaryenModuleRead'](buffer, data.length);
-      _free(buffer);
-      return ret;
-    };
     this['interpret'] = function() {
       return Module['_BinaryenInterpret'](module);
     };
@@ -388,10 +382,11 @@
       });
     };
     this['renderAndDispose'] = function(entry, labelHelper, module) {
-      return Module['_RelooperRelooperRenderAndDispose'](relooper, entry, labelHelper, module);
+      return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper, module);
     };
   };
 
+  // emit text of an expression or a module
   Module['emitText'] = function(expr) {
     if (typeof expr === 'object') {
       return expr.emitText();
@@ -401,6 +396,13 @@
     Module['print'] = function(x) { ret += x + '\n' };
     Module['_BinaryenExpressionPrint'](expr);
     Module['print'] = old;
+    return ret;
+  };
+
+  Module['readBinary'] = function(data) {
+    var buffer = allocate(data, 'i8', ALLOC_NORMAL);
+    var ret = Module['_BinaryenModuleRead'](buffer, data.length);
+    _free(buffer);
     return ret;
   };
 
