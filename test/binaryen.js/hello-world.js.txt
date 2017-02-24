@@ -31,4 +31,3 @@ binary size: 82
 [object WebAssembly.Instance]
 
 an addition: 42
-
