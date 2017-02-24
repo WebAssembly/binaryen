@@ -25,6 +25,50 @@ namespace wasm {
 Name WASM("wasm"),
      RETURN_FLOW("*return:)*");
 
+namespace BinaryConsts {
+namespace UserSections {
+const char* Name = "name";
+}
+}
+
+Name GROW_WASM_MEMORY("__growWasmMemory"),
+     NEW_SIZE("newSize"),
+     MODULE("module"),
+     START("start"),
+     FUNC("func"),
+     PARAM("param"),
+     RESULT("result"),
+     MEMORY("memory"),
+     DATA("data"),
+     SEGMENT("segment"),
+     EXPORT("export"),
+     IMPORT("import"),
+     TABLE("table"),
+     ELEM("elem"),
+     LOCAL("local"),
+     TYPE("type"),
+     CALL("call"),
+     CALL_IMPORT("call_import"),
+     CALL_INDIRECT("call_indirect"),
+     BLOCK("block"),
+     BR_IF("br_if"),
+     THEN("then"),
+     ELSE("else"),
+     _NAN("NaN"),
+     _INFINITY("Infinity"),
+     NEG_INFINITY("-infinity"),
+     NEG_NAN("-nan"),
+     CASE("case"),
+     BR("br"),
+     ANYFUNC("anyfunc"),
+     FAKE_RETURN("fake_return_waka123"),
+     MUT("mut"),
+     SPECTEST("spectest"),
+     PRINT("print"),
+     EXIT("exit");
+
+// Wasm types
+
 const char* printWasmType(WasmType type) {
   switch (type) {
     case WasmType::none: return "none";
@@ -70,7 +114,6 @@ WasmType getReachableWasmType(WasmType a, WasmType b) {
 bool isConcreteWasmType(WasmType type) {
   return type != none && type != unreachable;
 }
-
 
 // Literals
 
@@ -695,47 +738,37 @@ Literal Literal::copysign(const Literal& other) const {
   }
 }
 
-namespace BinaryConsts {
-namespace UserSections {
-const char* Name = "name";
-}
-}
+// Expressions
 
-Name GROW_WASM_MEMORY("__growWasmMemory"),
-     NEW_SIZE("newSize"),
-     MODULE("module"),
-     START("start"),
-     FUNC("func"),
-     PARAM("param"),
-     RESULT("result"),
-     MEMORY("memory"),
-     DATA("data"),
-     SEGMENT("segment"),
-     EXPORT("export"),
-     IMPORT("import"),
-     TABLE("table"),
-     ELEM("elem"),
-     LOCAL("local"),
-     TYPE("type"),
-     CALL("call"),
-     CALL_IMPORT("call_import"),
-     CALL_INDIRECT("call_indirect"),
-     BLOCK("block"),
-     BR_IF("br_if"),
-     THEN("then"),
-     ELSE("else"),
-     _NAN("NaN"),
-     _INFINITY("Infinity"),
-     NEG_INFINITY("-infinity"),
-     NEG_NAN("-nan"),
-     CASE("case"),
-     BR("br"),
-     ANYFUNC("anyfunc"),
-     FAKE_RETURN("fake_return_waka123"),
-     MUT("mut"),
-     SPECTEST("spectest"),
-     PRINT("print"),
-     EXIT("exit");
+const char* getExpressionName(Expression* curr) {
+  switch (curr->_id) {
+    case Expression::Id::InvalidId: abort();
+    case Expression::Id::BlockId: return "block";
+    case Expression::Id::IfId: return "if";
+    case Expression::Id::LoopId: return "loop";
+    case Expression::Id::BreakId: return "break";
+    case Expression::Id::SwitchId: return "switch";
+    case Expression::Id::CallId: return "call";
+    case Expression::Id::CallImportId: return "call_import";
+    case Expression::Id::CallIndirectId: return "call_indirect";
+    case Expression::Id::GetLocalId: return "get_local";
+    case Expression::Id::SetLocalId: return "set_local";
+    case Expression::Id::GetGlobalId: return "get_global";
+    case Expression::Id::SetGlobalId: return "set_global";
+    case Expression::Id::LoadId: return "load";
+    case Expression::Id::StoreId: return "store";
+    case Expression::Id::ConstId: return "const";
+    case Expression::Id::UnaryId: return "unary";
+    case Expression::Id::BinaryId: return "binary";
+    case Expression::Id::SelectId: return "select";
+    case Expression::Id::DropId: return "drop";
+    case Expression::Id::ReturnId: return "return";
+    case Expression::Id::HostId: return "host";
+    case Expression::Id::NopId: return "nop";
+    case Expression::Id::UnreachableId: return "unreachable";
+    default: WASM_UNREACHABLE();
+  }
+}
 
 // core AST type checking
 

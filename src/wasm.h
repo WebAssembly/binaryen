@@ -352,35 +352,7 @@ public:
   }
 };
 
-inline const char* getExpressionName(Expression* curr) {
-  switch (curr->_id) {
-    case Expression::Id::InvalidId: abort();
-    case Expression::Id::BlockId: return "block";
-    case Expression::Id::IfId: return "if";
-    case Expression::Id::LoopId: return "loop";
-    case Expression::Id::BreakId: return "break";
-    case Expression::Id::SwitchId: return "switch";
-    case Expression::Id::CallId: return "call";
-    case Expression::Id::CallImportId: return "call_import";
-    case Expression::Id::CallIndirectId: return "call_indirect";
-    case Expression::Id::GetLocalId: return "get_local";
-    case Expression::Id::SetLocalId: return "set_local";
-    case Expression::Id::GetGlobalId: return "get_global";
-    case Expression::Id::SetGlobalId: return "set_global";
-    case Expression::Id::LoadId: return "load";
-    case Expression::Id::StoreId: return "store";
-    case Expression::Id::ConstId: return "const";
-    case Expression::Id::UnaryId: return "unary";
-    case Expression::Id::BinaryId: return "binary";
-    case Expression::Id::SelectId: return "select";
-    case Expression::Id::DropId: return "drop";
-    case Expression::Id::ReturnId: return "return";
-    case Expression::Id::HostId: return "host";
-    case Expression::Id::NopId: return "nop";
-    case Expression::Id::UnreachableId: return "unreachable";
-    default: WASM_UNREACHABLE();
-  }
-}
+const char* getExpressionName(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
