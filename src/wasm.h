@@ -99,51 +99,12 @@ enum WasmType {
               // type checking across branches
 };
 
-inline const char* printWasmType(WasmType type) {
-  switch (type) {
-    case WasmType::none: return "none";
-    case WasmType::i32: return "i32";
-    case WasmType::i64: return "i64";
-    case WasmType::f32: return "f32";
-    case WasmType::f64: return "f64";
-    case WasmType::unreachable: return "unreachable";
-    default: WASM_UNREACHABLE();
-  }
-}
-
-inline unsigned getWasmTypeSize(WasmType type) {
-  switch (type) {
-    case WasmType::none: abort();
-    case WasmType::i32: return 4;
-    case WasmType::i64: return 8;
-    case WasmType::f32: return 4;
-    case WasmType::f64: return 8;
-    default: WASM_UNREACHABLE();
-  }
-}
-
-inline bool isWasmTypeFloat(WasmType type) {
-  switch (type) {
-    case f32:
-    case f64: return true;
-    default: return false;
-  }
-}
-
-inline WasmType getWasmType(unsigned size, bool float_) {
-  if (size < 4) return WasmType::i32;
-  if (size == 4) return float_ ? WasmType::f32 : WasmType::i32;
-  if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
-  abort();
-}
-
-inline WasmType getReachableWasmType(WasmType a, WasmType b) {
-  return a != unreachable ? a : b;
-}
-
-inline bool isConcreteWasmType(WasmType type) {
-  return type != none && type != unreachable;
-}
+const char* printWasmType(WasmType type);
+unsigned getWasmTypeSize(WasmType type);
+bool isWasmTypeFloat(WasmType type);
+WasmType getWasmType(unsigned size, bool float_);
+WasmType getReachableWasmType(WasmType a, WasmType b);
+bool isConcreteWasmType(WasmType type);
 
 // Literals
 
