@@ -157,8 +157,8 @@
   Module['HasFeature'] = Module['_BinaryenHasFeature']();
 
   // we provide a JS Module() object interface
-  Module['Module'] = function() {
-    var module = this.ptr = Module['_BinaryenModuleCreate']();
+  Module['Module'] = function(module) {
+    if (!module) module = Module['_BinaryenModuleCreate']();
 
     this['dispose'] = function() {
       Module['_BinaryenModuleDispose'](module);
@@ -360,7 +360,7 @@
       return new Uint8Array(HEAPU8.subarray(writeBuffer, writeBuffer + bytes));
     };
     this['interpret'] = function() {
-      return Module['_BinaryenInterpret'](module);
+      return Module['_BinaryenModuleInterpret'](module);
     };
   };
 
@@ -401,9 +401,9 @@
 
   Module['readBinary'] = function(data) {
     var buffer = allocate(data, 'i8', ALLOC_NORMAL);
-    var ret = Module['_BinaryenModuleRead'](buffer, data.length);
+    var ptr = Module['_BinaryenModuleRead'](buffer, data.length);
     _free(buffer);
-    return ret;
+    return new Module['Module'](ptr);
   };
 
   Module['setAPITracing'] = function(on) {
