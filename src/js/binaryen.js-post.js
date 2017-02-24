@@ -10,6 +10,7 @@
   };
 
   function strToStack(str) {
+    if (!str) return 0;
     return allocate(intArrayFromString(str), 'i8', ALLOC_STACK);
   }
 
@@ -192,9 +193,9 @@
       return preserveStack(function() {
         var namei32s = [];
         names.forEach(function(name) {
-          namei32s.push_back(strToStack(name));
+          namei32s.push(strToStack(name));
         });
-        return Module['_BinaryenSwitch'](module, i32sToStack(namePtrs), namePtrs.length,
+        return Module['_BinaryenSwitch'](module, i32sToStack(namei32s), namei32s.length,
                                          strToStack(defaultName), condition, value);
       });
     };
@@ -210,17 +211,17 @@
     };
     this['callIndirect'] = function(target, operands, type) {
       return preserveStack(function() {
-        return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, type);
+        return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
       });
     };
     this['getLocal'] = function(type) {
       return Module['_BinaryenGetLocal'](module, type);
     };
     this['setLocal'] = function(value) {
-      return Module['_Binaryen'](module, value);
+      return Module['_BinaryenSetLocal'](module, value);
     };
     this['teeLocal'] = function(value) {
-      return Module['_Binaryen'](module, value);
+      return Module['_BinaryenTeeLocal'](module, value);
     };
     this['load'] = function(bytes, signed, offset, align, type, ptr) {
       return Module['_BinaryenLoad'](module, bytes, signed, offset, align, type, ptr);
@@ -236,27 +237,27 @@
     var literal = _malloc(16); // a single literal in memory. the LLVM C ABI
                                // makes us pass pointers to this.
     this['constInt32'] = function(x) {
-      Module['_BinaryenLiteralInt32'](ptr, x);
+      Module['_BinaryenLiteralInt32'](literal, x);
       return Module['_BinaryenConst'](module, literal);
     };
     this['constInt64'] = function(l, h) {
-      Module['_BinaryenLiteralInt64'](ptr, l, h);
+      Module['_BinaryenLiteralInt64'](literal, l, h);
       return Module['_BinaryenConst'](module, literal);
     };
     this['constFloat32'] = function(x) {
-      Module['_BinaryenLiteralFloat32'](ptr, x);
+      Module['_BinaryenLiteralFloat32'](literal, x);
       return Module['_BinaryenConst'](module, literal);
     };
     this['constFloat64'] = function(x) {
-      Module['_BinaryenLiteralFloat64'](ptr, x);
+      Module['_BinaryenLiteralFloat64'](literal, x);
       return Module['_BinaryenConst'](module, literal);
     };
     this['constFloat32Bits'] = function(x) {
-      Module['_BinaryenLiteralFloat32Bits'](ptr, x);
+      Module['_BinaryenLiteralFloat32Bits'](literal, x);
       return Module['_BinaryenConst'](module, literal);
     };
     this['constFloat64Bits'] = function(l, h) {
-      Module['_BinaryenLiteralFloat64Bits'](ptr, l, h);
+      Module['_BinaryenLiteralFloat64Bits'](literal, l, h);
       return Module['_BinaryenConst'](module, literal);
     };
 
@@ -283,14 +284,6 @@
     };
     this['unreachable'] = function() {
       return Module['_BinaryenUnreachable'](module);
-    };
-    this['printExpression'] = function(expr) {
-      var old = Module['print'];
-      var ret = '';
-      Module['print'] = function(x) { ret += x + '\n' };
-      Module['_BinaryenExpressionPrint'](module, expr);
-      Module['print'] = old;
-      return ret;
     };
     this['addFunction'] = function(name, functionType, varTypes, body) {
       return preserveStack(function() {
@@ -397,6 +390,18 @@
     this['renderAndDispose'] = function(entry, labelHelper, module) {
       return Module['_RelooperRelooperRenderAndDispose'](relooper, entry, labelHelper, module);
     };
+  };
+
+  Module['emitText'] = function(expr) {
+    if (typeof expr === 'object') {
+      return expr.emitText();
+    }
+    var old = Module['print'];
+    var ret = '';
+    Module['print'] = function(x) { ret += x + '\n' };
+    Module['_BinaryenExpressionPrint'](expr);
+    Module['print'] = old;
+    return ret;
   };
 
   Module['setAPITracing'] = function(on) {
