@@ -22,7 +22,7 @@
     return ret;
   }
 
-  Module['None'] = Module['_BinaryenNone'];
+  Module['None'] = Module['_BinaryenNone']();
   Module['Int32'] = Module['_BinaryenInt32']();
   Module['Int64'] = Module['_BinaryenInt64']();
   Module['Float32'] = Module['_BinaryenFloat32']();

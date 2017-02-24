@@ -1,6 +1,4 @@
-BinaryenNone: function _BinaryenNone() {
- return 0;
-}
+BinaryenNone: 0
 BinaryenInt32: 1
 BinaryenInt64: 2
 BinaryenFloat32: 3
