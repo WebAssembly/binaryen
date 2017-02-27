@@ -21,6 +21,7 @@
 #include <wasm.h>
 #include <wasm-printing.h>
 #include <pass.h>
+#include <pretty_printing.h>
 
 namespace wasm {
 

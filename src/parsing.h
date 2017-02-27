@@ -24,6 +24,7 @@
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
+#include "support/colors.h"
 #include "support/utilities.h"
 #include "wasm.h"
 #include "wasm-printing.h"

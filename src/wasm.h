@@ -43,24 +43,15 @@
 #ifndef wasm_wasm_h
 #define wasm_wasm_h
 
+#include <algorithm>
 #include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "compiler-support.h"
-#include "emscripten-optimizer/simple_ast.h"
 #include "literal.h"
 #include "mixed_arena.h"
-#include "pretty_printing.h"
-#include "support/bits.h"
 #include "support/name.h"
-#include "support/utilities.h"
 #include "wasm-type.h"
 
 namespace wasm {

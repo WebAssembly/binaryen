@@ -39,6 +39,7 @@
 
 #include <set>
 
+#include "support/colors.h"
 #include "wasm.h"
 #include "wasm-printing.h"
 

@@ -16,6 +16,9 @@
 
 #include "wasm-binary.h"
 
+#include <fstream>
+#include "support/bits.h"
+
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {

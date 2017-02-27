@@ -27,6 +27,7 @@
 #include <sstream>
 
 #include "support/bits.h"
+#include "support/safe_integer.h"
 #include "wasm.h"
 #include "wasm-traversal.h"
 
