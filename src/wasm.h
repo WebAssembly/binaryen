@@ -434,17 +434,7 @@ public:
   Expression* value;
   Expression* condition;
 
-  void finalize() {
-    if (condition) {
-      if (value) {
-        type = value->type;
-      } else {
-        type = none;
-      }
-    } else {
-      type = unreachable;
-    }
-  }
+  void finalize();
 };
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
@@ -483,22 +473,10 @@ public:
 
   FunctionType() : result(none) {}
 
-  bool structuralComparison(FunctionType& b) {
-    if (result != b.result) return false;
-    if (params.size() != b.params.size()) return false;
-    for (size_t i = 0; i < params.size(); i++) {
-      if (params[i] != b.params[i]) return false;
-    }
-    return true;
-  }
+  bool structuralComparison(FunctionType& b);
 
-  bool operator==(FunctionType& b) {
-    if (name != b.name) return false;
-    return structuralComparison(b);
-  }
-  bool operator!=(FunctionType& b) {
-    return !(*this == b);
-  }
+  bool operator==(FunctionType& b);
+  bool operator!=(FunctionType& b);
 };
 
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
@@ -526,14 +504,8 @@ public:
   Index index;
   Expression* value;
 
-  bool isTee() {
-    return type != none;
-  }
-
-  void setTee(bool is) {
-    if (is) type = value->type;
-    else type = none;
-  }
+  bool isTee();
+  void setTee(bool is);
 };
 
 class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
@@ -579,9 +551,7 @@ public:
   Expression* value;
   WasmType valueType; // the store never returns a value
 
-  void finalize() {
-    assert(valueType != none); // must be set
-  }
+  void finalize();
 };
 
 class Const : public SpecificExpression<Expression::ConstId> {
@@ -591,11 +561,7 @@ public:
 
   Literal value;
 
-  Const* set(Literal value_) {
-    value = value_;
-    type = value.type;
-    return this;
-  }
+  Const* set(Literal value_);
 };
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
@@ -606,59 +572,9 @@ public:
   UnaryOp op;
   Expression* value;
 
-  bool isRelational() { return op == EqZInt32 || op == EqZInt64; }
+  bool isRelational();
 
-  void finalize() {
-    switch (op) {
-      case ClzInt32:
-      case CtzInt32:
-      case PopcntInt32:
-      case NegFloat32:
-      case AbsFloat32:
-      case CeilFloat32:
-      case FloorFloat32:
-      case TruncFloat32:
-      case NearestFloat32:
-      case SqrtFloat32:
-      case ClzInt64:
-      case CtzInt64:
-      case PopcntInt64:
-      case NegFloat64:
-      case AbsFloat64:
-      case CeilFloat64:
-      case FloorFloat64:
-      case TruncFloat64:
-      case NearestFloat64:
-      case SqrtFloat64: type = value->type; break;
-      case EqZInt32:
-      case EqZInt64: type = i32; break;
-      case ExtendSInt32: case ExtendUInt32: type = i64; break;
-      case WrapInt64: type = i32; break;
-      case PromoteFloat32: type = f64; break;
-      case DemoteFloat64: type = f32; break;
-      case TruncSFloat32ToInt32:
-      case TruncUFloat32ToInt32:
-      case TruncSFloat64ToInt32:
-      case TruncUFloat64ToInt32:
-      case ReinterpretFloat32: type = i32; break;
-      case TruncSFloat32ToInt64:
-      case TruncUFloat32ToInt64:
-      case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt64:
-      case ReinterpretFloat64: type = i64; break;
-      case ReinterpretInt32:
-      case ConvertSInt32ToFloat32:
-      case ConvertUInt32ToFloat32:
-      case ConvertSInt64ToFloat32:
-      case ConvertUInt64ToFloat32: type = f32; break;
-      case ReinterpretInt64:
-      case ConvertSInt32ToFloat64:
-      case ConvertUInt32ToFloat64:
-      case ConvertSInt64ToFloat64:
-      case ConvertUInt64ToFloat64: type = f64; break;
-      default: std::cerr << "waka " << op << '\n'; WASM_UNREACHABLE();
-    }
-  }
+  void finalize();
 };
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
@@ -673,52 +589,9 @@ public:
   // the type is always the type of the operands,
   // except for relationals
 
-  bool isRelational() {
-    switch (op) {
-      case EqFloat64:
-      case NeFloat64:
-      case LtFloat64:
-      case LeFloat64:
-      case GtFloat64:
-      case GeFloat64:
-      case EqInt32:
-      case NeInt32:
-      case LtSInt32:
-      case LtUInt32:
-      case LeSInt32:
-      case LeUInt32:
-      case GtSInt32:
-      case GtUInt32:
-      case GeSInt32:
-      case GeUInt32:
-      case EqInt64:
-      case NeInt64:
-      case LtSInt64:
-      case LtUInt64:
-      case LeSInt64:
-      case LeUInt64:
-      case GtSInt64:
-      case GtUInt64:
-      case GeSInt64:
-      case GeUInt64:
-      case EqFloat32:
-      case NeFloat32:
-      case LtFloat32:
-      case LeFloat32:
-      case GtFloat32:
-      case GeFloat32: return true;
-      default: return false;
-    }
-  }
+  bool isRelational();
 
-  void finalize() {
-    assert(left && right);
-    if (isRelational()) {
-      type = i32;
-    } else {
-      type = getReachableWasmType(left->type, right->type);
-    }
-  }
+  void finalize();
 };
 
 class Select : public SpecificExpression<Expression::SelectId> {
@@ -730,10 +603,7 @@ public:
   Expression* ifFalse;
   Expression* condition;
 
-  void finalize() {
-    assert(ifTrue && ifFalse);
-    type = getReachableWasmType(ifTrue->type, ifFalse->type);
-  }
+  void finalize();
 };
 
 class Drop : public SpecificExpression<Expression::DropId> {
@@ -762,19 +632,7 @@ public:
   Name nameOperand;
   ExpressionList operands;
 
-  void finalize() {
-    switch (op) {
-      case PageSize: case CurrentMemory: case HasFeature: {
-        type = i32;
-        break;
-      }
-      case GrowMemory: {
-        type = i32;
-        break;
-      }
-      default: abort();
-    }
-  }
+  void finalize();
 };
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
