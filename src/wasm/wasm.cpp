@@ -1085,4 +1085,184 @@ void Host::finalize() {
   }
 }
 
+size_t Function::getNumParams() {
+  return params.size();
+}
+
+size_t Function::getNumVars() {
+  return vars.size();
+}
+
+size_t Function::getNumLocals() {
+  return params.size() + vars.size();
+}
+
+bool Function::isParam(Index index) {
+  return index < params.size();
+}
+
+bool Function::isVar(Index index) {
+  return index >= params.size();
+}
+
+Name Function::getLocalName(Index index) {
+  assert(index < localNames.size() && localNames[index].is());
+  return localNames[index];
+}
+
+Name Function::tryLocalName(Index index) {
+  if (index < localNames.size() && localNames[index].is()) {
+    return localNames[index];
+  }
+  // this is an unnamed local
+  return Name();
+}
+
+Index Function::getLocalIndex(Name name) {
+  assert(localIndices.count(name) > 0);
+  return localIndices[name];
+}
+
+Index Function::getVarIndexBase() {
+  return params.size();
+}
+
+WasmType Function::getLocalType(Index index) {
+  if (isParam(index)) {
+    return params[index];
+  } else if (isVar(index)) {
+    return vars[index - getVarIndexBase()];
+  } else {
+    WASM_UNREACHABLE();
+  }
+}
+
+FunctionType* Module::getFunctionType(Name name) {
+  assert(functionTypesMap.count(name));
+  return functionTypesMap[name];
+}
+
+Import* Module::getImport(Name name) {
+  assert(importsMap.count(name));
+  return importsMap[name];
+}
+
+Export* Module::getExport(Name name) {
+  assert(exportsMap.count(name));
+  return exportsMap[name];
+}
+
+Function* Module::getFunction(Name name) {
+  assert(functionsMap.count(name));
+  return functionsMap[name];
+}
+
+Global* Module::getGlobal(Name name) {
+  assert(globalsMap.count(name));
+  return globalsMap[name];
+}
+
+FunctionType* Module::checkFunctionType(Name name) {
+  if (!functionTypesMap.count(name))
+    return nullptr;
+  return functionTypesMap[name];
+}
+
+Import* Module::checkImport(Name name) {
+  if (!importsMap.count(name))
+    return nullptr;
+  return importsMap[name];
+}
+
+Export* Module::checkExport(Name name) {
+  if (!exportsMap.count(name))
+    return nullptr;
+  return exportsMap[name];
+}
+
+Function* Module::checkFunction(Name name) {
+  if (!functionsMap.count(name))
+    return nullptr;
+  return functionsMap[name];
+}
+
+Global* Module::checkGlobal(Name name) {
+  if (!globalsMap.count(name))
+    return nullptr;
+  return globalsMap[name];
+}
+
+void Module::addFunctionType(FunctionType* curr) {
+  assert(curr->name.is());
+  functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
+  assert(functionTypesMap.find(curr->name) == functionTypesMap.end());
+  functionTypesMap[curr->name] = curr;
+}
+
+void Module::addImport(Import* curr) {
+  assert(curr->name.is());
+  imports.push_back(std::unique_ptr<Import>(curr));
+  assert(importsMap.find(curr->name) == importsMap.end());
+  importsMap[curr->name] = curr;
+}
+
+void Module::addExport(Export* curr) {
+  assert(curr->name.is());
+  exports.push_back(std::unique_ptr<Export>(curr));
+  assert(exportsMap.find(curr->name) == exportsMap.end());
+  exportsMap[curr->name] = curr;
+}
+
+void Module::addFunction(Function* curr) {
+  assert(curr->name.is());
+  functions.push_back(std::unique_ptr<Function>(curr));
+  assert(functionsMap.find(curr->name) == functionsMap.end());
+  functionsMap[curr->name] = curr;
+}
+
+void Module::addGlobal(Global* curr) {
+  assert(curr->name.is());
+  globals.push_back(std::unique_ptr<Global>(curr));
+  assert(globalsMap.find(curr->name) == globalsMap.end());
+  globalsMap[curr->name] = curr;
+}
+
+void Module::addStart(const Name& s) {
+  start = s;
+}
+
+void Module::removeImport(Name name) {
+  for (size_t i = 0; i < imports.size(); i++) {
+    if (imports[i]->name == name) {
+      imports.erase(imports.begin() + i);
+      break;
+    }
+  }
+  importsMap.erase(name);
+}
+  // TODO: remove* for other elements
+
+void Module::updateMaps() {
+  functionsMap.clear();
+  for (auto& curr : functions) {
+    functionsMap[curr->name] = curr.get();
+  }
+  functionTypesMap.clear();
+  for (auto& curr : functionTypes) {
+    functionTypesMap[curr->name] = curr.get();
+  }
+  importsMap.clear();
+  for (auto& curr : imports) {
+    importsMap[curr->name] = curr.get();
+  }
+  exportsMap.clear();
+  for (auto& curr : exports) {
+    exportsMap[curr->name] = curr.get();
+  }
+  globalsMap.clear();
+  for (auto& curr : globals) {
+    globalsMap[curr->name] = curr.get();
+  }
+}
+
 } // namespace wasm
