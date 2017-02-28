@@ -23,6 +23,7 @@
 #ifndef wasm_wasm_interpreter_h
 #define wasm_wasm_interpreter_h
 
+#include <cmath>
 #include <limits.h>
 #include <sstream>
 
