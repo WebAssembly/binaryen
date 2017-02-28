@@ -418,9 +418,10 @@ private:
             previous->params.push_back(type->params[i]); // add a new param
           }
         }
+        // we accept none and a concrete type, but two concrete types mean we need to use an f64 to contain anything
         if (previous->result == none) {
           previous->result = type->result; // use a more concrete type
-        } else if (previous->result != type->result) {
+        } else if (previous->result != type->result && type->result != none) {
           previous->result = f64; // overloaded return type, make it a double
         }
       }
