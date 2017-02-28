@@ -223,12 +223,6 @@
     this['teeLocal'] = function(index, value) {
       return Module['_BinaryenTeeLocal'](module, index, value);
     };
-    this['load'] = function(bytes, signed, offset, align, type, ptr) {
-      return Module['_BinaryenLoad'](module, bytes, signed, offset, align, type, ptr);
-    };
-    this['store'] = function(bytes, offset, align, type, ptr, value) {
-      return Module['_BinaryenStore'](module, bytes, offset, align, type, ptr, value);
-    };
 
     // The Const creation API is a little different: we don't want users to
     // need to make their own Literals, as the C API handles them by value,
@@ -236,37 +230,180 @@
     // accepts Literals, so fuse it with Literal creation
     var literal = _malloc(16); // a single literal in memory. the LLVM C ABI
                                // makes us pass pointers to this.
-    this['constInt32'] = function(x) {
-      Module['_BinaryenLiteralInt32'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
-    };
-    this['constInt64'] = function(l, h) {
-      Module['_BinaryenLiteralInt64'](literal, l, h);
-      return Module['_BinaryenConst'](module, literal);
-    };
-    this['constFloat32'] = function(x) {
-      Module['_BinaryenLiteralFloat32'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
-    };
-    this['constFloat64'] = function(x) {
-      Module['_BinaryenLiteralFloat64'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
-    };
-    this['constFloat32Bits'] = function(x) {
-      Module['_BinaryenLiteralFloat32Bits'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
-    };
-    this['constFloat64Bits'] = function(l, h) {
-      Module['_BinaryenLiteralFloat64Bits'](literal, l, h);
-      return Module['_BinaryenConst'](module, literal);
+
+    this['i32'] = {
+      'load': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i32'], ptr);
+      },
+      'load8_s': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i32'], ptr);
+      },
+      'load8_u': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i32'], ptr);
+      },
+      'load16_s': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i32'], ptr);
+      },
+      'load16_u': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i32'], ptr);
+      },
+      'store': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 4, offset, align, Module['i32'], ptr, value);
+      },
+      'store8': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 1, offset, align, Module['i32'], ptr, value);
+      },
+      'store16': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 2, offset, align, Module['i32'], ptr, value);
+      },
+      'const': function(x) {
+        Module['_BinaryenLiteralInt32'](literal, x);
+        return Module['_BinaryenConst'](module, literal);
+      },
+      'clz': function(value) {
+        return Module['_BinaryenUnary'](module, Module['ClzInt32'], value);
+      },
+      'ctz': function(value) {
+        return Module['_BinaryenUnary'](module, Module['CtzInt32'], value);
+      },
+      'popcnt': function(value) {
+        return Module['_BinaryenUnary'](module, Module['PopcntInt32'], value);
+      },
+      'eqz': function(value) {
+        return Module['_BinaryenUnary'](module, Module['EqzInt32'], value);
+      },
+      'wrap': function(value) {
+        return Module['_BinaryenUnary'](module, Module['WrapInt32'], value);
+      },
+      'trunc_s': {
+        'f32': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncSFloat32ToInt32'], value);
+        },
+        'f64': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncSFloat64ToInt32'], value);
+        },
+      },
+      'trunc_u': {
+        'f32': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncUFloat32ToInt32'], value);
+        },
+        'f64': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt32'], value);
+        },
+      },
+      'reinterpret': {
+        return Module['_BinaryenUnary'](module, Module['ReinterpretFloat32'], value);
+      },
     };
 
-    this['unary'] = function(op, value) {
-      return Module['_BinaryenUnary'](module, op, value);
+    this['i64'] = {
+      'load': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['i64'], ptr);
+      },
+      'load8_s': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i64'], ptr);
+      },
+      'load8_u': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i64'], ptr);
+      },
+      'load16_s': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i64'], ptr);
+      },
+      'load16_u': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i64'], ptr);
+      },
+      'load32_s': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i64'], ptr);
+      },
+      'load32_u': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 4, false, offset, align, Module['i64'], ptr);
+      },
+      'store': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 8, offset, align, Module['i64'], ptr, value);
+      },
+      'store8': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 1, offset, align, Module['i64'], ptr, value);
+      },
+      'store16': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 2, offset, align, Module['i64'], ptr, value);
+      },
+      'store32': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 2, offset, align, Module['i64'], ptr, value);
+      },
+      'const': function(x, y) {
+        Module['_BinaryenLiteralInt64'](literal, x, y);
+        return Module['_BinaryenConst'](module, literal);
+      },
+      'clz': function(value) {
+        return Module['_BinaryenUnary'](module, Module['ClzInt64'], value);
+      },
+      'ctz': function(value) {
+        return Module['_BinaryenUnary'](module, Module['CtzInt64'], value);
+      },
+      'popcnt': function(value) {
+        return Module['_BinaryenUnary'](module, Module['PopcntInt64'], value);
+      },
+      'eqz': function(value) {
+        return Module['_BinaryenUnary'](module, Module['EqzInt64'], value);
+      },
+      'wrap': function(value) {
+        return Module['_BinaryenUnary'](module, Module['WrapInt64'], value);
+      },
+      'trunc_s': {
+        'f32': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncSFloat32ToInt64'], value);
+        },
+        'f64': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncSFloat64ToInt64'], value);
+        },
+      },
+      'trunc_u': {
+        'f32': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncUFloat32ToInt64'], value);
+        },
+        'f64': function(value) {
+          return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt64'], value);
+        },
+      },
+      'reinterpret': {
+        return Module['_BinaryenUnary'](module, Module['ReinterpretFloat64'], value);
+      },
     };
-    this['binary'] = function(op, left, right) {
-      return Module['_BinaryenBinary'](module, op, left, right);
+
+    this['f32'] = {
+      'load': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f32'], ptr);
+      },
+      'store': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 4, offset, align, Module['f32'], ptr, value);
+      },
+      'const': function(x) {
+        Module['_BinaryenLiteralFloat32'](literal, x);
+        return Module['_BinaryenConst'](module, literal);
+      },
+      'const_bits': function(x) {
+        Module['_BinaryenLiteralFloat32Bits'](literal, x);
+        return Module['_BinaryenConst'](module, literal);
+      },
     };
+
+    this['f64'] = {
+      'load': function(offset, align, ptr) {
+        return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f64'], ptr);
+      },
+      'store': function(offset, align, ptr, value) {
+        return Module['_BinaryenStore'](module, 4, offset, align, Module['f64'], ptr, value);
+      },
+      'const': function(x) {
+        Module['_BinaryenLiteralFloat64'](literal, x);
+        return Module['_BinaryenConst'](module, literal);
+      },
+      'const_bits': function(x, y) {
+        Module['_BinaryenLiteralFloat64Bits'](literal, x, y);
+        return Module['_BinaryenConst'](module, literal);
+      },
+    };
+
     this['select'] = function(condition, ifTrue, ifFalse) {
       return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
     };
