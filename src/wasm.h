@@ -523,10 +523,16 @@ public:
   bool isVar(Index index);
 
   Name getLocalName(Index index);
-  Name tryLocalName(Index index);
   Index getLocalIndex(Name name);
   Index getVarIndexBase();
   WasmType getLocalType(Index index);
+
+  // try* methods return the same result as get* methods, but return a default
+  // value instead of asserting in the event that no value is found
+  Name tryLocalName(Index index);
+
+private:
+  bool hasLocalName(Index index) const;
 };
 
 enum class ExternalKind {
@@ -663,6 +669,8 @@ public:
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
 
+  // check* methods return the same result as get* methods, but return a default
+  // value instead of asserting in the event that no value is found
   FunctionType* checkFunctionType(Name name);
   Import* checkImport(Name name);
   Export* checkExport(Name name);

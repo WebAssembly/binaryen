@@ -434,13 +434,17 @@ bool Function::isVar(Index index) {
   return index >= params.size();
 }
 
+bool Function::hasLocalName(Index index) const {
+  return index < localNames.size() && localNames[index].is();
+}
+
 Name Function::getLocalName(Index index) {
-  assert(index < localNames.size() && localNames[index].is());
+  assert(hasLocalName(index));
   return localNames[index];
 }
 
 Name Function::tryLocalName(Index index) {
-  if (index < localNames.size() && localNames[index].is()) {
+  if (hasLocalName(index)) {
     return localNames[index];
   }
   // this is an unnamed local
