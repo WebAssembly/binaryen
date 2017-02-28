@@ -93,7 +93,7 @@ void finalizeModule() {
     exit(EXIT_FAILURE);
   }
   module->memory.initial = Address(providedMemory / Memory::kPageSize);
-  module->memory.max = module->checkExport(GROW_WASM_MEMORY) ? Address(Memory::kMaxSize) : module->memory.initial;
+  module->memory.max = module->getExportOrNull(GROW_WASM_MEMORY) ? Address(Memory::kMaxSize) : module->memory.initial;
 
   // global mapping is done in js in post.js
 }
@@ -229,7 +229,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         assert(offset + segment.data.size() <= wasm.table.initial);
         for (size_t i = 0; i != segment.data.size(); ++i) {
           Name name = segment.data[i];
-          auto* func = wasm.checkFunction(name);
+          auto* func = wasm.getFunctionOrNull(name);
           if (func) {
             EM_ASM_({
               Module['outside']['wasmTable'][$0] = $1;

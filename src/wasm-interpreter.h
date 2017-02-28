@@ -580,14 +580,14 @@ public:
 
   // call an exported function
   Literal callExport(Name name, LiteralList& arguments) {
-    Export *export_ = wasm.checkExport(name);
+    Export *export_ = wasm.getExportOrNull(name);
     if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
   }
 
   // get an exported global
   Literal getExport(Name name) {
-    Export *export_ = wasm.checkExport(name);
+    Export *export_ = wasm.getExportOrNull(name);
     if (!export_) externalInterface->trap("getExport external not found");
     Name internalName = export_->value;
     auto iter = globals.find(internalName);

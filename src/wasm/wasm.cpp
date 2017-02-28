@@ -443,7 +443,7 @@ Name Function::getLocalName(Index index) {
   return localNames[index];
 }
 
-Name Function::tryLocalName(Index index) {
+Name Function::getLocalNameOrDefault(Index index) {
   if (hasLocalName(index)) {
     return localNames[index];
   }
@@ -495,31 +495,31 @@ Global* Module::getGlobal(Name name) {
   return globalsMap[name];
 }
 
-FunctionType* Module::checkFunctionType(Name name) {
+FunctionType* Module::getFunctionTypeOrNull(Name name) {
   if (!functionTypesMap.count(name))
     return nullptr;
   return functionTypesMap[name];
 }
 
-Import* Module::checkImport(Name name) {
+Import* Module::getImportOrNull(Name name) {
   if (!importsMap.count(name))
     return nullptr;
   return importsMap[name];
 }
 
-Export* Module::checkExport(Name name) {
+Export* Module::getExportOrNull(Name name) {
   if (!exportsMap.count(name))
     return nullptr;
   return exportsMap[name];
 }
 
-Function* Module::checkFunction(Name name) {
+Function* Module::getFunctionOrNull(Name name) {
   if (!functionsMap.count(name))
     return nullptr;
   return functionsMap[name];
 }
 
-Global* Module::checkGlobal(Name name) {
+Global* Module::getGlobalOrNull(Name name) {
   if (!globalsMap.count(name))
     return nullptr;
   return globalsMap[name];

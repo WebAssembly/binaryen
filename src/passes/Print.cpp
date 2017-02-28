@@ -91,7 +91,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   Name printableLocal(Index index) {
     Name name;
     if (currFunction) {
-      name = currFunction->tryLocalName(index);
+      name = currFunction->getLocalNameOrDefault(index);
     }
     if (!name.is()) {
       name = Name::fromInt(index);

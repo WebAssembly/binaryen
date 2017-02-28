@@ -527,9 +527,7 @@ public:
   Index getVarIndexBase();
   WasmType getLocalType(Index index);
 
-  // try* methods return the same result as get* methods, but return a default
-  // value instead of asserting in the event that no value is found
-  Name tryLocalName(Index index);
+  Name getLocalNameOrDefault(Index index);
 
 private:
   bool hasLocalName(Index index) const;
@@ -669,13 +667,11 @@ public:
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
 
-  // check* methods return the same result as get* methods, but return a default
-  // value instead of asserting in the event that no value is found
-  FunctionType* checkFunctionType(Name name);
-  Import* checkImport(Name name);
-  Export* checkExport(Name name);
-  Function* checkFunction(Name name);
-  Global* checkGlobal(Name name);
+  FunctionType* getFunctionTypeOrNull(Name name);
+  Import* getImportOrNull(Name name);
+  Export* getExportOrNull(Name name);
+  Function* getFunctionOrNull(Name name);
+  Global* getGlobalOrNull(Name name);
 
   void addFunctionType(FunctionType* curr);
   void addImport(Import* curr);

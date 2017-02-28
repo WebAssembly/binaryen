@@ -60,7 +60,7 @@ void NameManager::visitFunctionType(FunctionType* curr) {
 void NameManager::visitFunction(Function* curr) {
   names.insert(curr->name);
   for (Index i = 0; i < curr->getNumLocals(); i++) {
-    Name name = curr->tryLocalName(i);
+    Name name = curr->getLocalNameOrDefault(i);
     if (name.is()) {
       names.insert(name);
     }
