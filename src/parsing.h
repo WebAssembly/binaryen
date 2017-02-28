@@ -17,6 +17,7 @@
 #ifndef wasm_parsing_h
 #define wasm_parsing_h
 
+#include <cmath>
 #include <ostream>
 #include <sstream>
 #include <string>
