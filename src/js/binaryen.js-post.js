@@ -294,6 +294,84 @@
       'reinterpret': {
         return Module['_BinaryenUnary'](module, Module['ReinterpretFloat32'], value);
       },
+      'wrap': function(value) {
+        return Module['_BinaryenUnary'](module, Module['WrapInt64'], value);
+      },
+      'add': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['AddInt32'], left, right);
+      },
+      'sub': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['SubInt32'], left, right);
+      },
+      'mul': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MulInt32'], left, right);
+      },
+      'div_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['DivSInt32'], left, right);
+      },
+      'div_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['DivUInt32'], left, right);
+      },
+      'rem_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RemSInt32'], left, right);
+      },
+      'rem_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RemUInt32'], left, right);
+      },
+      'and': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['AndInt32'], left, right);
+      },
+      'or': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['OrInt32'], left, right);
+      },
+      'xor': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['XorInt32'], left, right);
+      },
+      'shl': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['ShlInt32'], left, right);
+      },
+      'shr_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['ShrUInt32'], left, right);
+      },
+      'shr_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['ShrSInt32'], left, right);
+      },
+      'rotl': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RotLInt32'], left, right);
+      },
+      'rotr': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RotRInt32'], left, right);
+      },
+      'eq': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['EqInt32'], left, right);
+      },
+      'ne': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['NeInt32'], left, right);
+      },
+      'lt_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LtSInt32'], left, right);
+      },
+      'lt_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LtUInt32'], left, right);
+      },
+      'le_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LeSInt32'], left, right);
+      },
+      'le_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LeUInt32'], left, right);
+      },
+      'gt_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GtSInt32'], left, right);
+      },
+      'gt_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GtUInt32'], left, right);
+      },
+      'ge_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GeSInt32'], left, right);
+      },
+      'ge_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GeUInt32'], left, right);
+      },
     };
 
     this['i64'] = {
@@ -346,9 +424,6 @@
       'eqz': function(value) {
         return Module['_BinaryenUnary'](module, Module['EqzInt64'], value);
       },
-      'wrap': function(value) {
-        return Module['_BinaryenUnary'](module, Module['WrapInt64'], value);
-      },
       'trunc_s': {
         'f32': function(value) {
           return Module['_BinaryenUnary'](module, Module['TruncSFloat32ToInt64'], value);
@@ -368,6 +443,87 @@
       'reinterpret': {
         return Module['_BinaryenUnary'](module, Module['ReinterpretFloat64'], value);
       },
+      'extend_s': {
+        return Module['_BinaryenUnary'](module, Module['ExtendSInt32'], value);
+      },
+      'extend_u': {
+        return Module['_BinaryenUnary'](module, Module['ExtendUInt32'], value);
+      },
+      'add': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['AddInt64'], left, right);
+      },
+      'sub': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['SubInt64'], left, right);
+      },
+      'mul': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MulInt64'], left, right);
+      },
+      'div_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['DivSInt64'], left, right);
+      },
+      'div_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['DivUInt64'], left, right);
+      },
+      'rem_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RemSInt64'], left, right);
+      },
+      'rem_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RemUInt64'], left, right);
+      },
+      'and': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['AndInt64'], left, right);
+      },
+      'or': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['OrInt64'], left, right);
+      },
+      'xor': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['XorInt64'], left, right);
+      },
+      'shl': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['ShlInt64'], left, right);
+      },
+      'shr_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['ShrUInt64'], left, right);
+      },
+      'shr_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['ShrSInt64'], left, right);
+      },
+      'rotl': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RotLInt64'], left, right);
+      },
+      'rotr': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['RotRInt64'], left, right);
+      },
+      'eq': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['EqInt64'], left, right);
+      },
+      'ne': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['NeInt64'], left, right);
+      },
+      'lt_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LtSInt64'], left, right);
+      },
+      'lt_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LtUInt64'], left, right);
+      },
+      'le_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LeSInt64'], left, right);
+      },
+      'le_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LeUInt64'], left, right);
+      },
+      'gt_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GtSInt64'], left, right);
+      },
+      'gt_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GtUInt64'], left, right);
+      },
+      'ge_s': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GeSInt64'], left, right);
+      },
+      'ge_u': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GeUInt64'], left, right);
+      },
     };
 
     this['f32'] = {
@@ -385,6 +541,88 @@
         Module['_BinaryenLiteralFloat32Bits'](literal, x);
         return Module['_BinaryenConst'](module, literal);
       },
+      'neg': function(value) {
+        return Module['_BinaryenUnary'](module, Module['NegFloat32'], value);
+      },
+      'abs': function(value) {
+        return Module['_BinaryenUnary'](module, Module['AbsFloat32'], value);
+      },
+      'ceil': function(value) {
+        return Module['_BinaryenUnary'](module, Module['CeilFloat32'], value);
+      },
+      'floor': function(value) {
+        return Module['_BinaryenUnary'](module, Module['FloorFloat32'], value);
+      },
+      'trunc': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncFloat32'], value);
+      },
+      'nearest': function(value) {
+        return Module['_BinaryenUnary'](module, Module['NearestFloat32'], value);
+      },
+      'sqrt': function(value) {
+        return Module['_BinaryenUnary'](module, Module['SqrtFloat32'], value);
+      },
+      'reinterpret': {
+        return Module['_BinaryenUnary'](module, Module['ReinterpretInt32'], value);
+      },
+      'convert_s': {
+        'i32': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertSInt32ToFloat32'], value);
+        },
+        'i64': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertSInt64ToFloat32'], value);
+        },
+      },
+      'convert_u': {
+        'i32': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertUInt32ToFloat32'], value);
+        },
+        'i64': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertUInt64ToFloat32'], value);
+        },
+      },
+      'demote': function(value) {
+        return Module['_BinaryenUnary'](module, Module['DemoteFloat32'], value);
+      },
+      'add': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['AddFloat32'], left, right);
+      },
+      'sub': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['SubFloat32'], left, right);
+      },
+      'mul': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MulFloat32'], left, right);
+      },
+      'div': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['DivFloat32'], left, right);
+      },
+      'copysign': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['CopySignFloat32'], left, right);
+      },
+      'min': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MinFloat32'], left, right);
+      },
+      'max': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MaxFloat32'], left, right);
+      },
+      'eq': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['EqFloat32'], left, right);
+      },
+      'ne': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['NeFloat32'], left, right);
+      },
+      'lt': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LtFloat32'], left, right);
+      },
+      'le': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LeFloat32'], left, right);
+      },
+      'gt': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GtFloat32'], left, right);
+      },
+      'ge': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GeFloat32'], left, right);
+      },
     };
 
     this['f64'] = {
@@ -401,6 +639,88 @@
       'const_bits': function(x, y) {
         Module['_BinaryenLiteralFloat64Bits'](literal, x, y);
         return Module['_BinaryenConst'](module, literal);
+      },
+      'neg': function(value) {
+        return Module['_BinaryenUnary'](module, Module['NegFloat64'], value);
+      },
+      'abs': function(value) {
+        return Module['_BinaryenUnary'](module, Module['AbsFloat64'], value);
+      },
+      'ceil': function(value) {
+        return Module['_BinaryenUnary'](module, Module['CeilFloat64'], value);
+      },
+      'floor': function(value) {
+        return Module['_BinaryenUnary'](module, Module['FloorFloat64'], value);
+      },
+      'trunc': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncFloat64'], value);
+      },
+      'nearest': function(value) {
+        return Module['_BinaryenUnary'](module, Module['NearestFloat64'], value);
+      },
+      'sqrt': function(value) {
+        return Module['_BinaryenUnary'](module, Module['SqrtFloat64'], value);
+      },
+      'reinterpret': {
+        return Module['_BinaryenUnary'](module, Module['ReinterpretInt64'], value);
+      },
+      'convert_s': {
+        'i32': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertSInt32ToFloat64'], value);
+        },
+        'i64': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertSInt64ToFloat64'], value);
+        },
+      },
+      'convert_u': {
+        'i32': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertUInt32ToFloat64'], value);
+        },
+        'i64': function() {
+          return Module['_BinaryenUnary'](module, Module['ConvertUInt64ToFloat64'], value);
+        },
+      },
+      'promote': function(value) {
+        return Module['_BinaryenUnary'](module, Module['PromoteFloat64'], value);
+      },
+      'add': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['AddFloat64'], left, right);
+      },
+      'sub': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['SubFloat64'], left, right);
+      },
+      'mul': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MulFloat64'], left, right);
+      },
+      'div': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['DivFloat64'], left, right);
+      },
+      'copysign': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['CopySignFloat64'], left, right);
+      },
+      'min': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MinFloat64'], left, right);
+      },
+      'max': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['MaxFloat64'], left, right);
+      },
+      'eq': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['EqFloat64'], left, right);
+      },
+      'ne': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['NeFloat64'], left, right);
+      },
+      'lt': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LtFloat64'], left, right);
+      },
+      'le': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['LeFloat64'], left, right);
+      },
+      'gt': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GtFloat64'], left, right);
+      },
+      'ge': function(left, right) {
+        return Module['_BinaryenBinary'](module, Module['GeFloat64'], left, right);
       },
     };
 
