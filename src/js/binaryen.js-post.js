@@ -22,11 +22,11 @@
     return ret;
   }
 
-  Module['None'] = Module['_BinaryenNone']();
-  Module['Int32'] = Module['_BinaryenInt32']();
-  Module['Int64'] = Module['_BinaryenInt64']();
-  Module['Float32'] = Module['_BinaryenFloat32']();
-  Module['Float64'] = Module['_BinaryenFloat64']();
+  Module['none'] = Module['_BinaryenNone']();
+  Module['i32'] = Module['_BinaryenInt32']();
+  Module['i64'] = Module['_BinaryenInt64']();
+  Module['f32'] = Module['_BinaryenFloat32']();
+  Module['f64'] = Module['_BinaryenFloat64']();
 
   Module['ClzInt32'] = Module['_BinaryenClzInt32']();
   Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
@@ -291,7 +291,7 @@
           return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt32'], value);
         },
       },
-      'reinterpret': {
+      'reinterpret': function(value) {
         return Module['_BinaryenUnary'](module, Module['ReinterpretFloat32'], value);
       },
       'wrap': function(value) {
@@ -440,13 +440,13 @@
           return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt64'], value);
         },
       },
-      'reinterpret': {
+      'reinterpret': function(value) {
         return Module['_BinaryenUnary'](module, Module['ReinterpretFloat64'], value);
       },
-      'extend_s': {
+      'extend_s': function(value) {
         return Module['_BinaryenUnary'](module, Module['ExtendSInt32'], value);
       },
-      'extend_u': {
+      'extend_u': function(value) {
         return Module['_BinaryenUnary'](module, Module['ExtendUInt32'], value);
       },
       'add': function(left, right) {
@@ -562,7 +562,7 @@
       'sqrt': function(value) {
         return Module['_BinaryenUnary'](module, Module['SqrtFloat32'], value);
       },
-      'reinterpret': {
+      'reinterpret': function(value) {
         return Module['_BinaryenUnary'](module, Module['ReinterpretInt32'], value);
       },
       'convert_s': {
@@ -661,7 +661,7 @@
       'sqrt': function(value) {
         return Module['_BinaryenUnary'](module, Module['SqrtFloat64'], value);
       },
-      'reinterpret': {
+      'reinterpret': function(value) {
         return Module['_BinaryenUnary'](module, Module['ReinterpretInt64'], value);
       },
       'convert_s': {
