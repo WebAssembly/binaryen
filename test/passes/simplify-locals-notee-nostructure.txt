@@ -1,65 +1,65 @@
 (module
-  (type $0 (func))
-  (memory $0 0)
-  (func $contrast (type $0)
-    (local $x i32)
-    (local $y i32)
-    (local $z i32)
-    (local $a i32)
-    (local $b i32)
-    (set_local $x
-      (i32.const 1)
-    )
-    (if
-      (get_local $x)
-      (nop)
-    )
-    (if
-      (get_local $x)
-      (nop)
-    )
-    (nop)
-    (drop
-      (if i32
-        (i32.const 2)
-        (i32.const 3)
-        (i32.const 4)
-      )
-    )
-    (nop)
-    (drop
-      (block $block i32
-        (i32.const 5)
-      )
-    )
-    (if
-      (i32.const 6)
-      (set_local $a
-        (i32.const 7)
-      )
-      (set_local $a
-        (i32.const 8)
-      )
-    )
-    (drop
-      (get_local $a)
-    )
-    (block $val
-      (if
-        (i32.const 10)
-        (block $block4
-          (set_local $b
-            (i32.const 11)
-          )
-          (br $val)
-        )
-      )
-      (set_local $b
-        (i32.const 12)
-      )
-    )
-    (drop
-      (get_local $b)
-    )
+ (type $0 (func))
+ (memory $0 0)
+ (func $contrast (type $0)
+  (local $x i32)
+  (local $y i32)
+  (local $z i32)
+  (local $a i32)
+  (local $b i32)
+  (set_local $x
+   (i32.const 1)
   )
+  (if
+   (get_local $x)
+   (nop)
+  )
+  (if
+   (get_local $x)
+   (nop)
+  )
+  (nop)
+  (drop
+   (if i32
+    (i32.const 2)
+    (i32.const 3)
+    (i32.const 4)
+   )
+  )
+  (nop)
+  (drop
+   (block $block i32
+    (i32.const 5)
+   )
+  )
+  (if
+   (i32.const 6)
+   (set_local $a
+    (i32.const 7)
+   )
+   (set_local $a
+    (i32.const 8)
+   )
+  )
+  (drop
+   (get_local $a)
+  )
+  (block $val
+   (if
+    (i32.const 10)
+    (block $block4
+     (set_local $b
+      (i32.const 11)
+     )
+     (br $val)
+    )
+   )
+   (set_local $b
+    (i32.const 12)
+   )
+  )
+  (drop
+   (get_local $b)
+  )
+ )
 )

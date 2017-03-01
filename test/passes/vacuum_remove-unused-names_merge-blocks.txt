@@ -1,12 +1,12 @@
 (module
-  (type $0 (func (param i32) (result i32)))
-  (memory $0 0)
-  (func $return-block (type $0) (param $x i32) (result i32)
-    (set_local $x
-      (get_local $x)
-    )
-    (return
-      (get_local $x)
-    )
+ (type $0 (func (param i32) (result i32)))
+ (memory $0 0)
+ (func $return-block (type $0) (param $x i32) (result i32)
+  (set_local $x
+   (get_local $x)
   )
+  (return
+   (get_local $x)
+  )
+ )
 )
