@@ -308,6 +308,13 @@ struct Asm2WasmPreProcessor {
 //
 
 class Asm2WasmBuilder {
+public:
+  enum class PotentialTrapMode {
+    Allow,
+    Clamp,
+    JS
+  };
+
   Module& wasm;
 
   MixedArena &allocator;
@@ -332,7 +339,8 @@ class Asm2WasmBuilder {
 
   Asm2WasmPreProcessor& preprocessor;
   bool debug;
-  bool imprecise;
+    
+  PotentialTrapMode potentialTrapMode;
   PassOptions passOptions;
   bool runOptimizationPasses;
   bool wasmOnly;
@@ -437,13 +445,13 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, bool imprecise, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, PotentialTrapMode potentialTrapMode, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
        preprocessor(preprocessor),
        debug(debug),
-       imprecise(imprecise),
+       potentialTrapMode(potentialTrapMode),
        passOptions(passOptions),
        runOptimizationPasses(runOptimizationPasses),
        wasmOnly(wasmOnly) {}
@@ -614,9 +622,10 @@ private:
     return ret;
   }
 
+  // Some binary opts might trap, so emit them safely if necessary
   Expression* makePotentiallyTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (imprecise) return builder.makeBinary(op, left, right);
-    // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
+    if (potentialTrapMode == PotentialTrapMode::Allow) return builder.makeBinary(op, left, right);
+    // the wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
     switch (op) {
       case BinaryOp::RemSInt32: call->target = I32S_REM; break;
@@ -669,10 +678,10 @@ private:
     return call;
   }
 
-  // Some binary opts might trap, so emit them safely if we are precise
+  // Some binary opts might trap, so emit them safely if necessary
   Expression* makePotentiallyTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (imprecise) return builder.makeBinary(op, left, right);
-    // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
+    if (potentialTrapMode == PotentialTrapMode::Allow) return builder.makeBinary(op, left, right);
+    // wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
     switch (op) {
       case BinaryOp::RemSInt64: call->target = I64S_REM; break;
@@ -723,6 +732,93 @@ private:
       wasm.addFunction(func);
     }
     return call;
+  }
+
+  // Some conversions might trap, so emit them safely if necessary
+  Expression* makePotentiallyTrappingFloatToInt(Expression* value) {
+    if (potentialTrapMode == PotentialTrapMode::Allow) {
+      auto ret = allocator.alloc<Unary>();
+      ret->value = value;
+      ret->op = ret->value->type == f64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
+      ret->type = WasmType::i32;
+      return ret;
+    }
+    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
+    // First, normalize input to f64
+    auto input = value;
+    if (input->type == f32) {
+      auto conv = allocator.alloc<Unary>();
+      conv->op = PromoteFloat32;
+      conv->value = input;
+      conv->type = WasmType::f64;
+      input = conv;
+    }
+    // We can handle this in one of two ways: clamping, which is fast, or JS, which
+    // is precisely like JS but in order to do that we do a slow ffi
+    if (potentialTrapMode == PotentialTrapMode::JS) {
+      // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
+      CallImport *ret = allocator.alloc<CallImport>();
+      ret->target = F64_TO_INT;
+      ret->operands.push_back(input);
+      ret->type = i32;
+      static bool addedImport = false;
+      if (!addedImport) {
+        addedImport = true;
+        auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
+        import->name = F64_TO_INT;
+        import->module = ASM2WASM;
+        import->base = F64_TO_INT;
+        import->functionType = ensureFunctionType("id", &wasm)->name;
+        import->kind = ExternalKind::Function;
+        wasm.addImport(import);
+      }
+      return ret;
+    }
+    assert(potentialTrapMode == PotentialTrapMode::Clamp);
+    Call *ret = allocator.alloc<Call>();
+    ret->target = F64_TO_INT;
+    ret->operands.push_back(input);
+    ret->type = i32;
+    static bool added = false;
+    if (!added) {
+      added = true;
+      auto func = new Function;
+      func->name = ret->target;
+      func->params.push_back(f64);
+      func->result = i32;
+      func->body = builder.makeUnary(TruncSFloat64ToInt32,
+        builder.makeGetLocal(0, f64)
+      );
+      // too small XXX this is different than asm.js, which does frem. here we clamp, which is much simpler/faster, and similar to native builds
+      func->body = builder.makeIf(
+        builder.makeBinary(LeFloat64,
+          builder.makeGetLocal(0, f64),
+          builder.makeConst(Literal(double(std::numeric_limits<int32_t>::min()) - 1))
+        ),
+        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))),
+        func->body
+      );
+      // too big XXX see above
+      func->body = builder.makeIf(
+        builder.makeBinary(GeFloat64,
+          builder.makeGetLocal(0, f64),
+          builder.makeConst(Literal(double(std::numeric_limits<int32_t>::max()) + 1))
+        ),
+        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))), // NB: min here as well. anything out of range => to the min
+        func->body
+      );
+      // nan
+      func->body = builder.makeIf(
+        builder.makeBinary(NeFloat64,
+          builder.makeGetLocal(0, f64),
+          builder.makeGetLocal(0, f64)
+        ),
+        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))), // NB: min here as well. anything invalid => to the min
+        func->body
+      );
+      wasm.addFunction(func);
+    }
+    return ret;
   }
 
   Expression* truncateToInt32(Expression* value) {
@@ -1582,9 +1678,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           wasm.addImport(import);
         }
         return call;
-      } else if (!imprecise && (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
-                                ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
-        // we are precise, and the wasm operation might trap if done over 0, so generate a safe call
+      } else if (potentialTrapMode != PotentialTrapMode::Allow &&
+                 (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
+                  ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
         return makePotentiallyTrappingI32Binary(ret->op, ret->left, ret->right);
       }
       return ret;
@@ -1657,39 +1753,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == B_NOT) {
-          if (imprecise) {
-            auto ret = allocator.alloc<Unary>();
-            ret->value = process(ast[2][2]);
-            ret->op = ret->value->type == f64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32; // imprecise, because this wasm thing might trap, while asm.js never would
-            ret->type = WasmType::i32;
-            return ret;
-          } else {
-            // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-            CallImport *ret = allocator.alloc<CallImport>();
-            ret->target = F64_TO_INT;
-            auto input = process(ast[2][2]);
-            if (input->type == f32) {
-              auto conv = allocator.alloc<Unary>();
-              conv->op = PromoteFloat32;
-              conv->value = input;
-              conv->type = WasmType::f64;
-              input = conv;
-            }
-            ret->operands.push_back(input);
-            ret->type = i32;
-            static bool addedImport = false;
-            if (!addedImport) {
-              addedImport = true;
-              auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
-              import->name = F64_TO_INT;
-              import->module = ASM2WASM;
-              import->base = F64_TO_INT;
-              import->functionType = ensureFunctionType("id", &wasm)->name;
-              import->kind = ExternalKind::Function;
-              wasm.addImport(import);
-            }
-            return ret;
-          }
+          return makePotentiallyTrappingFloatToInt(process(ast[2][2]));
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
