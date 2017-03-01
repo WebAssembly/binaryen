@@ -71,7 +71,7 @@ function test_core() {
   var valueList = [
     // Unary
     module.i32.clz(module.i32.const(-10)),
-    module.i64.clz(module.i64.const(-22, -1)),
+    module.i64.ctz(module.i64.const(-22, -1)),
     module.i32.popcnt(module.i32.const(-10)),
     module.f32.neg(module.f32.const(-33.612)),
     module.f64.abs(module.f64.const(-9005.841)),
