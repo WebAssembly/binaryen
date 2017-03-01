@@ -9,14 +9,6 @@ function assert(x) {
   if (!x) throw 'error!';
 }
 
-function makeUnary(op, inputType) {
-  if (inputType == Binaryen.Int32) return module.unary(op, module.constInt32(-10));
-  if (inputType == Binaryen.Int64) return module.unary(op, module.constInt64(-22, -1));
-  if (inputType == Binaryen.Float32) return module.unary(op, module.constFloat32(-33.612));
-  if (inputType == Binaryen.Float64) return module.unary(op, module.constFloat64(-9005.841));
-  throw 'error :(';
-}
-
 function makeBinary(op, type) {
   var temp;
   if (type == Binaryen.Int32) {
@@ -100,42 +92,42 @@ function test_core() {
 
   var valueList = [
     // Unary
-    makeUnary(Binaryen.ClzInt32, 1),
-    makeUnary(Binaryen.CtzInt64, 2),
-    makeUnary(Binaryen.PopcntInt32, 1),
-    makeUnary(Binaryen.NegFloat32, 3),
-    makeUnary(Binaryen.AbsFloat64, 4),
-    makeUnary(Binaryen.CeilFloat32, 3),
-    makeUnary(Binaryen.FloorFloat64, 4),
-    makeUnary(Binaryen.TruncFloat32, 3),
-    makeUnary(Binaryen.NearestFloat32, 3),
-    makeUnary(Binaryen.SqrtFloat64, 4),
-    makeUnary(Binaryen.EqZInt32, 1),
-    makeUnary(Binaryen.ExtendSInt32, 1),
-    makeUnary(Binaryen.ExtentUInt32, 1),
-    makeUnary(Binaryen.WrapInt64, 2),
-    makeUnary(Binaryen.TruncSFloat32ToInt32, 3),
-    makeUnary(Binaryen.TruncSFloat32ToInt64, 3),
-    makeUnary(Binaryen.TruncUFloat32ToInt32, 3),
-    makeUnary(Binaryen.TruncUFloat32ToInt64, 3),
-    makeUnary(Binaryen.TruncSFloat64ToInt32, 4),
-    makeUnary(Binaryen.TruncSFloat64ToInt64, 4),
-    makeUnary(Binaryen.TruncUFloat64ToInt32, 4),
-    makeUnary(Binaryen.TruncUFloat64ToInt64, 4),
-    makeUnary(Binaryen.ReinterpretFloat32, 3),
-    makeUnary(Binaryen.ReinterpretFloat64, 4),
-    makeUnary(Binaryen.ConvertSInt32ToFloat32, 1),
-    makeUnary(Binaryen.ConvertSInt32ToFloat64, 1),
-    makeUnary(Binaryen.ConvertUInt32ToFloat32, 1),
-    makeUnary(Binaryen.ConvertUInt32ToFloat64, 1),
-    makeUnary(Binaryen.ConvertSInt64ToFloat32, 2),
-    makeUnary(Binaryen.ConvertSInt64ToFloat64, 2),
-    makeUnary(Binaryen.ConvertUInt64ToFloat32, 2),
-    makeUnary(Binaryen.ConvertUInt64ToFloat64, 2),
-    makeUnary(Binaryen.PromoteFloat32, 3),
-    makeUnary(Binaryen.DemoteFloat64, 4),
-    makeUnary(Binaryen.ReinterpretInt32, 1),
-    makeUnary(Binaryen.ReinterpretInt64, 2),
+    module.i32.clz(module.constInt32(-10)),
+    module.i64.clz(constInt64(-22, -1)),
+    module.i32.popcnt(module.constInt32(-10)),
+    module.f32.neg(module.constFloat32(-33.612)),
+    module.f64.abs(module.constFloat64(-9005.841)),
+    module.f32.ceil(module.constFloat32(-33.612)),
+    module.f64.floor(module.constFloat64(-9005.841)),
+    module.f32.trunc(module.constFloat32(-33.612)),
+    module.f32.nearest(module.constFloat32(-33.612)),
+    module.f64.sqrt(module.constFloat64(-9005.841)),
+    module.i32.eqz(module.constInt32(-10)),
+    module.i32.extend_s(module.constInt32(-10)),
+    module.i32.extend_u(module.constInt32(-10)),
+    module.i32.wrap(constInt64(-22, -1)),
+    module.i32.trunc_s.f32(module.constFloat32(-33.612)),
+    module.i64.trunc_s.f32(module.constFloat32(-33.612)),
+    module.i32.trunc_u.f32(module.constFloat32(-33.612)),
+    module.i64.trunc_u.f32(module.constFloat32(-33.612)),
+    module.i32.trunc_s.f64(module.constFloat64(-9005.841)),
+    module.i64.trunc_s/f64(module.constFloat64(-9005.841)),
+    module.i32.trunc_u/f64(module.constFloat64(-9005.841)),
+    module.i64.trunc_u/f64(module.constFloat64(-9005.841)),
+    module.i32.reinterpret(module.constFloat32(-33.612)),
+    module.i64.reinterpret(module.constFloat64(-9005.841)),
+    module.f32.convert_s/i32(module.constInt32(-10)),
+    module.f64.convert_s/i32(module.constInt32(-10)),
+    module.f32.convert_u/i32(module.constInt32(-10)),
+    module.f64.convert_u/i32(module.constInt32(-10)),
+    module.f32.convert_s/i64(constInt64(-22, -1)),
+    module.f64.convert_s/i64(constInt64(-22, -1)),
+    module.f32.convert_u/i64(constInt64(-22, -1)),
+    module.f64.convert_u/i64(constInt64(-22, -1)),
+    module.f64.promote(module.constFloat32(-33.612)),
+    module.f32.demote(module.constFloat64(-9005.841)),
+    module.f32.reinterpret(module.constInt32(-10)),
+    module.f64.reinterpret(constInt64(-22, -1)),
     // Binary
     makeBinary(Binaryen.AddInt32, 1),
     makeBinary(Binaryen.SubFloat64, 4),
