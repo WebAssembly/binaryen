@@ -9,42 +9,20 @@ function assert(x) {
   if (!x) throw 'error!';
 }
 
-function makeBinary(op, type) {
-  var temp;
-  if (type == Binaryen.Int32) {
-    // use temp vars to ensure optimization doesn't change the order of operation in our trace recording (well that makes sense in C++...)
-    temp = module.constInt32(-11);
-    return module.binary(op, module.constInt32(-10), temp);
-  }
-  if (type == Binaryen.Int64) {
-    temp = module.constInt64(-23, 0);
-    return module.binary(op, module.constInt64(-22, 0), temp);
-  }
-  if (type == Binaryen.Float32) {
-    temp = module.constFloat32(-62.5);
-    return module.binary(op, module.constFloat32(-33.612), temp);
-  }
-  if (type == Binaryen.Float64) {
-    temp = module.constFloat64(-9007.333);
-    return module.binary(op, module.constFloat64(-9005.841), temp);
-  }
-  throw 'error :(';
-}
-
 function makeInt32(x) {
-  return module.constInt32(x);
+  return module.i32.const(x);
 }
 
 function makeFloat32(x) {
-  return module.constFloat32(x);
+  return module.f32.const(x);
 }
 
 function makeInt64(l, h) {
-  return module.constInt64(l, h);
+  return module.i64.const(l, h);
 }
 
 function makeFloat64(x) {
-  return module.constFloat64(x);
+  return module.f64.const(x);
 }
 
 function makeSomething() {
@@ -52,17 +30,17 @@ function makeSomething() {
 }
 
 function makeDroppedInt32(x) {
-  return module.drop(module.constInt32(x));
+  return module.drop(module.i32.const(x));
 }
 
 // tests
 
 function test_types() {
-  console.log("BinaryenNone: " + Binaryen.None);
-  console.log("BinaryenInt32: " + Binaryen.Int32);
-  console.log("BinaryenInt64: " + Binaryen.Int64);
-  console.log("BinaryenFloat32: " + Binaryen.Float32);
-  console.log("BinaryenFloat64: " + Binaryen.Float64);
+  console.log("BinaryenNone: " + Binaryen.none);
+  console.log("BinaryenInt32: " + Binaryen.i32);
+  console.log("BinaryenInt64: " + Binaryen.i64);
+  console.log("BinaryenFloat32: " + Binaryen.f32);
+  console.log("BinaryenFloat64: " + Binaryen.f64);
 }
 
 function test_core() {
@@ -73,12 +51,12 @@ function test_core() {
 
   // Literals and consts
 
-  var constI32 = module.constInt32(1),
-      constI64 = module.constInt64(2),
-      constF32 = module.constFloat32(3.14),
-      constF64 = module.constFloat64(2.1828),
-      constF32Bits = module.constFloat32Bits(0xffff1234),
-      constF64Bits = module.constFloat64Bits(0x5678abcd, 0xffff1234);
+  var constI32 = module.i32.const(1),
+      constI64 = module.i64.const(2),
+      constF32 = module.f32.const(3.14),
+      constF64 = module.f64.const(2.1828),
+      constF32Bits = module.f32.const_bits(0xffff1234),
+      constF64Bits = module.f64.const_bits(0x5678abcd, 0xffff1234);
 
   var iiIfF = module.addFunctionType("iiIfF", Binaryen.Int32, [ Binaryen.Int32, Binaryen.Int64, Binaryen.Float32, Binaryen.Float64 ]);
 
@@ -92,75 +70,75 @@ function test_core() {
 
   var valueList = [
     // Unary
-    module.i32.clz(module.constInt32(-10)),
-    module.i64.clz(constInt64(-22, -1)),
-    module.i32.popcnt(module.constInt32(-10)),
-    module.f32.neg(module.constFloat32(-33.612)),
-    module.f64.abs(module.constFloat64(-9005.841)),
-    module.f32.ceil(module.constFloat32(-33.612)),
-    module.f64.floor(module.constFloat64(-9005.841)),
-    module.f32.trunc(module.constFloat32(-33.612)),
-    module.f32.nearest(module.constFloat32(-33.612)),
-    module.f64.sqrt(module.constFloat64(-9005.841)),
-    module.i32.eqz(module.constInt32(-10)),
-    module.i32.extend_s(module.constInt32(-10)),
-    module.i32.extend_u(module.constInt32(-10)),
-    module.i32.wrap(constInt64(-22, -1)),
-    module.i32.trunc_s.f32(module.constFloat32(-33.612)),
-    module.i64.trunc_s.f32(module.constFloat32(-33.612)),
-    module.i32.trunc_u.f32(module.constFloat32(-33.612)),
-    module.i64.trunc_u.f32(module.constFloat32(-33.612)),
-    module.i32.trunc_s.f64(module.constFloat64(-9005.841)),
-    module.i64.trunc_s/f64(module.constFloat64(-9005.841)),
-    module.i32.trunc_u/f64(module.constFloat64(-9005.841)),
-    module.i64.trunc_u/f64(module.constFloat64(-9005.841)),
-    module.i32.reinterpret(module.constFloat32(-33.612)),
-    module.i64.reinterpret(module.constFloat64(-9005.841)),
-    module.f32.convert_s/i32(module.constInt32(-10)),
-    module.f64.convert_s/i32(module.constInt32(-10)),
-    module.f32.convert_u/i32(module.constInt32(-10)),
-    module.f64.convert_u/i32(module.constInt32(-10)),
-    module.f32.convert_s/i64(constInt64(-22, -1)),
-    module.f64.convert_s/i64(constInt64(-22, -1)),
-    module.f32.convert_u/i64(constInt64(-22, -1)),
-    module.f64.convert_u/i64(constInt64(-22, -1)),
-    module.f64.promote(module.constFloat32(-33.612)),
-    module.f32.demote(module.constFloat64(-9005.841)),
-    module.f32.reinterpret(module.constInt32(-10)),
-    module.f64.reinterpret(constInt64(-22, -1)),
+    module.i32.clz(module.i32.const(-10)),
+    module.i64.clz(module.i64.const(-22, -1)),
+    module.i32.popcnt(module.i32.const(-10)),
+    module.f32.neg(module.f32.const(-33.612)),
+    module.f64.abs(module.f64.const(-9005.841)),
+    module.f32.ceil(module.f32.const(-33.612)),
+    module.f64.floor(module.f64.const(-9005.841)),
+    module.f32.trunc(module.f32.const(-33.612)),
+    module.f32.nearest(module.f32.const(-33.612)),
+    module.f64.sqrt(module.f64.const(-9005.841)),
+    module.i32.eqz(module.i32.const(-10)),
+    module.i64.extend_s(module.i32.const(-10)),
+    module.i64.extend_u(module.i32.const(-10)),
+    module.i32.wrap(module.i64.const(-22, -1)),
+    module.i32.trunc_s.f32(module.f32.const(-33.612)),
+    module.i64.trunc_s.f32(module.f32.const(-33.612)),
+    module.i32.trunc_u.f32(module.f32.const(-33.612)),
+    module.i64.trunc_u.f32(module.f32.const(-33.612)),
+    module.i32.trunc_s.f64(module.f64.const(-9005.841)),
+    module.i64.trunc_s.f64(module.f64.const(-9005.841)),
+    module.i32.trunc_u.f64(module.f64.const(-9005.841)),
+    module.i64.trunc_u.f64(module.f64.const(-9005.841)),
+    module.i32.reinterpret(module.f32.const(-33.612)),
+    module.i64.reinterpret(module.f64.const(-9005.841)),
+    module.f32.convert_s.i32(module.i32.const(-10)),
+    module.f64.convert_s.i32(module.i32.const(-10)),
+    module.f32.convert_u.i32(module.i32.const(-10)),
+    module.f64.convert_u.i32(module.i32.const(-10)),
+    module.f32.convert_s.i64(module.i64.const(-22, -1)),
+    module.f64.convert_s.i64(module.i64.const(-22, -1)),
+    module.f32.convert_u.i64(module.i64.const(-22, -1)),
+    module.f64.convert_u.i64(module.i64.const(-22, -1)),
+    module.f64.promote(module.f32.const(-33.612)),
+    module.f32.demote(module.f64.const(-9005.841)),
+    module.f32.reinterpret(module.i32.const(-10)),
+    module.f64.reinterpret(module.i64.const(-22, -1)),
     // Binary
-    makeBinary(Binaryen.AddInt32, 1),
-    makeBinary(Binaryen.SubFloat64, 4),
-    makeBinary(Binaryen.DivSInt32, 1),
-    makeBinary(Binaryen.DivUInt64, 2),
-    makeBinary(Binaryen.RemSInt64, 2),
-    makeBinary(Binaryen.RemUInt32, 1),
-    makeBinary(Binaryen.AndInt32, 1),
-    makeBinary(Binaryen.OrInt64, 2),
-    makeBinary(Binaryen.XorInt32, 1),
-    makeBinary(Binaryen.ShlInt64, 2),
-    makeBinary(Binaryen.ShrUInt64, 2),
-    makeBinary(Binaryen.ShrSInt32, 1),
-    makeBinary(Binaryen.RotLInt32, 1),
-    makeBinary(Binaryen.RotRInt64, 2),
-    makeBinary(Binaryen.DivFloat32, 3),
-    makeBinary(Binaryen.CopySignFloat64, 4),
-    makeBinary(Binaryen.MinFloat32, 3),
-    makeBinary(Binaryen.MaxFloat64, 4),
-    makeBinary(Binaryen.EqInt32, 1),
-    makeBinary(Binaryen.NeFloat32, 3),
-    makeBinary(Binaryen.LtSInt32, 1),
-    makeBinary(Binaryen.LtUInt64, 2),
-    makeBinary(Binaryen.LeSInt64, 2),
-    makeBinary(Binaryen.LeUInt32, 1),
-    makeBinary(Binaryen.GtSInt64, 2),
-    makeBinary(Binaryen.GtUInt32, 1),
-    makeBinary(Binaryen.GeSInt32, 1),
-    makeBinary(Binaryen.GeUInt64, 2),
-    makeBinary(Binaryen.LtFloat32, 3),
-    makeBinary(Binaryen.LeFloat64, 4),
-    makeBinary(Binaryen.GtFloat64, 4),
-    makeBinary(Binaryen.GeFloat32, 3),
+    module.i32.add(module.i32.const(-10), module.i32.const(-11)),
+    module.f64.sub(module.f64.const(-9005.841), module.f64.const(-9007.333)),
+    module.i32.div_s(module.i32.const(-10), module.i32.const(-11)),
+    module.i64.div_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.rem_s(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i32.rem_u(module.i32.const(-10), module.i32.const(-11)),
+    module.i32.and(module.i32.const(-10), module.i32.const(-11)),
+    module.i64.or(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i32.xor(module.i32.const(-10), module.i32.const(-11)),
+    module.i64.shl(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.shr_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i32.shr_s(module.i32.const(-10), module.i32.const(-11)),
+    module.i32.rotl(module.i32.const(-10), module.i32.const(-11)),
+    module.i64.rotr(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.f32.div(module.f32.const(-33.612), module.f32.const(-62.5)),
+    module.f64.copysign(module.f64.const(-9005.841), module.f64.const(-9007.333)),
+    module.f32.min(module.f32.const(-33.612), module.f32.const(-62.5)),
+    module.f64.max(module.f64.const(-9005.841), module.f64.const(-9007.333)),
+    module.i32.eq(module.i32.const(-10), module.i32.const(-11)),
+    module.f32.ne(module.f32.const(-33.612), module.f32.const(-62.5)),
+    module.i32.lt_s(module.i32.const(-10), module.i32.const(-11)),
+    module.i64.lt_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i64.le_s(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i32.le_u(module.i32.const(-10), module.i32.const(-11)),
+    module.i64.gt_s(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.i32.gt_u(module.i32.const(-10), module.i32.const(-11)),
+    module.i32.ge_s(module.i32.const(-10), module.i32.const(-11)),
+    module.i64.ge_u(module.i64.const(-22, 0), module.i64.const(-23, 0)),
+    module.f32.lt(module.f32.const(-33.612), module.f32.const(-62.5)),
+    module.f64.le(module.f64.const(-9005.841), module.f64.const(-9007.333)),
+    module.f64.gt(module.f64.const(-9005.841), module.f64.const(-9007.333)),
+    module.f32.ge(module.f32.const(-33.612), module.f32.const(-62.5)),
     // All the rest
     module.block('', []), // block with no name
     module.if(temp1, temp2, temp3),
@@ -173,27 +151,26 @@ function test_core() {
     module.break("the-nothing"),
     module.switch([ "the-value" ], "the-value", temp8, temp9),
     module.switch([ "the-nothing" ], "the-nothing", makeInt32(2)),
-    module.unary(Binaryen.EqZInt32, // check the output type of the call node
+    module.i32.eqz( // check the output type of the call node
       module.call("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.Int32)
     ),
-    module.unary(Binaryen.EqZInt32, // check the output type of the call node
-      module.unary(
-        Binaryen.TruncSFloat32ToInt32,
+    module.i32.eqz( // check the output type of the call node
+      module.i32.trunc_s.f32(
         module.callImport("an-imported", [ makeInt32(13), makeFloat64(3.7) ], Binaryen.Float32)
       )
     ),
-    module.unary(Binaryen.EqZInt32, // check the output type of the call node
+    module.i32.eqz( // check the output type of the call node
       module.callIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF")
     ),
     module.drop(module.getLocal(0, Binaryen.Int32)),
     module.setLocal(0, makeInt32(101)),
     module.drop(module.teeLocal(0, makeInt32(102))),
-    module.load(4, 0, 0, 0, Binaryen.Int32, makeInt32(1)),
-    module.load(2, 1, 2, 1, Binaryen.Int64, makeInt32(8)),
-    module.load(4, 0, 0, 0, Binaryen.Float32, makeInt32(2)),
-    module.load(8, 0, 2, 8, Binaryen.Float64, makeInt32(9)),
-    module.store(4, 0, 0, temp13, temp14, Binaryen.Int32),
-    module.store(8, 2, 4, temp15, temp16, Binaryen.Int64),
+    module.i32.load(0, 0, makeInt32(1)),
+    module.i64.load16_s(2, 1, makeInt32(8)),
+    module.f32.load(0, 0, makeInt32(2)),
+    module.f64.load(2, 8, makeInt32(9)),
+    module.i32.store(0, 0, temp13, temp14),
+    module.i64.store(2, 4, temp15, temp16),
     module.select(temp10, temp11, temp12),
     module.return(makeInt32(1337)),
     // TODO: Host
@@ -228,7 +205,7 @@ function test_core() {
   // Memory. One per module
 
   module.setMemory(1, 256, "mem", [{
-    offset: module.constInt32(10),
+    offset: module.i32.const(10),
     data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
   }]);
 

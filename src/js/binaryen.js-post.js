@@ -566,18 +566,18 @@
         return Module['_BinaryenUnary'](module, Module['ReinterpretInt32'], value);
       },
       'convert_s': {
-        'i32': function() {
+        'i32': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertSInt32ToFloat32'], value);
         },
-        'i64': function() {
+        'i64': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertSInt64ToFloat32'], value);
         },
       },
       'convert_u': {
-        'i32': function() {
+        'i32': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertUInt32ToFloat32'], value);
         },
-        'i64': function() {
+        'i64': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertUInt64ToFloat32'], value);
         },
       },
@@ -665,18 +665,18 @@
         return Module['_BinaryenUnary'](module, Module['ReinterpretInt64'], value);
       },
       'convert_s': {
-        'i32': function() {
+        'i32': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertSInt32ToFloat64'], value);
         },
-        'i64': function() {
+        'i64': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertSInt64ToFloat64'], value);
         },
       },
       'convert_u': {
-        'i32': function() {
+        'i32': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertUInt32ToFloat64'], value);
         },
-        'i64': function() {
+        'i64': function(value) {
           return Module['_BinaryenUnary'](module, Module['ConvertUInt64ToFloat64'], value);
         },
       },
