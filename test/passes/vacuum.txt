@@ -218,6 +218,18 @@
     )
     (i32.const 2)
   )
+  (func $if2drops-different (type $3) (result i32)
+    (if
+      (call $if2drops)
+      (drop
+        (call $if2drops)
+      )
+      (drop
+        (call $unary)
+      )
+    )
+    (i32.const 2)
+  )
   (func $if-const (type $1) (param $x i32)
     (call $if-const
       (i32.const 3)
