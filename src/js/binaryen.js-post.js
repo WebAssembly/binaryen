@@ -248,13 +248,13 @@
         return Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i32'], ptr);
       },
       'store': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 4, offset, align, Module['i32'], ptr, value);
+        return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i32']);
       },
       'store8': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 1, offset, align, Module['i32'], ptr, value);
+        return Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i32']);
       },
       'store16': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 2, offset, align, Module['i32'], ptr, value);
+        return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32']);
       },
       'const': function(x) {
         Module['_BinaryenLiteralInt32'](literal, x);
@@ -397,16 +397,16 @@
         return Module['_BinaryenLoad'](module, 4, false, offset, align, Module['i64'], ptr);
       },
       'store': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 8, offset, align, Module['i64'], ptr, value);
+        return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['i64']);
       },
       'store8': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 1, offset, align, Module['i64'], ptr, value);
+        return Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i64']);
       },
       'store16': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 2, offset, align, Module['i64'], ptr, value);
+        return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i64']);
       },
       'store32': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 2, offset, align, Module['i64'], ptr, value);
+        return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64']);
       },
       'const': function(x, y) {
         Module['_BinaryenLiteralInt64'](literal, x, y);
@@ -531,7 +531,7 @@
         return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f32'], ptr);
       },
       'store': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 4, offset, align, Module['f32'], ptr, value);
+        return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32']);
       },
       'const': function(x) {
         Module['_BinaryenLiteralFloat32'](literal, x);
@@ -627,10 +627,10 @@
 
     this['f64'] = {
       'load': function(offset, align, ptr) {
-        return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f64'], ptr);
+        return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['f64'], ptr);
       },
       'store': function(offset, align, ptr, value) {
-        return Module['_BinaryenStore'](module, 4, offset, align, Module['f64'], ptr, value);
+        return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64']);
       },
       'const': function(x) {
         Module['_BinaryenLiteralFloat64'](literal, x);

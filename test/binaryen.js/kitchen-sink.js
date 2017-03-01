@@ -58,7 +58,7 @@ function test_core() {
       constF32Bits = module.f32.const_bits(0xffff1234),
       constF64Bits = module.f64.const_bits(0x5678abcd, 0xffff1234);
 
-  var iiIfF = module.addFunctionType("iiIfF", Binaryen.Int32, [ Binaryen.Int32, Binaryen.Int64, Binaryen.Float32, Binaryen.Float64 ]);
+  var iiIfF = module.addFunctionType("iiIfF", Binaryen.i32, [ Binaryen.i32, Binaryen.i64, Binaryen.f32, Binaryen.f64 ]);
 
   var temp1 = makeInt32(1), temp2 = makeInt32(2), temp3 = makeInt32(3),
       temp4 = makeInt32(4), temp5 = makeInt32(5),
@@ -152,17 +152,17 @@ function test_core() {
     module.switch([ "the-value" ], "the-value", temp8, temp9),
     module.switch([ "the-nothing" ], "the-nothing", makeInt32(2)),
     module.i32.eqz( // check the output type of the call node
-      module.call("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.Int32)
+      module.call("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], Binaryen.i32)
     ),
     module.i32.eqz( // check the output type of the call node
       module.i32.trunc_s.f32(
-        module.callImport("an-imported", [ makeInt32(13), makeFloat64(3.7) ], Binaryen.Float32)
+        module.callImport("an-imported", [ makeInt32(13), makeFloat64(3.7) ], Binaryen.f32)
       )
     ),
     module.i32.eqz( // check the output type of the call node
       module.callIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], "iiIfF")
     ),
-    module.drop(module.getLocal(0, Binaryen.Int32)),
+    module.drop(module.getLocal(0, Binaryen.i32)),
     module.setLocal(0, makeInt32(101)),
     module.drop(module.teeLocal(0, makeInt32(102))),
     module.i32.load(0, 0, makeInt32(1)),
@@ -187,11 +187,11 @@ function test_core() {
   var body = module.block("the-body", [ nothing, makeInt32(42) ]);
 
   // Create the function
-  var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.Int32 ], body);
+  var sinker = module.addFunction("kitchen()sinker", iiIfF, [ Binaryen.i32 ], body);
 
   // Imports
 
-  var fiF = module.addFunctionType("fiF", Binaryen.Float32, [ Binaryen.Int32, Binaryen.Float64 ]);
+  var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
   module.addImport("an-imported", "module", "base", fiF);
 
   // Exports
@@ -239,10 +239,10 @@ function makeCallCheck(x) {
 function test_relooper() {
   module = new Binaryen.Module();
   var v = module.addFunctionType("v", Binaryen.None, []);
-  var localTypes = [ Binaryen.Int32 ];
+  var localTypes = [ Binaryen.i32 ];
 
   {
-    var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.Int32 ]);
+    var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
     module.addImport("check", "module", "check", vi);
   }
 
@@ -398,10 +398,10 @@ function test_relooper() {
     relooper.addBranch(block1, block2, null, null);
     relooper.addBranch(block2, block1, null, null);
     var body = relooper.renderAndDispose(block0, 3, module); // use $3 as the helper var
-    module.addFunction("duffs-device", v, [ Binaryen.Int32, Binaryen.Int32, Binaryen.Int64, Binaryen.Int32, Binaryen.Float32, Binaryen.Float64, Binaryen.Int32 ], body);
+    module.addFunction("duffs-device", v, [ Binaryen.i32, Binaryen.i32, Binaryen.i64, Binaryen.i32, Binaryen.f32, Binaryen.f64, Binaryen.i32 ], body);
   }
 
-  var i = module.addFunctionType("i", Binaryen.Int32, []);
+  var i = module.addFunctionType("i", Binaryen.i32, []);
 
   { // return in a block
     var relooper = new Binaryen.Relooper();
@@ -431,10 +431,10 @@ function test_binaries() {
 
   { // create a module and write it to binary
     module = new Binaryen.Module();
-    var iii = module.addFunctionType("iii", Binaryen.Int32, [ Binaryen.Int32, Binaryen.Int32 ]);
-    var x = module.getLocal(0, Binaryen.Int32),
-        y = module.getLocal(1, Binaryen.Int32);
-    var add = module.binary(Binaryen.AddInt32, x, y);
+    var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
+    var x = module.getLocal(0, Binaryen.i32),
+        y = module.getLocal(1, Binaryen.i32);
+    var add = module.i32.add(x, y);
     var adder = module.addFunction("adder", iii, [], add);
     buffer = module.emitBinary();
     size = buffer.length; // write out the module
@@ -458,7 +458,7 @@ function test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
   module = new Binaryen.Module();
 
-  var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.Int32 ]);
+  var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
   module.addImport("print-i32", "spectest", "print", vi);
 
   var v = module.addFunctionType("v", Binaryen.None, []);
@@ -477,7 +477,7 @@ function test_nonvalid() {
   module = new Binaryen.Module();
 
   var v = module.addFunctionType("v", Binaryen.None, []);
-  var func = module.addFunction("func", v, [ Binaryen.Int32 ],
+  var func = module.addFunction("func", v, [ Binaryen.i32 ],
     module.setLocal(0, makeInt64(1234, 0)) // wrong type!
   );
 
