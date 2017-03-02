@@ -45,8 +45,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   struct UsableInfo {
     Expression** item;
     Index index; // if not UNUSED, then the local we are assigned to, use that to reuse us
+    EffectAnalyzer effects;
 
-    UsableInfo(Expression** item) : item(item), index(UNUSED) {}
+    UsableInfo(Expression** item, PassOptions& passOptions) : item(item), index(UNUSED), effects(passOptions, *item) {}
   };
 
   // a list of usables in a linear execution trace
@@ -61,7 +62,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   void checkInvalidations(EffectAnalyzer& effects) {
     // TODO: this is O(bad)
-    std::vector<Index> invalidated;
+    std::vector<HashedExpression> invalidated;
     for (auto& sinkable : usables) {
       if (effects.invalidates(sinkable.second.effects)) {
         invalidated.push_back(sinkable.first);
@@ -115,18 +116,16 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   bool isRelevant(Expression* curr) {
     if (curr->is<GetLocal>()) {
-      return; // trivial, this is what we optimize to!
+      return false; // trivial, this is what we optimize to!
     }
     if (!isConcreteWasmType(curr->type)) {
-      return; // don't bother with unreachable etc.
+      return false; // don't bother with unreachable etc.
     }
     if (EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
-      return; // we can't combine things with side effects
+      return false; // we can't combine things with side effects
     }
     // check what we care about TODO: use optimize/shrink levels?
-    if (Measurer::measure(curr) > 1) {
-      return true;
-    }
+    return Measurer::measure(curr) > 1;
   }
 
   void handle(Expression** currp, Expression* curr) {
@@ -134,22 +133,23 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     auto iter = usables.find(hashed);
     if (iter != usables.end()) {
       // already exists in the table, this is good to reuse
-      if (iter->index == UNUSED) {
+      auto& info = iter->second;
+      if (info.index == UNUSED) {
         // we need to assign to a local. create a new one
-        auto index = iter->index = Builder::addVar(getFunction(), curr->type);
-        (*iter->item) = Builder(*getModule()).makeTee(index, *iter->item);
+        auto index = info.index = Builder::addVar(getFunction(), curr->type);
+        (*info.item) = Builder(*getModule()).makeTeeLocal(index, *info.item);
       }
       replaceCurrent(
-        Builder(*getModule()).makeGetLocal(iter->index, curr->type)
+        Builder(*getModule()).makeGetLocal(info.index, curr->type)
       );
     } else {
       // not in table, add this, maybe we can help others later
-      usables[hashed] = UsableInfo(currp);
+      auto iter = usables.emplace(std::make_pair(hashed, UsableInfo(currp, getPassOptions()))).first;
       // this may already be written to a local
       if (expressionStack.size() >= 2) {
         auto* parent = expressionStack[expressionStack.size() - 2];
         if (auto* set = parent->dynCast<SetLocal>()) {
-          usables[hashed].index = set->index;
+          iter->second.index = set->index;
         }
       }
     }
