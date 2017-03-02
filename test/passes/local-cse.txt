@@ -1,9 +1,139 @@
 (module
   (type $0 (func))
-  (memory $0 0)
-  (func $test (type $0)
+  (memory $0 100 100)
+  (func $basics (type $0)
     (local $x i32)
     (local $y i32)
-    (nop)
+    (local $2 i32)
+    (local $3 i32)
+    (drop
+      (tee_local $2
+        (i32.add
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+    (drop
+      (get_local $2)
+    )
+    (if
+      (i32.const 0)
+      (nop)
+    )
+    (drop
+      (i32.add
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (tee_local $3
+        (i32.add
+          (get_local $x)
+          (get_local $y)
+        )
+      )
+    )
+    (drop
+      (get_local $3)
+    )
+    (drop
+      (get_local $3)
+    )
+    (call $basics)
+    (drop
+      (get_local $3)
+    )
+    (set_local $x
+      (i32.const 100)
+    )
+    (drop
+      (i32.add
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+  )
+  (func $recursive1 (type $0)
+    (local $x i32)
+    (local $y i32)
+    (local $2 i32)
+    (drop
+      (i32.add
+        (i32.const 1)
+        (tee_local $2
+          (i32.add
+            (i32.const 2)
+            (i32.const 3)
+          )
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (i32.const 1)
+        (get_local $2)
+      )
+    )
+    (drop
+      (get_local $2)
+    )
+  )
+  (func $recursive2 (type $0)
+    (local $x i32)
+    (local $y i32)
+    (local $2 i32)
+    (drop
+      (i32.add
+        (i32.const 1)
+        (tee_local $2
+          (i32.add
+            (i32.const 2)
+            (i32.const 3)
+          )
+        )
+      )
+    )
+    (drop
+      (get_local $2)
+    )
+    (drop
+      (i32.add
+        (i32.const 1)
+        (get_local $2)
+      )
+    )
+  )
+  (func $self (type $0)
+    (local $x i32)
+    (local $y i32)
+    (local $2 i32)
+    (drop
+      (i32.add
+        (tee_local $2
+          (i32.add
+            (i32.const 2)
+            (i32.const 3)
+          )
+        )
+        (get_local $2)
+      )
+    )
+    (drop
+      (get_local $2)
+    )
+  )
+  (func $loads (type $0)
+    (drop
+      (i32.load
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.load
+        (i32.const 10)
+      )
+    )
   )
 )
