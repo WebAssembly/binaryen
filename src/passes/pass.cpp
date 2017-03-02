@@ -133,6 +133,10 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("merge-blocks");
   add("optimize-instructions");
   add("precompute");
+  if (options.optimizeLevel >= 3) {
+    add("local-cse"); // it is risky to run localCSE early, as what we tee- might later become so simplified we shouldn't be teeing it
+    add("coalesce-locals"); // just for localCSE
+  }
   add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
 }
 
