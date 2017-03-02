@@ -144,7 +144,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       );
     } else {
       // not in table, add this, maybe we can help others later
-      usables.emplace(std::make_pair(hashed, UsableInfo(currp, getPassOptions()))).first;
+      usables.emplace(std::make_pair(hashed, UsableInfo(currp, getPassOptions())));
     }
   }
 };
