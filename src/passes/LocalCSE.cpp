@@ -149,7 +149,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       if (expressionStack.size() >= 2) {
         auto* parent = expressionStack[expressionStack.size() - 2];
         if (auto* set = parent->dynCast<SetLocal>()) {
+          // reuse the local, and note that we depend on that local - if it's altered, we are out of luck
           iter->second.index = set->index;
+          iter->second.effects.localsWritten.insert(set->index);
         }
       }
     }
