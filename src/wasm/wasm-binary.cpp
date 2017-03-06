@@ -1524,23 +1524,27 @@ void WasmBinaryBuilder::readTableElements() {
 
 void WasmBinaryBuilder::readNames() {
   if (debug) std::cerr << "== readNames" << std::endl;
+  auto name_type = getU32LEB();
+  auto subsection_size = getU32LEB();
+  WASM_UNUSED(subsection_size);
+  assert(name_type == BinaryConsts::UserSections::Subsection::NameFunction);
+
   auto num = getU32LEB();
   if (num == 0) return;
+  uint32_t imported_functions = 0;
   for (auto& import : wasm.imports) {
-    if (import->kind == ExternalKind::Function) {
-      getInlineString(); // TODO: use this
-      auto numLocals = getU32LEB();
-      WASM_UNUSED(numLocals);
-      assert(numLocals == 0); // TODO
-      if (--num == 0) return;
-    }
+    if (import->kind != ExternalKind::Function) continue;
+    imported_functions++;
   }
   for (size_t i = 0; i < num; i++) {
-    functions[i]->name = getInlineString();
-    auto numLocals = getU32LEB();
-    WASM_UNUSED(numLocals);
-    assert(numLocals == 0); // TODO
+    auto index = getU32LEB();
+    if (index < imported_functions) {
+      getInlineString(); // TODO: use this
+    } else if (index - imported_functions < functions.size()) {
+      functions[index - imported_functions]->name = getInlineString();
+    }
   }
+  // TODO: locals
 }
 
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
