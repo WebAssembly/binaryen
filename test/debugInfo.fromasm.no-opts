@@ -42,6 +42,7 @@
         (i32.const 1)
       )
     )
+    (unreachable)
   )
   (func $i32s-rem (param $0 i32) (param $1 i32) (result i32)
     (if i32

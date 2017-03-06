@@ -6639,6 +6639,7 @@
                             )
                           )
                         )
+                        (br $__rjto$8)
                       )
                       (set_local $5
                         (call $_fmt_u
@@ -6868,6 +6869,7 @@
                       (br $__rjti$7)
                     )
                   )
+                  (br $__rjto$8)
                 )
                 (call $_pad
                   (get_local $0)
