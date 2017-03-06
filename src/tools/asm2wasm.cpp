@@ -33,7 +33,7 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   PassOptions passOptions;
   bool runOptimizationPasses = false;
-  Asm2WasmBuilder::PotentialTrapMode potentialTrapMode = Asm2WasmBuilder::PotentialTrapMode::JS;
+  Asm2WasmBuilder::TrapMode trapMode = Asm2WasmBuilder::TrapMode::JS;
   bool wasmOnly = false;
   bool debugInfo = false;
   std::string symbolMap;
@@ -77,20 +77,20 @@ int main(int argc, const char *argv[]) {
              std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
            })
       .add("--emit-potential-traps", "-i", "Emit instructions that might trap, like div/rem of 0", Options::Arguments::Zero,
-           [&potentialTrapMode](Options *o, const std::string &) {
-             potentialTrapMode = Asm2WasmBuilder::PotentialTrapMode::Allow;
+           [&trapMode](Options *o, const std::string &) {
+             trapMode = Asm2WasmBuilder::TrapMode::Allow;
            })
       .add("--emit-clamped-potential-traps", "-i", "Clamp instructions that might trap, like float => int", Options::Arguments::Zero,
-           [&potentialTrapMode](Options *o, const std::string &) {
-             potentialTrapMode = Asm2WasmBuilder::PotentialTrapMode::Clamp;
+           [&trapMode](Options *o, const std::string &) {
+             trapMode = Asm2WasmBuilder::TrapMode::Clamp;
            })
       .add("--emit-jsified-potential-traps", "-i", "Avoid instructions that might trap, handling them exactly like JS would", Options::Arguments::Zero,
-           [&potentialTrapMode](Options *o, const std::string &) {
-             potentialTrapMode = Asm2WasmBuilder::PotentialTrapMode::JS;
+           [&trapMode](Options *o, const std::string &) {
+             trapMode = Asm2WasmBuilder::TrapMode::JS;
            })
       .add("--imprecise", "-i", "Imprecise optimizations (old name for --emit-potential-traps)", Options::Arguments::Zero,
-           [&potentialTrapMode](Options *o, const std::string &) {
-             potentialTrapMode = Asm2WasmBuilder::PotentialTrapMode::Allow;
+           [&trapMode](Options *o, const std::string &) {
+             trapMode = Asm2WasmBuilder::TrapMode::Allow;
            })
       .add("--wasm-only", "-w", "Input is in WebAssembly-only format, and not actually valid asm.js", Options::Arguments::Zero,
            [&wasmOnly](Options *o, const std::string &) {
@@ -140,7 +140,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, potentialTrapMode, passOptions, runOptimizationPasses, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, passOptions, runOptimizationPasses, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided

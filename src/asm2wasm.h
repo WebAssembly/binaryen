@@ -309,7 +309,7 @@ struct Asm2WasmPreProcessor {
 
 class Asm2WasmBuilder {
 public:
-  enum class PotentialTrapMode {
+  enum class TrapMode {
     Allow,
     Clamp,
     JS
@@ -340,7 +340,7 @@ public:
   Asm2WasmPreProcessor& preprocessor;
   bool debug;
     
-  PotentialTrapMode potentialTrapMode;
+  TrapMode trapMode;
   PassOptions passOptions;
   bool runOptimizationPasses;
   bool wasmOnly;
@@ -445,13 +445,13 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, PotentialTrapMode potentialTrapMode, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
        preprocessor(preprocessor),
        debug(debug),
-       potentialTrapMode(potentialTrapMode),
+       trapMode(trapMode),
        passOptions(passOptions),
        runOptimizationPasses(runOptimizationPasses),
        wasmOnly(wasmOnly) {}
@@ -623,8 +623,8 @@ private:
   }
 
   // Some binary opts might trap, so emit them safely if necessary
-  Expression* makePotentiallyTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (potentialTrapMode == PotentialTrapMode::Allow) return builder.makeBinary(op, left, right);
+  Expression* makeTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
+    if (trapMode == TrapMode::Allow) return builder.makeBinary(op, left, right);
     // the wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
     switch (op) {
@@ -679,8 +679,8 @@ private:
   }
 
   // Some binary opts might trap, so emit them safely if necessary
-  Expression* makePotentiallyTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (potentialTrapMode == PotentialTrapMode::Allow) return builder.makeBinary(op, left, right);
+  Expression* makeTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
+    if (trapMode == TrapMode::Allow) return builder.makeBinary(op, left, right);
     // wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
     switch (op) {
@@ -735,8 +735,8 @@ private:
   }
 
   // Some conversions might trap, so emit them safely if necessary
-  Expression* makePotentiallyTrappingFloatToInt(Expression* value) {
-    if (potentialTrapMode == PotentialTrapMode::Allow) {
+  Expression* makeTrappingFloatToInt(Expression* value) {
+    if (trapMode == TrapMode::Allow) {
       auto ret = allocator.alloc<Unary>();
       ret->value = value;
       ret->op = ret->value->type == f64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
@@ -755,7 +755,7 @@ private:
     }
     // We can handle this in one of two ways: clamping, which is fast, or JS, which
     // is precisely like JS but in order to do that we do a slow ffi
-    if (potentialTrapMode == PotentialTrapMode::JS) {
+    if (trapMode == TrapMode::JS) {
       // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
       CallImport *ret = allocator.alloc<CallImport>();
       ret->target = F64_TO_INT;
@@ -774,7 +774,7 @@ private:
       }
       return ret;
     }
-    assert(potentialTrapMode == PotentialTrapMode::Clamp);
+    assert(trapMode == TrapMode::Clamp);
     Call *ret = allocator.alloc<Call>();
     ret->target = F64_TO_INT;
     ret->operands.push_back(input);
@@ -1678,10 +1678,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           wasm.addImport(import);
         }
         return call;
-      } else if (potentialTrapMode != PotentialTrapMode::Allow &&
+      } else if (trapMode != TrapMode::Allow &&
                  (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
                   ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
-        return makePotentiallyTrappingI32Binary(ret->op, ret->left, ret->right);
+        return makeTrappingI32Binary(ret->op, ret->left, ret->right);
       }
       return ret;
     } else if (what == SUB) {
@@ -1753,7 +1753,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == B_NOT) {
-          return makePotentiallyTrappingFloatToInt(process(ast[2][2]));
+          return makeTrappingFloatToInt(process(ast[2][2]));
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
@@ -1972,10 +1972,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
                 if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
                 if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-                if (name == I64_UDIV) return makePotentiallyTrappingI64Binary(BinaryOp::DivUInt64, left, right);
-                if (name == I64_SDIV) return makePotentiallyTrappingI64Binary(BinaryOp::DivSInt64, left, right);
-                if (name == I64_UREM) return makePotentiallyTrappingI64Binary(BinaryOp::RemUInt64, left, right);
-                if (name == I64_SREM) return makePotentiallyTrappingI64Binary(BinaryOp::RemSInt64, left, right);
+                if (name == I64_UDIV) return makeTrappingI64Binary(BinaryOp::DivUInt64, left, right);
+                if (name == I64_SDIV) return makeTrappingI64Binary(BinaryOp::DivSInt64, left, right);
+                if (name == I64_UREM) return makeTrappingI64Binary(BinaryOp::RemUInt64, left, right);
+                if (name == I64_SREM) return makeTrappingI64Binary(BinaryOp::RemSInt64, left, right);
                 if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
                 if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
                 if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
