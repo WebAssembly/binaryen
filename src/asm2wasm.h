@@ -1248,9 +1248,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.add<ApplyDebugInfo>(this);
     passRunner.add("vacuum"); // FIXME maybe just remove the nops that were debuginfo nodes, if not optimizing?
   }
-  // make sure to not emit unreachable code at all, even in -O0, as wasm rules for it are complex
-  // and changing.
-  passRunner.add("dce");
   passRunner.run();
 
   // remove the debug info intrinsic
