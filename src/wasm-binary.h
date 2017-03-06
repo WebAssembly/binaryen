@@ -304,6 +304,11 @@ enum EncodedType {
 
 namespace UserSections {
 extern const char* Name;
+
+enum Subsection {
+  NameFunction = 1,
+  NameLocal = 2,
+};
 }
 
 enum ASTNodes {
@@ -546,6 +551,8 @@ public:
   void writeResizableLimits(Address initial, Address maximum, bool hasMaximum);
   int32_t startSection(BinaryConsts::Section code);
   void finishSection(int32_t start);
+  int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
+  void finishSubsection(int32_t start);
   void writeStart();
   void writeMemory();
   void writeTypes();

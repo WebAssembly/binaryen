@@ -80,6 +80,16 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   o.writeAt(start, U32LEB(size));
 }
 
+int32_t WasmBinaryWriter::startSubsection(BinaryConsts::UserSections::Subsection code) {
+  o << U32LEB(code);
+  return writeU32LEBPlaceholder(); // section size to be filled in later
+}
+
+void WasmBinaryWriter::finishSubsection(int32_t start) {
+  int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
+  o.writeAt(start, U32LEB(size));
+}
+
 void WasmBinaryWriter::writeStart() {
   if (!wasm->start.is()) return;
   if (debug) std::cerr << "== writeStart" << std::endl;
@@ -386,21 +396,24 @@ void WasmBinaryWriter::writeNames() {
   if (debug) std::cerr << "== writeNames" << std::endl;
   auto start = startSection(BinaryConsts::Section::User);
   writeInlineString(BinaryConsts::UserSections::Name);
+  auto substart = startSubsection(BinaryConsts::UserSections::Subsection::NameFunction);
   o << U32LEB(mappedFunctions.size());
   Index emitted = 0;
   for (auto& import : wasm->imports) {
     if (import->kind == ExternalKind::Function) {
+      o << U32LEB(emitted);
       writeInlineString(import->name.str);
-      o << U32LEB(0); // TODO: locals
       emitted++;
     }
   }
   for (auto& curr : wasm->functions) {
+    o << U32LEB(emitted);
     writeInlineString(curr->name.str);
-    o << U32LEB(0); // TODO: locals
     emitted++;
   }
   assert(emitted == mappedFunctions.size());
+  finishSubsection(substart);
+  /* TODO: locals */
   finishSection(start);
 }
 
