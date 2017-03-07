@@ -981,7 +981,7 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
   auto oldPos = pos;
   Name sectionName = getInlineString();
   if (sectionName.equals(BinaryConsts::UserSections::Name)) {
-    readNames();
+    readNames(payloadLen - (pos - oldPos));
   } else {
     // an unfamiliar custom section
     wasm.userSections.resize(wasm.userSections.size() + 1);
@@ -1522,29 +1522,36 @@ void WasmBinaryBuilder::readTableElements() {
   }
 }
 
-void WasmBinaryBuilder::readNames() {
+void WasmBinaryBuilder::readNames(size_t payloadLen) {
   if (debug) std::cerr << "== readNames" << std::endl;
-  auto name_type = getU32LEB();
-  auto subsection_size = getU32LEB();
-  WASM_UNUSED(subsection_size);
-  assert(name_type == BinaryConsts::UserSections::Subsection::NameFunction);
-
-  auto num = getU32LEB();
-  if (num == 0) return;
-  uint32_t imported_functions = 0;
-  for (auto& import : wasm.imports) {
-    if (import->kind != ExternalKind::Function) continue;
-    imported_functions++;
-  }
-  for (size_t i = 0; i < num; i++) {
-    auto index = getU32LEB();
-    if (index < imported_functions) {
-      getInlineString(); // TODO: use this
-    } else if (index - imported_functions < functions.size()) {
-      functions[index - imported_functions]->name = getInlineString();
+  auto sectionPos = pos;
+  while (pos < sectionPos + payloadLen) {
+    auto nameType = getU32LEB();
+    auto subsectionSize = getU32LEB();
+    auto subsectionPos = pos;
+    if (nameType != BinaryConsts::UserSections::Subsection::NameFunction) {
+      // TODO: locals
+      std::cerr << "unknown name subsection at " << pos << std::endl;
+      pos = subsectionPos + subsectionSize;
+      continue;
     }
+    auto num = getU32LEB();
+    uint32_t importedFunctions = 0;
+    for (auto& import : wasm.imports) {
+      if (import->kind != ExternalKind::Function) continue;
+      importedFunctions++;
+    }
+    for (size_t i = 0; i < num; i++) {
+      auto index = getU32LEB();
+      if (index < importedFunctions) {
+        getInlineString(); // TODO: use this
+      } else if (index - importedFunctions < functions.size()) {
+        functions[index - importedFunctions]->name = getInlineString();
+      }
+    }
+    assert(pos == subsectionPos + subsectionSize);
   }
-  // TODO: locals
+  assert(pos == sectionPos + payloadLen);
 }
 
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {

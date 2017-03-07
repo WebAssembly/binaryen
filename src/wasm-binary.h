@@ -729,7 +729,7 @@ public:
 
   void readFunctionTableDeclaration();
   void readTableElements();
-  void readNames();
+  void readNames(size_t);
 
   // AST reading
   int depth = 0; // only for debugging
