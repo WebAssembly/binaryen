@@ -8,13 +8,16 @@ print '[ processing and updating testcases... ]\n'
 
 for asm in sorted(os.listdir('test')):
   if asm.endswith('.asm.js'):
-    for precise in [1, 0]:
+    for precise in [0, 1, 2]:
       for opts in [1, 0]:
         cmd = [os.path.join('bin', 'asm2wasm'), os.path.join('test', asm)]
         wasm = asm.replace('.asm.js', '.fromasm')
         if not precise:
-          cmd += ['--imprecise', '--ignore-implicit-traps']
+          cmd += ['--emit-potential-traps', '--ignore-implicit-traps']
           wasm += '.imprecise'
+        elif precise == 2:
+          cmd += ['--emit-clamped-potential-traps']
+          wasm += '.clamp'
         if not opts:
           wasm += '.no-opts'
           if precise:
@@ -31,8 +34,7 @@ for asm in sorted(os.listdir('test')):
             cmd += ['--mem-base=1024']
         if 'i64' in asm or 'wasm-only' in asm:
           cmd += ['--wasm-only']
-        print '..', asm, wasm
-        print '    ', ' '.join(cmd)
+        print ' '.join(cmd)
         actual = run_command(cmd)
         with open(os.path.join('test', wasm), 'w') as o: o.write(actual)
 
