@@ -1,6 +1,9 @@
 (module
  (type $0 (func (param i32)))
- (type $1 (func (param i32) (result i32)))
+ (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+ (type $2 (func (param i32) (result i32)))
+ (type $3 (func))
+ (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
  (memory $0 256 256)
  (export "load-off-2" (func $load-off-2))
  (func $b0 (type $0) (param $x i32)
@@ -41,7 +44,7 @@
    )
   )
  )
- (func $load-off-2 (type $1) (param $0 i32) (result i32)
+ (func $load-off-2 (type $2) (param $0 i32) (result i32)
   (i32.store
    (i32.const 6)
    (get_local $0)
@@ -110,6 +113,57 @@
   )
   (i32.load offset=12
    (get_local $0)
+  )
+ )
+ (func $pow2 (type $3)
+  (local $x f64)
+  (local $y f64)
+  (local $2 f64)
+  (local $3 f64)
+  (drop
+   (f64.mul
+    (tee_local $2
+     (f64.const 1)
+    )
+    (get_local $2)
+   )
+  )
+  (drop
+   (call $Math_pow
+    (f64.const 1)
+    (f64.const 3)
+   )
+  )
+  (drop
+   (call $Math_pow
+    (f64.const 2)
+    (f64.const 1)
+   )
+  )
+  (set_local $x
+   (f64.const 5)
+  )
+  (drop
+   (f64.mul
+    (get_local $x)
+    (get_local $x)
+   )
+  )
+  (drop
+   (f64.mul
+    (tee_local $y
+     (f64.const 7)
+    )
+    (get_local $y)
+   )
+  )
+  (drop
+   (f64.mul
+    (tee_local $3
+     (f64.const 8)
+    )
+    (get_local $3)
+   )
   )
  )
 )
