@@ -435,11 +435,13 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         } else if (auto* left = Properties::getSignExtValue(binary->left)) {
           if (auto* right = Properties::getSignExtValue(binary->right)) {
-            // we are comparing two sign-exts, so we may as well replace both with cheaper zexts
             auto bits = Properties::getSignExtBits(binary->left);
-            binary->left = makeZeroExt(left, bits);
-            binary->right = makeZeroExt(right, bits);
-            return binary;
+            if (Properties::getSignExtBits(binary->right) == bits) {
+              // we are comparing two sign-exts with the same bits, so we may as well replace both with cheaper zexts
+              binary->left = makeZeroExt(left, bits);
+              binary->right = makeZeroExt(right, bits);
+              return binary;
+            }
           } else if (auto* load = binary->right->dynCast<Load>()) {
             // we are comparing a load to a sign-ext, we may be able to switch to zext
             auto leftBits = Properties::getSignExtBits(binary->left);
