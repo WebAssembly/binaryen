@@ -103,6 +103,9 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
             Localizer localizer(curr->operands[0], getFunction(), getModule());
             Builder builder(*getModule());
             replaceCurrent(builder.makeBinary(MulFloat64, localizer.expr, builder.makeGetLocal(localizer.index, localizer.expr->type)));
+          } else if (exponent->value == Literal(double(0.5))) {
+            // This is just a square root operation
+            replaceCurrent(Builder(*getModule()).makeUnary(SqrtFloat64, curr->operands[0]));
           }
         }
       }

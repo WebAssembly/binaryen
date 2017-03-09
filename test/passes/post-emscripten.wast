@@ -194,4 +194,18 @@
       )
     )
   )
+  (func $pow.2
+    (drop
+      (call $Math_pow
+        (f64.const 1)
+        (f64.const 0.5)
+      )
+    )
+    (drop
+      (call $Math_pow
+        (f64.const 1)
+        (f64.const 0.51)
+      )
+    )
+  )
 )
