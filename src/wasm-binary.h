@@ -572,6 +572,7 @@ public:
   void writeTableElements();
   void writeNames();
   void writeSymbolMap();
+  void writeUserSections();
 
   // helpers
   void writeInlineString(const char* name);
