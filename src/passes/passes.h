@@ -31,6 +31,7 @@ Pass *createExtractFunctionPass();
 Pass *createFullPrinterPass();
 Pass *createInliningPass();
 Pass *createLegalizeJSInterfacePass();
+Pass *createLocalCSEPass();
 Pass *createLowerIfElsePass();
 Pass *createMemoryPackingPass();
 Pass *createMergeBlocksPass();

@@ -1,0 +1,30 @@
+(module
+ (type $0 (func))
+ (memory $0 100 100)
+ (func $loads (type $0)
+  (local $0 i32)
+  (drop
+   (tee_local $0
+    (i32.load
+     (i32.const 10)
+    )
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (i32.load offset=5
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 11)
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+ )
+)

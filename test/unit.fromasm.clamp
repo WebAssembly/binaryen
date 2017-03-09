@@ -1,0 +1,1223 @@
+(module
+ (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+ (type $FUNCSIG$vf (func (param f32)))
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$idi (func (param f64 i32) (result i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $FUNCSIG$dd (func (param f64) (result f64)))
+ (type $FUNCSIG$i (func (result i32)))
+ (import "env" "gb" (global $n$asm2wasm$import i32))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32) (result i32)))
+ (import "env" "abort" (func $abort (param f64) (result f64)))
+ (import "env" "print" (func $print (param i32)))
+ (import "env" "h" (func $h (param i32)))
+ (import "env" "return_int" (func $return_int (result i32)))
+ (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
+ (import "env" "memory" (memory $0 256 256))
+ (import "env" "table" (table 24 24 anyfunc))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (global $Int (mut i32) (i32.const 0))
+ (global $Double (mut f64) (f64.const 0))
+ (global $n (mut i32) (get_global $n$asm2wasm$import))
+ (global $exportedNumber i32 (i32.const 42))
+ (elem (get_global $tableBase) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $fr $cneg $fr $fr $fr $fr $fr $fr $vi $vi $vi $vi $vi $vi $vi $vi)
+ (data (get_global $memoryBase) "unit.asm.js")
+ (export "big_negative" (func $big_negative))
+ (export "pick" (func $big_negative))
+ (export "doubleCompares" (func $doubleCompares))
+ (export "intOps" (func $intOps))
+ (export "conversions" (func $conversions))
+ (export "switcher" (func $switcher))
+ (export "frem" (func $frem))
+ (export "big_uint_div_u" (func $big_uint_div_u))
+ (export "fr" (func $legalstub$fr))
+ (export "negZero" (func $negZero))
+ (export "neg" (func $neg))
+ (export "smallCompare" (func $smallCompare))
+ (export "cneg_nosemicolon" (func $cneg_nosemicolon))
+ (export "forLoop" (func $forLoop))
+ (export "ceiling_32_64" (func $legalstub$ceiling_32_64))
+ (export "aborts" (func $aborts))
+ (export "continues" (func $continues))
+ (export "bitcasts" (func $legalstub$bitcasts))
+ (export "recursiveBlockMerging" (func $recursiveBlockMerging))
+ (export "lb" (func $lb))
+ (export "zeroInit" (func $zeroInit))
+ (export "phi" (func $phi))
+ (export "smallIf" (func $smallIf))
+ (export "dropCall" (func $dropCall))
+ (export "useSetGlobal" (func $useSetGlobal))
+ (export "usesSetGlobal2" (func $usesSetGlobal2))
+ (export "breakThroughMany" (func $breakThroughMany))
+ (export "ifChainEmpty" (func $ifChainEmpty))
+ (export "heap8NoShift" (func $heap8NoShift))
+ (export "conditionalTypeFun" (func $conditionalTypeFun))
+ (export "loadSigned" (func $loadSigned))
+ (export "globalOpts" (func $globalOpts))
+ (export "dropCallImport" (func $dropCallImport))
+ (export "loophi" (func $loophi))
+ (export "loophi2" (func $loophi2))
+ (export "relooperJumpThreading" (func $relooperJumpThreading))
+ (export "relooperJumpThreading__ZN4game14preloadweaponsEv" (func $relooperJumpThreading__ZN4game14preloadweaponsEv))
+ (export "__Z12multi_varargiz" (func $__Z12multi_varargiz))
+ (export "jumpThreadDrop" (func $jumpThreadDrop))
+ (export "dropIgnoredImportInIf" (func $dropIgnoredImportInIf))
+ (export "dropIgnoredImportsInIf" (func $dropIgnoredImportsInIf))
+ (export "relooperJumpThreading_irreducible" (func $relooperJumpThreading_irreducible))
+ (export "store_fround" (func $store_fround))
+ (export "exportedNumber" (global $exportedNumber))
+ (export "relocatableAndModules" (func $relocatableAndModules))
+ (export "exported_f32_user" (func $legalstub$exported_f32_user))
+ (export "keepAlive" (func $keepAlive))
+ (func $big_negative
+  (nop)
+ )
+ (func $importedDoubles (result f64)
+  (if
+   (i32.gt_s
+    (get_global $Int)
+    (i32.const 0)
+   )
+   (return
+    (f64.const -3.4)
+   )
+  )
+  (if
+   (f64.gt
+    (get_global $Double)
+    (f64.const 0)
+   )
+   (return
+    (f64.const 5.6)
+   )
+  )
+  (f64.const 1.2)
+ )
+ (func $doubleCompares (param $0 f64) (param $1 f64) (result f64)
+  (local $2 f64)
+  (local $3 i32)
+  (if
+   (f64.gt
+    (get_local $0)
+    (f64.const 0)
+   )
+   (return
+    (f64.const 1.2)
+   )
+  )
+  (if
+   (f64.gt
+    (get_local $2)
+    (f64.const 0)
+   )
+   (return
+    (f64.const -3.4)
+   )
+  )
+  (if
+   (i32.gt_s
+    (get_local $3)
+    (i32.const 0)
+   )
+   (return
+    (f64.const 5.6)
+   )
+  )
+  (if
+   (f64.lt
+    (get_local $0)
+    (get_local $1)
+   )
+   (return
+    (get_local $0)
+   )
+  )
+  (get_local $1)
+ )
+ (func $intOps (result i32)
+  (local $0 i32)
+  (i32.eqz
+   (get_local $0)
+  )
+ )
+ (func $f64-to-int (param $0 f64) (result i32)
+  (if i32
+   (f64.ne
+    (get_local $0)
+    (get_local $0)
+   )
+   (i32.const -2147483648)
+   (if i32
+    (f64.ge
+     (get_local $0)
+     (f64.const 2147483648)
+    )
+    (i32.const -2147483648)
+    (if i32
+     (f64.le
+      (get_local $0)
+      (f64.const -2147483649)
+     )
+     (i32.const -2147483648)
+     (i32.trunc_s/f64
+      (get_local $0)
+     )
+    )
+   )
+  )
+ )
+ (func $conversions
+  (local $0 f64)
+  (local $1 f32)
+  (drop
+   (call $f64-to-int
+    (get_local $0)
+   )
+  )
+  (drop
+   (call $f64-to-int
+    (f64.promote/f32
+     (get_local $1)
+    )
+   )
+  )
+ )
+ (func $switcher (param $0 i32) (result i32)
+  (block $switch
+   (block $switch-case0
+    (block $switch-case
+     (br_table $switch-case $switch-case0 $switch
+      (i32.sub
+       (get_local $0)
+       (i32.const 1)
+      )
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (block $switch1
+   (block $switch-case3
+    (block $switch-case2
+     (br_table $switch-case3 $switch1 $switch1 $switch1 $switch1 $switch1 $switch1 $switch-case2 $switch1
+      (i32.sub
+       (get_local $0)
+       (i32.const 5)
+      )
+     )
+    )
+    (return
+     (i32.const 121)
+    )
+   )
+   (return
+    (i32.const 51)
+   )
+  )
+  (block $label$break$Lout
+   (block $switch-case9
+    (block $switch-case6
+     (block $switch-case5
+      (block $switch-case4
+       (br_table $switch-case9 $label$break$Lout $label$break$Lout $switch-case6 $label$break$Lout $label$break$Lout $label$break$Lout $label$break$Lout $switch-case5 $label$break$Lout $switch-case4 $label$break$Lout
+        (i32.sub
+         (get_local $0)
+         (i32.const 2)
+        )
+       )
+      )
+     )
+    )
+   )
+  )
+  (loop $label$continue$L1
+   (block $label$break$L1
+    (loop $label$continue$L3
+     (block $label$break$L3
+      (block $switch-default
+       (block $switch-case13
+        (block $switch-case12
+         (block $switch-case11
+          (br_table $switch-case11 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case13 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case12 $switch-default
+           (i32.sub
+            (get_local $0)
+            (i32.const -1)
+           )
+          )
+         )
+         (br $label$break$L1)
+        )
+        (br $label$continue$L3)
+       )
+       (br $label$break$L3)
+      )
+      (br $label$break$L1)
+     )
+    )
+    (call $h
+     (i32.const 120)
+    )
+    (br $label$continue$L1)
+   )
+  )
+  (i32.const 0)
+ )
+ (func $frem (result f64)
+  (call $f64-rem
+   (f64.const 5.5)
+   (f64.const 1.2)
+  )
+ )
+ (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
+  (if i32
+   (get_local $1)
+   (i32.div_u
+    (get_local $0)
+    (get_local $1)
+   )
+   (i32.const 0)
+  )
+ )
+ (func $big_uint_div_u (result i32)
+  (call $i32u-div
+   (i32.const -1)
+   (i32.const 2)
+  )
+ )
+ (func $fr (param $0 f32)
+  (nop)
+ )
+ (func $negZero (result f64)
+  (f64.const -0)
+ )
+ (func $neg
+  (local $0 f32)
+  (call_indirect $FUNCSIG$vf
+   (f32.neg
+    (get_local $0)
+   )
+   (i32.const 9)
+  )
+ )
+ (func $cneg (param $0 f32)
+  (call_indirect $FUNCSIG$vf
+   (get_local $0)
+   (i32.const 9)
+  )
+ )
+ (func $smallCompare (result i32)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (i32.lt_s
+    (get_local $0)
+    (get_local $1)
+   )
+   (set_local $0
+    (i32.add
+     (get_local $0)
+     (i32.const 1)
+    )
+   )
+  )
+  (if
+   (i32.lt_u
+    (get_local $0)
+    (get_local $1)
+   )
+   (set_local $0
+    (i32.add
+     (get_local $0)
+     (i32.const 1)
+    )
+   )
+  )
+  (get_local $0)
+ )
+ (func $cneg_nosemicolon
+  (call_indirect $FUNCSIG$vi
+   (i32.const 1)
+   (i32.const 17)
+  )
+ )
+ (func $forLoop
+  (local $0 i32)
+  (set_local $0
+   (i32.const 1)
+  )
+  (loop $for-in
+   (if
+    (i32.lt_s
+     (get_local $0)
+     (i32.const 200)
+    )
+    (block
+     (call $h
+      (get_local $0)
+     )
+     (set_local $0
+      (i32.add
+       (get_local $0)
+       (i32.const 1)
+      )
+     )
+     (br $for-in)
+    )
+   )
+  )
+ )
+ (func $ceiling_32_64 (param $0 f32) (param $1 f64)
+  (nop)
+ )
+ (func $aborts
+  (drop
+   (call $abort
+    (f64.const 0)
+   )
+  )
+  (drop
+   (call $abort
+    (f64.convert_s/i32
+     (i32.const 55)
+    )
+   )
+  )
+  (drop
+   (call $abort
+    (f64.const 0)
+   )
+  )
+  (drop
+   (call $abort
+    (f64.const 12.34)
+   )
+  )
+  (drop
+   (call $abort
+    (f64.const 56.779998779296875)
+   )
+  )
+ )
+ (func $continues
+  (loop $while-in
+   (call $print
+    (i32.const 1)
+   )
+   (loop $unlikely-continue
+    (call $print
+     (i32.const 5)
+    )
+    (br_if $unlikely-continue
+     (call $return_int)
+    )
+   )
+   (call $print
+    (i32.const 2)
+   )
+   (br $while-in)
+  )
+ )
+ (func $bitcasts (param $0 i32) (param $1 f32)
+  (nop)
+ )
+ (func $recursiveBlockMerging (param $0 i32) (result i32)
+  (drop
+   (call $lb
+    (i32.add
+     (get_local $0)
+     (i32.const 22)
+    )
+   )
+  )
+  (drop
+   (call $lb
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $lb
+    (i32.const 2)
+   )
+  )
+  (i32.add
+   (i32.add
+    (i32.add
+     (get_local $0)
+     (call $lb
+      (i32.const 3)
+     )
+    )
+    (block i32
+     (drop
+      (call $lb
+       (i32.const 4)
+      )
+     )
+     (drop
+      (call $lb
+       (i32.const 5)
+      )
+     )
+     (drop
+      (call $lb
+       (i32.const 6)
+      )
+     )
+     (call $lb
+      (i32.const 7)
+     )
+    )
+   )
+   (block i32
+    (drop
+     (call $lb
+      (i32.const 8)
+     )
+    )
+    (drop
+     (call $lb
+      (i32.const 9)
+     )
+    )
+    (drop
+     (call $lb
+      (i32.const 10)
+     )
+    )
+    (drop
+     (call $lb
+      (i32.const 11)
+     )
+    )
+    (call $lb
+     (i32.const 12)
+    )
+   )
+  )
+ )
+ (func $lb (param $0 i32) (result i32)
+  (i32.store
+   (get_local $0)
+   (i32.add
+    (get_global $n)
+    (i32.const 144)
+   )
+  )
+  (i32.const 0)
+ )
+ (func $zeroInit (param $0 i32)
+  (local $1 i32)
+  (if
+   (call $lb
+    (i32.const 0)
+   )
+   (if
+    (call $lb
+     (i32.const 1)
+    )
+    (set_local $1
+     (i32.const 3)
+    )
+   )
+   (set_local $1
+    (i32.const 3)
+   )
+  )
+  (if
+   (i32.eq
+    (get_local $1)
+    (i32.const 3)
+   )
+   (drop
+    (call $lb
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $phi (result i32)
+  (block $do-once i32
+   (drop
+    (br_if $do-once
+     (i32.const 0)
+     (call $lb
+      (i32.const 1)
+     )
+    )
+   )
+   (i32.const 1)
+  )
+ )
+ (func $smallIf
+  (if
+   (call $return_int)
+   (drop
+    (call $lb
+     (i32.const 3)
+    )
+   )
+  )
+ )
+ (func $dropCall (result i32)
+  (if
+   (call $return_int)
+   (block
+    (drop
+     (call $phi)
+    )
+    (drop
+     (call $setTempRet0
+      (i32.const 10)
+     )
+    )
+    (call $zeroInit
+     (call $setTempRet0
+      (i32.const 10)
+     )
+    )
+   )
+  )
+  (call $phi)
+ )
+ (func $useSetGlobal (result i32)
+  (set_global $Int
+   (i32.const 10)
+  )
+  (set_global $Int
+   (i32.const 20)
+  )
+  (set_global $Int
+   (i32.const 30)
+  )
+  (get_global $Int)
+ )
+ (func $usesSetGlobal2 (result i32)
+  (set_global $Int
+   (i32.const 40)
+  )
+  (i32.const 50)
+ )
+ (func $breakThroughMany (param $0 i32)
+  (block $label$break$L1
+   (if
+    (get_local $0)
+    (loop $while-in
+     (br_if $label$break$L1
+      (i32.eqz
+       (get_local $0)
+      )
+     )
+     (call $zeroInit
+      (i32.const 0)
+     )
+     (br $while-in)
+    )
+   )
+  )
+ )
+ (func $ifChainEmpty (param $0 i32) (result i32)
+  (if
+   (i32.eq
+    (get_local $0)
+    (i32.const 4)
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (i32.const 0)
+ )
+ (func $heap8NoShift (param $0 i32) (result i32)
+  (i32.load8_s
+   (get_local $0)
+  )
+ )
+ (func $conditionalTypeFun
+  (drop
+   (if i32
+    (call $return_int)
+    (i32.trunc_s/f64
+     (call $abort
+      (f64.convert_s/i32
+       (i32.const 5)
+      )
+     )
+    )
+    (i32.const 2)
+   )
+  )
+  (drop
+   (if f64
+    (call $return_int)
+    (call $abort
+     (f64.convert_s/i32
+      (i32.const 7)
+     )
+    )
+    (f64.const 4.5)
+   )
+  )
+ )
+ (func $loadSigned (param $0 i32)
+  (call $loadSigned
+   (i32.load8_s
+    (get_local $0)
+   )
+  )
+  (call $loadSigned
+   (i32.load8_s
+    (get_local $0)
+   )
+  )
+  (call $loadSigned
+   (i32.load16_s
+    (get_local $0)
+   )
+  )
+  (call $loadSigned
+   (i32.load16_s
+    (get_local $0)
+   )
+  )
+  (call $loadSigned
+   (i32.shr_s
+    (i32.shl
+     (i32.load8_s
+      (get_local $0)
+     )
+     (i32.const 24)
+    )
+    (i32.const 16)
+   )
+  )
+  (call $loadSigned
+   (i32.shr_s
+    (i32.shl
+     (i32.load8_u
+      (get_local $0)
+     )
+     (i32.const 16)
+    )
+    (i32.const 24)
+   )
+  )
+  (call $loadSigned
+   (i32.shr_s
+    (i32.shl
+     (i32.load16_s
+      (get_local $0)
+     )
+     (i32.const 16)
+    )
+    (i32.const 24)
+   )
+  )
+  (call $loadSigned
+   (i32.shl
+    (i32.load16_s
+     (get_local $0)
+    )
+    (i32.const 8)
+   )
+  )
+ )
+ (func $w (result f64)
+  (f64.const 0)
+ )
+ (func $globalOpts
+  (local $0 i32)
+  (i32.store8
+   (i32.const 13)
+   (i32.load
+    (i32.const 12)
+   )
+  )
+  (call $globalOpts)
+  (set_local $0
+   (get_global $Int)
+  )
+  (if
+   (call $return_int)
+   (set_global $Int
+    (i32.const 20)
+   )
+  )
+  (set_global $Int
+   (get_local $0)
+  )
+  (call $globalOpts)
+  (set_local $0
+   (get_global $Int)
+  )
+  (call $globalOpts)
+  (set_global $Int
+   (get_local $0)
+  )
+ )
+ (func $dropCallImport
+  (if
+   (call $return_int)
+   (drop
+    (call $return_int)
+   )
+  )
+ )
+ (func $loophi (param $0 i32) (param $1 i32)
+  (local $2 i32)
+  (loop $while-in
+   (block $while-out
+    (call $loophi
+     (get_local $0)
+     (i32.const 0)
+    )
+    (if
+     (tee_local $2
+      (get_local $0)
+     )
+     (br_if $while-out
+      (get_local $2)
+     )
+    )
+    (br_if $while-in
+     (i32.eq
+      (tee_local $0
+       (i32.add
+        (get_local $0)
+        (i32.const 1)
+       )
+      )
+      (get_local $1)
+     )
+    )
+   )
+  )
+ )
+ (func $loophi2 (result i32)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (set_local $1
+   (i32.const 0)
+  )
+  (loop $label$continue$L7
+   (block $label$break$L7
+    (set_local $0
+     (i32.const 0)
+    )
+    (loop $while-in
+     (set_local $2
+      (get_local $0)
+     )
+     (if
+      (call $return_int)
+      (br_if $label$break$L7
+       (get_local $2)
+      )
+     )
+     (br_if $while-in
+      (tee_local $0
+       (i32.add
+        (get_local $0)
+        (i32.const 1)
+       )
+      )
+     )
+    )
+    (br $label$continue$L7)
+   )
+  )
+  (get_local $1)
+ )
+ (func $relooperJumpThreading (param $0 i32) (result i32)
+  (block $__rjto$0
+   (block $__rjti$0
+    (if
+     (get_local $0)
+     (block
+      (call $h
+       (i32.const 0)
+      )
+      (br $__rjti$0)
+     )
+    )
+    (br $__rjto$0)
+   )
+   (call $h
+    (i32.const 1)
+   )
+  )
+  (call $h
+   (i32.const -1)
+  )
+  (block $__rjti$1
+   (loop $while-in
+    (br_if $while-in
+     (i32.eqz
+      (tee_local $0
+       (i32.add
+        (get_local $0)
+        (i32.const 1)
+       )
+      )
+     )
+    )
+    (call $h
+     (i32.const 2)
+    )
+    (br $__rjti$1)
+   )
+  )
+  (call $h
+   (i32.const 3)
+  )
+  (call $h
+   (i32.const -2)
+  )
+  (block $__rjto$3
+   (block $__rjti$3
+    (block $__rjti$2
+     (if
+      (get_local $0)
+      (block
+       (call $h
+        (i32.const 4)
+       )
+       (br_if $__rjti$2
+        (i32.eq
+         (get_local $0)
+         (i32.const 3)
+        )
+       )
+       (br $__rjti$3)
+      )
+     )
+     (br $__rjto$3)
+    )
+    (call $h
+     (i32.const 5)
+    )
+    (br $__rjto$3)
+   )
+   (call $h
+    (i32.const 6)
+   )
+  )
+  (call $h
+   (i32.const -3)
+  )
+  (block $__rjto$5
+   (block $__rjti$5
+    (block $__rjti$4
+     (if
+      (get_local $0)
+      (block
+       (call $h
+        (i32.const 7)
+       )
+       (br_if $__rjti$4
+        (i32.eq
+         (get_local $0)
+         (i32.const 5)
+        )
+       )
+       (br $__rjti$5)
+      )
+     )
+     (br $__rjto$5)
+    )
+    (call $h
+     (i32.const 8)
+    )
+    (br_if $__rjti$5
+     (i32.eq
+      (get_local $0)
+      (i32.const 6)
+     )
+    )
+    (br $__rjto$5)
+   )
+   (call $h
+    (i32.const 9)
+   )
+  )
+  (call $h
+   (i32.const -4)
+  )
+  (block $label$break$L1
+   (block $__rjti$6
+    (if
+     (get_local $0)
+     (block
+      (call $h
+       (i32.const 10)
+      )
+      (br $__rjti$6)
+     )
+    )
+    (br $label$break$L1)
+   )
+   (call $h
+    (i32.const 11)
+   )
+  )
+  (call $h
+   (i32.const -5)
+  )
+  (block $label$break$L10
+   (block $__rjti$8
+    (block $__rjti$7
+     (if
+      (get_local $0)
+      (block
+       (call $h
+        (i32.const 12)
+       )
+       (br_if $__rjti$7
+        (i32.eq
+         (get_local $0)
+         (i32.const 8)
+        )
+       )
+       (br $__rjti$8)
+      )
+     )
+     (br $label$break$L10)
+    )
+    (call $h
+     (i32.const 13)
+    )
+    (br_if $__rjti$8
+     (get_local $0)
+    )
+    (br $label$break$L10)
+   )
+   (call $h
+    (i32.const 14)
+   )
+  )
+  (call $h
+   (i32.const -6)
+  )
+  (get_local $0)
+ )
+ (func $relooperJumpThreading__ZN4game14preloadweaponsEv
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (loop $while-in
+   (block $__rjto$1
+    (block $__rjti$1
+     (if
+      (get_local $0)
+      (br_if $__rjti$1
+       (i32.eqz
+        (get_local $1)
+       )
+      )
+      (br_if $__rjti$1
+       (i32.eqz
+        (get_local $2)
+       )
+      )
+     )
+     (br $while-in)
+    )
+    (i32.store
+     (get_local $3)
+     (get_local $4)
+    )
+   )
+   (br $while-in)
+  )
+ )
+ (func $relooperJumpThreading_irreducible (param $0 i32)
+  (local $1 i32)
+  (if
+   (i32.eq
+    (get_local $0)
+    (i32.const 100)
+   )
+   (loop $while-in
+    (call $relooperJumpThreading_irreducible
+     (i32.const 1337)
+    )
+    (br $while-in)
+   )
+  )
+  (set_local $1
+   (select
+    (i32.const 2)
+    (i32.const 10)
+    (i32.eq
+     (get_local $0)
+     (i32.const 200)
+    )
+   )
+  )
+  (if
+   (i32.eq
+    (get_local $0)
+    (i32.const 300)
+   )
+   (set_local $1
+    (i32.const 2)
+   )
+  )
+  (if
+   (i32.eq
+    (get_local $1)
+    (i32.const 2)
+   )
+   (call $relooperJumpThreading_irreducible
+    (i32.const 1448)
+   )
+  )
+  (if
+   (i32.eq
+    (get_local $1)
+    (i32.const 10)
+   )
+   (call $relooperJumpThreading_irreducible
+    (i32.const 2000)
+   )
+  )
+ )
+ (func $__Z12multi_varargiz (param $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (if
+   (get_local $1)
+   (loop $while-in
+    (br_if $while-in
+     (i32.eqz
+      (get_local $2)
+     )
+    )
+   )
+   (drop
+    (call $lb
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $jumpThreadDrop (result i32)
+  (call $return_int)
+ )
+ (func $dropIgnoredImportInIf (param $0 i32) (param $1 i32) (param $2 i32)
+  (if
+   (get_local $0)
+   (drop
+    (call $lb
+     (get_local $2)
+    )
+   )
+  )
+ )
+ (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32)
+  (drop
+   (if i32
+    (get_local $0)
+    (call $lb
+     (get_local $1)
+    )
+    (call $lb
+     (get_local $2)
+    )
+   )
+  )
+ )
+ (func $store_fround (param $0 i32)
+  (f64.store
+   (i32.const 80)
+   (f64.promote/f32
+    (f32.convert_s/i32
+     (get_local $0)
+    )
+   )
+  )
+ )
+ (func $relocatableAndModules (result i32)
+  (call_indirect $FUNCSIG$v
+   (i32.const 10)
+  )
+  (call_indirect $FUNCSIG$v
+   (i32.const 20)
+  )
+  (call_indirect $FUNCSIG$idi
+   (f64.const 1.5)
+   (i32.const 200)
+   (i32.const 30)
+  )
+ )
+ (func $exported_f32_user (param $0 i32) (param $1 f32) (param $2 f64) (result f32)
+  (get_local $1)
+ )
+ (func $sqrts (param $0 f64) (result f64)
+  (f64.add
+   (f64.sqrt
+    (get_local $0)
+   )
+   (f64.promote/f32
+    (f32.sqrt
+     (f32.demote/f64
+      (get_local $0)
+     )
+    )
+   )
+  )
+ )
+ (func $keepAlive
+  (drop
+   (call $sqrts
+    (f64.const 3.14159)
+   )
+  )
+ )
+ (func $vi (param $0 i32)
+  (nop)
+ )
+ (func $legalstub$fr (param $0 f64)
+  (call $fr
+   (f32.demote/f64
+    (get_local $0)
+   )
+  )
+ )
+ (func $legalstub$ceiling_32_64 (param $0 f64) (param $1 f64)
+  (call $ceiling_32_64
+   (f32.demote/f64
+    (get_local $0)
+   )
+   (get_local $1)
+  )
+ )
+ (func $legalstub$bitcasts (param $0 i32) (param $1 f64)
+  (call $bitcasts
+   (get_local $0)
+   (f32.demote/f64
+    (get_local $1)
+   )
+  )
+ )
+ (func $legalstub$exported_f32_user (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
+  (f64.promote/f32
+   (call $exported_f32_user
+    (get_local $0)
+    (f32.demote/f64
+     (get_local $1)
+    )
+    (get_local $2)
+   )
+  )
+ )
+)

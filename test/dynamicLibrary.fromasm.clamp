@@ -1,0 +1,77 @@
+(module
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "abortStackOverflow" (func $abortStackOverflow (param i32)))
+ (import "env" "_puts" (func $_puts (param i32) (result i32)))
+ (import "env" "memory" (memory $0 256 256))
+ (import "env" "table" (table 0 0 anyfunc))
+ (import "env" "tableBase" (global $tableBase i32))
+ (global $STACKTOP (mut i32) (i32.const 0))
+ (global $STACK_MAX (mut i32) (i32.const 0))
+ (global $_global i32 (i32.const 5242912))
+ (data (get_global $memoryBase) "dynamicLibrary.asm.js")
+ (export "__ZN3FooC2Ev" (func $__ZN3FooC2Ev))
+ (export "__post_instantiate" (func $__post_instantiate))
+ (export "runPostSets" (func $runPostSets))
+ (export "_global" (global $_global))
+ (func $___cxx_global_var_init
+  (call $__ZN3FooC2Ev
+   (i32.add
+    (get_global $memoryBase)
+    (i32.const 5242912)
+   )
+  )
+ )
+ (func $__ZN3FooC2Ev (param $0 i32)
+  (local $1 i32)
+  (set_local $1
+   (get_global $STACKTOP)
+  )
+  (set_global $STACKTOP
+   (i32.add
+    (get_global $STACKTOP)
+    (i32.const 16)
+   )
+  )
+  (if
+   (i32.ge_s
+    (get_global $STACKTOP)
+    (get_global $STACK_MAX)
+   )
+   (call $abortStackOverflow
+    (i32.const 16)
+   )
+  )
+  (drop
+   (call $_puts
+    (get_global $memoryBase)
+   )
+  )
+  (set_global $STACKTOP
+   (get_local $1)
+  )
+ )
+ (func $__GLOBAL__sub_I_liblib_cpp
+  (call $___cxx_global_var_init)
+ )
+ (func $runPostSets
+  (nop)
+ )
+ (func $__post_instantiate
+  (set_global $STACKTOP
+   (i32.add
+    (get_global $memoryBase)
+    (i32.const 32)
+   )
+  )
+  (set_global $STACK_MAX
+   (i32.add
+    (get_global $STACKTOP)
+    (i32.const 5242880)
+   )
+  )
+  (call $runPostSets)
+  (call $__GLOBAL__sub_I_liblib_cpp)
+ )
+)

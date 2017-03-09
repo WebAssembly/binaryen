@@ -63,6 +63,7 @@
       (i32.const 26)
      )
      (return)
+     (br $switch)
     )
    )
    (block
