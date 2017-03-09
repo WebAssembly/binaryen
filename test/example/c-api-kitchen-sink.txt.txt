@@ -1,1025 +1,1025 @@
 (f32.neg
-  (f32.const -33.61199951171875)
+ (f32.const -33.61199951171875)
 )
 (module
-  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
-  (type $fiF (func (param i32 f64) (result f32)))
-  (type $v (func))
-  (type $3 (func))
-  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
-  (table 1 1 anyfunc)
-  (elem (i32.const 0) "$kitchen()sinker")
-  (memory $0 1 256)
-  (data (i32.const 10) "hello, world")
-  (export "kitchen_sinker" (func "$kitchen()sinker"))
-  (export "mem" (memory $0))
-  (start $starter)
-  (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
-    (local $4 i32)
-    (block $the-body i32
-      (block $the-nothing
-        (drop
-          (block $the-value i32
-            (drop
-              (i32.clz
-                (i32.const -10)
-              )
-            )
-            (drop
-              (i64.ctz
-                (i64.const -22)
-              )
-            )
-            (drop
-              (i32.popcnt
-                (i32.const -10)
-              )
-            )
-            (drop
-              (f32.neg
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (f64.abs
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (f32.ceil
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (f64.floor
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (f32.trunc
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (f32.nearest
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (f64.sqrt
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (i32.eqz
-                (i32.const -10)
-              )
-            )
-            (drop
-              (i64.extend_s/i32
-                (i32.const -10)
-              )
-            )
-            (drop
-              (i64.extend_u/i32
-                (i32.const -10)
-              )
-            )
-            (drop
-              (i32.wrap/i64
-                (i64.const -22)
-              )
-            )
-            (drop
-              (i32.trunc_s/f32
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (i64.trunc_s/f32
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (i32.trunc_u/f32
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (i64.trunc_u/f32
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (i32.trunc_s/f64
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (i64.trunc_s/f64
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (i32.trunc_u/f64
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (i64.trunc_u/f64
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (i32.reinterpret/f32
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (i64.reinterpret/f64
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (f32.convert_s/i32
-                (i32.const -10)
-              )
-            )
-            (drop
-              (f64.convert_s/i32
-                (i32.const -10)
-              )
-            )
-            (drop
-              (f32.convert_u/i32
-                (i32.const -10)
-              )
-            )
-            (drop
-              (f64.convert_u/i32
-                (i32.const -10)
-              )
-            )
-            (drop
-              (f32.convert_s/i64
-                (i64.const -22)
-              )
-            )
-            (drop
-              (f64.convert_s/i64
-                (i64.const -22)
-              )
-            )
-            (drop
-              (f32.convert_u/i64
-                (i64.const -22)
-              )
-            )
-            (drop
-              (f64.convert_u/i64
-                (i64.const -22)
-              )
-            )
-            (drop
-              (f64.promote/f32
-                (f32.const -33.61199951171875)
-              )
-            )
-            (drop
-              (f32.demote/f64
-                (f64.const -9005.84)
-              )
-            )
-            (drop
-              (f32.reinterpret/i32
-                (i32.const -10)
-              )
-            )
-            (drop
-              (f64.reinterpret/i64
-                (i64.const -22)
-              )
-            )
-            (drop
-              (i32.add
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (f64.sub
-                (f64.const -9005.84)
-                (f64.const -9007.33)
-              )
-            )
-            (drop
-              (i32.div_s
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i64.div_u
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i64.rem_s
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i32.rem_u
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i32.and
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i64.or
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i32.xor
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i64.shl
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i64.shr_u
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i32.shr_s
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i32.rotl
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i64.rotr
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (f32.div
-                (f32.const -33.61199951171875)
-                (f32.const -62.5)
-              )
-            )
-            (drop
-              (f64.copysign
-                (f64.const -9005.84)
-                (f64.const -9007.33)
-              )
-            )
-            (drop
-              (f32.min
-                (f32.const -33.61199951171875)
-                (f32.const -62.5)
-              )
-            )
-            (drop
-              (f64.max
-                (f64.const -9005.84)
-                (f64.const -9007.33)
-              )
-            )
-            (drop
-              (i32.eq
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (f32.ne
-                (f32.const -33.61199951171875)
-                (f32.const -62.5)
-              )
-            )
-            (drop
-              (i32.lt_s
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i64.lt_u
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i64.le_s
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i32.le_u
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i64.gt_s
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (i32.gt_u
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i32.ge_s
-                (i32.const -10)
-                (i32.const -11)
-              )
-            )
-            (drop
-              (i64.ge_u
-                (i64.const -22)
-                (i64.const -23)
-              )
-            )
-            (drop
-              (f32.lt
-                (f32.const -33.61199951171875)
-                (f32.const -62.5)
-              )
-            )
-            (drop
-              (f64.le
-                (f64.const -9005.84)
-                (f64.const -9007.33)
-              )
-            )
-            (drop
-              (f64.gt
-                (f64.const -9005.84)
-                (f64.const -9007.33)
-              )
-            )
-            (drop
-              (f32.ge
-                (f32.const -33.61199951171875)
-                (f32.const -62.5)
-              )
-            )
-            (block
-            )
-            (if
-              (i32.const 1)
-              (drop
-                (i32.const 2)
-              )
-              (drop
-                (i32.const 3)
-              )
-            )
-            (if
-              (i32.const 4)
-              (drop
-                (i32.const 5)
-              )
-            )
-            (drop
-              (loop $in i32
-                (i32.const 0)
-              )
-            )
-            (drop
-              (loop i32
-                (i32.const 0)
-              )
-            )
-            (drop
-              (br_if $the-value
-                (i32.const 1)
-                (i32.const 0)
-              )
-            )
-            (br_if $the-nothing
-              (i32.const 2)
-            )
-            (br $the-value
-              (i32.const 3)
-            )
-            (br $the-nothing)
-            (br_table $the-value $the-value
-              (i32.const 1)
-              (i32.const 0)
-            )
-            (br_table $the-nothing $the-nothing
-              (i32.const 2)
-            )
-            (drop
-              (i32.eqz
-                (call "$kitchen()sinker"
-                  (i32.const 13)
-                  (i64.const 37)
-                  (f32.const 1.2999999523162842)
-                  (f64.const 3.7)
-                )
-              )
-            )
-            (drop
-              (i32.eqz
-                (i32.trunc_s/f32
-                  (call $an-imported
-                    (i32.const 13)
-                    (f64.const 3.7)
-                  )
-                )
-              )
-            )
-            (drop
-              (i32.eqz
-                (call_indirect $iiIfF
-                  (i32.const 13)
-                  (i64.const 37)
-                  (f32.const 1.2999999523162842)
-                  (f64.const 3.7)
-                  (i32.const 2449)
-                )
-              )
-            )
-            (drop
-              (get_local $0)
-            )
-            (set_local $0
-              (i32.const 101)
-            )
-            (drop
-              (tee_local $0
-                (i32.const 102)
-              )
-            )
-            (drop
-              (i32.load
-                (i32.const 1)
-              )
-            )
-            (drop
-              (i64.load16_s offset=2 align=1
-                (i32.const 8)
-              )
-            )
-            (drop
-              (f32.load
-                (i32.const 2)
-              )
-            )
-            (drop
-              (f64.load offset=2
-                (i32.const 9)
-              )
-            )
-            (i32.store
-              (i32.const 10)
-              (i32.const 11)
-            )
-            (i64.store offset=2 align=4
-              (i32.const 110)
-              (i64.const 111)
-            )
-            (drop
-              (select
-                (i32.const 3)
-                (i32.const 5)
-                (i32.const 1)
-              )
-            )
-            (return
-              (i32.const 1337)
-            )
-            (nop)
-            (unreachable)
-          )
-        )
+ (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $fiF (func (param i32 f64) (result f32)))
+ (type $v (func))
+ (type $3 (func))
+ (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (table 1 1 anyfunc)
+ (elem (i32.const 0) "$kitchen()sinker")
+ (memory $0 1 256)
+ (data (i32.const 10) "hello, world")
+ (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "mem" (memory $0))
+ (start $starter)
+ (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+  (local $4 i32)
+  (block $the-body i32
+   (block $the-nothing
+    (drop
+     (block $the-value i32
+      (drop
+       (i32.clz
+        (i32.const -10)
+       )
       )
-      (i32.const 42)
-    )
-  )
-  (func $starter (type $v)
-    (nop)
-  )
-)
-(module
-  (type $v (func))
-  (type $vi (func (param i32)))
-  (type $i (func (result i32)))
-  (import "module" "check" (func $check (param i32)))
-  (memory $0 0)
-  (func $just-one-block (type $v)
-    (local $0 i32)
-    (call $check
-      (i32.const 1337)
-    )
-  )
-  (func $two-blocks (type $v)
-    (local $0 i32)
-    (block $block$2$break
-      (call $check
-        (i32.const 0)
+      (drop
+       (i64.ctz
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.popcnt
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.neg
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.abs
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (f32.ceil
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.floor
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (f32.trunc
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.nearest
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.sqrt
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i32.wrap/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.trunc_s/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_s/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_u/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_u/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_s/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i64.trunc_s/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i32.trunc_u/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i64.trunc_u/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i32.reinterpret/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.reinterpret/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (f32.convert_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_s/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_s/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f32.convert_u/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_u/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.promote/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.demote/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (f32.reinterpret/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.reinterpret/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.add
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f64.sub
+        (f64.const -9005.84)
+        (f64.const -9007.33)
+       )
+      )
+      (drop
+       (i32.div_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.div_u
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i64.rem_s
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i32.rem_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.and
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.or
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i32.xor
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.shl
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i64.shr_u
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i32.shr_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.rotl
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.rotr
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (f32.div
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.copysign
+        (f64.const -9005.84)
+        (f64.const -9007.33)
+       )
+      )
+      (drop
+       (f32.min
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.max
+        (f64.const -9005.84)
+        (f64.const -9007.33)
+       )
+      )
+      (drop
+       (i32.eq
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f32.ne
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (i32.lt_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.lt_u
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i64.le_s
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i32.le_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.gt_s
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (i32.gt_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.ge_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.ge_u
+        (i64.const -22)
+        (i64.const -23)
+       )
+      )
+      (drop
+       (f32.lt
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.le
+        (f64.const -9005.84)
+        (f64.const -9007.33)
+       )
+      )
+      (drop
+       (f64.gt
+        (f64.const -9005.84)
+        (f64.const -9007.33)
+       )
+      )
+      (drop
+       (f32.ge
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
       )
       (block
-        (br $block$2$break)
-      )
-    )
-    (block
-      (call $check
-        (i32.const 1)
-      )
-    )
-  )
-  (func $two-blocks-plus-code (type $v)
-    (local $0 i32)
-    (block $block$2$break
-      (call $check
-        (i32.const 0)
-      )
-      (block
-        (drop
-          (i32.const 77)
-        )
-        (br $block$2$break)
-      )
-    )
-    (block
-      (call $check
-        (i32.const 1)
-      )
-    )
-  )
-  (func $loop (type $v)
-    (local $0 i32)
-    (loop $shape$0$continue
-      (block $block$2$break
-        (call $check
-          (i32.const 0)
-        )
-        (block
-          (br $block$2$break)
-        )
-      )
-      (block
-        (call $check
-          (i32.const 1)
-        )
-        (block
-          (br $shape$0$continue)
-        )
-      )
-    )
-  )
-  (func $loop-plus-code (type $v)
-    (local $0 i32)
-    (loop $shape$0$continue
-      (block $block$2$break
-        (call $check
-          (i32.const 0)
-        )
-        (block
-          (drop
-            (i32.const 33)
-          )
-          (br $block$2$break)
-        )
-      )
-      (block
-        (call $check
-          (i32.const 1)
-        )
-        (block
-          (drop
-            (i32.const -66)
-          )
-          (br $shape$0$continue)
-        )
-      )
-    )
-  )
-  (func $split (type $v)
-    (local $0 i32)
-    (call $check
-      (i32.const 0)
-    )
-    (if
-      (i32.const 55)
-      (block
-        (call $check
-          (i32.const 1)
-        )
-      )
-      (block
-        (call $check
-          (i32.const 2)
-        )
-      )
-    )
-  )
-  (func $split-plus-code (type $v)
-    (local $0 i32)
-    (call $check
-      (i32.const 0)
-    )
-    (if
-      (i32.const 55)
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (block
-          (call $check
-            (i32.const 1)
-          )
-        )
-      )
-      (block
-        (drop
-          (i32.const 20)
-        )
-        (block
-          (call $check
-            (i32.const 2)
-          )
-        )
-      )
-    )
-  )
-  (func $if (type $v)
-    (local $0 i32)
-    (block $block$3$break
-      (call $check
-        (i32.const 0)
       )
       (if
-        (i32.const 55)
-        (block
-          (call $check
-            (i32.const 1)
-          )
-          (block
-            (br $block$3$break)
-          )
-        )
-        (br $block$3$break)
-      )
-    )
-    (block
-      (call $check
+       (i32.const 1)
+       (drop
         (i32.const 2)
-      )
-    )
-  )
-  (func $if-plus-code (type $v)
-    (local $0 i32)
-    (block $block$3$break
-      (call $check
-        (i32.const 0)
-      )
-      (if
-        (i32.const 55)
-        (block
-          (drop
-            (i32.const -1)
-          )
-          (block
-            (call $check
-              (i32.const 1)
-            )
-            (block
-              (drop
-                (i32.const -3)
-              )
-              (br $block$3$break)
-            )
-          )
-        )
-        (block
-          (drop
-            (i32.const -2)
-          )
-          (br $block$3$break)
-        )
-      )
-    )
-    (block
-      (call $check
-        (i32.const 2)
-      )
-    )
-  )
-  (func $if-else (type $v)
-    (local $0 i32)
-    (block $block$4$break
-      (call $check
-        (i32.const 0)
-      )
-      (if
-        (i32.const 55)
-        (block
-          (call $check
-            (i32.const 1)
-          )
-          (block
-            (br $block$4$break)
-          )
-        )
-        (block
-          (call $check
-            (i32.const 2)
-          )
-          (block
-            (br $block$4$break)
-          )
-        )
-      )
-    )
-    (block
-      (call $check
+       )
+       (drop
         (i32.const 3)
+       )
       )
-    )
-  )
-  (func $loop-tail (type $v)
-    (local $0 i32)
-    (block $block$3$break
-      (loop $shape$0$continue
-        (block $block$2$break
-          (call $check
-            (i32.const 0)
-          )
-          (block
-            (br $block$2$break)
-          )
-        )
-        (block
-          (call $check
-            (i32.const 1)
-          )
-          (if
-            (i32.const 10)
-            (br $shape$0$continue)
-            (br $block$3$break)
-          )
-        )
-      )
-    )
-    (block
-      (call $check
-        (i32.const 2)
-      )
-    )
-  )
-  (func $nontrivial-loop-plus-phi-to-head (type $v)
-    (local $0 i32)
-    (block $block$2$break
-      (call $check
-        (i32.const 0)
-      )
-      (block
-        (drop
-          (i32.const 10)
-        )
-        (br $block$2$break)
-      )
-    )
-    (block
-      (block $block$7$break
-        (block $block$4$break
-          (loop $shape$1$continue
-            (block $block$3$break
-              (call $check
-                (i32.const 1)
-              )
-              (if
-                (i32.const -2)
-                (br $block$3$break)
-                (block
-                  (drop
-                    (i32.const 20)
-                  )
-                  (br $block$7$break)
-                )
-              )
-            )
-            (block
-              (call $check
-                (i32.const 2)
-              )
-              (if
-                (i32.const -6)
-                (br $block$4$break)
-                (block
-                  (drop
-                    (i32.const 30)
-                  )
-                  (br $shape$1$continue)
-                )
-              )
-            )
-          )
-        )
-        (block
-          (block $block$6$break
-            (call $check
-              (i32.const 3)
-            )
-            (if
-              (i32.const -10)
-              (block
-                (call $check
-                  (i32.const 4)
-                )
-                (block
-                  (br $block$6$break)
-                )
-              )
-              (br $block$6$break)
-            )
-          )
-          (block
-            (call $check
-              (i32.const 5)
-            )
-            (block
-              (drop
-                (i32.const 40)
-              )
-              (br $block$7$break)
-            )
-          )
-        )
-      )
-      (block
-        (call $check
-          (i32.const 6)
-        )
-      )
-    )
-  )
-  (func $switch (type $v)
-    (local $0 i32)
-    (call $check
-      (i32.const 0)
-    )
-    (block $switch$1$leave
-      (block $switch$1$default
-        (block $switch$1$case$3
-          (block $switch$1$case$2
-            (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
-              (i32.const -99)
-            )
-          )
-          (block
-            (block
-              (call $check
-                (i32.const 1)
-              )
-            )
-          )
-          (br $switch$1$leave)
-        )
-        (block
-          (drop
-            (i32.const 55)
-          )
-          (block
-            (call $check
-              (i32.const 2)
-            )
-          )
-        )
-        (br $switch$1$leave)
-      )
-      (block
-        (block
-          (call $check
-            (i32.const 3)
-          )
-        )
-      )
-      (br $switch$1$leave)
-    )
-  )
-  (func $duffs-device (type $v)
-    (local $0 i32)
-    (local $1 i32)
-    (local $2 i64)
-    (local $3 i32)
-    (local $4 f32)
-    (local $5 f64)
-    (local $6 i32)
-    (block
-      (block $block$3$break
-        (block $block$2$break
-          (call $check
-            (i32.const 0)
-          )
-          (if
-            (i32.const 10)
-            (block
-              (set_local $3
-                (i32.const 2)
-              )
-              (br $block$2$break)
-            )
-            (block
-              (set_local $3
-                (i32.const 3)
-              )
-              (br $block$3$break)
-            )
-          )
-        )
-      )
-    )
-    (loop $shape$1$continue
       (if
-        (i32.eq
-          (get_local $3)
-          (i32.const 2)
-        )
-        (block
-          (set_local $3
-            (i32.const 0)
-          )
-          (call $check
-            (i32.const 1)
-          )
-          (block
-            (set_local $3
-              (i32.const 3)
-            )
-            (br $shape$1$continue)
-          )
-        )
-        (if
-          (i32.eq
-            (get_local $3)
-            (i32.const 3)
-          )
-          (block
-            (set_local $3
-              (i32.const 0)
-            )
-            (call $check
-              (i32.const 2)
-            )
-            (block
-              (set_local $3
-                (i32.const 2)
-              )
-              (br $shape$1$continue)
-            )
-          )
-        )
+       (i32.const 4)
+       (drop
+        (i32.const 5)
+       )
       )
-    )
-  )
-  (func $return (type $i) (result i32)
-    (local $0 i32)
-    (block $the-list
-      (call $check
-        (i32.const 42)
+      (drop
+       (loop $in i32
+        (i32.const 0)
+       )
+      )
+      (drop
+       (loop i32
+        (i32.const 0)
+       )
+      )
+      (drop
+       (br_if $the-value
+        (i32.const 1)
+        (i32.const 0)
+       )
+      )
+      (br_if $the-nothing
+       (i32.const 2)
+      )
+      (br $the-value
+       (i32.const 3)
+      )
+      (br $the-nothing)
+      (br_table $the-value $the-value
+       (i32.const 1)
+       (i32.const 0)
+      )
+      (br_table $the-nothing $the-nothing
+       (i32.const 2)
+      )
+      (drop
+       (i32.eqz
+        (call "$kitchen()sinker"
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.trunc_s/f32
+         (call $an-imported
+          (i32.const 13)
+          (f64.const 3.7)
+         )
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (call_indirect $iiIfF
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+         (i32.const 2449)
+        )
+       )
+      )
+      (drop
+       (get_local $0)
+      )
+      (set_local $0
+       (i32.const 101)
+      )
+      (drop
+       (tee_local $0
+        (i32.const 102)
+       )
+      )
+      (drop
+       (i32.load
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64.load16_s offset=2 align=1
+        (i32.const 8)
+       )
+      )
+      (drop
+       (f32.load
+        (i32.const 2)
+       )
+      )
+      (drop
+       (f64.load offset=2
+        (i32.const 9)
+       )
+      )
+      (i32.store
+       (i32.const 10)
+       (i32.const 11)
+      )
+      (i64.store offset=2 align=4
+       (i32.const 110)
+       (i64.const 111)
+      )
+      (drop
+       (select
+        (i32.const 3)
+        (i32.const 5)
+        (i32.const 1)
+       )
       )
       (return
-        (i32.const 1337)
+       (i32.const 1337)
       )
+      (nop)
+      (unreachable)
+     )
     )
+   )
+   (i32.const 42)
   )
+ )
+ (func $starter (type $v)
+  (nop)
+ )
 )
 (module
-  (type $v (func))
-  (type $vi (func (param i32)))
-  (type $i (func (result i32)))
-  (memory $0 0)
+ (type $v (func))
+ (type $vi (func (param i32)))
+ (type $i (func (result i32)))
+ (import "module" "check" (func $check (param i32)))
+ (memory $0 0)
+ (func $just-one-block (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 1337)
+  )
+ )
+ (func $two-blocks (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (br $block$2$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 1)
+   )
+  )
+ )
+ (func $two-blocks-plus-code (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (drop
+     (i32.const 77)
+    )
+    (br $block$2$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 1)
+   )
+  )
+ )
+ (func $loop (type $v)
+  (local $0 i32)
+  (loop $shape$0$continue
+   (block $block$2$break
+    (call $check
+     (i32.const 0)
+    )
+    (block
+     (br $block$2$break)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 1)
+    )
+    (block
+     (br $shape$0$continue)
+    )
+   )
+  )
+ )
+ (func $loop-plus-code (type $v)
+  (local $0 i32)
+  (loop $shape$0$continue
+   (block $block$2$break
+    (call $check
+     (i32.const 0)
+    )
+    (block
+     (drop
+      (i32.const 33)
+     )
+     (br $block$2$break)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 1)
+    )
+    (block
+     (drop
+      (i32.const -66)
+     )
+     (br $shape$0$continue)
+    )
+   )
+  )
+ )
+ (func $split (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (if
+   (i32.const 55)
+   (block
+    (call $check
+     (i32.const 1)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $split-plus-code (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (if
+   (i32.const 55)
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (block
+     (call $check
+      (i32.const 1)
+     )
+    )
+   )
+   (block
+    (drop
+     (i32.const 20)
+    )
+    (block
+     (call $check
+      (i32.const 2)
+     )
+    )
+   )
+  )
+ )
+ (func $if (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (br $block$3$break)
+     )
+    )
+    (br $block$3$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $if-plus-code (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (drop
+      (i32.const -1)
+     )
+     (block
+      (call $check
+       (i32.const 1)
+      )
+      (block
+       (drop
+        (i32.const -3)
+       )
+       (br $block$3$break)
+      )
+     )
+    )
+    (block
+     (drop
+      (i32.const -2)
+     )
+     (br $block$3$break)
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $if-else (type $v)
+  (local $0 i32)
+  (block $block$4$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (br $block$4$break)
+     )
+    )
+    (block
+     (call $check
+      (i32.const 2)
+     )
+     (block
+      (br $block$4$break)
+     )
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 3)
+   )
+  )
+ )
+ (func $loop-tail (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (loop $shape$0$continue
+    (block $block$2$break
+     (call $check
+      (i32.const 0)
+     )
+     (block
+      (br $block$2$break)
+     )
+    )
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (if
+      (i32.const 10)
+      (br $shape$0$continue)
+      (br $block$3$break)
+     )
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $nontrivial-loop-plus-phi-to-head (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (br $block$2$break)
+   )
+  )
+  (block
+   (block $block$7$break
+    (block $block$4$break
+     (loop $shape$1$continue
+      (block $block$3$break
+       (call $check
+        (i32.const 1)
+       )
+       (if
+        (i32.const -2)
+        (br $block$3$break)
+        (block
+         (drop
+          (i32.const 20)
+         )
+         (br $block$7$break)
+        )
+       )
+      )
+      (block
+       (call $check
+        (i32.const 2)
+       )
+       (if
+        (i32.const -6)
+        (br $block$4$break)
+        (block
+         (drop
+          (i32.const 30)
+         )
+         (br $shape$1$continue)
+        )
+       )
+      )
+     )
+    )
+    (block
+     (block $block$6$break
+      (call $check
+       (i32.const 3)
+      )
+      (if
+       (i32.const -10)
+       (block
+        (call $check
+         (i32.const 4)
+        )
+        (block
+         (br $block$6$break)
+        )
+       )
+       (br $block$6$break)
+      )
+     )
+     (block
+      (call $check
+       (i32.const 5)
+      )
+      (block
+       (drop
+        (i32.const 40)
+       )
+       (br $block$7$break)
+      )
+     )
+    )
+   )
+   (block
+    (call $check
+     (i32.const 6)
+    )
+   )
+  )
+ )
+ (func $switch (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (block $switch$1$leave
+   (block $switch$1$default
+    (block $switch$1$case$3
+     (block $switch$1$case$2
+      (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
+       (i32.const -99)
+      )
+     )
+     (block
+      (block
+       (call $check
+        (i32.const 1)
+       )
+      )
+     )
+     (br $switch$1$leave)
+    )
+    (block
+     (drop
+      (i32.const 55)
+     )
+     (block
+      (call $check
+       (i32.const 2)
+      )
+     )
+    )
+    (br $switch$1$leave)
+   )
+   (block
+    (block
+     (call $check
+      (i32.const 3)
+     )
+    )
+   )
+   (br $switch$1$leave)
+  )
+ )
+ (func $duffs-device (type $v)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i64)
+  (local $3 i32)
+  (local $4 f32)
+  (local $5 f64)
+  (local $6 i32)
+  (block
+   (block $block$3$break
+    (block $block$2$break
+     (call $check
+      (i32.const 0)
+     )
+     (if
+      (i32.const 10)
+      (block
+       (set_local $3
+        (i32.const 2)
+       )
+       (br $block$2$break)
+      )
+      (block
+       (set_local $3
+        (i32.const 3)
+       )
+       (br $block$3$break)
+      )
+     )
+    )
+   )
+  )
+  (loop $shape$1$continue
+   (if
+    (i32.eq
+     (get_local $3)
+     (i32.const 2)
+    )
+    (block
+     (set_local $3
+      (i32.const 0)
+     )
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (set_local $3
+       (i32.const 3)
+      )
+      (br $shape$1$continue)
+     )
+    )
+    (if
+     (i32.eq
+      (get_local $3)
+      (i32.const 3)
+     )
+     (block
+      (set_local $3
+       (i32.const 0)
+      )
+      (call $check
+       (i32.const 2)
+      )
+      (block
+       (set_local $3
+        (i32.const 2)
+       )
+       (br $shape$1$continue)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $return (type $i) (result i32)
+  (local $0 i32)
+  (block $the-list
+   (call $check
+    (i32.const 42)
+   )
+   (return
+    (i32.const 1337)
+   )
+  )
+ )
+)
+(module
+ (type $v (func))
+ (type $vi (func (param i32)))
+ (type $i (func (result i32)))
+ (memory $0 0)
 )

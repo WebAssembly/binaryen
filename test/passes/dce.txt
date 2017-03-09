@@ -1,340 +1,340 @@
 (module
-  (type $ii (func (param i32 i32)))
-  (type $1 (func))
-  (type $2 (func (result i32)))
-  (type $3 (func (param i32) (result i32)))
-  (global $x (mut i32) (i32.const 0))
-  (table 1 1 anyfunc)
-  (elem (i32.const 0) $call-me)
-  (memory $0 10)
-  (func $call-me (type $ii) (param $0 i32) (param $1 i32)
-    (nop)
+ (type $ii (func (param i32 i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32) (result i32)))
+ (global $x (mut i32) (i32.const 0))
+ (table 1 1 anyfunc)
+ (elem (i32.const 0) $call-me)
+ (memory $0 10)
+ (func $call-me (type $ii) (param $0 i32) (param $1 i32)
+  (nop)
+ )
+ (func $code-to-kill (type $1)
+  (local $x i32)
+  (block $out
+   (br $out)
   )
-  (func $code-to-kill (type $1)
-    (local $x i32)
-    (block $out
-      (br $out)
-    )
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (block $out3
+    (return)
+   )
+  )
+  (block $out4
+   (br_table $out4 $out4 $out4 $out4
+    (i32.const 4)
+   )
+  )
+  (block $out5
+   (br_if $out5
+    (i32.const 3)
+   )
+   (drop
+    (i32.const 0)
+   )
+  )
+  (if
+   (i32.const 0)
+   (block $block4
     (if
-      (i32.const 0)
-      (unreachable)
+     (i32.const 0)
+     (unreachable)
+     (unreachable)
     )
-    (if
-      (i32.const 0)
-      (block $out3
-        (return)
+   )
+  )
+  (if
+   (i32.const 0)
+   (drop
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (drop
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (drop
+    (unreachable)
+   )
+  )
+  (block $out16
+   (block $in
+    (br_if $out16
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (block $block11
+    (block $out18
+     (block $in19
+      (br_if $in19
+       (i32.const 1)
       )
+     )
+     (unreachable)
     )
-    (block $out4
-      (br_table $out4 $out4 $out4 $out4
-        (i32.const 4)
+   )
+  )
+  (block $out20
+   (block $in21
+    (br_table $out20 $in21
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+  )
+  (block $out22
+   (block $in23
+    (br_table $in23 $out22
+     (i32.const 1)
+    )
+   )
+   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (block $block13
+    (block $out25
+     (block $in26
+      (br_table $in26 $in26
+       (i32.const 1)
       )
+     )
+     (unreachable)
     )
-    (block $out5
-      (br_if $out5
-        (i32.const 3)
-      )
-      (drop
-        (i32.const 0)
-      )
+   )
+  )
+  (if
+   (i32.const 0)
+   (block $block15
+    (drop
+     (i32.const 10)
     )
-    (if
-      (i32.const 0)
-      (block $block4
-        (if
-          (i32.const 0)
-          (unreachable)
-          (unreachable)
-        )
-      )
+    (drop
+     (i32.const 42)
     )
-    (if
-      (i32.const 0)
-      (drop
-        (unreachable)
-      )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+  (block $out29
+   (loop $in30
+    (br_if $out29
+     (i32.const 1)
     )
-    (if
-      (i32.const 0)
-      (drop
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const 0)
-      (drop
-        (unreachable)
-      )
-    )
-    (block $out16
-      (block $in
-        (br_if $out16
-          (i32.const 1)
-        )
-      )
-      (unreachable)
-    )
-    (if
-      (i32.const 0)
-      (block $block11
-        (block $out18
-          (block $in19
-            (br_if $in19
-              (i32.const 1)
-            )
-          )
-          (unreachable)
-        )
-      )
-    )
-    (block $out20
-      (block $in21
-        (br_table $out20 $in21
-          (i32.const 1)
-        )
-      )
-      (unreachable)
-    )
-    (block $out22
-      (block $in23
-        (br_table $in23 $out22
-          (i32.const 1)
-        )
-      )
-      (unreachable)
-    )
-    (if
-      (i32.const 0)
-      (block $block13
-        (block $out25
-          (block $in26
-            (br_table $in26 $in26
-              (i32.const 1)
-            )
-          )
-          (unreachable)
-        )
-      )
-    )
-    (if
-      (i32.const 0)
-      (block $block15
-        (drop
-          (i32.const 10)
-        )
-        (drop
-          (i32.const 42)
-        )
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const 0)
-      (unreachable)
-    )
-    (block $out29
-      (loop $in30
-        (br_if $out29
-          (i32.const 1)
-        )
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const 0)
-      (block $block20
-        (loop $in32
-          (br_if $in32
-            (i32.const 1)
-          )
-          (unreachable)
-        )
-      )
-    )
-    (if
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (block $block20
+    (loop $in32
+     (br_if $in32
       (i32.const 1)
-      (block
-        (drop
-          (i32.const 123)
-        )
-        (unreachable)
-      )
+     )
+     (unreachable)
     )
-    (if
-      (i32.const 2)
-      (unreachable)
+   )
+  )
+  (if
+   (i32.const 1)
+   (block
+    (drop
+     (i32.const 123)
     )
-    (if
-      (i32.const 3)
-      (unreachable)
-    )
-    (if
-      (i32.const -1)
-      (block
-        (drop
-          (i32.const 123)
-        )
-        (drop
-          (i32.const 456)
-        )
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const -2)
-      (block
-        (drop
-          (i32.const 139)
-        )
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const -3)
-      (block
-        (drop
-          (i32.const 246)
-        )
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const -4)
-      (unreachable)
-    )
-    (if
-      (i32.const 11)
-      (unreachable)
-    )
-    (if
-      (i32.const 22)
-      (drop
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const 33)
-      (block
-        (drop
-          (i32.const 0)
-        )
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const 44)
-      (unreachable)
-    )
-    (if
-      (i32.const 55)
-      (unreachable)
-    )
-    (if
-      (i32.const 66)
-      (drop
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const 77)
-      (drop
-        (unreachable)
-      )
-    )
-    (if
-      (i32.const 88)
-      (drop
-        (block
-          (drop
-            (i32.const 0)
-          )
-          (unreachable)
-        )
-      )
-    )
-    (if
-      (i32.const 99)
-      (unreachable)
-    )
-    (if
-      (i32.const 100)
-      (drop
-        (block
-          (drop
-            (i32.const 123)
-          )
-          (drop
-            (i32.const 456)
-          )
-          (unreachable)
-        )
-      )
-    )
-    (if
-      (i32.const 101)
-      (drop
-        (block
-          (drop
-            (i32.const 123)
-          )
-          (unreachable)
-        )
-      )
-    )
-    (if
-      (i32.const 102)
-      (drop
-        (unreachable)
-      )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 2)
+   (unreachable)
+  )
+  (if
+   (i32.const 3)
+   (unreachable)
+  )
+  (if
+   (i32.const -1)
+   (block
+    (drop
+     (i32.const 123)
     )
     (drop
-      (i32.const 1337)
+     (i32.const 456)
     )
-  )
-  (func $killer (type $1)
     (unreachable)
+   )
   )
-  (func $target (type $1)
+  (if
+   (i32.const -2)
+   (block
     (drop
-      (i32.const 2000)
-    )
-  )
-  (func $typed-block-none-then-unreachable (type $2) (result i32)
-    (block $top-typed i32
-      (block $switch$0
-        (return
-          (i32.const 0)
-        )
-      )
-      (unreachable)
-    )
-  )
-  (func $typed-block-remove-br-changes-type (type $3) (param $$$0 i32) (result i32)
-    (block $switch$7
-      (block $switch-default$10
-        (block $switch-case$9
-          (block $switch-case$8
-            (br_table $switch-case$9 $switch-case$8 $switch-default$10
-              (i32.const -1)
-            )
-          )
-        )
-        (return
-          (get_local $$$0)
-        )
-      )
-      (return
-        (get_local $$$0)
-      )
+     (i32.const 139)
     )
     (unreachable)
+   )
   )
-  (func $global (type $1)
+  (if
+   (i32.const -3)
+   (block
+    (drop
+     (i32.const 246)
+    )
     (unreachable)
+   )
   )
-  (func $ret (type $2) (result i32)
-    (return
+  (if
+   (i32.const -4)
+   (unreachable)
+  )
+  (if
+   (i32.const 11)
+   (unreachable)
+  )
+  (if
+   (i32.const 22)
+   (drop
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 33)
+   (block
+    (drop
+     (i32.const 0)
+    )
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 44)
+   (unreachable)
+  )
+  (if
+   (i32.const 55)
+   (unreachable)
+  )
+  (if
+   (i32.const 66)
+   (drop
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 77)
+   (drop
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 88)
+   (drop
+    (block
+     (drop
       (i32.const 0)
+     )
+     (unreachable)
     )
+   )
   )
+  (if
+   (i32.const 99)
+   (unreachable)
+  )
+  (if
+   (i32.const 100)
+   (drop
+    (block
+     (drop
+      (i32.const 123)
+     )
+     (drop
+      (i32.const 456)
+     )
+     (unreachable)
+    )
+   )
+  )
+  (if
+   (i32.const 101)
+   (drop
+    (block
+     (drop
+      (i32.const 123)
+     )
+     (unreachable)
+    )
+   )
+  )
+  (if
+   (i32.const 102)
+   (drop
+    (unreachable)
+   )
+  )
+  (drop
+   (i32.const 1337)
+  )
+ )
+ (func $killer (type $1)
+  (unreachable)
+ )
+ (func $target (type $1)
+  (drop
+   (i32.const 2000)
+  )
+ )
+ (func $typed-block-none-then-unreachable (type $2) (result i32)
+  (block $top-typed i32
+   (block $switch$0
+    (return
+     (i32.const 0)
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $typed-block-remove-br-changes-type (type $3) (param $$$0 i32) (result i32)
+  (block $switch$7
+   (block $switch-default$10
+    (block $switch-case$9
+     (block $switch-case$8
+      (br_table $switch-case$9 $switch-case$8 $switch-default$10
+       (i32.const -1)
+      )
+     )
+    )
+    (return
+     (get_local $$$0)
+    )
+   )
+   (return
+    (get_local $$$0)
+   )
+  )
+  (unreachable)
+ )
+ (func $global (type $1)
+  (unreachable)
+ )
+ (func $ret (type $2) (result i32)
+  (return
+   (i32.const 0)
+  )
+ )
 )

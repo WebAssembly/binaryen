@@ -1,66 +1,66 @@
 (module
-  (type $0 (func (param i32) (result i32)))
-  (type $1 (func))
-  (memory $0 256 256)
-  (func $b0 (type $0) (param $i1 i32) (result i32)
-    (i32.const 0)
+ (type $0 (func (param i32) (result i32)))
+ (type $1 (func))
+ (memory $0 256 256)
+ (func $b0 (type $0) (param $i1 i32) (result i32)
+  (i32.const 0)
+ )
+ (func $loops (type $1)
+  (block $out
+   (loop $in
+    (br $out)
+    (br $in)
+   )
   )
-  (func $loops (type $1)
-    (block $out
-      (loop $in
-        (br $out)
-        (br $in)
-      )
-    )
-    (loop $in0
-      (br $in0)
-    )
-    (nop)
-    (block $out4
-      (loop $in5
-        (br $out4)
-        (br $in5)
-      )
-    )
-    (block $out6
-      (loop $in7
-        (br $out6)
-        (br $in7)
-      )
-    )
-    (loop $in8
-      (block $out9
-        (br $out9)
-        (br $in8)
-      )
-    )
-    (loop $in10
-      (block $out11
-        (br $out11)
-        (br $in10)
-      )
-    )
-    (block $out12
-      (loop $in13
-        (br $out12)
-        (br $in13)
-      )
-    )
+  (loop $in0
+   (br $in0)
   )
-  (func $merges (type $1)
-    (block $b
-      (br $b)
-      (br $b)
-    )
-    (block $b15
-      (br_table $b15 $b15
-        (i32.const 3)
-      )
-    )
-    (block $b17
-      (br_table $b17 $b17
-        (i32.const 3)
-      )
-    )
+  (nop)
+  (block $out4
+   (loop $in5
+    (br $out4)
+    (br $in5)
+   )
   )
+  (block $out6
+   (loop $in7
+    (br $out6)
+    (br $in7)
+   )
+  )
+  (loop $in8
+   (block $out9
+    (br $out9)
+    (br $in8)
+   )
+  )
+  (loop $in10
+   (block $out11
+    (br $out11)
+    (br $in10)
+   )
+  )
+  (block $out12
+   (loop $in13
+    (br $out12)
+    (br $in13)
+   )
+  )
+ )
+ (func $merges (type $1)
+  (block $b
+   (br $b)
+   (br $b)
+  )
+  (block $b15
+   (br_table $b15 $b15
+    (i32.const 3)
+   )
+  )
+  (block $b17
+   (br_table $b17 $b17
+    (i32.const 3)
+   )
+  )
+ )
 )
