@@ -198,6 +198,23 @@ for t in tests:
 
     minify_check(t)
 
+print '\n[ checking pass-through of binary sections ]\n'
+
+for t in tests:
+  if t.endswith('.wasm') and not t.startswith('spec'):
+    print '..', t
+    t = os.path.join(options.binaryen_test, t)
+    cmd = WASM_OPT + ['-O0', '-o', 'a.wasm', t]
+    run_command(cmd)
+
+    with open('a.wasm') as g:
+      actual = g.read()
+      with open(t + '.passThrough') as f:
+        expected = f.read()
+        if actual != expected:
+          fail(actual, expected)
+    delete_from_orbit('a.wasm')
+
 print '\n[ checking wasm-dis on provided binaries... ]\n'
 
 for t in tests:
