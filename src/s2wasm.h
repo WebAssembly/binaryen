@@ -628,7 +628,7 @@ class S2WasmBuilder {
     std::string sig = getSig(decl.get());
     decl->name = "FUNCSIG$" + sig;
 
-    FunctionType *ty = wasm->checkFunctionType(decl->name);
+    FunctionType *ty = wasm->getFunctionTypeOrNull(decl->name);
     Name name = fixEmEHSjLjNames(rawName, sig);
     if (!ty) {
       // The wasm module takes ownership of the FunctionType if we insert it.

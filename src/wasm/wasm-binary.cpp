@@ -16,6 +16,9 @@
 
 #include "wasm-binary.h"
 
+#include <fstream>
+#include "support/bits.h"
+
 namespace wasm {
 
 void WasmBinaryWriter::prepare() {
@@ -1764,12 +1767,12 @@ void WasmBinaryBuilder::visitGetGlobal(GetGlobal *curr) {
   if (debug) std::cerr << "zz node: GetGlobal " << pos << std::endl;
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
-  auto* global = wasm.checkGlobal(curr->name);
+  auto* global = wasm.getGlobalOrNull(curr->name);
   if (global) {
     curr->type = global->type;
     return;
   }
-  auto* import = wasm.checkImport(curr->name);
+  auto* import = wasm.getImportOrNull(curr->name);
   if (import && import->kind == ExternalKind::Global) {
     curr->type = import->globalType;
     return;

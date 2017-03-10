@@ -1128,7 +1128,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           IString value = pair[1]->getIString();
           if (key == Name("_emscripten_replace_memory")) {
             // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
-            assert(!wasm.checkFunction(value));
+            assert(!wasm.getFunctionOrNull(value));
             continue;
           } else if (key == UDIVMODDI4) {
             udivmoddi4 = value;
@@ -1211,7 +1211,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
 
     void visitCall(Call* curr) {
-      if (!getModule()->checkFunction(curr->target)) {
+      if (!getModule()->getFunctionOrNull(curr->target)) {
         std::cerr << "invalid call target: " << curr->target << '\n';
         WASM_UNREACHABLE();
       }
@@ -1386,7 +1386,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   wasm.table.imported = true;
 
   // Import memory offset, if not already there
-  if (!wasm.checkImport("memoryBase") && !wasm.checkGlobal("memoryBase")) {
+  if (!wasm.getImportOrNull("memoryBase") && !wasm.getGlobalOrNull("memoryBase")) {
     auto* import = new Import;
     import->name = Name("memoryBase");
     import->module = Name("env");
@@ -1397,7 +1397,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
 
   // Import table offset, if not already there
-  if (!wasm.checkImport("tableBase") && !wasm.checkGlobal("tableBase")) {
+  if (!wasm.getImportOrNull("tableBase") && !wasm.getGlobalOrNull("tableBase")) {
     auto* import = new Import;
     import->name = Name("tableBase");
     import->module = Name("env");
@@ -2019,7 +2019,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           firstOperand = 1;
           operands = &specific->operands;
           ret = specific;
-        } else if (wasm.checkImport(name)) {
+        } else if (wasm.getImportOrNull(name)) {
           callImport = allocator.alloc<CallImport>();
           callImport->target = name;
           operands = &callImport->operands;

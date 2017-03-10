@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <pass.h>
+#include <support/colors.h>
 #include <wasm.h>
 
 namespace wasm {
