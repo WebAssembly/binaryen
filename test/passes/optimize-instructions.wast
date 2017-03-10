@@ -2106,4 +2106,79 @@
       )
     )
   )
+  (func $unsign-diff-sizes (param $x i32) (param $y i32) (result i32)
+    (i32.ne
+      (i32.shr_s
+        (i32.shl
+          (call $unsign-diff-sizes
+            (i32.const -1)
+            (i32.const 5)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+      (i32.shr_s
+        (i32.shl
+          (call $unsign-diff-sizes
+            (i32.const 1)
+            (i32.const 2006)
+          )
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+  )
+  (func $unsign-same-sizes (param $x i32) (param $y i32) (result i32)
+    (i32.ne
+      (i32.shr_s
+        (i32.shl
+          (call $unsign-same-sizes
+            (i32.const -1)
+            (i32.const 5)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+      (i32.shr_s
+        (i32.shl
+          (call $unsign-same-sizes
+            (i32.const 1)
+            (i32.const 2006)
+          )
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+  )
+  (func $fuzz-almost-sign-ext
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.load16_u
+            (i32.const 2278)
+          )
+          (i32.const 17)
+        )
+        (i32.const 16)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shl
+            (i32.load16_u
+              (i32.const 2278)
+            )
+            (i32.const 1)
+          )
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+  )
 )

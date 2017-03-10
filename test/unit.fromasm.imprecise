@@ -664,11 +664,14 @@
    )
   )
   (call $loadSigned
-   (i32.shl
-    (i32.load16_s
-     (get_local $0)
+   (i32.shr_s
+    (i32.shl
+     (i32.load16_u
+      (get_local $0)
+     )
+     (i32.const 24)
     )
-    (i32.const 8)
+    (i32.const 16)
    )
   )
  )
