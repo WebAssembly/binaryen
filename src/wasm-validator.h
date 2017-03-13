@@ -161,6 +161,16 @@ public:
       if (curr->condition->type != unreachable) {
         shouldBeEqual(curr->type, none, curr, "if without else and reachable condition must be none");
       }
+    } else {
+      if (curr->type != unreachable) {
+        shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->type, curr, "returning if-else's true must have right type");
+        shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->type, curr, "returning if-else's false must have right type");
+      } else {
+        if (curr->condition->type != unreachable) {
+          shouldBeEqual(curr->ifTrue->type, unreachable, curr, "unreachable if-else must have unreachable true");
+          shouldBeEqual(curr->ifFalse->type, unreachable, curr, "unreachable if-else must have unreachable false");
+        }
+      }
     }
   }
 
