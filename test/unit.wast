@@ -525,4 +525,16 @@
       (return (i32.const 1))
     )
   )
+  (func $unreachable-ifs
+    (if (unreachable) (nop))
+    (if (unreachable) (unreachable))
+    (if (unreachable) (nop) (nop))
+    (if (unreachable) (unreachable) (nop))
+    (if (unreachable) (nop) (unreachable))
+    (if (unreachable) (unreachable) (unreachable))
+    ;;
+    (if (i32.const 1) (unreachable) (nop))
+    (if (i32.const 1) (nop) (unreachable))
+    (if (i32.const 1) (unreachable) (unreachable))
+  )
 )

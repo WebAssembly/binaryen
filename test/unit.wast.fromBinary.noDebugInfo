@@ -595,5 +595,51 @@
   )
   (unreachable)
  )
+ (func $35 (type $1)
+  (block $label$0
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (unreachable)
+   (if
+    (i32.const 1)
+    (block $label$1
+     (unreachable)
+    )
+    (block $label$2
+     (nop)
+    )
+   )
+   (if
+    (i32.const 1)
+    (block $label$3
+     (nop)
+    )
+    (block $label$4
+     (unreachable)
+    )
+   )
+   (if
+    (i32.const 1)
+    (block $label$5
+     (unreachable)
+    )
+    (block $label$6
+     (unreachable)
+    )
+   )
+   (unreachable)
+   (unreachable)
+  )
+  (unreachable)
+ )
 )
 
