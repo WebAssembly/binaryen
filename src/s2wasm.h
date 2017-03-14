@@ -509,8 +509,14 @@ class S2WasmBuilder {
       else if (match("data")) {}
       else if (match("ident")) skipToEOL();
       else if (match("section")) parseToplevelSection();
-      else if (match("align") || match("p2align") || match("import_global"))
+      else if (match("align") || match("p2align")) skipToEOL();
+      else if (match("import_global")) {
         skipToEOL();
+        skipWhitespace();
+        if (match(".size")) {
+          skipToEOL();
+        }
+      }
       else if (match("globl")) parseGlobl();
       else if (match("functype")) parseFuncType();
       else skipObjectAlias(true);
