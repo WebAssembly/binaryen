@@ -507,17 +507,12 @@ void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
 
 void WasmBinaryWriter::visitIf(If *curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
-  if (curr->type == unreachable && curr->ifFalse) {
-    if (curr->condition->type == unreachable) {
-      // this if-else is unreachable because of the condition, i.e., the condition
-      // does not exit. So don't emit the if, but do consume the condition
-      recurse(curr->condition);
-      o << int8_t(BinaryConsts::Unreachable);
-      return;
-    }
-    // an unreachable if-else (with reachable condition) is one where both sides do not fall through.
-    // wasm does not allow this to be emitted directly, so we must do something more. we could do
-    // better, but for now we emit an extra unreachable instruction after the if, so it is not consumed itself
+  if (curr->condition->type == unreachable) {
+    // this if-else is unreachable because of the condition, i.e., the condition
+    // does not exit. So don't emit the if, but do consume the condition
+    recurse(curr->condition);
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
   }
   recurse(curr->condition);
   o << int8_t(BinaryConsts::If);
@@ -533,8 +528,11 @@ void WasmBinaryWriter::visitIf(If *curr) {
   }
   o << int8_t(BinaryConsts::End);
   if (curr->type == unreachable) {
-    // see explanation above - we emitted an if without a return type, so it must not be consumed
-    assert(curr->ifFalse); // otherwise, if without else, that is unreachable, must have an unreachable condition, which was handled earlier
+    // we already handled the case of the condition being unreachable. otherwise,
+    // we may still be unreachable, if we are an if-else with both sides unreachable.
+    // wasm does not allow this to be emitted directly, so we must do something more. we could do
+    // better, but for now we emit an extra unreachable instruction after the if, so it is not consumed itself,
+    assert(curr->ifFalse);
     o << int8_t(BinaryConsts::Unreachable);
   }
 }
