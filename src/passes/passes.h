@@ -32,7 +32,7 @@ Pass *createFullPrinterPass();
 Pass *createInliningPass();
 Pass *createLegalizeJSInterfacePass();
 Pass *createLocalCSEPass();
-Pass *createLowerIfElsePass();
+Pass *createLogExecutionPass();
 Pass *createMemoryPackingPass();
 Pass *createMergeBlocksPass();
 Pass *createMinifiedPrinterPass();
