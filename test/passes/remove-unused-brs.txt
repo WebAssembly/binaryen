@@ -1,959 +1,959 @@
 (module
-  (type $0 (func (param i32)))
-  (type $1 (func))
-  (type $2 (func (result i32)))
-  (type $3 (func (param i32 i32) (result i32)))
-  (type $4 (func (param i32 i32)))
-  (memory $0 256 256)
-  (func $b0-yes (type $0) (param $i1 i32)
-    (block $topmost
-    )
+ (type $0 (func (param i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32 i32) (result i32)))
+ (type $4 (func (param i32 i32)))
+ (memory $0 256 256)
+ (func $b0-yes (type $0) (param $i1 i32)
+  (block $topmost
   )
-  (func $b1 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $block
-        (drop
-          (i32.const 0)
-        )
-      )
-    )
-  )
-  (func $b2 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-      )
-    )
-  )
-  (func $b3-yes (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-      )
-    )
-  )
-  (func $b4 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-        (block $block
-          (drop
-            (i32.const 0)
-          )
-        )
-      )
-    )
-  )
-  (func $b5 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-        (block $block
-          (drop
-            (i32.const 0)
-          )
-        )
-      )
-    )
-  )
-  (func $b6 (type $0) (param $i1 i32)
-    (block $topmost
-      (br_if $topmost
-        (i32.const 1)
-      )
-    )
-  )
-  (func $b7 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $block
-        (drop
-          (i32.const 0)
-        )
-        (br_if $topmost
-          (i32.const 1)
-        )
-      )
-    )
-  )
-  (func $b8 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-        (br_if $topmost
-          (i32.const 1)
-        )
-      )
-    )
-  )
-  (func $b9 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-        (br_if $topmost
-          (i32.const 1)
-        )
-      )
-    )
-  )
-  (func $b10 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-        (block $block
-          (drop
-            (i32.const 0)
-          )
-          (br_if $topmost
-            (i32.const 1)
-          )
-        )
-      )
-    )
-  )
-  (func $b11 (type $0) (param $i1 i32)
-    (block $topmost
-      (block $inner
-        (block $block
-          (drop
-            (i32.const 0)
-          )
-          (br_if $topmost
-            (i32.const 1)
-          )
-        )
-      )
-    )
-  )
-  (func $b12-yes (type $1)
-    (block $topmost
-      (if
-        (i32.const 1)
-        (block $block1
-          (drop
-            (i32.const 12)
-          )
-          (block $block
-            (drop
-              (i32.const 1)
-            )
-          )
-        )
-        (block $block3
-          (drop
-            (i32.const 27)
-          )
-          (block $block0
-            (drop
-              (i32.const 2)
-            )
-          )
-        )
-      )
-    )
-  )
-  (func $b13 (type $2) (result i32)
-    (block $topmost i32
-      (if
-        (i32.const 1)
-        (block $block1
-          (drop
-            (i32.const 12)
-          )
-          (drop
-            (br_if $topmost
-              (i32.const 1)
-              (i32.const 1)
-            )
-          )
-        )
-        (block $block3
-          (drop
-            (i32.const 27)
-          )
-          (br $topmost
-            (i32.const 2)
-          )
-        )
-      )
-      (i32.const 3)
-    )
-  )
-  (func $b14 (type $2) (result i32)
-    (block $topmost i32
-      (if i32
-        (i32.const 1)
-        (block $block1 i32
-          (i32.const 12)
-        )
-        (block $block3 i32
-          (i32.const 27)
-        )
-      )
-    )
-  )
-  (func $b15 (type $1)
-    (block $topmost
-      (br_if $topmost
-        (i32.const 17)
-      )
-    )
-  )
-  (func $b15b (type $1)
-    (block $topmost
-      (if
-        (i32.const 18)
-        (block $block
-          (drop
-            (i32.const 0)
-          )
-        )
-      )
-    )
-  )
-  (func $b16 (type $1)
-    (block $a
-      (block $b
-        (block $c
-        )
-      )
-    )
-    (block $a1
-      (block $b2
-        (block $c3
-        )
-      )
-    )
-    (block $a4
-      (block $b5
-        (block $c6
-        )
-      )
-    )
-  )
-  (func $b17 (type $1)
-    (block $a
-      (if
-        (i32.const 0)
-        (block $block1
-        )
-        (block $block3
-        )
-      )
-    )
-    (block $a7
-      (if
-        (i32.const 0)
-        (drop
-          (i32.const 1)
-        )
-        (block $block6
-        )
-      )
-    )
-    (block $a9
-      (if
-        (i32.const 0)
-        (block $block8
-        )
-        (drop
-          (i32.const 1)
-        )
-      )
-    )
-    (block $c
-      (block $b
-        (if
-          (i32.const 0)
-          (block $block11
-          )
-          (block $block13
-          )
-        )
-      )
-    )
-  )
-  (func $ret-1 (type $1)
-    (nop)
-  )
-  (func $ret-2 (type $1)
-    (block $block0
-      (block $block1
-      )
-    )
-  )
-  (func $ret-3 (type $1)
-    (block $block0
-      (if
-        (i32.const 0)
-        (nop)
-        (block $block3
-        )
-      )
-    )
-  )
-  (func $ret-value (type $2) (result i32)
-    (block $block0 i32
-      (block $block1 i32
-        (i32.const 1)
-      )
-    )
-  )
-  (func $no-select-but-the-last (type $1)
-    (block $a
-      (if
-        (i32.const 0)
-        (drop
-          (i32.const 1)
-        )
-        (block $block2
-          (block $block
-            (drop
-              (i32.const 2)
-            )
-            (br $a)
-          )
-          (drop
-            (i32.const 3)
-          )
-        )
-      )
-      (if
-        (i32.const 0)
-        (block $block4
-          (block $block13
-            (drop
-              (i32.const 2)
-            )
-            (br $a)
-          )
-          (drop
-            (i32.const 3)
-          )
-        )
-        (drop
-          (i32.const 1)
-        )
-      )
-      (if
-        (block $block6
-          (block $block15
-            (drop
-              (i32.const 2)
-            )
-            (br $a)
-          )
-          (i32.const 3)
-        )
-        (drop
-          (i32.const 0)
-        )
-        (drop
-          (i32.const 1)
-        )
-      )
-      (if
-        (block $a17 i32
-          (i32.const 0)
-        )
-        (block $a18
-          (block $block19
-            (drop
-              (i32.const 1)
-            )
-          )
-        )
-        (block $a20
-          (block $block21
-            (drop
-              (i32.const 2)
-            )
-          )
-        )
-      )
-    )
-  )
-  (func $side-effects-and-order (type $2) (result i32)
-    (local $x i32)
-    (block $do-once$0
-      (if
-        (call $b13)
-        (block $block
-          (drop
-            (i32.const 0)
-          )
-          (br $do-once$0)
-        )
-      )
-      (drop
-        (i32.const 1)
-      )
-    )
-    (block $do-once$022
-      (if
-        (call $b13)
-        (block $block24
-          (drop
-            (call $b14)
-          )
-          (br $do-once$022)
-        )
-      )
-      (drop
-        (i32.const 1)
-      )
-    )
-    (block $do-once$025
-      (if
-        (i32.const 0)
-        (block $block27
-          (drop
-            (call $b14)
-          )
-          (br $do-once$025)
-        )
-      )
-      (drop
-        (i32.const 1)
-      )
-    )
-    (block $do-once$028 i32
-      (if
-        (tee_local $x
-          (i32.const 1)
-        )
-        (br $do-once$028
-          (tee_local $x
-            (i32.const 2)
-          )
-        )
-      )
-      (i32.const 1)
-    )
-  )
-  (func $loops (type $1)
-    (loop $in
-      (block $out
-        (br_if $in
-          (i32.eqz
-            (i32.const 0)
-          )
-        )
-      )
-    )
-    (loop $in30
-      (br $in30)
-    )
-    (loop $loop-in
-      (block $out31
-        (br_if $out31
-          (i32.const 0)
-        )
-      )
-    )
-    (loop $in33
-      (block $out34
-        (br_if $out34
-          (i32.const 0)
-        )
-      )
-    )
-    (loop $in36
-      (nop)
-    )
-    (loop $in37
-      (block $out38
-      )
-    )
-    (loop $in39
-      (if
-        (i32.eqz
-          (i32.const 0)
-        )
-        (block
-          (nop)
-          (br_if $in39
-            (i32.const 1)
-          )
-        )
-      )
-    )
-    (loop $in42
-      (block $out43
-        (br_if $in42
-          (i32.const 0)
-        )
-      )
-    )
-    (loop $in45
-      (block $out46
-        (if
-          (i32.const 0)
-          (unreachable)
-        )
-        (br $in45)
-      )
-    )
-    (loop $in48
-      (block $out49
-        (br_if $in48
-          (i32.eqz
-            (i32.const 0)
-          )
-        )
-        (block $block
-          (call $loops)
-        )
-      )
-    )
-    (loop $in-todo
-      (block $out-todo
-        (if
-          (i32.const 0)
-          (nop)
-          (block
-            (call $loops)
-            (br $in-todo)
-          )
-        )
-      )
-    )
-    (loop $in52
-      (block $out53
-        (if
-          (i32.const 0)
-          (nop)
-          (block
-            (call $loops)
-            (br $in52)
-          )
-        )
-      )
-    )
-    (loop $in55
-      (block $out56
-        (if
-          (i32.const 0)
-          (block
-            (call $loops)
-            (br $in55)
-          )
-          (nop)
-        )
-      )
-    )
-    (loop $in58
-      (block $out59
-        (if
-          (i32.const 0)
-          (block $block61
-            (drop
-              (i32.const 1)
-            )
-            (call $loops)
-            (br $in58)
-          )
-          (nop)
-        )
-      )
-    )
-    (loop $in62
-      (block $out63
-        (if
-          (i32.const 0)
-          (nop)
-          (block
-            (call $loops)
-            (drop
-              (i32.const 100)
-            )
-            (br $in62)
-          )
-        )
-      )
-    )
-    (loop $in65
-      (block $out66
-        (if
-          (i32.const 0)
-          (block
-            (call $loops)
-            (drop
-              (i32.const 101)
-            )
-            (br $in65)
-          )
-          (nop)
-        )
-      )
-    )
-    (loop $in68
-      (block $out69
-        (if
-          (i32.const 0)
-          (block $block71
-            (drop
-              (i32.const 1)
-            )
-            (call $loops)
-            (drop
-              (i32.const 102)
-            )
-            (br $in68)
-          )
-          (nop)
-        )
-      )
-    )
-    (loop $in72
-      (if
-        (i32.eqz
-          (i32.const 0)
-        )
-        (block
-          (nop)
-          (call $loops)
-          (return)
-          (br $in72)
-        )
-      )
-    )
-    (loop $in75
-      (block $out76
-        (br_if $out76
-          (i32.const 0)
-        )
-        (call $loops)
-        (br $out76)
-        (br $in75)
-      )
-    )
-    (loop $in78
-      (block $out79
-        (if
-          (i32.const 0)
-          (nop)
-          (block
-            (call $loops)
-            (drop
-              (block $out2 i32
-                (i32.const 1)
-              )
-            )
-            (br $in78)
-          )
-        )
-      )
-    )
-    (loop $in81
-      (block $out82
-        (br_if $in81
-          (i32.eqz
-            (i32.const 0)
-          )
-        )
-      )
-    )
-    (loop $in-todo2
-      (block $out-todo2
-        (if
-          (i32.const 0)
-          (nop)
-          (block
-            (call $loops)
-            (br $in-todo2)
-          )
-        )
-      )
-    )
-    (loop $in83
-      (block $out84
-        (br $out84)
-        (br $in83)
-      )
-    )
-    (loop $in85
-      (block $out86
-        (br_if $in85
-          (i32.const 0)
-        )
-        (br $in85)
-      )
-    )
-    (loop $in-not
-      (block $out-not
-        (br_if $out-not
-          (i32.const -1)
-        )
-        (br_if $out-not
-          (i32.const 0)
-        )
-        (call $loops)
-        (br $in-not)
-      )
-    )
-    (loop $in-todo287
-      (block $out-todo288
-        (if
-          (i32.const 0)
-          (nop)
-          (block
-            (call $loops)
-            (drop
-              (i32.const 1)
-            )
-            (br $in-todo287)
-          )
-        )
-      )
-    )
-  )
-  (func $br_if_in_block (type $2) (result i32)
-    (block $outval i32
-      (block $in
-        (br_if $in
-          (i32.const 1)
-        )
-        (br $in)
-        (drop
-          (i32.const 2)
-        )
-        (br_if $in
-          (i32.eqz
-            (i32.const 3)
-          )
-        )
-        (unreachable)
-        (drop
-          (i32.const 4)
-        )
-        (br_if $in
-          (i32.const 5)
-        )
-        (unreachable)
-        (drop
-          (i32.const 6)
-        )
-      )
-      (if i32
-        (i32.const 6)
-        (br $outval
-          (i32.const 7)
-        )
-        (i32.const 8)
-      )
-    )
-  )
-  (func $threading (type $1)
+ )
+ (func $b1 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $block
     (drop
-      (block $value-out i32
-        (block $value-in i32
-          (block $out
-            (block $in
-              (br_if $out
-                (i32.const 1)
-              )
-              (br_if $out
-                (i32.const 2)
-              )
-              (br $value-in
-                (i32.const 3)
-              )
-            )
-          )
-          (i32.const 4)
-        )
-      )
+     (i32.const 0)
     )
-    (block $stack1
-      (block $stack2
-        (block $stack3
-          (block $stack4
-            (br_if $stack1
-              (i32.const 1)
-            )
-            (unreachable)
-          )
-        )
-      )
-    )
+   )
   )
-  (func $if-to-br_if-conflict (type $3) (param $x i32) (param $y i32) (result i32)
-    (block $leave
-      (set_local $y
-        (block $out i32
-          (if
-            (get_local $x)
-            (br $out
-              (block $block i32
-                (set_local $x
-                  (i32.const 0)
-                )
-                (i32.const 1)
-              )
-            )
-            (br_if $leave
-              (i32.const 1)
-            )
-          )
-          (unreachable)
-        )
-      )
-    )
-    (i32.add
-      (get_local $x)
-      (get_local $y)
-    )
+ )
+ (func $b2 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+   )
   )
-  (func $if-to-br_if-conflict2 (type $3) (param $x i32) (param $y i32) (result i32)
-    (block $leave
-      (set_local $y
-        (block $out i32
-          (if
-            (get_local $x)
-            (br_if $leave
-              (i32.const 1)
-            )
-            (br $out
-              (block $block i32
-                (set_local $x
-                  (i32.const 0)
-                )
-                (i32.const 1)
-              )
-            )
-          )
-          (unreachable)
-        )
-      )
-    )
-    (i32.add
-      (get_local $x)
-      (get_local $y)
-    )
+ )
+ (func $b3-yes (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+   )
   )
-  (func $if-to-br_if-value-sideeffect (type $3) (param $x i32) (param $y i32) (result i32)
-    (block $leave
-      (set_local $y
-        (block $out i32
-          (if
-            (get_local $x)
-            (br $out
-              (block $block i32
-                (drop
-                  (call $if-to-br_if-value-sideeffect
-                    (i32.const 0)
-                    (i32.const 1)
-                  )
-                )
-                (nop)
-                (i32.const 1)
-              )
-            )
-          )
-          (unreachable)
-        )
-      )
+ )
+ (func $b4 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+    (block $block
+     (drop
+      (i32.const 0)
+     )
     )
-    (i32.add
-      (get_local $x)
-      (get_local $y)
-    )
+   )
   )
-  (func $fuzz (type $4) (param $j i32) (param $g i32)
-    (block $label$break$c
-      (loop $label$continue$d
-        (block $label$break$d
-          (if
-            (i32.lt_s
-              (get_local $j)
-              (i32.const 2147483640)
-            )
-            (block $x
-              (block $y
-                (block $z
-                  (br_if $x
-                    (get_local $j)
-                  )
-                )
-              )
-            )
-            (block $switch$26
-            )
-          )
-          (i32.store
-            (i32.const 5724)
-            (i32.const -254899267)
-          )
-          (br $label$continue$d)
-        )
-      )
+ )
+ (func $b5 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+    (block $block
+     (drop
+      (i32.const 0)
+     )
     )
+   )
   )
-  (func $iffify (type $1)
+ )
+ (func $b6 (type $0) (param $i1 i32)
+  (block $topmost
+   (br_if $topmost
+    (i32.const 1)
+   )
+  )
+ )
+ (func $b7 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $block
+    (drop
+     (i32.const 0)
+    )
+    (br_if $topmost
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $b8 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+    (br_if $topmost
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $b9 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+    (br_if $topmost
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $b10 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+    (block $block
+     (drop
+      (i32.const 0)
+     )
+     (br_if $topmost
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+ (func $b11 (type $0) (param $i1 i32)
+  (block $topmost
+   (block $inner
+    (block $block
+     (drop
+      (i32.const 0)
+     )
+     (br_if $topmost
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+ (func $b12-yes (type $1)
+  (block $topmost
+   (if
+    (i32.const 1)
+    (block $block1
+     (drop
+      (i32.const 12)
+     )
+     (block $block
+      (drop
+       (i32.const 1)
+      )
+     )
+    )
+    (block $block3
+     (drop
+      (i32.const 27)
+     )
+     (block $block0
+      (drop
+       (i32.const 2)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $b13 (type $2) (result i32)
+  (block $topmost i32
+   (if
+    (i32.const 1)
+    (block $block1
+     (drop
+      (i32.const 12)
+     )
+     (drop
+      (br_if $topmost
+       (i32.const 1)
+       (i32.const 1)
+      )
+     )
+    )
+    (block $block3
+     (drop
+      (i32.const 27)
+     )
+     (br $topmost
+      (i32.const 2)
+     )
+    )
+   )
+   (i32.const 3)
+  )
+ )
+ (func $b14 (type $2) (result i32)
+  (block $topmost i32
+   (if i32
+    (i32.const 1)
+    (block $block1 i32
+     (i32.const 12)
+    )
+    (block $block3 i32
+     (i32.const 27)
+    )
+   )
+  )
+ )
+ (func $b15 (type $1)
+  (block $topmost
+   (br_if $topmost
+    (i32.const 17)
+   )
+  )
+ )
+ (func $b15b (type $1)
+  (block $topmost
+   (if
+    (i32.const 18)
+    (block $block
+     (drop
+      (i32.const 0)
+     )
+    )
+   )
+  )
+ )
+ (func $b16 (type $1)
+  (block $a
+   (block $b
+    (block $c
+    )
+   )
+  )
+  (block $a1
+   (block $b2
+    (block $c3
+    )
+   )
+  )
+  (block $a4
+   (block $b5
+    (block $c6
+    )
+   )
+  )
+ )
+ (func $b17 (type $1)
+  (block $a
+   (if
+    (i32.const 0)
+    (block $block1
+    )
+    (block $block3
+    )
+   )
+  )
+  (block $a7
+   (if
+    (i32.const 0)
+    (drop
+     (i32.const 1)
+    )
+    (block $block6
+    )
+   )
+  )
+  (block $a9
+   (if
+    (i32.const 0)
+    (block $block8
+    )
+    (drop
+     (i32.const 1)
+    )
+   )
+  )
+  (block $c
+   (block $b
     (if
-      (i32.eqz
-        (i32.const 0)
-      )
-      (block
-        (nop)
-        (drop
-          (i32.const 1)
-        )
-        (drop
-          (i32.const 2)
-        )
-      )
+     (i32.const 0)
+     (block $block11
+     )
+     (block $block13
+     )
     )
-    (block $no
-      (br_if $no
-        (i32.const 0)
-      )
+   )
+  )
+ )
+ (func $ret-1 (type $1)
+  (nop)
+ )
+ (func $ret-2 (type $1)
+  (block $block0
+   (block $block1
+   )
+  )
+ )
+ (func $ret-3 (type $1)
+  (block $block0
+   (if
+    (i32.const 0)
+    (nop)
+    (block $block3
+    )
+   )
+  )
+ )
+ (func $ret-value (type $2) (result i32)
+  (block $block0 i32
+   (block $block1 i32
+    (i32.const 1)
+   )
+  )
+ )
+ (func $no-select-but-the-last (type $1)
+  (block $a
+   (if
+    (i32.const 0)
+    (drop
+     (i32.const 1)
+    )
+    (block $block2
+     (block $block
       (drop
+       (i32.const 2)
+      )
+      (br $a)
+     )
+     (drop
+      (i32.const 3)
+     )
+    )
+   )
+   (if
+    (i32.const 0)
+    (block $block4
+     (block $block13
+      (drop
+       (i32.const 2)
+      )
+      (br $a)
+     )
+     (drop
+      (i32.const 3)
+     )
+    )
+    (drop
+     (i32.const 1)
+    )
+   )
+   (if
+    (block $block6
+     (block $block15
+      (drop
+       (i32.const 2)
+      )
+      (br $a)
+     )
+     (i32.const 3)
+    )
+    (drop
+     (i32.const 0)
+    )
+    (drop
+     (i32.const 1)
+    )
+   )
+   (if
+    (block $a17 i32
+     (i32.const 0)
+    )
+    (block $a18
+     (block $block19
+      (drop
+       (i32.const 1)
+      )
+     )
+    )
+    (block $a20
+     (block $block21
+      (drop
+       (i32.const 2)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $side-effects-and-order (type $2) (result i32)
+  (local $x i32)
+  (block $do-once$0
+   (if
+    (call $b13)
+    (block $block
+     (drop
+      (i32.const 0)
+     )
+     (br $do-once$0)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+  )
+  (block $do-once$022
+   (if
+    (call $b13)
+    (block $block24
+     (drop
+      (call $b14)
+     )
+     (br $do-once$022)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+  )
+  (block $do-once$025
+   (if
+    (i32.const 0)
+    (block $block27
+     (drop
+      (call $b14)
+     )
+     (br $do-once$025)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+  )
+  (block $do-once$028 i32
+   (if
+    (tee_local $x
+     (i32.const 1)
+    )
+    (br $do-once$028
+     (tee_local $x
+      (i32.const 2)
+     )
+    )
+   )
+   (i32.const 1)
+  )
+ )
+ (func $loops (type $1)
+  (loop $in
+   (block $out
+    (br_if $in
+     (i32.eqz
+      (i32.const 0)
+     )
+    )
+   )
+  )
+  (loop $in30
+   (br $in30)
+  )
+  (loop $loop-in
+   (block $out31
+    (br_if $out31
+     (i32.const 0)
+    )
+   )
+  )
+  (loop $in33
+   (block $out34
+    (br_if $out34
+     (i32.const 0)
+    )
+   )
+  )
+  (loop $in36
+   (nop)
+  )
+  (loop $in37
+   (block $out38
+   )
+  )
+  (loop $in39
+   (if
+    (i32.eqz
+     (i32.const 0)
+    )
+    (block
+     (nop)
+     (br_if $in39
+      (i32.const 1)
+     )
+    )
+   )
+  )
+  (loop $in42
+   (block $out43
+    (br_if $in42
+     (i32.const 0)
+    )
+   )
+  )
+  (loop $in45
+   (block $out46
+    (if
+     (i32.const 0)
+     (unreachable)
+    )
+    (br $in45)
+   )
+  )
+  (loop $in48
+   (block $out49
+    (br_if $in48
+     (i32.eqz
+      (i32.const 0)
+     )
+    )
+    (block $block
+     (call $loops)
+    )
+   )
+  )
+  (loop $in-todo
+   (block $out-todo
+    (if
+     (i32.const 0)
+     (nop)
+     (block
+      (call $loops)
+      (br $in-todo)
+     )
+    )
+   )
+  )
+  (loop $in52
+   (block $out53
+    (if
+     (i32.const 0)
+     (nop)
+     (block
+      (call $loops)
+      (br $in52)
+     )
+    )
+   )
+  )
+  (loop $in55
+   (block $out56
+    (if
+     (i32.const 0)
+     (block
+      (call $loops)
+      (br $in55)
+     )
+     (nop)
+    )
+   )
+  )
+  (loop $in58
+   (block $out59
+    (if
+     (i32.const 0)
+     (block $block61
+      (drop
+       (i32.const 1)
+      )
+      (call $loops)
+      (br $in58)
+     )
+     (nop)
+    )
+   )
+  )
+  (loop $in62
+   (block $out63
+    (if
+     (i32.const 0)
+     (nop)
+     (block
+      (call $loops)
+      (drop
+       (i32.const 100)
+      )
+      (br $in62)
+     )
+    )
+   )
+  )
+  (loop $in65
+   (block $out66
+    (if
+     (i32.const 0)
+     (block
+      (call $loops)
+      (drop
+       (i32.const 101)
+      )
+      (br $in65)
+     )
+     (nop)
+    )
+   )
+  )
+  (loop $in68
+   (block $out69
+    (if
+     (i32.const 0)
+     (block $block71
+      (drop
+       (i32.const 1)
+      )
+      (call $loops)
+      (drop
+       (i32.const 102)
+      )
+      (br $in68)
+     )
+     (nop)
+    )
+   )
+  )
+  (loop $in72
+   (if
+    (i32.eqz
+     (i32.const 0)
+    )
+    (block
+     (nop)
+     (call $loops)
+     (return)
+     (br $in72)
+    )
+   )
+  )
+  (loop $in75
+   (block $out76
+    (br_if $out76
+     (i32.const 0)
+    )
+    (call $loops)
+    (br $out76)
+    (br $in75)
+   )
+  )
+  (loop $in78
+   (block $out79
+    (if
+     (i32.const 0)
+     (nop)
+     (block
+      (call $loops)
+      (drop
+       (block $out2 i32
         (i32.const 1)
+       )
       )
-      (br $no)
-      (drop
-        (i32.const 2)
-      )
+      (br $in78)
+     )
     )
-    (block $no2
-      (br_if $no2
-        (i32.const 0)
-      )
+   )
+  )
+  (loop $in81
+   (block $out82
+    (br_if $in81
+     (i32.eqz
+      (i32.const 0)
+     )
     )
-    (block $no3
-      (br $no3)
+   )
+  )
+  (loop $in-todo2
+   (block $out-todo2
+    (if
+     (i32.const 0)
+     (nop)
+     (block
+      (call $loops)
+      (br $in-todo2)
+     )
+    )
+   )
+  )
+  (loop $in83
+   (block $out84
+    (br $out84)
+    (br $in83)
+   )
+  )
+  (loop $in85
+   (block $out86
+    (br_if $in85
+     (i32.const 0)
+    )
+    (br $in85)
+   )
+  )
+  (loop $in-not
+   (block $out-not
+    (br_if $out-not
+     (i32.const -1)
+    )
+    (br_if $out-not
+     (i32.const 0)
+    )
+    (call $loops)
+    (br $in-not)
+   )
+  )
+  (loop $in-todo287
+   (block $out-todo288
+    (if
+     (i32.const 0)
+     (nop)
+     (block
+      (call $loops)
       (drop
+       (i32.const 1)
+      )
+      (br $in-todo287)
+     )
+    )
+   )
+  )
+ )
+ (func $br_if_in_block (type $2) (result i32)
+  (block $outval i32
+   (block $in
+    (br_if $in
+     (i32.const 1)
+    )
+    (br $in)
+    (drop
+     (i32.const 2)
+    )
+    (br_if $in
+     (i32.eqz
+      (i32.const 3)
+     )
+    )
+    (unreachable)
+    (drop
+     (i32.const 4)
+    )
+    (br_if $in
+     (i32.const 5)
+    )
+    (unreachable)
+    (drop
+     (i32.const 6)
+    )
+   )
+   (if i32
+    (i32.const 6)
+    (br $outval
+     (i32.const 7)
+    )
+    (i32.const 8)
+   )
+  )
+ )
+ (func $threading (type $1)
+  (drop
+   (block $value-out i32
+    (block $value-in i32
+     (block $out
+      (block $in
+       (br_if $out
         (i32.const 1)
-      )
-      (drop
+       )
+       (br_if $out
         (i32.const 2)
+       )
+       (br $value-in
+        (i32.const 3)
+       )
       )
+     )
+     (i32.const 4)
     )
-    (block $no5
-      (block $no4
-        (br_if $no5
+   )
+  )
+  (block $stack1
+   (block $stack2
+    (block $stack3
+     (block $stack4
+      (br_if $stack1
+       (i32.const 1)
+      )
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
+ (func $if-to-br_if-conflict (type $3) (param $x i32) (param $y i32) (result i32)
+  (block $leave
+   (set_local $y
+    (block $out i32
+     (if
+      (get_local $x)
+      (br $out
+       (block $block i32
+        (set_local $x
+         (i32.const 0)
+        )
+        (i32.const 1)
+       )
+      )
+      (br_if $leave
+       (i32.const 1)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
+  (i32.add
+   (get_local $x)
+   (get_local $y)
+  )
+ )
+ (func $if-to-br_if-conflict2 (type $3) (param $x i32) (param $y i32) (result i32)
+  (block $leave
+   (set_local $y
+    (block $out i32
+     (if
+      (get_local $x)
+      (br_if $leave
+       (i32.const 1)
+      )
+      (br $out
+       (block $block i32
+        (set_local $x
+         (i32.const 0)
+        )
+        (i32.const 1)
+       )
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
+  (i32.add
+   (get_local $x)
+   (get_local $y)
+  )
+ )
+ (func $if-to-br_if-value-sideeffect (type $3) (param $x i32) (param $y i32) (result i32)
+  (block $leave
+   (set_local $y
+    (block $out i32
+     (if
+      (get_local $x)
+      (br $out
+       (block $block i32
+        (drop
+         (call $if-to-br_if-value-sideeffect
           (i32.const 0)
-        )
-        (drop
           (i32.const 1)
+         )
         )
-        (drop
-          (i32.const 2)
-        )
+        (nop)
+        (i32.const 1)
+       )
       )
+     )
+     (unreachable)
     )
+   )
   )
-  (func $loop-if (type $2) (result i32)
-    (block $outer i32
-      (loop $typed
-        (br_if $typed
-          (i32.eqz
-            (i32.const 2)
-          )
-        )
-        (block $block
-          (drop
-            (call $loop-if)
-          )
-          (br $outer
-            (i32.const 0)
-          )
-        )
+  (i32.add
+   (get_local $x)
+   (get_local $y)
+  )
+ )
+ (func $fuzz (type $4) (param $j i32) (param $g i32)
+  (block $label$break$c
+   (loop $label$continue$d
+    (block $label$break$d
+     (if
+      (i32.lt_s
+       (get_local $j)
+       (i32.const 2147483640)
       )
+      (block $x
+       (block $y
+        (block $z
+         (br_if $x
+          (get_local $j)
+         )
+        )
+       )
+      )
+      (block $switch$26
+      )
+     )
+     (i32.store
+      (i32.const 5724)
+      (i32.const -254899267)
+     )
+     (br $label$continue$d)
     )
+   )
   )
+ )
+ (func $iffify (type $1)
+  (if
+   (i32.eqz
+    (i32.const 0)
+   )
+   (block
+    (nop)
+    (drop
+     (i32.const 1)
+    )
+    (drop
+     (i32.const 2)
+    )
+   )
+  )
+  (block $no
+   (br_if $no
+    (i32.const 0)
+   )
+   (drop
+    (i32.const 1)
+   )
+   (br $no)
+   (drop
+    (i32.const 2)
+   )
+  )
+  (block $no2
+   (br_if $no2
+    (i32.const 0)
+   )
+  )
+  (block $no3
+   (br $no3)
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 2)
+   )
+  )
+  (block $no5
+   (block $no4
+    (br_if $no5
+     (i32.const 0)
+    )
+    (drop
+     (i32.const 1)
+    )
+    (drop
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $loop-if (type $2) (result i32)
+  (block $outer i32
+   (loop $typed
+    (br_if $typed
+     (i32.eqz
+      (i32.const 2)
+     )
+    )
+    (block $block
+     (drop
+      (call $loop-if)
+     )
+     (br $outer
+      (i32.const 0)
+     )
+    )
+   )
+  )
+ )
 )

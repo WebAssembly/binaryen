@@ -25,6 +25,7 @@
 #define WASM_WASM_LINK_H
 
 #include "support/archive.h"
+#include "support/name.h"
 #include "support/utilities.h"
 #include "wasm.h"
 
@@ -294,11 +295,11 @@ class Linker {
   }
 
   void exportFunction(Name name, bool must_export) {
-    if (!out.wasm.checkFunction(name)) {
+    if (!out.wasm.getFunctionOrNull(name)) {
       assert(!must_export);
       return;
     }
-    if (out.wasm.checkExport(name)) return; // Already exported
+    if (out.wasm.getExportOrNull(name)) return; // Already exported
     auto exp = new Export;
     exp->name = exp->value = name;
     exp->kind = ExternalKind::Function;

@@ -27,7 +27,7 @@
 
 inline std::ostream &doIndent(std::ostream &o, unsigned indent) {
   for (unsigned i = 0; i < indent; i++) {
-    o << "  ";
+    o << " ";
   }
   return o;
 }

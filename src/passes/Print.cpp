@@ -21,6 +21,7 @@
 #include <wasm.h>
 #include <wasm-printing.h>
 #include <pass.h>
+#include <pretty_printing.h>
 
 namespace wasm {
 
@@ -90,7 +91,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   Name printableLocal(Index index) {
     Name name;
     if (currFunction) {
-      name = currFunction->tryLocalName(index);
+      name = currFunction->getLocalNameOrDefault(index);
     }
     if (!name.is()) {
       name = Name::fromInt(index);

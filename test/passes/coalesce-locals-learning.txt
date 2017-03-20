@@ -1,864 +1,864 @@
 (module
-  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
-  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
-  (type $2 (func))
-  (type $3 (func (param i32 f32)))
-  (type $4 (func (param i32)))
-  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
-  (memory $0 10)
-  (func $nothing-to-do (type $2)
-    (local $0 i32)
-    (nop)
+ (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+ (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $2 (func))
+ (type $3 (func (param i32 f32)))
+ (type $4 (func (param i32)))
+ (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
+ (memory $0 10)
+ (func $nothing-to-do (type $2)
+  (local $0 i32)
+  (nop)
+ )
+ (func $merge (type $2)
+  (local $0 i32)
+  (nop)
+ )
+ (func $leave-type (type $2)
+  (local $0 i32)
+  (local $1 f32)
+  (nop)
+ )
+ (func $leave-interfere (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (set_local $0
+   (i32.const 0)
   )
-  (func $merge (type $2)
-    (local $0 i32)
-    (nop)
+  (set_local $1
+   (i32.const 0)
   )
-  (func $leave-type (type $2)
-    (local $0 i32)
-    (local $1 f32)
-    (nop)
+  (drop
+   (get_local $0)
   )
-  (func $leave-interfere (type $2)
-    (local $0 i32)
-    (local $1 i32)
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $almost-interfere (type $2)
+  (local $0 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (drop
+   (get_local $0)
+  )
+  (set_local $0
+   (i32.const 0)
+  )
+  (drop
+   (get_local $0)
+  )
+ )
+ (func $redundant-copy (type $2)
+  (local $0 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (nop)
+  (drop
+   (get_local $0)
+  )
+ )
+ (func $ineffective-store (type $2)
+  (local $0 i32)
+  (drop
+   (i32.const 0)
+  )
+  (set_local $0
+   (i32.const 0)
+  )
+  (drop
+   (get_local $0)
+  )
+ )
+ (func $block (type $2)
+  (local $0 i32)
+  (block $block0
+   (set_local $0
+    (i32.const 0)
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+ )
+ (func $see-both-sides (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (block $block0
+   (set_local $1
+    (i32.const 0)
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $see-br-and-ignore-dead (type $2)
+  (local $0 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (block $block
+   (br $block)
+   (nop)
+   (drop
+    (unreachable)
+   )
+   (nop)
+  )
+  (drop
+   (get_local $0)
+  )
+ )
+ (func $see-block-body (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (block $block
+   (set_local $1
+    (i32.const 0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (br $block)
+  )
+  (drop
+   (get_local $0)
+  )
+ )
+ (func $zero-init (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $multi (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $if-else (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (i32.const 0)
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+  )
+ )
+ (func $if-else-parallel (type $2)
+  (local $0 i32)
+  (if
+   (i32.const 0)
+   (block $block1
     (set_local $0
-      (i32.const 0)
+     (i32.const 0)
+    )
+    (drop
+     (get_local $0)
+    )
+   )
+   (block $block3
+    (set_local $0
+     (i32.const 1)
+    )
+    (drop
+     (get_local $0)
+    )
+   )
+  )
+ )
+ (func $if-else-after (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (i32.const 0)
+   (set_local $0
+    (i32.const 0)
+   )
+   (set_local $1
+    (i32.const 1)
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $if-else-through (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (set_local $1
+   (i32.const 1)
+  )
+  (if
+   (i32.const 0)
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 2)
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $if-through (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (set_local $1
+   (i32.const 1)
+  )
+  (if
+   (i32.const 0)
+   (drop
+    (i32.const 1)
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $if-through2 (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (if
+   (i32.const 0)
+   (set_local $1
+    (i32.const 1)
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $if-through3 (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (set_local $0
+   (i32.const 0)
+  )
+  (if
+   (i32.const 0)
+   (block $block1
+    (drop
+     (get_local $0)
+    )
+    (drop
+     (get_local $1)
+    )
+   )
+  )
+ )
+ (func $if2 (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (tee_local $0
+    (i32.const 0)
+   )
+   (block $block1
+    (drop
+     (get_local $0)
+    )
+    (drop
+     (get_local $1)
+    )
+   )
+  )
+ )
+ (func $if3 (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (i32.const 0)
+   (block $block1
+    (set_local $0
+     (i32.const 0)
+    )
+    (drop
+     (get_local $0)
+    )
+   )
+  )
+  (drop
+   (get_local $1)
+  )
+ )
+ (func $if4 (type $2)
+  (local $0 i32)
+  (if
+   (i32.const 0)
+   (block $block1
+    (set_local $0
+     (i32.const 0)
+    )
+    (drop
+     (get_local $0)
+    )
+    (set_local $0
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (get_local $0)
+  )
+ )
+ (func $if5 (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (i32.const 0)
+   (block $block1
+    (drop
+     (get_local $0)
     )
     (set_local $1
-      (i32.const 0)
+     (i32.const 1)
     )
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
+   )
   )
-  (func $almost-interfere (type $2)
-    (local $0 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (drop
-      (get_local $0)
-    )
-    (set_local $0
-      (i32.const 0)
-    )
-    (drop
-      (get_local $0)
-    )
+  (drop
+   (get_local $1)
   )
-  (func $redundant-copy (type $2)
-    (local $0 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (nop)
+ )
+ (func $loop (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (block $out
+   (loop $in
     (drop
-      (get_local $0)
-    )
-  )
-  (func $ineffective-store (type $2)
-    (local $0 i32)
-    (drop
-      (i32.const 0)
+     (get_local $0)
     )
     (set_local $0
-      (i32.const 0)
+     (i32.const 0)
     )
     (drop
-      (get_local $0)
+     (get_local $1)
     )
+    (br $in)
+   )
   )
-  (func $block (type $2)
-    (local $0 i32)
-    (block $block0
-      (set_local $0
-        (i32.const 0)
-      )
-    )
-    (drop
-      (get_local $0)
-    )
+ )
+ (func $interfere-in-dead (type $2)
+  (local $0 i32)
+  (block $block
+   (br $block)
+   (drop
+    (unreachable)
+   )
+   (drop
+    (unreachable)
+   )
   )
-  (func $see-both-sides (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (block $block0
-      (set_local $1
-        (i32.const 0)
-      )
-    )
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
+ )
+ (func $interfere-in-dead2 (type $2)
+  (local $0 i32)
+  (block $block
+   (unreachable)
+   (drop
+    (unreachable)
+   )
+   (drop
+    (unreachable)
+   )
   )
-  (func $see-br-and-ignore-dead (type $2)
-    (local $0 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (block $block
-      (br $block)
-      (nop)
-      (drop
-        (unreachable)
-      )
-      (nop)
-    )
-    (drop
-      (get_local $0)
-    )
+ )
+ (func $interfere-in-dead3 (type $2)
+  (local $0 i32)
+  (block $block
+   (return)
+   (drop
+    (unreachable)
+   )
+   (drop
+    (unreachable)
+   )
   )
-  (func $see-block-body (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (block $block
-      (set_local $1
-        (i32.const 0)
-      )
-      (drop
-        (get_local $1)
-      )
-      (br $block)
-    )
-    (drop
-      (get_local $0)
-    )
+ )
+ (func $params (type $3) (param $0 i32) (param $1 f32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (drop
+   (get_local $2)
   )
-  (func $zero-init (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
+  (drop
+   (get_local $3)
   )
-  (func $multi (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
+  (drop
+   (get_local $4)
   )
-  (func $if-else (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (if
-      (i32.const 0)
-      (drop
-        (get_local $0)
-      )
-      (drop
-        (get_local $1)
-      )
-    )
+ )
+ (func $interfere-in-dead4 (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (block $block
+   (br_if $block
+    (i32.const 0)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
   )
-  (func $if-else-parallel (type $2)
-    (local $0 i32)
-    (if
-      (i32.const 0)
-      (block $block1
-        (set_local $0
-          (i32.const 0)
-        )
-        (drop
-          (get_local $0)
-        )
-      )
-      (block $block3
-        (set_local $0
-          (i32.const 1)
-        )
-        (drop
-          (get_local $0)
-        )
-      )
-    )
-  )
-  (func $if-else-after (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (if
-      (i32.const 0)
-      (set_local $0
-        (i32.const 0)
-      )
-      (set_local $1
-        (i32.const 1)
-      )
-    )
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
-  )
-  (func $if-else-through (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (set_local $1
-      (i32.const 1)
-    )
-    (if
-      (i32.const 0)
-      (drop
-        (i32.const 1)
-      )
-      (drop
-        (i32.const 2)
-      )
-    )
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
-  )
-  (func $if-through (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (set_local $1
-      (i32.const 1)
-    )
-    (if
-      (i32.const 0)
-      (drop
-        (i32.const 1)
-      )
-    )
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
-  )
-  (func $if-through2 (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (if
-      (i32.const 0)
-      (set_local $1
-        (i32.const 1)
-      )
-    )
-    (drop
-      (get_local $0)
-    )
-    (drop
-      (get_local $1)
-    )
-  )
-  (func $if-through3 (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (set_local $0
-      (i32.const 0)
-    )
-    (if
-      (i32.const 0)
-      (block $block1
-        (drop
-          (get_local $0)
-        )
-        (drop
-          (get_local $1)
-        )
-      )
-    )
-  )
-  (func $if2 (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (if
-      (tee_local $0
-        (i32.const 0)
-      )
-      (block $block1
-        (drop
-          (get_local $0)
-        )
-        (drop
-          (get_local $1)
-        )
-      )
-    )
-  )
-  (func $if3 (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (if
-      (i32.const 0)
-      (block $block1
-        (set_local $0
-          (i32.const 0)
-        )
-        (drop
-          (get_local $0)
-        )
-      )
-    )
-    (drop
-      (get_local $1)
-    )
-  )
-  (func $if4 (type $2)
-    (local $0 i32)
-    (if
-      (i32.const 0)
-      (block $block1
-        (set_local $0
-          (i32.const 0)
-        )
-        (drop
-          (get_local $0)
-        )
-        (set_local $0
-          (i32.const 1)
-        )
-      )
-    )
-    (drop
-      (get_local $0)
-    )
-  )
-  (func $if5 (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (if
-      (i32.const 0)
-      (block $block1
-        (drop
-          (get_local $0)
-        )
-        (set_local $1
-          (i32.const 1)
-        )
-      )
-    )
-    (drop
-      (get_local $1)
-    )
-  )
-  (func $loop (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (block $out
-      (loop $in
-        (drop
-          (get_local $0)
-        )
-        (set_local $0
-          (i32.const 0)
-        )
-        (drop
-          (get_local $1)
-        )
-        (br $in)
-      )
-    )
-  )
-  (func $interfere-in-dead (type $2)
-    (local $0 i32)
-    (block $block
-      (br $block)
-      (drop
-        (unreachable)
-      )
-      (drop
-        (unreachable)
-      )
-    )
-  )
-  (func $interfere-in-dead2 (type $2)
-    (local $0 i32)
-    (block $block
+ )
+ (func $switch (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (block $switch$def
+   (block $switch-case$1
+    (block $switch-case$2
+     (br_table $switch-case$1 $switch-case$2 $switch-case$1 $switch-case$1 $switch$def
+      (i32.const 100)
+     )
+     (drop
       (unreachable)
-      (drop
-        (unreachable)
-      )
-      (drop
-        (unreachable)
-      )
-    )
-  )
-  (func $interfere-in-dead3 (type $2)
-    (local $0 i32)
-    (block $block
-      (return)
-      (drop
-        (unreachable)
-      )
-      (drop
-        (unreachable)
-      )
-    )
-  )
-  (func $params (type $3) (param $0 i32) (param $1 f32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (drop
-      (get_local $2)
+     )
     )
     (drop
-      (get_local $3)
+     (get_local $0)
     )
-    (drop
-      (get_local $4)
-    )
+   )
+   (drop
+    (get_local $1)
+   )
   )
-  (func $interfere-in-dead4 (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (block $block
-      (br_if $block
-        (i32.const 0)
-      )
-      (drop
-        (get_local $0)
-      )
-      (drop
-        (get_local $1)
-      )
-    )
+  (drop
+   (get_local $2)
   )
-  (func $switch (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (block $switch$def
-      (block $switch-case$1
-        (block $switch-case$2
-          (br_table $switch-case$1 $switch-case$2 $switch-case$1 $switch-case$1 $switch$def
-            (i32.const 100)
-          )
-          (drop
-            (unreachable)
-          )
-        )
-        (drop
-          (get_local $0)
-        )
-      )
-      (drop
-        (get_local $1)
-      )
-    )
-    (drop
-      (get_local $2)
-    )
-  )
-  (func $greedy-can-be-happy (type $2)
-    (local $0 i32)
-    (local $1 i32)
+ )
+ (func $greedy-can-be-happy (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (i32.const 0)
+   (if
+    (i32.const 1)
     (if
-      (i32.const 0)
-      (if
-        (i32.const 1)
-        (if
-          (i32.const 2)
-          (block $block3
-            (set_local $0
-              (i32.const 100)
-            )
-            (set_local $1
-              (i32.const 101)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-          (block $block5
-            (set_local $0
-              (i32.const 102)
-            )
-            (set_local $1
-              (i32.const 103)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-        )
-        (if
-          (i32.const 3)
-          (block $block8
-            (set_local $0
-              (i32.const 104)
-            )
-            (set_local $1
-              (i32.const 105)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-          (block $block10
-            (set_local $0
-              (i32.const 106)
-            )
-            (set_local $1
-              (i32.const 107)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-        )
+     (i32.const 2)
+     (block $block3
+      (set_local $0
+       (i32.const 100)
       )
-      (if
-        (i32.const 4)
-        (block $block13
-          (set_local $0
-            (i32.const 108)
-          )
-          (set_local $1
-            (i32.const 109)
-          )
-          (drop
-            (get_local $0)
-          )
-          (drop
-            (get_local $1)
-          )
-        )
-        (block $block15
-          (set_local $0
-            (i32.const 110)
-          )
-          (set_local $1
-            (i32.const 111)
-          )
-          (drop
-            (get_local $0)
-          )
-          (drop
-            (get_local $1)
-          )
-        )
-      )
-    )
-  )
-  (func $greedy-can-be-sad (type $2)
-    (local $0 i32)
-    (local $1 i32)
-    (if
-      (i32.const 0)
-      (if
-        (i32.const 1)
-        (if
-          (i32.const 2)
-          (block $block3
-            (set_local $0
-              (i32.const 100)
-            )
-            (set_local $1
-              (i32.const 101)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-          (block $block5
-            (set_local $0
-              (i32.const 102)
-            )
-            (set_local $1
-              (i32.const 103)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-        )
-        (if
-          (i32.const 3)
-          (block $block8
-            (set_local $0
-              (i32.const 104)
-            )
-            (set_local $1
-              (i32.const 105)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-          (block $block10
-            (set_local $0
-              (i32.const 106)
-            )
-            (set_local $1
-              (i32.const 107)
-            )
-            (drop
-              (get_local $0)
-            )
-            (drop
-              (get_local $1)
-            )
-          )
-        )
-      )
-      (if
-        (i32.const 4)
-        (block $block13
-          (set_local $0
-            (i32.const 108)
-          )
-          (set_local $1
-            (i32.const 109)
-          )
-          (drop
-            (get_local $0)
-          )
-          (drop
-            (get_local $1)
-          )
-        )
-        (block $block15
-          (set_local $0
-            (i32.const 110)
-          )
-          (set_local $1
-            (i32.const 111)
-          )
-          (drop
-            (get_local $0)
-          )
-          (drop
-            (get_local $1)
-          )
-        )
-      )
-    )
-  )
-  (func $_memcpy (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-    (local $3 i32)
-    (if
-      (i32.ge_s
-        (get_local $2)
-        (i32.const 4096)
+      (set_local $1
+       (i32.const 101)
       )
       (drop
-        (get_local $0)
+       (get_local $0)
       )
+      (drop
+       (get_local $1)
+      )
+     )
+     (block $block5
+      (set_local $0
+       (i32.const 102)
+      )
+      (set_local $1
+       (i32.const 103)
+      )
+      (drop
+       (get_local $0)
+      )
+      (drop
+       (get_local $1)
+      )
+     )
     )
-    (set_local $3
+    (if
+     (i32.const 3)
+     (block $block8
+      (set_local $0
+       (i32.const 104)
+      )
+      (set_local $1
+       (i32.const 105)
+      )
+      (drop
+       (get_local $0)
+      )
+      (drop
+       (get_local $1)
+      )
+     )
+     (block $block10
+      (set_local $0
+       (i32.const 106)
+      )
+      (set_local $1
+       (i32.const 107)
+      )
+      (drop
+       (get_local $0)
+      )
+      (drop
+       (get_local $1)
+      )
+     )
+    )
+   )
+   (if
+    (i32.const 4)
+    (block $block13
+     (set_local $0
+      (i32.const 108)
+     )
+     (set_local $1
+      (i32.const 109)
+     )
+     (drop
       (get_local $0)
+     )
+     (drop
+      (get_local $1)
+     )
     )
-    (if
-      (i32.eq
-        (i32.and
-          (get_local $0)
-          (i32.const 3)
-        )
-        (i32.and
-          (get_local $1)
-          (i32.const 3)
-        )
-      )
-      (block $block2
-        (block $while-out$0
-          (loop $while-in$1
-            (if
-              (i32.eqz
-                (i32.and
-                  (get_local $0)
-                  (i32.const 3)
-                )
-              )
-              (br $while-out$0)
-            )
-            (block $block4
-              (if
-                (i32.eqz
-                  (get_local $2)
-                )
-                (return
-                  (get_local $3)
-                )
-              )
-              (i32.store8
-                (get_local $0)
-                (i32.load8_s
-                  (get_local $1)
-                )
-              )
-              (set_local $0
-                (i32.add
-                  (get_local $0)
-                  (i32.const 1)
-                )
-              )
-              (set_local $1
-                (i32.add
-                  (get_local $1)
-                  (i32.const 1)
-                )
-              )
-              (set_local $2
-                (i32.sub
-                  (get_local $2)
-                  (i32.const 1)
-                )
-              )
-            )
-            (br $while-in$1)
-          )
-        )
-        (block $while-out$2
-          (loop $while-in$3
-            (if
-              (i32.eqz
-                (i32.ge_s
-                  (get_local $2)
-                  (i32.const 4)
-                )
-              )
-              (br $while-out$2)
-            )
-            (block $block7
-              (i32.store
-                (get_local $0)
-                (i32.load
-                  (get_local $1)
-                )
-              )
-              (set_local $0
-                (i32.add
-                  (get_local $0)
-                  (i32.const 4)
-                )
-              )
-              (set_local $1
-                (i32.add
-                  (get_local $1)
-                  (i32.const 4)
-                )
-              )
-              (set_local $2
-                (i32.sub
-                  (get_local $2)
-                  (i32.const 4)
-                )
-              )
-            )
-            (br $while-in$3)
-          )
-        )
-      )
-    )
-    (block $while-out$4
-      (loop $while-in$5
-        (if
-          (i32.eqz
-            (i32.gt_s
-              (get_local $2)
-              (i32.const 0)
-            )
-          )
-          (br $while-out$4)
-        )
-        (block $block9
-          (i32.store8
-            (get_local $0)
-            (i32.load8_s
-              (get_local $1)
-            )
-          )
-          (set_local $0
-            (i32.add
-              (get_local $0)
-              (i32.const 1)
-            )
-          )
-          (set_local $1
-            (i32.add
-              (get_local $1)
-              (i32.const 1)
-            )
-          )
-          (set_local $2
-            (i32.sub
-              (get_local $2)
-              (i32.const 1)
-            )
-          )
-        )
-        (br $while-in$5)
-      )
-    )
-    (return
-      (get_local $3)
-    )
-  )
-  (func $this-is-effective-i-tell-you (type $4) (param $0 i32)
-    (if
-      (i32.const -1)
-      (block $block1
-        (if
-          (i32.const 0)
-          (nop)
-        )
-        (set_local $0
-          (i32.const 1)
-        )
-      )
-      (nop)
-    )
-    (drop
+    (block $block15
+     (set_local $0
+      (i32.const 110)
+     )
+     (set_local $1
+      (i32.const 111)
+     )
+     (drop
       (get_local $0)
+     )
+     (drop
+      (get_local $1)
+     )
     )
+   )
   )
+ )
+ (func $greedy-can-be-sad (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (if
+   (i32.const 0)
+   (if
+    (i32.const 1)
+    (if
+     (i32.const 2)
+     (block $block3
+      (set_local $0
+       (i32.const 100)
+      )
+      (set_local $1
+       (i32.const 101)
+      )
+      (drop
+       (get_local $0)
+      )
+      (drop
+       (get_local $1)
+      )
+     )
+     (block $block5
+      (set_local $0
+       (i32.const 102)
+      )
+      (set_local $1
+       (i32.const 103)
+      )
+      (drop
+       (get_local $0)
+      )
+      (drop
+       (get_local $1)
+      )
+     )
+    )
+    (if
+     (i32.const 3)
+     (block $block8
+      (set_local $0
+       (i32.const 104)
+      )
+      (set_local $1
+       (i32.const 105)
+      )
+      (drop
+       (get_local $0)
+      )
+      (drop
+       (get_local $1)
+      )
+     )
+     (block $block10
+      (set_local $0
+       (i32.const 106)
+      )
+      (set_local $1
+       (i32.const 107)
+      )
+      (drop
+       (get_local $0)
+      )
+      (drop
+       (get_local $1)
+      )
+     )
+    )
+   )
+   (if
+    (i32.const 4)
+    (block $block13
+     (set_local $0
+      (i32.const 108)
+     )
+     (set_local $1
+      (i32.const 109)
+     )
+     (drop
+      (get_local $0)
+     )
+     (drop
+      (get_local $1)
+     )
+    )
+    (block $block15
+     (set_local $0
+      (i32.const 110)
+     )
+     (set_local $1
+      (i32.const 111)
+     )
+     (drop
+      (get_local $0)
+     )
+     (drop
+      (get_local $1)
+     )
+    )
+   )
+  )
+ )
+ (func $_memcpy (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (local $3 i32)
+  (if
+   (i32.ge_s
+    (get_local $2)
+    (i32.const 4096)
+   )
+   (drop
+    (get_local $0)
+   )
+  )
+  (set_local $3
+   (get_local $0)
+  )
+  (if
+   (i32.eq
+    (i32.and
+     (get_local $0)
+     (i32.const 3)
+    )
+    (i32.and
+     (get_local $1)
+     (i32.const 3)
+    )
+   )
+   (block $block2
+    (block $while-out$0
+     (loop $while-in$1
+      (if
+       (i32.eqz
+        (i32.and
+         (get_local $0)
+         (i32.const 3)
+        )
+       )
+       (br $while-out$0)
+      )
+      (block $block4
+       (if
+        (i32.eqz
+         (get_local $2)
+        )
+        (return
+         (get_local $3)
+        )
+       )
+       (i32.store8
+        (get_local $0)
+        (i32.load8_s
+         (get_local $1)
+        )
+       )
+       (set_local $0
+        (i32.add
+         (get_local $0)
+         (i32.const 1)
+        )
+       )
+       (set_local $1
+        (i32.add
+         (get_local $1)
+         (i32.const 1)
+        )
+       )
+       (set_local $2
+        (i32.sub
+         (get_local $2)
+         (i32.const 1)
+        )
+       )
+      )
+      (br $while-in$1)
+     )
+    )
+    (block $while-out$2
+     (loop $while-in$3
+      (if
+       (i32.eqz
+        (i32.ge_s
+         (get_local $2)
+         (i32.const 4)
+        )
+       )
+       (br $while-out$2)
+      )
+      (block $block7
+       (i32.store
+        (get_local $0)
+        (i32.load
+         (get_local $1)
+        )
+       )
+       (set_local $0
+        (i32.add
+         (get_local $0)
+         (i32.const 4)
+        )
+       )
+       (set_local $1
+        (i32.add
+         (get_local $1)
+         (i32.const 4)
+        )
+       )
+       (set_local $2
+        (i32.sub
+         (get_local $2)
+         (i32.const 4)
+        )
+       )
+      )
+      (br $while-in$3)
+     )
+    )
+   )
+  )
+  (block $while-out$4
+   (loop $while-in$5
+    (if
+     (i32.eqz
+      (i32.gt_s
+       (get_local $2)
+       (i32.const 0)
+      )
+     )
+     (br $while-out$4)
+    )
+    (block $block9
+     (i32.store8
+      (get_local $0)
+      (i32.load8_s
+       (get_local $1)
+      )
+     )
+     (set_local $0
+      (i32.add
+       (get_local $0)
+       (i32.const 1)
+      )
+     )
+     (set_local $1
+      (i32.add
+       (get_local $1)
+       (i32.const 1)
+      )
+     )
+     (set_local $2
+      (i32.sub
+       (get_local $2)
+       (i32.const 1)
+      )
+     )
+    )
+    (br $while-in$5)
+   )
+  )
+  (return
+   (get_local $3)
+  )
+ )
+ (func $this-is-effective-i-tell-you (type $4) (param $0 i32)
+  (if
+   (i32.const -1)
+   (block $block1
+    (if
+     (i32.const 0)
+     (nop)
+    )
+    (set_local $0
+     (i32.const 1)
+    )
+   )
+   (nop)
+  )
+  (drop
+   (get_local $0)
+  )
+ )
 )

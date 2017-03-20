@@ -274,7 +274,7 @@ struct LocalInfo {
   Index signExtedBits;
 };
 
-struct LocalScanner : PostWalker<LocalScanner, Visitor<LocalScanner>> {
+struct LocalScanner : PostWalker<LocalScanner> {
   std::vector<LocalInfo>& localInfo;
 
   LocalScanner(std::vector<LocalInfo>& localInfo) : localInfo(localInfo) {}
@@ -292,7 +292,7 @@ struct LocalScanner : PostWalker<LocalScanner, Visitor<LocalScanner>> {
       }
     }
     // walk
-    PostWalker<LocalScanner, Visitor<LocalScanner>>::doWalkFunction(func);
+    PostWalker<LocalScanner>::doWalkFunction(func);
     // finalize
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
@@ -404,13 +404,15 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
-        if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
-          // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
-          if ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16)) {
-            // if the value falls through, we can't alter the load, as it might be captured in a tee
-            if (load->signed_ == true || load == ext) {
-              load->signed_ = true;
-              return removeAlmostSignExt(binary);
+        if (extraShifts == 0) {
+          if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
+            // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
+            if ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16)) {
+              // if the value falls through, we can't alter the load, as it might be captured in a tee
+              if (load->signed_ == true || load == ext) {
+                load->signed_ = true;
+                return ext;
+              }
             }
           }
         }
@@ -435,11 +437,13 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         } else if (auto* left = Properties::getSignExtValue(binary->left)) {
           if (auto* right = Properties::getSignExtValue(binary->right)) {
-            // we are comparing two sign-exts, so we may as well replace both with cheaper zexts
             auto bits = Properties::getSignExtBits(binary->left);
-            binary->left = makeZeroExt(left, bits);
-            binary->right = makeZeroExt(right, bits);
-            return binary;
+            if (Properties::getSignExtBits(binary->right) == bits) {
+              // we are comparing two sign-exts with the same bits, so we may as well replace both with cheaper zexts
+              binary->left = makeZeroExt(left, bits);
+              binary->right = makeZeroExt(right, bits);
+              return binary;
+            }
           } else if (auto* load = binary->right->dynCast<Load>()) {
             // we are comparing a load to a sign-ext, we may be able to switch to zext
             auto leftBits = Properties::getSignExtBits(binary->left);
@@ -725,7 +729,7 @@ private:
       c->value = Literal(int32_t(0));
     }
     // remove added/subbed zeros
-    struct ZeroRemover : public PostWalker<ZeroRemover, Visitor<ZeroRemover>> {
+    struct ZeroRemover : public PostWalker<ZeroRemover> {
       // TODO: we could save the binarys and costs we drop, and reuse them later
 
       PassOptions& passOptions;

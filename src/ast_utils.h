@@ -27,7 +27,7 @@ namespace wasm {
 // Finds if there are breaks targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
-struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
+struct BreakSeeker : public PostWalker<BreakSeeker> {
   Name target;
   Index found;
   WasmType valueType;
@@ -70,7 +70,7 @@ struct BreakSeeker : public PostWalker<BreakSeeker, Visitor<BreakSeeker>> {
 // Look for side effects, including control flow
 // TODO: optimize
 
-struct EffectAnalyzer : public PostWalker<EffectAnalyzer, Visitor<EffectAnalyzer>> {
+struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   EffectAnalyzer(PassOptions& passOptions, Expression *ast = nullptr) {
     ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
     if (ast) analyze(ast);
@@ -350,7 +350,7 @@ struct ExpressionAnalyzer {
 
 // Finalizes a node
 
-struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, Visitor<ReFinalize>>> {
+struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   ReFinalize() { name = "refinalize"; }
 
   void visitBlock(Block *curr) { curr->finalize(); }
@@ -380,7 +380,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, Visitor<ReFinalize>
 
 // Adds drop() operations where necessary. This lets you not worry about adding drop when
 // generating code.
-struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop, Visitor<AutoDrop>>> {
+struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new AutoDrop; }

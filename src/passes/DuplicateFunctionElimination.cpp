@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher, Visitor<FunctionHasher>>> {
+struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
   FunctionHasher(std::map<Function*, uint32_t>* output) : output(output) {}
@@ -60,7 +60,7 @@ private:
   };
 };
 
-struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer, Visitor<FunctionReplacer>>> {
+struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer>> {
   bool isFunctionParallel() override { return true; }
 
   FunctionReplacer(std::map<Name, Name>* replacements) : replacements(replacements) {}
@@ -89,6 +89,7 @@ struct DuplicateFunctionElimination : public Pass {
         hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
       }
       PassRunner hasherRunner(module);
+      hasherRunner.setIsNested(true);
       hasherRunner.add<FunctionHasher>(&hashes);
       hasherRunner.run();
       // Find hash-equal groups
@@ -131,6 +132,7 @@ struct DuplicateFunctionElimination : public Pass {
         module->updateMaps();
         // replace direct calls
         PassRunner replacerRunner(module);
+        replacerRunner.setIsNested(true);
         replacerRunner.add<FunctionReplacer>(&replacements);
         replacerRunner.run();
         // replace in table

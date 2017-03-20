@@ -320,7 +320,7 @@ private:
 // Walks in post-order, i.e., children first. When there isn't an obvious
 // order to operands, we follow them in order of execution.
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct PostWalker : public Walker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
@@ -469,7 +469,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 // Traversal with a control-flow stack.
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   ControlFlowWalker() {}
 
@@ -532,7 +532,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
 
 // Traversal with an expression stack.
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
   ExpressionStackWalker() {}
 
@@ -583,7 +583,7 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
 // When execution is no longer linear, this notifies via a call
 // to noteNonLinear().
 
-template<typename SubType, typename VisitorType>
+template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   LinearExecutionWalker() {}
 

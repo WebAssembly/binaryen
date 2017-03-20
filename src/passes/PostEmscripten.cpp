@@ -21,10 +21,13 @@
 
 #include <wasm.h>
 #include <pass.h>
+#include <wasm-builder.h>
+#include <ast/localize.h>
+#include <asmjs/shared-constants.h>
 
 namespace wasm {
 
-struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<PostEmscripten>>> {
+struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new PostEmscripten; }
@@ -87,6 +90,26 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<Pos
   }
   void visitStore(Store* curr) {
     optimizeMemoryAccess(curr->ptr, curr->offset);
+  }
+
+  void visitCallImport(CallImport* curr) {
+    // special asm.js imports can be optimized
+    auto* import = getModule()->getImport(curr->target);
+    if (import->module == GLOBAL_MATH) {
+      if (import->base == POW) {
+        if (auto* exponent = curr->operands[1]->dynCast<Const>()) {
+          if (exponent->value == Literal(double(2.0))) {
+            // This is just a square operation, do a multiply
+            Localizer localizer(curr->operands[0], getFunction(), getModule());
+            Builder builder(*getModule());
+            replaceCurrent(builder.makeBinary(MulFloat64, localizer.expr, builder.makeGetLocal(localizer.index, localizer.expr->type)));
+          } else if (exponent->value == Literal(double(0.5))) {
+            // This is just a square root operation
+            replaceCurrent(Builder(*getModule()).makeUnary(SqrtFloat64, curr->operands[0]));
+          }
+        }
+      }
+    }
   }
 };
 

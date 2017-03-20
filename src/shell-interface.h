@@ -23,6 +23,7 @@
 
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
+#include "support/name.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"
 
@@ -147,7 +148,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
     if (index >= table.size()) trap("callTable overflow");
-    auto* func = instance.wasm.checkFunction(table[index]);
+    auto* func = instance.wasm.getFunctionOrNull(table[index]);
     if (!func) trap("uninitialized table element");
     if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
     for (size_t i = 0; i < func->params.size(); i++) {

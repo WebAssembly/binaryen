@@ -1,0 +1,18 @@
+(module
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (import "env" "_emscripten_glIsTexture" (func $gm (param i32) (result i32)))
+ (import "env" "memory" (memory $0 256 256))
+ (import "env" "table" (table 1 1 anyfunc))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (elem (get_global $tableBase) $gm)
+ (data (get_global $memoryBase) "importedSignCast.asm.js")
+ (export "func" (func $func))
+ (func $func
+  (drop
+   (call $gm
+    (i32.const 0)
+   )
+  )
+ )
+)

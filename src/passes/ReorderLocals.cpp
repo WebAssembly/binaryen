@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<ReorderLocals>>> {
+struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ReorderLocals; }
@@ -84,7 +84,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<Reord
       }
     }
     // apply the renaming to AST nodes
-    struct ReIndexer : public PostWalker<ReIndexer, Visitor<ReIndexer>> {
+    struct ReIndexer : public PostWalker<ReIndexer> {
       Function* func;
       std::vector<Index>& oldToNew;
 

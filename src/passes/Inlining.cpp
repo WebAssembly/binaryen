@@ -29,7 +29,7 @@
 
 namespace wasm {
 
-struct FunctionUseCounter : public WalkerPass<PostWalker<FunctionUseCounter, Visitor<FunctionUseCounter>>> {
+struct FunctionUseCounter : public WalkerPass<PostWalker<FunctionUseCounter>> {
   bool isFunctionParallel() override { return true; }
 
   FunctionUseCounter(std::map<Name, Index>* output) : output(output) {}
@@ -59,7 +59,7 @@ struct InliningState {
   std::map<Name, std::vector<Action>> actionsForFunction; // function name => actions that can be performed in it
 };
 
-struct Planner : public WalkerPass<PostWalker<Planner, Visitor<Planner>>> {
+struct Planner : public WalkerPass<PostWalker<Planner>> {
   bool isFunctionParallel() override { return true; }
 
   Planner(InliningState* state) : state(state) {}
@@ -99,7 +99,7 @@ static Expression* doInlining(Module* module, Function* into, Action& action) {
   block->name = Name(std::string("__inlined_func$") + action.contents->name.str);
   block->type = action.contents->result;
   // set up a locals mapping
-  struct Updater : public PostWalker<Updater, Visitor<Updater>> {
+  struct Updater : public PostWalker<Updater> {
     std::map<Index, Index> localMapping;
     Name returnName;
     Builder* builder;
@@ -145,6 +145,7 @@ struct Inlining : public Pass {
     }
     {
       PassRunner runner(module);
+      runner.setIsNested(true);
       runner.add<FunctionUseCounter>(&uses);
       runner.run();
     }
@@ -172,6 +173,7 @@ struct Inlining : public Pass {
     // find and plan inlinings
     {
       PassRunner runner(module);
+      runner.setIsNested(true);
       runner.add<Planner>(&state);
       runner.run();
     }

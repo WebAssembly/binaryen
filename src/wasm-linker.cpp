@@ -49,7 +49,7 @@ void Linker::placeStackPointer(Address stackAllocation) {
 }
 
 void Linker::ensureFunctionImport(Name target, std::string signature) {
-  if (!out.wasm.checkImport(target)) {
+  if (!out.wasm.getImportOrNull(target)) {
     auto import = new Import;
     import->name = import->base = target;
     import->module = ENV;
@@ -60,7 +60,7 @@ void Linker::ensureFunctionImport(Name target, std::string signature) {
 }
 
 void Linker::ensureObjectImport(Name target) {
-  if (!out.wasm.checkImport(target)) {
+  if (!out.wasm.getImportOrNull(target)) {
     auto import = new Import;
     import->name = import->base = target;
     import->module = ENV;
@@ -195,7 +195,7 @@ void Linker::layout() {
       if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
     } else {
       // function address
-      if (!out.wasm.checkFunction(name)) {
+      if (!out.wasm.getFunctionOrNull(name)) {
         if (FunctionType* f = out.getExternType(name)) {
           // Address of an imported function is taken, but imports do not have addresses in wasm.
           // Generate a thunk to forward to the call_import.
@@ -398,7 +398,7 @@ void Linker::makeDummyFunction() {
 
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   Name thunkName = std::string("__importThunk_") + name.c_str();
-  if (Function* thunk = out.wasm.checkFunction(thunkName)) return thunk;
+  if (Function* thunk = out.wasm.getFunctionOrNull(thunkName)) return thunk;
   ensureFunctionImport(name, getSig(funcType));
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;

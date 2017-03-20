@@ -1,232 +1,244 @@
 (module
-  (type $0 (func))
-  (type $1 (func (param i32)))
-  (type $2 (func (result f32)))
-  (type $3 (func (result i32)))
-  (type $4 (func (param i32 f64 i32 i32)))
-  (type $FUNCSIG$i (func (result i32)))
-  (import "env" "int" (func $int (result i32)))
-  (global $Int i32 (i32.const 0))
-  (memory $0 256 256)
-  (func $b (type $0)
-    (nop)
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (result f32)))
+ (type $3 (func (result i32)))
+ (type $4 (func (param i32 f64 i32 i32)))
+ (type $FUNCSIG$i (func (result i32)))
+ (import "env" "int" (func $int (result i32)))
+ (global $Int i32 (i32.const 0))
+ (memory $0 256 256)
+ (func $b (type $0)
+  (nop)
+ )
+ (func $l (type $0)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (get_local $x)
   )
-  (func $l (type $0)
-    (local $x i32)
-    (local $y i32)
-    (set_local $x
-      (get_local $x)
-    )
-    (block $in-a-block
-    )
-    (block $two-in-a-block
-    )
-    (set_local $x
-      (block $result-used i32
-        (get_local $x)
-      )
-    )
-    (set_local $x
-      (block $two-and-result-used i32
-        (get_local $y)
-      )
-    )
+  (block $in-a-block
   )
-  (func $loopy (type $1) (param $0 i32)
-    (nop)
+  (block $two-in-a-block
   )
-  (func $unary (type $2) (result f32)
+  (set_local $x
+   (block $result-used i32
+    (get_local $x)
+   )
+  )
+  (set_local $x
+   (block $two-and-result-used i32
+    (get_local $y)
+   )
+  )
+ )
+ (func $loopy (type $1) (param $0 i32)
+  (nop)
+ )
+ (func $unary (type $2) (result f32)
+  (unreachable)
+  (f32.abs
+   (f32.const 2)
+  )
+ )
+ (func $binary (type $2) (result f32)
+  (drop
+   (unreachable)
+  )
+  (drop
+   (unreachable)
+  )
+  (f32.add
+   (unreachable)
+   (unreachable)
+  )
+  (f32.add
+   (f32.const 5)
+   (f32.const 6)
+  )
+ )
+ (func $select (type $3) (result i32)
+  (drop
+   (unreachable)
+  )
+  (drop
+   (unreachable)
+  )
+  (drop
+   (unreachable)
+  )
+  (select
+   (unreachable)
+   (unreachable)
+   (i32.const 10)
+  )
+  (drop
+   (select
     (unreachable)
-    (f32.abs
-      (f32.const 2)
-    )
+    (i32.const 11)
+    (unreachable)
+   )
   )
-  (func $binary (type $2) (result f32)
-    (drop
-      (unreachable)
-    )
-    (drop
-      (unreachable)
-    )
-    (f32.add
-      (unreachable)
-      (unreachable)
-    )
-    (f32.add
-      (f32.const 5)
-      (f32.const 6)
-    )
+  (drop
+   (select
+    (i32.const 12)
+    (unreachable)
+    (unreachable)
+   )
   )
-  (func $select (type $3) (result i32)
-    (drop
-      (unreachable)
-    )
-    (drop
-      (unreachable)
-    )
-    (drop
-      (unreachable)
-    )
-    (select
-      (unreachable)
-      (unreachable)
-      (i32.const 10)
-    )
-    (drop
-      (select
-        (unreachable)
-        (i32.const 11)
-        (unreachable)
-      )
-    )
-    (drop
-      (select
-        (i32.const 12)
-        (unreachable)
-        (unreachable)
-      )
-    )
-    (select
-      (unreachable)
-      (unreachable)
-      (unreachable)
-    )
-    (select
-      (i32.const 13)
-      (i32.const 14)
-      (i32.const 15)
-    )
+  (select
+   (unreachable)
+   (unreachable)
+   (unreachable)
   )
-  (func $block-to-one (type $0)
-    (block $block0
-    )
-    (block $block1
-      (unreachable)
-    )
-    (block $block2
-      (unreachable)
-    )
-    (block $block3
-      (unreachable)
-    )
-    (block $block4
-      (unreachable)
-    )
+  (select
+   (i32.const 13)
+   (i32.const 14)
+   (i32.const 15)
   )
-  (func $recurse (type $0)
-    (nop)
+ )
+ (func $block-to-one (type $0)
+  (block $block0
   )
-  (func $func-block (type $0)
-    (nop)
+  (block $block1
+   (unreachable)
   )
-  (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
-    (if
-      (if i32
-        (get_local $d)
-        (block $block1 i32
-          (f64.ne
-            (f64.promote/f32
-              (f32.load
-                (tee_local $l
-                  (i32.add
-                    (get_local $b)
-                    (i32.const 60)
-                  )
-                )
-              )
-            )
-            (get_local $e)
-          )
+  (block $block2
+   (unreachable)
+  )
+  (block $block3
+   (unreachable)
+  )
+  (block $block4
+   (unreachable)
+  )
+ )
+ (func $recurse (type $0)
+  (nop)
+ )
+ (func $func-block (type $0)
+  (nop)
+ )
+ (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
+  (if
+   (if i32
+    (get_local $d)
+    (block $block1 i32
+     (f64.ne
+      (f64.promote/f32
+       (f32.load
+        (tee_local $l
+         (i32.add
+          (get_local $b)
+          (i32.const 60)
+         )
         )
-        (i32.const 0)
+       )
       )
-      (unreachable)
+      (get_local $e)
+     )
     )
+    (i32.const 0)
+   )
+   (unreachable)
   )
-  (func $if-drop (type $3) (result i32)
-    (block $out
-      (if
-        (call $if-drop)
-        (drop
-          (call $int)
-        )
-        (br $out)
-      )
-      (if
-        (call $if-drop)
-        (br $out)
-        (drop
-          (call $int)
-        )
-      )
-    )
-    (i32.const 1)
-  )
-  (func $drop-silly (type $0)
+ )
+ (func $if-drop (type $3) (result i32)
+  (block $out
+   (if
+    (call $if-drop)
     (drop
-      (call $int)
+     (call $int)
     )
+    (br $out)
+   )
+   (if
+    (call $if-drop)
+    (br $out)
     (drop
-      (call $int)
+     (call $int)
     )
-    (drop
-      (call $int)
-    )
-    (drop
-      (i32.add
-        (call $int)
-        (call $int)
+   )
+  )
+  (i32.const 1)
+ )
+ (func $drop-silly (type $0)
+  (drop
+   (call $int)
+  )
+  (drop
+   (call $int)
+  )
+  (drop
+   (call $int)
+  )
+  (drop
+   (i32.add
+    (call $int)
+    (call $int)
+   )
+  )
+ )
+ (func $drop-get-global (type $0)
+  (call $drop-get-global)
+ )
+ (func $relooperJumpThreading1 (type $0)
+  (local $$vararg_ptr5 i32)
+  (local $$11 i32)
+  (loop $while-in$1
+   (drop
+    (block $jumpthreading$outer$8 i32
+     (block $jumpthreading$inner$8
+      (br $jumpthreading$outer$8
+       (i32.const 0)
       )
+     )
+     (i32.store
+      (get_local $$vararg_ptr5)
+      (get_local $$11)
+     )
+     (i32.const 0)
     )
+   )
   )
-  (func $drop-get-global (type $0)
-    (call $drop-get-global)
+ )
+ (func $relooperJumpThreading2 (type $0)
+  (nop)
+ )
+ (func $relooperJumpThreading3 (type $0)
+  (nop)
+ )
+ (func $if2drops (type $3) (result i32)
+  (drop
+   (if i32
+    (call $if2drops)
+    (call $if2drops)
+    (call $if2drops)
+   )
   )
-  (func $relooperJumpThreading1 (type $0)
-    (local $$vararg_ptr5 i32)
-    (local $$11 i32)
-    (loop $while-in$1
-      (drop
-        (block $jumpthreading$outer$8 i32
-          (block $jumpthreading$inner$8
-            (br $jumpthreading$outer$8
-              (i32.const 0)
-            )
-          )
-          (i32.store
-            (get_local $$vararg_ptr5)
-            (get_local $$11)
-          )
-          (i32.const 0)
-        )
-      )
-    )
+  (i32.const 2)
+ )
+ (func $if2drops-different (type $3) (result i32)
+  (if
+   (call $if2drops)
+   (drop
+    (call $if2drops)
+   )
+   (drop
+    (call $unary)
+   )
   )
-  (func $relooperJumpThreading2 (type $0)
-    (nop)
+  (i32.const 2)
+ )
+ (func $if-const (type $1) (param $x i32)
+  (call $if-const
+   (i32.const 3)
   )
-  (func $relooperJumpThreading3 (type $0)
-    (nop)
+  (call $if-const
+   (i32.const 5)
   )
-  (func $if2drops (type $3) (result i32)
-    (drop
-      (if i32
-        (call $if2drops)
-        (call $if2drops)
-        (call $if2drops)
-      )
-    )
-    (i32.const 2)
+  (call $if-const
+   (i32.const 7)
   )
-  (func $if-const (type $1) (param $x i32)
-    (call $if-const
-      (i32.const 3)
-    )
-    (call $if-const
-      (i32.const 5)
-    )
-    (call $if-const
-      (i32.const 7)
-    )
-  )
+ )
 )

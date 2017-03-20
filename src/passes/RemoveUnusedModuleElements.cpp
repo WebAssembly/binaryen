@@ -37,7 +37,7 @@ typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
 // Finds reachabilities
 
-struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer, Visitor<ReachabilityAnalyzer>> {
+struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;
@@ -59,13 +59,13 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer, Visitor<Re
         reachable.insert(curr);
         if (curr.first == ModuleElementKind::Function) {
           // if not an import, walk it
-          auto* func = module->checkFunction(curr.second);
+          auto* func = module->getFunctionOrNull(curr.second);
           if (func) {
             walk(func->body);
           }
         } else {
           // if not imported, it has an init expression we need to walk
-          auto* glob = module->checkGlobal(curr.second);
+          auto* glob = module->getGlobalOrNull(curr.second);
           if (glob) {
             walk(glob->init);
           }

@@ -314,28 +314,28 @@ void mergeIn(Module& output, Module& input) {
   // find new names
   for (auto& curr : input.functionTypes) {
     curr->name = inputUpdater.ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.checkFunctionType(name);
+      return output.getFunctionTypeOrNull(name);
     });
   }
   for (auto& curr : input.imports) {
     if (curr->kind == ExternalKind::Function) {
       curr->name = inputUpdater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return !!output.checkImport(name) || !!output.checkFunction(name);
+        return !!output.getImportOrNull(name) || !!output.getFunctionOrNull(name);
       });
     } else if (curr->kind == ExternalKind::Global) {
       curr->name = inputUpdater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return !!output.checkImport(name) || !!output.checkGlobal(name);
+        return !!output.getImportOrNull(name) || !!output.getGlobalOrNull(name);
       });
     }
   }
   for (auto& curr : input.functions) {
     curr->name = inputUpdater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.checkFunction(name);
+      return output.getFunctionOrNull(name);
     });
   }
   for (auto& curr : input.globals) {
     curr->name = inputUpdater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.checkGlobal(name);
+      return output.getGlobalOrNull(name);
     });
   }
 
@@ -406,7 +406,7 @@ void mergeIn(Module& output, Module& input) {
   // handle post-instantiate. this is special, as if it exists in both, we must in fact call both
   Name POST_INSTANTIATE("__post_instantiate");
   if (inputUpdater.fNames.find(POST_INSTANTIATE) != inputUpdater.fNames.end() &&
-      output.checkExport(POST_INSTANTIATE)) {
+      output.getExportOrNull(POST_INSTANTIATE)) {
     // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
     auto* func = output.getFunction(output.getExport(POST_INSTANTIATE)->value);
     Builder builder(output);
@@ -437,7 +437,7 @@ void mergeIn(Module& output, Module& input) {
     }
     // if an export would collide, do not add the new one, ignore it
     // TODO: warning/error mode?
-    if (!output.checkExport(curr->name)) {
+    if (!output.getExportOrNull(curr->name)) {
       if (curr->kind == ExternalKind::Function) {
         curr->value = inputUpdater.fNames[curr->value];
         output.addExport(curr.release());

@@ -41,7 +41,7 @@ struct LegalizeJSInterface : public Pass {
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
-        if (auto* func = module->checkFunction(ex->value)) {
+        if (auto* func = module->getFunctionOrNull(ex->value)) {
           if (isIllegal(func)) {
             auto legalName = makeLegalStub(func, module);
             ex->value = legalName;
@@ -75,7 +75,7 @@ struct LegalizeJSInterface : public Pass {
 
       // fix up imports: call_import of an illegal must be turned to a call of a legal
 
-      struct FixImports : public WalkerPass<PostWalker<FixImports, Visitor<FixImports>>> {
+      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
         bool isFunctionParallel() override { return true; }
 
         Pass* create() override { return new FixImports(illegalToLegal); }
@@ -94,6 +94,7 @@ struct LegalizeJSInterface : public Pass {
       };
 
       PassRunner passRunner(module);
+      passRunner.setIsNested(true);
       passRunner.add<FixImports>(&illegalToLegal);
       passRunner.run();
     }
@@ -158,7 +159,7 @@ private:
     }
 
     // a method may be exported multiple times
-    if (!module->checkFunction(legal->name)) {
+    if (!module->getFunctionOrNull(legal->name)) {
       module->addFunction(legal);
     }
     return legal->name;
@@ -224,7 +225,7 @@ private:
   }
 
   void ensureTempRet0(Module* module) {
-    if (!module->checkGlobal(TEMP_RET_0)) {
+    if (!module->getGlobalOrNull(TEMP_RET_0)) {
       Global* global = new Global;
       global->name = TEMP_RET_0;
       global->type = i32;
