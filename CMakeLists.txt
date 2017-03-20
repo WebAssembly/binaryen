@@ -208,3 +208,13 @@ TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ast support)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION bin)
+
+SET(wasm_analyze_SOURCES
+  src/tools/wasm-analyze.cpp
+)
+ADD_EXECUTABLE(wasm-analyze
+               ${wasm_analyze_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-analyze wasm asmjs passes ast support)
+SET_PROPERTY(TARGET wasm-analyze PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-analyze PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-analyze DESTINATION bin)

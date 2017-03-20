@@ -72,8 +72,6 @@ int main(int argc, const char* argv[]) {
     passes[0] = "O";
   }
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
-
   Module wasm;
 
   {

@@ -215,6 +215,20 @@ for t in tests:
       if actual != expected:
         fail(actual, expected)
 
+print '\n[ checking wasm-analyze testcases... ]\n'
+
+for t in sorted(os.listdir(os.path.join('test', 'analyze'))):
+  if t.endswith('.wast'):
+    print '..', t
+    wast = os.path.join('test', 'analyze', t)
+    cmd = [os.path.join('bin', 'wasm-analyze'), wast]
+    actual = run_command(cmd, stderr=None)
+    out = wast.replace('.wast', '.txt')
+    with open(out) as f:
+      expected = f.read()
+      if actual != expected:
+        fail(actual, expected)
+
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
 if len(requested) == 0:
