@@ -79,8 +79,10 @@ echo "building wasm.js"
   src/asmjs/asm_v_wasm.cpp \
   src/asmjs/shared-constants.cpp \
   src/wasm/wasm.cpp \
+  src/wasm/wasm-type.cpp \
   src/wasm/wasm-s-parser.cpp \
   src/wasm/wasm-binary.cpp \
+  src/wasm/literal.cpp \
   -Isrc/ \
   -o bin/wasm${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE=1 \
@@ -136,7 +138,9 @@ fi
   src/asmjs/asm_v_wasm.cpp \
   src/asmjs/shared-constants.cpp \
   src/wasm/wasm.cpp \
+  src/wasm/wasm-type.cpp \
   src/wasm/wasm-binary.cpp \
+  src/wasm/literal.cpp \
   src/binaryen-c.cpp \
   src/cfg/Relooper.cpp \
   -o binaryen.bc \
