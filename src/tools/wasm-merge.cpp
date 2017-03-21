@@ -215,285 +215,276 @@ struct Mergeable {
   }
 };
 
-// Merges input into output.
-// May destructively modify input, we don't expect to use it later
-// We don't copy into the new module, we assume both stay alive forever
-void mergeIn(Module& output, Module& input) {
-  struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>, public Mergeable {
-    OutputUpdater(Module& wasm) : Mergeable(wasm) {}
+struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>, public Mergeable {
+  OutputUpdater(Module& wasm) : Mergeable(wasm) {}
 
-    void visitCallImport(CallImport* curr) {
-      auto iter = implementedFunctionImports.find(curr->target);
-      if (iter != implementedFunctionImports.end()) {
-        // this import is now in the module - call it
-        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
-      }
+  void visitCallImport(CallImport* curr) {
+    auto iter = implementedFunctionImports.find(curr->target);
+    if (iter != implementedFunctionImports.end()) {
+      // this import is now in the module - call it
+      replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
     }
+  }
 
-    void visitGetGlobal(GetGlobal* curr) {
-      auto iter = implementedGlobalImports.find(curr->name);
-      if (iter != implementedGlobalImports.end()) {
-        curr->name = iter->second;
-        assert(curr->name.is());
-      }
-    }
-
-    void visitModule(Module* curr) {
-      // remove imports that are being implemented
-      for (auto& pair : implementedFunctionImports) {
-        curr->removeImport(pair.first);
-      }
-      for (auto& pair : implementedGlobalImports) {
-        curr->removeImport(pair.first);
-      }
-    }
-  };
-  OutputUpdater outputUpdater(output);
-
-  struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUpdater>>, public Mergeable {
-    InputUpdater(Module& wasm, OutputUpdater& outputUpdater) : Mergeable(wasm), outputUpdater(outputUpdater) {}
-
-    OutputUpdater& outputUpdater;
-
-    // mappings, old name => new name
-    std::map<Name, Name> ftNames; // function types
-    std::map<Name, Name> eNames; // exports
-    std::map<Name, Name> fNames; // functions
-    std::map<Name, Name> gNames; // globals
-
-    void visitCall(Call* curr) {
-      curr->target = fNames[curr->target];
-      assert(curr->target.is());
-    }
-
-    void visitCallImport(CallImport* curr) {
-      auto iter = implementedFunctionImports.find(curr->target);
-      if (iter != implementedFunctionImports.end()) {
-        // this import is now in the module - call it
-        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
-        return;
-      }
-      curr->target = fNames[curr->target];
-      assert(curr->target.is());
-    }
-
-    void visitCallIndirect(CallIndirect* curr) {
-      curr->fullType = ftNames[curr->fullType];
-      assert(curr->fullType.is());
-    }
-
-    void visitGetGlobal(GetGlobal* curr) {
-      auto iter = implementedGlobalImports.find(curr->name);
-      if (iter != implementedGlobalImports.end()) {
-        // this import is now in the module - use it
-        curr->name = iter->second;
-        return;
-      }
-      curr->name = gNames[curr->name];
-      assert(curr->name.is());
-      // if this is the memory or table base, add the bump
-      if (memoryBaseGlobals.count(curr->name)) {
-        addBump(outputUpdater.totalMemorySize);
-      } else if (tableBaseGlobals.count(curr->name)) {
-        addBump(outputUpdater.totalTableSize);
-      }
-    }
-
-    void visitSetGlobal(SetGlobal* curr) {
-      curr->name = gNames[curr->name];
+  void visitGetGlobal(GetGlobal* curr) {
+    auto iter = implementedGlobalImports.find(curr->name);
+    if (iter != implementedGlobalImports.end()) {
+      curr->name = iter->second;
       assert(curr->name.is());
     }
+  }
 
-    void merge() {
-      // find function imports in us that are implemented in the output
-      // TODO make maps, avoid N^2
-      for (auto& imp : wasm.imports) {
-        // per wasm dynamic library rules, we expect to see exports on 'env'
-        if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
-          // seek an export on the other side that matches
-          for (auto& exp : outputUpdater.wasm.exports) {
-            if (exp->kind == imp->kind && exp->name == imp->base) {
-              // fits!
-              if (imp->kind == ExternalKind::Function) {
-                implementedFunctionImports[imp->name] = exp->value;
-              } else {
-                implementedGlobalImports[imp->name] = exp->value;
-              }
-              break;
+  void visitModule(Module* curr) {
+    // remove imports that are being implemented
+    for (auto& pair : implementedFunctionImports) {
+      curr->removeImport(pair.first);
+    }
+    for (auto& pair : implementedGlobalImports) {
+      curr->removeImport(pair.first);
+    }
+  }
+};
+
+struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUpdater>>, public Mergeable {
+  InputUpdater(Module& wasm, OutputUpdater& outputUpdater) : Mergeable(wasm), outputUpdater(outputUpdater) {}
+
+  OutputUpdater& outputUpdater;
+
+  // mappings, old name => new name
+  std::map<Name, Name> ftNames; // function types
+  std::map<Name, Name> eNames; // exports
+  std::map<Name, Name> fNames; // functions
+  std::map<Name, Name> gNames; // globals
+
+  void visitCall(Call* curr) {
+    curr->target = fNames[curr->target];
+    assert(curr->target.is());
+  }
+
+  void visitCallImport(CallImport* curr) {
+    auto iter = implementedFunctionImports.find(curr->target);
+    if (iter != implementedFunctionImports.end()) {
+      // this import is now in the module - call it
+      replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+      return;
+    }
+    curr->target = fNames[curr->target];
+    assert(curr->target.is());
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    curr->fullType = ftNames[curr->fullType];
+    assert(curr->fullType.is());
+  }
+
+  void visitGetGlobal(GetGlobal* curr) {
+    auto iter = implementedGlobalImports.find(curr->name);
+    if (iter != implementedGlobalImports.end()) {
+      // this import is now in the module - use it
+      curr->name = iter->second;
+      return;
+    }
+    curr->name = gNames[curr->name];
+    assert(curr->name.is());
+    // if this is the memory or table base, add the bump
+    if (memoryBaseGlobals.count(curr->name)) {
+      addBump(outputUpdater.totalMemorySize);
+    } else if (tableBaseGlobals.count(curr->name)) {
+      addBump(outputUpdater.totalTableSize);
+    }
+  }
+
+  void visitSetGlobal(SetGlobal* curr) {
+    curr->name = gNames[curr->name];
+    assert(curr->name.is());
+  }
+
+  void merge() {
+    // find function imports in us that are implemented in the output
+    // TODO make maps, avoid N^2
+    for (auto& imp : wasm.imports) {
+      // per wasm dynamic library rules, we expect to see exports on 'env'
+      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+        // seek an export on the other side that matches
+        for (auto& exp : outputUpdater.wasm.exports) {
+          if (exp->kind == imp->kind && exp->name == imp->base) {
+            // fits!
+            if (imp->kind == ExternalKind::Function) {
+              implementedFunctionImports[imp->name] = exp->value;
+            } else {
+              implementedGlobalImports[imp->name] = exp->value;
             }
+            break;
           }
         }
       }
-      // remove the unneeded ones
-      for (auto& pair : implementedFunctionImports) {
-        wasm.removeImport(pair.first);
-      }
-      for (auto& pair : implementedGlobalImports) {
-        wasm.removeImport(pair.first);
-      }
+    }
+    // remove the unneeded ones
+    for (auto& pair : implementedFunctionImports) {
+      wasm.removeImport(pair.first);
+    }
+    for (auto& pair : implementedGlobalImports) {
+      wasm.removeImport(pair.first);
+    }
 
-      // find new names
-      for (auto& curr : wasm.functionTypes) {
-        curr->name = ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return outputUpdater.wasm.getFunctionTypeOrNull(name);
-        });
-      }
-      for (auto& curr : wasm.imports) {
-        if (curr->kind == ExternalKind::Function) {
-          curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-            return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getFunctionOrNull(name);
-          });
-        } else if (curr->kind == ExternalKind::Global) {
-          curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-            return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getGlobalOrNull(name);
-          });
-        }
-      }
-      for (auto& curr : wasm.functions) {
+    // find new names
+    for (auto& curr : wasm.functionTypes) {
+      curr->name = ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return outputUpdater.wasm.getFunctionTypeOrNull(name);
+      });
+    }
+    for (auto& curr : wasm.imports) {
+      if (curr->kind == ExternalKind::Function) {
         curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return outputUpdater.wasm.getFunctionOrNull(name);
+          return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getFunctionOrNull(name);
         });
-      }
-      for (auto& curr : wasm.globals) {
+      } else if (curr->kind == ExternalKind::Global) {
         curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return outputUpdater.wasm.getGlobalOrNull(name);
+          return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getGlobalOrNull(name);
         });
       }
+    }
+    for (auto& curr : wasm.functions) {
+      curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return outputUpdater.wasm.getFunctionOrNull(name);
+      });
+    }
+    for (auto& curr : wasm.globals) {
+      curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return outputUpdater.wasm.getGlobalOrNull(name);
+      });
+    }
 
-      // update global names in input
-      {
-        auto temp = memoryBaseGlobals;
-        memoryBaseGlobals.clear();
-        for (auto x : temp) {
-          memoryBaseGlobals.insert(gNames[x]);
-        }
+    // update global names in input
+    {
+      auto temp = memoryBaseGlobals;
+      memoryBaseGlobals.clear();
+      for (auto x : temp) {
+        memoryBaseGlobals.insert(gNames[x]);
       }
-      {
-        auto temp = tableBaseGlobals;
-        tableBaseGlobals.clear();
-        for (auto x : temp) {
-          tableBaseGlobals.insert(gNames[x]);
-        }
-      }
-
-      // find function imports in output that are implemented in the input
-      for (auto& imp : outputUpdater.wasm.imports) {
-        if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
-          for (auto& exp : wasm.exports) {
-            if (exp->kind == imp->kind && exp->name == imp->base) {
-              if (imp->kind == ExternalKind::Function) {
-                outputUpdater.implementedFunctionImports[imp->name] = fNames[exp->value];
-              } else {
-                outputUpdater.implementedGlobalImports[imp->name] = gNames[exp->value];
-              }
-              break;
-            }
-          }
-        }
-      }
-
-      // update the output before bringing anything in. avoid doing so when possible, as in the
-      // common case the output module is very large.
-      if (outputUpdater.implementedFunctionImports.size() + outputUpdater.implementedGlobalImports.size() > 0) {
-        outputUpdater.walkModule(&outputUpdater.wasm);
-      }
-
-      // memory&table: we place the new memory segments at a higher position. after the existing ones.
-      // that means we need to update usage of gb, which we did earlier.
-      // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
-      // segment at most.
-      copySegment(outputUpdater.wasm.memory, wasm.memory, [](char x) -> char { return x; });
-      // if no functions, even imported, then nothing to do (and no zero element anyhow)
-      copySegment(outputUpdater.wasm.table, wasm.table, [&](Name x) -> Name { return fNames[x]; });
-
-      // update the new contents about to be merged in
-      walkModule(&wasm);
-
-      // handle post-instantiate. this is special, as if it exists in both, we must in fact call both
-      Name POST_INSTANTIATE("__post_instantiate");
-      if (fNames.find(POST_INSTANTIATE) != fNames.end() &&
-          outputUpdater.wasm.getExportOrNull(POST_INSTANTIATE)) {
-        // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
-        auto* func = outputUpdater.wasm.getFunction(outputUpdater.wasm.getExport(POST_INSTANTIATE)->value);
-        Builder builder(outputUpdater.wasm);
-        func->body = builder.makeSequence(
-          builder.makeCall(fNames[POST_INSTANTIATE], {}, none),
-          func->body
-        );
-      }
-
-      // copy in the data
-      for (auto& curr : wasm.functionTypes) {
-        outputUpdater.wasm.addFunctionType(curr.release());
-      }
-      for (auto& curr : wasm.imports) {
-        if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
-          continue; // wasm has just 1 of each, they must match
-        }
-        // update and add
-        if (curr->functionType.is()) {
-          curr->functionType = ftNames[curr->functionType];
-          assert(curr->functionType.is());
-        }
-        outputUpdater.wasm.addImport(curr.release());
-      }
-      for (auto& curr : wasm.exports) {
-        if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
-          continue; // wasm has just 1 of each, they must match
-        }
-        // if an export would collide, do not add the new one, ignore it
-        // TODO: warning/error mode?
-        if (!outputUpdater.wasm.getExportOrNull(curr->name)) {
-          if (curr->kind == ExternalKind::Function) {
-            curr->value = fNames[curr->value];
-            outputUpdater.wasm.addExport(curr.release());
-          } else if (curr->kind == ExternalKind::Global) {
-            curr->value = gNames[curr->value];
-            outputUpdater.wasm.addExport(curr.release());
-          } else {
-            WASM_UNREACHABLE();
-          }
-        }
-      }
-      for (auto& curr : wasm.functions) {
-        curr->type = ftNames[curr->type];
-        assert(curr->type.is());
-        outputUpdater.wasm.addFunction(curr.release());
-      }
-      for (auto& curr : wasm.globals) {
-        outputUpdater.wasm.addGlobal(curr.release());
+    }
+    {
+      auto temp = tableBaseGlobals;
+      tableBaseGlobals.clear();
+      for (auto x : temp) {
+        tableBaseGlobals.insert(gNames[x]);
       }
     }
 
-  private:
-    // add an offset to a get_global. we look above, and if there is already an add,
-    // we can add into it, avoiding creating a new node
-    void addBump(Index bump) {
-      if (expressionStack.size() >= 2) {
-        auto* parent = expressionStack[expressionStack.size() - 2];
-        if (auto* binary = parent->dynCast<Binary>()) {
-          if (binary->op == AddInt32) {
-            if (auto* num = binary->right->dynCast<Const>()) {
-              num->value = num->value.add(Literal(bump));
-              return;
+    // find function imports in output that are implemented in the input
+    for (auto& imp : outputUpdater.wasm.imports) {
+      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+        for (auto& exp : wasm.exports) {
+          if (exp->kind == imp->kind && exp->name == imp->base) {
+            if (imp->kind == ExternalKind::Function) {
+              outputUpdater.implementedFunctionImports[imp->name] = fNames[exp->value];
+            } else {
+              outputUpdater.implementedGlobalImports[imp->name] = gNames[exp->value];
             }
+            break;
           }
         }
       }
-      Builder builder(*getModule());
-      replaceCurrent(
-        builder.makeBinary(
-          AddInt32,
-          expressionStack.back(),
-          builder.makeConst(Literal(int32_t(bump)))
-        )
+    }
+
+    // update the output before bringing anything in. avoid doing so when possible, as in the
+    // common case the output module is very large.
+    if (outputUpdater.implementedFunctionImports.size() + outputUpdater.implementedGlobalImports.size() > 0) {
+      outputUpdater.walkModule(&outputUpdater.wasm);
+    }
+
+    // memory&table: we place the new memory segments at a higher position. after the existing ones.
+    // that means we need to update usage of gb, which we did earlier.
+    // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
+    // segment at most.
+    copySegment(outputUpdater.wasm.memory, wasm.memory, [](char x) -> char { return x; });
+    // if no functions, even imported, then nothing to do (and no zero element anyhow)
+    copySegment(outputUpdater.wasm.table, wasm.table, [&](Name x) -> Name { return fNames[x]; });
+
+    // update the new contents about to be merged in
+    walkModule(&wasm);
+
+    // handle post-instantiate. this is special, as if it exists in both, we must in fact call both
+    Name POST_INSTANTIATE("__post_instantiate");
+    if (fNames.find(POST_INSTANTIATE) != fNames.end() &&
+        outputUpdater.wasm.getExportOrNull(POST_INSTANTIATE)) {
+      // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
+      auto* func = outputUpdater.wasm.getFunction(outputUpdater.wasm.getExport(POST_INSTANTIATE)->value);
+      Builder builder(outputUpdater.wasm);
+      func->body = builder.makeSequence(
+        builder.makeCall(fNames[POST_INSTANTIATE], {}, none),
+        func->body
       );
     }
-  };
-  InputUpdater inputUpdater(input, outputUpdater);
 
-  inputUpdater.merge();
-}
+    // copy in the data
+    for (auto& curr : wasm.functionTypes) {
+      outputUpdater.wasm.addFunctionType(curr.release());
+    }
+    for (auto& curr : wasm.imports) {
+      if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
+        continue; // wasm has just 1 of each, they must match
+      }
+      // update and add
+      if (curr->functionType.is()) {
+        curr->functionType = ftNames[curr->functionType];
+        assert(curr->functionType.is());
+      }
+      outputUpdater.wasm.addImport(curr.release());
+    }
+    for (auto& curr : wasm.exports) {
+      if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
+        continue; // wasm has just 1 of each, they must match
+      }
+      // if an export would collide, do not add the new one, ignore it
+      // TODO: warning/error mode?
+      if (!outputUpdater.wasm.getExportOrNull(curr->name)) {
+        if (curr->kind == ExternalKind::Function) {
+          curr->value = fNames[curr->value];
+          outputUpdater.wasm.addExport(curr.release());
+        } else if (curr->kind == ExternalKind::Global) {
+          curr->value = gNames[curr->value];
+          outputUpdater.wasm.addExport(curr.release());
+        } else {
+          WASM_UNREACHABLE();
+        }
+      }
+    }
+    for (auto& curr : wasm.functions) {
+      curr->type = ftNames[curr->type];
+      assert(curr->type.is());
+      outputUpdater.wasm.addFunction(curr.release());
+    }
+    for (auto& curr : wasm.globals) {
+      outputUpdater.wasm.addGlobal(curr.release());
+    }
+  }
+
+private:
+  // add an offset to a get_global. we look above, and if there is already an add,
+  // we can add into it, avoiding creating a new node
+  void addBump(Index bump) {
+    if (expressionStack.size() >= 2) {
+      auto* parent = expressionStack[expressionStack.size() - 2];
+      if (auto* binary = parent->dynCast<Binary>()) {
+        if (binary->op == AddInt32) {
+          if (auto* num = binary->right->dynCast<Const>()) {
+            num->value = num->value.add(Literal(bump));
+            return;
+          }
+        }
+      }
+    }
+    Builder builder(*getModule());
+    replaceCurrent(
+      builder.makeBinary(
+        AddInt32,
+        expressionStack.back(),
+        builder.makeConst(Literal(int32_t(bump)))
+      )
+    );
+  }
+};
 
 // Finalize the memory/table bases, assinging concrete values into them
 void finalizeBases(Module& wasm, Index memory, Index table) {
@@ -600,7 +591,11 @@ int main(int argc, const char* argv[]) {
         p.dump(std::cerr);
         Fatal() << "error in parsing input";
       }
-      mergeIn(output, *input);
+      // perform the merge
+      OutputUpdater outputUpdater(output);
+      InputUpdater inputUpdater(*input, outputUpdater);
+      inputUpdater.merge();
+      // retain the linked in module as we may depend on parts of it
       otherModules.push_back(std::unique_ptr<Module>(input.release()));
     }
   }
