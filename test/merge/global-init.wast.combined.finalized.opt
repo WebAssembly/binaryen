@@ -1,4 +1,7 @@
 (module
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$v$0 (func))
  (import "env" "memory" (memory $0 256))
- (import "env" "table" (table 0 anyfunc))
+ (import "env" "table" (table 8 anyfunc))
+ 
 )

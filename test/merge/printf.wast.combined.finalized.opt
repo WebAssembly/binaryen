@@ -3,7 +3,8 @@
  (type $FUNCSIG$iii$0 (func (param i32 i32) (result i32)))
  (type $1 (func))
  (import "env" "memory" (memory $0 256))
- (import "env" "table" (table 0 anyfunc))
+ (import "env" "table" (table 8 anyfunc))
+ 
  (export "_printf" (func $625))
  (func $625 (type $FUNCSIG$iii) (param $var$0 i32) (param $var$1 i32) (result i32)
   (i32.const 102030)

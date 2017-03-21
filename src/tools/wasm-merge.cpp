@@ -27,6 +27,7 @@
 #include "pass.h"
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
+#include "asm_v_wasm.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
@@ -35,54 +36,6 @@
 #include "wasm-validator.h"
 
 using namespace wasm;
-
-// utilities
-
-static Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
-  if (!checkIfCollides(initial)) {
-    return initial;
-  }
-  int x = 0;
-  while (1) {
-    auto curr = Name(std::string(initial.str) + '$' + std::to_string(x));
-    if (!checkIfCollides(curr)) {
-      return curr;
-    }
-    x++;
-  }
-}
-
-// find the memory and table bumps. if there are relocatable sections for them,
-// that is the base size, and a dylink section may increase things further
-static void findBumps(Module& wasm, Index& memoryBaseBump, Index& tableBaseBump) {
-  memoryBaseBump = 0;
-  tableBaseBump = 0;
-  for (auto& segment : wasm.memory.segments) {
-    Expression* offset = segment.offset;
-    if (offset->is<GetGlobal>()) {
-      memoryBaseBump = segment.data.size();
-      break;
-    }
-  }
-  for (auto& segment : wasm.table.segments) {
-    Expression* offset = segment.offset;
-    if (offset->is<GetGlobal>()) {
-      tableBaseBump = segment.data.size();
-      break;
-    }
-  }
-  for (auto& section : wasm.userSections) {
-    if (section.name == "dylink") {
-      WasmBinaryBuilder builder(wasm, section.data, false);
-      memoryBaseBump = std::max(memoryBaseBump, builder.getU32LEB());
-      tableBaseBump = std::max(tableBaseBump, builder.getU32LEB());
-      break; // there can be only one
-    }
-  }
-  // align them
-  while (memoryBaseBump % 16 != 0) memoryBaseBump++;
-  while (tableBaseBump % 2 != 0) tableBaseBump++;
-}
 
 static void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
   for (auto& curr : wasm.imports) {
@@ -94,81 +47,215 @@ static void findImportsByBase(Module& wasm, Name base, std::function<void (Name)
   }
 }
 
-// ensure a relocatable segment exists, of the proper size, including
-// the dylink bump applied into it, standardized into the form of
-// not using a dylink section and instead having enough zeros at
-// the end. this makes linking much simpler.
-template<typename T, typename U, typename Segment>
-static void standardizeSegment(Module& wasm, T& what, Index size, U zero, Name globalName) {
-  Segment* relocatable = nullptr;
-  for (auto& segment : what.segments) {
-    Expression* offset = segment.offset;
-    if (offset->is<GetGlobal>()) {
-      // this is the relocatable one.
-      relocatable = &segment;
-      break;
-    }
+// Ensure a memory or table is of at least a size
+template<typename T>
+static void ensureSize(T& what, Index size) {
+  // ensure the size is sufficient
+  while (what.initial * what.kPageSize < size) {
+    what.initial = what.initial + 1;
   }
-  if (!relocatable) {
-    // none existing, add one
-    what.segments.resize(what.segments.size() + 1);
-    relocatable = &what.segments.back();
-    relocatable->offset = Builder(wasm).makeGetGlobal(globalName, i32);
-  }
-  // make sure it is the right size
-  while (relocatable->data.size() < size) {
-    relocatable->data.push_back(zero);
-  }
-}
-
-// copies a relocatable segment from the input to the output
-template<typename T, typename V>
-void copySegment(T& output, T& input, V updater) {
-  for (auto& inputSegment : input.segments) {
-    Expression* inputOffset = inputSegment.offset;
-    if (inputOffset->is<GetGlobal>()) {
-      // this is the relocatable one. find the output's relocatable
-      for (auto& segment : output.segments) {
-        Expression* offset = segment.offset;
-        if (offset->is<GetGlobal>()) {
-          // copy our data in
-          for (auto item : inputSegment.data) {
-            segment.data.push_back(updater(item));
-          }
-          return; // there can be only one
-        }
-      }
-      WASM_UNREACHABLE(); // we must find a relocatable one in the output, as we standardized
-    }
-  }
+  what.max = std::max(what.initial, what.max);
 }
 
 struct Mergeable {
+  Mergeable(Module& wasm) : wasm(wasm) {
+    // scan the module
+    findBumps();
+    findImports();
+    standardizeSegments();
+  }
+
+  // The module we are working on
+  Module& wasm;
+
+  // Total sizes of the memory and table data, including everything
+  Index memoryBaseBump, tableBaseBump;
+
+  // The names of the imported globals for the memory and table bases
+  // (sets, as each may be imported more than once)
+  std::set<Name> memoryBaseGlobals, tableBaseGlobals;
+
   // Imported functions and globals provided by the other mergeable
   // are fused together. We track those here, then remove them
   std::map<Name, Name> implementedFunctionImports;
   std::map<Name, Name> implementedGlobalImports;
 
+  // setups
+
+  // find the memory and table bumps. if there are relocatable sections for them,
+  // that is the base size, and a dylink section may increase things further
+  void findBumps() {
+    memoryBaseBump = 0;
+    tableBaseBump = 0;
+    for (auto& segment : wasm.memory.segments) {
+      Expression* offset = segment.offset;
+      if (offset->is<GetGlobal>()) {
+        memoryBaseBump = segment.data.size();
+        break;
+      }
+    }
+    for (auto& segment : wasm.table.segments) {
+      Expression* offset = segment.offset;
+      if (offset->is<GetGlobal>()) {
+        tableBaseBump = segment.data.size();
+        break;
+      }
+    }
+    for (auto& section : wasm.userSections) {
+      if (section.name == "dylink") {
+        WasmBinaryBuilder builder(wasm, section.data, false);
+        memoryBaseBump = std::max(memoryBaseBump, builder.getU32LEB());
+        tableBaseBump = std::max(tableBaseBump, builder.getU32LEB());
+        break; // there can be only one
+      }
+    }
+    // align them
+    while (memoryBaseBump % 16 != 0) memoryBaseBump++;
+    while (tableBaseBump % 2 != 0) tableBaseBump++;
+  }
+
+  void findImports() {
+    findImportsByBase(wasm, MEMORY_BASE, [&](Name name) {
+      memoryBaseGlobals.insert(name);
+    });
+    if (memoryBaseGlobals.size() == 0) {
+      Fatal() << "no memory base was imported";
+    }
+    findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
+      tableBaseGlobals.insert(name);
+    });
+    if (tableBaseGlobals.size() == 0) {
+      Fatal() << "no table base was imported";
+    }
+  }
+
+  void standardizeSegments() {
+    standardizeSegment<Memory, char, Memory::Segment>(wasm, wasm.memory, memoryBaseBump, 0, *memoryBaseGlobals.begin());
+    // if there are no functions, we need to add one as the zero
+    if (wasm.functions.empty()) {
+      auto func = new Function;
+      func->name = Name("binaryen$merge-zero");
+      func->body = Builder(wasm).makeNop();
+      func->type = ensureFunctionType("v", &wasm)->name;
+      wasm.addFunction(func);
+    }
+    Name zero = wasm.functions.begin()->get()->name;
+    standardizeSegment<Table, Name, Table::Segment>(wasm, wasm.table, tableBaseBump, zero, *tableBaseGlobals.begin());
+  }
+
+  // utilities
+
+  Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
+    if (!checkIfCollides(initial)) {
+      return initial;
+    }
+    int x = 0;
+    while (1) {
+      auto curr = Name(std::string(initial.str) + '$' + std::to_string(x));
+      if (!checkIfCollides(curr)) {
+        return curr;
+      }
+      x++;
+    }
+  }
+
+  // ensure a relocatable segment exists, of the proper size, including
+  // the dylink bump applied into it, standardized into the form of
+  // not using a dylink section and instead having enough zeros at
+  // the end. this makes linking much simpler.
+  template<typename T, typename U, typename Segment>
+  void standardizeSegment(Module& wasm, T& what, Index size, U zero, Name globalName) {
+    Segment* relocatable = nullptr;
+    for (auto& segment : what.segments) {
+      Expression* offset = segment.offset;
+      if (offset->is<GetGlobal>()) {
+        // this is the relocatable one.
+        relocatable = &segment;
+        break;
+      }
+    }
+    if (!relocatable) {
+      // none existing, add one
+      what.segments.resize(what.segments.size() + 1);
+      relocatable = &what.segments.back();
+      relocatable->offset = Builder(wasm).makeGetGlobal(globalName, i32);
+    }
+    // make sure it is the right size
+    while (relocatable->data.size() < size) {
+      relocatable->data.push_back(zero);
+    }
+    ensureSize(what, relocatable->data.size());
+  }
+
+  // copies a relocatable segment from the input to the output
+  template<typename T, typename V>
+  void copySegment(T& output, T& input, V updater) {
+    for (auto& inputSegment : input.segments) {
+      Expression* inputOffset = inputSegment.offset;
+      if (inputOffset->is<GetGlobal>()) {
+        // this is the relocatable one. find the output's relocatable
+        for (auto& segment : output.segments) {
+          Expression* offset = segment.offset;
+          if (offset->is<GetGlobal>()) {
+            // copy our data in
+            for (auto item : inputSegment.data) {
+              segment.data.push_back(updater(item));
+            }
+            ensureSize(output, segment.data.size());
+            return; // there can be only one
+          }
+        }
+        WASM_UNREACHABLE(); // we must find a relocatable one in the output, as we standardized
+      }
+    }
+  }
 };
 
 // Merges input into output.
 // May destructively modify input, we don't expect to use it later
 // We don't copy into the new module, we assume both stay alive forever
 void mergeIn(Module& output, Module& input) {
+  struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>, public Mergeable {
+    OutputUpdater(Module& wasm) : Mergeable(wasm) {}
+
+    void visitCallImport(CallImport* curr) {
+      auto iter = implementedFunctionImports.find(curr->target);
+      if (iter != implementedFunctionImports.end()) {
+        // this import is now in the module - call it
+        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+      }
+    }
+
+    void visitGetGlobal(GetGlobal* curr) {
+      auto iter = implementedGlobalImports.find(curr->name);
+      if (iter != implementedGlobalImports.end()) {
+        curr->name = iter->second;
+        assert(curr->name.is());
+      }
+    }
+
+    void visitModule(Module* curr) {
+      // remove imports that are being implemented
+      for (auto& pair : implementedFunctionImports) {
+        curr->removeImport(pair.first);
+      }
+      for (auto& pair : implementedGlobalImports) {
+        curr->removeImport(pair.first);
+      }
+    }
+  };
+  OutputUpdater outputUpdater(output);
+
   struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUpdater>>, public Mergeable {
+    InputUpdater(Module& wasm, OutputUpdater& outputUpdater) : Mergeable(wasm), outputUpdater(outputUpdater) {}
+
+    OutputUpdater& outputUpdater;
+
     // mappings, old name => new name
     std::map<Name, Name> ftNames; // function types
     std::map<Name, Name> eNames; // exports
     std::map<Name, Name> fNames; // functions
     std::map<Name, Name> gNames; // globals
-
-    // memory and table base are imported into these globals
-    std::set<Name> memoryBaseGlobals,
-                   tableBaseGlobals;
-
-    // memory base and table base bumps
-    Index memoryBaseBump = 0,
-          tableBaseBump = 0;
 
     void visitCall(Call* curr) {
       curr->target = fNames[curr->target];
@@ -202,15 +289,176 @@ void mergeIn(Module& output, Module& input) {
       assert(curr->name.is());
       // if this is the memory or table base, add the bump
       if (memoryBaseGlobals.count(curr->name)) {
-        addBump(memoryBaseBump);
+        addBump(outputUpdater.memoryBaseBump);
       } else if (tableBaseGlobals.count(curr->name)) {
-        addBump(tableBaseBump);
+        addBump(outputUpdater.tableBaseBump);
       }
     }
 
     void visitSetGlobal(SetGlobal* curr) {
       curr->name = gNames[curr->name];
       assert(curr->name.is());
+    }
+
+    void merge() {
+      // find function imports in us that are implemented in the output
+      // TODO make maps, avoid N^2
+      for (auto& imp : wasm.imports) {
+        // per wasm dynamic library rules, we expect to see exports on 'env'
+        if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+          // seek an export on the other side that matches
+          for (auto& exp : outputUpdater.wasm.exports) {
+            if (exp->kind == imp->kind && exp->name == imp->base) {
+              // fits!
+              if (imp->kind == ExternalKind::Function) {
+                implementedFunctionImports[imp->name] = exp->value;
+              } else {
+                implementedGlobalImports[imp->name] = exp->value;
+              }
+              break;
+            }
+          }
+        }
+      }
+      // remove the unneeded ones
+      for (auto& pair : implementedFunctionImports) {
+        wasm.removeImport(pair.first);
+      }
+      for (auto& pair : implementedGlobalImports) {
+        wasm.removeImport(pair.first);
+      }
+
+      // find new names
+      for (auto& curr : wasm.functionTypes) {
+        curr->name = ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+          return outputUpdater.wasm.getFunctionTypeOrNull(name);
+        });
+      }
+      for (auto& curr : wasm.imports) {
+        if (curr->kind == ExternalKind::Function) {
+          curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+            return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getFunctionOrNull(name);
+          });
+        } else if (curr->kind == ExternalKind::Global) {
+          curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+            return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getGlobalOrNull(name);
+          });
+        }
+      }
+      for (auto& curr : wasm.functions) {
+        curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+          return outputUpdater.wasm.getFunctionOrNull(name);
+        });
+      }
+      for (auto& curr : wasm.globals) {
+        curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+          return outputUpdater.wasm.getGlobalOrNull(name);
+        });
+      }
+
+      // update global names in input
+      {
+        auto temp = memoryBaseGlobals;
+        memoryBaseGlobals.clear();
+        for (auto x : temp) {
+          memoryBaseGlobals.insert(gNames[x]);
+        }
+      }
+      {
+        auto temp = tableBaseGlobals;
+        tableBaseGlobals.clear();
+        for (auto x : temp) {
+          tableBaseGlobals.insert(gNames[x]);
+        }
+      }
+
+      // find function imports in output that are implemented in the input
+      for (auto& imp : outputUpdater.wasm.imports) {
+        if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+          for (auto& exp : wasm.exports) {
+            if (exp->kind == imp->kind && exp->name == imp->base) {
+              if (imp->kind == ExternalKind::Function) {
+                outputUpdater.implementedFunctionImports[imp->name] = fNames[exp->value];
+              } else {
+                outputUpdater.implementedGlobalImports[imp->name] = gNames[exp->value];
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      // update the output before bringing anything in. avoid doing so when possible, as in the
+      // common case the output module is very large.
+      if (outputUpdater.implementedFunctionImports.size() + outputUpdater.implementedGlobalImports.size() > 0) {
+        outputUpdater.walkModule(&outputUpdater.wasm);
+      }
+
+      // memory&table: we place the new memory segments at a higher position. after the existing ones.
+      // that means we need to update usage of gb, which we did earlier.
+      // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
+      // segment at most.
+      copySegment(outputUpdater.wasm.memory, wasm.memory, [](char x) -> char { return x; });
+      // if no functions, even imported, then nothing to do (and no zero element anyhow)
+      copySegment(outputUpdater.wasm.table, wasm.table, [&](Name x) -> Name { return fNames[x]; });
+
+      // update the new contents about to be merged in
+      walkModule(&wasm);
+
+      // handle post-instantiate. this is special, as if it exists in both, we must in fact call both
+      Name POST_INSTANTIATE("__post_instantiate");
+      if (fNames.find(POST_INSTANTIATE) != fNames.end() &&
+          outputUpdater.wasm.getExportOrNull(POST_INSTANTIATE)) {
+        // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
+        auto* func = outputUpdater.wasm.getFunction(outputUpdater.wasm.getExport(POST_INSTANTIATE)->value);
+        Builder builder(outputUpdater.wasm);
+        func->body = builder.makeSequence(
+          builder.makeCall(fNames[POST_INSTANTIATE], {}, none),
+          func->body
+        );
+      }
+
+      // copy in the data
+      for (auto& curr : wasm.functionTypes) {
+        outputUpdater.wasm.addFunctionType(curr.release());
+      }
+      for (auto& curr : wasm.imports) {
+        if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
+          continue; // wasm has just 1 of each, they must match
+        }
+        // update and add
+        if (curr->functionType.is()) {
+          curr->functionType = ftNames[curr->functionType];
+          assert(curr->functionType.is());
+        }
+        outputUpdater.wasm.addImport(curr.release());
+      }
+      for (auto& curr : wasm.exports) {
+        if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
+          continue; // wasm has just 1 of each, they must match
+        }
+        // if an export would collide, do not add the new one, ignore it
+        // TODO: warning/error mode?
+        if (!outputUpdater.wasm.getExportOrNull(curr->name)) {
+          if (curr->kind == ExternalKind::Function) {
+            curr->value = fNames[curr->value];
+            outputUpdater.wasm.addExport(curr.release());
+          } else if (curr->kind == ExternalKind::Global) {
+            curr->value = gNames[curr->value];
+            outputUpdater.wasm.addExport(curr.release());
+          } else {
+            WASM_UNREACHABLE();
+          }
+        }
+      }
+      for (auto& curr : wasm.functions) {
+        curr->type = ftNames[curr->type];
+        assert(curr->type.is());
+        outputUpdater.wasm.addFunction(curr.release());
+      }
+      for (auto& curr : wasm.globals) {
+        outputUpdater.wasm.addGlobal(curr.release());
+      }
     }
 
   private:
@@ -238,226 +486,9 @@ void mergeIn(Module& output, Module& input) {
       );
     }
   };
-  InputUpdater inputUpdater;
+  InputUpdater inputUpdater(input, outputUpdater);
 
-  struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>, public Mergeable {
-    void visitCallImport(CallImport* curr) {
-      auto iter = implementedFunctionImports.find(curr->target);
-      if (iter != implementedFunctionImports.end()) {
-        // this import is now in the module - call it
-        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
-      }
-    }
-
-    void visitGetGlobal(GetGlobal* curr) {
-      auto iter = implementedGlobalImports.find(curr->name);
-      if (iter != implementedGlobalImports.end()) {
-        curr->name = iter->second;
-        assert(curr->name.is());
-      }
-    }
-
-    void visitModule(Module* curr) {
-      // remove imports that are being implemented
-      for (auto& pair : implementedFunctionImports) {
-        curr->removeImport(pair.first);
-      }
-      for (auto& pair : implementedGlobalImports) {
-        curr->removeImport(pair.first);
-      }
-    }
-  };
-  OutputUpdater outputUpdater;
-
-  // find imports in the modules for the relocatable bases
-  Name outputMemoryBase, outputTableBase;
-  findImportsByBase(output, MEMORY_BASE, [&](Name name) {
-    outputMemoryBase = name;
-  });
-  findImportsByBase(output, TABLE_BASE, [&](Name name) {
-    outputTableBase = name;
-  });
-  Name inputMemoryBase, inputTableBase;
-  findImportsByBase(input, MEMORY_BASE, [&](Name name) {
-    inputMemoryBase = name;
-  });
-  findImportsByBase(input, TABLE_BASE, [&](Name name) {
-    inputTableBase = name;
-  });
-
-  // find function imports in input that are implemented in the output
-  // TODO make maps, avoid N^2
-  for (auto& imp : input.imports) {
-    // per wasm dynamic library rules, we expect to see exports on 'env'
-    if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
-      // seek an export on the other side that matches
-      for (auto& exp : output.exports) {
-        if (exp->kind == imp->kind && exp->name == imp->base) {
-          // fits!
-          if (imp->kind == ExternalKind::Function) {
-            inputUpdater.implementedFunctionImports[imp->name] = exp->value;
-          } else {
-            inputUpdater.implementedGlobalImports[imp->name] = exp->value;
-          }
-          break;
-        }
-      }
-    }
-  }
-  // remove the unneeded ones
-  for (auto& pair : inputUpdater.implementedFunctionImports) {
-    input.removeImport(pair.first);
-  }
-  for (auto& pair : inputUpdater.implementedGlobalImports) {
-    input.removeImport(pair.first);
-  }
-
-  // find new names
-  for (auto& curr : input.functionTypes) {
-    curr->name = inputUpdater.ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.getFunctionTypeOrNull(name);
-    });
-  }
-  for (auto& curr : input.imports) {
-    if (curr->kind == ExternalKind::Function) {
-      curr->name = inputUpdater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return !!output.getImportOrNull(name) || !!output.getFunctionOrNull(name);
-      });
-    } else if (curr->kind == ExternalKind::Global) {
-      curr->name = inputUpdater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return !!output.getImportOrNull(name) || !!output.getGlobalOrNull(name);
-      });
-    }
-  }
-  for (auto& curr : input.functions) {
-    curr->name = inputUpdater.fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.getFunctionOrNull(name);
-    });
-  }
-  for (auto& curr : input.globals) {
-    curr->name = inputUpdater.gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-      return output.getGlobalOrNull(name);
-    });
-  }
-
-  // find function imports in output that are implemented in the input
-  for (auto& imp : output.imports) {
-    if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
-      for (auto& exp : input.exports) {
-        if (exp->kind == imp->kind && exp->name == imp->base) {
-          if (imp->kind == ExternalKind::Function) {
-            outputUpdater.implementedFunctionImports[imp->name] = inputUpdater.fNames[exp->value];
-          } else {
-            outputUpdater.implementedGlobalImports[imp->name] = inputUpdater.gNames[exp->value];
-          }
-          break;
-        }
-      }
-    }
-  }
-
-  // update the output before bringing anything in. avoid doing so when possible, as in the
-  // common case the output module is very large.
-  if (outputUpdater.implementedFunctionImports.size() + outputUpdater.implementedGlobalImports.size() > 0) {
-    outputUpdater.walkModule(&output);
-  }
-
-  // Find input memory bumps. if the exist, we must have output segments to copy them into
-  Index inputMemoryBump = 0, inputTableBump = 0;
-  findBumps(input, inputMemoryBump, inputTableBump);
-
-  // output memory and table sizes may increase the bump we need for the input
-  findBumps(output, inputUpdater.memoryBaseBump, inputUpdater.tableBaseBump);
-  // ensure relocatable segments in the output for us to write to
-  if (inputUpdater.memoryBaseBump > 0 || inputMemoryBump > 0) {
-    standardizeSegment<Memory, char, Memory::Segment>(output, output.memory, inputUpdater.memoryBaseBump, 0, outputMemoryBase);
-  }
-  if ((inputUpdater.tableBaseBump > 0 || inputTableBump > 0) && inputUpdater.fNames.size() > 0) {
-    standardizeSegment<Table, Name, Table::Segment>(output, output.table, inputUpdater.tableBaseBump, inputUpdater.fNames.begin()->second, outputTableBase);
-  }
-
-  // read the input dylink section too, as we currently don't emit a dylink section,
-  // we just add zeros
-  if (inputMemoryBump > 0) {
-    standardizeSegment<Memory, char, Memory::Segment>(input, input.memory, inputMemoryBump, 0, inputMemoryBase);
-  }
-  if (inputTableBump > 0 && inputUpdater.fNames.size() > 0) {
-    standardizeSegment<Table, Name, Table::Segment>(input, input.table, inputTableBump, inputUpdater.fNames.begin()->first, inputTableBase);
-  }
-
-  // memory&table: we place the new memory segments at a higher position. after the existing ones.
-  // that means we need to update usage of gb, which we did earlier.
-  // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
-  // segment at most.
-  copySegment(output.memory, input.memory, [](char x) -> char { return x; });
-  // if no functions, even imported, then nothing to do (and no zero element anyhow)
-  copySegment(output.table, input.table, [&](Name x) -> Name { return inputUpdater.fNames[x]; });
-
-  // find the memory/table base globals, so we know how to update them
-  findImportsByBase(input, MEMORY_BASE, [&](Name name) {
-    inputUpdater.memoryBaseGlobals.insert(name);
-  });
-  findImportsByBase(input, TABLE_BASE, [&](Name name) {
-    inputUpdater.tableBaseGlobals.insert(name);
-  });
-
-  // update the new contents about to be merged in
-  inputUpdater.walkModule(&input);
-
-  // handle post-instantiate. this is special, as if it exists in both, we must in fact call both
-  Name POST_INSTANTIATE("__post_instantiate");
-  if (inputUpdater.fNames.find(POST_INSTANTIATE) != inputUpdater.fNames.end() &&
-      output.getExportOrNull(POST_INSTANTIATE)) {
-    // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
-    auto* func = output.getFunction(output.getExport(POST_INSTANTIATE)->value);
-    Builder builder(output);
-    func->body = builder.makeSequence(
-      builder.makeCall(inputUpdater.fNames[POST_INSTANTIATE], {}, none),
-      func->body
-    );
-  }
-
-  // copy in the data
-  for (auto& curr : input.functionTypes) {
-    output.addFunctionType(curr.release());
-  }
-  for (auto& curr : input.imports) {
-    if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
-      continue; // wasm has just 1 of each, they must match
-    }
-    // update and add
-    if (curr->functionType.is()) {
-      curr->functionType = inputUpdater.ftNames[curr->functionType];
-      assert(curr->functionType.is());
-    }
-    output.addImport(curr.release());
-  }
-  for (auto& curr : input.exports) {
-    if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
-      continue; // wasm has just 1 of each, they must match
-    }
-    // if an export would collide, do not add the new one, ignore it
-    // TODO: warning/error mode?
-    if (!output.getExportOrNull(curr->name)) {
-      if (curr->kind == ExternalKind::Function) {
-        curr->value = inputUpdater.fNames[curr->value];
-        output.addExport(curr.release());
-      } else if (curr->kind == ExternalKind::Global) {
-        curr->value = inputUpdater.gNames[curr->value];
-        output.addExport(curr.release());
-      } else {
-        WASM_UNREACHABLE();
-      }
-    }
-  }
-  for (auto& curr : input.functions) {
-    curr->type = inputUpdater.ftNames[curr->type];
-    assert(curr->type.is());
-    output.addFunction(curr.release());
-  }
-  for (auto& curr : input.globals) {
-    output.addGlobal(curr.release());
-  }
+  inputUpdater.merge();
 }
 
 // Finalize the memory/table bases, assinging concrete values into them
@@ -491,6 +522,13 @@ void finalizeBases(Module& wasm, Index memory, Index table) {
     updater.tableBaseGlobals.insert(name);
   });
   updater.walkModule(&wasm);
+  // ensure memory and table sizes suffice
+  for (auto& segment : wasm.memory.segments) {
+    ensureSize(wasm.memory, memory + segment.data.size());
+  }
+  for (auto& segment : wasm.table.segments) {
+    ensureSize(wasm.table, table + segment.data.size());
+  }
 }
 
 //
