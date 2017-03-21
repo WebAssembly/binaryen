@@ -541,7 +541,16 @@
      (get_local $0)
      (i32.const 255)
     )
-    (i32.const 255)
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i32.eq
+    (i32.and
+     (get_local $0)
+     (i32.const 255)
+    )
+    (i32.const 127)
    )
   )
   (drop
@@ -1103,7 +1112,16 @@
      (get_local $0)
      (i32.const 255)
     )
-    (i32.const 232)
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i32.ne
+    (i32.and
+     (get_local $0)
+     (i32.const 255)
+    )
+    (i32.const 104)
    )
   )
   (drop

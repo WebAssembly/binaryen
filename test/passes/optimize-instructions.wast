@@ -491,7 +491,19 @@
           )
           (i32.const 24)
         )
-        (i32.const 32767) ;; non-zero and bigger than the mask
+        (i32.const 32767) ;; non-zero and bigger than the mask, with sign bit
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 32639) ;; non-zero and bigger than the mask, without sign bit
       )
     )
     ;; eq of two sign-ext, can both be a zext
@@ -1359,6 +1371,18 @@
           (i32.const 24)
         )
         (i32.const 65000)
+      )
+    )
+    (drop
+      (i32.ne
+        (i32.shr_s
+          (i32.shl
+            (get_local $0)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 64872) ;; no sign bit
       )
     )
     (drop
