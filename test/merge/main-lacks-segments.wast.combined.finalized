@@ -1,5 +1,4 @@
 (module
- (type $FUNCSIG$v (func))
  (type $0 (func))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
@@ -9,9 +8,6 @@
  (import "env" "tableBase" (global $tableBase$0 i32))
  (elem (i32.const 8) $foo $foo)
  (data (i32.const 1024) "hello, this is some data!\00\00\00\00\00\00\00")
- (func $binaryen$merge-zero (type $FUNCSIG$v)
-  (nop)
- )
  (func $foo (type $0)
   (drop
    (i32.add

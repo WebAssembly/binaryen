@@ -131,15 +131,18 @@ struct Mergeable {
 
   void standardizeSegments() {
     standardizeSegment<Memory, char, Memory::Segment>(wasm, wasm.memory, memoryBaseBump, 0, *memoryBaseGlobals.begin());
-    // if there are no functions, we need to add one as the zero
-    if (wasm.functions.empty()) {
+    // if there are no functions, and we need one, we need to add one as the zero
+    if (tableBaseBump > 0 && wasm.functions.empty()) {
       auto func = new Function;
       func->name = Name("binaryen$merge-zero");
       func->body = Builder(wasm).makeNop();
       func->type = ensureFunctionType("v", &wasm)->name;
       wasm.addFunction(func);
     }
-    Name zero = wasm.functions.begin()->get()->name;
+    Name zero;
+    if (tableBaseBump > 0) {
+      zero = wasm.functions.begin()->get()->name;
+    }
     standardizeSegment<Table, Name, Table::Segment>(wasm, wasm.table, tableBaseBump, zero, *tableBaseGlobals.begin());
   }
 
