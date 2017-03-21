@@ -2205,4 +2205,90 @@
       )
     )
   )
+  (func $fuzz-comp-impossible (param $x i32)
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $x)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+        (i32.const 65535) ;; impossible to be equal, the effective sign bit is set, but not the higher bits, which the sign-ext will set on the non-const value
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $x)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $x)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 127) ;; safe
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $x)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 128) ;; unsafe again
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $x)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 4223) ;; more big bits, so sign bit though
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $x)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const 4224) ;; more big bits
+      )
+    )
+    (drop
+      (i32.eq
+        (i32.shr_s
+          (i32.shl
+            (get_local $x)
+            (i32.const 24)
+          )
+          (i32.const 24)
+        )
+        (i32.const -4) ;; safe even with more big bits, as they are all 1s
+      )
+    )
+  )
 )
