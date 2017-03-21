@@ -448,8 +448,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             auto upperConstValue = constValue & ~Bits::lowBitMask(bits);
             uint32_t count = PopCount(upperConstValue);
             auto constSignBit = constValue & (1 << (bits - 1));
-            if (constSignBit && count < 32 - bits) {
-              // mixed or zero upper const bits; the compared values can never be identical, so
+            if ((count > 0 && count < 32 - bits) || (constSignBit && count == 0)) {
+              // mixed or [zero upper const bits with sign bit set]; the compared values can never be identical, so
               // force something definitely impossible even after zext
               assert(bits < 31);
               c->value = Literal(int32_t(0x80000000));
