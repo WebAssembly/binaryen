@@ -38,7 +38,7 @@ using namespace wasm;
 
 // utilities
 
-Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
+static Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
   if (!checkIfCollides(initial)) {
     return initial;
   }
@@ -54,7 +54,7 @@ Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
 
 // find the memory and table bumps. if there are relocatable sections for them,
 // that is the base size, and a dylink section may increase things further
-void findBumps(Module& wasm, Index& memoryBaseBump, Index& tableBaseBump) {
+static void findBumps(Module& wasm, Index& memoryBaseBump, Index& tableBaseBump) {
   memoryBaseBump = 0;
   tableBaseBump = 0;
   for (auto& segment : wasm.memory.segments) {
@@ -84,7 +84,7 @@ void findBumps(Module& wasm, Index& memoryBaseBump, Index& tableBaseBump) {
   while (tableBaseBump % 2 != 0) tableBaseBump++;
 }
 
-void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
+static void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
   for (auto& curr : wasm.imports) {
     if (curr->module == ENV) {
       if (curr->base == base) {
@@ -95,10 +95,11 @@ void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note)
 }
 
 // ensure a relocatable segment exists, of the proper size, including
-// the dylink bump applied into it (as we are dropping dylink sections)
-// if we create a new segment, we need to know the import global to use in the offset.
+// the dylink bump applied into it, standardized into the form of
+// not using a dylink section and instead having enough zeros at
+// the end. this makes linking much simpler.
 template<typename T, typename U, typename Segment>
-void ensureSegment(Module& wasm, T& what, Index size, U zero, Name globalName) {
+static void standardizeSegment(Module& wasm, T& what, Index size, U zero, Name globalName) {
   Segment* relocatable = nullptr;
   for (auto& segment : what.segments) {
     Expression* offset = segment.offset;
@@ -137,7 +138,7 @@ void copySegment(T& output, T& input, V updater) {
           return; // there can be only one
         }
       }
-      WASM_UNREACHABLE(); // we must find a relocatable one in the output
+      WASM_UNREACHABLE(); // we must find a relocatable one in the output, as we standardized
     }
   }
 }
@@ -369,19 +370,19 @@ void mergeIn(Module& output, Module& input) {
   findBumps(output, inputUpdater.memoryBaseBump, inputUpdater.tableBaseBump);
   // ensure relocatable segments in the output for us to write to
   if (inputUpdater.memoryBaseBump > 0 || inputMemoryBump > 0) {
-    ensureSegment<Memory, char, Memory::Segment>(output, output.memory, inputUpdater.memoryBaseBump, 0, outputMemoryBase);
+    standardizeSegment<Memory, char, Memory::Segment>(output, output.memory, inputUpdater.memoryBaseBump, 0, outputMemoryBase);
   }
   if ((inputUpdater.tableBaseBump > 0 || inputTableBump > 0) && inputUpdater.fNames.size() > 0) {
-    ensureSegment<Table, Name, Table::Segment>(output, output.table, inputUpdater.tableBaseBump, inputUpdater.fNames.begin()->second, outputTableBase);
+    standardizeSegment<Table, Name, Table::Segment>(output, output.table, inputUpdater.tableBaseBump, inputUpdater.fNames.begin()->second, outputTableBase);
   }
 
   // read the input dylink section too, as we currently don't emit a dylink section,
   // we just add zeros
   if (inputMemoryBump > 0) {
-    ensureSegment<Memory, char, Memory::Segment>(input, input.memory, inputMemoryBump, 0, inputMemoryBase);
+    standardizeSegment<Memory, char, Memory::Segment>(input, input.memory, inputMemoryBump, 0, inputMemoryBase);
   }
   if (inputTableBump > 0 && inputUpdater.fNames.size() > 0) {
-    ensureSegment<Table, Name, Table::Segment>(input, input.table, inputTableBump, inputUpdater.fNames.begin()->first, inputTableBase);
+    standardizeSegment<Table, Name, Table::Segment>(input, input.table, inputTableBump, inputUpdater.fNames.begin()->first, inputTableBase);
   }
 
   // memory&table: we place the new memory segments at a higher position. after the existing ones.
@@ -459,7 +460,7 @@ void mergeIn(Module& output, Module& input) {
   }
 }
 
-// Finalize the memory/table bases
+// Finalize the memory/table bases, assinging concrete values into them
 void finalizeBases(Module& wasm, Index memory, Index table) {
   struct Updater : public PostWalker<Updater, Visitor<Updater>> {
     Index memory, table;
