@@ -143,20 +143,24 @@ void copySegment(T& output, T& input, V updater) {
   }
 }
 
+struct Mergeable {
+  // Imported functions and globals provided by the other mergeable
+  // are fused together. We track those here, then remove them
+  std::map<Name, Name> implementedFunctionImports;
+  std::map<Name, Name> implementedGlobalImports;
+
+};
+
 // Merges input into output.
 // May destructively modify input, we don't expect to use it later
 // We don't copy into the new module, we assume both stay alive forever
 void mergeIn(Module& output, Module& input) {
-  struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUpdater>> {
+  struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUpdater>>, public Mergeable {
     // mappings, old name => new name
     std::map<Name, Name> ftNames; // function types
     std::map<Name, Name> eNames; // exports
     std::map<Name, Name> fNames; // functions
     std::map<Name, Name> gNames; // globals
-
-    // An import of something provided on the other side becomes a direct usage
-    std::map<Name, Name> implementedFunctionImports;
-    std::map<Name, Name> implementedGlobalImports;
 
     // memory and table base are imported into these globals
     std::set<Name> memoryBaseGlobals,
@@ -236,11 +240,7 @@ void mergeIn(Module& output, Module& input) {
   };
   InputUpdater inputUpdater;
 
-  struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>> {
-    // An import of something provided on the other side becomes a direct usage
-    std::map<Name, Name> implementedFunctionImports;
-    std::map<Name, Name> implementedGlobalImports;
-
+  struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>, public Mergeable {
     void visitCallImport(CallImport* curr) {
       auto iter = implementedFunctionImports.find(curr->target);
       if (iter != implementedFunctionImports.end()) {
