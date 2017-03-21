@@ -37,6 +37,7 @@
 
 using namespace wasm;
 
+// Calls note() on every import that has form "env".(base)
 static void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
   for (auto& curr : wasm.imports) {
     if (curr->module == ENV) {
@@ -57,6 +58,8 @@ static void ensureSize(T& what, Index size) {
   what.max = std::max(what.initial, what.max);
 }
 
+// A mergeable unit. This class contains basic logic to prepare for merging
+// of two modules.
 struct Mergeable {
   Mergeable(Module& wasm) : wasm(wasm) {
     // scan the module
@@ -215,8 +218,11 @@ struct Mergeable {
   }
 };
 
-struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>, public Mergeable {
-  OutputUpdater(Module& wasm) : Mergeable(wasm) {}
+// A mergeable that is an output, that is, that we merge into. This adds
+// logic to update it for the new data, namely, when an import is provided
+// by the other merged unit, we resolve to access that value directly.
+struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergeable>>, public Mergeable {
+  OutputMergeable(Module& wasm) : Mergeable(wasm) {}
 
   void visitCallImport(CallImport* curr) {
     auto iter = implementedFunctionImports.find(curr->target);
@@ -229,6 +235,7 @@ struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>,
   void visitGetGlobal(GetGlobal* curr) {
     auto iter = implementedGlobalImports.find(curr->name);
     if (iter != implementedGlobalImports.end()) {
+      // this global is now in the module - get it
       curr->name = iter->second;
       assert(curr->name.is());
     }
@@ -245,12 +252,16 @@ struct OutputUpdater : public PostWalker<OutputUpdater, Visitor<OutputUpdater>>,
   }
 };
 
-struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUpdater>>, public Mergeable {
-  InputUpdater(Module& wasm, OutputUpdater& outputUpdater) : Mergeable(wasm), outputUpdater(outputUpdater) {}
+// A mergeable that is an input, that is, that we merge into another.
+// This adds logic to disambiguate its names from the other, and to
+// perform all other merging operations.
+struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<InputMergeable>>, public Mergeable {
+  InputMergeable(Module& wasm, OutputMergeable& outputMergeable) : Mergeable(wasm), outputMergeable(outputMergeable) {}
 
-  OutputUpdater& outputUpdater;
+  // The unit we are being merged into
+  OutputMergeable& outputMergeable;
 
-  // mappings, old name => new name
+  // mappings (after disambiguating with the other mergeable), old name => new name
   std::map<Name, Name> ftNames; // function types
   std::map<Name, Name> eNames; // exports
   std::map<Name, Name> fNames; // functions
@@ -288,9 +299,9 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
     assert(curr->name.is());
     // if this is the memory or table base, add the bump
     if (memoryBaseGlobals.count(curr->name)) {
-      addBump(outputUpdater.totalMemorySize);
+      addBump(outputMergeable.totalMemorySize);
     } else if (tableBaseGlobals.count(curr->name)) {
-      addBump(outputUpdater.totalTableSize);
+      addBump(outputMergeable.totalTableSize);
     }
   }
 
@@ -306,7 +317,7 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
       // per wasm dynamic library rules, we expect to see exports on 'env'
       if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
         // seek an export on the other side that matches
-        for (auto& exp : outputUpdater.wasm.exports) {
+        for (auto& exp : outputMergeable.wasm.exports) {
           if (exp->kind == imp->kind && exp->name == imp->base) {
             // fits!
             if (imp->kind == ExternalKind::Function) {
@@ -330,28 +341,28 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
     // find new names
     for (auto& curr : wasm.functionTypes) {
       curr->name = ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return outputUpdater.wasm.getFunctionTypeOrNull(name);
+        return outputMergeable.wasm.getFunctionTypeOrNull(name);
       });
     }
     for (auto& curr : wasm.imports) {
       if (curr->kind == ExternalKind::Function) {
         curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getFunctionOrNull(name);
+          return !!outputMergeable.wasm.getImportOrNull(name) || !!outputMergeable.wasm.getFunctionOrNull(name);
         });
       } else if (curr->kind == ExternalKind::Global) {
         curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return !!outputUpdater.wasm.getImportOrNull(name) || !!outputUpdater.wasm.getGlobalOrNull(name);
+          return !!outputMergeable.wasm.getImportOrNull(name) || !!outputMergeable.wasm.getGlobalOrNull(name);
         });
       }
     }
     for (auto& curr : wasm.functions) {
       curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return outputUpdater.wasm.getFunctionOrNull(name);
+        return outputMergeable.wasm.getFunctionOrNull(name);
       });
     }
     for (auto& curr : wasm.globals) {
       curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return outputUpdater.wasm.getGlobalOrNull(name);
+        return outputMergeable.wasm.getGlobalOrNull(name);
       });
     }
 
@@ -372,14 +383,14 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
     }
 
     // find function imports in output that are implemented in the input
-    for (auto& imp : outputUpdater.wasm.imports) {
+    for (auto& imp : outputMergeable.wasm.imports) {
       if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
         for (auto& exp : wasm.exports) {
           if (exp->kind == imp->kind && exp->name == imp->base) {
             if (imp->kind == ExternalKind::Function) {
-              outputUpdater.implementedFunctionImports[imp->name] = fNames[exp->value];
+              outputMergeable.implementedFunctionImports[imp->name] = fNames[exp->value];
             } else {
-              outputUpdater.implementedGlobalImports[imp->name] = gNames[exp->value];
+              outputMergeable.implementedGlobalImports[imp->name] = gNames[exp->value];
             }
             break;
           }
@@ -389,28 +400,24 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
 
     // update the output before bringing anything in. avoid doing so when possible, as in the
     // common case the output module is very large.
-    if (outputUpdater.implementedFunctionImports.size() + outputUpdater.implementedGlobalImports.size() > 0) {
-      outputUpdater.walkModule(&outputUpdater.wasm);
+    if (outputMergeable.implementedFunctionImports.size() + outputMergeable.implementedGlobalImports.size() > 0) {
+      outputMergeable.walkModule(&outputMergeable.wasm);
     }
 
     // memory&table: we place the new memory segments at a higher position. after the existing ones.
-    // that means we need to update usage of gb, which we did earlier.
-    // for now, wasm has no base+offset for segments, just a base, so there is 1 relocatable
-    // segment at most.
-    copySegment(outputUpdater.wasm.memory, wasm.memory, [](char x) -> char { return x; });
-    // if no functions, even imported, then nothing to do (and no zero element anyhow)
-    copySegment(outputUpdater.wasm.table, wasm.table, [&](Name x) -> Name { return fNames[x]; });
+    copySegment(outputMergeable.wasm.memory, wasm.memory, [](char x) -> char { return x; });
+    copySegment(outputMergeable.wasm.table, wasm.table, [&](Name x) -> Name { return fNames[x]; });
 
     // update the new contents about to be merged in
     walkModule(&wasm);
 
-    // handle post-instantiate. this is special, as if it exists in both, we must in fact call both
+    // handle the dylink post-instantiate. this is special, as if it exists in both, we must in fact call both
     Name POST_INSTANTIATE("__post_instantiate");
     if (fNames.find(POST_INSTANTIATE) != fNames.end() &&
-        outputUpdater.wasm.getExportOrNull(POST_INSTANTIATE)) {
+        outputMergeable.wasm.getExportOrNull(POST_INSTANTIATE)) {
       // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
-      auto* func = outputUpdater.wasm.getFunction(outputUpdater.wasm.getExport(POST_INSTANTIATE)->value);
-      Builder builder(outputUpdater.wasm);
+      auto* func = outputMergeable.wasm.getFunction(outputMergeable.wasm.getExport(POST_INSTANTIATE)->value);
+      Builder builder(outputMergeable.wasm);
       func->body = builder.makeSequence(
         builder.makeCall(fNames[POST_INSTANTIATE], {}, none),
         func->body
@@ -419,7 +426,7 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
 
     // copy in the data
     for (auto& curr : wasm.functionTypes) {
-      outputUpdater.wasm.addFunctionType(curr.release());
+      outputMergeable.wasm.addFunctionType(curr.release());
     }
     for (auto& curr : wasm.imports) {
       if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
@@ -430,7 +437,7 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
         curr->functionType = ftNames[curr->functionType];
         assert(curr->functionType.is());
       }
-      outputUpdater.wasm.addImport(curr.release());
+      outputMergeable.wasm.addImport(curr.release());
     }
     for (auto& curr : wasm.exports) {
       if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
@@ -438,13 +445,13 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
       }
       // if an export would collide, do not add the new one, ignore it
       // TODO: warning/error mode?
-      if (!outputUpdater.wasm.getExportOrNull(curr->name)) {
+      if (!outputMergeable.wasm.getExportOrNull(curr->name)) {
         if (curr->kind == ExternalKind::Function) {
           curr->value = fNames[curr->value];
-          outputUpdater.wasm.addExport(curr.release());
+          outputMergeable.wasm.addExport(curr.release());
         } else if (curr->kind == ExternalKind::Global) {
           curr->value = gNames[curr->value];
-          outputUpdater.wasm.addExport(curr.release());
+          outputMergeable.wasm.addExport(curr.release());
         } else {
           WASM_UNREACHABLE();
         }
@@ -453,10 +460,10 @@ struct InputUpdater : public ExpressionStackWalker<InputUpdater, Visitor<InputUp
     for (auto& curr : wasm.functions) {
       curr->type = ftNames[curr->type];
       assert(curr->type.is());
-      outputUpdater.wasm.addFunction(curr.release());
+      outputMergeable.wasm.addFunction(curr.release());
     }
     for (auto& curr : wasm.globals) {
-      outputUpdater.wasm.addGlobal(curr.release());
+      outputMergeable.wasm.addGlobal(curr.release());
     }
   }
 
@@ -488,11 +495,19 @@ private:
 
 // Finalize the memory/table bases, assinging concrete values into them
 void finalizeBases(Module& wasm, Index memory, Index table) {
-  struct Updater : public PostWalker<Updater, Visitor<Updater>> {
-    Index memory, table;
+  struct FinalizableMergeable : public Mergeable, public PostWalker<FinalizableMergeable, Visitor<FinalizableMergeable>> {
+    FinalizableMergeable(Module& wasm, Index memory, Index table) : Mergeable(wasm), memory(memory), table(table) {
+      walkModule(&wasm);
+      // ensure memory and table sizes suffice, after finalization we have absolute locations now
+      for (auto& segment : wasm.memory.segments) {
+        ensureSize(wasm.memory, memory + segment.data.size());
+      }
+      for (auto& segment : wasm.table.segments) {
+        ensureSize(wasm.table, table + segment.data.size());
+      }
+    }
 
-    std::set<Name> memoryBaseGlobals,
-                   tableBaseGlobals;
+    Index memory, table;
 
     void visitGetGlobal(GetGlobal* curr) {
       if (memory != Index(-1) && memoryBaseGlobals.count(curr->name)) {
@@ -507,23 +522,7 @@ void finalizeBases(Module& wasm, Index memory, Index table) {
       replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(value))));
     }
   };
-  Updater updater;
-  updater.memory = memory;
-  updater.table = table;
-  findImportsByBase(wasm, MEMORY_BASE, [&](Name name) {
-    updater.memoryBaseGlobals.insert(name);
-  });
-  findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
-    updater.tableBaseGlobals.insert(name);
-  });
-  updater.walkModule(&wasm);
-  // ensure memory and table sizes suffice
-  for (auto& segment : wasm.memory.segments) {
-    ensureSize(wasm.memory, memory + segment.data.size());
-  }
-  for (auto& segment : wasm.table.segments) {
-    ensureSize(wasm.table, table + segment.data.size());
-  }
+  FinalizableMergeable mergeable(wasm, memory, table);
 }
 
 //
@@ -592,9 +591,9 @@ int main(int argc, const char* argv[]) {
         Fatal() << "error in parsing input";
       }
       // perform the merge
-      OutputUpdater outputUpdater(output);
-      InputUpdater inputUpdater(*input, outputUpdater);
-      inputUpdater.merge();
+      OutputMergeable outputMergeable(output);
+      InputMergeable inputMergeable(*input, outputMergeable);
+      inputMergeable.merge();
       // retain the linked in module as we may depend on parts of it
       otherModules.push_back(std::unique_ptr<Module>(input.release()));
     }
