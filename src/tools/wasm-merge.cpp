@@ -60,7 +60,7 @@ static void ensureSize(T& what, Index size) {
 struct Mergeable {
   Mergeable(Module& wasm) : wasm(wasm) {
     // scan the module
-    findBumps();
+    findSizes();
     findImports();
     standardizeSegments();
   }
@@ -68,8 +68,9 @@ struct Mergeable {
   // The module we are working on
   Module& wasm;
 
-  // Total sizes of the memory and table data, including everything
-  Index memoryBaseBump, tableBaseBump;
+  // Total sizes of the memory and table data, including things
+  // link a bump from the dylink section
+  Index totalMemorySize, totalTableSize;
 
   // The names of the imported globals for the memory and table bases
   // (sets, as each may be imported more than once)
@@ -82,36 +83,36 @@ struct Mergeable {
 
   // setups
 
-  // find the memory and table bumps. if there are relocatable sections for them,
+  // find the memory and table sizes. if there are relocatable sections for them,
   // that is the base size, and a dylink section may increase things further
-  void findBumps() {
-    memoryBaseBump = 0;
-    tableBaseBump = 0;
+  void findSizes() {
+    totalMemorySize = 0;
+    totalTableSize = 0;
     for (auto& segment : wasm.memory.segments) {
       Expression* offset = segment.offset;
       if (offset->is<GetGlobal>()) {
-        memoryBaseBump = segment.data.size();
+        totalMemorySize = segment.data.size();
         break;
       }
     }
     for (auto& segment : wasm.table.segments) {
       Expression* offset = segment.offset;
       if (offset->is<GetGlobal>()) {
-        tableBaseBump = segment.data.size();
+        totalTableSize = segment.data.size();
         break;
       }
     }
     for (auto& section : wasm.userSections) {
       if (section.name == "dylink") {
         WasmBinaryBuilder builder(wasm, section.data, false);
-        memoryBaseBump = std::max(memoryBaseBump, builder.getU32LEB());
-        tableBaseBump = std::max(tableBaseBump, builder.getU32LEB());
+        totalMemorySize = std::max(totalMemorySize, builder.getU32LEB());
+        totalTableSize = std::max(totalTableSize, builder.getU32LEB());
         break; // there can be only one
       }
     }
     // align them
-    while (memoryBaseBump % 16 != 0) memoryBaseBump++;
-    while (tableBaseBump % 2 != 0) tableBaseBump++;
+    while (totalMemorySize % 16 != 0) totalMemorySize++;
+    while (totalTableSize % 2 != 0) totalTableSize++;
   }
 
   void findImports() {
@@ -130,9 +131,9 @@ struct Mergeable {
   }
 
   void standardizeSegments() {
-    standardizeSegment<Memory, char, Memory::Segment>(wasm, wasm.memory, memoryBaseBump, 0, *memoryBaseGlobals.begin());
+    standardizeSegment<Memory, char, Memory::Segment>(wasm, wasm.memory, totalMemorySize, 0, *memoryBaseGlobals.begin());
     // if there are no functions, and we need one, we need to add one as the zero
-    if (tableBaseBump > 0 && wasm.functions.empty()) {
+    if (totalTableSize > 0 && wasm.functions.empty()) {
       auto func = new Function;
       func->name = Name("binaryen$merge-zero");
       func->body = Builder(wasm).makeNop();
@@ -140,10 +141,10 @@ struct Mergeable {
       wasm.addFunction(func);
     }
     Name zero;
-    if (tableBaseBump > 0) {
+    if (totalTableSize > 0) {
       zero = wasm.functions.begin()->get()->name;
     }
-    standardizeSegment<Table, Name, Table::Segment>(wasm, wasm.table, tableBaseBump, zero, *tableBaseGlobals.begin());
+    standardizeSegment<Table, Name, Table::Segment>(wasm, wasm.table, totalTableSize, zero, *tableBaseGlobals.begin());
   }
 
   // utilities
@@ -292,9 +293,9 @@ void mergeIn(Module& output, Module& input) {
       assert(curr->name.is());
       // if this is the memory or table base, add the bump
       if (memoryBaseGlobals.count(curr->name)) {
-        addBump(outputUpdater.memoryBaseBump);
+        addBump(outputUpdater.totalMemorySize);
       } else if (tableBaseGlobals.count(curr->name)) {
-        addBump(outputUpdater.tableBaseBump);
+        addBump(outputUpdater.totalTableSize);
       }
     }
 
