@@ -39,6 +39,7 @@
 
 #include <set>
 
+#include "support/colors.h"
 #include "wasm.h"
 #include "wasm-printing.h"
 
@@ -160,6 +161,16 @@ public:
       if (curr->condition->type != unreachable) {
         shouldBeEqual(curr->type, none, curr, "if without else and reachable condition must be none");
       }
+    } else {
+      if (curr->type != unreachable) {
+        shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->type, curr, "returning if-else's true must have right type");
+        shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->type, curr, "returning if-else's false must have right type");
+      } else {
+        if (curr->condition->type != unreachable) {
+          shouldBeEqual(curr->ifTrue->type, unreachable, curr, "unreachable if-else must have unreachable true");
+          shouldBeEqual(curr->ifFalse->type, unreachable, curr, "unreachable if-else must have unreachable false");
+        }
+      }
     }
   }
 
@@ -213,7 +224,7 @@ public:
   }
   void visitCall(Call *curr) {
     if (!validateGlobally) return;
-    auto* target = getModule()->checkFunction(curr->target);
+    auto* target = getModule()->getFunctionOrNull(curr->target);
     if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
     if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
     for (size_t i = 0; i < curr->operands.size(); i++) {
@@ -224,7 +235,7 @@ public:
   }
   void visitCallImport(CallImport *curr) {
     if (!validateGlobally) return;
-    auto* import = getModule()->checkImport(curr->target);
+    auto* import = getModule()->getImportOrNull(curr->target);
     if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
     if (!shouldBeTrue(!!import->functionType.is(), curr, "called import must be function")) return;
     auto* type = getModule()->getFunctionType(import->functionType);
@@ -237,7 +248,7 @@ public:
   }
   void visitCallIndirect(CallIndirect *curr) {
     if (!validateGlobally) return;
-    auto* type = getModule()->checkFunctionType(curr->fullType);
+    auto* type = getModule()->getFunctionTypeOrNull(curr->fullType);
     if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) return;
     shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
     if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
@@ -477,7 +488,7 @@ public:
         }
         shouldBeTrue(found, name, "module function exports must be found");
       } else if (exp->kind == ExternalKind::Global) {
-        shouldBeTrue(curr->checkGlobal(name), name, "module global exports must be found");
+        shouldBeTrue(curr->getGlobalOrNull(name), name, "module global exports must be found");
       } else if (exp->kind == ExternalKind::Table) {
         shouldBeTrue(name == Name("0") || name == curr->table.name, name, "module table exports must be found");
       } else if (exp->kind == ExternalKind::Memory) {
@@ -491,7 +502,7 @@ public:
     }
     // start
     if (curr->start.is()) {
-      auto func = curr->checkFunction(curr->start);
+      auto func = curr->getFunctionOrNull(curr->start);
       if (shouldBeTrue(func != nullptr, curr->start, "start must be found")) {
         shouldBeTrue(func->params.size() == 0, curr, "start must have 0 params");
         shouldBeTrue(func->result == none, curr, "start must not return a value");

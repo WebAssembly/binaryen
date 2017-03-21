@@ -338,7 +338,7 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
       functionTypes[name] = stringToWasmType(curr[1]->str());
     } else if (id == TYPE) {
       Name typeName = getFunctionTypeName(*curr[1]);
-      if (!wasm.checkFunctionType(typeName)) throw ParseException("unknown function type", curr.line, curr.col);
+      if (!wasm.getFunctionTypeOrNull(typeName)) throw ParseException("unknown function type", curr.line, curr.col);
       type = wasm.getFunctionType(typeName);
       functionTypes[name] = type->result;
     } else if (id == PARAM && curr.size() > 1) {
@@ -426,7 +426,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     ex->name = exportName;
     ex->value = name;
     ex->kind = ExternalKind::Function;
-    if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
+    if (wasm.getExportOrNull(ex->name)) throw ParseException("duplicate export", s.line, s.col);
     wasm.addExport(ex.release());
   }
   Expression* body = nullptr;
@@ -489,7 +489,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     } else if (id == TYPE) {
       Name name = getFunctionTypeName(*curr[1]);
       type = name;
-      if (!wasm.checkFunctionType(name)) throw ParseException("unknown function type");
+      if (!wasm.getFunctionTypeOrNull(name)) throw ParseException("unknown function type");
       FunctionType* type = wasm.getFunctionType(name);
       result = type->result;
       for (size_t j = 0; j < type->params.size(); j++) {
@@ -939,12 +939,12 @@ Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
 Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
   auto ret = allocator.alloc<GetGlobal>();
   ret->name = getGlobalName(*s[1]);
-  auto* global = wasm.checkGlobal(ret->name);
+  auto* global = wasm.getGlobalOrNull(ret->name);
   if (global) {
     ret->type = global->type;
     return ret;
   }
-  auto* import = wasm.checkImport(ret->name);
+  auto* import = wasm.getImportOrNull(ret->name);
   if (import && import->kind == ExternalKind::Global) {
     ret->type = import->globalType;
     return ret;
@@ -955,7 +955,7 @@ Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
 Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
   auto ret = allocator.alloc<SetGlobal>();
   ret->name = getGlobalName(*s[1]);
-  if (wasm.checkGlobal(ret->name) && !wasm.checkGlobal(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
+  if (wasm.getGlobalOrNull(ret->name) && !wasm.getGlobalOrNull(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
   ret->value = parseExpression(s[2]);
   return ret;
 }
@@ -1194,7 +1194,7 @@ Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeCall(Element& s) {
   auto target = getFunctionName(*s[1]);
-  auto* import = wasm.checkImport(target);
+  auto* import = wasm.getImportOrNull(target);
   if (import && import->kind == ExternalKind::Function) {
     auto ret = allocator.alloc<CallImport>();
     ret->target = target;
@@ -1223,7 +1223,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   if (!wasm.table.exists) throw ParseException("no table");
   auto ret = allocator.alloc<CallIndirect>();
   IString type = s[1]->str();
-  auto* fullType = wasm.checkFunctionType(type);
+  auto* fullType = wasm.getFunctionTypeOrNull(type);
   if (!fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
   ret->fullType = fullType->name;
   ret->type = fullType->result;
@@ -1351,7 +1351,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       ex->name = inner[1]->str();
       ex->value = wasm.memory.name;
       ex->kind = ExternalKind::Memory;
-      if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
+      if (wasm.getExportOrNull(ex->name)) throw ParseException("duplicate export", s.line, s.col);
       wasm.addExport(ex.release());
       i++;
     } else if (inner[0]->str() == IMPORT) {
@@ -1443,7 +1443,7 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
       ex->kind = ExternalKind::Table;
     } else if (inner[0]->str() == GLOBAL) {
       ex->kind = ExternalKind::Global;
-      if (wasm.checkGlobal(ex->value) && wasm.getGlobal(ex->value)->mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
+      if (wasm.getGlobalOrNull(ex->value) && wasm.getGlobal(ex->value)->mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
     } else {
       WASM_UNREACHABLE();
     }
@@ -1464,7 +1464,7 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
     ex->value = s[2]->str();
     ex->kind = ExternalKind::Function;
   }
-  if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
+  if (wasm.getExportOrNull(ex->name)) throw ParseException("duplicate export", s.line, s.col);
   wasm.addExport(ex.release());
 }
 
@@ -1545,7 +1545,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
         type->result = stringToWasmType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
-        if (!wasm.checkFunctionType(name)) throw ParseException("bad function type for import");
+        if (!wasm.getFunctionTypeOrNull(name)) throw ParseException("bad function type for import");
         *type = *wasm.getFunctionType(name);
       } else {
         throw ParseException("bad import element");
@@ -1608,7 +1608,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
       ex->name = inner[1]->str();
       ex->value = global->name;
       ex->kind = ExternalKind::Global;
-      if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
+      if (wasm.getExportOrNull(ex->name)) throw ParseException("duplicate export", s.line, s.col);
       wasm.addExport(ex.release());
       exported = true;
       i++;
@@ -1672,7 +1672,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
       ex->name = inner[1]->str();
       ex->value = wasm.table.name;
       ex->kind = ExternalKind::Table;
-      if (wasm.checkExport(ex->name)) throw ParseException("duplicate export", s.line, s.col);
+      if (wasm.getExportOrNull(ex->name)) throw ParseException("duplicate export", s.line, s.col);
       wasm.addExport(ex.release());
       i++;
     } else if (inner[0]->str() == IMPORT) {

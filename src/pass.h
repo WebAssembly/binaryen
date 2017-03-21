@@ -123,6 +123,16 @@ struct PassRunner {
 
   ~PassRunner();
 
+  // When running a pass runner within another pass runner, this
+  // flag should be set. This influences how pass debugging works,
+  // and may influence other things in the future too.
+  void setIsNested(bool nested) {
+    isNested = nested;
+  }
+
+protected:
+  bool isNested = false;
+
 private:
   void doAdd(Pass* pass);
 

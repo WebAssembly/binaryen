@@ -213,11 +213,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         curr->ifFalse = nullptr;
         curr->condition = Builder(*getModule()).makeUnary(EqZInt32, curr->condition);
       } else if (curr->ifTrue->is<Drop>() && curr->ifFalse->is<Drop>()) {
-        // instead of dropping both sides, drop the if
-        curr->ifTrue = curr->ifTrue->cast<Drop>()->value;
-        curr->ifFalse = curr->ifFalse->cast<Drop>()->value;
-        curr->finalize();
-        replaceCurrent(Builder(*getModule()).makeDrop(curr));
+        // instead of dropping both sides, drop the if, if they are the same type
+        auto* left = curr->ifTrue->cast<Drop>()->value;
+        auto* right = curr->ifFalse->cast<Drop>()->value;
+        if (left->type == right->type) {
+          curr->ifTrue = left;
+          curr->ifFalse = right;
+          curr->finalize();
+          replaceCurrent(Builder(*getModule()).makeDrop(curr));
+        }
       }
     } else {
       // no else

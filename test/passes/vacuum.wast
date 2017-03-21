@@ -427,6 +427,18 @@
     )
     (i32.const 2)
   )
+  (func $if2drops-different (result i32)
+    (if
+      (call $if2drops)
+      (drop
+        (call $if2drops) ;; i32
+      )
+      (drop
+        (call $unary) ;; f32!
+      )
+    )
+    (i32.const 2)
+  )
   (func $if-const (param $x i32)
     (if (i32.const 0) (call $if-const (i32.const 1)))
     (if (i32.const 2) (call $if-const (i32.const 3)))

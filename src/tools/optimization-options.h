@@ -78,7 +78,7 @@
            })
       .add("--ignore-implicit-traps", "-iit", "Optimize under the helpful assumption that no surprising traps occur (from load, div/mod, etc.)",
            Options::Arguments::Zero,
-           [&runOptimizationPasses, &passOptions](Options*, const std::string&) {
+           [&passOptions](Options*, const std::string&) {
              passOptions.ignoreImplicitTraps = true;
            })
 

@@ -1,6 +1,7 @@
 (module
   (memory 256 256)
   (type $0 (func (param i32)))
+  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
   (func $b0 (type $0) (param $x i32)
     (drop
       (i32.load
@@ -149,6 +150,61 @@
       (i32.add
         (i32.const 10)
         (get_local $0)
+      )
+    )
+  )
+  (func $pow2
+    (local $x f64)
+    (local $y f64)
+    (drop
+      (call $Math_pow
+        (f64.const 1)
+        (f64.const 2)
+      )
+    )
+    (drop
+      (call $Math_pow
+        (f64.const 1)
+        (f64.const 3)
+      )
+    )
+    (drop
+      (call $Math_pow
+        (f64.const 2)
+        (f64.const 1)
+      )
+    )
+    (set_local $x (f64.const 5))
+    (drop
+      (call $Math_pow
+        (get_local $x)
+        (f64.const 2)
+      )
+    )
+    (drop
+      (call $Math_pow
+        (tee_local $y (f64.const 7))
+        (f64.const 2)
+      )
+    )
+    (drop
+      (call $Math_pow
+        (f64.const 8)
+        (f64.const 2)
+      )
+    )
+  )
+  (func $pow.2
+    (drop
+      (call $Math_pow
+        (f64.const 1)
+        (f64.const 0.5)
+      )
+    )
+    (drop
+      (call $Math_pow
+        (f64.const 1)
+        (f64.const 0.51)
       )
     )
   )

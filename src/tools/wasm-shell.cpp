@@ -174,7 +174,7 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
         for (auto& segment : wasm.table.segments) {
           for (auto name : segment.data) {
             // spec tests consider it illegal to use spectest.print in a table
-            if (auto* import = wasm.checkImport(name)) {
+            if (auto* import = wasm.getImportOrNull(name)) {
               if (import->module == SPECTEST && import->base == PRINT) {
                 std::cerr << "cannot put spectest.print in table\n";
                 invalid = true;

@@ -22,7 +22,6 @@
 #define wasm_wasm_binary_h
 
 #include <cassert>
-#include <istream>
 #include <ostream>
 #include <type_traits>
 

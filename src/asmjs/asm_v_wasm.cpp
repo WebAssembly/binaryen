@@ -95,7 +95,7 @@ FunctionType* sigToFunctionType(std::string sig) {
 
 FunctionType* ensureFunctionType(std::string sig, Module* wasm) {
   cashew::IString name(("FUNCSIG$" + sig).c_str(), false);
-  if (wasm->checkFunctionType(name)) {
+  if (wasm->getFunctionTypeOrNull(name)) {
     return wasm->getFunctionType(name);
   }
   // add new type

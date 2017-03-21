@@ -7,6 +7,8 @@ SET(passes_SOURCES
   ExtractFunction.cpp
   Inlining.cpp
   LegalizeJSInterface.cpp
+  LocalCSE.cpp
+  LogExecution.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   Metrics.cpp

@@ -23,10 +23,12 @@
 #ifndef wasm_wasm_interpreter_h
 #define wasm_wasm_interpreter_h
 
+#include <cmath>
 #include <limits.h>
 #include <sstream>
 
 #include "support/bits.h"
+#include "support/safe_integer.h"
 #include "wasm.h"
 #include "wasm-traversal.h"
 
@@ -579,14 +581,14 @@ public:
 
   // call an exported function
   Literal callExport(Name name, LiteralList& arguments) {
-    Export *export_ = wasm.checkExport(name);
+    Export *export_ = wasm.getExportOrNull(name);
     if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
   }
 
   // get an exported global
   Literal getExport(Name name) {
-    Export *export_ = wasm.checkExport(name);
+    Export *export_ = wasm.getExportOrNull(name);
     if (!export_) externalInterface->trap("getExport external not found");
     Name internalName = export_->value;
     auto iter = globals.find(internalName);

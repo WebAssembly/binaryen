@@ -1,115 +1,182 @@
 (module
-  (type $0 (func (param i32)))
-  (type $1 (func (param i32) (result i32)))
-  (memory $0 256 256)
-  (export "load-off-2" (func $load-off-2))
-  (func $b0 (type $0) (param $x i32)
-    (drop
-      (i32.load offset=1
-        (get_local $x)
-      )
-    )
-    (drop
-      (i32.load offset=8
-        (get_local $x)
-      )
-    )
-    (drop
-      (i32.load offset=1023
-        (get_local $x)
-      )
-    )
-    (drop
-      (i32.load
-        (i32.add
-          (get_local $x)
-          (i32.const 1024)
-        )
-      )
-    )
-    (drop
-      (i32.load
-        (i32.add
-          (get_local $x)
-          (i32.const 2048)
-        )
-      )
-    )
-    (drop
-      (i32.load offset=4
-        (get_local $x)
-      )
-    )
+ (type $0 (func (param i32)))
+ (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+ (type $2 (func (param i32) (result i32)))
+ (type $3 (func))
+ (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
+ (memory $0 256 256)
+ (export "load-off-2" (func $load-off-2))
+ (func $b0 (type $0) (param $x i32)
+  (drop
+   (i32.load offset=1
+    (get_local $x)
+   )
   )
-  (func $load-off-2 (type $1) (param $0 i32) (result i32)
-    (i32.store
-      (i32.const 6)
-      (get_local $0)
-    )
-    (i32.store
-      (i32.const 6)
-      (get_local $0)
-    )
-    (i32.store offset=7
-      (get_local $0)
-      (get_local $0)
-    )
-    (i32.store offset=9
-      (get_local $0)
-      (get_local $0)
-    )
-    (i32.store offset=2
-      (i32.add
-        (i32.const -11)
-        (get_local $0)
-      )
-      (get_local $0)
-    )
-    (i32.store offset=2
-      (i32.add
-        (get_local $0)
-        (i32.const -13)
-      )
-      (get_local $0)
-    )
-    (i32.store
-      (i32.const 4)
-      (get_local $0)
-    )
-    (i32.store
-      (i32.const 0)
-      (get_local $0)
-    )
-    (i32.store
-      (i32.const 25)
-      (get_local $0)
-    )
-    (i32.store
-      (i32.const -23)
-      (get_local $0)
-    )
-    (drop
-      (i32.load
-        (i32.const 8)
-      )
-    )
-    (drop
-      (i32.load
-        (i32.const 8)
-      )
-    )
-    (drop
-      (i32.load offset=8
-        (get_local $0)
-      )
-    )
-    (drop
-      (i32.load
-        (i32.const 10)
-      )
-    )
-    (i32.load offset=12
-      (get_local $0)
-    )
+  (drop
+   (i32.load offset=8
+    (get_local $x)
+   )
   )
+  (drop
+   (i32.load offset=1023
+    (get_local $x)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.add
+     (get_local $x)
+     (i32.const 1024)
+    )
+   )
+  )
+  (drop
+   (i32.load
+    (i32.add
+     (get_local $x)
+     (i32.const 2048)
+    )
+   )
+  )
+  (drop
+   (i32.load offset=4
+    (get_local $x)
+   )
+  )
+ )
+ (func $load-off-2 (type $2) (param $0 i32) (result i32)
+  (i32.store
+   (i32.const 6)
+   (get_local $0)
+  )
+  (i32.store
+   (i32.const 6)
+   (get_local $0)
+  )
+  (i32.store offset=7
+   (get_local $0)
+   (get_local $0)
+  )
+  (i32.store offset=9
+   (get_local $0)
+   (get_local $0)
+  )
+  (i32.store offset=2
+   (i32.add
+    (i32.const -11)
+    (get_local $0)
+   )
+   (get_local $0)
+  )
+  (i32.store offset=2
+   (i32.add
+    (get_local $0)
+    (i32.const -13)
+   )
+   (get_local $0)
+  )
+  (i32.store
+   (i32.const 4)
+   (get_local $0)
+  )
+  (i32.store
+   (i32.const 0)
+   (get_local $0)
+  )
+  (i32.store
+   (i32.const 25)
+   (get_local $0)
+  )
+  (i32.store
+   (i32.const -23)
+   (get_local $0)
+  )
+  (drop
+   (i32.load
+    (i32.const 8)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 8)
+   )
+  )
+  (drop
+   (i32.load offset=8
+    (get_local $0)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 10)
+   )
+  )
+  (i32.load offset=12
+   (get_local $0)
+  )
+ )
+ (func $pow2 (type $3)
+  (local $x f64)
+  (local $y f64)
+  (local $2 f64)
+  (local $3 f64)
+  (drop
+   (f64.mul
+    (tee_local $2
+     (f64.const 1)
+    )
+    (get_local $2)
+   )
+  )
+  (drop
+   (call $Math_pow
+    (f64.const 1)
+    (f64.const 3)
+   )
+  )
+  (drop
+   (call $Math_pow
+    (f64.const 2)
+    (f64.const 1)
+   )
+  )
+  (set_local $x
+   (f64.const 5)
+  )
+  (drop
+   (f64.mul
+    (get_local $x)
+    (get_local $x)
+   )
+  )
+  (drop
+   (f64.mul
+    (tee_local $y
+     (f64.const 7)
+    )
+    (get_local $y)
+   )
+  )
+  (drop
+   (f64.mul
+    (tee_local $3
+     (f64.const 8)
+    )
+    (get_local $3)
+   )
+  )
+ )
+ (func $pow.2 (type $3)
+  (drop
+   (f64.sqrt
+    (f64.const 1)
+   )
+  )
+  (drop
+   (call $Math_pow
+    (f64.const 1)
+    (f64.const 0.51)
+   )
+  )
+ )
 )
