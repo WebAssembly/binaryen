@@ -159,6 +159,7 @@
   // we provide a JS Module() object interface
   Module['Module'] = function(module) {
     if (!module) module = Module['_BinaryenModuleCreate']();
+    this['ptr'] = module;
 
     this['dispose'] = function() {
       Module['_BinaryenModuleDispose'](module);
@@ -839,7 +840,7 @@
       });
     };
     this['renderAndDispose'] = function(entry, labelHelper, module) {
-      return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper, module);
+      return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper, module['ptr']);
     };
   };
 
