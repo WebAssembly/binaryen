@@ -119,11 +119,15 @@ void ThreadPool::initialize(size_t num) {
 }
 
 size_t ThreadPool::getNumCores() {
+#if EMSCRIPTEN
+  return 1;
+#else
   size_t num = std::max(1U, std::thread::hardware_concurrency());
   if (getenv("BINARYEN_CORES")) {
     num = std::stoi(getenv("BINARYEN_CORES"));
   }
   return num;
+#endif
 }
 
 ThreadPool* ThreadPool::get() {
