@@ -124,7 +124,7 @@ void test_core() {
     makeUnary(module, BinaryenSqrtFloat64(), 4),
     makeUnary(module, BinaryenEqZInt32(), 1),
     makeUnary(module, BinaryenExtendSInt32(), 1),
-    makeUnary(module, BinaryenExtentUInt32(), 1),
+    makeUnary(module, BinaryenExtendUInt32(), 1),
     makeUnary(module, BinaryenWrapInt64(), 2),
     makeUnary(module, BinaryenTruncSFloat32ToInt32(), 3),
     makeUnary(module, BinaryenTruncSFloat32ToInt64(), 3),
