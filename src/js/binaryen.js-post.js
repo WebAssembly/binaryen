@@ -273,9 +273,6 @@
       'eqz': function(value) {
         return Module['_BinaryenUnary'](module, Module['EqZInt32'], value);
       },
-      'wrap': function(value) {
-        return Module['_BinaryenUnary'](module, Module['WrapInt32'], value);
-      },
       'trunc_s': {
         'f32': function(value) {
           return Module['_BinaryenUnary'](module, Module['TruncSFloat32ToInt32'], value);
