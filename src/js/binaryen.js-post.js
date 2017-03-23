@@ -51,7 +51,7 @@
   Module['SqrtFloat64'] = Module['_BinaryenSqrtFloat64']();
   Module['EqZInt64'] = Module['_BinaryenEqZInt64']();
   Module['ExtendSInt32'] = Module['_BinaryenExtendSInt32']();
-  Module['ExtentUInt32'] = Module['_BinaryenExtentUInt32']();
+  Module['ExtendUInt32'] = Module['_BinaryenExtendUInt32']();
   Module['WrapInt64'] = Module['_BinaryenWrapInt64']();
   Module['TruncSFloat32ToInt32'] = Module['_BinaryenTruncSFloat32ToInt32']();
   Module['TruncSFloat32ToInt64'] = Module['_BinaryenTruncSFloat32ToInt64']();
@@ -271,7 +271,7 @@
         return Module['_BinaryenUnary'](module, Module['PopcntInt32'], value);
       },
       'eqz': function(value) {
-        return Module['_BinaryenUnary'](module, Module['EqzInt32'], value);
+        return Module['_BinaryenUnary'](module, Module['EqZInt32'], value);
       },
       'wrap': function(value) {
         return Module['_BinaryenUnary'](module, Module['WrapInt32'], value);
@@ -423,7 +423,7 @@
         return Module['_BinaryenUnary'](module, Module['PopcntInt64'], value);
       },
       'eqz': function(value) {
-        return Module['_BinaryenUnary'](module, Module['EqzInt64'], value);
+        return Module['_BinaryenUnary'](module, Module['EqZInt64'], value);
       },
       'trunc_s': {
         'f32': function(value) {
@@ -583,7 +583,7 @@
         },
       },
       'demote': function(value) {
-        return Module['_BinaryenUnary'](module, Module['DemoteFloat32'], value);
+        return Module['_BinaryenUnary'](module, Module['DemoteFloat64'], value);
       },
       'add': function(left, right) {
         return Module['_BinaryenBinary'](module, Module['AddFloat32'], left, right);
@@ -682,7 +682,7 @@
         },
       },
       'promote': function(value) {
-        return Module['_BinaryenUnary'](module, Module['PromoteFloat64'], value);
+        return Module['_BinaryenUnary'](module, Module['PromoteFloat32'], value);
       },
       'add': function(left, right) {
         return Module['_BinaryenBinary'](module, Module['AddFloat64'], left, right);
