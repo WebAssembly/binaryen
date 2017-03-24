@@ -535,6 +535,7 @@ int main(int argc, const char* argv[]) {
   Index finalizeMemoryBase = Index(-1),
         finalizeTableBase = Index(-1);
   bool optimize = false;
+  bool verbose = false;
 
   Options options("wasm-merge", "Merge wasm files");
   options
@@ -561,6 +562,11 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
              optimize = true;
+           })
+      .add("--verbose", "-v", "Verbose output",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             verbose = true;
            })
       .add_positional("INFILES", Options::Arguments::N,
                       [&](Options *o, const std::string &argument) {
@@ -597,6 +603,13 @@ int main(int argc, const char* argv[]) {
       // retain the linked in module as we may depend on parts of it
       otherModules.push_back(std::unique_ptr<Module>(input.release()));
     }
+  }
+
+  if (verbose) {
+    // memory and table are standardized and merged, so it's easy to dump out some stats
+    std::cout << "merged total memory size: " << output.memory.segments[0].data.size() << '\n';
+    std::cout << "merged total table size: " << output.table.segments[0].data.size() << '\n';
+    std::cout << "merged functions: " << output.functions.size() << '\n';
   }
 
   if (finalizeMemoryBase != Index(-1) || finalizeTableBase != Index(-1)) {

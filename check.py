@@ -224,16 +224,18 @@ for t in os.listdir(os.path.join('test', 'merge')):
     u = t + '.toMerge'
     for finalize in [0, 1]:
       for opt in [0, 1]:
-        cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S']
+        cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S', '--verbose']
         if finalize: cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
         if opt: cmd += ['-O']
-        run_command(cmd)
+        stdout = run_command(cmd)
         actual = open('a.wast').read()
         out = t + '.combined'
         if finalize: out += '.finalized'
         if opt: out += '.opt'
         with open(out) as f:
           fail_if_not_identical(f.read(), actual)
+        with open(out + '.stdout') as f:
+          fail_if_not_identical(f.read(), stdout)
 
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
