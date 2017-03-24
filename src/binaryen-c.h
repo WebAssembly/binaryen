@@ -154,7 +154,7 @@ BinaryenOp BinaryenNearestFloat64(void);
 BinaryenOp BinaryenSqrtFloat64(void);
 BinaryenOp BinaryenEqZInt64(void);
 BinaryenOp BinaryenExtendSInt32(void);
-BinaryenOp BinaryenExtentUInt32(void);
+BinaryenOp BinaryenExtendUInt32(void);
 BinaryenOp BinaryenWrapInt64(void);
 BinaryenOp BinaryenTruncSFloat32ToInt32(void);
 BinaryenOp BinaryenTruncSFloat32ToInt64(void);

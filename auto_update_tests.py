@@ -193,4 +193,17 @@ for t in os.listdir('test'):
 
     open(t + '.fromBinary', 'w').write(actual)
 
+print '\n[ checking binaryen.js testcases... ]\n'
+
+for s in sorted(os.listdir(os.path.join('test', 'binaryen.js'))):
+  if not s.endswith('.js'): continue
+  print s
+  f = open('a.js', 'w')
+  f.write(open(os.path.join('bin', 'binaryen.js')).read())
+  f.write(open(os.path.join('test', 'binaryen.js', s)).read())
+  f.close()
+  cmd = ['mozjs', 'a.js']
+  out = run_command(cmd, stderr=subprocess.STDOUT)
+  open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w').write(out)
+
 print '\n[ success! ]'

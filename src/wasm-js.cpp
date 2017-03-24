@@ -80,7 +80,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   module->memory.max = pre.memoryGrowth ? Address(Memory::kMaxSize) : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
-  asm2wasm = new Asm2WasmBuilder(*module, pre, debug, false /* TODO: support imprecise? */, PassOptions(), false /* TODO: support optimizing? */, false /* TODO: support asm2wasm-i64? */);
+  asm2wasm = new Asm2WasmBuilder(*module, pre, debug, Asm2WasmBuilder::TrapMode::JS, PassOptions(), false /* TODO: support optimizing? */, false /* TODO: support asm2wasm-i64? */);
   asm2wasm->processAsm(asmjs);
 }
 
@@ -171,7 +171,10 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
   if (wasmJSDebug) std::cerr << "creating instance...\n";
 
   struct JSExternalInterface : ModuleInstance::ExternalInterface {
+    Module* module = nullptr;
+
     void init(Module& wasm, ModuleInstance& instance) override {
+      module = &wasm;
       // look for imported memory
       {
         bool found = false;
@@ -302,7 +305,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
       if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
 
-      return getResultFromJS(ret, import->functionType->result);
+      return getResultFromJS(ret, module->getFunctionType(import->functionType)->result);
     }
 
     Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
