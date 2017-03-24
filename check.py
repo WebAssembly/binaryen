@@ -323,7 +323,7 @@ for t in spec_tests:
       # compare all the outputs to the expected output
       check_expected(actual, os.path.join(options.binaryen_test, 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
-if NODEJS:
+if MOZJS:
   print '\n[ checking binaryen.js testcases... ]\n'
 
   for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
@@ -333,8 +333,8 @@ if NODEJS:
     f.write(open(os.path.join(options.binaryen_bin, 'binaryen.js')).read())
     f.write(open(os.path.join(options.binaryen_test, 'binaryen.js', s)).read())
     f.close()
-    cmd = [NODEJS, 'a.js']
-    out = run_command(cmd)
+    cmd = [MOZJS, 'a.js']
+    out = run_command(cmd, stderr=subprocess.STDOUT)
     expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
     if expected not in out:
       fail(out, expected)

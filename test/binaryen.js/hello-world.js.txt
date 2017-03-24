@@ -1,0 +1,33 @@
+(module
+ (type $iii (func (param i32 i32) (result i32)))
+ (memory $0 0)
+ (export "adder" (func $adder))
+ (func $adder (type $iii) (param $0 i32) (param $1 i32) (result i32)
+  (return
+   (i32.add
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+ )
+)
+
+optimized:
+
+(module
+ (type $iii (func (param i32 i32) (result i32)))
+ (memory $0 0)
+ (export "adder" (func $adder))
+ (func $adder (type $iii) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+)
+
+binary size: 82
+
+[object WebAssembly.Instance]
+
+an addition: 42

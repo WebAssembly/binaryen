@@ -1,0 +1,2925 @@
+BinaryenNone: 0
+BinaryenInt32: 1
+BinaryenInt64: 2
+BinaryenFloat32: 3
+BinaryenFloat64: 4
+(f32.neg
+ (f32.const -33.61199951171875)
+)
+
+(module
+ (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $fiF (func (param i32 f64) (result f32)))
+ (type $v (func))
+ (type $3 (func))
+ (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (table 1 1 anyfunc)
+ (elem (i32.const 0) "$kitchen()sinker")
+ (memory $0 1 256)
+ (data (i32.const 10) "hello, world")
+ (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "mem" (memory $0))
+ (start $starter)
+ (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+  (local $4 i32)
+  (block $the-body i32
+   (block $the-nothing
+    (drop
+     (block $the-value i32
+      (drop
+       (i32.clz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.ctz
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.popcnt
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.neg
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.abs
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.ceil
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.floor
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.trunc
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.nearest
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.sqrt
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i32.wrap/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.trunc_s/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_s/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_u/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_u/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_s/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_s/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_u/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_u/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.reinterpret/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.reinterpret/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.convert_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_s/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_s/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f32.convert_u/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_u/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.promote/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.demote/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.reinterpret/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.reinterpret/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.add
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f64.sub
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.div_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.div_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.rem_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.rem_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.and
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.or
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.xor
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.shl
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.shr_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.shr_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.rotl
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.rotr
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.div
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.copysign
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.min
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.max
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.eq
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f32.ne
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (i32.lt_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.lt_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.le_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.le_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.gt_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.gt_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.ge_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.ge_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.lt
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.le
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f64.gt
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.ge
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (block
+      )
+      (if
+       (i32.const 1)
+       (drop
+        (i32.const 2)
+       )
+       (drop
+        (i32.const 3)
+       )
+      )
+      (if
+       (i32.const 4)
+       (drop
+        (i32.const 5)
+       )
+      )
+      (drop
+       (loop $in i32
+        (i32.const 0)
+       )
+      )
+      (drop
+       (loop i32
+        (i32.const 0)
+       )
+      )
+      (drop
+       (br_if $the-value
+        (i32.const 1)
+        (i32.const 0)
+       )
+      )
+      (br_if $the-nothing
+       (i32.const 2)
+      )
+      (br $the-value
+       (i32.const 3)
+      )
+      (br $the-nothing)
+      (br_table $the-value $the-value
+       (i32.const 1)
+       (i32.const 0)
+      )
+      (br_table $the-nothing $the-nothing
+       (i32.const 2)
+      )
+      (drop
+       (i32.eqz
+        (call "$kitchen()sinker"
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.trunc_s/f32
+         (call $an-imported
+          (i32.const 13)
+          (f64.const 3.7)
+         )
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (call_indirect $iiIfF
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+         (i32.const 2449)
+        )
+       )
+      )
+      (drop
+       (get_local $0)
+      )
+      (set_local $0
+       (i32.const 101)
+      )
+      (drop
+       (tee_local $0
+        (i32.const 102)
+       )
+      )
+      (drop
+       (i32.load
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64.load16_s offset=2 align=1
+        (i32.const 8)
+       )
+      )
+      (drop
+       (f32.load
+        (i32.const 2)
+       )
+      )
+      (drop
+       (f64.load offset=2
+        (i32.const 9)
+       )
+      )
+      (i32.store
+       (i32.const 10)
+       (i32.const 11)
+      )
+      (i64.store offset=2 align=4
+       (i32.const 110)
+       (i64.const 111)
+      )
+      (drop
+       (select
+        (i32.const 3)
+        (i32.const 5)
+        (i32.const 1)
+       )
+      )
+      (return
+       (i32.const 1337)
+      )
+      (nop)
+      (unreachable)
+     )
+    )
+   )
+   (i32.const 42)
+  )
+ )
+ (func $starter (type $v)
+  (nop)
+ )
+)
+
+raw:
+(module
+ (type $v (func))
+ (type $vi (func (param i32)))
+ (type $i (func (result i32)))
+ (import "module" "check" (func $check (param i32)))
+ (memory $0 0)
+ (func $just-one-block (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 1337)
+  )
+ )
+ (func $two-blocks (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (br $block$2$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 1)
+   )
+  )
+ )
+ (func $two-blocks-plus-code (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (drop
+     (i32.const 77)
+    )
+    (br $block$2$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 1)
+   )
+  )
+ )
+ (func $loop (type $v)
+  (local $0 i32)
+  (loop $shape$0$continue
+   (block $block$2$break
+    (call $check
+     (i32.const 0)
+    )
+    (block
+     (br $block$2$break)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 1)
+    )
+    (block
+     (br $shape$0$continue)
+    )
+   )
+  )
+ )
+ (func $loop-plus-code (type $v)
+  (local $0 i32)
+  (loop $shape$0$continue
+   (block $block$2$break
+    (call $check
+     (i32.const 0)
+    )
+    (block
+     (drop
+      (i32.const 33)
+     )
+     (br $block$2$break)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 1)
+    )
+    (block
+     (drop
+      (i32.const -66)
+     )
+     (br $shape$0$continue)
+    )
+   )
+  )
+ )
+ (func $split (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (if
+   (i32.const 55)
+   (block
+    (call $check
+     (i32.const 1)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $split-plus-code (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (if
+   (i32.const 55)
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (block
+     (call $check
+      (i32.const 1)
+     )
+    )
+   )
+   (block
+    (drop
+     (i32.const 20)
+    )
+    (block
+     (call $check
+      (i32.const 2)
+     )
+    )
+   )
+  )
+ )
+ (func $if (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (br $block$3$break)
+     )
+    )
+    (br $block$3$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $if-plus-code (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (drop
+      (i32.const -1)
+     )
+     (block
+      (call $check
+       (i32.const 1)
+      )
+      (block
+       (drop
+        (i32.const -3)
+       )
+       (br $block$3$break)
+      )
+     )
+    )
+    (block
+     (drop
+      (i32.const -2)
+     )
+     (br $block$3$break)
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $if-else (type $v)
+  (local $0 i32)
+  (block $block$4$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (br $block$4$break)
+     )
+    )
+    (block
+     (call $check
+      (i32.const 2)
+     )
+     (block
+      (br $block$4$break)
+     )
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 3)
+   )
+  )
+ )
+ (func $loop-tail (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (loop $shape$0$continue
+    (block $block$2$break
+     (call $check
+      (i32.const 0)
+     )
+     (block
+      (br $block$2$break)
+     )
+    )
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (if
+      (i32.const 10)
+      (br $shape$0$continue)
+      (br $block$3$break)
+     )
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $nontrivial-loop-plus-phi-to-head (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (br $block$2$break)
+   )
+  )
+  (block
+   (block $block$7$break
+    (block $block$4$break
+     (loop $shape$1$continue
+      (block $block$3$break
+       (call $check
+        (i32.const 1)
+       )
+       (if
+        (i32.const -2)
+        (br $block$3$break)
+        (block
+         (drop
+          (i32.const 20)
+         )
+         (br $block$7$break)
+        )
+       )
+      )
+      (block
+       (call $check
+        (i32.const 2)
+       )
+       (if
+        (i32.const -6)
+        (br $block$4$break)
+        (block
+         (drop
+          (i32.const 30)
+         )
+         (br $shape$1$continue)
+        )
+       )
+      )
+     )
+    )
+    (block
+     (block $block$6$break
+      (call $check
+       (i32.const 3)
+      )
+      (if
+       (i32.const -10)
+       (block
+        (call $check
+         (i32.const 4)
+        )
+        (block
+         (br $block$6$break)
+        )
+       )
+       (br $block$6$break)
+      )
+     )
+     (block
+      (call $check
+       (i32.const 5)
+      )
+      (block
+       (drop
+        (i32.const 40)
+       )
+       (br $block$7$break)
+      )
+     )
+    )
+   )
+   (block
+    (call $check
+     (i32.const 6)
+    )
+   )
+  )
+ )
+ (func $switch (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (block $switch$1$leave
+   (block $switch$1$default
+    (block $switch$1$case$3
+     (block $switch$1$case$2
+      (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
+       (i32.const -99)
+      )
+     )
+     (block
+      (block
+       (call $check
+        (i32.const 1)
+       )
+      )
+     )
+     (br $switch$1$leave)
+    )
+    (block
+     (drop
+      (i32.const 55)
+     )
+     (block
+      (call $check
+       (i32.const 2)
+      )
+     )
+    )
+    (br $switch$1$leave)
+   )
+   (block
+    (block
+     (call $check
+      (i32.const 3)
+     )
+    )
+   )
+   (br $switch$1$leave)
+  )
+ )
+ (func $duffs-device (type $v)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i64)
+  (local $3 i32)
+  (local $4 f32)
+  (local $5 f64)
+  (local $6 i32)
+  (block
+   (block $block$3$break
+    (block $block$2$break
+     (call $check
+      (i32.const 0)
+     )
+     (if
+      (i32.const 10)
+      (block
+       (set_local $3
+        (i32.const 2)
+       )
+       (br $block$2$break)
+      )
+      (block
+       (set_local $3
+        (i32.const 3)
+       )
+       (br $block$3$break)
+      )
+     )
+    )
+   )
+  )
+  (loop $shape$1$continue
+   (if
+    (i32.eq
+     (get_local $3)
+     (i32.const 2)
+    )
+    (block
+     (set_local $3
+      (i32.const 0)
+     )
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (set_local $3
+       (i32.const 3)
+      )
+      (br $shape$1$continue)
+     )
+    )
+    (if
+     (i32.eq
+      (get_local $3)
+      (i32.const 3)
+     )
+     (block
+      (set_local $3
+       (i32.const 0)
+      )
+      (call $check
+       (i32.const 2)
+      )
+      (block
+       (set_local $3
+        (i32.const 2)
+       )
+       (br $shape$1$continue)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $return (type $i) (result i32)
+  (local $0 i32)
+  (block $the-list
+   (call $check
+    (i32.const 42)
+   )
+   (return
+    (i32.const 1337)
+   )
+  )
+ )
+)
+
+optimized:
+(module
+ (type $v (func))
+ (type $vi (func (param i32)))
+ (type $i (func (result i32)))
+ (memory $0 0)
+)
+
+module loaded from binary form:
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (memory $0 0)
+ (func $adder (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (i32.add
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+)
+
+(module
+ (type $vi (func (param i32)))
+ (type $v (func))
+ (import "spectest" "print" (func $print-i32 (param i32)))
+ (memory $0 0)
+ (start $starter)
+ (func $starter (type $v)
+  (call $print-i32
+   (i32.const 1234)
+  )
+ )
+)
+
+(i32.const 1234)
+(module
+ (type $v (func))
+ (memory $0 0)
+ (func $func (type $v)
+  (local $0 i32)
+  (set_local $0
+   (i64.const 1234)
+  )
+ )
+)
+
+[wasm-validator error in function $func] 1 != 2: set_local type must match function, on 
+[none] (set_local $0
+ [i64] (i64.const 1234)
+)
+(module
+ (type $v (func))
+ (memory $0 0)
+ (func $func (type $v)
+  (local $0 i32)
+  (set_local $0
+   (i64.const 1234)
+  )
+ )
+)
+validation: 0
+// beginning a Binaryen API trace
+#include <math.h>
+#include <map>
+#include "src/binaryen-c.h"
+int main() {
+  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
+  std::map<size_t, BinaryenExpressionRef> expressions;
+  std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, RelooperBlockRef> relooperBlocks;
+  BinaryenModuleRef the_module = NULL;
+  RelooperRef the_relooper = NULL;
+  the_module = BinaryenModuleCreate();
+  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
+  expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt64(2));
+  expressions[3] = BinaryenConst(the_module, BinaryenLiteralFloat32(3.14));
+  expressions[4] = BinaryenConst(the_module, BinaryenLiteralFloat64(2.1828));
+  expressions[5] = BinaryenConst(the_module, BinaryenLiteralFloat32(NAN));
+  expressions[6] = BinaryenConst(the_module, BinaryenLiteralFloat64(NAN));
+  {
+    BinaryenIndex paramTypes[] = { 1, 2, 3, 4 };
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "iiIfF", 1, paramTypes, 4);
+  }
+  expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[8] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[9] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[10] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[12] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[14] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  expressions[15] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[16] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[17] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  expressions[18] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  expressions[19] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[20] = BinaryenConst(the_module, BinaryenLiteralInt32(11));
+  expressions[21] = BinaryenConst(the_module, BinaryenLiteralInt32(110));
+  expressions[22] = BinaryenConst(the_module, BinaryenLiteralInt64(111));
+  expressions[23] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[24] = BinaryenUnary(the_module, 0, expressions[23]);
+  expressions[25] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[26] = BinaryenUnary(the_module, 3, expressions[25]);
+  expressions[27] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[28] = BinaryenUnary(the_module, 4, expressions[27]);
+  expressions[29] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[30] = BinaryenUnary(the_module, 6, expressions[29]);
+  expressions[31] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[32] = BinaryenUnary(the_module, 9, expressions[31]);
+  expressions[33] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[34] = BinaryenUnary(the_module, 10, expressions[33]);
+  expressions[35] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[36] = BinaryenUnary(the_module, 13, expressions[35]);
+  expressions[37] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[38] = BinaryenUnary(the_module, 14, expressions[37]);
+  expressions[39] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[40] = BinaryenUnary(the_module, 16, expressions[39]);
+  expressions[41] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[42] = BinaryenUnary(the_module, 19, expressions[41]);
+  expressions[43] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[44] = BinaryenUnary(the_module, 20, expressions[43]);
+  expressions[45] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[46] = BinaryenUnary(the_module, 22, expressions[45]);
+  expressions[47] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[48] = BinaryenUnary(the_module, 23, expressions[47]);
+  expressions[49] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[50] = BinaryenUnary(the_module, 24, expressions[49]);
+  expressions[51] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[52] = BinaryenUnary(the_module, 25, expressions[51]);
+  expressions[53] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[54] = BinaryenUnary(the_module, 26, expressions[53]);
+  expressions[55] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[56] = BinaryenUnary(the_module, 27, expressions[55]);
+  expressions[57] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[58] = BinaryenUnary(the_module, 28, expressions[57]);
+  expressions[59] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[60] = BinaryenUnary(the_module, 29, expressions[59]);
+  expressions[61] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[62] = BinaryenUnary(the_module, 30, expressions[61]);
+  expressions[63] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[64] = BinaryenUnary(the_module, 31, expressions[63]);
+  expressions[65] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[66] = BinaryenUnary(the_module, 32, expressions[65]);
+  expressions[67] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[68] = BinaryenUnary(the_module, 33, expressions[67]);
+  expressions[69] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[70] = BinaryenUnary(the_module, 34, expressions[69]);
+  expressions[71] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[72] = BinaryenUnary(the_module, 35, expressions[71]);
+  expressions[73] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[74] = BinaryenUnary(the_module, 36, expressions[73]);
+  expressions[75] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[76] = BinaryenUnary(the_module, 37, expressions[75]);
+  expressions[77] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[78] = BinaryenUnary(the_module, 38, expressions[77]);
+  expressions[79] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[80] = BinaryenUnary(the_module, 39, expressions[79]);
+  expressions[81] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[82] = BinaryenUnary(the_module, 40, expressions[81]);
+  expressions[83] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[84] = BinaryenUnary(the_module, 41, expressions[83]);
+  expressions[85] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[86] = BinaryenUnary(the_module, 42, expressions[85]);
+  expressions[87] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[88] = BinaryenUnary(the_module, 43, expressions[87]);
+  expressions[89] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[90] = BinaryenUnary(the_module, 44, expressions[89]);
+  expressions[91] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[92] = BinaryenUnary(the_module, 45, expressions[91]);
+  expressions[93] = BinaryenConst(the_module, BinaryenLiteralInt64(-22));
+  expressions[94] = BinaryenUnary(the_module, 46, expressions[93]);
+  expressions[95] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[96] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[97] = BinaryenBinary(the_module, 0, expressions[95], expressions[96]);
+  expressions[98] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[99] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[100] = BinaryenBinary(the_module, 64, expressions[98], expressions[99]);
+  expressions[101] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[102] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[103] = BinaryenBinary(the_module, 3, expressions[101], expressions[102]);
+  expressions[104] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[105] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[106] = BinaryenBinary(the_module, 29, expressions[104], expressions[105]);
+  expressions[107] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[108] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[109] = BinaryenBinary(the_module, 30, expressions[107], expressions[108]);
+  expressions[110] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[111] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[112] = BinaryenBinary(the_module, 6, expressions[110], expressions[111]);
+  expressions[113] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[114] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[115] = BinaryenBinary(the_module, 7, expressions[113], expressions[114]);
+  expressions[116] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[117] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[118] = BinaryenBinary(the_module, 33, expressions[116], expressions[117]);
+  expressions[119] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[120] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[121] = BinaryenBinary(the_module, 9, expressions[119], expressions[120]);
+  expressions[122] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[123] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[124] = BinaryenBinary(the_module, 35, expressions[122], expressions[123]);
+  expressions[125] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[126] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[127] = BinaryenBinary(the_module, 36, expressions[125], expressions[126]);
+  expressions[128] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[129] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[130] = BinaryenBinary(the_module, 12, expressions[128], expressions[129]);
+  expressions[131] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[132] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[133] = BinaryenBinary(the_module, 13, expressions[131], expressions[132]);
+  expressions[134] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[135] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[136] = BinaryenBinary(the_module, 39, expressions[134], expressions[135]);
+  expressions[137] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[138] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[139] = BinaryenBinary(the_module, 53, expressions[137], expressions[138]);
+  expressions[140] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[141] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[142] = BinaryenBinary(the_module, 67, expressions[140], expressions[141]);
+  expressions[143] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[144] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[145] = BinaryenBinary(the_module, 55, expressions[143], expressions[144]);
+  expressions[146] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[147] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[148] = BinaryenBinary(the_module, 69, expressions[146], expressions[147]);
+  expressions[149] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[150] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[151] = BinaryenBinary(the_module, 15, expressions[149], expressions[150]);
+  expressions[152] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[153] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[154] = BinaryenBinary(the_module, 58, expressions[152], expressions[153]);
+  expressions[155] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[156] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[157] = BinaryenBinary(the_module, 17, expressions[155], expressions[156]);
+  expressions[158] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[159] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[160] = BinaryenBinary(the_module, 43, expressions[158], expressions[159]);
+  expressions[161] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[162] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[163] = BinaryenBinary(the_module, 44, expressions[161], expressions[162]);
+  expressions[164] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[165] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[166] = BinaryenBinary(the_module, 20, expressions[164], expressions[165]);
+  expressions[167] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[168] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[169] = BinaryenBinary(the_module, 46, expressions[167], expressions[168]);
+  expressions[170] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[171] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[172] = BinaryenBinary(the_module, 22, expressions[170], expressions[171]);
+  expressions[173] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  expressions[174] = BinaryenConst(the_module, BinaryenLiteralInt32(-11));
+  expressions[175] = BinaryenBinary(the_module, 23, expressions[173], expressions[174]);
+  expressions[176] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967274));
+  expressions[177] = BinaryenConst(the_module, BinaryenLiteralInt64(4294967273));
+  expressions[178] = BinaryenBinary(the_module, 49, expressions[176], expressions[177]);
+  expressions[179] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[180] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[181] = BinaryenBinary(the_module, 59, expressions[179], expressions[180]);
+  expressions[182] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[183] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[184] = BinaryenBinary(the_module, 73, expressions[182], expressions[183]);
+  expressions[185] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9005.84));
+  expressions[186] = BinaryenConst(the_module, BinaryenLiteralFloat64(-9007.33));
+  expressions[187] = BinaryenBinary(the_module, 74, expressions[185], expressions[186]);
+  expressions[188] = BinaryenConst(the_module, BinaryenLiteralFloat32(-33.612));
+  expressions[189] = BinaryenConst(the_module, BinaryenLiteralFloat32(-62.5));
+  expressions[190] = BinaryenBinary(the_module, 62, expressions[188], expressions[189]);
+  {
+    BinaryenExpressionRef children[] = { 0 };
+    expressions[191] = BinaryenBlock(the_module, NULL, children, 0);
+  }
+    expressions[192] = BinaryenIf(the_module, expressions[7], expressions[8], expressions[9]);
+    expressions[193] = BinaryenIf(the_module, expressions[10], expressions[11], expressions[0]);
+  expressions[194] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+    expressions[195] = BinaryenLoop(the_module, "in", expressions[194]);
+  expressions[196] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+    expressions[197] = BinaryenLoop(the_module, NULL, expressions[196]);
+    expressions[198] = BinaryenBreak(the_module, "the-value", expressions[12], expressions[13]);
+  expressions[199] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+    expressions[200] = BinaryenBreak(the_module, "the-nothing", expressions[199], expressions[0]);
+  expressions[201] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+    expressions[202] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[201]);
+    expressions[203] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
+  {
+    const char* names[] = { "the-value" };
+    expressions[204] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[14], expressions[15]);
+  }
+  expressions[205] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    const char* names[] = { "the-nothing" };
+    expressions[206] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[205], expressions[0]);
+  }
+  expressions[207] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[208] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
+  expressions[209] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
+  expressions[210] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  {
+    BinaryenExpressionRef operands[] = { expressions[207], expressions[208], expressions[209], expressions[210] };
+    expressions[211] = BinaryenCall(the_module, "kitchen()sinker", operands, 4, 1);
+  }
+  expressions[212] = BinaryenUnary(the_module, 20, expressions[211]);
+  expressions[213] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[214] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  {
+    BinaryenExpressionRef operands[] = { expressions[213], expressions[214] };
+    expressions[215] = BinaryenCallImport(the_module, "an-imported", operands, 2, 3);
+  }
+  expressions[216] = BinaryenUnary(the_module, 25, expressions[215]);
+  expressions[217] = BinaryenUnary(the_module, 20, expressions[216]);
+  expressions[218] = BinaryenConst(the_module, BinaryenLiteralInt32(2449));
+  expressions[219] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
+  expressions[220] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
+  expressions[221] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
+  expressions[222] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
+  {
+    BinaryenExpressionRef operands[] = { expressions[219], expressions[220], expressions[221], expressions[222] };
+    expressions[223] = BinaryenCallIndirect(the_module, expressions[218], operands, 4, "iiIfF");
+  }
+  expressions[224] = BinaryenUnary(the_module, 20, expressions[223]);
+  expressions[225] = BinaryenGetLocal(the_module, 0, 1);
+  expressions[226] = BinaryenDrop(the_module, expressions[225]);
+  expressions[227] = BinaryenConst(the_module, BinaryenLiteralInt32(101));
+  expressions[228] = BinaryenSetLocal(the_module, 0, expressions[227]);
+  expressions[229] = BinaryenConst(the_module, BinaryenLiteralInt32(102));
+  expressions[230] = BinaryenTeeLocal(the_module, 0, expressions[229]);
+  expressions[231] = BinaryenDrop(the_module, expressions[230]);
+  expressions[232] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  expressions[233] = BinaryenLoad(the_module, 4, 1, 0, 0, 1, expressions[232]);
+  expressions[234] = BinaryenConst(the_module, BinaryenLiteralInt32(8));
+  expressions[235] = BinaryenLoad(the_module, 2, 1, 2, 1, 2, expressions[234]);
+  expressions[236] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  expressions[237] = BinaryenLoad(the_module, 4, 1, 0, 0, 3, expressions[236]);
+  expressions[238] = BinaryenConst(the_module, BinaryenLiteralInt32(9));
+  expressions[239] = BinaryenLoad(the_module, 8, 1, 2, 8, 4, expressions[238]);
+  expressions[240] = BinaryenStore(the_module, 4, 0, 0, expressions[19], expressions[20], 1);
+  expressions[241] = BinaryenStore(the_module, 8, 2, 4, expressions[21], expressions[22], 2);
+  expressions[242] = BinaryenSelect(the_module, expressions[16], expressions[17], expressions[18]);
+  expressions[243] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
+  expressions[244] = BinaryenReturn(the_module, expressions[243]);
+  expressions[245] = BinaryenNop(the_module);
+  expressions[246] = BinaryenUnreachable(the_module);
+  BinaryenExpressionPrint(expressions[30]);
+(f32.neg
+ (f32.const -33.61199951171875)
+)
+
+  {
+    BinaryenExpressionRef children[] = { expressions[24], expressions[26], expressions[28], expressions[30], expressions[32], expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[86], expressions[88], expressions[90], expressions[92], expressions[94], expressions[97], expressions[100], expressions[103], expressions[106], expressions[109], expressions[112], expressions[115], expressions[118], expressions[121], expressions[124], expressions[127], expressions[130], expressions[133], expressions[136], expressions[139], expressions[142], expressions[145], expressions[148], expressions[151], expressions[154], expressions[157], expressions[160], expressions[163], expressions[166], expressions[169], expressions[172], expressions[175], expressions[178], expressions[181], expressions[184], expressions[187], expressions[190], expressions[191], expressions[192], expressions[193], expressions[195], expressions[197], expressions[198], expressions[200], expressions[202], expressions[203], expressions[204], expressions[206], expressions[212], expressions[217], expressions[224], expressions[226], expressions[228], expressions[231], expressions[233], expressions[235], expressions[237], expressions[239], expressions[240], expressions[241], expressions[242], expressions[244], expressions[245], expressions[246] };
+    expressions[247] = BinaryenBlock(the_module, "the-value", children, 95);
+  }
+  expressions[248] = BinaryenDrop(the_module, expressions[247]);
+  {
+    BinaryenExpressionRef children[] = { expressions[248] };
+    expressions[249] = BinaryenBlock(the_module, "the-nothing", children, 1);
+  }
+  expressions[250] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  {
+    BinaryenExpressionRef children[] = { expressions[249], expressions[250] };
+    expressions[251] = BinaryenBlock(the_module, "the-body", children, 2);
+  }
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[251]);
+  }
+  {
+    BinaryenIndex paramTypes[] = { 1, 4 };
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
+  }
+  BinaryenAddImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  BinaryenAddExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  {
+    BinaryenFunctionRef funcs[] = { functions[0] };
+    BinaryenSetFunctionTable(the_module, funcs, 1);
+  }
+  expressions[252] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  {
+    const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
+    const char* segments[] = { segment0 };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[252] };
+    BinaryenIndex segmentSizes[] = { 12 };
+    BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
+  }
+  {
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
+  }
+  expressions[253] = BinaryenNop(the_module);
+  {
+    BinaryenType varTypes[] = { 0 };
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[253]);
+  }
+  BinaryenSetStart(the_module, functions[1]);
+  {
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
+  }
+  BinaryenModuleAutoDrop(the_module);
+  BinaryenModuleValidate(the_module);
+  BinaryenModulePrint(the_module);
+(module
+ (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
+ (type $fiF (func (param i32 f64) (result f32)))
+ (type $v (func))
+ (type $3 (func))
+ (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (table 1 1 anyfunc)
+ (elem (i32.const 0) "$kitchen()sinker")
+ (memory $0 1 256)
+ (data (i32.const 10) "hello, world")
+ (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "mem" (memory $0))
+ (start $starter)
+ (func "$kitchen()sinker" (type $iiIfF) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+  (local $4 i32)
+  (block $the-body i32
+   (block $the-nothing
+    (drop
+     (block $the-value i32
+      (drop
+       (i32.clz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.ctz
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.popcnt
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.neg
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.abs
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.ceil
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.floor
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.trunc
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.nearest
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f64.sqrt
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i64.extend_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (i32.wrap/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.trunc_s/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_s/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_u/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_u/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_s/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_s/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.trunc_u/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i64.trunc_u/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (i32.reinterpret/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.reinterpret/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.convert_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_s/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.convert_u/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f32.convert_s/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_s/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f32.convert_u/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.convert_u/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (f64.promote/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (f32.demote/f64
+        (f64.const -9005.841)
+       )
+      )
+      (drop
+       (f32.reinterpret/i32
+        (i32.const -10)
+       )
+      )
+      (drop
+       (f64.reinterpret/i64
+        (i64.const -22)
+       )
+      )
+      (drop
+       (i32.add
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f64.sub
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.div_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.div_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.rem_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.rem_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.and
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.or
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.xor
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.shl
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.shr_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.shr_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.rotl
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.rotr
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.div
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.copysign
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.min
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.max
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (i32.eq
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (f32.ne
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (i32.lt_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.lt_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i64.le_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.le_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.gt_s
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (i32.gt_u
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i32.ge_s
+        (i32.const -10)
+        (i32.const -11)
+       )
+      )
+      (drop
+       (i64.ge_u
+        (i64.const 4294967274)
+        (i64.const 4294967273)
+       )
+      )
+      (drop
+       (f32.lt
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (drop
+       (f64.le
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f64.gt
+        (f64.const -9005.841)
+        (f64.const -9007.333)
+       )
+      )
+      (drop
+       (f32.ge
+        (f32.const -33.61199951171875)
+        (f32.const -62.5)
+       )
+      )
+      (block
+      )
+      (if
+       (i32.const 1)
+       (drop
+        (i32.const 2)
+       )
+       (drop
+        (i32.const 3)
+       )
+      )
+      (if
+       (i32.const 4)
+       (drop
+        (i32.const 5)
+       )
+      )
+      (drop
+       (loop $in i32
+        (i32.const 0)
+       )
+      )
+      (drop
+       (loop i32
+        (i32.const 0)
+       )
+      )
+      (drop
+       (br_if $the-value
+        (i32.const 1)
+        (i32.const 0)
+       )
+      )
+      (br_if $the-nothing
+       (i32.const 2)
+      )
+      (br $the-value
+       (i32.const 3)
+      )
+      (br $the-nothing)
+      (br_table $the-value $the-value
+       (i32.const 1)
+       (i32.const 0)
+      )
+      (br_table $the-nothing $the-nothing
+       (i32.const 2)
+      )
+      (drop
+       (i32.eqz
+        (call "$kitchen()sinker"
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (i32.trunc_s/f32
+         (call $an-imported
+          (i32.const 13)
+          (f64.const 3.7)
+         )
+        )
+       )
+      )
+      (drop
+       (i32.eqz
+        (call_indirect $iiIfF
+         (i32.const 13)
+         (i64.const 37)
+         (f32.const 1.2999999523162842)
+         (f64.const 3.7)
+         (i32.const 2449)
+        )
+       )
+      )
+      (drop
+       (get_local $0)
+      )
+      (set_local $0
+       (i32.const 101)
+      )
+      (drop
+       (tee_local $0
+        (i32.const 102)
+       )
+      )
+      (drop
+       (i32.load
+        (i32.const 1)
+       )
+      )
+      (drop
+       (i64.load16_s offset=2 align=1
+        (i32.const 8)
+       )
+      )
+      (drop
+       (f32.load
+        (i32.const 2)
+       )
+      )
+      (drop
+       (f64.load offset=2
+        (i32.const 9)
+       )
+      )
+      (i32.store
+       (i32.const 10)
+       (i32.const 11)
+      )
+      (i64.store offset=2 align=4
+       (i32.const 110)
+       (i64.const 111)
+      )
+      (drop
+       (select
+        (i32.const 3)
+        (i32.const 5)
+        (i32.const 1)
+       )
+      )
+      (return
+       (i32.const 1337)
+      )
+      (nop)
+      (unreachable)
+     )
+    )
+   )
+   (i32.const 42)
+  )
+ )
+ (func $starter (type $v)
+  (nop)
+ )
+)
+
+  BinaryenModuleDispose(the_module);
+  functionTypes.clear();
+  expressions.clear();
+  functions.clear();
+  relooperBlocks.clear();
+  the_module = BinaryenModuleCreate();
+  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
+  {
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[0] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
+  }
+  {
+    BinaryenIndex paramTypes[] = { 1 };
+    functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
+  }
+  BinaryenAddImport(the_module, "check", "module", "check", functionTypes[1]);
+  the_relooper = RelooperCreate();
+  expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
+  {
+    BinaryenExpressionRef operands[] = { expressions[1] };
+    expressions[2] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[2]);
+  expressions[3] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[0] = BinaryenAddFunction(the_module, "just-one-block", functionTypes[0], varTypes, 1, expressions[3]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[4] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[4] };
+    expressions[5] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[5]);
+  expressions[6] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[6] };
+    expressions[7] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[7]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
+  expressions[8] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[1] = BinaryenAddFunction(the_module, "two-blocks", functionTypes[0], varTypes, 1, expressions[8]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[9] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[9] };
+    expressions[10] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[10]);
+  expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[11] };
+    expressions[12] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[12]);
+  expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(77));
+  expressions[14] = BinaryenDrop(the_module, expressions[13]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[14]);
+  expressions[15] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[2] = BinaryenAddFunction(the_module, "two-blocks-plus-code", functionTypes[0], varTypes, 1, expressions[15]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[16] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[16] };
+    expressions[17] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[17]);
+  expressions[18] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[18] };
+    expressions[19] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[19]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
+  expressions[20] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[3] = BinaryenAddFunction(the_module, "loop", functionTypes[0], varTypes, 1, expressions[20]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[21] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[21] };
+    expressions[22] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[22]);
+  expressions[23] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[23] };
+    expressions[24] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[24]);
+  expressions[25] = BinaryenConst(the_module, BinaryenLiteralInt32(33));
+  expressions[26] = BinaryenDrop(the_module, expressions[25]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[26]);
+  expressions[27] = BinaryenConst(the_module, BinaryenLiteralInt32(-66));
+  expressions[28] = BinaryenDrop(the_module, expressions[27]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[28]);
+  expressions[29] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[4] = BinaryenAddFunction(the_module, "loop-plus-code", functionTypes[0], varTypes, 1, expressions[29]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[30] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[30] };
+    expressions[31] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[31]);
+  expressions[32] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[32] };
+    expressions[33] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[33]);
+  expressions[34] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[34] };
+    expressions[35] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[35]);
+  expressions[36] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[36], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  expressions[37] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[5] = BinaryenAddFunction(the_module, "split", functionTypes[0], varTypes, 1, expressions[37]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[38] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[38] };
+    expressions[39] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[39]);
+  expressions[40] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[40] };
+    expressions[41] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[41]);
+  expressions[42] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[42] };
+    expressions[43] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[43]);
+  expressions[44] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[45] = BinaryenDrop(the_module, expressions[44]);
+  expressions[46] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[46], expressions[45]);
+  expressions[47] = BinaryenConst(the_module, BinaryenLiteralInt32(20));
+  expressions[48] = BinaryenDrop(the_module, expressions[47]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[48]);
+  expressions[49] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[6] = BinaryenAddFunction(the_module, "split-plus-code", functionTypes[0], varTypes, 1, expressions[49]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[50] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[50] };
+    expressions[51] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[51]);
+  expressions[52] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[52] };
+    expressions[53] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[53]);
+  expressions[54] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[54] };
+    expressions[55] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[55]);
+  expressions[56] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[56], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
+  expressions[57] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[7] = BinaryenAddFunction(the_module, "if", functionTypes[0], varTypes, 1, expressions[57]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[58] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[58] };
+    expressions[59] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[59]);
+  expressions[60] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[60] };
+    expressions[61] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[61]);
+  expressions[62] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[62] };
+    expressions[63] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[63]);
+  expressions[64] = BinaryenConst(the_module, BinaryenLiteralInt32(-1));
+  expressions[65] = BinaryenDrop(the_module, expressions[64]);
+  expressions[66] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[66], expressions[65]);
+  expressions[67] = BinaryenConst(the_module, BinaryenLiteralInt32(-2));
+  expressions[68] = BinaryenDrop(the_module, expressions[67]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[68]);
+  expressions[69] = BinaryenConst(the_module, BinaryenLiteralInt32(-3));
+  expressions[70] = BinaryenDrop(the_module, expressions[69]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[70]);
+  expressions[71] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[8] = BinaryenAddFunction(the_module, "if-plus-code", functionTypes[0], varTypes, 1, expressions[71]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[72] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[72] };
+    expressions[73] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[73]);
+  expressions[74] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[74] };
+    expressions[75] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[75]);
+  expressions[76] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[76] };
+    expressions[77] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[77]);
+  expressions[78] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  {
+    BinaryenExpressionRef operands[] = { expressions[78] };
+    expressions[79] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[79]);
+  expressions[80] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[80], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[3], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[3], expressions[0], expressions[0]);
+  expressions[81] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[9] = BinaryenAddFunction(the_module, "if-else", functionTypes[0], varTypes, 1, expressions[81]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[82] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[82] };
+    expressions[83] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[83]);
+  expressions[84] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[84] };
+    expressions[85] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[85]);
+  expressions[86] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[86] };
+    expressions[87] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[87]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
+  expressions[88] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[88], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
+  expressions[89] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[10] = BinaryenAddFunction(the_module, "loop-tail", functionTypes[0], varTypes, 1, expressions[89]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[90] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[90] };
+    expressions[91] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[91]);
+  expressions[92] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[92] };
+    expressions[93] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[93]);
+  expressions[94] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[94] };
+    expressions[95] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[95]);
+  expressions[96] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  {
+    BinaryenExpressionRef operands[] = { expressions[96] };
+    expressions[97] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[97]);
+  expressions[98] = BinaryenConst(the_module, BinaryenLiteralInt32(4));
+  {
+    BinaryenExpressionRef operands[] = { expressions[98] };
+    expressions[99] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[4] = RelooperAddBlock(the_relooper, expressions[99]);
+  expressions[100] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  {
+    BinaryenExpressionRef operands[] = { expressions[100] };
+    expressions[101] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[5] = RelooperAddBlock(the_relooper, expressions[101]);
+  expressions[102] = BinaryenConst(the_module, BinaryenLiteralInt32(6));
+  {
+    BinaryenExpressionRef operands[] = { expressions[102] };
+    expressions[103] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[6] = RelooperAddBlock(the_relooper, expressions[103]);
+  expressions[104] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[105] = BinaryenDrop(the_module, expressions[104]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[105]);
+  expressions[106] = BinaryenConst(the_module, BinaryenLiteralInt32(-2));
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[106], expressions[0]);
+  expressions[107] = BinaryenConst(the_module, BinaryenLiteralInt32(20));
+  expressions[108] = BinaryenDrop(the_module, expressions[107]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[6], expressions[0], expressions[108]);
+  expressions[109] = BinaryenConst(the_module, BinaryenLiteralInt32(-6));
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[3], expressions[109], expressions[0]);
+  expressions[110] = BinaryenConst(the_module, BinaryenLiteralInt32(30));
+  expressions[111] = BinaryenDrop(the_module, expressions[110]);
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[1], expressions[0], expressions[111]);
+  expressions[112] = BinaryenConst(the_module, BinaryenLiteralInt32(-10));
+  RelooperAddBranch(relooperBlocks[3], relooperBlocks[4], expressions[112], expressions[0]);
+  RelooperAddBranch(relooperBlocks[3], relooperBlocks[5], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[4], relooperBlocks[5], expressions[0], expressions[0]);
+  expressions[113] = BinaryenConst(the_module, BinaryenLiteralInt32(40));
+  expressions[114] = BinaryenDrop(the_module, expressions[113]);
+  RelooperAddBranch(relooperBlocks[5], relooperBlocks[6], expressions[0], expressions[114]);
+  expressions[115] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[11] = BinaryenAddFunction(the_module, "nontrivial-loop-plus-phi-to-head", functionTypes[0], varTypes, 1, expressions[115]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[116] = BinaryenConst(the_module, BinaryenLiteralInt32(-99));
+  expressions[117] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[117] };
+    expressions[118] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlockWithSwitch(the_relooper, expressions[118], expressions[116]);
+  expressions[119] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[119] };
+    expressions[120] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[120]);
+  expressions[121] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[121] };
+    expressions[122] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[122]);
+  expressions[123] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
+  {
+    BinaryenExpressionRef operands[] = { expressions[123] };
+    expressions[124] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[124]);
+  {
+    BinaryenIndex indexes[] = { 2, 5 };
+    RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[1], indexes, 2, expressions[0]);
+  }
+  expressions[125] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
+  expressions[126] = BinaryenDrop(the_module, expressions[125]);
+  {
+    BinaryenIndex indexes[] = { 4 };
+    RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[2], indexes, 1, expressions[126]);
+  }
+  {
+    BinaryenIndex indexes[] = { 0 };
+    RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[3], indexes, 0, expressions[0]);
+  }
+  expressions[127] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[12] = BinaryenAddFunction(the_module, "switch", functionTypes[0], varTypes, 1, expressions[127]);
+  }
+  the_relooper = RelooperCreate();
+  expressions[128] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenExpressionRef operands[] = { expressions[128] };
+    expressions[129] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[129]);
+  expressions[130] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
+  {
+    BinaryenExpressionRef operands[] = { expressions[130] };
+    expressions[131] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[131]);
+  expressions[132] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
+  {
+    BinaryenExpressionRef operands[] = { expressions[132] };
+    expressions[133] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[133]);
+  expressions[134] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[134], expressions[0]);
+  RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
+  RelooperAddBranch(relooperBlocks[2], relooperBlocks[1], expressions[0], expressions[0]);
+  expressions[135] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 3, the_module);
+  {
+    BinaryenType varTypes[] = { 1, 1, 2, 1, 3, 4, 1 };
+    functions[13] = BinaryenAddFunction(the_module, "duffs-device", functionTypes[0], varTypes, 7, expressions[135]);
+  }
+  {
+    BinaryenIndex paramTypes[] = { 0 };
+    functionTypes[2] = BinaryenAddFunctionType(the_module, "i", 1, paramTypes, 0);
+  }
+  the_relooper = RelooperCreate();
+  expressions[136] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  {
+    BinaryenExpressionRef operands[] = { expressions[136] };
+    expressions[137] = BinaryenCallImport(the_module, "check", operands, 1, 0);
+  }
+  expressions[138] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
+  expressions[139] = BinaryenReturn(the_module, expressions[138]);
+  {
+    BinaryenExpressionRef children[] = { expressions[137], expressions[139] };
+    expressions[140] = BinaryenBlock(the_module, "the-list", children, 2);
+  }
+  relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[140]);
+  expressions[141] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  {
+    BinaryenType varTypes[] = { 1 };
+    functions[14] = BinaryenAddFunction(the_module, "return", functionTypes[2], varTypes, 1, expressions[141]);
+  }
+raw:
+  BinaryenModulePrint(the_module);
+(module
+ (type $v (func))
+ (type $vi (func (param i32)))
+ (type $i (func (result i32)))
+ (import "module" "check" (func $check (param i32)))
+ (memory $0 0)
+ (func $just-one-block (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 1337)
+  )
+ )
+ (func $two-blocks (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (br $block$2$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 1)
+   )
+  )
+ )
+ (func $two-blocks-plus-code (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (drop
+     (i32.const 77)
+    )
+    (br $block$2$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 1)
+   )
+  )
+ )
+ (func $loop (type $v)
+  (local $0 i32)
+  (loop $shape$0$continue
+   (block $block$2$break
+    (call $check
+     (i32.const 0)
+    )
+    (block
+     (br $block$2$break)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 1)
+    )
+    (block
+     (br $shape$0$continue)
+    )
+   )
+  )
+ )
+ (func $loop-plus-code (type $v)
+  (local $0 i32)
+  (loop $shape$0$continue
+   (block $block$2$break
+    (call $check
+     (i32.const 0)
+    )
+    (block
+     (drop
+      (i32.const 33)
+     )
+     (br $block$2$break)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 1)
+    )
+    (block
+     (drop
+      (i32.const -66)
+     )
+     (br $shape$0$continue)
+    )
+   )
+  )
+ )
+ (func $split (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (if
+   (i32.const 55)
+   (block
+    (call $check
+     (i32.const 1)
+    )
+   )
+   (block
+    (call $check
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $split-plus-code (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (if
+   (i32.const 55)
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (block
+     (call $check
+      (i32.const 1)
+     )
+    )
+   )
+   (block
+    (drop
+     (i32.const 20)
+    )
+    (block
+     (call $check
+      (i32.const 2)
+     )
+    )
+   )
+  )
+ )
+ (func $if (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (br $block$3$break)
+     )
+    )
+    (br $block$3$break)
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $if-plus-code (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (drop
+      (i32.const -1)
+     )
+     (block
+      (call $check
+       (i32.const 1)
+      )
+      (block
+       (drop
+        (i32.const -3)
+       )
+       (br $block$3$break)
+      )
+     )
+    )
+    (block
+     (drop
+      (i32.const -2)
+     )
+     (br $block$3$break)
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $if-else (type $v)
+  (local $0 i32)
+  (block $block$4$break
+   (call $check
+    (i32.const 0)
+   )
+   (if
+    (i32.const 55)
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (br $block$4$break)
+     )
+    )
+    (block
+     (call $check
+      (i32.const 2)
+     )
+     (block
+      (br $block$4$break)
+     )
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 3)
+   )
+  )
+ )
+ (func $loop-tail (type $v)
+  (local $0 i32)
+  (block $block$3$break
+   (loop $shape$0$continue
+    (block $block$2$break
+     (call $check
+      (i32.const 0)
+     )
+     (block
+      (br $block$2$break)
+     )
+    )
+    (block
+     (call $check
+      (i32.const 1)
+     )
+     (if
+      (i32.const 10)
+      (br $shape$0$continue)
+      (br $block$3$break)
+     )
+    )
+   )
+  )
+  (block
+   (call $check
+    (i32.const 2)
+   )
+  )
+ )
+ (func $nontrivial-loop-plus-phi-to-head (type $v)
+  (local $0 i32)
+  (block $block$2$break
+   (call $check
+    (i32.const 0)
+   )
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (br $block$2$break)
+   )
+  )
+  (block
+   (block $block$7$break
+    (block $block$4$break
+     (loop $shape$1$continue
+      (block $block$3$break
+       (call $check
+        (i32.const 1)
+       )
+       (if
+        (i32.const -2)
+        (br $block$3$break)
+        (block
+         (drop
+          (i32.const 20)
+         )
+         (br $block$7$break)
+        )
+       )
+      )
+      (block
+       (call $check
+        (i32.const 2)
+       )
+       (if
+        (i32.const -6)
+        (br $block$4$break)
+        (block
+         (drop
+          (i32.const 30)
+         )
+         (br $shape$1$continue)
+        )
+       )
+      )
+     )
+    )
+    (block
+     (block $block$6$break
+      (call $check
+       (i32.const 3)
+      )
+      (if
+       (i32.const -10)
+       (block
+        (call $check
+         (i32.const 4)
+        )
+        (block
+         (br $block$6$break)
+        )
+       )
+       (br $block$6$break)
+      )
+     )
+     (block
+      (call $check
+       (i32.const 5)
+      )
+      (block
+       (drop
+        (i32.const 40)
+       )
+       (br $block$7$break)
+      )
+     )
+    )
+   )
+   (block
+    (call $check
+     (i32.const 6)
+    )
+   )
+  )
+ )
+ (func $switch (type $v)
+  (local $0 i32)
+  (call $check
+   (i32.const 0)
+  )
+  (block $switch$1$leave
+   (block $switch$1$default
+    (block $switch$1$case$3
+     (block $switch$1$case$2
+      (br_table $switch$1$default $switch$1$default $switch$1$case$2 $switch$1$default $switch$1$case$3 $switch$1$case$2 $switch$1$default
+       (i32.const -99)
+      )
+     )
+     (block
+      (block
+       (call $check
+        (i32.const 1)
+       )
+      )
+     )
+     (br $switch$1$leave)
+    )
+    (block
+     (drop
+      (i32.const 55)
+     )
+     (block
+      (call $check
+       (i32.const 2)
+      )
+     )
+    )
+    (br $switch$1$leave)
+   )
+   (block
+    (block
+     (call $check
+      (i32.const 3)
+     )
+    )
+   )
+   (br $switch$1$leave)
+  )
+ )
+ (func $duffs-device (type $v)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i64)
+  (local $3 i32)
+  (local $4 f32)
+  (local $5 f64)
+  (local $6 i32)
+  (block
+   (block $block$3$break
+    (block $block$2$break
+     (call $check
+      (i32.const 0)
+     )
+     (if
+      (i32.const 10)
+      (block
+       (set_local $3
+        (i32.const 2)
+       )
+       (br $block$2$break)
+      )
+      (block
+       (set_local $3
+        (i32.const 3)
+       )
+       (br $block$3$break)
+      )
+     )
+    )
+   )
+  )
+  (loop $shape$1$continue
+   (if
+    (i32.eq
+     (get_local $3)
+     (i32.const 2)
+    )
+    (block
+     (set_local $3
+      (i32.const 0)
+     )
+     (call $check
+      (i32.const 1)
+     )
+     (block
+      (set_local $3
+       (i32.const 3)
+      )
+      (br $shape$1$continue)
+     )
+    )
+    (if
+     (i32.eq
+      (get_local $3)
+      (i32.const 3)
+     )
+     (block
+      (set_local $3
+       (i32.const 0)
+      )
+      (call $check
+       (i32.const 2)
+      )
+      (block
+       (set_local $3
+        (i32.const 2)
+       )
+       (br $shape$1$continue)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $return (type $i) (result i32)
+  (local $0 i32)
+  (block $the-list
+   (call $check
+    (i32.const 42)
+   )
+   (return
+    (i32.const 1337)
+   )
+  )
+ )
+)
+
+  BinaryenModuleValidate(the_module);
+  BinaryenModuleOptimize(the_module);
+  BinaryenModuleValidate(the_module);
+optimized:
+  BinaryenModulePrint(the_module);
+(module
+ (type $v (func))
+ (type $vi (func (param i32)))
+ (type $i (func (result i32)))
+ (memory $0 0)
+)
+
+  BinaryenModuleDispose(the_module);
+  functionTypes.clear();
+  expressions.clear();
+  functions.clear();
+  relooperBlocks.clear();
+  return 0;
+}

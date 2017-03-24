@@ -1,1 +1,1 @@
-var Binaryen = function(Module){
+var Binaryen = function(Module) {

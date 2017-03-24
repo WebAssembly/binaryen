@@ -6,7 +6,7 @@
 int main() {
   BinaryenModuleRef module = BinaryenModuleCreate();
 
-  // Creation a function type for  i32 (i32, i32)
+  // Create a function type for  i32 (i32, i32)
   BinaryenType params[2] = { BinaryenInt32(), BinaryenInt32() };
   BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenInt32(), params, 2);
 
