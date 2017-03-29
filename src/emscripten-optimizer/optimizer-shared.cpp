@@ -155,8 +155,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
     switch (op.str[0]) {
       case '>': {
         if (op == TRSHIFT) return ASM_UNSIGNED;
-        // fallthrough
-      }
+      } // fallthrough
       case '|': case '&': case '^': case '<': case '=': case '!': return ASM_SIGNED;
       case '+': case '-': return ASM_FLEXIBLE;
       case '*': case '/': return ASM_NONSIGNED; // without a coercion, these are double
