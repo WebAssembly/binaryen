@@ -1,3 +1,8 @@
+# Untriaged (abort)
+20040409-1.c.s.wast
+20040409-2.c.s.wast
+20040409-3.c.s.wast
+
 # [trap highest > memory]
 pr27260.c.s.wast
 
