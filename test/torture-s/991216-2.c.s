@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991216-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991216-2.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -9,10 +9,10 @@ test:                                   # @test
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push20=, 0
-	i32.const	$push17=, 0
-	i32.load	$push18=, __stack_pointer($pop17)
+	i32.const	$push18=, 0
+	i32.load	$push17=, __stack_pointer($pop18)
 	i32.const	$push19=, 16
-	i32.sub 	$push25=, $pop18, $pop19
+	i32.sub 	$push25=, $pop17, $pop19
 	tee_local	$push24=, $4=, $pop25
 	i32.store	__stack_pointer($pop20), $pop24
 	i32.store	12($4), $1
@@ -76,7 +76,7 @@ test:                                   # @test
 	i32.add 	$push22=, $4, $pop21
 	i32.store	__stack_pointer($pop23), $pop22
 	return
-.LBB0_8:                                # %if.then11
+.LBB0_8:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -93,10 +93,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push37=, 0
-	i32.const	$push34=, 0
-	i32.load	$push35=, __stack_pointer($pop34)
+	i32.const	$push35=, 0
+	i32.load	$push34=, __stack_pointer($pop35)
 	i32.const	$push36=, 288
-	i32.sub 	$push116=, $pop35, $pop36
+	i32.sub 	$push116=, $pop34, $pop36
 	tee_local	$push115=, $0=, $pop116
 	i32.store	__stack_pointer($pop37), $pop115
 	i32.const	$push0=, 85
@@ -257,6 +257,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

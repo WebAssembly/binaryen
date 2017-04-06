@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920731-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920731-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -7,9 +7,9 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 0
+	i32.const	$2=, 0
 	block   	
 	i32.const	$push3=, 1
 	i32.and 	$push0=, $0, $pop3
@@ -19,26 +19,26 @@ f:                                      # @f
 .LBB0_2:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push7=, 1
-	i32.add 	$push6=, $1, $pop7
-	tee_local	$push5=, $1=, $pop6
-	i32.const	$push4=, 7
-	i32.gt_s	$push2=, $pop5, $pop4
+	i32.const	$push5=, 1
+	i32.add 	$2=, $1, $pop5
+	i32.const	$push4=, 6
+	i32.gt_s	$push2=, $1, $pop4
 	br_if   	1, $pop2        # 1: down to label0
 # BB#3:                                 # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push11=, 1
-	i32.shr_s	$push10=, $0, $pop11
-	tee_local	$push9=, $0=, $pop10
-	i32.const	$push8=, 1
-	i32.and 	$push1=, $pop9, $pop8
-	i32.eqz 	$push12=, $pop1
-	br_if   	0, $pop12       # 0: up to label1
+	copy_local	$1=, $2
+	i32.const	$push9=, 1
+	i32.shr_s	$push8=, $0, $pop9
+	tee_local	$push7=, $0=, $pop8
+	i32.const	$push6=, 1
+	i32.and 	$push1=, $pop7, $pop6
+	i32.eqz 	$push10=, $pop1
+	br_if   	0, $pop10       # 0: up to label1
 .LBB0_4:                                # %for.end
 	end_loop
 	end_block                       # label0:
-	copy_local	$push13=, $1
-                                        # fallthrough-return: $pop13
+	copy_local	$push11=, $2
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

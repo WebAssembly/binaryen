@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-6.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-6.c"
 	.section	.text.ctest_float,"ax",@progbits
 	.hidden	ctest_float
 	.globl	ctest_float
@@ -65,10 +65,10 @@ ctest_long_double:                      # @ctest_long_double
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push18=, 0
-	i32.const	$push15=, 0
-	i32.load	$push16=, __stack_pointer($pop15)
+	i32.const	$push16=, 0
+	i32.load	$push15=, __stack_pointer($pop16)
 	i32.const	$push17=, 16
-	i32.sub 	$push26=, $pop16, $pop17
+	i32.sub 	$push26=, $pop15, $pop17
 	tee_local	$push25=, $2=, $pop26
 	i32.store	__stack_pointer($pop18), $pop25
 	i64.const	$push5=, 0
@@ -198,4 +198,4 @@ err:
 	.size	err, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"

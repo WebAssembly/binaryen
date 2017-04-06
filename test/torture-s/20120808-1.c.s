@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20120808-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20120808-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push35=, 0
-	i32.const	$push32=, 0
-	i32.load	$push33=, __stack_pointer($pop32)
+	i32.const	$push33=, 0
+	i32.load	$push32=, __stack_pointer($pop33)
 	i32.const	$push34=, 32
-	i32.sub 	$push41=, $pop33, $pop34
+	i32.sub 	$push41=, $pop32, $pop34
 	tee_local	$push40=, $5=, $pop41
 	i32.store	__stack_pointer($pop35), $pop40
 	i32.const	$push0=, 24
@@ -160,6 +160,6 @@ cp:
 	.size	cp, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

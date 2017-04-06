@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44852.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44852.c"
 	.section	.text.sf,"ax",@progbits
 	.hidden	sf
 	.globl	sf
@@ -58,10 +58,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push20=, 0
-	i32.const	$push17=, 0
-	i32.load	$push18=, __stack_pointer($pop17)
+	i32.const	$push18=, 0
+	i32.load	$push17=, __stack_pointer($pop18)
 	i32.const	$push19=, 16
-	i32.sub 	$push35=, $pop18, $pop19
+	i32.sub 	$push35=, $pop17, $pop19
 	tee_local	$push34=, $0=, $pop35
 	i32.store	__stack_pointer($pop20), $pop34
 	i32.const	$push2=, 14
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	.L.str, 7
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

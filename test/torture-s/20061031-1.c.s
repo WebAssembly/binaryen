@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20061031-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20061031-1.c"
 	.section	.text.ff,"ax",@progbits
 	.hidden	ff
 	.globl	ff
@@ -40,12 +40,14 @@ f:                                      # @f
 	i32.add 	$push2=, $1, $0
 	i32.const	$push7=, 65535
 	i32.and 	$push3=, $pop2, $pop7
-	br_if   	0, $pop3        # 0: down to label1
-# BB#3:                                 # %if.then.1
+	i32.eqz 	$push8=, $pop3
+	br_if   	0, $pop8        # 0: down to label1
+# BB#3:                                 # %for.inc.1
+	return
+.LBB1_4:                                # %if.then.1
+	end_block                       # label1:
 	#APP
 	#NO_APP
-.LBB1_4:                                # %for.inc.1
-	end_block                       # label1:
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -75,4 +77,4 @@ nunmap:
 	.size	nunmap, 3
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"

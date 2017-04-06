@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40022.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40022.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -9,18 +9,16 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push1=, __stack_pointer($pop0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 16
-	i32.sub 	$push5=, $pop1, $pop2
-	tee_local	$push4=, $1=, $pop5
-	i32.store	12($pop4), $0
-	i32.const	$push3=, 12
-	i32.add 	$1=, $1, $pop3
+	i32.sub 	$push4=, $pop0, $pop2
+	tee_local	$push3=, $1=, $pop4
+	i32.store	12($pop3), $0
 	#APP
 	#NO_APP
-	copy_local	$push6=, $0
-                                        # fallthrough-return: $pop6
+	copy_local	$push5=, $0
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -38,7 +36,7 @@ bar:                                    # @bar
 	block   	
 	i32.eqz 	$push13=, $1
 	br_if   	0, $pop13       # 0: down to label0
-.LBB1_1:                                # %while.cond.while.cond_crit_edge
+.LBB1_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
 	copy_local	$push6=, $1
@@ -55,7 +53,7 @@ bar:                                    # @bar
 	block   	
 	i32.eqz 	$push14=, $1
 	br_if   	0, $pop14       # 0: down to label2
-.LBB1_3:                                # %while.cond2.while.cond2_crit_edge
+.LBB1_3:                                # %while.body4
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
 	copy_local	$push12=, $1
@@ -156,5 +154,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

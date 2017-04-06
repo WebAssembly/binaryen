@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push47=, 0
-	i32.const	$push44=, 0
-	i32.load	$push45=, __stack_pointer($pop44)
+	i32.const	$push45=, 0
+	i32.load	$push44=, __stack_pointer($pop45)
 	i32.const	$push46=, 144
-	i32.sub 	$push75=, $pop45, $pop46
+	i32.sub 	$push75=, $pop44, $pop46
 	tee_local	$push74=, $1=, $pop75
 	i32.store	__stack_pointer($pop47), $pop74
 	i32.const	$push1=, .L.str
@@ -151,7 +151,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop50), $pop49
 	i32.const	$push98=, 0
 	return  	$pop98
-.LBB0_12:                               # %if.then50
+.LBB0_12:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -201,9 +201,10 @@ main:                                   # @main
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	fwrite, i32, i32, i32, i32, i32
 	.functype	fputc, i32, i32, i32
 	.import_global	stdout
+	.size	stdout, 4

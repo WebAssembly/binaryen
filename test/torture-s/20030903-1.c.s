@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030903-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030903-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -24,23 +24,13 @@ main:                                   # @main
 	end_block                       # label0:
 	block   	
 	br_table 	$0, 0, 0, 0, 0, 0 # 0: down to label1
-.LBB0_3:                                # %sw.bb3
+.LBB0_3:                                # %sw.bb
 	end_block                       # label1:
-	call    	y@FUNCTION
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
-	.section	.text.y,"ax",@progbits
-	.type	y,@function
-y:                                      # @y
-# BB#0:                                 # %entry
-	call    	abort@FUNCTION
-	unreachable
-	.endfunc
-.Lfunc_end1:
-	.size	y, .Lfunc_end1-y
 
 	.type	test,@object            # @test
 	.section	.bss.test,"aw",@nobits
@@ -50,5 +40,5 @@ test:
 	.size	test, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

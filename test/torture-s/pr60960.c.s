@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60960.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60960.c"
 	.section	.text.f1,"ax",@progbits
 	.hidden	f1
 	.globl	f1
@@ -7,32 +7,6 @@
 f1:                                     # @f1
 	.param  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 3
-	i32.add 	$push1=, $0, $pop0
-	i32.const	$push2=, 255
-	i32.and 	$push3=, $4, $pop2
-	i32.const	$push4=, 0
-	i32.div_u	$push5=, $pop3, $pop4
-	i32.store8	0($pop1), $pop5
-	i32.const	$push6=, 2
-	i32.add 	$push7=, $0, $pop6
-	i32.const	$push21=, 255
-	i32.and 	$push8=, $3, $pop21
-	i32.const	$push20=, 0
-	i32.div_u	$push9=, $pop8, $pop20
-	i32.store8	0($pop7), $pop9
-	i32.const	$push10=, 1
-	i32.add 	$push11=, $0, $pop10
-	i32.const	$push19=, 255
-	i32.and 	$push12=, $2, $pop19
-	i32.const	$push18=, 0
-	i32.div_u	$push13=, $pop12, $pop18
-	i32.store8	0($pop11), $pop13
-	i32.const	$push14=, 254
-	i32.and 	$push15=, $1, $pop14
-	i32.const	$push17=, 1
-	i32.shr_u	$push16=, $pop15, $pop17
-	i32.store8	0($0), $pop16
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -127,10 +101,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push13=, 0
-	i32.const	$push10=, 0
-	i32.load	$push11=, __stack_pointer($pop10)
+	i32.const	$push11=, 0
+	i32.load	$push10=, __stack_pointer($pop11)
 	i32.const	$push12=, 16
-	i32.sub 	$push29=, $pop11, $pop12
+	i32.sub 	$push29=, $pop10, $pop12
 	tee_local	$push28=, $0=, $pop29
 	i32.store	__stack_pointer($pop13), $pop28
 	i32.const	$push17=, 12
@@ -180,7 +154,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop16), $pop15
 	i32.const	$push9=, 0
 	return  	$pop9
-.LBB3_4:                                # %if.then10
+.LBB3_4:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -189,5 +163,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

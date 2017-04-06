@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-5.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/string-opt-5.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push114=, 0
-	i32.const	$push111=, 0
-	i32.load	$push112=, __stack_pointer($pop111)
+	i32.const	$push112=, 0
+	i32.load	$push111=, __stack_pointer($pop112)
 	i32.const	$push113=, 64
-	i32.sub 	$push122=, $pop112, $pop113
+	i32.sub 	$push122=, $pop111, $pop113
 	tee_local	$push121=, $4=, $pop122
 	i32.store	__stack_pointer($pop114), $pop121
 	block   	
@@ -43,7 +43,7 @@ main:                                   # @main
 	i32.const	$push10=, 7
 	i32.ne  	$push11=, $2, $pop10
 	br_if   	0, $pop11       # 0: down to label0
-# BB#3:                                 # %if.end26
+# BB#3:                                 # %if.end25
 	i32.const	$push131=, 0
 	i32.const	$push12=, -3
 	i32.add 	$push130=, $1, $pop12
@@ -54,13 +54,13 @@ main:                                   # @main
 	i32.const	$push15=, .L.str.2
 	i32.call	$push16=, strcmp@FUNCTION, $pop14, $pop15
 	br_if   	0, $pop16       # 0: down to label0
-# BB#4:                                 # %if.end33
+# BB#4:                                 # %if.end32
 	i32.const	$push133=, .L.str.1
 	i32.call	$push17=, strcmp@FUNCTION, $pop133, $0
 	i32.const	$push132=, 0
 	i32.ge_s	$push18=, $pop17, $pop132
 	br_if   	0, $pop18       # 0: down to label0
-# BB#5:                                 # %if.end37
+# BB#5:                                 # %if.end36
 	i32.const	$push138=, 0
 	i32.const	$push19=, -2
 	i32.add 	$push137=, $1, $pop19
@@ -74,7 +74,7 @@ main:                                   # @main
 	i32.const	$push134=, 0
 	i32.ge_s	$push24=, $pop23, $pop134
 	br_if   	0, $pop24       # 0: down to label0
-# BB#6:                                 # %if.end47
+# BB#6:                                 # %if.end46
 	i32.const	$push141=, 0
 	i32.const	$push25=, -1
 	i32.add 	$push140=, $1, $pop25
@@ -89,7 +89,7 @@ main:                                   # @main
 	i32.const	$push32=, .L.str.1+9
 	i32.ne  	$push33=, $pop31, $pop32
 	br_if   	0, $pop33       # 0: down to label0
-# BB#7:                                 # %if.end58
+# BB#7:                                 # %if.end56
 	i32.const	$push36=, 111
 	i32.call	$push143=, strchr@FUNCTION, $0, $pop36
 	tee_local	$push142=, $3=, $pop143
@@ -97,21 +97,21 @@ main:                                   # @main
 	i32.add 	$push35=, $0, $pop34
 	i32.ne  	$push37=, $pop142, $pop35
 	br_if   	0, $pop37       # 0: down to label0
-# BB#8:                                 # %if.end63
+# BB#8:                                 # %if.end61
 	i32.call	$push38=, strlen@FUNCTION, $0
 	i32.const	$push39=, 8
 	i32.ne  	$push40=, $pop38, $pop39
 	br_if   	0, $pop40       # 0: down to label0
-# BB#9:                                 # %if.end68
+# BB#9:                                 # %if.end66
 	i32.const	$push41=, 120
 	i32.call	$push42=, strrchr@FUNCTION, $0, $pop41
 	br_if   	0, $pop42       # 0: down to label0
-# BB#10:                                # %if.end72
+# BB#10:                                # %if.end70
 	i32.const	$push43=, 111
 	i32.call	$push44=, strrchr@FUNCTION, $0, $pop43
 	i32.ne  	$push45=, $pop44, $3
 	br_if   	0, $pop45       # 0: down to label0
-# BB#11:                                # %if.end77
+# BB#11:                                # %if.end75
 	i32.const	$push46=, 0
 	i32.store	x($pop46), $1
 	i32.const	$push148=, 0
@@ -131,9 +131,9 @@ main:                                   # @main
 	i32.add 	$push55=, $pop53, $pop54
 	i32.call	$push56=, strcmp@FUNCTION, $pop52, $pop55
 	br_if   	0, $pop56       # 0: down to label0
-# BB#12:                                # %if.end86
+# BB#12:                                # %if.end84
 	br_if   	0, $0           # 0: down to label0
-# BB#13:                                # %if.end90
+# BB#13:                                # %if.end88
 	i32.const	$push154=, 0
 	i32.const	$push57=, 1
 	i32.store	y($pop154), $pop57
@@ -150,7 +150,7 @@ main:                                   # @main
 	i32.const	$push60=, .L.str.4
 	i32.call	$push61=, strcmp@FUNCTION, $pop149, $pop60
 	br_if   	0, $pop61       # 0: down to label0
-# BB#14:                                # %if.end108
+# BB#14:                                # %if.end106
 	i32.const	$push158=, 32
 	i32.const	$push64=, 64
 	i32.call	$1=, memset@FUNCTION, $4, $pop158, $pop64
@@ -165,24 +165,24 @@ main:                                   # @main
 	i32.call	$push68=, strncpy@FUNCTION, $0, $pop67, $pop66
 	i32.ne  	$push69=, $pop68, $0
 	br_if   	0, $pop69       # 0: down to label0
-# BB#15:                                # %if.end108
+# BB#15:                                # %if.end106
 	i32.const	$push160=, 0
 	i32.load	$push62=, x($pop160)
 	i32.const	$push159=, 7
 	i32.ne  	$push70=, $pop62, $pop159
 	br_if   	0, $pop70       # 0: down to label0
-# BB#16:                                # %if.end108
+# BB#16:                                # %if.end106
 	i32.const	$push161=, 0
 	i32.load	$push63=, y($pop161)
 	i32.const	$push71=, 2
 	i32.ne  	$push72=, $pop63, $pop71
 	br_if   	0, $pop72       # 0: down to label0
-# BB#17:                                # %lor.lhs.false125
+# BB#17:                                # %lor.lhs.false123
 	i32.const	$push74=, .L.str.6
 	i32.const	$push73=, 12
 	i32.call	$push75=, memcmp@FUNCTION, $1, $pop74, $pop73
 	br_if   	0, $pop75       # 0: down to label0
-# BB#18:                                # %if.end130
+# BB#18:                                # %if.end128
 	i32.const	$push77=, 32
 	i32.const	$push76=, 64
 	i32.call	$push163=, memset@FUNCTION, $1, $pop77, $pop76
@@ -192,12 +192,12 @@ main:                                   # @main
 	i32.call	$push80=, strncpy@FUNCTION, $0, $pop79, $pop78
 	i32.ne  	$push81=, $pop162, $pop80
 	br_if   	0, $pop81       # 0: down to label0
-# BB#19:                                # %lor.lhs.false136
+# BB#19:                                # %lor.lhs.false134
 	i32.const	$push83=, .L.str.8
 	i32.const	$push82=, 9
 	i32.call	$push84=, memcmp@FUNCTION, $0, $pop83, $pop82
 	br_if   	0, $pop84       # 0: down to label0
-# BB#20:                                # %if.end141
+# BB#20:                                # %if.end139
 	i32.const	$push87=, buf
 	i32.const	$push86=, 32
 	i32.const	$push85=, 64
@@ -217,12 +217,12 @@ main:                                   # @main
 	i32.const	$push164=, 3
 	i32.ne  	$push93=, $1, $pop164
 	br_if   	0, $pop93       # 0: down to label0
-# BB#21:                                # %lor.lhs.false148
+# BB#21:                                # %lor.lhs.false146
 	i32.const	$push94=, .L.str.9
 	i32.const	$push169=, 3
 	i32.call	$push95=, memcmp@FUNCTION, $4, $pop94, $pop169
 	br_if   	0, $pop95       # 0: down to label0
-# BB#22:                                # %lor.lhs.false158
+# BB#22:                                # %lor.lhs.false156
 	i32.const	$push172=, 0
 	i64.const	$push96=, 3255307777713450285
 	i64.store	buf+3($pop172):p2align=0, $pop96
@@ -234,7 +234,7 @@ main:                                   # @main
 	i32.const	$push170=, 11
 	i32.call	$push100=, memcmp@FUNCTION, $pop99, $pop98, $pop170
 	br_if   	0, $pop100      # 0: down to label0
-# BB#23:                                # %lor.lhs.false171
+# BB#23:                                # %lor.lhs.false169
 	i32.const	$push177=, 0
 	i32.const	$push101=, 5
 	i32.store	y($pop177), $pop101
@@ -249,7 +249,7 @@ main:                                   # @main
 	i32.const	$push102=, 7
 	i32.call	$push105=, memcmp@FUNCTION, $pop104, $pop103, $pop102
 	br_if   	0, $pop105      # 0: down to label0
-# BB#24:                                # %lor.lhs.false180
+# BB#24:                                # %lor.lhs.false178
 	i32.const	$push182=, 0
 	i32.const	$push106=, 15
 	i32.store	x($pop182), $pop106
@@ -264,14 +264,14 @@ main:                                   # @main
 	i32.const	$push107=, 11
 	i32.call	$push110=, memcmp@FUNCTION, $pop109, $pop108, $pop107
 	br_if   	0, $pop110      # 0: down to label0
-# BB#25:                                # %if.end184
+# BB#25:                                # %if.end182
 	i32.const	$push117=, 0
 	i32.const	$push115=, 64
 	i32.add 	$push116=, $0, $pop115
 	i32.store	__stack_pointer($pop117), $pop116
 	i32.const	$push183=, 0
 	return  	$pop183
-.LBB0_26:                               # %if.then183
+.LBB0_26:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -389,7 +389,7 @@ buf:
 	.size	.L.str.12, 11
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	strcmp, i32, i32, i32

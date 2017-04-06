@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041126-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041126-1.c"
 	.section	.text.check,"ax",@progbits
 	.hidden	check
 	.globl	check
@@ -9,29 +9,29 @@ check:                                  # @check
 	.local  	i32
 # BB#0:                                 # %entry
 	block   	
+	block   	
 	i32.load	$push0=, 0($0)
-	br_if   	0, $pop0        # 0: down to label0
+	br_if   	0, $pop0        # 0: down to label1
 # BB#1:                                 # %for.inc
 	i32.load	$push1=, 4($0)
-	br_if   	0, $pop1        # 0: down to label0
+	br_if   	0, $pop1        # 0: down to label1
 # BB#2:                                 # %for.inc.1
 	i32.load	$push2=, 8($0)
-	br_if   	0, $pop2        # 0: down to label0
+	br_if   	0, $pop2        # 0: down to label1
 # BB#3:                                 # %for.inc.2
 	i32.load	$push3=, 12($0)
-	br_if   	0, $pop3        # 0: down to label0
+	br_if   	0, $pop3        # 0: down to label1
 # BB#4:                                 # %for.inc.3
 	i32.load	$push4=, 16($0)
-	br_if   	0, $pop4        # 0: down to label0
+	br_if   	0, $pop4        # 0: down to label1
 # BB#5:                                 # %for.cond1.preheader
 	i32.const	$1=, 5
 .LBB0_6:                                # %for.cond1
                                         # =>This Inner Loop Header: Depth=1
-	block   	
 	loop    	                # label2:
 	i32.const	$push10=, 9
 	i32.gt_s	$push5=, $1, $pop10
-	br_if   	1, $pop5        # 1: down to label1
+	br_if   	2, $pop5        # 2: down to label0
 # BB#7:                                 # %for.body3
                                         #   in Loop: Header=BB0_6 Depth=1
 	i32.const	$push14=, 1
@@ -43,17 +43,14 @@ check:                                  # @check
 	tee_local	$push11=, $1=, $pop12
 	i32.eq  	$push9=, $pop6, $pop11
 	br_if   	0, $pop9        # 0: up to label2
-# BB#8:                                 # %if.then6
+.LBB0_8:                                # %if.then
 	end_loop
+	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_9:                                # %for.end10
-	end_block                       # label1:
-	return
-.LBB0_10:                               # %if.then
 	end_block                       # label0:
-	call    	abort@FUNCTION
-	unreachable
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
@@ -67,10 +64,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %for.cond1.i.preheader
 	i32.const	$push15=, 0
-	i32.const	$push12=, 0
-	i32.load	$push13=, __stack_pointer($pop12)
+	i32.const	$push13=, 0
+	i32.load	$push12=, __stack_pointer($pop13)
 	i32.const	$push14=, 48
-	i32.sub 	$push23=, $pop13, $pop14
+	i32.sub 	$push23=, $pop12, $pop14
 	tee_local	$push22=, $1=, $pop23
 	i32.store	__stack_pointer($pop15), $pop22
 	i32.const	$push1=, .Lmain.a
@@ -137,5 +134,5 @@ main:                                   # @main
 	.size	.Lmain.a, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090113-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090113-1.c"
 	.section	.text.msum_i4,"ax",@progbits
 	.hidden	msum_i4
 	.globl	msum_i4
@@ -9,10 +9,10 @@ msum_i4:                                # @msum_i4
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push23=, 0
-	i32.const	$push20=, 0
-	i32.load	$push21=, __stack_pointer($pop20)
+	i32.const	$push21=, 0
+	i32.load	$push20=, __stack_pointer($pop21)
 	i32.const	$push22=, 64
-	i32.sub 	$push42=, $pop21, $pop22
+	i32.sub 	$push42=, $pop20, $pop22
 	tee_local	$push41=, $8=, $pop42
 	i32.store	__stack_pointer($pop23), $pop41
 	i32.load	$push40=, 0($2)
@@ -149,4 +149,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"

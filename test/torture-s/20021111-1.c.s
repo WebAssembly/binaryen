@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021111-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021111-1.c"
 	.section	.text.aim_callhandler,"ax",@progbits
 	.hidden	aim_callhandler
 	.globl	aim_callhandler
@@ -16,7 +16,7 @@ aim_callhandler:                        # @aim_callhandler
 	i32.const	$push0=, 65535
 	i32.eq  	$push1=, $3, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-# BB#2:                                 # %if.end3
+# BB#2:                                 # %if.end3.lr.ph
 	i32.const	$push8=, 0
 	i32.load	$push7=, aim_callhandler.i($pop8)
 	tee_local	$push6=, $1=, $pop7
@@ -67,6 +67,6 @@ aim_callhandler.i:
 	.size	aim_callhandler.i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

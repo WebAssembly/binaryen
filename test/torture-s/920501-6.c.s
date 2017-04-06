@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-6.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-6.c"
 	.section	.text.str2llu,"ax",@progbits
 	.hidden	str2llu
 	.globl	str2llu
@@ -232,10 +232,10 @@ main:                                   # @main
 	.local  	i32, i32, i64, i64, i64, i32, i32
 # BB#0:                                 # %for.cond.i.preheader.i.preheader
 	i32.const	$push30=, 0
-	i32.const	$push27=, 0
-	i32.load	$push28=, __stack_pointer($pop27)
+	i32.const	$push28=, 0
+	i32.load	$push27=, __stack_pointer($pop28)
 	i32.const	$push29=, 80
-	i32.sub 	$push32=, $pop28, $pop29
+	i32.sub 	$push32=, $pop27, $pop29
 	tee_local	$push31=, $8=, $pop32
 	i32.store	__stack_pointer($pop30), $pop31
 	i64.const	$4=, 1234111111
@@ -369,6 +369,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end3-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

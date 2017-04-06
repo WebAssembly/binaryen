@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43783.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43783.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -66,10 +66,10 @@ main:                                   # @main
 	i64.store	bid_Kx192+440($pop31), $pop30
 	i32.const	$push29=, 0
 	i64.const	$push28=, 0
-	i64.store	bid_Kx192+464($pop29), $pop28
+	i64.store	bid_Kx192+488($pop29), $pop28
 	i32.const	$push27=, 0
 	i64.const	$push26=, 0
-	i64.store	bid_Kx192+488($pop27), $pop26
+	i64.store	bid_Kx192+464($pop27), $pop26
 	i32.const	$push25=, 0
 	i64.const	$push24=, 0
 	i64.store	bid_Kx192+512($pop25), $pop24
@@ -119,4 +119,4 @@ bid_Kx192:
 	.size	bid_Kx192, 768
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-5.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-5.c"
 	.section	.text.va_double,"ax",@progbits
 	.hidden	va_double
 	.globl	va_double
@@ -10,10 +10,10 @@ va_double:                              # @va_double
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push23=, 0
-	i32.const	$push20=, 0
-	i32.load	$push21=, __stack_pointer($pop20)
+	i32.const	$push21=, 0
+	i32.load	$push20=, __stack_pointer($pop21)
 	i32.const	$push22=, 16
-	i32.sub 	$push32=, $pop21, $pop22
+	i32.sub 	$push32=, $pop20, $pop22
 	tee_local	$push31=, $4=, $pop32
 	i32.store	__stack_pointer($pop23), $pop31
 	i32.store	12($4), $1
@@ -63,7 +63,7 @@ va_double:                              # @va_double
 	i32.add 	$push25=, $4, $pop24
 	i32.store	__stack_pointer($pop26), $pop25
 	return  	$4
-.LBB0_5:                                # %if.then15
+.LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -81,10 +81,10 @@ va_long_double:                         # @va_long_double
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push37=, 0
-	i32.const	$push34=, 0
-	i32.load	$push35=, __stack_pointer($pop34)
+	i32.const	$push35=, 0
+	i32.load	$push34=, __stack_pointer($pop35)
 	i32.const	$push36=, 16
-	i32.sub 	$push46=, $pop35, $pop36
+	i32.sub 	$push46=, $pop34, $pop36
 	tee_local	$push45=, $4=, $pop46
 	i32.store	__stack_pointer($pop37), $pop45
 	i32.store	12($4), $1
@@ -148,7 +148,7 @@ va_long_double:                         # @va_long_double
 	i32.add 	$push39=, $4, $pop38
 	i32.store	__stack_pointer($pop40), $pop39
 	return  	$1
-.LBB1_5:                                # %if.then15
+.LBB1_5:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -165,10 +165,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push30=, 0
-	i32.const	$push27=, 0
-	i32.load	$push28=, __stack_pointer($pop27)
+	i32.const	$push28=, 0
+	i32.load	$push27=, __stack_pointer($pop28)
 	i32.const	$push29=, 96
-	i32.sub 	$push40=, $pop28, $pop29
+	i32.sub 	$push40=, $pop27, $pop29
 	tee_local	$push39=, $0=, $pop40
 	i32.store	__stack_pointer($pop30), $pop39
 	i32.const	$push31=, 64
@@ -227,6 +227,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -358,7 +358,7 @@ if options.torture and options.test_waterfall:
       runner=os.path.abspath(WASM_SHELL_EXE),
       files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
       fails=[os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_binaryen_shell_test_failures.txt'))],
-      attributes=['O0'],
+      attributes=['O2'],
       out='',
       wasmjs='')
 

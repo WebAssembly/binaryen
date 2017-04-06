@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59014.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59014.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -10,14 +10,14 @@ foo:                                    # @foo
 # BB#0:                                 # %entry
 	block   	
 	i32.const	$push9=, 0
-	i32.load	$push2=, b($pop9)
-	i32.const	$push8=, 0
-	i32.gt_s	$push3=, $pop2, $pop8
-	i32.const	$push7=, 0
-	i32.load	$push6=, a($pop7)
-	tee_local	$push5=, $0=, $pop6
-	i32.const	$push0=, 1
-	i32.and 	$push1=, $pop5, $pop0
+	i32.load	$push8=, a($pop9)
+	tee_local	$push7=, $0=, $pop8
+	i32.const	$push2=, 1
+	i32.and 	$push3=, $pop7, $pop2
+	i32.const	$push6=, 0
+	i32.load	$push0=, b($pop6)
+	i32.const	$push5=, 0
+	i32.gt_s	$push1=, $pop0, $pop5
 	i32.or  	$push4=, $pop3, $pop1
 	i32.eqz 	$push12=, $pop4
 	br_if   	0, $pop12       # 0: down to label0
@@ -46,14 +46,14 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	block   	
 	i32.const	$push12=, 0
-	i32.load	$push2=, b($pop12)
-	i32.const	$push11=, 0
-	i32.gt_s	$push3=, $pop2, $pop11
-	i32.const	$push10=, 0
-	i32.load	$push9=, a($pop10)
-	tee_local	$push8=, $0=, $pop9
-	i32.const	$push0=, 1
-	i32.and 	$push1=, $pop8, $pop0
+	i32.load	$push11=, a($pop12)
+	tee_local	$push10=, $0=, $pop11
+	i32.const	$push2=, 1
+	i32.and 	$push3=, $pop10, $pop2
+	i32.const	$push9=, 0
+	i32.load	$push0=, b($pop9)
+	i32.const	$push8=, 0
+	i32.gt_s	$push1=, $pop0, $pop8
 	i32.or  	$push4=, $pop3, $pop1
 	i32.eqz 	$push14=, $pop4
 	br_if   	0, $pop14       # 0: down to label2
@@ -118,5 +118,5 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

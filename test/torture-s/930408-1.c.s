@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930408-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930408-1.c"
 	.section	.text.p,"ax",@progbits
 	.hidden	p
 	.globl	p
@@ -30,7 +30,7 @@ f:                                      # @f
 	return  	$0
 .LBB1_2:                                # %sw.bb
 	end_block                       # label0:
-	i32.call	$drop=, p@FUNCTION
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -64,6 +64,6 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

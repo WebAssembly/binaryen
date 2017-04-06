@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -25,21 +25,20 @@ main:                                   # @main
 	block   	
 	block   	
 	block   	
-	i32.eqz 	$push23=, $1
-	br_if   	0, $pop23       # 0: down to label5
-# BB#3:                                 # %for.body6.preheader
+	br_if   	0, $1           # 0: down to label5
+# BB#3:                                 #   in Loop: Header=BB0_2 Depth=2
+	i32.const	$4=, u
+	br_if   	1, $3           # 1: down to label4
+	br      	2               # 2: down to label3
+.LBB0_4:                                # %for.body6.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
+	end_block                       # label5:
 	i32.const	$push9=, u
 	i32.const	$push8=, 0
 	i32.call	$drop=, memset@FUNCTION, $pop9, $pop8, $1
 	copy_local	$4=, $2
-	br_if   	1, $3           # 1: down to label4
-	br      	2               # 2: down to label3
-.LBB0_4:                                #   in Loop: Header=BB0_2 Depth=2
-	end_block                       # label5:
-	i32.const	$4=, u
-	i32.eqz 	$push24=, $3
-	br_if   	1, $pop24       # 1: down to label3
+	i32.eqz 	$push23=, $3
+	br_if   	1, $pop23       # 1: down to label3
 .LBB0_5:                                # %for.body9.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label4:
@@ -98,7 +97,7 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

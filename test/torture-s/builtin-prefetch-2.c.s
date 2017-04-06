@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-2.c"
 	.section	.text.simple_global,"ax",@progbits
 	.hidden	simple_global
 	.globl	simple_global
@@ -41,10 +41,10 @@ simple_local:                           # @simple_local
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push3=, 0
-	i32.const	$push0=, 0
-	i32.load	$push1=, __stack_pointer($pop0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 416
-	i32.sub 	$push8=, $pop1, $pop2
+	i32.sub 	$push8=, $pop0, $pop2
 	tee_local	$push7=, $0=, $pop8
 	i32.store	__stack_pointer($pop3), $pop7
 	i32.const	$push6=, 0
@@ -63,10 +63,10 @@ simple_local:                           # @simple_local
 simple_arg:                             # @simple_arg
 	.param  	i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push1=, __stack_pointer($pop0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 16
-	i32.sub 	$push3=, $pop1, $pop2
+	i32.sub 	$push3=, $pop0, $pop2
 	i32.store	12($pop3), $2
                                         # fallthrough-return
 	.endfunc
@@ -90,10 +90,10 @@ expr_global:                            # @expr_global
 	.type	expr_local,@function
 expr_local:                             # @expr_local
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push1=, __stack_pointer($pop0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 80
-	i32.sub 	$drop=, $pop1, $pop2
+	i32.sub 	$drop=, $pop0, $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end6:
@@ -105,23 +105,25 @@ expr_local:                             # @expr_local
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	call    	simple_global@FUNCTION
-	call    	simple_file@FUNCTION
-	call    	simple_static_local@FUNCTION
-	i32.const	$push3=, glob_int_arr
-	i32.const	$push0=, 0
-	i32.load	$push2=, glob_ptr_int($pop0)
-	i32.const	$push7=, 0
-	i32.load	$push1=, glob_int($pop7)
-	call    	simple_arg@FUNCTION, $pop3, $pop2, $pop1
 	i32.const	$push6=, 0
-	i32.const	$push4=, str
-	i32.store	str+16($pop6), $pop4
+	i32.const	$push4=, 0
+	i32.load	$push3=, __stack_pointer($pop4)
+	i32.const	$push5=, 416
+	i32.sub 	$push10=, $pop3, $pop5
+	tee_local	$push9=, $0=, $pop10
+	i32.store	__stack_pointer($pop6), $pop9
+	i32.const	$push0=, 0
+	i32.load	$push1=, glob_int($pop0)
+	i32.store	8($0), $pop1
+	i32.const	$push8=, 0
+	i32.const	$push2=, str
+	i32.store	str+16($pop8), $pop2
 	call    	expr_global@FUNCTION
 	call    	expr_local@FUNCTION
-	i32.const	$push5=, 0
-	call    	exit@FUNCTION, $pop5
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 	.endfunc
 .Lfunc_end7:
@@ -201,5 +203,5 @@ simple_static_local.ix:
 	.size	simple_static_local.ix, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

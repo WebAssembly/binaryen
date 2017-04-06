@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041218-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041218-1.c"
 	.section	.text.dummy1,"ax",@progbits
 	.hidden	dummy1
 	.globl	dummy1
@@ -93,39 +93,39 @@ check:                                  # @check
 foo:                                    # @foo
 	.param  	i32, i32, i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %for.cond
-	i32.const	$3=, 0
 	i32.const	$push6=, 0
 	i32.store	0($2), $pop6
 	block   	
 	block   	
-	i32.eqz 	$push10=, $1
-	br_if   	0, $pop10       # 0: down to label2
+	i32.eqz 	$push13=, $1
+	br_if   	0, $pop13       # 0: down to label2
 # BB#1:                                 # %for.body
-	i32.const	$3=, 1
 	i32.load	$push0=, 0($0)
 	i32.const	$push7=, 1
-	i32.ne  	$push1=, $pop0, $pop7
+	i32.eq  	$push1=, $pop0, $pop7
 	br_if   	1, $pop1        # 1: down to label1
-# BB#2:                                 # %sw.bb
+# BB#2:                                 # %cleanup2
+	i32.const	$push8=, 1
+	return  	$pop8
+.LBB4_3:                                # %for.end
+	end_block                       # label2:
+	i32.const	$push10=, 0
+	i32.store	0($2), $pop10
+	i32.const	$push9=, 0
+	return  	$pop9
+.LBB4_4:                                # %sw.bb
+	end_block                       # label1:
 	i32.const	$push3=, 0
 	i32.const	$push2=, 1
 	i32.store	baz.v($pop3), $pop2
 	i32.const	$push5=, baz.v+4
-	i32.const	$push8=, 0
+	i32.const	$push12=, 0
 	i32.const	$push4=, 40
-	i32.call	$drop=, memset@FUNCTION, $pop5, $pop8, $pop4
-	i32.call	$drop=, dummy2@FUNCTION, $3, $3
+	i32.call	$drop=, memset@FUNCTION, $pop5, $pop12, $pop4
+	i32.const	$push11=, 0
+	call    	exit@FUNCTION, $pop11
 	unreachable
-.LBB4_3:                                # %for.end
-	end_block                       # label2:
-	i32.const	$push9=, 0
-	i32.store	0($2), $pop9
-.LBB4_4:                                # %cleanup2
-	end_block                       # label1:
-	copy_local	$push11=, $3
-                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end4:
 	.size	foo, .Lfunc_end4-foo
@@ -139,10 +139,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push4=, 0
-	i32.const	$push1=, 0
-	i32.load	$push2=, __stack_pointer($pop1)
+	i32.const	$push2=, 0
+	i32.load	$push1=, __stack_pointer($pop2)
 	i32.const	$push3=, 16
-	i32.sub 	$push11=, $pop2, $pop3
+	i32.sub 	$push11=, $pop1, $pop3
 	tee_local	$push10=, $0=, $pop11
 	i32.store	__stack_pointer($pop4), $pop10
 	i32.const	$push0=, 1
@@ -173,6 +173,6 @@ baz.v:
 	.size	baz.v, 44
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32
 	.functype	abort, void

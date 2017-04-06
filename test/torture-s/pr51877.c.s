@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr51877.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr51877.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -48,10 +48,10 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push10=, 0
-	i32.const	$push7=, 0
-	i32.load	$push8=, __stack_pointer($pop7)
+	i32.const	$push8=, 0
+	i32.load	$push7=, __stack_pointer($pop8)
 	i32.const	$push9=, 80
-	i32.sub 	$push19=, $pop8, $pop9
+	i32.sub 	$push19=, $pop7, $pop9
 	tee_local	$push18=, $2=, $pop19
 	i32.store	__stack_pointer($pop10), $pop18
 	block   	
@@ -97,10 +97,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push50=, 0
-	i32.const	$push47=, 0
-	i32.load	$push48=, __stack_pointer($pop47)
+	i32.const	$push48=, 0
+	i32.load	$push47=, __stack_pointer($pop48)
 	i32.const	$push49=, 80
-	i32.sub 	$push62=, $pop48, $pop49
+	i32.sub 	$push62=, $pop47, $pop49
 	tee_local	$push61=, $0=, $pop62
 	i32.store	__stack_pointer($pop50), $pop61
 	i32.const	$push54=, 40
@@ -208,7 +208,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop53), $pop52
 	i32.const	$push46=, 0
 	return  	$pop46
-.LBB3_13:                               # %if.then39
+.LBB3_13:                               # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -242,5 +242,5 @@ b:
 	.size	b, 36
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

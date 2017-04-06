@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zerolen-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zerolen-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.then
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
 	i32.store16	entry($pop1):p2align=0, $pop0
@@ -40,5 +40,5 @@ entry:
 	.size	entry, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

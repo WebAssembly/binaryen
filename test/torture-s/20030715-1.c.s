@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030715-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030715-1.c"
 	.section	.text.ap_check_cmd_context,"ax",@progbits
 	.hidden	ap_check_cmd_context
 	.globl	ap_check_cmd_context
@@ -25,27 +25,28 @@ server_type:                            # @server_type
 # BB#0:                                 # %entry
 	i32.const	$3=, 0
 	block   	
-	block   	
 	i32.const	$push0=, .L.str
 	i32.call	$push1=, strcmp@FUNCTION, $2, $pop0
-	i32.eqz 	$push5=, $pop1
-	br_if   	0, $pop5        # 0: down to label1
+	i32.eqz 	$push7=, $pop1
+	br_if   	0, $pop7        # 0: down to label0
 # BB#1:                                 # %if.else
-	i32.const	$3=, .L.str.2
+	block   	
 	i32.const	$push2=, .L.str.1
 	i32.call	$push3=, strcmp@FUNCTION, $2, $pop2
-	br_if   	1, $pop3        # 1: down to label0
-# BB#2:
-	i32.const	$3=, 1
-.LBB1_3:                                # %if.end9
+	i32.eqz 	$push8=, $pop3
+	br_if   	0, $pop8        # 0: down to label1
+# BB#2:                                 # %cleanup
+	i32.const	$push5=, .L.str.2
+	return  	$pop5
+.LBB1_3:
 	end_block                       # label1:
-	i32.const	$push4=, 0
-	i32.store	ap_standalone($pop4), $3
-	i32.const	$3=, 0
-.LBB1_4:                                # %cleanup
+	i32.const	$3=, 1
+.LBB1_4:                                # %if.end9
 	end_block                       # label0:
-	copy_local	$push6=, $3
-                                        # fallthrough-return: $pop6
+	i32.const	$push6=, 0
+	i32.store	ap_standalone($pop6), $3
+	i32.const	$push4=, 0
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	server_type, .Lfunc_end1-server_type
@@ -93,5 +94,5 @@ ap_standalone:
 	.size	.L.str.2, 50
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	strcmp, i32, i32, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46316.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46316.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -7,20 +7,22 @@
 foo:                                    # @foo
 	.param  	i64
 	.result 	i64
+	.local  	i64
 # BB#0:                                 # %entry
-	i64.const	$push0=, -4
-	i64.const	$push11=, -4
-	i64.lt_s	$push1=, $0, $pop11
-	i64.select	$push2=, $0, $pop0, $pop1
-	i64.const	$push3=, -1
-	i64.xor 	$push4=, $pop2, $pop3
-	i64.add 	$push5=, $0, $pop4
-	i64.const	$push6=, 2
-	i64.add 	$push7=, $pop5, $pop6
-	i64.const	$push8=, -2
-	i64.and 	$push9=, $pop7, $pop8
-	i64.sub 	$push10=, $0, $pop9
-                                        # fallthrough-return: $pop10
+	i64.const	$push0=, -1
+	i64.xor 	$push12=, $0, $pop0
+	tee_local	$push11=, $1=, $pop12
+	i64.const	$push1=, 3
+	i64.const	$push10=, 3
+	i64.gt_s	$push2=, $1, $pop10
+	i64.select	$push3=, $pop11, $pop1, $pop2
+	i64.add 	$push4=, $pop3, $0
+	i64.const	$push5=, 2
+	i64.add 	$push6=, $pop4, $pop5
+	i64.const	$push7=, -2
+	i64.and 	$push8=, $pop6, $pop7
+	i64.sub 	$push9=, $0, $pop8
+                                        # fallthrough-return: $pop9
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -50,5 +52,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

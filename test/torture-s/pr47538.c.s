@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47538.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47538.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -8,111 +8,128 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32, i32, f64, i32, i32, i32, f64, i32, f64, f64
 # BB#0:                                 # %entry
-	f64.load	$push34=, 0($1)
-	tee_local	$push33=, $11=, $pop34
-	f64.store	0($0), $pop33
-	f64.load	$push32=, 8($1)
-	tee_local	$push31=, $10=, $pop32
-	f64.store	8($0), $pop31
-	i32.load	$5=, 16($0)
+	f64.load	$push43=, 0($1)
+	tee_local	$push42=, $11=, $pop43
+	f64.store	0($0), $pop42
+	f64.load	$push41=, 8($1)
+	tee_local	$push40=, $10=, $pop41
+	f64.store	8($0), $pop40
 	block   	
 	block   	
-	i32.load	$push30=, 20($1)
-	tee_local	$push29=, $2=, $pop30
-	i32.eqz 	$push55=, $pop29
-	br_if   	0, $pop55       # 0: down to label1
+	i32.load	$push39=, 20($1)
+	tee_local	$push38=, $2=, $pop39
+	i32.eqz 	$push68=, $pop38
+	br_if   	0, $pop68       # 0: down to label1
 # BB#1:                                 # %if.else
 	f64.sub 	$push1=, $10, $11
 	f64.const	$push2=, 0x1p-2
 	f64.mul 	$4=, $pop1, $pop2
-	i32.load	$6=, 16($1)
 	i32.const	$push0=, 1
-	i32.add 	$push36=, $2, $pop0
-	tee_local	$push35=, $3=, $pop36
+	i32.add 	$push45=, $2, $pop0
+	tee_local	$push44=, $3=, $pop45
 	i32.const	$push3=, 2
-	i32.ne  	$push4=, $pop35, $pop3
+	i32.ne  	$push4=, $pop44, $pop3
 	br_if   	1, $pop4        # 1: down to label0
 # BB#2:                                 # %if.then6
-	f64.load	$push25=, 0($6)
-	f64.mul 	$push38=, $4, $pop25
-	tee_local	$push37=, $11=, $pop38
-	f64.store	8($5), $pop37
-	f64.add 	$push26=, $11, $11
-	f64.store	0($5), $pop26
+	i32.load	$push49=, 16($0)
+	tee_local	$push48=, $0=, $pop49
+	i32.load	$push33=, 16($1)
+	f64.load	$push34=, 0($pop33)
+	f64.mul 	$push47=, $4, $pop34
+	tee_local	$push46=, $11=, $pop47
+	f64.store	8($pop48), $pop46
+	f64.add 	$push35=, $11, $11
+	f64.store	0($0), $pop35
 	return
-.LBB0_3:
+.LBB0_3:                                # %if.then
 	end_block                       # label1:
-	f64.const	$push27=, 0x0p0
-	f64.store	0($5), $pop27
+	i32.load	$push36=, 16($0)
+	i64.const	$push37=, 0
+	i64.store	0($pop36), $pop37
 	return
 .LBB0_4:                                # %for.cond.preheader
 	end_block                       # label0:
+	i32.load	$7=, 16($0)
+	i32.load	$6=, 16($1)
 	block   	
 	block   	
 	i32.const	$push5=, -1
-	i32.add 	$push40=, $2, $pop5
-	tee_local	$push39=, $7=, $pop40
-	i32.eqz 	$push56=, $pop39
-	br_if   	0, $pop56       # 0: down to label3
-# BB#5:                                 # %for.body.preheader
-	i32.const	$push41=, 8
-	i32.add 	$0=, $5, $pop41
-	f64.const	$10=, 0x0p0
-	f64.const	$11=, 0x1p0
-	copy_local	$1=, $6
-	i32.const	$9=, 1
-.LBB0_6:                                # %for.body
+	i32.add 	$push51=, $2, $pop5
+	tee_local	$push50=, $5=, $pop51
+	i32.eqz 	$push69=, $pop50
+	br_if   	0, $pop69       # 0: down to label3
+# BB#5:                                 # %for.body.lr.ph
+	f64.load	$push7=, 0($6)
+	f64.load	$push6=, 16($6)
+	f64.sub 	$push8=, $pop7, $pop6
+	f64.mul 	$push54=, $4, $pop8
+	tee_local	$push53=, $11=, $pop54
+	f64.store	8($7), $pop53
+	f64.const	$push9=, 0x0p0
+	f64.add 	$10=, $11, $pop9
+	f64.const	$11=, -0x1p0
+	i32.const	$push52=, 1
+	i32.eq  	$push10=, $5, $pop52
+	br_if   	1, $pop10       # 1: down to label2
+# BB#6:                                 # %for.body.preheader
+	i32.const	$push11=, 16
+	i32.add 	$0=, $7, $pop11
+	i32.const	$push12=, 24
+	i32.add 	$1=, $6, $pop12
+	f64.const	$11=, -0x1p0
+	i32.const	$9=, 2
+.LBB0_7:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label4:
-	f64.load	$push8=, 0($1)
-	i32.const	$push49=, 16
-	i32.add 	$push6=, $1, $pop49
-	f64.load	$push7=, 0($pop6)
-	f64.sub 	$push9=, $pop8, $pop7
-	f64.mul 	$push10=, $4, $pop9
-	f64.convert_u/i32	$push11=, $9
-	f64.div 	$push48=, $pop10, $pop11
-	tee_local	$push47=, $8=, $pop48
-	f64.store	0($0), $pop47
-	i32.const	$push46=, 8
-	i32.add 	$0=, $0, $pop46
-	i32.const	$push45=, 8
-	i32.add 	$1=, $1, $pop45
-	f64.mul 	$push12=, $11, $8
-	f64.add 	$10=, $10, $pop12
+	i32.const	$push62=, -16
+	i32.add 	$push13=, $1, $pop62
+	f64.load	$push14=, 0($pop13)
+	f64.load	$push15=, 0($1)
+	f64.sub 	$push16=, $pop14, $pop15
+	f64.mul 	$push17=, $4, $pop16
+	f64.convert_u/i32	$push18=, $9
+	f64.div 	$push61=, $pop17, $pop18
+	tee_local	$push60=, $8=, $pop61
+	f64.store	0($0), $pop60
+	i32.const	$push59=, 8
+	i32.add 	$0=, $0, $pop59
+	i32.const	$push58=, 8
+	i32.add 	$1=, $1, $pop58
+	f64.mul 	$push19=, $11, $8
+	f64.add 	$10=, $10, $pop19
 	f64.neg 	$11=, $11
-	i32.const	$push44=, 1
-	i32.add 	$push43=, $9, $pop44
-	tee_local	$push42=, $9=, $pop43
-	i32.le_u	$push13=, $pop42, $7
-	br_if   	0, $pop13       # 0: up to label4
+	i32.const	$push57=, 1
+	i32.add 	$push56=, $9, $pop57
+	tee_local	$push55=, $9=, $pop56
+	i32.le_u	$push20=, $pop55, $5
+	br_if   	0, $pop20       # 0: up to label4
 	br      	2               # 2: down to label2
-.LBB0_7:
+.LBB0_8:
 	end_loop
 	end_block                       # label3:
 	f64.const	$11=, 0x1p0
 	f64.const	$10=, 0x0p0
-.LBB0_8:                                # %for.end
+.LBB0_9:                                # %for.end
 	end_block                       # label2:
-	i32.const	$push17=, 3
-	i32.shl 	$push22=, $2, $pop17
-	i32.add 	$push23=, $5, $pop22
-	i32.const	$push54=, 3
-	i32.shl 	$push18=, $7, $pop54
-	i32.add 	$push19=, $6, $pop18
-	f64.load	$push20=, 0($pop19)
-	f64.mul 	$push21=, $4, $pop20
-	f64.convert_u/i32	$push14=, $3
-	f64.const	$push15=, -0x1p0
-	f64.add 	$push16=, $pop14, $pop15
-	f64.div 	$push53=, $pop21, $pop16
-	tee_local	$push52=, $8=, $pop53
-	f64.store	0($pop23), $pop52
-	f64.mul 	$push24=, $11, $8
-	f64.add 	$push51=, $10, $pop24
-	tee_local	$push50=, $11=, $pop51
-	f64.add 	$push28=, $pop50, $11
-	f64.store	0($5), $pop28
+	i32.const	$push24=, 3
+	i32.shl 	$push29=, $2, $pop24
+	i32.add 	$push30=, $7, $pop29
+	i32.const	$push67=, 3
+	i32.shl 	$push25=, $5, $pop67
+	i32.add 	$push26=, $6, $pop25
+	f64.load	$push27=, 0($pop26)
+	f64.mul 	$push28=, $4, $pop27
+	f64.convert_u/i32	$push21=, $3
+	f64.const	$push22=, -0x1p0
+	f64.add 	$push23=, $pop21, $pop22
+	f64.div 	$push66=, $pop28, $pop23
+	tee_local	$push65=, $8=, $pop66
+	f64.store	0($pop30), $pop65
+	f64.mul 	$push31=, $11, $8
+	f64.add 	$push64=, $10, $pop31
+	tee_local	$push63=, $11=, $pop64
+	f64.add 	$push32=, $pop63, $11
+	f64.store	0($7), $pop32
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -127,10 +144,10 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push100=, 0
-	i32.const	$push97=, 0
-	i32.load	$push98=, __stack_pointer($pop97)
+	i32.const	$push98=, 0
+	i32.load	$push97=, __stack_pointer($pop98)
 	i32.const	$push99=, 112
-	i32.sub 	$push139=, $pop98, $pop99
+	i32.sub 	$push139=, $pop97, $pop99
 	tee_local	$push138=, $2=, $pop139
 	i32.store	__stack_pointer($pop100), $pop138
 	i32.const	$push104=, 32
@@ -363,7 +380,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop103), $pop102
 	i32.const	$push96=, 0
 	return  	$pop96
-.LBB1_17:                               # %if.then61
+.LBB1_17:                               # %if.then
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
@@ -391,5 +408,5 @@ main:                                   # @main
 	.size	.Lmain.e, 32
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

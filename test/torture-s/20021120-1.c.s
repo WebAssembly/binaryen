@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021120-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021120-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -582,18 +582,18 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	f64.const	$0=, 0x0p0
-	i32.const	$2=, gd
-	i32.const	$3=, gf
+	i32.const	$3=, gd
+	i32.const	$2=, gf
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	f64.store	0($2), $0
+	f64.store	0($3), $0
 	f32.convert_s/i32	$push0=, $1
-	f32.store	0($3), $pop0
+	f32.store	0($2), $pop0
 	i32.const	$push17=, 4
-	i32.add 	$3=, $3, $pop17
+	i32.add 	$2=, $2, $pop17
 	i32.const	$push16=, 8
-	i32.add 	$2=, $2, $pop16
+	i32.add 	$3=, $3, $pop16
 	f64.const	$push15=, 0x1p0
 	f64.add 	$0=, $0, $pop15
 	i32.const	$push14=, 1
@@ -606,9 +606,9 @@ main:                                   # @main
 	end_loop
 	i32.const	$push18=, 1
 	call    	foo@FUNCTION, $pop18
+	i32.const	$3=, -1
 	i32.const	$2=, gd
 	i32.const	$1=, 0
-	i32.const	$3=, 0
 .LBB1_3:                                # %for.body6
                                         # =>This Inner Loop Header: Depth=1
 	block   	
@@ -619,10 +619,13 @@ main:                                   # @main
 	br_if   	1, $pop4        # 1: down to label3
 # BB#4:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB1_3 Depth=1
-	i32.const	$push19=, gf
-	i32.add 	$push5=, $1, $pop19
+	i32.const	$push22=, gf
+	i32.add 	$push5=, $1, $pop22
 	f32.load	$push6=, 0($pop5)
-	f32.convert_s/i32	$push7=, $3
+	i32.const	$push21=, 1
+	i32.add 	$push20=, $3, $pop21
+	tee_local	$push19=, $3=, $pop20
+	f32.convert_s/i32	$push7=, $pop19
 	f32.ne  	$push8=, $pop6, $pop7
 	br_if   	1, $pop8        # 1: down to label3
 # BB#5:                                 # %for.cond3
@@ -631,11 +634,8 @@ main:                                   # @main
 	i32.add 	$1=, $1, $pop25
 	i32.const	$push24=, 8
 	i32.add 	$2=, $2, $pop24
-	i32.const	$push23=, 1
-	i32.add 	$push22=, $3, $pop23
-	tee_local	$push21=, $3=, $pop22
-	i32.const	$push20=, 31
-	i32.le_s	$push9=, $pop21, $pop20
+	i32.const	$push23=, 30
+	i32.le_s	$push9=, $3, $pop23
 	br_if   	0, $pop9        # 0: up to label4
 # BB#6:                                 # %for.end17
 	end_loop
@@ -669,6 +669,6 @@ gf:
 	.size	gf, 128
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

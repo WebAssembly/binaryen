@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35800.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr35800.c"
 	.section	.text.stab_xcoff_builtin_type,"ax",@progbits
 	.hidden	stab_xcoff_builtin_type
 	.globl	stab_xcoff_builtin_type
@@ -26,7 +26,7 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 # BB#2:                                 # %switch.lookup
 	i32.const	$push5=, 2
 	i32.shl 	$push6=, $0, $pop5
-	i32.const	$push7=, .Lswitch.table
+	i32.const	$push7=, .Lswitch.table.34
 	i32.add 	$push8=, $pop6, $pop7
 	i32.load	$1=, 0($pop8)
 .LBB0_3:                                # %sw.epilog
@@ -46,34 +46,47 @@ stab_xcoff_builtin_type:                # @stab_xcoff_builtin_type
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
+	.local  	i32, i32, i32, i32
 # BB#0:                                 # %if.end8
-	i32.const	$1=, -4
-	i32.const	$0=, .Lswitch.table+8
-.LBB1_1:                                # %stab_xcoff_builtin_type.exit
+	i32.const	$2=, .Lswitch.table.34+8
+	i32.const	$1=, 2
+	i32.const	$0=, -3
+.LBB1_1:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label3:
-	i32.load	$push0=, 0($0)
-	i32.load8_u	$push1=, 0($pop0)
-	i32.const	$push5=, 105
-	i32.ne  	$push2=, $pop1, $pop5
-	br_if   	1, $pop2        # 1: down to label2
-# BB#2:                                 # %for.cond
+	i32.const	$3=, .L.str
+	block   	
+	i32.const	$push5=, 32
+	i32.gt_u	$push0=, $1, $pop5
+	br_if   	0, $pop0        # 0: down to label4
+# BB#2:                                 # %switch.lookup
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push10=, 4
-	i32.add 	$0=, $0, $pop10
-	i32.const	$push9=, -1
-	i32.add 	$push8=, $1, $pop9
-	tee_local	$push7=, $1=, $pop8
-	i32.const	$push6=, -34
-	i32.ge_s	$push3=, $pop7, $pop6
+	i32.load	$3=, 0($2)
+.LBB1_3:                                # %stab_xcoff_builtin_type.exit
+                                        #   in Loop: Header=BB1_1 Depth=1
+	end_block                       # label4:
+	i32.load8_u	$push1=, 0($3)
+	i32.const	$push6=, 105
+	i32.ne  	$push2=, $pop1, $pop6
+	br_if   	1, $pop2        # 1: down to label2
+# BB#4:                                 # %for.cond
+                                        #   in Loop: Header=BB1_1 Depth=1
+	i32.const	$push12=, 1
+	i32.add 	$1=, $1, $pop12
+	i32.const	$push11=, 4
+	i32.add 	$2=, $2, $pop11
+	i32.const	$push10=, -1
+	i32.add 	$push9=, $0, $pop10
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push7=, -33
+	i32.ge_s	$push3=, $pop8, $pop7
 	br_if   	0, $pop3        # 0: up to label3
-# BB#3:                                 # %if.end21
+# BB#5:                                 # %if.end21
 	end_loop
 	i32.const	$push4=, 0
 	return  	$pop4
-.LBB1_4:                                # %if.then16
+.LBB1_6:                                # %if.then16
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -97,10 +110,10 @@ main:                                   # @main
 	.asciz	"integer*8"
 	.size	.L.str.33, 10
 
-	.type	.Lswitch.table,@object  # @switch.table
-	.section	.rodata..Lswitch.table,"a",@progbits
+	.type	.Lswitch.table.34,@object # @switch.table.34
+	.section	.rodata..Lswitch.table.34,"a",@progbits
 	.p2align	4
-.Lswitch.table:
+.Lswitch.table.34:
 	.int32	.L.str.2
 	.int32	.L.str.2
 	.int32	.L.str.33
@@ -134,8 +147,8 @@ main:                                   # @main
 	.int32	.L.str.33
 	.int32	.L.str.33
 	.int32	.L.str.33
-	.size	.Lswitch.table, 132
+	.size	.Lswitch.table.34, 132
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

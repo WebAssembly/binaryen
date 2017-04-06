@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-5.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-5.c"
 	.section	.text.arg_ptr,"ax",@progbits
 	.hidden	arg_ptr
 	.globl	arg_ptr
@@ -56,8 +56,6 @@ main:                                   # @main
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
 	i32.store	idx($pop1), $pop0
-	call    	glob_ptr@FUNCTION
-	call    	glob_idx@FUNCTION
 	i32.const	$push9=, 0
 	i32.const	$push2=, 2
 	i32.store	idx($pop9), $pop2
@@ -67,8 +65,6 @@ main:                                   # @main
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
 	i32.store	ptr($pop8), $pop5
-	call    	glob_ptr@FUNCTION
-	call    	glob_idx@FUNCTION
 	i32.const	$push6=, 0
 	call    	exit@FUNCTION, $pop6
 	unreachable
@@ -113,5 +109,5 @@ s:
 	.size	s, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

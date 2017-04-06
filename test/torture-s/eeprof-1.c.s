@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/eeprof-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/eeprof-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -79,7 +79,7 @@ nfoo:                                   # @nfoo
 	br_if   	0, $pop17       # 0: down to label1
 # BB#8:                                 # %if.end18
 	return
-.LBB1_9:                                # %if.then17
+.LBB1_9:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -148,7 +148,7 @@ main:                                   # @main
 # BB#8:                                 # %if.end20
 	i32.const	$push33=, 0
 	return  	$pop33
-.LBB2_9:                                # %if.then19
+.LBB2_9:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -243,7 +243,7 @@ foo2:                                   # @foo2
 	br_if   	0, $pop16       # 0: down to label3
 # BB#7:                                 # %if.end15
 	return
-.LBB5_8:                                # %if.then14
+.LBB5_8:                                # %if.then
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
@@ -288,5 +288,5 @@ last_fn_exited:
 	.size	last_fn_exited, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

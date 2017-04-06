@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/gofast.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/gofast.c"
 	.section	.text.fp_add,"ax",@progbits
 	.hidden	fp_add
 	.globl	fp_add
@@ -430,10 +430,10 @@ fail:                                   # @fail
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
-	i32.const	$push6=, 0
-	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push7=, 0
+	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 16
-	i32.sub 	$push16=, $pop7, $pop8
+	i32.sub 	$push16=, $pop6, $pop8
 	tee_local	$push15=, $1=, $pop16
 	i32.store	__stack_pointer($pop9), $pop15
 	i32.const	$push0=, 0
@@ -463,7 +463,7 @@ fail:                                   # @fail
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end11
+# BB#0:                                 # %if.end198
 	block   	
 	i32.const	$push1=, 0
 	i32.load	$push0=, fail_count($pop1)
@@ -496,8 +496,9 @@ fail_count:
 	.size	.L.str, 17
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32
 	.import_global	stderr
+	.size	stderr, 4

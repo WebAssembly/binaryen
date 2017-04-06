@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040703-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040703-1.c"
 	.section	.text.num_lshift,"ax",@progbits
 	.hidden	num_lshift
 	.globl	num_lshift
@@ -8,10 +8,10 @@ num_lshift:                             # @num_lshift
 	.param  	i32, i32, i32, i32
 	.local  	i32, i32, i64, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push93=, 0
-	i32.load	$push94=, __stack_pointer($pop93)
+	i32.const	$push94=, 0
+	i32.load	$push93=, __stack_pointer($pop94)
 	i32.const	$push95=, 16
-	i32.sub 	$12=, $pop94, $pop95
+	i32.sub 	$12=, $pop93, $pop95
 	block   	
 	block   	
 	block   	
@@ -160,7 +160,7 @@ num_lshift:                             # @num_lshift
 	i32.const	$push51=, 31
 	i32.gt_u	$push52=, $2, $pop51
 	br_if   	0, $pop52       # 0: down to label12
-# BB#18:                                # %if.then5.i61
+# BB#18:                                # %if.then5.i63
 	i32.store	8($12), $8
 	i32.const	$push96=, 4
 	i32.add 	$push97=, $12, $pop96
@@ -289,10 +289,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push22=, 0
-	i32.const	$push19=, 0
-	i32.load	$push20=, __stack_pointer($pop19)
+	i32.const	$push20=, 0
+	i32.load	$push19=, __stack_pointer($pop20)
 	i32.const	$push21=, 32
-	i32.sub 	$push30=, $pop20, $pop21
+	i32.sub 	$push30=, $pop19, $pop21
 	tee_local	$push29=, $0=, $pop30
 	i32.store	__stack_pointer($pop22), $pop29
 	i32.const	$push2=, 12
@@ -334,7 +334,7 @@ main:                                   # @main
 	i32.const	$push18=, 0
 	call    	exit@FUNCTION, $pop18
 	unreachable
-.LBB1_4:                                # %if.then5
+.LBB1_4:                                # %if.then
 	end_block                       # label18:
 	call    	abort@FUNCTION
 	unreachable
@@ -373,6 +373,6 @@ num:
 	.size	num, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031204-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031204-1.c"
 	.section	.text.in_aton,"ax",@progbits
 	.hidden	in_aton
 	.globl	in_aton
@@ -82,7 +82,7 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	i32.const	$push39=, 46
 	i32.eq  	$push9=, $pop8, $pop39
 	i32.or  	$push10=, $pop7, $pop9
-	i32.add 	$push38=, $pop10, $1
+	i32.add 	$push38=, $1, $pop10
 	tee_local	$push37=, $1=, $pop38
 	i32.const	$push36=, 4
 	i32.lt_s	$push11=, $pop37, $pop36
@@ -199,7 +199,7 @@ main:                                   # @main
 	i32.const	$push41=, 46
 	i32.eq  	$push9=, $pop8, $pop41
 	i32.or  	$push10=, $pop7, $pop9
-	i32.add 	$push40=, $pop10, $0
+	i32.add 	$push40=, $0, $pop10
 	tee_local	$push39=, $0=, $pop40
 	i32.const	$push38=, 4
 	i32.lt_s	$push11=, $pop39, $pop38
@@ -258,6 +258,6 @@ main.addr:
 	.size	main.addr, 19
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void

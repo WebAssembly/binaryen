@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56837.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56837.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -35,8 +35,8 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	call    	foo@FUNCTION
-	i32.const	$1=, 0
 	i32.const	$0=, a
+	i32.const	$1=, -1
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	
@@ -58,7 +58,7 @@ main:                                   # @main
 	i32.const	$push11=, 1
 	i32.add 	$push10=, $1, $pop11
 	tee_local	$push9=, $1=, $pop10
-	i32.const	$push8=, 1023
+	i32.const	$push8=, 1022
 	i32.le_s	$push4=, $pop9, $pop8
 	br_if   	0, $pop4        # 0: up to label2
 # BB#4:                                 # %for.end
@@ -83,5 +83,5 @@ a:
 	.size	a, 8192
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

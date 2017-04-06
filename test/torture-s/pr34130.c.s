@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34130.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34130.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -7,19 +7,17 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push2=, -2
-	i32.add 	$push11=, $0, $pop2
-	tee_local	$push10=, $1=, $pop11
-	i32.const	$push0=, 2
-	i32.sub 	$push1=, $pop0, $0
-	i32.const	$push3=, -1
-	i32.gt_s	$push4=, $1, $pop3
-	i32.select	$push5=, $pop10, $pop1, $pop4
-	i32.const	$push6=, 1
-	i32.shl 	$push7=, $pop5, $pop6
+	i32.const	$push4=, -2
+	i32.add 	$push5=, $0, $pop4
+	i32.const	$push2=, 2
+	i32.sub 	$push3=, $pop2, $0
+	i32.const	$push0=, 1
+	i32.gt_s	$push1=, $0, $pop0
+	i32.select	$push6=, $pop5, $pop3, $pop1
+	i32.const	$push10=, 1
+	i32.shl 	$push7=, $pop6, $pop10
 	i32.sub 	$push9=, $pop8, $pop7
                                         # fallthrough-return: $pop9
 	.endfunc
@@ -40,4 +38,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"

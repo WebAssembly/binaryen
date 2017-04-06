@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020810-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020810-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -54,19 +54,19 @@ main:                                   # @main
 # BB#0:                                 # %f.exit
 	block   	
 	i32.const	$push12=, 0
-	i64.load	$push11=, R($pop12)
-	tee_local	$push10=, $0=, $pop11
-	i32.wrap/i64	$push3=, $pop10
-	i32.const	$push9=, 0
-	i32.load	$push2=, R($pop9)
-	i32.ne  	$push4=, $pop3, $pop2
+	i32.load	$push2=, R($pop12)
+	i32.const	$push11=, 0
+	i64.load	$push10=, R($pop11)
+	tee_local	$push9=, $0=, $pop10
+	i32.wrap/i64	$push3=, $pop9
+	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label1
 # BB#1:                                 # %f.exit
+	i32.const	$push13=, 0
+	i32.load	$push0=, R+4($pop13)
 	i64.const	$push5=, 32
 	i64.shr_u	$push6=, $0, $pop5
-	i32.wrap/i64	$push0=, $pop6
-	i32.const	$push13=, 0
-	i32.load	$push1=, R+4($pop13)
+	i32.wrap/i64	$push1=, $pop6
 	i32.ne  	$push7=, $pop0, $pop1
 	br_if   	0, $pop7        # 0: down to label1
 # BB#2:                                 # %if.end
@@ -91,5 +91,5 @@ R:
 	.size	R, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

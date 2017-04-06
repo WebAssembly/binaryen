@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920726-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920726-1.c"
 	.section	.text.first,"ax",@progbits
 	.hidden	first
 	.globl	first
@@ -10,10 +10,10 @@ first:                                  # @first
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $3=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
 	i32.store	12($3), $2
@@ -81,10 +81,10 @@ second:                                 # @second
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $3=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
 	i32.store	12($3), $2
@@ -151,10 +151,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 256
-	i32.sub 	$push23=, $pop6, $pop7
+	i32.sub 	$push23=, $pop5, $pop7
 	tee_local	$push22=, $0=, $pop23
 	i32.store	__stack_pointer($pop8), $pop22
 	i64.const	$push0=, 85899345925
@@ -212,7 +212,7 @@ main:                                   # @main
 	.size	.L.str.2, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strlen, i32, i32
 	.functype	strcmp, i32, i32, i32

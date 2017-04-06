@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-2.c"
 	.section	.text.do_mknod,"ax",@progbits
 	.hidden	do_mknod
 	.globl	do_mknod
@@ -107,23 +107,15 @@ sys_mknod:                              # @sys_mknod
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, .L.str
-	i32.const	$push0=, 305419896
-	i32.call	$drop=, sys_mknod@FUNCTION, $pop1, $0, $pop0
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
 
-	.type	.L.str,@object          # @.str
-	.section	.rodata.str1.1,"aMS",@progbits,1
-.L.str:
-	.asciz	"test"
-	.size	.L.str, 5
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32
 	.functype	abort, void

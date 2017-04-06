@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39501.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39501.c"
 	.section	.text.float_min1,"ax",@progbits
 	.hidden	float_min1
 	.globl	float_min1
@@ -464,7 +464,7 @@ main:                                   # @main
 	f64.const	$push238=, 0x1p0
 	f64.eq  	$push95=, $pop94, $pop238
 	br_if   	1, $pop95       # 1: down to label0
-.LBB8_48:                               # %if.then187
+.LBB8_48:                               # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -478,6 +478,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end8-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

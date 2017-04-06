@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920625-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920625-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -8,95 +8,120 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push21=, 0
-	i32.const	$push18=, 0
-	i32.load	$push19=, __stack_pointer($pop18)
-	i32.const	$push20=, 128
-	i32.sub 	$push64=, $pop19, $pop20
-	tee_local	$push63=, $0=, $pop64
-	i32.store	__stack_pointer($pop21), $pop63
-	i32.const	$push22=, 112
-	i32.add 	$push23=, $0, $pop22
+	i32.const	$push31=, 0
+	i32.const	$push29=, 0
+	i32.load	$push28=, __stack_pointer($pop29)
+	i32.const	$push30=, 128
+	i32.sub 	$push84=, $pop28, $pop30
+	tee_local	$push83=, $0=, $pop84
+	i32.store	__stack_pointer($pop31), $pop83
+	i32.const	$push32=, 112
+	i32.add 	$push33=, $0, $pop32
 	i32.const	$push2=, 8
-	i32.add 	$push3=, $pop23, $pop2
+	i32.add 	$push3=, $pop33, $pop2
 	i32.const	$push0=, 0
 	i64.load	$push1=, pts+8($pop0)
 	i64.store	0($pop3), $pop1
-	i32.const	$push24=, 96
-	i32.add 	$push25=, $0, $pop24
-	i32.const	$push62=, 8
-	i32.add 	$push5=, $pop25, $pop62
-	i32.const	$push61=, 0
-	i64.load	$push4=, pts+24($pop61)
-	i64.store	0($pop5), $pop4
-	i32.const	$push60=, 0
-	i64.load	$push6=, pts($pop60)
-	i64.store	112($0), $pop6
-	i32.const	$push59=, 0
-	i64.load	$push7=, pts+16($pop59)
-	i64.store	96($0), $pop7
-	i32.const	$push26=, 80
-	i32.add 	$push27=, $0, $pop26
-	i32.const	$push58=, 8
-	i32.add 	$push8=, $pop27, $pop58
-	i32.const	$push57=, 0
-	i64.load	$push9=, pts+40($pop57)
-	i64.store	0($pop8), $pop9
-	i32.const	$push56=, 0
-	i64.load	$push10=, pts+32($pop56)
-	i64.store	80($0), $pop10
-	i32.const	$push28=, 64
-	i32.add 	$push29=, $0, $pop28
-	i32.const	$push55=, 8
-	i32.add 	$push11=, $pop29, $pop55
-	i32.const	$push54=, 0
-	i64.load	$push12=, pts+56($pop54)
-	i64.store	0($pop11), $pop12
-	i32.const	$push53=, 0
-	i64.load	$push13=, pts+48($pop53)
-	i64.store	64($0), $pop13
-	i32.const	$push30=, 64
-	i32.add 	$push31=, $0, $pop30
-	i32.store	60($0), $pop31
-	i32.const	$push32=, 80
-	i32.add 	$push33=, $0, $pop32
-	i32.store	56($0), $pop33
 	i32.const	$push34=, 96
 	i32.add 	$push35=, $0, $pop34
-	i32.store	52($0), $pop35
-	i32.const	$push36=, 112
+	i32.const	$push82=, 8
+	i32.add 	$push5=, $pop35, $pop82
+	i32.const	$push81=, 0
+	i64.load	$push4=, pts+24($pop81)
+	i64.store	0($pop5), $pop4
+	i32.const	$push80=, 0
+	i64.load	$push6=, pts($pop80)
+	i64.store	112($0), $pop6
+	i32.const	$push79=, 0
+	i32.load	$push7=, pts+20($pop79)
+	i32.store	100($0), $pop7
+	i32.const	$push78=, 0
+	i32.load	$push8=, pts+16($pop78)
+	i32.store	96($0), $pop8
+	i32.const	$push9=, 92
+	i32.add 	$push10=, $0, $pop9
+	i32.const	$push77=, 0
+	i32.load	$push11=, pts+44($pop77)
+	i32.store	0($pop10), $pop11
+	i32.const	$push36=, 80
 	i32.add 	$push37=, $0, $pop36
-	i32.store	48($0), $pop37
-	i32.const	$push38=, 48
+	i32.const	$push76=, 8
+	i32.add 	$push12=, $pop37, $pop76
+	i32.const	$push75=, 0
+	i32.load	$push13=, pts+40($pop75)
+	i32.store	0($pop12), $pop13
+	i32.const	$push74=, 0
+	i32.load	$push14=, pts+32($pop74)
+	i32.store	80($0), $pop14
+	i32.const	$push73=, 0
+	i32.load	$push15=, pts+36($pop73)
+	i32.store	84($0), $pop15
+	i32.const	$push38=, 64
 	i32.add 	$push39=, $0, $pop38
-	call    	va1@FUNCTION, $0, $pop39
-	i32.const	$push52=, 0
-	i64.load	$push14=, ipts($pop52)
-	i64.store	40($0):p2align=2, $pop14
-	i32.const	$push51=, 0
-	i64.load	$push15=, ipts+8($pop51)
-	i64.store	32($0):p2align=2, $pop15
-	i32.const	$push50=, 0
-	i64.load	$push16=, ipts+16($pop50)
-	i64.store	24($0):p2align=2, $pop16
-	i32.const	$push49=, 0
-	i64.load	$push17=, ipts+24($pop49)
-	i64.store	16($0):p2align=2, $pop17
-	i32.const	$push40=, 16
+	i32.const	$push72=, 8
+	i32.add 	$push16=, $pop39, $pop72
+	i32.const	$push71=, 0
+	i64.load	$push17=, pts+56($pop71)
+	i64.store	0($pop16), $pop17
+	i32.const	$push70=, 0
+	i64.load	$push18=, pts+48($pop70)
+	i64.store	64($0), $pop18
+	i32.const	$push40=, 64
 	i32.add 	$push41=, $0, $pop40
-	i32.store	12($0), $pop41
-	i32.const	$push42=, 24
+	i32.store	60($0), $pop41
+	i32.const	$push42=, 80
 	i32.add 	$push43=, $0, $pop42
-	i32.store	8($0), $pop43
-	i32.const	$push44=, 32
+	i32.store	56($0), $pop43
+	i32.const	$push44=, 96
 	i32.add 	$push45=, $0, $pop44
-	i32.store	4($0), $pop45
-	i32.const	$push46=, 40
+	i32.store	52($0), $pop45
+	i32.const	$push46=, 112
 	i32.add 	$push47=, $0, $pop46
-	i32.store	0($0), $pop47
+	i32.store	48($0), $pop47
+	i32.const	$push48=, 48
+	i32.add 	$push49=, $0, $pop48
+	call    	va1@FUNCTION, $0, $pop49
+	i32.const	$push69=, 0
+	i64.load	$push19=, ipts($pop69)
+	i64.store	40($0):p2align=2, $pop19
+	i32.const	$push68=, 0
+	i64.load	$push20=, ipts+8($pop68)
+	i64.store	32($0):p2align=2, $pop20
+	i32.const	$push50=, 24
+	i32.add 	$push51=, $0, $pop50
+	i32.const	$push21=, 4
+	i32.add 	$push22=, $pop51, $pop21
+	i32.const	$push67=, 0
+	i32.load	$push23=, ipts+20($pop67)
+	i32.store	0($pop22), $pop23
+	i32.const	$push52=, 16
+	i32.add 	$push53=, $0, $pop52
+	i32.const	$push66=, 4
+	i32.add 	$push24=, $pop53, $pop66
+	i32.const	$push65=, 0
+	i32.load	$push25=, ipts+28($pop65)
+	i32.store	0($pop24), $pop25
+	i32.const	$push64=, 0
+	i32.load	$push26=, ipts+16($pop64)
+	i32.store	24($0), $pop26
+	i32.const	$push63=, 0
+	i32.load	$push27=, ipts+24($pop63)
+	i32.store	16($0), $pop27
+	i32.const	$push54=, 32
+	i32.add 	$push55=, $0, $pop54
+	i32.store	4($0), $pop55
+	i32.const	$push56=, 16
+	i32.add 	$push57=, $0, $pop56
+	i32.store	12($0), $pop57
+	i32.const	$push58=, 24
+	i32.add 	$push59=, $0, $pop58
+	i32.store	8($0), $pop59
+	i32.const	$push60=, 40
+	i32.add 	$push61=, $0, $pop60
+	i32.store	0($0), $pop61
 	call    	va2@FUNCTION, $0, $0
-	i32.const	$push48=, 0
-	call    	exit@FUNCTION, $pop48
+	i32.const	$push62=, 0
+	call    	exit@FUNCTION, $pop62
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -109,10 +134,10 @@ va1:                                    # @va1
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push44=, 0
-	i32.const	$push41=, 0
-	i32.load	$push42=, __stack_pointer($pop41)
+	i32.const	$push42=, 0
+	i32.load	$push41=, __stack_pointer($pop42)
 	i32.const	$push43=, 16
-	i32.sub 	$push52=, $pop42, $pop43
+	i32.sub 	$push52=, $pop41, $pop43
 	tee_local	$push51=, $2=, $pop52
 	i32.store	__stack_pointer($pop44), $pop51
 	i32.store	12($2), $1
@@ -208,10 +233,10 @@ va2:                                    # @va2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push41=, 0
-	i32.const	$push38=, 0
-	i32.load	$push39=, __stack_pointer($pop38)
+	i32.const	$push39=, 0
+	i32.load	$push38=, __stack_pointer($pop39)
 	i32.const	$push40=, 16
-	i32.sub 	$push47=, $pop39, $pop40
+	i32.sub 	$push47=, $pop38, $pop40
 	tee_local	$push46=, $2=, $pop47
 	i32.store	__stack_pointer($pop41), $pop46
 	i32.store	12($2), $1
@@ -328,6 +353,6 @@ ipts:
 	.size	ipts, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32
 	.functype	abort, void

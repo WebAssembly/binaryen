@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
 	.section	.text.w,"ax",@progbits
 	.hidden	w
 	.globl	w
@@ -112,16 +112,16 @@ gitter:                                 # @gitter
 	i32.or  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label3
 # BB#5:                                 # %if.then
-	f64.promote/f32	$push32=, $6
-	tee_local	$push31=, $8=, $pop32
 	f64.promote/f32	$push15=, $5
 	f64.const	$push16=, 0x1p-1
-	f64.mul 	$push30=, $pop15, $pop16
-	tee_local	$push29=, $7=, $pop30
-	f64.gt  	$push17=, $pop31, $pop29
-	f64.ne  	$push19=, $8, $8
+	f64.mul 	$push32=, $pop15, $pop16
+	tee_local	$push31=, $7=, $pop32
+	f64.promote/f32	$push30=, $6
+	tee_local	$push29=, $8=, $pop30
+	f64.lt  	$push17=, $pop31, $pop29
 	f64.ne  	$push18=, $7, $7
-	i32.or  	$push20=, $pop19, $pop18
+	f64.ne  	$push19=, $8, $8
+	i32.or  	$push20=, $pop18, $pop19
 	i32.or  	$push21=, $pop17, $pop20
 	br_if   	0, $pop21       # 0: down to label3
 # BB#6:                                 # %if.then15
@@ -130,7 +130,7 @@ gitter:                                 # @gitter
 .LBB3_7:                                # %if.end18
 	end_block                       # label3:
 	return  	$4
-.LBB3_8:                                # %if.then.i32
+.LBB3_8:                                # %if.then.i
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -147,10 +147,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
+	i32.const	$push5=, 0
+	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push13=, $pop5, $pop6
+	i32.sub 	$push13=, $pop4, $pop6
 	tee_local	$push12=, $0=, $pop13
 	i32.store	__stack_pointer($pop7), $pop12
 	i32.const	$push2=, pos
@@ -189,6 +189,6 @@ limit:
 	.size	limit, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

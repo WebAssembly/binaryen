@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060420-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20060420-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -347,100 +347,100 @@ main:                                   # @main
 	.result 	i32
 	.local  	f32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push30=, 0
-	i32.const	$push27=, 0
-	i32.load	$push28=, __stack_pointer($pop27)
-	i32.const	$push29=, 16
-	i32.sub 	$push42=, $pop28, $pop29
-	tee_local	$push41=, $3=, $pop42
-	i32.store	__stack_pointer($pop30), $pop41
+	i32.const	$push31=, 0
+	i32.const	$push29=, 0
+	i32.load	$push28=, __stack_pointer($pop29)
+	i32.const	$push30=, 16
+	i32.sub 	$push43=, $pop28, $pop30
+	tee_local	$push42=, $3=, $pop43
+	i32.store	__stack_pointer($pop31), $pop42
 	i32.const	$2=, 0
-	i32.const	$push40=, 0
+	i32.const	$push41=, 0
 	i32.const	$push0=, buffer
-	i32.sub 	$push1=, $pop40, $pop0
+	i32.sub 	$push1=, $pop41, $pop0
 	i32.const	$push2=, 63
-	i32.and 	$push39=, $pop1, $pop2
-	tee_local	$push38=, $1=, $pop39
+	i32.and 	$push40=, $pop1, $pop2
+	tee_local	$push39=, $1=, $pop40
 	i32.const	$push3=, buffer+128
-	i32.add 	$push4=, $pop38, $pop3
+	i32.add 	$push4=, $pop39, $pop3
 	i32.store	12($3), $pop4
 	i32.const	$push5=, buffer+64
-	i32.add 	$push37=, $1, $pop5
-	tee_local	$push36=, $1=, $pop37
-	i32.store	8($3), $pop36
+	i32.add 	$push38=, $1, $pop5
+	tee_local	$push37=, $1=, $pop38
+	i32.store	8($3), $pop37
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label13:
-	i32.const	$push52=, 64
-	i32.add 	$push6=, $1, $pop52
-	f32.convert_s/i32	$push51=, $2
-	tee_local	$push50=, $0=, $pop51
-	f32.const	$push49=, 0x1.8p3
-	f32.mul 	$push7=, $0, $pop49
-	f32.add 	$push8=, $pop50, $pop7
+	i32.const	$push53=, 64
+	i32.add 	$push6=, $1, $pop53
+	f32.convert_s/i32	$push52=, $2
+	tee_local	$push51=, $0=, $pop52
+	f32.const	$push50=, 0x1.8p3
+	f32.mul 	$push7=, $pop51, $pop50
+	f32.add 	$push8=, $pop7, $0
 	f32.store	0($pop6), $pop8
-	f32.const	$push48=, 0x1.6p3
-	f32.mul 	$push9=, $0, $pop48
-	f32.add 	$push10=, $0, $pop9
+	f32.const	$push49=, 0x1.6p3
+	f32.mul 	$push9=, $0, $pop49
+	f32.add 	$push10=, $pop9, $0
 	f32.store	0($1), $pop10
-	i32.const	$push47=, 4
-	i32.add 	$1=, $1, $pop47
-	i32.const	$push46=, 1
-	i32.add 	$push45=, $2, $pop46
-	tee_local	$push44=, $2=, $pop45
-	i32.const	$push43=, 16
-	i32.ne  	$push11=, $pop44, $pop43
+	i32.const	$push48=, 4
+	i32.add 	$1=, $1, $pop48
+	i32.const	$push47=, 1
+	i32.add 	$push46=, $2, $pop47
+	tee_local	$push45=, $2=, $pop46
+	i32.const	$push44=, 16
+	i32.ne  	$push11=, $pop45, $pop44
 	br_if   	0, $pop11       # 0: up to label13
 # BB#2:                                 # %for.end
 	end_loop
-	i32.const	$1=, 0
-	i32.const	$push56=, 0
+	i32.const	$push13=, 0
 	i32.const	$push12=, buffer
-	i32.sub 	$push13=, $pop56, $pop12
-	i32.const	$push14=, 63
-	i32.and 	$push15=, $pop13, $pop14
-	i32.const	$push55=, buffer
-	i32.add 	$push54=, $pop15, $pop55
-	tee_local	$push53=, $2=, $pop54
-	i32.const	$push34=, 8
-	i32.add 	$push35=, $3, $pop34
-	i32.const	$push17=, 2
-	i32.const	$push16=, 16
-	call    	foo@FUNCTION, $pop53, $pop35, $pop17, $pop16
+	i32.sub 	$push14=, $pop13, $pop12
+	i32.const	$push15=, 63
+	i32.and 	$push16=, $pop14, $pop15
+	i32.const	$push56=, buffer
+	i32.add 	$push55=, $pop16, $pop56
+	tee_local	$push54=, $2=, $pop55
+	i32.const	$push35=, 8
+	i32.add 	$push36=, $3, $pop35
+	i32.const	$push18=, 2
+	i32.const	$push17=, 16
+	call    	foo@FUNCTION, $pop54, $pop36, $pop18, $pop17
+	i32.const	$1=, -1
 .LBB1_3:                                # %for.body16
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label15:
-	f32.load	$push23=, 0($2)
-	f32.convert_s/i32	$push60=, $1
+	f32.load	$push24=, 0($2)
+	i32.const	$push63=, 1
+	i32.add 	$push62=, $1, $pop63
+	tee_local	$push61=, $1=, $pop62
+	f32.convert_s/i32	$push60=, $pop61
 	tee_local	$push59=, $0=, $pop60
 	f32.const	$push58=, 0x1.8p3
-	f32.mul 	$push18=, $pop59, $pop58
+	f32.mul 	$push22=, $pop59, $pop58
 	f32.const	$push57=, 0x1.6p3
 	f32.mul 	$push19=, $0, $pop57
-	f32.add 	$push20=, $0, $pop19
-	f32.add 	$push21=, $0, $pop20
-	f32.add 	$push22=, $pop18, $pop21
-	f32.ne  	$push24=, $pop23, $pop22
-	br_if   	1, $pop24       # 1: down to label14
+	f32.add 	$push20=, $pop19, $0
+	f32.add 	$push21=, $pop20, $0
+	f32.add 	$push23=, $pop22, $pop21
+	f32.ne  	$push25=, $pop24, $pop23
+	br_if   	1, $pop25       # 1: down to label14
 # BB#4:                                 # %for.cond13
                                         #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$push65=, 4
 	i32.add 	$2=, $2, $pop65
-	i32.const	$push64=, 1
-	i32.add 	$push63=, $1, $pop64
-	tee_local	$push62=, $1=, $pop63
-	i32.const	$push61=, 15
-	i32.le_s	$push25=, $pop62, $pop61
-	br_if   	0, $pop25       # 0: up to label15
+	i32.const	$push64=, 14
+	i32.le_s	$push26=, $1, $pop64
+	br_if   	0, $pop26       # 0: up to label15
 # BB#5:                                 # %for.end31
 	end_loop
-	i32.const	$push33=, 0
-	i32.const	$push31=, 16
-	i32.add 	$push32=, $3, $pop31
-	i32.store	__stack_pointer($pop33), $pop32
-	i32.const	$push26=, 0
-	return  	$pop26
+	i32.const	$push34=, 0
+	i32.const	$push32=, 16
+	i32.add 	$push33=, $3, $pop32
+	i32.store	__stack_pointer($pop34), $pop33
+	i32.const	$push27=, 0
+	return  	$pop27
 .LBB1_6:                                # %if.then
 	end_block                       # label14:
 	call    	abort@FUNCTION
@@ -459,5 +459,5 @@ buffer:
 	.size	buffer, 256
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

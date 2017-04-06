@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-19.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-19.c"
 	.section	.text.vafunction,"ax",@progbits
 	.hidden	vafunction
 	.globl	vafunction
@@ -9,10 +9,10 @@ vafunction:                             # @vafunction
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push40=, 0
-	i32.const	$push37=, 0
-	i32.load	$push38=, __stack_pointer($pop37)
+	i32.const	$push38=, 0
+	i32.load	$push37=, __stack_pointer($pop38)
 	i32.const	$push39=, 16
-	i32.sub 	$push47=, $pop38, $pop39
+	i32.sub 	$push47=, $pop37, $pop39
 	tee_local	$push46=, $4=, $pop47
 	i32.store	__stack_pointer($pop40), $pop46
 	i32.store	12($4), $1
@@ -102,7 +102,7 @@ vafunction:                             # @vafunction
 	i32.add 	$push42=, $4, $pop41
 	i32.store	__stack_pointer($pop43), $pop42
 	return
-.LBB0_10:                               # %if.then40
+.LBB0_10:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -119,10 +119,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push15=, 0
-	i32.const	$push12=, 0
-	i32.load	$push13=, __stack_pointer($pop12)
+	i32.const	$push13=, 0
+	i32.load	$push12=, __stack_pointer($pop13)
 	i32.const	$push14=, 48
-	i32.sub 	$push17=, $pop13, $pop14
+	i32.sub 	$push17=, $pop12, $pop14
 	tee_local	$push16=, $0=, $pop17
 	i32.store	__stack_pointer($pop15), $pop16
 	i32.const	$push0=, 32
@@ -150,6 +150,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

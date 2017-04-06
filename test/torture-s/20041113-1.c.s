@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041113-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041113-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -9,10 +9,10 @@ test:                                   # @test
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push20=, 0
-	i32.const	$push17=, 0
-	i32.load	$push18=, __stack_pointer($pop17)
+	i32.const	$push18=, 0
+	i32.load	$push17=, __stack_pointer($pop18)
 	i32.const	$push19=, 16
-	i32.sub 	$push27=, $pop18, $pop19
+	i32.sub 	$push27=, $pop17, $pop19
 	tee_local	$push26=, $4=, $pop27
 	i32.store	__stack_pointer($pop20), $pop26
 	i32.store	12($4), $1
@@ -57,7 +57,7 @@ test:                                   # @test
 	i32.add 	$push22=, $4, $pop21
 	i32.store	__stack_pointer($pop23), $pop22
 	return
-.LBB0_5:                                # %if.then15
+.LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -75,10 +75,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push14=, $pop9, $pop10
+	i32.sub 	$push14=, $pop8, $pop10
 	tee_local	$push13=, $2=, $pop14
 	i32.store	__stack_pointer($pop11), $pop13
 	i32.const	$push0=, 3
@@ -111,6 +111,6 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

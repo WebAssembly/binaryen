@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990628-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990628-1.c"
 	.section	.text.num_records,"ax",@progbits
 	.hidden	num_records
 	.globl	num_records
@@ -78,9 +78,13 @@ load_data:                              # @load_data
 	i32.select	$push5=, $pop4, $pop14, $pop11
 	i32.store	sqlca($pop15), $pop5
 	block   	
-	br_if   	0, $1           # 0: down to label0
-.LBB2_1:                                # %while.body
+	i32.eqz 	$push36=, $1
+	br_if   	0, $pop36       # 0: down to label0
+# BB#1:                                 # %while.end
+	return
+.LBB2_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
+	end_block                       # label0:
 	loop    	                # label1:
 	i32.const	$push34=, 404
 	i32.call	$drop=, memcpy@FUNCTION, $3, $0, $pop34
@@ -95,7 +99,7 @@ load_data:                              # @load_data
 	i32.const	$push27=, 1
 	i32.lt_s	$push6=, $pop28, $pop27
 	br_if   	0, $pop6        # 0: up to label1
-# BB#2:                                 # %while.cond.while.end_crit_edge
+# BB#3:                                 # %while.cond.while.end_crit_edge
 	end_loop
 	i32.const	$push8=, 0
 	i32.const	$push7=, 100
@@ -104,8 +108,6 @@ load_data:                              # @load_data
 	i32.const	$push9=, 1
 	i32.add 	$push10=, $2, $pop9
 	i32.store	fetch.fetch_count($pop35), $pop10
-.LBB2_3:                                # %while.end
-	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -228,7 +230,7 @@ data_ptr:
 	.size	data_ptr, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	malloc, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

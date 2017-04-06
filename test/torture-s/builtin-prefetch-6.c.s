@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-6.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-6.c"
 	.section	.text.init_addrs,"ax",@progbits
 	.hidden	init_addrs
 	.globl	init_addrs
@@ -9,87 +9,54 @@ init_addrs:                             # @init_addrs
 	i32.const	$push1=, 0
 	i64.const	$push0=, 8589934593
 	i64.store	bad_addr($pop1), $pop0
-	i32.const	$push55=, 0
-	i64.const	$push2=, 34359738372
-	i64.store	bad_addr+8($pop55), $pop2
-	i32.const	$push54=, 0
-	i64.const	$push3=, 137438953488
-	i64.store	bad_addr+16($pop54), $pop3
-	i32.const	$push53=, 0
-	i64.const	$push4=, 549755813952
-	i64.store	bad_addr+24($pop53), $pop4
-	i32.const	$push52=, 0
-	i64.const	$push5=, 2199023255808
-	i64.store	bad_addr+32($pop52), $pop5
-	i32.const	$push51=, 0
-	i32.const	$push6=, 1024
-	i32.store	bad_addr+40($pop51), $pop6
-	i32.const	$push50=, 0
-	i32.const	$push7=, 2048
-	i32.store	bad_addr+44($pop50), $pop7
-	i32.const	$push49=, 0
-	i32.const	$push8=, 4096
-	i32.store	bad_addr+48($pop49), $pop8
-	i32.const	$push48=, 0
-	i32.const	$push9=, 8192
-	i32.store	bad_addr+52($pop48), $pop9
-	i32.const	$push47=, 0
-	i32.const	$push10=, 16384
-	i32.store	bad_addr+56($pop47), $pop10
-	i32.const	$push46=, 0
-	i32.const	$push11=, 32768
-	i32.store	bad_addr+60($pop46), $pop11
-	i32.const	$push45=, 0
-	i32.const	$push12=, 65536
-	i32.store	bad_addr+64($pop45), $pop12
-	i32.const	$push44=, 0
-	i32.const	$push13=, 131072
-	i32.store	bad_addr+68($pop44), $pop13
-	i32.const	$push43=, 0
-	i32.const	$push14=, 262144
-	i32.store	bad_addr+72($pop43), $pop14
-	i32.const	$push42=, 0
-	i32.const	$push15=, 524288
-	i32.store	bad_addr+76($pop42), $pop15
-	i32.const	$push41=, 0
-	i32.const	$push16=, 1048576
-	i32.store	bad_addr+80($pop41), $pop16
-	i32.const	$push40=, 0
-	i32.const	$push17=, 2097152
-	i32.store	bad_addr+84($pop40), $pop17
-	i32.const	$push39=, 0
-	i32.const	$push18=, 4194304
-	i32.store	bad_addr+88($pop39), $pop18
-	i32.const	$push38=, 0
-	i32.const	$push19=, 8388608
-	i32.store	bad_addr+92($pop38), $pop19
-	i32.const	$push37=, 0
-	i32.const	$push20=, 16777216
-	i32.store	bad_addr+96($pop37), $pop20
-	i32.const	$push36=, 0
-	i32.const	$push21=, 33554432
-	i32.store	bad_addr+100($pop36), $pop21
-	i32.const	$push35=, 0
-	i32.const	$push22=, 67108864
-	i32.store	bad_addr+104($pop35), $pop22
-	i32.const	$push34=, 0
-	i32.const	$push23=, 134217728
-	i32.store	bad_addr+108($pop34), $pop23
 	i32.const	$push33=, 0
-	i32.const	$push24=, 268435456
-	i32.store	bad_addr+112($pop33), $pop24
+	i64.const	$push2=, 34359738372
+	i64.store	bad_addr+8($pop33), $pop2
 	i32.const	$push32=, 0
-	i32.const	$push25=, 536870912
-	i32.store	bad_addr+116($pop32), $pop25
+	i64.const	$push3=, 137438953488
+	i64.store	bad_addr+16($pop32), $pop3
 	i32.const	$push31=, 0
-	i32.const	$push26=, 1073741824
-	i32.store	bad_addr+120($pop31), $pop26
+	i64.const	$push4=, 549755813952
+	i64.store	bad_addr+24($pop31), $pop4
 	i32.const	$push30=, 0
-	i32.const	$push27=, -2147483648
-	i32.store	bad_addr+124($pop30), $pop27
+	i64.const	$push5=, 2199023255808
+	i64.store	bad_addr+32($pop30), $pop5
 	i32.const	$push29=, 0
-	i32.const	$push28=, 33
-	i32.store	arr_used($pop29), $pop28
+	i64.const	$push6=, 8796093023232
+	i64.store	bad_addr+40($pop29), $pop6
+	i32.const	$push28=, 0
+	i64.const	$push7=, 35184372092928
+	i64.store	bad_addr+48($pop28), $pop7
+	i32.const	$push27=, 0
+	i64.const	$push8=, 140737488371712
+	i64.store	bad_addr+56($pop27), $pop8
+	i32.const	$push26=, 0
+	i64.const	$push9=, 562949953486848
+	i64.store	bad_addr+64($pop26), $pop9
+	i32.const	$push25=, 0
+	i64.const	$push10=, 2251799813947392
+	i64.store	bad_addr+72($pop25), $pop10
+	i32.const	$push24=, 0
+	i64.const	$push11=, 9007199255789568
+	i64.store	bad_addr+80($pop24), $pop11
+	i32.const	$push23=, 0
+	i64.const	$push12=, 36028797023158272
+	i64.store	bad_addr+88($pop23), $pop12
+	i32.const	$push22=, 0
+	i64.const	$push13=, 144115188092633088
+	i64.store	bad_addr+96($pop22), $pop13
+	i32.const	$push21=, 0
+	i64.const	$push14=, 576460752370532352
+	i64.store	bad_addr+104($pop21), $pop14
+	i32.const	$push20=, 0
+	i64.const	$push15=, 2305843009482129408
+	i64.store	bad_addr+112($pop20), $pop15
+	i32.const	$push19=, 0
+	i64.const	$push16=, -9223372035781033984
+	i64.store	bad_addr+120($pop19), $pop16
+	i32.const	$push18=, 0
+	i32.const	$push17=, 33
+	i32.store	arr_used($pop18), $pop17
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -145,12 +112,85 @@ prefetch_for_write:                     # @prefetch_for_write
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	call    	init_addrs@FUNCTION
-	call    	prefetch_for_read@FUNCTION
-	call    	prefetch_for_write@FUNCTION
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push1=, 0
+	i64.const	$push0=, 8589934593
+	i64.store	bad_addr($pop1), $pop0
+	i32.const	$push36=, 0
+	i64.const	$push2=, 34359738372
+	i64.store	bad_addr+8($pop36), $pop2
+	i32.const	$push35=, 0
+	i64.const	$push3=, 137438953488
+	i64.store	bad_addr+16($pop35), $pop3
+	i32.const	$push34=, 0
+	i64.const	$push4=, 549755813952
+	i64.store	bad_addr+24($pop34), $pop4
+	i32.const	$push33=, 0
+	i64.const	$push5=, 2199023255808
+	i64.store	bad_addr+32($pop33), $pop5
+	i32.const	$push32=, 0
+	i64.const	$push6=, 8796093023232
+	i64.store	bad_addr+40($pop32), $pop6
+	i32.const	$push31=, 0
+	i64.const	$push7=, 35184372092928
+	i64.store	bad_addr+48($pop31), $pop7
+	i32.const	$push30=, 0
+	i64.const	$push8=, 140737488371712
+	i64.store	bad_addr+56($pop30), $pop8
+	i32.const	$push29=, 0
+	i64.const	$push9=, 562949953486848
+	i64.store	bad_addr+64($pop29), $pop9
+	i32.const	$push28=, 0
+	i64.const	$push10=, 2251799813947392
+	i64.store	bad_addr+72($pop28), $pop10
+	i32.const	$push27=, 0
+	i64.const	$push11=, 9007199255789568
+	i64.store	bad_addr+80($pop27), $pop11
+	i32.const	$push26=, 0
+	i64.const	$push12=, 36028797023158272
+	i64.store	bad_addr+88($pop26), $pop12
+	i32.const	$push25=, 0
+	i64.const	$push13=, 144115188092633088
+	i64.store	bad_addr+96($pop25), $pop13
+	i32.const	$push24=, 0
+	i64.const	$push14=, 576460752370532352
+	i64.store	bad_addr+104($pop24), $pop14
+	i32.const	$push23=, 0
+	i64.const	$push15=, 2305843009482129408
+	i64.store	bad_addr+112($pop23), $pop15
+	i32.const	$push22=, 0
+	i64.const	$push16=, -9223372035781033984
+	i64.store	bad_addr+120($pop22), $pop16
+	i32.const	$push21=, 0
+	i32.const	$push17=, 33
+	i32.store	arr_used($pop21), $pop17
+	i32.const	$0=, 4
+.LBB3_1:                                # %for.body.i.for.body.i_crit_edge
+                                        # =>This Inner Loop Header: Depth=1
+	loop    	                # label2:
+	i32.const	$push40=, 4
+	i32.add 	$push39=, $0, $pop40
+	tee_local	$push38=, $0=, $pop39
+	i32.const	$push37=, 260
+	i32.ne  	$push18=, $pop38, $pop37
+	br_if   	0, $pop18       # 0: up to label2
+# BB#2:                                 # %for.body.i5.preheader
+	end_loop
+	i32.const	$0=, 4
+.LBB3_3:                                # %for.body.i5.for.body.i5_crit_edge
+                                        # =>This Inner Loop Header: Depth=1
+	loop    	                # label3:
+	i32.const	$push44=, 4
+	i32.add 	$push43=, $0, $pop44
+	tee_local	$push42=, $0=, $pop43
+	i32.const	$push41=, 260
+	i32.ne  	$push19=, $pop42, $pop41
+	br_if   	0, $pop19       # 0: up to label3
+# BB#4:                                 # %prefetch_for_write.exit
+	end_loop
+	i32.const	$push20=, 0
+	call    	exit@FUNCTION, $pop20
 	unreachable
 	.endfunc
 .Lfunc_end3:
@@ -175,5 +215,5 @@ arr_used:
 	.size	arr_used, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

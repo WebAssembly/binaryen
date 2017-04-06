@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/arith-rand.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/arith-rand.c"
 	.section	.text.simple_rand,"ax",@progbits
 	.hidden	simple_rand
 	.globl	simple_rand
@@ -95,7 +95,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$push58=, 0
 	i32.load	$2=, simple_rand.seed($pop58)
-	i32.const	$0=, 0
+	i32.const	$1=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
@@ -104,6 +104,7 @@ main:                                   # @main
 	block   	
 	block   	
 	loop    	                # label6:
+	copy_local	$0=, $1
 	i32.const	$6=, 0
 	i32.const	$7=, 0
 .LBB2_2:                                # %for.cond.i
@@ -121,8 +122,8 @@ main:                                   # @main
 	i32.const	$push61=, 15
 	i32.and 	$push60=, $pop1, $pop61
 	tee_local	$push59=, $1=, $pop60
-	i32.eqz 	$push146=, $pop59
-	br_if   	1, $pop146      # 1: down to label7
+	i32.eqz 	$push144=, $pop59
+	br_if   	1, $pop144      # 1: down to label7
 # BB#3:                                 # %if.else.i
                                         #   in Loop: Header=BB2_2 Depth=2
 	i32.add 	$7=, $1, $7
@@ -130,8 +131,8 @@ main:                                   # @main
 	block   	
 	i32.const	$push67=, 256
 	i32.and 	$push2=, $2, $pop67
-	i32.eqz 	$push147=, $pop2
-	br_if   	0, $pop147      # 0: down to label9
+	i32.eqz 	$push145=, $pop2
+	br_if   	0, $pop145      # 0: down to label9
 # BB#4:                                 # %if.then1.i
                                         #   in Loop: Header=BB2_2 Depth=2
 	i32.const	$push69=, 1
@@ -166,8 +167,8 @@ main:                                   # @main
 	i32.const	$push73=, 15
 	i32.and 	$push72=, $pop7, $pop73
 	tee_local	$push71=, $1=, $pop72
-	i32.eqz 	$push148=, $pop71
-	br_if   	1, $pop148      # 1: down to label10
+	i32.eqz 	$push146=, $pop71
+	br_if   	1, $pop146      # 1: down to label10
 # BB#8:                                 # %if.else.i343
                                         #   in Loop: Header=BB2_7 Depth=2
 	i32.add 	$8=, $1, $8
@@ -175,8 +176,8 @@ main:                                   # @main
 	block   	
 	i32.const	$push79=, 256
 	i32.and 	$push8=, $2, $pop79
-	i32.eqz 	$push149=, $pop8
-	br_if   	0, $pop149      # 0: down to label12
+	i32.eqz 	$push147=, $pop8
+	br_if   	0, $pop147      # 0: down to label12
 # BB#9:                                 # %if.then1.i347
                                         #   in Loop: Header=BB2_7 Depth=2
 	i32.const	$push81=, 1
@@ -195,8 +196,8 @@ main:                                   # @main
 	end_loop
 	end_block                       # label10:
 	block   	
-	i32.eqz 	$push150=, $7
-	br_if   	0, $pop150      # 0: down to label13
+	i32.eqz 	$push148=, $7
+	br_if   	0, $pop148      # 0: down to label13
 # BB#12:                                # %cleanup.cont
                                         #   in Loop: Header=BB2_1 Depth=1
 	block   	
@@ -229,8 +230,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push93=, 65535
 	i32.and 	$push20=, $7, $pop93
-	i32.eqz 	$push151=, $pop20
-	br_if   	0, $pop151      # 0: down to label13
+	i32.eqz 	$push149=, $pop20
+	br_if   	0, $pop149      # 0: down to label13
 # BB#16:                                # %cleanup.cont86
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push114=, 16
@@ -280,8 +281,8 @@ main:                                   # @main
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push117=, 255
 	i32.and 	$push38=, $7, $pop117
-	i32.eqz 	$push152=, $pop38
-	br_if   	0, $pop152      # 0: down to label13
+	i32.eqz 	$push150=, $pop38
+	br_if   	0, $pop150      # 0: down to label13
 # BB#19:                                # %cleanup.cont177
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push138=, 24
@@ -330,18 +331,17 @@ main:                                   # @main
 .LBB2_21:                               # %cleanup229
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label13:
-	i32.const	$push144=, 1
-	i32.add 	$push143=, $0, $pop144
-	tee_local	$push142=, $0=, $pop143
-	i32.const	$push141=, 1000
-	i32.lt_s	$push56=, $pop142, $pop141
+	i32.const	$push142=, 1
+	i32.add 	$1=, $0, $pop142
+	i32.const	$push141=, 999
+	i32.lt_s	$push56=, $0, $pop141
 	br_if   	0, $pop56       # 0: up to label6
 # BB#22:                                # %for.end
 	end_loop
 	i32.const	$push57=, 0
 	i32.store	simple_rand.seed($pop57), $2
-	i32.const	$push145=, 0
-	call    	exit@FUNCTION, $pop145
+	i32.const	$push143=, 0
+	call    	exit@FUNCTION, $pop143
 	unreachable
 .LBB2_23:                               # %if.then136
 	end_block                       # label5:
@@ -373,6 +373,6 @@ simple_rand.seed:
 	.size	simple_rand.seed, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

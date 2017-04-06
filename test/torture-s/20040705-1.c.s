@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040705-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040705-1.c"
 	.section	.text.ret1,"ax",@progbits
 	.hidden	ret1
 	.globl	ret1
@@ -3434,24 +3434,7 @@ fn4_i:                                  # @fn4_i
 	.type	fn5_i,@function
 fn5_i:                                  # @fn5_i
 	.param  	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.const	$push14=, 0
-	i32.load	$push13=, c+8($pop14)
-	tee_local	$push12=, $1=, $pop13
-	i32.const	$push3=, 5
-	i32.shr_u	$push4=, $pop12, $pop3
-	i32.const	$push5=, 1
-	i32.and 	$push6=, $pop4, $pop5
-	i32.const	$push7=, 19
-	i32.rem_u	$push8=, $pop6, $pop7
-	i32.const	$push11=, 5
-	i32.shl 	$push9=, $pop8, $pop11
-	i32.const	$push1=, -33
-	i32.and 	$push2=, $1, $pop1
-	i32.or  	$push10=, $pop9, $pop2
-	i32.store	c+8($pop0), $pop10
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end166:
@@ -3588,4 +3571,4 @@ d:
 	.size	d, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"

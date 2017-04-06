@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49390.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49390.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -83,156 +83,158 @@ test:                                   # @test
 	.param  	i32
 	.local  	i32, i32, i32, i32, i64, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push53=, 0
-	i32.const	$push50=, 0
-	i32.load	$push51=, __stack_pointer($pop50)
-	i32.const	$push52=, 16
-	i32.sub 	$push62=, $pop51, $pop52
-	tee_local	$push61=, $7=, $pop62
-	i32.store	__stack_pointer($pop53), $pop61
+	i32.const	$push54=, 0
+	i32.const	$push52=, 0
+	i32.load	$push51=, __stack_pointer($pop52)
+	i32.const	$push53=, 16
+	i32.sub 	$push63=, $pop51, $pop53
+	tee_local	$push62=, $7=, $pop63
+	i32.store	__stack_pointer($pop54), $pop62
 	i32.const	$push1=, 0
-	i64.load	$push60=, a($pop1)
-	tee_local	$push59=, $5=, $pop60
-	i64.store	8($7), $pop59
+	i64.load	$push61=, a($pop1)
+	tee_local	$push60=, $5=, $pop61
+	i64.store	8($7), $pop60
 	block   	
 	block   	
 	block   	
 	block   	
-	i32.eqz 	$push83=, $0
-	br_if   	0, $pop83       # 0: down to label4
+	i32.eqz 	$push86=, $0
+	br_if   	0, $pop86       # 0: down to label4
 # BB#1:                                 # %if.else
-	block   	
-	i32.load	$push66=, 4($0)
-	tee_local	$push65=, $6=, $pop66
+	i32.load	$push67=, 4($0)
+	tee_local	$push66=, $6=, $pop67
 	i32.const	$push5=, 8191
-	i32.and 	$push64=, $pop65, $pop5
-	tee_local	$push63=, $3=, $pop64
+	i32.and 	$push65=, $pop66, $pop5
+	tee_local	$push64=, $3=, $pop65
 	i32.const	$push7=, 16
-	i32.lt_u	$push8=, $pop63, $pop7
-	br_if   	0, $pop8        # 0: down to label5
+	i32.lt_u	$push8=, $pop64, $pop7
+	br_if   	1, $pop8        # 1: down to label3
 # BB#2:                                 # %if.else
 	i32.const	$push6=, 8192
 	i32.sub 	$push4=, $pop6, $3
 	i32.const	$push9=, 31
-	i32.gt_u	$push10=, $pop4, $pop9
-	br_if   	2, $pop10       # 2: down to label3
-.LBB3_3:                                # %if.then5
-	end_block                       # label5:
+	i32.le_u	$push10=, $pop4, $pop9
+	br_if   	1, $pop10       # 1: down to label3
+# BB#3:                                 # %if.end7
+	i32.call	$push16=, baz@FUNCTION, $0
+	br_if   	2, $pop16       # 2: down to label2
+	br      	3               # 3: down to label1
+.LBB3_4:
+	end_block                       # label4:
+	i32.const	$push58=, 8
+	i32.add 	$push59=, $7, $pop58
+	copy_local	$push69=, $pop59
+	tee_local	$push68=, $0=, $pop69
+	i32.call	$push14=, baz@FUNCTION, $pop68
+	br_if   	1, $pop14       # 1: down to label2
+	br      	2               # 2: down to label1
+.LBB3_5:                                # %if.then5
+	end_block                       # label3:
 	i32.const	$push13=, 1
 	i32.const	$push12=, 0
 	i32.load	$push11=, 0($0)
 	call    	foo@FUNCTION, $pop13, $pop12, $pop11, $6
-	i32.call	$push14=, baz@FUNCTION, $0
-	br_if   	2, $pop14       # 2: down to label2
-	br      	3               # 3: down to label1
-.LBB3_4:
-	end_block                       # label4:
-	i32.const	$push57=, 8
-	i32.add 	$push58=, $7, $pop57
-	copy_local	$0=, $pop58
-.LBB3_5:                                # %if.end7
-	end_block                       # label3:
 	i32.call	$push15=, baz@FUNCTION, $0
-	i32.eqz 	$push84=, $pop15
-	br_if   	1, $pop84       # 1: down to label1
+	i32.eqz 	$push87=, $pop15
+	br_if   	1, $pop87       # 1: down to label1
 .LBB3_6:                                # %if.end9
 	end_block                       # label2:
-	i32.const	$push22=, 32
-	i32.const	$push21=, 4
-	i32.const	$push16=, 0
-	i32.load	$push74=, b($pop16)
-	tee_local	$push73=, $1=, $pop74
-	i32.load16_u	$push72=, 2($pop73)
-	tee_local	$push71=, $2=, $pop72
-	i32.const	$push17=, 2
-	i32.and 	$push18=, $pop71, $pop17
-	i32.const	$push19=, 1
-	i32.shr_u	$push20=, $pop18, $pop19
-	i32.select	$3=, $pop22, $pop21, $pop20
+	i32.const	$push23=, 32
+	i32.const	$push22=, 4
+	i32.const	$push17=, 0
+	i32.load	$push77=, b($pop17)
+	tee_local	$push76=, $1=, $pop77
+	i32.load16_u	$push75=, 2($pop76)
+	tee_local	$push74=, $2=, $pop75
+	i32.const	$push18=, 2
+	i32.and 	$push19=, $pop74, $pop18
+	i32.const	$push20=, 1
+	i32.shr_u	$push21=, $pop19, $pop20
+	i32.select	$3=, $pop23, $pop22, $pop21
 	block   	
 	block   	
-	i32.load	$push70=, 4($0)
-	tee_local	$push69=, $4=, $pop70
-	i32.const	$push23=, 8191
-	i32.and 	$push68=, $pop69, $pop23
-	tee_local	$push67=, $6=, $pop68
-	i32.eqz 	$push85=, $pop67
-	br_if   	0, $pop85       # 0: down to label7
+	i32.load	$push73=, 4($0)
+	tee_local	$push72=, $4=, $pop73
+	i32.const	$push24=, 8191
+	i32.and 	$push71=, $pop72, $pop24
+	tee_local	$push70=, $6=, $pop71
+	i32.eqz 	$push88=, $pop70
+	br_if   	0, $pop88       # 0: down to label6
 # BB#7:                                 # %if.else17
-	i32.ge_u	$push24=, $6, $3
-	br_if   	1, $pop24       # 1: down to label6
+	i32.ge_u	$push25=, $6, $3
+	br_if   	1, $pop25       # 1: down to label5
 # BB#8:                                 # %if.then20
-	i32.const	$push27=, 2
-	i32.const	$push26=, 0
-	i32.load	$push25=, 0($0)
-	call    	foo@FUNCTION, $pop27, $pop26, $pop25, $4
+	i32.const	$push28=, 2
+	i32.const	$push27=, 0
+	i32.load	$push26=, 0($0)
+	call    	foo@FUNCTION, $pop28, $pop27, $pop26, $4
 	br      	2               # 2: down to label1
 .LBB3_9:                                # %if.then15
-	end_block                       # label7:
+	end_block                       # label6:
 	i64.const	$push2=, 32
 	i64.shr_u	$push3=, $5, $pop2
 	i32.wrap/i64	$push0=, $pop3
-	i32.add 	$push28=, $pop0, $3
-	i32.store	12($7), $pop28
+	i32.add 	$push29=, $3, $pop0
+	i32.store	12($7), $pop29
 	copy_local	$6=, $3
 .LBB3_10:                               # %if.end24
-	end_block                       # label6:
+	end_block                       # label5:
 	block   	
-	i32.const	$push29=, 1
-	i32.and 	$push30=, $2, $pop29
-	i32.eqz 	$push86=, $pop30
-	br_if   	0, $pop86       # 0: down to label8
+	i32.ne  	$push32=, $6, $3
+	br_if   	0, $pop32       # 0: down to label7
 # BB#11:                                # %if.end24
-	i32.ne  	$push31=, $6, $3
-	br_if   	0, $pop31       # 0: down to label8
+	i32.const	$push31=, 1
+	i32.and 	$push30=, $2, $pop31
+	i32.eqz 	$push89=, $pop30
+	br_if   	0, $pop89       # 0: down to label7
 # BB#12:                                # %if.then31
-	i64.load	$push43=, 0($0):p2align=2
-	i64.store	0($7):p2align=2, $pop43
+	i64.load	$push44=, 0($0):p2align=2
+	i64.store	0($7):p2align=2, $pop44
 	call    	bar@FUNCTION, $7
-	i32.const	$push49=, 3
-	i32.const	$push48=, 0
-	i32.load	$push47=, 0($0)
-	i32.const	$push44=, 4
-	i32.add 	$push45=, $0, $pop44
-	i32.load	$push46=, 0($pop45)
-	call    	foo@FUNCTION, $pop49, $pop48, $pop47, $pop46
+	i32.const	$push50=, 3
+	i32.const	$push49=, 0
+	i32.load	$push48=, 0($0)
+	i32.const	$push45=, 4
+	i32.add 	$push46=, $0, $pop45
+	i32.load	$push47=, 0($pop46)
+	call    	foo@FUNCTION, $pop50, $pop49, $pop48, $pop47
 	br      	1               # 1: down to label1
 .LBB3_13:                               # %if.end34
-	end_block                       # label8:
-	i32.const	$push32=, 4
-	i32.add 	$push33=, $0, $pop32
-	i32.load	$push82=, 0($pop33)
-	tee_local	$push81=, $3=, $pop82
-	i32.const	$push34=, 8191
-	i32.and 	$push35=, $pop81, $pop34
-	i32.add 	$push80=, $1, $pop35
-	tee_local	$push79=, $6=, $pop80
-	i32.load	$push78=, 4($pop79)
-	tee_local	$push77=, $2=, $pop78
-	i32.load	$push76=, 0($0)
-	tee_local	$push75=, $0=, $pop76
-	i32.lt_u	$push36=, $pop77, $pop75
-	br_if   	0, $pop36       # 0: down to label1
+	end_block                       # label7:
+	i32.const	$push33=, 4
+	i32.add 	$push34=, $0, $pop33
+	i32.load	$push85=, 0($pop34)
+	tee_local	$push84=, $3=, $pop85
+	i32.const	$push35=, 8191
+	i32.and 	$push36=, $pop84, $pop35
+	i32.add 	$push83=, $1, $pop36
+	tee_local	$push82=, $6=, $pop83
+	i32.load	$push81=, 4($pop82)
+	tee_local	$push80=, $2=, $pop81
+	i32.load	$push79=, 0($0)
+	tee_local	$push78=, $0=, $pop79
+	i32.lt_u	$push37=, $pop80, $pop78
+	br_if   	0, $pop37       # 0: down to label1
 # BB#14:                                # %land.lhs.true41
 	block   	
-	i32.ne  	$push37=, $2, $0
-	br_if   	0, $pop37       # 0: down to label9
+	i32.ne  	$push38=, $2, $0
+	br_if   	0, $pop38       # 0: down to label8
 # BB#15:                                # %lor.lhs.false47
-	i32.const	$push38=, 8
-	i32.add 	$push39=, $6, $pop38
-	i32.load	$push40=, 0($pop39)
-	i32.lt_u	$push41=, $pop40, $3
-	br_if   	1, $pop41       # 1: down to label1
+	i32.const	$push39=, 8
+	i32.add 	$push40=, $6, $pop39
+	i32.load	$push41=, 0($pop40)
+	i32.lt_u	$push42=, $pop41, $3
+	br_if   	1, $pop42       # 1: down to label1
 .LBB3_16:                               # %if.then53
-	end_block                       # label9:
-	i32.const	$push42=, 4
-	call    	foo@FUNCTION, $pop42, $6, $0, $3
+	end_block                       # label8:
+	i32.const	$push43=, 4
+	call    	foo@FUNCTION, $pop43, $6, $0, $3
 .LBB3_17:                               # %cleanup
 	end_block                       # label1:
-	i32.const	$push56=, 0
-	i32.const	$push54=, 16
-	i32.add 	$push55=, $7, $pop54
-	i32.store	__stack_pointer($pop56), $pop55
+	i32.const	$push57=, 0
+	i32.const	$push55=, 16
+	i32.add 	$push56=, $7, $pop55
+	i32.store	__stack_pointer($pop57), $pop56
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -262,12 +264,12 @@ main:                                   # @main
 	i32.load	$push2=, v($pop5)
 	i32.const	$push3=, 16384
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label10
+	br_if   	0, $pop4        # 0: down to label9
 # BB#1:                                 # %if.end
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB4_2:                                # %if.then
-	end_block                       # label10:
+	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -311,5 +313,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

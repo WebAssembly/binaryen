@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40657.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40657.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -8,10 +8,10 @@ bar:                                    # @bar
 	.param  	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push1=, __stack_pointer($pop0)
+	i32.const	$push1=, 0
+	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 16
-	i32.sub 	$push5=, $pop1, $pop2
+	i32.sub 	$push5=, $pop0, $pop2
 	tee_local	$push4=, $1=, $pop5
 	i32.store	12($pop4), $0
 	i32.const	$push3=, 12
@@ -32,10 +32,10 @@ foo:                                    # @foo
 	.local  	i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push4=, 0
-	i32.const	$push1=, 0
-	i32.load	$push2=, __stack_pointer($pop1)
+	i32.const	$push2=, 0
+	i32.load	$push1=, __stack_pointer($pop2)
 	i32.const	$push3=, 16
-	i32.sub 	$push11=, $pop2, $pop3
+	i32.sub 	$push11=, $pop1, $pop3
 	tee_local	$push10=, $1=, $pop11
 	i32.store	__stack_pointer($pop4), $pop10
 	i32.const	$push8=, 12
@@ -88,6 +88,6 @@ v:
 	.size	v, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

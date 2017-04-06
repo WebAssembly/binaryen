@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021011-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021011-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -216,7 +216,7 @@ main:                                   # @main
 # BB#17:                                # %for.cond.15
 	i32.const	$push137=, 0
 	return  	$pop137
-.LBB0_18:                               # %if.then7
+.LBB0_18:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -240,6 +240,6 @@ buf:
 	.size	.L.str, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

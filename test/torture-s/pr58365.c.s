@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58365.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58365.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -20,85 +20,84 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push29=, 0
-	i32.const	$push26=, 0
-	i32.load	$push27=, __stack_pointer($pop26)
-	i32.const	$push28=, 32
-	i32.sub 	$push35=, $pop27, $pop28
-	tee_local	$push34=, $0=, $pop35
-	i32.store	__stack_pointer($pop29), $pop34
+	i32.const	$push27=, 0
+	i32.const	$push25=, 0
+	i32.load	$push24=, __stack_pointer($pop25)
+	i32.const	$push26=, 32
+	i32.sub 	$push33=, $pop24, $pop26
+	tee_local	$push32=, $1=, $pop33
+	i32.store	__stack_pointer($pop27), $pop32
 	block   	
 	block   	
-	i32.const	$push33=, 0
-	i32.load8_u	$push0=, i($pop33)
-	i32.eqz 	$push49=, $pop0
-	br_if   	0, $pop49       # 0: down to label1
+	i32.const	$push31=, 0
+	i32.load8_u	$push0=, i($pop31)
+	i32.eqz 	$push48=, $pop0
+	br_if   	0, $pop48       # 0: down to label1
 # BB#1:                                 # %if.then.i
 	i32.const	$push2=, 24
-	i32.add 	$push3=, $0, $pop2
-	i32.const	$push38=, 0
-	i32.load	$push1=, f+16($pop38)
+	i32.add 	$push3=, $1, $pop2
+	i32.const	$push36=, 0
+	i32.load	$push1=, f+16($pop36)
 	i32.store	0($pop3), $pop1
 	i32.const	$push5=, 16
-	i32.add 	$push6=, $0, $pop5
-	i32.const	$push37=, 0
-	i64.load	$push4=, f+8($pop37):p2align=2
+	i32.add 	$push6=, $1, $pop5
+	i32.const	$push35=, 0
+	i64.load	$push4=, f+8($pop35):p2align=2
 	i64.store	0($pop6), $pop4
-	i32.const	$push36=, 0
-	i64.load	$push7=, f($pop36):p2align=2
-	i64.store	8($0), $pop7
+	i32.const	$push34=, 0
+	i64.load	$push7=, f($pop34):p2align=2
+	i64.store	8($1), $pop7
 	br      	1               # 1: down to label0
 .LBB1_2:                                # %if.end.i
 	end_block                       # label1:
 	i32.const	$push8=, 24
-	i32.add 	$push9=, $0, $pop8
-	i32.const	$push40=, 0
-	i32.store	0($pop9), $pop40
+	i32.add 	$push9=, $1, $pop8
+	i32.const	$push38=, 0
+	i32.store	0($pop9), $pop38
 	i32.const	$push10=, 16
-	i32.add 	$push11=, $0, $pop10
+	i32.add 	$push11=, $1, $pop10
 	i64.const	$push12=, 0
 	i64.store	0($pop11), $pop12
-	i64.const	$push39=, 0
-	i64.store	8($0), $pop39
+	i64.const	$push37=, 0
+	i64.store	8($1), $pop37
 .LBB1_3:                                # %bar.exit
 	end_block                       # label0:
-	i32.const	$push47=, 0
-	i32.load	$push13=, 12($0)
-	i32.store	h+4($pop47), $pop13
 	i32.const	$push46=, 0
-	i32.load	$push14=, 8($0)
-	i32.store	h($pop46), $pop14
-	i32.const	$push45=, 0
-	i32.const	$push15=, 24
-	i32.add 	$push16=, $0, $pop15
-	i32.load	$push17=, 0($pop16)
-	i32.store	h+16($pop45), $pop17
-	i32.const	$push44=, 0
-	i32.const	$push18=, 20
-	i32.add 	$push19=, $0, $pop18
-	i32.load	$push20=, 0($pop19)
-	i32.store	h+12($pop44), $pop20
+	i32.load	$push45=, 12($1)
+	tee_local	$push44=, $0=, $pop45
+	i32.store	h+4($pop46), $pop44
 	i32.const	$push43=, 0
-	i32.const	$push21=, 16
-	i32.add 	$push22=, $0, $pop21
-	i32.load	$push23=, 0($pop22)
-	i32.store	h+8($pop43), $pop23
+	i32.load	$push13=, 8($1)
+	i32.store	h($pop43), $pop13
 	i32.const	$push42=, 0
-	i32.const	$push24=, 1
-	i32.store	f+4($pop42), $pop24
-	block   	
+	i32.const	$push14=, 1
+	i32.store	f+4($pop42), $pop14
 	i32.const	$push41=, 0
-	i32.load	$push25=, h+4($pop41)
-	br_if   	0, $pop25       # 0: down to label2
+	i32.const	$push15=, 24
+	i32.add 	$push16=, $1, $pop15
+	i32.load	$push17=, 0($pop16)
+	i32.store	h+16($pop41), $pop17
+	i32.const	$push40=, 0
+	i32.const	$push18=, 20
+	i32.add 	$push19=, $1, $pop18
+	i32.load	$push20=, 0($pop19)
+	i32.store	h+12($pop40), $pop20
+	i32.const	$push39=, 0
+	i32.const	$push21=, 16
+	i32.add 	$push22=, $1, $pop21
+	i32.load	$push23=, 0($pop22)
+	i32.store	h+8($pop39), $pop23
+	block   	
+	br_if   	0, $0           # 0: down to label2
 # BB#4:                                 # %if.end
-	i32.const	$push32=, 0
-	i32.const	$push30=, 32
-	i32.add 	$push31=, $0, $pop30
-	i32.store	__stack_pointer($pop32), $pop31
-	i32.const	$push48=, 0
-	return  	$pop48
+	i32.const	$push30=, 0
+	i32.const	$push28=, 32
+	i32.add 	$push29=, $1, $pop28
+	i32.store	__stack_pointer($pop30), $pop29
+	i32.const	$push47=, 0
+	return  	$pop47
 .LBB1_5:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
@@ -133,5 +132,5 @@ f:
 	.size	f, 20
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

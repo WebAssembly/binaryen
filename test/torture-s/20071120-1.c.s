@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
 	.section	.text.vec_assert_fail,"ax",@progbits
 	.hidden	vec_assert_fail
 	.globl	vec_assert_fail
@@ -76,7 +76,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	br_if   	1, $pop24       # 1: down to label1
 # BB#6:                                 # %if.end16
 	return
-.LBB2_7:                                # %cond.false.i26
+.LBB2_7:                                # %cond.false.i
 	end_block                       # label2:
 	call    	vec_assert_fail@FUNCTION
 	unreachable
@@ -138,6 +138,6 @@ deferred_access_stack:
 	.size	deferred_access_stack, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	__builtin_malloc, i32

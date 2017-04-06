@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/multi-ix.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/multi-ix.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -9,10 +9,10 @@ f:                                      # @f
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push193=, 0
-	i32.const	$push190=, 0
-	i32.load	$push191=, __stack_pointer($pop190)
+	i32.const	$push191=, 0
+	i32.load	$push190=, __stack_pointer($pop191)
 	i32.const	$push192=, 80480
-	i32.sub 	$push666=, $pop191, $pop192
+	i32.sub 	$push666=, $pop190, $pop192
 	tee_local	$push665=, $41=, $pop666
 	i32.store	__stack_pointer($pop193), $pop665
 	block   	
@@ -291,8 +291,8 @@ f:                                      # @f
 	i32.const	$push349=, 320
 	i32.add 	$push350=, $41, $pop349
 	call    	s@FUNCTION, $pop784, $pop350
-	i32.load	$1=, 480($41)
-	i32.load	$2=, 2480($41)
+	i32.load	$1=, 2480($41)
+	i32.load	$2=, 480($41)
 	i32.load	$3=, 4480($41)
 	i32.load	$4=, 6480($41)
 	i32.load	$5=, 8480($41)
@@ -310,8 +310,8 @@ f:                                      # @f
 	i32.load	$17=, 32480($41)
 	i32.load	$18=, 34480($41)
 	i32.load	$19=, 36480($41)
-	i32.load	$20=, 38480($41)
-	i32.load	$21=, 40480($41)
+	i32.load	$20=, 40480($41)
+	i32.load	$21=, 38480($41)
 	i32.load	$22=, 42480($41)
 	i32.load	$23=, 44480($41)
 	i32.load	$24=, 46480($41)
@@ -713,13 +713,13 @@ f:                                      # @f
 	i32.shl 	$push110=, $22, $pop728
 	i32.add 	$push111=, $pop542, $pop110
 	i32.store	0($pop111), $22
-	i32.const	$push543=, 40480
+	i32.const	$push543=, 38480
 	i32.add 	$push544=, $41, $pop543
 	i32.const	$push727=, 2
 	i32.shl 	$push112=, $21, $pop727
 	i32.add 	$push113=, $pop544, $pop112
 	i32.store	0($pop113), $21
-	i32.const	$push545=, 38480
+	i32.const	$push545=, 40480
 	i32.add 	$push546=, $41, $pop545
 	i32.const	$push726=, 2
 	i32.shl 	$push114=, $20, $pop726
@@ -827,13 +827,13 @@ f:                                      # @f
 	i32.shl 	$push148=, $3, $pop709
 	i32.add 	$push149=, $pop580, $pop148
 	i32.store	0($pop149), $3
-	i32.const	$push581=, 2480
+	i32.const	$push581=, 480
 	i32.add 	$push582=, $41, $pop581
 	i32.const	$push708=, 2
 	i32.shl 	$push150=, $2, $pop708
 	i32.add 	$push151=, $pop582, $pop150
 	i32.store	0($pop151), $2
-	i32.const	$push583=, 480
+	i32.const	$push583=, 2480
 	i32.add 	$push584=, $41, $pop583
 	i32.const	$push707=, 2
 	i32.shl 	$push152=, $1, $pop707
@@ -1057,10 +1057,10 @@ s:                                      # @s
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push3=, 0
-	i32.load	$push4=, __stack_pointer($pop3)
+	i32.const	$push4=, 0
+	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 16
-	i32.sub 	$push7=, $pop4, $pop5
+	i32.sub 	$push7=, $pop3, $pop5
 	tee_local	$push6=, $2=, $pop7
 	i32.store	12($pop6), $1
 	block   	
@@ -1102,10 +1102,10 @@ z:                                      # @z
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push4=, 0
-	i32.const	$push1=, 0
-	i32.load	$push2=, __stack_pointer($pop1)
+	i32.const	$push2=, 0
+	i32.load	$push1=, __stack_pointer($pop2)
 	i32.const	$push3=, 16
-	i32.sub 	$push9=, $pop2, $pop3
+	i32.sub 	$push9=, $pop1, $pop3
 	tee_local	$push8=, $3=, $pop9
 	i32.store	__stack_pointer($pop4), $pop8
 	i32.store	12($3), $1
@@ -1151,10 +1151,10 @@ c:                                      # @c
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push10=, 0
-	i32.const	$push7=, 0
-	i32.load	$push8=, __stack_pointer($pop7)
+	i32.const	$push8=, 0
+	i32.load	$push7=, __stack_pointer($pop8)
 	i32.const	$push9=, 16
-	i32.sub 	$push16=, $pop8, $pop9
+	i32.sub 	$push16=, $pop7, $pop9
 	tee_local	$push15=, $3=, $pop16
 	i32.store	__stack_pointer($pop10), $pop15
 	i32.store	12($3), $1
@@ -1218,6 +1218,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32
 	.functype	abort, void

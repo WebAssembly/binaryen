@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960116-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960116-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -7,24 +7,22 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$1=, 1
 	block   	
-	block   	
-	i32.const	$push2=, 1
-	i32.and 	$push0=, $0, $pop2
-	br_if   	0, $pop0        # 0: down to label1
+	i32.const	$push3=, 1
+	i32.and 	$push0=, $0, $pop3
+	br_if   	0, $pop0        # 0: down to label0
 # BB#1:                                 # %land.lhs.true
 	i32.load	$push1=, 0($0)
-	br_if   	1, $pop1        # 1: down to label0
-.LBB0_2:                                # %if.end
-	end_block                       # label1:
-	i32.const	$1=, 0
-.LBB0_3:                                # %return
+	i32.eqz 	$push5=, $pop1
+	br_if   	0, $pop5        # 0: down to label0
+# BB#2:                                 # %return
+	i32.const	$push4=, 1
+	return  	$pop4
+.LBB0_3:                                # %if.end
 	end_block                       # label0:
-	copy_local	$push3=, $1
-                                        # fallthrough-return: $pop3
+	i32.const	$push2=, 0
+                                        # fallthrough-return: $pop2
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -44,5 +42,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

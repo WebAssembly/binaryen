@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020510-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020510-1.c"
 	.section	.text.testc,"ax",@progbits
 	.hidden	testc
 	.globl	testc
@@ -18,20 +18,20 @@ testc:                                  # @testc
 	i32.lt_s	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label1
-# BB#2:                                 # %if.then5
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_3:                                # %if.else
+	i32.eqz 	$push6=, $1
+	br_if   	1, $pop6        # 1: down to label1
+	br      	2               # 2: down to label0
+.LBB0_2:                                # %if.else
 	end_block                       # label2:
-	br_if   	1, $1           # 1: down to label0
-.LBB0_4:                                # %if.end9
+	i32.eqz 	$push7=, $1
+	br_if   	1, $pop7        # 1: down to label0
+.LBB0_3:                                # %if.then5
 	end_block                       # label1:
-	return
-.LBB0_5:                                # %if.then7
-	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+.LBB0_4:                                # %if.end9
+	end_block                       # label0:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	testc, .Lfunc_end0-testc
@@ -54,20 +54,20 @@ tests:                                  # @tests
 	i32.lt_s	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label5
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label4
-# BB#2:                                 # %if.then5
-	call    	abort@FUNCTION
-	unreachable
-.LBB1_3:                                # %if.else
+	i32.eqz 	$push6=, $1
+	br_if   	1, $pop6        # 1: down to label4
+	br      	2               # 2: down to label3
+.LBB1_2:                                # %if.else
 	end_block                       # label5:
-	br_if   	1, $1           # 1: down to label3
-.LBB1_4:                                # %if.end9
+	i32.eqz 	$push7=, $1
+	br_if   	1, $pop7        # 1: down to label3
+.LBB1_3:                                # %if.then5
 	end_block                       # label4:
-	return
-.LBB1_5:                                # %if.then7
-	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+.LBB1_4:                                # %if.end9
+	end_block                       # label3:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	tests, .Lfunc_end1-tests
@@ -86,20 +86,20 @@ testi:                                  # @testi
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label8
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label7
-# BB#2:                                 # %if.then2
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_3:                                # %if.else
+	i32.eqz 	$push2=, $1
+	br_if   	1, $pop2        # 1: down to label7
+	br      	2               # 2: down to label6
+.LBB2_2:                                # %if.else
 	end_block                       # label8:
-	br_if   	1, $1           # 1: down to label6
-.LBB2_4:                                # %if.end6
+	i32.eqz 	$push3=, $1
+	br_if   	1, $pop3        # 1: down to label6
+.LBB2_3:                                # %if.then2
 	end_block                       # label7:
-	return
-.LBB2_5:                                # %if.then4
-	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+.LBB2_4:                                # %if.end6
+	end_block                       # label6:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	testi, .Lfunc_end2-testi
@@ -118,20 +118,20 @@ testl:                                  # @testl
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label11
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label10
-# BB#2:                                 # %if.then2
-	call    	abort@FUNCTION
-	unreachable
-.LBB3_3:                                # %if.else
+	i32.eqz 	$push2=, $1
+	br_if   	1, $pop2        # 1: down to label10
+	br      	2               # 2: down to label9
+.LBB3_2:                                # %if.else
 	end_block                       # label11:
-	br_if   	1, $1           # 1: down to label9
-.LBB3_4:                                # %if.end6
+	i32.eqz 	$push3=, $1
+	br_if   	1, $pop3        # 1: down to label9
+.LBB3_3:                                # %if.then2
 	end_block                       # label10:
-	return
-.LBB3_5:                                # %if.then4
-	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
+.LBB3_4:                                # %if.end6
+	end_block                       # label9:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	testl, .Lfunc_end3-testl
@@ -150,5 +150,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

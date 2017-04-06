@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-chk-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-chk-1.c"
 	.section	.text.__fprintf_chk,"ax",@progbits
 	.hidden	__fprintf_chk
 	.globl	__fprintf_chk
@@ -10,10 +10,10 @@ __fprintf_chk:                          # @__fprintf_chk
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
-	i32.const	$push2=, 0
-	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push3=, 0
+	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push11=, $pop3, $pop4
+	i32.sub 	$push11=, $pop2, $pop4
 	tee_local	$push10=, $4=, $pop11
 	i32.store	__stack_pointer($pop5), $pop10
 	block   	
@@ -48,10 +48,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push57=, 0
-	i32.const	$push54=, 0
-	i32.load	$push55=, __stack_pointer($pop54)
+	i32.const	$push55=, 0
+	i32.load	$push54=, __stack_pointer($pop55)
 	i32.const	$push56=, 224
-	i32.sub 	$push95=, $pop55, $pop56
+	i32.sub 	$push95=, $pop54, $pop56
 	tee_local	$push94=, $1=, $pop95
 	i32.store	__stack_pointer($pop57), $pop94
 	i32.const	$push93=, 0
@@ -386,7 +386,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop60), $pop59
 	i32.const	$push199=, 0
 	return  	$pop199
-.LBB1_34:                               # %if.then115
+.LBB1_34:                               # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -445,7 +445,8 @@ should_optimize:
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	vfprintf, i32, i32, i32, i32
 	.import_global	stdout
+	.size	stdout, 4

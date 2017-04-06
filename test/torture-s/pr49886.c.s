@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49886.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49886.c"
 	.section	.text.never_ever,"ax",@progbits
 	.hidden	never_ever
 	.globl	never_ever
@@ -19,12 +19,25 @@ never_ever:                             # @never_ever
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
+	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push0=, 1
-	i32.store	cond($pop1), $pop0
 	i32.const	$push2=, 0
-                                        # fallthrough-return: $pop2
+	i32.const	$push0=, 1
+	i32.store	cond($pop2), $pop0
+	i32.const	$0=, 100
+.LBB1_1:                                # %for.body
+                                        # =>This Inner Loop Header: Depth=1
+	loop    	                # label0:
+	i32.const	$push6=, 0
+	call    	mark_cell@FUNCTION, $pop6
+	i32.const	$push5=, -1
+	i32.add 	$push4=, $0, $pop5
+	tee_local	$push3=, $0=, $pop4
+	br_if   	0, $pop3        # 0: up to label0
+# BB#2:                                 # %for.end
+	end_loop
+	i32.const	$push1=, 0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
@@ -63,22 +76,22 @@ mark_cell:                              # @mark_cell
 	block   	
 	block   	
 	i32.eqz 	$push49=, $0
-	br_if   	0, $pop49       # 0: down to label9
+	br_if   	0, $pop49       # 0: down to label10
 # BB#1:                                 # %entry
 	i32.const	$push1=, 0
 	i32.load	$push0=, cond($pop1)
 	i32.eqz 	$push50=, $pop0
-	br_if   	0, $pop50       # 0: down to label9
+	br_if   	0, $pop50       # 0: down to label10
 # BB#2:                                 # %land.lhs.true
 	i32.load	$push2=, 8($0)
 	i32.const	$push3=, 4
 	i32.ne  	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label9
+	br_if   	0, $pop4        # 0: down to label10
 # BB#3:                                 # %land.lhs.true2
 	i32.load	$push38=, 0($0)
 	tee_local	$push37=, $0=, $pop38
 	i32.eqz 	$push51=, $pop37
-	br_if   	0, $pop51       # 0: down to label9
+	br_if   	0, $pop51       # 0: down to label10
 # BB#4:                                 # %land.lhs.true4
 	i32.const	$push41=, 2
 	i32.add 	$push40=, $0, $pop41
@@ -87,13 +100,13 @@ mark_cell:                              # @mark_cell
 	i32.const	$push6=, 4
 	i32.and 	$push7=, $pop5, $pop6
 	i32.eqz 	$push52=, $pop7
-	br_if   	1, $pop52       # 1: down to label8
+	br_if   	1, $pop52       # 1: down to label9
 # BB#5:                                 # %land.lhs.true17
 	i32.load8_u	$push8=, 0($1)
 	i32.const	$push42=, 2
 	i32.and 	$push9=, $pop8, $pop42
 	i32.eqz 	$push53=, $pop9
-	br_if   	2, $pop53       # 2: down to label7
+	br_if   	2, $pop53       # 2: down to label8
 # BB#6:                                 # %land.lhs.true33
 	i32.const	$push10=, 2
 	i32.add 	$push11=, $0, $pop10
@@ -101,7 +114,7 @@ mark_cell:                              # @mark_cell
 	i32.const	$push43=, 1
 	i32.and 	$push13=, $pop12, $pop43
 	i32.eqz 	$push54=, $pop13
-	br_if   	3, $pop54       # 3: down to label6
+	br_if   	3, $pop54       # 3: down to label7
 # BB#7:                                 # %land.lhs.true49
 	i32.const	$push44=, 1
 	i32.add 	$push14=, $0, $pop44
@@ -109,7 +122,7 @@ mark_cell:                              # @mark_cell
 	i32.const	$push16=, 7
 	i32.shr_u	$push17=, $pop15, $pop16
 	i32.eqz 	$push55=, $pop17
-	br_if   	4, $pop55       # 4: down to label5
+	br_if   	4, $pop55       # 4: down to label6
 # BB#8:                                 # %land.lhs.true65
 	i32.const	$push18=, 1
 	i32.add 	$push46=, $0, $pop18
@@ -118,13 +131,13 @@ mark_cell:                              # @mark_cell
 	i32.const	$push20=, 64
 	i32.and 	$push21=, $pop19, $pop20
 	i32.eqz 	$push56=, $pop21
-	br_if   	5, $pop56       # 5: down to label4
+	br_if   	5, $pop56       # 5: down to label5
 # BB#9:                                 # %land.lhs.true81
 	i32.load8_u	$push22=, 0($1)
 	i32.const	$push23=, 32
 	i32.and 	$push24=, $pop22, $pop23
 	i32.eqz 	$push57=, $pop24
-	br_if   	6, $pop57       # 6: down to label3
+	br_if   	6, $pop57       # 6: down to label4
 # BB#10:                                # %land.lhs.true97
 	i32.const	$push25=, 1
 	i32.add 	$push48=, $0, $pop25
@@ -133,13 +146,13 @@ mark_cell:                              # @mark_cell
 	i32.const	$push27=, 16
 	i32.and 	$push28=, $pop26, $pop27
 	i32.eqz 	$push58=, $pop28
-	br_if   	7, $pop58       # 7: down to label2
+	br_if   	7, $pop58       # 7: down to label3
 # BB#11:                                # %land.lhs.true113
 	i32.load8_u	$push29=, 0($1)
 	i32.const	$push30=, 8
 	i32.and 	$push31=, $pop29, $pop30
 	i32.eqz 	$push59=, $pop31
-	br_if   	8, $pop59       # 8: down to label1
+	br_if   	8, $pop59       # 8: down to label2
 # BB#12:                                # %land.lhs.true129
 	i32.const	$push32=, 1
 	i32.add 	$push33=, $0, $pop32
@@ -147,44 +160,44 @@ mark_cell:                              # @mark_cell
 	i32.const	$push35=, 4
 	i32.and 	$push36=, $pop34, $pop35
 	i32.eqz 	$push60=, $pop36
-	br_if   	9, $pop60       # 9: down to label0
+	br_if   	9, $pop60       # 9: down to label1
 .LBB3_13:                               # %if.end137
-	end_block                       # label9:
+	end_block                       # label10:
 	return
 .LBB3_14:                               # %if.then7
-	end_block                       # label8:
+	end_block                       # label9:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_15:                               # %if.then22
-	end_block                       # label7:
+	end_block                       # label8:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_16:                               # %if.then38
-	end_block                       # label6:
+	end_block                       # label7:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_17:                               # %if.then54
-	end_block                       # label5:
+	end_block                       # label6:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_18:                               # %if.then70
-	end_block                       # label4:
+	end_block                       # label5:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_19:                               # %if.then86
-	end_block                       # label3:
+	end_block                       # label4:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_20:                               # %if.then102
-	end_block                       # label2:
+	end_block                       # label3:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_21:                               # %if.then118
-	end_block                       # label1:
+	end_block                       # label2:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 .LBB3_22:                               # %if.then134
-	end_block                       # label0:
+	end_block                       # label1:
 	call    	never_ever@FUNCTION, $0, $0
 	unreachable
 	.endfunc
@@ -227,5 +240,5 @@ gi:
 	.size	gi, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

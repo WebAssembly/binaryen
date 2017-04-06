@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44202-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44202-1.c"
 	.section	.text.add512,"ax",@progbits
 	.hidden	add512
 	.globl	add512
@@ -38,13 +38,15 @@ add513:                                 # @add513
 	i32.const	$push0=, 513
 	i32.add 	$push2=, $0, $pop0
 	tee_local	$push1=, $2=, $pop2
-	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %if.then
-	i32.store	0($1), $0
-.LBB1_2:                                # %if.end
+	i32.eqz 	$push3=, $pop1
+	br_if   	0, $pop3        # 0: down to label1
+# BB#1:                                 # %if.end
+	return  	$2
+.LBB1_2:                                # %if.then
 	end_block                       # label1:
-	copy_local	$push3=, $2
-                                        # fallthrough-return: $pop3
+	i32.store	0($1), $0
+	copy_local	$push4=, $2
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	add513, .Lfunc_end1-add513
@@ -58,10 +60,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push19=, $pop9, $pop10
+	i32.sub 	$push19=, $pop8, $pop10
 	tee_local	$push18=, $0=, $pop19
 	i32.store	__stack_pointer($pop11), $pop18
 	i32.const	$push17=, -1
@@ -103,6 +105,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
 	.section	.text.f883b,"ax",@progbits
 	.hidden	f883b
 	.globl	f883b
@@ -13,6 +13,7 @@ f883b:                                  # @f883b
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
 	i32.add 	$push12=, $0, $6
+	i64.load	$push10=, 0($3)
 	i32.load16_s	$push29=, 0($1)
 	tee_local	$push28=, $5=, $pop29
 	i32.const	$push27=, 1
@@ -32,8 +33,7 @@ f883b:                                  # @f883b
 	i32.const	$push21=, 251
 	i32.or  	$push8=, $pop7, $pop21
 	i64.extend_u/i32	$push9=, $pop8
-	i64.load	$push10=, 0($3)
-	i64.and 	$push11=, $pop9, $pop10
+	i64.and 	$push11=, $pop10, $pop9
 	i64.store8	0($pop12), $pop11
 	i32.const	$push20=, 8
 	i32.add 	$3=, $3, $pop20
@@ -102,6 +102,7 @@ main:                                   # @main
 .LBB1_3:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
+	i64.load	$push15=, 0($3)
 	i32.const	$push50=, arg1+192
 	i32.add 	$push4=, $1, $pop50
 	i32.load16_s	$push49=, 0($pop4)
@@ -123,8 +124,7 @@ main:                                   # @main
 	i32.const	$push41=, 251
 	i32.or  	$push13=, $pop12, $pop41
 	i64.extend_u/i32	$push14=, $pop13
-	i64.load	$push15=, 0($3)
-	i64.and 	$push16=, $pop14, $pop15
+	i64.and 	$push16=, $pop15, $pop14
 	i64.store8	0($4), $pop16
 	i32.const	$push40=, 4
 	i32.add 	$2=, $2, $pop40
@@ -138,17 +138,17 @@ main:                                   # @main
 	br_if   	0, $pop35       # 0: up to label2
 # BB#4:                                 # %for.body10.preheader
 	end_loop
-	i32.const	$4=, 0
+	i32.const	$4=, -1
 	i32.const	$3=, .Lmain.correct
 .LBB1_5:                                # %for.body10
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label4:
-	i32.const	$push51=, result
+	i32.load	$push19=, 0($3)
+	i32.const	$push51=, result+1
 	i32.add 	$push17=, $4, $pop51
 	i32.load8_s	$push18=, 0($pop17)
-	i32.load	$push19=, 0($3)
-	i32.ne  	$push20=, $pop18, $pop19
+	i32.ne  	$push20=, $pop19, $pop18
 	br_if   	1, $pop20       # 1: down to label3
 # BB#6:                                 # %for.cond7
                                         #   in Loop: Header=BB1_5 Depth=1
@@ -157,7 +157,7 @@ main:                                   # @main
 	i32.const	$push55=, 1
 	i32.add 	$push54=, $4, $pop55
 	tee_local	$push53=, $4=, $pop54
-	i32.const	$push52=, 95
+	i32.const	$push52=, 94
 	i32.le_s	$push21=, $pop53, $pop52
 	br_if   	0, $pop21       # 0: up to label4
 # BB#7:                                 # %for.end18
@@ -320,5 +320,5 @@ result:
 	.size	result, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

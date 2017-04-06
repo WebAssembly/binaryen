@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-1.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -424,7 +424,7 @@ main:                                   # @main
 	i32.const	$push95=, 0
 	call    	exit@FUNCTION, $pop95
 	unreachable
-.LBB0_55:                               # %if.then130
+.LBB0_55:                               # %if.then14
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -448,6 +448,6 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

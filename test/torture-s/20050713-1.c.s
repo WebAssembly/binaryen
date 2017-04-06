@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050713-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050713-1.c"
 	.section	.text.foo2,"ax",@progbits
 	.hidden	foo2
 	.globl	foo2
@@ -41,7 +41,7 @@ foo2:                                   # @foo2
 # BB#6:                                 # %if.end13
 	i32.const	$push18=, 0
 	return  	$pop18
-.LBB0_7:                                # %if.then12
+.LBB0_7:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -105,7 +105,7 @@ foo3:                                   # @foo3
 # BB#9:                                 # %if.end
 	i32.const	$push27=, 0
 	return  	$pop27
-.LBB1_10:                               # %if.then
+.LBB1_10:                               # %if.then.i
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -154,7 +154,7 @@ bar2:                                   # @bar2
 # BB#6:                                 # %foo2.exit
 	i32.const	$push18=, 0
 	return  	$pop18
-.LBB2_7:                                # %if.then12.i
+.LBB2_7:                                # %if.then.i
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -218,7 +218,7 @@ bar3:                                   # @bar3
 # BB#9:                                 # %foo3.exit
 	i32.const	$push27=, 0
 	return  	$pop27
-.LBB3_10:                               # %if.then.i
+.LBB3_10:                               # %if.then.i.i
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
@@ -282,7 +282,7 @@ baz3:                                   # @baz3
 # BB#9:                                 # %foo3.exit
 	i32.const	$push27=, 0
 	return  	$pop27
-.LBB4_10:                               # %if.then.i
+.LBB4_10:                               # %if.then.i.i
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
@@ -304,5 +304,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

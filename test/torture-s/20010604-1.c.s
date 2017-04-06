@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010604-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010604-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -9,25 +9,22 @@ f:                                      # @f
 	.result 	i32
 # BB#0:                                 # %entry
 	block   	
-	i32.const	$push6=, 1
-	i32.ne  	$push3=, $6, $pop6
-	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %entry
-	i32.const	$push7=, 1
-	i32.xor 	$push0=, $3, $pop7
-	br_if   	0, $pop0        # 0: down to label0
-# BB#2:                                 # %entry
-	i32.const	$push8=, 1
-	i32.xor 	$push1=, $4, $pop8
+	i32.const	$push0=, 1
+	i32.ne  	$push1=, $6, $pop0
 	br_if   	0, $pop1        # 0: down to label0
+# BB#1:                                 # %entry
+	i32.eqz 	$push4=, $3
+	br_if   	0, $pop4        # 0: down to label0
+# BB#2:                                 # %entry
+	i32.eqz 	$push5=, $4
+	br_if   	0, $pop5        # 0: down to label0
 # BB#3:                                 # %entry
-	i32.const	$push9=, 1
-	i32.xor 	$push2=, $5, $pop9
-	br_if   	0, $pop2        # 0: down to label0
+	i32.eqz 	$push6=, $5
+	br_if   	0, $pop6        # 0: down to label0
 # BB#4:                                 # %if.end
-	i32.add 	$push4=, $1, $0
-	i32.add 	$push5=, $pop4, $2
-	return  	$pop5
+	i32.add 	$push2=, $1, $0
+	i32.add 	$push3=, $pop2, $2
+	return  	$pop3
 .LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -51,6 +48,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

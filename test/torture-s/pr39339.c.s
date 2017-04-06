@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39339.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39339.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -72,10 +72,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push22=, 0
-	i32.const	$push19=, 0
-	i32.load	$push20=, __stack_pointer($pop19)
+	i32.const	$push20=, 0
+	i32.load	$push19=, __stack_pointer($pop20)
 	i32.const	$push21=, 64
-	i32.sub 	$push40=, $pop20, $pop21
+	i32.sub 	$push40=, $pop19, $pop21
 	tee_local	$push39=, $0=, $pop40
 	i32.store	__stack_pointer($pop22), $pop39
 	i32.const	$push2=, 56
@@ -99,14 +99,14 @@ main:                                   # @main
 	i32.add 	$push10=, $0, $pop9
 	i64.const	$push37=, 0
 	i64.store	0($pop10), $pop37
+	i32.const	$push11=, 255
+	i32.store8	4($0), $pop11
 	i32.const	$push36=, 0
 	i32.store	28($0), $pop36
 	i32.const	$push35=, 0
 	i32.store	24($0), $pop35
 	i32.const	$push34=, 0
 	i32.store	20($0), $pop34
-	i32.const	$push11=, 255
-	i32.store8	4($0), $pop11
 	i32.const	$push28=, 8
 	i32.add 	$push29=, $0, $pop28
 	i32.store	0($0), $pop29
@@ -134,7 +134,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop25), $pop24
 	i32.const	$push18=, 0
 	return  	$pop18
-.LBB1_3:                                # %if.then12
+.LBB1_3:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
@@ -156,5 +156,5 @@ main:                                   # @main
 	.size	.Lmain.e, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

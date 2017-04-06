@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071202-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071202-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -36,10 +36,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push71=, 0
-	i32.const	$push68=, 0
-	i32.load	$push69=, __stack_pointer($pop68)
+	i32.const	$push69=, 0
+	i32.load	$push68=, __stack_pointer($pop69)
 	i32.const	$push70=, 80
-	i32.sub 	$push80=, $pop69, $pop70
+	i32.sub 	$push80=, $pop68, $pop70
 	tee_local	$push79=, $0=, $pop80
 	i32.store	__stack_pointer($pop71), $pop79
 	i32.const	$push75=, 8
@@ -156,7 +156,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop74), $pop73
 	i32.const	$push67=, 0
 	return  	$pop67
-.LBB1_18:                               # %if.then63
+.LBB1_18:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -188,5 +188,5 @@ main:                                   # @main
 	.size	.Lmain.s, 68
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

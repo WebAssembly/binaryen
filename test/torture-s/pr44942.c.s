@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44942.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44942.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -9,10 +9,10 @@ test1:                                  # @test1
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $10=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
 	i32.store	12($10), $9
@@ -47,10 +47,10 @@ test2:                                  # @test2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $19=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
 	i32.store	12($19), $18
@@ -85,10 +85,10 @@ test3:                                  # @test3
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push18=, $pop9, $pop10
+	i32.sub 	$push18=, $pop8, $pop10
 	tee_local	$push17=, $10=, $pop18
 	i32.store	__stack_pointer($pop11), $pop17
 	i32.store	12($10), $9
@@ -128,10 +128,10 @@ test4:                                  # @test4
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push18=, $pop9, $pop10
+	i32.sub 	$push18=, $pop8, $pop10
 	tee_local	$push17=, $19=, $pop18
 	i32.store	__stack_pointer($pop11), $pop17
 	i32.store	12($19), $18
@@ -171,10 +171,10 @@ main:                                   # @main
 	.local  	f64, i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
-	i32.const	$push6=, 0
-	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push7=, 0
+	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 128
-	i32.sub 	$push25=, $pop7, $pop8
+	i32.sub 	$push25=, $pop6, $pop8
 	tee_local	$push24=, $2=, $pop25
 	i32.store	__stack_pointer($pop9), $pop24
 	i32.const	$push0=, 1234
@@ -212,5 +212,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end4-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

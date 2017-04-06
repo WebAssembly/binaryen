@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950809-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950809-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -20,11 +20,11 @@ f:                                      # @f
 	i32.load	$push1=, 0($4)
 	i32.store	8($4), $pop1
 	i32.store	0($4), $2
-	i32.load	$2=, 4($4)
+	i32.store	0($0), $4
+	i32.load	$4=, 4($4)
 	i32.store	12($0), $5
 	i32.store	0($1), $3
-	i32.store	4($0), $2
-	i32.store	0($0), $4
+	i32.store	4($0), $4
 	copy_local	$push6=, $0
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -73,6 +73,6 @@ main.sc:
 	.size	main.sc, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

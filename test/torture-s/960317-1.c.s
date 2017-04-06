@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960317-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960317-1.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -14,13 +14,13 @@ f:                                      # @f
 	i32.shl 	$push6=, $pop7, $0
 	tee_local	$push5=, $0=, $pop6
 	i32.sub 	$push0=, $pop8, $pop5
-	i32.and 	$push1=, $1, $pop0
+	i32.and 	$push1=, $pop0, $1
 	i32.eqz 	$push12=, $pop1
 	br_if   	0, $pop12       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push10=, -1
 	i32.xor 	$push2=, $0, $pop10
-	i32.and 	$push3=, $1, $pop2
+	i32.and 	$push3=, $pop2, $1
 	i32.const	$push9=, 0
 	i32.ne  	$push4=, $pop3, $pop9
 	return  	$pop4
@@ -47,5 +47,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

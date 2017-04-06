@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-11.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-11.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -59,7 +59,7 @@ f:                                      # @f
 	br_if   	0, $pop28       # 0: down to label0
 # BB#10:                                # %if.end51
 	return  	$1
-.LBB0_11:                               # %if.then50
+.LBB0_11:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -75,72 +75,60 @@ main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push24=, 0
-	i32.const	$push21=, 0
-	i32.load	$push22=, __stack_pointer($pop21)
-	i32.const	$push23=, 32
-	i32.sub 	$push42=, $pop22, $pop23
-	tee_local	$push41=, $1=, $pop42
-	i32.store	__stack_pointer($pop24), $pop41
-	i32.const	$push0=, 30
-	i32.store8	18($1), $pop0
-	i32.const	$push1=, 11
-	i32.store8	19($1), $pop1
-	i32.const	$push2=, 12
-	i32.store8	22($1), $pop2
-	i32.const	$push3=, 5130
-	i32.store16	16($1), $pop3
-	i32.const	$push4=, 21
-	i32.store8	20($1), $pop4
-	i32.const	$push5=, 22
-	i32.store8	23($1), $pop5
+	i32.const	$push18=, 0
+	i32.const	$push16=, 0
+	i32.load	$push15=, __stack_pointer($pop16)
+	i32.const	$push17=, 32
+	i32.sub 	$push36=, $pop15, $pop17
+	tee_local	$push35=, $1=, $pop36
+	i32.store	__stack_pointer($pop18), $pop35
+	i64.const	$push0=, 1588678943796237322
+	i64.store	16($1), $pop0
+	i32.const	$push19=, 12
+	i32.add 	$push20=, $1, $pop19
+	i32.const	$push1=, 2
+	i32.add 	$push2=, $pop20, $pop1
+	i32.load8_u	$push3=, 18($1)
+	i32.store8	0($pop2), $pop3
+	i32.const	$push4=, 24
+	i32.add 	$push34=, $1, $pop4
+	tee_local	$push33=, $0=, $pop34
+	i32.const	$push5=, 32
+	i32.store8	0($pop33), $pop5
+	i32.const	$push21=, 8
+	i32.add 	$push22=, $1, $pop21
+	i32.const	$push32=, 2
+	i32.add 	$push6=, $pop22, $pop32
+	i32.load8_u	$push7=, 21($1)
+	i32.store8	0($pop6), $pop7
+	i32.const	$push23=, 4
+	i32.add 	$push24=, $1, $pop23
+	i32.const	$push31=, 2
+	i32.add 	$push8=, $pop24, $pop31
+	i32.load8_u	$push9=, 0($0)
+	i32.store8	0($pop8), $pop9
+	i32.load16_u	$push10=, 16($1)
+	i32.store16	12($1), $pop10
+	i32.load16_u	$push11=, 19($1):p2align=0
+	i32.store16	8($1), $pop11
+	i32.load16_u	$push12=, 22($1)
+	i32.store16	4($1), $pop12
 	i32.const	$push25=, 12
 	i32.add 	$push26=, $1, $pop25
-	i32.const	$push6=, 2
-	i32.add 	$push7=, $pop26, $pop6
-	i32.load8_u	$push8=, 18($1)
-	i32.store8	0($pop7), $pop8
-	i32.const	$push9=, 31
-	i32.store8	21($1), $pop9
-	i32.const	$push10=, 24
-	i32.add 	$push40=, $1, $pop10
-	tee_local	$push39=, $0=, $pop40
-	i32.const	$push11=, 32
-	i32.store8	0($pop39), $pop11
 	i32.const	$push27=, 8
 	i32.add 	$push28=, $1, $pop27
-	i32.const	$push38=, 2
-	i32.add 	$push12=, $pop28, $pop38
-	i32.load8_u	$push13=, 21($1)
-	i32.store8	0($pop12), $pop13
-	i32.load16_u	$push14=, 16($1)
-	i32.store16	12($1), $pop14
-	i32.load16_u	$push15=, 19($1):p2align=0
-	i32.store16	8($1), $pop15
 	i32.const	$push29=, 4
 	i32.add 	$push30=, $1, $pop29
-	i32.const	$push37=, 2
-	i32.add 	$push16=, $pop30, $pop37
-	i32.load8_u	$push17=, 0($0)
-	i32.store8	0($pop16), $pop17
-	i32.load16_u	$push18=, 22($1)
-	i32.store16	4($1), $pop18
-	i32.const	$push31=, 12
-	i32.add 	$push32=, $1, $pop31
-	i32.const	$push33=, 8
-	i32.add 	$push34=, $1, $pop33
-	i32.const	$push35=, 4
-	i32.add 	$push36=, $1, $pop35
-	i32.const	$push19=, 123
-	i32.call	$drop=, f@FUNCTION, $1, $pop32, $pop34, $pop36, $pop19
-	i32.const	$push20=, 0
-	call    	exit@FUNCTION, $pop20
+	i32.const	$push13=, 123
+	i32.call	$drop=, f@FUNCTION, $1, $pop26, $pop28, $pop30, $pop13
+	i32.const	$push14=, 0
+	call    	exit@FUNCTION, $pop14
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

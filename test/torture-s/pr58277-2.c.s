@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58277-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58277-2.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -20,7 +20,7 @@ main:                                   # @main
 	i32.const	$push8=, 0
 	i32.load	$drop=, d($pop8)
 	br      	1               # 1: down to label0
-.LBB0_2:                                # %for.body4.preheader.i
+.LBB0_2:                                # %if.end.loopexit.i
 	end_block                       # label1:
 	i32.const	$push11=, 0
 	i32.const	$push1=, 1
@@ -121,4 +121,4 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"

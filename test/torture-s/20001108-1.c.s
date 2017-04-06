@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001108-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001108-1.c"
 	.section	.text.signed_poly,"ax",@progbits
 	.hidden	signed_poly
 	.globl	signed_poly
@@ -28,10 +28,10 @@ unsigned_poly:                          # @unsigned_poly
 	.param  	i64, i32
 	.result 	i64
 # BB#0:                                 # %entry
-	i64.extend_u/i32	$push2=, $1
 	i64.const	$push0=, 4294967295
 	i64.and 	$push1=, $0, $pop0
-	i64.mul 	$push3=, $pop2, $pop1
+	i64.extend_u/i32	$push2=, $1
+	i64.mul 	$push3=, $pop1, $pop2
 	i64.add 	$push4=, $pop3, $0
                                         # fallthrough-return: $pop4
 	.endfunc
@@ -53,5 +53,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

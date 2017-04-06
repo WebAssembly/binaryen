@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001203-2.c"
 	.section	.text.create_array_type,"ax",@progbits
 	.hidden	create_array_type
 	.globl	create_array_type
@@ -10,9 +10,8 @@ create_array_type:                      # @create_array_type
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	block   	
-	block   	
 	i32.eqz 	$push52=, $0
-	br_if   	0, $pop52       # 0: down to label1
+	br_if   	0, $pop52       # 0: down to label0
 # BB#1:                                 # %if.end
 	i32.const	$push0=, 1
 	i32.store16	8($0), $pop0
@@ -24,7 +23,7 @@ create_array_type:                      # @create_array_type
 	i32.load	$push27=, 4($0)
 	tee_local	$push26=, $1=, $pop27
 	i32.eqz 	$push53=, $pop26
-	br_if   	0, $pop53       # 0: down to label2
+	br_if   	0, $pop53       # 0: down to label1
 # BB#2:                                 # %cond.true
 	i32.const	$push4=, 20
 	i32.add 	$push5=, $1, $pop4
@@ -38,7 +37,7 @@ create_array_type:                      # @create_array_type
 	i32.sub 	$push6=, $pop33, $pop28
 	i32.const	$push7=, 15
 	i32.le_s	$push8=, $pop6, $pop7
-	br_if   	2, $pop8        # 2: down to label0
+	br_if   	1, $pop8        # 1: down to label0
 # BB#3:                                 # %if.end9
 	i32.const	$push41=, 16
 	i32.add 	$push40=, $3, $pop41
@@ -51,14 +50,14 @@ create_array_type:                      # @create_array_type
 	i32.load	$push36=, 0($pop37)
 	tee_local	$push35=, $7=, $pop36
 	i32.ne  	$push10=, $3, $pop35
-	br_if   	0, $pop10       # 0: down to label3
+	br_if   	0, $pop10       # 0: down to label2
 # BB#4:                                 # %if.then16
 	i32.const	$push11=, 28
 	i32.add 	$push12=, $1, $pop11
 	i32.const	$push13=, 1
 	i32.store	0($pop12), $pop13
 .LBB0_5:                                # %if.end17
-	end_block                       # label3:
+	end_block                       # label2:
 	i32.const	$push19=, 16
 	i32.add 	$push51=, $1, $pop19
 	tee_local	$push50=, $6=, $pop51
@@ -86,17 +85,13 @@ create_array_type:                      # @create_array_type
 	i32.store	12($0), $7
 	return  	$0
 .LBB0_6:
-	end_block                       # label2:
+	end_block                       # label1:
 	i32.const	$push25=, 0
 	i32.store	12($0), $pop25
 	return  	$0
 .LBB0_7:                                # %if.then
-	end_block                       # label1:
-	i32.call	$drop=, alloc_type@FUNCTION
-	unreachable
-.LBB0_8:                                # %if.then8
 	end_block                       # label0:
-	call    	_obstack_newchunk@FUNCTION, $0, $0
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
@@ -173,6 +168,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

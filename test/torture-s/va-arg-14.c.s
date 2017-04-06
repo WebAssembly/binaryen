@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-14.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-14.c"
 	.section	.text.vat,"ax",@progbits
 	.hidden	vat
 	.globl	vat
@@ -9,10 +9,10 @@ vat:                                    # @vat
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push27=, 0
-	i32.const	$push24=, 0
-	i32.load	$push25=, __stack_pointer($pop24)
+	i32.const	$push25=, 0
+	i32.load	$push24=, __stack_pointer($pop25)
 	i32.const	$push26=, 16
-	i32.sub 	$push37=, $pop25, $pop26
+	i32.sub 	$push37=, $pop24, $pop26
 	tee_local	$push36=, $2=, $pop37
 	i32.store	__stack_pointer($pop27), $pop36
 	i32.store	12($2), $0
@@ -104,7 +104,7 @@ vat:                                    # @vat
 	i32.add 	$push29=, $2, $pop28
 	i32.store	__stack_pointer($pop30), $pop29
 	return
-.LBB0_8:                                # %if.then35
+.LBB0_8:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -121,10 +121,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
-	i32.const	$push2=, 0
-	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push3=, 0
+	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push7=, $pop3, $pop4
+	i32.sub 	$push7=, $pop2, $pop4
 	tee_local	$push6=, $0=, $pop7
 	i32.store	__stack_pointer($pop5), $pop6
 	i32.const	$push0=, 1
@@ -147,6 +147,6 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

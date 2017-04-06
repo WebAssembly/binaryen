@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57876.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57876.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i64, i32, i32, i32, i32
 # BB#0:                                 # %for.body4.1
 	i32.const	$push75=, 0
-	i32.const	$push72=, 0
-	i32.load	$push73=, __stack_pointer($pop72)
+	i32.const	$push73=, 0
+	i32.load	$push72=, __stack_pointer($pop73)
 	i32.const	$push74=, 16
-	i32.sub 	$push245=, $pop73, $pop74
+	i32.sub 	$push245=, $pop72, $pop74
 	tee_local	$push244=, $4=, $pop245
 	i32.store	__stack_pointer($pop75), $pop244
 	i32.const	$push243=, 0
@@ -419,5 +419,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

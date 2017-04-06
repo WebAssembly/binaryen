@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-8.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-8.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -30,60 +30,48 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	f64, i32
+	.local  	f64
 # BB#0:                                 # %entry
-	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
-	i32.const	$push10=, 16
-	i32.sub 	$push21=, $pop9, $pop10
-	tee_local	$push20=, $1=, $pop21
-	i32.store	__stack_pointer($pop11), $pop20
 	block   	
 	block   	
-	i32.const	$push19=, 0
-	f64.load	$push18=, a($pop19)
-	tee_local	$push17=, $0=, $pop18
-	f64.const	$push16=, 0x0p0
-	f64.gt  	$push0=, $pop17, $pop16
-	br_if   	0, $pop0        # 0: down to label2
+	block   	
+	i32.const	$push13=, 0
+	f64.load	$push12=, a($pop13)
+	tee_local	$push11=, $0=, $pop12
+	f64.const	$push10=, 0x0p0
+	f64.gt  	$push0=, $pop11, $pop10
+	br_if   	0, $pop0        # 0: down to label3
 # BB#1:                                 # %for.cond
-	i32.const	$push25=, 0
-	f64.load	$push24=, a+8($pop25)
-	tee_local	$push23=, $0=, $pop24
-	f64.const	$push22=, 0x0p0
-	f64.le  	$push1=, $pop23, $pop22
+	i32.const	$push17=, 0
+	f64.load	$push16=, a+8($pop17)
+	tee_local	$push15=, $0=, $pop16
+	f64.const	$push14=, 0x0p0
+	f64.le  	$push1=, $pop15, $pop14
 	f64.ne  	$push2=, $0, $0
 	i32.or  	$push3=, $pop1, $pop2
-	i32.eqz 	$push31=, $pop3
-	br_if   	0, $pop31       # 0: down to label2
+	i32.eqz 	$push20=, $pop3
+	br_if   	0, $pop20       # 0: down to label3
 # BB#2:                                 # %for.cond.1
 	i32.const	$push4=, 0
-	f64.load	$push27=, a+16($pop4)
-	tee_local	$push26=, $0=, $pop27
+	f64.load	$push19=, a+16($pop4)
+	tee_local	$push18=, $0=, $pop19
 	f64.const	$push5=, 0x0p0
-	f64.gt  	$push6=, $pop26, $pop5
-	i32.eqz 	$push32=, $pop6
-	br_if   	1, $pop32       # 1: down to label1
+	f64.gt  	$push6=, $pop18, $pop5
+	i32.eqz 	$push21=, $pop6
+	br_if   	1, $pop21       # 1: down to label2
 .LBB1_3:                                # %e
+	end_block                       # label3:
+	f64.const	$push7=, 0x1p0
+	f64.eq  	$push8=, $0, $pop7
+	br_if   	1, $pop8        # 1: down to label1
+.LBB1_4:                                # %if.then.i
 	end_block                       # label2:
-	f64.store	8($1), $0
-	i32.const	$push29=, 0
-	i32.const	$push12=, 8
-	i32.add 	$push13=, $1, $pop12
-	call    	bar@FUNCTION, $pop29, $pop13
-	i32.const	$push28=, 0
-	call    	exit@FUNCTION, $pop28
+	call    	abort@FUNCTION
 	unreachable
-.LBB1_4:                                # %for.cond.2
+.LBB1_5:                                # %bar.exit4
 	end_block                       # label1:
-	f64.store	8($1), $0
-	i32.const	$push7=, 1
-	i32.const	$push14=, 8
-	i32.add 	$push15=, $1, $pop14
-	call    	bar@FUNCTION, $pop7, $pop15
-	i32.const	$push30=, 1
-	call    	exit@FUNCTION, $pop30
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -101,6 +89,6 @@ a:
 	.size	a, 24
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

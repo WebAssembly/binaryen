@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020413-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020413-1.c"
 	.section	.text.test,"ax",@progbits
 	.hidden	test
 	.globl	test
@@ -9,10 +9,10 @@ test:                                   # @test
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push83=, 0
-	i32.const	$push80=, 0
-	i32.load	$push81=, __stack_pointer($pop80)
+	i32.const	$push81=, 0
+	i32.load	$push80=, __stack_pointer($pop81)
 	i32.const	$push82=, 16
-	i32.sub 	$push101=, $pop81, $pop82
+	i32.sub 	$push101=, $pop80, $pop82
 	tee_local	$push100=, $5=, $pop101
 	i32.store	__stack_pointer($pop83), $pop100
 	i64.const	$push99=, 0
@@ -135,10 +135,8 @@ test:                                   # @test
 	i32.const	$push78=, -1
 	i32.gt_s	$push79=, $pop77, $pop78
 	br_if   	1, $pop79       # 1: down to label1
-# BB#13:                                # %while.body12.10
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_14:                               # %while.cond.preheader
+	br      	2               # 2: down to label0
+.LBB0_13:                               # %while.cond.preheader
 	end_block                       # label2:
 	i64.const	$push123=, 0
 	i64.const	$push122=, 4611404543450677248
@@ -146,7 +144,7 @@ test:                                   # @test
 	i32.const	$push8=, 1
 	i32.lt_s	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label1
-# BB#15:                                # %while.body
+# BB#14:                                # %while.body
 	i32.const	$4=, 1
 	i64.const	$push124=, 0
 	i64.const	$push10=, 4611686018427387904
@@ -154,7 +152,7 @@ test:                                   # @test
 	i32.const	$push12=, 0
 	i32.le_s	$push13=, $pop11, $pop12
 	br_if   	0, $pop13       # 0: down to label1
-# BB#16:                                # %while.body.1
+# BB#15:                                # %while.body.1
 	i32.const	$4=, 2
 	i64.const	$push126=, 0
 	i64.const	$push14=, 4611967493404098560
@@ -162,7 +160,7 @@ test:                                   # @test
 	i32.const	$push125=, 1
 	i32.lt_s	$push16=, $pop15, $pop125
 	br_if   	0, $pop16       # 0: down to label1
-# BB#17:                                # %while.body.2
+# BB#16:                                # %while.body.2
 	i32.const	$4=, 3
 	i64.const	$push128=, 0
 	i64.const	$push17=, 4612248968380809216
@@ -170,7 +168,7 @@ test:                                   # @test
 	i32.const	$push127=, 1
 	i32.lt_s	$push19=, $pop18, $pop127
 	br_if   	0, $pop19       # 0: down to label1
-# BB#18:                                # %while.body.3
+# BB#17:                                # %while.body.3
 	i32.const	$4=, 4
 	i64.const	$push130=, 0
 	i64.const	$push20=, 4612530443357519872
@@ -178,7 +176,7 @@ test:                                   # @test
 	i32.const	$push129=, 1
 	i32.lt_s	$push22=, $pop21, $pop129
 	br_if   	0, $pop22       # 0: down to label1
-# BB#19:                                # %while.body.4
+# BB#18:                                # %while.body.4
 	i32.const	$4=, 5
 	i64.const	$push132=, 0
 	i64.const	$push23=, 4612811918334230528
@@ -186,7 +184,7 @@ test:                                   # @test
 	i32.const	$push131=, 1
 	i32.lt_s	$push25=, $pop24, $pop131
 	br_if   	0, $pop25       # 0: down to label1
-# BB#20:                                # %while.body.5
+# BB#19:                                # %while.body.5
 	i32.const	$4=, 6
 	i64.const	$push134=, 0
 	i64.const	$push26=, 4613093393310941184
@@ -194,7 +192,7 @@ test:                                   # @test
 	i32.const	$push133=, 1
 	i32.lt_s	$push28=, $pop27, $pop133
 	br_if   	0, $pop28       # 0: down to label1
-# BB#21:                                # %while.body.6
+# BB#20:                                # %while.body.6
 	i32.const	$4=, 7
 	i64.const	$push136=, 0
 	i64.const	$push29=, 4613374868287651840
@@ -202,7 +200,7 @@ test:                                   # @test
 	i32.const	$push135=, 1
 	i32.lt_s	$push31=, $pop30, $pop135
 	br_if   	0, $pop31       # 0: down to label1
-# BB#22:                                # %while.body.7
+# BB#21:                                # %while.body.7
 	i32.const	$4=, 8
 	i64.const	$push138=, 0
 	i64.const	$push32=, 4613656343264362496
@@ -210,7 +208,7 @@ test:                                   # @test
 	i32.const	$push137=, 1
 	i32.lt_s	$push34=, $pop33, $pop137
 	br_if   	0, $pop34       # 0: down to label1
-# BB#23:                                # %while.body.8
+# BB#22:                                # %while.body.8
 	i32.const	$4=, 9
 	i64.const	$push140=, 0
 	i64.const	$push35=, 4613937818241073152
@@ -218,7 +216,7 @@ test:                                   # @test
 	i32.const	$push139=, 1
 	i32.lt_s	$push37=, $pop36, $pop139
 	br_if   	0, $pop37       # 0: down to label1
-# BB#24:                                # %while.body.9
+# BB#23:                                # %while.body.9
 	i32.const	$4=, 10
 	i64.const	$push141=, 0
 	i64.const	$push38=, 4614219293217783808
@@ -226,7 +224,7 @@ test:                                   # @test
 	i32.const	$push40=, 1
 	i32.ge_s	$push41=, $pop39, $pop40
 	br_if   	1, $pop41       # 1: down to label0
-.LBB0_25:                               # %if.end19
+.LBB0_24:                               # %if.end19
 	end_block                       # label1:
 	i32.store	0($2), $4
 	i32.const	$push86=, 0
@@ -234,7 +232,7 @@ test:                                   # @test
 	i32.add 	$push85=, $5, $pop84
 	i32.store	__stack_pointer($pop86), $pop85
 	return
-.LBB0_26:                               # %while.body.10
+.LBB0_25:                               # %while.body12.10
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -251,10 +249,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
-	i32.const	$push6=, 0
-	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push7=, 0
+	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 16
-	i32.sub 	$push22=, $pop7, $pop8
+	i32.sub 	$push22=, $pop6, $pop8
 	tee_local	$push21=, $0=, $pop22
 	i32.store	__stack_pointer($pop9), $pop21
 	i64.const	$push1=, 0
@@ -285,6 +283,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

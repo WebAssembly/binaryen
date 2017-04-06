@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/cbrt.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/cbrt.c"
 	.section	.text.cbrtl,"ax",@progbits
 	.hidden	cbrtl
 	.globl	cbrtl
@@ -9,10 +9,10 @@ cbrtl:                                  # @cbrtl
 	.result 	f64
 	.local  	i64, i32, i32, f64, f64, i32
 # BB#0:                                 # %entry
-	i32.const	$push57=, 0
-	i32.load	$push58=, __stack_pointer($pop57)
+	i32.const	$push58=, 0
+	i32.load	$push57=, __stack_pointer($pop58)
 	i32.const	$push59=, 16
-	i32.sub 	$push69=, $pop58, $pop59
+	i32.sub 	$push69=, $pop57, $pop59
 	tee_local	$push68=, $6=, $pop69
 	i64.const	$push0=, 0
 	i64.store	8($pop68), $pop0
@@ -39,7 +39,7 @@ cbrtl:                                  # @cbrtl
 	end_block                       # label0:
 	block   	
 	i32.wrap/i64	$push6=, $1
-	i32.or  	$push7=, $pop6, $3
+	i32.or  	$push7=, $3, $pop6
 	i32.eqz 	$push90=, $pop7
 	br_if   	0, $pop90       # 0: down to label1
 # BB#3:                                 # %if.end13
@@ -122,7 +122,7 @@ cbrtl:                                  # @cbrtl
 	i64.const	$push75=, 32
 	i64.shr_u	$push49=, $pop48, $pop75
 	i32.wrap/i64	$push50=, $pop49
-	i32.or  	$push51=, $pop50, $2
+	i32.or  	$push51=, $2, $pop50
 	i32.store	12($6), $pop51
 	f64.load	$push74=, 8($6)
 	tee_local	$push73=, $5=, $pop74
@@ -146,7 +146,7 @@ cbrtl:                                  # @cbrtl
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -155,5 +155,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

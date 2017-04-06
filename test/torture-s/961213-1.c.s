@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/961213-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/961213-1.c"
 	.section	.text.g,"ax",@progbits
 	.hidden	g
 	.globl	g
@@ -22,9 +22,9 @@ g:                                      # @g
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i64.load32_u	$push4=, 0($2)
 	i64.mul 	$push3=, $5, $4
-	i64.add 	$5=, $pop4, $pop3
+	i64.load32_u	$push4=, 0($2)
+	i64.add 	$5=, $pop3, $pop4
 	i32.const	$push9=, 4
 	i32.add 	$push0=, $2, $pop9
 	copy_local	$2=, $pop0
@@ -58,5 +58,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

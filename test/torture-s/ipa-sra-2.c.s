@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/ipa-sra-2.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/ipa-sra-2.c"
 	.section	.text.main,"ax",@progbits
 	.hidden	main
 	.globl	main
@@ -29,19 +29,17 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 999999
+	i32.const	$push1=, 3999996
 	i32.const	$push0=, 0
 	i32.select	$push2=, $pop1, $pop0, $0
-	i32.const	$push3=, 2
-	i32.shl 	$push4=, $pop2, $pop3
-	i32.add 	$push5=, $1, $pop4
-	i32.load	$push6=, 0($pop5)
-                                        # fallthrough-return: $pop6
+	i32.add 	$push3=, $1, $pop2
+	i32.load	$push4=, 0($pop3)
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	calloc, i32, i32, i32
 	.functype	free, void, i32

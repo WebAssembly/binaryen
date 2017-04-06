@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57860.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57860.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -66,13 +66,13 @@ foo:                                    # @foo
 .LBB0_8:                                # %for.end
                                         #   in Loop: Header=BB0_3 Depth=1
 	end_block                       # label6:
-	i64.load32_s	$push4=, 0($2)
 	i32.const	$push28=, 0
 	i64.load32_s	$push2=, a($pop28)
 	i64.const	$push27=, 8589934591
 	i64.xor 	$push3=, $pop2, $pop27
-	i64.and 	$push5=, $pop4, $pop3
-	i64.gt_s	$push26=, $1, $pop5
+	i64.load32_s	$push4=, 0($2)
+	i64.and 	$push5=, $pop3, $pop4
+	i64.lt_s	$push26=, $pop5, $1
 	tee_local	$push25=, $0=, $pop26
 	i32.store	0($3), $pop25
 	i32.store	0($4), $0
@@ -176,12 +176,12 @@ main:                                   # @main
 .LBB1_8:                                # %for.end.i
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label18:
-	i64.load32_s	$push4=, 0($0)
 	i32.const	$push31=, 0
 	i64.load32_s	$push2=, a($pop31)
 	i64.const	$push30=, 8589934591
 	i64.xor 	$push3=, $pop2, $pop30
-	i64.and 	$push5=, $pop4, $pop3
+	i64.load32_s	$push4=, 0($0)
+	i64.and 	$push5=, $pop3, $pop4
 	i64.const	$push29=, 1
 	i64.lt_s	$push28=, $pop5, $pop29
 	tee_local	$push27=, $3=, $pop28
@@ -319,5 +319,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

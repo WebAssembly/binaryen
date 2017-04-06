@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000503-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000503-1.c"
 	.section	.text.sub,"ax",@progbits
 	.hidden	sub
 	.globl	sub
@@ -8,13 +8,13 @@ sub:                                    # @sub
 	.param  	i32
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
 	i32.const	$push0=, -2
 	i32.add 	$push8=, $0, $pop0
 	tee_local	$push7=, $0=, $pop8
+	i32.const	$push1=, 0
 	i32.const	$push6=, 0
-	i32.lt_s	$push2=, $0, $pop6
-	i32.select	$push3=, $pop1, $pop7, $pop2
+	i32.gt_s	$push2=, $0, $pop6
+	i32.select	$push3=, $pop7, $pop1, $pop2
 	i32.const	$push4=, 2
 	i32.shl 	$push5=, $pop3, $pop4
                                         # fallthrough-return: $pop5
@@ -37,5 +37,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

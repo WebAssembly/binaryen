@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040409-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040409-1.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -39,7 +39,7 @@ test2:                                  # @test2
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147483648
-	i32.xor 	$push1=, $0, $pop0
+	i32.or  	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
@@ -129,7 +129,7 @@ test5:                                  # @test5
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, -2147483648
-	i32.xor 	$push1=, $0, $pop0
+	i32.or  	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end8:
@@ -188,13 +188,18 @@ test:                                   # @test
 	.param  	i32, i32
 # BB#0:                                 # %entry
 	block   	
-	i32.const	$push0=, -2147483648
-	i32.xor 	$push1=, $0, $pop0
-	i32.ne  	$push2=, $pop1, $1
-	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end20
+	i32.const	$push4=, -2147483648
+	i32.xor 	$push0=, $0, $pop4
+	i32.ne  	$push1=, $pop0, $1
+	br_if   	0, $pop1        # 0: down to label0
+# BB#1:                                 # %if.end
+	i32.const	$push5=, -2147483648
+	i32.or  	$push2=, $0, $pop5
+	i32.ne  	$push3=, $pop2, $1
+	br_if   	0, $pop3        # 0: down to label0
+# BB#2:                                 # %if.end20
 	return
-.LBB12_2:                               # %if.then
+.LBB12_3:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -231,12 +236,12 @@ testu:                                  # @testu
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-                                        # fallthrough-return: $pop0
+	call    	abort@FUNCTION
+	unreachable
 	.endfunc
 .Lfunc_end14:
 	.size	main, .Lfunc_end14-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

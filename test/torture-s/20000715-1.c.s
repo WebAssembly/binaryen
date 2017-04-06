@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000715-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000715-1.c"
 	.section	.text.test1,"ax",@progbits
 	.hidden	test1
 	.globl	test1
@@ -91,11 +91,14 @@ test6:                                  # @test6
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	call    	test4@FUNCTION
-	call    	test5@FUNCTION
-	call    	test6@FUNCTION
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
+	i32.const	$push1=, 0
+	i32.const	$push0=, 3
+	i32.store	y($pop1), $pop0
+	i32.const	$push4=, 0
+	i32.const	$push3=, 3
+	i32.store	x($pop4), $pop3
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
 	.endfunc
 .Lfunc_end6:
@@ -120,5 +123,5 @@ y:
 	.size	y, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39240.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39240.c"
 	.section	.text.bar1,"ax",@progbits
 	.hidden	bar1
 	.globl	bar1
@@ -203,18 +203,18 @@ main:                                   # @main
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push22=, -10
-	i32.call	$push3=, bar2@FUNCTION, $pop22
-	i32.const	$push21=, 0
-	i32.load	$push4=, l2($pop21)
-	i32.ne  	$push5=, $pop3, $pop4
+	i32.const	$push22=, 0
+	i32.load	$push4=, l2($pop22)
+	i32.const	$push21=, -10
+	i32.call	$push3=, bar2@FUNCTION, $pop21
+	i32.ne  	$push5=, $pop4, $pop3
 	br_if   	0, $pop5        # 0: down to label0
 # BB#2:                                 # %if.end5
-	i32.const	$push24=, -10
-	i32.call	$push6=, bar3@FUNCTION, $pop24
-	i32.const	$push23=, 0
-	i32.load	$push7=, l3($pop23)
-	i32.ne  	$push8=, $pop6, $pop7
+	i32.const	$push24=, 0
+	i32.load	$push7=, l3($pop24)
+	i32.const	$push23=, -10
+	i32.call	$push6=, bar3@FUNCTION, $pop23
+	i32.ne  	$push8=, $pop7, $pop6
 	br_if   	0, $pop8        # 0: down to label0
 # BB#3:                                 # %if.end11
 	i32.const	$push26=, -10
@@ -224,23 +224,23 @@ main:                                   # @main
 	i32.ne  	$push11=, $pop9, $pop10
 	br_if   	0, $pop11       # 0: down to label0
 # BB#4:                                 # %if.end16
-	i32.const	$push28=, -10
-	i32.call	$push12=, bar5@FUNCTION, $pop28
-	i32.const	$push27=, 0
-	i32.load	$push13=, l5($pop27)
-	i32.ne  	$push14=, $pop12, $pop13
+	i32.const	$push28=, 0
+	i32.load	$push13=, l5($pop28)
+	i32.const	$push27=, -10
+	i32.call	$push12=, bar5@FUNCTION, $pop27
+	i32.ne  	$push14=, $pop13, $pop12
 	br_if   	0, $pop14       # 0: down to label0
 # BB#5:                                 # %if.end22
-	i32.const	$push30=, -10
-	i32.call	$push15=, bar6@FUNCTION, $pop30
-	i32.const	$push29=, 0
-	i32.load	$push16=, l6($pop29)
-	i32.ne  	$push17=, $pop15, $pop16
+	i32.const	$push30=, 0
+	i32.load	$push16=, l6($pop30)
+	i32.const	$push29=, -10
+	i32.call	$push15=, bar6@FUNCTION, $pop29
+	i32.ne  	$push17=, $pop16, $pop15
 	br_if   	0, $pop17       # 0: down to label0
 # BB#6:                                 # %if.end28
 	i32.const	$push18=, 0
 	return  	$pop18
-.LBB12_7:                               # %if.then27
+.LBB12_7:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -303,5 +303,5 @@ l6:
 	.size	l6, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15296.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr15296.c"
 	.section	.text.f,"ax",@progbits
 	.hidden	f
 	.globl	f
@@ -98,10 +98,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push38=, 0
-	i32.const	$push35=, 0
-	i32.load	$push36=, __stack_pointer($pop35)
+	i32.const	$push36=, 0
+	i32.load	$push35=, __stack_pointer($pop36)
 	i32.const	$push37=, 48
-	i32.sub 	$push53=, $pop36, $pop37
+	i32.sub 	$push53=, $pop35, $pop37
 	tee_local	$push52=, $1=, $pop53
 	i32.store	__stack_pointer($pop38), $pop52
 	i32.const	$push0=, 0
@@ -207,6 +207,6 @@ main:                                   # @main
 	.size	.Lmain.s, 20
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

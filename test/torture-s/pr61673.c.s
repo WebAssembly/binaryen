@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61673.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61673.c"
 	.section	.text.bar,"ax",@progbits
 	.hidden	bar
 	.globl	bar
@@ -38,13 +38,15 @@ foo:                                    # @foo
 	i32.load8_s	$push4=, 0($0)
 	tee_local	$push3=, $0=, $pop4
 	i32.const	$push0=, -1
-	i32.gt_s	$push1=, $pop3, $pop0
+	i32.le_s	$push1=, $pop3, $pop0
 	br_if   	0, $pop1        # 0: down to label2
-# BB#1:                                 # %if.then
+# BB#1:                                 # %if.end
+	call    	bar@FUNCTION, $0
+	return
+.LBB1_2:                                # %if.then
+	end_block                       # label2:
 	i32.const	$push2=, 0
 	i32.store8	e($pop2), $0
-.LBB1_2:                                # %if.end
-	end_block                       # label2:
 	call    	bar@FUNCTION, $0
                                         # fallthrough-return
 	.endfunc
@@ -62,13 +64,14 @@ baz:                                    # @baz
 	i32.load8_s	$push4=, 0($0)
 	tee_local	$push3=, $0=, $pop4
 	i32.const	$push0=, -1
-	i32.gt_s	$push1=, $pop3, $pop0
+	i32.le_s	$push1=, $pop3, $pop0
 	br_if   	0, $pop1        # 0: down to label3
-# BB#1:                                 # %if.then
+# BB#1:                                 # %if.end
+	return
+.LBB2_2:                                # %if.then
+	end_block                       # label3:
 	i32.const	$push2=, 0
 	i32.store8	e($pop2), $0
-.LBB2_2:                                # %if.end
-	end_block                       # label3:
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -122,7 +125,7 @@ main:                                   # @main
 # BB#4:                                 # %if.end16
 	i32.const	$push16=, 0
 	return  	$pop16
-.LBB3_5:                                # %if.then15
+.LBB3_5:                                # %if.then
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
@@ -145,5 +148,5 @@ main.c:
 	.size	main.c, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

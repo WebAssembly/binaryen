@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39100.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39100.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -9,10 +9,10 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push22=, $pop9, $pop10
+	i32.sub 	$push22=, $pop8, $pop10
 	tee_local	$push21=, $8=, $pop22
 	i32.const	$push20=, 0
 	i32.store	12($pop21), $pop20
@@ -105,10 +105,10 @@ main:                                   # @main
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push16=, 0
-	i32.const	$push13=, 0
-	i32.load	$push14=, __stack_pointer($pop13)
+	i32.const	$push14=, 0
+	i32.load	$push13=, __stack_pointer($pop14)
 	i32.const	$push15=, 32
-	i32.sub 	$push30=, $pop14, $pop15
+	i32.sub 	$push30=, $pop13, $pop15
 	tee_local	$push29=, $2=, $pop30
 	i32.store	__stack_pointer($pop16), $pop29
 	i64.const	$push0=, 0
@@ -155,7 +155,7 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop19), $pop18
 	i32.const	$push12=, 0
 	return  	$pop12
-.LBB1_6:                                # %if.then23
+.LBB1_6:                                # %if.then
 	end_block                       # label5:
 	call    	abort@FUNCTION
 	unreachable
@@ -164,5 +164,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

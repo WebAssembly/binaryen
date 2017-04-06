@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46909-1.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46909-1.c"
 	.section	.text.foo,"ax",@progbits
 	.hidden	foo
 	.globl	foo
@@ -40,29 +40,27 @@ main:                                   # @main
 	block   	
 	loop    	                # label1:
 	i32.const	$push11=, 4
-	i32.add 	$push4=, $1, $pop11
-	i32.call	$push5=, foo@FUNCTION, $pop4
-	i32.const	$push10=, 1
-	i32.eqz 	$push1=, $1
-	i32.const	$push9=, 1
-	i32.shl 	$push2=, $pop1, $pop9
-	i32.sub 	$push3=, $pop10, $pop2
-	i32.ne  	$push6=, $pop5, $pop3
-	br_if   	1, $pop6        # 1: down to label0
+	i32.add 	$push10=, $1, $pop11
+	tee_local	$push9=, $0=, $pop10
+	i32.call	$push3=, foo@FUNCTION, $pop9
+	i32.const	$push8=, 1
+	i32.eqz 	$push0=, $1
+	i32.const	$push7=, 1
+	i32.shl 	$push1=, $pop0, $pop7
+	i32.sub 	$push2=, $pop8, $pop1
+	i32.ne  	$push4=, $pop3, $pop2
+	br_if   	1, $pop4        # 1: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push14=, 5
-	i32.add 	$0=, $1, $pop14
 	i32.const	$push13=, 1
-	i32.add 	$push0=, $1, $pop13
-	copy_local	$1=, $pop0
-	i32.const	$push12=, 9
-	i32.le_s	$push7=, $0, $pop12
-	br_if   	0, $pop7        # 0: up to label1
+	i32.add 	$1=, $1, $pop13
+	i32.const	$push12=, 8
+	i32.le_s	$push5=, $0, $pop12
+	br_if   	0, $pop5        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB1_4:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -72,5 +70,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void

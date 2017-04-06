@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-4.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-4.c"
 	.section	.text.assign_arg_ptr,"ax",@progbits
 	.hidden	assign_arg_ptr
 	.globl	assign_arg_ptr
@@ -20,13 +20,9 @@ assign_arg_ptr:                         # @assign_arg_ptr
 	.type	assign_glob_ptr,@function
 assign_glob_ptr:                        # @assign_glob_ptr
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push3=, ptr($pop0)
-	tee_local	$push2=, $0=, $pop3
-	i32.eq  	$push1=, $pop2, $0
-                                        # fallthrough-return: $pop1
+	i32.const	$push0=, 1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	assign_glob_ptr, .Lfunc_end1-assign_glob_ptr
@@ -51,13 +47,9 @@ assign_arg_idx:                         # @assign_arg_idx
 	.type	assign_glob_idx,@function
 assign_glob_idx:                        # @assign_glob_idx
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push3=, arrindex($pop0)
-	tee_local	$push2=, $0=, $pop3
-	i32.eq  	$push1=, $pop2, $0
-                                        # fallthrough-return: $pop1
+	i32.const	$push0=, 1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	assign_glob_idx, .Lfunc_end3-assign_glob_idx
@@ -400,14 +392,13 @@ funccall_arg_idx:                       # @funccall_arg_idx
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push7=, 0
-	i32.load	$push1=, getintcnt($pop7)
-	i32.const	$push2=, 1
-	i32.add 	$push6=, $pop1, $pop2
-	tee_local	$push5=, $2=, $pop6
-	i32.store	getintcnt($pop0), $pop5
-	i32.const	$push4=, 1
-	i32.eq  	$push3=, $2, $pop4
+	i32.const	$push6=, 0
+	i32.load	$push5=, getintcnt($pop6)
+	tee_local	$push4=, $2=, $pop5
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $pop4, $pop1
+	i32.store	getintcnt($pop0), $pop2
+	i32.eqz 	$push3=, $2
                                         # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end23:
@@ -420,71 +411,46 @@ funccall_arg_idx:                       # @funccall_arg_idx
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	block   	
-	i32.const	$push9=, 0
-	i32.load	$push8=, ptr($pop9)
-	tee_local	$push7=, $0=, $pop8
-	i32.ne  	$push0=, $pop7, $0
-	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %if.end4
-	i32.const	$push12=, 0
-	i32.load	$push11=, arrindex($pop12)
-	tee_local	$push10=, $0=, $pop11
-	i32.ne  	$push1=, $pop10, $0
-	br_if   	0, $pop1        # 0: down to label0
-# BB#2:                                 # %if.end44
-	i32.const	$push17=, 0
-	i32.const	$push16=, 1
-	i32.add 	$push15=, $0, $pop16
-	tee_local	$push14=, $1=, $pop15
-	i32.store	arrindex($pop17), $pop14
-	i32.const	$push13=, 1
-	i32.eqz 	$push34=, $pop13
-	br_if   	0, $pop34       # 0: down to label0
-# BB#3:                                 # %if.end52
+# BB#0:                                 # %if.end76
 	i32.const	$push19=, 0
-	i32.const	$push2=, 2
-	i32.add 	$push3=, $0, $pop2
-	i32.store	arrindex($pop19), $pop3
-	i32.const	$push18=, 1
-	i32.eqz 	$push35=, $pop18
-	br_if   	0, $pop35       # 0: down to label0
-# BB#4:                                 # %if.end64
-	i32.const	$push21=, 0
-	i32.store	arrindex($pop21), $1
-	i32.const	$push20=, 1
-	i32.eqz 	$push36=, $pop20
-	br_if   	0, $pop36       # 0: down to label0
-# BB#5:                                 # %if.end72
+	i32.const	$push18=, 0
+	i32.load	$push17=, arrindex($pop18)
+	tee_local	$push16=, $0=, $pop17
+	i32.const	$push15=, 1
+	i32.add 	$push14=, $pop16, $pop15
+	tee_local	$push13=, $1=, $pop14
+	i32.store	arrindex($pop19), $pop13
+	i32.const	$push12=, 0
+	i32.const	$push0=, 2
+	i32.add 	$push1=, $0, $pop0
+	i32.store	arrindex($pop12), $pop1
+	i32.const	$push11=, 0
+	i32.store	arrindex($pop11), $1
+	i32.const	$push10=, 0
+	i32.store	arrindex($pop10), $0
+	i32.const	$push9=, 0
+	i32.const	$push8=, 0
+	i32.load	$push7=, getptrcnt($pop8)
+	tee_local	$push6=, $0=, $pop7
+	i32.const	$push5=, 1
+	i32.add 	$push2=, $pop6, $pop5
+	i32.store	getptrcnt($pop9), $pop2
+	block   	
+	br_if   	0, $0           # 0: down to label0
+# BB#1:                                 # %if.end80
+	i32.const	$push24=, 0
 	i32.const	$push23=, 0
-	i32.store	arrindex($pop23), $0
-	i32.const	$push22=, 1
-	i32.eqz 	$push37=, $pop22
-	br_if   	0, $pop37       # 0: down to label0
-# BB#6:                                 # %if.end76
-	i32.const	$push28=, 0
-	i32.const	$push27=, 0
-	i32.load	$push26=, getptrcnt($pop27)
-	tee_local	$push25=, $0=, $pop26
-	i32.const	$push24=, 1
-	i32.add 	$push4=, $pop25, $pop24
-	i32.store	getptrcnt($pop28), $pop4
+	i32.load	$push22=, getintcnt($pop23)
+	tee_local	$push21=, $0=, $pop22
+	i32.const	$push20=, 1
+	i32.add 	$push3=, $pop21, $pop20
+	i32.store	getintcnt($pop24), $pop3
 	br_if   	0, $0           # 0: down to label0
-# BB#7:                                 # %if.end80
-	i32.const	$push33=, 0
-	i32.const	$push32=, 0
-	i32.load	$push31=, getintcnt($pop32)
-	tee_local	$push30=, $0=, $pop31
-	i32.const	$push29=, 1
-	i32.add 	$push5=, $pop30, $pop29
-	i32.store	getintcnt($pop33), $pop5
-	br_if   	0, $0           # 0: down to label0
-# BB#8:                                 # %if.end84
-	i32.const	$push6=, 0
-	call    	exit@FUNCTION, $pop6
+# BB#2:                                 # %if.end84
+	i32.const	$push4=, 0
+	call    	exit@FUNCTION, $pop4
 	unreachable
-.LBB24_9:                               # %if.then83
+.LBB24_3:                               # %if.then79
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
@@ -538,6 +504,6 @@ getintcnt:
 	.size	getintcnt, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	abort, void
 	.functype	exit, void, i32

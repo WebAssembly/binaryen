@@ -1,5 +1,5 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/conversion.c"
+	.file	"/b/build/slave/linux/build/src/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/conversion.c"
 	.section	.text.u2f,"ax",@progbits
 	.hidden	u2f
 	.globl	u2f
@@ -37,10 +37,10 @@ u2ld:                                   # @u2ld
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push14=, $pop6, $pop7
+	i32.sub 	$push14=, $pop5, $pop7
 	tee_local	$push13=, $2=, $pop14
 	i32.store	__stack_pointer($pop8), $pop13
 	call    	__floatunsitf@FUNCTION, $2, $1
@@ -98,10 +98,10 @@ s2ld:                                   # @s2ld
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push14=, $pop6, $pop7
+	i32.sub 	$push14=, $pop5, $pop7
 	tee_local	$push13=, $2=, $pop14
 	i32.store	__stack_pointer($pop8), $pop13
 	call    	__floatsitf@FUNCTION, $2, $1
@@ -129,23 +129,22 @@ s2ld:                                   # @s2ld
 fnear:                                  # @fnear
 	.param  	f32, f32
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 1
 	block   	
-	f32.sub 	$push5=, $0, $1
-	tee_local	$push4=, $1=, $pop5
+	f32.sub 	$push6=, $0, $1
+	tee_local	$push5=, $1=, $pop6
 	f32.const	$push0=, 0x0p0
-	f32.eq  	$push1=, $pop4, $pop0
+	f32.ne  	$push1=, $pop5, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %lor.rhs
+# BB#1:                                 # %lor.end
+	i32.const	$push7=, 1
+	return  	$pop7
+.LBB6_2:                                # %lor.rhs
+	end_block                       # label0:
 	f32.div 	$push2=, $0, $1
 	f32.const	$push3=, 0x1.e848p19
-	f32.gt  	$2=, $pop2, $pop3
-.LBB6_2:                                # %lor.end
-	end_block                       # label0:
-	copy_local	$push6=, $2
-                                        # fallthrough-return: $pop6
+	f32.gt  	$push4=, $pop2, $pop3
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end6:
 	.size	fnear, .Lfunc_end6-fnear
@@ -157,23 +156,22 @@ fnear:                                  # @fnear
 dnear:                                  # @dnear
 	.param  	f64, f64
 	.result 	i32
-	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$2=, 1
 	block   	
-	f64.sub 	$push5=, $0, $1
-	tee_local	$push4=, $1=, $pop5
+	f64.sub 	$push6=, $0, $1
+	tee_local	$push5=, $1=, $pop6
 	f64.const	$push0=, 0x0p0
-	f64.eq  	$push1=, $pop4, $pop0
+	f64.ne  	$push1=, $pop5, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %lor.rhs
+# BB#1:                                 # %lor.end
+	i32.const	$push7=, 1
+	return  	$pop7
+.LBB7_2:                                # %lor.rhs
+	end_block                       # label1:
 	f64.div 	$push2=, $0, $1
 	f64.const	$push3=, 0x1.6bcc41e9p46
-	f64.gt  	$2=, $pop2, $pop3
-.LBB7_2:                                # %lor.end
-	end_block                       # label1:
-	copy_local	$push6=, $2
-                                        # fallthrough-return: $pop6
+	f64.gt  	$push4=, $pop2, $pop3
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end7:
 	.size	dnear, .Lfunc_end7-dnear
@@ -188,10 +186,10 @@ ldnear:                                 # @ldnear
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push13=, 0
-	i32.const	$push10=, 0
-	i32.load	$push11=, __stack_pointer($pop10)
+	i32.const	$push11=, 0
+	i32.load	$push10=, __stack_pointer($pop11)
 	i32.const	$push12=, 32
-	i32.sub 	$push28=, $pop11, $pop12
+	i32.sub 	$push28=, $pop10, $pop12
 	tee_local	$push27=, $5=, $pop28
 	i32.store	__stack_pointer($pop13), $pop27
 	i32.const	$push17=, 16
@@ -242,7 +240,7 @@ ldnear:                                 # @ldnear
 test_integer_to_float:                  # @test_integer_to_float
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %fnear.exit178
+# BB#0:                                 # %if.end103
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -286,10 +284,10 @@ ull2ld:                                 # @ull2ld
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push14=, $pop6, $pop7
+	i32.sub 	$push14=, $pop5, $pop7
 	tee_local	$push13=, $2=, $pop14
 	i32.store	__stack_pointer($pop8), $pop13
 	call    	__floatunditf@FUNCTION, $2, $1
@@ -347,10 +345,10 @@ sll2ld:                                 # @sll2ld
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push14=, $pop6, $pop7
+	i32.sub 	$push14=, $pop5, $pop7
 	tee_local	$push13=, $2=, $pop14
 	i32.store	__stack_pointer($pop8), $pop13
 	call    	__floatditf@FUNCTION, $2, $1
@@ -378,7 +376,7 @@ sll2ld:                                 # @sll2ld
 test_longlong_integer_to_float:         # @test_longlong_integer_to_float
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %fnear.exit
+# BB#0:                                 # %if.end96
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -596,5 +594,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end31-main
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 5.0.0 (https://chromium.googlesource.com/external/github.com/llvm-mirror/clang e7bf9bd23e5ab5ae3f79d88d3e8956f0067fc683) (https://chromium.googlesource.com/external/github.com/llvm-mirror/llvm 7bfedca6fc415b0e5edea211f299142b03de1e97)"
 	.functype	exit, void, i32
