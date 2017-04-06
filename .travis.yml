@@ -44,7 +44,7 @@ before_script:
 script:
   - ./check.py --only-prepare
   - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
-  - make -j2
+  - make -j2 VERBOSE=1
   - ./check.py
 
 notifications:
