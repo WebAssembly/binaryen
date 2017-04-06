@@ -17,7 +17,7 @@ matrix:
       compiler: clang
       addons: *gcc5
 
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=address"
+    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=address -v"
       compiler: clang
       addons: *gcc5
 
