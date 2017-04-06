@@ -349,7 +349,7 @@ if options.torture and options.test_waterfall:
   unexpected_result_count += link_assembly_files.run(
       linker=os.path.abspath(S2WASM_EXE),
       files=os.path.abspath(os.path.join(options.binaryen_test, 'torture-s', '*.s')),
-      fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_gcc_test_failures.txt')),
+      fails=[os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_gcc_test_failures.txt'))],
       out=s2wasm_torture_out)
   assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
 
@@ -357,7 +357,8 @@ if options.torture and options.test_waterfall:
   unexpected_result_count += execute_files.run(
       runner=os.path.abspath(WASM_SHELL_EXE),
       files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
-      fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_binaryen_shell_test_failures.txt')),
+      fails=[os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_binaryen_shell_test_failures.txt'))],
+      attributes=['O0'],
       out='',
       wasmjs='')
 
