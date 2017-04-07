@@ -84,6 +84,8 @@ IF(MSVC)
     endforeach()
   endif()
 
+  ADD_LINK_FLAG("/STACK:2097152")
+
   IF(RUN_STATIC_ANALYZER)
     ADD_DEFINITIONS(/analyze)
   ENDIF()
