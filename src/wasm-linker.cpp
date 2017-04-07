@@ -337,7 +337,8 @@ void Linker::emscriptenGlue(std::ostream& o) {
   }
 
   auto functionsToThunk = getTableData();
-  std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
+  auto removeIt = std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
+  functionsToThunk.erase(removeIt, functionsToThunk.end());
   for (auto f : emscripten::makeDynCallThunks(out.wasm, functionsToThunk)) {
     exportFunction(f->name, true);
   }
