@@ -22,6 +22,8 @@
 // size, and may have speed benefits.
 //
 
+#include <atomic>
+
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -32,29 +34,31 @@ namespace wasm {
 
 static const int INLINING_SIZE_LIMIT = 15;
 
+typedef std::map<Name, std::atomic<Index>> NameToAtomicIndexMap;
+
 struct FunctionUseCounter : public WalkerPass<PostWalker<FunctionUseCounter>> {
   bool isFunctionParallel() override { return true; }
 
-  FunctionUseCounter(std::map<Name, Index>* output) : output(output) {}
+  FunctionUseCounter(NameToAtomicIndexMap* uses) : uses(uses) {}
 
   FunctionUseCounter* create() override {
-    return new FunctionUseCounter(output);
+    return new FunctionUseCounter(uses);
   }
 
   void visitCall(Call *curr) {
-    (*output)[curr->target]++;
+    assert(uses->count(curr->target) > 0); // can't add a new element in parallel
+    (*uses)[curr->target]++;
   }
 
 private:
-  std::map<Name, Index>* output;
+  NameToAtomicIndexMap* uses;
 };
 
 struct Action {
-  Call* call;
-  Block* block; // the replacement for the call, into which we should inline
+  Expression** callSite;
   Function* contents;
 
-  Action(Call* call, Block* block, Function* contents) : call(call), block(block), contents(contents) {}
+  Action(Expression** callSite, Function* contents) : callSite(callSite), contents(contents) {}
 };
 
 struct InliningState {
@@ -71,12 +75,15 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
     return new Planner(state);
   }
 
-  void visitCall(Call *curr) {
+  void visitCall(Call* curr) {
     if (state->canInline.count(curr->target)) {
-      auto* block = Builder(*getModule()).makeBlock();
-      block->type = curr->type;
+      // nest the call in a block. that way the location of the pointer to the call will not
+      // change even if we inline multiple times into the same function, otherwise
+      // call1(call2()) might be a problem
+      auto* block = Builder(*getModule()).makeBlock(curr);
       replaceCurrent(block);
-      state->actionsForFunction[getFunction()->name].emplace_back(curr, block, getModule()->getFunction(curr->target));
+      assert(state->actionsForFunction.count(getFunction()->name) > 0); // can't add a new element in parallel
+      state->actionsForFunction[getFunction()->name].emplace_back(&block->list[0], getModule()->getFunction(curr->target));
     }
   }
 
@@ -97,10 +104,12 @@ private:
 // Since we only inline once, and do not need the function afterwards, we
 // can just reuse all the nodes and even avoid copying.
 static Expression* doInlining(Module* module, Function* into, Action& action) {
+  auto* call = (*action.callSite)->cast<Call>();
   Builder builder(*module);
-  auto* block = action.block;
+  auto* block = Builder(*module).makeBlock();
+  block->type = call->type;
   block->name = Name(std::string("__inlined_func$") + action.contents->name.str);
-  block->type = action.contents->result;
+  *action.callSite = block;
   // set up a locals mapping
   struct Updater : public PostWalker<Updater> {
     std::map<Index, Index> localMapping;
@@ -124,7 +133,7 @@ static Expression* doInlining(Module* module, Function* into, Action& action) {
   }
   // assign the operands into the params
   for (Index i = 0; i < action.contents->params.size(); i++) {
-    block->list.push_back(builder.makeSetLocal(updater.localMapping[i], action.call->operands[i]));
+    block->list.push_back(builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
   }
   // update the inlined contents
   updater.walk(action.contents->body);
@@ -137,41 +146,44 @@ struct Inlining : public Pass {
   // whether to optimize where we inline
   bool optimize = false;
 
+  NameToAtomicIndexMap uses;
+
   void run(PassRunner* runner, Module* module) override {
     // keep going while we inline, to handle nesting. TODO: optimize
+    calculateUses(module);
     while (iteration(runner, module)) {}
   }
 
-  bool iteration(PassRunner* runner, Module* module) {
-    // Count uses
-    std::map<Name, Index> uses;
+  void calculateUses(Module* module) {
     // fill in uses, as we operate on it in parallel (each function to its own entry)
     for (auto& func : module->functions) {
-      uses[func->name] = 0;
+      uses[func->name].store(0);
     }
-    {
-      PassRunner runner(module);
-      runner.setIsNested(true);
-      runner.add<FunctionUseCounter>(&uses);
-      runner.run();
-    }
+    PassRunner runner(module);
+    runner.setIsNested(true);
+    runner.add<FunctionUseCounter>(&uses);
+    runner.run();
+    // anything exported or used in a table should not be inlined
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
-        uses[ex->value] = 2; // too many, so we ignore it
+        uses[ex->value].store(2); // too many, so we ignore it
       }
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
         if (module->getFunctionOrNull(name)) {
-          uses[name]++;
+          uses[name].store(2);
         }
       }
     }
+  }
+
+  bool iteration(PassRunner* runner, Module* module) {
     // decide which to inline
     InliningState state;
-    for (auto iter : uses) {
-      auto name = iter.first;
-      auto num = iter.second;
+    for (auto& func : module->functions) {
+      auto name = func->name;
+      auto num = uses[name].load();
       if (num == 1 && worthInlining(module->getFunction(name))) {
         state.canInline.insert(name);
       }
@@ -192,19 +204,20 @@ struct Inlining : public Pass {
     std::set<Function*> inlinedInto;
     for (auto& func : module->functions) {
       for (auto& action : state.actionsForFunction[func->name]) {
+        Name inlinedName = action.contents->name;
         doInlining(module, func.get(), action);
-        inlined.insert(action.contents->name);
+        inlined.insert(inlinedName);
         inlinedInto.insert(func.get());
+        uses[inlinedName]--;
+        assert(uses[inlinedName].load() == 0);
       }
     }
     // anything we inlined into may now have non-unique label names, fix it up
     for (auto func : inlinedInto) {
       wasm::UniqueNameMapper::uniquify(func->body);
     }
-    if (optimize) {
-      for (auto func : inlinedInto) {
-        doOptimize(func, runner, module);
-      }
+    if (optimize && inlinedInto.size() > 0) {
+      doOptimize(inlinedInto, module, runner);
     }
     // remove functions that we managed to inline, their one use is gone
     auto& funcs = module->functions;
@@ -219,12 +232,19 @@ struct Inlining : public Pass {
     return Measurer::measure(func->body) <= INLINING_SIZE_LIMIT;
   }
 
-  void doOptimize(Function* func, PassRunner* parentRunner, Module* module) {
-    // Run useful optimizations after inlining, things like removing
-    // unnecessary new blocks, sharing variables, etc.
-    // TODO: run these in parallel
+  // Run useful optimizations after inlining, things like removing
+  // unnecessary new blocks, sharing variables, etc.
+  void doOptimize(std::set<Function*>& funcs, Module* module, PassRunner* parentRunner) {
+    // save the full list of functions on the side
+    std::vector<std::unique_ptr<Function>> all;
+    all.swap(module->functions);
+    module->updateMaps();
+    for (auto& func : funcs) {
+      module->addFunction(func);
+    }
     PassRunner runner(module, parentRunner->options);
     runner.setIsNested(true);
+    runner.setValidateGlobally(false); // not a full valid module
     runner.add("remove-unused-brs");
     runner.add("remove-unused-names");
     runner.add("coalesce-locals");
@@ -233,7 +253,13 @@ struct Inlining : public Pass {
     runner.add("reorder-locals");
     runner.add("remove-unused-brs");
     runner.add("merge-blocks");
-    runner.runFunction(func);
+    runner.run();
+    // restore all the funcs
+    for (auto& func : module->functions) {
+      func.release();
+    }
+    all.swap(module->functions);
+    module->updateMaps();
   }
 };
 

@@ -20,71 +20,93 @@
   (call $tabled)
   (call $multi)
   (call $multi)
-  (block $__inlined_func$ok
-   (drop
-    (i32.const 1)
+  (block
+   (block $__inlined_func$ok
+    (drop
+     (i32.const 1)
+    )
    )
   )
   (drop
-   (block $__inlined_func$int i32
-    (i32.const 2)
+   (block i32
+    (block $__inlined_func$int i32
+     (i32.const 2)
+    )
    )
   )
   (drop
-   (block $__inlined_func$double f64
-    (f64.const 3.14159)
+   (block f64
+    (block $__inlined_func$double f64
+     (f64.const 3.14159)
+    )
    )
   )
   (set_local $x
-   (block $__inlined_func$int2 i32
-    (i32.const 112)
+   (block i32
+    (block $__inlined_func$int2 i32
+     (i32.const 112)
+    )
    )
   )
   (set_local $y
-   (block $__inlined_func$double2 f64
-    (f64.const 113.14159)
+   (block f64
+    (block $__inlined_func$double2 f64
+     (f64.const 113.14159)
+    )
    )
   )
-  (block $__inlined_func$with-local
-   (set_local $2
-    (f32.const 2.1418280601501465)
+  (block
+   (block $__inlined_func$with-local
+    (set_local $2
+     (f32.const 2.1418280601501465)
+    )
    )
   )
-  (block $__inlined_func$with-local2
-   (set_local $3
-    (i64.const 4)
+  (block
+   (block $__inlined_func$with-local2
+    (set_local $3
+     (i64.const 4)
+    )
    )
   )
   (drop
-   (block $__inlined_func$return i32
-    (br $__inlined_func$return
-     (i32.const 5)
+   (block i32
+    (block $__inlined_func$return i32
+     (br $__inlined_func$return
+      (i32.const 5)
+     )
     )
    )
   )
-  (block $__inlined_func$multipass
-   (block $__inlined_func$multipass2
-    (drop
-     (i32.const 6)
+  (block
+   (block $__inlined_func$multipass
+    (block
+     (block $__inlined_func$multipass2
+      (drop
+       (i32.const 6)
+      )
+     )
     )
    )
   )
-  (block $__inlined_func$param
-   (set_local $4
-    (f32.const 12.34000015258789)
-   )
-   (set_local $5
-    (i64.const 890005350012)
-   )
-   (block
-    (drop
-     (get_local $4)
+  (block
+   (block $__inlined_func$param
+    (set_local $4
+     (f32.const 12.34000015258789)
     )
-    (drop
-     (get_local $5)
+    (set_local $5
+     (i64.const 890005350012)
     )
-    (drop
-     (get_local $6)
+    (block
+     (drop
+      (get_local $4)
+     )
+     (drop
+      (get_local $5)
+     )
+     (drop
+      (get_local $6)
+     )
     )
    )
   )
