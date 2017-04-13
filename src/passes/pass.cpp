@@ -104,11 +104,9 @@ void PassRegistry::registerPasses() {
 }
 
 void PassRunner::addDefaultOptimizationPasses() {
-  add("duplicate-function-elimination");
+  addDefaultGlobalOptimizationPrePasses();
   addDefaultFunctionOptimizationPasses();
-  add("duplicate-function-elimination"); // optimizations show more functions as duplicate
-  add("remove-unused-module-elements");
-  add("memory-packing");
+  addDefaultGlobalOptimizationPostPasses();
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
@@ -142,8 +140,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
 }
 
-void PassRunner::addDefaultGlobalOptimizationPasses() {
+void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   add("duplicate-function-elimination");
+}
+
+void PassRunner::addDefaultGlobalOptimizationPostPasses() {
+  add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("inlining-optimizing");

@@ -622,7 +622,7 @@ int main(int argc, const char* argv[]) {
     PassRunner passRunner(&output);
     passRunner.add("precompute");
     passRunner.add("optimize-instructions"); // things now-constant may be further optimized
-    passRunner.addDefaultGlobalOptimizationPasses();
+    passRunner.addDefaultGlobalOptimizationPostPasses();
     passRunner.run();
   }
 
