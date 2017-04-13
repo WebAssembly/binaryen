@@ -286,16 +286,28 @@ function asm(global, env, buffer) {
   }
   function keepAlive() {
     loads();
+    loads();
+    stores();
     stores();
     test();
+    test();
+    i64(imports());
     i64(imports());
     arg(i64(0));
+    arg(i64(0));
+    i64(call1(i64(0)));
     i64(call1(i64(0)));
     i64(call2(i64(0)));
+    i64(call2(i64(0)));
+    i64(returnCastConst());
     i64(returnCastConst());
     i64(ifValue64(i64(0), i64(0)));
+    i64(ifValue64(i64(0), i64(0)));
+    ifValue32(0, 0) | 0;
     ifValue32(0, 0) | 0;
     switch64(i64(0)) | 0;
+    switch64(i64(0)) | 0;
+    unreachable_leftovers(0, 0, 0);
     unreachable_leftovers(0, 0, 0);
   }
 

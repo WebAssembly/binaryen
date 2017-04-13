@@ -298,13 +298,27 @@
  )
  (func $keepAlive
   (call $loads)
+  (call $loads)
+  (call $stores)
   (call $stores)
   (call $test)
+  (call $test)
+  (drop
+   (call $imports)
+  )
   (drop
    (call $imports)
   )
   (call $arg
    (i64.const 0)
+  )
+  (call $arg
+   (i64.const 0)
+  )
+  (drop
+   (call $call1
+    (i64.const 0)
+   )
   )
   (drop
    (call $call1
@@ -317,7 +331,21 @@
    )
   )
   (drop
+   (call $call2
+    (i64.const 0)
+   )
+  )
+  (drop
    (call $returnCastConst)
+  )
+  (drop
+   (call $returnCastConst)
+  )
+  (drop
+   (call $ifValue64
+    (i64.const 0)
+    (i64.const 0)
+   )
   )
   (drop
    (call $ifValue64
@@ -332,9 +360,25 @@
    )
   )
   (drop
+   (call $ifValue32
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+  (drop
    (call $switch64
     (i64.const 0)
    )
+  )
+  (drop
+   (call $switch64
+    (i64.const 0)
+   )
+  )
+  (call $unreachable_leftovers
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
   )
   (call $unreachable_leftovers
    (i32.const 0)

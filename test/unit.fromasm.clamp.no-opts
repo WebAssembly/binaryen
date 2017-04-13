@@ -1917,6 +1917,11 @@
     (f64.const 3.14159)
    )
   )
+  (drop
+   (call $sqrts
+    (f64.const 2.18281)
+   )
+  )
  )
  (func $v
   (nop)

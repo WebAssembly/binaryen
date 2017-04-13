@@ -682,6 +682,7 @@ function asm(global, env, buffer) {
 
   function keepAlive() {
     sqrts(3.14159);
+    sqrts(2.18281); // don't inline it either
   }
 
   function v() {

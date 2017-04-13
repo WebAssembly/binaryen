@@ -9184,9 +9184,16 @@
    (block $do-once i32
     (if i32
      (i32.lt_s
-      (call $_fputs
-       (get_local $0)
-       (get_local $1)
+      (i32.add
+       (call $_fwrite
+        (get_local $0)
+        (call $_strlen
+         (get_local $0)
+        )
+        (i32.const 1)
+        (get_local $1)
+       )
+       (i32.const -1)
       )
       (i32.const 0)
      )
@@ -9649,19 +9656,6 @@
      (get_local $1)
     )
    )
-  )
- )
- (func $_fputs (param $0 i32) (param $1 i32) (result i32)
-  (i32.add
-   (call $_fwrite
-    (get_local $0)
-    (call $_strlen
-     (get_local $0)
-    )
-    (i32.const 1)
-    (get_local $1)
-   )
-   (i32.const -1)
   )
  )
  (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)

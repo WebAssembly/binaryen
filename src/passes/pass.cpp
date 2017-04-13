@@ -70,6 +70,7 @@ void PassRegistry::registerPasses() {
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
   registerPass("inlining", "inlines functions (currently only ones with a single use)", createInliningPass);
+  registerPass("inlining-optimizing", "inlines functions (currently only ones with a single use) and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
   registerPass("local-cse", "common subexpression elimination inside basic blocks", createLocalCSEPass);
   registerPass("log-execution", "instrument the build with logging of where execution goes", createLogExecutionPass);
@@ -144,6 +145,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 void PassRunner::addDefaultGlobalOptimizationPasses() {
   add("duplicate-function-elimination");
   add("remove-unused-module-elements");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    add("inlining-optimizing");
+  }
   add("memory-packing");
 }
 

@@ -18,16 +18,19 @@
 // Inlining.
 //
 // For now, this does a conservative inlining of all functions that have
-// exactly one use. That should not increase code size, and may have
-// speed benefits.
+// exactly one use, and are fairly small. That should not increase code
+// size, and may have speed benefits.
 //
 
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
+#include <ast_utils.h>
 #include <parsing.h>
 
 namespace wasm {
+
+static const int INLINING_SIZE_LIMIT = 15;
 
 struct FunctionUseCounter : public WalkerPass<PostWalker<FunctionUseCounter>> {
   bool isFunctionParallel() override { return true; }
@@ -131,6 +134,9 @@ static Expression* doInlining(Module* module, Function* into, Action& action) {
 }
 
 struct Inlining : public Pass {
+  // whether to optimize where we inline
+  bool optimize = false;
+
   void run(PassRunner* runner, Module* module) override {
     // keep going while we inline, to handle nesting. TODO: optimize
     while (iteration(runner, module)) {}
@@ -156,14 +162,18 @@ struct Inlining : public Pass {
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
-        uses[name]++;
+        if (module->getFunctionOrNull(name)) {
+          uses[name]++;
+        }
       }
     }
     // decide which to inline
     InliningState state;
     for (auto iter : uses) {
-      if (iter.second == 1) {
-        state.canInline.insert(iter.first);
+      auto name = iter.first;
+      auto num = iter.second;
+      if (num == 1 && worthInlining(module->getFunction(name))) {
+        state.canInline.insert(name);
       }
     }
     // fill in actionsForFunction, as we operate on it in parallel (each function to its own entry)
@@ -191,6 +201,11 @@ struct Inlining : public Pass {
     for (auto func : inlinedInto) {
       wasm::UniqueNameMapper::uniquify(func->body);
     }
+    if (optimize) {
+      for (auto func : inlinedInto) {
+        doOptimize(func, runner, module);
+      }
+    }
     // remove functions that we managed to inline, their one use is gone
     auto& funcs = module->functions;
     funcs.erase(std::remove_if(funcs.begin(), funcs.end(), [&inlined](const std::unique_ptr<Function>& curr) {
@@ -199,10 +214,37 @@ struct Inlining : public Pass {
     // return whether we did any work
     return inlined.size() > 0;
   }
+
+  bool worthInlining(Function* func) {
+    return Measurer::measure(func->body) <= INLINING_SIZE_LIMIT;
+  }
+
+  void doOptimize(Function* func, PassRunner* parentRunner, Module* module) {
+    // Run useful optimizations after inlining, things like removing
+    // unnecessary new blocks, sharing variables, etc.
+    // TODO: run these in parallel
+    PassRunner runner(module, parentRunner->options);
+    runner.setIsNested(true);
+    runner.add("remove-unused-brs");
+    runner.add("remove-unused-names");
+    runner.add("coalesce-locals");
+    runner.add("simplify-locals");
+    runner.add("vacuum");
+    runner.add("reorder-locals");
+    runner.add("remove-unused-brs");
+    runner.add("merge-blocks");
+    runner.runFunction(func);
+  }
 };
 
 Pass *createInliningPass() {
   return new Inlining();
+}
+
+Pass *createInliningOptimizingPass() {
+  auto* ret = new Inlining();
+  ret->optimize = true;
+  return ret;
 }
 
 } // namespace wasm

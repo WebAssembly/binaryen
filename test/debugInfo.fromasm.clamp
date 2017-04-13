@@ -23,38 +23,31 @@
    (i32.const 1)
   )
  )
- (func $i32s-rem (param $0 i32) (param $1 i32) (result i32)
-  (if i32
-   (get_local $1)
-   (i32.rem_s
-    (get_local $0)
-    (get_local $1)
-   )
-   (i32.const 0)
-  )
- )
  (func $opts (param $0 i32) (param $1 i32) (result i32)
-  ;; even-opted.cpp:2
-  (set_local $1
-   (i32.shr_s
-    (get_local $1)
-    (tee_local $0
-     (i32.add
-      (get_local $0)
-      (get_local $1)
+  (local $2 i32)
+  (i32.add
+   (tee_local $0
+    (if i32
+     (tee_local $2
+      (tee_local $1
+       (i32.shr_s
+        (get_local $1)
+        (tee_local $0
+         (i32.add
+          (get_local $0)
+          (get_local $1)
+         )
+        )
+       )
+      )
      )
+     (i32.rem_s
+      (get_local $0)
+      (get_local $2)
+     )
+     (i32.const 0)
     )
    )
-  )
-  ;; even-opted.cpp:3
-  (set_local $0
-   (call $i32s-rem
-    (get_local $0)
-    (get_local $1)
-   )
-  )
-  (i32.add
-   (get_local $0)
    (get_local $1)
   )
  )

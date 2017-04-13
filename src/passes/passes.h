@@ -30,6 +30,7 @@ Pass *createDuplicateFunctionEliminationPass();
 Pass *createExtractFunctionPass();
 Pass *createFullPrinterPass();
 Pass *createInliningPass();
+Pass *createInliningOptimizingPass();
 Pass *createLegalizeJSInterfacePass();
 Pass *createLocalCSEPass();
 Pass *createLogExecutionPass();
