@@ -510,8 +510,9 @@ public:
   std::vector<Name> localNames;
   std::map<Name, Index> localIndices;
 
-  // node annotations, printed alongside the node in the text format
-  struct DebugLocation { uint32_t fileIndex, lineNumber; };
+  struct DebugLocation {
+    uint32_t fileIndex, lineNumber;
+  };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
 
   Function() : result(none) {}
