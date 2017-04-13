@@ -1171,6 +1171,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   if (runOptimizationPasses) {
     optimizingBuilder->finish();
   }
+  wasm.debugInfoFileNames = std::move(preprocessor.debugInfoFileNames);
 
   // second pass. first, function imports
 
@@ -1306,11 +1307,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         // this is a debuginfo node. turn it into an annotation on the last stack
         auto* last = lastExpression;
         lastExpression = nullptr;
-        auto& annotations = getFunction()->annotations;
+        auto& debugLocations = getFunction()->debugLocations;
         if (last) {
-          auto fileIndex = call->operands[0]->cast<Const>()->value.geti32();
-          auto lineNumber = call->operands[1]->cast<Const>()->value.geti32();
-          annotations[last] = parent->preprocessor.debugInfoFileNames[fileIndex] + ":" + std::to_string(lineNumber);
+          uint32_t fileIndex = call->operands[0]->cast<Const>()->value.geti32();
+          assert(getModule()->debugInfoFileNames.size() > fileIndex);
+          uint32_t lineNumber = call->operands[1]->cast<Const>()->value.geti32();
+          debugLocations[last] = {fileIndex, lineNumber};
         }
         // eliminate the debug info call
         ExpressionManipulator::nop(curr);

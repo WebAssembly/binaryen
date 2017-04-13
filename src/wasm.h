@@ -510,8 +510,10 @@ public:
   std::vector<Name> localNames;
   std::map<Name, Index> localIndices;
 
-  // node annotations, printed alongside the node in the text format
-  std::unordered_map<Expression*, std::string> annotations;
+  struct DebugLocation {
+    uint32_t fileIndex, lineNumber;
+  };
+  std::unordered_map<Expression*, DebugLocation> debugLocations;
 
   Function() : result(none) {}
 
@@ -647,6 +649,7 @@ public:
   Name start;
 
   std::vector<UserSection> userSections;
+  std::vector<std::string> debugInfoFileNames;
 
   MixedArena allocator;
 
