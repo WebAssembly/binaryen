@@ -46,6 +46,7 @@ void WasmBinaryWriter::write() {
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
+  if (binaryMap) writeSourceMapUrl();
   if (symbolMap.size() > 0) writeSymbolMap();
 
   finishUp();
@@ -236,6 +237,7 @@ void WasmBinaryWriter::writeFunctions() {
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     Function* function = wasm->functions[i].get();
+    currFunction = function;
     mappedLocals.clear();
     numLocalsByType.clear();
     if (debug) std::cerr << "writing" << function->name << std::endl;
@@ -258,6 +260,7 @@ void WasmBinaryWriter::writeFunctions() {
     if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
     o.writeAt(sizePos, U32LEB(size));
   }
+  currFunction = nullptr;
   finishSection(start);
 }
 
@@ -417,6 +420,14 @@ void WasmBinaryWriter::writeNames() {
   assert(emitted == mappedFunctions.size());
   finishSubsection(substart);
   /* TODO: locals */
+  finishSection(start);
+}
+
+void WasmBinaryWriter::writeSourceMapUrl() {
+  if (debug) std::cerr << "== writeSourceMapUrl" << std::endl;
+  auto start = startSection(BinaryConsts::Section::User);
+  writeInlineString(BinaryConsts::UserSections::SourceMapUrl);
+  writeInlineString(binaryMapUrl.c_str());
   finishSection(start);
 }
 

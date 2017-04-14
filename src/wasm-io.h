@@ -48,11 +48,15 @@ class ModuleWriter : public ModuleIO {
   bool binary = true;
   bool debugInfo = false;
   std::string symbolMap;
+  std::string binaryMapFilename;
+  std::string binaryMapUrl;
 
 public:
   void setBinary(bool binary_) { binary = binary_; }
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
   void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }
+  void setBinaryMapFilename(std::string binaryMapFilename_) { binaryMapFilename = binaryMapFilename_; }
+  void setBinaryMapUrl(std::string binaryMapUrl_) { binaryMapUrl = binaryMapUrl_; }
 
   // write text
   void writeText(Module& wasm, std::string filename);

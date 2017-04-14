@@ -189,6 +189,31 @@ for asm in tests:
               fail_with_error('wasm interpreter error: ' + err) # failed to pretty-print
             fail_with_error('wasm interpreter error')
 
+        # verify debug info
+        if 'debugInfo' in asm:
+          txtmap = 'a.wasm.txtmap'
+          cmd += ['--binarymap-file', txtmap,
+                  '--binarymap-url', txtmap + '.map',
+                  '-o', 'a.wasm']
+          run_command(cmd)
+          if not os.path.isfile(txtmap):
+            fail_with_error('Debug info map not created: %s' % txtmap)
+          with open(wasm + '.txtmap', 'rb') as expected:
+            with open(txtmap, 'rb') as actual:
+              fail_if_not_identical(actual.read(), expected.read())
+          with open('a.wasm', 'rb') as binary:
+            url_section_name = bytearray([16]) + bytearray('sourceMappingURL')
+            payload = txtmap + '.map'
+            assert len(payload) < 256, 'name too long'
+            url_section_contents = bytearray([len(payload)]) + bytearray(payload)
+            print url_section_name
+            binary_contents = bytearray(binary.read())
+            if url_section_name not in binary_contents:
+              fail_with_error('source map url section not found in binary')
+            if url_section_contents not in binary_contents[binary_contents.index(url_section_name):]:
+              fail_with_error('source map url not found in url section')
+
+
 print '\n[ checking asm2wasm binary reading/writing... ]\n'
 
 asmjs = os.path.join(options.binaryen_test, 'hello_world.asm.js')

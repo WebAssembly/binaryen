@@ -308,6 +308,7 @@ enum EncodedType {
 
 namespace UserSections {
 extern const char* Name;
+extern const char* SourceMapUrl;
 
 enum Subsection {
   NameFunction = 1,
@@ -534,8 +535,11 @@ inline S32LEB binaryWasmType(WasmType type) {
 class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
+  Function* currFunction = nullptr;
   bool debug;
   bool debugInfo = true;
+  std::ostream* binaryMap = nullptr;
+  std::string binaryMapUrl;
   std::string symbolMap;
 
   MixedArena allocator;
@@ -546,7 +550,11 @@ public:
     prepare();
   }
 
-  void setDebugInfo(bool set) { debugInfo = set; }
+  void setNamesSection(bool set) { debugInfo = set; }
+  void setBinaryMap(std::ostream* set, std::string url) {
+    binaryMap = set;
+    binaryMapUrl = url;
+  }
   void setSymbolMap(std::string set) { symbolMap = set; }
 
   void write();
@@ -582,6 +590,7 @@ public:
   void writeFunctionTableDeclaration();
   void writeTableElements();
   void writeNames();
+  void writeSourceMapUrl();
   void writeSymbolMap();
 
   // helpers
@@ -606,6 +615,19 @@ public:
 
   void recurse(Expression*& curr);
   std::vector<Name> breakStack;
+
+  void visit(Expression* curr) {
+    if (binaryMap && currFunction) {
+      // Dump the binaryMap debug info
+      auto& debugLocations = currFunction->debugLocations;
+      auto iter = debugLocations.find(curr);
+      if (iter != debugLocations.end()) {
+        auto fileName = wasm->debugInfoFileNames[iter->second.fileIndex];
+        *binaryMap << o.size() << ":" << fileName << ":" <<iter->second.lineNumber << '\n';
+      }
+    }
+    Visitor<WasmBinaryWriter>::visit(curr);
+  }
 
   void visitBlock(Block *curr);
   // emits a node, but if it is a block with no name, emit a list of its contents
