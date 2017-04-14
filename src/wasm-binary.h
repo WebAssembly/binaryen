@@ -529,6 +529,7 @@ inline S32LEB binaryWasmType(WasmType type) {
 class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
+  Function* currFunction = nullptr;
   bool debug;
   bool debugInfo = true;
   std::string symbolMap;
@@ -601,6 +602,19 @@ public:
 
   void recurse(Expression*& curr);
   std::vector<Name> breakStack;
+
+  void visit(Expression* curr) {
+    if (debugInfo && currFunction) {
+      // show an annotation, if there is one
+      auto& debugLocations = currFunction->debugLocations;
+      auto iter = debugLocations.find(curr);
+      if (iter != debugLocations.end()) {
+        auto fileName = wasm->debugInfoFileNames[iter->second.fileIndex];
+        std::cout << std::hex <<o.size() << ":" << fileName << ":" << std::dec <<iter->second.lineNumber << '\n';
+      }
+    }
+    Visitor<WasmBinaryWriter>::visit(curr);
+  }
 
   void visitBlock(Block *curr);
   // emits a node, but if it is a block with no name, emit a list of its contents

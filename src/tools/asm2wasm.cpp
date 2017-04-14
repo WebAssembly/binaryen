@@ -128,7 +128,7 @@ int main(int argc, const char *argv[]) {
 
   Asm2WasmPreProcessor pre;
   // wasm binaries can contain a names section, but not full debug info
-  pre.debugInfo = debugInfo && !emitBinary;
+  pre.debugInfo = debugInfo;
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
   char *start = pre.process(input.data());
