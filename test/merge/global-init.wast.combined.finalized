@@ -1,0 +1,16 @@
+(module
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 8 anyfunc))
+ (import "env" "globally" (global $i-collide i32))
+ (import "env" "memoryBase" (global $memoryBase$0 i32))
+ (import "env" "tableBase" (global $tableBase$0 i32))
+ (import "env" "globally" (global $i-collide$0 f64))
+ (global $a i32 (get_global $i-collide))
+ (global $g-collide i32 (get_global $i-collide))
+ (global $b f64 (get_global $i-collide$0))
+ (global $g-collide$0 f64 (get_global $i-collide$0))
+ 
+ (data (i32.const 1024) "")
+)

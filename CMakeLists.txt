@@ -168,6 +168,16 @@ SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+SET(wasm-merge_SOURCES
+  src/tools/wasm-merge.cpp
+)
+ADD_EXECUTABLE(wasm-merge
+               ${wasm-merge_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer ${all_passes} ast support)
+SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-merge DESTINATION bin)
+
 SET(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp
   src/wasm-emscripten.cpp

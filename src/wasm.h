@@ -561,6 +561,7 @@ public:
 
 class Table {
 public:
+  static const Address::address_t kPageSize = 1;
   static const Index kMaxSize = Index(-1);
 
   struct Segment {

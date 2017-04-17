@@ -1,0 +1,44 @@
+(module
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$v$0 (func))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 0 anyfunc))
+ (import "env" "memoryBase" (global $memoryBase$0 i32))
+ (import "env" "tableBase" (global $tableBase$0 i32))
+ (global $a-global i32 (i32.const 0))
+ (global $b-global f64 (f64.const 2.14281428))
+ 
+ (data (get_global $memoryBase) "")
+ (export "foo" (func $foo-func))
+ (export "aglobal" (global $a-global))
+ (export "bar" (func $bar-func))
+ (export "bglobal" (global $b-global))
+ (func $foo-func (type $FUNCSIG$v)
+  (drop
+   (i32.const 1337)
+  )
+  (call $bar-func)
+  (drop
+   (get_global $a-global)
+  )
+  (drop
+   (get_global $b-global)
+  )
+ )
+ (func $b (type $FUNCSIG$v$0)
+  (call $foo-func)
+ )
+ (func $bar-func (type $FUNCSIG$v$0)
+  (drop
+   (f64.const 3.14159)
+  )
+  (drop
+   (get_global $a-global)
+  )
+  (drop
+   (get_global $b-global)
+  )
+ )
+)

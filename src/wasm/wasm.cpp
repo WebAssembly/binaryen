@@ -32,6 +32,8 @@ const char* Name = "name";
 }
 
 Name GROW_WASM_MEMORY("__growWasmMemory"),
+     MEMORY_BASE("memoryBase"),
+     TABLE_BASE("tableBase"),
      NEW_SIZE("newSize"),
      MODULE("module"),
      START("start"),

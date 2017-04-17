@@ -1,0 +1,63 @@
+(module
+  (type $ii (func (param i32 i32)))
+  (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "tableBase" (global $tableBase i32))
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 anyfunc))
+  (import "env" "some-func-b" (func $some-func-b))
+  (import "env" "some-collide" (func $some-collide))
+  (data (get_global $memoryBase) "hello, B!\n")
+  (global $global-collide i32 (i32.const 0))
+  (global $global-collide-mut (mut i32) (i32.const 0))
+  (global $global-b i32 (i32.const 1))
+  (elem (get_global $tableBase) $only-b $willCollide $some-func-b $some-collide)
+  (export "exp-b" (func $only-b))
+  (export "exp-collide" (func $only-b))
+  (export "exp-collide2" (func $willCollide))
+  (export "exp-b-nameCollided" (func $willCollide))
+  (func $only-b
+    (drop (i32.const 111))
+    (call $only-b)
+    (call $some-func-b)
+    (call_import $some-collide)
+    (call_indirect $ii
+      (i32.const 12)
+      (i32.const 34)
+      (i32.const 56)
+    )
+    (drop (get_global $global-collide))
+    (drop (get_global $global-b))
+    (drop (get_global $memoryBase))
+    (drop (get_global $tableBase))
+    (drop
+      (i32.add
+        (get_global $memoryBase)
+        (i32.const 1000)
+      )
+    )
+    (drop
+      (i32.add
+        (get_global $tableBase)
+        (i32.const 1000)
+      )
+    )
+    (drop
+      (i32.add
+        (get_global $tableBase)
+        (unreachable) ;; bad!
+      )
+    )
+    (drop
+      (i32.sub ;; bad!
+        (get_global $tableBase)
+        (i32.const 1000)
+      )
+    )
+    (set_global $global-collide-mut (i32.const 5678))
+  )
+  (func $willCollide
+    (drop (i32.const 222))
+    (call $willCollide)
+  )
+)
+

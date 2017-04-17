@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+#ifndef wasm_shared_constants_h
+
+#include "wasm.h"
+
 namespace wasm {
 
 extern Name GROW_WASM_MEMORY,
+            MEMORY_BASE,
+            TABLE_BASE,
             NEW_SIZE,
             MODULE,
             START,
@@ -53,4 +59,6 @@ extern Name GROW_WASM_MEMORY,
             EXIT;
 
 } // namespace wasm
+
+#endif // wasm_shared_constants_h
 

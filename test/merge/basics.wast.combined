@@ -1,0 +1,133 @@
+(module
+ (type $ii (func (param i32 i32)))
+ (type $FUNCSIG$v (func))
+ (type $ii$0 (func (param i32 i32)))
+ (type $FUNCSIG$v$0 (func))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 10 anyfunc))
+ (import "env" "some-func" (func $some-func))
+ (import "env" "some-collide" (func $some-collide))
+ (import "env" "memoryBase" (global $memoryBase$0 i32))
+ (import "env" "tableBase" (global $tableBase$0 i32))
+ (import "env" "some-func-b" (func $some-func-b))
+ (import "env" "some-collide" (func $some-collide$0))
+ (global $global-collide i32 (i32.const 0))
+ (global $global-collide-mut (mut i32) (i32.const 0))
+ (global $global-a i32 (i32.const 1))
+ (global $global-collide$0 i32 (i32.const 0))
+ (global $global-collide-mut$0 (mut i32) (i32.const 0))
+ (global $global-b i32 (i32.const 1))
+ (elem (get_global $tableBase) $only-a $willCollide $some-func $some-collide $only-a $only-a $only-b $willCollide$0 $some-func-b $some-collide$0)
+ (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n\00\00\00\00\00\00")
+ (export "exp-a" (func $only-a))
+ (export "exp-collide" (func $only-a))
+ (export "exp-collide2" (func $willCollide))
+ (export "exp-b" (func $only-b))
+ (export "exp-b-nameCollided" (func $willCollide$0))
+ (func $only-a (type $FUNCSIG$v)
+  (drop
+   (i32.const 100)
+  )
+  (call $only-a)
+  (call $some-func)
+  (call $some-collide)
+  (call_indirect $ii
+   (i32.const 123)
+   (i32.const 456)
+   (i32.const 789)
+  )
+  (drop
+   (get_global $global-collide)
+  )
+  (drop
+   (get_global $global-a)
+  )
+  (drop
+   (get_global $memoryBase)
+  )
+  (drop
+   (get_global $tableBase)
+  )
+  (set_global $global-collide-mut
+   (i32.const 1234)
+  )
+ )
+ (func $willCollide (type $FUNCSIG$v)
+  (drop
+   (i32.const 200)
+  )
+  (call $willCollide)
+ )
+ (func $only-b (type $FUNCSIG$v$0)
+  (drop
+   (i32.const 111)
+  )
+  (call $only-b)
+  (call $some-func-b)
+  (call $some-collide$0)
+  (call_indirect $ii$0
+   (i32.const 12)
+   (i32.const 34)
+   (i32.const 56)
+  )
+  (drop
+   (get_global $global-collide$0)
+  )
+  (drop
+   (get_global $global-b)
+  )
+  (drop
+   (i32.add
+    (get_global $memoryBase$0)
+    (i32.const 16)
+   )
+  )
+  (drop
+   (i32.add
+    (get_global $tableBase$0)
+    (i32.const 6)
+   )
+  )
+  (drop
+   (i32.add
+    (get_global $memoryBase$0)
+    (i32.const 1016)
+   )
+  )
+  (drop
+   (i32.add
+    (get_global $tableBase$0)
+    (i32.const 1006)
+   )
+  )
+  (drop
+   (i32.add
+    (i32.add
+     (get_global $tableBase$0)
+     (i32.const 6)
+    )
+    (unreachable)
+   )
+  )
+  (drop
+   (i32.sub
+    (i32.add
+     (get_global $tableBase$0)
+     (i32.const 6)
+    )
+    (i32.const 1000)
+   )
+  )
+  (set_global $global-collide-mut$0
+   (i32.const 5678)
+  )
+ )
+ (func $willCollide$0 (type $FUNCSIG$v$0)
+  (drop
+   (i32.const 222)
+  )
+  (call $willCollide$0)
+ )
+)

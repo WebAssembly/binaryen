@@ -1,0 +1,10 @@
+(module
+ (type $0 (func))
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 10 anyfunc))
+ (elem (i32.const 8) $foo $foo)
+ (data (i32.const 1024) "hello, this is some data!")
+ (func $foo (type $0)
+  (nop)
+ )
+)

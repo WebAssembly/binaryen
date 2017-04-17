@@ -426,7 +426,9 @@ public:
     if (!validateGlobally) return;
     shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
     shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
-    shouldBeEqual(curr->type, curr->init->type, nullptr, "global init must have correct type");
+    if (!shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type")) {
+      std::cerr << "(on global " << curr->name << '\n';
+    }
   }
 
   void visitFunction(Function *curr) {

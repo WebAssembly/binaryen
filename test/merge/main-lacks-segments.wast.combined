@@ -1,0 +1,25 @@
+(module
+ (type $0 (func))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 2 anyfunc))
+ (import "env" "memoryBase" (global $memoryBase$0 i32))
+ (import "env" "tableBase" (global $tableBase$0 i32))
+ (elem (get_global $tableBase) $foo $foo)
+ (data (get_global $memoryBase) "hello, this is some data!\00\00\00\00\00\00\00")
+ (func $foo (type $0)
+  (drop
+   (i32.add
+    (get_global $tableBase$0)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.add
+    (get_global $memoryBase$0)
+    (i32.const 0)
+   )
+  )
+ )
+)

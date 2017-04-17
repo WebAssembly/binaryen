@@ -1,0 +1,28 @@
+(module
+ (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $FUNCSIG$iii$0 (func (param i32 i32) (result i32)))
+ (type $1 (func))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 0 anyfunc))
+ (import "env" "globally" (global $i-collide i32))
+ (import "env" "foobar" (func $import$8 (param i32 i32) (result i32)))
+ (import "env" "memoryBase" (global $memoryBase$0 i32))
+ (import "env" "tableBase" (global $tableBase$0 i32))
+ (import "env" "globally" (global $i-collide$0 f64))
+ 
+ (data (get_global $memoryBase) "")
+ (export "_printf" (func $625))
+ (func $625 (type $FUNCSIG$iii) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (i32.const 102030)
+ )
+ (func $b (type $1)
+  (drop
+   (call $625
+    (i32.const 11)
+    (i32.const 22)
+   )
+  )
+ )
+)
