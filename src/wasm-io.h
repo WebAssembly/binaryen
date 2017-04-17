@@ -56,7 +56,9 @@ public:
   // write text
   void writeText(Module& wasm, std::string filename);
   // write binary
-  void writeBinary(Module& wasm, std::string filename);
+  void writeBinary(Module& wasm, std::string filename,
+                   std::string binaryMapFilename,
+                   std::string binaryMapUrl);
   // write text or binary, defaulting to binary unless setBinary(false),
   // and unless there is no output file (in which case we write text
   // to stdout).

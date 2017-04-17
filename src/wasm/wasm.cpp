@@ -28,6 +28,7 @@ Name WASM("wasm"),
 namespace BinaryConsts {
 namespace UserSections {
 const char* Name = "name";
+const char* SourceMapUrl = "sourceMappingURL";
 }
 }
 

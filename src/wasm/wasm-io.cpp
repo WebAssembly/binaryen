@@ -68,24 +68,35 @@ void ModuleWriter::writeText(Module& wasm, std::string filename) {
   WasmPrinter::printModule(&wasm, output.getStream());
 }
 
-void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
+void ModuleWriter::writeBinary(Module& wasm, std::string filename,
+                               std::string binaryMapFilename,
+                               std::string binaryMapUrl) {
   if (debug) std::cerr << "writing binary to " << filename << "\n";
   BufferWithRandomAccess buffer(debug);
   WasmBinaryWriter writer(&wasm, buffer, debug);
-  writer.setDebugInfo(debugInfo);
+  writer.setNamesSection(debugInfo);
+  std::ofstream* binaryMapStream = nullptr;
+  if (binaryMapFilename.size()) {
+    binaryMapStream = new std::ofstream;
+    binaryMapStream->open(binaryMapFilename);
+    writer.setBinaryMap(binaryMapStream, binaryMapUrl);
+  }
   if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
   Output output(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
   buffer.writeTo(output);
+  if (binaryMapStream) {
+    binaryMapStream->close();
+    delete binaryMapStream;
+  }
 }
 
 void ModuleWriter::write(Module& wasm, std::string filename) {
   if (binary && filename.size() > 0) {
-    writeBinary(wasm, filename);
+    writeBinary(wasm, filename, std::string(), std::string());
   } else {
     writeText(wasm, filename);
   }
 }
 
 }
-

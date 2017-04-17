@@ -86,7 +86,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "binarification..." << std::endl;
   BufferWithRandomAccess buffer(options.debug);
   WasmBinaryWriter writer(&wasm, buffer, options.debug);
-  writer.setDebugInfo(debugInfo);
+  writer.setNamesSection(debugInfo);
   if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
 
