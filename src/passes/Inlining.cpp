@@ -32,7 +32,15 @@
 
 namespace wasm {
 
+// A limit on how big a function to inline.
 static const int INLINING_SIZE_LIMIT = 15;
+
+// We only inline a function with a single use.
+static const int SINGLE_USE = 1;
+
+// A number of uses of a function that is too high for us to
+// inline it to all those locations.
+static const int TOO_MANY_USES_TO_INLINE = SINGLE_USE + 1;
 
 typedef std::map<Name, std::atomic<Index>> NameToAtomicIndexMap;
 
@@ -166,13 +174,13 @@ struct Inlining : public Pass {
     // anything exported or used in a table should not be inlined
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
-        uses[ex->value].store(2); // too many, so we ignore it
+        uses[ex->value].store(TOO_MANY_USES_TO_INLINE);
       }
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
         if (module->getFunctionOrNull(name)) {
-          uses[name].store(2);
+          uses[name].store(TOO_MANY_USES_TO_INLINE);
         }
       }
     }
@@ -183,8 +191,8 @@ struct Inlining : public Pass {
     InliningState state;
     for (auto& func : module->functions) {
       auto name = func->name;
-      auto num = uses[name].load();
-      if (num == 1 && worthInlining(module->getFunction(name))) {
+      auto numUses = uses[name].load();
+      if (canInline(numUses) && worthInlining(module->getFunction(name))) {
         state.canInline.insert(name);
       }
     }
@@ -226,6 +234,10 @@ struct Inlining : public Pass {
     }), funcs.end());
     // return whether we did any work
     return inlined.size() > 0;
+  }
+
+  bool canInline(int numUses) {
+    return numUses == SINGLE_USE;
   }
 
   bool worthInlining(Function* func) {
