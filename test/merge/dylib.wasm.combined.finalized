@@ -27,64 +27,76 @@
  (export "_foo" (func $_foo))
  (func $_main (type $2) (result i32)
   (block $label$0 i32
-   (drop
-    (call $import$1
-     (i32.const 1024)
+   (block $label$1 i32
+    (drop
+     (call $import$1
+      (i32.const 1024)
+     )
     )
+    (i32.const 0)
    )
-   (i32.const 0)
   )
  )
  (func $runPostSets (type $3)
-  (nop)
+  (block $label$0
+   (nop)
+  )
  )
  (func $__post_instantiate (type $3)
   (call $__post_instantiate$0)
   (block
    (block $label$0
-    (set_global $global$0
-     (i32.add
-      (i32.const 1024)
-      (i32.const 16)
+    (block $label$1
+     (set_global $global$0
+      (i32.add
+       (i32.const 1024)
+       (i32.const 16)
+      )
      )
-    )
-    (set_global $global$1
-     (i32.add
-      (get_global $global$0)
-      (i32.const 32)
+     (set_global $global$1
+      (i32.add
+       (get_global $global$0)
+       (i32.const 32)
+      )
      )
+     (call $runPostSets)
     )
-    (call $runPostSets)
    )
   )
  )
  (func $_foo (type $1$0) (result i32)
   (local $var$0 i32)
   (block $label$0 i32
-   (set_local $var$0
-    (call $_main)
+   (block $label$1 i32
+    (set_local $var$0
+     (call $_main)
+    )
+    (get_local $var$0)
    )
-   (get_local $var$0)
   )
  )
  (func $runPostSets$0 (type $2$0)
-  (nop)
+  (block $label$0
+   (nop)
+  )
  )
  (func $__post_instantiate$0 (type $2$0)
   (block $label$0
-   (set_global $global$0$0
-    (i32.add
-     (i32.const 1024)
-     (i32.const 48)
+   (block $label$1
+    (set_global $global$0$0
+     (i32.add
+      (i32.const 1024)
+      (i32.const 48)
+     )
     )
-   )
-   (set_global $global$1$0
-    (i32.add
-     (get_global $global$0$0)
-     (i32.const 10)
+    (set_global $global$1$0
+     (i32.add
+      (get_global $global$0$0)
+      (i32.const 10)
+     )
     )
+    (call $runPostSets$0)
    )
-   (call $runPostSets$0)
   )
  )
  ;; custom section "dylink", size 2
