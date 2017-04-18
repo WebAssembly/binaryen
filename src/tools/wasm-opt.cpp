@@ -41,6 +41,7 @@ int main(int argc, const char* argv[]) {
   bool runOptimizationPasses = false;
   PassOptions passOptions;
   bool emitBinary = true;
+  bool debugInfo = false;
 
   Options options("wasm-opt", "Optimize .wast files");
   options
@@ -54,6 +55,9 @@ int main(int argc, const char* argv[]) {
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { emitBinary = false; })
+      .add("--debuginfo", "-g", "Emit names section and debug info",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { debugInfo = true; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -113,6 +117,7 @@ int main(int argc, const char* argv[]) {
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
+    writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);
   }
 }
