@@ -1124,6 +1124,11 @@
   )
  )
  (func $f2u (param $0 f64) (result i32)
+  (i32.trunc_u/f64
+   (get_local $0)
+  )
+ )
+ (func $f2s (param $0 f64) (result i32)
   (i32.trunc_s/f64
    (get_local $0)
   )
@@ -1140,7 +1145,7 @@
    )
   )
   (drop
-   (call $f2u
+   (call $f2s
     (f64.const 100)
    )
   )

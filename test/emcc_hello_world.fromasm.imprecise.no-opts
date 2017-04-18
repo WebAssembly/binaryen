@@ -9847,7 +9847,7 @@
            (loop $while-in60
             (block $while-out59
              (set_local $$conv216$i
-              (i32.trunc_s/f64
+              (i32.trunc_u/f64
                (get_local $$y$addr$4$i)
               )
              )
