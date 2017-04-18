@@ -42,6 +42,14 @@ static const int SINGLE_USE = 1;
 // inline it to all those locations.
 static const int TOO_MANY_USES_TO_INLINE = SINGLE_USE + 1;
 
+// Map of function name => number of uses. We build the values in
+// parallel, using atomic increments. This is safe because we never
+// update the map itself in parallel, we only update the values,
+// and so the map never allocates or moves values which could be
+// a problem with atomics (in fact it would be a problem in general
+// as well, not just with atomics, as we don't use a lock in
+// parallel access, we depend on the map itself being constant
+// when running multiple threads).
 typedef std::map<Name, std::atomic<Index>> NameToAtomicIndexMap;
 
 struct FunctionUseCounter : public WalkerPass<PostWalker<FunctionUseCounter>> {
