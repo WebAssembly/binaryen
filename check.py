@@ -576,6 +576,7 @@ if EMCC:
         for method in ['interpret-asm2wasm', 'interpret-s-expr', 'interpret-binary']:
           command = [EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join(options.binaryen_test, c)] + opts + extra
           command += ['-s', 'BINARYEN_METHOD="' + method + '"']
+          command += ['-s', 'BINARYEN_TRAP_MODE="js"']
           print '....' + ' '.join(command)
           subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           if post:
