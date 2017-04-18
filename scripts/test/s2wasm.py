@@ -26,8 +26,8 @@ def test_s2wasm():
   print '\n[ checking .s testcases... ]\n'
 
   cmd = S2WASM + [
-    os.path.join(options.binaryen_test, 'dot_s', 'basics.s'),
-    '--import-memory']
+      os.path.join(options.binaryen_test, 'dot_s', 'basics.s'),
+      '--import-memory']
   output = run_command(cmd)
   fail_if_not_contained(output, '(import "env" "memory" (memory $0 1))')
 
