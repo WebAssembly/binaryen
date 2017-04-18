@@ -860,7 +860,7 @@ private:
     addr += curr->offset;
     trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
     trapIfGt(addr, memorySizeBytes - curr->bytes, "highest > memory");
-    return addr;
+    return (Address)addr;
   }
 
   ExternalInterface* externalInterface;
