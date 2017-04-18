@@ -122,15 +122,15 @@ struct Mergeable {
     findImportsByBase(wasm, MEMORY_BASE, [&](Name name) {
       memoryBaseGlobals.insert(name);
     });
-    if (memoryBaseGlobals.size() == 0) {
-      Fatal() << "no memory base was imported";
-    }
+    //if (memoryBaseGlobals.size() == 0) {
+    //  Fatal() << "no memory base was imported";
+    //}
     findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
       tableBaseGlobals.insert(name);
     });
-    if (tableBaseGlobals.size() == 0) {
-      Fatal() << "no table base was imported";
-    }
+    //if (tableBaseGlobals.size() == 0) {
+    //  Fatal() << "no table base was imported";
+    //}
   }
 
   void standardizeSegments() {
@@ -296,12 +296,13 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
       return;
     }
     curr->name = gNames[curr->name];
-    assert(curr->name.is());
-    // if this is the memory or table base, add the bump
-    if (memoryBaseGlobals.count(curr->name)) {
-      addBump(outputMergeable.totalMemorySize);
-    } else if (tableBaseGlobals.count(curr->name)) {
-      addBump(outputMergeable.totalTableSize);
+    if (curr->name.is()) {
+      // if this is the memory or table base, add the bump
+      if (memoryBaseGlobals.count(curr->name)) {
+        addBump(outputMergeable.totalMemorySize);
+      } else if (tableBaseGlobals.count(curr->name)) {
+        addBump(outputMergeable.totalTableSize);
+      }
     }
   }
 
