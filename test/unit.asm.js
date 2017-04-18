@@ -680,8 +680,19 @@ function asm(global, env, buffer) {
     return +(+Math_sqrt(x) + +Math_fround(Math_sqrt(Math_fround(x))));
   }
 
+  function f2u(x) {
+    x = +x;
+    return (~~x>>>0) | 0;
+  }
+  function f2s(x) {
+    x = +x;
+    return (~~x) | 0;
+  }
+
   function keepAlive() {
     sqrts(3.14159);
+    f2u(100.0);
+    f2s(100.0);
   }
 
   function v() {
