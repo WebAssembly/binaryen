@@ -1180,6 +1180,11 @@
    )
   )
  )
+ (func $f2u (param $0 f64) (result i32)
+  (call $f64-to-int
+   (get_local $0)
+  )
+ )
  (func $keepAlive
   (drop
    (call $sqrts
@@ -1189,6 +1194,16 @@
   (drop
    (call $sqrts
     (f64.const 2.18281)
+   )
+  )
+  (drop
+   (call $f2u
+    (f64.const 100)
+   )
+  )
+  (drop
+   (call $f2u
+    (f64.const 100)
    )
   )
  )
