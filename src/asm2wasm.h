@@ -485,6 +485,14 @@ private:
     return detectSign(ast, Math_fround) == ASM_UNSIGNED;
   }
 
+  bool isParentUnsignedCoercion(Ref parent) {
+    // parent may not exist, or may be a non-relevant node
+    if (!!parent && parent->isArray() && parent[0] == BINARY && isUnsignedCoercion(parent)) {
+      return true;
+    }
+    return false;
+  }
+
   BinaryOp parseAsmBinaryOp(IString op, Ref left, Ref right, Expression* leftWasm, Expression* rightWasm) {
     WasmType leftType = leftWasm->type;
     bool isInteger = leftType == WasmType::i32;
@@ -735,11 +743,16 @@ private:
   }
 
   // Some conversions might trap, so emit them safely if necessary
-  Expression* makeTrappingFloatToInt(Expression* value) {
+  Expression* makeTrappingFloatToInt(bool signed_, Expression* value) {
     if (trapMode == TrapMode::Allow) {
       auto ret = allocator.alloc<Unary>();
       ret->value = value;
-      ret->op = ret->value->type == f64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
+      bool isF64 = ret->value->type == f64;
+      if (signed_) {
+        ret->op = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
+      } else {
+        ret->op = isF64 ? TruncUFloat64ToInt32 : TruncUFloat32ToInt32;
+      }
       ret->type = WasmType::i32;
       return ret;
     }
@@ -1752,7 +1765,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == B_NOT) {
-          return makeTrappingFloatToInt(process(ast[2][2]));
+          // if we have an unsigned coercion on us, it is an unsigned op
+          return makeTrappingFloatToInt(!isParentUnsignedCoercion(astStackHelper.getParent()), process(ast[2][2]));
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();

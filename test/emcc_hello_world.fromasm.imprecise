@@ -4530,7 +4530,7 @@
                    (i32.store
                     (get_local $7)
                     (tee_local $5
-                     (i32.trunc_s/f64
+                     (i32.trunc_u/f64
                       (get_local $15)
                      )
                     )
