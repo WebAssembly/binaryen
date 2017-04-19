@@ -656,7 +656,7 @@ class S2WasmBuilder {
 
   void parseFunction() {
     if (debug) dump("func");
-    Name name = getStrToSep();
+
     if (match(" =")) {
       /* alias = */ getAtSeparated();
       mustMatch("@FUNCTION");
