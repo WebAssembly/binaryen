@@ -553,7 +553,7 @@ int main(int argc, const char* argv[]) {
            [&](Options* o, const std::string& argument) {
              finalizeMemoryBase = atoi(argument.c_str());
            })
-      .add("--finalize-table-base", "-fmb", "Finalize the env.tableBase import",
+      .add("--finalize-table-base", "-ftb", "Finalize the env.tableBase import",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              finalizeTableBase = atoi(argument.c_str());

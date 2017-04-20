@@ -26,7 +26,7 @@ optimized:
  )
 )
 
-binary size: 82
+binary size: 88
 
 [object WebAssembly.Instance]
 
