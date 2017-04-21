@@ -9,6 +9,8 @@
   )
   (func $test2
     (drop (i32.load (i32.const 12))) ;; a safe load
+    (drop (i32.load16 (i32.const 12)))
+    (drop (i32.load8 (i32.const 12)))
   )
   (func $test3
     (drop (i32.store (i32.const 12) (i32.const 115))) ;; a safe store, should alter memory
