@@ -220,3 +220,14 @@ TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ast support)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+SET(wasm-ctor-eval_SOURCES
+  src/tools/wasm-ctor-eval.cpp
+)
+ADD_EXECUTABLE(wasm-ctor-eval
+               ${wasm-ctor-eval_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-ctor-eval wasm asmjs emscripten-optimizer ${all_passes} ast support)
+SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)
+

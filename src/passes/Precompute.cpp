@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
+static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
 
 // Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
 class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
