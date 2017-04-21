@@ -20,6 +20,7 @@
   )
   (func $safe-to-call
     (drop (i32.const 1))
-    (i32.store8 (i32.const 10) (i32.const 110)) ;; safe write too
+    (i32.store8 (i32.const 10) (i32.const 110)) ;; safe write too (lowest possible)
+    (i32.store8 (i32.const 33) (i32.const 109)) ;; safe write too (highest possible)
   )
 )

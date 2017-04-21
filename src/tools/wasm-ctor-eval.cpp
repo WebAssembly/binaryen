@@ -129,7 +129,7 @@ private:
         throw FailToEvalException("non-constant segment");
       }
       auto start = offset->value.getInteger();
-      if (start <= address && address < start + segment.data.size() - sizeof(T)) {
+      if (start <= address && address <= start + segment.data.size() - sizeof(T)) {
         return (T*)(&segment.data[address - start]);
       }
       if (address >= start + segment.data.size()) {
