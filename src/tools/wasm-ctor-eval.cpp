@@ -169,7 +169,7 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
       wasm.memory = memoryBefore;
       return;
     }
-    std::cerr << "  ...success!\n";
+    std::cerr << "  ...success on " << ctor << ".\n";
     // success, the entire function was evalled!
     auto* exp = wasm.getExport(ctor);
     auto* func = wasm.getFunction(exp->value);
