@@ -143,7 +143,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       throw ExitException();
     }
     std::cout << "callImport " << import->name.str << "\n";
-    abort();
+    WASM_UNREACHABLE();
   }
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
@@ -166,7 +166,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case 1: return load->signed_ ? Literal((int32_t)memory.get<int8_t>(addr)) : Literal((int32_t)memory.get<uint8_t>(addr));
           case 2: return load->signed_ ? Literal((int32_t)memory.get<int16_t>(addr)) : Literal((int32_t)memory.get<uint16_t>(addr));
           case 4: return load->signed_ ? Literal((int32_t)memory.get<int32_t>(addr)) : Literal((int32_t)memory.get<uint32_t>(addr));
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
@@ -176,13 +176,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case 2: return load->signed_ ? Literal((int64_t)memory.get<int16_t>(addr)) : Literal((int64_t)memory.get<uint16_t>(addr));
           case 4: return load->signed_ ? Literal((int64_t)memory.get<int32_t>(addr)) : Literal((int64_t)memory.get<uint32_t>(addr));
           case 8: return load->signed_ ? Literal((int64_t)memory.get<int64_t>(addr)) : Literal((int64_t)memory.get<uint64_t>(addr));
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
       case f32: return Literal(memory.get<float>(addr));
       case f64: return Literal(memory.get<double>(addr));
-      default: abort();
+      default: WASM_UNREACHABLE();
     }
   }
 
@@ -193,7 +193,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case 1: memory.set<int8_t>(addr, value.geti32()); break;
           case 2: memory.set<int16_t>(addr, value.geti32()); break;
           case 4: memory.set<int32_t>(addr, value.geti32()); break;
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
@@ -203,14 +203,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
           case 2: memory.set<int16_t>(addr, (int16_t)value.geti64()); break;
           case 4: memory.set<int32_t>(addr, (int32_t)value.geti64()); break;
           case 8: memory.set<int64_t>(addr, value.geti64()); break;
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
       // write floats carefully, ensuring all bits reach memory
       case f32: memory.set<int32_t>(addr, value.reinterpreti32()); break;
       case f64: memory.set<int64_t>(addr, value.reinterpreti64()); break;
-      default: abort();
+      default: WASM_UNREACHABLE();
     }
   }
 

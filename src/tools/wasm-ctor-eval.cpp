@@ -33,7 +33,10 @@
 
 using namespace wasm;
 
-struct FailToEvalException {};
+struct FailToEvalException {
+  std::string why;
+  FailToEvalException(std::string why) : why(why) {}
+};
 
 struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
   Module* wasm;
@@ -43,11 +46,11 @@ struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
-    throw FailToEvalException();
+    throw FailToEvalException("call import");
   }
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
-    throw FailToEvalException();
+    throw FailToEvalException("call table");
   }
 
   Literal load(Load* load, Address addr) override {
@@ -58,7 +61,7 @@ struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
           case 1: return load->signed_ ? Literal((int32_t)doLoad<int8_t>(addr)) : Literal((int32_t)doLoad<uint8_t>(addr));
           case 2: return load->signed_ ? Literal((int32_t)doLoad<int16_t>(addr)) : Literal((int32_t)doLoad<uint16_t>(addr));
           case 4: return load->signed_ ? Literal((int32_t)doLoad<int32_t>(addr)) : Literal((int32_t)doLoad<uint32_t>(addr));
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
@@ -68,13 +71,13 @@ struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
           case 2: return load->signed_ ? Literal((int64_t)doLoad<int16_t>(addr)) : Literal((int64_t)doLoad<uint16_t>(addr));
           case 4: return load->signed_ ? Literal((int64_t)doLoad<int32_t>(addr)) : Literal((int64_t)doLoad<uint32_t>(addr));
           case 8: return load->signed_ ? Literal((int64_t)doLoad<int64_t>(addr)) : Literal((int64_t)doLoad<uint64_t>(addr));
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
       case f32: return Literal(doLoad<float>(addr));
       case f64: return Literal(doLoad<double>(addr));
-      default: abort();
+      default: WASM_UNREACHABLE();
     }
   }
 
@@ -86,7 +89,7 @@ struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
           case 1: doStore<int8_t>(addr, value.geti32()); break;
           case 2: doStore<int16_t>(addr, value.geti32()); break;
           case 4: doStore<int32_t>(addr, value.geti32()); break;
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
@@ -96,23 +99,23 @@ struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
           case 2: doStore<int16_t>(addr, (int16_t)value.geti64()); break;
           case 4: doStore<int32_t>(addr, (int32_t)value.geti64()); break;
           case 8: doStore<int64_t>(addr, value.geti64()); break;
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
         break;
       }
       // write floats carefully, ensuring all bits reach memory
       case f32: doStore<int32_t>(addr, value.reinterpreti32()); break;
       case f64: doStore<int64_t>(addr, value.reinterpreti64()); break;
-      default: abort();
+      default: WASM_UNREACHABLE();
     }
   }
 
   void growMemory(Address /*oldSize*/, Address newSize) override {
-    throw FailToEvalException();
+    throw FailToEvalException("grow memory");
   }
 
   void trap(const char* why) override {
-    throw FailToEvalException();
+    throw FailToEvalException(std::string("trap: ") + why);
   }
 
 private:
@@ -123,7 +126,7 @@ private:
     for (auto& segment : wasm->memory.segments) {
       auto* offset = segment.offset->dynCast<Const>();
       if (!offset) {
-        throw FailToEvalException(); // non-constant segment
+        throw FailToEvalException("non-constant segment");
       }
       auto start = offset->value.getInteger();
       if (start <= address && address < start + segment.data.size() - sizeof(T)) {
@@ -132,9 +135,9 @@ private:
       if (address >= start + segment.data.size()) {
         continue; // can be in next segment
       }
-      throw FailToEvalException(); // either before, which is impossible, or split among segments TODO merge them
+      throw FailToEvalException("not in next segment"); // either before, which is impossible, or split among segments TODO merge them
     }
-    throw FailToEvalException(); // no segment found TODO create one
+    throw FailToEvalException("no segment"); // no segment found TODO create one
   }
 
   template <typename T>
@@ -159,10 +162,10 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     auto memoryBefore = wasm.memory;
     try {
       instance.callExport(ctor);
-    } catch (FailToEvalException) {
+    } catch (FailToEvalException& fail) {
       // that's it, we failed, so stop here, cleaning up partial
       // memory changes first
-      std::cerr << "  ...could not eval, stopping\n";
+      std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
       wasm.memory = memoryBefore;
       return;
     }
@@ -230,7 +233,7 @@ int main(int argc, const char* argv[]) {
 
   // get list of ctors, and eval them
   std::vector<std::string> ctors;
-  std::istringstream stream;
+  std::istringstream stream(ctorsString);
   std::string temp;
   while (std::getline(stream, temp, ',')) {
     ctors.push_back(temp);
