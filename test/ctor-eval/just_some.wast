@@ -5,13 +5,13 @@
   (export "test2" $test2)
   (export "test3" $test3)
   (func $test1
-    (drop (i32.store8 (i32.const 12) (i32.const 115))) ;; a safe store, should alter memory
+    (i32.store8 (i32.const 12) (i32.const 115)) ;; a safe store, should alter memory
   )
   (func $test2
     (unreachable)
-    (drop (i32.store8 (i32.const 13) (i32.const 114))) ;; a safe store, should alter memory, but we trapped already
+    (i32.store8 (i32.const 13) (i32.const 114)) ;; a safe store, should alter memory, but we trapped already
   )
   (func $test3
-    (drop (i32.store8 (i32.const 13) (i32.const 113))) ;; a safe store, should alter memory, but we trapped already
+    (i32.store8 (i32.const 13) (i32.const 113)) ;; a safe store, should alter memory, but we trapped already
   )
 )
