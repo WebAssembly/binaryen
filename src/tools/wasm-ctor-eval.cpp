@@ -28,13 +28,148 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
+#include "wasm-interpreter.h"
 
 using namespace wasm;
 
+struct FailException {};
+
+struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
+  Module* wasm;
+
+  void importGlobals(std::map<Name, Literal>& globals, Module& wasm_) override {
+    wasm = wasm_;
+  }
+
+  Literal callImport(Import *import, LiteralList& arguments) override {
+    throw FailToEvalException();
+  }
+
+  Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
+    throw FailToEvalException();
+  }
+
+  Literal load(Load* load, Address addr) override {
+    // load from the memory segments
+    switch (load->type) {
+      case i32: {
+        switch (load->bytes) {
+          case 1: return load->signed_ ? Literal((int32_t)doLoad<int8_t>(addr)) : Literal((int32_t)doLoad<uint8_t>(addr));
+          case 2: return load->signed_ ? Literal((int32_t)doLoad<int16_t>(addr)) : Literal((int32_t)doLoad<uint16_t>(addr));
+          case 4: return load->signed_ ? Literal((int32_t)doLoad<int32_t>(addr)) : Literal((int32_t)doLoad<uint32_t>(addr));
+          default: abort();
+        }
+        break;
+      }
+      case i64: {
+        switch (load->bytes) {
+          case 1: return load->signed_ ? Literal((int64_t)doLoad<int8_t>(addr)) : Literal((int64_t)doLoad<uint8_t>(addr));
+          case 2: return load->signed_ ? Literal((int64_t)doLoad<int16_t>(addr)) : Literal((int64_t)doLoad<uint16_t>(addr));
+          case 4: return load->signed_ ? Literal((int64_t)doLoad<int32_t>(addr)) : Literal((int64_t)doLoad<uint32_t>(addr));
+          case 8: return load->signed_ ? Literal((int64_t)doLoad<int64_t>(addr)) : Literal((int64_t)doLoad<uint64_t>(addr));
+          default: abort();
+        }
+        break;
+      }
+      case f32: return Literal(doLoad<float>(addr));
+      case f64: return Literal(doLoad<double>(addr));
+      default: abort();
+    }
+  }
+
+  void store(Store* store, Address addr, Literal value) override {
+    // store to the memory segments
+    switch (store->valueType) {
+      case i32: {
+        switch (store->bytes) {
+          case 1: doStore<int8_t>(addr, value.geti32()); break;
+          case 2: doStore<int16_t>(addr, value.geti32()); break;
+          case 4: doStore<int32_t>(addr, value.geti32()); break;
+          default: abort();
+        }
+        break;
+      }
+      case i64: {
+        switch (store->bytes) {
+          case 1: doStore<int8_t>(addr, (int8_t)value.geti64()); break;
+          case 2: doStore<int16_t>(addr, (int16_t)value.geti64()); break;
+          case 4: doStore<int32_t>(addr, (int32_t)value.geti64()); break;
+          case 8: doStore<int64_t>(addr, value.geti64()); break;
+          default: abort();
+        }
+        break;
+      }
+      // write floats carefully, ensuring all bits reach memory
+      case f32: doStore<int32_t>(addr, value.reinterpreti32()); break;
+      case f64: doStore<int64_t>(addr, value.reinterpreti64()); break;
+      default: abort();
+    }
+  }
+
+  void growMemory(Address /*oldSize*/, Address newSize) override {
+    throw FailToEvalException();
+  }
+
+  void trap(const char* why) override {
+    throw FailToEvalException();
+  }
+
+private:
+  // TODO: handle unaligned too, see shell-interface
+
+  template <typename T>
+  T* getMemory(Address address) {
+    for (auto& segment : wasm->memory.segments) {
+      auto* offset = segment.offset->dynCast<Const>();
+      if (!offset) {
+        throw FailToEvalException(); // non-constant segment
+      }
+      auto start = offset->value.getInteger();
+      if (start <= address && address < start + segment.data.size() - sizeof(T)) {
+        return &segment.data[address - start];
+      }
+      if (address >= start + segment.data.size()) {
+        continue; // can be in next segment
+      }
+      throw FailToEvalException(); // either before, which is impossible, or split among segments TODO merge them
+    }
+    throw FailToEvalException(); // no segment found TODO create one
+  }
+
+  template <typename T>
+  void doStore(Address address, T value) {
+    *getMemory(address) = value;
+  }
+
+  template <typename T>
+  T doLoad(Address address) {
+    return *getMemory(address);
+  }
+};
+
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
+  CtorEvalExternalInterface interface;
+  Instance instance(wasm, &interface);
   // go one by one, in order, until we fail
   // TODO: if we knew priorities, we could reorder?
   for (auto& ctor : ctors) {
+    std::cerr << "trying to eval " << ctor << '\n';
+    // snapshot memory, as either the entire function is done, or none
+    auto memoryBefore = wasm.memory;
+    try {
+      instance->callExport(ctor);
+    } catch (FailToEvalException) {
+      // that's it, we failed, so stop here, cleaning up partial
+      // memory changes first
+      std::cerr << "  ...could not eval, stopping\n";
+      wasm.memory = memoryBefore;
+      return;
+    }
+    std::cerr << "  ...success!\n";
+    // success, the entire function was evalled!
+    auto* exp = wasm.getExport(ctor);
+    auto* func = wasm.getFunction(exp->value);
+    func->body = wasm.allocator.alloc<Nop>();
   }
 }
 
