@@ -41,8 +41,12 @@ struct FailToEvalException {
 struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
   Module* wasm;
 
-  void importGlobals(std::map<Name, Literal>& globals, Module& wasm_) override {
+  void init(Module& wasm_, ModuleInstance& instance) override {
     wasm = &wasm_;
+  }
+
+  void importGlobals(std::map<Name, Literal>& globals, Module& wasm_) override {
+    // XXX we must not touch imported globals!
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
@@ -160,12 +164,20 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     std::cerr << "trying to eval " << ctor << '\n';
     // snapshot memory, as either the entire function is done, or none
     auto memoryBefore = wasm.memory;
+    // snapshot globals (note that STACKTOP might be modified, but should
+    // be returned, so that works out)
+    auto globalsBefore = instance.globals;
     try {
       instance.callExport(ctor);
     } catch (FailToEvalException& fail) {
       // that's it, we failed, so stop here, cleaning up partial
       // memory changes first
       std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
+      wasm.memory = memoryBefore;
+      return;
+    }
+    if (instance.globals != globalsBefore) {
+      std::cerr << "  ...stopping since globals modified\n";
       wasm.memory = memoryBefore;
       return;
     }
