@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (memory $0 256 256)
- (data (i32.const 10) "was\00\00\00aka yzkx waka waka")
+ (data (i32.const 10) "nas\00\00\00aka yzkx waka waka")
  (export "test1" (func $test1))
  (export "test2" (func $test2))
  (export "test3" (func $test3))
@@ -17,6 +17,10 @@
  (func $safe-to-call (type $0)
   (drop
    (i32.const 1)
+  )
+  (i32.store8
+   (i32.const 10)
+   (i32.const 110)
   )
  )
 )
