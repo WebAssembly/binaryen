@@ -27,18 +27,19 @@
 #include "pass.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
 
 using namespace wasm;
 
-struct FailException {};
+struct FailToEvalException {};
 
 struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
   Module* wasm;
 
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm_) override {
-    wasm = wasm_;
+    wasm = &wasm_;
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
@@ -138,18 +139,18 @@ private:
 
   template <typename T>
   void doStore(Address address, T value) {
-    *getMemory(address) = value;
+    *getMemory<T>(address) = value;
   }
 
   template <typename T>
   T doLoad(Address address) {
-    return *getMemory(address);
+    return *getMemory<T>(address);
   }
 };
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface interface;
-  Instance instance(wasm, &interface);
+  ModuleInstance instance(wasm, &interface);
   // go one by one, in order, until we fail
   // TODO: if we knew priorities, we could reorder?
   for (auto& ctor : ctors) {
@@ -157,7 +158,7 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // snapshot memory, as either the entire function is done, or none
     auto memoryBefore = wasm.memory;
     try {
-      instance->callExport(ctor);
+      instance.callExport(ctor);
     } catch (FailToEvalException) {
       // that's it, we failed, so stop here, cleaning up partial
       // memory changes first
@@ -193,7 +194,6 @@ int main(int argc, const char* argv[]) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      #include "optimization-options.h"
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { emitBinary = false; })
@@ -202,7 +202,7 @@ int main(int argc, const char* argv[]) {
            [&](Options *o, const std::string &arguments) { debugInfo = true; })
       .add("--ctors", "-c", "Comma-separated list of global constructor functions to evaluate",
            Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
+           [&](Options* o, const std::string& argument) {
              ctorsString = argument;
            })
       .add_positional("INFILE", Options::Arguments::One,
@@ -231,7 +231,7 @@ int main(int argc, const char* argv[]) {
   // get list of ctors, and eval them
   std::vector<std::string> ctors;
   std::istringstream stream;
-  string temp;
+  std::string temp;
   while (std::getline(stream, temp, ',')) {
     ctors.push_back(temp);
   }

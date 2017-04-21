@@ -22,6 +22,7 @@
 #define wasm_wasm_io_h
 
 #include "wasm.h"
+#include "parsing.h"
 
 namespace wasm {
 

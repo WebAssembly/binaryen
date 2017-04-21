@@ -586,6 +586,11 @@ public:
     return callFunction(export_->value, arguments);
   }
 
+  Literal callExport(Name name) {
+    LiteralList arguments;
+    return callExport(name, arguments);
+  }
+
   // get an exported global
   Literal getExport(Name name) {
     Export *export_ = wasm.getExportOrNull(name);
