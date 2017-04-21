@@ -127,7 +127,7 @@ private:
       }
       auto start = offset->value.getInteger();
       if (start <= address && address < start + segment.data.size() - sizeof(T)) {
-        return &segment.data[address - start];
+        return (T*)(&segment.data[address - start]);
       }
       if (address >= start + segment.data.size()) {
         continue; // can be in next segment
