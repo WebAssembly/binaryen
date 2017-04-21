@@ -14,4 +14,9 @@
  (func $test3 (type $0)
   (nop)
  )
+ (func $safe-to-call (type $0)
+  (drop
+   (i32.const 1)
+  )
+ )
 )

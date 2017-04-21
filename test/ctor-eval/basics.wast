@@ -6,6 +6,7 @@
   (export "test3" $test3)
   (func $test1
     (drop (i32.const 0)) ;; no work at all, really
+    (call $safe-to-call) ;; safe to call
   )
   (func $test2
     (drop (i32.load (i32.const 12))) ;; a safe load
@@ -16,5 +17,8 @@
     (i32.store (i32.const 12) (i32.const 115)) ;; a safe store, should alter memory
     (i32.store16 (i32.const 20) (i32.const 31353))
     (i32.store8 (i32.const 23) (i32.const 120))
+  )
+  (func $safe-to-call
+    (drop (i32.const 1))
   )
 )
