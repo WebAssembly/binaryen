@@ -47,6 +47,7 @@ struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
 
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm_) override {
     // XXX we must not touch imported globals!
+    // XXX need to special-case the imported STACKTOP etc., set up stack space
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
