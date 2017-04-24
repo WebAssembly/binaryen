@@ -245,6 +245,22 @@ private:
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface interface;
   try {
+    // if any global in the module has a non-const constructor, it is using a global import,
+    // which we don't have, and is illegal to use
+    for (auto& global : wasm.globals) {
+      if (!global->init->is<Const>()) {
+        // the special stack constants are ok to use
+        if (auto* get = global->init->dynCast<GetGlobal>()) {
+          auto name = get->name;
+          auto* import = wasm.getImport(name);
+          if (import->module == Name("env") && (import->base == Name("STACKTOP") || import->base == Name("STACK_MAX"))) {
+            continue; // this is fine
+          }
+        }
+        throw FailToEvalException("non-constant global init");
+      }
+    }
+    // create an instance for evalling
     EvallingModuleInstance instance(wasm, &interface);
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new

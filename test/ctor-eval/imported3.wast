@@ -9,6 +9,6 @@
   ;; ok to modify a global, if we keep it the same value
   (global $mine (mut i32) (get_global $tempDoublePtr)) ;; BAD!
   (func $test1
-    (i32.store8 (i32.const 12) (i32.const 115)) ;; we never get here
+    (i32.store8 (i32.const 12) (i32.const 115)) ;; we never get here.
   )
 )
