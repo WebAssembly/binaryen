@@ -38,14 +38,63 @@ struct FailToEvalException {
   FailToEvalException(std::string why) : why(why) {}
 };
 
-struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
+// We do not have access to imported globals
+class EvallingGlobalManager {
+  std::map<Name, Literal> globals;
+
+public:
+  bool operator==(const EvallingGlobalManager& other) {
+    return globals == other.globals;
+  }
+  bool operator!=(const EvallingGlobalManager& other) {
+    return !(*this == other);
+  }
+
+  Literal& operator[](Name name) {
+    if (globals.find(name) == globals.end()) {
+      throw FailToEvalException(std::string("tried to access missing global: ") + name.str);
+    }
+    return globals[name];
+  }
+
+  struct Iter {
+    Name first;
+    Literal second;
+    bool found;
+
+    Iter() : found(false) {}
+    Iter(Name name, Literal value) : first(name), second(value), found(true) {}
+
+    bool operator==(const Iter& other) {
+      return first == other.first && second == other.second && found == other.found;
+    }
+    bool operator!=(const Iter& other) {
+      return !(*this == other);
+    }
+  };
+
+  Iter find(Name name) {
+    if (globals.find(name) == globals.end()) {
+      return end();
+    }
+    return Iter(name, globals[name]);
+  }
+
+  Iter end() {
+    return Iter();
+  }
+};
+
+typedef ModuleInstanceBase<EvallingGlobalManager> EvallingModuleInstance;
+
+struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Module* wasm;
 
-  void init(Module& wasm_, ModuleInstance& instance) override {
+  void init(Module& wasm_, EvallingModuleInstance& instance) override {
     wasm = &wasm_;
   }
 
-  void importGlobals(std::map<Name, Literal>& globals, Module& wasm_) override {
+  void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     // XXX we must not touch imported globals!
     // XXX need to special-case the imported STACKTOP etc., set up stack space
   }
@@ -54,7 +103,7 @@ struct CtorEvalExternalInterface : ModuleInstance::ExternalInterface {
     throw FailToEvalException("call import");
   }
 
-  Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
+  Literal callTable(Index index, LiteralList& arguments, WasmType result, EvallingModuleInstance& instance) override {
     throw FailToEvalException("call table");
   }
 
@@ -158,7 +207,7 @@ private:
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface interface;
-  ModuleInstance instance(wasm, &interface);
+  EvallingModuleInstance instance(wasm, &interface);
   // go one by one, in order, until we fail
   // TODO: if we knew priorities, we could reorder?
   for (auto& ctor : ctors) {

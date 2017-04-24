@@ -510,10 +510,11 @@ public:
 };
 
 // Execute an constant expression in a global init or memory offset
-class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner> {
-  std::map<Name, Literal>& globals;
+template<typename GlobalManager>
+class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner<GlobalManager>> {
+  GlobalManager& globals;
 public:
-  ConstantExpressionRunner(std::map<Name, Literal>& globals) : globals(globals) {}
+  ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
 
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
   Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
@@ -547,10 +548,10 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
-    virtual void init(Module& wasm, ModuleInstanceBase& instance) {}
+    virtual void init(Module& wasm, ModuleInstanceBase<GlobalManager>& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstanceBase& instance) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstanceBase<GlobalManager>& instance) = 0;
     virtual Literal load(Load* load, Address addr) = 0;
     virtual void store(Store* store, Address addr, Literal value) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
@@ -569,7 +570,7 @@ public:
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     for (auto& global : wasm.globals) {
-      globals[global->name] = ConstantExpressionRunner(globals).visit(global->init).value;
+      globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals).visit(global->init).value;
     }
     // initialize the rest of the external interface
     externalInterface->init(wasm, *this);
@@ -873,7 +874,8 @@ private:
 };
 
 // The default ModuleInstance uses a trivial global manager
-typedef ModuleInstanceBase<std::map<Name, Literal>> ModuleInstance;
+typedef std::map<Name, Literal> TrivialGlobalManager;
+typedef ModuleInstanceBase<TrivialGlobalManager> ModuleInstance;
 
 } // namespace wasm
 
