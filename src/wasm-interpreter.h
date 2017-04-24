@@ -538,7 +538,8 @@ public:
 // To call into the interpreter, use callExport.
 //
 
-class ModuleInstance {
+template<typename GlobalManager>
+class ModuleInstanceBase {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -546,10 +547,10 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
-    virtual void init(Module& wasm, ModuleInstance& instance) {}
-    virtual void importGlobals(std::map<Name, Literal>& globals, Module& wasm) = 0;
+    virtual void init(Module& wasm, ModuleInstanceBase& instance) {}
+    virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstanceBase& instance) = 0;
     virtual Literal load(Load* load, Address addr) = 0;
     virtual void store(Store* store, Address addr, Literal value) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
@@ -559,9 +560,9 @@ public:
   Module& wasm;
 
   // Values of globals
-  std::map<Name, Literal> globals;
+  GlobalManager globals;
 
-  ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
+  ModuleInstanceBase(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // prepare memory
@@ -665,17 +666,17 @@ public:
 
     // Executes expresions with concrete runtime info, the function and module at runtime
     class RuntimeExpressionRunner : public ExpressionRunner<RuntimeExpressionRunner> {
-      ModuleInstance& instance;
+      ModuleInstanceBase& instance;
       FunctionScope& scope;
 
     public:
-      RuntimeExpressionRunner(ModuleInstance& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
+      RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
 
       Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
         NOTE_ENTER_("generateArguments");
         arguments.reserve(operands.size());
         for (auto expression : operands) {
-          Flow flow = visit(expression);
+          Flow flow = this->visit(expression);
           if (flow.breaking()) return flow;
           NOTE_EVAL1(flow.value);
           arguments.push_back(flow.value);
@@ -707,7 +708,7 @@ public:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        Flow target = visit(curr->target);
+        Flow target = this->visit(curr->target);
         if (target.breaking()) return target;
         Index index = target.value.geti32();
         return instance.externalInterface->callTable(index, arguments, curr->type, instance);
@@ -723,7 +724,7 @@ public:
       Flow visitSetLocal(SetLocal *curr) {
         NOTE_ENTER("SetLocal");
         auto index = curr->index;
-        Flow flow = visit(curr->value);
+        Flow flow = this->visit(curr->value);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
@@ -743,7 +744,7 @@ public:
       Flow visitSetGlobal(SetGlobal *curr) {
         NOTE_ENTER("SetGlobal");
         auto name = curr->name;
-        Flow flow = visit(curr->value);
+        Flow flow = this->visit(curr->value);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(name);
         NOTE_EVAL1(flow.value);
@@ -753,7 +754,7 @@ public:
 
       Flow visitLoad(Load *curr) {
         NOTE_ENTER("Load");
-        Flow flow = visit(curr->ptr);
+        Flow flow = this->visit(curr->ptr);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(flow);
         auto addr = instance.getFinalAddress(curr, flow.value);
@@ -764,9 +765,9 @@ public:
       }
       Flow visitStore(Store *curr) {
         NOTE_ENTER("Store");
-        Flow ptr = visit(curr->ptr);
+        Flow ptr = this->visit(curr->ptr);
         if (ptr.breaking()) return ptr;
-        Flow value = visit(curr->value);
+        Flow value = this->visit(curr->value);
         if (value.breaking()) return value;
         auto addr = instance.getFinalAddress(curr, ptr.value);
         NOTE_EVAL1(addr);
@@ -782,7 +783,7 @@ public:
           case CurrentMemory: return Literal(int32_t(instance.memorySize));
           case GrowMemory: {
             auto fail = Literal(int32_t(-1));
-            Flow flow = visit(curr->operands[0]);
+            Flow flow = this->visit(curr->operands[0]);
             if (flow.breaking()) return flow;
             int32_t ret = instance.memorySize;
             uint32_t delta = flow.value.geti32();
@@ -870,6 +871,9 @@ private:
 
   ExternalInterface* externalInterface;
 };
+
+// The default ModuleInstance uses a trivial global manager
+typedef ModuleInstanceBase<std::map<Name, Literal>> ModuleInstance;
 
 } // namespace wasm
 
