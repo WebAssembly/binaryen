@@ -95,8 +95,53 @@ ELSE()
   SET(CMAKE_THREAD_PREFER_PTHREAD ON)
   FIND_PACKAGE(Threads REQUIRED)
   ADD_COMPILE_FLAG("-std=c++11")
-  ADD_COMPILE_FLAG("-msse2")
-  ADD_COMPILE_FLAG("-mfpmath=sse")
+  if (NOT EMSCRIPTEN)
+    # try to get the target architecture by compiling a dummy.c file and
+    # checking the architecture using the file command.
+    file(WRITE ${PROJECT_BINARY_DIR}/dummy.c "main(){}")
+    try_compile(
+      COMPILE_OK
+      ${PROJECT_BINARY_DIR}
+      ${PROJECT_BINARY_DIR}/dummy.c
+      COPY_FILE ${PROJECT_BINARY_DIR}/dummy
+    )
+    if (COMPILE_OK)
+      execute_process(
+        COMMAND file ${PROJECT_BINARY_DIR}/dummy
+        RESULT_VARIABLE FILE_RESULT
+        OUTPUT_VARIABLE FILE_OUTPUT
+        ERROR_QUIET
+      )
+
+      if (FILE_RESULT EQUAL 0)
+        if (${FILE_OUTPUT} MATCHES "x86[-_]64")
+          set(TARGET_ARCH "x86-64")
+        elseif (${FILE_OUTPUT} MATCHES "Intel 80386")
+          set(TARGET_ARCH "i386")
+        elseif (${FILE_OUTPUT} MATCHES "ARM")
+          set(TARGET_ARCH "ARM")
+        else ()
+          message(WARNING "Unknown target architecture!")
+        endif ()
+        if(TARGET_ARCH)
+          MESSAGE(STATUS "Building for platform ${TARGET_ARCH}")
+        endif ()
+      else ()
+        message(WARNING "Error running file on dummy executable")
+      endif ()
+    else ()
+      message(WARNING "Error compiling dummy.c file")
+    endif ()
+
+    if (TARGET_ARCH STREQUAL "i386")
+      # wasm doesn't allow for x87 floating point math
+      ADD_COMPILE_FLAG("-msse2")
+      ADD_COMPILE_FLAG("-mfpmath=sse")
+    elseif(TARGET_ARCH STREQUAL "ARM")
+      # stub for ARM-specific instructions. GCC6 adds NEON with the below flags
+      ADD_COMPILE_FLAG("-march=native")
+    endif ()
+  endif ()
   ADD_COMPILE_FLAG("-Wall")
   ADD_COMPILE_FLAG("-Werror")
   ADD_COMPILE_FLAG("-Wextra")
