@@ -41,8 +41,13 @@ struct FailToEvalException {
 // We do not have access to imported globals
 class EvallingGlobalManager {
   std::map<Name, Literal> globals;
+  bool sealed = false;
 
 public:
+  void seal() {
+    sealed = true;
+  }
+
   bool operator==(const EvallingGlobalManager& other) {
     return globals == other.globals;
   }
@@ -52,7 +57,9 @@ public:
 
   Literal& operator[](Name name) {
     if (globals.find(name) == globals.end()) {
-      throw FailToEvalException(std::string("tried to access missing global: ") + name.str);
+      if (sealed) {
+        throw FailToEvalException(std::string("tried to access missing global: ") + name.str);
+      }
     }
     return globals[name];
   }
@@ -206,35 +213,44 @@ private:
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface interface;
-  EvallingModuleInstance instance(wasm, &interface);
-  // go one by one, in order, until we fail
-  // TODO: if we knew priorities, we could reorder?
-  for (auto& ctor : ctors) {
-    std::cerr << "trying to eval " << ctor << '\n';
-    // snapshot memory, as either the entire function is done, or none
-    auto memoryBefore = wasm.memory;
-    // snapshot globals (note that STACKTOP might be modified, but should
-    // be returned, so that works out)
-    auto globalsBefore = instance.globals;
-    try {
-      instance.callExport(ctor);
-    } catch (FailToEvalException& fail) {
-      // that's it, we failed, so stop here, cleaning up partial
-      // memory changes first
-      std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
-      wasm.memory = memoryBefore;
-      return;
+  try {
+    EvallingModuleInstance instance(wasm, &interface);
+    // we should not add new globals from here on; as a result, using
+    // an imported global will fail, as it is missing and so looks new
+    instance.globals.seal();
+    // go one by one, in order, until we fail
+    // TODO: if we knew priorities, we could reorder?
+    for (auto& ctor : ctors) {
+      std::cerr << "trying to eval " << ctor << '\n';
+      // snapshot memory, as either the entire function is done, or none
+      auto memoryBefore = wasm.memory;
+      // snapshot globals (note that STACKTOP might be modified, but should
+      // be returned, so that works out)
+      auto globalsBefore = instance.globals;
+      try {
+        instance.callExport(ctor);
+      } catch (FailToEvalException& fail) {
+        // that's it, we failed, so stop here, cleaning up partial
+        // memory changes first
+        std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
+        wasm.memory = memoryBefore;
+        return;
+      }
+      if (instance.globals != globalsBefore) {
+        std::cerr << "  ...stopping since globals modified\n";
+        wasm.memory = memoryBefore;
+        return;
+      }
+      std::cerr << "  ...success on " << ctor << ".\n";
+      // success, the entire function was evalled!
+      auto* exp = wasm.getExport(ctor);
+      auto* func = wasm.getFunction(exp->value);
+      func->body = wasm.allocator.alloc<Nop>();
     }
-    if (instance.globals != globalsBefore) {
-      std::cerr << "  ...stopping since globals modified\n";
-      wasm.memory = memoryBefore;
-      return;
-    }
-    std::cerr << "  ...success on " << ctor << ".\n";
-    // success, the entire function was evalled!
-    auto* exp = wasm.getExport(ctor);
-    auto* func = wasm.getFunction(exp->value);
-    func->body = wasm.allocator.alloc<Nop>();
+  } catch (FailToEvalException& fail) {
+    // that's it, we failed to even create the instance
+    std::cerr << "  ...stopping since could not create module instance: " << fail.why << "\n";
+    return;
   }
 }
 

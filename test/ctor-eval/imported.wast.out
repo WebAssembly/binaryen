@@ -3,6 +3,7 @@
  (import "env" "STACKTOP" (global $STACKTOP i32))
  (import "env" "STACK_MAX" (global $STACK_MAX i32))
  (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
+ (global $mine (mut i32) (i32.const 1))
  (memory $0 256 256)
  (data (i32.const 10) "wasa waka waka waka waka")
  (export "test1" (func $test1))
