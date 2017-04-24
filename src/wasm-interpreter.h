@@ -539,7 +539,7 @@ public:
 // To call into the interpreter, use callExport.
 //
 
-template<typename GlobalManager>
+template<typename GlobalManager, typename SubType>
 class ModuleInstanceBase {
 public:
   //
@@ -548,15 +548,19 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
-    virtual void init(Module& wasm, ModuleInstanceBase<GlobalManager>& instance) {}
+    virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstanceBase<GlobalManager>& instance) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, SubType& instance) = 0;
     virtual Literal load(Load* load, Address addr) = 0;
     virtual void store(Store* store, Address addr, Literal value) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
   };
+
+  SubType* self() {
+    return static_cast<SubType*>(this);
+  }
 
   Module& wasm;
 
@@ -573,7 +577,7 @@ public:
       globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals).visit(global->init).value;
     }
     // initialize the rest of the external interface
-    externalInterface->init(wasm, *this);
+    externalInterface->init(wasm, *self());
     // run start, if present
     if (wasm.start.is()) {
       LiteralList arguments;
@@ -712,7 +716,7 @@ public:
         Flow target = this->visit(curr->target);
         if (target.breaking()) return target;
         Index index = target.value.geti32();
-        return instance.externalInterface->callTable(index, arguments, curr->type, instance);
+        return instance.externalInterface->callTable(index, arguments, curr->type, *instance.self());
       }
 
       Flow visitGetLocal(GetLocal *curr) {
@@ -875,7 +879,10 @@ private:
 
 // The default ModuleInstance uses a trivial global manager
 typedef std::map<Name, Literal> TrivialGlobalManager;
-typedef ModuleInstanceBase<TrivialGlobalManager> ModuleInstance;
+class ModuleInstance : public ModuleInstanceBase<TrivialGlobalManager, ModuleInstance> {
+public:
+  ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {}
+};
 
 } // namespace wasm
 

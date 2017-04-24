@@ -92,17 +92,37 @@ public:
   }
 };
 
-typedef ModuleInstanceBase<EvallingGlobalManager> EvallingModuleInstance;
+class EvallingModuleInstance : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
+public:
+  EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {}
+
+  enum {
+    // put the stack in some ridiculously high location
+    STACK_START = 0x80000000,
+    // use a ridiculously large stack size
+    STACK_SIZE = 32 * 1024 * 1024
+  };
+
+  std::vector<char> stack;
+
+  // create C stack space for us to use. We do *NOT* care about their contents,
+  // assuming the stack top was unwound. the memory may have been modified,
+  // but it should not be read afterwards, doing so would be undefined behavior
+  void setupStack() {
+    stack.resize(STACK_SIZE);
+  }
+};
 
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Module* wasm;
+  EvallingModuleInstance* instance;
 
-  void init(Module& wasm_, EvallingModuleInstance& instance) override {
+  void init(Module& wasm_, EvallingModuleInstance& instance_) override {
     wasm = &wasm_;
+    instance = &instance_;
   }
 
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
-    // XXX need to special-case the imported STACKTOP etc., set up stack space
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
@@ -183,6 +203,17 @@ private:
 
   template <typename T>
   T* getMemory(Address address) {
+    // if memory is on the stack, use the stack
+    if (address >= instance->STACK_START) {
+      Address relative = address - instance->STACK_START;
+      if (relative + sizeof(T) > instance->STACK_SIZE) {
+        throw FailToEvalException("stack usage too high");
+      }
+      // in range, all is good, use the stack
+      return (T*)(&instance->stack[relative]);
+    }
+
+    // otherwise, this must be in the segments TODO: create segments as needed, up to the stack
     for (auto& segment : wasm->memory.segments) {
       auto* offset = segment.offset->dynCast<Const>();
       if (!offset) {
@@ -218,6 +249,8 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new
     instance.globals.seal();
+    // set up the stack area
+    instance.setupStack();
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
