@@ -168,7 +168,24 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, EvallingModuleInstance& instance) override {
-    throw FailToEvalException("call table");
+    // we assume the table is not modified (hmm)
+    // look through the segments, try to find the function
+    for (auto& segment : wasm->table.segments) {
+      if (auto* c = segment.offset->dynCast<Const>()) {
+        auto start = c->value.getInteger();
+        auto end = start + segment.data.size();
+        if (start <= index && index < end) {
+          auto name = segment.data[index - start];
+          // if this is one of our functions, we can call it; if it was imported, fail
+          if (wasm->getFunctionOrNull(name)) {
+            return instance.callFunctionInternal(name, arguments);
+          } else {
+            throw FailToEvalException(std::string("callTable on imported function: ") + name.str);
+          }
+        }
+      }
+    }
+    throw FailToEvalException(std::string("callTable on index not found in static segments: ") + std::to_string(index));
   }
 
   Literal load(Load* load, Address addr) override {
