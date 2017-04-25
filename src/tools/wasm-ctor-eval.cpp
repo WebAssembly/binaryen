@@ -41,9 +41,14 @@ struct FailToEvalException {
 // We do not have access to imported globals
 class EvallingGlobalManager {
   std::map<Name, Literal> globals;
+  std::set<Name> dangerouses;
   bool sealed = false;
 
 public:
+  void addDangerous(Name name) {
+    dangerouses.insert(name);
+  }
+
   void seal() {
     sealed = true;
   }
@@ -56,8 +61,11 @@ public:
   }
 
   Literal& operator[](Name name) {
-    if (globals.find(name) == globals.end()) {
-      if (sealed) {
+    if (dangerouses.count(name) > 0) {
+      throw FailToEvalException(std::string("tried to access a dangerous (import-initialized) global: ") + name.str);
+    }
+    if (sealed) {
+      if (globals.find(name) == globals.end()) {
         throw FailToEvalException(std::string("tried to access missing global: ") + name.str);
       }
     }
@@ -107,7 +115,8 @@ public:
             continue; // this is fine
           }
         }
-        throw FailToEvalException("non-constant global init");
+        // this global is dangerously initialized by an import, so if it is used, we must fail
+        globals.addDangerous(global->name);
       }
     }
   }

@@ -15,6 +15,8 @@
   ;; globals - must keep the same value (which means, unwind the stack)
   (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
   (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
+  ;; a global initialized by an import, so bad, but ok if not used
+  (global $do-not-use (mut i32) (get_global $tempDoublePtr))
   (func $test1
     (local $temp i32)
     (set_global $mine (i32.const 1))

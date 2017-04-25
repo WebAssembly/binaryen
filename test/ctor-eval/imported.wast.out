@@ -6,6 +6,7 @@
  (global $mine (mut i32) (i32.const 1))
  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
+ (global $do-not-use (mut i32) (get_global $tempDoublePtr))
  (memory $0 256 256)
  (data (i32.const 10) "wasa waka waka waka waka")
  (export "test1" (func $test1))

@@ -6,9 +6,9 @@
   (export "test1" $test1)
   (export "test2" $test2)
   (export "test3" $test3)
-  ;; ok to modify a global, if we keep it the same value
-  (global $mine (mut i32) (get_global $tempDoublePtr)) ;; BAD!
+  (global $mine (mut i32) (get_global $tempDoublePtr)) ;; BAD, if used
   (func $test1
-    (i32.store8 (i32.const 12) (i32.const 115)) ;; we never get here.
+    (drop (get_global $mine))
+    (i32.store8 (i32.const 13) (i32.const 115)) ;; we never get here.
   )
 )
