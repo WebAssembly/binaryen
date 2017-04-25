@@ -30,6 +30,7 @@
 #include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
+#include "ast/memory.h"
 
 using namespace wasm;
 
@@ -143,6 +144,11 @@ public:
     // tell the module to accept writes up to the stack end
     memorySize = total / Memory::kPageSize;
   }
+
+  // flatten memory into a single segment
+  void flattenMemory() {
+    MemoryUtils::flatten(wasm.memory);
+  }
 };
 
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
@@ -245,22 +251,23 @@ private:
       return (T*)(&instance->stack[relative]);
     }
 
-    // otherwise, this must be in the segments TODO: create segments as needed, up to the stack
-    for (auto& segment : wasm->memory.segments) {
-      auto* offset = segment.offset->dynCast<Const>();
-      if (!offset) {
-        throw FailToEvalException("non-constant segment");
-      }
-      auto start = offset->value.getInteger();
-      if (start <= address && address <= start + segment.data.size() - sizeof(T)) {
-        return (T*)(&segment.data[address - start]);
-      }
-      if (address >= start + segment.data.size()) {
-        continue; // can be in next segment
-      }
-      throw FailToEvalException("not in next segment"); // either before, which is impossible, or split among segments TODO merge them
+    // otherwise, this must be in the singleton segment. resize as needed
+    if (wasm->memory.segments.size() == 0) {
+      std::vector<char> temp;
+      wasm->memory.segments.push_back(
+        Memory::Segment(
+          wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))),
+          temp
+        )
+      );
     }
-    throw FailToEvalException("no segment"); // no segment found TODO create one
+    assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() == 0);
+    auto max = address + sizeof(T);
+    auto& data = wasm->memory.segments[0].data;
+    if (max > data.size()) {
+      data.resize(max);
+    }
+    return (T*)(&data[address]);
   }
 
   template <typename T>
@@ -279,6 +286,8 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   try {
     // create an instance for evalling
     EvallingModuleInstance instance(wasm, &interface);
+    // flatten memory, so we do not depend on the layout of data segments
+    instance.flattenMemory();
     // set up the stack area
     instance.setupStack();
     // we should not add new globals from here on; as a result, using
