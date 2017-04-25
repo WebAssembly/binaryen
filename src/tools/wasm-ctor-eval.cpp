@@ -171,8 +171,18 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     // we assume the table is not modified (hmm)
     // look through the segments, try to find the function
     for (auto& segment : wasm->table.segments) {
+      bool found = false;
+      Index start;
       if (auto* c = segment.offset->dynCast<Const>()) {
-        auto start = c->value.getInteger();
+        start = c->value.getInteger();
+        found = true;
+      } else if (segment.offset->is<GetGlobal>()) {
+        // a segment loaded from a global is assumed to be loaded at 0. this is true
+        // in emscripten in the non-dynamic linking case
+        start = 0;
+        found = true;
+      }
+      if (found) {
         auto end = start + segment.data.size();
         if (start <= index && index < end) {
           auto name = segment.data[index - start];
