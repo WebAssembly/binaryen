@@ -15,13 +15,19 @@
   )
  )
  (func $ret (param $0 i32) (result i32)
-  (i32.add
-   (i32.shl
-    (get_local $0)
+  ;; return.cpp:100
+  (return
+   (i32.add
+    (tee_local $0
+     (i32.shl
+      (get_local $0)
+      (i32.const 1)
+     )
+    )
     (i32.const 1)
    )
-   (i32.const 1)
   )
+  (unreachable)
  )
  (func $i32s-rem (param $0 i32) (param $1 i32) (result i32)
   (if i32

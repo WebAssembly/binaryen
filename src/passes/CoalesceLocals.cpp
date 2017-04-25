@@ -657,7 +657,8 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
           }
           continue;
         }
-        if (!action.effective) {
+        // remove ineffective actions (but not for debug info, where we need to preserve ineffective code)
+        if (!action.effective && !getPassOptions().debugInfo) {
           *action.origin = set->value; // value may have no side effects, further optimizations can eliminate it
           if (!set->isTee()) {
             // we need to drop it

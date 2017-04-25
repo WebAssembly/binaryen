@@ -61,6 +61,7 @@ struct PassOptions {
   int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
   bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
+  bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
 };
 
 //
