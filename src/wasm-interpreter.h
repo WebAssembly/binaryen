@@ -851,7 +851,7 @@ public:
     return ret;
   }
 
-private:
+protected:
 
   Address memorySize; // in pages
 

@@ -94,11 +94,27 @@ public:
 
 class EvallingModuleInstance : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
-  EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {}
+  EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {
+    // if any global in the module has a non-const constructor, it is using a global import,
+    // which we don't have, and is illegal to use
+    for (auto& global : wasm.globals) {
+      if (!global->init->is<Const>()) {
+        // the special stack constants are ok to use
+        if (auto* get = global->init->dynCast<GetGlobal>()) {
+          auto name = get->name;
+          auto* import = wasm.getImport(name);
+          if (import->module == Name("env") && (import->base == Name("STACKTOP") || import->base == Name("STACK_MAX"))) {
+            continue; // this is fine
+          }
+        }
+        throw FailToEvalException("non-constant global init");
+      }
+    }
+  }
 
   enum {
     // put the stack in some ridiculously high location
-    STACK_START = 0x80000000,
+    STACK_START = 0x40000000,
     // use a ridiculously large stack size
     STACK_SIZE = 32 * 1024 * 1024
   };
@@ -109,7 +125,14 @@ public:
   // assuming the stack top was unwound. the memory may have been modified,
   // but it should not be read afterwards, doing so would be undefined behavior
   void setupStack() {
+    // prepare scratch memory
     stack.resize(STACK_SIZE);
+    // fill usable values for stack imports
+    auto total = STACK_START + STACK_SIZE;
+    globals["STACKTOP"] = Literal(int32_t(STACK_START));
+    globals["STACK_MAX"] = Literal(int32_t(STACK_START + STACK_SIZE));
+    // tell the module to accept writes up to the stack end
+    memorySize = total / Memory::kPageSize;
   }
 };
 
@@ -245,28 +268,13 @@ private:
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface interface;
   try {
-    // if any global in the module has a non-const constructor, it is using a global import,
-    // which we don't have, and is illegal to use
-    for (auto& global : wasm.globals) {
-      if (!global->init->is<Const>()) {
-        // the special stack constants are ok to use
-        if (auto* get = global->init->dynCast<GetGlobal>()) {
-          auto name = get->name;
-          auto* import = wasm.getImport(name);
-          if (import->module == Name("env") && (import->base == Name("STACKTOP") || import->base == Name("STACK_MAX"))) {
-            continue; // this is fine
-          }
-        }
-        throw FailToEvalException("non-constant global init");
-      }
-    }
     // create an instance for evalling
     EvallingModuleInstance instance(wasm, &interface);
+    // set up the stack area
+    instance.setupStack();
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new
     instance.globals.seal();
-    // set up the stack area
-    instance.setupStack();
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
