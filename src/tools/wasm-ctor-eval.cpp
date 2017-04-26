@@ -108,11 +108,15 @@ public:
     // which we don't have, and is illegal to use
     for (auto& global : wasm.globals) {
       if (!global->init->is<Const>()) {
-        // the special stack constants are ok to use
+        // some constants are ok to use
         if (auto* get = global->init->dynCast<GetGlobal>()) {
           auto name = get->name;
           auto* import = wasm.getImport(name);
-          if (import->module == Name("env") && (import->base == Name("STACKTOP") || import->base == Name("STACK_MAX"))) {
+          if (import->module == Name("env") && (
+            import->base == Name("STACKTOP") || // stack constants are special, we handle them
+            import->base == Name("STACK_MAX") ||
+            import->base == Name("___dso_handle") // used by atexit, safe to assume 0
+          )) {
             continue; // this is fine
           }
         }
@@ -134,13 +138,14 @@ public:
   // create C stack space for us to use. We do *NOT* care about their contents,
   // assuming the stack top was unwound. the memory may have been modified,
   // but it should not be read afterwards, doing so would be undefined behavior
-  void setupStack() {
+  void setupEnvironment() {
     // prepare scratch memory
     stack.resize(STACK_SIZE);
     // fill usable values for stack imports
     auto total = STACK_START + STACK_SIZE;
     globals["STACKTOP"] = Literal(int32_t(STACK_START));
     globals["STACK_MAX"] = Literal(int32_t(STACK_START + STACK_SIZE));
+    globals["___dso_handle"] = Literal(int32_t(0));
     // tell the module to accept writes up to the stack end
     memorySize = total / Memory::kPageSize;
   }
@@ -164,7 +169,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
-    throw FailToEvalException("call import");
+    throw FailToEvalException(std::string("call import: ") + import->module.str + "." + import->base.str);
   }
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, EvallingModuleInstance& instance) override {
@@ -315,8 +320,8 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     EvallingModuleInstance instance(wasm, &interface);
     // flatten memory, so we do not depend on the layout of data segments
     instance.flattenMemory();
-    // set up the stack area
-    instance.setupStack();
+    // set up the stack area and other environment details
+    instance.setupEnvironment();
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new
     instance.globals.seal();
