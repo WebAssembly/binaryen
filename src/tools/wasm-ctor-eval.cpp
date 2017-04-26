@@ -310,12 +310,16 @@ private:
 
   template <typename T>
   void doStore(Address address, T value) {
-    *getMemory<T>(address) = value;
+    // do a memcpy to avoid undefined behavior if unaligned
+    memcpy(getMemory<T>(address), &value, sizeof(T));
   }
 
   template <typename T>
   T doLoad(Address address) {
-    return *getMemory<T>(address);
+    // do a memcpy to avoid undefined behavior if unaligned
+    T ret;
+    memcpy(&ret, getMemory<T>(address), sizeof(T));
+    return ret;
   }
 };
 
