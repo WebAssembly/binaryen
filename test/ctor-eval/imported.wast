@@ -4,8 +4,6 @@
   ;; stack imports are special
   (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
   (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
-  ;; dso handle is also special and ignorable (when not linking)
-  (import "env" "___dso_handle" (global $___dso_handle$asm2wasm$import i32))
   ;; other imports must not be touched!
   (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
   (export "test1" $test1)
@@ -17,7 +15,6 @@
   ;; globals - must keep the same value (which means, unwind the stack)
   (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
   (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
-  (global $___dso_handle (mut i32) (get_global $___dso_handle$asm2wasm$import))
   ;; a global initialized by an import, so bad, but ok if not used
   (global $do-not-use (mut i32) (get_global $tempDoublePtr))
   (func $test1
@@ -35,7 +32,6 @@
       )
       (unreachable) ;; they should be equal, never get here
     )
-    (get_global $___dso_handle)
     ;; finally, do a valid store
     (i32.store8 (i32.const 12) (i32.const 115))
   )

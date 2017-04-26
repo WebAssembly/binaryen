@@ -63,7 +63,11 @@ public:
 
   Literal& operator[](Name name) {
     if (dangerouses.count(name) > 0) {
-      throw FailToEvalException(std::string("tried to access a dangerous (import-initialized) global: ") + name.str);
+      std::string extra;
+      if (name == "___dso_handle") {
+        extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit that use ___dso_handle are not emitted";
+      }
+      throw FailToEvalException(std::string("tried to access a dangerous (import-initialized) global: ") + name.str + extra);
     }
     if (sealed) {
       if (globals.find(name) == globals.end()) {
@@ -114,8 +118,7 @@ public:
           auto* import = wasm.getImport(name);
           if (import->module == Name("env") && (
             import->base == Name("STACKTOP") || // stack constants are special, we handle them
-            import->base == Name("STACK_MAX") ||
-            import->base == Name("___dso_handle") // used by atexit, safe to assume 0
+            import->base == Name("STACK_MAX")
           )) {
             continue; // this is fine
           }
@@ -145,7 +148,6 @@ public:
     auto total = STACK_START + STACK_SIZE;
     globals["STACKTOP"] = Literal(int32_t(STACK_START));
     globals["STACK_MAX"] = Literal(int32_t(STACK_START + STACK_SIZE));
-    globals["___dso_handle"] = Literal(int32_t(0));
     // tell the module to accept writes up to the stack end
     memorySize = total / Memory::kPageSize;
   }
@@ -171,7 +173,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Literal callImport(Import *import, LiteralList& arguments) override {
     std::string extra;
     if (import->module == "env" && import->base == "___cxa_atexit") {
-      extra = " recommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit are not emitted";
+      extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit are not emitted";
     }
     throw FailToEvalException(std::string("call import: ") + import->module.str + "." + import->base.str + extra);
   }
