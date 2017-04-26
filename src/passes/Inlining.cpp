@@ -70,16 +70,16 @@ private:
   NameToAtomicIndexMap* uses;
 };
 
-struct Action {
+struct InliningAction {
   Expression** callSite;
   Function* contents;
 
-  Action(Expression** callSite, Function* contents) : callSite(callSite), contents(contents) {}
+  InliningAction(Expression** callSite, Function* contents) : callSite(callSite), contents(contents) {}
 };
 
 struct InliningState {
   std::set<Name> canInline;
-  std::map<Name, std::vector<Action>> actionsForFunction; // function name => actions that can be performed in it
+  std::map<Name, std::vector<InliningAction>> actionsForFunction; // function name => actions that can be performed in it
 };
 
 struct Planner : public WalkerPass<PostWalker<Planner>> {
@@ -119,7 +119,7 @@ private:
 // needed), and returns the inlined code.
 // Since we only inline once, and do not need the function afterwards, we
 // can just reuse all the nodes and even avoid copying.
-static Expression* doInlining(Module* module, Function* into, Action& action) {
+static Expression* doInlining(Module* module, Function* into, InliningAction& action) {
   auto* call = (*action.callSite)->cast<Call>();
   Builder builder(*module);
   auto* block = Builder(*module).makeBlock();
