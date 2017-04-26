@@ -169,7 +169,11 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
-    throw FailToEvalException(std::string("call import: ") + import->module.str + "." + import->base.str);
+    std::string extra;
+    if (import->module == "env" && import->base == "___cxa_atexit") {
+      extra = " recommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit are not emitted";
+    }
+    throw FailToEvalException(std::string("call import: ") + import->module.str + "." + import->base.str + extra);
   }
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, EvallingModuleInstance& instance) override {
