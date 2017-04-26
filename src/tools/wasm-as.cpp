@@ -30,6 +30,8 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool debugInfo = false;
   std::string symbolMap;
+  std::string binaryMapFilename;
+  std::string binaryMapUrl;
   Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.extra["validate"] = "wasm";
   options
@@ -51,6 +53,12 @@ int main(int argc, const char *argv[]) {
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { debugInfo = true; })
+      .add("--binarymap-file", "-bm", "Emit binary map to the specified file",
+           Options::Arguments::One,
+           [&binaryMapFilename](Options *o, const std::string &argument) { binaryMapFilename = argument; })
+      .add("--binarymap-url", "-bu", "Use specified string as binary map URL",
+           Options::Arguments::One,
+           [&binaryMapUrl](Options *o, const std::string &argument) { binaryMapUrl = argument; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
            Options::Arguments::One,
            [&](Options *o, const std::string &argument) { symbolMap = argument; })
@@ -88,12 +96,21 @@ int main(int argc, const char *argv[]) {
   WasmBinaryWriter writer(&wasm, buffer, options.debug);
   // if debug info is used, then we want to emit the names section
   writer.setNamesSection(debugInfo);
+  std::unique_ptr<std::ofstream> binaryMapStream = nullptr;
+  if (binaryMapFilename.size()) {
+    binaryMapStream = make_unique<std::ofstream>();
+    binaryMapStream->open(binaryMapFilename);
+    writer.setBinaryMap(binaryMapStream.get(), binaryMapUrl);
+  }
   if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;
   Output output(options.extra["output"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release);
   buffer.writeTo(output);
+  if (binaryMapStream) {
+    binaryMapStream->close();
+  }
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }

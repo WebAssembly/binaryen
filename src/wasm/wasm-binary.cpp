@@ -238,6 +238,7 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     Function* function = wasm->functions[i].get();
     currFunction = function;
+    lastDebugLocation = {0, 0, 0};
     mappedLocals.clear();
     numLocalsByType.clear();
     if (debug) std::cerr << "writing" << function->name << std::endl;
@@ -1353,6 +1354,7 @@ void WasmBinaryBuilder::readFunctions() {
       // process the function body
       if (debug) std::cerr << "processing function: " << i << std::endl;
       nextLabel = 0;
+      useDebugLocation = false;
       breaksToReturn = false;
       // process body
       assert(breakStack.empty());
@@ -1400,6 +1402,43 @@ void WasmBinaryBuilder::readExports() {
   }
 }
 
+void WasmBinaryBuilder::readNextDebugLocation() {
+  if (binaryMap) {
+    std::string line;
+    while (std::getline(*binaryMap, line)) {
+      auto pos = line.begin();
+      while (pos < line.end() && pos[0] != ':') pos++;
+      if (pos == line.end()) continue;
+      uint32_t position = atoi(std::string(line.begin(), pos).c_str());
+      auto filenameStart = ++pos;
+      while (pos < line.end() && pos[0] != ':') pos++;
+      if (pos == line.end()) continue;
+      std::string file(filenameStart, pos);
+      auto iter = debugInfoFileIndices.find(file);
+      if (iter == debugInfoFileIndices.end()) {
+        Index index = wasm.debugInfoFileNames.size();
+        wasm.debugInfoFileNames.push_back(file);
+        debugInfoFileIndices[file] = index;
+      }
+      uint32_t fileIndex = debugInfoFileIndices[file];
+      auto lineNumberStart = ++pos;
+      while (pos < line.end() && pos[0] != ':') pos++;
+      if (pos == line.end()) {
+        // old format
+        uint32_t lineNumber = atoi(std::string(lineNumberStart, line.end()).c_str());
+        nextDebugLocation = { position, { fileIndex, lineNumber, 0 } };
+        return;
+      }
+      uint32_t lineNumber = atoi(std::string(lineNumberStart, pos).c_str());
+      auto columnNumberStart = ++pos;
+      uint32_t columnNumber = atoi(std::string(columnNumberStart, line.end()).c_str());
+
+      nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
+      return;
+    }
+    nextDebugLocation.first = 0;
+  }
+}
 Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
   processExpressions();
@@ -1638,6 +1677,16 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     throw ParseException("Reached function end without seeing End opcode");
   }
   if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
+  if (nextDebugLocation.first) {
+    while (nextDebugLocation.first && nextDebugLocation.first <= pos) {
+      if (nextDebugLocation.first < pos) {
+        std::cerr << "skipping debug location info for " << nextDebugLocation.first << std::endl;
+      }
+      debugLocation = nextDebugLocation.second;
+      useDebugLocation = currFunction; // using only for function expressions
+      readNextDebugLocation();
+    }
+  }
   uint8_t code = getInt8();
   if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
   switch (code) {
@@ -1671,6 +1720,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitHost(curr, code)) break;
       throw ParseException("bad node code " + std::to_string(code));
     }
+  }
+  if (useDebugLocation && curr) {
+    currFunction->debugLocations[curr] = debugLocation;
   }
   if (debug) std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
   return BinaryConsts::ASTNodes(code);

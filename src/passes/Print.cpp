@@ -45,6 +45,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
+  Function::DebugLocation lastPrintedLocation;
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
@@ -58,8 +59,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       auto iter = debugLocations.find(curr);
       if (iter != debugLocations.end()) {
         auto fileName = currModule->debugInfoFileNames[iter->second.fileIndex];
-        o << ";; " << fileName << ":" << iter->second.lineNumber << '\n';
-        doIndent(o, indent);
+        if (lastPrintedLocation != iter->second) {
+          lastPrintedLocation = iter->second;
+          o << ";;@ " << fileName << ":" << iter->second.lineNumber << ":" << iter->second.columnNumber << '\n';
+          doIndent(o, indent);
+        }
       }
     }
     Visitor<PrintSExpression>::visit(curr);
@@ -599,6 +603,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitFunction(Function *curr) {
     currFunction = curr;
+    lastPrintedLocation = { 0, 0, 0 };
     printOpening(o, "func ", true);
     printName(curr->name);
     if (curr->type.is()) {

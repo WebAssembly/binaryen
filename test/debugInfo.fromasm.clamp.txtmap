@@ -1,2 +1,12 @@
-211:even-opted.cpp:2
-223:even-opted.cpp:3
+185:tests/other_file.cpp:314159:0
+199:return.cpp:50:0
+206:return.cpp:100:0
+241:even-opted.cpp:1:0
+248:even-opted.cpp:2:0
+255:even-opted.cpp:3:0
+276:fib.c:3:0
+300:fib.c:8:0
+306:fib.c:4:0
+313:fib.c:3:0
+339:fib.c:8:0
+436:/tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0

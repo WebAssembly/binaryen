@@ -18,18 +18,21 @@
   )
   (block $label$0
    (loop $label$1
+    ;;@ fib.c:3:17
     (set_local $2
      (i32.add
       (get_local $2)
       (i32.const 1)
      )
     )
+    ;;@ fib.c:3:3
     (br_if $label$0
      (i32.ge_s
       (get_local $2)
       (get_local $0)
      )
     )
+    ;;@ fib.c:4:11
     (set_local $1
      (i32.add
       (get_local $4)
@@ -45,6 +48,7 @@
     (br $label$1)
    )
   )
+  ;;@ fib.c:6:3
   (return
    (get_local $4)
   )

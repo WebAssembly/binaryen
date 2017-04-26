@@ -615,15 +615,17 @@ public:
 
   void recurse(Expression*& curr);
   std::vector<Name> breakStack;
+  Function::DebugLocation lastDebugLocation;
 
   void visit(Expression* curr) {
     if (binaryMap && currFunction) {
       // Dump the binaryMap debug info
       auto& debugLocations = currFunction->debugLocations;
       auto iter = debugLocations.find(curr);
-      if (iter != debugLocations.end()) {
+      if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
+        lastDebugLocation = iter->second;
         auto fileName = wasm->debugInfoFileNames[iter->second.fileIndex];
-        *binaryMap << o.size() << ":" << fileName << ":" <<iter->second.lineNumber << '\n';
+        *binaryMap << o.size() << ":" << fileName << ":" << iter->second.lineNumber << ":" << iter->second.columnNumber << '\n';
       }
     }
     Visitor<WasmBinaryWriter>::visit(curr);
@@ -663,14 +665,17 @@ class WasmBinaryBuilder {
   MixedArena& allocator;
   std::vector<char>& input;
   bool debug;
+  std::istream* binaryMap;
+  std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
 
   size_t pos = 0;
   Index startIndex = -1;
+  bool useDebugLocation;
 
   std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), binaryMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -758,6 +763,15 @@ public:
   void readFunctionTableDeclaration();
   void readTableElements();
   void readNames(size_t);
+
+  // Debug information reading helpers
+  void setDebugLocations(std::istream* binaryMap_) {
+      binaryMap = binaryMap_;
+      readNextDebugLocation();
+  }
+  Function::DebugLocation debugLocation;
+  std::unordered_map<std::string, Index> debugInfoFileIndices;
+  void readNextDebugLocation();
 
   // AST reading
   int depth = 0; // only for debugging
