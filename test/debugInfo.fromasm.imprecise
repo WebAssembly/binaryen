@@ -10,11 +10,8 @@
  (export "fib" (func $fib))
  (func $add (param $0 i32) (param $1 i32) (result i32)
   ;; tests/other_file.cpp:314159
-  (set_local $0
-   (get_local $1)
-  )
   (i32.add
-   (get_local $0)
+   (get_local $1)
    (get_local $1)
   )
  )
@@ -51,14 +48,11 @@
    )
   )
   ;; even-opted.cpp:3
-  (set_local $0
+  (i32.add
    (i32.rem_s
     (get_local $0)
     (get_local $1)
    )
-  )
-  (i32.add
-   (get_local $0)
    (get_local $1)
   )
  )
@@ -67,65 +61,60 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  ;; fib.c:3
-  (set_local $1
+  (if
+   ;; fib.c:3
    (i32.gt_s
     (get_local $0)
     (i32.const 0)
    )
-  )
-  (if
-   (get_local $1)
    (block
+    (set_local $4
+     (i32.const 0)
+    )
     (set_local $2
      (i32.const 0)
     )
     (set_local $3
-     (i32.const 0)
-    )
-    (set_local $1
      (i32.const 1)
     )
    )
-   ;; fib.c:8
-   (return
-    (tee_local $4
+   (block
+    (set_local $1
      (i32.const 1)
+    )
+    ;; fib.c:8
+    (return
+     (get_local $1)
     )
    )
   )
   (loop $while-in
    ;; fib.c:4
-   (set_local $4
-    (i32.add
-     (get_local $1)
-     (get_local $2)
-    )
-   )
-   ;; fib.c:3
-   (set_local $3
+   (set_local $1
     (i32.add
      (get_local $3)
-     (i32.const 1)
+     (get_local $4)
     )
    )
    ;; fib.c:3
    (set_local $2
-    (i32.eq
-     (get_local $3)
-     (get_local $0)
+    (i32.add
+     (get_local $2)
+     (i32.const 1)
     )
    )
    (if
-    (i32.eqz
+    ;; fib.c:3
+    (i32.ne
      (get_local $2)
+     (get_local $0)
     )
     (block
-     (set_local $2
-      (get_local $1)
+     (set_local $4
+      (get_local $3)
      )
-     (set_local $1
-      (get_local $4)
+     (set_local $3
+      (get_local $1)
      )
      (br $while-in)
     )
@@ -133,7 +122,7 @@
   )
   ;; fib.c:8
   (return
-   (get_local $4)
+   (get_local $1)
   )
   (unreachable)
  )
