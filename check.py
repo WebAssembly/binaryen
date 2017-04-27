@@ -112,13 +112,15 @@ for asm in tests:
           cmd += ['-O']
         if 'debugInfo' in asm:
           cmd += ['-g']
+        if 'noffi' in asm:
+          cmd += ['--no-legalize-javascript-ffi']
         if precise and opts:
           # test mem init importing
           open('a.mem', 'wb').write(asm)
           cmd += ['--mem-init=a.mem']
           if asm[0] == 'e':
             cmd += ['--mem-base=1024']
-        if 'i64' in asm or 'wasm-only' in asm:
+        if 'i64' in asm or 'wasm-only' in asm or 'noffi' in asm:
           cmd += ['--wasm-only']
         wasm = os.path.join(options.binaryen_test, wasm)
         print '..', asm, wasm

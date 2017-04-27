@@ -342,6 +342,7 @@ public:
     
   TrapMode trapMode;
   PassOptions passOptions;
+  bool legalizeJavaScriptFFI;
   bool runOptimizationPasses;
   bool wasmOnly;
 
@@ -445,7 +446,7 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode, PassOptions passOptions, bool runOptimizationPasses, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode, PassOptions passOptions, bool legalizeJavaScriptFFI, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
@@ -453,6 +454,7 @@ public:
        debug(debug),
        trapMode(trapMode),
        passOptions(passOptions),
+       legalizeJavaScriptFFI(legalizeJavaScriptFFI),
        runOptimizationPasses(runOptimizationPasses),
        wasmOnly(wasmOnly) {}
 
@@ -1347,7 +1349,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   passRunner.add<FinalizeCalls>(this);
   passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
   passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
-  passRunner.add("legalize-js-interface");
+  if (legalizeJavaScriptFFI) {
+    passRunner.add("legalize-js-interface");
+  }
   if (runOptimizationPasses) {
     // autodrop can add some garbage
     passRunner.add("vacuum");

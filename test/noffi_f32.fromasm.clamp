@@ -1,0 +1,25 @@
+(module
+ (type $FUNCSIG$ff (func (param f32) (result f32)))
+ (import "env" "_importf" (func $importf (param f32) (result f32)))
+ (import "env" "memory" (memory $0 256 256))
+ (import "env" "table" (table 0 0 anyfunc))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (data (get_global $memoryBase) "noffi_f32.asm.js")
+ (export "main" (func $main))
+ (export "exportf" (func $exportf))
+ (func $exportf (param $0 f32) (result f32)
+  (f32.add
+   (get_local $0)
+   (f32.const 1)
+  )
+ )
+ (func $main (result i32)
+  (drop
+   (call $importf
+    (f32.const 3.4000000953674316)
+   )
+  )
+  (i32.const 0)
+ )
+)
