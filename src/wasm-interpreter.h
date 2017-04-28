@@ -552,10 +552,82 @@ public:
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, SubType& instance) = 0;
-    virtual Literal load(Load* load, Address addr) = 0;
-    virtual void store(Store* store, Address addr, Literal value) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
+
+    // the default impls for load and store switch on the sizes. you can either
+    // customize load/store, or the sub-functions which they call
+    virtual Literal load(Load* load, Address addr) {
+      switch (load->type) {
+        case i32: {
+          switch (load->bytes) {
+            case 1: return load->signed_ ? Literal((int32_t)load8s(addr)) : Literal((int32_t)load8u(addr));
+            case 2: return load->signed_ ? Literal((int32_t)load16s(addr)) : Literal((int32_t)load16u(addr));
+            case 4: return load->signed_ ? Literal((int32_t)load32s(addr)) : Literal((int32_t)load32u(addr));
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        case i64: {
+          switch (load->bytes) {
+            case 1: return load->signed_ ? Literal((int64_t)load8s(addr)) : Literal((int64_t)load8u(addr));
+            case 2: return load->signed_ ? Literal((int64_t)load16s(addr)) : Literal((int64_t)load16u(addr));
+            case 4: return load->signed_ ? Literal((int64_t)load32s(addr)) : Literal((int64_t)load32u(addr));
+            case 8: return load->signed_ ? Literal((int64_t)load64s(addr)) : Literal((int64_t)load64u(addr));
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        case f32: return Literal(loadf32(addr));
+        case f64: return Literal(loadf64(addr));
+        default: WASM_UNREACHABLE();
+      }
+    }
+    virtual void store(Store* store, Address addr, Literal value) {
+      switch (store->valueType) {
+        case i32: {
+          switch (store->bytes) {
+            case 1: store8(addr, value.geti32()); break;
+            case 2: store16(addr, value.geti32()); break;
+            case 4: store32(addr, value.geti32()); break;
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        case i64: {
+          switch (store->bytes) {
+            case 1: store8(addr, value.geti64()); break;
+            case 2: store16(addr, value.geti64()); break;
+            case 4: store32(addr, value.geti64()); break;
+            case 8: store64(addr, value.geti64()); break;
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        // write floats carefully, ensuring all bits reach memory
+        case f32: storef32(addr, value.reinterpreti32()); break;
+        case f64: storef64(addr, value.reinterpreti64()); break;
+        default: WASM_UNREACHABLE();
+      }
+    }
+
+    virtual int8_t load8s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint8_t load8u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int16_t load16s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint16_t load16u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int32_t load32s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint32_t load32u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int64_t load64s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint64_t load64u(Address addr) { WASM_UNREACHABLE(); }
+    virtual float loadf32(Address addr) { WASM_UNREACHABLE(); }
+    virtual double loadf64(Address addr) { WASM_UNREACHABLE(); }
+
+    virtual void store8(Address addr, int8_t value) { WASM_UNREACHABLE(); }
+    virtual void store16(Address addr, int16_t value) { WASM_UNREACHABLE(); }
+    virtual void store32(Address addr, int32_t value) { WASM_UNREACHABLE(); }
+    virtual void store64(Address addr, int64_t value) { WASM_UNREACHABLE(); }
+    virtual void storef32(Address addr, float value) { WASM_UNREACHABLE(); }
+    virtual void storef64(Address addr, double value) { WASM_UNREACHABLE(); }
   };
 
   SubType* self() {

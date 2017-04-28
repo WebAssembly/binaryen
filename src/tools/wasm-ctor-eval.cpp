@@ -214,62 +214,23 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException(std::string("callTable on index not found in static segments: ") + std::to_string(index));
   }
 
-  Literal load(Load* load, Address addr) override {
-    // load from the memory segments
-    switch (load->type) {
-      case i32: {
-        switch (load->bytes) {
-          case 1: return load->signed_ ? Literal((int32_t)doLoad<int8_t>(addr)) : Literal((int32_t)doLoad<uint8_t>(addr));
-          case 2: return load->signed_ ? Literal((int32_t)doLoad<int16_t>(addr)) : Literal((int32_t)doLoad<uint16_t>(addr));
-          case 4: return load->signed_ ? Literal((int32_t)doLoad<int32_t>(addr)) : Literal((int32_t)doLoad<uint32_t>(addr));
-          default: WASM_UNREACHABLE();
-        }
-        break;
-      }
-      case i64: {
-        switch (load->bytes) {
-          case 1: return load->signed_ ? Literal((int64_t)doLoad<int8_t>(addr)) : Literal((int64_t)doLoad<uint8_t>(addr));
-          case 2: return load->signed_ ? Literal((int64_t)doLoad<int16_t>(addr)) : Literal((int64_t)doLoad<uint16_t>(addr));
-          case 4: return load->signed_ ? Literal((int64_t)doLoad<int32_t>(addr)) : Literal((int64_t)doLoad<uint32_t>(addr));
-          case 8: return load->signed_ ? Literal((int64_t)doLoad<int64_t>(addr)) : Literal((int64_t)doLoad<uint64_t>(addr));
-          default: WASM_UNREACHABLE();
-        }
-        break;
-      }
-      case f32: return Literal(doLoad<float>(addr));
-      case f64: return Literal(doLoad<double>(addr));
-      default: WASM_UNREACHABLE();
-    }
-  }
+  int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
+  uint8_t load8u(Address addr) override { return doLoad<uint8_t>(addr); }
+  int16_t load16s(Address addr) override { return doLoad<int16_t>(addr); }
+  uint16_t load16u(Address addr) override { return doLoad<uint16_t>(addr); }
+  int32_t load32s(Address addr) override { return doLoad<int32_t>(addr); }
+  uint32_t load32u(Address addr) override { return doLoad<uint32_t>(addr); }
+  int64_t load64s(Address addr) override { return doLoad<int64_t>(addr); }
+  uint64_t load64u(Address addr) override { return doLoad<uint64_t>(addr); }
+  float loadf32(Address addr) override { return doLoad<float>(addr); }
+  double loadf64(Address addr) override { return doLoad<double>(addr); }
 
-  void store(Store* store, Address addr, Literal value) override {
-    // store to the memory segments
-    switch (store->valueType) {
-      case i32: {
-        switch (store->bytes) {
-          case 1: doStore<int8_t>(addr, value.geti32()); break;
-          case 2: doStore<int16_t>(addr, value.geti32()); break;
-          case 4: doStore<int32_t>(addr, value.geti32()); break;
-          default: WASM_UNREACHABLE();
-        }
-        break;
-      }
-      case i64: {
-        switch (store->bytes) {
-          case 1: doStore<int8_t>(addr, (int8_t)value.geti64()); break;
-          case 2: doStore<int16_t>(addr, (int16_t)value.geti64()); break;
-          case 4: doStore<int32_t>(addr, (int32_t)value.geti64()); break;
-          case 8: doStore<int64_t>(addr, value.geti64()); break;
-          default: WASM_UNREACHABLE();
-        }
-        break;
-      }
-      // write floats carefully, ensuring all bits reach memory
-      case f32: doStore<int32_t>(addr, value.reinterpreti32()); break;
-      case f64: doStore<int64_t>(addr, value.reinterpreti64()); break;
-      default: WASM_UNREACHABLE();
-    }
-  }
+  void store8(Address addr, int8_t value) override { doStore<int8_t>(addr, value); }
+  void store16(Address addr, int16_t value) override { doStore<int16_t>(addr, value); }
+  void store32(Address addr, int32_t value) override { doStore<int32_t>(addr, value); }
+  void store64(Address addr, int64_t value) override { doStore<int64_t>(addr, value); }
+  void storef32(Address addr, float value) override { doStore<float>(addr, value); }
+  void storef64(Address addr, double value) override { doStore<double>(addr, value); }
 
   void growMemory(Address /*oldSize*/, Address newSize) override {
     throw FailToEvalException("grow memory");
