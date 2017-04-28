@@ -226,4 +226,17 @@ for s in sorted(os.listdir(os.path.join('test', 'binaryen.js'))):
   out = run_command(cmd, stderr=subprocess.STDOUT)
   open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w').write(out)
 
+print '\n[ checking wasm-ctor-eval... ]\n'
+
+for t in os.listdir(os.path.join('test', 'ctor-eval')):
+  if t.endswith(('.wast', '.wasm')):
+    print '..', t
+    t = os.path.join('test', 'ctor-eval', t)
+    ctors = open(t + '.ctors').read().strip()
+    cmd = [os.path.join('bin', 'wasm-ctor-eval'), t, '-o', 'a.wast', '-S', '--ctors', ctors]
+    stdout = run_command(cmd)
+    actual = open('a.wast').read()
+    out = t + '.out'
+    with open(out, 'w') as o: o.write(actual)
+
 print '\n[ success! ]'
