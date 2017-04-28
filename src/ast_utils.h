@@ -73,10 +73,12 @@ struct BreakSeeker : public PostWalker<BreakSeeker> {
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   EffectAnalyzer(PassOptions& passOptions, Expression *ast = nullptr) {
     ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
+    debugInfo = passOptions.debugInfo;
     if (ast) analyze(ast);
   }
 
   bool ignoreImplicitTraps;
+  bool debugInfo;
 
   void analyze(Expression *ast) {
     breakNames.clear();
@@ -187,7 +189,14 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   }
 
   void visitCall(Call *curr) { calls = true; }
-  void visitCallImport(CallImport *curr) { calls = true; }
+  void visitCallImport(CallImport *curr) {
+    calls = true;
+    if (debugInfo) {
+      // debugInfo call imports must be preserved very strongly, do not
+      // move code around them
+      branches = true; // !
+    }
+  }
   void visitCallIndirect(CallIndirect *curr) { calls = true; }
   void visitGetLocal(GetLocal *curr) {
     localsRead.insert(curr->index);
