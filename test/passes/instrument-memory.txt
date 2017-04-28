@@ -1,8 +1,8 @@
 (module
  (type $1 (func))
  (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
- (import "ins" "load" (func $load (param i32 i32 i32 i32) (result i32)))
- (import "ins" "store" (func $store (param i32 i32 i32 i32) (result i32)))
+ (import "instrument" "load" (func $load (param i32 i32 i32 i32) (result i32)))
+ (import "instrument" "store" (func $store (param i32 i32 i32 i32) (result i32)))
  (memory $0 256 256)
  (func $A (type $1)
   (drop

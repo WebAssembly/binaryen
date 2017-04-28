@@ -16,12 +16,44 @@
 
 //
 // Instruments the build with code to intercept all memory reads and writes.
-// This can be useful in building tools that analyze cache behaviour.
+// This can be useful in building tools that analyze memory access behaviour.
 //
-// The instrumentation is performed by calling an ffi with an id for each
-// memory access site. You need to provide imports on the JS side to read
-// and write from memory.
+// The instrumentation is performed by calling an FFI with an ID for each
+// memory access site. Load / store IDs share the same index space. The
+// instrumentation wraps the evaluation of the address operand, therefore
+// it executes before the load / store is executed. Note that Instrumentation
+// code must return tha address argument.
 //
+// Loads: load(id, bytes, offset, address) => address
+//
+//  Before:
+//   (i32.load8_s align=1 offset=2 (i32.const 3))
+//
+//  After:
+//   (i32.load8_s align=1 offset=2
+//    (call $load
+//     (i32.const n) // ID
+//     (i32.const 1) // bytes
+//     (i32.const 2) // offset
+//     (i32.const 3) // address
+//    )
+//   )
+//
+// Stores: store(id, bytes, offset, address) => address
+//
+//  Before:
+//   (i32.store8 align=1 offset=2 (i32.const 3) (i32.const 4))
+//
+//  After:
+//   (i32.store16 align=1 offset=2
+//    (call $store
+//     (i32.const n) // ID
+//     (i32.const 1) // bytes
+//     (i32.const 2) // offset
+//     (i32.const 3) // address
+//    )
+//    (i32.const 4)
+//   )
 
 #include <wasm.h>
 #include <wasm-builder.h>
@@ -45,7 +77,7 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void addImport(Module *curr, Name name, std::string sig) {
     auto import = new Import;
     import->name = name;
-    import->module = INS;
+    import->module = INSTRUMENT;
     import->base = name;
     import->functionType = ensureFunctionType(sig, curr)->name;
     import->kind = ExternalKind::Function;
@@ -53,9 +85,7 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitModule(Module *curr) {
-    // load(id, bytes, offset, address) => address
     addImport(curr, load,  "iiiii");
-    // store(id, bytes, offset, address) => address
     addImport(curr, store,  "iiiii");
   }
 
