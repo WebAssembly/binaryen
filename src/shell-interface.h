@@ -167,15 +167,11 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   uint32_t load32u(Address addr) override { return memory.get<uint32_t>(addr); }
   int64_t load64s(Address addr) override { return memory.get<int64_t>(addr); }
   uint64_t load64u(Address addr) override { return memory.get<uint64_t>(addr); }
-  float loadf32(Address addr) override { return memory.get<float>(addr); }
-  double loadf64(Address addr) override { return memory.get<double>(addr); }
 
   void store8(Address addr, int8_t value) override { memory.set<int8_t>(addr, value); }
   void store16(Address addr, int16_t value) override { memory.set<int16_t>(addr, value); }
   void store32(Address addr, int32_t value) override { memory.set<int32_t>(addr, value); }
   void store64(Address addr, int64_t value) override { memory.set<int64_t>(addr, value); }
-  void storef32(Address addr, float value) override { memory.set<float>(addr, value); }
-  void storef64(Address addr, double value) override { memory.set<double>(addr, value); }
 
   void growMemory(Address /*oldSize*/, Address newSize) override {
     memory.resize(newSize);

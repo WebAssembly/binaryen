@@ -223,15 +223,11 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   uint32_t load32u(Address addr) override { return doLoad<uint32_t>(addr); }
   int64_t load64s(Address addr) override { return doLoad<int64_t>(addr); }
   uint64_t load64u(Address addr) override { return doLoad<uint64_t>(addr); }
-  float loadf32(Address addr) override { return doLoad<float>(addr); }
-  double loadf64(Address addr) override { return doLoad<double>(addr); }
 
   void store8(Address addr, int8_t value) override { doStore<int8_t>(addr, value); }
   void store16(Address addr, int16_t value) override { doStore<int16_t>(addr, value); }
   void store32(Address addr, int32_t value) override { doStore<int32_t>(addr, value); }
   void store64(Address addr, int64_t value) override { doStore<int64_t>(addr, value); }
-  void storef32(Address addr, float value) override { doStore<float>(addr, value); }
-  void storef64(Address addr, double value) override { doStore<double>(addr, value); }
 
   void growMemory(Address /*oldSize*/, Address newSize) override {
     throw FailToEvalException("grow memory");
