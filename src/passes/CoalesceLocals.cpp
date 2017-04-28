@@ -657,6 +657,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
           }
           continue;
         }
+        // remove ineffective actions
         if (!action.effective) {
           *action.origin = set->value; // value may have no side effects, further optimizations can eliminate it
           if (!set->isTee()) {

@@ -17,6 +17,7 @@
 #include <chrono>
 #include <sstream>
 
+#include <support/colors.h>
 #include <passes/passes.h>
 #include <pass.h>
 #include <wasm-validator.h>
@@ -111,7 +112,9 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
-  add("dce");
+  if (!options.debugInfo) { // debug info must be preserved, do not dce it
+    add("dce");
+  }
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
@@ -147,6 +150,17 @@ void PassRunner::addDefaultGlobalOptimizationPasses() {
   add("memory-packing");
 }
 
+static void dumpWast(Name name, Module* wasm) {
+  // write out the wast
+  Colors::disable();
+  static int counter = 0;
+  std::stringstream text;
+  WasmPrinter::printModule(wasm, text);
+  FILE* f = fopen((std::string("byn-") + std::to_string(counter++) + "-" + name.str + ".wast").c_str(), "w");
+  fputs(text.str().c_str(), f);
+  fclose(f);
+}
+
 void PassRunner::run() {
   // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
   //                     and validate between each pass.
@@ -160,6 +174,9 @@ void PassRunner::run() {
     std::cerr << "[PassRunner] running passes..." << std::endl;
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
+    }
+    if (passDebug >= 3) {
+      dumpWast("before", wasm);
     }
     for (auto* pass : passes) {
       // ignoring the time, save a printout of the module before, in case this pass breaks it, so we can print the before and after
@@ -194,6 +211,9 @@ void PassRunner::run() {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state (FIXME: this is broken, need to prevent recursion of the print pass\n";
         }
         abort();
+      }
+      if (passDebug >= 3) {
+        dumpWast(pass->name, wasm);
       }
     }
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;

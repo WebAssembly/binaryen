@@ -7,34 +7,45 @@
  (export "add" (func $add))
  (export "ret" (func $ret))
  (export "opts" (func $opts))
+ (export "fib" (func $fib))
+ (export "switch_reach" (func $switch_reach))
  (func $add (param $0 i32) (param $1 i32) (result i32)
+  ;; tests/other_file.cpp:314159
   (i32.add
    (get_local $1)
    (get_local $1)
   )
  )
  (func $ret (param $0 i32) (result i32)
-  (i32.add
+  ;; return.cpp:50
+  (set_local $0
    (i32.shl
     (get_local $0)
     (i32.const 1)
    )
+  )
+  ;; return.cpp:100
+  (i32.add
+   (get_local $0)
    (i32.const 1)
   )
  )
  (func $opts (param $0 i32) (param $1 i32) (result i32)
+  ;; even-opted.cpp:1
+  (set_local $0
+   (i32.add
+    (get_local $0)
+    (get_local $1)
+   )
+  )
   ;; even-opted.cpp:2
   (set_local $1
    (i32.shr_s
     (get_local $1)
-    (tee_local $0
-     (i32.add
-      (get_local $0)
-      (get_local $1)
-     )
-    )
+    (get_local $0)
    )
   )
+  ;; even-opted.cpp:3
   (i32.add
    (i32.rem_s
     (get_local $0)
@@ -42,5 +53,132 @@
    )
    (get_local $1)
   )
+ )
+ (func $fib (param $0 i32) (result i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (if
+   ;; fib.c:3
+   (i32.gt_s
+    (get_local $0)
+    (i32.const 0)
+   )
+   (block
+    (set_local $4
+     (i32.const 0)
+    )
+    (set_local $2
+     (i32.const 0)
+    )
+    (set_local $3
+     (i32.const 1)
+    )
+   )
+   (block
+    (set_local $1
+     (i32.const 1)
+    )
+    ;; fib.c:8
+    (return
+     (get_local $1)
+    )
+   )
+  )
+  (loop $while-in
+   ;; fib.c:4
+   (set_local $1
+    (i32.add
+     (get_local $3)
+     (get_local $4)
+    )
+   )
+   ;; fib.c:3
+   (set_local $2
+    (i32.add
+     (get_local $2)
+     (i32.const 1)
+    )
+   )
+   (if
+    ;; fib.c:3
+    (i32.ne
+     (get_local $2)
+     (get_local $0)
+    )
+    (block
+     (set_local $4
+      (get_local $3)
+     )
+     (set_local $3
+      (get_local $1)
+     )
+     (br $while-in)
+    )
+   )
+  )
+  ;; fib.c:8
+  (get_local $1)
+ )
+ (func $switch_reach (param $0 i32) (result i32)
+  (local $1 i32)
+  (set_local $1
+   (block $__rjto$0 i32
+    (block $__rjti$0
+     (br $__rjto$0
+      (if i32
+       (i32.lt_s
+        (tee_local $1
+         (i32.add
+          (get_local $0)
+          (i32.const 52)
+         )
+        )
+        (i32.const 1369188723)
+       )
+       (block $switch i32
+        (block $switch-default
+         (block $switch-case
+          (br_table $switch-case $switch-default
+           (i32.sub
+            (get_local $1)
+            (i32.const -1108210269)
+           )
+          )
+         )
+         (br $__rjti$0)
+        )
+        (i32.const 0)
+       )
+       (block $switch0 i32
+        (block $switch-default2
+         (block $switch-case1
+          (br_table $switch-case1 $switch-default2
+           (i32.sub
+            (get_local $1)
+            (i32.const 1369188723)
+           )
+          )
+         )
+         (br $__rjti$0)
+        )
+        (i32.const 0)
+       )
+      )
+     )
+    )
+    (call $switch_reach
+     (get_local $0)
+    )
+   )
+  )
+  (drop
+   (call $switch_reach
+    (get_local $0)
+   )
+  )
+  ;; /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950
+  (get_local $1)
  )
 )

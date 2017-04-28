@@ -35,7 +35,6 @@ int main(int argc, const char *argv[]) {
   bool runOptimizationPasses = false;
   Asm2WasmBuilder::TrapMode trapMode = Asm2WasmBuilder::TrapMode::JS;
   bool wasmOnly = false;
-  bool debugInfo = false;
   std::string symbolMap;
   bool emitBinary = true;
 
@@ -98,7 +97,7 @@ int main(int argc, const char *argv[]) {
            })
       .add("--debuginfo", "-g", "Emit names section and debug info (for debug info you must emit text, -S, for this to work)",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { debugInfo = true; })
+           [&](Options *o, const std::string &arguments) { passOptions.debugInfo = true; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
            Options::Arguments::One,
            [&](Options *o, const std::string &argument) { symbolMap = argument; })
@@ -128,7 +127,7 @@ int main(int argc, const char *argv[]) {
 
   Asm2WasmPreProcessor pre;
   // wasm binaries can contain a names section, but not full debug info
-  pre.debugInfo = debugInfo && !emitBinary;
+  pre.debugInfo = passOptions.debugInfo && !emitBinary;
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
   char *start = pre.process(input.data());
@@ -188,7 +187,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "printing..." << std::endl;
   ModuleWriter writer;
   writer.setDebug(options.debug);
-  writer.setDebugInfo(debugInfo);
+  writer.setDebugInfo(passOptions.debugInfo);
   writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);
   writer.write(wasm, options.extra["output"]);
