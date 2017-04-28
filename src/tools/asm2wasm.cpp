@@ -155,7 +155,7 @@ int main(int argc, const char *argv[]) {
     } else {
       init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
     }
-    wasm.memory.segments.emplace_back(init, data);
+    wasm.memory.segments.emplace_back(init, std::move(data));
     if (runOptimizationPasses) {
       PassRunner runner(&wasm);
       runner.add("memory-packing");

@@ -254,12 +254,11 @@ private:
 
     // otherwise, this must be in the singleton segment. resize as needed
     if (wasm->memory.segments.size() == 0) {
-      std::vector<char> temp;
       Builder builder(*wasm);
       wasm->memory.segments.push_back(
         Memory::Segment(
           builder.makeConst(Literal(int32_t(0))),
-          temp
+          std::vector<char>()
         )
       );
     }

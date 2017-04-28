@@ -44,7 +44,7 @@ void Linker::placeStackPointer(Address stackAllocation) {
       LinkerObject::Relocation::kData, (uint32_t*)&raw[0], ".stack", stackAllocation);
     out.addRelocation(relocation);
     assert(out.wasm.memory.segments.empty());
-    out.addSegment("__stack_pointer", raw);
+    out.addSegment("__stack_pointer", std::move(raw));
   }
 }
 
