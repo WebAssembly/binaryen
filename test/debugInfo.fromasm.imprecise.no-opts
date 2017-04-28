@@ -9,6 +9,7 @@
  (export "ret" (func $ret))
  (export "opts" (func $opts))
  (export "fib" (func $fib))
+ (export "switch_reach" (func $switch_reach))
  (func $add (param $x i32) (param $y i32) (result i32)
   ;; tests/hello_world.c:5
   (set_local $x
@@ -44,7 +45,6 @@
     (i32.const 1)
    )
   )
-  (unreachable)
  )
  (func $opts (param $x i32) (param $y i32) (result i32)
   ;; even-opted.cpp:1
@@ -173,6 +173,102 @@
   (return
    (get_local $$$0$lcssa)
   )
-  (unreachable)
+ )
+ (func $switch_reach (param $$p i32) (result i32)
+  (local $$0 i32)
+  (local $$call i32)
+  (local $$magic i32)
+  (local $$rc$0 i32)
+  (local $$switch$split2D i32)
+  (local $label i32)
+  (local $sp i32)
+  (set_local $sp
+   (get_global $STACKTOP)
+  )
+  (set_local $$magic
+   (i32.add
+    (get_local $$p)
+    (i32.const 52)
+   )
+  )
+  (set_local $$0
+   (get_local $$magic)
+  )
+  (set_local $$switch$split2D
+   (i32.lt_s
+    (get_local $$0)
+    (i32.const 1369188723)
+   )
+  )
+  (if
+   (get_local $$switch$split2D)
+   (block $switch
+    (block $switch-default
+     (block $switch-case
+      (br_table $switch-case $switch-default
+       (i32.sub
+        (get_local $$0)
+        (i32.const -1108210269)
+       )
+      )
+     )
+     (block
+      (set_local $label
+       (i32.const 2)
+      )
+      (br $switch)
+     )
+    )
+    (set_local $$rc$0
+     (i32.const 0)
+    )
+   )
+   (block $switch0
+    (block $switch-default2
+     (block $switch-case1
+      (br_table $switch-case1 $switch-default2
+       (i32.sub
+        (get_local $$0)
+        (i32.const 1369188723)
+       )
+      )
+     )
+     (block
+      (set_local $label
+       (i32.const 2)
+      )
+      (br $switch0)
+     )
+    )
+    (set_local $$rc$0
+     (i32.const 0)
+    )
+   )
+  )
+  (if
+   (i32.eq
+    (get_local $label)
+    (i32.const 2)
+   )
+   (block
+    (set_local $$call
+     (call $switch_reach
+      (get_local $$p)
+     )
+    )
+    (set_local $$rc$0
+     (get_local $$call)
+    )
+   )
+  )
+  (drop
+   (call $switch_reach
+    (get_local $$p)
+   )
+  )
+  ;; /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950
+  (return
+   (get_local $$rc$0)
+  )
  )
 )

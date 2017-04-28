@@ -326,11 +326,17 @@ struct AdjustDebugInfo : public WalkerPass<PostWalker<AdjustDebugInfo, Visitor<A
 
   void visitBlock(Block* curr) {
     // look for a debug info call that is unreachable
+    if (curr->list.size() == 0) return;
+    auto* back = curr->list.back();
     for (Index i = 1; i < curr->list.size(); i++) {
       if (checkDebugInfo(curr->list[i]) && !checkDebugInfo(curr->list[i - 1])) {
-          // swap them
-          std::swap(curr->list[i - 1], curr->list[i]);
+        // swap them
+        std::swap(curr->list[i - 1], curr->list[i]);
       }
+    }
+    if (curr->list.back() != back) {
+      // we changed the last element, update the type
+      curr->finalize();
     }
   }
 };
@@ -2606,27 +2612,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   };
   // body
   function->body = processStatements(body, start);
-  // debug info cleanup: we add debug info calls after each instruction; as
-  // a result,
-  //   return 0; //@line file.cpp
-  // will have code after the return. if the function body is a block,
-  // it will be forced to the return type of the function, and then
-  // the unreachable type of the return makes things work, which we break
-  // if we add a none debug intrinsic call afterwards. so we need to fix
-  // that up.
-  if (preprocessor.debugInfo) {
-    if (function->result != none) {
-      if (auto* block = function->body->dynCast<Block>()) {
-        if (block->list.size() > 0) {
-          if (checkDebugInfo(block->list.back())) {
-            // add an unreachable. both the debug info and it could be dce'd,
-            // but it makes us validate properly.
-            block->list.push_back(builder.makeUnreachable());
-          }
-        }
-      }
-    }
-  }
   // cleanups/checks
   assert(breakStack.size() == 0 && continueStack.size() == 0);
   assert(parentLabel.isNull());

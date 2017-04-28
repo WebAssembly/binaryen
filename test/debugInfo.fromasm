@@ -9,6 +9,7 @@
  (export "ret" (func $ret))
  (export "opts" (func $opts))
  (export "fib" (func $fib))
+ (export "switch_reach" (func $switch_reach))
  (func $add (param $0 i32) (param $1 i32) (result i32)
   ;; tests/other_file.cpp:314159
   (i32.add
@@ -25,13 +26,10 @@
    )
   )
   ;; return.cpp:100
-  (return
-   (i32.add
-    (get_local $0)
-    (i32.const 1)
-   )
+  (i32.add
+   (get_local $0)
+   (i32.const 1)
   )
-  (unreachable)
  )
  (func $i32s-rem (param $0 i32) (param $1 i32) (result i32)
   (if i32
@@ -132,9 +130,66 @@
    )
   )
   ;; fib.c:8
-  (return
-   (get_local $1)
+  (get_local $1)
+ )
+ (func $switch_reach (param $0 i32) (result i32)
+  (local $1 i32)
+  (set_local $1
+   (block $__rjto$0 i32
+    (block $__rjti$0
+     (br $__rjto$0
+      (if i32
+       (i32.lt_s
+        (tee_local $1
+         (i32.add
+          (get_local $0)
+          (i32.const 52)
+         )
+        )
+        (i32.const 1369188723)
+       )
+       (block $switch i32
+        (block $switch-default
+         (block $switch-case
+          (br_table $switch-case $switch-default
+           (i32.sub
+            (get_local $1)
+            (i32.const -1108210269)
+           )
+          )
+         )
+         (br $__rjti$0)
+        )
+        (i32.const 0)
+       )
+       (block $switch0 i32
+        (block $switch-default2
+         (block $switch-case1
+          (br_table $switch-case1 $switch-default2
+           (i32.sub
+            (get_local $1)
+            (i32.const 1369188723)
+           )
+          )
+         )
+         (br $__rjti$0)
+        )
+        (i32.const 0)
+       )
+      )
+     )
+    )
+    (call $switch_reach
+     (get_local $0)
+    )
+   )
   )
-  (unreachable)
+  (drop
+   (call $switch_reach
+    (get_local $0)
+   )
+  )
+  ;; /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950
+  (get_local $1)
  )
 )
