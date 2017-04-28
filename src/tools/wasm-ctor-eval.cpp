@@ -30,6 +30,7 @@
 #include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
+#include "wasm-builder.h"
 #include "ast/memory-utils.h"
 
 using namespace wasm;
@@ -258,9 +259,10 @@ private:
     // otherwise, this must be in the singleton segment. resize as needed
     if (wasm->memory.segments.size() == 0) {
       std::vector<char> temp;
+      Builder builder(*wasm);
       wasm->memory.segments.push_back(
         Memory::Segment(
-          wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))),
+          builder.makeConst(Literal(int32_t(0))),
           temp
         )
       );
