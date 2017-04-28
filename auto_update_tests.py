@@ -233,13 +233,10 @@ for t in os.listdir(os.path.join('test', 'ctor-eval')):
     print '..', t
     t = os.path.join('test', 'ctor-eval', t)
     ctors = open(t + '.ctors').read().strip()
-    for opt in [0]:#, 1]:
-      cmd = [os.path.join('bin', 'wasm-ctor-eval'), t, '-o', 'a.wast', '-S', '--ctors', ctors]
-      if opt: cmd += ['-O']
-      stdout = run_command(cmd)
-      actual = open('a.wast').read()
-      out = t + '.out'
-      if opt: out += '.opt'
-      with open(out, 'w') as o: o.write(actual)
+    cmd = [os.path.join('bin', 'wasm-ctor-eval'), t, '-o', 'a.wast', '-S', '--ctors', ctors]
+    stdout = run_command(cmd)
+    actual = open('a.wast').read()
+    out = t + '.out'
+    with open(out, 'w') as o: o.write(actual)
 
 print '\n[ success! ]'

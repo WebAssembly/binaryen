@@ -18,6 +18,10 @@
 #define wasm_ast_memory_h
 
 #include <algorithm>
+#include <vector>
+
+#include "literal.h"
+#include "wasm.h"
 
 namespace wasm {
 

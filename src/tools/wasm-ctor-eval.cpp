@@ -30,7 +30,7 @@
 #include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
-#include "ast/memory.h"
+#include "ast/memory-utils.h"
 
 using namespace wasm;
 
@@ -41,19 +41,26 @@ struct FailToEvalException {
 
 // We do not have access to imported globals
 class EvallingGlobalManager {
+  // values of globals
   std::map<Name, Literal> globals;
-  std::set<Name> dangerouses;
+
+  // globals that are dangerous to modify in the module
+  std::set<Name> dangerousGlobals;
+
+  // whether we are done adding new globals
   bool sealed = false;
 
 public:
   void addDangerous(Name name) {
-    dangerouses.insert(name);
+    dangerousGlobals.insert(name);
   }
 
   void seal() {
     sealed = true;
   }
 
+  // for equality purposes, we just care about the globals
+  // and whether they have changed
   bool operator==(const EvallingGlobalManager& other) {
     return globals == other.globals;
   }
@@ -62,7 +69,7 @@ public:
   }
 
   Literal& operator[](Name name) {
-    if (dangerouses.count(name) > 0) {
+    if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
         extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit that use ___dso_handle are not emitted";
@@ -77,31 +84,31 @@ public:
     return globals[name];
   }
 
-  struct Iter {
+  struct Iterator {
     Name first;
     Literal second;
     bool found;
 
-    Iter() : found(false) {}
-    Iter(Name name, Literal value) : first(name), second(value), found(true) {}
+    Iterator() : found(false) {}
+    Iterator(Name name, Literal value) : first(name), second(value), found(true) {}
 
-    bool operator==(const Iter& other) {
+    bool operator==(const Iterator& other) {
       return first == other.first && second == other.second && found == other.found;
     }
-    bool operator!=(const Iter& other) {
+    bool operator!=(const Iterator& other) {
       return !(*this == other);
     }
   };
 
-  Iter find(Name name) {
+  Iterator find(Name name) {
     if (globals.find(name) == globals.end()) {
       return end();
     }
-    return Iter(name, globals[name]);
+    return Iterator(name, globals[name]);
   }
 
-  Iter end() {
-    return Iter();
+  Iterator end() {
+    return Iterator();
   }
 };
 
@@ -182,27 +189,25 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     // we assume the table is not modified (hmm)
     // look through the segments, try to find the function
     for (auto& segment : wasm->table.segments) {
-      bool found = false;
       Index start;
+      // look for the index in this segment. if it has a constant offset, we look in
+      // the proper range. if it instead gets a global, we rely on the fact that when
+      // not dynamically linking then the table is loaded at offset 0.
       if (auto* c = segment.offset->dynCast<Const>()) {
         start = c->value.getInteger();
-        found = true;
       } else if (segment.offset->is<GetGlobal>()) {
-        // a segment loaded from a global is assumed to be loaded at 0. this is true
-        // in emscripten in the non-dynamic linking case
         start = 0;
-        found = true;
+      } else {
+        WASM_UNREACHABLE(); // wasm spec only allows const and get_global there
       }
-      if (found) {
-        auto end = start + segment.data.size();
-        if (start <= index && index < end) {
-          auto name = segment.data[index - start];
-          // if this is one of our functions, we can call it; if it was imported, fail
-          if (wasm->getFunctionOrNull(name)) {
-            return instance.callFunctionInternal(name, arguments);
-          } else {
-            throw FailToEvalException(std::string("callTable on imported function: ") + name.str);
-          }
+      auto end = start + segment.data.size();
+      if (start <= index && index < end) {
+        auto name = segment.data[index - start];
+        // if this is one of our functions, we can call it; if it was imported, fail
+        if (wasm->getFunctionOrNull(name)) {
+          return instance.callFunctionInternal(name, arguments);
+        } else {
+          throw FailToEvalException(std::string("callTable on imported function: ") + name.str);
         }
       }
     }
