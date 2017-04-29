@@ -33,6 +33,7 @@ Pass *createInliningPass();
 Pass *createLegalizeJSInterfacePass();
 Pass *createLocalCSEPass();
 Pass *createLogExecutionPass();
+Pass *createInstrumentMemoryPass();
 Pass *createMemoryPackingPass();
 Pass *createMergeBlocksPass();
 Pass *createMinifiedPrinterPass();
