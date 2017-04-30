@@ -137,6 +137,8 @@ public:
       } else {
         if (isConcreteWasmType(backType)) {
           shouldBeEqual(curr->type, backType, curr, "block with value and last element with value must match types");
+        } else {
+          shouldBeUnequal(backType, none, curr, "block with value must not have last element that is none");
         }
       }
     }
