@@ -240,7 +240,7 @@ public:
         case ConvertUInt32ToFloat64: return value.convertUToF64();
         case ConvertSInt32ToFloat32: return value.convertSToF32();
         case ConvertSInt32ToFloat64: return value.convertSToF64();
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
     if (value.type == i64) {
@@ -255,7 +255,7 @@ public:
         case ConvertUInt64ToFloat64: return value.convertUToF64();
         case ConvertSInt64ToFloat32: return value.convertSToF32();
         case ConvertSInt64ToFloat64: return value.convertSToF64();
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
     if (value.type == f32) {
@@ -273,7 +273,7 @@ public:
         case TruncUFloat32ToInt64: return truncUFloat(curr, value);
         case ReinterpretFloat32: return value.castToI32();
         case PromoteFloat32:   return value.extendToF64();
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
     if (value.type == f64) {
@@ -304,10 +304,10 @@ public:
           if (val > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
           return value.truncateToF32();
         }
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
-    abort();
+    WASM_UNREACHABLE();
   }
   Flow visitBinary(Binary *curr) {
     NOTE_ENTER("Binary");
@@ -361,7 +361,7 @@ public:
         case GtUInt32:  return left.gtU(right);
         case GeSInt32:  return left.geS(right);
         case GeUInt32:  return left.geU(right);
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     } else if (left.type == i64) {
       switch (curr->op) {
@@ -404,7 +404,7 @@ public:
         case GtUInt64:  return left.gtU(right);
         case GeSInt64:  return left.geS(right);
         case GeUInt64:  return left.geU(right);
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     } else if (left.type == f32 || left.type == f64) {
       switch (curr->op) {
@@ -421,10 +421,10 @@ public:
         case LeFloat32:       case LeFloat64:       return left.le(right);
         case GtFloat32:       case GtFloat64:       return left.gt(right);
         case GeFloat32:       case GeFloat64:       return left.ge(right);
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
-    abort();
+    WASM_UNREACHABLE();
   }
   Flow visitSelect(Select *curr) {
     NOTE_ENTER("Select");
@@ -715,7 +715,7 @@ public:
           std::cerr << "Function `" << function->name << "` expects "
                     << function->params.size() << " parameters, got "
                     << arguments.size() << " arguments." << std::endl;
-          abort();
+          WASM_UNREACHABLE();
         }
         locals.resize(function->getNumLocals());
         for (size_t i = 0; i < function->getNumLocals(); i++) {
@@ -726,7 +726,7 @@ public:
                         << printWasmType(function->params[i])
                         << " for parameter " << i << ", got "
                         << printWasmType(arguments[i].type) << "." << std::endl;
-              abort();
+              WASM_UNREACHABLE();
             }
             locals[i] = arguments[i];
           } else {
@@ -873,7 +873,7 @@ public:
             if (id == WASM) return Literal(1);
             return Literal((int32_t)0);
           }
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
       }
 
@@ -906,7 +906,7 @@ public:
     if (function->result == none) ret = Literal();
     if (function->result != ret.type) {
       std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
-      abort();
+      WASM_UNREACHABLE();
     }
     callDepth = previousCallDepth; // may decrease more than one, if we jumped up the stack
     // if we jumped up the stack, we also need to pop higher frames
