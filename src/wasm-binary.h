@@ -645,6 +645,8 @@ class WasmBinaryBuilder {
   size_t pos = 0;
   Index startIndex = -1;
 
+  std::set<BinaryConsts::Section> seenSections;
+
 public:
   WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
 

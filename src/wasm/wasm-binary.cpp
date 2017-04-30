@@ -945,6 +945,15 @@ void WasmBinaryBuilder::read() {
 
     auto oldPos = pos;
 
+    // almost no sections can appear more than once
+    if (seenSections.count(BinaryConsts::Section(sectionCode)) > 0) {
+      if (sectionCode != BinaryConsts::Section::Code) {
+        throw ParseException("section seen more than once: " + std::to_string(sectionCode));
+      }
+    } else {
+      seenSections.insert(BinaryConsts::Section(sectionCode));
+    }
+
     switch (sectionCode) {
       case BinaryConsts::Section::Start: readStart(); break;
       case BinaryConsts::Section::Memory: readMemory(); break;
