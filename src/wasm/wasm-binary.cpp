@@ -1095,7 +1095,7 @@ WasmType WasmBinaryBuilder::getWasmType() {
     case BinaryConsts::EncodedType::i64: return i64;
     case BinaryConsts::EncodedType::f32: return f32;
     case BinaryConsts::EncodedType::f64: return f64;
-    default: abort();
+    default: throw ParseException("invalid wasm type: " + std::to_string(type));
   }
 }
 
@@ -1276,6 +1276,9 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto index = getU32LEB();
+    if (index >= wasm.functionTypes.size()) {
+      throw ParseException("invalid function type index for function");
+    }
     functionTypes.push_back(wasm.functionTypes[index].get());
   }
 }

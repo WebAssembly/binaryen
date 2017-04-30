@@ -94,8 +94,9 @@ struct LEB {
                             : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
       T significant_payload = payload & shift_mask;
       if (significant_payload != payload) {
-        assert(std::is_signed<T>::value && last &&
-               "dropped bits only valid for signed LEB");
+        if (!(std::is_signed<T>::value && last)) {
+          throw ParseException("LEB dropped bits only valid for signed LEB");
+        }
       }
       value |= significant_payload << shift;
       if (last) break;
@@ -113,7 +114,7 @@ struct LEB {
         value <<= sext_bits;
         value >>= sext_bits;
         if (value >= 0) {
-          throw ParseException("sign-extend should produce a negative value");
+          throw ParseException(" LEBsign-extend should produce a negative value");
         }
       }
     }
