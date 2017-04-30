@@ -100,7 +100,9 @@ struct LEB {
       value |= significant_payload << shift;
       if (last) break;
       shift += 7;
-      assert(size_t(shift) < sizeof(T) * 8 && "LEB overflow");
+      if (size_t(shift) >= sizeof(T) * 8) {
+        throw ParseException("LEB overflow");
+      }
     }
     // If signed LEB, then we might need to sign-extend. (compile should
     // optimize this out if not needed).
@@ -110,7 +112,9 @@ struct LEB {
         size_t sext_bits = 8 * sizeof(T) - size_t(shift);
         value <<= sext_bits;
         value >>= sext_bits;
-        assert(value < 0 && "sign-extend should produces a negative value");
+        if (value >= 0) {
+          throw ParseException("sign-extend should produce a negative value");
+        }
       }
     }
   }
