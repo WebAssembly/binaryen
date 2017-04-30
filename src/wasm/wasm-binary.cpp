@@ -1407,7 +1407,9 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
-  assert(expressionStack.size() > 0);
+  if (expressionStack.empty()) {
+    throw ParseException("attempted pop from empty stack");
+  }
   auto ret = expressionStack.back();
   expressionStack.pop_back();
   return ret;
