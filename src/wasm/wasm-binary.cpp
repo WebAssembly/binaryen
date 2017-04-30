@@ -966,7 +966,9 @@ void WasmBinaryBuilder::read() {
       case BinaryConsts::Section::Table: readFunctionTableDeclaration(); break;
       default: {
         readUserSection(payloadLen);
-        assert(pos <= oldPos + payloadLen);
+        if (pos > oldPos + payloadLen) {
+          throw ParseException("bad user section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+        }
         pos = oldPos + payloadLen;
       }
     }
@@ -1157,8 +1159,12 @@ void WasmBinaryBuilder::readMemory() {
   if (debug) std::cerr << "== readMemory" << std::endl;
   auto numMemories = getU32LEB();
   if (!numMemories) return;
-  assert(numMemories == 1);
-  if (wasm.memory.exists) throw ParseException("Memory cannot be both imported and defined");
+  if (numMemories != 1) {
+    throw ParseException("Must be exactly 1 memory");
+  }
+  if (wasm.memory.exists) {
+    throw ParseException("Memory cannot be both imported and defined");
+  }
   wasm.memory.exists = true;
   getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
 }
@@ -1183,7 +1189,9 @@ void WasmBinaryBuilder::readSignatures() {
     if (numResults == 0) {
       curr->result = none;
     } else {
-      assert(numResults == 1);
+      if (numResults != 1) {
+        throw ParseException("signature must have 1 result");
+      }
       curr->result = getWasmType();
     }
     curr->name = Name::fromInt(wasm.functionTypes.size());
@@ -1250,8 +1258,9 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Global: {
         curr->globalType = getWasmType();
         auto globalMutable = getU32LEB();
-        WASM_UNUSED(globalMutable);
-        assert(!globalMutable);
+        if (globalMutable) {
+          throw ParseException("imported globals cannot be mutable");
+        }
         break;
       }
       default: WASM_UNREACHABLE();
@@ -1274,11 +1283,15 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 void WasmBinaryBuilder::readFunctions() {
   if (debug) std::cerr << "== readFunctions" << std::endl;
   size_t total = getU32LEB();
-  assert(total == functionTypes.size());
+  if (total != functionTypes.size()) {
+    throw ParseException("invalid function section size, must equal types");
+  }
   for (size_t i = 0; i < total; i++) {
     if (debug) std::cerr << "read one at " << pos << std::endl;
     size_t size = getU32LEB();
-    assert(size > 0);
+    if (size == 0) {
+      throw ParseException("empty function size");
+    }
     endOfFunction = pos + size;
     auto type = functionTypes[i];
     if (debug) std::cerr << "reading " << i << std::endl;
