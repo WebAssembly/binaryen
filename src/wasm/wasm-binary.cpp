@@ -1343,8 +1343,12 @@ void WasmBinaryBuilder::readFunctions() {
       assert(depth == 0);
       assert(breakStack.size() == 1);
       breakStack.pop_back();
-      assert(expressionStack.empty());
-      assert(pos == endOfFunction);
+      if (!expressionStack.empty()) {
+        throw ParseException("stack not empty on function exit");
+      }
+      if (pos != endOfFunction) {
+        throw ParseException("binary offset at function exit not at expected location");
+      }
       if (breaksToReturn) {
         // we broke to return, so we need an outer block to break to
         func->body = Builder(wasm).blockifyWithName(func->body, RETURN_BREAK);
@@ -1805,14 +1809,18 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
 void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
   if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
   curr->index = getU32LEB();
-  assert(curr->index < currFunction->getNumLocals());
+  if (curr->index >= currFunction->getNumLocals()) {
+    throw ParseException("bad get_local index");
+  }
   curr->type = currFunction->getLocalType(curr->index);
 }
 
 void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   curr->index = getU32LEB();
-  assert(curr->index < currFunction->getNumLocals());
+  if (curr->index >= currFunction->getNumLocals()) {
+    throw ParseException("bad set_local index");
+  }
   curr->value = popNonVoidExpression();
   curr->type = curr->value->type;
   curr->setTee(code == BinaryConsts::TeeLocal);
