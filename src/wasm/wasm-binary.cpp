@@ -1451,7 +1451,9 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
     }
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild
-  assert(mappedGlobals.count(index));
+  if (mappedGlobals.count(index) == 0) {
+    throw ParseException("bad global index");
+  }
   return mappedGlobals[index];
 }
 
@@ -1503,7 +1505,9 @@ void WasmBinaryBuilder::readDataSegments() {
   for (size_t i = 0; i < num; i++) {
     auto memoryIndex = getU32LEB();
     WASM_UNUSED(memoryIndex);
-    assert(memoryIndex == 0); // Only one linear memory in the MVP
+    if (memoryIndex != 0) {
+      throw ParseException("bad memory index, must be 0");
+    }
     Memory::Segment curr;
     auto offset = readExpression();
     auto size = getU32LEB();
