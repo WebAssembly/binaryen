@@ -1263,7 +1263,9 @@ void WasmBinaryBuilder::readImports() {
         }
         break;
       }
-      default: WASM_UNREACHABLE();
+      default: {
+        throw ParseException("bad import kind");
+      }
     }
     wasm.addImport(curr);
   }
