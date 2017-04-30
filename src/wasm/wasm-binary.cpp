@@ -1443,6 +1443,9 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
     expressions.pop_back();
   }
   auto type = block->list[0]->type;
+  if (!currFunction) {
+    throw ParseException("popping void outside of function, where we need a new local");
+  }
   auto local = builder.addVar(currFunction, type);
   block->list[0] = builder.makeSetLocal(local, block->list[0]);
   block->list.push_back(builder.makeGetLocal(local, type));
