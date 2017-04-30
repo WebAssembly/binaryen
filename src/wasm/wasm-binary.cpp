@@ -1805,7 +1805,11 @@ Expression* WasmBinaryBuilder::visitCall() {
 
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
-  auto* fullType = wasm.functionTypes.at(getU32LEB()).get();
+  auto index = getU32LEB();
+  if (index >= wasm.functionTypes.size()) {
+    throw ParseException("bad call_indirect function index");
+  }
+  auto* fullType = wasm.functionTypes[index].get();
   auto reserved = getU32LEB();
   if (reserved != 0) throw ParseException("Invalid flags field in call_indirect");
   curr->fullType = fullType->name;
@@ -1820,6 +1824,9 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
 
 void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
   if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
+  if (!currFunction) {
+    throw ParseException("get_local outside of function");
+  }
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
     throw ParseException("bad get_local index");
@@ -1829,6 +1836,9 @@ void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
 
 void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
+  if (!currFunction) {
+    throw ParseException("set_local outside of function");
+  }
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
     throw ParseException("bad set_local index");
