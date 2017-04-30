@@ -1588,9 +1588,13 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         functions[index - importedFunctions]->name = getInlineString();
       }
     }
-    assert(pos == subsectionPos + subsectionSize);
+    if (pos != subsectionPos + subsectionSize) {
+      throw ParseException("bad names subsection position change");
+    }
   }
-  assert(pos == sectionPos + payloadLen);
+  if (pos != sectionPos + payloadLen) {
+    throw ParseException("bad names section position change");
+  }
 }
 
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
@@ -1668,7 +1672,9 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     last = curr;
     processExpressions();
     size_t end = expressionStack.size();
-    assert(end >= start);
+    if (end < start) {
+      throw ParseException("block cannot pop from outside");
+    }
     for (size_t i = start; i < end; i++) {
       if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
       curr->list.push_back(expressionStack[i]);
@@ -1714,7 +1720,9 @@ void WasmBinaryBuilder::visitIf(If *curr) {
     curr->ifFalse = getBlock(curr->type);
   }
   curr->finalize(curr->type);
-  assert(lastSeparator == BinaryConsts::End);
+  if (lastSeparator != BinaryConsts::End) {
+    throw ParseException("if should end with End");
+  }
 }
 
 void WasmBinaryBuilder::visitLoop(Loop *curr) {
@@ -1730,7 +1738,9 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
 WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   if (debug) std::cerr << "getBreakTarget " << offset << std::endl;
   size_t index = breakStack.size() - 1 - offset;
-  assert(index < breakStack.size());
+  if (index >= breakStack.size()) {
+    throw ParseException("bad breakindex");
+  }
   if (index == 0) {
     // trying to access the topmost element means we break out
     // to the function scope, doing in effect a return, we'll
@@ -1782,7 +1792,9 @@ Expression* WasmBinaryBuilder::visitCall() {
     // this is a call of a defined function
     auto* call = allocator.alloc<Call>();
     auto adjustedIndex = index - functionImportIndexes.size();
-    assert(adjustedIndex < functionTypes.size());
+    if (adjustedIndex >= functionTypes.size()) {
+      throw ParseException("bad call index");
+    }
     type = functionTypes[adjustedIndex];
     fillCall(call, type);
     functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
