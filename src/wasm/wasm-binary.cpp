@@ -1371,7 +1371,9 @@ void WasmBinaryBuilder::readExports() {
 Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
   processExpressions();
-  assert(expressionStack.size() == 1);
+  if (expressionStack.size() != 1) {
+    throw ParseException("expected to read a single expression");
+  }
   auto* ret = popExpression();
   assert(depth == 0);
   return ret;
@@ -1620,8 +1622,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitLoad(curr, code)) break;
       if (maybeVisitStore(curr, code)) break;
       if (maybeVisitHost(curr, code)) break;
-      std::cerr << "bad code 0x" << std::hex << (int)code << std::endl;
-      abort();
+      throw ParseException("bad node code " + std::to_string(code));
     }
   }
   if (debug) std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
@@ -2043,6 +2044,9 @@ void WasmBinaryBuilder::visitSelect(Select *curr) {
 
 void WasmBinaryBuilder::visitReturn(Return *curr) {
   if (debug) std::cerr << "zz node: Return" << std::endl;
+  if (!currFunction) {
+    throw ParseException("return outside of function");
+  }
   if (currFunction->result != none) {
     curr->value = popNonVoidExpression();
   }
