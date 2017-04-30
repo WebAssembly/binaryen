@@ -1206,7 +1206,10 @@ Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
     return import->name;
   } else {
     i -= functionImportIndexes.size();
-    return wasm.functions.at(i)->name;
+    if (i >= wasm.functions.size()) {
+      throw ParseException("bad function index");
+    }
+    return wasm.functions[i]->name;
   }
 }
 
@@ -1483,7 +1486,7 @@ void WasmBinaryBuilder::processFunctions() {
       case ExternalKind::Table: curr->value = Name::fromInt(0); break;
       case ExternalKind::Memory: curr->value = Name::fromInt(0); break;
       case ExternalKind::Global: curr->value = getGlobalName(index); break;
-      default: WASM_UNREACHABLE();
+      default: throw ParseException("bad export kind");
     }
     wasm.addExport(curr);
   }
