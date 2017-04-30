@@ -48,7 +48,7 @@ Element::List& Element::list() {
 }
 
 Element* Element::operator[](unsigned i) {
-  if (i >= list().size()) element_assert(0 && "expected more elements in list");
+  if (i >= list().size()) throw ParseException("expected more elements in list", line, col);
   return list()[i];
 }
 

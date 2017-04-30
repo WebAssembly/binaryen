@@ -972,7 +972,9 @@ void WasmBinaryBuilder::read() {
     }
 
     // make sure we advanced exactly past this section
-    assert(pos == oldPos + payloadLen);
+    if (pos != oldPos + payloadLen) {
+      throw ParseException("bad section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+    }
   }
 
   processFunctions();
@@ -1169,8 +1171,9 @@ void WasmBinaryBuilder::readSignatures() {
     if (debug) std::cerr << "read one" << std::endl;
     auto curr = new FunctionType;
     auto form = getS32LEB();
-    WASM_UNUSED(form);
-    assert(form == BinaryConsts::EncodedType::Func);
+    if (form != BinaryConsts::EncodedType::Func) {
+      throw ParseException("bad signature form " + std::to_string(form));
+    }
     size_t numParams = getU32LEB();
     if (debug) std::cerr << "num params: " << numParams << std::endl;
     for (size_t j = 0; j < numParams; j++) {
@@ -1221,7 +1224,9 @@ void WasmBinaryBuilder::readImports() {
     switch (curr->kind) {
       case ExternalKind::Function: {
         auto index = getU32LEB();
-        assert(index < wasm.functionTypes.size());
+        if (index >= wasm.functionTypes.size()) {
+          throw ParseException("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
+        }
         curr->functionType = wasm.functionTypes[index]->name;
         assert(curr->functionType.is());
         functionImportIndexes.push_back(curr->name);
