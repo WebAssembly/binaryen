@@ -422,9 +422,12 @@ public:
         }
         break;
       }
-      case EqZInt32:
+      case EqZInt32: {
+        shouldBeTrue(curr->value->type == i32, curr, "i32.eqz input must be i32");
+        break;
+      }
       case EqZInt64: {
-        shouldBeTrue(curr->value->type == i32 || curr->value->type == i64, curr, "eqz input must be i32 or i64");
+        shouldBeTrue(curr->value->type == i64, curr, "i64.eqz input must be i64");
         break;
       }
       case ExtendSInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
