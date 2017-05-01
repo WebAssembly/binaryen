@@ -441,4 +441,16 @@
     )
     (nop)
   )
+  (func $unreachable-br (result i32)
+    (block $out i32
+      (br $out
+        (br $out (i32.const 0))
+      )
+    )
+  )
+  (func $unreachable-br-loop (result i32)
+    (loop $out
+      (br $out)
+    )
+  )
 )

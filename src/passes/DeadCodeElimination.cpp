@@ -51,12 +51,14 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   std::set<Name> reachableBreaks;
 
   void addBreak(Name name) {
+    // if it is not reachable, we should have already handled that
     assert(reachable);
     reachableBreaks.insert(name);
   }
 
-  bool isDead(Expression* curr) {
-    return curr && curr->is<Unreachable>();
+  // if a child is unreachable, we can replace ourselves with it
+  bool isDead(Expression* child) {
+    return child && child->type == unreachable;
   }
 
   // things that stop control flow
@@ -137,7 +139,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       reachable = reachable || reachableBreaks.count(curr->name);
       reachableBreaks.erase(curr->name);
     }
-    if (curr->list.size() == 1 && isDead(curr->list[0])) {
+    if (curr->list.size() == 1 && isDead(curr->list[0]) && !BreakSeeker::has(curr->list[0], curr->name)) {
       replaceCurrent(curr->list[0]);
     }
   }
@@ -146,7 +148,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (curr->name.is()) {
       reachableBreaks.erase(curr->name);
     }
-    if (isDead(curr->body)) {
+    if (isDead(curr->body) && !BreakSeeker::has(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
