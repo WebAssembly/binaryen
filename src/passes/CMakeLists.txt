@@ -1,5 +1,6 @@
 SET(passes_SOURCES
   pass.cpp
+  AssignmentOfSelectToBranch.cc
   CoalesceLocals.cpp
   CodePushing.cpp
   DeadCodeElimination.cpp

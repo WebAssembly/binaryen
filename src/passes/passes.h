@@ -22,6 +22,7 @@ namespace wasm {
 class Pass;
 
 // All passes:
+Pass *createAssignmentOfSelectToBranchPass();
 Pass *createCoalesceLocalsPass();
 Pass *createCoalesceLocalsWithLearningPass();
 Pass *createCodePushingPass();
