@@ -1715,6 +1715,9 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
   if (start - end == 1) {
     return popExpression();
   }
+  if (start > end) {
+    throw ParseException("block cannot pop from outside");
+  }
   auto* block = allocator.alloc<Block>();
   for (size_t i = start; i < end; i++) {
     block->list.push_back(expressionStack[i]);
