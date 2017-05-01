@@ -241,4 +241,22 @@
    (i32.const 7)
   )
  )
+ (func $drop-if-both-unreachable (type $1) (param $0 i32)
+  (block $out
+   (drop
+    (if i32
+     (get_local $0)
+     (br $out)
+     (br $out)
+    )
+   )
+  )
+  (drop
+   (if i32
+    (get_local $0)
+    (unreachable)
+    (unreachable)
+   )
+  )
+ )
 )

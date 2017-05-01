@@ -445,4 +445,22 @@
     (if (i32.const 0) (call $if-const (i32.const 4)) (call $if-const (i32.const 5)))
     (if (i32.const 6) (call $if-const (i32.const 7)) (call $if-const (i32.const 8)))
   )
+  (func $drop-if-both-unreachable (param $0 i32)
+    (block $out
+      (drop
+        (if i32
+          (get_local $0)
+          (br $out)
+          (br $out)
+        )
+      )
+    )
+    (drop
+      (if i32
+        (get_local $0)
+        (unreachable)
+        (unreachable)
+      )
+    )
+  )
 )

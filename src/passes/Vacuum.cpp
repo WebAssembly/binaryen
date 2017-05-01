@@ -288,14 +288,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && isConcreteWasmType(iff->type)) {
       // reuse the drop in both cases
-      if (iff->ifTrue->type == unreachable) {
-        assert(isConcreteWasmType(iff->ifFalse->type));
+      if (iff->ifTrue->type == unreachable && isConcreteWasmType(iff->ifFalse->type)) {
         curr->value = iff->ifFalse;
         iff->ifFalse = curr;
         iff->type = none;
         replaceCurrent(iff);
-      } else if (iff->ifFalse->type == unreachable) {
-        assert(isConcreteWasmType(iff->ifTrue->type));
+      } else if (iff->ifFalse->type == unreachable && isConcreteWasmType(iff->ifTrue->type)) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;
         iff->type = none;
