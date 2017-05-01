@@ -1373,10 +1373,15 @@ void WasmBinaryBuilder::readExports() {
   if (debug) std::cerr << "== readExports" << std::endl;
   size_t num = getU32LEB();
   if (debug) std::cerr << "num: " << num << std::endl;
+  std::set<Name> names;
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto curr = new Export;
     curr->name = getInlineString();
+    if (names.count(curr->name) > 0) {
+      throw ParseException("duplicate export name");
+    }
+    names.insert(curr->name);
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
     exportIndexes[curr] = index;
