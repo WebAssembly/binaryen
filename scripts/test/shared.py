@@ -156,6 +156,7 @@ WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
 ASM2WASM = [os.path.join(options.binaryen_bin, 'asm2wasm')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
+WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
 S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
 
 S2WASM_EXE = S2WASM[0]

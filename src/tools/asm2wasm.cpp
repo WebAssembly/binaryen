@@ -32,6 +32,7 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   PassOptions passOptions;
+  bool legalizeJavaScriptFFI = true;
   bool runOptimizationPasses = false;
   Asm2WasmBuilder::TrapMode trapMode = Asm2WasmBuilder::TrapMode::JS;
   bool wasmOnly = false;
@@ -95,6 +96,10 @@ int main(int argc, const char *argv[]) {
            [&wasmOnly](Options *o, const std::string &) {
              wasmOnly = true;
            })
+      .add("--no-legalize-javascript-ffi", "-nj", "Do not legalize (i64->i32, f32->f64) the imports and exports for interfacing with JS", Options::Arguments::Zero,
+           [&legalizeJavaScriptFFI](Options *o, const std::string &) {
+             legalizeJavaScriptFFI = false;
+           })
       .add("--debuginfo", "-g", "Emit names section and debug info (for debug info you must emit text, -S, for this to work)",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { passOptions.debugInfo = true; })
@@ -139,7 +144,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, passOptions, runOptimizationPasses, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, passOptions, legalizeJavaScriptFFI, runOptimizationPasses, wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided

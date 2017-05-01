@@ -23,7 +23,7 @@ import sys
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
     ASM2WASM, BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
-    WASM_AS, WASM_OPT, WASM_SHELL, WASM_SHELL_EXE, WASM_DIS,
+    WASM_AS, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE, WASM_DIS,
     binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
@@ -112,13 +112,15 @@ for asm in tests:
           cmd += ['-O']
         if 'debugInfo' in asm:
           cmd += ['-g']
+        if 'noffi' in asm:
+          cmd += ['--no-legalize-javascript-ffi']
         if precise and opts:
           # test mem init importing
           open('a.mem', 'wb').write(asm)
           cmd += ['--mem-init=a.mem']
           if asm[0] == 'e':
             cmd += ['--mem-base=1024']
-        if 'i64' in asm or 'wasm-only' in asm:
+        if 'i64' in asm or 'wasm-only' in asm or 'noffi' in asm:
           cmd += ['--wasm-only']
         wasm = os.path.join(options.binaryen_test, wasm)
         print '..', asm, wasm
@@ -224,7 +226,7 @@ for t in os.listdir(os.path.join('test', 'merge')):
     u = t + '.toMerge'
     for finalize in [0, 1]:
       for opt in [0, 1]:
-        cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S', '--verbose']
+        cmd = WASM_MERGE + [t, u, '-o', 'a.wast', '-S', '--verbose']
         if finalize: cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
         if opt: cmd += ['-O']
         stdout = run_command(cmd)
