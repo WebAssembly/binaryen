@@ -142,6 +142,9 @@ public:
         }
       }
     }
+    if (isConcreteWasmType(curr->type)) {
+      shouldBeTrue(curr->list.size() > 0, curr, "block with a value must not be empty");
+    }
   }
 
   static void visitPreLoop(WasmValidator* self, Expression** currp) {
