@@ -945,6 +945,15 @@ void WasmBinaryBuilder::read() {
 
     auto oldPos = pos;
 
+    // almost no sections can appear more than once
+    if (seenSections.count(BinaryConsts::Section(sectionCode)) > 0) {
+      if (sectionCode != BinaryConsts::Section::User && sectionCode != BinaryConsts::Section::Code) {
+        throw ParseException("section seen more than once: " + std::to_string(sectionCode));
+      }
+    } else {
+      seenSections.insert(BinaryConsts::Section(sectionCode));
+    }
+
     switch (sectionCode) {
       case BinaryConsts::Section::Start: readStart(); break;
       case BinaryConsts::Section::Memory: readMemory(); break;
@@ -966,13 +975,17 @@ void WasmBinaryBuilder::read() {
       case BinaryConsts::Section::Table: readFunctionTableDeclaration(); break;
       default: {
         readUserSection(payloadLen);
-        assert(pos <= oldPos + payloadLen);
+        if (pos > oldPos + payloadLen) {
+          throw ParseException("bad user section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+        }
         pos = oldPos + payloadLen;
       }
     }
 
     // make sure we advanced exactly past this section
-    assert(pos == oldPos + payloadLen);
+    if (pos != oldPos + payloadLen) {
+      throw ParseException("bad section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+    }
   }
 
   processFunctions();
@@ -1091,7 +1104,7 @@ WasmType WasmBinaryBuilder::getWasmType() {
     case BinaryConsts::EncodedType::i64: return i64;
     case BinaryConsts::EncodedType::f32: return f32;
     case BinaryConsts::EncodedType::f64: return f64;
-    default: abort();
+    default: throw ParseException("invalid wasm type: " + std::to_string(type));
   }
 }
 
@@ -1155,8 +1168,12 @@ void WasmBinaryBuilder::readMemory() {
   if (debug) std::cerr << "== readMemory" << std::endl;
   auto numMemories = getU32LEB();
   if (!numMemories) return;
-  assert(numMemories == 1);
-  if (wasm.memory.exists) throw ParseException("Memory cannot be both imported and defined");
+  if (numMemories != 1) {
+    throw ParseException("Must be exactly 1 memory");
+  }
+  if (wasm.memory.exists) {
+    throw ParseException("Memory cannot be both imported and defined");
+  }
   wasm.memory.exists = true;
   getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
 }
@@ -1169,8 +1186,9 @@ void WasmBinaryBuilder::readSignatures() {
     if (debug) std::cerr << "read one" << std::endl;
     auto curr = new FunctionType;
     auto form = getS32LEB();
-    WASM_UNUSED(form);
-    assert(form == BinaryConsts::EncodedType::Func);
+    if (form != BinaryConsts::EncodedType::Func) {
+      throw ParseException("bad signature form " + std::to_string(form));
+    }
     size_t numParams = getU32LEB();
     if (debug) std::cerr << "num params: " << numParams << std::endl;
     for (size_t j = 0; j < numParams; j++) {
@@ -1180,7 +1198,9 @@ void WasmBinaryBuilder::readSignatures() {
     if (numResults == 0) {
       curr->result = none;
     } else {
-      assert(numResults == 1);
+      if (numResults != 1) {
+        throw ParseException("signature must have 1 result");
+      }
       curr->result = getWasmType();
     }
     curr->name = Name::fromInt(wasm.functionTypes.size());
@@ -1195,7 +1215,10 @@ Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
     return import->name;
   } else {
     i -= functionImportIndexes.size();
-    return wasm.functions.at(i)->name;
+    if (i >= wasm.functions.size()) {
+      throw ParseException("bad function index");
+    }
+    return wasm.functions[i]->name;
   }
 }
 
@@ -1221,7 +1244,9 @@ void WasmBinaryBuilder::readImports() {
     switch (curr->kind) {
       case ExternalKind::Function: {
         auto index = getU32LEB();
-        assert(index < wasm.functionTypes.size());
+        if (index >= wasm.functionTypes.size()) {
+          throw ParseException("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
+        }
         curr->functionType = wasm.functionTypes[index]->name;
         assert(curr->functionType.is());
         functionImportIndexes.push_back(curr->name);
@@ -1245,11 +1270,14 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Global: {
         curr->globalType = getWasmType();
         auto globalMutable = getU32LEB();
-        WASM_UNUSED(globalMutable);
-        assert(!globalMutable);
+        if (globalMutable) {
+          throw ParseException("imported globals cannot be mutable");
+        }
         break;
       }
-      default: WASM_UNREACHABLE();
+      default: {
+        throw ParseException("bad import kind");
+      }
     }
     wasm.addImport(curr);
   }
@@ -1262,6 +1290,9 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto index = getU32LEB();
+    if (index >= wasm.functionTypes.size()) {
+      throw ParseException("invalid function type index for function");
+    }
     functionTypes.push_back(wasm.functionTypes[index].get());
   }
 }
@@ -1269,11 +1300,15 @@ void WasmBinaryBuilder::readFunctionSignatures() {
 void WasmBinaryBuilder::readFunctions() {
   if (debug) std::cerr << "== readFunctions" << std::endl;
   size_t total = getU32LEB();
-  assert(total == functionTypes.size());
+  if (total != functionTypes.size()) {
+    throw ParseException("invalid function section size, must equal types");
+  }
   for (size_t i = 0; i < total; i++) {
     if (debug) std::cerr << "read one at " << pos << std::endl;
     size_t size = getU32LEB();
-    assert(size > 0);
+    if (size == 0) {
+      throw ParseException("empty function size");
+    }
     endOfFunction = pos + size;
     auto type = functionTypes[i];
     if (debug) std::cerr << "reading " << i << std::endl;
@@ -1317,8 +1352,12 @@ void WasmBinaryBuilder::readFunctions() {
       assert(depth == 0);
       assert(breakStack.size() == 1);
       breakStack.pop_back();
-      assert(expressionStack.empty());
-      assert(pos == endOfFunction);
+      if (!expressionStack.empty()) {
+        throw ParseException("stack not empty on function exit");
+      }
+      if (pos != endOfFunction) {
+        throw ParseException("binary offset at function exit not at expected location");
+      }
       if (breaksToReturn) {
         // we broke to return, so we need an outer block to break to
         func->body = Builder(wasm).blockifyWithName(func->body, RETURN_BREAK);
@@ -1334,10 +1373,15 @@ void WasmBinaryBuilder::readExports() {
   if (debug) std::cerr << "== readExports" << std::endl;
   size_t num = getU32LEB();
   if (debug) std::cerr << "num: " << num << std::endl;
+  std::set<Name> names;
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto curr = new Export;
     curr->name = getInlineString();
+    if (names.count(curr->name) > 0) {
+      throw ParseException("duplicate export name");
+    }
+    names.insert(curr->name);
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
     exportIndexes[curr] = index;
@@ -1348,7 +1392,9 @@ void WasmBinaryBuilder::readExports() {
 Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
   processExpressions();
-  assert(expressionStack.size() == 1);
+  if (expressionStack.size() != 1) {
+    throw ParseException("expected to read a single expression");
+  }
   auto* ret = popExpression();
   assert(depth == 0);
   return ret;
@@ -1384,7 +1430,9 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
-  assert(expressionStack.size() > 0);
+  if (expressionStack.empty()) {
+    throw ParseException("attempted pop from empty stack");
+  }
   auto ret = expressionStack.back();
   expressionStack.pop_back();
   return ret;
@@ -1409,6 +1457,9 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
     expressions.pop_back();
   }
   auto type = block->list[0]->type;
+  if (!currFunction) {
+    throw ParseException("popping void outside of function, where we need a new local");
+  }
   auto local = builder.addVar(currFunction, type);
   block->list[0] = builder.makeSetLocal(local, block->list[0]);
   block->list.push_back(builder.makeGetLocal(local, type));
@@ -1430,7 +1481,9 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
     }
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild
-  assert(mappedGlobals.count(index));
+  if (mappedGlobals.count(index) == 0) {
+    throw ParseException("bad global index");
+  }
   return mappedGlobals[index];
 }
 
@@ -1454,7 +1507,7 @@ void WasmBinaryBuilder::processFunctions() {
       case ExternalKind::Table: curr->value = Name::fromInt(0); break;
       case ExternalKind::Memory: curr->value = Name::fromInt(0); break;
       case ExternalKind::Global: curr->value = getGlobalName(index); break;
-      default: WASM_UNREACHABLE();
+      default: throw ParseException("bad export kind");
     }
     wasm.addExport(curr);
   }
@@ -1482,7 +1535,9 @@ void WasmBinaryBuilder::readDataSegments() {
   for (size_t i = 0; i < num; i++) {
     auto memoryIndex = getU32LEB();
     WASM_UNUSED(memoryIndex);
-    assert(memoryIndex == 0); // Only one linear memory in the MVP
+    if (memoryIndex != 0) {
+      throw ParseException("bad memory index, must be 0");
+    }
     Memory::Segment curr;
     auto offset = readExpression();
     auto size = getU32LEB();
@@ -1542,17 +1597,27 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       if (import->kind != ExternalKind::Function) continue;
       importedFunctions++;
     }
+    std::set<Name> functionNames;
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
       if (index < importedFunctions) {
         getInlineString(); // TODO: use this
       } else if (index - importedFunctions < functions.size()) {
-        functions[index - importedFunctions]->name = getInlineString();
+        auto name = getInlineString();
+        functions[index - importedFunctions]->name = name;
+        if (functionNames.count(name) > 0) {
+          throw ParseException("duplicate function names");
+        }
+        functionNames.insert(name);
       }
     }
-    assert(pos == subsectionPos + subsectionSize);
+    if (pos != subsectionPos + subsectionSize) {
+      throw ParseException("bad names subsection position change");
+    }
   }
-  assert(pos == sectionPos + payloadLen);
+  if (pos != sectionPos + payloadLen) {
+    throw ParseException("bad names section position change");
+  }
 }
 
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
@@ -1591,8 +1656,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitLoad(curr, code)) break;
       if (maybeVisitStore(curr, code)) break;
       if (maybeVisitHost(curr, code)) break;
-      std::cerr << "bad code 0x" << std::hex << (int)code << std::endl;
-      abort();
+      throw ParseException("bad node code " + std::to_string(code));
     }
   }
   if (debug) std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
@@ -1631,7 +1695,9 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     last = curr;
     processExpressions();
     size_t end = expressionStack.size();
-    assert(end >= start);
+    if (end < start) {
+      throw ParseException("block cannot pop from outside");
+    }
     for (size_t i = start; i < end; i++) {
       if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
       curr->list.push_back(expressionStack[i]);
@@ -1648,6 +1714,9 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
   size_t end = expressionStack.size();
   if (start - end == 1) {
     return popExpression();
+  }
+  if (start > end) {
+    throw ParseException("block cannot pop from outside");
   }
   auto* block = allocator.alloc<Block>();
   for (size_t i = start; i < end; i++) {
@@ -1677,7 +1746,9 @@ void WasmBinaryBuilder::visitIf(If *curr) {
     curr->ifFalse = getBlock(curr->type);
   }
   curr->finalize(curr->type);
-  assert(lastSeparator == BinaryConsts::End);
+  if (lastSeparator != BinaryConsts::End) {
+    throw ParseException("if should end with End");
+  }
 }
 
 void WasmBinaryBuilder::visitLoop(Loop *curr) {
@@ -1693,7 +1764,9 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
 WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   if (debug) std::cerr << "getBreakTarget " << offset << std::endl;
   size_t index = breakStack.size() - 1 - offset;
-  assert(index < breakStack.size());
+  if (index >= breakStack.size()) {
+    throw ParseException("bad breakindex");
+  }
   if (index == 0) {
     // trying to access the topmost element means we break out
     // to the function scope, doing in effect a return, we'll
@@ -1745,7 +1818,9 @@ Expression* WasmBinaryBuilder::visitCall() {
     // this is a call of a defined function
     auto* call = allocator.alloc<Call>();
     auto adjustedIndex = index - functionImportIndexes.size();
-    assert(adjustedIndex < functionTypes.size());
+    if (adjustedIndex >= functionTypes.size()) {
+      throw ParseException("bad call index");
+    }
     type = functionTypes[adjustedIndex];
     fillCall(call, type);
     functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
@@ -1756,7 +1831,11 @@ Expression* WasmBinaryBuilder::visitCall() {
 
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
-  auto* fullType = wasm.functionTypes.at(getU32LEB()).get();
+  auto index = getU32LEB();
+  if (index >= wasm.functionTypes.size()) {
+    throw ParseException("bad call_indirect function index");
+  }
+  auto* fullType = wasm.functionTypes[index].get();
   auto reserved = getU32LEB();
   if (reserved != 0) throw ParseException("Invalid flags field in call_indirect");
   curr->fullType = fullType->name;
@@ -1771,15 +1850,25 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
 
 void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
   if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
+  if (!currFunction) {
+    throw ParseException("get_local outside of function");
+  }
   curr->index = getU32LEB();
-  assert(curr->index < currFunction->getNumLocals());
+  if (curr->index >= currFunction->getNumLocals()) {
+    throw ParseException("bad get_local index");
+  }
   curr->type = currFunction->getLocalType(curr->index);
 }
 
 void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
+  if (!currFunction) {
+    throw ParseException("set_local outside of function");
+  }
   curr->index = getU32LEB();
-  assert(curr->index < currFunction->getNumLocals());
+  if (curr->index >= currFunction->getNumLocals()) {
+    throw ParseException("bad set_local index");
+  }
   curr->value = popNonVoidExpression();
   curr->type = curr->value->type;
   curr->setTee(code == BinaryConsts::TeeLocal);
@@ -2014,6 +2103,9 @@ void WasmBinaryBuilder::visitSelect(Select *curr) {
 
 void WasmBinaryBuilder::visitReturn(Return *curr) {
   if (debug) std::cerr << "zz node: Return" << std::endl;
+  if (!currFunction) {
+    throw ParseException("return outside of function");
+  }
   if (currFunction->result != none) {
     curr->value = popNonVoidExpression();
   }

@@ -90,6 +90,8 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing input";
+    } catch (std::bad_alloc& b) {
+      Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
   }
 

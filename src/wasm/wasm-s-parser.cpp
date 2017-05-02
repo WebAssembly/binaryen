@@ -48,7 +48,7 @@ Element::List& Element::list() {
 }
 
 Element* Element::operator[](unsigned i) {
-  if (i >= list().size()) element_assert(0 && "expected more elements in list");
+  if (i >= list().size()) throw ParseException("expected more elements in list", line, col);
   return list()[i];
 }
 
@@ -114,8 +114,10 @@ Element* SExpressionParser::parse() {
     } else if (input[0] == ')') {
       input++;
       auto last = curr;
+      if (stack.empty()) {
+        throw ParseException("s-expr stack empty");
+      }
       curr = stack.back();
-      assert(stack.size());
       stack.pop_back();
       curr->list().push_back(last);
     } else {
