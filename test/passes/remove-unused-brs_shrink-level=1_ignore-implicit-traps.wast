@@ -36,6 +36,7 @@
         (i32.const 27)
       )
     )
+    (i32.const 0)
   )
   (func $join-br_ifs
     (block $out

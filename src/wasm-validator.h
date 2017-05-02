@@ -128,9 +128,18 @@ public:
         }
       }
     }
-    if (!isConcreteWasmType(curr->type) && curr->list.size() > 0) {
-      if (isConcreteWasmType(curr->list.back()->type)) {
-        shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
+    if (curr->list.size() > 0) {
+      auto backType = curr->list.back()->type;
+      if (!isConcreteWasmType(curr->type)) {
+        if (isConcreteWasmType(backType)) {
+          shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
+        }
+      } else {
+        if (isConcreteWasmType(backType)) {
+          shouldBeEqual(curr->type, backType, curr, "block with value and last element with value must match types");
+        } else {
+          shouldBeUnequal(backType, none, curr, "block with value must not have last element that is none");
+        }
       }
     }
   }
@@ -155,7 +164,7 @@ public:
   }
 
   void visitIf(If *curr) {
-    shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32 || curr->condition->type == i64, curr, "if condition must be valid");
+    shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "if condition must be valid");
     if (!curr->ifFalse) {
       shouldBeFalse(isConcreteWasmType(curr->ifTrue->type), curr, "if without else must not return a value in body");
       if (curr->condition->type != unreachable) {
@@ -284,6 +293,97 @@ public:
     if (curr->left->type != unreachable && curr->right->type != unreachable) {
       shouldBeEqual(curr->left->type, curr->right->type, curr, "binary child types must be equal");
     }
+    switch (curr->op) {
+      case AddInt32:
+      case SubInt32:
+      case MulInt32:
+      case DivSInt32:
+      case DivUInt32:
+      case RemSInt32:
+      case RemUInt32:
+      case AndInt32:
+      case OrInt32:
+      case XorInt32:
+      case ShlInt32:
+      case ShrUInt32:
+      case ShrSInt32:
+      case RotLInt32:
+      case RotRInt32:
+      case EqInt32:
+      case NeInt32:
+      case LtSInt32:
+      case LtUInt32:
+      case LeSInt32:
+      case LeUInt32:
+      case GtSInt32:
+      case GtUInt32:
+      case GeSInt32:
+      case GeUInt32: {
+        shouldBeEqualOrFirstIsUnreachable(curr->left->type, i32, curr, "i32 op");
+        break;
+      }
+      case AddInt64:
+      case SubInt64:
+      case MulInt64:
+      case DivSInt64:
+      case DivUInt64:
+      case RemSInt64:
+      case RemUInt64:
+      case AndInt64:
+      case OrInt64:
+      case XorInt64:
+      case ShlInt64:
+      case ShrUInt64:
+      case ShrSInt64:
+      case RotLInt64:
+      case RotRInt64:
+      case EqInt64:
+      case NeInt64:
+      case LtSInt64:
+      case LtUInt64:
+      case LeSInt64:
+      case LeUInt64:
+      case GtSInt64:
+      case GtUInt64:
+      case GeSInt64:
+      case GeUInt64: {
+        shouldBeEqualOrFirstIsUnreachable(curr->left->type, i64, curr, "i64 op");
+        break;
+      }
+      case AddFloat32:
+      case SubFloat32:
+      case MulFloat32:
+      case DivFloat32:
+      case CopySignFloat32:
+      case MinFloat32:
+      case MaxFloat32:
+      case EqFloat32:
+      case NeFloat32:
+      case LtFloat32:
+      case LeFloat32:
+      case GtFloat32:
+      case GeFloat32: {
+        shouldBeEqualOrFirstIsUnreachable(curr->left->type, f32, curr, "f32 op");
+        break;
+      }
+      case AddFloat64:
+      case SubFloat64:
+      case MulFloat64:
+      case DivFloat64:
+      case CopySignFloat64:
+      case MinFloat64:
+      case MaxFloat64:
+      case EqFloat64:
+      case NeFloat64:
+      case LtFloat64:
+      case LeFloat64:
+      case GtFloat64:
+      case GeFloat64: {
+        shouldBeEqualOrFirstIsUnreachable(curr->left->type, f64, curr, "f64 op");
+        break;
+      }
+      default: WASM_UNREACHABLE();
+    }
   }
   void visitUnary(Unary *curr) {
     shouldBeUnequal(curr->value->type, none, curr, "unaries must not receive a none as their input");
@@ -322,9 +422,12 @@ public:
         }
         break;
       }
-      case EqZInt32:
+      case EqZInt32: {
+        shouldBeTrue(curr->value->type == i32, curr, "i32.eqz input must be i32");
+        break;
+      }
       case EqZInt64: {
-        shouldBeTrue(curr->value->type == i32 || curr->value->type == i64, curr, "eqz input must be i32 or i64");
+        shouldBeTrue(curr->value->type == i64, curr, "i64.eqz input must be i64");
         break;
       }
       case ExtendSInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
