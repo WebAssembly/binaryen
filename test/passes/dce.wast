@@ -455,16 +455,6 @@
   )
  (func $unreachable-block-ends-switch (result i32)
   (block $label$0 i32
-   (block $label$1
-    (br $label$1)
-    (unreachable)
-   )
-   (block $label$2
-    (br_if $label$2
-     (i32.const 1)
-    )
-    (unreachable)
-   )
    (block $label$3
     (nop)
     (br_table $label$3
@@ -472,13 +462,31 @@
     )
     (unreachable)
    )
-   (block $label$4
-    (br_table $label$4 $label$4 $label$4
-     (i32.const 1)
+   (i32.const 19)
+  )
+ )
+ (func $unreachable-block-ends-br_if (type $1) (result i32)
+  (block $label$0 i32
+   (block $label$2
+    (nop)
+    (br_if $label$2
+     (unreachable)
     )
     (unreachable)
    )
    (i32.const 19)
+  )
+ )
+ (func $unreachable-brs-3 (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (grow_memory
+     (br $label$0
+      (i32.const 18)
+     )
+    )
+   )
+   (i32.const 21)
   )
  )
 )

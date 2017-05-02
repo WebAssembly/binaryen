@@ -69,6 +69,19 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       replaceCurrent(curr->value);
       return;
     }
+    if (isDead(curr->condition)) {
+      if (curr->value) {
+        auto* block = getModule()->allocator.alloc<Block>();
+        block->list.resize(2);
+        block->list[0] = drop(curr->value);
+        block->list[1] = curr->condition;
+        block->finalize();
+        replaceCurrent(block);
+      } else {
+        replaceCurrent(curr->condition);
+      }
+      return;
+    }
     addBreak(curr->name);
     if (!curr->condition) {
       reachable = false;
@@ -375,7 +388,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitHost(Host* curr) {
-    // TODO
+    handleCall(curr);
   }
 
   void visitFunction(Function* curr) {

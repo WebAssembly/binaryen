@@ -409,7 +409,12 @@ void Host::finalize() {
       break;
     }
     case GrowMemory: {
-      type = i32;
+      // if the single operand is not reachable, so are we
+      if (operands[0]->type == unreachable) {
+        type = unreachable;
+      } else {
+        type = i32;
+      }
       break;
     }
     default: abort();
