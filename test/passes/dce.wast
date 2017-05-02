@@ -489,4 +489,23 @@
    (i32.const 21)
   )
  )
+ (func $unreachable-brs-4 (param $var$0 i32) (result i32)
+  (i32.add
+   (i32.const 1)
+   (block $label$0 i32
+    (br $label$0
+     (block $label$1 i32 ;; this block is declared i32, but we can see it is unreachable
+      (drop
+       (br_if $label$0
+        (i32.const 4104)
+        (unreachable)
+       )
+      )
+      (i32.const 4)
+     )
+    )
+    (i32.const 16)
+   )
+  )
+ )
 )

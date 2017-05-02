@@ -51,9 +51,15 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   std::set<Name> reachableBreaks;
 
   void addBreak(Name name) {
-    // if it is not reachable, we should have already handled that
-    assert(reachable);
-    reachableBreaks.insert(name);
+    // we normally have already reduced unreachable code into (unreachable)
+    // nodes, so we would not get to this function at all anyhow, the breaking
+    // instruction itself would be removed. However, an exception are things
+    // like  (block i32 (call $x) (unreachable)) , which has type i32
+    // despite not being exited.
+    // TODO: optimize such cases
+    if (reachable) {
+      reachableBreaks.insert(name);
+    }
   }
 
   // if a child is unreachable, we can replace ourselves with it
