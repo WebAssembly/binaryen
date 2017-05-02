@@ -235,7 +235,7 @@
   (if
    (i32.const 88)
    (drop
-    (block i32
+    (block
      (drop
       (i32.const 0)
      )
@@ -250,7 +250,7 @@
   (if
    (i32.const 100)
    (drop
-    (block i32
+    (block
      (drop
       (i32.const 123)
      )
@@ -264,7 +264,7 @@
   (if
    (i32.const 101)
    (drop
-    (block i32
+    (block
      (drop
       (i32.const 123)
      )
@@ -367,7 +367,7 @@
     (br $label$0
      (block $label$1 i32
       (drop
-       (block i32
+       (block
         (drop
          (i32.const 4104)
         )
@@ -390,12 +390,14 @@
     (get_local $var$1)
    )
    (block $label$1 i64
-    (call $call-unreach
-     (i64.sub
-      (get_local $var$0)
-      (i64.const 1)
+    (block i64
+     (drop
+      (i64.sub
+       (get_local $var$0)
+       (i64.const 1)
+      )
      )
-     (block i64
+     (block
       (drop
        (block $block i64
         (set_local $2

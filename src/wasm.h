@@ -299,6 +299,8 @@ public:
   Name default_;
   Expression* condition;
   Expression* value;
+
+  void finalize();
 };
 
 class Call : public SpecificExpression<Expression::CallId> {

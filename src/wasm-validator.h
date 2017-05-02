@@ -390,15 +390,7 @@ public:
   }
   void visitUnary(Unary *curr) {
     shouldBeUnequal(curr->value->type, none, curr, "unaries must not receive a none as their input");
-    switch (curr->op) {
-      case EqZInt32:
-      case EqZInt64: {
-        shouldBeEqual(curr->type, i32, curr, "eqz must return i32");
-        break;
-      }
-      default: {}
-    }
-    if (curr->value->type == unreachable) return;
+    if (curr->value->type == unreachable) return; // nothing to check
     switch (curr->op) {
       case ClzInt32:
       case CtzInt32:
@@ -420,9 +412,7 @@ public:
       case TruncFloat64:
       case NearestFloat64:
       case SqrtFloat64: {
-        if (curr->value->type != unreachable) {
-          shouldBeEqual(curr->value->type, curr->type, curr, "non-conversion unaries must return the same type");
-        }
+        shouldBeEqual(curr->value->type, curr->type, curr, "non-conversion unaries must return the same type");
         break;
       }
       case EqZInt32: {
