@@ -178,16 +178,14 @@
     (i32.const 51)
    )
   )
-  (block $label$break$Lout
-   (block $switch-case9
-    (block $switch-case6
-     (block $switch-case5
-      (block $switch-case4
-       (br_table $switch-case9 $label$break$Lout $label$break$Lout $switch-case6 $label$break$Lout $label$break$Lout $label$break$Lout $label$break$Lout $switch-case5 $label$break$Lout $switch-case4 $label$break$Lout
-        (i32.sub
-         (get_local $0)
-         (i32.const 2)
-        )
+  (block $switch-case9
+   (block $switch-case6
+    (block $switch-case5
+     (block $switch-case4
+      (br_table $switch-case9 $switch-case9 $switch-case9 $switch-case6 $switch-case9 $switch-case9 $switch-case9 $switch-case9 $switch-case5 $switch-case9 $switch-case4 $switch-case9
+       (i32.sub
+        (get_local $0)
+        (i32.const 2)
        )
       )
      )

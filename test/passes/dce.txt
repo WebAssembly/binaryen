@@ -21,9 +21,7 @@
   )
   (if
    (i32.const 0)
-   (block $out3
-    (return)
-   )
+   (return)
   )
   (block $out4
    (br_table $out4 $out4 $out4 $out4
@@ -40,12 +38,10 @@
   )
   (if
    (i32.const 0)
-   (block $block4
-    (if
-     (i32.const 0)
-     (unreachable)
-     (unreachable)
-    )
+   (if
+    (i32.const 0)
+    (unreachable)
+    (unreachable)
    )
   )
   (if
@@ -76,15 +72,13 @@
   )
   (if
    (i32.const 0)
-   (block $block11
-    (block $out18
-     (block $in19
-      (br_if $in19
-       (i32.const 1)
-      )
+   (block $out18
+    (block $in19
+     (br_if $in19
+      (i32.const 1)
      )
-     (unreachable)
     )
+    (unreachable)
    )
   )
   (block $out20
@@ -105,15 +99,13 @@
   )
   (if
    (i32.const 0)
-   (block $block13
-    (block $out25
-     (block $in26
-      (br_table $in26 $in26
-       (i32.const 1)
-      )
+   (block $out25
+    (block $in26
+     (br_table $in26 $in26
+      (i32.const 1)
      )
-     (unreachable)
     )
+    (unreachable)
    )
   )
   (if
@@ -133,7 +125,7 @@
    (unreachable)
   )
   (block $out29
-   (loop $in30
+   (block
     (br_if $out29
      (i32.const 1)
     )
@@ -142,13 +134,11 @@
   )
   (if
    (i32.const 0)
-   (block $block20
-    (loop $in32
-     (br_if $in32
-      (i32.const 1)
-     )
-     (unreachable)
+   (loop $in32
+    (br_if $in32
+     (i32.const 1)
     )
+    (unreachable)
    )
   )
   (if
@@ -300,13 +290,8 @@
   )
  )
  (func $typed-block-none-then-unreachable (type $2) (result i32)
-  (block $top-typed i32
-   (block $switch$0
-    (return
-     (i32.const 0)
-    )
-   )
-   (unreachable)
+  (return
+   (i32.const 0)
   )
  )
  (func $typed-block-remove-br-changes-type (type $3) (param $$$0 i32) (result i32)
@@ -335,6 +320,63 @@
  (func $ret (type $2) (result i32)
   (return
    (i32.const 0)
+  )
+ )
+ (func $unreachable-br (type $2) (result i32)
+  (block $out i32
+   (br $out
+    (i32.const 0)
+   )
+  )
+ )
+ (func $unreachable-br-loop (type $2) (result i32)
+  (loop $out
+   (br $out)
+  )
+ )
+ (func $unreachable-block-ends-switch (type $2) (result i32)
+  (block $label$0 i32
+   (block $label$3
+    (nop)
+    (unreachable)
+   )
+   (unreachable)
+  )
+ )
+ (func $unreachable-block-ends-br_if (type $1) (result i32)
+  (block $label$0 i32
+   (block $label$2
+    (nop)
+    (unreachable)
+   )
+   (unreachable)
+  )
+ )
+ (func $unreachable-brs-3 (type $2) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (i32.const 18)
+   )
+  )
+ )
+ (func $unreachable-brs-4 (type $3) (param $var$0 i32) (result i32)
+  (i32.add
+   (i32.const 1)
+   (block $label$0 i32
+    (br $label$0
+     (block $label$1 i32
+      (drop
+       (block
+        (drop
+         (i32.const 4104)
+        )
+        (unreachable)
+       )
+      )
+      (unreachable)
+     )
+    )
+   )
   )
  )
 )

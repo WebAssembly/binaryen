@@ -2,11 +2,8 @@
  (type $0 (func (result i32)))
  (memory $0 0)
  (func $__Z12serveroptionPc (type $0) (result i32)
-  (block $switch$0
-   (return
-    (i32.const 0)
-   )
+  (return
+   (i32.const 0)
   )
-  (unreachable)
  )
 )

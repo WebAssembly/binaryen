@@ -442,4 +442,71 @@
     (nop)
     (i32.const 0)
   )
+  (func $unreachable-br (result i32)
+    (block $out i32
+      (br $out
+        (br $out (i32.const 0))
+      )
+    )
+  )
+  (func $unreachable-br-loop (result i32)
+    (loop $out
+      (br $out)
+    )
+  )
+ (func $unreachable-block-ends-switch (result i32)
+  (block $label$0 i32
+   (block $label$3
+    (nop)
+    (br_table $label$3
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (i32.const 19)
+  )
+ )
+ (func $unreachable-block-ends-br_if (type $1) (result i32)
+  (block $label$0 i32
+   (block $label$2
+    (nop)
+    (br_if $label$2
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (i32.const 19)
+  )
+ )
+ (func $unreachable-brs-3 (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (grow_memory
+     (br $label$0
+      (i32.const 18)
+     )
+    )
+   )
+   (i32.const 21)
+  )
+ )
+ (func $unreachable-brs-4 (param $var$0 i32) (result i32)
+  (i32.add
+   (i32.const 1)
+   (block $label$0 i32
+    (br $label$0
+     (block $label$1 i32 ;; this block is declared i32, but we can see it is unreachable
+      (drop
+       (br_if $label$0
+        (i32.const 4104)
+        (unreachable)
+       )
+      )
+      (i32.const 4)
+     )
+    )
+    (i32.const 16)
+   )
+  )
+ )
 )
