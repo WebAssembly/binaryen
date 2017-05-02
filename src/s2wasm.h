@@ -1182,6 +1182,10 @@ class S2WasmBuilder {
       } else if (match("end_block")) {
         auto* block = bstack.back()->cast<Block>();
         block->finalize(block->type);
+        if (isConcreteWasmType(block->type) && block->list.size() == 0) {
+          // empty blocks that return a value are not valid, fix that up
+          block->list.push_back(allocator->alloc<Unreachable>());
+        }
         bstack.pop_back();
       } else if (peek(".LBB")) {
         // FIXME legacy tests: it can be leftover from "loop" or "block", but it can be a label too

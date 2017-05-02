@@ -133,6 +133,9 @@ public:
         shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
       }
     }
+    if (isConcreteWasmType(curr->type)) {
+      shouldBeTrue(curr->list.size() > 0, curr, "block with a value must not be empty");
+    }
   }
 
   static void visitPreLoop(WasmValidator* self, Expression** currp) {

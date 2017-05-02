@@ -15,6 +15,7 @@
    (i32.const 2)
   )
   (block $label$0 i32
+   (unreachable)
   )
  )
  (func $unreachable_block_i64 (result i64)
@@ -22,6 +23,7 @@
    (i64.const 3)
   )
   (block $label$0 i64
+   (unreachable)
   )
  )
  (func $unreachable_block_f32 (result f32)
@@ -29,6 +31,7 @@
    (f32.const 4.5)
   )
   (block $label$0 f32
+   (unreachable)
   )
  )
  (func $unreachable_block_f64 (result f64)
@@ -36,6 +39,7 @@
    (f64.const 5.5)
   )
   (block $label$0 f64
+   (unreachable)
   )
  )
  (func $unreachable_loop_void
