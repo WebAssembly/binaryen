@@ -81,7 +81,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         block->list.resize(2);
         block->list[0] = drop(curr->value);
         block->list[1] = curr->condition;
-        block->finalize();
+        // if we previously returned a value, then this block
+        // must have the same type, so it fits in the ast
+        // properly. it ends in an unreachable
+        // anyhow, so that is ok.
+        block->finalize(curr->type);
         replaceCurrent(block);
       } else {
         replaceCurrent(curr->condition);
@@ -105,7 +109,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         block->list.resize(2);
         block->list[0] = drop(curr->value);
         block->list[1] = curr->condition;
-        block->finalize();
+        block->finalize(curr->type);
         replaceCurrent(block);
       } else {
         replaceCurrent(curr->condition);
@@ -271,8 +275,9 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   // other things
 
+  // we don't need to drop unreachable nodes
   Expression* drop(Expression* toDrop) {
-    if (toDrop->is<Unreachable>()) return toDrop;
+    if (toDrop->type == unreachable) return toDrop;
     return Builder(*getModule()).makeDrop(toDrop);
   }
 
@@ -288,7 +293,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
           for (; j < newSize; j++) {
             block->list[j] = drop(curr->operands[j]);
           }
-          block->finalize();
+          block->finalize(curr->type);
           return replaceCurrent(block);
         } else {
           return replaceCurrent(curr->operands[i]);
@@ -314,7 +319,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         block->list.push_back(drop(operand));
       }
       block->list.push_back(curr->target);
-      block->finalize();
+      block->finalize(curr->type);
       replaceCurrent(block);
     }
   }
@@ -341,7 +346,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       block->list.resize(2);
       block->list[0] = drop(curr->ptr);
       block->list[1] = curr->value;
-      block->finalize();
+      block->finalize(curr->type);
       replaceCurrent(block);
     }
   }
@@ -362,7 +367,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       block->list.resize(2);
       block->list[0] = drop(curr->left);
       block->list[1] = curr->right;
-      block->finalize();
+      block->finalize(curr->type);
       replaceCurrent(block);
     }
   }
@@ -377,7 +382,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       block->list.resize(2);
       block->list[0] = drop(curr->ifTrue);
       block->list[1] = curr->ifFalse;
-      block->finalize();
+      block->finalize(curr->type);
       replaceCurrent(block);
       return;
     }
@@ -387,7 +392,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       block->list[0] = drop(curr->ifTrue);
       block->list[1] = drop(curr->ifFalse);
       block->list[2] = curr->condition;
-      block->finalize();
+      block->finalize(curr->type);
       replaceCurrent(block);
       return;
     }
