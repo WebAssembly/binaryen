@@ -32,6 +32,7 @@
 #include "wasm-interpreter.h"
 #include "wasm-builder.h"
 #include "ast/memory-utils.h"
+#include "ast/global-utils.h"
 
 using namespace wasm;
 
@@ -153,10 +154,14 @@ public:
     // prepare scratch memory
     stack.resize(STACK_SIZE);
     // fill usable values for stack imports
-    auto total = STACK_START + STACK_SIZE;
-    globals["STACKTOP"] = Literal(int32_t(STACK_START));
-    globals["STACK_MAX"] = Literal(int32_t(STACK_START + STACK_SIZE));
+    if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm, "env", "STACKTOP")) {
+      globals[stackTop->name] = Literal(int32_t(STACK_START));
+    }
+    if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm, "env", "STACK_MAX")) {
+      globals[stackMax->name] = Literal(int32_t(STACK_START));
+    }
     // tell the module to accept writes up to the stack end
+    auto total = STACK_START + STACK_SIZE;
     memorySize = total / Memory::kPageSize;
   }
 
