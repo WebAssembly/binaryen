@@ -17,9 +17,6 @@
   (nop)
  )
  (func $safe-to-call (type $v)
-  (drop
-   (i32.const 1)
-  )
   (i32.store8
    (i32.const 10)
    (i32.const 110)

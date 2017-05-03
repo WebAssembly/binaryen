@@ -407,6 +407,10 @@ int main(int argc, const char* argv[]) {
   {
     PassRunner passRunner(&wasm);
     passRunner.add("memory-packing"); // we flattened it, so re-optimize
+    passRunner.add("remove-unused-names");
+    passRunner.add("dce");
+    passRunner.add("merge-blocks");
+    passRunner.add("vacuum");
     passRunner.run();
   }
 
