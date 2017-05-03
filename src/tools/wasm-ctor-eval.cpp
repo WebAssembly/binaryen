@@ -403,6 +403,13 @@ int main(int argc, const char* argv[]) {
   }
   evalCtors(wasm, ctors);
 
+  // Do some useful optimizations after the evalling
+  {
+    PassRunner passRunner(&wasm);
+    passRunner.add("memory-packing"); // we flattened it, so re-optimize
+    passRunner.run();
+  }
+
   if (options.extra.count("output") > 0) {
     if (options.debug) std::cerr << "writing..." << std::endl;
     ModuleWriter writer;

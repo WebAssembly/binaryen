@@ -5,7 +5,7 @@
  (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
  (global $mine (mut i32) (i32.const 1))
  (memory $0 256 256)
- (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00wasa waka waka waka waka")
+ (data (i32.const 10) "wasa waka waka waka waka")
  (export "test1" (func $test1))
  (export "test2" (func $test2))
  (export "test3" (func $test3))
