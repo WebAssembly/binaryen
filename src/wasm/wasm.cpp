@@ -248,7 +248,9 @@ void Loop::finalize() {
 
 void Break::finalize() {
   if (condition) {
-    if (value) {
+    if (condition->type == unreachable) {
+      type = unreachable;
+    } else if (value) {
       type = value->type;
     } else {
       type = none;
@@ -256,6 +258,10 @@ void Break::finalize() {
   } else {
     type = unreachable;
   }
+}
+
+void Switch::finalize() {
+  type = unreachable;
 }
 
 bool FunctionType::structuralComparison(FunctionType& b) {
@@ -286,6 +292,11 @@ void SetLocal::setTee(bool is) {
 
 void Store::finalize() {
   assert(valueType != none); // must be set
+  if (ptr->type == unreachable || value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
+  }
 }
 
 Const* Const::set(Literal value_) {
@@ -299,6 +310,10 @@ bool Unary::isRelational() {
 }
 
 void Unary::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+    return;
+  }
   switch (op) {
     case ClzInt32:
     case CtzInt32:
@@ -390,16 +405,22 @@ bool Binary::isRelational() {
 
 void Binary::finalize() {
   assert(left && right);
-  if (isRelational()) {
+  if (left->type == unreachable || right->type == unreachable) {
+    type = unreachable;
+  } else if (isRelational()) {
     type = i32;
   } else {
-    type = getReachableWasmType(left->type, right->type);
+    type = left->type;
   }
 }
 
 void Select::finalize() {
   assert(ifTrue && ifFalse);
-  type = getReachableWasmType(ifTrue->type, ifFalse->type);
+  if (ifTrue->type == unreachable || ifFalse->type == unreachable || condition->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = ifTrue->type;
+  }
 }
 
 void Host::finalize() {
