@@ -114,72 +114,98 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     walk(func->body);
   }
 
-  // splits out a child expression, replacing the current expression with
-  // (child, curr) and using a temp variable as necessary
-  // returns the new expression after replaceCurrent()ing with it, or nullptr
-  // if the child has type unreachable, which means we can stop here, and can
-  // get rid of the parent (together with other siblings that are evaluated
-  // after us)
-  Expression* maybeSplitOut(Expression* curr, Expression*& child) {
-    if (!child) return curr;
-    // it's enough to look at the child, ignoring the contents, as the contents
-    // have already been processed before we got here, so they must have been
-    // flattened if necessary.
-    if (!ControlFlowChecker::is(child)) {
-      // nothing to do here, no control flow to split out
-      return curr;
+  // Splitter helper
+  struct Splitter {
+    Splitter(FlattenControlFlow& parent, Expression* node) : parent(parent), node(node), replacement(curr) {}
+
+    ~Splitter() {
+      // finish up
+
     }
-    // if the child has a concrete type, we need a temp var
-    Expression* pre = child;
-    if (isConcreteWasmType(child->type)) {
-      // the child node is control flow, a structure or a flow-causer. if
-      // it has a concrete type, it must be a block, loop, if, or br_if with value
-      auto temp = builder->addVar(getFunction(), child->type);
-      if (auto* block = child->dynCast<Block>()) {
-        // use the local to save the breaks and fallthrough value
-        BreakValueUpdater::update(block, block->name, temp, getModule());
-        auto*& last = block->list.back();
-        if (isConcreteWasmType(last->type)) {
-          last = builder->makeSetLocal(temp, last);
-        }
-        block->finalize(none);
-      } else if (auto* iff = child->dynCast<If>()) {
-        // assign both sides to a local
-        iff->ifTrue = builder->makeSetLocal(temp, iff->ifTrue);
-        iff->ifFalse = builder->makeSetLocal(temp, iff->ifFalse);
-        iff->finalize(none);
-      } else if (auto* loop = child->dynCast<Loop>()) {
-        // save the fallthrough
-        loop->body = builder->makeSetLocal(temp, loop->body);
-        loop->finalize(none);
-      } else if (auto* brIf = child->dynCast<Break>()) {
-        assert(brIf->condition);
-        assert(brIf->value);
-        // we disallow br_ifs entirely, so turn this into an if. but do
-        // so using the proper order of operations
-        pre = builder->makeSequence(
-          builder->makeSetLocal(temp, brIf->value),
-          builder->makeIf(
-            brIf->condition,
-            builder->makeBreak(brIf->name, builder->makeGetLocal(temp, child->type))
-          )
-        );
-      } else {
-        WASM_UNREACHABLE();
+
+    FlattenControlFlow& parent;
+    Expression* node;
+
+    std::vector<Expression*> mustEmit; // all nodes we must emit, even if we don't emit node
+    Expression* replacement; // the final replacement for the current node
+    bool stop = false; // if a child is unreachable, we can stop
+
+    // note a child. if it has control flow, we must split it out
+    void note(Expression*& child) {
+      // we accept nullptr inputs, for a non-existing child
+      if (!child) return;
+      // if a previous child was unreachable, stop
+      if (stop) return;
+      // it's enough to look at the child, ignoring the contents, as the contents
+      // have already been processed before we got here, so they must have been
+      // flattened if necessary.
+      if (!ControlFlowChecker::is(child)) {
+        // nothing to do here, no control flow to split out
+        mustEmit.push_back(child);
+        return;
       }
-      // replace the child in the parent (note *&) with a get_local
-      child = builder->makeGetLocal(temp, child->type);
-      return replaceCurrent(builder->makeSequence(pre, curr));
-    } else {
-      // as a child expression, it is either concrete or unreachable, cannot be none
-      assert(child->type == unreachable);
-      replaceCurrent(pre);
-      return nullptr;
+      // if the child has a concrete type, we need a temp var
+      auto* builder = parent->builder;
+      if (isConcreteWasmType(child->type)) {
+          // the child node is control flow, a structure or a flow-causer. if
+        // it has a concrete type, it must be a block, loop, if, or br_if with value
+        auto temp = builder->addVar(getFunction(), child->type);
+        Expression* pre = child; // we emit the child before curr
+        if (auto* block = child->dynCast<Block>()) {
+          // use the local to save the breaks and fallthrough value
+          BreakValueUpdater::update(block, block->name, temp, parent->getModule());
+          auto*& last = block->list.back();
+          if (isConcreteWasmType(last->type)) {
+            last = builder->makeSetLocal(temp, last);
+          }
+          block->finalize(none);
+        } else if (auto* iff = child->dynCast<If>()) {
+          // assign both sides to a local
+          iff->ifTrue = builder->makeSetLocal(temp, iff->ifTrue);
+          iff->ifFalse = builder->makeSetLocal(temp, iff->ifFalse);
+          iff->finalize(none);
+        } else if (auto* loop = child->dynCast<Loop>()) {
+          // save the fallthrough
+          loop->body = builder->makeSetLocal(temp, loop->body);
+          loop->finalize(none);
+        } else if (auto* brIf = child->dynCast<Break>()) {
+          assert(brIf->condition);
+          assert(brIf->value);
+          // we disallow br_ifs entirely, so turn this into an if. but do
+          // so using the proper order of operations
+          pre = builder->makeSequence(
+            builder->makeSetLocal(temp, brIf->value),
+            builder->makeIf(
+              brIf->condition,
+              builder->makeBreak(brIf->name, builder->makeGetLocal(temp, child->type))
+            )
+          );
+        } else {
+          WASM_UNREACHABLE();
+        }
+        // replace the child in the parent (note *&) with a get_local
+        child = builder->makeGetLocal(temp, child->type);
+        mustEmit.push_back(pre);
+        replacement = parent->replaceCurrent(builder->makeSequence(pre, replacement));
+      } else {
+        // as a non-concrete child expression, it must be unreachable (cannot be none)
+        assert(child->type == unreachable);
+        // we don't need to emit the parent, but must emit previous children
+        auto* block = builder->makeBlock();
+        for (auto* emit : mustEmit) {
+          block->list.push_back(emit);
+        }
+        block->list.push_back(child);
+        block->finalize();
+        replacement = parent->replaceCurrent(block);
+        stop = true;
+      }
     }
-  }
+  };
 
   void visitIf(If* curr) {
-    maybeSplitOut(curr, curr->condition);
+    Splitter splitter(*this, curr);
+    splitter.note(curr->condition);
     curr->ifTrue = builder->blockify(curr->ifTrue);
     if (curr->ifFalse) {
       curr->ifFalse = builder->blockify(curr->ifFalse);
@@ -189,85 +215,75 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     curr->body = builder->blockify(curr->body);
   }
   void visitBreak(Break* curr) {
-    Expression* chain = curr;
-    chain = maybeSplitOut(chain, curr->value);
-    if (!chain) return;
-    chain = maybeSplitOut(chain, curr->condition);
-    if (!chain) return;
+    Splitter splitter(*this, curr);
+    Splitter(*this, curr);
+    splitter.note(curr->value);
+    splitter.note(curr->condition);
   }
   void visitSwitch(Switch* curr) {
-    Expression* chain = curr;
+    Splitter(*this, curr);
     if (curr->value) {
-      chain = maybeSplitOut(chain, curr->value);
-      if (!chain) return;
+      splitter.note(curr->value);
     }
-    maybeSplitOut(chain, curr->condition);
+    splitter.note(curr->condition);
   }
   void visitCall(Call* curr) {
-    Expression* chain = curr;
+    Splitter(*this, curr);
     for (auto*& operand : curr->operands) {
-      chain = maybeSplitOut(chain, operand);
-      if (!chain) return;
+      splitter.note(operand);
     }
   }
   void visitCallImport(CallImport* curr) {
-    Expression* chain = curr;
+    Splitter(*this, curr);
     for (auto*& operand : curr->operands) {
-      chain = maybeSplitOut(chain, operand);
-      if (!chain) return;
+      splitter.note(operand);
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
-    Expression* chain = curr;
+    Splitter(*this, curr);
     for (auto*& operand : curr->operands) {
-      chain = maybeSplitOut(chain, operand);
-      if (!chain) return;
+      splitter.note(operand);
     }
-    maybeSplitOut(chain, curr->target);
+    splitter.note(curr->target);
   }
   void visitSetLocal(SetLocal* curr) {
-    maybeSplitOut(curr, curr->value);
+    splitter.note(curr->value);
   }
   void visitSetGlobal(SetGlobal* curr) {
-    maybeSplitOut(curr, curr->value);
+    splitter.note(curr->value);
   }
   void visitLoad(Load* curr) {
-    maybeSplitOut(curr, curr->ptr);
+    splitter.note(curr->ptr);
   }
   void visitStore(Store* curr) {
-    Expression* chain = curr;
-    chain = maybeSplitOut(chain, curr->ptr);
-    if (!chain) return;
-    maybeSplitOut(chain, curr->value);
+    Splitter(*this, curr);
+    splitter.note(curr->ptr);
+    splitter.note(curr->value);
   }
   void visitUnary(Unary* curr) {
-    maybeSplitOut(curr, curr->value);
+    splitter.note(curr->value);
   }
   void visitBinary(Binary* curr) {
-    Expression* chain = curr;
-    chain = maybeSplitOut(chain, curr->left);
-    if (!chain) return;
-    maybeSplitOut(chain, curr->right);
+    Splitter(*this, curr);
+    splitter.note(curr->left);
+    splitter.note(curr->right);
   }
   void visitSelect(Select* curr) {
-    Expression* chain = curr;
-    chain = maybeSplitOut(chain, curr->ifTrue);
-    if (!chain) return;
-    chain = maybeSplitOut(chain, curr->ifFalse);
-    if (!chain) return;
-    maybeSplitOut(chain, curr->condition);
+    Splitter(*this, curr);
+    splitter.note(curr->ifTrue);
+    splitter.note(curr->ifFalse);
+    splitter.note(curr->condition);
   }
   void visitDrop(Drop* curr) {
-    maybeSplitOut(curr, curr->value);
+    splitter.note(curr->value);
   }
   void visitReturn(Return* curr) {
-    maybeSplitOut(curr, curr->value);
+    splitter.note(curr->value);
   }
   void visitHost(Host* curr) {
-    Expression* chain = curr;
+    Splitter(*this, curr);
     for (auto*& operand : curr->operands) {
-      chain = maybeSplitOut(chain, operand);
-      if (!chain) return;
+      splitter.note(operand);
     }
   }
 };
