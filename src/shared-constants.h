@@ -61,4 +61,3 @@ extern Name GROW_WASM_MEMORY,
 } // namespace wasm
 
 #endif // wasm_shared_constants_h
-

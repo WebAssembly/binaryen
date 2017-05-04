@@ -41,8 +41,8 @@
 //
 //================
 
-#ifndef binaryen_h
-#define binaryen_h
+#ifndef wasm_binaryen_c_h
+#define wasm_binaryen_c_h
 
 #include <stddef.h>
 #include <stdint.h>
@@ -436,4 +436,4 @@ void BinaryenSetAPITracing(int on);
 } // extern "C"
 #endif
 
-#endif  // binaryen_h
+#endif // wasm_binaryen_c_h

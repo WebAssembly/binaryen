@@ -24,8 +24,8 @@
 //   struct MyVisitor : public WasmVisitor<MyVisitor> { .. }
 //
 
-#ifndef wasm_traversal_h
-#define wasm_traversal_h
+#ifndef wasm_wasm_traversal_h
+#define wasm_wasm_traversal_h
 
 #include "wasm.h"
 #include "support/threads.h"
@@ -662,4 +662,4 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
 
 } // namespace wasm
 
-#endif // wasm_traversal_h
+#endif // wasm_wasm_traversal_h

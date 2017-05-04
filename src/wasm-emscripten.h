@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_emscripten_h
-#define wasm_emscripten_h
+#ifndef wasm_wasm_emscripten_h
+#define wasm_wasm_emscripten_h
 
 #include "wasm.h"
 
@@ -39,4 +39,4 @@ void generateEmscriptenMetadata(std::ostream& o,
 
 } // namespace wasm
 
-#endif // wasm_emscripten_h
+#endif // wasm_wasm_emscripten_h

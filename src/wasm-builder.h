@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_builder_h
-#define wasm_builder_h
+#ifndef wasm_wasm_builder_h
+#define wasm_wasm_builder_h
 
 #include <wasm.h>
 
@@ -378,4 +378,4 @@ public:
 
 } // namespace wasm
 
-#endif // wasm_builder_h
+#endif // wasm_wasm_builder_h
