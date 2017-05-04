@@ -28,6 +28,7 @@ Pass *createCodePushingPass();
 Pass *createDeadCodeEliminationPass();
 Pass *createDuplicateFunctionEliminationPass();
 Pass *createExtractFunctionPass();
+Pass *createFlattenControlFlowPass();
 Pass *createFullPrinterPass();
 Pass *createInliningPass();
 Pass *createLegalizeJSInterfacePass();
