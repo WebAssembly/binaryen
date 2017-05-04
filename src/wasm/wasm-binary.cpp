@@ -1596,7 +1596,6 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       if (import->kind != ExternalKind::Function) continue;
       importedFunctions++;
     }
-    std::set<Name> functionNames;
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
       if (index < importedFunctions) {
@@ -1604,10 +1603,13 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       } else if (index - importedFunctions < functions.size()) {
         auto name = getInlineString();
         functions[index - importedFunctions]->name = name;
-        // verify no duplicates
-        if (!functionNames.insert(name).second) {
-          throw ParseException("duplicate function names");
-        }
+      }
+    }
+    // disallow duplicate names
+    std::set<Name> functionNames;
+    for (auto* func : functions) {
+      if (!functionNames.insert(func->name).second) {
+        throw ParseException("duplicate function name: " + std::string(func->name.str));
       }
     }
     if (pos != subsectionPos + subsectionSize) {

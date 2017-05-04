@@ -509,4 +509,33 @@
    )
   )
  )
+ (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $2 i64)
+  (if i64
+   (i64.eqz
+    (get_local $var$0)
+   )
+   (block $label$0 i64
+    (get_local $var$1)
+   )
+   (block $label$1 i64
+    (call $call-unreach
+     (i64.sub
+      (get_local $var$0)
+      (i64.const 1)
+     )
+     (i64.mul
+      (block i64
+       (set_local $2
+        (get_local $var$0)
+       )
+       (nop)
+       (get_local $2)
+      )
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
 )
