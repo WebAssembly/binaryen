@@ -46,7 +46,6 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
 
 namespace wasm {
@@ -54,9 +53,10 @@ namespace wasm {
 // Looks for control flow changes and structures, excluding blocks (as we
 // want to put all control flow on them)
 struct ControlFlowFinder : public PostWalker<ControlFlowFinder> {
-  static has(Expression *ast) {
-    walk(ast);
-    return hasControlFlow;
+  static bool has(Expression *ast) {
+    ControlFlowFinder finder;
+    finder.walk(ast);
+    return finder.hasControlFlow;
   }
 
   bool hasControlFlow = false;
@@ -100,7 +100,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     if (isConcreteWasmType(child->type)) {
       auto temp = builder->addVar(getFunction(), child->type);
       pre = builder->makeSetLocal(temp, child);
-      child = builder->makeGetLocal(temp);
+      child = builder->makeGetLocal(temp, child->type);
       return replaceCurrent(builder->makeSequence(pre, curr));
     } else {
       // as a child expression, it is either concrete or unreachable, cannot be none
@@ -113,7 +113,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   }
 
   void visitIf(If* curr) {
-    maybeSplitOut(curr, curr->condition, i32);
+    maybeSplitOut(curr, curr->condition);
     curr->ifTrue = builder->blockify(curr->ifTrue);
     if (curr->ifFalse) {
       curr->ifFalse = builder->blockify(curr->ifFalse);
@@ -179,9 +179,9 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   }
   void visitBinary(Binary* curr) {
     Expression* chain = curr;
-    chain = maybeSplitOut(chain, curr->ptr);
+    chain = maybeSplitOut(chain, curr->left);
     if (!chain) return;
-    maybeSplitOut(chain, curr->value);
+    maybeSplitOut(chain, curr->right);
   }
   void visitSelect(Select* curr) {
     Expression* chain = curr;
