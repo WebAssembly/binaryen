@@ -122,15 +122,9 @@ struct Mergeable {
     findImportsByBase(wasm, MEMORY_BASE, [&](Name name) {
       memoryBaseGlobals.insert(name);
     });
-    //if (memoryBaseGlobals.size() == 0) {
-    //  Fatal() << "no memory base was imported";
-    //}
     findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
       tableBaseGlobals.insert(name);
     });
-    //if (tableBaseGlobals.size() == 0) {
-    //  Fatal() << "no table base was imported";
-    //}
   }
 
   void standardizeSegments() {
