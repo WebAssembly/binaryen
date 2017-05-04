@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef optimizing_incremental_module_builder_h
-#define optimizing_incremental_module_builder_h
+#ifndef wasm_wasm_module_building_h
+#define wasm_wasm_module_building_h
 
 #include <wasm.h>
 #include <support/threads.h>
@@ -288,5 +288,4 @@ private:
 
 } // namespace wasm
 
-#endif // optimizing_incremental_module_builder_h
-
+#endif // wasm_wasm_module_building_h

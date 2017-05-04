@@ -78,4 +78,4 @@ inline std::ostream& printMinorOpening(std::ostream &o, const char *str) {
   return o;
 }
 
-#endif //  wasm_pretty_printing_h
+#endif // wasm_pretty_printing_h

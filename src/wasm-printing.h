@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef __wasm_printing_h__
-#define __wasm_printing_h__
+#ifndef wasm_wasm_printing_h
+#define wasm_wasm_printing_h
 
 #include <ostream>
 
@@ -54,5 +54,4 @@ inline std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
 
 }
 
-#endif
-
+#endif // wasm_wasm_printing_h
