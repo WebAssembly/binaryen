@@ -945,13 +945,12 @@ void WasmBinaryBuilder::read() {
 
     auto oldPos = pos;
 
-    // almost no sections can appear more than once
-    if (seenSections.count(BinaryConsts::Section(sectionCode)) > 0) {
-      if (sectionCode != BinaryConsts::Section::User && sectionCode != BinaryConsts::Section::Code) {
+    // note the section in the list of seen sections, as almost no sections can appear more than once,
+    // and verify those that shouldn't do not.
+    if (sectionCode != BinaryConsts::Section::User && sectionCode != BinaryConsts::Section::Code) {
+      if (!seenSections.insert(BinaryConsts::Section(sectionCode)).second) {
         throw ParseException("section seen more than once: " + std::to_string(sectionCode));
       }
-    } else {
-      seenSections.insert(BinaryConsts::Section(sectionCode));
     }
 
     switch (sectionCode) {
@@ -1609,10 +1608,9 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     // disallow duplicate names
     std::set<Name> functionNames;
     for (auto* func : functions) {
-      if (functionNames.count(func->name) > 0) {
+      if (!functionNames.insert(func->name).second) {
         throw ParseException("duplicate function name: " + std::string(func->name.str));
       }
-      functionNames.insert(func->name);
     }
     if (pos != subsectionPos + subsectionSize) {
       throw ParseException("bad names subsection position change");
