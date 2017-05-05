@@ -603,6 +603,24 @@
   (local $17 i32)
   (local $18 i32)
   (local $19 i32)
+  (local $20 i32)
+  (local $21 i32)
+  (local $22 i32)
+  (local $23 i32)
+  (local $24 i32)
+  (local $25 i32)
+  (local $26 i32)
+  (local $27 i32)
+  (local $28 i32)
+  (local $29 i32)
+  (local $30 i32)
+  (local $31 i32)
+  (local $32 i32)
+  (local $33 i32)
+  (local $34 i32)
+  (local $35 i32)
+  (local $36 i32)
+  (local $37 i32)
   (block $out
    (drop
     (i32.add
@@ -800,6 +818,124 @@
     )
     (drop
      (get_local $19)
+    )
+   )
+   (drop
+    (select
+     (i32.const 9)
+     (i32.const 10)
+     (i32.const 11)
+    )
+   )
+   (block
+    (block
+     (br $out)
+    )
+   )
+   (block
+    (block
+     (set_local $22
+      (i32.const 9)
+     )
+     (br $out)
+    )
+   )
+   (block
+    (block
+     (set_local $24
+      (i32.const 9)
+     )
+     (set_local $25
+      (i32.const 10)
+     )
+     (br $out)
+    )
+   )
+   (block
+    (block
+     (if
+      (i32.const 11)
+      (set_local $26
+       (i32.const 12)
+      )
+      (set_local $26
+       (i32.const 13)
+      )
+     )
+     (set_local $27
+      (i32.const 9)
+     )
+     (set_local $28
+      (i32.const 10)
+     )
+     (set_local $29
+      (select
+       (get_local $26)
+       (get_local $27)
+       (get_local $28)
+      )
+     )
+    )
+    (drop
+     (get_local $29)
+    )
+   )
+   (block
+    (block
+     (set_local $30
+      (i32.const 9)
+     )
+     (if
+      (i32.const 11)
+      (set_local $31
+       (i32.const 12)
+      )
+      (set_local $31
+       (i32.const 13)
+      )
+     )
+     (set_local $32
+      (i32.const 10)
+     )
+     (set_local $33
+      (select
+       (get_local $30)
+       (get_local $31)
+       (get_local $32)
+      )
+     )
+    )
+    (drop
+     (get_local $33)
+    )
+   )
+   (block
+    (block
+     (set_local $34
+      (i32.const 9)
+     )
+     (set_local $35
+      (i32.const 10)
+     )
+     (if
+      (i32.const 11)
+      (set_local $36
+       (i32.const 12)
+      )
+      (set_local $36
+       (i32.const 13)
+      )
+     )
+     (set_local $37
+      (select
+       (get_local $34)
+       (get_local $35)
+       (get_local $36)
+      )
+     )
+    )
+    (drop
+     (get_local $37)
     )
    )
   )

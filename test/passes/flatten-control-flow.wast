@@ -585,6 +585,67 @@
           (i32.const 8)
         )
       ))
+      (drop
+        (select
+         (i32.const 9)
+         (i32.const 10)
+         (i32.const 11)
+        )
+      )
+      (drop
+        (select
+         (br $out)
+         (i32.const 10)
+         (i32.const 11)
+        )
+      )
+      (drop
+        (select
+         (i32.const 9)
+         (br $out)
+         (i32.const 11)
+        )
+      )
+      (drop
+        (select
+         (i32.const 9)
+         (i32.const 10)
+         (br $out)
+        )
+      )
+      (drop
+        (select
+          (if i32
+            (i32.const 11)
+            (i32.const 12)
+            (i32.const 13)
+          )
+          (i32.const 9)
+          (i32.const 10)
+        )
+      )
+      (drop
+        (select
+          (i32.const 9)
+          (if i32
+            (i32.const 11)
+            (i32.const 12)
+            (i32.const 13)
+          )
+          (i32.const 10)
+        )
+      )
+      (drop
+        (select
+          (i32.const 9)
+          (i32.const 10)
+          (if i32
+            (i32.const 11)
+            (i32.const 12)
+            (i32.const 13)
+          )
+        )
+      )
     )
   )
 )
