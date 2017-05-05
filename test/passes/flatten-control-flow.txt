@@ -592,6 +592,11 @@
   (local $6 i32)
   (local $7 i32)
   (local $8 i32)
+  (local $9 i32)
+  (local $10 i32)
+  (local $11 i32)
+  (local $12 i32)
+  (local $13 i32)
   (block $out
    (drop
     (i32.add
@@ -651,32 +656,98 @@
    )
    (block
     (block
-     (set_local $6
+     (set_local $9
       (i32.const 1)
      )
      (block $in
-      (drop
-       (i32.const 2)
+      (block
+       (block $switch-in
+        (block
+         (set_local $7
+          (i32.const 2)
+         )
+         (set_local $8
+          (i32.const 777)
+         )
+         (drop
+          (block $flatten-control-flow$0$fake i32
+           (block
+            (block $flatten-control-flow$0$others
+             (block
+              (block $flatten-control-flow$0$ours
+               (br_table $flatten-control-flow$0$others $flatten-control-flow$0$ours $flatten-control-flow$0$others
+                (get_local $8)
+               )
+              )
+              (block
+               (set_local $6
+                (get_local $7)
+               )
+               (br $switch-in)
+              )
+             )
+            )
+            (block
+             (set_local $11
+              (get_local $7)
+             )
+             (set_local $12
+              (get_local $8)
+             )
+             (drop
+              (block $flatten-control-flow$1$fake i32
+               (block
+                (block $flatten-control-flow$1$others
+                 (block
+                  (block $flatten-control-flow$1$ours
+                   (br_table $flatten-control-flow$1$ours $flatten-control-flow$1$others $flatten-control-flow$1$ours
+                    (get_local $12)
+                   )
+                  )
+                  (block
+                   (set_local $10
+                    (get_local $11)
+                   )
+                   (br $in)
+                  )
+                 )
+                )
+                (br_table $flatten-control-flow$1$fake $flatten-control-flow$0$fake $flatten-control-flow$1$fake
+                 (get_local $11)
+                 (get_local $12)
+                )
+               )
+              )
+             )
+            )
+           )
+          )
+         )
+        )
+       )
+       (drop
+        (get_local $6)
+       )
       )
       (block
-       (set_local $7
+       (set_local $10
         (i32.const 3)
        )
        (br $in)
       )
-      (set_local $7
+      (set_local $10
        (i32.const 4)
       )
      )
-     (set_local $8
+     (set_local $13
       (i32.add
-       (get_local $6)
-       (get_local $7)
+       (get_local $9)
+       (get_local $10)
       )
      )
     )
     (drop
-     (get_local $8)
+     (get_local $13)
     )
    )
   )

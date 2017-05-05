@@ -76,11 +76,12 @@ struct ControlFlowChecker : public Visitor<ControlFlowChecker> {
 // Replaces breaks with a value to a target with assigns to a local
 // then a break without a value
 struct BreakValueUpdater : public PostWalker<BreakValueUpdater> {
-  static void update(Expression* ast, Name name, Index index, Module* wasm) {
+  static void update(Expression* ast, Name name, Index index, Module* wasm, Function* func) {
     BreakValueUpdater finder;
     finder.name = name;
     finder.index = index;
     finder.setModule(wasm);
+    finder.setFunction(func);
     finder.walk(ast);
   }
 
@@ -101,10 +102,98 @@ struct BreakValueUpdater : public PostWalker<BreakValueUpdater> {
       curr->value = nullptr;
     }
   }
+  void visitSwitch(Switch *curr) {
+    if (!curr->value) return;
+    bool relevant = false;
+    for (auto target : curr->targets) {
+      if (target == name) {
+        relevant = true;
+        break;
+      }
+    }
+    if (curr->default_ == name) {
+      relevant = true;
+    }
+    if (!relevant) return;
+    assert(isConcreteWasmType(curr->value->type)); // we have already seen and flattened this
+    assert(isConcreteWasmType(curr->condition->type)); // we have already seen and flattened this
+    // the switch may target other blocks as well, and we should not alter their value
+    Builder builder(*getModule());
+    auto* block = builder.makeBlock();
+    // write out value and condition to temps, so we can use them more than once
+    auto tempValue = Builder::addVar(getFunction(), curr->value->type),
+         tempCondition = Builder::addVar(getFunction(), i32);
+    block->list.push_back(builder.makeSetLocal(tempValue, curr->value));
+    block->list.push_back(builder.makeSetLocal(tempCondition, curr->condition));
+    curr->value = builder.makeGetLocal(tempValue, curr->value->type);
+    curr->condition = builder.makeGetLocal(tempCondition, i32);
+    // make a "gating" switch, and decides whether we are going to our location (and should alter the value) or not (and should not)
+    static int counter = 0;
+    std::string base = std::string("flatten-control-flow$") + std::to_string(counter++) + "$";
+    Name ours = Name((base + "ours").c_str()),
+         others = Name((base + "others").c_str()),
+         fake = Name((base + "fake").c_str());
+    std::vector<Name> targets;
+    // for the gate, go to ours or others
+    for (auto target : curr->targets) {
+      targets.push_back(target == name ? ours : others);
+    }
+    auto* gate = builder.makeSwitch(
+      targets,
+      curr->default_ == name ? ours : others,
+      builder.makeGetLocal(tempCondition, i32)
+    );
+    // for the switch if it isn't ours, replace our name with a safe place to break to - it will not be reached
+    targets.clear();
+    for (auto target : curr->targets) {
+      targets.push_back(target == name ? fake : target);
+    }
+    auto* fakeBlock = builder.makeBlock(
+      fake,
+      builder.makeSequence(
+        builder.makeBlock(
+          others,
+          builder.makeSequence(
+            builder.makeBlock(
+              ours,
+              gate
+            ),
+            // it is ours, so break to it, setting the value
+            builder.makeSequence(
+              builder.makeSetLocal(
+                index,
+                builder.makeGetLocal(
+                  tempValue,
+                  curr->value->type
+                )
+              ),
+              builder.makeBreak(name)
+            )
+          )
+        ),
+        // it is not ours, so br_table on the others normally
+        builder.makeSwitch(
+          targets,
+          curr->default_ == name ? fake : curr->default_,
+          builder.makeGetLocal(tempCondition, i32),
+          builder.makeGetLocal(tempValue, curr->value->type)
+        )
+      )
+    );
+    // the "fake" block has a value, so we can fake br to it with our value
+    fakeBlock->type = i32;
+    block->list.push_back(
+      builder.makeDrop(
+        fakeBlock
+      )
+    );
+    block->finalize();
+    replaceCurrent(block);
+  }
 };
 
 struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
-  bool isFunctionParallel() override { return true; }
+  // NB: *not* parallel, as we create labels for new blocks for switch reduction TODO optimize
 
   Pass* create() override { return new FlattenControlFlow; }
 
@@ -206,7 +295,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       Builder* builder = parent.builder.get();
       if (auto* block = child->dynCast<Block>()) {
         // use the local to save the breaks and fallthrough value
-        BreakValueUpdater::update(block, block->name, tempIndex, parent.getModule());
+        BreakValueUpdater::update(block, block->name, tempIndex, parent.getModule(), parent.getFunction());
         auto*& last = block->list.back();
         if (isConcreteWasmType(last->type)) {
           last = builder->makeSetLocal(tempIndex, last);

@@ -76,6 +76,11 @@ public:
     }
     return ret;
   }
+  Block* makeBlock(Name name, Expression* first = nullptr) {
+    auto* ret = makeBlock(first);
+    ret->name = name;
+    return ret;
+  }
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse = nullptr) {
     auto* ret = allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;

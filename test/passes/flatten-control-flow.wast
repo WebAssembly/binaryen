@@ -564,7 +564,11 @@
       ))
       (drop (i32.add (i32.const 1)
         (block $in i32
-          (drop (i32.const 2))
+          (drop
+            (block $switch-in i32
+              (br_table $in $switch-in $in (i32.const 2) (i32.const 777))
+            )
+          )
           (br $in (i32.const 3))
           (i32.const 4)
         )
