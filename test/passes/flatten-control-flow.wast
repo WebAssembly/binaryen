@@ -547,4 +547,13 @@
    )
   )
  )
+
+  ;; flatten-specific
+  (func $test-flatten
+    (block $out
+      (drop (i32.add (i32.const 1) (i32.const 2)))
+      (drop (i32.add (i32.const 1) (br $out)))
+      (drop (i32.add (br $out) (i32.const 1)))
+    )
+  )
 )
