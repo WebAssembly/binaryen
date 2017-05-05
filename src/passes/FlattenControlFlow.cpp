@@ -95,6 +95,16 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   void doWalkFunction(Function* func) {
     builder = make_unique<Builder>(*getModule());
     walk(func->body);
+    // if the body had a fallthrough, receive it and return it
+    auto iter = breakExprIndexes.find(func->body);
+    if (iter != breakExprIndexes.end()) {
+      func->body = builder->makeSequence(
+        func->body,
+        builder->makeReturn(
+          builder->makeGetLocal(iter->second, func->result)
+        )
+      );
+    }
   }
 
   // returns the index to assign values to for a break target. allocates
@@ -247,13 +257,13 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   void visitBlock(Block* curr) {
     if (isConcreteWasmType(curr->type)) {
       curr->list.back() = getFallthroughReplacement(curr->list.back(), getBreakTargetIndex(curr->name, curr->type, curr), curr->type);
-      curr->finalize(none);
+      curr->finalize();
     }
   }
   void visitLoop(Loop* curr) {
     if (isConcreteWasmType(curr->type)) {
       curr->body = getFallthroughReplacement(curr->body, getBreakTargetIndex(Name(), curr->type, curr), curr->type);
-      curr->finalize(none);
+      curr->finalize();
     }
   }
   void visitIf(If* curr) {
@@ -261,7 +271,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       auto targetIndex = getBreakTargetIndex(Name(), curr->type, curr);
       curr->ifTrue = getFallthroughReplacement(curr->ifTrue, targetIndex, curr->type);
       curr->ifFalse = getFallthroughReplacement(curr->ifFalse, targetIndex, curr->type);
-      curr->finalize(none);
+      curr->finalize();
     }
     Splitter splitter(*this, curr);
     splitter.note(curr->condition);
