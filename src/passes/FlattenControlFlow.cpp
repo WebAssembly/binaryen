@@ -158,7 +158,6 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       }
       if (!hasControlFlowChild) {
         // nothing to do here.
-if (hasUnreachableChild) std::cerr << "hasUC " << node << " : " << parent.getFunction()->name << '\n';
         assert(!hasUnreachableChild); // all of them should be executed
         return;
       }

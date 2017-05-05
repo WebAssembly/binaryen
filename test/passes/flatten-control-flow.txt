@@ -585,6 +585,10 @@
  (func $test-flatten (type $1)
   (local $0 i32)
   (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
   (block $out
    (drop
     (i32.add
@@ -603,6 +607,43 @@
    (block
     (block
      (br $out)
+    )
+   )
+   (block
+    (block
+     (set_local $2
+      (i32.const 1)
+     )
+     (br_table $out $out $out $out
+      (i32.const 3)
+     )
+    )
+   )
+   (block
+    (block
+     (set_local $3
+      (i32.const 1)
+     )
+     (block $block
+      (drop
+       (i32.const 2)
+      )
+      (drop
+       (i32.const 3)
+      )
+      (set_local $4
+       (i32.const 4)
+      )
+     )
+     (set_local $5
+      (i32.add
+       (get_local $3)
+       (get_local $4)
+      )
+     )
+    )
+    (drop
+     (get_local $5)
     )
    )
   )
