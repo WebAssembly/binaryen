@@ -562,6 +562,13 @@
           (i32.const 4)
         )
       ))
+      (drop (i32.add (i32.const 1)
+        (block $in i32
+          (drop (i32.const 2))
+          (br $in (i32.const 3))
+          (i32.const 4)
+        )
+      ))
     )
   )
 )
