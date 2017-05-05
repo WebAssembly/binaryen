@@ -3,7 +3,7 @@
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-indirect)
  (memory $0 256 256)
- (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00nas\00\00\00aka yzkx waka wakm\00\00\00\00\00\00C")
+ (data (i32.const 10) "nas\00\00\00aka yzkx waka wakm\00\00\00\00\00\00C")
  (export "test1" (func $test1))
  (export "test2" (func $test2))
  (export "test3" (func $test3))
@@ -17,9 +17,6 @@
   (nop)
  )
  (func $safe-to-call (type $v)
-  (drop
-   (i32.const 1)
-  )
   (i32.store8
    (i32.const 10)
    (i32.const 110)
