@@ -623,6 +623,10 @@
   (local $37 i32)
   (local $38 i32)
   (local $39 i32)
+  (local $40 i32)
+  (local $41 i32)
+  (local $42 i32)
+  (local $43 i32)
   (block $out
    (drop
     (i32.add
@@ -942,7 +946,42 @@
    )
    (block
     (block
-     (set_local $38
+     (if
+      (i32.const 11)
+      (set_local $38
+       (i32.const 12)
+      )
+      (set_local $38
+       (i32.const 13)
+      )
+     )
+     (set_local $39
+      (i32.const 14)
+     )
+     (if
+      (i32.const 15)
+      (set_local $40
+       (i32.const 16)
+      )
+      (set_local $40
+       (i32.const 17)
+      )
+     )
+     (set_local $41
+      (select
+       (get_local $38)
+       (get_local $39)
+       (get_local $40)
+      )
+     )
+    )
+    (drop
+     (get_local $41)
+    )
+   )
+   (block
+    (block
+     (set_local $42
       (i32.const 1)
      )
      (return)
@@ -950,7 +989,7 @@
    )
    (block
     (block
-     (set_local $39
+     (set_local $43
       (i32.const 1)
      )
      (unreachable)

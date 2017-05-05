@@ -646,6 +646,21 @@
           )
         )
       )
+      (drop
+        (select
+          (if i32
+            (i32.const 11)
+            (i32.const 12)
+            (i32.const 13)
+          )
+          (i32.const 14)
+          (if i32
+            (i32.const 15)
+            (i32.const 16)
+            (i32.const 17)
+          )
+        )
+      )
       (drop (i32.add (i32.const 1) (return)))
       (drop (i32.add (i32.const 1) (unreachable)))
     )
