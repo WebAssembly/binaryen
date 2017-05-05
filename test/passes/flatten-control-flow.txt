@@ -597,6 +597,9 @@
   (local $11 i32)
   (local $12 i32)
   (local $13 i32)
+  (local $14 i32)
+  (local $15 i32)
+  (local $16 i32)
   (block $out
    (drop
     (i32.add
@@ -748,6 +751,29 @@
     )
     (drop
      (get_local $13)
+    )
+   )
+   (block
+    (block
+     (set_local $14
+      (i32.const 1)
+     )
+     (loop $loop-in
+      (set_local $15
+       (block i32
+        (i32.const 5)
+       )
+      )
+     )
+     (set_local $16
+      (i32.add
+       (get_local $14)
+       (get_local $15)
+      )
+     )
+    )
+    (drop
+     (get_local $16)
     )
    )
   )
