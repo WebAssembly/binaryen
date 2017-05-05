@@ -112,12 +112,14 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   // returns the index to assign values to for a break target. allocates
   // the local if this is the first time we see it.
   // expr is used if this is a flowing value.
-  Index getBreakTargetIndex(Name name, WasmType type, Expression* expr = nullptr) {
+  Index getBreakTargetIndex(Name name, WasmType type, Expression* expr = nullptr, Index index = -1) {
     assert(type != unreachable); // we shouldn't get here if the value ins't actually set
     if (name.is()) {
       auto iter = breakNameIndexes.find(name);
       if (iter == breakNameIndexes.end()) {
-        auto index = builder->addVar(getFunction(), type);
+        if (index == Index(-1)) {
+          index = builder->addVar(getFunction(), type);
+        }
         breakNameIndexes[name] = index;
         if (expr) {
           breakExprIndexes[expr] = index;
@@ -132,7 +134,10 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       assert(expr);
       auto iter = breakExprIndexes.find(expr);
       if (iter == breakExprIndexes.end()) {
-        return breakExprIndexes[expr] = builder->addVar(getFunction(), type);
+        if (index == Index(-1)) {
+          index = builder->addVar(getFunction(), type);
+        }
+        return breakExprIndexes[expr] = index;
       }
       return iter->second;
     }
@@ -285,29 +290,37 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   void visitBreak(Break* curr) {
     Expression* processed = curr;
     // first of all, get rid of the value if there is one
-    if (curr->value && curr->value->type != unreachable) {
-      processed = builder->makeSequence(
-        builder->makeSetLocal(
-          getBreakTargetIndex(curr->name, curr->value->type),
-          curr->value
-        ),
-        curr
-      );
-      if (curr->condition) {
+    if (curr->value) {
+      if (curr->value->type != unreachable) {
+        auto type = curr->value->type;
+        auto index = getBreakTargetIndex(curr->name, type);
+        auto* value = curr->value;
+        curr->value = nullptr;
+        curr->finalize();
         processed = builder->makeSequence(
-          processed,
-          builder->makeGetLocal(
-            getBreakTargetIndex(curr->name, curr->value->type),
-            curr->value->type
-          )
+          builder->makeSetLocal(
+            index,
+            value
+          ),
+          curr
         );
+        replaceCurrent(processed);
+        if (curr->condition) {
+          // we already called getBreakTargetIndex for the value we send to our
+          // break target if we break. as this is a br_if with a value, it also
+          // flows out that value, so our parent needs to know how to receive it.
+          // we note the already-existing index we prepared before, for that value.
+          getBreakTargetIndex(Name(), type, processed, index);
+        }
+      } else {
+        // we have a value, but it has unreachable type. we can just replace
+        // ourselves with it, we won't reach a condition (if there is one) or the br
+        // itself
+        replaceCurrent(curr->value);
+        return;
       }
-      curr->value = nullptr;
-      replaceCurrent(processed);
     }
-    // TODO: force-split this if it's a br-if, we don't allow them
     Splitter splitter(*this, processed);
-    splitter.note(curr->value);
     splitter.note(curr->condition);
   }
   void visitSwitch(Switch* curr) {
