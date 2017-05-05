@@ -49,6 +49,8 @@
 #include <pass.h>
 #include <wasm-builder.h>
 
+                                                                              #include "wasm-printing.h"
+
 namespace wasm {
 
 // Looks for control flow changes and structures, excluding blocks (as we
@@ -64,6 +66,7 @@ struct ControlFlowChecker : public Visitor<ControlFlowChecker> {
 
   void visitBreak(Break *curr) { hasControlFlow = true; }
   void visitSwitch(Switch *curr) { hasControlFlow = true; }
+  void visitBlock(Block *curr) { hasControlFlow = true; }
   void visitLoop(Loop* curr) { hasControlFlow = true; }
   void visitIf(If* curr) { hasControlFlow = true; }
   void visitReturn(Return *curr) { hasControlFlow = true; }
@@ -116,89 +119,127 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
 
   // Splitter helper
   struct Splitter {
-    Splitter(FlattenControlFlow& parent, Expression* node) : parent(parent), node(node), replacement(curr) {}
+    Splitter(FlattenControlFlow& parent, Expression* node) : parent(parent), node(node) {}
 
     ~Splitter() {
-      // finish up
-
+      finish();
     }
 
     FlattenControlFlow& parent;
     Expression* node;
 
-    std::vector<Expression*> mustEmit; // all nodes we must emit, even if we don't emit node
-    Expression* replacement; // the final replacement for the current node
-    bool stop = false; // if a child is unreachable, we can stop
+    std::vector<Expression**> children;
 
-    // note a child. if it has control flow, we must split it out
     void note(Expression*& child) {
       // we accept nullptr inputs, for a non-existing child
       if (!child) return;
-      // if a previous child was unreachable, stop
-      if (stop) return;
-      // it's enough to look at the child, ignoring the contents, as the contents
-      // have already been processed before we got here, so they must have been
-      // flattened if necessary.
-      if (!ControlFlowChecker::is(child)) {
-        // nothing to do here, no control flow to split out
-        mustEmit.push_back(child);
+      children.push_back(&child);
+    }
+
+    Expression* replacement; // the final replacement for the current node
+    bool stop = false; // if a child is unreachable, we can stop
+
+    void finish() {
+      if (children.empty()) return;
+      // first, scan the list
+      bool hasControlFlowChild = false;
+      bool hasUnreachableChild = false;
+      for (auto** childp : children) {
+        // it's enough to look at the child, ignoring the contents, as the contents
+        // have already been processed before we got here, so they must have been
+        // flattened if necessary.
+        auto* child = *childp;
+        if (ControlFlowChecker::is(child)) {
+          hasControlFlowChild = true;
+        }
+        if (child->type == unreachable) {
+          hasUnreachableChild = true;
+        }
+      }
+      if (!hasControlFlowChild) {
+        // nothing to do here.
+if (hasUnreachableChild) std::cerr << "hasUC " << node << " : " << parent.getFunction()->name << '\n';
+        assert(!hasUnreachableChild); // all of them should be executed
         return;
       }
-      // if the child has a concrete type, we need a temp var
-      auto* builder = parent->builder;
-      if (isConcreteWasmType(child->type)) {
-          // the child node is control flow, a structure or a flow-causer. if
-        // it has a concrete type, it must be a block, loop, if, or br_if with value
-        auto temp = builder->addVar(getFunction(), child->type);
-        Expression* pre = child; // we emit the child before curr
-        if (auto* block = child->dynCast<Block>()) {
-          // use the local to save the breaks and fallthrough value
-          BreakValueUpdater::update(block, block->name, temp, parent->getModule());
-          auto*& last = block->list.back();
-          if (isConcreteWasmType(last->type)) {
-            last = builder->makeSetLocal(temp, last);
-          }
-          block->finalize(none);
-        } else if (auto* iff = child->dynCast<If>()) {
-          // assign both sides to a local
-          iff->ifTrue = builder->makeSetLocal(temp, iff->ifTrue);
-          iff->ifFalse = builder->makeSetLocal(temp, iff->ifFalse);
-          iff->finalize(none);
-        } else if (auto* loop = child->dynCast<Loop>()) {
-          // save the fallthrough
-          loop->body = builder->makeSetLocal(temp, loop->body);
-          loop->finalize(none);
-        } else if (auto* brIf = child->dynCast<Break>()) {
-          assert(brIf->condition);
-          assert(brIf->value);
-          // we disallow br_ifs entirely, so turn this into an if. but do
-          // so using the proper order of operations
-          pre = builder->makeSequence(
-            builder->makeSetLocal(temp, brIf->value),
-            builder->makeIf(
-              brIf->condition,
-              builder->makeBreak(brIf->name, builder->makeGetLocal(temp, child->type))
-            )
-          );
+      // we have at least one child we need to split out, so to preserve the order of operations,
+      // split them all out
+      Builder* builder = parent.builder.get();
+      std::vector<Index> tempIndexes;
+      for (auto** childp : children) {
+        auto* child = *childp;
+        if (isConcreteWasmType(child->type)) {
+          tempIndexes.push_back(builder->addVar(parent.getFunction(), child->type));
         } else {
-          WASM_UNREACHABLE();
+          tempIndexes.push_back(-1);
         }
-        // replace the child in the parent (note *&) with a get_local
-        child = builder->makeGetLocal(temp, child->type);
-        mustEmit.push_back(pre);
-        replacement = parent->replaceCurrent(builder->makeSequence(pre, replacement));
-      } else {
-        // as a non-concrete child expression, it must be unreachable (cannot be none)
-        assert(child->type == unreachable);
-        // we don't need to emit the parent, but must emit previous children
-        auto* block = builder->makeBlock();
-        for (auto* emit : mustEmit) {
-          block->list.push_back(emit);
+      }
+      // create a new replacement block
+      auto* block = builder->makeBlock();
+      for (Index i = 0; i < children.size(); i++) {
+        auto* child = *children[i];
+        auto type = child->type;
+        if (isConcreteWasmType(type)) {
+          // set the child to a local, and use it later
+          block->list.push_back(flattenChild(child, tempIndexes[i]));
+          *children[i] = builder->makeGetLocal(tempIndexes[i], type);
+        } else {
+          assert(type == unreachable); // can't be none, it's nested
+          block->list.push_back(child); // note no need to flatten, we are not adding a set_local
+          break; // no need to push any more
         }
-        block->list.push_back(child);
+      }
+      if (!hasUnreachableChild) {
+        // we reached the end, so we need to emit the expression itself
+        // (which has been modified to replace children usages with get_locals)
+        block->list.push_back(node);
+      }
+      block->finalize();
+      parent.replaceCurrent(block);
+    }
+
+    // this is a child expression which is being moved to early in the block, before
+    // the main node. We need to set the child value to a temporary local. If the
+    // child is control flow, then we must flatten it out, assigning to the local
+    // in the proper way
+    Expression* flattenChild(Expression* child, Index tempIndex) {
+      assert(isConcreteWasmType(child->type));
+      Builder* builder = parent.builder.get();
+      if (auto* block = child->dynCast<Block>()) {
+        // use the local to save the breaks and fallthrough value
+        BreakValueUpdater::update(block, block->name, tempIndex, parent.getModule());
+        auto*& last = block->list.back();
+        if (isConcreteWasmType(last->type)) {
+          last = builder->makeSetLocal(tempIndex, last);
+        }
         block->finalize();
-        replacement = parent->replaceCurrent(block);
-        stop = true;
+        return block;
+      } else if (auto* iff = child->dynCast<If>()) {
+        // assign both sides to a local
+        iff->ifTrue = builder->makeSetLocal(tempIndex, iff->ifTrue);
+        iff->ifFalse = builder->makeSetLocal(tempIndex, iff->ifFalse);
+        iff->finalize(none);
+        return iff;
+      } else if (auto* loop = child->dynCast<Loop>()) {
+        // save the fallthrough
+        loop->body = builder->makeSetLocal(tempIndex, loop->body);
+        loop->finalize(none);
+        return loop;
+      } else if (auto* brIf = child->dynCast<Break>()) {
+        assert(brIf->condition);
+        assert(brIf->value);
+        // we disallow br_ifs entirely, so turn this into an if. but do
+        // so using the proper order of operations
+        return builder->makeSequence(
+          builder->makeSetLocal(tempIndex, brIf->value),
+          builder->makeIf(
+            brIf->condition,
+            builder->makeBreak(brIf->name, builder->makeGetLocal(tempIndex, child->type))
+          )
+        );
+      } else {
+        // safe to just emit a set of the child
+        return builder->makeSetLocal(tempIndex, child);
       }
     }
   };
@@ -216,72 +257,77 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   }
   void visitBreak(Break* curr) {
     Splitter splitter(*this, curr);
-    Splitter(*this, curr);
     splitter.note(curr->value);
     splitter.note(curr->condition);
   }
   void visitSwitch(Switch* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     if (curr->value) {
       splitter.note(curr->value);
     }
     splitter.note(curr->condition);
   }
   void visitCall(Call* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     for (auto*& operand : curr->operands) {
       splitter.note(operand);
     }
   }
   void visitCallImport(CallImport* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     for (auto*& operand : curr->operands) {
       splitter.note(operand);
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     for (auto*& operand : curr->operands) {
       splitter.note(operand);
     }
     splitter.note(curr->target);
   }
   void visitSetLocal(SetLocal* curr) {
+    Splitter splitter(*this, curr);
     splitter.note(curr->value);
   }
   void visitSetGlobal(SetGlobal* curr) {
+    Splitter splitter(*this, curr);
     splitter.note(curr->value);
   }
   void visitLoad(Load* curr) {
+    Splitter splitter(*this, curr);
     splitter.note(curr->ptr);
   }
   void visitStore(Store* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     splitter.note(curr->ptr);
     splitter.note(curr->value);
   }
   void visitUnary(Unary* curr) {
+    Splitter splitter(*this, curr);
     splitter.note(curr->value);
   }
   void visitBinary(Binary* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     splitter.note(curr->left);
     splitter.note(curr->right);
   }
   void visitSelect(Select* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     splitter.note(curr->ifTrue);
     splitter.note(curr->ifFalse);
     splitter.note(curr->condition);
   }
   void visitDrop(Drop* curr) {
+    Splitter splitter(*this, curr);
     splitter.note(curr->value);
   }
   void visitReturn(Return* curr) {
+    Splitter splitter(*this, curr);
     splitter.note(curr->value);
   }
   void visitHost(Host* curr) {
-    Splitter(*this, curr);
+    Splitter splitter(*this, curr);
     for (auto*& operand : curr->operands) {
       splitter.note(operand);
     }
