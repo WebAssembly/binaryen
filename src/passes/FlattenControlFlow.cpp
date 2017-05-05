@@ -38,11 +38,14 @@
 //    (i32.const 1)
 //  )
 //
-// This leaves control flow to only show up as a block element,
-// and not nested inside other code. Blocks themselves are allowed
-// only on other blocks, or as the body of a function, loop, or arm
-// of an if. We disallow br_if entirely (as it returns a value, i.e.,
-// inherently has nested control flow).
+// The properties we work to achieve are
+//  1. leave control flow structures and control flow operations
+//     to only show up as a block element, if true or if false, loop
+//     body, or function body, and nowhere else (i.e. not nested in an
+//     i32.add, drop, etc., nor in an if condition)
+//  2. avoid fallthrough values, i.e., do not use control flow to
+//     pass values automatically, which means no block, loop and if
+//     values (instead, use a local)
 //
 
 #include <wasm.h>
@@ -50,6 +53,7 @@
 #include <wasm-builder.h>
 
                                                                               #include "wasm-printing.h"
+      // TODO: when we add a set)_local, flatten inside it
 
 namespace wasm {
 
@@ -73,137 +77,76 @@ struct ControlFlowChecker : public Visitor<ControlFlowChecker> {
   void visitUnreachable(Unreachable *curr) { hasControlFlow = true; }
 };
 
-// Replaces breaks with a value to a target with assigns to a local
-// then a break without a value
-struct BreakValueUpdater : public PostWalker<BreakValueUpdater> {
-  static void update(Expression* ast, Name name, Index index, Module* wasm, Function* func) {
-    BreakValueUpdater finder;
-    finder.name = name;
-    finder.index = index;
-    finder.setModule(wasm);
-    finder.setFunction(func);
-    finder.walk(ast);
-  }
-
-  Name name;
-  Index index;
-
-  void visitBreak(Break *curr) {
-    if (curr->name == name) {
-      assert(!curr->condition); // br_ifs must already have been removed
-      assert(curr->value);
-      Builder builder(*getModule());
-      replaceCurrent(
-        builder.makeSequence(
-          builder.makeSetLocal(index, curr->value),
-          curr
-        )
-      );
-      curr->value = nullptr;
-    }
-  }
-  void visitSwitch(Switch *curr) {
-    if (!curr->value) return;
-    bool relevant = false;
-    for (auto target : curr->targets) {
-      if (target == name) {
-        relevant = true;
-        break;
-      }
-    }
-    if (curr->default_ == name) {
-      relevant = true;
-    }
-    if (!relevant) return;
-    assert(isConcreteWasmType(curr->value->type)); // we have already seen and flattened this
-    assert(isConcreteWasmType(curr->condition->type)); // we have already seen and flattened this
-    // the switch may target other blocks as well, and we should not alter their value
-    Builder builder(*getModule());
-    auto* block = builder.makeBlock();
-    // write out value and condition to temps, so we can use them more than once
-    auto tempValue = Builder::addVar(getFunction(), curr->value->type),
-         tempCondition = Builder::addVar(getFunction(), i32);
-    block->list.push_back(builder.makeSetLocal(tempValue, curr->value));
-    block->list.push_back(builder.makeSetLocal(tempCondition, curr->condition));
-    curr->value = builder.makeGetLocal(tempValue, curr->value->type);
-    curr->condition = builder.makeGetLocal(tempCondition, i32);
-    // make a "gating" switch, and decides whether we are going to our location (and should alter the value) or not (and should not)
-    static int counter = 0;
-    std::string base = std::string("flatten-control-flow$") + std::to_string(counter++) + "$";
-    Name ours = Name((base + "ours").c_str()),
-         others = Name((base + "others").c_str()),
-         fake = Name((base + "fake").c_str());
-    std::vector<Name> targets;
-    // for the gate, go to ours or others
-    for (auto target : curr->targets) {
-      targets.push_back(target == name ? ours : others);
-    }
-    auto* gate = builder.makeSwitch(
-      targets,
-      curr->default_ == name ? ours : others,
-      builder.makeGetLocal(tempCondition, i32)
-    );
-    // for the switch if it isn't ours, replace our name with a safe place to break to - it will not be reached
-    targets.clear();
-    for (auto target : curr->targets) {
-      targets.push_back(target == name ? fake : target);
-    }
-    auto* fakeBlock = builder.makeBlock(
-      fake,
-      builder.makeSequence(
-        builder.makeBlock(
-          others,
-          builder.makeSequence(
-            builder.makeBlock(
-              ours,
-              gate
-            ),
-            // it is ours, so break to it, setting the value
-            builder.makeSequence(
-              builder.makeSetLocal(
-                index,
-                builder.makeGetLocal(
-                  tempValue,
-                  curr->value->type
-                )
-              ),
-              builder.makeBreak(name)
-            )
-          )
-        ),
-        // it is not ours, so br_table on the others normally
-        builder.makeSwitch(
-          targets,
-          curr->default_ == name ? fake : curr->default_,
-          builder.makeGetLocal(tempCondition, i32),
-          builder.makeGetLocal(tempValue, curr->value->type)
-        )
-      )
-    );
-    // the "fake" block has a value, so we can fake br to it with our value
-    fakeBlock->type = i32;
-    block->list.push_back(
-      builder.makeDrop(
-        fakeBlock
-      )
-    );
-    block->finalize();
-    replaceCurrent(block);
-  }
-};
-
 struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
-  // NB: *not* parallel, as we create labels for new blocks for switch reduction TODO optimize
+  bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FlattenControlFlow; }
 
   std::unique_ptr<Builder> builder;
+  // we get rid of block/if/loop values. this map tells us for
+  // each break target what local index to use.
+  // if this is a flowing value, there might not be a name assigned
+  // (block ending, block with no name; or if value), so we use
+  // the expr (and there will be exactly one set and get of it,
+  // so we don't need a name)
+  std::map<Name, Index> breakNameIndexes;
+  std::map<Expression*, Index> breakExprIndexes;
 
   void doWalkFunction(Function* func) {
     builder = make_unique<Builder>(*getModule());
-    // ensure the top level is a block
-    func->body = builder->blockify(func->body);
     walk(func->body);
+  }
+
+  // returns the index to assign values to for a break target. allocates
+  // the local if this is the first time we see it.
+  // expr is used if this is a flowing value.
+  Index getBreakTargetIndex(Name name, WasmType type, Expression* expr = nullptr) {
+    assert(type != unreachable); // we shouldn't get here if the value ins't actually set
+    if (name.is()) {
+      auto iter = breakNameIndexes.find(name);
+      if (iter == breakNameIndexes.end()) {
+        auto index = builder->addVar(getFunction(), type);
+        breakNameIndexes[name] = index;
+        if (expr) {
+          breakExprIndexes[expr] = index;
+        }
+        return index;
+      }
+      if (expr) {
+        breakExprIndexes[expr] = iter->second;
+      }
+      return iter->second;
+    } else {
+      assert(expr);
+      auto iter = breakExprIndexes.find(expr);
+      if (iter == breakExprIndexes.end()) {
+        return breakExprIndexes[expr] = builder->addVar(getFunction(), type);
+      }
+      return iter->second;
+    }
+  }
+
+  // When we reach a fallthrough value, it has already been flattened, and its value
+  // assigned to the proper local. Or, it may not have needed to be flattened,
+  // and we can just assign to a local. This method simply returns the fallthrough
+  // replacement code.
+  Expression* getFallthroughReplacement(Expression* child, Index myIndex, WasmType type) {
+    auto iter = breakExprIndexes.find(child);
+    if (iter != breakExprIndexes.end()) {
+      // it was flattened and saved to a local
+      return builder->makeSequence(
+        child, // which no longer flows a value, now it sets the child index
+        builder->makeSetLocal(
+          myIndex,
+          builder->makeGetLocal(iter->second, type)
+        )
+      );
+    }
+    // a simple expression
+    return builder->makeSetLocal(
+      myIndex,
+      child
+    );
   }
 
   // Splitter helper
@@ -217,7 +160,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     FlattenControlFlow& parent;
     Expression* node;
 
-    std::vector<Expression**> children;
+    std::vector<Expression**> children; // TODO: reuse in parent, avoiding mallocing on each node
 
     void note(Expression*& child) {
       // we accept nullptr inputs, for a non-existing child
@@ -269,7 +212,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         auto type = child->type;
         if (isConcreteWasmType(type)) {
           // set the child to a local, and use it later
-          block->list.push_back(flattenChild(child, tempIndexes[i]));
+          block->list.push_back(child);
           *children[i] = builder->makeGetLocal(tempIndexes[i], type);
         } else {
           assert(type == unreachable); // can't be none, it's nested
@@ -283,90 +226,95 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         block->list.push_back(node);
       }
       block->finalize();
-      parent.flattenBlockEnding(block);
       parent.replaceCurrent(block);
-    }
-
-    // this is a child expression which is being moved to early in the block, before
-    // the main node. We need to set the child value to a temporary local. If the
-    // child is control flow, then we must flatten it out, assigning to the local
-    // in the proper way
-    Expression* flattenChild(Expression* child, Index tempIndex) {
-      assert(isConcreteWasmType(child->type));
-      Builder* builder = parent.builder.get();
-      if (auto* block = child->dynCast<Block>()) {
-        // use the local to save the breaks and fallthrough value
-        BreakValueUpdater::update(block, block->name, tempIndex, parent.getModule(), parent.getFunction());
-        auto*& last = block->list.back();
-        if (isConcreteWasmType(last->type)) {
-          assert(!ControlFlowChecker::is(last)); // already flattened
-          last = builder->makeSetLocal(tempIndex, last);
-        }
-        block->finalize();
-        return block;
-      } else if (auto* iff = child->dynCast<If>()) {
-        // assign both sides to a local
-        iff->ifTrue = builder->makeSetLocal(tempIndex, iff->ifTrue);
-        iff->ifFalse = builder->makeSetLocal(tempIndex, iff->ifFalse);
-        iff->finalize(none);
-        return iff;
-      } else if (auto* loop = child->dynCast<Loop>()) {
-        // save the fallthrough
-        loop->body = builder->makeSetLocal(tempIndex, loop->body);
-        loop->finalize(none);
-        return loop;
-      } else if (auto* brIf = child->dynCast<Break>()) {
-        assert(brIf->condition);
-        assert(brIf->value);
-        // we disallow br_ifs entirely, so turn this into an if. but do
-        // so using the proper order of operations
-        return builder->makeSequence(
-          builder->makeSetLocal(tempIndex, brIf->value),
-          builder->makeIf(
-            brIf->condition,
-            builder->makeBreak(brIf->name, builder->makeGetLocal(tempIndex, child->type))
-          )
-        );
-      } else {
-        // safe to just emit a set of the child
-        assert(!ControlFlowChecker::is(child)); // already flattened
-        return builder->makeSetLocal(tempIndex, child);
-      }
     }
   };
 
-  void flattenBlockEnding(Block* curr) {
-    // the last element may be a returned value, and must not be a block/loop/if with a value, which
-    // are ok in intermediate elements (since then it must not return a value)
-    if (curr->list.size() == 0 || !isConcreteWasmType(curr->type)) return;
-    auto* last = curr->list.back();
-    auto type = last->type;
-    if (!isConcreteWasmType(type)) return;
-    if (!last->is<Block>() && !last->is<Loop>() && !last->is<If>()) return;
-    // split the last node, making it write to a temp var, and then return a get of that var
-    Splitter splitter(*this, curr);
-    auto temp = Builder::addVar(getFunction(), type);
-    curr->list.back() = splitter.flattenChild(last, temp);
-    curr->list.push_back(builder->makeGetLocal(temp, type));
-  }
-
   void visitBlock(Block* curr) {
-    flattenBlockEnding(curr);
+    if (isConcreteWasmType(curr->type)) {
+      curr->list.back() = getFallthroughReplacement(curr->list.back(), getBreakTargetIndex(curr->name, curr->type, curr), curr->type);
+      curr->finalize(none);
+    }
+  }
+  void visitLoop(Loop* curr) {
+    if (isConcreteWasmType(curr->type)) {
+      curr->body = getFallthroughReplacement(curr->body, getBreakTargetIndex(Name(), curr->type, curr), curr->type);
+      curr->finalize(none);
+    }
   }
   void visitIf(If* curr) {
+    if (isConcreteWasmType(curr->type)) {
+      auto targetIndex = getBreakTargetIndex(Name(), curr->type, curr);
+      curr->ifTrue = getFallthroughReplacement(curr->ifTrue, targetIndex, curr->type);
+      curr->ifFalse = getFallthroughReplacement(curr->ifFalse, targetIndex, curr->type);
+      curr->finalize(none);
+    }
     Splitter splitter(*this, curr);
     splitter.note(curr->condition);
   }
   void visitBreak(Break* curr) {
-    Splitter splitter(*this, curr);
+    Expression* processed = curr;
+    // first of all, get rid of the value if there is one
+    if (curr->value && curr->value->type != unreachable) {
+      processed = builder->makeSequence(
+        builder->makeSetLocal(
+          getBreakTargetIndex(curr->name, curr->value->type),
+          curr->value
+        ),
+        curr
+      );
+      if (curr->condition) {
+        processed = builder->makeSequence(
+          processed,
+          builder->makeGetLocal(
+            getBreakTargetIndex(curr->name, curr->value->type),
+            curr->value->type
+          )
+        );
+      }
+      curr->value = nullptr;
+      replaceCurrent(processed);
+    }
+    // TODO: force-split this if it's a br-if, we don't allow them
+    Splitter splitter(*this, processed);
     splitter.note(curr->value);
     splitter.note(curr->condition);
   }
   void visitSwitch(Switch* curr) {
-    Splitter splitter(*this, curr);
-    if (curr->value) {
-      splitter.note(curr->value);
+    Expression* processed = curr;
+    // first of all, get rid of the value if there is one
+    if (curr->value && curr->value->type != unreachable) {
+      auto type = curr->value->type;
+      // we must assign the value to *all* the targets
+      auto temp = builder->addVar(getFunction(), type);
+      auto* block = builder->makeBlock();
+      block->list.push_back(builder->makeSetLocal(temp, curr->value));
+      std::set<Name> names;
+      for (auto target : curr->targets) {
+        if (names.insert(target).second) {
+          block->list.push_back(
+            builder->makeSetLocal(
+              getBreakTargetIndex(target, type),
+              builder->makeGetLocal(temp, type)
+            )
+          );
+        }
+      }
+      if (names.insert(curr->default_).second) {
+        block->list.push_back(
+          builder->makeSetLocal(
+            getBreakTargetIndex(curr->default_, type),
+            builder->makeGetLocal(temp, type)
+          )
+        );
+      }
+      block->list.push_back(curr);
+      block->finalize();
+      curr->value = nullptr;
+      replaceCurrent(block);
     }
+    Splitter splitter(*this, processed);
+    splitter.note(curr->value);
     splitter.note(curr->condition);
   }
   void visitCall(Call* curr) {
