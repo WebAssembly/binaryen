@@ -647,6 +647,7 @@
         )
       )
       (drop (i32.add (i32.const 1) (return)))
+      (drop (i32.add (i32.const 1) (unreachable)))
     )
   )
   (func $flatten-return-value (result i32)

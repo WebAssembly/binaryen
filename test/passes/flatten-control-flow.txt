@@ -622,6 +622,7 @@
   (local $36 i32)
   (local $37 i32)
   (local $38 i32)
+  (local $39 i32)
   (block $out
    (drop
     (i32.add
@@ -945,6 +946,14 @@
       (i32.const 1)
      )
      (return)
+    )
+   )
+   (block
+    (block
+     (set_local $39
+      (i32.const 1)
+     )
+     (unreachable)
     )
    )
   )
