@@ -212,12 +212,19 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         auto type = child->type;
         if (isConcreteWasmType(type)) {
           // set the child to a local, and use it later
-          block->list.push_back(child);
+          block->list.push_back(builder->makeSetLocal(tempIndexes[i], child));
           *children[i] = builder->makeGetLocal(tempIndexes[i], type);
-        } else {
-          assert(type == unreachable); // can't be none, it's nested
-          block->list.push_back(child); // note no need to flatten, we are not adding a set_local
+        } else if (type == none) {
+          // a nested none can not happen normally, here it occurs after we flattened a nested
+          // we can use the local it already assigned to. TODO: don't even allocate one here
+          block->list.push_back(child);
+          assert(parent.breakExprIndexes.count(child) > 0);
+          *children[i] = builder->makeGetLocal(parent.breakExprIndexes[child], type);
+        } else if (type == unreachable) {
+          block->list.push_back(child);
           break; // no need to push any more
+        } else {
+          WASM_UNREACHABLE();
         }
       }
       if (!hasUnreachableChild) {
@@ -227,6 +234,13 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       }
       block->finalize();
       parent.replaceCurrent(block);
+      // if the node is an if, which returned a value, then we replaced it with
+      // a block (while flattening its condition; note how this can't happen with
+      // blocks or loops). So the parent of the if will now see the block, and we
+      // must tell it the temp index for that
+      if (node->is<If>() && parent.breakExprIndexes.find(node) != parent.breakExprIndexes.end()) {
+        parent.breakExprIndexes[block] = parent.breakExprIndexes[node];
+      }
     }
   };
 
