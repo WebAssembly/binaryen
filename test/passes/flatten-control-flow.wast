@@ -578,6 +578,13 @@
           (i32.const 5)
         )
       ))
+      (drop (i32.add (i32.const 1)
+        (if i32
+          (i32.const 6)
+          (i32.const 7)
+          (i32.const 8)
+        )
+      ))
     )
   )
 )

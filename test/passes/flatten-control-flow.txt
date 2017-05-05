@@ -600,6 +600,9 @@
   (local $14 i32)
   (local $15 i32)
   (local $16 i32)
+  (local $17 i32)
+  (local $18 i32)
+  (local $19 i32)
   (block $out
    (drop
     (i32.add
@@ -760,9 +763,7 @@
      )
      (loop $loop-in
       (set_local $15
-       (block i32
-        (i32.const 5)
-       )
+       (i32.const 5)
       )
      )
      (set_local $16
@@ -774,6 +775,31 @@
     )
     (drop
      (get_local $16)
+    )
+   )
+   (block
+    (block
+     (set_local $17
+      (i32.const 1)
+     )
+     (if
+      (i32.const 6)
+      (set_local $18
+       (i32.const 7)
+      )
+      (set_local $18
+       (i32.const 8)
+      )
+     )
+     (set_local $19
+      (i32.add
+       (get_local $17)
+       (get_local $18)
+      )
+     )
+    )
+    (drop
+     (get_local $19)
     )
    )
   )

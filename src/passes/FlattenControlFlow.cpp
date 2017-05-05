@@ -335,13 +335,6 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   void visitIf(If* curr) {
     Splitter splitter(*this, curr);
     splitter.note(curr->condition);
-    curr->ifTrue = builder->blockify(curr->ifTrue);
-    if (curr->ifFalse) {
-      curr->ifFalse = builder->blockify(curr->ifFalse);
-    }
-  }
-  void visitLoop(Loop* curr) {
-    curr->body = builder->blockify(curr->body);
   }
   void visitBreak(Break* curr) {
     Splitter splitter(*this, curr);
