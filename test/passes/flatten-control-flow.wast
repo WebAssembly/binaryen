@@ -692,4 +692,61 @@
     (drop (i32.add (i32.const 1) (return (i32.const 2))))
     (i32.const 3)
   )
+  (func $unbug
+   (local $12 i32)
+   (local $432 i32)
+   (local $430 i32)
+   (local $431 i32)
+   (local $9 i32)
+   (local $5 i32)
+   (local $433 i32)
+   (drop
+    (block i32
+     (if
+      (i32.eq
+       (get_local $12)
+       (i32.const 65535)
+      )
+      (block
+       (block $label$78
+        (set_local $430
+         (i32.const 0)
+        )
+       )
+       (set_local $432
+        (get_local $430)
+       )
+      )
+      (block
+       (block $label$79
+        (set_local $431
+         (i32.lt_u
+          (get_local $9)
+          (i32.load16_u offset=2
+           (i32.add
+            (get_local $5)
+            (i32.mul
+             (get_local $12)
+             (i32.const 12)
+            )
+           )
+          )
+         )
+        )
+       )
+       (set_local $432
+        (get_local $431)
+       )
+      )
+     )
+     (set_local $433
+      (i32.const 1)
+     )
+     (i32.xor
+      (get_local $432)
+      (get_local $433)
+     )
+    )
+   )
+  )
 )

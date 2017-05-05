@@ -160,10 +160,18 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       );
     }
     // a simple expression
-    return builder->makeSetLocal(
-      myIndex,
-      child
-    );
+    if (child->type == unreachable) {
+      // no need to even set the local
+      return child;
+    } else {
+if (ControlFlowChecker::is(child))
+ std::cerr << getFunction()->name << " :-( " << child << "\n";
+    assert(!ControlFlowChecker::is(child));
+      return builder->makeSetLocal(
+        myIndex,
+        child
+      );
+    }
   }
 
   // Splitter helper
@@ -235,6 +243,8 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
           // a nested none can not happen normally, here it occurs after we flattened a nested
           // we can use the local it already assigned to. TODO: don't even allocate one here
           block->list.push_back(child);
+if (parent.breakExprIndexes.count(child) == 0)
+ std::cerr << parent.getFunction()->name << " :( " << node << " : " << child << "\n";
           assert(parent.breakExprIndexes.count(child) > 0);
           auto index = parent.breakExprIndexes[child];
           *children[i] = builder->makeGetLocal(
