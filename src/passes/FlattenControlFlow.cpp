@@ -284,6 +284,11 @@ if (parent.breakExprIndexes.count(child) == 0)
         block->list.push_back(node);
       }
       block->finalize();
+      // finally, we just created a new block, ending in node. If node is e.g.
+      // i32.add, then our block would return a value. so we must convert
+      // this new block to return a value through a local
+      parent.visitBlock(block);
+      // the block is now done
       parent.replaceCurrent(block);
       // if the node is an if, which returned a value, then we replaced it with
       // a block (while flattening its condition; note how this can't happen with
