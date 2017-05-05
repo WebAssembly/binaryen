@@ -621,6 +621,7 @@
   (local $35 i32)
   (local $36 i32)
   (local $37 i32)
+  (local $38 i32)
   (block $out
    (drop
     (i32.add
@@ -938,6 +939,28 @@
      (get_local $37)
     )
    )
+   (block
+    (block
+     (set_local $38
+      (i32.const 1)
+     )
+     (return)
+    )
+   )
   )
+ )
+ (func $flatten-return-value (type $2) (result i32)
+  (local $0 i32)
+  (block
+   (block
+    (set_local $0
+     (i32.const 1)
+    )
+    (return
+     (i32.const 2)
+    )
+   )
+  )
+  (i32.const 3)
  )
 )
