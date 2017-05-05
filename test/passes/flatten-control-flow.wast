@@ -663,6 +663,21 @@
       )
       (drop (i32.add (i32.const 1) (return)))
       (drop (i32.add (i32.const 1) (unreachable)))
+      (drop
+        (if i32
+          (if i32
+            (i32.const 5)
+            (i32.const 6)
+            (i32.const 7)
+          )
+          (i32.const 8)
+          (if i32
+            (i32.const 9)
+            (i32.const 10)
+            (i32.const 11)
+          )
+        )
+      )
     )
   )
   (func $flatten-return-value (result i32)

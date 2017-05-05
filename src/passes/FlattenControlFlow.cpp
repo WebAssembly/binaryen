@@ -283,6 +283,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         block->list.push_back(node);
       }
       block->finalize();
+      parent.flattenBlockEnding(block);
       parent.replaceCurrent(block);
     }
 
@@ -298,6 +299,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         BreakValueUpdater::update(block, block->name, tempIndex, parent.getModule(), parent.getFunction());
         auto*& last = block->list.back();
         if (isConcreteWasmType(last->type)) {
+          assert(!ControlFlowChecker::is(last)); // already flattened
           last = builder->makeSetLocal(tempIndex, last);
         }
         block->finalize();
@@ -327,11 +329,30 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         );
       } else {
         // safe to just emit a set of the child
+        assert(!ControlFlowChecker::is(child)); // already flattened
         return builder->makeSetLocal(tempIndex, child);
       }
     }
   };
 
+  void flattenBlockEnding(Block* curr) {
+    // the last element may be a returned value, and must not be a block/loop/if with a value, which
+    // are ok in intermediate elements (since then it must not return a value)
+    if (curr->list.size() == 0 || !isConcreteWasmType(curr->type)) return;
+    auto* last = curr->list.back();
+    auto type = last->type;
+    if (!isConcreteWasmType(type)) return;
+    if (!last->is<Block>() && !last->is<Loop>() && !last->is<If>()) return;
+    // split the last node, making it write to a temp var, and then return a get of that var
+    Splitter splitter(*this, curr);
+    auto temp = Builder::addVar(getFunction(), type);
+    curr->list.back() = splitter.flattenChild(last, temp);
+    curr->list.push_back(builder->makeGetLocal(temp, type));
+  }
+
+  void visitBlock(Block* curr) {
+    flattenBlockEnding(curr);
+  }
   void visitIf(If* curr) {
     Splitter splitter(*this, curr);
     splitter.note(curr->condition);
