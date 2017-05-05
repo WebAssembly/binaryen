@@ -8,10 +8,10 @@
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-me)
  (memory $0 10)
- (func $call-me (type $ii) (param $0 i32) (param $1 i32)
+ (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
- (func $code-to-kill (type $1)
+ (func $code-to-kill
   (local $x i32)
   (block $out
    (br $out)
@@ -475,7 +475,7 @@
    (i32.const 19)
   )
  )
- (func $unreachable-block-ends-br_if (type $1) (result i32)
+ (func $unreachable-block-ends-br_if (result i32)
   (block $label$0 i32
    (block $label$2
     (nop)
@@ -487,7 +487,7 @@
    (i32.const 19)
   )
  )
- (func $unreachable-brs-3 (type $2) (result i32)
+ (func $unreachable-brs-3 (result i32)
   (block $label$0 i32
    (br $label$0
     (grow_memory
@@ -499,7 +499,7 @@
    (i32.const 21)
   )
  )
- (func $unreachable-brs-4 (type $3) (param $var$0 i32) (result i32)
+ (func $unreachable-brs-4 (param $var$0 i32) (result i32)
   (i32.add
    (i32.const 1)
    (block $label$0 i32
@@ -518,7 +518,7 @@
    )
   )
  )
- (func $call-unreach (type $4) (param $var$0 i64) (param $var$1 i64) (result i64)
+ (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $2 i64)
   (if i64
    (i64.eqz

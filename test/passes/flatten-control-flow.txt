@@ -489,7 +489,7 @@
    (get_local $0)
   )
  )
- (func $unreachable-block-ends-br_if (type $1) (result i32)
+ (func $unreachable-block-ends-br_if (type $2) (result i32)
   (local $0 i32)
   (block $label$0
    (block $label$2
