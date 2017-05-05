@@ -109,52 +109,43 @@
   )
   (if
    (i32.const 0)
-   (block
-    (block $out11
-     (block
-      (unreachable)
-     )
-     (drop
-      (i32.const 0)
-     )
+   (block $out11
+    (block
      (unreachable)
     )
     (drop
-     (get_local $1)
+     (i32.const 0)
+    )
+    (block
+     (unreachable)
     )
    )
   )
   (if
    (i32.const 0)
-   (block
-    (block $out13
-     (block
-      (unreachable)
-     )
-     (drop
-      (i32.const 0)
-     )
+   (block $out13
+    (block
      (unreachable)
     )
     (drop
-     (get_local $3)
+     (i32.const 0)
+    )
+    (block
+     (unreachable)
     )
    )
   )
   (if
    (i32.const 0)
-   (block
-    (block $out15
-     (block
-      (unreachable)
-     )
-     (drop
-      (i32.const 0)
-     )
+   (block $out15
+    (block
      (unreachable)
     )
     (drop
-     (get_local $4)
+     (i32.const 0)
+    )
+    (block
+     (unreachable)
     )
    )
   )
@@ -405,39 +396,53 @@
   )
  )
  (func $typed-block-none-then-unreachable (type $2) (result i32)
-  (block $top-typed i32
+  (local $0 i32)
+  (block $top-typed
    (block $switch$0
     (return
      (i32.const 0)
     )
     (br $switch$0)
    )
-   (return
-    (i32.const 1)
+   (block
+    (return
+     (i32.const 1)
+    )
    )
+  )
+  (return
+   (get_local $0)
   )
  )
  (func $typed-block-remove-br-changes-type (type $3) (param $$$0 i32) (result i32)
-  (block $switch$7
-   (block $switch-default$10
-    (block $switch-case$9
-     (block $switch-case$8
-      (br_table $switch-case$9 $switch-case$8 $switch-default$10
-       (i32.const -1)
+  (local $1 i32)
+  (block
+   (block $switch$7
+    (block $switch-default$10
+     (block $switch-case$9
+      (block $switch-case$8
+       (br_table $switch-case$9 $switch-case$8 $switch-default$10
+        (i32.const -1)
+       )
       )
      )
+     (return
+      (get_local $$$0)
+     )
+     (br $switch$7)
     )
     (return
      (get_local $$$0)
     )
-    (br $switch$7)
    )
-   (return
-    (get_local $$$0)
+   (block
+    (return
+     (i32.const 0)
+    )
    )
   )
   (return
-   (i32.const 0)
+   (get_local $1)
   )
  )
  (func $global (type $1)
@@ -450,19 +455,36 @@
   )
  )
  (func $ret (type $2) (result i32)
-  (return
-   (i32.const 0)
+  (local $0 i32)
+  (block
+   (return
+    (i32.const 0)
+   )
+   (nop)
+   (set_local $0
+    (i32.const 0)
+   )
   )
-  (nop)
-  (i32.const 0)
+  (return
+   (get_local $0)
+  )
  )
  (func $unreachable-br (type $2) (result i32)
-  (block $out i32
+  (local $0 i32)
+  (block $out
    (block
-    (br $out
-     (i32.const 0)
+    (block
+     (block
+      (set_local $0
+       (i32.const 0)
+      )
+      (br $out)
+     )
     )
    )
+  )
+  (return
+   (get_local $0)
   )
  )
  (func $unreachable-br-loop (type $2) (result i32)
@@ -471,7 +493,8 @@
   )
  )
  (func $unreachable-block-ends-switch (type $2) (result i32)
-  (block $label$0 i32
+  (local $0 i32)
+  (block $label$0
    (block $label$3
     (nop)
     (block
@@ -479,11 +502,17 @@
     )
     (unreachable)
    )
-   (i32.const 19)
+   (set_local $0
+    (i32.const 19)
+   )
+  )
+  (return
+   (get_local $0)
   )
  )
  (func $unreachable-block-ends-br_if (type $1) (result i32)
-  (block $label$0 i32
+  (local $0 i32)
+  (block $label$0
    (block $label$2
     (nop)
     (block
@@ -491,65 +520,59 @@
     )
     (unreachable)
    )
-   (i32.const 19)
+   (set_local $0
+    (i32.const 19)
+   )
+  )
+  (return
+   (get_local $0)
   )
  )
  (func $unreachable-brs-3 (type $2) (result i32)
-  (block $label$0 i32
+  (local $0 i32)
+  (block $label$0
    (block
     (block
-     (br $label$0
-      (i32.const 18)
+     (block
+      (set_local $0
+       (i32.const 18)
+      )
+      (br $label$0)
      )
     )
    )
-   (i32.const 21)
+   (set_local $0
+    (i32.const 21)
+   )
+  )
+  (return
+   (get_local $0)
   )
  )
  (func $unreachable-brs-4 (type $3) (param $var$0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (local $4 i32)
-  (local $5 i32)
-  (block
-   (set_local $3
-    (i32.const 1)
-   )
-   (block $label$0
-    (block
-     (block $label$1
-      (block
-       (block
-        (set_local $1
-         (i32.const 4104)
-        )
-        (unreachable)
-       )
-      )
-      (set_local $2
-       (i32.const 4)
-      )
-     )
+  (set_local $3
+   (i32.const 1)
+  )
+  (block $label$0
+   (block
+    (block $label$1
      (block
-      (set_local $4
-       (get_local $2)
+      (block
+       (unreachable)
       )
-      (br $label$0)
+     )
+     (set_local $2
+      (i32.const 4)
      )
     )
-    (set_local $4
-     (i32.const 16)
-    )
    )
-   (set_local $5
-    (i32.add
-     (get_local $3)
-     (get_local $4)
-    )
+   (set_local $1
+    (i32.const 16)
    )
   )
-  (get_local $5)
  )
  (func $call-unreach (type $4) (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $2 i64)
@@ -564,43 +587,47 @@
    )
    (block
     (block $label$0
-     (set_local $6
+     (set_local $3
       (get_local $var$1)
      )
     )
-    (set_local $5
-     (get_local $6)
+    (set_local $7
+     (get_local $3)
     )
    )
    (block
     (block $label$1
      (block
-      (set_local $4
-       (i64.sub
-        (get_local $var$0)
-        (i64.const 1)
-       )
-      )
       (block
-       (block $block
-        (set_local $2
+       (set_local $5
+        (i64.sub
          (get_local $var$0)
-        )
-        (nop)
-        (set_local $3
-         (get_local $2)
+         (i64.const 1)
         )
        )
-       (unreachable)
+       (block
+        (block $block
+         (set_local $2
+          (get_local $var$0)
+         )
+         (nop)
+         (set_local $4
+          (get_local $2)
+         )
+        )
+        (unreachable)
+       )
       )
      )
     )
-    (set_local $5
-     (get_local $7)
+    (set_local $7
+     (get_local $6)
     )
    )
   )
-  (get_local $5)
+  (return
+   (get_local $7)
+  )
  )
  (func $test-flatten (type $1)
   (local $0 i32)
@@ -657,6 +684,7 @@
   (local $51 i32)
   (local $52 i32)
   (local $53 i32)
+  (local $54 i32)
   (block $out
    (drop
     (i32.add
@@ -689,25 +717,30 @@
    )
    (block
     (block
-     (set_local $3
-      (i32.const 1)
-     )
-     (block $block
-      (drop
-       (i32.const 2)
-      )
-      (drop
-       (i32.const 3)
-      )
+     (block
       (set_local $4
-       (i32.const 4)
+       (i32.const 1)
+      )
+      (block $block
+       (drop
+        (i32.const 2)
+       )
+       (drop
+        (i32.const 3)
+       )
+       (set_local $3
+        (i32.const 4)
+       )
+      )
+      (set_local $45
+       (i32.add
+        (get_local $4)
+        (get_local $3)
+       )
       )
      )
      (set_local $5
-      (i32.add
-       (get_local $3)
-       (get_local $4)
-      )
+      (get_local $45)
      )
     )
     (drop
@@ -716,158 +749,79 @@
    )
    (block
     (block
-     (set_local $9
-      (i32.const 1)
-     )
-     (block $in
-      (block
-       (block $switch-in
-        (block
-         (set_local $7
-          (i32.const 2)
-         )
-         (set_local $8
-          (i32.const 777)
-         )
+     (block
+      (set_local $9
+       (i32.const 1)
+      )
+      (block $in
+       (block
+        (block $switch-in
          (block
-          (block $flatten-control-flow$0$fake
-           (block
-            (block $flatten-control-flow$0$others
-             (block
-              (block $flatten-control-flow$0$ours
-               (br_table $flatten-control-flow$0$others $flatten-control-flow$0$ours $flatten-control-flow$0$others
-                (get_local $8)
-               )
-              )
-              (block
-               (set_local $6
-                (get_local $7)
-               )
-               (br $switch-in)
-              )
-             )
-            )
-            (block
-             (set_local $11
-              (get_local $7)
-             )
-             (set_local $12
-              (get_local $8)
-             )
-             (block
-              (block $flatten-control-flow$1$fake
-               (block
-                (block $flatten-control-flow$1$others
-                 (block
-                  (block $flatten-control-flow$1$ours
-                   (br_table $flatten-control-flow$1$ours $flatten-control-flow$1$others $flatten-control-flow$1$ours
-                    (get_local $12)
-                   )
-                  )
-                  (block
-                   (set_local $10
-                    (get_local $11)
-                   )
-                   (br $in)
-                  )
-                 )
-                )
-                (block
-                 (set_local $48
-                  (get_local $11)
-                 )
-                 (set_local $49
-                  (get_local $12)
-                 )
-                 (drop
-                  (block $flatten-control-flow$2$fake i32
-                   (block
-                    (block $flatten-control-flow$2$others
-                     (block
-                      (block $flatten-control-flow$2$ours
-                       (br_table $flatten-control-flow$2$ours $flatten-control-flow$2$others $flatten-control-flow$2$ours
-                        (get_local $49)
-                       )
-                      )
-                      (block
-                       (set_local $47
-                        (get_local $48)
-                       )
-                       (br $flatten-control-flow$1$fake)
-                      )
-                     )
-                    )
-                    (block
-                     (set_local $51
-                      (get_local $48)
-                     )
-                     (set_local $52
-                      (get_local $49)
-                     )
-                     (drop
-                      (block $flatten-control-flow$3$fake i32
-                       (block
-                        (block $flatten-control-flow$3$others
-                         (block
-                          (block $flatten-control-flow$3$ours
-                           (br_table $flatten-control-flow$3$others $flatten-control-flow$3$ours $flatten-control-flow$3$others
-                            (get_local $52)
-                           )
-                          )
-                          (block
-                           (set_local $50
-                            (get_local $51)
-                           )
-                           (br $flatten-control-flow$0$fake)
-                          )
-                         )
-                        )
-                        (br_table $flatten-control-flow$2$fake $flatten-control-flow$3$fake $flatten-control-flow$2$fake
-                         (get_local $51)
-                         (get_local $52)
-                        )
-                       )
-                      )
-                     )
-                    )
-                   )
-                  )
-                 )
-                )
-               )
-              )
-              (drop
-               (get_local $47)
-              )
-             )
-            )
+          (block
+           (set_local $6
+            (i32.const 2)
            )
-          )
-          (drop
-           (get_local $50)
+           (set_local $7
+            (get_local $6)
+           )
+           (set_local $8
+            (get_local $6)
+           )
+           (br_table $in $switch-in $in
+            (i32.const 777)
+           )
           )
          )
         )
+        (drop
+         (get_local $8)
+        )
        )
-       (drop
-        (get_local $6)
+       (block
+        (set_local $7
+         (i32.const 3)
+        )
+        (br $in)
+       )
+       (set_local $7
+        (i32.const 4)
        )
       )
-      (block
-       (set_local $10
-        (i32.const 3)
+      (set_local $46
+       (i32.add
+        (get_local $9)
+        (get_local $7)
        )
-       (br $in)
       )
-      (set_local $10
-       (i32.const 4)
+     )
+     (set_local $10
+      (get_local $46)
+     )
+    )
+    (drop
+     (get_local $10)
+    )
+   )
+   (block
+    (block
+     (block
+      (set_local $12
+       (i32.const 1)
+      )
+      (loop $loop-in
+       (set_local $11
+        (i32.const 5)
+       )
+      )
+      (set_local $47
+       (i32.add
+        (get_local $12)
+        (get_local $11)
+       )
       )
      )
      (set_local $13
-      (i32.add
-       (get_local $9)
-       (get_local $10)
-      )
+      (get_local $47)
      )
     )
     (drop
@@ -876,48 +830,32 @@
    )
    (block
     (block
-     (set_local $14
-      (i32.const 1)
-     )
-     (loop $loop-in
+     (block
       (set_local $15
-       (i32.const 5)
+       (i32.const 1)
+      )
+      (if
+       (i32.const 6)
+       (set_local $14
+        (i32.const 7)
+       )
+       (set_local $14
+        (i32.const 8)
+       )
+      )
+      (set_local $48
+       (i32.add
+        (get_local $15)
+        (get_local $14)
+       )
       )
      )
      (set_local $16
-      (i32.add
-       (get_local $14)
-       (get_local $15)
-      )
+      (get_local $48)
      )
     )
     (drop
      (get_local $16)
-    )
-   )
-   (block
-    (block
-     (set_local $17
-      (i32.const 1)
-     )
-     (if
-      (i32.const 6)
-      (set_local $18
-       (i32.const 7)
-      )
-      (set_local $18
-       (i32.const 8)
-      )
-     )
-     (set_local $19
-      (i32.add
-       (get_local $17)
-       (get_local $18)
-      )
-     )
-    )
-    (drop
-     (get_local $19)
     )
    )
    (drop
@@ -934,18 +872,18 @@
    )
    (block
     (block
+     (set_local $19
+      (i32.const 9)
+     )
+     (br $out)
+    )
+   )
+   (block
+    (block
+     (set_local $21
+      (i32.const 9)
+     )
      (set_local $22
-      (i32.const 9)
-     )
-     (br $out)
-    )
-   )
-   (block
-    (block
-     (set_local $24
-      (i32.const 9)
-     )
-     (set_local $25
       (i32.const 10)
      )
      (br $out)
@@ -953,129 +891,149 @@
    )
    (block
     (block
-     (if
-      (i32.const 11)
-      (set_local $26
-       (i32.const 12)
+     (block
+      (if
+       (i32.const 11)
+       (set_local $23
+        (i32.const 12)
+       )
+       (set_local $23
+        (i32.const 13)
+       )
       )
-      (set_local $26
-       (i32.const 13)
+      (set_local $24
+       (i32.const 9)
+      )
+      (set_local $25
+       (i32.const 10)
+      )
+      (set_local $49
+       (select
+        (get_local $23)
+        (get_local $24)
+        (get_local $25)
+       )
       )
      )
-     (set_local $27
-      (i32.const 9)
-     )
-     (set_local $28
-      (i32.const 10)
-     )
-     (set_local $29
-      (select
-       (get_local $26)
-       (get_local $27)
-       (get_local $28)
-      )
+     (set_local $26
+      (get_local $49)
      )
     )
     (drop
-     (get_local $29)
+     (get_local $26)
     )
    )
    (block
     (block
+     (block
+      (set_local $28
+       (i32.const 9)
+      )
+      (if
+       (i32.const 11)
+       (set_local $27
+        (i32.const 12)
+       )
+       (set_local $27
+        (i32.const 13)
+       )
+      )
+      (set_local $29
+       (i32.const 10)
+      )
+      (set_local $50
+       (select
+        (get_local $28)
+        (get_local $27)
+        (get_local $29)
+       )
+      )
+     )
      (set_local $30
-      (i32.const 9)
-     )
-     (if
-      (i32.const 11)
-      (set_local $31
-       (i32.const 12)
-      )
-      (set_local $31
-       (i32.const 13)
-      )
-     )
-     (set_local $32
-      (i32.const 10)
-     )
-     (set_local $33
-      (select
-       (get_local $30)
-       (get_local $31)
-       (get_local $32)
-      )
+      (get_local $50)
      )
     )
     (drop
-     (get_local $33)
+     (get_local $30)
     )
    )
    (block
     (block
+     (block
+      (set_local $32
+       (i32.const 9)
+      )
+      (set_local $33
+       (i32.const 10)
+      )
+      (if
+       (i32.const 11)
+       (set_local $31
+        (i32.const 12)
+       )
+       (set_local $31
+        (i32.const 13)
+       )
+      )
+      (set_local $51
+       (select
+        (get_local $32)
+        (get_local $33)
+        (get_local $31)
+       )
+      )
+     )
      (set_local $34
-      (i32.const 9)
-     )
-     (set_local $35
-      (i32.const 10)
-     )
-     (if
-      (i32.const 11)
-      (set_local $36
-       (i32.const 12)
-      )
-      (set_local $36
-       (i32.const 13)
-      )
-     )
-     (set_local $37
-      (select
-       (get_local $34)
-       (get_local $35)
-       (get_local $36)
-      )
+      (get_local $51)
      )
     )
     (drop
-     (get_local $37)
+     (get_local $34)
     )
    )
    (block
     (block
-     (if
-      (i32.const 11)
-      (set_local $38
-       (i32.const 12)
+     (block
+      (if
+       (i32.const 11)
+       (set_local $35
+        (i32.const 12)
+       )
+       (set_local $35
+        (i32.const 13)
+       )
       )
-      (set_local $38
-       (i32.const 13)
+      (set_local $37
+       (i32.const 14)
+      )
+      (if
+       (i32.const 15)
+       (set_local $36
+        (i32.const 16)
+       )
+       (set_local $36
+        (i32.const 17)
+       )
+      )
+      (set_local $52
+       (select
+        (get_local $35)
+        (get_local $37)
+        (get_local $36)
+       )
       )
      )
+     (set_local $38
+      (get_local $52)
+     )
+    )
+    (drop
+     (get_local $38)
+    )
+   )
+   (block
+    (block
      (set_local $39
-      (i32.const 14)
-     )
-     (if
-      (i32.const 15)
-      (set_local $40
-       (i32.const 16)
-      )
-      (set_local $40
-       (i32.const 17)
-      )
-     )
-     (set_local $41
-      (select
-       (get_local $38)
-       (get_local $39)
-       (get_local $40)
-      )
-     )
-    )
-    (drop
-     (get_local $41)
-    )
-   )
-   (block
-    (block
-     (set_local $42
       (i32.const 1)
      )
      (return)
@@ -1083,7 +1041,7 @@
    )
    (block
     (block
-     (set_local $43
+     (set_local $40
       (i32.const 1)
      )
      (unreachable)
@@ -1093,55 +1051,87 @@
     (block
      (if
       (i32.const 5)
-      (set_local $44
+      (set_local $41
        (i32.const 6)
       )
-      (set_local $44
+      (set_local $41
        (i32.const 7)
       )
      )
      (if
-      (get_local $44)
-      (set_local $45
+      (get_local $41)
+      (set_local $43
        (i32.const 8)
       )
       (block
        (if
         (i32.const 9)
-        (set_local $53
+        (set_local $42
          (i32.const 10)
         )
-        (set_local $53
+        (set_local $42
          (i32.const 11)
         )
        )
-       (set_local $45
-        (get_local $53)
+       (set_local $43
+        (get_local $42)
        )
       )
      )
-     (set_local $46
-      (get_local $45)
+    )
+    (drop
+     (get_local $43)
+    )
+   )
+   (block
+    (block $temp
+     (block
+      (block
+       (block
+        (set_local $44
+         (i32.const 1)
+        )
+        (set_local $53
+         (br_if $temp
+          (i32.const 2)
+         )
+        )
+       )
+       (set_local $54
+        (get_local $44)
+       )
+      )
+      (set_local $44
+       (get_local $54)
+      )
      )
     )
     (drop
-     (get_local $46)
+     (get_local $44)
     )
    )
   )
  )
  (func $flatten-return-value (type $2) (result i32)
   (local $0 i32)
+  (local $1 i32)
   (block
    (block
-    (set_local $0
-     (i32.const 1)
-    )
-    (return
-     (i32.const 2)
+    (block
+     (set_local $0
+      (i32.const 1)
+     )
+     (return
+      (i32.const 2)
+     )
     )
    )
+   (set_local $1
+    (i32.const 3)
+   )
   )
-  (i32.const 3)
+  (return
+   (get_local $1)
+  )
  )
 )

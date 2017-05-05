@@ -95,15 +95,17 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   void doWalkFunction(Function* func) {
     builder = make_unique<Builder>(*getModule());
     walk(func->body);
-    // if the body had a fallthrough, receive it and return it
-    auto iter = breakExprIndexes.find(func->body);
-    if (iter != breakExprIndexes.end()) {
-      func->body = builder->makeSequence(
-        func->body,
-        builder->makeReturn(
-          builder->makeGetLocal(iter->second, func->result)
-        )
-      );
+    if (func->result != none) {
+      // if the body had a fallthrough, receive it and return it
+      auto iter = breakExprIndexes.find(func->body);
+      if (iter != breakExprIndexes.end()) {
+        func->body = builder->makeSequence(
+          func->body,
+          builder->makeReturn(
+            builder->makeGetLocal(iter->second, func->result)
+          )
+        );
+      }
     }
   }
 
@@ -229,7 +231,11 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
           // we can use the local it already assigned to. TODO: don't even allocate one here
           block->list.push_back(child);
           assert(parent.breakExprIndexes.count(child) > 0);
-          *children[i] = builder->makeGetLocal(parent.breakExprIndexes[child], type);
+          auto index = parent.breakExprIndexes[child];
+          *children[i] = builder->makeGetLocal(
+            index,
+            parent.getFunction()->getLocalType(index)
+          );
         } else if (type == unreachable) {
           block->list.push_back(child);
           break; // no need to push any more

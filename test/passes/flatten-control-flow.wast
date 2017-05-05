@@ -678,6 +678,14 @@
           )
         )
       )
+      (drop
+        (block $temp i32
+          (br_if $temp
+            (i32.const 1)
+            (i32.const 2)
+          )
+        )
+      )
     )
   )
   (func $flatten-return-value (result i32)
