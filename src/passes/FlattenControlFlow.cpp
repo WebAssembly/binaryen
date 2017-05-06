@@ -54,8 +54,6 @@
 #include <pass.h>
 #include <wasm-builder.h>
 
-                                                                              #include "wasm-printing.h"
-      // TODO: when we add a set)_local, flatten inside it
 
 namespace wasm {
 
@@ -95,15 +93,6 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   std::map<Expression*, Index> breakExprIndexes;
 
   void doWalkFunction(Function* func) {
-/*
-static int from = atoi(getenv("FROM"));
-static int to = atoi(getenv("TO"));
-static int counter = 0;
-counter++;
-if (counter - 1 < from) return;
-if (counter - 1> to) return;
-std::cerr << "doing " << counter << " : " << func->name << "\n";
-*/
     builder = make_unique<Builder>(*getModule());
     walk(func->body);
     if (func->result != none) {
@@ -175,9 +164,7 @@ std::cerr << "doing " << counter << " : " << func->name << "\n";
       // no need to even set the local
       return child;
     } else {
-if (ControlFlowChecker::is(child))
- std::cerr << getFunction()->name << " :-( " << child << "\n";
-    assert(!ControlFlowChecker::is(child));
+      assert(!ControlFlowChecker::is(child));
       return builder->makeSetLocal(
         myIndex,
         child
@@ -265,8 +252,6 @@ if (ControlFlowChecker::is(child))
           // a nested none can not happen normally, here it occurs after we flattened a nested
           // we can use the local it already assigned to. TODO: don't even allocate one here
           block->list.push_back(child);
-if (parent.breakExprIndexes.count(child) == 0)
- std::cerr << parent.getFunction()->name << " :( " << node << " : " << child << "\n";
           assert(parent.breakExprIndexes.count(child) > 0);
           auto index = parent.breakExprIndexes[child];
           *children[i] = builder->makeGetLocal(
