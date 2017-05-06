@@ -49,6 +49,14 @@
 //  2. Disallow block, loop, and if return values, i.e., do not use
 //     control flow to pass around values.
 //
+// Note that we do still allow normal arbitrary nesting of expressions
+// *without* control flow (i.e., this is not a reduction to 3-address
+// code form). We also allow nesting of control flow, but just nested
+// in other control flow, like an if in the true arm of an if, and
+// so forth. What we achieve here is that when you see an expression,
+// you know it has no control flow inside it, it will be fully
+// executed.
+//
 
 #include <wasm.h>
 #include <pass.h>
