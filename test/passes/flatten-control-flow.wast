@@ -759,4 +759,18 @@
     )
    )
   )
+  (func $nested-br_if-with-value (result i32)
+   (local $0 i32)
+   (block $label$0 i32
+    (drop
+     (br_if $label$0
+      (i32.const 0)
+      (block i32
+       (get_local $0)
+      )
+     )
+    )
+    (i32.const 1)
+   )
+  )
 )

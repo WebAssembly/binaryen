@@ -290,11 +290,10 @@ if (parent.breakExprIndexes.count(child) == 0)
       parent.visitBlock(block);
       // the block is now done
       parent.replaceCurrent(block);
-      // if the node is an if, which returned a value, then we replaced it with
-      // a block (while flattening its condition; note how this can't happen with
-      // blocks or loops). So the parent of the if will now see the block, and we
-      // must tell it the temp index for that
-      if (node->is<If>() && parent.breakExprIndexes.find(node) != parent.breakExprIndexes.end()) {
+      // if the node was potentially a flowthrough value, then it has an entry
+      // in breakExprIndexes, and since we are replacing it with this block,
+      // we must note it's index as the same, so it is found by the parent.
+      if (parent.breakExprIndexes.find(node) != parent.breakExprIndexes.end()) {
         parent.breakExprIndexes[block] = parent.breakExprIndexes[node];
       }
     }

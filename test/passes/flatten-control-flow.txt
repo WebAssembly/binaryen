@@ -1141,4 +1141,37 @@
    (get_local $4)
   )
  )
+ (func $nested-br_if-with-value (type $2) (result i32)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (block $label$0
+   (block
+    (block
+     (block $block
+      (set_local $1
+       (get_local $0)
+      )
+     )
+     (block
+      (set_local $2
+       (i32.const 0)
+      )
+      (br_if $label$0
+       (get_local $1)
+      )
+     )
+    )
+    (drop
+     (get_local $2)
+    )
+   )
+   (set_local $2
+    (i32.const 1)
+   )
+  )
+  (return
+   (get_local $2)
+  )
+ )
 )
