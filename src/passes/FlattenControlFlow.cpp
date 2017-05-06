@@ -40,7 +40,7 @@
 //
 // Formally, this pass flattens control flow in the precise sense of
 // making the AST have these properties:
-//W
+//
 //  1. Control flow structures (block, loop, if) and control flow
 //     operations (br, br_if, br_table, return, unreachable) may
 //     only be block children, a loop body, or an if-true or if-false.
