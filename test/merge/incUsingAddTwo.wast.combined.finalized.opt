@@ -1,0 +1,23 @@
+(module
+ (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
+ (type $1 (func (param i32) (result i32)))
+ (type $0 (func (param i32 i32) (result i32)))
+ (import "env" "memory" (memory $0 1))
+ (table 8 anyfunc)
+ 
+ (data (get_global ) "")
+ (export "inc" (func $inc))
+ (export "addTwo" (func $addTwo))
+ (func $inc (type $1) (param $0 i32) (result i32)
+  (call $addTwo
+   (get_local $0)
+   (i32.const 1)
+  )
+ )
+ (func $addTwo (type $0) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (get_local $1)
+   (get_local $0)
+  )
+ )
+)
