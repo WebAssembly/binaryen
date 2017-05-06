@@ -38,14 +38,16 @@
 //    (i32.const 1)
 //  )
 //
-// The properties we work to achieve are
-//  1. leave control flow structures and control flow operations
-//     to only show up as a block element, if true or if false, loop
-//     body, or function body, and nowhere else (i.e. not nested in an
-//     i32.add, drop, etc., nor in an if condition)
-//  2. avoid fallthrough values, i.e., do not use control flow to
-//     pass values automatically, which means no block, loop and if
-//     values (instead, use a local)
+// Formally, this pass flattens control flow in the precise sense of
+// making the AST have these properties:
+//W
+//  1. Control flow structures (block, loop, if) and control flow
+//     operations (br, br_if, br_table, return, unreachable) may
+//     only be block children, a loop body, or an if-true or if-false.
+//     (I.e., they cannot be nested inside an i32.add, a drop, a
+//     call, an if-condition, etc.)
+//  2. Disallow block, loop, and if return values, i.e., do not use
+//     control flow to pass around values.
 //
 
 #include <wasm.h>
