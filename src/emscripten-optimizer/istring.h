@@ -66,11 +66,11 @@ struct IString {
 
   void set(const char *s, bool reuse=true) {
     typedef std::unordered_set<const char *, CStringHash, CStringEqual> StringSet;
-    static StringSet* strings = new StringSet();
+    static StringSet strings;
 
-    auto existing = strings->find(s);
+    auto existing = strings.find(s);
 
-    if (existing == strings->end()) {
+    if (existing == strings.end()) {
       // the StringSet cache is a global shared structure, which should
       // not be modified by multiple threads at once.
       assert(!wasm::ThreadPool::isRunning());
@@ -80,7 +80,7 @@ struct IString {
         strncpy(copy, s, len);
         s = copy;
       }
-      strings->insert(s);
+      strings.insert(s);
     } else {
       s = *existing;
     }
