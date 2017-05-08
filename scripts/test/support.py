@@ -94,6 +94,11 @@ def split_wast(wast):
   # this splits out a wast into [(module, assertions), ..]
   # we ignore module invalidity tests here.
   wast = open(wast).read()
+
+  # if it's a binary, leave it as is
+  if wast[0] == '\0':
+    return [[wast, '']]
+
   ret = []
 
   def to_end(j):

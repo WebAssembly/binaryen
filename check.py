@@ -76,7 +76,8 @@ print '\n[ checking wasm-opt passes... ]\n'
 for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
   if t.endswith(('.wast', '.wasm')):
     print '..', t
-    passname = os.path.basename(t).replace('.wast', '')
+    binary = '.wasm' in t
+    passname = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
     opts = ['-' + passname] if passname.startswith('O') else ['--' + p for p in passname.split('_')]
     t = os.path.join(options.binaryen_test, 'passes', t)
     actual = ''
@@ -88,7 +89,7 @@ for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
       # also check debug mode output is valid
       debugged = run_command(cmd + ['--debug'], stderr=subprocess.PIPE)
       fail_if_not_contained(actual, debugged)
-    fail_if_not_identical(actual, open(os.path.join(options.binaryen_test, 'passes', passname + '.txt'), 'rb').read())
+    fail_if_not_identical(actual, os.path.join('test', 'passes', passname + ('.bin' if binary else '') + '.txt'), 'rb').read())
 
 print '[ checking asm2wasm testcases... ]\n'
 
