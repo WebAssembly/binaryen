@@ -48,17 +48,18 @@ Element::List& Element::list() {
 }
 
 Element* Element::operator[](unsigned i) {
+  if (!isList()) throw ParseException("expected list", line, col);
   if (i >= list().size()) throw ParseException("expected more elements in list", line, col);
   return list()[i];
 }
 
 IString Element::str() {
-  element_assert(!isList_);
+  if (!isStr()) throw ParseException("expected string", line, col);
   return str_;
 }
 
 const char* Element::c_str() {
-  element_assert(!isList_);
+  if (!isStr()) throw ParseException("expected string", line, col);
   return str_.str;
 }
 
@@ -207,7 +208,8 @@ Element* SExpressionParser::parseString() {
 }
 
 SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName) : wasm(wasm), allocator(wasm.allocator), globalCounter(0) {
-  assert(module[0]->str() == MODULE);
+  if (module.size() == 0) throw ParseException("empty toplevel, expected module");
+  if (module[0]->str() != MODULE) throw ParseException("toplevel does not start with module");
   if (module.size() == 1) return;
   Index i = 1;
   if (module[i]->dollared()) {
@@ -579,7 +581,6 @@ WasmType SExpressionWasmBuilder::stringToWasmType(const char* str, bool allowErr
 }
 
 Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
-  assert(s.isList());
   IString id = s[0]->str();
   const char *str = id.str;
   const char *dot = strchr(str, '.');
