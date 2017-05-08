@@ -116,6 +116,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
+        br->finalize(); // if we removed a condition, the type may change
         if (flow.value.type != none) {
           // reuse a const value if there is one
           if (br->value) {
