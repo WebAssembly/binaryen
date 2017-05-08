@@ -1732,7 +1732,6 @@ Expression* WasmBinaryBuilder::getBlock(WasmType type) {
   Name label = getNextLabel();
   breakStack.push_back({label, type != none && type != unreachable});
   auto* block = Builder(wasm).blockify(getMaybeBlock(type));
-  block->finalize();
   breakStack.pop_back();
   block->cast<Block>()->name = label;
   return block;

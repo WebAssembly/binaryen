@@ -288,8 +288,8 @@ public:
     if (!block) block = makeBlock(any);
     if (append) {
       block->list.push_back(append);
+      block->finalize();
     }
-    block->finalize();
     return block;
   }
 
@@ -302,8 +302,8 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
+      block->finalize();
     }
-    block->finalize();
     return block;
   }
 

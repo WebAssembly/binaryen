@@ -198,6 +198,16 @@ void Block::finalize() {
   if (!name.is()) {
     // nothing branches here, so this is easy
     if (list.size() > 0) {
+      // if we have an unreachable child, we are unreachable
+      // (we don't need to recurse into children, they can't
+      // break to us)
+      for (auto* child : list) {
+        if (child->type == unreachable) {
+          type = unreachable;
+          return;
+        }
+      }
+      // children are reachable, so last element determines type
       type = list.back()->type;
     } else {
       type = none;
