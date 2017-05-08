@@ -676,7 +676,8 @@ void WasmBinaryWriter::visitLoad(Load *curr) {
     }
     case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
     case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
-    default: abort();
+    case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
+    default: WASM_UNREACHABLE();
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
