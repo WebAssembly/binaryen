@@ -74,7 +74,7 @@ assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
 print '\n[ checking wasm-opt passes... ]\n'
 
 for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
-  if t.endswith('.wast'):
+  if t.endswith(('.wast', '.wasm')):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
     opts = ['-' + passname] if passname.startswith('O') else ['--' + p for p in passname.split('_')]

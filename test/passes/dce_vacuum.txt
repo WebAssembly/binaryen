@@ -1,9 +1,15 @@
 (module
  (type $0 (func (result i32)))
+ (type $1 (func (param f32 f32) (result f32)))
  (memory $0 0)
  (func $__Z12serveroptionPc (type $0) (result i32)
   (return
    (i32.const 0)
+  )
+ )
+ (func $drop-unreachable (type $1) (param $var$0 f32) (param $var$1 f32) (result f32)
+  (drop
+   (unreachable)
   )
  )
 )

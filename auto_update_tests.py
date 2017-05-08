@@ -84,7 +84,7 @@ for t in sorted(os.listdir(os.path.join('test', 'print'))):
     with open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w') as o: o.write(actual)
 
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
-  if t.endswith('.wast'):
+  if t.endswith(('.wast', '.wasm')):
     print '..', t
     passname = os.path.basename(t).replace('.wast', '')
     opts = ['-' + passname] if passname.startswith('O') else ['--' + p for p in passname.split('_')]

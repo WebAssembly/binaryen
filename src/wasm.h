@@ -466,6 +466,8 @@ public:
   Drop(MixedArena& allocator) {}
 
   Expression* value;
+
+  void finalize();
 };
 
 class Return : public SpecificExpression<Expression::ReturnId> {

@@ -423,6 +423,14 @@ void Select::finalize() {
   }
 }
 
+void Drop::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
+  }
+}
+
 void Host::finalize() {
   switch (op) {
     case PageSize: case CurrentMemory: case HasFeature: {

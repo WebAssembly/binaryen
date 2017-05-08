@@ -2149,6 +2149,7 @@ void WasmBinaryBuilder::visitUnreachable(Unreachable *curr) {
 void WasmBinaryBuilder::visitDrop(Drop *curr) {
   if (debug) std::cerr << "zz node: Drop" << std::endl;
   curr->value = popNonVoidExpression();
+  curr->finalize();
 }
 
 } // namespace wasm
