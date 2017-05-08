@@ -21,6 +21,8 @@
 // This pass depends on flatten-control-flow being run before it.
 //
 
+#include <memory>
+
 #include "wasm.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -33,37 +35,151 @@ struct ReReloop : public Pass {
 
   Pass* create() override { return new ReReloop; }
 
+  Relooper relooper;
+  std::unique_ptr<Builder> builder;
+
+  // block handling
+
+  CFG::Block* currCFGBlock;
+
+  CFG::Block* makeCFGBlock() {
+    return new CFG::Block(builder->makeBlock());
+  }
+
+  CFG::Block* startCFGBlock() {
+    return currCFGBlock = makeCFGBlock();
+  }
+
+  Block* getCurrBlock() {
+    return currCFGBlock->Code->cast<Block>();
+  }
+
+  void finishBlock() {
+    getCurrBlock()->finalize();
+  }
+
+  // break handling
+
+  std::map<Name, CFG::Block*> breakTargets;
+
+  void addBreakTarget(Name name, CFG::Block* target) {
+    breakTargets[name] = target;
+  }
+
+  // branch handling
+
+  void addBranch(CFG::Block* from, CFG::Block* to, Expression* condition = nullptr) {
+    // XXX handle more than one branch from A to B, need to merge them?
+    from->AddBranchTo(to, condition);
+  }
+
+  // we work using a stack of control flow tasks
+
+  struct Task {
+    ReReloop& parent;
+    Task(ReReloop& parent) : parent(parent) {}
+    virtual void run() {
+      WASM_UNREACHABLE();
+    }
+  };
+
+  typedef std::shared_ptr<Task> TaskPtr;
+  std::vector<TaskPtr> stack;
+
+  struct BlockTask : public Task {
+    Block* curr;
+    CFG::Block* later;
+    BlockTask(ReReloop& parent, Block* curr) : Task(parent), curr(curr) {
+      auto& list = curr->list;
+      for (int i = int(list.size()) - 1; i >= 0; i--) {
+        parent.stack.push_back(list[i]);
+      }
+      if (curr->name.is()) {
+        // we may be branched to. create a target, and
+        // ensure we are called at the join point 
+        later = parent.makeCFGBlock();
+        parent.addBreakTarget(curr->name, later);
+        parent.stack.push_back(new BlockTask(*this));
+      }
+    }
+
+    void run() override {
+      // add fallthrough
+      parent.addBranchTo(parent.getCurrCFGBlock(), later);
+    }
+  };
+
+  struct LoopTask : public Task {
+    Loop* curr;
+    LoopTask(ReReloop& parent, Loop* curr) : Task(parent), curr(curr) {
+      parent.stack.push_back(curr->body);
+      if (curr->name.is()) {
+        // we may be branched to. create a target
+        auto* before = parent.getCurrCFGBlock();
+        auto* top = parent.startCFGBlock();
+        parent.addBreakTarget(curr->name, top);
+        parent.addBranchTo(before, top);
+      }
+    }
+  };
+
+  struct IfTask : public Task {
+    If* curr;
+CFG::Block* later;
+    int phase = 0;
+    BlockTask(ReReloop& parent, If* curr) : Task(parent), curr(curr) {
+      TaskPtr task = new IfTask(*this);
+      if (curr->ifFalse) {
+        parent.stack.push_back(task);
+        parent.stack.push_back(curr->ifFalse);
+      }
+      parent.stack.push_back(task);
+      parent.stack.push_back(curr->ifTrue);
+      parent.stack.push_back(task);
+      parent.stack.push_back(curr->condition);
+        later = parent.makeCFGBlock();
+        parent.addBreakTarget(curr->name, later);
+        parent.stack.push_back(new BlockTask(this));
+      }
+    }
+
+    void run() override {
+      if (phase == 0) {
+        // after the condition
+      // add fallthrough
+      parent.addBranchTo(parent.getCurrCFGBlock(), later);
+    }
+  };
+
+  // handle an element we encounter
+
+  void handleElement(Expression* curr) {
+    if (auto* block = curr->dynCast<Block>()) {
+      BlockTask(*this, block);
+    } else if (auto* loop = curr->dynCast<Loop>()) {
+      LoopTask(*this, loop);
+    } else if (auto* iff = curr->dynCast<If>()) {
+      IfTask(*this, iff);
+    } else
+br, br_table, return, unreachable
+    } else {
+      // not control flow, so just a simple element
+      getCurrBlock()->list.push_back(curr);
+    }
+  }
+
   void runFunction(PassRunner* runner, Module* module, Function* function) override {
     // since control flow is flattened, this is pretty simple
     // first, traverse the function body. note how we don't need to traverse
     // into expressions, as we know they contain no control flow
-    std::vector<Expression*> stack;
-    Relooper relooper;
+    builder = make_unique<Builder>(*module);
+    currCFGBlock = makeCFGBlock();
     stack.push_back(function->body);
-    Builder builder(*module);
-    std::map<Name, CFG::Block*> breakTargets;
-    // make a cfg block, containing an ast block for us to append to
-    auto makeCFGBlock = [&]() {
-      return new CFG::Block(builder->makeBlock());
-    };
-    CFG::Block* currCFGBlock = makeCFGBlock();
-    auto getCurrBlock = [&]() {
-      return currCFGBlock->Code->cast<Block>();
-    };
+    // main loop
     while (stack.size() > 0) {
       auto* curr = stack.back();
       stack.pop_back();
-      if (auto* block = curr->dynCast<Block>()) {
-        if (block->name.is()) {
-          .. but taret is in the future ..
-          .. can create it now, but need to use it later
-        }
-        auto& list = block->list;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          stack.push_back(list[i]);
-        }
-      } else if (auto* loop = curr->dynCast<Loop>()) {
-      }
+      handleElement(curr);
     }
     // finish the current block
     ..
