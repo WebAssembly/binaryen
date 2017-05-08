@@ -5,7 +5,7 @@
  (table 2 2 anyfunc)
  (elem (i32.const 0) $_abort $call-indirect)
  (memory $0 256 256)
- (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00waka waka waka waka waka")
+ (data (i32.const 10) "waka waka waka waka waka")
  (export "test1" (func $test1))
  (func $test1 (type $v)
   (call_indirect $v

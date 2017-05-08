@@ -8,7 +8,7 @@
  (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
  (global $do-not-use (mut i32) (get_global $tempDoublePtr))
  (memory $0 256 256)
- (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00wasa waka waka waka waka")
+ (data (i32.const 10) "wasa waka waka waka waka")
  (export "test1" (func $test1))
  (export "test2" (func $test2))
  (export "test3" (func $test3))

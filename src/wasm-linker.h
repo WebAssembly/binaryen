@@ -21,8 +21,8 @@
 // is no merging of multiple modules). Currently this is only inteded to turn
 // a .s file produced by LLVM into a usable wast file.
 
-#ifndef WASM_WASM_LINK_H
-#define WASM_WASM_LINK_H
+#ifndef wasm_wasm_linker_h
+#define wasm_wasm_linker_h
 
 #include "support/archive.h"
 #include "support/name.h"
@@ -331,6 +331,6 @@ class Linker {
   std::map<Address, cashew::IString> functionNames;
 };
 
-
 }
-#endif // WASM_WASM_LINK_H
+
+#endif // wasm_wasm_linker_h
