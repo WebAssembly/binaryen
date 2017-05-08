@@ -2296,6 +2296,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Break *continuer = allocator.alloc<Break>();
       continuer->name = in;
       continuer->condition = process(ast[1]);
+      continuer->finalize();
       Block *block = builder.blockifyWithName(loop->body, out, continuer);
       loop->body = block;
       loop->finalize();
