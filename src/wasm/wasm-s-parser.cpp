@@ -928,6 +928,7 @@ Expression* SExpressionWasmBuilder::makeTeeLocal(Element& s) {
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
   ret->setTee(true);
+  ret->finalize();
   return ret;
 }
 
@@ -936,6 +937,7 @@ Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
   ret->setTee(false);
+  ret->finalize();
   return ret;
 }
 
@@ -960,6 +962,7 @@ Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
   ret->name = getGlobalName(*s[1]);
   if (wasm.getGlobalOrNull(ret->name) && !wasm.getGlobalOrNull(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
   ret->value = parseExpression(s[2]);
+  ret->finalize();
   return ret;
 }
 
@@ -1084,6 +1087,7 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type) {
     i++;
   }
   ret->ptr = parseExpression(s[i]);
+  ret->finalize();
   return ret;
 }
 
@@ -1210,6 +1214,7 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s) {
   ret->target = target;
   ret->type = functionTypes[ret->target];
   parseCallOperands(s, 2, s.size(), ret);
+  ret->finalize();
   return ret;
 }
 
@@ -1219,6 +1224,7 @@ Expression* SExpressionWasmBuilder::makeCallImport(Element& s) {
   Import* import = wasm.getImport(ret->target);
   ret->type = wasm.getFunctionType(import->functionType)->result;
   parseCallOperands(s, 2, s.size(), ret);
+  ret->finalize();
   return ret;
 }
 
@@ -1232,6 +1238,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   ret->type = fullType->result;
   parseCallOperands(s, 2, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
+  ret->finalize();
   return ret;
 }
 

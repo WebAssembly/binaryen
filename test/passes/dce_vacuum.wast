@@ -21,5 +21,31 @@
     (get_local $var$1)
    )
   )
+
+ (func $set-unreachable (param $var$0 i64) (result i64)
+  (local $var$1 i64)
+  (local $var$2 i64)
+  (block $label$0 i64
+   (block $label$1
+    (loop $label$2
+     (if
+      (i64.eq
+       (get_local $var$1)
+       (i64.const 0)
+      )
+      (unreachable)
+      (set_local $var$2
+       (i64.mul
+        (unreachable)
+        (get_local $var$2)
+       )
+      )
+     )
+     (br $label$2)
+    )
+   )
+   (get_local $var$2)
+  )
+ )
 )
 

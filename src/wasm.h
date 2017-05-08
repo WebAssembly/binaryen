@@ -309,6 +309,8 @@ public:
 
   ExpressionList operands;
   Name target;
+
+  void finalize();
 };
 
 class CallImport : public SpecificExpression<Expression::CallImportId> {
@@ -317,6 +319,8 @@ public:
 
   ExpressionList operands;
   Name target;
+
+  void finalize();
 };
 
 class FunctionType {
@@ -340,6 +344,8 @@ public:
   ExpressionList operands;
   Name fullType;
   Expression* target;
+
+  void finalize();
 };
 
 class GetLocal : public SpecificExpression<Expression::GetLocalId> {
@@ -354,6 +360,8 @@ class SetLocal : public SpecificExpression<Expression::SetLocalId> {
 public:
   SetLocal() {}
   SetLocal(MixedArena& allocator) {}
+
+  void finalize();
 
   Index index;
   Expression* value;
@@ -377,6 +385,8 @@ public:
 
   Name name;
   Expression* value;
+
+  void finalize();
 };
 
 class Load : public SpecificExpression<Expression::LoadId> {
@@ -391,6 +401,8 @@ public:
   Expression* ptr;
 
   // type must be set during creation, cannot be inferred
+
+  void finalize();
 };
 
 class Store : public SpecificExpression<Expression::StoreId> {

@@ -274,6 +274,31 @@ void Switch::finalize() {
   type = unreachable;
 }
 
+template<typename T>
+void handleUnreachableOperands(T* curr) {
+  for (auto* child : curr->operands) {
+    if (child->type == unreachable) {
+      curr->type = unreachable;
+      break;
+    }
+  }
+}
+
+void Call::finalize() {
+  handleUnreachableOperands(this);
+}
+
+void CallImport::finalize() {
+  handleUnreachableOperands(this);
+}
+
+void CallIndirect::finalize() {
+  handleUnreachableOperands(this);
+  if (target->type == unreachable) {
+    type = unreachable;
+  }
+}
+
 bool FunctionType::structuralComparison(FunctionType& b) {
   if (result != b.result) return false;
   if (params.size() != b.params.size()) return false;
@@ -298,6 +323,24 @@ bool SetLocal::isTee() {
 void SetLocal::setTee(bool is) {
   if (is) type = value->type;
   else type = none;
+}
+
+void SetLocal::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SetGlobal::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void Load::finalize() {
+  if (ptr->type == unreachable) {
+    type = unreachable;
+  }
 }
 
 void Store::finalize() {

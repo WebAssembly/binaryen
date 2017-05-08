@@ -382,26 +382,24 @@
    (block $label$0 i64
     (get_local $var$1)
    )
-   (block $label$1 i64
-    (block i64
+   (block
+    (drop
+     (i64.sub
+      (get_local $var$0)
+      (i64.const 1)
+     )
+    )
+    (block
      (drop
-      (i64.sub
-       (get_local $var$0)
-       (i64.const 1)
-      )
-     )
-     (block
-      (drop
-       (block $block i64
-        (set_local $2
-         (get_local $var$0)
-        )
-        (nop)
-        (get_local $2)
+      (block $block i64
+       (set_local $2
+        (get_local $var$0)
        )
+       (nop)
+       (get_local $2)
       )
-      (unreachable)
      )
+     (unreachable)
     )
    )
   )

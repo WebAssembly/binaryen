@@ -1813,6 +1813,7 @@ Expression* WasmBinaryBuilder::visitCall() {
     call->target = import->name;
     type = wasm.getFunctionType(import->functionType);
     fillCall(call, type);
+    call->finalize();
     ret = call;
   } else {
     // this is a call of a defined function
@@ -1824,6 +1825,7 @@ Expression* WasmBinaryBuilder::visitCall() {
     type = functionTypes[adjustedIndex];
     fillCall(call, type);
     functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
+    call->finalize();
     ret = call;
   }
   return ret;
@@ -1846,6 +1848,7 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = fullType->result;
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
@@ -1872,6 +1875,7 @@ void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   curr->value = popNonVoidExpression();
   curr->type = curr->value->type;
   curr->setTee(code == BinaryConsts::TeeLocal);
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitGetGlobal(GetGlobal *curr) {
@@ -1896,6 +1900,7 @@ void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
   curr->value = popNonVoidExpression();
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::readMemoryAccess(Address& alignment, size_t bytes, Address& offset) {
@@ -1925,6 +1930,7 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out, uint8_t code) {
   if (debug) std::cerr << "zz node: Load" << std::endl;
   readMemoryAccess(curr->align, curr->bytes, curr->offset);
   curr->ptr = popNonVoidExpression();
+  curr->finalize();
   out = curr;
   return true;
 }
