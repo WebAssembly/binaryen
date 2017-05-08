@@ -54,6 +54,7 @@ Pass *createRemoveUnusedModuleElementsPass();
 Pass *createRemoveUnusedNamesPass();
 Pass *createReorderFunctionsPass();
 Pass *createReorderLocalsPass();
+Pass *createReReloopPass();
 Pass *createSimplifyLocalsPass();
 Pass *createSimplifyLocalsNoTeePass();
 Pass *createSimplifyLocalsNoStructurePass();

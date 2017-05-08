@@ -96,6 +96,7 @@ void PassRegistry::registerPasses() {
   registerPass("remove-unused-names", "removes names from locations that are never branched to", createRemoveUnusedNamesPass);
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
+  registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
