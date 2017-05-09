@@ -7,4 +7,18 @@
    (nop)
   )
  )
+ (func $trivial2 (type $0)
+  (local $0 i32)
+  (block
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 2)
+   )
+   (drop
+    (i32.const 3)
+   )
+  )
+ )
 )
