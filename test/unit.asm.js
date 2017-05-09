@@ -689,10 +689,25 @@ function asm(global, env, buffer) {
     return (~~x) | 0;
   }
 
+  function autoDrop(x) {
+    x = x | 0;
+    while (1) {
+      if ((x | 0) == 17) {
+        return 5;
+        autoDrop(1) | 0;
+      } else {
+        break;
+        x = autoDrop(2) | 0;
+      }
+    }
+    return x | 0;
+  }
+
   function keepAlive() {
     sqrts(3.14159);
     f2u(100.0);
     f2s(100.0);
+    autoDrop(52) | 0;
   }
 
   function v() {

@@ -1925,6 +1925,40 @@
    )
   )
  )
+ (func $autoDrop (param $x i32) (result i32)
+  (loop $while-in
+   (block $while-out
+    (if
+     (i32.eq
+      (get_local $x)
+      (i32.const 17)
+     )
+     (block
+      (return
+       (i32.const 5)
+      )
+      (drop
+       (call $autoDrop
+        (i32.const 1)
+       )
+      )
+     )
+     (block
+      (br $while-out)
+      (set_local $x
+       (call $autoDrop
+        (i32.const 2)
+       )
+      )
+     )
+    )
+    (br $while-in)
+   )
+  )
+  (return
+   (get_local $x)
+  )
+ )
  (func $keepAlive
   (drop
    (call $sqrts
@@ -1939,6 +1973,11 @@
   (drop
    (call $f2s
     (f64.const 100)
+   )
+  )
+  (drop
+   (call $autoDrop
+    (i32.const 52)
    )
   )
  )
