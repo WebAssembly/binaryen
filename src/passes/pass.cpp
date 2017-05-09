@@ -293,18 +293,10 @@ void PassRunner::doAdd(Pass* pass) {
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
-#if 0
-  if (debug) {
-    std::cerr << "[PassRunner]   runPass " << pass->name << " OnFunction " << func->name << "\n";
-  }
-#endif
+  assert(pass->isFunctionParallel());
   // function-parallel passes get a new instance per function
-  if (pass->isFunctionParallel()) {
-    auto instance = std::unique_ptr<Pass>(pass->create());
-    instance->runFunction(this, wasm, func);
-  } else {
-    pass->runFunction(this, wasm, func);
-  }
+  auto instance = std::unique_ptr<Pass>(pass->create());
+  instance->runFunction(this, wasm, func);
 }
 
 } // namespace wasm

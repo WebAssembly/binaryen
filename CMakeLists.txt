@@ -168,6 +168,7 @@ ENDIF()
 # Static libraries
 ADD_SUBDIRECTORY(src/ast)
 ADD_SUBDIRECTORY(src/asmjs)
+ADD_SUBDIRECTORY(src/cfg)
 ADD_SUBDIRECTORY(src/emscripten-optimizer)
 ADD_SUBDIRECTORY(src/passes)
 ADD_SUBDIRECTORY(src/support)
@@ -178,14 +179,13 @@ ADD_SUBDIRECTORY(src/wasm)
 
 SET(binaryen_SOURCES
   src/binaryen-c.cpp
-  src/cfg/Relooper.cpp
 )
 IF(BUILD_STATIC_LIB)
   ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})    
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
-TARGET_LINK_LIBRARIES(binaryen ${all_passes} wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(binaryen ${all_passes} wasm asmjs ast cfg support)
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -198,7 +198,7 @@ SET(wasm-shell_SOURCES
 )
 ADD_EXECUTABLE(wasm-shell
                ${wasm-shell_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer ${all_passes} ast support)
+TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -208,7 +208,7 @@ SET(wasm-opt_SOURCES
 )
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer ${all_passes} ast support)
+TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -218,7 +218,7 @@ SET(wasm-merge_SOURCES
 )
 ADD_EXECUTABLE(wasm-merge
                ${wasm-merge_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer ${all_passes} ast support)
+TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-merge DESTINATION bin)
@@ -229,7 +229,7 @@ SET(asm2wasm_SOURCES
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer ${all_passes} wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer ${all_passes} wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -241,7 +241,7 @@ SET(s2wasm_SOURCES
 )
 ADD_EXECUTABLE(s2wasm
                ${s2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(s2wasm passes wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(s2wasm passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -251,7 +251,7 @@ SET(wasm_as_SOURCES
 )
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes ast support)
+TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes ast cfg support)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -261,7 +261,7 @@ SET(wasm_dis_SOURCES
 )
 ADD_EXECUTABLE(wasm-dis
                ${wasm_dis_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -271,7 +271,7 @@ SET(wasm-ctor-eval_SOURCES
 )
 ADD_EXECUTABLE(wasm-ctor-eval
                ${wasm-ctor-eval_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-ctor-eval wasm asmjs emscripten-optimizer ${all_passes} ast support)
+TARGET_LINK_LIBRARIES(wasm-ctor-eval wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)
