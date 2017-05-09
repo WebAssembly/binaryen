@@ -50,6 +50,10 @@ struct ReReloop : public Pass {
     return currCFGBlock = makeCFGBlock();
   }
 
+  CFG::Block* getCurrCFGBlock() {
+    return currCFGBlock;
+  }
+
   Block* getCurrBlock() {
     return currCFGBlock->Code->cast<Block>();
   }
@@ -64,6 +68,10 @@ struct ReReloop : public Pass {
 
   void addBreakTarget(Name name, CFG::Block* target) {
     breakTargets[name] = target;
+  }
+
+  CFG::Block* getBreakTarget(Name name) {
+    return breakTargets[name];
   }
 
   // branch handling
@@ -89,65 +97,101 @@ struct ReReloop : public Pass {
   struct BlockTask : public Task {
     Block* curr;
     CFG::Block* later;
-    BlockTask(ReReloop& parent, Block* curr) : Task(parent), curr(curr) {
+
+    static void handle(ReReloop& parent, Block* curr) {
       auto& list = curr->list;
       for (int i = int(list.size()) - 1; i >= 0; i--) {
         parent.stack.push_back(list[i]);
       }
       if (curr->name.is()) {
         // we may be branched to. create a target, and
-        // ensure we are called at the join point 
-        later = parent.makeCFGBlock();
-        parent.addBreakTarget(curr->name, later);
-        parent.stack.push_back(new BlockTask(*this));
+        // ensure we are called at the join point
+        TaskPtr task = new BlockTask(parent);
+        task->curr = curr;
+        task->later = parent.makeCFGBlock();
+        parent.addBreakTarget(curr->name, task->later);
+        parent.stack.push_back(task);
       }
     }
 
     void run() override {
       // add fallthrough
-      parent.addBranchTo(parent.getCurrCFGBlock(), later);
+      parent.addBranch(parent.getCurrCFGBlock(), later);
     }
   };
 
   struct LoopTask : public Task {
-    Loop* curr;
-    LoopTask(ReReloop& parent, Loop* curr) : Task(parent), curr(curr) {
+    static void handle(ReReloop& parent, Loop* curr) {
       parent.stack.push_back(curr->body);
       if (curr->name.is()) {
         // we may be branched to. create a target
         auto* before = parent.getCurrCFGBlock();
         auto* top = parent.startCFGBlock();
         parent.addBreakTarget(curr->name, top);
-        parent.addBranchTo(before, top);
+        parent.addBranch(before, top);
       }
     }
   };
 
   struct IfTask : public Task {
     If* curr;
-CFG::Block* later;
+    CFG::Block* condition;
+    CFG::Block* ifTrueEnd;
     int phase = 0;
-    BlockTask(ReReloop& parent, If* curr) : Task(parent), curr(curr) {
-      TaskPtr task = new IfTask(*this);
+
+    static void IfTask(ReReloop& parent, If* curr) {
+      TaskPtr task = new IfTask(parent);
+      task->curr = curr;
+      task->condition = parent.getCurrCFGBlock();
+      auto ifTrueBegin = parent.startCFGBlock();
+      parent.addBranch(task->condition, ifTrueBegin, curr->condition);
       if (curr->ifFalse) {
         parent.stack.push_back(task);
         parent.stack.push_back(curr->ifFalse);
       }
       parent.stack.push_back(task);
       parent.stack.push_back(curr->ifTrue);
-      parent.stack.push_back(task);
-      parent.stack.push_back(curr->condition);
-        later = parent.makeCFGBlock();
-        parent.addBreakTarget(curr->name, later);
-        parent.stack.push_back(new BlockTask(this));
-      }
     }
 
     void run() override {
       if (phase == 0) {
-        // after the condition
-      // add fallthrough
-      parent.addBranchTo(parent.getCurrCFGBlock(), later);
+        // end of ifTrue
+        ifTrueEnd = parent.getCurrCFGBlock();
+        auto after = parent.startCFGBlock();
+        parent.addBranch(task->condition, after); // if condition was false, go after the ifTrue, to ifFalse or outside
+        if (!curr->ifFalse) {
+          parent.addBranch(ifTrueEnd, after);
+        }
+        phase++;
+      } else if (phase == 1) {
+        // end if ifFalse
+        auto ifFalseEnd = parent.getCurrCFGBlock();
+        auto after = parent.startCFGBlock();
+        parent.addBranch(ifTrueEnd, after);
+        parent.addBranch(ifFalseEnd, after);
+      } else {
+        WASM_UNREACHABLE();
+      }
+    }
+  };
+
+  struct BreakTask : public Task {
+    static void handle(ReReloop& parent, Break* curr) {
+      // add the branch. note how if the condition is false, it is the right value there as well
+      auto before = parent.getCurrCFGBlock();
+      parent.addBranch(before, parent.getBreakTarget(curr->name), curr->condition);
+      if (curr->condition) {
+        auto after = parent.startCFGBlock();
+        parent.addBranch(before, after);
+      } else {
+        parent.stopControlFlow();
+      }
+    }
+  };
+
+  struct SwitchTask : public Task {
+    static void handle(ReReloop& parent, Switch* curr) {
+      abort(); // TODO!
     }
   };
 
@@ -155,17 +199,26 @@ CFG::Block* later;
 
   void handleElement(Expression* curr) {
     if (auto* block = curr->dynCast<Block>()) {
-      BlockTask(*this, block);
+      BlockTask::handle(*this, block);
     } else if (auto* loop = curr->dynCast<Loop>()) {
-      LoopTask(*this, loop);
+      LoopTask::handle(*this, loop);
     } else if (auto* iff = curr->dynCast<If>()) {
-      IfTask(*this, iff);
-    } else
-br, br_table, return, unreachable
+      IfTask::handle(*this, iff);
+    } else if (auto* br = curr->dynCast<Break>()) {
+      IfTask::handle(*this, br);
+    } else if (auto* sw = curr->dynCast<Switch>()) {
+      IfTask::handle(*this, sw);
+    } else if (curr->is<Return>() || curr->is<Unreachable>()) {
+      stopControlFlow();
     } else {
       // not control flow, so just a simple element
       getCurrBlock()->list.push_back(curr);
     }
+  }
+
+  void stopControlFlow() {
+    startCFGBlock();
+    // TODO: optimize with this?
   }
 
   void runFunction(PassRunner* runner, Module* module, Function* function) override {
