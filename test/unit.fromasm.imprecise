@@ -1131,6 +1131,18 @@
    (get_local $0)
   )
  )
+ (func $autoDrop (param $0 i32) (result i32)
+  (if
+   (i32.eq
+    (get_local $0)
+    (i32.const 17)
+   )
+   (return
+    (i32.const 5)
+   )
+  )
+  (get_local $0)
+ )
  (func $keepAlive
   (drop
    (call $sqrts
@@ -1145,6 +1157,11 @@
   (drop
    (call $f2s
     (f64.const 100)
+   )
+  )
+  (drop
+   (call $autoDrop
+    (i32.const 52)
    )
   )
  )

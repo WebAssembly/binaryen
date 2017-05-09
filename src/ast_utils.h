@@ -426,7 +426,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     if (maybeDrop(curr->list.back())) {
       reFinalize();
-      assert(curr->type == none);
+      assert(curr->type == none || curr->type == unreachable);
     }
   }
 
