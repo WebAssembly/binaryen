@@ -265,7 +265,7 @@ struct ReReloop : public Pass {
     stack.push_back(TaskPtr(new TriageTask(*this, function->body)));
     // main loop
     while (stack.size() > 0) {
-      auto curr = stack.back();
+      TaskPtr curr = stack.back();
       stack.pop_back();
       curr->run();
     }
@@ -274,9 +274,19 @@ struct ReReloop : public Pass {
     // run the relooper to recreate control flow
     relooper.Calculate(entry);
     // render
-    auto temp = builder->addVar(function, i32);
-    CFG::RelooperBuilder builder(*module, temp);
-    function->body = relooper.Render(builder);
+    {
+      auto temp = builder->addVar(function, i32);
+      CFG::RelooperBuilder builder(*module, temp);
+      function->body = relooper.Render(builder);
+    }
+    // if the function returns, ensure it ends in unreachable, as the relooper
+    // doesn't emit a flowing-out value, and may end on an empty block
+    if (function->result != none) {
+      function->body = builder->makeSequence(
+        function->body,
+        builder->makeUnreachable()
+      );
+    }
   }
 };
 
