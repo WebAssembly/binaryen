@@ -1,0 +1,6 @@
+(module
+  (func $trivial
+    (nop)
+  )
+)
+

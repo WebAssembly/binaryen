@@ -1,0 +1,10 @@
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (func $trivial (type $0)
+  (local $0 i32)
+  (block
+   (nop)
+  )
+ )
+)
