@@ -215,6 +215,19 @@ struct ReReloop : public Pass {
     }
   };
 
+  struct ReturnTask : public Task {
+    static void handle(ReReloop& parent, Return* curr) {
+      // reuse the return
+      parent.getCurrBlock()->list.push_back(curr);
+    }
+  };
+
+  struct UnreachableTask : public Task {
+    static void handle(ReReloop& parent) {
+      parent.stopControlFlow();
+    }
+  };
+
   // handle an element we encounter
 
   void triage(Expression* curr) {
@@ -228,8 +241,10 @@ struct ReReloop : public Pass {
       BreakTask::handle(*this, br);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       SwitchTask::handle(*this, sw);
-    } else if (curr->is<Return>() || curr->is<Unreachable>()) {
-      stopControlFlow();
+    } else if (auto* ret = curr->dynCast<Return>()) {
+      ReturnTask::handle(*this, ret);
+    } else if (curr->is<Unreachable>()) {
+      UnreachableTask::handle(*this);
     } else {
       // not control flow, so just a simple element
       getCurrBlock()->list.push_back(curr);
