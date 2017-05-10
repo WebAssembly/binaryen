@@ -49,11 +49,15 @@ struct ReReloop : public Pass {
     return ret;
   }
 
-  CFG::Block* startCFGBlock() {
+  CFG::Block* setCurrCFGBlock(CFG::Block* curr) {
     if (currCFGBlock) {
       finishBlock();
     }
-    return currCFGBlock = makeCFGBlock();
+    return currCFGBlock = curr;
+  }
+
+  CFG::Block* startCFGBlock() {
+    return setCurrCFGBlock(makeCFGBlock());
   }
 
   CFG::Block* getCurrCFGBlock() {
@@ -134,6 +138,7 @@ struct ReReloop : public Pass {
     void run() override {
       // add fallthrough
       parent.addBranch(parent.getCurrCFGBlock(), later);
+      parent.setCurrCFGBlock(later);
     }
   };
 

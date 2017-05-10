@@ -241,4 +241,27 @@
    )
   )
  )
+ (func $empty-blocks (type $3) (param $x i32)
+  (local $1 i32)
+  (block $block$2$break
+   (block
+   )
+   (block
+    (br $block$2$break)
+   )
+  )
+  (block
+   (block $block$3$break
+    (block
+    )
+    (block
+     (br $block$3$break)
+    )
+   )
+   (block
+    (block
+    )
+   )
+  )
+ )
 )

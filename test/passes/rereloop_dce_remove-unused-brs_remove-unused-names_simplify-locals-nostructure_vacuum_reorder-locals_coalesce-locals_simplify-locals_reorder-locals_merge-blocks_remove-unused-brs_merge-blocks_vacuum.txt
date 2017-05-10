@@ -86,4 +86,7 @@
    )
   )
  )
+ (func $empty-blocks (type $3) (param $0 i32)
+  (nop)
+ )
 )
