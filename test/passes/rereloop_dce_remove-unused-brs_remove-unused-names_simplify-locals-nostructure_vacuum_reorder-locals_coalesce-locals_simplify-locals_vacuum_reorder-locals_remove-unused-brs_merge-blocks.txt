@@ -2,6 +2,7 @@
  (type $0 (func))
  (type $1 (func (result i32)))
  (type $2 (func (param i32) (result i32)))
+ (type $3 (func (param i32)))
  (memory $0 0)
  (func $trivial (type $0)
   (nop)
@@ -36,5 +37,34 @@
    )
   )
   (i32.const 5)
+ )
+ (func $loops (type $3) (param $0 i32)
+  (if
+   (get_local $0)
+   (loop $shape$3$continue
+    (call $trivial)
+    (br $shape$3$continue)
+   )
+  )
+  (block $block$7$break
+   (loop $shape$6$continue
+    (call $trivial)
+    (br_if $shape$6$continue
+     (get_local $0)
+    )
+    (br $block$7$break)
+   )
+  )
+  (block $block$11$break
+   (loop $shape$9$continue
+    (call $trivial)
+    (br_if $block$11$break
+     (i32.eqz
+      (get_local $0)
+     )
+    )
+    (br $shape$9$continue)
+   )
+  )
  )
 )

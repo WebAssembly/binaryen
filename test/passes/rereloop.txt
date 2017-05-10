@@ -2,6 +2,7 @@
  (type $0 (func))
  (type $1 (func (result i32)))
  (type $2 (func (param i32) (result i32)))
+ (type $3 (func (param i32)))
  (memory $0 0)
  (func $trivial (type $0)
   (local $0 i32)
@@ -109,5 +110,91 @@
    )
   )
   (unreachable)
+ )
+ (func $loops (type $3) (param $x i32)
+  (local $1 i32)
+  (block $block$5$break
+   (block
+   )
+   (if
+    (get_local $x)
+    (block
+     (block $block$3$break
+      (block
+      )
+      (block
+       (br $block$3$break)
+      )
+     )
+     (loop $shape$3$continue
+      (block
+      )
+      (block
+       (br $shape$3$continue)
+      )
+     )
+    )
+    (br $block$5$break)
+   )
+  )
+  (block
+   (block $block$6$break
+    (block
+    )
+    (block
+     (br $block$6$break)
+    )
+   )
+   (block
+    (block $block$7$break
+     (loop $shape$6$continue
+      (block
+       (call $trivial)
+      )
+      (if
+       (get_local $x)
+       (br $shape$6$continue)
+       (br $block$7$break)
+      )
+     )
+    )
+    (block
+     (block $block$8$break
+      (block
+      )
+      (block
+       (br $block$8$break)
+      )
+     )
+     (block
+      (block $block$11$break
+       (loop $shape$9$continue
+        (block $block$9$break
+         (block
+          (call $trivial)
+         )
+         (if
+          (get_local $x)
+          (br $block$9$break)
+          (br $block$11$break)
+         )
+        )
+        (block
+         (block
+         )
+         (block
+          (br $shape$9$continue)
+         )
+        )
+       )
+      )
+      (block
+       (block
+       )
+      )
+     )
+    )
+   )
+  )
  )
 )

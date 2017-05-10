@@ -27,5 +27,21 @@
     )
     (return (i32.const 5))
   )
+  (func $loops (param $x i32)
+    (if (get_local $x)
+      (loop $top
+        (call $trivial)
+        (br $top)
+      )
+    )
+    (loop $top2
+      (call $trivial)
+      (br_if $top2 (get_local $x))
+    )
+    (loop $top3
+      (call $trivial)
+      (if (get_local $x) (br $top3))
+    )
+  )
 )
 
