@@ -939,20 +939,39 @@
  )
  (func $loop-if (type $2) (result i32)
   (block $outer i32
-   (loop $typed
-    (br_if $typed
-     (i32.eqz
-      (i32.const 2)
-     )
-    )
-    (block $block
-     (drop
-      (call $loop-if)
-     )
-     (br $outer
+   (loop $typed i32
+    (if i32
+     (i32.const 2)
+     (block $block i32
+      (drop
+       (call $loop-if)
+      )
       (i32.const 0)
      )
+     (br $typed)
     )
+   )
+  )
+ )
+ (func $block-break (type $0) (param $0 i32)
+  (block $block$7$break
+   (block $shape$6$continue
+    (call $block-break
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $loop-break (type $0) (param $0 i32)
+  (block $block$7$break
+   (loop $shape$6$continue
+    (call $loop-break
+     (i32.const 1)
+    )
+    (br_if $shape$6$continue
+     (get_local $0)
+    )
+    (nop)
    )
   )
  )
