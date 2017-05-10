@@ -3,9 +3,8 @@
     (nop)
   )
   (func $trivial2
-    (drop (i32.const 1))
-    (drop (i32.const 2))
-    (drop (i32.const 3))
+    (call $trivial)
+    (call $trivial)
   )
   (func $return-void
     (return)
@@ -13,12 +12,17 @@
   (func $return-val (result i32)
     (return (i32.const 1))
   )
-  (func $if (result i32)
+  (func $ifs (param $x i32) (result i32)
     (if
-      (i32.const 1)
+      (get_local $x)
       (return (i32.const 2))
       (return (i32.const 3))
     )
+    (if
+      (get_local $x)
+      (return (i32.const 4))
+    )
+    (return (i32.const 5))
   )
 )
 

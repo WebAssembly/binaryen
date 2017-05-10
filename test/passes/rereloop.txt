@@ -1,6 +1,7 @@
 (module
  (type $0 (func))
  (type $1 (func (result i32)))
+ (type $2 (func (param i32) (result i32)))
  (memory $0 0)
  (func $trivial (type $0)
   (local $0 i32)
@@ -11,15 +12,8 @@
  (func $trivial2 (type $0)
   (local $0 i32)
   (block
-   (drop
-    (i32.const 1)
-   )
-   (drop
-    (i32.const 2)
-   )
-   (drop
-    (i32.const 3)
-   )
+   (call $trivial)
+   (call $trivial)
   )
  )
  (func $return-void (type $0)
@@ -39,14 +33,14 @@
   )
   (unreachable)
  )
- (func $if (type $1) (result i32)
-  (local $0 i32)
+ (func $ifs (type $2) (param $x i32) (result i32)
+  (local $1 i32)
   (block
    (block $block$4$break
     (block
     )
     (if
-     (i32.const 1)
+     (get_local $x)
      (block
       (block
        (return
@@ -70,7 +64,30 @@
     )
    )
    (block
+    (block $block$6$break
+     (block
+     )
+     (if
+      (get_local $x)
+      (block
+       (block
+        (return
+         (i32.const 4)
+        )
+       )
+       (block
+        (br $block$6$break)
+       )
+      )
+      (br $block$6$break)
+     )
+    )
     (block
+     (block
+      (return
+       (i32.const 5)
+      )
+     )
     )
    )
   )
