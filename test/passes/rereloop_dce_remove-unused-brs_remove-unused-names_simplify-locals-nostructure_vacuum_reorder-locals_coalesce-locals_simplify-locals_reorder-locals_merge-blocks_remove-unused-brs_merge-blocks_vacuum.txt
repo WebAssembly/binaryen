@@ -55,12 +55,13 @@
   (block $block$11$break
    (loop $shape$9$continue
     (call $trivial)
-    (br_if $block$11$break
+    (br_if $shape$9$continue
      (i32.eqz
-      (get_local $0)
+      (i32.eqz
+       (get_local $0)
+      )
      )
     )
-    (br $shape$9$continue)
    )
   )
  )
