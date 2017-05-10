@@ -135,8 +135,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
+  add("merge-blocks"); // makes remove-unused-brs more effective
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
-  add("merge-blocks");
+  add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
   add("precompute");
   if (options.shrinkLevel >= 2) {
