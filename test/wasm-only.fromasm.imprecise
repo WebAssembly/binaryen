@@ -278,7 +278,6 @@
      (get_local $1)
     )
     (block
-     (nop)
      (br_if $__rjto$0
       (get_local $2)
      )
