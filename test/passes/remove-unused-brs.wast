@@ -847,5 +847,24 @@
       )
     )
   )
+  (func $block-break (param $0 i32)
+    (block $block$7$break
+      (block $shape$6$continue
+        (call $block-break (i32.const 1))
+        (br $block$7$break)
+      )
+    )
+  )
+  (func $loop-break (param $0 i32)
+    (block $block$7$break
+      (loop $shape$6$continue
+        (call $loop-break (i32.const 1))
+        (br_if $shape$6$continue
+          (get_local $0)
+        )
+        (br $block$7$break)
+      )
+    )
+  )
 )
 

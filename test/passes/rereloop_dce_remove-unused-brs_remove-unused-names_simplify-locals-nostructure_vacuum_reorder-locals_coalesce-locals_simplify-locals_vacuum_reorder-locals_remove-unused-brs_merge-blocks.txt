@@ -46,13 +46,10 @@
     (br $shape$3$continue)
    )
   )
-  (block $block$7$break
-   (loop $shape$6$continue
-    (call $trivial)
-    (br_if $shape$6$continue
-     (get_local $0)
-    )
-    (br $block$7$break)
+  (loop $shape$6$continue
+   (call $trivial)
+   (br_if $shape$6$continue
+    (get_local $0)
    )
   )
   (block $block$11$break
