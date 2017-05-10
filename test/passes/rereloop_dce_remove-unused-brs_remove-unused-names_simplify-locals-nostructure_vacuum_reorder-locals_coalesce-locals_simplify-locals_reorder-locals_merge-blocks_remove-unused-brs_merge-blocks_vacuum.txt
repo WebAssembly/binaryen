@@ -75,8 +75,11 @@
   )
   (if
    (get_local $0)
-   (call $unreachable
-    (i32.const 1)
+   (block
+    (call $unreachable
+     (i32.const 1)
+    )
+    (unreachable)
    )
    (call $unreachable
     (i32.const 3)

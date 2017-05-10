@@ -223,7 +223,9 @@ struct ReReloop : public Pass {
   };
 
   struct UnreachableTask : public Task {
-    static void handle(ReReloop& parent) {
+    static void handle(ReReloop& parent, Unreachable* curr) {
+      // reuse the unreachable
+      parent.getCurrBlock()->list.push_back(curr);
       parent.stopControlFlow();
     }
   };
@@ -243,8 +245,8 @@ struct ReReloop : public Pass {
       SwitchTask::handle(*this, sw);
     } else if (auto* ret = curr->dynCast<Return>()) {
       ReturnTask::handle(*this, ret);
-    } else if (curr->is<Unreachable>()) {
-      UnreachableTask::handle(*this);
+    } else if (auto* un = curr->dynCast<Unreachable>()) {
+      UnreachableTask::handle(*this, un);
     } else {
       // not control flow, so just a simple element
       getCurrBlock()->list.push_back(curr);
