@@ -43,5 +43,11 @@
       (if (get_local $x) (br $top3))
     )
   )
+  (func $br-out (param $x i32)
+    (block $out
+      (call $br-out (i32.const 5))
+      (br $out)
+    )
+  )
 )
 

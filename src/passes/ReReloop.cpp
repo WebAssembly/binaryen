@@ -83,7 +83,6 @@ struct ReReloop : public Pass {
   // branch handling
 
   void addBranch(CFG::Block* from, CFG::Block* to, Expression* condition = nullptr) {
-    // XXX handle more than one branch from A to B, need to merge them?
     from->AddBranchTo(to, condition);
   }
 
@@ -117,10 +116,6 @@ struct ReReloop : public Pass {
     BlockTask(ReReloop& parent, Block* curr) : Task(parent), curr(curr) {}
 
     static void handle(ReReloop& parent, Block* curr) {
-      auto& list = curr->list;
-      for (int i = int(list.size()) - 1; i >= 0; i--) {
-        parent.stack.push_back(std::make_shared<TriageTask>(parent, list[i]));
-      }
       if (curr->name.is()) {
         // we may be branched to. create a target, and
         // ensure we are called at the join point
@@ -129,6 +124,10 @@ struct ReReloop : public Pass {
         task->later = parent.makeCFGBlock();
         parent.addBreakTarget(curr->name, task->later);
         parent.stack.push_back(task);
+      }
+      auto& list = curr->list;
+      for (int i = int(list.size()) - 1; i >= 0; i--) {
+        parent.stack.push_back(std::make_shared<TriageTask>(parent, list[i]));
       }
     }
 
@@ -219,6 +218,7 @@ struct ReReloop : public Pass {
     static void handle(ReReloop& parent, Return* curr) {
       // reuse the return
       parent.getCurrBlock()->list.push_back(curr);
+      parent.stopControlFlow();
     }
   };
 
