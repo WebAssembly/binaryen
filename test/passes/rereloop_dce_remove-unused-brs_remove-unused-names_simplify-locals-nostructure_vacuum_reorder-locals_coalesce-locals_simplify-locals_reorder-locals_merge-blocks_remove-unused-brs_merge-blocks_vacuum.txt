@@ -89,4 +89,100 @@
  (func $empty-blocks (type $3) (param $0 i32)
   (nop)
  )
+ (func $before-and-after (type $3) (param $0 i32)
+  (call $before-and-after
+   (i32.const 1)
+  )
+  (call $before-and-after
+   (i32.const 2)
+  )
+  (call $before-and-after
+   (i32.const 3)
+  )
+  (call $before-and-after
+   (i32.const 4)
+  )
+  (if
+   (i32.eqz
+    (get_local $0)
+   )
+   (call $before-and-after
+    (i32.const 5)
+   )
+  )
+  (call $before-and-after
+   (i32.const 6)
+  )
+  (call $before-and-after
+   (i32.const 7)
+  )
+  (call $before-and-after
+   (i32.const 8)
+  )
+  (loop $shape$7$continue
+   (call $before-and-after
+    (i32.const 9)
+   )
+   (br_if $shape$7$continue
+    (get_local $0)
+   )
+  )
+  (call $before-and-after
+   (i32.const 10)
+  )
+  (call $before-and-after
+   (i32.const 11)
+  )
+  (if
+   (get_local $0)
+   (call $before-and-after
+    (i32.const 12)
+   )
+  )
+  (call $before-and-after
+   (i32.const 13)
+  )
+  (if
+   (get_local $0)
+   (call $before-and-after
+    (i32.const 14)
+   )
+   (call $before-and-after
+    (i32.const 15)
+   )
+  )
+  (if
+   (get_local $0)
+   (call $before-and-after
+    (i32.const 16)
+   )
+  )
+  (call $before-and-after
+   (i32.const 17)
+  )
+  (call $before-and-after
+   (i32.const 18)
+  )
+  (call $before-and-after
+   (i32.const 19)
+  )
+  (call $before-and-after
+   (i32.const 20)
+  )
+  (call $before-and-after
+   (i32.const 21)
+  )
+  (call $before-and-after
+   (i32.const 22)
+  )
+  (call $before-and-after
+   (i32.const 23)
+  )
+  (call $before-and-after
+   (i32.const 24)
+  )
+  (call $before-and-after
+   (i32.const 25)
+  )
+ )
 )
