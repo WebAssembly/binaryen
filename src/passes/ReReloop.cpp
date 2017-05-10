@@ -90,6 +90,12 @@ struct ReReloop : public Pass {
     from->AddBranchTo(to, condition);
   }
 
+  void addSwitchBranch(CFG::Block* from, CFG::Block* to, const std::set<Index>& values) {
+    std::vector<Index> list;
+    for (auto i : values) list.push_back(i);
+    from->AddSwitchBranchTo(to, std::move(list));
+  }
+
   // we work using a stack of control flow tasks
 
   struct Task {
@@ -215,7 +221,29 @@ struct ReReloop : public Pass {
 
   struct SwitchTask : public Task {
     static void handle(ReReloop& parent, Switch* curr) {
-      abort(); // TODO!
+      // set the switch condition for the block ending now
+      auto* before = parent.getCurrCFGBlock();
+      assert(!before->SwitchCondition);
+      before->SwitchCondition = curr->condition;
+      std::map<Name, std::set<Index>> targetValues;
+      auto& targets = curr->targets;
+      auto num = targets.size();
+      for (Index i = 0; i < num; i++) {
+        targetValues[targets[i]].insert(i);
+      }
+      for (auto& iter : targetValues) {
+        parent.addSwitchBranch(before, parent.getBreakTarget(iter.first), iter.second);
+      }
+      // the default may be among the targets, in which case, we can't add it simply as
+      // it would be a duplicate, so create a temp block
+      if (targetValues.count(curr->default_) == 0) {
+        parent.addSwitchBranch(before, parent.getBreakTarget(curr->default_), std::set<Index>());
+      } else {
+        auto* temp = parent.startCFGBlock();
+        parent.addSwitchBranch(before, temp, std::set<Index>());
+        parent.addBranch(temp, parent.getBreakTarget(curr->default_));
+      }
+      parent.stopControlFlow();
     }
   };
 
