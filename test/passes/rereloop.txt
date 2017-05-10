@@ -191,4 +191,53 @@
    )
   )
  )
+ (func $unreachable (type $3) (param $x i32)
+  (local $1 i32)
+  (block $block$2$break
+   (block
+   )
+   (if
+    (get_local $x)
+    (br $block$2$break)
+    (block
+     (block $block$11$break
+      (block
+       (call $unreachable
+        (i32.const 5)
+       )
+      )
+      (block
+       (br $block$11$break)
+      )
+     )
+     (block
+      (block
+      )
+     )
+    )
+   )
+  )
+  (block
+   (block
+   )
+   (if
+    (get_local $x)
+    (block
+     (block
+      (call $unreachable
+       (i32.const 1)
+      )
+     )
+    )
+    (block
+     (block
+      (call $unreachable
+       (i32.const 3)
+      )
+      (return)
+     )
+    )
+   )
+  )
+ )
 )

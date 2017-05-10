@@ -59,4 +59,28 @@
    )
   )
  )
+ (func $br-out (type $3) (param $0 i32)
+  (call $br-out
+   (i32.const 5)
+  )
+ )
+ (func $unreachable (type $3) (param $0 i32)
+  (if
+   (i32.eqz
+    (get_local $0)
+   )
+   (call $unreachable
+    (i32.const 5)
+   )
+  )
+  (if
+   (get_local $0)
+   (call $unreachable
+    (i32.const 1)
+   )
+   (call $unreachable
+    (i32.const 3)
+   )
+  )
+ )
 )
