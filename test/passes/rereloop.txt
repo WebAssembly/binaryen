@@ -532,4 +532,85 @@
    )
   )
  )
+ (func $switch (type $3) (param $x i32)
+  (local $1 i32)
+  (block $block$3$break
+   (block
+   )
+   (block $switch$1$leave
+    (block $switch$1$default
+     (block $switch$1$case$3
+      (br_table $switch$1$case$3 $switch$1$default
+       (get_local $x)
+      )
+     )
+     (block
+      (br $block$3$break)
+     )
+     (br $switch$1$leave)
+    )
+    (block
+     (block
+      (block
+      )
+      (block
+       (br $block$3$break)
+      )
+     )
+    )
+    (br $switch$1$leave)
+   )
+  )
+  (block
+   (block $block$6$break
+    (block
+     (call $switch
+      (i32.const 1)
+     )
+    )
+    (block $switch$3$leave
+     (block $switch$3$default
+      (block $switch$3$case$6
+       (br_table $switch$3$case$6 $switch$3$case$6 $switch$3$case$6 $switch$3$default
+        (get_local $x)
+       )
+      )
+      (block
+       (br $block$6$break)
+      )
+      (br $switch$3$leave)
+     )
+     (block
+      (block
+       (block
+        (call $switch
+         (i32.const 2)
+        )
+       )
+       (block
+        (br $block$6$break)
+       )
+      )
+     )
+     (br $switch$3$leave)
+    )
+   )
+   (block
+    (block $block$2$break
+     (block
+      (call $switch
+       (i32.const 3)
+      )
+     )
+     (block
+      (br $block$2$break)
+     )
+    )
+    (block
+     (block
+     )
+    )
+   )
+  )
+ )
 )

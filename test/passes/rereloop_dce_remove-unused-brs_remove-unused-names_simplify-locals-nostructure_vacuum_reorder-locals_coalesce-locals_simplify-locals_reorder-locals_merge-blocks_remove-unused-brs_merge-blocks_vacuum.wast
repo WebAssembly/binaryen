@@ -131,5 +131,20 @@
     )
     (call $before-and-after (i32.const 25))
   )
+  (func $switch (param $x i32)
+    (block $out
+      (block $a
+        (br_table $a $a (get_local $x))
+      )
+      (call $switch (i32.const 1))
+      (block $b
+        (block $c
+          (br_table $b $b $b $c (get_local $x))
+        )
+        (call $switch (i32.const 2))
+      )
+      (call $switch (i32.const 3))
+    )
+  )
 )
 
