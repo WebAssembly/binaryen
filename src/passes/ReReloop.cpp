@@ -119,16 +119,16 @@ struct ReReloop : public Pass {
     static void handle(ReReloop& parent, Block* curr) {
       auto& list = curr->list;
       for (int i = int(list.size()) - 1; i >= 0; i--) {
-        parent.stack.push_back(TaskPtr(new TriageTask(parent, list[i])));
+        parent.stack.push_back(std::make_shared<TriageTask>(parent, list[i]));
       }
       if (curr->name.is()) {
         // we may be branched to. create a target, and
         // ensure we are called at the join point
-        auto* task = new BlockTask(parent, curr);
+        auto task = std::make_shared<BlockTask>(parent, curr);
         task->curr = curr;
         task->later = parent.makeCFGBlock();
         parent.addBreakTarget(curr->name, task->later);
-        parent.stack.push_back(TaskPtr(task));
+        parent.stack.push_back(task);
       }
     }
 
@@ -140,7 +140,7 @@ struct ReReloop : public Pass {
 
   struct LoopTask : public Task {
     static void handle(ReReloop& parent, Loop* curr) {
-      parent.stack.push_back(TaskPtr(new TriageTask(parent, curr->body)));
+      parent.stack.push_back(std::make_shared<TriageTask>(parent, curr->body));
       if (curr->name.is()) {
         // we may be branched to. create a target
         auto* before = parent.getCurrCFGBlock();
@@ -160,17 +160,17 @@ struct ReReloop : public Pass {
     IfTask(ReReloop& parent, If* curr) : Task(parent), curr(curr) {}
 
     static void handle(ReReloop& parent, If* curr) {
-      auto* task = new IfTask(parent, curr);
+      auto task = std::make_shared<IfTask>(parent, curr);
       task->curr = curr;
       task->condition = parent.getCurrCFGBlock();
       auto* ifTrueBegin = parent.startCFGBlock();
       parent.addBranch(task->condition, ifTrueBegin, curr->condition);
       if (curr->ifFalse) {
-        parent.stack.push_back(TaskPtr(task));
-        parent.stack.push_back(TaskPtr(new TriageTask(parent, curr->ifFalse)));
+        parent.stack.push_back(task);
+        parent.stack.push_back(std::make_shared<TriageTask>(parent, curr->ifFalse));
       }
-      parent.stack.push_back(TaskPtr(task));
-      parent.stack.push_back(TaskPtr(new TriageTask(parent, curr->ifTrue)));
+      parent.stack.push_back(task);
+      parent.stack.push_back(std::make_shared<TriageTask>(parent, curr->ifTrue));
     }
 
     void run() override {

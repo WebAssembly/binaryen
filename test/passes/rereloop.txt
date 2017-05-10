@@ -31,9 +31,49 @@
  (func $return-val (type $1) (result i32)
   (local $0 i32)
   (block
-   (return
-    (i32.const 1)
+   (block
+    (return
+     (i32.const 1)
+    )
    )
   )
+  (unreachable)
+ )
+ (func $if (type $1) (result i32)
+  (local $0 i32)
+  (block
+   (block $block$4$break
+    (block
+    )
+    (if
+     (i32.const 1)
+     (block
+      (block
+       (return
+        (i32.const 2)
+       )
+      )
+      (block
+       (br $block$4$break)
+      )
+     )
+     (block
+      (block
+       (return
+        (i32.const 3)
+       )
+      )
+      (block
+       (br $block$4$break)
+      )
+     )
+    )
+   )
+   (block
+    (block
+    )
+   )
+  )
+  (unreachable)
  )
 )

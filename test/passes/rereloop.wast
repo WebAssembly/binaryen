@@ -13,5 +13,12 @@
   (func $return-val (result i32)
     (return (i32.const 1))
   )
+  (func $if (result i32)
+    (if
+      (i32.const 1)
+      (return (i32.const 2))
+      (return (i32.const 3))
+    )
+  )
 )
 
