@@ -15,8 +15,11 @@
   (func $ifs (param $x i32) (result i32)
     (if
       (get_local $x)
-      (return (i32.const 2))
-      (return (i32.const 3))
+      (if
+        (get_local $x)
+        (return (i32.const 2))
+        (return (i32.const 3))
+      )
     )
     (if
       (get_local $x)
