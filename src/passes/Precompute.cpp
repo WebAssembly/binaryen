@@ -23,6 +23,7 @@
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
 #include <ast_utils.h>
+#include "ast/manipulation.h"
 
 namespace wasm {
 

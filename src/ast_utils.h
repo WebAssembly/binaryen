@@ -273,50 +273,6 @@ struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>
   }
 };
 
-// Manipulate expressions
-
-struct ExpressionManipulator {
-  // Re-use a node's memory. This helps avoid allocation when optimizing.
-  template<typename InputType, typename OutputType>
-  static OutputType* convert(InputType *input) {
-    static_assert(sizeof(OutputType) <= sizeof(InputType),
-                  "Can only convert to a smaller size Expression node");
-    input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
-    OutputType* output = (OutputType*)(input);
-    new (output) OutputType;
-    return output;
-  }
-
-  // Convenience method for nop, which is a common conversion
-  template<typename InputType>
-  static void nop(InputType* target) {
-    convert<InputType, Nop>(target);
-  }
-
-  // Convert a node that allocates
-  template<typename InputType, typename OutputType>
-  static OutputType* convert(InputType *input, MixedArena& allocator) {
-    assert(sizeof(OutputType) <= sizeof(InputType));
-    input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
-    OutputType* output = (OutputType*)(input);
-    new (output) OutputType(allocator);
-    return output;
-  }
-
-  using CustomCopier = std::function<Expression*(Expression*)>;
-  static Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom);
-
-  static Expression* copy(Expression* original, Module& wasm) {
-    auto copy = [](Expression* curr) {
-        return nullptr;
-    };
-    return flexibleCopy(original, wasm, copy);
-  }
-
-  // Splice an item into the middle of a block's list
-  static void spliceIntoBlock(Block* block, Index index, Expression* add);
-};
-
 struct ExpressionAnalyzer {
   // Given a stack of expressions, checks if the topmost is used as a result.
   // For example, if the parent is a block and the node is before the last position,

@@ -42,6 +42,7 @@
 #include "support/colors.h"
 #include "wasm.h"
 #include "wasm-printing.h"
+#include "ast_utils.h"
 
 namespace wasm {
 
@@ -68,7 +69,7 @@ struct WasmValidator : public PostWalker<WasmValidator> {
 
   void noteLabelName(Name name) {
     if (!name.is()) return;
-    shouldBeTrue(labelNames.find(name) == labelNames.end(), name, "names in Binaren IR must be unique - IR generators must ensure that");
+    shouldBeTrue(labelNames.find(name) == labelNames.end(), name, "names in Binaryen IR must be unique - IR generators must ensure that");
     labelNames.insert(name);
   }
 
@@ -76,7 +77,11 @@ public:
   bool validate(Module& module, bool validateWeb_ = false, bool validateGlobally_ = true) {
     validateWeb = validateWeb_;
     validateGlobally = validateGlobally_;
+    // wasm logic validation
     walkModule(&module);
+    // binaryen IR validation, internal details
+    validateBinaryenIR(module);
+    // print if an error occurred
     if (!valid) {
       WasmPrinter::printModule(&module, std::cerr);
     }
@@ -612,8 +617,6 @@ public:
     PostWalker<WasmValidator>::doWalkFunction(func);
   }
 
-private:
-
   // helpers
 
   std::ostream& fail() {
@@ -717,6 +720,37 @@ private:
       }
       default: {}
     }
+  }
+
+  void validateBinaryenIR(Module& wasm) {
+    struct BinaryenIRValidator : public PostWalker<BinaryenIRValidator, UnifiedExpressionVisitor<BinaryenIRValidator>> {
+      WasmValidator& parent;
+
+      BinaryenIRValidator(WasmValidator& parent) : parent(parent) {}
+
+      void visitExpression(Expression* curr) {
+        // check if a node type is 'stale', i.e., we forgot to finalize() the node.
+        auto oldType = curr->type;
+        ReFinalize().visit(curr);
+        auto newType = curr->type;
+        if (newType != oldType) {
+          // We accept concrete => undefined,
+          // e.g.
+          //
+          //  (drop (block i32 (unreachable)))
+          //
+          // The block has an added type, not derived from the ast itself, so it is
+          // ok for it to be either i32 or unreachable.
+          if (!(isConcreteWasmType(oldType) && newType == unreachable)) {
+            parent.fail() << "stale type found in " << getFunction()->name << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
+            parent.valid = false;
+          }
+          curr->type = oldType;
+        }
+      }
+    };
+    BinaryenIRValidator binaryenIRValidator(*this);
+    binaryenIRValidator.walkModule(&wasm);
   }
 };
 
