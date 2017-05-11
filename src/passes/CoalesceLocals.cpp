@@ -621,8 +621,9 @@ static void removeIfCopy(Expression** origin, SetLocal* set, If* iff, Expression
   // replace the origin with the if, and sink the set into the other non-copying arm
   *origin = iff;
   set->value = other;
+  set->finalize();
   other = set;
-  if (!set->isTee()) {
+  if (!isConcreteWasmType(set->type)) {
     // we don't need the copy at all
     copy = nullptr;
     if (!iff->ifTrue) {
