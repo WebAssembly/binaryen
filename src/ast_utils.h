@@ -42,10 +42,18 @@ struct BreakSeeker : public PostWalker<BreakSeeker> {
   }
 
   void visitBreak(Break *curr) {
+    // ignore an unreachable break
+    if (curr->condition && curr->condition->type == unreachable) return;
+    if (curr->value && curr->value->type == unreachable) return;
+    // check the break
     if (curr->name == target) noteFound(curr->value);
   }
 
   void visitSwitch(Switch *curr) {
+    // ignore an unreachable switch
+    if (curr->condition->type == unreachable) return;
+    if (curr->value && curr->value->type == unreachable) return;
+    // check the switch
     for (auto name : curr->targets) {
       if (name == target) noteFound(curr->value);
     }
