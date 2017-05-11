@@ -177,6 +177,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     }
     if (curr->list.size() == 1 && isDead(curr->list[0]) && !BreakSeeker::has(curr->list[0], curr->name)) {
       replaceCurrent(curr->list[0]);
+      assert(!reachable);
     }
   }
 
@@ -395,6 +396,12 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       block->finalize(curr->type);
       replaceCurrent(block);
       return;
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    if (isDead(curr->value)) {
+      replaceCurrent(curr->value);
     }
   }
 
