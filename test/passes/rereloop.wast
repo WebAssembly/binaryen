@@ -146,5 +146,34 @@
       (call $switch (i32.const 3))
     )
   )
+  (func $no-return
+    (if (i32.const 1)
+      (drop (i32.const 2))
+      (drop (i32.const 3))
+    )
+  )
+  (func $if-br-wat (param $x i32)
+   (call $if-br-wat
+    (i32.const 0)
+   )
+   (block $label$2
+    (if
+     (get_local $x)
+     (call $if-br-wat
+      (i32.const 1)
+     )
+     (if
+      (get_local $x)
+      (br $label$2) ;; waka
+     )
+    )
+    (call $if-br-wat
+     (i32.const 2)
+    )
+   )
+   (call $if-br-wat
+    (i32.const 3)
+   )
+  )
 )
 

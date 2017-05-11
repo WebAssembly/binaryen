@@ -317,10 +317,6 @@ struct ReReloop : public Pass {
     // if the function returns, ensure it ends in unreachable, as the relooper
     // doesn't emit a flowing-out value, and may end on an empty block
     if (function->result != none) {
-      function->body = builder->makeSequence(
-        function->body,
-        builder->makeUnreachable()
-      );
     }
   }
 };
