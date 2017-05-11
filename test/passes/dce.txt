@@ -47,21 +47,15 @@
   )
   (if
    (i32.const 0)
-   (drop
-    (unreachable)
-   )
+   (unreachable)
   )
   (if
    (i32.const 0)
-   (drop
-    (unreachable)
-   )
+   (unreachable)
   )
   (if
    (i32.const 0)
-   (drop
-    (unreachable)
-   )
+   (unreachable)
   )
   (block $out16
    (block $in
@@ -199,9 +193,7 @@
   )
   (if
    (i32.const 22)
-   (drop
-    (unreachable)
-   )
+   (unreachable)
   )
   (if
    (i32.const 33)
@@ -222,25 +214,19 @@
   )
   (if
    (i32.const 66)
-   (drop
-    (unreachable)
-   )
+   (unreachable)
   )
   (if
    (i32.const 77)
-   (drop
-    (unreachable)
-   )
+   (unreachable)
   )
   (if
    (i32.const 88)
-   (drop
-    (block
-     (drop
-      (i32.const 0)
-     )
-     (unreachable)
+   (block
+    (drop
+     (i32.const 0)
     )
+    (unreachable)
    )
   )
   (if
@@ -249,34 +235,28 @@
   )
   (if
    (i32.const 100)
-   (drop
-    (block
-     (drop
-      (i32.const 123)
-     )
-     (drop
-      (i32.const 456)
-     )
-     (unreachable)
+   (block
+    (drop
+     (i32.const 123)
     )
+    (drop
+     (i32.const 456)
+    )
+    (unreachable)
    )
   )
   (if
    (i32.const 101)
-   (drop
-    (block
-     (drop
-      (i32.const 123)
-     )
-     (unreachable)
+   (block
+    (drop
+     (i32.const 123)
     )
+    (unreachable)
    )
   )
   (if
    (i32.const 102)
-   (drop
-    (unreachable)
-   )
+   (unreachable)
   )
   (drop
    (i32.const 1337)
@@ -313,7 +293,6 @@
     (get_local $$$0)
    )
   )
-  (unreachable)
  )
  (func $global (type $1)
   (unreachable)
@@ -336,20 +315,14 @@
   )
  )
  (func $unreachable-block-ends-switch (type $2) (result i32)
-  (block $label$0 i32
-   (block $label$3
-    (nop)
-    (unreachable)
-   )
+  (block $label$3
+   (nop)
    (unreachable)
   )
  )
  (func $unreachable-block-ends-br_if (type $1) (result i32)
-  (block $label$0 i32
-   (block $label$2
-    (nop)
-    (unreachable)
-   )
+  (block $label$2
+   (nop)
    (unreachable)
   )
  )
@@ -364,13 +337,11 @@
   (drop
    (i32.const 1)
   )
-  (drop
-   (block
-    (drop
-     (i32.const 4104)
-    )
-    (unreachable)
+  (block
+   (drop
+    (i32.const 4104)
    )
+   (unreachable)
   )
  )
  (func $call-unreach (type $4) (param $var$0 i64) (param $var$1 i64) (result i64)

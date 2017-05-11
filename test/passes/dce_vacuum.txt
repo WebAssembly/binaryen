@@ -9,9 +9,7 @@
   )
  )
  (func $drop-unreachable (type $1) (param $var$0 f32) (param $var$1 f32) (result f32)
-  (drop
-   (unreachable)
-  )
+  (unreachable)
  )
  (func $set-unreachable (type $2) (param $var$0 i64) (result i64)
   (local $var$1 i64)
