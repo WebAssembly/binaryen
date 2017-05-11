@@ -66,20 +66,35 @@ struct IString {
 
   void set(const char *s, bool reuse=true) {
     typedef std::unordered_set<const char *, CStringHash, CStringEqual> StringSet;
-    static StringSet* strings = new StringSet();
+    // one global store of strings per thread, we must not access this
+    // in parallel
+    thread_local static StringSet* strings = new StringSet();
 
     auto existing = strings->find(s);
 
     if (existing == strings->end()) {
-      // the StringSet cache is a global shared structure, which should
-      // not be modified by multiple threads at once.
-      assert(!wasm::ThreadPool::isRunning());
-      if (!reuse) {
-        size_t len = strlen(s) + 1;
-        char *copy = (char*)malloc(len); // XXX leaked
-        strncpy(copy, s, len);
-        s = copy;
+      // if the string isn't already known, we must use a single global
+      // storage location, guarded by a mutex, so each string is allocated
+      // exactly once
+      static std::mutex mutex;
+      std::unique_lock<std::mutex> lock(mutex);
+      static StringSet* globalStrings = new StringSet();
+      auto globalExisting = globalStrings->find(s);
+      if (globalExisting == globalStrings->end()) {
+        if (!reuse) {
+          // a single global set contains the actual strings, so we allocate each one
+          // exactly once.
+          size_t len = strlen(s) + 1;
+          char *copy = (char*)malloc(len); // XXX leaked
+          strncpy(copy, s, len);
+          s = copy;
+        }
+        // insert into global set
+        globalStrings->insert(s);
+      } else {
+        s = *globalExisting;
       }
+      // add the string to our thread-local set
       strings->insert(s);
     } else {
       s = *existing;
