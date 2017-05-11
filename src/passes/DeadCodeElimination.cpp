@@ -179,6 +179,10 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       replaceCurrent(curr->list[0]);
       assert(!reachable);
     }
+    // blocks without a value may change from none to unreachable
+    if (curr->type == none) {
+      curr->finalize(curr->type);
+    }
   }
 
   void visitLoop(Loop* curr) {
