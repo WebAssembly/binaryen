@@ -314,10 +314,6 @@ struct ReReloop : public Pass {
       CFG::RelooperBuilder builder(*module, temp);
       function->body = relooper.Render(builder);
     }
-    // if the function returns, ensure it ends in unreachable, as the relooper
-    // doesn't emit a flowing-out value, and may end on an empty block
-    if (function->result != none) {
-    }
   }
 };
 
