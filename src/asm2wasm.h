@@ -478,8 +478,14 @@ private:
   }
 
   FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
-    // generate signature
-    WasmType result = !!parent ? detectWasmType(parent, nullptr) : none;
+    WasmType result = none;
+    if (!!parent) {
+      // if the parent is a seq, we cannot be the last element in it (we would have a coercion, which would be
+      // the parent), so we must be (us, somethingElse), and so our return is void
+      if (parent[0] != SEQ) {
+        result = detectWasmType(parent, nullptr);
+      }
+    }
     return ensureFunctionType(getSig(result, operands), &wasm);
   }
 
@@ -2296,6 +2302,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       Break *continuer = allocator.alloc<Break>();
       continuer->name = in;
       continuer->condition = process(ast[1]);
+      continuer->finalize();
       Block *block = builder.blockifyWithName(loop->body, out, continuer);
       loop->body = block;
       loop->finalize();

@@ -21,7 +21,7 @@
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (import "env" "memory" (memory $0 256 256))
- (import "env" "table" (table 24 24 anyfunc))
+ (import "env" "table" (table 25 25 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (global $t (mut f64) (get_global $t$asm2wasm$import))
@@ -32,7 +32,7 @@
  (global $n (mut i32) (get_global $n$asm2wasm$import))
  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (global $exportedNumber i32 (i32.const 42))
- (elem (get_global $tableBase) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi)
+ (elem (get_global $tableBase) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
  (export "big_negative" (func $big_negative))
  (export "pick" (func $exportMe))
  (export "doubleCompares" (func $doubleCompares))
@@ -1901,6 +1901,58 @@
    )
   )
  )
+ (func $autoDrop (param $x i32) (result i32)
+  (loop $while-in
+   (block $while-out
+    (if
+     (i32.eq
+      (get_local $x)
+      (i32.const 17)
+     )
+     (block
+      (return
+       (i32.const 5)
+      )
+      (drop
+       (call $autoDrop
+        (i32.const 1)
+       )
+      )
+     )
+     (block
+      (br $while-out)
+      (set_local $x
+       (call $autoDrop
+        (i32.const 2)
+       )
+      )
+     )
+    )
+    (br $while-in)
+   )
+  )
+  (return
+   (get_local $x)
+  )
+ )
+ (func $indirectInSequence
+  (local $i1 i32)
+  (set_local $i1
+   (block i32
+    (call_indirect $FUNCSIG$vi
+     (i32.const 0)
+     (i32.add
+      (i32.and
+       (i32.const 1)
+       (i32.const 7)
+      )
+      (i32.const 16)
+     )
+    )
+    (i32.const 1)
+   )
+  )
+ )
  (func $keepAlive
   (drop
    (call $sqrts
@@ -1917,12 +1969,23 @@
     (f64.const 100)
    )
   )
+  (drop
+   (call $autoDrop
+    (i32.const 52)
+   )
+  )
+  (call $indirectInSequence)
  )
  (func $v
   (nop)
  )
  (func $vi (param $x i32)
   (nop)
+ )
+ (func $ii (param $x i32) (result i32)
+  (return
+   (get_local $x)
+  )
  )
  (func $legalstub$fr (param $0 f64)
   (call $fr

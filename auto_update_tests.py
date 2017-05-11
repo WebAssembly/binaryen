@@ -84,9 +84,10 @@ for t in sorted(os.listdir(os.path.join('test', 'print'))):
     with open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w') as o: o.write(actual)
 
 for t in sorted(os.listdir(os.path.join('test', 'passes'))):
-  if t.endswith('.wast'):
+  if t.endswith(('.wast', '.wasm')):
     print '..', t
-    passname = os.path.basename(t).replace('.wast', '')
+    binary = '.wasm' in t
+    passname = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
     opts = ['-' + passname] if passname.startswith('O') else ['--' + p for p in passname.split('_')]
     t = os.path.join('test', 'passes', t)
     actual = ''
@@ -95,7 +96,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
       with open('split.wast', 'w') as o: o.write(module)
       cmd = WASM_OPT + opts + ['split.wast', '--print']
       actual += run_command(cmd)
-    with open(os.path.join('test', 'passes', passname + '.txt'), 'w') as o: o.write(actual)
+    with open(os.path.join('test', 'passes', passname + ('.bin' if binary else '') + '.txt'), 'w') as o: o.write(actual)
 
 print '\n[ checking wasm-opt -o notation... ]\n'
 

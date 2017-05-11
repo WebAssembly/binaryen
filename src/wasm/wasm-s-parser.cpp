@@ -48,17 +48,18 @@ Element::List& Element::list() {
 }
 
 Element* Element::operator[](unsigned i) {
+  if (!isList()) throw ParseException("expected list", line, col);
   if (i >= list().size()) throw ParseException("expected more elements in list", line, col);
   return list()[i];
 }
 
 IString Element::str() {
-  element_assert(!isList_);
+  if (!isStr()) throw ParseException("expected string", line, col);
   return str_;
 }
 
 const char* Element::c_str() {
-  element_assert(!isList_);
+  if (!isStr()) throw ParseException("expected string", line, col);
   return str_.str;
 }
 
@@ -207,7 +208,8 @@ Element* SExpressionParser::parseString() {
 }
 
 SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName) : wasm(wasm), allocator(wasm.allocator), globalCounter(0) {
-  assert(module[0]->str() == MODULE);
+  if (module.size() == 0) throw ParseException("empty toplevel, expected module");
+  if (module[0]->str() != MODULE) throw ParseException("toplevel does not start with module");
   if (module.size() == 1) return;
   Index i = 1;
   if (module[i]->dollared()) {
@@ -579,7 +581,6 @@ WasmType SExpressionWasmBuilder::stringToWasmType(const char* str, bool allowErr
 }
 
 Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
-  assert(s.isList());
   IString id = s[0]->str();
   const char *str = id.str;
   const char *dot = strchr(str, '.');
@@ -927,6 +928,7 @@ Expression* SExpressionWasmBuilder::makeTeeLocal(Element& s) {
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
   ret->setTee(true);
+  ret->finalize();
   return ret;
 }
 
@@ -935,6 +937,7 @@ Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
   ret->index = getLocalIndex(*s[1]);
   ret->value = parseExpression(s[2]);
   ret->setTee(false);
+  ret->finalize();
   return ret;
 }
 
@@ -959,6 +962,7 @@ Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
   ret->name = getGlobalName(*s[1]);
   if (wasm.getGlobalOrNull(ret->name) && !wasm.getGlobalOrNull(ret->name)->mutable_) throw ParseException("set_global of immutable", s.line, s.col);
   ret->value = parseExpression(s[2]);
+  ret->finalize();
   return ret;
 }
 
@@ -1083,6 +1087,7 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type) {
     i++;
   }
   ret->ptr = parseExpression(s[i]);
+  ret->finalize();
   return ret;
 }
 
@@ -1209,6 +1214,7 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s) {
   ret->target = target;
   ret->type = functionTypes[ret->target];
   parseCallOperands(s, 2, s.size(), ret);
+  ret->finalize();
   return ret;
 }
 
@@ -1218,6 +1224,7 @@ Expression* SExpressionWasmBuilder::makeCallImport(Element& s) {
   Import* import = wasm.getImport(ret->target);
   ret->type = wasm.getFunctionType(import->functionType)->result;
   parseCallOperands(s, 2, s.size(), ret);
+  ret->finalize();
   return ret;
 }
 
@@ -1231,6 +1238,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   ret->type = fullType->result;
   parseCallOperands(s, 2, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
+  ret->finalize();
   return ret;
 }
 

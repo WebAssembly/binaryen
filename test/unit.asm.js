@@ -689,10 +689,32 @@ function asm(global, env, buffer) {
     return (~~x) | 0;
   }
 
+  function autoDrop(x) {
+    x = x | 0;
+    while (1) {
+      if ((x | 0) == 17) {
+        return 5;
+        autoDrop(1) | 0;
+      } else {
+        break;
+        x = autoDrop(2) | 0;
+      }
+    }
+    return x | 0;
+  }
+
+  function indirectInSequence() {
+   var i1 = 0;
+   // this indirect call should have the right type, vi
+   i1 = (FUNCTION_TABLE_vi[1 & 7](0), 1);
+  }
+
   function keepAlive() {
     sqrts(3.14159);
     f2u(100.0);
     f2s(100.0);
+    autoDrop(52) | 0;
+    indirectInSequence();
   }
 
   function v() {
@@ -700,11 +722,16 @@ function asm(global, env, buffer) {
   function vi(x) {
     x = x | 0;
   }
+  function ii(x) {
+    x = x | 0;
+    return x | 0;
+  }
 
   var FUNCTION_TABLE_a = [ v, big_negative, v, v ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg, z, z, z, z, z, z ];
   var FUNCTION_TABLE_vi = [ vi, vi, vi, vi, vi, vi, vi, vi ];
+  var FUNCTION_TABLE_ii = [ ii ];
 
   return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround, exportedNumber: 42, relocatableAndModules: relocatableAndModules, exported_f32_user: exported_f32_user, keepAlive: keepAlive };
 }

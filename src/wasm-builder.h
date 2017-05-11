@@ -293,7 +293,7 @@ public:
     if (!block) block = makeBlock(any);
     if (append) {
       block->list.push_back(append);
-      block->finalize(); // TODO: move out of if
+      block->finalize();
     }
     return block;
   }
@@ -307,7 +307,7 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
-      block->finalize(); // TODO: move out of if
+      block->finalize();
     }
     return block;
   }
@@ -330,7 +330,7 @@ public:
         block->list.push_back(item);
       }
     }
-    block->finalize(); // TODO: move out of if
+    block->finalize();
     return block;
   }
 

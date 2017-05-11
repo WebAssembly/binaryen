@@ -361,22 +361,15 @@
   )
  )
  (func $unreachable-brs-4 (type $3) (param $var$0 i32) (result i32)
-  (i32.add
+  (drop
    (i32.const 1)
-   (block $label$0 i32
-    (br $label$0
-     (block $label$1 i32
-      (drop
-       (block
-        (drop
-         (i32.const 4104)
-        )
-        (unreachable)
-       )
-      )
-      (unreachable)
-     )
+  )
+  (drop
+   (block
+    (drop
+     (i32.const 4104)
     )
+    (unreachable)
    )
   )
  )
@@ -389,26 +382,24 @@
    (block $label$0 i64
     (get_local $var$1)
    )
-   (block $label$1 i64
-    (block i64
+   (block
+    (drop
+     (i64.sub
+      (get_local $var$0)
+      (i64.const 1)
+     )
+    )
+    (block
      (drop
-      (i64.sub
-       (get_local $var$0)
-       (i64.const 1)
-      )
-     )
-     (block
-      (drop
-       (block $block i64
-        (set_local $2
-         (get_local $var$0)
-        )
-        (nop)
-        (get_local $2)
+      (block $block i64
+       (set_local $2
+        (get_local $var$0)
        )
+       (nop)
+       (get_local $2)
       )
-      (unreachable)
      )
+     (unreachable)
     )
    )
   )
