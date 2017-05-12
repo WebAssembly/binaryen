@@ -173,15 +173,22 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
     if (!curr->name.is()) {
       if (list.size() == 1) {
-        // just one element. replace the block, either with it or with a nop if it's not needed
-        if (isConcreteWasmType(curr->type) || EffectAnalyzer(getPassOptions(), list[0]).hasSideEffects()) {
-          replaceCurrent(list[0]);
+        // just one element. replace the block
+        auto* singleton = list[0];
+        auto sideEffects = EffectAnalyzer(getPassOptions(), singleton).hasSideEffects();
+        if (!sideEffects && !isConcreteWasmType(singleton->type)) {
+          // no side effects, and singleton is not returning a value, so we can throw away
+          // the block and its contents, basically
+          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
+        } else if (curr->type == singleton->type) {
+          replaceCurrent(singleton);
         } else {
-          if (curr->type == unreachable) {
-            ExpressionManipulator::convert<Block, Unreachable>(curr);
-          } else {
-            ExpressionManipulator::nop(curr);
-          }
+          // (side effects +) type change, must be block with declared value but inside is unreachable
+          // (if both concrete, must match, and since no name on block, we can't be
+          // branched to, so if singleton is unreachable, so is the block)
+          assert(isConcreteWasmType(curr->type) && singleton->type == unreachable);
+          // we could replace with unreachable, but would need to update all
+          // the parent's types
         }
       } else if (list.size() == 0) {
         ExpressionManipulator::nop(curr);

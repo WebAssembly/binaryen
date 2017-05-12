@@ -1,5 +1,6 @@
 (module
  (type $0 (func (result i32)))
+ (type $1 (func))
  (memory $0 0)
  (func $return-i32-but-body-is-unreachable3 (type $0) (result i32)
   (local $label i32)
@@ -9,5 +10,12 @@
   (local $label i32)
   (unreachable)
   (i32.const 0)
+ )
+ (func $to-drop-unreachable (type $1)
+  (drop
+   (block i32
+    (unreachable)
+   )
+  )
  )
 )
