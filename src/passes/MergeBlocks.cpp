@@ -169,6 +169,7 @@ static void optimizeBlock(Block* curr, Module* module) {
               // we can do it!
               // reuse the drop
               drop->value = child->list.back();
+              drop->finalize();
               child->list.back() = drop;
               child->finalize();
               curr->list[i] = child;

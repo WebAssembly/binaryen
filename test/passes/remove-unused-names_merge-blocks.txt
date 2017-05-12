@@ -741,4 +741,11 @@
   )
   (unreachable)
  )
+ (func $drop-unreachable (type $4) (result i32)
+  (local $0 i32)
+  (drop
+   (unreachable)
+  )
+  (unreachable)
+ )
 )
