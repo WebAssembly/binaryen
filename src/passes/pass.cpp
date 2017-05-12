@@ -211,7 +211,7 @@ void PassRunner::run() {
         if (passDebug >= 2) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state (FIXME: this is broken, need to prevent recursion of the print pass\n";
+          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state, or 3 to dump byn-* files for each pass\n";
         }
         abort();
       }
