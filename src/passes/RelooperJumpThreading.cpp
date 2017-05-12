@@ -245,6 +245,7 @@ private:
     auto* inner = builder.blockifyWithName(origin, innerName, builder.makeBreak(outerName));
     auto* outer = builder.makeSequence(inner, iff->ifTrue);
     outer->name = outerName;
+    outer->finalize();
     origin = outer;
     // if another label value is checked here, handle that too
     if (ifFalse) {
