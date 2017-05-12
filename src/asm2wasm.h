@@ -35,7 +35,6 @@
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-printing.h"
-#include "wasm-validator.h"
 #include "wasm-module-building.h"
 
 namespace wasm {
