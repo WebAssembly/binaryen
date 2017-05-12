@@ -2488,7 +2488,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
 
         top->list.push_back(br);
-        top->finalize();
+
+        // once we finish the stack and br on top, we finalize blocks to the bottom
+        std::vector<Block*> finalizeStack;
+        finalizeStack.push_back(top);
 
         for (unsigned i = 0; i < cases->size(); i++) {
           Ref curr = cases[i];
@@ -2516,6 +2519,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           next->list.push_back(case_);
           next->finalize();
           top = next;
+          finalizeStack.push_back(top);
           nameMapper.popLabelName(name);
         }
 
@@ -2528,6 +2532,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         for (size_t i = 0; i < br->targets.size(); i++) {
           if (br->targets[i].isNull()) br->targets[i] = br->default_;
+        }
+
+        // we are finished setting up the br and blocks, finalize
+        while (finalizeStack.size() > 0) {
+          auto* curr = finalizeStack.back();
+          finalizeStack.pop_back();
+          curr->finalize();
         }
       } else {
         // we can't switch, make an if-chain instead of br_table
