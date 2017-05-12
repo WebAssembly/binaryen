@@ -211,6 +211,10 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
     // We'll emit a chain of if-elses
     wasm::If* CurrIf = nullptr;
 
+    // we build an if, then add a child, then add a child to that, etc., so we must
+    // finalize them in reverse order
+    std::vector<wasm::If*> finalizeStack;
+
     wasm::Expression* RemainingConditions = nullptr;
 
     for (BlockBranchMap::iterator iter = ProcessedBranchesOut.begin();; iter++) {
@@ -245,6 +249,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
           wasm::Expression* Now;
           if (RemainingConditions) {
             Now = Builder.makeIf(RemainingConditions, CurrContent);
+            finalizeStack.push_back(Now->cast<wasm::If>());
           } else {
             Now = CurrContent;
           }
@@ -257,6 +262,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
           }
         } else {
           auto* Now = Builder.makeIf(Details->Condition, CurrContent);
+          finalizeStack.push_back(Now);
           if (!CurrIf) {
             assert(!Root);
             Root = CurrIf = Now;
@@ -276,6 +282,14 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
       }
       if (IsDefault) break;
     }
+
+    // finalize the if-chains
+    while (finalizeStack.size() > 0) {
+      wasm::If* curr = finalizeStack.back();
+      finalizeStack.pop_back();
+      curr->finalize();
+    }
+
   } else {
     // Emit a switch
     auto Base = std::string("switch$") + std::to_string(Id);
@@ -366,11 +380,13 @@ wasm::Expression* MultipleShape::Render(RelooperBuilder& Builder, bool InLoop) {
   // TODO: consider switch
   // emit an if-else chain
   wasm::If *FirstIf = nullptr, *CurrIf = nullptr;
+  std::vector<wasm::If*> finalizeStack;
   for (IdShapeMap::iterator iter = InnerMap.begin(); iter != InnerMap.end(); iter++) {
     auto* Now = Builder.makeIf(
       Builder.makeCheckLabel(iter->first),
       iter->second->Render(Builder, InLoop)
     );
+    finalizeStack.push_back(Now);
     if (!CurrIf) {
       FirstIf = CurrIf = Now;
     } else {
@@ -378,6 +394,11 @@ wasm::Expression* MultipleShape::Render(RelooperBuilder& Builder, bool InLoop) {
       CurrIf->finalize();
       CurrIf = Now;
     }
+  }
+  while (finalizeStack.size() > 0) {
+    wasm::If* curr = finalizeStack.back();
+    finalizeStack.pop_back();
+    curr->finalize();
   }
   wasm::Expression* Ret = Builder.makeBlock(FirstIf);
   Ret = HandleFollowupMultiples(Ret, this, Builder, InLoop);
