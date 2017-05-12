@@ -2548,6 +2548,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         If* chain = nullptr;
         If* first = nullptr;
 
+        // once we finish the stack and br on top, we finalize everything
+        std::vector<Block*> finalizeBlocks;
+        finalizeBlocks.push_back(top);
+        std::vector<If*> finalizeIfs;
+
         for (unsigned i = 0; i < cases->size(); i++) {
           Ref curr = cases[i];
           Ref condition = curr[0];
@@ -2567,6 +2572,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               builder.makeBreak(name),
               chain
             );
+            finalizeIfs.push_back(iff);
             chain = iff;
             if (!first) first = iff;
           }
@@ -2574,8 +2580,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           top->name = name;
           next->list.push_back(top);
           next->list.push_back(case_);
-          next->finalize();
           top = next;
+          finalizeBlocks.push_back(top);
           nameMapper.popLabelName(name);
         }
 
@@ -2590,7 +2596,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         first->ifFalse = builder.makeBreak(br->default_);
 
         brHolder->list.push_back(chain);
-        brHolder->finalize();
+
+        // finalize it all
+        for (If* iff : finalizeIfs) {
+          iff->finalize();
+        }
+        for (Block* block : finalizeBlocks) {
+          block->finalize();
+        }
       }
 
       breakStack.pop_back();
