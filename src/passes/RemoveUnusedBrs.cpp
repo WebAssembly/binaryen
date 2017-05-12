@@ -461,6 +461,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 ));
                 curr->name = Name();
                 ExpressionManipulator::nop(br);
+                curr->finalize(curr->type);
                 return;
               }
             }

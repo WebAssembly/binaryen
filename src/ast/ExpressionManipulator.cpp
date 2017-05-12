@@ -147,6 +147,7 @@ void ExpressionManipulator::spliceIntoBlock(Block* block, Index index, Expressio
     }
     list[index] = add;
   }
+  block->finalize(block->type);
 }
 
 } // namespace wasm
