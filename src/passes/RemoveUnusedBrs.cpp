@@ -370,18 +370,22 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
       }
 
-      void finish() {
+      void finish(Function* func) {
         for (auto& iter : newNames) {
           auto* br = iter.first;
           auto name = iter.second;
           br->name = name;
+        }
+        if (newNames.size() > 0) {
+          // by changing where brs go, we may change block types etc.
+          ReFinalize().walkFunction(func);
         }
       }
     };
     JumpThreader jumpThreader;
     jumpThreader.setModule(getModule());
     jumpThreader.walkFunction(func);
-    jumpThreader.finish();
+    jumpThreader.finish(func);
 
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer> {
