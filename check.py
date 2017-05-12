@@ -280,6 +280,11 @@ for t in spec_tests:
       cmd = cmd + (extra.get(os.path.basename(wast)) or [])
       return run_command(cmd, stderr=subprocess.PIPE)
 
+    def run_opt_test(wast):
+      # check optimization validation
+      cmd = WASM_OPT + [wast, '-O']
+      run_command(cmd)
+
     def check_expected(actual, expected):
       if expected and os.path.exists(expected):
         expected = open(expected).read()
@@ -335,17 +340,13 @@ for t in spec_tests:
         split_num += 1
         with open('split.wast', 'w') as o: o.write(module + '\n' + '\n'.join(asserts))
         run_spec_test('split.wast') # before binary stuff - just check it's still ok split out
+        run_opt_test('split.wast') # also that our optimizer doesn't break on it
         result_wast = binary_format_check('split.wast', verify_final_result=False)
         # add the asserts, and verify that the test still passes
         open(result_wast, 'a').write('\n' + '\n'.join(asserts))
         actual += run_spec_test(result_wast)
       # compare all the outputs to the expected output
       check_expected(actual, os.path.join(options.binaryen_test, 'spec', 'expected-output', os.path.basename(wast) + '.log'))
-
-    # check optimization validation
-    print '    -O test'
-    cmd = WASM_OPT + [wast, '-O']
-    run_command(cmd)
 
 if MOZJS:
   print '\n[ checking binaryen.js testcases... ]\n'
