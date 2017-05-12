@@ -72,6 +72,7 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
             WASM_UNREACHABLE();
           }
         }
+        child->finalize(child->type);
         replaceCurrent(child);
       }
     }
