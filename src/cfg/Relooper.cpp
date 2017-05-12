@@ -57,6 +57,7 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* P
       int Id = iter.first;
       Shape* Body = iter.second;
       Curr->name = Builder.getBlockBreakName(Id);
+      Curr->finalize();
       auto* Outer = Builder.makeBlock(Curr);
       Outer->list.push_back(Body->Render(Builder, InLoop));
       Outer->finalize(); // TODO: not really necessary
@@ -83,6 +84,7 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* P
       } else {
         for (auto* Entry : Loop->Entries) {
           Curr->name = Builder.getBlockBreakName(Entry->Id);
+          Curr->finalize();
           auto* Outer = Builder.makeBlock(Curr);
           Outer->finalize(); // TODO: not really necessary
           Curr = Outer;
