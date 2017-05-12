@@ -342,6 +342,11 @@ for t in spec_tests:
       # compare all the outputs to the expected output
       check_expected(actual, os.path.join(options.binaryen_test, 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
+    # check optimization validation
+    print '    -O test'
+    cmd = WASM_OPT + [wast, '-O']
+    run_command(cmd)
+
 if MOZJS:
   print '\n[ checking binaryen.js testcases... ]\n'
 
