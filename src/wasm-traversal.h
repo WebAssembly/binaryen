@@ -184,6 +184,15 @@ struct Walker : public VisitorType {
     setFunction(nullptr);
   }
 
+  void walkFunctionInModule(Function* func, Module* module) {
+    setModule(module);
+    setFunction(func);
+    static_cast<SubType*>(this)->doWalkFunction(func);
+    static_cast<SubType*>(this)->visitFunction(func);
+    setFunction(nullptr);
+    setModule(nullptr);
+  }
+
   // override this to provide custom functionality
   void doWalkFunction(Function* func) {
     walk(func->body);

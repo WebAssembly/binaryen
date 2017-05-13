@@ -1338,6 +1338,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       }
     }
+
+    void visitFunction(Function* curr) {
+      // changing call types requires we percolate types, and drop stuff.
+      // we do this in this pass so that we don't look broken between passes
+      ReFinalize().walkFunctionInModule(curr, getModule());
+      AutoDrop().walkFunctionInModule(curr, getModule());
+    }
   };
 
   // apply debug info, reducing intrinsic calls into annotations on the ast nodes
@@ -1400,8 +1407,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.setValidateGlobally(false);
   }
   passRunner.add<FinalizeCalls>(this);
-  passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
-  passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
   if (legalizeJavaScriptFFI) {
     passRunner.add("legalize-js-interface");
   }
