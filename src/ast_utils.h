@@ -431,6 +431,14 @@ struct ReFinalizeNode : public Visitor<ReFinalizeNode> {
   void visitHost(Host *curr) { curr->finalize(); }
   void visitNop(Nop *curr) { curr->finalize(); }
   void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+
+  // given a stack of nested expressions, update them all from child to parent
+  static void updateStack(std::vector<Expression*>& expressionStack) {
+    for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
+      auto* curr = expressionStack[i];
+      ReFinalizeNode().visit(curr);
+    }
+  }
 };
 
 // Adds drop() operations where necessary. This lets you not worry about adding drop when
@@ -459,10 +467,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   }
 
   void reFinalize() {
-    for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
-      auto* curr = expressionStack[i];
-      ReFinalizeNode().visit(curr);
-    }
+    ReFinalizeNode::updateStack(expressionStack);
   }
 
   void visitBlock(Block* curr) {

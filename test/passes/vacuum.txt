@@ -259,4 +259,19 @@
    )
   )
  )
+ (func $if-1-block (type $1) (param $x i32)
+  (block $out
+   (if
+    (get_local $x)
+    (block $block
+     (block $block9
+      (set_local $x
+       (get_local $x)
+      )
+      (br $out)
+     )
+    )
+   )
+  )
+ )
 )

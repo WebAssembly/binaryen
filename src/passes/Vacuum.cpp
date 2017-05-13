@@ -200,17 +200,25 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // if the condition is a constant, just apply it
     // we can just return the ifTrue or ifFalse.
     if (auto* value = curr->condition->dynCast<Const>()) {
+      Expression* child;
       if (value->value.getInteger()) {
-        replaceCurrent(curr->ifTrue);
-        return;
+        child = curr->ifTrue;
       } else {
         if (curr->ifFalse) {
-          replaceCurrent(curr->ifFalse);
+          child = curr->ifFalse;
         } else {
           ExpressionManipulator::nop(curr);
+          return;
         }
-        return;
       }
+      replaceCurrent(child);
+      if (curr->type != child->type) {
+        // e.g., if (1) unreachable is none => unreachable
+        // or if i32 (1) unreachable else 10 is i32 => unreachable
+        // in which cases we must update our parents
+        ReFinalizeNode::updateStack(expressionStack);
+      }
+      return;
     }
     if (curr->ifFalse) {
       if (curr->ifFalse->is<Nop>()) {

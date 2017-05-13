@@ -463,4 +463,22 @@
       )
     )
   )
+  (func $if-1-block (param $x i32)
+   (block $out
+    (if
+     (get_local $x)
+     (block
+      (if
+       (i32.const 1)
+       (block
+        (set_local $x
+         (get_local $x)
+        )
+        (br $out)
+       )
+      )
+     )
+    )
+   )
+  )
 )
