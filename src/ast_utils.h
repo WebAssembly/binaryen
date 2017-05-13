@@ -322,7 +322,12 @@ struct ExpressionAnalyzer {
 };
 
 // Re-Finalizes all node types
-
+// This removes "unnecessary' block/if/loop types, i.e., that are added
+// specifically, as in
+//  (block i32 (unreachable))
+// vs
+//  (block (unreachable))
+// This converts to the latter form.
 struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   bool isFunctionParallel() override { return true; }
 
@@ -430,6 +435,9 @@ struct ReFinalizeNode : public Visitor<ReFinalizeNode> {
 
 // Adds drop() operations where necessary. This lets you not worry about adding drop when
 // generating code.
+// This also refinalizes before and after, as dropping can change types, and depends
+// on types being cleaned up - no unnecessary block/if/loop types (see refinalize)
+// TODO: optimize that, interleave them
 struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   bool isFunctionParallel() override { return true; }
 
@@ -483,10 +491,13 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
   }
 
-  void visitFunction(Function* curr) {
+  void doWalkFunction(Function* curr) {
+    ReFinalize().walkFunctionInModule(curr, getModule());
+    walk(curr->body);
     if (curr->result == none && isConcreteWasmType(curr->body->type)) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
+    ReFinalize().walkFunctionInModule(curr, getModule());
   }
 };
 

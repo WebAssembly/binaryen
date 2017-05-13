@@ -1342,7 +1342,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     void visitFunction(Function* curr) {
       // changing call types requires we percolate types, and drop stuff.
       // we do this in this pass so that we don't look broken between passes
-      ReFinalize().walkFunctionInModule(curr, getModule());
       AutoDrop().walkFunctionInModule(curr, getModule());
     }
   };
