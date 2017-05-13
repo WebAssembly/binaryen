@@ -165,11 +165,7 @@ static void dumpWast(Name name, Module* wasm) {
 }
 
 void PassRunner::run() {
-  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
-  //                     and validate between each pass.
-  //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
-  //                     also is bad for e.g. printing which is a pass)
-  static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  static const int passDebug = getPassDebug();
   if (!isNested && (options.debug || passDebug)) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
@@ -305,6 +301,11 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   } else {
     pass->runFunction(this, wasm, func);
   }
+}
+
+int PassRunner::getPassDebug() {
+  static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  return passDebug;
 }
 
 } // namespace wasm
