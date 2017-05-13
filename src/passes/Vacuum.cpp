@@ -25,10 +25,12 @@
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
+struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Vacuum; }
+
+  bool needRefinalize = false;
 
   // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
@@ -164,7 +166,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             list.push_back(last);
           }
           needResize = false;
-          ReFinalizeNode::updateStack(expressionStack);
+          needRefinalize = true;
           break;
         }
       }
@@ -173,7 +175,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       list.resize(size - skip);
       // resizing means we drop elements, which may include breaks, which may
       // render blocks unreachable now
-      ReFinalizeNode::updateStack(expressionStack);
+      needRefinalize = true;
     }
     if (!curr->name.is()) {
       if (list.size() == 1) {
@@ -220,7 +222,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         // e.g., if (1) unreachable is none => unreachable
         // or if i32 (1) unreachable else 10 is i32 => unreachable
         // in which cases we must update our parents
-        ReFinalizeNode::updateStack(expressionStack);
+        needRefinalize = true;
       }
       return;
     }
@@ -322,6 +324,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitFunction(Function* curr) {
+    if (needRefinalize) {
+      ReFinalize().walk(curr->body);
+    }
     auto* optimized = optimize(curr->body, curr->result != none);
     if (optimized) {
       curr->body = optimized;
