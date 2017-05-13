@@ -179,7 +179,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       replaceCurrent(curr->list[0]);
       assert(!reachable);
     }
-    // blocks without a value may change from none to unreachable
+    // blocks without a value may change from none to unreachable TODO optimize
     if (curr->type == none) {
       curr->finalize(curr->type);
     }

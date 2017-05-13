@@ -731,7 +731,7 @@ public:
       void visitExpression(Expression* curr) {
         // check if a node type is 'stale', i.e., we forgot to finalize() the node.
         auto oldType = curr->type;
-        ReFinalize().visit(curr);
+        ReFinalizeNode().visit(curr);
         auto newType = curr->type;
         if (newType != oldType) {
           // We accept concrete => undefined,

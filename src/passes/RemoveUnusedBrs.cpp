@@ -305,19 +305,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     if (worked) {
       // Our work may alter block and if types, they may now return values that we made flow through them
-      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater>> {
-        void visitBlock(Block* curr) {
-          curr->finalize();
-        }
-        void visitLoop(Loop* curr) {
-          curr->finalize();
-        }
-        void visitIf(If* curr) {
-          curr->finalize();
-        }
-      };
-      TypeUpdater typeUpdater;
-      typeUpdater.walkFunction(func);
+      ReFinalize().walkFunctionInModule(func, getModule());
     }
 
     // thread trivial jumps
@@ -378,7 +366,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         if (newNames.size() > 0) {
           // by changing where brs go, we may change block types etc.
-          ReFinalize().walkFunction(func);
+          ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
     };

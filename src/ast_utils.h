@@ -400,6 +400,34 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   }
 };
 
+// Re-finalize a single node. This is slow, if you want to refinalize
+// an entire ast, use ReFinalize
+struct ReFinalizeNode : public Visitor<ReFinalizeNode> {
+  void visitBlock(Block *curr) { curr->finalize(); }
+  void visitIf(If *curr) { curr->finalize(); }
+  void visitLoop(Loop *curr) { curr->finalize(); }
+  void visitBreak(Break *curr) { curr->finalize(); }
+  void visitSwitch(Switch *curr) { curr->finalize(); }
+  void visitCall(Call *curr) { curr->finalize(); }
+  void visitCallImport(CallImport *curr) { curr->finalize(); }
+  void visitCallIndirect(CallIndirect *curr) { curr->finalize(); }
+  void visitGetLocal(GetLocal *curr) { curr->finalize(); }
+  void visitSetLocal(SetLocal *curr) { curr->finalize(); }
+  void visitGetGlobal(GetGlobal *curr) { curr->finalize(); }
+  void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
+  void visitLoad(Load *curr) { curr->finalize(); }
+  void visitStore(Store *curr) { curr->finalize(); }
+  void visitConst(Const *curr) { curr->finalize(); }
+  void visitUnary(Unary *curr) { curr->finalize(); }
+  void visitBinary(Binary *curr) { curr->finalize(); }
+  void visitSelect(Select *curr) { curr->finalize(); }
+  void visitDrop(Drop *curr) { curr->finalize(); }
+  void visitReturn(Return *curr) { curr->finalize(); }
+  void visitHost(Host *curr) { curr->finalize(); }
+  void visitNop(Nop *curr) { curr->finalize(); }
+  void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+};
+
 // Adds drop() operations where necessary. This lets you not worry about adding drop when
 // generating code.
 struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
@@ -425,7 +453,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void reFinalize() {
     for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
       auto* curr = expressionStack[i];
-      ReFinalize().visit(curr);
+      ReFinalizeNode().visit(curr);
     }
   }
 
