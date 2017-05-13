@@ -125,16 +125,29 @@ for asm in tests:
           cmd += ['--wasm-only']
         wasm = os.path.join(options.binaryen_test, wasm)
         print '..', asm, wasm
-        actual = run_command(cmd)
 
-        # verify output
-        if not os.path.exists(wasm):
-          fail_with_error('output .wast file %s does not exist' % wasm)
-        expected = open(wasm, 'rb').read()
-        if actual != expected:
-          fail(actual, expected)
+        def do_asm2wasm_test():
+          actual = run_command(cmd)
 
-        binary_format_check(wasm, verify_final_result=False)
+          # verify output
+          if not os.path.exists(wasm):
+            fail_with_error('output .wast file %s does not exist' % wasm)
+          expected = open(wasm, 'rb').read()
+          if actual != expected:
+            fail(actual, expected)
+
+          binary_format_check(wasm, verify_final_result=False)
+
+        # test both normally and with pass debug (so each inter-pass state is validated)
+        old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
+        try:
+          os.environ['BINARYEN_PASS_DEBUG'] = '1'
+          do_asm2wasm_test()
+          del os.environ['BINARYEN_PASS_DEBUG']
+          do_asm2wasm_test()
+        finally:
+          if old_pass_debug is not None:
+            os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
 
         # verify in wasm
         if options.interpreter:
