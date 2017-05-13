@@ -321,16 +321,61 @@ struct ExpressionAnalyzer {
   static uint32_t hash(Expression* curr);
 };
 
-// Finalizes a node
+// Re-Finalizes all node types
 
 struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new ReFinalize; }
+
   ReFinalize() { name = "refinalize"; }
 
-  void visitBlock(Block *curr) { curr->finalize(); }
+  // block finalization is O(bad) if we do each block by itself, so do it in bulk,
+  // tracking break value types so we just do a linear pass
+
+  std::map<Name, WasmType> breakValues;
+
+  void visitBlock(Block *curr) {
+    // do this quickly, without any validation
+    if (curr->name.is()) {
+      auto iter = breakValues.find(curr->name);
+      if (iter != breakValues.end()) {
+        // there is a break to here
+        curr->type = iter->second;
+        return;
+      }
+    }
+    // nothing branches here
+    if (curr->list.size() > 0) {
+      // if we have an unreachable child, we are unreachable
+      // (we don't need to recurse into children, they can't
+      // break to us)
+      for (auto* child : curr->list) {
+        if (child->type == unreachable) {
+          curr->type = unreachable;
+          return;
+        }
+      }
+      // children are reachable, so last element determines type
+      curr->type = curr->list.back()->type;
+    } else {
+      curr->type = none;
+    }
+  }
   void visitIf(If *curr) { curr->finalize(); }
   void visitLoop(Loop *curr) { curr->finalize(); }
-  void visitBreak(Break *curr) { curr->finalize(); }
-  void visitSwitch(Switch *curr) { curr->finalize(); }
+  void visitBreak(Break *curr) {
+    curr->finalize();
+    breakValues[curr->name] = getValueType(curr->value);
+  }
+  void visitSwitch(Switch *curr) {
+    curr->finalize();
+    auto valueType = getValueType(curr->value);
+    for (auto target : curr->targets) {
+      breakValues[target] = valueType;
+    }
+    breakValues[curr->default_] = valueType;
+  }
   void visitCall(Call *curr) { curr->finalize(); }
   void visitCallImport(CallImport *curr) { curr->finalize(); }
   void visitCallIndirect(CallIndirect *curr) { curr->finalize(); }
@@ -349,6 +394,10 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   void visitHost(Host *curr) { curr->finalize(); }
   void visitNop(Nop *curr) { curr->finalize(); }
   void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+
+  WasmType getValueType(Expression* value) {
+    return value && value->type != unreachable ? value->type : none;
+  }
 };
 
 // Adds drop() operations where necessary. This lets you not worry about adding drop when
