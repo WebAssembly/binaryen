@@ -251,6 +251,7 @@ private:
     if (ifFalse) {
       optimizeJumpsToLabelCheck(origin, ifFalse->cast<If>());
     }
+    ReFinalize().walk(origin);
   }
 };
 

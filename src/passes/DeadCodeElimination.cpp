@@ -415,6 +415,9 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   void visitFunction(Function* curr) {
     assert(reachableBreaks.size() == 0);
+    // removing breaks can make blocks unreachable
+    // TODO: check if we need to do this?
+    ReFinalize().walk(curr->body);
   }
 };
 
