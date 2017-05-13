@@ -164,12 +164,16 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             list.push_back(last);
           }
           needResize = false;
+          ReFinalizeNode::updateStack(expressionStack);
           break;
         }
       }
     }
     if (needResize) {
       list.resize(size - skip);
+      // resizing means we drop elements, which may include breaks, which may
+      // render blocks unreachable now
+      ReFinalizeNode::updateStack(expressionStack);
     }
     if (!curr->name.is()) {
       if (list.size() == 1) {

@@ -481,4 +481,21 @@
     )
    )
   )
+  (func $block-resize-br-gone
+    (block $out
+      (block $in
+        (call $block-resize-br-gone)
+        (br $in)
+        (br $out)
+      )
+      (return)
+    )
+    (block $out2
+      (block $in2
+        (br $in2)
+        (br $out2)
+      )
+      (return)
+    )
+  )
 )

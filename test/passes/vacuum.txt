@@ -274,4 +274,19 @@
    )
   )
  )
+ (func $block-resize-br-gone (type $0)
+  (block $out
+   (block $in
+    (call $block-resize-br-gone)
+    (br $in)
+   )
+   (return)
+  )
+  (block $out2
+   (block $in2
+    (br $in2)
+   )
+   (return)
+  )
+ )
 )
