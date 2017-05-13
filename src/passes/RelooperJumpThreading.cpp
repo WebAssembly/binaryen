@@ -26,6 +26,7 @@
 
 namespace wasm {
 
+
 static Name LABEL("label");
 
 // We need to use new label names, which we cannot create in parallel, so pre-create them
@@ -164,6 +165,11 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
     }
   }
 
+  void visitFunction(Function* curr) {
+    // we may alter types
+    ReFinalize().walkFunctionInModule(curr, getModule());
+  }
+
 private:
 
   bool hasIrreducibleControlFlow(If* iff, Expression* origin) {
@@ -245,13 +251,11 @@ private:
     auto* inner = builder.blockifyWithName(origin, innerName, builder.makeBreak(outerName));
     auto* outer = builder.makeSequence(inner, iff->ifTrue);
     outer->name = outerName;
-    outer->finalize();
     origin = outer;
     // if another label value is checked here, handle that too
     if (ifFalse) {
       optimizeJumpsToLabelCheck(origin, ifFalse->cast<If>());
     }
-    ReFinalize().walk(origin);
   }
 };
 
