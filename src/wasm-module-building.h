@@ -137,7 +137,7 @@ public:
   }
 
   bool useWorkers() {
-    return numFunctions > 0 && !debug && ThreadPool::getNumCores() > 1 && !PassRunner::passDebug();
+    return numFunctions > 0 && !debug && ThreadPool::getNumCores() > 1 && !PassRunner::getPassDebug();
   }
 
   // Add a function to the module, and to be optimized

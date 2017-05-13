@@ -143,6 +143,11 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       ExpressionManipulator::nop(curr);
     }
   }
+
+  void visitFunction(Function* curr) {
+    // removing breaks can alter types
+    ReFinalize().walkFunctionInModule(curr, getModule());
+  }
 };
 
 Pass *createPrecomputePass() {
