@@ -2493,10 +2493,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
         top->list.push_back(br);
 
-        // once we finish the stack and br on top, we finalize blocks to the bottom
-        std::vector<Block*> finalizeStack;
-        finalizeStack.push_back(top);
-
         for (unsigned i = 0; i < cases->size(); i++) {
           Ref curr = cases[i];
           Ref condition = curr[0];
@@ -2523,7 +2519,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           next->list.push_back(case_);
           next->finalize();
           top = next;
-          finalizeStack.push_back(top);
           nameMapper.popLabelName(name);
         }
 
@@ -2537,13 +2532,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         for (size_t i = 0; i < br->targets.size(); i++) {
           if (br->targets[i].isNull()) br->targets[i] = br->default_;
         }
-
-        // we are finished setting up the br and blocks, finalize
-        while (finalizeStack.size() > 0) {
-          auto* curr = finalizeStack.back();
-          finalizeStack.pop_back();
-          curr->finalize();
-        }
       } else {
         // we can't switch, make an if-chain instead of br_table
         auto var = Builder::addVar(function, br->condition->type);
@@ -2551,11 +2539,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         auto* brHolder = top;
         If* chain = nullptr;
         If* first = nullptr;
-
-        // once we finish the stack and br on top, we finalize everything
-        std::vector<Block*> finalizeBlocks;
-        finalizeBlocks.push_back(top);
-        std::vector<If*> finalizeIfs;
 
         for (unsigned i = 0; i < cases->size(); i++) {
           Ref curr = cases[i];
@@ -2576,7 +2559,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               builder.makeBreak(name),
               chain
             );
-            finalizeIfs.push_back(iff);
             chain = iff;
             if (!first) first = iff;
           }
@@ -2585,7 +2567,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           next->list.push_back(top);
           next->list.push_back(case_);
           top = next;
-          finalizeBlocks.push_back(top);
           nameMapper.popLabelName(name);
         }
 
@@ -2600,14 +2581,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         first->ifFalse = builder.makeBreak(br->default_);
 
         brHolder->list.push_back(chain);
-
-        // finalize it all
-        for (If* iff : finalizeIfs) {
-          iff->finalize();
-        }
-        for (Block* block : finalizeBlocks) {
-          block->finalize();
-        }
       }
 
       breakStack.pop_back();
