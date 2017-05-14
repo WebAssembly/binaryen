@@ -73,6 +73,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (isDead(curr->value)) {
       // the condition is evaluated last, so if the value was unreachable, the whole thing is
       replaceCurrent(curr->value);
+      // removing a break can alter block types everywhere
+      ReFinalize().walk(getFunction()->body);
       return;
     }
     if (isDead(curr->condition)) {
@@ -90,6 +92,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       } else {
         replaceCurrent(curr->condition);
       }
+      // removing a break can alter block types everywhere
+      ReFinalize().walk(getFunction()->body);
       return;
     }
     addBreak(curr->name);

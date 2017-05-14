@@ -538,4 +538,20 @@
    )
   )
  )
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block i32
+     (nop)
+     (drop
+      (br_if $label$0
+       (unreachable)
+       (get_local $var$0)
+      )
+     )
+     (i32.const 4)
+    )
+   )
+  )
+ )
 )
