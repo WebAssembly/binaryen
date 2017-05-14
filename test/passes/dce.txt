@@ -315,9 +315,11 @@
   )
  )
  (func $unreachable-block-ends-switch (type $2) (result i32)
-  (block $label$3
-   (nop)
-   (unreachable)
+  (block $label$0
+   (block $label$3
+    (nop)
+    (unreachable)
+   )
   )
  )
  (func $unreachable-block-ends-br_if (type $1) (result i32)
@@ -353,24 +355,26 @@
    (block $label$0 i64
     (get_local $var$1)
    )
-   (block
-    (drop
-     (i64.sub
-      (get_local $var$0)
-      (i64.const 1)
-     )
-    )
+   (block $label$1
     (block
      (drop
-      (block $block i64
-       (set_local $2
-        (get_local $var$0)
-       )
-       (nop)
-       (get_local $2)
+      (i64.sub
+       (get_local $var$0)
+       (i64.const 1)
       )
      )
-     (unreachable)
+     (block
+      (drop
+       (block $block i64
+        (set_local $2
+         (get_local $var$0)
+        )
+        (nop)
+        (get_local $2)
+       )
+      )
+      (unreachable)
+     )
     )
    )
   )
@@ -391,6 +395,16 @@
        (get_local $var$0)
       )
      )
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $replace-br-value-of-i32-with-unreachable (type $2) (result i32)
+  (block $label$0
+   (br $label$0
+    (block $label$1
+     (nop)
      (unreachable)
     )
    )

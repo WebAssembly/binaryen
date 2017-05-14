@@ -7,13 +7,11 @@
  (import "env" "tableBase" (global $tableBase i32))
  (export "__ZN10WasmAssertC2Ev__async_cb" (func $__ZN10WasmAssertC2Ev__async_cb))
  (func $__ZN10WasmAssertC2Ev__async_cb (param $0 i32)
-  (block $switch-default
-   (i32.store
-    (i32.const 12)
-    (i32.const 26)
-   )
-   (return)
+  (i32.store
+   (i32.const 12)
+   (i32.const 26)
   )
+  (return)
   (i32.store
    (i32.const 0)
    (i32.const 1)

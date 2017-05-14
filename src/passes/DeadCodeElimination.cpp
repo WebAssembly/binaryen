@@ -32,6 +32,7 @@
 #include <pass.h>
 #include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/block-utils.h>
 
 namespace wasm {
 
@@ -179,9 +180,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       reachable = reachable || reachableBreaks.count(curr->name);
       reachableBreaks.erase(curr->name);
     }
-    if (curr->list.size() == 1 && isDead(curr->list[0]) && !BreakSeeker::has(curr->list[0], curr->name)) {
-      replaceCurrent(curr->list[0]);
-      assert(!reachable);
+    if (curr->list.size() == 1 && isDead(curr->list[0])) {
+      replaceCurrent(BlockUtils::simplifyToContents(curr, this));
     }
     // blocks without a value may change from none to unreachable TODO optimize
     if (curr->type == none) {
@@ -233,8 +233,17 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         case Expression::Id::BlockId: DELEGATE(Block);
         case Expression::Id::IfId: DELEGATE(If);
         case Expression::Id::LoopId: DELEGATE(Loop);
-        case Expression::Id::BreakId: DELEGATE(Break);
-        case Expression::Id::SwitchId: DELEGATE(Switch);
+        case Expression::Id::BreakId: {
+          // changing the break target can cause types to need updating
+          ExpressionManipulator::convert<Break, Unreachable>(static_cast<Break*>(*currp));
+          ReFinalize().walk(self->getFunction()->body);
+          break;
+        }
+        case Expression::Id::SwitchId: {
+          ExpressionManipulator::convert<Switch, Unreachable>(static_cast<Switch*>(*currp));
+          ReFinalize().walk(self->getFunction()->body);
+          break;
+        }
         case Expression::Id::CallId: DELEGATE(Call);
         case Expression::Id::CallImportId: DELEGATE(CallImport);
         case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);

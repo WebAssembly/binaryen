@@ -570,4 +570,14 @@
    (i32.const 16)
   )
  )
+ (func $replace-br-value-of-i32-with-unreachable (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block $label$1 i32
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+ )
 )

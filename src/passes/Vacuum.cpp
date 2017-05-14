@@ -22,6 +22,7 @@
 #include <pass.h>
 #include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/block-utils.h>
 
 namespace wasm {
 
@@ -177,29 +178,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
       // render blocks unreachable now
       needRefinalize = true;
     }
-    if (!curr->name.is()) {
-      if (list.size() == 1) {
-        // just one element. replace the block
-        auto* singleton = list[0];
-        auto sideEffects = EffectAnalyzer(getPassOptions(), singleton).hasSideEffects();
-        if (!sideEffects && !isConcreteWasmType(singleton->type)) {
-          // no side effects, and singleton is not returning a value, so we can throw away
-          // the block and its contents, basically
-          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
-        } else if (curr->type == singleton->type) {
-          replaceCurrent(singleton);
-        } else {
-          // (side effects +) type change, must be block with declared value but inside is unreachable
-          // (if both concrete, must match, and since no name on block, we can't be
-          // branched to, so if singleton is unreachable, so is the block)
-          assert(isConcreteWasmType(curr->type) && singleton->type == unreachable);
-          // we could replace with unreachable, but would need to update all
-          // the parent's types
-        }
-      } else if (list.size() == 0) {
-        ExpressionManipulator::nop(curr);
-      }
-    }
+    // the block may now be a trivial one that we can get rid of and just leave its contents
+    replaceCurrent(BlockUtils::simplifyToContents(curr, this));
   }
 
   void visitIf(If* curr) {

@@ -227,16 +227,22 @@ public:
     }
   }
   void visitBreak(Break *curr) {
-    noteBreak(curr->name, curr->value, curr);
+    // note breaks (that are actually taken)
+    if (!curr->value || curr->value->type != unreachable) {
+      noteBreak(curr->name, curr->value, curr);
+    }
     if (curr->condition) {
       shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "break condition must be i32");
     }
   }
   void visitSwitch(Switch *curr) {
-    for (auto& target : curr->targets) {
-      noteBreak(target, curr->value, curr);
+    // note breaks (that are actually taken)
+    if (curr->condition->type != unreachable && (!curr->value || curr->value->type != unreachable)) {
+      for (auto& target : curr->targets) {
+        noteBreak(target, curr->value, curr);
+      }
+      noteBreak(curr->default_, curr->value, curr);
     }
-    noteBreak(curr->default_, curr->value, curr);
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
   }
   void visitCall(Call *curr) {
