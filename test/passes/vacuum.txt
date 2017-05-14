@@ -289,4 +289,8 @@
    (return)
   )
  )
+ (func $block-unreachable-but-last-element-concrete (type $0)
+  (local $2 i32)
+  (nop)
+ )
 )

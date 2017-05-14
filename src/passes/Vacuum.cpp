@@ -274,8 +274,10 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     // if we are dropping a block's return value, we might be able to remove it entirely
     if (auto* block = curr->value->dynCast<Block>()) {
       auto* last = block->list.back();
-      if (isConcreteWasmType(last->type)) {
-        assert(block->type == last->type);
+      // note that the last element may be concrete but not the block, if the
+      // block has an unreachable element in the middle, making the block unreachable
+      // despite later elements and in particular the last
+      if (isConcreteWasmType(last->type) && block->type == last->type) {
         last = optimize(last, false);
         if (!last) {
           // we may be able to remove this, if there are no brs
