@@ -371,10 +371,16 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   void visitLoop(Loop *curr) { curr->finalize(); }
   void visitBreak(Break *curr) {
     curr->finalize();
+    if (curr->value && curr->value->type == unreachable) {
+      return; // not an actual break
+    }
     breakValues[curr->name] = getValueType(curr->value);
   }
   void visitSwitch(Switch *curr) {
     curr->finalize();
+    if (curr->condition->type == unreachable || (curr->value && curr->value->type == unreachable)) {
+      return; // not an actual break
+    }
     auto valueType = getValueType(curr->value);
     for (auto target : curr->targets) {
       breakValues[target] = valueType;

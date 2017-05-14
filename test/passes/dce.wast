@@ -554,4 +554,20 @@
    )
   )
  )
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block i32 ;; turns into unreachable when refinalized
+     (drop
+      (br_if $label$0
+       (i32.const 8)
+       (get_local $var$0)
+      )
+     )
+     (unreachable)
+    )
+   )
+   (i32.const 16)
+  )
+ )
 )
