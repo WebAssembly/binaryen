@@ -221,8 +221,9 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
       if (curr->type != child->type) {
         // e.g., if (1) unreachable is none => unreachable
         // or if i32 (1) unreachable else 10 is i32 => unreachable
-        // in which cases we must update our parents
-        needRefinalize = true;
+        // in which cases we must update our parents.
+        // we must do this now, so that our parents see valid data
+        ReFinalize().walk(getFunction()->body);
       }
       return;
     }
