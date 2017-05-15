@@ -374,6 +374,9 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
     if (curr->value && curr->value->type == unreachable) {
       return; // not an actual break
     }
+    if (curr->condition && curr->condition->type == unreachable) {
+      return; // not an actual break
+    }
     breakValues[curr->name] = getValueType(curr->value);
   }
   void visitSwitch(Switch *curr) {

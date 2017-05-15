@@ -186,4 +186,13 @@
       (return)
     )
   )
+  (func $refinalize-br-condition-unreachable
+   (block $label$1
+    (drop
+     (br_if $label$1
+      (unreachable)
+     )
+    )
+   )
+  )
 )
