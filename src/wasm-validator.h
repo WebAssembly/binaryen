@@ -228,7 +228,8 @@ public:
   }
   void visitBreak(Break *curr) {
     // note breaks (that are actually taken)
-    if (!curr->value || curr->value->type != unreachable) {
+    if ((!curr->value     || curr->value->type     != unreachable) &&
+        (!curr->condition || curr->condition->type != unreachable)) {
       noteBreak(curr->name, curr->value, curr);
     }
     if (curr->condition) {
