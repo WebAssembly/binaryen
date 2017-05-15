@@ -914,4 +914,16 @@
     )
     (unreachable)
   )
+
+ (func $drop-unreachable (result i32)
+  (local $0 i32)
+  (block $label$1 i32
+   (drop
+    (block i32
+     (unreachable)
+    )
+   )
+   (unreachable)
+  )
+ )
 )

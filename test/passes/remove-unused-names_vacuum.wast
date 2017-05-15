@@ -16,5 +16,12 @@
     )
     (i32.const 0)
   )
+ (func $to-drop-unreachable
+  (drop
+   (block i32
+    (unreachable)
+   )
+  )
+ )
 )
 

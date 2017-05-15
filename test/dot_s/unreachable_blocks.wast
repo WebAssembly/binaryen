@@ -14,7 +14,7 @@
   (return
    (i32.const 2)
   )
-  (block $label$0 i32
+  (block $label$0
    (unreachable)
   )
  )
@@ -22,7 +22,7 @@
   (return
    (i64.const 3)
   )
-  (block $label$0 i64
+  (block $label$0
    (unreachable)
   )
  )
@@ -30,7 +30,7 @@
   (return
    (f32.const 4.5)
   )
-  (block $label$0 f32
+  (block $label$0
    (unreachable)
   )
  )
@@ -38,7 +38,7 @@
   (return
    (f64.const 5.5)
   )
-  (block $label$0 f64
+  (block $label$0
    (unreachable)
   )
  )

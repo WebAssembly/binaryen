@@ -114,7 +114,7 @@
    (br $block)
    (nop)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (nop)
   )
@@ -393,10 +393,10 @@
   (block $block
    (br $block)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (drop
-    (unreachable)
+    (i32.const 0)
    )
   )
  )
@@ -405,10 +405,10 @@
   (block $block
    (unreachable)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (drop
-    (unreachable)
+    (i32.const 0)
    )
   )
  )
@@ -417,10 +417,10 @@
   (block $block
    (return)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (drop
-    (unreachable)
+    (i32.const 0)
    )
   )
  )
@@ -464,7 +464,7 @@
       (i32.const 100)
      )
      (drop
-      (unreachable)
+      (i32.const 0)
      )
     )
     (drop
@@ -904,7 +904,7 @@
    (return)
    (nop)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (nop)
   )
@@ -912,7 +912,7 @@
    (unreachable)
    (nop)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (nop)
   )
@@ -920,7 +920,7 @@
    (br $z)
    (nop)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (nop)
   )
@@ -930,7 +930,7 @@
    )
    (nop)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (nop)
   )
@@ -940,8 +940,8 @@
   (block $block
    (unreachable)
    (i32.store
-    (unreachable)
-    (unreachable)
+    (i32.const 0)
+    (i32.const 0)
    )
   )
  )
@@ -1028,7 +1028,7 @@
   (loop $top
    (if
     (i32.const 1)
-    (set_local $0
+    (tee_local $0
      (unreachable)
     )
    )

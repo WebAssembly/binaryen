@@ -17,19 +17,11 @@
   (set_local $x
    (get_local $x)
   )
-  (block $in-a-block
-  )
-  (block $two-in-a-block
+  (set_local $x
+   (get_local $x)
   )
   (set_local $x
-   (block $result-used i32
-    (get_local $x)
-   )
-  )
-  (set_local $x
-   (block $two-and-result-used i32
-    (get_local $y)
-   )
+   (get_local $y)
   )
  )
  (func $loopy (type $1) (param $0 i32)
@@ -98,20 +90,10 @@
   )
  )
  (func $block-to-one (type $0)
-  (block $block0
-  )
-  (block $block1
-   (unreachable)
-  )
-  (block $block2
-   (unreachable)
-  )
-  (block $block3
-   (unreachable)
-  )
-  (block $block4
-   (unreachable)
-  )
+  (unreachable)
+  (unreachable)
+  (unreachable)
+  (unreachable)
  )
  (func $recurse (type $0)
   (nop)
@@ -123,20 +105,18 @@
   (if
    (if i32
     (get_local $d)
-    (block $block1 i32
-     (f64.ne
-      (f64.promote/f32
-       (f32.load
-        (tee_local $l
-         (i32.add
-          (get_local $b)
-          (i32.const 60)
-         )
+    (f64.ne
+     (f64.promote/f32
+      (f32.load
+       (tee_local $l
+        (i32.add
+         (get_local $b)
+         (i32.const 60)
         )
        )
       )
-      (get_local $e)
      )
+     (get_local $e)
     )
     (i32.const 0)
    )
@@ -185,22 +165,7 @@
  (func $relooperJumpThreading1 (type $0)
   (local $$vararg_ptr5 i32)
   (local $$11 i32)
-  (loop $while-in$1
-   (drop
-    (block $jumpthreading$outer$8 i32
-     (block $jumpthreading$inner$8
-      (br $jumpthreading$outer$8
-       (i32.const 0)
-      )
-     )
-     (i32.store
-      (get_local $$vararg_ptr5)
-      (get_local $$11)
-     )
-     (i32.const 0)
-    )
-   )
-  )
+  (nop)
  )
  (func $relooperJumpThreading2 (type $0)
   (nop)
@@ -258,5 +223,37 @@
     (unreachable)
    )
   )
+ )
+ (func $if-1-block (type $1) (param $x i32)
+  (block $out
+   (if
+    (get_local $x)
+    (block $block9
+     (set_local $x
+      (get_local $x)
+     )
+     (br $out)
+    )
+   )
+  )
+ )
+ (func $block-resize-br-gone (type $0)
+  (block $out
+   (block $in
+    (call $block-resize-br-gone)
+    (br $in)
+   )
+   (return)
+  )
+  (block $out2
+   (block $in2
+    (br $in2)
+   )
+   (return)
+  )
+ )
+ (func $block-unreachable-but-last-element-concrete (type $0)
+  (local $2 i32)
+  (nop)
  )
 )

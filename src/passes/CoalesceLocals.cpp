@@ -159,7 +159,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     auto* curr = (*currp)->cast<GetLocal>();
      // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      ExpressionManipulator::convert<GetLocal, Unreachable>(curr);
+      *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, currp);
@@ -169,11 +169,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     auto* curr = (*currp)->cast<SetLocal>();
     // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      if (curr->isTee()) {
-        ExpressionManipulator::convert<SetLocal, Unreachable>(curr);
-      } else {
-        ExpressionManipulator::nop(curr);
-      }
+      *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
@@ -625,8 +621,9 @@ static void removeIfCopy(Expression** origin, SetLocal* set, If* iff, Expression
   // replace the origin with the if, and sink the set into the other non-copying arm
   *origin = iff;
   set->value = other;
+  set->finalize();
   other = set;
-  if (!set->isTee()) {
+  if (!isConcreteWasmType(set->type)) {
     // we don't need the copy at all
     copy = nullptr;
     if (!iff->ifTrue) {

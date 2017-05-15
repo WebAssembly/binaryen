@@ -125,16 +125,29 @@ for asm in tests:
           cmd += ['--wasm-only']
         wasm = os.path.join(options.binaryen_test, wasm)
         print '..', asm, wasm
-        actual = run_command(cmd)
 
-        # verify output
-        if not os.path.exists(wasm):
-          fail_with_error('output .wast file %s does not exist' % wasm)
-        expected = open(wasm, 'rb').read()
-        if actual != expected:
-          fail(actual, expected)
+        def do_asm2wasm_test():
+          actual = run_command(cmd)
 
-        binary_format_check(wasm, verify_final_result=False)
+          # verify output
+          if not os.path.exists(wasm):
+            fail_with_error('output .wast file %s does not exist' % wasm)
+          expected = open(wasm, 'rb').read()
+          if actual != expected:
+            fail(actual, expected)
+
+          binary_format_check(wasm, verify_final_result=False)
+
+        # test both normally and with pass debug (so each inter-pass state is validated)
+        old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
+        try:
+          os.environ['BINARYEN_PASS_DEBUG'] = '1'
+          do_asm2wasm_test()
+          del os.environ['BINARYEN_PASS_DEBUG']
+          do_asm2wasm_test()
+        finally:
+          if old_pass_debug is not None:
+            os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
 
         # verify in wasm
         if options.interpreter:
@@ -280,6 +293,11 @@ for t in spec_tests:
       cmd = cmd + (extra.get(os.path.basename(wast)) or [])
       return run_command(cmd, stderr=subprocess.PIPE)
 
+    def run_opt_test(wast):
+      # check optimization validation
+      cmd = WASM_OPT + [wast, '-O']
+      run_command(cmd)
+
     def check_expected(actual, expected):
       if expected and os.path.exists(expected):
         expected = open(expected).read()
@@ -335,6 +353,7 @@ for t in spec_tests:
         split_num += 1
         with open('split.wast', 'w') as o: o.write(module + '\n' + '\n'.join(asserts))
         run_spec_test('split.wast') # before binary stuff - just check it's still ok split out
+        run_opt_test('split.wast') # also that our optimizer doesn't break on it
         result_wast = binary_format_check('split.wast', verify_final_result=False)
         # add the asserts, and verify that the test still passes
         open(result_wast, 'a').write('\n' + '\n'.join(asserts))

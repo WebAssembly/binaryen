@@ -35,7 +35,6 @@
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-printing.h"
-#include "wasm-validator.h"
 #include "wasm-module-building.h"
 
 namespace wasm {
@@ -1339,6 +1338,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       }
     }
+
+    void visitFunction(Function* curr) {
+      // changing call types requires we percolate types, and drop stuff.
+      // we do this in this pass so that we don't look broken between passes
+      AutoDrop().walkFunctionInModule(curr, getModule());
+    }
   };
 
   // apply debug info, reducing intrinsic calls into annotations on the ast nodes
@@ -1400,9 +1405,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.setDebug(true);
     passRunner.setValidateGlobally(false);
   }
+  // finalizeCalls also does autoDrop, which is crucial for the non-optimizing case,
+  // so that the output of the first pass is valid
   passRunner.add<FinalizeCalls>(this);
-  passRunner.add<ReFinalize>(); // FinalizeCalls changes call types, need to percolate
-  passRunner.add<AutoDrop>(); // FinalizeCalls may cause us to require additional drops
   if (legalizeJavaScriptFFI) {
     passRunner.add("legalize-js-interface");
   }
@@ -2489,7 +2494,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
 
         top->list.push_back(br);
-        top->finalize();
 
         for (unsigned i = 0; i < cases->size(); i++) {
           Ref curr = cases[i];
@@ -2564,7 +2568,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           top->name = name;
           next->list.push_back(top);
           next->list.push_back(case_);
-          next->finalize();
           top = next;
           nameMapper.popLabelName(name);
         }
@@ -2580,7 +2583,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         first->ifFalse = builder.makeBreak(br->default_);
 
         brHolder->list.push_back(chain);
-        brHolder->finalize();
       }
 
       breakStack.pop_back();

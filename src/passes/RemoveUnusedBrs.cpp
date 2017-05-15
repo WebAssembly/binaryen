@@ -305,19 +305,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     if (worked) {
       // Our work may alter block and if types, they may now return values that we made flow through them
-      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater>> {
-        void visitBlock(Block* curr) {
-          curr->finalize();
-        }
-        void visitLoop(Loop* curr) {
-          curr->finalize();
-        }
-        void visitIf(If* curr) {
-          curr->finalize();
-        }
-      };
-      TypeUpdater typeUpdater;
-      typeUpdater.walkFunction(func);
+      ReFinalize().walkFunctionInModule(func, getModule());
     }
 
     // thread trivial jumps
@@ -370,18 +358,22 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
       }
 
-      void finish() {
+      void finish(Function* func) {
         for (auto& iter : newNames) {
           auto* br = iter.first;
           auto name = iter.second;
           br->name = name;
+        }
+        if (newNames.size() > 0) {
+          // by changing where brs go, we may change block types etc.
+          ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
     };
     JumpThreader jumpThreader;
     jumpThreader.setModule(getModule());
     jumpThreader.walkFunction(func);
-    jumpThreader.finish();
+    jumpThreader.finish(func);
 
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer> {
@@ -461,6 +453,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 ));
                 curr->name = Name();
                 ExpressionManipulator::nop(br);
+                curr->finalize(curr->type);
                 return;
               }
             }

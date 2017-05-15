@@ -131,6 +131,16 @@ struct PassRunner {
     isNested = nested;
   }
 
+  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
+  //                     and validate between each pass.
+  //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
+  //                     also is bad for e.g. printing which is a pass)
+  // this method returns whether we are in passDebug mode, and which value:
+  //  1: run pass by pass, validating in between
+  //  2: also save the last pass, so it breakage happens we can print the last one
+  //  3: also dump out byn-* files for each pass
+  static int getPassDebug();
+
 protected:
   bool isNested = false;
 

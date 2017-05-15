@@ -169,6 +169,7 @@ static void optimizeBlock(Block* curr, Module* module) {
               // we can do it!
               // reuse the drop
               drop->value = child->list.back();
+              drop->finalize();
               child->list.back() = drop;
               child->finalize();
               curr->list[i] = child;
@@ -223,10 +224,17 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
         child = block->list.back();
+        // we modified child )which is *&), which modifies curr, which might change its type
+        // (e.g. (drop (block i32 .. (unreachable)))
+        // the child was a block of i32, and is being replaced with an unreachable, so the
+        // parent will likely need to be unreachable too
+        auto oldType = curr->type;
+        ReFinalize().walk(curr);
         if (outer == nullptr) {
           // reuse the block, move it out
           block->list.back() = curr;
-          block->finalize(); // last block element was our input, and is now our output, which may differ TODO optimize
+          // we want the block outside to have the same type as curr had
+          block->finalize(oldType);
           replaceCurrent(block);
           return block;
         } else {
@@ -264,7 +272,16 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   }
 
   void visitSelect(Select* curr) {
-    optimize(curr, curr->condition, optimize(curr, curr->ifFalse, optimize(curr, curr->ifTrue), &curr->ifTrue), &curr->ifTrue, &curr->ifFalse);
+    Block* outer = nullptr;
+    outer = optimize(curr, curr->ifTrue, outer);
+    if (EffectAnalyzer(getPassOptions(), curr->ifTrue).hasSideEffects()) return;
+    outer = optimize(curr, curr->ifFalse, outer);
+    if (EffectAnalyzer(getPassOptions(), curr->ifFalse).hasSideEffects()) return;
+    /* . */ optimize(curr, curr->condition, outer);
+  }
+
+  void visitDrop(Drop* curr) {
+    optimize(curr, curr->value);
   }
 
   void visitBreak(Break* curr) {

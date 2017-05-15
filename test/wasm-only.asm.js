@@ -16,7 +16,10 @@ function asm(global, env, buffer) {
   var HEAPF32 = new global.Float32Array(buffer);
   var HEAPF64 = new global.Float64Array(buffer);
 
+  var STACKTOP = env.STACKTOP | 0;
+
   var fround = global.Math.fround;
+  var Math_imul = global.Math.imul;
 
   var illegalImport = env.illegalImport;
   var illegalImportResult = env.illegalImportResult;
@@ -284,6 +287,135 @@ function asm(global, env, buffer) {
     }
     return 44;
   }
+  function _memchr($src,$c,$n) {
+   $src = $src|0;
+   $c = $c|0;
+   $n = $n|0;
+   var $0 = 0, $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $and = 0, $and15 = 0, $and16 = 0, $and39 = 0, $cmp = 0, $cmp11 = 0, $cmp1132 = 0, $cmp28 = 0, $cmp8 = 0, $cond = 0, $conv1 = 0, $dec = 0;
+   var $dec34 = 0, $incdec$ptr = 0, $incdec$ptr21 = 0, $incdec$ptr33 = 0, $lnot = 0, $mul = 0, $n$addr$0$lcssa = 0, $n$addr$0$lcssa52 = 0, $n$addr$043 = 0, $n$addr$1$lcssa = 0, $n$addr$133 = 0, $n$addr$227 = 0, $n$addr$3 = 0, $neg = 0, $or$cond = 0, $or$cond42 = 0, $s$0$lcssa = 0, $s$0$lcssa53 = 0, $s$044 = 0, $s$128 = 0;
+   var $s$2 = 0, $sub = 0, $sub22 = 0, $tobool = 0, $tobool2 = 0, $tobool2$lcssa = 0, $tobool241 = 0, $tobool25 = 0, $tobool2526 = 0, $tobool36 = 0, $tobool40 = 0, $w$0$lcssa = 0, $w$034 = 0, $xor = 0, label = 0, sp = 0;
+   sp = STACKTOP;
+   $conv1 = $c & 255;
+   $0 = $src;
+   $and39 = $0 & 3;
+   $tobool40 = ($and39|0)!=(0);
+   $tobool241 = ($n|0)!=(0);
+   $or$cond42 = $tobool241 & $tobool40;
+   L1: do {
+    if ($or$cond42) {
+     $1 = $c&255;
+     $n$addr$043 = $n;$s$044 = $src;
+     while(1) {
+      $2 = load1($s$044);
+      $cmp = ($2<<24>>24)==($1<<24>>24);
+      if ($cmp) {
+       $n$addr$0$lcssa52 = $n$addr$043;$s$0$lcssa53 = $s$044;
+       label = 6;
+       break L1;
+      }
+      $incdec$ptr = ((($s$044)) + 1|0);
+      $dec = (($n$addr$043) + -1)|0;
+      $3 = $incdec$ptr;
+      $and = $3 & 3;
+      $tobool = ($and|0)!=(0);
+      $tobool2 = ($dec|0)!=(0);
+      $or$cond = $tobool2 & $tobool;
+      if ($or$cond) {
+       $n$addr$043 = $dec;$s$044 = $incdec$ptr;
+      } else {
+       $n$addr$0$lcssa = $dec;$s$0$lcssa = $incdec$ptr;$tobool2$lcssa = $tobool2;
+       label = 5;
+       break;
+      }
+     }
+    } else {
+     $n$addr$0$lcssa = $n;$s$0$lcssa = $src;$tobool2$lcssa = $tobool241;
+     label = 5;
+    }
+   } while(0);
+   if ((label|0) == 5) {
+    if ($tobool2$lcssa) {
+     $n$addr$0$lcssa52 = $n$addr$0$lcssa;$s$0$lcssa53 = $s$0$lcssa;
+     label = 6;
+    } else {
+     $n$addr$3 = 0;$s$2 = $s$0$lcssa;
+    }
+   }
+   L8: do {
+    if ((label|0) == 6) {
+     $4 = load1($s$0$lcssa53);
+     $5 = $c&255;
+     $cmp8 = ($4<<24>>24)==($5<<24>>24);
+     if ($cmp8) {
+      $n$addr$3 = $n$addr$0$lcssa52;$s$2 = $s$0$lcssa53;
+     } else {
+      $mul = Math_imul($conv1, 16843009)|0;
+      $cmp1132 = ($n$addr$0$lcssa52>>>0)>(3);
+      L11: do {
+       if ($cmp1132) {
+        $n$addr$133 = $n$addr$0$lcssa52;$w$034 = $s$0$lcssa53;
+        while(1) {
+         $6 = load4($w$034);
+         $xor = $6 ^ $mul;
+         $sub = (($xor) + -16843009)|0;
+         $neg = $xor & -2139062144;
+         $and15 = $neg ^ -2139062144;
+         $and16 = $and15 & $sub;
+         $lnot = ($and16|0)==(0);
+         if (!($lnot)) {
+          break;
+         }
+         $incdec$ptr21 = ((($w$034)) + 4|0);
+         $sub22 = (($n$addr$133) + -4)|0;
+         $cmp11 = ($sub22>>>0)>(3);
+         if ($cmp11) {
+          $n$addr$133 = $sub22;$w$034 = $incdec$ptr21;
+         } else {
+          $n$addr$1$lcssa = $sub22;$w$0$lcssa = $incdec$ptr21;
+          label = 11;
+          break L11;
+         }
+        }
+        $n$addr$227 = $n$addr$133;$s$128 = $w$034;
+       } else {
+        $n$addr$1$lcssa = $n$addr$0$lcssa52;$w$0$lcssa = $s$0$lcssa53;
+        label = 11;
+       }
+      } while(0);
+      if ((label|0) == 11) {
+       $tobool2526 = ($n$addr$1$lcssa|0)==(0);
+       if ($tobool2526) {
+        $n$addr$3 = 0;$s$2 = $w$0$lcssa;
+        break;
+       } else {
+        $n$addr$227 = $n$addr$1$lcssa;$s$128 = $w$0$lcssa;
+       }
+      }
+      while(1) {
+       $7 = load1($s$128);
+       $cmp28 = ($7<<24>>24)==($5<<24>>24);
+       if ($cmp28) {
+        $n$addr$3 = $n$addr$227;$s$2 = $s$128;
+        break L8;
+       }
+       $incdec$ptr33 = ((($s$128)) + 1|0);
+       $dec34 = (($n$addr$227) + -1)|0;
+       $tobool25 = ($dec34|0)==(0);
+       if ($tobool25) {
+        $n$addr$3 = 0;$s$2 = $incdec$ptr33;
+        break;
+       } else {
+        $n$addr$227 = $dec34;$s$128 = $incdec$ptr33;
+       }
+      }
+     }
+    }
+   } while(0);
+   $tobool36 = ($n$addr$3|0)!=(0);
+   $cond = $tobool36 ? $s$2 : 0;
+   return ($cond|0);
+  }
+
   function keepAlive() {
     loads();
     stores();
@@ -297,6 +429,8 @@ function asm(global, env, buffer) {
     ifValue32(0, 0) | 0;
     switch64(i64(0)) | 0;
     unreachable_leftovers(0, 0, 0);
+    _memchr(0, 0, 0) | 0;
+    switch64TOOMUCH(i64(0)) | 0;
   }
 
   function __emscripten_dceable_type_decls() { // dce-able, but this defines the type of fabsf which has no other use

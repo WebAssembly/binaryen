@@ -32,6 +32,7 @@
 #include <pass.h>
 #include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/block-utils.h>
 
 namespace wasm {
 
@@ -73,6 +74,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (isDead(curr->value)) {
       // the condition is evaluated last, so if the value was unreachable, the whole thing is
       replaceCurrent(curr->value);
+      // removing a break can alter block types everywhere
+      ReFinalize().walk(getFunction()->body);
       return;
     }
     if (isDead(curr->condition)) {
@@ -90,6 +93,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       } else {
         replaceCurrent(curr->condition);
       }
+      // removing a break can alter block types everywhere
+      ReFinalize().walk(getFunction()->body);
       return;
     }
     addBreak(curr->name);
@@ -160,10 +165,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         // see https://github.com/WebAssembly/spec/issues/355
         if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
           block->list.resize(i + 1);
-          // note that we do *not* finalize here. it is incorrect to re-finalize a block
-          // after removing elements, as it may no longer have branches to it that would
-          // determine its type, so re-finalizing would just wipe out an existing type
-          // that it had.
+          // we may have removed branches
+          ReFinalize().walk(self->getFunction()->body);
         }
       }
     }
@@ -175,8 +178,12 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       reachable = reachable || reachableBreaks.count(curr->name);
       reachableBreaks.erase(curr->name);
     }
-    if (curr->list.size() == 1 && isDead(curr->list[0]) && !BreakSeeker::has(curr->list[0], curr->name)) {
-      replaceCurrent(curr->list[0]);
+    if (curr->list.size() == 1 && isDead(curr->list[0])) {
+      replaceCurrent(BlockUtils::simplifyToContents(curr, this));
+    }
+    // blocks without a value may change from none to unreachable TODO optimize
+    if (curr->type == none) {
+      curr->finalize(curr->type);
     }
   }
 
@@ -224,8 +231,17 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         case Expression::Id::BlockId: DELEGATE(Block);
         case Expression::Id::IfId: DELEGATE(If);
         case Expression::Id::LoopId: DELEGATE(Loop);
-        case Expression::Id::BreakId: DELEGATE(Break);
-        case Expression::Id::SwitchId: DELEGATE(Switch);
+        case Expression::Id::BreakId: {
+          // changing the break target can cause types to need updating
+          ExpressionManipulator::convert<Break, Unreachable>(static_cast<Break*>(*currp));
+          ReFinalize().walk(self->getFunction()->body);
+          break;
+        }
+        case Expression::Id::SwitchId: {
+          ExpressionManipulator::convert<Switch, Unreachable>(static_cast<Switch*>(*currp));
+          ReFinalize().walk(self->getFunction()->body);
+          break;
+        }
         case Expression::Id::CallId: DELEGATE(Call);
         case Expression::Id::CallImportId: DELEGATE(CallImport);
         case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
@@ -398,12 +414,21 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     }
   }
 
+  void visitDrop(Drop* curr) {
+    if (isDead(curr->value)) {
+      replaceCurrent(curr->value);
+    }
+  }
+
   void visitHost(Host* curr) {
     handleCall(curr);
   }
 
   void visitFunction(Function* curr) {
     assert(reachableBreaks.size() == 0);
+    // removing breaks can make blocks unreachable
+    // TODO: check if we need to do this?
+    ReFinalize().walk(curr->body);
   }
 };
 

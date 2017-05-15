@@ -94,6 +94,7 @@ public:
       : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions), addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr), nextFunction(0),
         numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
         finishing(false), debug(debug), validateGlobally(validateGlobally) {
+
     if (!useWorkers()) {
       // if we shouldn't use threads, don't
       return;
@@ -136,7 +137,7 @@ public:
   }
 
   bool useWorkers() {
-    return numFunctions > 0 && !debug && ThreadPool::getNumCores() > 1;
+    return numFunctions > 0 && !debug && ThreadPool::getNumCores() > 1 && !PassRunner::getPassDebug();
   }
 
   // Add a function to the module, and to be optimized

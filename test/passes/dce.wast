@@ -538,4 +538,57 @@
    )
   )
  )
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block i32
+     (nop)
+     (drop
+      (br_if $label$0
+       (unreachable)
+       (get_local $var$0)
+      )
+     )
+     (i32.const 4)
+    )
+   )
+  )
+ )
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block i32 ;; turns into unreachable when refinalized
+     (drop
+      (br_if $label$0
+       (i32.const 8)
+       (get_local $var$0)
+      )
+     )
+     (unreachable)
+    )
+   )
+   (i32.const 16)
+  )
+ )
+ (func $replace-br-value-of-i32-with-unreachable (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block $label$1 i32
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
+  (block $label$0
+   (unreachable)
+   (if
+    (unreachable)
+    (br_if $label$0
+     (get_local $var$1)
+    )
+   )
+  )
+ )
 )

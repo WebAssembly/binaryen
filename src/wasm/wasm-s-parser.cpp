@@ -185,9 +185,11 @@ Element* SExpressionParser::parseString() {
     input++;
     std::string str;
     while (1) {
+      if (input[0] == 0) throw ParseException("unterminated string", line, start - lineStart);
       if (input[0] == '"') break;
       if (input[0] == '\\') {
         str += input[0];
+        if (input[1] == 0) throw ParseException("unterminated string escape", line, start - lineStart);
         str += input[1];
         input += 2;
         continue;
