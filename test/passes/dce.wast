@@ -580,4 +580,15 @@
    )
   )
  )
+ (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
+  (block $label$0
+   (unreachable)
+   (if
+    (unreachable)
+    (br_if $label$0
+     (get_local $var$1)
+    )
+   )
+  )
+ )
 )

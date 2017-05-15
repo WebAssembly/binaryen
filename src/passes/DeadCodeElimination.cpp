@@ -165,10 +165,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         // see https://github.com/WebAssembly/spec/issues/355
         if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
           block->list.resize(i + 1);
-          // note that we do *not* finalize here. it is incorrect to re-finalize a block
-          // after removing elements, as it may no longer have branches to it that would
-          // determine its type, so re-finalizing would just wipe out an existing type
-          // that it had.
+          // we may have removed branches
+          ReFinalize().walk(self->getFunction()->body);
         }
       }
     }
