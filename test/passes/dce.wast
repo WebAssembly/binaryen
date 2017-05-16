@@ -629,4 +629,15 @@
    )
   )
  )
+ (func $replace-unary-with-br-child
+  (drop
+   (block $label$6 i32
+    (i32.ctz
+     (br $label$6
+      (i32.const 8)
+     )
+    )
+   )
+  )
+ )
 )
