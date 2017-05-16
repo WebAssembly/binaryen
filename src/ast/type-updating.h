@@ -51,11 +51,11 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     }
     // discover block/break relationships
     if (auto* block = curr->dynCast<Block>()) {
-      if (curr->name.is()) {
-        blockInfos[curr->name].block = block;
+      if (block->name.is()) {
+        blockInfos[block->name].block = block;
       }
     } else if (auto* br = curr->dynCast<Break>()) {
-      blockInfos[curr->name].numBreaks++;
+      blockInfos[br->name].numBreaks++;
     } else if (auto* sw = curr->dynCast<Switch>()) {
       std::set<Name> seen;
       for (auto target : sw->targets) {
@@ -89,7 +89,24 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     noteRemovalOrAddition(curr, nullptr);
   }
 
-  void noteAddition(Expression* curr, Expression* parent, Exprssion* previous = nullptr) {
+  // note the removal of a node and all its children
+  void noteRecursiveRemoval(Expression* curr) {
+    struct Recurser : public PostWalker<Recurser, UnifiedExpressionVisitor<Recurser>> {
+      TypeUpdater& parent;
+
+      Recurser(TypeUpdater& parent, Expression* root) : parent(parent) {
+        walk(root);
+      }
+
+      void visitExpression(Expression* curr) {
+        parent.noteRemoval(curr);
+      }
+    };
+
+    Recurser(*this, curr);
+  }
+
+  void noteAddition(Expression* curr, Expression* parent, Expression* previous = nullptr) {
     noteRemovalOrAddition(curr, parent);
     // if we didn't replace with the exact same type, propagate types up
     if (!(previous && previous->type == curr->type)) {
@@ -104,7 +121,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     if (auto* br = curr->dynCast<Break>()) {
       if (!(br->value     && br->value->type     == unreachable) &&
           !(br->condition && br->condition->type == unreachable)) {
-        noteBreakChange(curr->name, change, br->value);
+        noteBreakChange(br->name, change, br->value);
       }
     } else if (auto* sw = curr->dynCast<Switch>()) {
       if (!(sw->value     && sw->value->type     == unreachable) &&
@@ -132,7 +149,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     if (iter == blockInfos.end()) {
       return; // we can ignore breaks to loops
     }
-    auto& info = iter.second;
+    auto& info = iter->second;
     info.numBreaks += change;
     if (info.numBreaks == 0) {
       // dropped to 0! the block may now be unreachable. that
@@ -215,6 +232,8 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
       }
     }
   }
+};
+
 } // namespace wasm
 
 #endif // wasm_ast_type_updating_h

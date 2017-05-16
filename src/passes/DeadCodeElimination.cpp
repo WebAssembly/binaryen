@@ -231,7 +231,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (!self->reachable) {
       // convert to an unreachable. do this without UB, even though we have no destructors on AST nodes
       #define DELEGATE(CLASS_TO_VISIT) { \
-        self->typeUpdater.changeTypeTo(*currp, unreachable); /* we also replace the node, but it's ok to not note that */ \
+        self->typeUpdater.noteRecursiveRemoval(*currp); \
         ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); \
         break; \
       }
