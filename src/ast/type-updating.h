@@ -154,15 +154,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     if (info.numBreaks == 0) {
       // dropped to 0! the block may now be unreachable. that
       // requires that it doesn't have a fallthrough
-      auto* block = info.block;
-      assert(block->type != unreachable);
-      for (auto* child : block->list) {
-        if (child->type == unreachable) {
-          // no fallthrough, this block is now unreachable
-          changeTypeTo(block, unreachable);
-          return;
-        }
-      }
+      makeBlockUnreachableIfNoFallThrough(info.block);
     } else if (change == 1 && info.numBreaks == 1) {
       // bumped to 1! the block may now be reachable
       auto* block = info.block;
@@ -229,6 +221,34 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
         }
       } else {
         curr->type = unreachable;
+      }
+    }
+  }
+
+  // efficiently update the type of a block, given the data we know. this
+  // can remove a concrete type and turn the block unreachable when it is
+  // unreachable, and it does this efficiently, without scanning the full
+  // contents
+  void maybeUpdateTypeToUnreachable(Block* curr) {
+    if (!isConcreteWasmType(curr->type)) {
+      return; // nothing concrete to change to unreachable
+    }
+    if (curr->name.is() && blockInfos[curr->name].numBreaks > 0) {
+      return;// has a break, not unreachable
+    }
+    // look for a fallthrough
+    makeBlockUnreachableIfNoFallThrough(curr);
+  }
+
+  void makeBlockUnreachableIfNoFallThrough(Block* curr) {
+    if (curr->type == unreachable) {
+      return; // no change possible
+    }
+    for (auto* child : curr->list) {
+      if (child->type == unreachable) {
+        // no fallthrough, this block is now unreachable
+        changeTypeTo(curr, unreachable);
+        return;
       }
     }
   }

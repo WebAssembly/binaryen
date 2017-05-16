@@ -188,7 +188,10 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       reachableBreaks.erase(curr->name);
     }
     if (curr->list.size() == 1 && isDead(curr->list[0])) {
-      replaceCurrent(BlockUtils::simplifyToContents(curr, this));
+      replaceCurrent(BlockUtils::simplifyToContentsWithPossibleTypeChange(curr, this));
+    } else {
+      // the block may have had a type, but can now be unreachable, which allows more reduction outside
+      typeUpdater.maybeUpdateTypeToUnreachable(curr);
     }
   }
 
@@ -225,6 +228,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (isDead(curr->condition)) {
       replaceCurrent(curr->condition);
     }
+    // the if may have had a type, but can now be unreachable, which allows more reduction outside
+    curr->finalize();
   }
 
   static void scan(DeadCodeElimination* self, Expression** currp) {

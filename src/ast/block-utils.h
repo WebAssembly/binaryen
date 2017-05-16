@@ -27,7 +27,7 @@ namespace BlockUtils {
   // if a block has just one element, it can often be replaced
   // with that content
   template<typename T>
-  inline Expression* simplifyToContents(Block* block, T* parent) {
+  inline Expression* simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
     auto& list = block->list;
     if (list.size() == 1 && !BreakSeeker::has(list[0], block->name)) {
       // just one element. try to replace the block
@@ -37,7 +37,7 @@ namespace BlockUtils {
         // no side effects, and singleton is not returning a value, so we can throw away
         // the block and its contents, basically
         return Builder(*parent->getModule()).replaceWithIdenticalType(block);
-      } else if (block->type == singleton->type) {
+      } else if (block->type == singleton->type || allowTypeChange) {
         return singleton;
       } else {
         // (side effects +) type change, must be block with declared value but inside is unreachable
@@ -51,6 +51,12 @@ namespace BlockUtils {
       ExpressionManipulator::nop(block);
     }
     return block;
+  }
+
+  // similar, but when we allow the type to change while doing so
+  template<typename T>
+  inline Expression* simplifyToContentsWithPossibleTypeChange(Block* block, T* parent) {
+    return simplifyToContents(block, parent, true);
   }
 };
 
