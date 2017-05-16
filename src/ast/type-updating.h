@@ -224,8 +224,15 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
         return; // already unreachable, stop here
       }
       // most nodes become unreachable if a child is unreachable,
-      // but an exception exists
-      if (auto* iff = curr->dynCast<If>()) {
+      // but exceptions exists
+      if (auto* block = curr->dynCast<Block>()) {
+        // if the block has breaks, it can keep its type
+        if (!block->name.is() || blockInfos[block->name].numBreaks == 0) {
+          curr->type = unreachable;
+        } else {
+          return; // did not turn
+        }
+      } else if (auto* iff = curr->dynCast<If>()) {
         // may not be unreachable if just one side is
         iff->finalize();
         if (curr->type != unreachable) {
