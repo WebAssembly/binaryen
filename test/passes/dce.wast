@@ -591,4 +591,25 @@
    )
   )
  )
+ (func $block-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block $block i32
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $if-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (if i32
+     (get_local $var$0)
+     (unreachable)
+     (unreachable)
+    )
+   )
+  )
+ )
 )
