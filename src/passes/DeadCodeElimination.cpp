@@ -33,6 +33,7 @@
 #include <ast_utils.h>
 #include <wasm-builder.h>
 #include <ast/block-utils.h>
+#include <ast/type-updating.h>
 
 namespace wasm {
 
@@ -41,11 +42,23 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   Pass* create() override { return new DeadCodeElimination; }
 
+  // as we remove code, we must keep the types of other nodes valid
+  TypeUpdater typeUpdater;
+
+  Expression* replaceCurrent(Expression* expression) {
+    auto* old = getCurrent();
+    WalkerPass<PostWalker<DeadCodeElimination>>::replaceCurrent(expression);
+    // also update the type updater
+    typeUpdater.noteReplacement(old, expression);
+    return expression;
+  }
+
   // whether the current code is actually reachable
   bool reachable;
 
   void doWalkFunction(Function* func) {
     reachable = true;
+    typeUpdater.walk(func->body);
     walk(func->body);
   }
 
@@ -74,8 +87,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (isDead(curr->value)) {
       // the condition is evaluated last, so if the value was unreachable, the whole thing is
       replaceCurrent(curr->value);
-      // removing a break can alter block types everywhere
-      ReFinalize().walk(getFunction()->body);
       return;
     }
     if (isDead(curr->condition)) {
@@ -93,8 +104,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       } else {
         replaceCurrent(curr->condition);
       }
-      // removing a break can alter block types everywhere
-      ReFinalize().walk(getFunction()->body);
       return;
     }
     addBreak(curr->name);
@@ -165,8 +174,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         // see https://github.com/WebAssembly/spec/issues/355
         if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
           block->list.resize(i + 1);
-          // we may have removed branches
-          ReFinalize().walk(self->getFunction()->body);
+          // note that we still walk the children, so typeUpdater will already
+          // note they are being removed, and we don't need to do that here
         }
       }
     }
@@ -180,10 +189,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     }
     if (curr->list.size() == 1 && isDead(curr->list[0])) {
       replaceCurrent(BlockUtils::simplifyToContents(curr, this));
-    }
-    // blocks without a value may change from none to unreachable TODO optimize
-    if (curr->type == none) {
-      curr->finalize(curr->type);
     }
   }
 
@@ -225,23 +230,17 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   static void scan(DeadCodeElimination* self, Expression** currp) {
     if (!self->reachable) {
       // convert to an unreachable. do this without UB, even though we have no destructors on AST nodes
-      #define DELEGATE(CLASS_TO_VISIT) \
-        { ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); break; }
+      #define DELEGATE(CLASS_TO_VISIT) { \
+        self->typeUpdater.changeTypeTo(*currp, unreachable); /* we also replace the node, but it's ok to not note that */ \
+        ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); \
+        break; \
+      }
       switch ((*currp)->_id) {
         case Expression::Id::BlockId: DELEGATE(Block);
         case Expression::Id::IfId: DELEGATE(If);
         case Expression::Id::LoopId: DELEGATE(Loop);
-        case Expression::Id::BreakId: {
-          // changing the break target can cause types to need updating
-          ExpressionManipulator::convert<Break, Unreachable>(static_cast<Break*>(*currp));
-          ReFinalize().walk(self->getFunction()->body);
-          break;
-        }
-        case Expression::Id::SwitchId: {
-          ExpressionManipulator::convert<Switch, Unreachable>(static_cast<Switch*>(*currp));
-          ReFinalize().walk(self->getFunction()->body);
-          break;
-        }
+        case Expression::Id::BreakId: DELEGATE(Break);
+        case Expression::Id::SwitchId: DELEGATE(Switch);
         case Expression::Id::CallId: DELEGATE(Call);
         case Expression::Id::CallImportId: DELEGATE(CallImport);
         case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
@@ -426,9 +425,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   void visitFunction(Function* curr) {
     assert(reachableBreaks.size() == 0);
-    // removing breaks can make blocks unreachable
-    // TODO: check if we need to do this?
-    ReFinalize().walk(curr->body);
   }
 };
 

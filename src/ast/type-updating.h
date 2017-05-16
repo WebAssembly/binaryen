@@ -31,10 +31,6 @@ namespace wasm {
 struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpressionVisitor<TypeUpdater>> {
   // Part 1: Scanning
 
-  TypeUpdater(Function* func) {
-    walk(func->body);
-  }
-
   // track names to their blocks, so that when we remove a break to
   // a block, we know how to find it if we need to update it
   struct BlockInfo {
@@ -75,7 +71,11 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
 
   // Part 2: Updating
 
-  // note the replacement of one node with another
+  // Node replacements, additions, removals and type changes should be noted. An
+  // exception is nodes you know will never be looked at again.
+
+  // note the replacement of one node with another. this should be called
+  // after performing the replacement.
   // this does *not* look into the node. you should do so yourself if necessary
   // does this handle recursion? do we look into child nodes that are rmeovd/added?
   void noteReplacement(Expression* from, Expression* to) {

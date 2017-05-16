@@ -160,6 +160,10 @@ struct Walker : public VisitorType {
     return *replacep = expression;
   }
 
+  Expression* getCurrent() {
+    return *replacep;
+  }
+
   // Get the current module
   Module* getModule() {
     return currModule;
