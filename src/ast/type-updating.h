@@ -151,17 +151,19 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     }
     auto& info = iter->second;
     info.numBreaks += change;
-    if (info.numBreaks == 0) {
-      // dropped to 0! the block may now be unreachable. that
-      // requires that it doesn't have a fallthrough
-      makeBlockUnreachableIfNoFallThrough(info.block);
-    } else if (change == 1 && info.numBreaks == 1) {
-      // bumped to 1! the block may now be reachable
-      auto* block = info.block;
-      if (block->type != unreachable) {
-        return; // was already reachable, had a fallthrough
+    auto* block = info.block;
+    if (block) { // if to a loop, can ignore
+      if (info.numBreaks == 0) {
+        // dropped to 0! the block may now be unreachable. that
+        // requires that it doesn't have a fallthrough
+        makeBlockUnreachableIfNoFallThrough(block);
+      } else if (change == 1 && info.numBreaks == 1) {
+        // bumped to 1! the block may now be reachable
+        if (block->type != unreachable) {
+          return; // was already reachable, had a fallthrough
+        }
+        changeTypeTo(block, value ? value->type : none);
       }
-      changeTypeTo(block, value ? value->type : none);
     }
   }
 

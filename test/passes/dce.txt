@@ -416,4 +416,7 @@
    (unreachable)
   )
  )
+ (func $unreachable-loop (type $1)
+  (unreachable)
+ )
 )

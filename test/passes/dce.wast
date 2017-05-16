@@ -612,4 +612,10 @@
    )
   )
  )
+ (func $unreachable-loop
+  (loop $label$2
+   (unreachable)
+   (br $label$2)
+  )
+ )
 )
