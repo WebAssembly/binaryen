@@ -81,11 +81,15 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     auto parent = parents[from];
     noteRemoval(from);
     // if we are replacing with a child, i.e. a node that was already present
-    // in the ast, then we should remove it before adding it in this location
+    // in the ast, then we just have a type and parent to update
     if (parents.find(to) != parents.end()) {
-      noteRemoval(to);
+      parents[to] = parent;
+      if (from->type != to->type) {
+        propagateTypesUp(to);
+      }
+    } else {
+      noteAddition(to, parent, from);
     }
-    noteAddition(to, parent, from);
   }
 
   // note the removal of a node
