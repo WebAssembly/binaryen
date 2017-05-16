@@ -426,4 +426,13 @@
    )
   )
  )
+ (func $replace-unary-with-br-child (type $1)
+  (drop
+   (block $label$6 i32
+    (br $label$6
+     (i32.const 8)
+    )
+   )
+  )
+ )
 )
