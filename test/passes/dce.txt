@@ -419,4 +419,11 @@
  (func $unreachable-loop (type $1)
   (unreachable)
  )
+ (func $br-block-from-unary (type $2) (result i32)
+  (block $label$6 i32
+   (br $label$6
+    (i32.const 8)
+   )
+  )
+ )
 )

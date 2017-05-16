@@ -618,4 +618,15 @@
    (br $label$2)
   )
  )
+ (func $br-block-from-unary (result i32)
+  (block $label$6 i32
+   (i32.ctz
+    (block $label$7 i32
+     (br $label$6
+      (i32.const 8)
+     )
+    )
+   )
+  )
+ )
 )
