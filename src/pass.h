@@ -152,11 +152,14 @@ public:
   virtual void prepareToRun(PassRunner* runner, Module* module) {}
 
   // Implement this with code to run the pass on the whole module
-  virtual void run(PassRunner* runner, Module* module) = 0;
+  virtual void run(PassRunner* runner, Module* module) {
+    WASM_UNREACHABLE();
+  }
 
-  // Implement this with code to run the pass on a single function
+  // Implement this with code to run the pass on a single function, for
+  // a function-parallel pass
   virtual void runFunction(PassRunner* runner, Module* module, Function* function) {
-    WASM_UNREACHABLE(); // by default, passes cannot be run this way
+    WASM_UNREACHABLE();
   }
 
   // Function parallelism. By default, passes are not run in parallel, but you
