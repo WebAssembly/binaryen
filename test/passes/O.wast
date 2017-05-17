@@ -24,12 +24,5 @@
     )
    )
   )
-  (func $if-parallel (export "waka2") (param $0 i32) (param $1 i32) (result i32)
-   (if i32
-    (get_local $0)
-    (i32.add (get_local $1) (i32.const 1))
-    (i32.add (get_local $1) (i32.const 1))
-   )
-  )
 )
 
