@@ -596,6 +596,18 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             std::swap(iff->ifTrue, iff->ifFalse);
           }
         }
+        if (ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
+          // sides are identical, fold
+          if (!EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects()) {
+            return iff->ifTrue;
+          } else {
+            Builder builder(*getModule());
+            return builder.makeSequence(
+              builder.makeDrop(iff->condition),
+              iff->ifTrue
+            );
+          }
+        }
       }
     } else if (auto* select = curr->dynCast<Select>()) {
       select->condition = optimizeBoolean(select->condition);
@@ -607,6 +619,33 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         if (!ifTrue.invalidates(ifFalse)) {
           select->condition = condition->value;
           std::swap(select->ifTrue, select->ifFalse);
+        }
+      }
+      if (ExpressionAnalyzer::equal(select->ifTrue, select->ifFalse)) {
+        // sides are identical, fold
+        EffectAnalyzer value(getPassOptions(), select->ifTrue);
+        if (value.hasSideEffects()) {
+          // at best we don't need the condition, but need to execute the value
+          // twice. a block is larger than a select by 2 bytes, and
+          // we must drop one value, so 3, while we save the condition,
+          // so it's not clear this is worth it, TODO
+        } else {
+          // value has no side effects
+          EffectAnalyzer condition(getPassOptions(), select->condition);
+          if (!condition.hasSideEffects()) {
+            return select->ifTrue;
+          } else {
+            // the condition is last, so we need a new local, and it may be
+            // a bad idea to use a block like we do for an if. Do it only if we
+            // can reorder
+            if (!condition.invalidates(value)) {
+              Builder builder(*getModule());
+              return builder.makeSequence(
+                builder.makeDrop(select->condition),
+                select->ifTrue
+              );
+            }
+          }
         }
       }
     } else if (auto* br = curr->dynCast<Break>()) {

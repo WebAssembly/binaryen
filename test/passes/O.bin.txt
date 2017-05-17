@@ -43,14 +43,7 @@
   )
  )
  (func $2 (type $0) (param $0 i64) (result i64)
-  (if
-   (i64.eq
-    (get_local $0)
-    (i64.const 0)
-   )
-   (unreachable)
-   (unreachable)
-  )
+  (unreachable)
  )
  (func $3 (type $0) (param $0 i64) (result i64)
   (local $1 i64)
