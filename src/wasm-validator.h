@@ -79,8 +79,10 @@ public:
     validateGlobally = validateGlobally_;
     // wasm logic validation
     walkModule(&module);
-    // binaryen IR validation, internal details
-    validateBinaryenIR(module);
+    // validate additional internal IR details when in pass-debug mode
+    if (PassRunner::getPassDebug()) {
+      validateBinaryenIR(module);
+    }
     // print if an error occurred
     if (!valid) {
       WasmPrinter::printModule(&module, std::cerr);
