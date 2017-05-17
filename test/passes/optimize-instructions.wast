@@ -319,7 +319,7 @@
       (if i32
         (i32.const 1)
         (i32.ne (call $ne0) (i32.const 0))
-        (i32.ne (call $ne0) (i32.const 0))
+        (i32.ne (call $ne1) (i32.const 0))
       )
       (nop)
     )
@@ -330,6 +330,9 @@
       )
       (nop)
     )
+  )
+  (func $ne1 (result i32)
+    (unreachable)
   )
   (func $load-off-2 "load-off-2" (param $0 i32) (result i32)
     (i32.store offset=2
@@ -2300,6 +2303,59 @@
           (i32.const 24)
         )
         (i32.const -4) ;; safe even with more big bits, as they are all 1s
+      )
+    )
+  )
+  (func $if-parallel (param $0 i32) (param $1 i32)
+    (drop
+      (if i32
+        (get_local $0)
+        (i32.add (get_local $1) (i32.const 1))
+        (i32.add (get_local $1) (i32.const 1))
+      )
+    )
+    (drop
+      (if i32
+        (tee_local $0 (get_local $1)) ;; side effects!
+        (i32.add (get_local $1) (i32.const 1))
+        (i32.add (get_local $1) (i32.const 1))
+      )
+    )
+  )
+  (func $select-parallel (param $0 i32) (param $1 i32)
+    (drop
+      (select
+        (i32.add (get_local $1) (i32.const 1))
+        (i32.add (get_local $1) (i32.const 1))
+        (get_local $0)
+      )
+    )
+    (drop
+      (select
+        (tee_local $0 (get_local $1)) ;; side effects!
+        (tee_local $0 (get_local $1)) ;; side effects!
+        (get_local $0)
+      )
+    )
+    (drop
+      (select
+        (i32.add (get_local $1) (i32.const 1))
+        (i32.add (get_local $1) (i32.const 1))
+        (tee_local $0 (get_local $1)) ;; side effects! (but no interference with values)
+      )
+    )
+    (drop
+      (select
+        (tee_local $0 (get_local $1)) ;; side effects! interference!
+        (tee_local $0 (get_local $1)) ;; side effects! interference!
+        (tee_local $0 (get_local $1)) ;; side effects! interference!
+      )
+    )
+    (drop
+      (select
+        (tee_local $0 (get_local $1)) ;; side effects!
+        (tee_local $0 (get_local $1)) ;; side effects!
+        (unreachable) ;; side effects! (but no interference with values)
       )
     )
   )
