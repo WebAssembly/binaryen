@@ -435,4 +435,10 @@
    )
   )
  )
+ (func $br_if-unreach-then-br_if-normal (type $1)
+  (block $out
+   (nop)
+   (unreachable)
+  )
+ )
 )

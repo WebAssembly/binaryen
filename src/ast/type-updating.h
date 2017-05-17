@@ -35,7 +35,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // a block, we know how to find it if we need to update it
   struct BlockInfo {
     Block* block = nullptr;
-    Index numBreaks = 0;
+    int numBreaks = 0;
   };
   std::map<Name, BlockInfo> blockInfos;
 
@@ -55,18 +55,17 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
         blockInfos[block->name].block = block;
       }
     } else if (auto* br = curr->dynCast<Break>()) {
-      blockInfos[br->name].numBreaks++;
+      // ensure info exists, discoverBreaks can then fill it
+      blockInfos[br->name];
     } else if (auto* sw = curr->dynCast<Switch>()) {
-      std::set<Name> seen;
+      // ensure info exists, discoverBreaks can then fill it
       for (auto target : sw->targets) {
-        if (seen.insert(target).second) {
-          blockInfos[target].numBreaks++;
-        }
+        blockInfos[target];
       }
-      if (seen.insert(sw->default_).second) {
-        blockInfos[sw->default_].numBreaks++;
-      }
+      blockInfos[sw->default_];
     }
+    // add a break to the info, for break and switch
+    discoverBreaks(curr, +1);
   }
 
   // Part 2: Updating
@@ -127,7 +126,11 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // if parent is nullptr, this is a removal
   void noteRemovalOrAddition(Expression* curr, Expression* parent) {
     parents[curr] = parent;
-    int change = parent ? +1 : -1;
+    discoverBreaks(curr, parent ? +1 : -1);
+  }
+
+  // adds (or removes) breaks depending on break/switch contents
+  void discoverBreaks(Expression* curr, int change) {
     if (auto* br = curr->dynCast<Break>()) {
       if (!(br->value     && br->value->type     == unreachable) &&
           !(br->condition && br->condition->type == unreachable)) {
@@ -161,6 +164,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     }
     auto& info = iter->second;
     info.numBreaks += change;
+    assert(info.numBreaks >= 0);
     auto* block = info.block;
     if (block) { // if to a loop, can ignore
       if (info.numBreaks == 0) {

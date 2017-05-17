@@ -640,4 +640,15 @@
    )
   )
  )
+ (func $br_if-unreach-then-br_if-normal
+  (block $out
+    (nop)
+    (br_if $out
+      (unreachable)
+    )
+    (br_if $out
+      (i32.const 1)
+    )
+  )
+ )
 )
