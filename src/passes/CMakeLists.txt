@@ -23,6 +23,7 @@ SET(passes_SOURCES
   Print.cpp
   PrintCallGraph.cpp
   RelooperJumpThreading.cpp
+  ReReloop.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveUnusedBrs.cpp

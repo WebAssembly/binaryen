@@ -96,6 +96,7 @@ void PassRegistry::registerPasses() {
   registerPass("remove-unused-names", "removes names from locations that are never branched to", createRemoveUnusedNamesPass);
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
+  registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
@@ -289,18 +290,10 @@ void PassRunner::doAdd(Pass* pass) {
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
-#if 0
-  if (debug) {
-    std::cerr << "[PassRunner]   runPass " << pass->name << " OnFunction " << func->name << "\n";
-  }
-#endif
+  assert(pass->isFunctionParallel());
   // function-parallel passes get a new instance per function
-  if (pass->isFunctionParallel()) {
-    auto instance = std::unique_ptr<Pass>(pass->create());
-    instance->runFunction(this, wasm, func);
-  } else {
-    pass->runFunction(this, wasm, func);
-  }
+  auto instance = std::unique_ptr<Pass>(pass->create());
+  instance->runFunction(this, wasm, func);
 }
 
 int PassRunner::getPassDebug() {
