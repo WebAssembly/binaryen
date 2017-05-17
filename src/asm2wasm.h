@@ -1556,8 +1556,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     body->finalize();
     func->body = body;
   }
-
-  assert(WasmValidator().validate(wasm));
 }
 
 Function* Asm2WasmBuilder::processFunction(Ref ast) {
