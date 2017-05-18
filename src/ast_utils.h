@@ -21,6 +21,7 @@
 #include "wasm-traversal.h"
 #include "wasm-builder.h"
 #include "pass.h"
+#include "ast/branch-utils.h"
 
 namespace wasm {
 
@@ -371,24 +372,19 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   void visitLoop(Loop *curr) { curr->finalize(); }
   void visitBreak(Break *curr) {
     curr->finalize();
-    if (curr->value && curr->value->type == unreachable) {
-      return; // not an actual break
+    if (BranchUtils::isBranchTaken(curr)) {
+      breakValues[curr->name] = getValueType(curr->value);
     }
-    if (curr->condition && curr->condition->type == unreachable) {
-      return; // not an actual break
-    }
-    breakValues[curr->name] = getValueType(curr->value);
   }
   void visitSwitch(Switch *curr) {
     curr->finalize();
-    if (curr->condition->type == unreachable || (curr->value && curr->value->type == unreachable)) {
-      return; // not an actual break
+    if (BranchUtils::isBranchTaken(curr)) {
+      auto valueType = getValueType(curr->value);
+      for (auto target : curr->targets) {
+        breakValues[target] = valueType;
+      }
+      breakValues[curr->default_] = valueType;
     }
-    auto valueType = getValueType(curr->value);
-    for (auto target : curr->targets) {
-      breakValues[target] = valueType;
-    }
-    breakValues[curr->default_] = valueType;
   }
   void visitCall(Call *curr) { curr->finalize(); }
   void visitCallImport(CallImport *curr) { curr->finalize(); }

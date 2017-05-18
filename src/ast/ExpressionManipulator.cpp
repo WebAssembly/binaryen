@@ -19,7 +19,9 @@
 
 namespace wasm {
 
-Expression* ExpressionManipulator::flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
+namespace ExpressionManipulator {
+
+Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   struct Copier : public Visitor<Copier, Expression*> {
     Module& wasm;
     CustomCopier custom;
@@ -135,7 +137,7 @@ Expression* ExpressionManipulator::flexibleCopy(Expression* original, Module& wa
 
 
 // Splice an item into the middle of a block's list
-void ExpressionManipulator::spliceIntoBlock(Block* block, Index index, Expression* add) {
+void spliceIntoBlock(Block* block, Index index, Expression* add) {
   auto& list = block->list;
   if (index == list.size()) {
     list.push_back(add); // simple append
@@ -149,5 +151,7 @@ void ExpressionManipulator::spliceIntoBlock(Block* block, Index index, Expressio
   }
   block->finalize(block->type);
 }
+
+} // namespace ExpressionManipulator
 
 } // namespace wasm
