@@ -148,6 +148,9 @@ for asm in tests:
         finally:
           if old_pass_debug is not None:
             os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
+          else:
+            if 'BINARYEN_PASS_DEBUG' in os.environ:
+              del os.environ['BINARYEN_PASS_DEBUG']
 
         # verify in wasm
         if options.interpreter:

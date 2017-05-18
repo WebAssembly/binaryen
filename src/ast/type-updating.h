@@ -132,13 +132,11 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
     if (auto* br = curr->dynCast<Break>()) {
-      if (!(br->value     && br->value->type     == unreachable) &&
-          !(br->condition && br->condition->type == unreachable)) {
+      if (BranchUtils::isBranchTaken(br)) {
         noteBreakChange(br->name, change, br->value);
       }
     } else if (auto* sw = curr->dynCast<Switch>()) {
-      if (!(sw->value     && sw->value->type     == unreachable) &&
-                             sw->condition->type != unreachable) {
+      if (BranchUtils::isBranchTaken(sw)) {
         applySwitchChanges(sw, change);
       }
     }

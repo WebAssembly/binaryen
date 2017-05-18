@@ -43,6 +43,7 @@
 #include "wasm.h"
 #include "wasm-printing.h"
 #include "ast_utils.h"
+#include "ast/branch-utils.h"
 
 namespace wasm {
 
@@ -230,8 +231,7 @@ public:
   }
   void visitBreak(Break *curr) {
     // note breaks (that are actually taken)
-    if ((!curr->value     || curr->value->type     != unreachable) &&
-        (!curr->condition || curr->condition->type != unreachable)) {
+    if (BranchUtils::isBranchTaken(curr)) {
       noteBreak(curr->name, curr->value, curr);
     }
     if (curr->condition) {
@@ -240,7 +240,7 @@ public:
   }
   void visitSwitch(Switch *curr) {
     // note breaks (that are actually taken)
-    if (curr->condition->type != unreachable && (!curr->value || curr->value->type != unreachable)) {
+    if (BranchUtils::isBranchTaken(curr)) {
       for (auto& target : curr->targets) {
         noteBreak(target, curr->value, curr);
       }

@@ -21,10 +21,10 @@
 
 namespace wasm {
 
-struct ExpressionManipulator {
+namespace ExpressionManipulator {
   // Re-use a node's memory. This helps avoid allocation when optimizing.
   template<typename InputType, typename OutputType>
-  static OutputType* convert(InputType *input) {
+  inline OutputType* convert(InputType *input) {
     static_assert(sizeof(OutputType) <= sizeof(InputType),
                   "Can only convert to a smaller size Expression node");
     input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
@@ -35,13 +35,13 @@ struct ExpressionManipulator {
 
   // Convenience method for nop, which is a common conversion
   template<typename InputType>
-  static Nop* nop(InputType* target) {
+  inline Nop* nop(InputType* target) {
     return convert<InputType, Nop>(target);
   }
 
   // Convert a node that allocates
   template<typename InputType, typename OutputType>
-  static OutputType* convert(InputType *input, MixedArena& allocator) {
+  inline OutputType* convert(InputType *input, MixedArena& allocator) {
     assert(sizeof(OutputType) <= sizeof(InputType));
     input->~InputType(); // arena-allocaed, so no destructor, but avoid UB.
     OutputType* output = (OutputType*)(input);
@@ -50,9 +50,9 @@ struct ExpressionManipulator {
   }
 
   using CustomCopier = std::function<Expression*(Expression*)>;
-  static Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom);
+  Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom);
 
-  static Expression* copy(Expression* original, Module& wasm) {
+  inline Expression* copy(Expression* original, Module& wasm) {
     auto copy = [](Expression* curr) {
         return nullptr;
     };
@@ -60,8 +60,8 @@ struct ExpressionManipulator {
   }
 
   // Splice an item into the middle of a block's list
-  static void spliceIntoBlock(Block* block, Index index, Expression* add);
-};
+  void spliceIntoBlock(Block* block, Index index, Expression* add);
+}
 
 } // wasm
 
