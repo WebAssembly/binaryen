@@ -22,8 +22,10 @@
 #include "wasm.h"
 #include "pass.h"
 #include "ast_utils.h"
+#include "ast/manipulation.h"
 
 namespace wasm {
+
 
 static Name LABEL("label");
 
@@ -145,6 +147,11 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
       finder.walk(func->body);
       WalkerPass<ExpressionStackWalker<RelooperJumpThreading>>::doWalkFunction(func);
     }
+  }
+
+  void visitFunction(Function* curr) {
+    // we may alter types
+    ReFinalize().walkFunctionInModule(curr, getModule());
   }
 
 private:

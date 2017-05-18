@@ -448,33 +448,27 @@
   (drop
    (i32.const 10)
   )
+  (unreachable)
+  (drop
+   (i32.const 50)
+  )
   (drop
    (select
     (i32.const 20)
-    (block i32
-     (unreachable)
-     (i32.const 40)
-    )
-    (block i32
-     (drop
-      (i32.const 50)
-     )
-     (i32.const 60)
-    )
+    (i32.const 40)
+    (i32.const 60)
    )
   )
   (drop
    (i32.const 10)
   )
   (drop
+   (i32.const 30)
+  )
+  (drop
    (select
     (i32.const 20)
-    (block i32
-     (drop
-      (i32.const 30)
-     )
-     (unreachable)
-    )
+    (unreachable)
     (block i32
      (drop
       (i32.const 50)
@@ -489,14 +483,12 @@
   (drop
    (i32.const 30)
   )
+  (unreachable)
   (drop
    (select
     (i32.const 20)
     (i32.const 40)
-    (block i32
-     (unreachable)
-     (i32.const 60)
-    )
+    (i32.const 60)
    )
   )
   (drop
@@ -506,15 +498,13 @@
    (i32.const 30)
   )
   (drop
+   (i32.const 50)
+  )
+  (drop
    (select
     (i32.const 20)
     (i32.const 40)
-    (block i32
-     (drop
-      (i32.const 50)
-     )
-     (unreachable)
-    )
+    (unreachable)
    )
   )
  )
@@ -748,6 +738,13 @@
      (i32.const 1)
     )
    )
+  )
+  (unreachable)
+ )
+ (func $drop-unreachable (type $4) (result i32)
+  (local $0 i32)
+  (drop
+   (unreachable)
   )
   (unreachable)
  )

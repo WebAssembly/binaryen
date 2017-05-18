@@ -1185,6 +1185,7 @@ class S2WasmBuilder {
         if (isConcreteWasmType(block->type) && block->list.size() == 0) {
           // empty blocks that return a value are not valid, fix that up
           block->list.push_back(allocator->alloc<Unreachable>());
+          block->finalize();
         }
         bstack.pop_back();
       } else if (peek(".LBB")) {
@@ -1207,7 +1208,7 @@ class S2WasmBuilder {
       } else if (match("end_loop")) {
         auto* loop = bstack.back()->cast<Loop>();
         bstack.pop_back();
-        loop->body->finalize();
+        loop->body->cast<Block>()->finalize();
         loop->finalize(loop->type);
       } else if (match("br_table")) {
         auto curr = allocator->alloc<Switch>();
@@ -1293,7 +1294,7 @@ class S2WasmBuilder {
     bstack.pop_back(); // remove the base block for the function body
     assert(bstack.empty());
     assert(estack.empty());
-    func->body->dynCast<Block>()->finalize();
+    func->body->cast<Block>()->finalize();
     wasm->addFunction(func);
   }
 

@@ -166,11 +166,7 @@ static void dumpWast(Name name, Module* wasm) {
 }
 
 void PassRunner::run() {
-  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
-  //                     and validate between each pass.
-  //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
-  //                     also is bad for e.g. printing which is a pass)
-  static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  static const int passDebug = getPassDebug();
   if (!isNested && (options.debug || passDebug)) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
@@ -212,7 +208,7 @@ void PassRunner::run() {
         if (passDebug >= 2) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state (FIXME: this is broken, need to prevent recursion of the print pass\n";
+          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state, or 3 to dump byn-* files for each pass\n";
         }
         abort();
       }
@@ -298,6 +294,11 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   // function-parallel passes get a new instance per function
   auto instance = std::unique_ptr<Pass>(pass->create());
   instance->runFunction(this, wasm, func);
+}
+
+int PassRunner::getPassDebug() {
+  static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  return passDebug;
 }
 
 } // namespace wasm

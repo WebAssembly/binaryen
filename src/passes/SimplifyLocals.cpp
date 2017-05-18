@@ -47,6 +47,7 @@
 #include <pass.h>
 #include <ast_utils.h>
 #include <ast/count.h>
+#include <ast/manipulation.h>
 
 namespace wasm {
 

@@ -157,7 +157,11 @@ struct Walker : public VisitorType {
   // just one visit*() method is called by the traversal; if you replace a node,
   // and you want to process the output, you must do that explicitly).
   Expression* replaceCurrent(Expression* expression) {
-    return replace = expression;
+    return *replacep = expression;
+  }
+
+  Expression* getCurrent() {
+    return *replacep;
   }
 
   // Get the current module
@@ -182,6 +186,15 @@ struct Walker : public VisitorType {
     static_cast<SubType*>(this)->doWalkFunction(func);
     static_cast<SubType*>(this)->visitFunction(func);
     setFunction(nullptr);
+  }
+
+  void walkFunctionInModule(Function* func, Module* module) {
+    setModule(module);
+    setFunction(func);
+    static_cast<SubType*>(this)->doWalkFunction(func);
+    static_cast<SubType*>(this)->visitFunction(func);
+    setFunction(nullptr);
+    setModule(nullptr);
   }
 
   // override this to provide custom functionality
@@ -264,12 +277,9 @@ struct Walker : public VisitorType {
     pushTask(SubType::scan, &root);
     while (stack.size() > 0) {
       auto task = popTask();
+      replacep = task.currp;
       assert(*task.currp);
       task.func(static_cast<SubType*>(this), task.currp);
-      if (replace) {
-        *task.currp = replace;
-        replace = nullptr;
-      }
     }
   }
 
@@ -311,7 +321,7 @@ struct Walker : public VisitorType {
   }
 
 private:
-  Expression* replace = nullptr; // a node to replace
+  Expression** replacep = nullptr; // the address of the current node, used to replace it
   std::vector<Task> stack; // stack of tasks
   Function* currFunction = nullptr; // current function being processed
   Module* currModule = nullptr; // current module being processed
@@ -570,6 +580,13 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     PostWalker<SubType, VisitorType>::scan(self, currp);
 
     self->pushTask(SubType::doPreVisit, currp);
+  }
+
+  Expression* replaceCurrent(Expression* expression) {
+    PostWalker<SubType, VisitorType>::replaceCurrent(expression);
+    // also update the stack
+    expressionStack.back() = expression;
+    return expression;
   }
 };
 

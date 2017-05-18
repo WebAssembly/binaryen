@@ -110,7 +110,7 @@
    (br $block)
    (nop)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (nop)
   )
@@ -391,10 +391,10 @@
   (block $block
    (br $block)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (drop
-    (unreachable)
+    (i32.const 0)
    )
   )
  )
@@ -403,10 +403,10 @@
   (block $block
    (unreachable)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (drop
-    (unreachable)
+    (i32.const 0)
    )
   )
  )
@@ -415,10 +415,10 @@
   (block $block
    (return)
    (drop
-    (unreachable)
+    (i32.const 0)
    )
    (drop
-    (unreachable)
+    (i32.const 0)
    )
   )
  )
@@ -462,7 +462,7 @@
       (i32.const 100)
      )
      (drop
-      (unreachable)
+      (i32.const 0)
      )
     )
     (drop

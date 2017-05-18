@@ -538,4 +538,117 @@
    )
   )
  )
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block i32
+     (nop)
+     (drop
+      (br_if $label$0
+       (unreachable)
+       (get_local $var$0)
+      )
+     )
+     (i32.const 4)
+    )
+   )
+  )
+ )
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block i32 ;; turns into unreachable when refinalized
+     (drop
+      (br_if $label$0
+       (i32.const 8)
+       (get_local $var$0)
+      )
+     )
+     (unreachable)
+    )
+   )
+   (i32.const 16)
+  )
+ )
+ (func $replace-br-value-of-i32-with-unreachable (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block $label$1 i32
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
+  (block $label$0
+   (unreachable)
+   (if
+    (unreachable)
+    (br_if $label$0
+     (get_local $var$1)
+    )
+   )
+  )
+ )
+ (func $block-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (block $block i32
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $if-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+  (block $label$0 i32
+   (br $label$0
+    (if i32
+     (get_local $var$0)
+     (unreachable)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $unreachable-loop
+  (loop $label$2
+   (unreachable)
+   (br $label$2)
+  )
+ )
+ (func $br-block-from-unary (result i32)
+  (block $label$6 i32
+   (i32.ctz
+    (block $label$7 i32
+     (br $label$6
+      (i32.const 8)
+     )
+    )
+   )
+  )
+ )
+ (func $replace-unary-with-br-child
+  (drop
+   (block $label$6 i32
+    (i32.ctz
+     (br $label$6
+      (i32.const 8)
+     )
+    )
+   )
+  )
+ )
+ (func $br_if-unreach-then-br_if-normal
+  (block $out
+    (nop)
+    (br_if $out
+      (unreachable)
+    )
+    (br_if $out
+      (i32.const 1)
+    )
+  )
+ )
 )

@@ -463,4 +463,50 @@
       )
     )
   )
+  (func $if-1-block (param $x i32)
+   (block $out
+    (if
+     (get_local $x)
+     (block
+      (if
+       (i32.const 1)
+       (block
+        (set_local $x
+         (get_local $x)
+        )
+        (br $out)
+       )
+      )
+     )
+    )
+   )
+  )
+  (func $block-resize-br-gone
+    (block $out
+      (block $in
+        (call $block-resize-br-gone)
+        (br $in)
+        (br $out)
+      )
+      (return)
+    )
+    (block $out2
+      (block $in2
+        (br $in2)
+        (br $out2)
+      )
+      (return)
+    )
+  )
+  (func $block-unreachable-but-last-element-concrete
+   (local $2 i32)
+   (block $label$0
+    (drop
+     (block
+      (br $label$0)
+      (get_local $2)
+     )
+    )
+   )
+  )
 )

@@ -24,6 +24,7 @@
 #include "wasm-builder.h"
 #include "wasm-printing.h"
 #include "wasm-io.h"
+#include "wasm-validator.h"
 
 #include "asm2wasm.h"
 
@@ -189,7 +190,11 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  if (options.debug) std::cerr << "printing..." << std::endl;
+  if (!WasmValidator().validate(wasm)) {
+    Fatal() << "error in validating output";
+  }
+
+  if (options.debug) std::cerr << "emitting..." << std::endl;
   ModuleWriter writer;
   writer.setDebug(options.debug);
   writer.setDebugInfo(passOptions.debugInfo);

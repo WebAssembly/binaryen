@@ -186,4 +186,28 @@
       (return)
     )
   )
+  (func $refinalize-br-condition-unreachable
+   (block $label$1
+    (drop
+     (br_if $label$1
+      (unreachable)
+     )
+    )
+   )
+  )
+  (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky
+   (drop
+    (block $label$1 i32
+     (drop
+      (br_if $label$1
+       (i32.const 100)
+       (block $label$3 i32
+        (unreachable)
+       )
+      )
+     )
+     (i32.const 0)
+    )
+   )
+  )
 )

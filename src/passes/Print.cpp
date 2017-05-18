@@ -25,6 +25,13 @@
 
 namespace wasm {
 
+static int forceFull() {
+  if (getenv("BINARYEN_PRINT_FULL")) {
+    return std::stoi(getenv("BINARYEN_PRINT_FULL"));
+  }
+  return 0;
+}
+
 struct PrintSExpression : public Visitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
@@ -41,9 +48,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
-    if (getenv("BINARYEN_PRINT_FULL")) {
-      full = std::stoi(getenv("BINARYEN_PRINT_FULL"));
-    }
+    if (!full) full = forceFull();
   }
 
   void visit(Expression* curr) {
@@ -802,7 +807,7 @@ std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream&
   }
   PrintSExpression print(o);
   print.setMinify(minify);
-  if (full) {
+  if (full || forceFull()) {
     print.setFull(true);
     o << "[" << printWasmType(expression->type) << "] ";
   }

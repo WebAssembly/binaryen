@@ -5,7 +5,7 @@
  (export "f32.compute_radix" (func $0))
  (export "f64.compute_radix" (func $1))
  (func $0 (type $0) (param $var$0 f32) (param $var$1 f32) (result f32)
-  (block $label$0 f32
+  (block $label$0
    (loop $label$1
     (br_if $label$1
      (f32.eq
@@ -28,24 +28,22 @@
      )
     )
    )
-   (drop
-    (block
-     (drop
-      (call $0
-       (f32.add
-        (get_local $var$0)
-        (tee_local $var$1
-         (f32.add
-          (get_local $var$1)
-          (f32.const 1)
-         )
+   (block
+    (drop
+     (call $0
+      (f32.add
+       (get_local $var$0)
+       (tee_local $var$1
+        (f32.add
+         (get_local $var$1)
+         (f32.const 1)
         )
        )
-       (get_local $var$0)
       )
+      (get_local $var$0)
      )
-     (unreachable)
     )
+    (unreachable)
    )
   )
  )

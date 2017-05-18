@@ -32,6 +32,8 @@
 #include <pass.h>
 #include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/block-utils.h>
+#include <ast/type-updating.h>
 
 namespace wasm {
 
@@ -40,11 +42,23 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   Pass* create() override { return new DeadCodeElimination; }
 
+  // as we remove code, we must keep the types of other nodes valid
+  TypeUpdater typeUpdater;
+
+  Expression* replaceCurrent(Expression* expression) {
+    auto* old = getCurrent();
+    WalkerPass<PostWalker<DeadCodeElimination>>::replaceCurrent(expression);
+    // also update the type updater
+    typeUpdater.noteReplacement(old, expression);
+    return expression;
+  }
+
   // whether the current code is actually reachable
   bool reachable;
 
   void doWalkFunction(Function* func) {
     reachable = true;
+    typeUpdater.walk(func->body);
     walk(func->body);
   }
 
@@ -160,10 +174,8 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         // see https://github.com/WebAssembly/spec/issues/355
         if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
           block->list.resize(i + 1);
-          // note that we do *not* finalize here. it is incorrect to re-finalize a block
-          // after removing elements, as it may no longer have branches to it that would
-          // determine its type, so re-finalizing would just wipe out an existing type
-          // that it had.
+          // note that we still walk the children, so typeUpdater will already
+          // note they are being removed, and we don't need to do that here
         }
       }
     }
@@ -175,8 +187,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       reachable = reachable || reachableBreaks.count(curr->name);
       reachableBreaks.erase(curr->name);
     }
-    if (curr->list.size() == 1 && isDead(curr->list[0]) && !BreakSeeker::has(curr->list[0], curr->name)) {
-      replaceCurrent(curr->list[0]);
+    if (curr->list.size() == 1 && isDead(curr->list[0])) {
+      replaceCurrent(BlockUtils::simplifyToContentsWithPossibleTypeChange(curr, this));
+    } else {
+      // the block may have had a type, but can now be unreachable, which allows more reduction outside
+      typeUpdater.maybeUpdateTypeToUnreachable(curr);
     }
   }
 
@@ -213,13 +228,18 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (isDead(curr->condition)) {
       replaceCurrent(curr->condition);
     }
+    // the if may have had a type, but can now be unreachable, which allows more reduction outside
+    curr->finalize();
   }
 
   static void scan(DeadCodeElimination* self, Expression** currp) {
     if (!self->reachable) {
       // convert to an unreachable. do this without UB, even though we have no destructors on AST nodes
-      #define DELEGATE(CLASS_TO_VISIT) \
-        { ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); break; }
+      #define DELEGATE(CLASS_TO_VISIT) { \
+        self->typeUpdater.noteRecursiveRemoval(*currp); \
+        ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); \
+        break; \
+      }
       switch ((*currp)->_id) {
         case Expression::Id::BlockId: DELEGATE(Block);
         case Expression::Id::IfId: DELEGATE(If);
@@ -395,6 +415,12 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       block->finalize(curr->type);
       replaceCurrent(block);
       return;
+    }
+  }
+
+  void visitDrop(Drop* curr) {
+    if (isDead(curr->value)) {
+      replaceCurrent(curr->value);
     }
   }
 
