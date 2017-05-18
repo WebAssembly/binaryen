@@ -76,9 +76,14 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     }
   }
 
-  // if a child is unreachable, we can replace ourselves with it
+  // if a child exists and is unreachable, we can replace ourselves with it
   bool isDead(Expression* child) {
     return child && child->type == unreachable;
+  }
+
+  // a similar check, assumes the child exists
+  bool isUnreachable(Expression* child) {
+    return child->type == unreachable;
   }
 
   // things that stop control flow
@@ -117,7 +122,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       replaceCurrent(curr->value);
       return;
     }
-    if (isDead(curr->condition)) {
+    if (isUnreachable(curr->condition)) {
       if (curr->value) {
         auto* block = getModule()->allocator.alloc<Block>();
         block->list.resize(2);
@@ -149,45 +154,25 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     reachable = false;
   }
 
-  // we maintain a stack for blocks, as we visit each item, and the parameter is the index
-
-  std::vector<Index> blockStack; // index in current block
-
-  static void doPreBlock(DeadCodeElimination* self, Expression** currp) {
-    self->blockStack.push_back(0);
-  }
-
-  static void doAfterBlockElement(DeadCodeElimination* self, Expression** currp) {
-    auto* block = (*currp)->cast<Block>();
-    Index i = self->blockStack.back();
-    self->blockStack.back()++;
-    if (!self->reachable) {
-      // control flow ended in the middle of the block, so we can truncate the rest.
-      // note that we still visit the rest, so if we already truncated, do not lengthen.
-      // note that it is ok that we visit the others even though the list was shortened;
-      // our arena vectors leave things as they are when shrinking.
-      if (block->list.size() > i + 1) {
-        // but note that it is not legal to truncate a block if it leaves a bad last element,
-        // given the wasm type rules. For example, if the last element is a return, then
-        // the block doesn't care about it for type checking purposes, but if removing
-        // it would leave an element with type none as the last, that could be a problem,
-        // see https://github.com/WebAssembly/spec/issues/355
-        if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
-          block->list.resize(i + 1);
-          // note that we still walk the children, so typeUpdater will already
-          // note they are being removed, and we don't need to do that here
+  void visitBlock(Block* curr) {
+    auto& list = curr->list;
+    // if we are currently unreachable (before we take into account
+    // breaks to the block) then a child may be unreachable, and we
+    // can shorten
+    if (!reachable && list.size() > 1) {
+      // to do here: nothing to remove after it)
+      for (Index i = 0; i < list.size() - 1; i++) {
+        if (list[i]->type == unreachable) {
+          list.resize(i + 1);
+          break;
         }
       }
     }
-  }
-
-  void visitBlock(Block* curr) {
-    blockStack.pop_back();
     if (curr->name.is()) {
       reachable = reachable || reachableBreaks.count(curr->name);
       reachableBreaks.erase(curr->name);
     }
-    if (curr->list.size() == 1 && isDead(curr->list[0])) {
+    if (list.size() == 1 && isUnreachable(list[0])) {
       replaceCurrent(BlockUtils::simplifyToContentsWithPossibleTypeChange(curr, this));
     } else {
       // the block may have had a type, but can now be unreachable, which allows more reduction outside
@@ -199,7 +184,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (curr->name.is()) {
       reachableBreaks.erase(curr->name);
     }
-    if (isDead(curr->body) && !BreakSeeker::has(curr->body, curr->name)) {
+    if (isUnreachable(curr->body) && !BreakSeeker::has(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
@@ -225,7 +210,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     // the ifStack has the branch that joins us, either from before if just an if, or the ifTrue if an if-else
     reachable = reachable || ifStack.back();
     ifStack.pop_back();
-    if (isDead(curr->condition)) {
+    if (isUnreachable(curr->condition)) {
       replaceCurrent(curr->condition);
     }
     // the if may have had a type, but can now be unreachable, which allows more reduction outside
@@ -280,14 +265,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       self->pushTask(DeadCodeElimination::scan, &curr->cast<If>()->ifTrue);
       self->pushTask(DeadCodeElimination::doAfterIfCondition, currp);
       self->pushTask(DeadCodeElimination::scan, &curr->cast<If>()->condition);
-    } else if (curr->is<Block>()) {
-      self->pushTask(DeadCodeElimination::doVisitBlock, currp);
-      auto& list = curr->cast<Block>()->list;
-      for (int i = int(list.size()) - 1; i >= 0; i--) {
-        self->pushTask(DeadCodeElimination::doAfterBlockElement, currp);
-        self->pushTask(DeadCodeElimination::scan, &list[i]);
-      }
-      self->pushTask(DeadCodeElimination::doPreBlock, currp);
     } else {
       WalkerPass<PostWalker<DeadCodeElimination>>::scan(self, currp);
     }
@@ -304,7 +281,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   template<typename T>
   Expression* handleCall(T* curr) {
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (isDead(curr->operands[i])) {
+      if (isUnreachable(curr->operands[i])) {
         if (i > 0) {
           auto* block = getModule()->allocator.alloc<Block>();
           Index newSize = i + 1;
@@ -333,7 +310,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   void visitCallIndirect(CallIndirect* curr) {
     if (handleCall(curr) != curr) return;
-    if (isDead(curr->target)) {
+    if (isUnreachable(curr->target)) {
       auto* block = getModule()->allocator.alloc<Block>();
       for (auto* operand : curr->operands) {
         block->list.push_back(drop(operand));
@@ -345,23 +322,23 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitSetLocal(SetLocal* curr) {
-    if (isDead(curr->value)) {
+    if (isUnreachable(curr->value)) {
       replaceCurrent(curr->value);
     }
   }
 
   void visitLoad(Load* curr) {
-    if (isDead(curr->ptr)) {
+    if (isUnreachable(curr->ptr)) {
       replaceCurrent(curr->ptr);
     }
   }
 
   void visitStore(Store* curr) {
-    if (isDead(curr->ptr)) {
+    if (isUnreachable(curr->ptr)) {
       replaceCurrent(curr->ptr);
       return;
     }
-    if (isDead(curr->value)) {
+    if (isUnreachable(curr->value)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(2);
       block->list[0] = drop(curr->ptr);
@@ -372,17 +349,17 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitUnary(Unary* curr) {
-    if (isDead(curr->value)) {
+    if (isUnreachable(curr->value)) {
       replaceCurrent(curr->value);
     }
   }
 
   void visitBinary(Binary* curr) {
-    if (isDead(curr->left)) {
+    if (isUnreachable(curr->left)) {
       replaceCurrent(curr->left);
       return;
     }
-    if (isDead(curr->right)) {
+    if (isUnreachable(curr->right)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(2);
       block->list[0] = drop(curr->left);
@@ -393,11 +370,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitSelect(Select* curr) {
-    if (isDead(curr->ifTrue)) {
+    if (isUnreachable(curr->ifTrue)) {
       replaceCurrent(curr->ifTrue);
       return;
     }
-    if (isDead(curr->ifFalse)) {
+    if (isUnreachable(curr->ifFalse)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(2);
       block->list[0] = drop(curr->ifTrue);
@@ -406,7 +383,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       replaceCurrent(block);
       return;
     }
-    if (isDead(curr->condition)) {
+    if (isUnreachable(curr->condition)) {
       auto* block = getModule()->allocator.alloc<Block>();
       block->list.resize(3);
       block->list[0] = drop(curr->ifTrue);
@@ -419,7 +396,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitDrop(Drop* curr) {
-    if (isDead(curr->value)) {
+    if (isUnreachable(curr->value)) {
       replaceCurrent(curr->value);
     }
   }
