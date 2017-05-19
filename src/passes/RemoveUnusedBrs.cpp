@@ -84,6 +84,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           flows.push_back(flow);
         }
         self->ifStack.pop_back();
+      } else {
+        // if without else stops the flow of values
+        self->valueCanFlow = false;
       }
     } else if (curr->is<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
