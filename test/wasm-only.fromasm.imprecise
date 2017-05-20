@@ -271,7 +271,6 @@
       (i32.const -2)
      )
      (return)
-     (br $__rjto$0)
     )
    )
    (i32.store

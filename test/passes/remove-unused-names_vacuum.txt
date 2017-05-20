@@ -9,7 +9,6 @@
  (func $return-i32-but-body-is-unreachable4 (type $0) (result i32)
   (local $label i32)
   (unreachable)
-  (i32.const 0)
  )
  (func $to-drop-unreachable (type $1)
   (drop

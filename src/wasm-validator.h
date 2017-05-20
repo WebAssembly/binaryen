@@ -408,17 +408,26 @@ public:
     switch (curr->op) {
       case ClzInt32:
       case CtzInt32:
-      case PopcntInt32:
+      case PopcntInt32: {
+        shouldBeEqual(curr->value->type, i32, curr, "i32 unary value type must be correct");
+        break;
+      }
+      case ClzInt64:
+      case CtzInt64:
+      case PopcntInt64: {
+        shouldBeEqual(curr->value->type, i64, curr, "i64 unary value type must be correct");
+        break;
+      }
       case NegFloat32:
       case AbsFloat32:
       case CeilFloat32:
       case FloorFloat32:
       case TruncFloat32:
       case NearestFloat32:
-      case SqrtFloat32:
-      case ClzInt64:
-      case CtzInt64:
-      case PopcntInt64:
+      case SqrtFloat32: {
+        shouldBeEqual(curr->value->type, f32, curr, "f32 unary value type must be correct");
+        break;
+      }
       case NegFloat64:
       case AbsFloat64:
       case CeilFloat64:
@@ -426,7 +435,7 @@ public:
       case TruncFloat64:
       case NearestFloat64:
       case SqrtFloat64: {
-        shouldBeEqual(curr->value->type, curr->type, curr, "non-conversion unaries must return the same type");
+        shouldBeEqual(curr->value->type, f64, curr, "f64 unary value type must be correct");
         break;
       }
       case EqZInt32: {
