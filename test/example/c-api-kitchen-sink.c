@@ -427,6 +427,9 @@ void test_relooper() {
     RelooperRef relooper = RelooperCreate();
     BinaryenExpressionRef temp = makeInt32(module, -99);
     RelooperBlockRef block0 = RelooperAddBlockWithSwitch(relooper, makeCallCheck(module,  0), temp);
+    // TODO: this example is not very good, the blocks should end in a |return| as otherwise they
+    //       fall through to each other. A relooper block should end in something that stops control
+    //       flow, if it doesn't have branches going out
     RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
     RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
     RelooperBlockRef block3 = RelooperAddBlock(relooper, makeCallCheck(module,  3));

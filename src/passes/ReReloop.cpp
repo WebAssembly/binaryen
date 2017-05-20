@@ -28,6 +28,7 @@
 #include "wasm-traversal.h"
 #include "pass.h"
 #include "cfg/Relooper.h"
+#include "ast_utils.h"
 
 namespace wasm {
 
@@ -314,6 +315,8 @@ struct ReReloop : public Pass {
       CFG::RelooperBuilder builder(*module, temp);
       function->body = relooper.Render(builder);
     }
+    // TODO: should this be in the relooper itself?
+    ReFinalize().walk(function->body);
   }
 };
 
