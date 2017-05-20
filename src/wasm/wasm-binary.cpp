@@ -1800,6 +1800,7 @@ void WasmBinaryBuilder::visitSwitch(Switch *curr) {
   curr->default_ = defaultTarget.name;
   if (debug) std::cerr << "default: "<< curr->default_<<std::endl;
   if (defaultTarget.arity) curr->value = popNonVoidExpression();
+  curr->finalize();
 }
 
 Expression* WasmBinaryBuilder::visitCall() {
@@ -1862,6 +1863,7 @@ void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
     throw ParseException("bad get_local index");
   }
   curr->type = currFunction->getLocalType(curr->index);
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
@@ -2034,6 +2036,7 @@ bool WasmBinaryBuilder::maybeVisitUnary(Expression*& out, uint8_t code) {
   }
   if (debug) std::cerr << "zz node: Unary" << std::endl;
   curr->value = popNonVoidExpression();
+  curr->finalize();
   out = curr;
   return true;
 }
@@ -2116,6 +2119,7 @@ void WasmBinaryBuilder::visitReturn(Return *curr) {
   if (currFunction->result != none) {
     curr->value = popNonVoidExpression();
   }
+  curr->finalize();
 }
 
 bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
