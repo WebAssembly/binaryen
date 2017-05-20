@@ -85,10 +85,24 @@ for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
       assert len(asserts) == 0
       with open('split.wast', 'w') as o: o.write(module)
       cmd = WASM_OPT + opts + ['split.wast', '--print']
-      actual += run_command(cmd)
+      curr = run_command(cmd)
+      actual += curr
       # also check debug mode output is valid
       debugged = run_command(cmd + ['--debug'], stderr=subprocess.PIPE)
       fail_if_not_contained(actual, debugged)
+      # also check pass-debug mode
+      old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
+      try:
+        os.environ['BINARYEN_PASS_DEBUG'] = '1'
+        pass_debug = run_command(cmd)
+        fail_if_not_identical(curr, pass_debug)
+      finally:
+        if old_pass_debug is not None:
+          os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
+        else:
+          if 'BINARYEN_PASS_DEBUG' in os.environ:
+            del os.environ['BINARYEN_PASS_DEBUG']
+
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + ('.bin' if binary else '') + '.txt'), 'rb').read())
 
 print '[ checking asm2wasm testcases... ]\n'
