@@ -23,6 +23,7 @@
 #include <ast_utils.h>
 #include <wasm-builder.h>
 #include <ast/block-utils.h>
+#include <ast/type-updating.h>
 
 namespace wasm {
 
@@ -31,7 +32,20 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
 
   Pass* create() override { return new Vacuum; }
 
-  bool needRefinalize = false;
+  TypeUpdater typeUpdater;
+
+  Expression* replaceCurrent(Expression* expression) {
+    auto* old = getCurrent();
+    WalkerPass<PostWalker<Vacuum>>::replaceCurrent(expression);
+    // also update the type updater
+    typeUpdater.noteReplacement(old, expression);
+    return expression;
+  }
+
+  void doWalkFunction(Function* func) {
+    typeUpdater.walk(func->body);
+    walk(func->body);
+  }
 
   // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
@@ -143,40 +157,39 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     int skip = 0;
     auto& list = curr->list;
     size_t size = list.size();
-    bool needResize = false;
     for (size_t z = 0; z < size; z++) {
-      auto* optimized = optimize(list[z], z == size - 1 && isConcreteWasmType(curr->type));
+      auto* child = list[z];
+      auto* optimized = optimize(child, z == size - 1 && isConcreteWasmType(curr->type));
       if (!optimized) {
+        typeUpdater.noteRecursiveRemoval(child);
         skip++;
-        needResize = true;
       } else {
-        if (optimized != list[z]) {
+        if (optimized != child) {
+          typeUpdater.noteReplacement(child, optimized);
           list[z] = optimized;
         }
         if (skip > 0) {
           list[z - skip] = list[z];
+          list[z] = nullptr;
         }
-        // if this is an unconditional br, the rest is dead code
-        Break* br = list[z - skip]->dynCast<Break>();
-        Switch* sw = list[z - skip]->dynCast<Switch>();
-        if ((br && !br->condition) || sw) {
-          auto* last = list.back();
-          list.resize(z - skip + 1);
-          // if we removed the last one, and it was a return value, it must be returned
-          if (list.back() != last && isConcreteWasmType(last->type)) {
-            list.push_back(last);
+        // if this is unreachable, the rest is dead code
+        if (list[z - skip]->type == unreachable && z < size - 1) {
+          for (Index i = z - skip + 1; i < list.size(); i++) {
+            auto* remove = list[i];
+            if (remove) {
+              typeUpdater.noteRecursiveRemoval(remove);
+            }
           }
-          needResize = false;
-          needRefinalize = true;
+          list.resize(z - skip + 1);
+          typeUpdater.maybeUpdateTypeToUnreachable(curr);
+          skip = 0; // nothing more to do on the list
           break;
         }
       }
     }
-    if (needResize) {
+    if (skip > 0) {
       list.resize(size - skip);
-      // resizing means we drop elements, which may include breaks, which may
-      // render blocks unreachable now
-      needRefinalize = true;
+      typeUpdater.maybeUpdateTypeToUnreachable(curr);
     }
     // the block may now be a trivial one that we can get rid of and just leave its contents
     replaceCurrent(BlockUtils::simplifyToContents(curr, this));
@@ -198,13 +211,6 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         }
       }
       replaceCurrent(child);
-      if (curr->type != child->type) {
-        // e.g., if (1) unreachable is none => unreachable
-        // or if i32 (1) unreachable else 10 is i32 => unreachable
-        // in which cases we must update our parents.
-        // we must do this now, so that our parents see valid data
-        ReFinalize().walk(getFunction()->body);
-      }
       return;
     }
     if (curr->ifFalse) {
@@ -307,9 +313,6 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   }
 
   void visitFunction(Function* curr) {
-    if (needRefinalize) {
-      ReFinalize().walk(curr->body);
-    }
     auto* optimized = optimize(curr->body, curr->result != none);
     if (optimized) {
       curr->body = optimized;

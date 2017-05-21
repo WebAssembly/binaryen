@@ -328,7 +328,12 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
         NextOuter->list.push_back(Outer);
         Outer->name = CurrName; // breaking on Outer leads to the content in NextOuter
         NextOuter->list.push_back(CurrContent);
-        NextOuter->list.push_back(Builder.makeBreak(SwitchLeave));
+        // if this is not a dead end, also need to break to the outside
+        // this is both an optimization, and avoids incorrectness as adding
+        // a brak in unreachable code can make a place look reachable that isn't
+        if (CurrContent->type != wasm::unreachable) {
+          NextOuter->list.push_back(Builder.makeBreak(SwitchLeave));
+        }
         // prepare for more nesting
         Outer = NextOuter;
       } else {

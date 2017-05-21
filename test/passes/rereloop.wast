@@ -175,5 +175,26 @@
     (i32.const 3)
    )
   )
+
+ (func $switcher-to-nowhere (param $0 i32) (result i32)
+  (block $switch
+   (block $switch-case0
+    (block $switch-case
+     (br_table $switch-case $switch-case0 $switch
+      (get_local $0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (return
+   (i32.const 3)
+  )
+ )
 )
 

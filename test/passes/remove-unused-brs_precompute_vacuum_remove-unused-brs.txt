@@ -4,19 +4,11 @@
  (memory $0 0)
  (func $1 (type $0) (param $x i32) (result f64)
   (local $var$0 f64)
-  (block $label$0
+  (block $label$0 f64
    (set_local $var$0
     (f64.const 0)
    )
-   (return
-    (f64.const -3.4)
-   )
-   (if
-    (get_local $x)
-    (return
-     (f64.const 5.6)
-    )
-   )
+   (f64.const -3.4)
   )
  )
 )

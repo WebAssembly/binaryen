@@ -29,70 +29,18 @@
  )
  (func $unary (type $2) (result f32)
   (unreachable)
-  (f32.abs
-   (f32.const 2)
-  )
  )
  (func $binary (type $2) (result f32)
   (drop
    (unreachable)
-  )
-  (drop
-   (unreachable)
-  )
-  (f32.add
-   (unreachable)
-   (unreachable)
-  )
-  (f32.add
-   (f32.const 5)
-   (f32.const 6)
   )
  )
  (func $select (type $3) (result i32)
   (drop
    (unreachable)
   )
-  (drop
-   (unreachable)
-  )
-  (drop
-   (unreachable)
-  )
-  (select
-   (unreachable)
-   (unreachable)
-   (i32.const 10)
-  )
-  (drop
-   (select
-    (unreachable)
-    (i32.const 11)
-    (unreachable)
-   )
-  )
-  (drop
-   (select
-    (i32.const 12)
-    (unreachable)
-    (unreachable)
-   )
-  )
-  (select
-   (unreachable)
-   (unreachable)
-   (unreachable)
-  )
-  (select
-   (i32.const 13)
-   (i32.const 14)
-   (i32.const 15)
-  )
  )
  (func $block-to-one (type $0)
-  (unreachable)
-  (unreachable)
-  (unreachable)
   (unreachable)
  )
  (func $recurse (type $0)
@@ -242,12 +190,6 @@
    (block $in
     (call $block-resize-br-gone)
     (br $in)
-   )
-   (return)
-  )
-  (block $out2
-   (block $in2
-    (br $in2)
    )
    (return)
   )
