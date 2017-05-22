@@ -477,6 +477,7 @@ public:
   void visitSelect(Select* curr) {
     shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
     shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
+    shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "select condition must be valid");
   }
 
   void visitDrop(Drop* curr) {
