@@ -64,6 +64,9 @@ int main(int argc, const char *argv[]) {
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm binary";
+  } catch (MapParseException& p) {
+    p.dump(std::cerr);
+    Fatal() << "error in parsing wasm source mapping";
   }
 
   if (options.debug) std::cerr << "Printing..." << std::endl;

@@ -191,19 +191,19 @@ for asm in tests:
 
         # verify debug info
         if 'debugInfo' in asm:
-          txtmap = 'a.wasm.txtmap'
-          cmd += ['--binarymap-file', txtmap,
-                  '--binarymap-url', txtmap + '.map',
+          jsmap = 'a.wasm.map'
+          cmd += ['--binarymap-file', jsmap,
+                  '--binarymap-url', 'http://example.org/' + jsmap,
                   '-o', 'a.wasm']
           run_command(cmd)
-          if not os.path.isfile(txtmap):
-            fail_with_error('Debug info map not created: %s' % txtmap)
-          with open(wasm + '.txtmap', 'rb') as expected:
-            with open(txtmap, 'rb') as actual:
+          if not os.path.isfile(jsmap):
+            fail_with_error('Debug info map not created: %s' % jsmap)
+          with open(wasm + '.map', 'rb') as expected:
+            with open(jsmap, 'rb') as actual:
               fail_if_not_identical(actual.read(), expected.read())
           with open('a.wasm', 'rb') as binary:
             url_section_name = bytearray([16]) + bytearray('sourceMappingURL')
-            payload = txtmap + '.map'
+            payload = 'http://example.org/' + jsmap
             assert len(payload) < 256, 'name too long'
             url_section_contents = bytearray([len(payload)]) + bytearray(payload)
             print url_section_name
@@ -266,6 +266,8 @@ for t in tests:
     print '..', t
     t = os.path.join(options.binaryen_test, t)
     cmd = WASM_DIS + [t]
+    if os.path.isfile(t + '.map'): cmd += ['-bm', t + '.map']
+
     actual = run_command(cmd)
 
     with open(t + '.fromBinary') as f:

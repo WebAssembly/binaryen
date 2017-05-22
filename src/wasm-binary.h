@@ -593,6 +593,10 @@ public:
   void writeSourceMapUrl();
   void writeSymbolMap();
 
+  void writeBinaryMapProlog();
+  void writeBinaryMapEpilog();
+  void writeDebugLocation(size_t offset, const Function::DebugLocation& loc);
+
   // helpers
   void writeInlineString(const char* name);
   void writeInlineBuffer(const char* data, size_t size);
@@ -616,6 +620,7 @@ public:
   void recurse(Expression*& curr);
   std::vector<Name> breakStack;
   Function::DebugLocation lastDebugLocation;
+  size_t lastBytecodeOffset;
 
   void visit(Expression* curr) {
     if (binaryMap && currFunction) {
@@ -623,9 +628,7 @@ public:
       auto& debugLocations = currFunction->debugLocations;
       auto iter = debugLocations.find(curr);
       if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
-        lastDebugLocation = iter->second;
-        auto fileName = wasm->debugInfoFileNames[iter->second.fileIndex];
-        *binaryMap << o.size() << ":" << fileName << ":" << iter->second.lineNumber << ":" << iter->second.columnNumber << '\n';
+        writeDebugLocation(o.size(), iter->second);
       }
     }
     Visitor<WasmBinaryWriter>::visit(curr);
@@ -767,11 +770,11 @@ public:
   // Debug information reading helpers
   void setDebugLocations(std::istream* binaryMap_) {
       binaryMap = binaryMap_;
-      readNextDebugLocation();
   }
   Function::DebugLocation debugLocation;
   std::unordered_map<std::string, Index> debugInfoFileIndices;
   void readNextDebugLocation();
+  void readBinaryMapHeader();
 
   // AST reading
   int depth = 0; // only for debugging

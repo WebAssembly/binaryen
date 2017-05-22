@@ -33,6 +33,9 @@ void WasmBinaryWriter::prepare() {
 
 void WasmBinaryWriter::write() {
   writeHeader();
+  if (binaryMap) {
+    writeBinaryMapProlog();
+  }
 
   writeTypes();
   writeImports();
@@ -49,6 +52,9 @@ void WasmBinaryWriter::write() {
   if (binaryMap) writeSourceMapUrl();
   if (symbolMap.size() > 0) writeSymbolMap();
 
+  if (binaryMap) {
+    writeBinaryMapEpilog();
+  }
   finishUp();
 }
 
@@ -238,7 +244,6 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     Function* function = wasm->functions[i].get();
     currFunction = function;
-    lastDebugLocation = {0, 0, 0};
     mappedLocals.clear();
     numLocalsByType.clear();
     if (debug) std::cerr << "writing" << function->name << std::endl;
@@ -443,6 +448,50 @@ void WasmBinaryWriter::writeSymbolMap() {
     file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
   }
   file.close();
+}
+
+void WasmBinaryWriter::writeBinaryMapProlog() {
+  lastDebugLocation = { 0, /* lineNumber = */ 1, 0 };
+  lastBytecodeOffset = 0;
+  *binaryMap << "{\"version\":3,\"sources\":[";
+  for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
+    if (i > 0) *binaryMap << ",";
+    // TODO respect JSON string encoding, e.g. quotes and control chars.
+    *binaryMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
+  }
+  *binaryMap << "],\"names\":[],\"mappings\":\"";
+}
+
+void WasmBinaryWriter::writeBinaryMapEpilog() {
+  *binaryMap << "\"}";
+}
+
+static void writeBase64VLQ(std::ostream& out, int32_t n) {
+  uint32_t value = n >= 0 ? n << 1 : ((-n) << 1) | 1;
+  while (1) {
+    uint32_t digit = value & 0x1F;
+    value >>= 5;
+    if (!value) {
+      // last VLQ digit -- base64 codes 'A'..'Z', 'a'..'f'
+      out << char(digit < 26 ? 'A' + digit : 'a' + digit - 26);
+      break;
+    }
+    // more VLG digit will follow -- add continuation bit (0x20),
+    // base64 codes 'g'..'z', '0'..'9', '+', '/'
+    out << char(digit < 20 ? 'g' + digit : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+  }
+}
+
+void WasmBinaryWriter::writeDebugLocation(size_t offset, const Function::DebugLocation& loc) {
+  if (lastBytecodeOffset > 0) {
+    *binaryMap << ",";
+  }
+  writeBase64VLQ(*binaryMap, int32_t(offset - lastBytecodeOffset));
+  writeBase64VLQ(*binaryMap, int32_t(loc.fileIndex - lastDebugLocation.fileIndex));
+  writeBase64VLQ(*binaryMap, int32_t(loc.lineNumber - lastDebugLocation.lineNumber));
+  writeBase64VLQ(*binaryMap, int32_t(loc.columnNumber - lastDebugLocation.columnNumber));
+  lastDebugLocation = loc;
+  lastBytecodeOffset = offset;
 }
 
 void WasmBinaryWriter::writeInlineString(const char* name) {
@@ -949,6 +998,7 @@ static Name RETURN_BREAK("binaryen|break-to-return");
 void WasmBinaryBuilder::read() {
 
   readHeader();
+  readBinaryMapHeader();
 
   // read sections until the end
   while (more()) {
@@ -1402,43 +1452,135 @@ void WasmBinaryBuilder::readExports() {
   }
 }
 
-void WasmBinaryBuilder::readNextDebugLocation() {
-  if (binaryMap) {
-    std::string line;
-    while (std::getline(*binaryMap, line)) {
-      auto pos = line.begin();
-      while (pos < line.end() && pos[0] != ':') pos++;
-      if (pos == line.end()) continue;
-      uint32_t position = atoi(std::string(line.begin(), pos).c_str());
-      auto filenameStart = ++pos;
-      while (pos < line.end() && pos[0] != ':') pos++;
-      if (pos == line.end()) continue;
-      std::string file(filenameStart, pos);
-      auto iter = debugInfoFileIndices.find(file);
-      if (iter == debugInfoFileIndices.end()) {
-        Index index = wasm.debugInfoFileNames.size();
-        wasm.debugInfoFileNames.push_back(file);
-        debugInfoFileIndices[file] = index;
-      }
-      uint32_t fileIndex = debugInfoFileIndices[file];
-      auto lineNumberStart = ++pos;
-      while (pos < line.end() && pos[0] != ':') pos++;
-      if (pos == line.end()) {
-        // old format
-        uint32_t lineNumber = atoi(std::string(lineNumberStart, line.end()).c_str());
-        nextDebugLocation = { position, { fileIndex, lineNumber, 0 } };
-        return;
-      }
-      uint32_t lineNumber = atoi(std::string(lineNumberStart, pos).c_str());
-      auto columnNumberStart = ++pos;
-      uint32_t columnNumber = atoi(std::string(columnNumberStart, line.end()).c_str());
-
-      nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
-      return;
+static int32_t readBase64VLQ(std::istream& in) {
+  uint32_t value = 0;
+  uint32_t shift = 0;
+  while (1) {
+    char ch = in.get();
+    if (ch == EOF)
+      throw MapParseException("unexpected EOF in the middle of VLQ");
+    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch < 'g')) {
+      // last number digit
+      uint32_t digit = ch < 'a' ? ch - 'A' : ch - 'a' + 26;
+      value |= digit << shift;
+      break;
     }
-    nextDebugLocation.first = 0;
+    if (!(ch >= 'g' && ch <= 'z') && !(ch >= '0' && ch <= '9') &&
+        ch != '+' && ch != '/') {
+      throw MapParseException("invalid VLQ digit");
+    }
+    uint32_t digit = ch > '9' ? ch - 'g' : (ch >= '0' ? ch - '0' + 20 : (ch == '+' ? 30 : 31));
+    value |= digit << shift;
+    shift += 5;
   }
+  return value & 1 ? -int32_t(value >> 1) : int32_t(value >> 1);
 }
+
+void WasmBinaryBuilder::readBinaryMapHeader() {
+  if (!binaryMap) return;
+
+  auto maybeReadChar = [&](char expected) {
+    if (binaryMap->peek() != expected) return false;
+    binaryMap->get();
+    return true;
+  };
+  auto mustReadChar = [&](char expected) {
+    if (binaryMap->get() != expected) {
+      throw MapParseException("Unexpected char");
+    }
+  };
+  auto findField = [&](const char* name, size_t len) {
+    bool matching = false;
+    size_t pos;
+    while (1) {
+      int ch = binaryMap->get();
+      if (ch == EOF) return false;
+      if (ch == '\"') {
+        matching = true;
+        pos = 0;
+      } else if (matching && name[pos] == ch) {
+        ++pos;
+        if (pos == len) {
+          if (maybeReadChar('\"')) break; // found field
+        }
+      } else {
+        matching = false;
+      }
+    }
+    mustReadChar(':');
+    return true;
+  };
+  auto readString = [&](std::string& str) {
+    std::vector<char> vec;
+    mustReadChar('\"');
+    if (!maybeReadChar('\"')) {
+      while (1) {
+        int ch = binaryMap->get();
+        if (ch == EOF) {
+          throw MapParseException("unexpected EOF in the middle of string");
+        }
+        if (ch == '\"') break;
+        vec.push_back(ch);
+      }
+    }
+    str = std::string(vec.begin(), vec.end());
+  };
+
+  if (!findField("sources", strlen("sources"))) {
+    throw MapParseException("cannot find the sources field in map");
+  }
+  mustReadChar('[');
+  if (!maybeReadChar(']')) {
+    do {
+      std::string file;
+      readString(file);
+      Index index = wasm.debugInfoFileNames.size();
+      wasm.debugInfoFileNames.push_back(file);
+      debugInfoFileIndices[file] = index;
+    } while (maybeReadChar(','));
+    mustReadChar(']');
+  }
+
+  if (!findField("mappings", strlen("mappings"))) {
+    throw MapParseException("cannot find the mappings field in map");
+  }
+  mustReadChar('\"');
+  if (maybeReadChar('\"')) { // empty mappings
+    nextDebugLocation.first = 0;
+    return;
+  }
+  // read first debug location
+  uint32_t position = readBase64VLQ(*binaryMap);
+  uint32_t fileIndex = readBase64VLQ(*binaryMap);
+  uint32_t lineNumber = readBase64VLQ(*binaryMap) + 1; // adjust zero-based line number
+  uint32_t columnNumber = readBase64VLQ(*binaryMap);
+  nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
+}
+
+void WasmBinaryBuilder::readNextDebugLocation() {
+  if (!binaryMap) return;
+
+  char ch;
+  *binaryMap >> ch;
+  if (ch == '\"') { // end of records
+    nextDebugLocation.first = 0;
+    return;
+  }
+  if (ch != ',') {
+    throw MapParseException("Unexpected delimiter");
+  }
+  int32_t positionDelta = readBase64VLQ(*binaryMap);
+  uint32_t position = nextDebugLocation.first + positionDelta;
+  int32_t fileIndexDelta = readBase64VLQ(*binaryMap);
+  uint32_t fileIndex = nextDebugLocation.second.fileIndex + fileIndexDelta;
+  int32_t lineNumberDelta = readBase64VLQ(*binaryMap);
+  uint32_t lineNumber = nextDebugLocation.second.lineNumber + lineNumberDelta;
+  int32_t columnNumberDelta = readBase64VLQ(*binaryMap);
+  uint32_t columnNumber = nextDebugLocation.second.columnNumber + columnNumberDelta;
+
+  nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
+}
+
 Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
   processExpressions();
