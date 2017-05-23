@@ -63,7 +63,7 @@ struct SSAify : public PostWalker<SSAify> {
 
   // control flow
 
-  static void doVisitBlock(SubType* self, Expression** currp) {
+  static void doVisitBlock(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
     if (curr->name.is() && self->breakInfos.find(curr->name) != self->breakInfos.end()) {
       auto& infos = self->breakInfos[curr->name];
@@ -81,11 +81,11 @@ struct SSAify : public PostWalker<SSAify> {
     currMapping = std::move(merge(breaks));
   }
 
-  static void afterIfCondition(SubType* self, Expression** currp) {
+  static void afterIfCondition(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<If>();
     self->mappingStack.push_back(self->currMapping);
   }
-  static void afterIfTrue(SubType* self, Expression** currp) {
+  static void afterIfTrue(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<If>();
     if (curr->ifFalse) {
       auto afterCondition = std::move(self.mappingStack.back());
@@ -95,15 +95,15 @@ struct SSAify : public PostWalker<SSAify> {
       self->finishIf();
     }
   }
-  static void afterIfFalse(SubType* self, Expression** currp) {
+  static void afterIfFalse(SSAify* self, Expression** currp) {
     self->finishIf();
   }
-  static void beforeLoop(SubType* self, Expression** currp) {
+  static void beforeLoop(SSAify* self, Expression** currp) {
     // save the state before entering the loop, for calculation later of the merge at the loop top
     self->mappingStack.push_back(self->currMapping);
     self->loopGetStack.push_back({});
   }
-  static void doVisitLoop(SubType* self, Expression** currp) {
+  static void doVisitLoop(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
     if (curr->name.is() && self->breakInfos.find(curr->name) != self->breakInfos.end()) {
       auto& infos = self->breakInfos[curr->name];
@@ -121,14 +121,14 @@ struct SSAify : public PostWalker<SSAify> {
     self->mappingStack.pop_back();
     self->loopGetStack.pop_back();
   }
-  static void visitBreak(SubType* self, Expression** currp) {
+  static void visitBreak(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<Break>();
     self->breakInfos[curr->name].emplace_back(std::move(self->currMapping), currp, BreakInfo::Internal);
     if (!(*currp)->cast<Break>()->condition) {
       setUnreachable(self->currMapping);
     }
   }
-  static void visitSwitch(SubType* self, Expression** currp) {
+  static void visitSwitch(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<Switch>();
     std::set<Name> all;
     for (auto target : curr->targets) {
@@ -147,44 +147,40 @@ struct SSAify : public PostWalker<SSAify> {
     setUnreachable(currMapping);
   }
 
+  // local usage
+
   void visitGetLocal(GetLocal* curr) {
     for (auto& loopGets : loopGetStack) {
       loopGets.push_back(curr);
     }
     originalGetIndexes[curr] = curr->index;
-    curr->index = currMapping[curr->index];
+    curr->index = currMapping[curr->index]->index;
   }
   void visitSetLocal(SetLocal* curr) {
     currMapping[curr->index] = curr;
     curr->index = nextIndex++;
   }
 
-  // assignments
-
-  void visitSetLocal(SetLocal *curr) {
-    currMapping[curr->index] = nextIndex++; // a new assignment, trample the old
-  }
-
   // traversal
 
-  static void scan(SubType* self, Expression** currp) {
+  static void scan(SSAify* self, Expression** currp) {
     if (auto* iff = (*currp)->dynCast<If>()) {
       // if needs special handling
       if (iff->ifFalse) {
-        self->pushTask(SubType::afterIfFalse, currp);
-        self->pushTask(SubType::scan, iff->ifFalse);
+        self->pushTask(SSAify::afterIfFalse, currp);
+        self->pushTask(SSAify::scan, iff->ifFalse);
       }
-      self->pushTask(SubType::afterIfTrue, currp);
-      self->pushTask(SubType::scan, iff->ifTrue);
-      self->pushTask(SubType::afterIfCondition, currp);
-      self->pushTask(SubType::scan, iff->condition);
+      self->pushTask(SSAify::afterIfTrue, currp);
+      self->pushTask(SSAify::scan, iff->ifTrue);
+      self->pushTask(SSAify::afterIfCondition, currp);
+      self->pushTask(SSAify::scan, iff->condition);
     } else {
-      PostWalker<SubType, VisitorType>::scan(self, currp);
+      PostWalker<SSAify, VisitorType>::scan(self, currp);
     }
 
     // loops need pre-order visiting too
     if ((*currp)->is<Loop>()) {
-      self->pushTask(SubType::beforeLoop, currp);
+      self->pushTask(SSAify::beforeLoop, currp);
     }
   }
 
@@ -217,6 +213,7 @@ struct SSAify : public PostWalker<SSAify> {
         } else {
           if (info[i] != merged) {
             // we need a phi for this local
+// XXX merge to a single set_local how?
             merged = nextIndex++;
             createPhi(infos, i, merged);
             break;
