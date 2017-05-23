@@ -1421,7 +1421,7 @@ class S2WasmBuilder {
     // assign the address, add to memory
     linkerObj->addStatic(size, align, name);
     if (!zero) {
-      linkerObj->addSegment(name, raw);
+      linkerObj->addSegment(name, std::move(raw));
     }
   }
 

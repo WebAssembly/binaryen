@@ -123,9 +123,9 @@ class LinkerObject {
     wasm.memory.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data, size);
   }
 
-  void addSegment(Name name, std::vector<char>& data) {
+  void addSegment(Name name, std::vector<char>&& data) {
     segments[name] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data);
+    wasm.memory.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), std::move(data));
   }
 
   void addInitializerFunction(Name name) {
