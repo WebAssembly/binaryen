@@ -59,6 +59,7 @@ Pass *createSimplifyLocalsPass();
 Pass *createSimplifyLocalsNoTeePass();
 Pass *createSimplifyLocalsNoStructurePass();
 Pass *createSimplifyLocalsNoTeeNoStructurePass();
+Pass *createSSAifyPass();
 Pass *createVacuumPass();
 Pass *createPrecomputePass();
 //Pass *createLowerInt64Pass();

@@ -101,6 +101,7 @@ void PassRegistry::registerPasses() {
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
   registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeeNoStructurePass);
+  registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
 //  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
