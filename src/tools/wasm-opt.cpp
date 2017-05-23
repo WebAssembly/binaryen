@@ -149,9 +149,9 @@ int main(int argc, const char* argv[]) {
     results.get(wasm);
   }
 
-  if (options.runningOptimizationPasses()) {
+  if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner = options.getOptimizationPassRunner(wasm);
+    PassRunner passRunner = options.getPassRunner(wasm);
     passRunner.run();
     assert(WasmValidator().validate(wasm));
   }

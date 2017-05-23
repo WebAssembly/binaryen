@@ -21,7 +21,7 @@
 namespace wasm {
 
 struct OptimizationOptions : public Options {
-  const std::string RUN_OPT_PASSES = "O";
+  const std::string DEFAULT_OPT_PASSES = "O";
 
   std::vector<std::string> passes;
   PassOptions passOptions;
@@ -32,7 +32,7 @@ struct OptimizationOptions : public Options {
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 2;
                   passOptions.shrinkLevel = 1;
-                  passes.push_back(RUN_OPT_PASSES);
+                  passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("", "-O0", "execute no optimization passes",
                 Options::Arguments::Zero,
@@ -45,35 +45,35 @@ struct OptimizationOptions : public Options {
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 1;
                   passOptions.shrinkLevel = 0;
-                  passes.push_back(RUN_OPT_PASSES);
+                  passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("", "-O2", "execute -O2 optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 2;
                   passOptions.shrinkLevel = 0;
-                  passes.push_back(RUN_OPT_PASSES);
+                  passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("", "-O3", "execute -O3 optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 3;
                   passOptions.shrinkLevel = 0;
-                  passes.push_back(RUN_OPT_PASSES);
+                  passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("", "-Os", "execute default optimization passes, focusing on code size",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 2;
                   passOptions.shrinkLevel = 1;
-                  passes.push_back(RUN_OPT_PASSES);
+                  passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("", "-Oz", "execute default optimization passes, super-focusing on code size",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 2;
                   passOptions.shrinkLevel = 2;
-                  passes.push_back(RUN_OPT_PASSES);
+                  passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("--optimize-level", "-ol", "How much to focus on optimizing code",
                 Options::Arguments::One,
@@ -102,20 +102,24 @@ struct OptimizationOptions : public Options {
     }
   }
 
-  bool runningOptimizationPasses() {
+  bool runningDefaultOptimizationPasses() {
     for (auto& pass : passes) {
-      if (pass == RUN_OPT_PASSES) {
+      if (pass == DEFAULT_OPT_PASSES) {
         return true;
       }
     }
     return false;
   }
 
-  PassRunner getOptimizationPassRunner(Module& wasm) {
+  bool runningPasses() {
+    return passes.size() > 0;
+  }
+
+  PassRunner getPassRunner(Module& wasm) {
     PassRunner passRunner(&wasm, passOptions);
     if (debug) passRunner.setDebug(true);
     for (auto& pass : passes) {
-      if (pass == RUN_OPT_PASSES) {
+      if (pass == DEFAULT_OPT_PASSES) {
         passRunner.addDefaultOptimizationPasses();
       } else {
         passRunner.add(pass);

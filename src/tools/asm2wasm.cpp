@@ -120,7 +120,7 @@ int main(int argc, const char *argv[]) {
     emitBinary = false;
   }
 
-  if (options.runningOptimizationPasses()) {
+  if (options.runningDefaultOptimizationPasses()) {
     if (options.passes.size() > 1) {
       Fatal() << "asm2wasm can only run default optimization passes (-O, -Ox, etc.), and not specific additional passes";
     }
@@ -149,7 +149,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningOptimizationPasses(), wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided
@@ -166,7 +166,7 @@ int main(int argc, const char *argv[]) {
       init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
     }
     wasm.memory.segments.emplace_back(init, data);
-    if (options.runningOptimizationPasses()) {
+    if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
       runner.add("memory-packing");
       runner.run();
