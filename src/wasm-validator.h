@@ -477,6 +477,7 @@ public:
   void visitSelect(Select* curr) {
     shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
     shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
+    shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "select condition must be valid");
   }
 
   void visitDrop(Drop* curr) {
@@ -565,8 +566,19 @@ public:
     labelNames.clear();
   }
 
-  bool isConstant(Expression* curr) {
-    return curr->is<Const>() || curr->is<GetGlobal>();
+  bool checkOffset(Expression* curr, Address add, Address max) {
+    if (curr->is<GetGlobal>()) return true;
+    auto* c = curr->dynCast<Const>();
+    if (!c) return false;
+    uint64_t raw = c->value.getInteger();
+    if (raw > std::numeric_limits<Address::address_t>::max()) {
+      return false;
+    }
+    if (raw + uint64_t(add) > std::numeric_limits<Address::address_t>::max()) {
+      return false;
+    }
+    Address offset = raw;
+    return offset + add <= max;
   }
 
   void visitMemory(Memory *curr) {
@@ -575,7 +587,7 @@ public:
     Index mustBeGreaterOrEqual = 0;
     for (auto& segment : curr->segments) {
       if (!shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;
-      shouldBeTrue(isConstant(segment.offset), segment.offset, "segment offset should be constant");
+      shouldBeTrue(checkOffset(segment.offset, segment.data.size(), getModule()->memory.initial * Memory::kPageSize), segment.offset, "segment offset should be reasonable");
       Index size = segment.data.size();
       shouldBeTrue(size <= curr->initial * Memory::kPageSize, segment.data.size(), "segment size should fit in memory");
       if (segment.offset->is<Const>()) {
@@ -590,7 +602,7 @@ public:
   void visitTable(Table* curr) {
     for (auto& segment : curr->segments) {
       shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32");
-      shouldBeTrue(isConstant(segment.offset), segment.offset, "segment offset should be constant");
+      shouldBeTrue(checkOffset(segment.offset, segment.data.size(), getModule()->table.initial * Table::kPageSize), segment.offset, "segment offset should be reasonable");
     }
   }
   void visitModule(Module *curr) {
