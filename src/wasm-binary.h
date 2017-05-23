@@ -538,8 +538,8 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Function* currFunction = nullptr;
   bool debug;
   bool debugInfo = true;
-  std::ostream* binaryMap = nullptr;
-  std::string binaryMapUrl;
+  std::ostream* sourceMap = nullptr;
+  std::string sourceMapUrl;
   std::string symbolMap;
 
   MixedArena allocator;
@@ -551,9 +551,9 @@ public:
   }
 
   void setNamesSection(bool set) { debugInfo = set; }
-  void setBinaryMap(std::ostream* set, std::string url) {
-    binaryMap = set;
-    binaryMapUrl = url;
+  void setSourceMap(std::ostream* set, std::string url) {
+    sourceMap = set;
+    sourceMapUrl = url;
   }
   void setSymbolMap(std::string set) { symbolMap = set; }
 
@@ -593,8 +593,8 @@ public:
   void writeSourceMapUrl();
   void writeSymbolMap();
 
-  void writeBinaryMapProlog();
-  void writeBinaryMapEpilog();
+  void writeSourceMapProlog();
+  void writeSourceMapEpilog();
   void writeDebugLocation(size_t offset, const Function::DebugLocation& loc);
 
   // helpers
@@ -623,8 +623,8 @@ public:
   size_t lastBytecodeOffset;
 
   void visit(Expression* curr) {
-    if (binaryMap && currFunction) {
-      // Dump the binaryMap debug info
+    if (sourceMap && currFunction) {
+      // Dump the sourceMap debug info
       auto& debugLocations = currFunction->debugLocations;
       auto iter = debugLocations.find(curr);
       if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
@@ -668,7 +668,7 @@ class WasmBinaryBuilder {
   MixedArena& allocator;
   std::vector<char>& input;
   bool debug;
-  std::istream* binaryMap;
+  std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
 
   size_t pos = 0;
@@ -678,7 +678,7 @@ class WasmBinaryBuilder {
   std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), binaryMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -768,13 +768,13 @@ public:
   void readNames(size_t);
 
   // Debug information reading helpers
-  void setDebugLocations(std::istream* binaryMap_) {
-      binaryMap = binaryMap_;
+  void setDebugLocations(std::istream* sourceMap_) {
+      sourceMap = sourceMap_;
   }
   Function::DebugLocation debugLocation;
   std::unordered_map<std::string, Index> debugInfoFileIndices;
   void readNextDebugLocation();
-  void readBinaryMapHeader();
+  void readSourceMapHeader();
 
   // AST reading
   int depth = 0; // only for debugging

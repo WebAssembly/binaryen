@@ -42,7 +42,7 @@ for asm in sorted(os.listdir('test')):
         actual = run_command(cmd)
         with open(os.path.join('test', wasm), 'w') as o: o.write(actual)
         if 'debugInfo' in asm:
-          cmd += ['--binarymap-file', os.path.join('test', wasm + '.map'), '-o', 'a.wasm']
+          cmd += ['--source-map', os.path.join('test', wasm + '.map'), '-o', 'a.wasm']
           run_command(cmd)
 
 

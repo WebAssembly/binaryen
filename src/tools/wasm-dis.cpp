@@ -28,7 +28,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  std::string binaryMapFilename;
+  std::string sourceMapFilename;
   Options options("wasm-dis", "Un-assemble a .wasm (WebAssembly binary format) into a .wast (WebAssembly text format)");
   options.add("--output", "-o", "Output file (stdout if not specified)",
               Options::Arguments::One,
@@ -36,9 +36,9 @@ int main(int argc, const char *argv[]) {
                 o->extra["output"] = argument;
                 Colors::disable();
               })
-      .add("--binarymap-file", "-bm", "Consume binary map from the specified file to add location information",
+      .add("--source-map", "-sm", "Consume source map from the specified file to add location information",
            Options::Arguments::One,
-           [&binaryMapFilename](Options *o, const std::string &argument) { binaryMapFilename = argument; })
+           [&sourceMapFilename](Options *o, const std::string &argument) { sourceMapFilename = argument; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -50,16 +50,16 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "parsing binary..." << std::endl;
   Module wasm;
   try {
-    std::unique_ptr<std::ifstream> binaryMapStream;
+    std::unique_ptr<std::ifstream> sourceMapStream;
     WasmBinaryBuilder parser(wasm, input, options.debug);
-    if (binaryMapFilename.size()) {
-        binaryMapStream = make_unique<std::ifstream>();
-        binaryMapStream->open(binaryMapFilename);
-        parser.setDebugLocations(binaryMapStream.get());
+    if (sourceMapFilename.size()) {
+        sourceMapStream = make_unique<std::ifstream>();
+        sourceMapStream->open(sourceMapFilename);
+        parser.setDebugLocations(sourceMapStream.get());
     }
     parser.read();
-    if (binaryMapStream) {
-        binaryMapStream->close();
+    if (sourceMapStream) {
+        sourceMapStream->close();
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

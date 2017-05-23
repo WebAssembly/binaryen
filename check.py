@@ -192,8 +192,8 @@ for asm in tests:
         # verify debug info
         if 'debugInfo' in asm:
           jsmap = 'a.wasm.map'
-          cmd += ['--binarymap-file', jsmap,
-                  '--binarymap-url', 'http://example.org/' + jsmap,
+          cmd += ['--source-map', jsmap,
+                  '--source-map-url', 'http://example.org/' + jsmap,
                   '-o', 'a.wasm']
           run_command(cmd)
           if not os.path.isfile(jsmap):
@@ -266,7 +266,7 @@ for t in tests:
     print '..', t
     t = os.path.join(options.binaryen_test, t)
     cmd = WASM_DIS + [t]
-    if os.path.isfile(t + '.map'): cmd += ['-bm', t + '.map']
+    if os.path.isfile(t + '.map'): cmd += ['--source-map', t + '.map']
 
     actual = run_command(cmd)
 

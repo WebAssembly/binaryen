@@ -36,8 +36,8 @@ int main(int argc, const char *argv[]) {
   bool legalizeJavaScriptFFI = true;
   Asm2WasmBuilder::TrapMode trapMode = Asm2WasmBuilder::TrapMode::JS;
   bool wasmOnly = false;
-  std::string binaryMapFile;
-  std::string binaryMapUrl;
+  std::string sourceMapFilename;
+  std::string sourceMapUrl;
   std::string symbolMap;
   bool emitBinary = true;
 
@@ -104,12 +104,12 @@ int main(int argc, const char *argv[]) {
       .add("--debuginfo", "-g", "Emit names section in wasm binary (or full debuginfo in wast)",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { options.passOptions.debugInfo = true; })
-      .add("--binarymap-file", "-bm", "Emit binary map (if using binary output) to the specified file",
+      .add("--source-map", "-sm", "Emit source map (if using binary output) to the specified file",
            Options::Arguments::One,
-           [&binaryMapFile](Options *o, const std::string &argument) { binaryMapFile = argument; })
-      .add("--binarymap-url", "-bu", "Use specified string as binary map URL",
+           [&sourceMapFilename](Options *o, const std::string &argument) { sourceMapFilename = argument; })
+      .add("--source-map-url", "-su", "Use specified string as source map URL",
            Options::Arguments::One,
-           [&binaryMapUrl](Options *o, const std::string &argument) { binaryMapUrl = argument; })
+           [&sourceMapUrl](Options *o, const std::string &argument) { sourceMapUrl = argument; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
            Options::Arguments::One,
            [&](Options *o, const std::string &argument) { symbolMap = argument; })
@@ -146,7 +146,7 @@ int main(int argc, const char *argv[]) {
   Asm2WasmPreProcessor pre;
   // wasm binaries can contain a names section, but not full debug info --
   // debug info is disabled if a map file is not specified with wasm binary
-  pre.debugInfo = options.passOptions.debugInfo && (!emitBinary || binaryMapFile.size());
+  pre.debugInfo = options.passOptions.debugInfo && (!emitBinary || sourceMapFilename.size());
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
   char *start = pre.process(input.data());
@@ -214,8 +214,8 @@ int main(int argc, const char *argv[]) {
   writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);
   if (emitBinary) {
-    writer.setBinaryMapFilename(binaryMapFile);
-    writer.setBinaryMapUrl(binaryMapUrl);
+    writer.setSourceMapFilename(sourceMapFilename);
+    writer.setSourceMapUrl(sourceMapUrl);
   }
   writer.write(wasm, options.extra["output"]);
 

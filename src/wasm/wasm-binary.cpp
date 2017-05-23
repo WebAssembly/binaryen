@@ -33,8 +33,8 @@ void WasmBinaryWriter::prepare() {
 
 void WasmBinaryWriter::write() {
   writeHeader();
-  if (binaryMap) {
-    writeBinaryMapProlog();
+  if (sourceMap) {
+    writeSourceMapProlog();
   }
 
   writeTypes();
@@ -49,11 +49,11 @@ void WasmBinaryWriter::write() {
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
-  if (binaryMap) writeSourceMapUrl();
+  if (sourceMap) writeSourceMapUrl();
   if (symbolMap.size() > 0) writeSymbolMap();
 
-  if (binaryMap) {
-    writeBinaryMapEpilog();
+  if (sourceMap) {
+    writeSourceMapEpilog();
   }
   finishUp();
 }
@@ -433,7 +433,7 @@ void WasmBinaryWriter::writeSourceMapUrl() {
   if (debug) std::cerr << "== writeSourceMapUrl" << std::endl;
   auto start = startSection(BinaryConsts::Section::User);
   writeInlineString(BinaryConsts::UserSections::SourceMapUrl);
-  writeInlineString(binaryMapUrl.c_str());
+  writeInlineString(sourceMapUrl.c_str());
   finishSection(start);
 }
 
@@ -450,20 +450,20 @@ void WasmBinaryWriter::writeSymbolMap() {
   file.close();
 }
 
-void WasmBinaryWriter::writeBinaryMapProlog() {
+void WasmBinaryWriter::writeSourceMapProlog() {
   lastDebugLocation = { 0, /* lineNumber = */ 1, 0 };
   lastBytecodeOffset = 0;
-  *binaryMap << "{\"version\":3,\"sources\":[";
+  *sourceMap << "{\"version\":3,\"sources\":[";
   for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
-    if (i > 0) *binaryMap << ",";
+    if (i > 0) *sourceMap << ",";
     // TODO respect JSON string encoding, e.g. quotes and control chars.
-    *binaryMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
+    *sourceMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
   }
-  *binaryMap << "],\"names\":[],\"mappings\":\"";
+  *sourceMap << "],\"names\":[],\"mappings\":\"";
 }
 
-void WasmBinaryWriter::writeBinaryMapEpilog() {
-  *binaryMap << "\"}";
+void WasmBinaryWriter::writeSourceMapEpilog() {
+  *sourceMap << "\"}";
 }
 
 static void writeBase64VLQ(std::ostream& out, int32_t n) {
@@ -484,12 +484,12 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
 
 void WasmBinaryWriter::writeDebugLocation(size_t offset, const Function::DebugLocation& loc) {
   if (lastBytecodeOffset > 0) {
-    *binaryMap << ",";
+    *sourceMap << ",";
   }
-  writeBase64VLQ(*binaryMap, int32_t(offset - lastBytecodeOffset));
-  writeBase64VLQ(*binaryMap, int32_t(loc.fileIndex - lastDebugLocation.fileIndex));
-  writeBase64VLQ(*binaryMap, int32_t(loc.lineNumber - lastDebugLocation.lineNumber));
-  writeBase64VLQ(*binaryMap, int32_t(loc.columnNumber - lastDebugLocation.columnNumber));
+  writeBase64VLQ(*sourceMap, int32_t(offset - lastBytecodeOffset));
+  writeBase64VLQ(*sourceMap, int32_t(loc.fileIndex - lastDebugLocation.fileIndex));
+  writeBase64VLQ(*sourceMap, int32_t(loc.lineNumber - lastDebugLocation.lineNumber));
+  writeBase64VLQ(*sourceMap, int32_t(loc.columnNumber - lastDebugLocation.columnNumber));
   lastDebugLocation = loc;
   lastBytecodeOffset = offset;
 }
@@ -998,7 +998,7 @@ static Name RETURN_BREAK("binaryen|break-to-return");
 void WasmBinaryBuilder::read() {
 
   readHeader();
-  readBinaryMapHeader();
+  readSourceMapHeader();
 
   // read sections until the end
   while (more()) {
@@ -1476,16 +1476,16 @@ static int32_t readBase64VLQ(std::istream& in) {
   return value & 1 ? -int32_t(value >> 1) : int32_t(value >> 1);
 }
 
-void WasmBinaryBuilder::readBinaryMapHeader() {
-  if (!binaryMap) return;
+void WasmBinaryBuilder::readSourceMapHeader() {
+  if (!sourceMap) return;
 
   auto maybeReadChar = [&](char expected) {
-    if (binaryMap->peek() != expected) return false;
-    binaryMap->get();
+    if (sourceMap->peek() != expected) return false;
+    sourceMap->get();
     return true;
   };
   auto mustReadChar = [&](char expected) {
-    if (binaryMap->get() != expected) {
+    if (sourceMap->get() != expected) {
       throw MapParseException("Unexpected char");
     }
   };
@@ -1493,7 +1493,7 @@ void WasmBinaryBuilder::readBinaryMapHeader() {
     bool matching = false;
     size_t pos;
     while (1) {
-      int ch = binaryMap->get();
+      int ch = sourceMap->get();
       if (ch == EOF) return false;
       if (ch == '\"') {
         matching = true;
@@ -1515,7 +1515,7 @@ void WasmBinaryBuilder::readBinaryMapHeader() {
     mustReadChar('\"');
     if (!maybeReadChar('\"')) {
       while (1) {
-        int ch = binaryMap->get();
+        int ch = sourceMap->get();
         if (ch == EOF) {
           throw MapParseException("unexpected EOF in the middle of string");
         }
@@ -1550,18 +1550,18 @@ void WasmBinaryBuilder::readBinaryMapHeader() {
     return;
   }
   // read first debug location
-  uint32_t position = readBase64VLQ(*binaryMap);
-  uint32_t fileIndex = readBase64VLQ(*binaryMap);
-  uint32_t lineNumber = readBase64VLQ(*binaryMap) + 1; // adjust zero-based line number
-  uint32_t columnNumber = readBase64VLQ(*binaryMap);
+  uint32_t position = readBase64VLQ(*sourceMap);
+  uint32_t fileIndex = readBase64VLQ(*sourceMap);
+  uint32_t lineNumber = readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
+  uint32_t columnNumber = readBase64VLQ(*sourceMap);
   nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
 }
 
 void WasmBinaryBuilder::readNextDebugLocation() {
-  if (!binaryMap) return;
+  if (!sourceMap) return;
 
   char ch;
-  *binaryMap >> ch;
+  *sourceMap >> ch;
   if (ch == '\"') { // end of records
     nextDebugLocation.first = 0;
     return;
@@ -1569,13 +1569,14 @@ void WasmBinaryBuilder::readNextDebugLocation() {
   if (ch != ',') {
     throw MapParseException("Unexpected delimiter");
   }
-  int32_t positionDelta = readBase64VLQ(*binaryMap);
+
+  int32_t positionDelta = readBase64VLQ(*sourceMap);
   uint32_t position = nextDebugLocation.first + positionDelta;
-  int32_t fileIndexDelta = readBase64VLQ(*binaryMap);
+  int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
   uint32_t fileIndex = nextDebugLocation.second.fileIndex + fileIndexDelta;
-  int32_t lineNumberDelta = readBase64VLQ(*binaryMap);
+  int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
   uint32_t lineNumber = nextDebugLocation.second.lineNumber + lineNumberDelta;
-  int32_t columnNumberDelta = readBase64VLQ(*binaryMap);
+  int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
   uint32_t columnNumber = nextDebugLocation.second.columnNumber + columnNumberDelta;
 
   nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
