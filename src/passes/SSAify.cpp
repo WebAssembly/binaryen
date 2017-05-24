@@ -173,7 +173,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
   }
   void visitSetLocal(SetLocal* curr) {
     currMapping[curr->index] = curr;
-    curr->index = nextIndex++;
+    curr->index = addLocal(getFunction()->getLocalType(curr->index));
   }
 
   // traversal
@@ -234,8 +234,8 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
             // (not that y seems as "single-assignment" as x here, but the point is
             // that x may be merged multiple times, so we need a different phi merge
             // local for each)
-            auto phiLocal = nextIndex++;
-            addWritesToLocal(mappings, i, phiLocal);
+            auto phiLocal = addLocal(getFunction()->getLocalType(i));
+;            addWritesToLocal(mappings, i, phiLocal);
             // we can leave |merged| alone here - we basically just
             // pick one to represent it, it doesn't matter which
             break;
@@ -271,6 +271,10 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         mapping[old]->value
       );
     }
+  }
+
+  Index addLocal(WasmType type) {
+    return Builder::addVar(getFunction(), type);
   }
 };
 

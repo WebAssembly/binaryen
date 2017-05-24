@@ -9,6 +9,10 @@
     (drop (get_local $z))
     (drop (get_local $w))
     (drop (get_local $t))
+    (set_local $x (i32.const 100)) ;; overwrite param
+    (drop (get_local $x)) ;; no longer a param!
+    (set_local $t (f64.const 2)) ;; overwrite local
+    (drop (get_local $t))
   )
 )
 

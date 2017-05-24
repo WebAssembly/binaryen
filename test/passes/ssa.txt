@@ -6,6 +6,8 @@
   (local $z f32)
   (local $w i64)
   (local $t f64)
+  (local $5 i32)
+  (local $6 f64)
   (drop
    (get_local $x)
   )
@@ -20,6 +22,18 @@
   )
   (drop
    (f64.const 0)
+  )
+  (set_local $5
+   (i32.const 100)
+  )
+  (drop
+   (get_local $5)
+  )
+  (set_local $6
+   (f64.const 2)
+  )
+  (drop
+   (get_local $6)
   )
  )
 )
