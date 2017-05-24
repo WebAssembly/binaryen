@@ -17,7 +17,7 @@
     (drop (get_local $t))
     (drop (get_local $t)) ;; use twice
   )
-  (func $if
+  (func $if (param $p i32)
     (local $x i32)
     (local $y i32)
     (drop
@@ -31,7 +31,13 @@
       (i32.const 1)
       (set_local $x (i32.const 1))
     )
-    (drop (get_local $x)) ;; x merged to here
+    (drop (get_local $x))
+    ;; same but with param
+    (if
+      (i32.const 1)
+      (set_local $p (i32.const 1))
+    )
+    (drop (get_local $p))
   )
 )
 
