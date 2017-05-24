@@ -52,11 +52,9 @@
   (local $y i32)
   (local $2 i32)
   (local $3 i32)
-  (local $4 i32)
-  (local $5 i32)
   (set_local $x
    (tee_local $3
-    (get_local $3)
+    (get_local $x)
    )
   )
   (drop
@@ -68,14 +66,14 @@
   )
   (if
    (i32.const 1)
-   (set_local $5
-    (tee_local $4
+   (set_local $2
+    (tee_local $3
      (i32.const 1)
     )
    )
   )
   (drop
-   (get_local $x)
+   (get_local $3)
   )
  )
 )

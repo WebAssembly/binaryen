@@ -31,8 +31,6 @@
 #include "ast/manipulation.h"
 #include "ast/literal-utils.h"
 
-#include "wasm-printing.h"
-
 namespace wasm {
 
 // A set we know is impossible / not in the ast
@@ -55,10 +53,10 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
   std::map<Name, std::vector<Mapping>> breakMappings; // break target => infos that reach it
   std::vector<std::vector<GetLocal*>> loopGetStack; //  stack of loops, all the gets in each, so we can update them for phis
   std::map<GetLocal*, Index> originalGetIndexes;
+  std::vector<Expression*> functionPrepends; // things we add to the function prologue
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
-std::cerr << "num locals " << numLocals << '\n';
     if (numLocals == 0) return; // nothing to do
     // We begin with each param being assigned from the incoming value, and the zero-init for the locals,
     // so the initial state is the identity permutation
@@ -66,6 +64,15 @@ std::cerr << "num locals " << numLocals << '\n';
     for (auto& set : currMapping) set = nullptr;
     nextIndex = numLocals;
     WalkerPass<PostWalker<SSAify>>::walk(func->body);
+    if (functionPrepends.size() > 0) {
+      Builder builder(*getModule());
+      auto* block = builder.blockify(func->body);
+      func->body = block;
+      // TODO: this is O(toplevel block size^2)
+      for (auto* pre : functionPrepends) {
+        ExpressionManipulator::spliceIntoBlock(block, 0, pre);
+      }
+    }
   }
 
   // control flow
@@ -177,7 +184,6 @@ std::cerr << "num locals " << numLocals << '\n';
     updateGetLocalIndex(curr, currMapping);
   }
   void visitSetLocal(SetLocal* curr) {
-std::cerr << "visit set local " << curr->index << " : " << numLocals << '\n' << getFunction()->body << '\n' << curr << '\n';
     assert(currMapping.size() == numLocals);
     assert(curr->index < numLocals);
     currMapping[curr->index] = curr;
@@ -243,9 +249,7 @@ std::cerr << "visit set local " << curr->index << " : " << numLocals << '\n' << 
             // that x may be merged multiple times, so we need a different phi merge
             // local for each)
             auto phiLocal = addLocal(getFunction()->getLocalType(i));
-;            addWritesToLocal(mappings, i, phiLocal);
-            // we can leave |merged| alone here - we basically just
-            // pick one to represent it, it doesn't matter which
+;           merged = addWritesToLocal(mappings, i, phiLocal);
             break;
           }
         }
@@ -257,28 +261,29 @@ std::cerr << "visit set local " << curr->index << " : " << numLocals << '\n' << 
     return out;
   }
 
-  void addWritesToLocal(std::vector<Mapping>& mappings, Index old, Index new_) {
-    // assign the set value to the phi value as well
+  // adds phi-style writes to sets of a local
+  // returns one of those writes
+  SetLocal* addWritesToLocal(std::vector<Mapping>& mappings, Index old, Index new_) {
+    SetLocal* ret = nullptr;
     Builder builder(*getModule());
     for (auto& mapping : mappings) {
       if (!mapping[old]) {
         // this is a param or the zero init value. add a set first thing in
         // the function
-        auto* block = builder.blockify(getFunction()->body);
-        getFunction()->body = block;
         auto* set = builder.makeSetLocal(
           old,
-          builder.makeGetLocal(new_, getFunction()->getLocalType(old))
+          builder.makeGetLocal(old, getFunction()->getLocalType(old))
         );
         mapping[old] = set;
-        ExpressionManipulator::spliceIntoBlock(block, 0, set);
+        functionPrepends.push_back(set);
       }
       // now a set exists, just add a tee of its value, so we also set the phi merge var
-      mapping[old]->value = builder.makeTeeLocal(
+      mapping[old]->value = ret = builder.makeTeeLocal(
         new_,
         mapping[old]->value
       );
     }
+    return ret;
   }
 
   Index addLocal(WasmType type) {
