@@ -30,6 +30,7 @@
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
 #include "shell-interface.h"
+#include "optimization-options.h"
 
 using namespace wasm;
 
@@ -93,13 +94,11 @@ struct ExecutionResults {
 int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
-  bool runOptimizationPasses = false;
-  PassOptions passOptions;
   bool emitBinary = true;
   bool debugInfo = false;
   bool fuzzExec = false;
 
-  Options options("wasm-opt", "Optimize .wast files");
+  OptimizationOptions options("wasm-opt", "Optimize .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -107,7 +106,6 @@ int main(int argc, const char* argv[]) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      #include "optimization-options.h"
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { emitBinary = false; })
@@ -121,19 +119,7 @@ int main(int argc, const char* argv[]) {
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
-  for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
-    options.add(
-        std::string("--") + p, "", PassRegistry::get()->getPassDescription(p),
-        Options::Arguments::Zero,
-        [&passes, p](Options*, const std::string&) { passes.push_back(p); });
-  }
   options.parse(argc, argv);
-
-  if (runOptimizationPasses) {
-    passes.resize(passes.size() + 1);
-    std::move_backward(passes.begin(), passes.begin() + passes.size() - 1, passes.end());
-    passes[0] = "O";
-  }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
@@ -163,17 +149,9 @@ int main(int argc, const char* argv[]) {
     results.get(wasm);
   }
 
-  if (passes.size() > 0) {
+  if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner(&wasm, passOptions);
-    if (options.debug) passRunner.setDebug(true);
-    for (auto& passName : passes) {
-      if (passName == "O") {
-        passRunner.addDefaultOptimizationPasses();
-      } else {
-        passRunner.add(passName);
-      }
-    }
+    PassRunner passRunner = options.getPassRunner(wasm);
     passRunner.run();
     assert(WasmValidator().validate(wasm));
   }
