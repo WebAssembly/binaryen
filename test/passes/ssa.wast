@@ -38,6 +38,34 @@
       (set_local $p (i32.const 1))
     )
     (drop (get_local $p))
+    ;; if-else
+    (if
+      (i32.const 1)
+      (set_local $x (i32.const 2))
+      (nop)
+    )
+    (drop (get_local $x))
+    (if
+      (i32.const 1)
+      (nop)
+      (set_local $x (i32.const 3))
+    )
+    (drop (get_local $x))
+    (if
+      (i32.const 1)
+      (set_local $x (i32.const 4))
+      (set_local $x (i32.const 5))
+    )
+    (drop (get_local $x))
+    (if
+      (i32.const 1)
+      (set_local $x (i32.const 6))
+      (block
+        (set_local $x (i32.const 7))
+        (set_local $x (i32.const 8))
+      )
+    )
+    (drop (get_local $x))
   )
 )
 
