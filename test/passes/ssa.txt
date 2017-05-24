@@ -8,6 +8,7 @@
   (local $t f64)
   (local $5 i32)
   (local $6 f64)
+  (local $7 f64)
   (drop
    (get_local $x)
   )
@@ -34,6 +35,15 @@
   )
   (drop
    (get_local $6)
+  )
+  (set_local $7
+   (f64.const 33)
+  )
+  (drop
+   (get_local $7)
+  )
+  (drop
+   (get_local $7)
   )
  )
 )

@@ -13,6 +13,9 @@
     (drop (get_local $x)) ;; no longer a param!
     (set_local $t (f64.const 2)) ;; overwrite local
     (drop (get_local $t))
+    (set_local $t (f64.const 33)) ;; overwrite local AGAIN
+    (drop (get_local $t))
+    (drop (get_local $t)) ;; use twice
   )
 )
 
