@@ -21,7 +21,7 @@
 namespace wasm {
 
 struct OptimizationOptions : public Options {
-  const std::string DEFAULT_OPT_PASSES = "O";
+  static constexpr const char* DEFAULT_OPT_PASSES = "O";
 
   std::vector<std::string> passes;
   PassOptions passOptions;
