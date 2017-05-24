@@ -40,6 +40,10 @@ SetLocal IMPOSSIBLE_SET;
 // each assignment creates a new variable.
 
 struct SSAify : public WalkerPass<PostWalker<SSAify>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new SSAify; }
+
   // we map (old local index) => the set_local for that index. The new
   // index for the local can be seen in that set local.
   // this can be nullptr if there is no set_local, and instead the value

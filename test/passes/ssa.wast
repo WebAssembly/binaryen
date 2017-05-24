@@ -67,5 +67,15 @@
     )
     (drop (get_local $x))
   )
+  (func $if2 (param $x i32)
+    (if
+      (i32.const 1)
+      (block
+        (set_local $x (i32.const 1))
+        (drop (get_local $x)) ;; use between phi set and use
+      )
+    )
+    (drop (get_local $x))
+  )
 )
 
