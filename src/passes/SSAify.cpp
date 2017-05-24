@@ -33,6 +33,9 @@
 
 namespace wasm {
 
+// A set we know is impossible / not in the ast
+SetLocal IMPOSSIBLE_SET;
+
 // Tracks assignments to locals, assuming single-assignment form, i.e.,
 // each assignment creates a new variable.
 
@@ -197,8 +200,6 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
   }
 
   // helpers
-
-  static SetLocal IMPOSSIBLE_SET;
 
   void setUnreachable(Mapping& mapping) {
     mapping.resize(numLocals); // may have been emptied by a move

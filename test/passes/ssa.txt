@@ -1,0 +1,13 @@
+(module
+ (type $0 (func (param i32)))
+ (memory $0 0)
+ (func $basics (type $0) (param $x i32)
+  (local $y i32)
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (i32.const 0)
+  )
+ )
+)
