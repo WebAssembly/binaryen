@@ -29,6 +29,7 @@
 #include "wasm-builder.h"
 #include "support/permutations.h"
 #include "ast/manipulation.h"
+#include "ast/literal-utils.h"
 
 namespace wasm {
 
@@ -154,7 +155,18 @@ struct SSAify : public PostWalker<SSAify> {
       loopGets.push_back(curr);
     }
     originalGetIndexes[curr] = curr->index;
-    curr->index = currMapping[curr->index]->index;
+    auto* set = currMapping[curr->index];
+    if (set) {
+      curr->index = set->index;
+    } else {
+      // no set, this is either a param or a zero init
+      if (curr->index < getFunction()->getNumParams()) {
+        // nothing to do, keep getting that param
+      } else {
+        // just replace with zero
+        replaceCurrent(LiteralUtils::makeZero(curr->type, *getModule());
+      }
+    }
   }
   void visitSetLocal(SetLocal* curr) {
     currMapping[curr->index] = curr;
@@ -195,27 +207,36 @@ struct SSAify : public PostWalker<SSAify> {
     return mapping[0] == Index(-1);
   }
 
-  // merges a bunch of infos into one
-  Mapping& merge(std::vector<Info>& infos) {
-    assert(infos.size() > 0);
-    auto& out = infos[0];
-    if (infos.size() == 1) {
-      return infos[0];
+  // merges a bunch of infos into one.
+  // if we need phis, writes them into the provided vector. the caller should
+  // ensure those are placed in the right location
+  Mapping& merge(std::vector<Mapping>& mappings) {
+    assert(mappings.size() > 0);
+    auto& out = mappings[0];
+    if (mappings.size() == 1) {
+      return mappings[0];
     }
     for (Index i = 0; i < numLocals; i++) {
       SetLocal* merged;
       bool seen = false;
-      for (auto& info : infos) {
-        if (isUnreachable(info)) continue;
+      for (auto& mapping : mappings) {
+        if (isUnreachable(mapping)) continue;
         if (!seen) {
-          merged = info[i];
+          merged = mapping[i];
           seen = true;
         } else {
-          if (info[i] != merged) {
-            // we need a phi for this local
-// XXX merge to a single set_local how?
-            merged = nextIndex++;
-            createPhi(infos, i, merged);
+          if (mapping[i] != merged) {
+            // we need a phi for this local, e.g., imagine
+            // if (..) { x = 1 } else { x = 2 } ..use x here..
+            // create a new local, and also write to it at the old write locations
+            // if (..) { x = y = 1 } else { x = y = 2 } ..use y here..
+            // (not that y seems as "single-assignment" as x here, but the point is
+            // that x may be merged multiple times, so we need a different phi merge
+            // local for each)
+            auto phiLocal = nextIndex++;
+            addWritesToLocal(mappings, i, phiLocal);
+            // we can leave |merged| alone here - we basically just
+            // pick one to represent it, it doesn't matter which
             break;
           }
         }
@@ -227,26 +248,26 @@ struct SSAify : public PostWalker<SSAify> {
     return out;
   }
 
-  void createPhi(std::vector<BreakInfo>& infos, Index old, Index new_) {
+  void addWritesToLocal(std::vector<Mapping>& mappings, Index old, Index new_) {
     // assign the set value to the phi value as well
     Builder builder(*getModule());
-    for (auto& info : infos) {
-      if (!info[index]) {
+    for (auto& mapping : mappings) {
+      if (!mapping[index]) {
         // this is a param or the zero init value. add a set first thing in
         // the function
         auto* block = builder.blockify(getFunction()->body);
         getFunction()->body = block;
         auto* set = builder.makeSetLocal(
-          old_,
+          old,
           builder.makeGetLocal(new_, getFunction()->getLocalType(old))
         );
-        info[old] = set;
+        mapping[old] = set;
         ExpressionManipulator::spliceIntoBlock(block, 0, set);
       }
       // now a set exists, just add a tee of its value, so we also set the phi merge var
-      info[old]->value = builder.makeTeeLocal(
+      mapping[old]->value = builder.makeTeeLocal(
         new_,
-        info[old]->value
+        mapping[old]->value
       );
     }
   }
