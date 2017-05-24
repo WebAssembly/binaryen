@@ -31,6 +31,8 @@
 #include "ast/manipulation.h"
 #include "ast/literal-utils.h"
 
+#include "wasm-printing.h"
+
 namespace wasm {
 
 // A set we know is impossible / not in the ast
@@ -56,6 +58,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
+std::cerr << "num locals " << numLocals << '\n';
     if (numLocals == 0) return; // nothing to do
     // We begin with each param being assigned from the incoming value, and the zero-init for the locals,
     // so the initial state is the identity permutation
@@ -165,6 +168,8 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
   }
 
   void visitGetLocal(GetLocal* curr) {
+    assert(currMapping.size() == numLocals);
+    assert(curr->index < numLocals);
     for (auto& loopGets : loopGetStack) {
       loopGets.push_back(curr);
     }
@@ -172,6 +177,9 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     updateGetLocalIndex(curr, currMapping);
   }
   void visitSetLocal(SetLocal* curr) {
+std::cerr << "visit set local " << curr->index << " : " << numLocals << '\n' << getFunction()->body << '\n' << curr << '\n';
+    assert(currMapping.size() == numLocals);
+    assert(curr->index < numLocals);
     currMapping[curr->index] = curr;
     curr->index = addLocal(getFunction()->getLocalType(curr->index));
   }

@@ -17,5 +17,21 @@
     (drop (get_local $t))
     (drop (get_local $t)) ;; use twice
   )
+  (func $if
+    (local $x i32)
+    (local $y i32)
+    (drop
+      (if i32
+        (i32.const 1)
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+    (if
+      (i32.const 1)
+      (set_local $x (i32.const 1))
+    )
+    (drop (get_local $x)) ;; x merged to here
+  )
 )
 
