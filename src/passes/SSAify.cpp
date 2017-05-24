@@ -272,7 +272,8 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         // the function
         auto* set = builder.makeSetLocal(
           old,
-          builder.makeGetLocal(old, getFunction()->getLocalType(old))
+          getFunction()->isParam(old) ? builder.makeGetLocal(old, getFunction()->getLocalType(old))
+                                      : LiteralUtils::makeZero(getFunction()->getLocalType(old), *getModule())
         );
         mapping[old] = set;
         functionPrepends.push_back(set);
