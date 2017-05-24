@@ -36,7 +36,7 @@ namespace wasm {
 // Tracks assignments to locals, assuming single-assignment form, i.e.,
 // each assignment creates a new variable.
 
-struct SSAify : public PostWalker<SSAify> {
+struct SSAify : public WalkerPass<PostWalker<SSAify>> {
   // we map (old local index) => the set_local for that index. The new
   // index for the local can be seen in that set local.
   // this can be nullptr if there is no set_local, and instead the value
@@ -47,7 +47,7 @@ struct SSAify : public PostWalker<SSAify> {
   Mapping currMapping;
   Index nextIndex;
   std::vector<Mapping> mappingStack; // used in ifs, loops
-  std::map<Name, std::vector<Mapping>> breakInfos; // break target => infos that reach it
+  std::map<Name, std::vector<Mapping>> breakMappings; // break target => infos that reach it
   std::vector<std::vector<GetLocal*>> loopGetStack; //  stack of loops, all the gets in each, so we can update them for phis
   std::map<GetLocal*, Index> originalGetIndexes;
 
@@ -59,23 +59,23 @@ struct SSAify : public PostWalker<SSAify> {
     currMapping.resize(numLocals);
     for (auto& set : currMapping) set = nullptr;
     nextIndex = numLocals;
-    PostWalker<SSAify>::walk(func->body);
+    WalkerPass<PostWalker<SSAify>>::walk(func->body);
   }
 
   // control flow
 
   static void doVisitBlock(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
-    if (curr->name.is() && self->breakInfos.find(curr->name) != self->breakInfos.end()) {
-      auto& infos = self->breakInfos[curr->name];
-      infos.emplace_back(std::move(self->currMapping), currp, BreakInfo::Internal);
-      self->currMapping = std::move(self->merge(infos), curr->name);
+    if (curr->name.is() && self->breakMappings.find(curr->name) != self->breakMappings.end()) {
+      auto& infos = self->breakMappings[curr->name];
+      infos.emplace_back(std::move(self->currMapping));
+      self->currMapping = std::move(self->merge(infos));
     }
   }
 
   void finishIf() {
     // that's it for this if, merge
-    std::vector<BreakInfo> breaks;
+    std::vector<Mapping> breaks;
     breaks.emplace_back(std::move(currMapping));
     breaks.emplace_back(std::move(mappingStack.back()));
     mappingStack.pop_back();
@@ -83,13 +83,12 @@ struct SSAify : public PostWalker<SSAify> {
   }
 
   static void afterIfCondition(SSAify* self, Expression** currp) {
-    auto* curr = (*currp)->cast<If>();
     self->mappingStack.push_back(self->currMapping);
   }
   static void afterIfTrue(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<If>();
     if (curr->ifFalse) {
-      auto afterCondition = std::move(self.mappingStack.back());
+      auto afterCondition = std::move(self->mappingStack.back());
       self->mappingStack.back() = std::move(self->currMapping);
       self->currMapping = std::move(afterCondition);
     } else {
@@ -106,8 +105,8 @@ struct SSAify : public PostWalker<SSAify> {
   }
   static void doVisitLoop(SSAify* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
-    if (curr->name.is() && self->breakInfos.find(curr->name) != self->breakInfos.end()) {
-      auto& infos = self->breakInfos[curr->name];
+    if (curr->name.is() && self->breakMappings.find(curr->name) != self->breakMappings.end()) {
+      auto& infos = self->breakMappings[curr->name];
       infos.emplace_back(std::move(self->mappingStack.back()));
       auto before = infos.back();
       auto& merged = self->merge(infos);
@@ -115,31 +114,28 @@ struct SSAify : public PostWalker<SSAify> {
       // the loop
       auto& gets = self->loopGetStack.back();
       for (auto* get : gets) {
-        auto original = self->originalGetIndexes[get];
-        get->index = merged[original];
+        self->updateGetLocalIndex(get, merged);
       }
     }
     self->mappingStack.pop_back();
     self->loopGetStack.pop_back();
   }
-  static void visitBreak(SSAify* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Break>();
-    self->breakInfos[curr->name].emplace_back(std::move(self->currMapping), currp, BreakInfo::Internal);
-    if (!(*currp)->cast<Break>()->condition) {
-      setUnreachable(self->currMapping);
+  void visitBreak(Break* curr) {
+    breakMappings[curr->name].emplace_back(std::move(currMapping));
+    if (!curr->condition) {
+      setUnreachable(currMapping);
     }
   }
-  static void visitSwitch(SSAify* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Switch>();
+  void visitSwitch(Switch* curr) {
     std::set<Name> all;
     for (auto target : curr->targets) {
       all.insert(target);
     }
     all.insert(curr->default_);
     for (auto target : all) {
-      self->breakInfos[curr->default_].emplace_back(self->currMapping, currp, BreakInfo::Switch);
+      breakMappings[target].emplace_back(currMapping);
     }
-    setUnreachable(self->currMapping);
+    setUnreachable(currMapping);
   }
   void visitReturn(Return *curr) {
     setUnreachable(currMapping);
@@ -150,12 +146,8 @@ struct SSAify : public PostWalker<SSAify> {
 
   // local usage
 
-  void visitGetLocal(GetLocal* curr) {
-    for (auto& loopGets : loopGetStack) {
-      loopGets.push_back(curr);
-    }
-    originalGetIndexes[curr] = curr->index;
-    auto* set = currMapping[curr->index];
+  void updateGetLocalIndex(GetLocal* curr, Mapping& mapping) {
+    auto* set = mapping[curr->index];
     if (set) {
       curr->index = set->index;
     } else {
@@ -164,9 +156,17 @@ struct SSAify : public PostWalker<SSAify> {
         // nothing to do, keep getting that param
       } else {
         // just replace with zero
-        replaceCurrent(LiteralUtils::makeZero(curr->type, *getModule());
+        replaceCurrent(LiteralUtils::makeZero(curr->type, *getModule()));
       }
     }
+  }
+
+  void visitGetLocal(GetLocal* curr) {
+    for (auto& loopGets : loopGetStack) {
+      loopGets.push_back(curr);
+    }
+    originalGetIndexes[curr] = curr->index;
+    updateGetLocalIndex(curr, currMapping);
   }
   void visitSetLocal(SetLocal* curr) {
     currMapping[curr->index] = curr;
@@ -180,14 +180,14 @@ struct SSAify : public PostWalker<SSAify> {
       // if needs special handling
       if (iff->ifFalse) {
         self->pushTask(SSAify::afterIfFalse, currp);
-        self->pushTask(SSAify::scan, iff->ifFalse);
+        self->pushTask(SSAify::scan, &iff->ifFalse);
       }
       self->pushTask(SSAify::afterIfTrue, currp);
-      self->pushTask(SSAify::scan, iff->ifTrue);
+      self->pushTask(SSAify::scan, &iff->ifTrue);
       self->pushTask(SSAify::afterIfCondition, currp);
-      self->pushTask(SSAify::scan, iff->condition);
+      self->pushTask(SSAify::scan, &iff->condition);
     } else {
-      PostWalker<SSAify, VisitorType>::scan(self, currp);
+      WalkerPass<PostWalker<SSAify>>::scan(self, currp);
     }
 
     // loops need pre-order visiting too
@@ -198,13 +198,15 @@ struct SSAify : public PostWalker<SSAify> {
 
   // helpers
 
+  static SetLocal IMPOSSIBLE_SET;
+
   void setUnreachable(Mapping& mapping) {
     mapping.resize(numLocals); // may have been emptied by a move
-    mapping[0] = Index(-1);
+    mapping[0] = &IMPOSSIBLE_SET;
   }
 
   bool isUnreachable(Mapping& mapping) {
-    return mapping[0] == Index(-1);
+    return mapping[0] == &IMPOSSIBLE_SET;
   }
 
   // merges a bunch of infos into one.
@@ -217,13 +219,11 @@ struct SSAify : public PostWalker<SSAify> {
       return mappings[0];
     }
     for (Index i = 0; i < numLocals; i++) {
-      SetLocal* merged;
-      bool seen = false;
+      SetLocal* merged = &IMPOSSIBLE_SET;
       for (auto& mapping : mappings) {
         if (isUnreachable(mapping)) continue;
-        if (!seen) {
+        if (merged == &IMPOSSIBLE_SET) {
           merged = mapping[i];
-          seen = true;
         } else {
           if (mapping[i] != merged) {
             // we need a phi for this local, e.g., imagine
@@ -241,7 +241,7 @@ struct SSAify : public PostWalker<SSAify> {
           }
         }
       }
-      if (seen) {
+      if (merged != &IMPOSSIBLE_SET) {
         out[i] = merged;
       }
     }
@@ -252,7 +252,7 @@ struct SSAify : public PostWalker<SSAify> {
     // assign the set value to the phi value as well
     Builder builder(*getModule());
     for (auto& mapping : mappings) {
-      if (!mapping[index]) {
+      if (!mapping[old]) {
         // this is a param or the zero init value. add a set first thing in
         // the function
         auto* block = builder.blockify(getFunction()->body);
