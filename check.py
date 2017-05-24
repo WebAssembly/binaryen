@@ -583,19 +583,19 @@ if EMCC:
         if not success:
           break_cashew() # we need cashew
       elif method.startswith('interpret-s-expr'):
-        os.unlink('a.wasm.asm.js') # we should not need the .asm.js
+        delete_from_orbit('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
-          os.unlink('a.wasm.wast')
+          delete_from_orbit('a.wasm.wast')
       elif method.startswith('asmjs'):
         delete_from_orbit('a.wasm.wast') # we should not need the .wast
         break_cashew() # we don't use cashew, so ok to break it
         if not success:
-          os.unlink('a.wasm.js')
+          delete_from_orbit('a.wasm.js')
       elif method.startswith('interpret-binary'):
         delete_from_orbit('a.wasm.wast') # we should not need the .wast
-        os.unlink('a.wasm.asm.js') # we should not need the .asm.js
+        delete_from_orbit('a.wasm.asm.js') # we should not need the .asm.js
         if not success:
-          os.unlink('a.wasm.wasm')
+          delete_from_orbit('a.wasm.wasm')
       else:
         1/0
       if NODEJS:
