@@ -84,5 +84,38 @@
     )
     (drop (get_local $x))
   )
+  (func $block2 (param $x i32)
+    (block $out
+      (set_local $x (i32.const 1))
+      (br_if $out (i32.const 2))
+      (if (i32.const 3)
+        (block
+          (set_local $x (i32.const 1))
+          (br $out)
+        )
+      )
+      (set_local $x (i32.const 4))
+      (if (i32.const 5)
+        (br $out)
+      )
+      (if (i32.const 6)
+        (nop)
+      )
+      (if (i32.const 7)
+        (nop)
+        (nop)
+      )
+      ;; finally, switching
+      (block $in
+        (set_local $x (i32.const 8))
+        (br_table $in $out (i32.const 9))
+      )
+      (block $in2
+        (set_local $x (i32.const 10))
+        (br_table $out $in2 (i32.const 11))
+      )
+    )
+    (drop (get_local $x))
+  )
 )
 

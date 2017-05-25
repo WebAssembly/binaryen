@@ -216,4 +216,76 @@
    (get_local $2)
   )
  )
+ (func $block2 (type $0) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
+  (local $6 i32)
+  (block $out
+   (set_local $1
+    (tee_local $6
+     (i32.const 1)
+    )
+   )
+   (br_if $out
+    (i32.const 2)
+   )
+   (if
+    (i32.const 3)
+    (block $block
+     (set_local $2
+      (tee_local $6
+       (i32.const 1)
+      )
+     )
+     (br $out)
+    )
+   )
+   (set_local $3
+    (tee_local $6
+     (i32.const 4)
+    )
+   )
+   (if
+    (i32.const 5)
+    (br $out)
+   )
+   (if
+    (i32.const 6)
+    (nop)
+   )
+   (if
+    (i32.const 7)
+    (nop)
+    (nop)
+   )
+   (block $in
+    (set_local $4
+     (tee_local $6
+      (i32.const 8)
+     )
+    )
+    (br_table $in $out
+     (i32.const 9)
+    )
+   )
+   (block $in2
+    (set_local $5
+     (tee_local $6
+      (tee_local $6
+       (i32.const 10)
+      )
+     )
+    )
+    (br_table $out $in2
+     (i32.const 11)
+    )
+   )
+  )
+  (drop
+   (get_local $6)
+  )
+ )
 )
