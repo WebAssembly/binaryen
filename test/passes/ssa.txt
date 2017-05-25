@@ -344,4 +344,42 @@
    (get_local $1)
   )
  )
+ (func $loop2 (type $0) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (set_local $x
+   (tee_local $3
+    (get_local $x)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (loop $moar
+   (drop
+    (get_local $3)
+   )
+   (set_local $1
+    (tee_local $3
+     (i32.const 1)
+    )
+   )
+   (br_if $moar
+    (i32.const 2)
+   )
+   (drop
+    (get_local $1)
+   )
+   (set_local $2
+    (i32.const 3)
+   )
+   (drop
+    (get_local $2)
+   )
+  )
+  (drop
+   (get_local $2)
+  )
+ )
 )

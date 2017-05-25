@@ -164,7 +164,8 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
 
   // local usage
 
-  void updateGetLocalIndex(GetLocal* curr, Mapping& mapping) {
+  // updates a get_local with the new, proper index. returns a possible replacment for the entire node
+  Expression* updateGetLocalIndex(GetLocal* curr, Mapping& mapping) {
     auto* set = mapping[curr->index];
     if (set) {
       curr->index = set->index;
@@ -174,9 +175,10 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         // nothing to do, keep getting that param
       } else {
         // just replace with zero
-        replaceCurrent(LiteralUtils::makeZero(curr->type, *getModule()));
+        return LiteralUtils::makeZero(curr->type, *getModule());
       }
     }
+    return curr;
   }
 
   void visitGetLocal(GetLocal* curr) {
@@ -186,7 +188,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       loopGets.push_back(curr);
     }
     originalGetIndexes[curr] = curr->index;
-    updateGetLocalIndex(curr, currMapping);
+    replaceCurrent(updateGetLocalIndex(curr, currMapping));
   }
   void visitSetLocal(SetLocal* curr) {
     assert(currMapping.size() == numLocals);
