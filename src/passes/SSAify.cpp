@@ -58,6 +58,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
   std::vector<std::vector<GetLocal*>> loopGetStack; //  stack of loops, all the gets in each, so we can update them for phis
   std::map<GetLocal*, Index> originalGetIndexes;
   std::vector<Expression*> functionPrepends; // things we add to the function prologue
+  std::map<GetLocal*, Expression**> canZeros; // gets of a var without a set can be zero'd out
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
@@ -68,6 +69,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     for (auto& set : currMapping) set = nullptr;
     nextIndex = numLocals;
     WalkerPass<PostWalker<SSAify>>::walk(func->body);
+    // add prepends
     if (functionPrepends.size() > 0) {
       Builder builder(*getModule());
       auto* block = builder.blockify(func->body);
@@ -76,6 +78,12 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       for (auto* pre : functionPrepends) {
         ExpressionManipulator::spliceIntoBlock(block, 0, pre);
       }
+    }
+    // zero out stuff we can
+    for (auto iter : canZeros) {
+      auto* curr = iter.first;
+      auto* currp = iter.second;
+      *currp = LiteralUtils::makeZero(curr->type, *getModule());
     }
   }
 
@@ -141,6 +149,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         // the get uses the index, then we should update to the newer phi index
         if ((!oldSet && get->index == original) || (oldSet && get->index == oldSet->index)) {
           get->index = newSet->index;
+          self->canZeros.erase(get);
         }
       }
     }
@@ -191,7 +200,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         // nothing to do, keep getting that param
       } else {
         // just replace with zero
-        replaceCurrent(LiteralUtils::makeZero(curr->type, *getModule()));
+        canZeros[curr] = getCurrentPointer();
       }
     }
   }

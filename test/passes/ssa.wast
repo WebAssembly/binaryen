@@ -151,5 +151,21 @@
     )
     (drop (get_local $x))
   )
+  (func $loop2-zeroinit
+    (local $x i32)
+    (drop (get_local $x))
+    (loop $moar
+      (drop (get_local $x))
+      (set_local $x (i32.const 1))
+      (drop (get_local $x))
+      (set_local $x (i32.const 123))
+      (drop (get_local $x))
+      (br_if $moar (i32.const 2))
+      (drop (get_local $x)) ;; add use in loop before it ends, we should update this to the phi
+      (set_local $x (i32.const 3))
+      (drop (get_local $x)) ;; another use, but should *not* be phi'd
+    )
+    (drop (get_local $x))
+  )
 )
 
