@@ -271,11 +271,18 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
   SetLocal* addWritesToLocal(std::vector<Mapping>& mappings, Index old, Index new_) {
     SetLocal* ret = nullptr;
     Builder builder(*getModule());
+    // the same set may appear in multiple mappings; we just need one for each
+    std::set<SetLocal*> seen;
     for (auto& mapping : mappings) {
-      if (!mapping[old]) {
+      auto* set = mapping[old];
+      if (!seen.insert(set).second) {
+        // seen it already
+        continue;
+      }
+      if (!set) {
         // this is a param or the zero init value. add a set first thing in
         // the function
-        auto* set = builder.makeSetLocal(
+        set = builder.makeSetLocal(
           old,
           getFunction()->isParam(old) ? builder.makeGetLocal(old, getFunction()->getLocalType(old))
                                       : LiteralUtils::makeZero(getFunction()->getLocalType(old), *getModule())
@@ -284,9 +291,9 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         functionPrepends.push_back(set);
       }
       // now a set exists, just add a tee of its value, so we also set the phi merge var
-      mapping[old]->value = ret = builder.makeTeeLocal(
+      set->value = ret = builder.makeTeeLocal(
         new_,
-        mapping[old]->value
+        set->value
       );
     }
     return ret;

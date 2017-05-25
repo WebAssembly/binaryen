@@ -274,9 +274,7 @@
    (block $in2
     (set_local $5
      (tee_local $6
-      (tee_local $6
-       (i32.const 10)
-      )
+      (i32.const 10)
      )
     )
     (br_table $out $in2
