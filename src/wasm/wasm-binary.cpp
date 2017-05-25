@@ -47,6 +47,7 @@ void WasmBinaryWriter::write() {
   writeDataSegments();
   if (debugInfo) writeNames();
   if (symbolMap.size() > 0) writeSymbolMap();
+  if (wasm->userSections.size()) writeUserSections();
 
   finishUp();
 }
@@ -431,6 +432,17 @@ void WasmBinaryWriter::writeSymbolMap() {
     file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
   }
   file.close();
+}
+
+void WasmBinaryWriter::writeUserSections() {
+  for(auto& userSection : wasm->userSections) {
+    auto start = startSection(BinaryConsts::Section::User);
+    writeInlineString(userSection.name.c_str());
+    for (size_t i = 0; i < userSection.data.size(); i++) {
+      o << uint8_t(userSection.data[i]);
+    }
+    finishSection(start);
+  }
 }
 
 void WasmBinaryWriter::writeInlineString(const char* name) {
