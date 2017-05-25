@@ -772,7 +772,7 @@ public:
           // The block has an added type, not derived from the ast itself, so it is
           // ok for it to be either i32 or unreachable.
           if (!(isConcreteWasmType(oldType) && newType == unreachable)) {
-            parent.fail() << "stale type found in " << getFunction()->name << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
+            parent.fail() << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
             parent.valid = false;
           }
           curr->type = oldType;
