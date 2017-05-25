@@ -81,12 +81,11 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
 
   // control flow
 
-  static void doVisitBlock(SSAify* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Block>();
-    if (curr->name.is() && self->breakMappings.find(curr->name) != self->breakMappings.end()) {
-      auto& infos = self->breakMappings[curr->name];
-      infos.emplace_back(std::move(self->currMapping));
-      self->currMapping = std::move(self->merge(infos));
+  void visitBlock(Block* curr) {
+    if (curr->name.is() && breakMappings.find(curr->name) != breakMappings.end()) {
+      auto& infos = breakMappings[curr->name];
+      infos.emplace_back(std::move(currMapping));
+      currMapping = std::move(merge(infos));
     }
   }
 
@@ -138,8 +137,10 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     self->loopGetStack.pop_back();
   }
   void visitBreak(Break* curr) {
-    breakMappings[curr->name].emplace_back(std::move(currMapping));
-    if (!curr->condition) {
+    if (curr->condition) {
+      breakMappings[curr->name].emplace_back(currMapping);
+    } else {
+      breakMappings[curr->name].emplace_back(std::move(currMapping));
       setUnreachable(currMapping);
     }
   }
