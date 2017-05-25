@@ -229,8 +229,14 @@
      (i32.const 1)
     )
    )
+   (drop
+    (get_local $1)
+   )
    (br_if $out
     (i32.const 2)
+   )
+   (drop
+    (get_local $1)
    )
    (if
     (i32.const 3)
@@ -240,17 +246,29 @@
        (i32.const 1)
       )
      )
+     (drop
+      (get_local $2)
+     )
      (br $out)
     )
+   )
+   (drop
+    (get_local $1)
    )
    (set_local $3
     (tee_local $6
      (i32.const 4)
     )
    )
+   (drop
+    (get_local $3)
+   )
    (if
     (i32.const 5)
     (br $out)
+   )
+   (drop
+    (get_local $3)
    )
    (if
     (i32.const 6)
@@ -267,9 +285,15 @@
       (i32.const 8)
      )
     )
+    (drop
+     (get_local $4)
+    )
     (br_table $in $out
      (i32.const 9)
     )
+   )
+   (drop
+    (get_local $4)
    )
    (block $in2
     (set_local $5
@@ -277,9 +301,15 @@
       (i32.const 10)
      )
     )
+    (drop
+     (get_local $5)
+    )
     (br_table $out $in2
      (i32.const 11)
     )
+   )
+   (drop
+    (get_local $5)
    )
   )
   (drop
