@@ -128,9 +128,20 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       auto& merged = self->merge(infos);
       // every local we created a phi for requires us to update get_local operations in
       // the loop
+      // we need to replace precisely in this case: we enter the loop with
+      // old mapping of  oldMapping[oldIndex] => newIndex , so wherever newIndex is
+      // used, we need the newer new index
       auto& gets = self->loopGetStack.back();
       for (auto* get : gets) {
-        self->updateGetLocalIndex(get, merged);
+        auto original = self->originalGetIndexes[get];
+        auto newSet = merged[original];
+        if (!newSet) continue; // nothing here, nothing was merged
+        auto oldSet = before[original];
+        // if no old set and we use the original index, or there is an old set and
+        // the get uses the index, then we should update to the newer phi index
+        if ((!oldSet && get->index == original) || (oldSet && get->index == oldSet->index)) {
+          get->index = newSet->index;
+        }
       }
     }
     self->mappingStack.pop_back();
@@ -164,9 +175,14 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
 
   // local usage
 
-  // updates a get_local with the new, proper index. returns a possible replacment for the entire node
-  Expression* updateGetLocalIndex(GetLocal* curr, Mapping& mapping) {
-    auto* set = mapping[curr->index];
+  void visitGetLocal(GetLocal* curr) {
+    assert(currMapping.size() == numLocals);
+    assert(curr->index < numLocals);
+    for (auto& loopGets : loopGetStack) {
+      loopGets.push_back(curr);
+    }
+    originalGetIndexes[curr] = curr->index;
+    auto* set = currMapping[curr->index];
     if (set) {
       curr->index = set->index;
     } else {
@@ -175,20 +191,9 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         // nothing to do, keep getting that param
       } else {
         // just replace with zero
-        return LiteralUtils::makeZero(curr->type, *getModule());
+        replaceCurrent(LiteralUtils::makeZero(curr->type, *getModule()));
       }
     }
-    return curr;
-  }
-
-  void visitGetLocal(GetLocal* curr) {
-    assert(currMapping.size() == numLocals);
-    assert(curr->index < numLocals);
-    for (auto& loopGets : loopGetStack) {
-      loopGets.push_back(curr);
-    }
-    originalGetIndexes[curr] = curr->index;
-    replaceCurrent(updateGetLocalIndex(curr, currMapping));
   }
   void visitSetLocal(SetLocal* curr) {
     assert(currMapping.size() == numLocals);
