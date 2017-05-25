@@ -28,7 +28,6 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "support/permutations.h"
-#include "ast/manipulation.h"
 #include "ast/literal-utils.h"
 
 namespace wasm {
@@ -72,12 +71,13 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     // add prepends
     if (functionPrepends.size() > 0) {
       Builder builder(*getModule());
-      auto* block = builder.blockify(func->body);
-      func->body = block;
-      // TODO: this is O(toplevel block size^2)
+      auto* block = builder.makeBlock();
       for (auto* pre : functionPrepends) {
-        ExpressionManipulator::spliceIntoBlock(block, 0, pre);
+        block->list.push_back(pre);
       }
+      block->list.push_back(func->body);
+      block->finalize(func->body->type);
+      func->body = block;
     }
     // zero out stuff we can
     for (auto iter : canZeros) {
