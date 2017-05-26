@@ -295,22 +295,27 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         // seen it already
         continue;
       }
-      if (!set) {
-        // this is a param or the zero init value. add a set first thing in
-        // the function
-        set = builder.makeSetLocal(
-          old,
-          getFunction()->isParam(old) ? builder.makeGetLocal(old, getFunction()->getLocalType(old))
-                                      : LiteralUtils::makeZero(getFunction()->getLocalType(old), *getModule())
+      if (set) {
+        // a set exists, just add a tee of its value, so we also set the phi merge var
+        set->value = ret = builder.makeTeeLocal(
+          new_,
+          set->value
         );
-        mapping[old] = set;
-        functionPrepends.push_back(set);
+      } else {
+        // this is a param or the zero init value.
+        if (getFunction()->isParam(old)) {
+          // we add a set with the proper
+          // param value at the beginning of the function
+          auto* set = ret = builder.makeSetLocal(
+            new_,
+            getFunction()->isParam(old) ? builder.makeGetLocal(old, getFunction()->getLocalType(old))
+                                        : LiteralUtils::makeZero(getFunction()->getLocalType(old), *getModule())
+          );
+          functionPrepends.push_back(set);
+        } else {
+          // this is a zero init, so we don't need to do anything actually
+        }
       }
-      // now a set exists, just add a tee of its value, so we also set the phi merge var
-      set->value = ret = builder.makeTeeLocal(
-        new_,
-        set->value
-      );
     }
     return ret;
   }
