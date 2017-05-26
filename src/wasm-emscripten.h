@@ -21,8 +21,11 @@
 
 namespace wasm {
 
+class LinkerObject;
+
 namespace emscripten {
 
+void generateRuntimeFunctions(LinkerObject& linker);
 void generateMemoryGrowthFunction(Module&);
 
 // Create thunks for use with emscripten Runtime.dynCall. Creates one for each

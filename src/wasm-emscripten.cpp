@@ -20,6 +20,7 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
+#include "wasm-linker.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -28,6 +29,14 @@ namespace wasm {
 namespace emscripten {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+
+void addExportedFunction(Module& wasm, Function* function) {
+  wasm.addFunction(function);
+  auto export_ = new Export;
+  export_->name = export_->value = function->name;
+  export_->kind = ExternalKind::Function;
+  wasm.addExport(export_);
+}
 
 void generateMemoryGrowthFunction(Module& wasm) {
   Builder wasmBuilder(wasm);
@@ -42,11 +51,38 @@ void generateMemoryGrowthFunction(Module& wasm) {
     { wasmBuilder.makeGetLocal(0, i32) }
   );
 
-  wasm.addFunction(growFunction);
-  auto export_ = new Export;
-  export_->name = export_->value = name;
-  export_->kind = ExternalKind::Function;
-  wasm.addExport(export_);
+  addExportedFunction(wasm, growFunction);
+}
+
+void generateStackSaveFunction(LinkerObject& linker) {
+  Module& wasm = linker.wasm;
+  Builder wasmBuilder(wasm);
+  Name name("stackSave");
+  std::vector<NameType> params { };
+  Function* function = wasmBuilder.makeFunction(
+    name, std::move(params), i32, {}
+  );
+  Load* load = wasmBuilder.makeLoad(
+    /* bytes =*/ 4,
+    /* signed =*/ false,
+    /* offset =*/ 0,
+    /* align =*/ 4,
+    wasmBuilder.makeConst(Literal(0)),
+    i32
+  );
+  function->body = load;
+  linker.addRelocation(new LinkerObject::Relocation(
+    LinkerObject::Relocation::kData,
+    &load->offset.addr,
+    Name("__stack_pointer"),
+    0
+  ));
+
+  addExportedFunction(wasm, function);
+}
+
+void generateRuntimeFunctions(LinkerObject& linker) {
+  generateStackSaveFunction(linker);
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
