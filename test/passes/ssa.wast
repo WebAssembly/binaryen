@@ -1,4 +1,5 @@
 (module
+  (import "env" "_emscripten_autodebug_i32" (func $import$15 (param i32 i32)))
   (func $basics (param $x i32)
     (local $y i32)
     (local $z f32)
@@ -166,6 +167,32 @@
       (drop (get_local $x)) ;; another use, but should *not* be phi'd
     )
     (drop (get_local $x))
+  )
+  (func $real-loop
+    (param $param i32)
+    (local $loopvar i32)
+    (local $inc i32)
+    (set_local $loopvar
+     (get_local $param)
+    )
+    (loop $more
+     (block $stop
+      (if
+       (i32.const 1)
+       (br $stop)
+      )
+      (set_local $inc
+       (i32.add
+        (get_local $loopvar) ;; this var should be written to from before the loop and the inc at the end
+        (i32.const 1)
+       )
+      )
+      (set_local $loopvar
+       (get_local $inc)
+      )
+      (br $more)
+     )
+    )
   )
 )
 
