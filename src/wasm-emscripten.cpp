@@ -30,6 +30,8 @@ namespace emscripten {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
+static constexpr const char* stackPointer = "__stack_pointer";
+
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
   auto export_ = new Export;
@@ -54,6 +56,43 @@ void generateMemoryGrowthFunction(Module& wasm) {
   addExportedFunction(wasm, growFunction);
 }
 
+void addStackPointerRelocation(LinkerObject& linker, uint32_t* data) {
+  linker.addRelocation(new LinkerObject::Relocation(
+    LinkerObject::Relocation::kData,
+    data,
+    Name(stackPointer),
+    0
+  ));
+}
+
+Load* generateLoadStackPointer(Builder& wasmBuilder, LinkerObject& linker) {
+  Load* load = wasmBuilder.makeLoad(
+    /* bytes  =*/ 4,
+    /* signed =*/ false,
+    /* offset =*/ 0,
+    /* align  =*/ 4,
+    /* ptr    =*/ wasmBuilder.makeConst(Literal(0)),
+    /* type   =*/ i32
+  );
+  addStackPointerRelocation(linker, &load->offset.addr);
+  return load;
+}
+
+Store* generateStoreStackPointer(Builder& wasmBuilder,
+                                 LinkerObject& linker,
+                                 Expression* value) {
+  Store* store = wasmBuilder.makeStore(
+    /* bytes  =*/ 4,
+    /* offset =*/ 0,
+    /* align  =*/ 4,
+    /* ptr    =*/ wasmBuilder.makeConst(Literal(0)),
+    /* value  =*/ value,
+    /* type   =*/ i32
+  );
+  addStackPointerRelocation(linker, &store->offset.addr);
+  return store;
+}
+
 void generateStackSaveFunction(LinkerObject& linker) {
   Module& wasm = linker.wasm;
   Builder wasmBuilder(wasm);
@@ -62,27 +101,48 @@ void generateStackSaveFunction(LinkerObject& linker) {
   Function* function = wasmBuilder.makeFunction(
     name, std::move(params), i32, {}
   );
-  Load* load = wasmBuilder.makeLoad(
-    /* bytes =*/ 4,
-    /* signed =*/ false,
-    /* offset =*/ 0,
-    /* align =*/ 4,
-    wasmBuilder.makeConst(Literal(0)),
-    i32
+
+  function->body = generateLoadStackPointer(wasmBuilder, linker);
+
+  addExportedFunction(wasm, function);
+}
+
+void generateStackAllocFunction(LinkerObject& linker) {
+  Module& wasm = linker.wasm;
+  Builder wasmBuilder(wasm);
+  Name name("stackAlloc");
+  std::vector<NameType> params { { "0", i32 } };
+  Function* function = wasmBuilder.makeFunction(
+    name, std::move(params), i32, { { "1", i32 } }
   );
-  function->body = load;
-  linker.addRelocation(new LinkerObject::Relocation(
-    LinkerObject::Relocation::kData,
-    &load->offset.addr,
-    Name("__stack_pointer"),
-    0
-  ));
+  Load* loadStack = generateLoadStackPointer(wasmBuilder, linker);
+  SetLocal* setStackLocal = wasmBuilder.makeSetLocal(1, loadStack);
+  GetLocal* getStackLocal = wasmBuilder.makeGetLocal(1, i32);
+  GetLocal* getSizeArg = wasmBuilder.makeGetLocal(0, i32);
+  Binary* add = wasmBuilder.makeBinary(AddInt32, getStackLocal, getSizeArg);
+  const static uint32_t bitAlignment = 16;
+  const static uint32_t bitMask = bitAlignment - 1;
+  Const* addConst = wasmBuilder.makeConst(Literal(bitMask));
+  Binary* maskedAdd = wasmBuilder.makeBinary(
+    AndInt32,
+    wasmBuilder.makeBinary(AddInt32, add, addConst),
+    wasmBuilder.makeConst(Literal(~bitMask))
+  );
+  Store* storeStack = generateStoreStackPointer(wasmBuilder, linker, maskedAdd);
+
+  Block* block = wasmBuilder.makeBlock();
+  block->list.push_back(setStackLocal);
+  block->list.push_back(storeStack);
+  block->list.push_back(getStackLocal);
+  block->type = i32;
+  function->body = block;
 
   addExportedFunction(wasm, function);
 }
 
 void generateRuntimeFunctions(LinkerObject& linker) {
   generateStackSaveFunction(linker);
+  generateStackAllocFunction(linker);
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
