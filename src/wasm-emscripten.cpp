@@ -140,9 +140,26 @@ void generateStackAllocFunction(LinkerObject& linker) {
   addExportedFunction(wasm, function);
 }
 
+void generateStackRestoreFunction(LinkerObject& linker) {
+  Module& wasm = linker.wasm;
+  Builder wasmBuilder(wasm);
+  Name name("stackRestore");
+  std::vector<NameType> params { { "0", i32 } };
+  Function* function = wasmBuilder.makeFunction(
+    name, std::move(params), none, {}
+  );
+  GetLocal* getArg = wasmBuilder.makeGetLocal(0, i32);
+  Store* store = generateStoreStackPointer(wasmBuilder, linker, getArg);
+
+  function->body = store;
+
+  addExportedFunction(wasm, function);
+}
+
 void generateRuntimeFunctions(LinkerObject& linker) {
   generateStackSaveFunction(linker);
   generateStackAllocFunction(linker);
+  generateStackRestoreFunction(linker);
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
