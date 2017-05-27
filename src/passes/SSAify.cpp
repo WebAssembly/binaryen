@@ -18,8 +18,7 @@
 // Transforms code into SSA form. That ensures each variable has a
 // single assignment. For phis, we do not add a new node to the AST,
 // so the result is multiple assignments but with the guarantee that
-// they all travel directly to the same basic block, i.e., they are
-// a way to represent a phi in our AST.
+// they all lead to the same get_local
 // TODO: consider adding a "proper" phi node to the AST, that passes
 //       can utilize
 //
@@ -43,21 +42,25 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
 
   Pass* create() override { return new SSAify; }
 
-  // we map (old local index) => the set_local for that index. The new
-  // index for the local can be seen in that set local.
-  // this can be nullptr if there is no set_local, and instead the value
-  // is a parameter, or the zero init.
-  typedef std::vector<SetLocal*> Mapping;
+  // the set_locals relevant for an index or a get. we use
+  // as set as merges of control flow mean more than 1 may
+  // be relevant; we create a phi on demand when necessary for those
+  typedef std::set<SetLocal*> Sets;
+
+  // we map (old local index) => the set_locals for that index.
+  // a nullptr set means there is a virtual set, from a param
+  // initial value or the zero init initial value.
+  typedef std::vector<Sets> Mapping;
 
   Index numLocals;
   Mapping currMapping;
   Index nextIndex;
   std::vector<Mapping> mappingStack; // used in ifs, loops
   std::map<Name, std::vector<Mapping>> breakMappings; // break target => infos that reach it
-  std::vector<std::vector<GetLocal*>> loopGetStack; //  stack of loops, all the gets in each, so we can update them for phis
-  std::map<GetLocal*, Index> originalGetIndexes;
+  std::vector<std::vector<GetLocal*>> loopGetStack; //  stack of loops, all the gets in each, so we can update them for back branches
   std::vector<Expression*> functionPrepends; // things we add to the function prologue
-  std::map<GetLocal*, Expression**> canZeros; // gets of a var without a set can be zero'd out
+  std::map<GetLocal*, Sets> getSetses; // the sets for each get
+  std::map<GetLocal*, Expression**> getLocations;
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
@@ -65,9 +68,13 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     // We begin with each param being assigned from the incoming value, and the zero-init for the locals,
     // so the initial state is the identity permutation
     currMapping.resize(numLocals);
-    for (auto& set : currMapping) set = nullptr;
+    for (auto& set : currMapping) {
+      set = { nullptr };
+    }
     nextIndex = numLocals;
     WalkerPass<PostWalker<SSAify>>::walk(func->body);
+    // apply - we now know the sets for each get
+    computeGetsAndPhis();
     // add prepends
     if (functionPrepends.size() > 0) {
       Builder builder(*getModule());
@@ -78,12 +85,6 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       block->list.push_back(func->body);
       block->finalize(func->body->type);
       func->body = block;
-    }
-    // zero out stuff we can
-    for (auto iter : canZeros) {
-      auto* curr = iter.first;
-      auto* currp = iter.second;
-      *currp = LiteralUtils::makeZero(curr->type, *getModule());
     }
   }
 
@@ -135,21 +136,30 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       auto before = infos.back();
       auto& merged = self->merge(infos);
       // every local we created a phi for requires us to update get_local operations in
-      // the loop
-      // we need to replace precisely in this case: we enter the loop with
-      // old mapping of  oldMapping[oldIndex] => newIndex , so wherever newIndex is
-      // used, we need the newer new index
+      // the loop - the branch back has means that gets in the loop have potentially
+      // more sets reaching them.
+      // we can detect this as follows: if a get of oldIndex has the same sets
+      // as the sets at the entrance to the loop, then it is affected by the loop
+      // header sets, and we can add to there sets that looped back
       auto& gets = self->loopGetStack.back();
       for (auto* get : gets) {
-        auto original = self->originalGetIndexes[get];
-        auto newSet = merged[original];
-        if (!newSet) continue; // nothing here, nothing was merged
-        auto oldSet = before[original];
-        // if no old set and we use the original index, or there is an old set and
-        // the get uses the index, then we should update to the newer phi index
-        if ((!oldSet && get->index == original) || (oldSet && get->index == oldSet->index)) {
-          get->index = newSet->index;
-          self->canZeros.erase(get);
+        auto& beforeSets = before[get->index];
+        auto& getSets = getSetses[get];
+        if (getSets.size() < beforeSets.size()) {
+          // the get trivially has fewer sets, so it overrode the loop entry sets
+          continue;
+        }
+        Sets intersection;
+        std::set_intersection(beforeSets.begin(), beforeSets.end(),
+                              getSets.begin(), getSets.end(),
+                              std::back_inserter(intersection));
+        if (intersection.size() < beforeSets.size()) {
+          // the get has not the same sets as in the loop entry
+          continue;
+        }
+        // the get has the entry sets, so add any new ones
+        for (auto* set : merged) {
+          getSets.insert(set);
         }
       }
     }
@@ -190,24 +200,15 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     for (auto& loopGets : loopGetStack) {
       loopGets.push_back(curr);
     }
-    originalGetIndexes[curr] = curr->index;
-    auto* set = currMapping[curr->index];
-    if (set) {
-      curr->index = set->index;
-    } else {
-      // no set, this is either a param or a zero init
-      if (curr->index < getFunction()->getNumParams()) {
-        // nothing to do, keep getting that param
-      } else {
-        // just replace with zero
-        canZeros[curr] = getCurrentPointer();
-      }
-    }
+    // current sets are our sets
+    getSetses[curr] = currMapping[curr->index];
+    getLocations[curr] = getCurrPointer();
   }
   void visitSetLocal(SetLocal* curr) {
     assert(currMapping.size() == numLocals);
     assert(curr->index < numLocals);
-    currMapping[curr->index] = curr;
+    // current sets are just this set
+    currMapping[curr->index] = { curr }; // TODO optimize?
     curr->index = addLocal(getFunction()->getLocalType(curr->index));
   }
 
@@ -252,34 +253,49 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     assert(mappings.size() > 0);
     auto& out = mappings[0];
     if (mappings.size() == 1) {
-      return mappings[0];
+      return out;
     }
-    for (Index i = 0; i < numLocals; i++) {
-      SetLocal* merged = &IMPOSSIBLE_SET;
-      for (auto& mapping : mappings) {
-        if (isUnreachable(mapping)) continue;
-        if (merged == &IMPOSSIBLE_SET) {
-          merged = mapping[i];
-        } else {
-          if (mapping[i] != merged) {
-            // we need a phi for this local, e.g., imagine
-            // if (..) { x = 1 } else { x = 2 } ..use x here..
-            // create a new local, and also write to it at the old write locations
-            // if (..) { x = y = 1 } else { x = y = 2 } ..use y here..
-            // (not that y seems as "single-assignment" as x here, but the point is
-            // that x may be merged multiple times, so we need a different phi merge
-            // local for each)
-            auto phiLocal = addLocal(getFunction()->getLocalType(i));
-;           merged = addWritesToLocal(mappings, i, phiLocal);
-            break;
-          }
+    // merge into the first
+    for (Index j = 1; j < mappings.size(); j++) {
+      auto& other = mappings[j];
+      for (Index i = 0; i < numLocals; i++) {
+        auto& outSets = out[i];
+        for (auto* set : other[i]) {
+          outSets.insert(set);
         }
-      }
-      if (merged != &IMPOSSIBLE_SET) {
-        out[i] = merged;
       }
     }
     return out;
+  }
+
+  // After we traversed it all, we can compute gets and phis
+  void computeGetsAndPhis() {
+    for (auto& iter : getSetses) {
+      auto* get = iter.first;
+      auto& sets = iter.second;
+      if (sets->size() == 0) {
+        continue; // unreachable, ignore
+      }
+      if (sets->size() == 1) {
+        // TODO: add tests for this case
+        // easy, just one set, use it's index
+        auto* set = sets.begin();
+        if (set) {
+          get->index = set->index;
+        } else {
+          // no set, assign param or zero
+          if (getFunction()->isParam(get->index)) {
+            // leave it, it's fine
+          } else {
+            // zero it out
+            (*getLocations[get]) = LiteralUtils::makeZero(get->type, *getModule());
+          }
+        }
+        continue;
+      }
+      // more than 1 set, need a phi: a new local written to at each of the sets
+      // if there is already a local with that property, reuse it
+    }
   }
 
   // adds phi-style writes to sets of a local
