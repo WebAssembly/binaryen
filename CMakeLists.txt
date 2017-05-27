@@ -205,6 +205,7 @@ INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(wasm-opt_SOURCES
   src/tools/wasm-opt.cpp
+  src/wasm-interpreter.cpp
 )
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
