@@ -295,45 +295,59 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       }
       // more than 1 set, need a phi: a new local written to at each of the sets
       // if there is already a local with that property, reuse it
-    }
-  }
-
-  // adds phi-style writes to sets of a local
-  // returns one of those writes
-  SetLocal* addWritesToLocal(std::vector<Mapping>& mappings, Index old, Index new_) {
-    SetLocal* ret = nullptr;
-    Builder builder(*getModule());
-    // the same set may appear in multiple mappings; we just need one for each
-    std::set<SetLocal*> seen;
-    for (auto& mapping : mappings) {
-      auto* set = mapping[old];
-      if (!seen.insert(set).second) {
-        // seen it already
-        continue;
+      auto gatherIndexes = [](SetLocal* set) {
+        std::set<Index> ret;
+        while (set) {
+          ret->insert(set->index);
+          set = set->value->dynCast<SetLocal>();
+        }
+        return ret;
       }
-      if (set) {
-        // a set exists, just add a tee of its value, so we also set the phi merge var
-        set->value = ret = builder.makeTeeLocal(
-          new_,
-          set->value
-        );
+      auto indexes = gatherIndexes(sets[0]);
+      for (Index i = 1; i < sets.size(); i++) {
+        auto* curr = sets[i];
+        auto currIndexes = gatherIndexes(curr);
+        Sets intersection;
+        std::set_intersection(indexes.begin(), indexes.end(),
+                              currIndexes.begin(), currIndexes.end(),
+                              std::back_inserter(intersection));
+        indexes.swap(intersection);
+        if (indexes.empty()) break;
+      }
+      if (!indexes.empty()) {
+        // we found an index, use it
+        get->index = indexes.begin()->index;
       } else {
-        // this is a param or the zero init value.
-        if (getFunction()->isParam(old)) {
-          // we add a set with the proper
-          // param value at the beginning of the function
-          auto* set = ret = builder.makeSetLocal(
-            new_,
-            getFunction()->isParam(old) ? builder.makeGetLocal(old, getFunction()->getLocalType(old))
-                                        : LiteralUtils::makeZero(getFunction()->getLocalType(old), *getModule())
-          );
-          functionPrepends.push_back(set);
-        } else {
-          // this is a zero init, so we don't need to do anything actually
+        // we need to create a local for this phi'ing
+        auto new_ = addLocal(get->type);
+        auto old = get->index;
+        get->index = new_;
+        Builder builder(*getModule());
+        // write to the local in each of our sets
+        for (auto* set : sets) {
+          if (set) {
+            // a set exists, just add a tee of its value
+            set->value = builder.makeTeeLocal(
+              new_,
+              set->value
+            );
+          } else {
+            // this is a param or the zero init value.
+            if (getFunction()->isParam(old)) {
+              // we add a set with the proper
+              // param value at the beginning of the function
+              auto* set = builder.makeSetLocal(
+                new_,
+                builder.makeGetLocal(old, getFunction()->getLocalType(old))
+              );
+              functionPrepends.push_back(set);
+            } else {
+              // this is a zero init, so we don't need to do anything actually
+            }
+          }
         }
       }
     }
-    return ret;
   }
 
   Index addLocal(WasmType type) {
