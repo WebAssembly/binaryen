@@ -80,7 +80,7 @@ struct ExecutionResults {
       arguments.push_back(Literal(param));
     }
     try {
-      return instance.callFunctionInternal(func->name, arguments);
+      return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
       return Literal();
     }

@@ -692,6 +692,7 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
+public:
   // Call a function, starting an invocation.
   Literal callFunction(Name name, LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
@@ -700,7 +701,6 @@ private:
     return callFunctionInternal(name, arguments);
   }
 
-public:
   // Internal function call. Must be public so that callTable implementations can use it (refactor?)
   Literal callFunctionInternal(Name name, LiteralList& arguments) {
 
