@@ -478,6 +478,9 @@ public:
     shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
     shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "select condition must be valid");
+    if (curr->ifTrue->type != unreachable && curr->ifFalse->type != unreachable) {
+      shouldBeEqual(curr->ifTrue->type, curr->ifFalse->type, curr, "select sides must be equal");
+    }
   }
 
   void visitDrop(Drop* curr) {
