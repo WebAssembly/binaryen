@@ -144,12 +144,12 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       auto& gets = self->loopGetStack.back();
       for (auto* get : gets) {
         auto& beforeSets = before[get->index];
-        auto& getSets = getSetses[get];
+        auto& getSets = self->getSetses[get];
         if (getSets.size() < beforeSets.size()) {
           // the get trivially has fewer sets, so it overrode the loop entry sets
           continue;
         }
-        Sets intersection;
+        std::vector<SetLocal*> intersection;
         std::set_intersection(beforeSets.begin(), beforeSets.end(),
                               getSets.begin(), getSets.end(),
                               std::back_inserter(intersection));
@@ -158,7 +158,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
           continue;
         }
         // the get has the entry sets, so add any new ones
-        for (auto* set : merged) {
+        for (auto* set : merged[get->index]) {
           getSets.insert(set);
         }
       }
@@ -202,7 +202,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     }
     // current sets are our sets
     getSetses[curr] = currMapping[curr->index];
-    getLocations[curr] = getCurrPointer();
+    getLocations[curr] = getCurrentPointer();
   }
   void visitSetLocal(SetLocal* curr) {
     assert(currMapping.size() == numLocals);
@@ -239,11 +239,12 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
 
   void setUnreachable(Mapping& mapping) {
     mapping.resize(numLocals); // may have been emptied by a move
-    mapping[0] = &IMPOSSIBLE_SET;
+    mapping[0].clear();
   }
 
   bool isUnreachable(Mapping& mapping) {
-    return mapping[0] == &IMPOSSIBLE_SET;
+    // we must have some set for each index, if only the zero init, so empty means we emptied it for unreachable code
+    return mapping[0].empty();
   }
 
   // merges a bunch of infos into one.
@@ -273,13 +274,13 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     for (auto& iter : getSetses) {
       auto* get = iter.first;
       auto& sets = iter.second;
-      if (sets->size() == 0) {
+      if (sets.size() == 0) {
         continue; // unreachable, ignore
       }
-      if (sets->size() == 1) {
+      if (sets.size() == 1) {
         // TODO: add tests for this case
         // easy, just one set, use it's index
-        auto* set = sets.begin();
+        auto* set = *sets.begin();
         if (set) {
           get->index = set->index;
         } else {
@@ -298,25 +299,29 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       auto gatherIndexes = [](SetLocal* set) {
         std::set<Index> ret;
         while (set) {
-          ret->insert(set->index);
+          ret.insert(set->index);
           set = set->value->dynCast<SetLocal>();
         }
         return ret;
-      }
-      auto indexes = gatherIndexes(sets[0]);
-      for (Index i = 1; i < sets.size(); i++) {
-        auto* curr = sets[i];
-        auto currIndexes = gatherIndexes(curr);
-        Sets intersection;
+      };
+      auto indexes = gatherIndexes(*sets.begin());
+      for (auto* set : sets) {
+        if (set == *sets.begin()) continue;
+        auto currIndexes = gatherIndexes(set);
+        std::vector<Index> intersection;
         std::set_intersection(indexes.begin(), indexes.end(),
                               currIndexes.begin(), currIndexes.end(),
                               std::back_inserter(intersection));
-        indexes.swap(intersection);
-        if (indexes.empty()) break;
+        if (intersection.empty()) break;
+        // TODO: or keep sorted vectors?
+        indexes.clear();
+        for (Index i : intersection) {
+          indexes.insert(i);
+        }
       }
       if (!indexes.empty()) {
         // we found an index, use it
-        get->index = indexes.begin()->index;
+        get->index = *indexes.begin();
       } else {
         // we need to create a local for this phi'ing
         auto new_ = addLocal(get->type);
