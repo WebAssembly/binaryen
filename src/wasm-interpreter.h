@@ -903,7 +903,6 @@ public:
     Flow flow = RuntimeExpressionRunner(*this, scope).visit(function->body);
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW); // cannot still be breaking, it means we missed our stop
     Literal ret = flow.value;
-    if (function->result == none) ret = Literal();
     if (function->result != ret.type) {
       std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
       WASM_UNREACHABLE();
