@@ -250,11 +250,17 @@ struct UniqueNameMapper {
   }
 
   Name sourceToUnique(Name sName) {
-    return labelMappings.at(sName).back();
+    if (labelMappings.find(sName) == labelMappings.end()) {
+      throw ParseException("label mismatch in sourceToUnique");
+    }
+    return labelMappings[sName].back();
   }
 
   Name uniqueToSource(Name name) {
-    return reverseLabelMapping.at(name);
+    if (reverseLabelMapping.find(name) == reverseLabelMapping.end()) {
+      throw ParseException("label mismatch in uniqueToSource");
+    }
+    return reverseLabelMapping[name];
   }
 
   void clear() {
