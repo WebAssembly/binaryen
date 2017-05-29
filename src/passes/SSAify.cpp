@@ -128,23 +128,22 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
     self->mappingStack.push_back(self->currMapping);
     self->loopGetStack.push_back({});
   }
-  static void doVisitLoop(SSAify* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Loop>();
-    if (curr->name.is() && self->breakMappings.find(curr->name) != self->breakMappings.end()) {
-      auto& infos = self->breakMappings[curr->name];
-      infos.emplace_back(std::move(self->mappingStack.back()));
+  void visitLoop(Loop* curr) {
+    if (curr->name.is() && breakMappings.find(curr->name) != breakMappings.end()) {
+      auto& infos = breakMappings[curr->name];
+      infos.emplace_back(std::move(mappingStack.back()));
       auto before = infos.back();
-      auto& merged = self->merge(infos);
+      auto& merged = merge(infos);
       // every local we created a phi for requires us to update get_local operations in
       // the loop - the branch back has means that gets in the loop have potentially
       // more sets reaching them.
       // we can detect this as follows: if a get of oldIndex has the same sets
       // as the sets at the entrance to the loop, then it is affected by the loop
       // header sets, and we can add to there sets that looped back
-      auto& gets = self->loopGetStack.back();
+      auto& gets = loopGetStack.back();
       for (auto* get : gets) {
         auto& beforeSets = before[get->index];
-        auto& getSets = self->getSetses[get];
+        auto& getSets = getSetses[get];
         if (getSets.size() < beforeSets.size()) {
           // the get trivially has fewer sets, so it overrode the loop entry sets
           continue;
@@ -163,8 +162,8 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         }
       }
     }
-    self->mappingStack.pop_back();
-    self->loopGetStack.pop_back();
+    mappingStack.pop_back();
+    loopGetStack.pop_back();
   }
   void visitBreak(Break* curr) {
     if (curr->condition) {
@@ -312,9 +311,9 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
         std::set_intersection(indexes.begin(), indexes.end(),
                               currIndexes.begin(), currIndexes.end(),
                               std::back_inserter(intersection));
+        indexes.clear();
         if (intersection.empty()) break;
         // TODO: or keep sorted vectors?
-        indexes.clear();
         for (Index i : intersection) {
           indexes.insert(i);
         }

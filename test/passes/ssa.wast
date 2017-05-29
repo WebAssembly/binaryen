@@ -1,5 +1,4 @@
 (module
-  (import "env" "_emscripten_autodebug_i32" (func $import$15 (param i32 i32)))
   (func $basics (param $x i32)
     (local $y i32)
     (local $z f32)
