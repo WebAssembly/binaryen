@@ -577,6 +577,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->kind = ExternalKind::Function;
     im->functionType = wasm.getFunctionType(type)->name;
     wasm.addImport(im.release());
+    if (currFunction) throw ParseException("import module inside function dec");
     assert(!currFunction);
     currLocalTypes.clear();
     nameMapper.clear();
