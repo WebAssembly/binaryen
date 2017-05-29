@@ -1340,6 +1340,7 @@ Expression* SExpressionWasmBuilder::makeBreakTable(Element& s) {
   while (!s[i]->isList()) {
     ret->targets.push_back(getLabel(*s[i++]));
   }
+  if (ret->targets.size() == 0) throw ParseException("switch with no targets");
   ret->default_ = ret->targets.back();
   ret->targets.pop_back();
   ret->condition = parseExpression(s[i++]);
