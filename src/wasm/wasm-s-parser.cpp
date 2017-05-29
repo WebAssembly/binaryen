@@ -600,6 +600,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
   currFunction->body = body;
   currFunction->type = type;
+  if (wasm.getFunctionOrNull(currFunction->name)) throw ParseException("duplicate function", s.line, s.col);
   wasm.addFunction(currFunction.release());
   currLocalTypes.clear();
   nameMapper.clear();
