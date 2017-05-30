@@ -156,6 +156,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         trap("callIndirect: bad argument type");
       }
     }
+    if (func->result != result) {
+      trap("callIndirect: bad result type");
+    }
     return instance.callFunctionInternal(func->name, arguments);
   }
 
