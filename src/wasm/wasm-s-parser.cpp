@@ -955,6 +955,15 @@ Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   } else {
     parseCallOperands(s, 1, s.size(), ret);
   }
+  if (ret->op == HostOp::GrowMemory) {
+    if (ret->operands.size() != 1) {
+      throw ParseException("grow_memory needs one operand");
+    }
+  } else {
+    if (ret->operands.size() != 0) {
+      throw ParseException("host needs zero operands");
+    }
+  }
   ret->finalize();
   return ret;
 }
