@@ -1650,20 +1650,36 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
   } else if (im->kind == ExternalKind::Table) {
     if (j < inner.size() - 1) {
-      wasm.table.initial = atoi(inner[j++]->c_str());
+      uint64_t num = atoi(inner[j++]->c_str());
+      if (num > std::numeric_limits<Address::address_t>::max()) {
+        throw ParseException("excessive table size", s.line, s.col);
+      }
+      wasm.table.initial = num;
     }
     if (j < inner.size() - 1) {
-      wasm.table.max = atoi(inner[j++]->c_str());
+      uint64_t num = atoi(inner[j++]->c_str());
+      if (num > std::numeric_limits<Address::address_t>::max()) {
+        throw ParseException("excessive table size", s.line, s.col);
+      }
+      wasm.table.max = num;
     } else {
       wasm.table.max = Table::kMaxSize;
     }
     // ends with the table element type
   } else if (im->kind == ExternalKind::Memory) {
     if (j < inner.size()) {
-      wasm.memory.initial = atoi(inner[j++]->c_str());
+      uint64_t num = atoi(inner[j++]->c_str());
+      if (num > std::numeric_limits<Address::address_t>::max()) {
+        throw ParseException("excessive table size", s.line, s.col);
+      }
+      wasm.memory.initial = num;
     }
     if (j < inner.size()) {
-      wasm.memory.max = atoi(inner[j++]->c_str());
+      uint64_t num = atoi(inner[j++]->c_str());
+      if (num > std::numeric_limits<Address::address_t>::max()) {
+        throw ParseException("excessive table size", s.line, s.col);
+      }
+      wasm.memory.max = num;
     }
   }
   if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
