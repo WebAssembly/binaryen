@@ -251,7 +251,10 @@ struct UniqueNameMapper {
 
   Name sourceToUnique(Name sName) {
     if (labelMappings.find(sName) == labelMappings.end()) {
-      throw ParseException("label mismatch in sourceToUnique");
+      throw ParseException("bad label in sourceToUnique");
+    }
+    if (labelMappings[sName].empty()) {
+      throw ParseException("use of popped label in sourceToUnique");
     }
     return labelMappings[sName].back();
   }
