@@ -1143,7 +1143,9 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type) {
     if (!eq) throw ParseException("no = in load attribute");
     eq++;
     if (str[0] == 'a') {
-      ret->align = atoi(eq);
+      uint64_t align = atoll(eq);
+      if (align > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
+      ret->align = align;
     } else if (str[0] == 'o') {
       uint64_t offset = atoll(eq);
       if (offset > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset");
@@ -1182,7 +1184,9 @@ Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type) {
     if (!eq) throw ParseException("missing = in store attribute");;
     eq++;
     if (str[0] == 'a') {
-      ret->align = atoi(eq);
+      uint64_t align = atoll(eq);
+      if (align > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
+      ret->align = align;
     } else if (str[0] == 'o') {
       ret->offset = atoi(eq);
     } else throw ParseException("bad store attribute");
