@@ -73,15 +73,16 @@ struct ExecutionResults {
 
   Literal run(Function* func, Module& wasm) {
     ShellExternalInterface interface;
-    ModuleInstance instance(wasm, &interface);
-    LiteralList arguments;
-    for (WasmType param : func->params) {
-      // zeros in arguments TODO: more?
-      arguments.push_back(Literal(param));
-    }
     try {
+      ModuleInstance instance(wasm, &interface);
+      LiteralList arguments;
+      for (WasmType param : func->params) {
+        // zeros in arguments TODO: more?
+        arguments.push_back(Literal(param));
+      }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
+      // may throw in instance creation (init of offsets) or call itself
       return Literal();
     }
   }
