@@ -15,6 +15,9 @@
  (table 7 7 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $__importThunk_extern_fd $__importThunk_extern_vj $__importThunk_extern_v $__importThunk_extern_ijidf $__importThunk_extern_struct $__importThunk_extern_sret)
  (data (i32.const 4) "\10\04\00\00")
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (export "bar" (func $bar))
  (export "dynCall_fd" (func $dynCall_fd))
  (export "dynCall_v" (func $dynCall_v))
@@ -82,6 +85,39 @@
    )
   )
   (return
+   (get_local $0)
+  )
+ )
+ (func $stackSave (result i32)
+  (i32.load offset=4
+   (i32.const 0)
+  )
+ )
+ (func $stackAlloc (param $0 i32) (result i32)
+  (local $1 i32)
+  (set_local $1
+   (i32.load offset=4
+    (i32.const 0)
+   )
+  )
+  (i32.store offset=4
+   (i32.const 0)
+   (i32.and
+    (i32.add
+     (i32.add
+      (get_local $1)
+      (get_local $0)
+     )
+     (i32.const 15)
+    )
+    (i32.const -16)
+   )
+  )
+  (get_local $1)
+ )
+ (func $stackRestore (param $0 i32)
+  (i32.store offset=4
+   (i32.const 0)
    (get_local $0)
   )
  )
