@@ -1460,7 +1460,11 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       return;
     }
   }
-  wasm.memory.initial = atoi(s[i++]->c_str());
+  uint64_t num = atoi(s[i++]->c_str());
+  if (num > std::numeric_limits<Address::address_t>::max()) {
+    throw ParseException("excessive memory init", s.line, s.col);
+  }
+  wasm.memory.initial = num;
   if (i == s.size()) return;
   if (s[i]->isStr()) {
     uint64_t max = atoll(s[i]->c_str());
@@ -1475,7 +1479,11 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     if (curr[0]->str() == DATA) {
       offsetValue = 0;
     } else {
-      offsetValue = atoi(curr[j++]->c_str());
+      uint64_t num = atoi(curr[j++]->c_str());
+      if (num > std::numeric_limits<Address::address_t>::max()) {
+        throw ParseException("excessive memory offset", s.line, s.col);
+      }
+      offsetValue = num;
     }
     const char *input = curr[j]->c_str();
     auto* offset = allocator.alloc<Const>();
