@@ -71,9 +71,10 @@ Element* Element::setString(IString str__, bool dollared__, bool quoted__) {
   return this;
 }
 
-Element* Element::setMetadata(size_t line_, size_t col_) {
+Element* Element::setMetadata(size_t line_, size_t col_, SourceLocation* loc_) {
   line = line_;
   col = col_;
+  loc = loc_;
   return this;
 }
 
@@ -93,7 +94,7 @@ void Element::dump() {
 }
 
 
-SExpressionParser::SExpressionParser(char* input) : input(input) {
+SExpressionParser::SExpressionParser(char* input) : input(input), loc(nullptr) {
   root = nullptr;
   line = 1;
   lineStart = input;
@@ -104,6 +105,7 @@ SExpressionParser::SExpressionParser(char* input) : input(input) {
 
 Element* SExpressionParser::parse() {
   std::vector<Element *> stack;
+  std::vector<SourceLocation*> stackLocs;
   Element *curr = allocator.alloc<Element>();
   while (1) {
     skipWhitespace();
@@ -111,7 +113,9 @@ Element* SExpressionParser::parse() {
     if (input[0] == '(') {
       input++;
       stack.push_back(curr);
-      curr = allocator.alloc<Element>()->setMetadata(line, input - lineStart - 1);
+      curr = allocator.alloc<Element>()->setMetadata(line, input - lineStart - 1, loc);
+      stackLocs.push_back(loc);
+      assert(stack.size() == stackLocs.size());
     } else if (input[0] == ')') {
       input++;
       auto last = curr;
@@ -119,7 +123,10 @@ Element* SExpressionParser::parse() {
         throw ParseException("s-expr stack empty");
       }
       curr = stack.back();
+      assert(stack.size() == stackLocs.size());
       stack.pop_back();
+      loc = stackLocs.back();
+      stackLocs.pop_back();
       curr->list().push_back(last);
     } else {
       curr->list().push_back(parseString());
@@ -127,6 +134,29 @@ Element* SExpressionParser::parse() {
   }
   if (stack.size() != 0) throw ParseException("stack is not empty", curr->line, curr->col);
   return curr;
+}
+
+void SExpressionParser::parseDebugLocation() {
+  // Extracting debug location (if valid)
+  char* debugLoc = input + 3; // skipping ";;@"
+  while (debugLoc[0] && debugLoc[0] == ' ') debugLoc++;
+  char* debugLocEnd = debugLoc;
+  while (debugLocEnd[0] && debugLocEnd[0] != '\n') debugLocEnd++;
+  char* pos = debugLoc;
+  while (pos < debugLocEnd && pos[0] != ':') pos++;
+  if (pos >= debugLocEnd) {
+    return; // no line number
+  }
+  std::string name(debugLoc, pos);
+  char* lineStart = ++pos;
+  while (pos < debugLocEnd && pos[0] != ':') pos++;
+  std::string lineStr(lineStart, pos);
+  if (pos >= debugLocEnd) {
+    return; // no column number
+  }
+  std::string colStr(++pos, debugLocEnd);
+  void* buf = allocator.allocSpace(sizeof(SourceLocation));
+  loc = new (buf) SourceLocation(IString(name.c_str(), false), atoi(lineStr.c_str()), atoi(colStr.c_str()));
 }
 
 void SExpressionParser::skipWhitespace() {
@@ -139,6 +169,9 @@ void SExpressionParser::skipWhitespace() {
       input++;
     }
     if (input[0] == ';' && input[1] == ';') {
+      if (input[2] == '@') {
+        parseDebugLocation();
+      }
       while (input[0] && input[0] != '\n') input++;
       line++;
       lineStart = ++input;
@@ -198,13 +231,13 @@ Element* SExpressionParser::parseString() {
       input++;
     }
     input++;
-    return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared, true)->setMetadata(line, start - lineStart);
+    return allocator.alloc<Element>()->setString(IString(str.c_str(), false), dollared, true)->setMetadata(line, start - lineStart, loc);
   }
   while (input[0] && !isspace(input[0]) && input[0] != ')' && input[0] != '(' && input[0] != ';') input++;
   if (start == input) throw ParseException("expected string", line, input - lineStart);
   char temp = input[0];
   input[0] = 0;
-  auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared, false)->setMetadata(line, start - lineStart);
+  auto ret = allocator.alloc<Element>()->setString(IString(start, false), dollared, false)->setMetadata(line, start - lineStart, loc);
   input[0] = temp;
   return ret;
 }
@@ -583,6 +616,23 @@ WasmType SExpressionWasmBuilder::stringToWasmType(const char* str, bool allowErr
 }
 
 Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
+  Expression* result = makeExpression(s);
+  if (s.loc) {
+    IString file = s.loc->filename;
+    auto& debugInfoFileNames = wasm.debugInfoFileNames;
+    auto iter = debugInfoFileIndices.find(file);
+    if (iter == debugInfoFileIndices.end()) {
+      Index index = debugInfoFileNames.size();
+      debugInfoFileNames.push_back(file.c_str());
+      debugInfoFileIndices[file] = index;
+    }
+    uint32_t fileIndex = debugInfoFileIndices[file];
+    currFunction->debugLocations[result] = {fileIndex, s.loc->line, s.loc->column};
+  }
+  return result;
+}
+
+Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
   IString id = s[0]->str();
   const char *str = id.str;
   const char *dot = strchr(str, '.');

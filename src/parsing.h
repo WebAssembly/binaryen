@@ -193,6 +193,25 @@ struct ParseException {
   }
 };
 
+struct MapParseException {
+  std::string text;
+
+  MapParseException() : text("unknown parse error") {}
+  MapParseException(std::string text) : text(text) {}
+
+  void dump(std::ostream& o) {
+    Colors::magenta(o);
+    o << "[";
+    Colors::red(o);
+    o << "map parse exception: ";
+    Colors::green(o);
+    o << text;
+    Colors::magenta(o);
+    o << "]";
+    Colors::normal(o);
+  }
+};
+
 // Helper for parsers that may not have unique label names. This transforms
 // the names into unique ones, as required by Binaryen IR.
 struct UniqueNameMapper {
