@@ -1648,7 +1648,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       }
       if (inner.size() > j+1) {
         Element& result = *inner[j+1];
-        if (result[0]->str() != RESULT)  throw ParseException("expected result");
+        if (result[0]->str() != RESULT) throw ParseException("expected result");
         type->result = stringToWasmType(result[1]->str());
       }
     }
