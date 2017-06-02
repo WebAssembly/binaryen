@@ -1,13 +1,14 @@
 (module
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
- (func $unreachable_block_void
+ (func $unreachable_block_void (result i32)
   (block $label$0
   )
   (return
    (i32.const 1)
   )
   (block $label$1
+   (unreachable)
   )
  )
  (func $unreachable_block_i32 (result i32)
@@ -42,7 +43,7 @@
    (unreachable)
   )
  )
- (func $unreachable_loop_void
+ (func $unreachable_loop_void (result i32)
   (loop $label$0
    (br $label$0)
   )
