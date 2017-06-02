@@ -45,6 +45,7 @@ class S2WasmBuilder {
   LinkerObject* linkerObj;
   std::unique_ptr<LinkerObject::SymbolInfo> symbolInfo;
   std::unordered_map<uint32_t, uint32_t> fileIndexMap;
+  std::vector<Global*> globalVars;
 
  public:
   S2WasmBuilder(const char* input, bool debug)
@@ -63,9 +64,13 @@ class S2WasmBuilder {
     linkerObj = obj;
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
+    for (auto global : globalVars) {
+      wasm->addGlobal(global);
+    }
 
     s = inputStart;
     process();
+    globalVars = {};
   }
 
   // getSymbolInfo scans the .s file to determine what symbols it defines
@@ -434,6 +439,7 @@ class S2WasmBuilder {
   // processors
 
   void scan(LinkerObject::SymbolInfo* info) {
+    globalVars = {};
     s = inputStart;
     while (*s) {
       skipWhitespace();
@@ -459,6 +465,15 @@ class S2WasmBuilder {
         Name name = getStr();
         info->importedObjects.insert(name);
         s = strchr(s, '\n');
+      } else if (match(".globalvar")) {
+        WasmType type = tryGetType();
+        skipEqual();
+        Name name = getStr();
+        Global* global = new Global();
+        global->name = name;
+        global->type = type;
+        global->mutable_ = true;
+        globalVars.push_back(global);
       } else {
         // add data aliases
         Name lhs = getStrToSep();
@@ -520,6 +535,8 @@ class S2WasmBuilder {
       }
       else if (match("globl")) parseGlobl();
       else if (match("functype")) parseFuncType();
+      else if (match("globalvar")) skipToEOL();
+      else if (match("stack_pointer")) skipToEOL();
       else skipObjectAlias(true);
     }
   }
@@ -1251,6 +1268,35 @@ class S2WasmBuilder {
         addToBlock(curr);
       } else if (match("call")) {
         makeCall(none);
+      } else if (match("get_local")) {
+        Name assign = getAssign();
+        skipComma();
+        auto curr = allocator->alloc<GetLocal>();
+        curr->index = getInt();
+        curr->type = i32;
+        setOutput(curr, assign);
+      } else if (match("get_global")) {
+        Name assign = getAssign();
+        skipComma();
+        auto curr = allocator->alloc<GetGlobal>();
+        int index = getInt();
+        auto global = globalVars[index];
+        curr->name = global->name;
+        curr->type = global->type;
+        setOutput(curr, assign);
+      } else if (match("set_global")) {
+        int index = getInt();
+        skipComma();
+        auto curr = allocator->alloc<SetGlobal>();
+        curr->name = globalVars[index]->name;
+        curr->value = getInput();
+        addToBlock(curr);
+      } else if (match("drop")) {
+        auto value = getInput();
+        auto* drop = builder.makeDrop(value);
+        addToBlock(drop);
+      } else if (match("end_function")) {
+        // discard
       } else if (match("copy_local")) {
         Name assign = getAssign();
         skipComma();
@@ -1259,7 +1305,12 @@ class S2WasmBuilder {
         Name assign = getAssign();
         skipComma();
         auto curr = allocator->alloc<SetLocal>();
-        curr->index = func->getLocalIndex(getAssign());
+        Name tee = getAssign();
+        if (tee.c_str()) {
+          curr->index = func->getLocalIndex(tee);
+        } else {
+          curr->index = getInt();
+        }
         skipComma();
         curr->value = getInput();
         curr->setTee(true);
