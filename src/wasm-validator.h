@@ -478,6 +478,9 @@ public:
     shouldBeUnequal(curr->ifTrue->type, none, curr, "select left must be valid");
     shouldBeUnequal(curr->ifFalse->type, none, curr, "select right must be valid");
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "select condition must be valid");
+    if (curr->ifTrue->type != unreachable && curr->ifFalse->type != unreachable) {
+      shouldBeEqual(curr->ifTrue->type, curr->ifFalse->type, curr, "select sides must be equal");
+    }
   }
 
   void visitDrop(Drop* curr) {
@@ -772,7 +775,7 @@ public:
           // The block has an added type, not derived from the ast itself, so it is
           // ok for it to be either i32 or unreachable.
           if (!(isConcreteWasmType(oldType) && newType == unreachable)) {
-            parent.fail() << "stale type found in " << getFunction()->name << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
+            parent.fail() << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
             parent.valid = false;
           }
           curr->type = oldType;

@@ -1684,6 +1684,14 @@ void WasmBinaryBuilder::processFunctions() {
   for (auto& func : functions) {
     wasm.addFunction(func);
   }
+
+  // we should have seen all the functions
+  // we assume this later down in fact, when we read wasm.functions[index],
+  // as index was validated vs functionTypes.size()
+  if (wasm.functions.size() != functionTypes.size()) {
+    throw ParseException("did not see the right number of functions");
+  }
+
   // now that we have names for each function, apply things
 
   if (startIndex != static_cast<Index>(-1)) {

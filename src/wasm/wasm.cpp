@@ -74,7 +74,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
-    case Expression::Id::InvalidId: abort();
+    case Expression::Id::InvalidId: WASM_UNREACHABLE();
     case Expression::Id::BlockId: return "block";
     case Expression::Id::IfId: return "if";
     case Expression::Id::LoopId: return "loop";
@@ -500,7 +500,7 @@ void Host::finalize() {
       }
       break;
     }
-    default: abort();
+    default: WASM_UNREACHABLE();
   }
 }
 

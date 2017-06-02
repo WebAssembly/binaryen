@@ -692,6 +692,7 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
+public:
   // Call a function, starting an invocation.
   Literal callFunction(Name name, LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
@@ -700,7 +701,6 @@ private:
     return callFunctionInternal(name, arguments);
   }
 
-public:
   // Internal function call. Must be public so that callTable implementations can use it (refactor?)
   Literal callFunctionInternal(Name name, LiteralList& arguments) {
 
@@ -903,7 +903,6 @@ public:
     Flow flow = RuntimeExpressionRunner(*this, scope).visit(function->body);
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW); // cannot still be breaking, it means we missed our stop
     Literal ret = flow.value;
-    if (function->result == none) ret = Literal();
     if (function->result != ret.type) {
       std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
       WASM_UNREACHABLE();

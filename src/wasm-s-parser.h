@@ -53,10 +53,10 @@ class Element {
 public:
   Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), loc(nullptr) {}
 
-  bool isList() { return isList_; }
-  bool isStr() { return !isList_; }
-  bool dollared() { return isStr() && dollared_; }
-  bool quoted() { return isStr() && quoted_; }
+  bool isList() const { return isList_; }
+  bool isStr() const { return !isList_; }
+  bool dollared() const { return isStr() && dollared_; }
+  bool quoted() const { return isStr() && quoted_; }
 
   size_t line, col;
   SourceLocation* loc;
@@ -69,8 +69,8 @@ public:
   }
 
   // string methods
-  cashew::IString str();
-  const char* c_str();
+  cashew::IString str() const;
+  const char* c_str() const;
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* loc_);
 
