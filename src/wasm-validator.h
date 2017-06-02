@@ -488,8 +488,8 @@ public:
     if (curr->value) {
       if (returnType == unreachable) {
         returnType = curr->value->type;
-      } else if (curr->value->type != unreachable && returnType != curr->value->type) {
-        returnType = none; // poison
+      } else if (curr->value->type != unreachable) {
+        shouldBeEqual(curr->value->type, returnType, curr, "function results must match");
       }
     } else {
       returnType = none;
@@ -557,10 +557,8 @@ public:
     if (curr->body->type != unreachable) {
       shouldBeEqual(curr->result, curr->body->type, curr->body, "function body type must match, if function returns");
     }
-    if (curr->result != none) { // TODO: over previous too?
-      if (returnType != unreachable) {
-        shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function returns");
-      }
+    if (returnType != unreachable) {
+      shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
     }
     returnType = unreachable;
     labelNames.clear();

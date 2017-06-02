@@ -9,9 +9,8 @@ __exit:                           # @__exit
 	i32.load	$push1=, 0($pop0)
 	i32.const	$push2=, ._C
 	i32.load	$push3=, 0($pop2)
-	i32.add 	$push4=, $pop1, $pop3
+	i32.add 	$drop=, $pop1, $pop3
 # BB#0:                                 # %entry
-	return		$pop4
 	.endfunc
 .Lfunc_end0:
 	.size	__exit, .Lfunc_end0-__exit

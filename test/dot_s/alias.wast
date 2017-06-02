@@ -8,7 +8,7 @@
  (export "__needs_exit" (func $__needs_exit))
  (export "dynCall_v" (func $dynCall_v))
  (func $__exit (type $FUNCSIG$v)
-  (return
+  (drop
    (i32.add
     (i32.load
      (i32.const 16)
