@@ -100,15 +100,15 @@ def test_linker():
       '--emscripten-glue', '--allow-memory-growth']
   output = run_command(cmd)
   expected_funcs = [
-    ('__growWasmMemory', '(param $newSize i32)'),
-    ('stackSave', '(result i32)'),
-    ('stackAlloc', '(param $0 i32) (result i32)'),
-    ('stackRestore', '(param $0 i32)'),
+      ('__growWasmMemory', '(param $newSize i32)'),
+      ('stackSave', '(result i32)'),
+      ('stackAlloc', '(param $0 i32) (result i32)'),
+      ('stackRestore', '(param $0 i32)'),
   ]
   for name, extra in expected_funcs:
     space = ' ' if extra else ''
     fail_if_not_contained(output, '(export "{0}" (func ${0}))'.format(name))
-    fail_if_not_contained(output, '(func ${0}{1}{2}'.format(name, space, extra))
+    fail_if_not_contained(output, '(func ${0}'.format(name + space + extra))
 
 
 if __name__ == '__main__':
