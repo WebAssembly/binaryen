@@ -42,6 +42,15 @@ int unhex(char c) {
 }
 
 namespace wasm {
+
+static Address getCheckedAddress(const Element* s, const char* errorText) {
+  uint64_t num = atoi(s->c_str());
+  if (num > std::numeric_limits<Address::address_t>::max()) {
+    throw ParseException(errorText, s->line, s->col);
+  }
+  return num;
+}
+
 Element::List& Element::list() {
   if (!isList()) throw ParseException("expected list", line, col);
   return list_;
@@ -53,12 +62,12 @@ Element* Element::operator[](unsigned i) {
   return list()[i];
 }
 
-IString Element::str() {
+IString Element::str() const {
   if (!isStr()) throw ParseException("expected string", line, col);
   return str_;
 }
 
-const char* Element::c_str() {
+const char* Element::c_str() const {
   if (!isStr()) throw ParseException("expected string", line, col);
   return str_.str;
 }
@@ -580,7 +589,6 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
     wasm.addImport(im.release());
     if (currFunction) throw ParseException("import module inside function dec");
-    assert(!currFunction);
     currLocalTypes.clear();
     nameMapper.clear();
     return;
@@ -1460,11 +1468,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       return;
     }
   }
-  uint64_t num = atoi(s[i++]->c_str());
-  if (num > std::numeric_limits<Address::address_t>::max()) {
-    throw ParseException("excessive memory init", s.line, s.col);
-  }
-  wasm.memory.initial = num;
+  wasm.memory.initial = getCheckedAddress(s[i++], "excessive memory init");
   if (i == s.size()) return;
   if (s[i]->isStr()) {
     uint64_t max = atoll(s[i]->c_str());
@@ -1479,11 +1483,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     if (curr[0]->str() == DATA) {
       offsetValue = 0;
     } else {
-      uint64_t num = atoi(curr[j++]->c_str());
-      if (num > std::numeric_limits<Address::address_t>::max()) {
-        throw ParseException("excessive memory offset", s.line, s.col);
-      }
-      offsetValue = num;
+      offsetValue = getCheckedAddress(curr[j++], "excessive memory offset");
     }
     const char *input = curr[j]->c_str();
     auto* offset = allocator.alloc<Const>();
@@ -1664,36 +1664,20 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
   } else if (im->kind == ExternalKind::Table) {
     if (j < inner.size() - 1) {
-      uint64_t num = atoi(inner[j++]->c_str());
-      if (num > std::numeric_limits<Address::address_t>::max()) {
-        throw ParseException("excessive table size", s.line, s.col);
-      }
-      wasm.table.initial = num;
+      wasm.table.initial = getCheckedAddress(inner[j++], "excessive table init size");
     }
     if (j < inner.size() - 1) {
-      uint64_t num = atoi(inner[j++]->c_str());
-      if (num > std::numeric_limits<Address::address_t>::max()) {
-        throw ParseException("excessive table size", s.line, s.col);
-      }
-      wasm.table.max = num;
+      wasm.table.max = getCheckedAddress(inner[j++], "excessive table max size");
     } else {
       wasm.table.max = Table::kMaxSize;
     }
     // ends with the table element type
   } else if (im->kind == ExternalKind::Memory) {
     if (j < inner.size()) {
-      uint64_t num = atoi(inner[j++]->c_str());
-      if (num > std::numeric_limits<Address::address_t>::max()) {
-        throw ParseException("excessive table size", s.line, s.col);
-      }
-      wasm.memory.initial = num;
+      wasm.memory.initial = getCheckedAddress(inner[j++], "excessive memory init size");
     }
     if (j < inner.size()) {
-      uint64_t num = atoi(inner[j++]->c_str());
-      if (num > std::numeric_limits<Address::address_t>::max()) {
-        throw ParseException("excessive table size", s.line, s.col);
-      }
-      wasm.memory.max = num;
+      wasm.memory.max = getCheckedAddress(inner[j++], "excessive memory max size");
     }
   }
   if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
