@@ -44,7 +44,7 @@ int unhex(char c) {
 namespace wasm {
 
 static Address getCheckedAddress(const Element* s, const char* errorText) {
-  uint64_t num = atoi(s->c_str());
+  uint64_t num = atoll(s->c_str());
   if (num > std::numeric_limits<Address::address_t>::max()) {
     throw ParseException(errorText, s->line, s->col);
   }
