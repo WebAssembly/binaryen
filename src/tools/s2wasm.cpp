@@ -152,6 +152,10 @@ int main(int argc, const char *argv[]) {
     linker.linkArchive(lib);
   }
 
+  if (generateEmscriptenGlue) {
+    emscripten::generateRuntimeFunctions(linker.getOutput());
+  }
+
   linker.layout();
 
   std::stringstream meta;

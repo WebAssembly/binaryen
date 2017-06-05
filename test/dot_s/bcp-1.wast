@@ -15,6 +15,9 @@
  (data (i32.const 72) "\0f\00\00\00\10\00\00\00\11\00\00\00")
  (data (i32.const 96) "hi\00")
  (data (i32.const 100) "\00\00\00\00")
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (export "bad0" (func $bad0))
  (export "bad1" (func $bad1))
  (export "bad2" (func $bad2))
@@ -305,6 +308,39 @@
   )
   (call $abort)
   (unreachable)
+ )
+ (func $stackSave (result i32)
+  (i32.load offset=4
+   (i32.const 0)
+  )
+ )
+ (func $stackAlloc (param $0 i32) (result i32)
+  (local $1 i32)
+  (set_local $1
+   (i32.load offset=4
+    (i32.const 0)
+   )
+  )
+  (i32.store offset=4
+   (i32.const 0)
+   (i32.and
+    (i32.add
+     (i32.add
+      (get_local $1)
+      (get_local $0)
+     )
+     (i32.const 15)
+    )
+    (i32.const -16)
+   )
+  )
+  (get_local $1)
+ )
+ (func $stackRestore (param $0 i32)
+  (i32.store offset=4
+   (i32.const 0)
+   (get_local $0)
+  )
  )
  (func $__wasm_nullptr (type $FUNCSIG$v)
   (unreachable)
