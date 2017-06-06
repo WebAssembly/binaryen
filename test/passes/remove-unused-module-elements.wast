@@ -10,6 +10,8 @@
   (type $2-thrupe (func (param i32) (result i32)))
   (export "memory" (memory $0))
   (export "exported" $exported)
+  (export "other1" $other1)
+  (export "other2" $other2)
   (table 1 1 anyfunc)
   (elem (i32.const 0) $called_indirect)
   (func $start (type $0)
