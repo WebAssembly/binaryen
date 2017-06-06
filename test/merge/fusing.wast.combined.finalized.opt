@@ -1,4 +1,5 @@
 (module
+ (type $FUNCSIG$v (func))
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table 8 anyfunc))
  (global $a-global i32 (i32.const 0))
@@ -18,7 +19,7 @@
    (get_global $b-global)
   )
  )
- (func $bar-func (type $FUNCSIG$v$0)
+ (func $bar-func (type $FUNCSIG$v)
   (nop)
   (drop
    (get_global $a-global)

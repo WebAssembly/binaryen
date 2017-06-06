@@ -292,6 +292,8 @@
  )
 )
 (module
+ (type $i (func (result i32)))
+ (type $v (func))
  (type $vi (func (param i32)))
  (import "spectest" "print" (func $print (param i32)))
  (memory $0 1 1)
