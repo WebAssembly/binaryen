@@ -1,6 +1,4 @@
 (module
- (type $FUNCSIG$v (func))
- (type $FUNCSIG$v$0 (func))
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table 8 anyfunc))
  (global $a-global i32 (i32.const 0))

@@ -1,11 +1,5 @@
 (module
- (type $0 (func (param i32 i32)))
  (type $1 (func (param i32) (result i32)))
- (type $2 (func (result i32)))
- (type $3 (func))
- (type $0$0 (func (param i32 i32)))
- (type $1$0 (func (result i32)))
- (type $2$0 (func))
  (import "env" "memoryBase" (global $import$0 i32))
  (import "env" "_puts" (func $import$1 (param i32) (result i32)))
  (import "env" "memory" (memory $0 256))
