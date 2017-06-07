@@ -28,6 +28,16 @@
 
 namespace wasm {
 
+class SourceLocation
+{
+public:
+  cashew::IString filename;
+  uint32_t line;
+  uint32_t column;
+  SourceLocation(cashew::IString filename_, uint32_t line_, uint32_t column_ = 0)
+   : filename(filename_), line(line_), column(column_) {}
+};
+
 //
 // An element in an S-Expression: a list or a string
 //
@@ -41,14 +51,15 @@ class Element {
   bool quoted_;
 
 public:
-  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1) {}
+  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), loc(nullptr) {}
 
-  bool isList() { return isList_; }
-  bool isStr() { return !isList_; }
-  bool dollared() { return isStr() && dollared_; }
-  bool quoted() { return isStr() && quoted_; }
+  bool isList() const { return isList_; }
+  bool isStr() const { return !isList_; }
+  bool dollared() const { return isStr() && dollared_; }
+  bool quoted() const { return isStr() && quoted_; }
 
   size_t line, col;
+  SourceLocation* loc;
 
   // list methods
   List& list();
@@ -58,16 +69,15 @@ public:
   }
 
   // string methods
-  cashew::IString str();
-  const char* c_str();
+  cashew::IString str() const;
+  const char* c_str() const;
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
-  Element* setMetadata(size_t line_, size_t col_);
+  Element* setMetadata(size_t line_, size_t col_, SourceLocation* loc_);
 
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
   void dump();
 };
-
 
 //
 // Generic S-Expression parsing into lists
@@ -76,6 +86,7 @@ class SExpressionParser {
   char* input;
   size_t line;
   char* lineStart;
+  SourceLocation* loc;
 
   MixedArena allocator;
 
@@ -87,6 +98,7 @@ public:
 private:
   Element* parse();
   void skipWhitespace();
+  void parseDebugLocation();
   Element* parseString();
 };
 
@@ -102,6 +114,7 @@ class SExpressionWasmBuilder {
   int functionCounter;
   int globalCounter;
   std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
+  std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
 
 public:
   // Assumes control of and modifies the input.
@@ -147,6 +160,7 @@ public:
   Expression* parseExpression(Element& s);
 
 private:
+  Expression* makeExpression(Element& s);
   Expression* makeBinary(Element& s, BinaryOp op, WasmType type);
   Expression* makeUnary(Element& s, UnaryOp op, WasmType type);
   Expression* makeSelect(Element& s);

@@ -3,12 +3,13 @@
 
   .type unreachable_block_void,@function
 unreachable_block_void:
+  .result   i32
   block     
   # Tests that we don't consume the type of the first item inside a block
   i32.const $push0=, 1
   end_block
   return    $pop0
-  block     
+  block     i32
   end_block
   .endfunc
 .Lfunc_end0:
@@ -60,6 +61,7 @@ unreachable_block_f64:
 
   .type unreachable_loop_void,@function
 unreachable_loop_void:
+  .result   i32
   loop
   i32.const $push0=, 6
   br        0

@@ -200,7 +200,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           var source = Module['HEAP8'].subarray($1, $1 + $2);
           var target = new Int8Array(Module['asmExports']['memory']);
           target.set(source, $0);
-        }, ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
+        }, ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
       }
       // look for imported table
       {
@@ -228,7 +228,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       // Emulated table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
       // TODO: make them all JS methods, wrapping a dynCall where necessary?
       for (auto segment : wasm.table.segments) {
-        Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
+        Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
         assert(offset + segment.data.size() <= wasm.table.initial);
         for (size_t i = 0; i != segment.data.size(); ++i) {
           Name name = segment.data[i];

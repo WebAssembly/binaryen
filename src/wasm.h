@@ -527,7 +527,9 @@ public:
   std::map<Name, Index> localIndices;
 
   struct DebugLocation {
-    uint32_t fileIndex, lineNumber;
+    uint32_t fileIndex, lineNumber, columnNumber;
+    bool operator==(const DebugLocation& other) const { return fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber; }
+    bool operator!=(const DebugLocation& other) const { return !(*this == other); }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
 
@@ -702,6 +704,7 @@ public:
   void addStart(const Name& s);
 
   void removeImport(Name name);
+  void removeExport(Name name);
   // TODO: remove* for other elements
 
   void updateMaps();

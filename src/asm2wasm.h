@@ -1382,13 +1382,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
                 while (i < expressionStack.size()) {
                   exp = expressionStack[i];
                   if (debugLocations.count(exp) == 0) {
-                    debugLocations[exp] = { fileIndex, lineNumber };
+                    debugLocations[exp] = { fileIndex, lineNumber, 0 };
                     break;
                   }
                   i++;
                 }
               } else {
-                debugLocations[exp] = { fileIndex, lineNumber };
+                debugLocations[exp] = { fileIndex, lineNumber, 0 };
               }
               break;
             }

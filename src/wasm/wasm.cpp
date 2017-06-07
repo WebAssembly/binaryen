@@ -28,6 +28,7 @@ Name WASM("wasm"),
 namespace BinaryConsts {
 namespace UserSections {
 const char* Name = "name";
+const char* SourceMapUrl = "sourceMappingURL";
 }
 }
 
@@ -73,7 +74,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
-    case Expression::Id::InvalidId: abort();
+    case Expression::Id::InvalidId: WASM_UNREACHABLE();
     case Expression::Id::BlockId: return "block";
     case Expression::Id::IfId: return "if";
     case Expression::Id::LoopId: return "loop";
@@ -499,7 +500,7 @@ void Host::finalize() {
       }
       break;
     }
-    default: abort();
+    default: WASM_UNREACHABLE();
   }
 }
 
@@ -662,6 +663,17 @@ void Module::removeImport(Name name) {
   }
   importsMap.erase(name);
 }
+
+void Module::removeExport(Name name) {
+  for (size_t i = 0; i < exports.size(); i++) {
+    if (exports[i]->name == name) {
+      exports.erase(exports.begin() + i);
+      break;
+    }
+  }
+  exportsMap.erase(name);
+}
+
   // TODO: remove* for other elements
 
 void Module::updateMaps() {

@@ -30,6 +30,8 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   bool debugInfo = false;
   std::string symbolMap;
+  std::string sourceMapFilename;
+  std::string sourceMapUrl;
   Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
   options.extra["validate"] = "wasm";
   options
@@ -51,6 +53,12 @@ int main(int argc, const char *argv[]) {
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { debugInfo = true; })
+      .add("--source-map", "-sm", "Emit source map to the specified file",
+           Options::Arguments::One,
+           [&sourceMapFilename](Options *o, const std::string &argument) { sourceMapFilename = argument; })
+      .add("--source-map-url", "-su", "Use specified string as source map URL",
+           Options::Arguments::One,
+           [&sourceMapUrl](Options *o, const std::string &argument) { sourceMapUrl = argument; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
            Options::Arguments::One,
            [&](Options *o, const std::string &argument) { symbolMap = argument; })
@@ -86,13 +94,23 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "binarification..." << std::endl;
   BufferWithRandomAccess buffer(options.debug);
   WasmBinaryWriter writer(&wasm, buffer, options.debug);
-  writer.setDebugInfo(debugInfo);
+  // if debug info is used, then we want to emit the names section
+  writer.setNamesSection(debugInfo);
+  std::unique_ptr<std::ofstream> sourceMapStream = nullptr;
+  if (sourceMapFilename.size()) {
+    sourceMapStream = make_unique<std::ofstream>();
+    sourceMapStream->open(sourceMapFilename);
+    writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
+  }
   if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
 
   if (options.debug) std::cerr << "writing to output..." << std::endl;
   Output output(options.extra["output"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release);
   buffer.writeTo(output);
+  if (sourceMapStream) {
+    sourceMapStream->close();
+  }
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }

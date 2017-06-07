@@ -11,15 +11,15 @@
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
  (func $add (param $x i32) (param $y i32) (result i32)
-  ;; tests/hello_world.c:5
+  ;;@ tests/hello_world.c:5:0
   (set_local $x
    (get_local $x)
   )
-  ;; tests/hello_world.c:6
+  ;;@ tests/hello_world.c:6:0
   (set_local $y
    (get_local $y)
   )
-  ;; tests/other_file.cpp:314159
+  ;;@ tests/other_file.cpp:314159:0
   (set_local $x
    (get_local $y)
   )
@@ -31,14 +31,14 @@
   )
  )
  (func $ret (param $x i32) (result i32)
-  ;; return.cpp:50
+  ;;@ return.cpp:50:0
   (set_local $x
    (i32.shl
     (get_local $x)
     (i32.const 1)
    )
   )
-  ;; return.cpp:100
+  ;;@ return.cpp:100:0
   (return
    (i32.add
     (get_local $x)
@@ -59,21 +59,21 @@
   )
  )
  (func $opts (param $x i32) (param $y i32) (result i32)
-  ;; even-opted.cpp:1
+  ;;@ even-opted.cpp:1:0
   (set_local $x
    (i32.add
     (get_local $x)
     (get_local $y)
    )
   )
-  ;; even-opted.cpp:2
+  ;;@ even-opted.cpp:2:0
   (set_local $y
    (i32.shr_s
     (get_local $y)
     (get_local $x)
    )
   )
-  ;; even-opted.cpp:3
+  ;;@ even-opted.cpp:3:0
   (set_local $x
    (call $i32s-rem
     (get_local $x)
@@ -102,7 +102,7 @@
   (set_local $sp
    (get_global $STACKTOP)
   )
-  ;; fib.c:3
+  ;;@ fib.c:3:0
   (set_local $$1
    (i32.gt_s
     (get_local $$0)
@@ -126,7 +126,7 @@
     (set_local $$$0$lcssa
      (i32.const 1)
     )
-    ;; fib.c:8
+    ;;@ fib.c:8:0
     (return
      (get_local $$$0$lcssa)
     )
@@ -134,21 +134,20 @@
   )
   (loop $while-in
    (block $while-out
-    ;; fib.c:4
+    ;;@ fib.c:4:0
     (set_local $$2
      (i32.add
       (get_local $$$019)
       (get_local $$$01518)
      )
     )
-    ;; fib.c:3
+    ;;@ fib.c:3:0
     (set_local $$3
      (i32.add
       (get_local $$$01617)
       (i32.const 1)
      )
     )
-    ;; fib.c:3
     (set_local $$exitcond
      (i32.eq
       (get_local $$3)
@@ -181,7 +180,7 @@
     (br $while-in)
    )
   )
-  ;; fib.c:8
+  ;;@ fib.c:8:0
   (return
    (get_local $$$0$lcssa)
   )
@@ -278,7 +277,7 @@
     (get_local $$p)
    )
   )
-  ;; /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950
+  ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
   (return
    (get_local $$rc$0)
   )

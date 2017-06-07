@@ -308,6 +308,7 @@ enum EncodedType {
 
 namespace UserSections {
 extern const char* Name;
+extern const char* SourceMapUrl;
 
 enum Subsection {
   NameFunction = 1,
@@ -534,8 +535,11 @@ inline S32LEB binaryWasmType(WasmType type) {
 class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
+  Function* currFunction = nullptr;
   bool debug;
   bool debugInfo = true;
+  std::ostream* sourceMap = nullptr;
+  std::string sourceMapUrl;
   std::string symbolMap;
 
   MixedArena allocator;
@@ -546,7 +550,11 @@ public:
     prepare();
   }
 
-  void setDebugInfo(bool set) { debugInfo = set; }
+  void setNamesSection(bool set) { debugInfo = set; }
+  void setSourceMap(std::ostream* set, std::string url) {
+    sourceMap = set;
+    sourceMapUrl = url;
+  }
   void setSymbolMap(std::string set) { symbolMap = set; }
 
   void write();
@@ -582,7 +590,12 @@ public:
   void writeFunctionTableDeclaration();
   void writeTableElements();
   void writeNames();
+  void writeSourceMapUrl();
   void writeSymbolMap();
+
+  void writeSourceMapProlog();
+  void writeSourceMapEpilog();
+  void writeDebugLocation(size_t offset, const Function::DebugLocation& loc);
 
   // helpers
   void writeInlineString(const char* name);
@@ -606,6 +619,20 @@ public:
 
   void recurse(Expression*& curr);
   std::vector<Name> breakStack;
+  Function::DebugLocation lastDebugLocation;
+  size_t lastBytecodeOffset;
+
+  void visit(Expression* curr) {
+    if (sourceMap && currFunction) {
+      // Dump the sourceMap debug info
+      auto& debugLocations = currFunction->debugLocations;
+      auto iter = debugLocations.find(curr);
+      if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
+        writeDebugLocation(o.size(), iter->second);
+      }
+    }
+    Visitor<WasmBinaryWriter>::visit(curr);
+  }
 
   void visitBlock(Block *curr);
   // emits a node, but if it is a block with no name, emit a list of its contents
@@ -641,14 +668,17 @@ class WasmBinaryBuilder {
   MixedArena& allocator;
   std::vector<char>& input;
   bool debug;
+  std::istream* sourceMap;
+  std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
 
   size_t pos = 0;
   Index startIndex = -1;
+  bool useDebugLocation;
 
   std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -736,6 +766,15 @@ public:
   void readFunctionTableDeclaration();
   void readTableElements();
   void readNames(size_t);
+
+  // Debug information reading helpers
+  void setDebugLocations(std::istream* sourceMap_) {
+      sourceMap = sourceMap_;
+  }
+  Function::DebugLocation debugLocation;
+  std::unordered_map<std::string, Index> debugInfoFileIndices;
+  void readNextDebugLocation();
+  void readSourceMapHeader();
 
   // AST reading
   int depth = 0; // only for debugging

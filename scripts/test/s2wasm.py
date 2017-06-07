@@ -94,14 +94,21 @@ def test_linker():
   # bar should be linked from the archive
   fail_if_not_contained(output, '(func $bar')
 
-  # Test exporting memory growth function
+  # Test exporting memory growth function and emscripten runtime functions
   cmd = S2WASM + [
       os.path.join(options.binaryen_test, 'linker', 'main.s'),
       '--emscripten-glue', '--allow-memory-growth']
   output = run_command(cmd)
-  fail_if_not_contained(
-      output, '(export "__growWasmMemory" (func $__growWasmMemory))')
-  fail_if_not_contained(output, '(func $__growWasmMemory (param $newSize i32)')
+  expected_funcs = [
+      ('__growWasmMemory', '(param $newSize i32)'),
+      ('stackSave', '(result i32)'),
+      ('stackAlloc', '(param $0 i32) (result i32)'),
+      ('stackRestore', '(param $0 i32)'),
+  ]
+  for name, extra in expected_funcs:
+    space = ' ' if extra else ''
+    fail_if_not_contained(output, '(export "{0}" (func ${0}))'.format(name))
+    fail_if_not_contained(output, '(func ${0}'.format(name + space + extra))
 
 
 if __name__ == '__main__':

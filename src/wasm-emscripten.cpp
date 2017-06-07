@@ -20,6 +20,7 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
+#include "wasm-linker.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -29,24 +30,136 @@ namespace emscripten {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
-void generateMemoryGrowthFunction(Module& wasm) {
-  Builder wasmBuilder(wasm);
-  Name name(GROW_WASM_MEMORY);
-  std::vector<NameType> params { { NEW_SIZE, i32 } };
-  Function* growFunction = wasmBuilder.makeFunction(
-    name, std::move(params), i32, {}
-  );
-  growFunction->body = wasmBuilder.makeHost(
-    GrowMemory,
-    Name(),
-    { wasmBuilder.makeGetLocal(0, i32) }
-  );
+static constexpr const char* stackPointer = "__stack_pointer";
 
-  wasm.addFunction(growFunction);
+void addExportedFunction(Module& wasm, Function* function) {
+  wasm.addFunction(function);
   auto export_ = new Export;
-  export_->name = export_->value = name;
+  export_->name = export_->value = function->name;
   export_->kind = ExternalKind::Function;
   wasm.addExport(export_);
+}
+
+void generateMemoryGrowthFunction(Module& wasm) {
+  Builder builder(wasm);
+  Name name(GROW_WASM_MEMORY);
+  std::vector<NameType> params { { NEW_SIZE, i32 } };
+  Function* growFunction = builder.makeFunction(
+    name, std::move(params), i32, {}
+  );
+  growFunction->body = builder.makeHost(
+    GrowMemory,
+    Name(),
+    { builder.makeGetLocal(0, i32) }
+  );
+
+  addExportedFunction(wasm, growFunction);
+}
+
+void addStackPointerRelocation(LinkerObject& linker, uint32_t* data) {
+  linker.addRelocation(new LinkerObject::Relocation(
+    LinkerObject::Relocation::kData,
+    data,
+    Name(stackPointer),
+    0
+  ));
+}
+
+Load* generateLoadStackPointer(Builder& builder, LinkerObject& linker) {
+  Load* load = builder.makeLoad(
+    /* bytes  =*/ 4,
+    /* signed =*/ false,
+    /* offset =*/ 0,
+    /* align  =*/ 4,
+    /* ptr    =*/ builder.makeConst(Literal(0)),
+    /* type   =*/ i32
+  );
+  addStackPointerRelocation(linker, &load->offset.addr);
+  return load;
+}
+
+Store* generateStoreStackPointer(Builder& builder,
+                                 LinkerObject& linker,
+                                 Expression* value) {
+  Store* store = builder.makeStore(
+    /* bytes  =*/ 4,
+    /* offset =*/ 0,
+    /* align  =*/ 4,
+    /* ptr    =*/ builder.makeConst(Literal(0)),
+    /* value  =*/ value,
+    /* type   =*/ i32
+  );
+  addStackPointerRelocation(linker, &store->offset.addr);
+  return store;
+}
+
+void generateStackSaveFunction(LinkerObject& linker) {
+  Module& wasm = linker.wasm;
+  Builder builder(wasm);
+  Name name("stackSave");
+  std::vector<NameType> params { };
+  Function* function = builder.makeFunction(
+    name, std::move(params), i32, {}
+  );
+
+  function->body = generateLoadStackPointer(builder, linker);
+
+  addExportedFunction(wasm, function);
+}
+
+void generateStackAllocFunction(LinkerObject& linker) {
+  Module& wasm = linker.wasm;
+  Builder builder(wasm);
+  Name name("stackAlloc");
+  std::vector<NameType> params { { "0", i32 } };
+  Function* function = builder.makeFunction(
+    name, std::move(params), i32, { { "1", i32 } }
+  );
+  Load* loadStack = generateLoadStackPointer(builder, linker);
+  SetLocal* setStackLocal = builder.makeSetLocal(1, loadStack);
+  GetLocal* getStackLocal = builder.makeGetLocal(1, i32);
+  GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
+  Binary* add = builder.makeBinary(AddInt32, getStackLocal, getSizeArg);
+  const static uint32_t bitAlignment = 16;
+  const static uint32_t bitMask = bitAlignment - 1;
+  Const* addConst = builder.makeConst(Literal(bitMask));
+  Binary* maskedAdd = builder.makeBinary(
+    AndInt32,
+    builder.makeBinary(AddInt32, add, addConst),
+    builder.makeConst(Literal(~bitMask))
+  );
+  Store* storeStack = generateStoreStackPointer(builder, linker, maskedAdd);
+
+  Block* block = builder.makeBlock();
+  block->list.push_back(setStackLocal);
+  block->list.push_back(storeStack);
+  block->list.push_back(getStackLocal);
+  block->type = i32;
+  function->body = block;
+
+  addExportedFunction(wasm, function);
+}
+
+void generateStackRestoreFunction(LinkerObject& linker) {
+  Module& wasm = linker.wasm;
+  Builder builder(wasm);
+  Name name("stackRestore");
+  std::vector<NameType> params { { "0", i32 } };
+  Function* function = builder.makeFunction(
+    name, std::move(params), none, {}
+  );
+  GetLocal* getArg = builder.makeGetLocal(0, i32);
+  Store* store = generateStoreStackPointer(builder, linker, getArg);
+
+  function->body = store;
+
+  addExportedFunction(wasm, function);
+}
+
+void generateRuntimeFunctions(LinkerObject& linker) {
+  generateStackSaveFunction(linker);
+  generateStackAllocFunction(linker);
+  generateStackRestoreFunction(linker);
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
@@ -74,7 +187,7 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
 
   std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
-  Builder wasmBuilder(wasm);
+  Builder builder(wasm);
   for (const auto& indirectFunc : tableSegmentData) {
     std::string sig(getSig(wasm.getFunction(indirectFunc)));
     auto* funcType = ensureFunctionType(sig, &wasm);
@@ -84,13 +197,13 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
     params.emplace_back("fptr", i32); // function pointer param
     int p = 0;
     for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
-    Function* f = wasmBuilder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
-    Expression* fptr = wasmBuilder.makeGetLocal(0, i32);
+    Function* f = builder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
+    Expression* fptr = builder.makeGetLocal(0, i32);
     std::vector<Expression*> args;
     for (unsigned i = 0; i < funcType->params.size(); ++i) {
-      args.push_back(wasmBuilder.makeGetLocal(i + 1, funcType->params[i]));
+      args.push_back(builder.makeGetLocal(i + 1, funcType->params[i]));
     }
-    Expression* call = wasmBuilder.makeCallIndirect(funcType, fptr, args);
+    Expression* call = builder.makeCallIndirect(funcType, fptr, args);
     f->body = call;
     wasm.addFunction(f);
     generatedFunctions.push_back(f);
