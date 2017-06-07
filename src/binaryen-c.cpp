@@ -60,6 +60,13 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
   }
 }
 
+// Mutexes (global for now; in theory if multiple modules
+// are used at once this should be optimized to be per-
+// module, but likely it doesn't matter)
+
+static std::mutex BinaryenFunctionMutex;
+static std::mutex BinaryenFunctionTypeMutex;
+
 // Tracing support
 
 static int tracing = 0;
@@ -137,9 +144,8 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
 
   // Lock. This can be called from multiple threads at once, and is a
   // point where they all access and modify the module.
-  static std::mutex BinaryenAddFunctionTypeMutex;
   {
-    std::lock_guard<std::mutex> lock(BinaryenAddFunctionTypeMutex);
+    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
     wasm->addFunctionType(ret);
   }
 
@@ -728,9 +734,8 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
 
   // Lock. This can be called from multiple threads at once, and is a
   // point where they all access and modify the module.
-  static std::mutex BinaryenAddFunctionMutex;
   {
-    std::lock_guard<std::mutex> lock(BinaryenAddFunctionMutex);
+    std::lock_guard<std::mutex> lock(BinaryenFunctionMutex);
     wasm->addFunction(ret);
   }
 
@@ -1104,27 +1109,23 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef mod
   }
 
   auto* wasm = (Module*)module;
-  auto* test = new FunctionType;
-  test->result = WasmType(result);
+  FunctionType test;
+  test.result = WasmType(result);
   for (BinaryenIndex i = 0; i < numParams; i++) {
-    test->params.push_back(WasmType(paramTypes[i]));
+    test.params.push_back(WasmType(paramTypes[i]));
   }
 
-  // Lock. This can be called from multiple threads at once, and is a
-  // point where they all access and modify the module.
-  static std::mutex BinaryenAddFunctionTypeMutex;
+  // Lock. Guard against reading the list while types are being added.
   {
-    std::lock_guard<std::mutex> lock(BinaryenAddFunctionTypeMutex);
+    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
     for (BinaryenIndex i = 0; i < wasm->functionTypes.size(); i++) {
-      FunctionType* current = wasm->functionTypes[i].get();
-      if (current->structuralComparison(*test)) {
-        delete test;
-        return current;
+      FunctionType* curr = wasm->functionTypes[i].get();
+      if (curr->structuralComparison(test)) {
+        return curr;
       }
     }
   }
 
-  delete test;
   return NULL;
 }
 
