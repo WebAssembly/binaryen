@@ -10,6 +10,7 @@ SET(passes_SOURCES
   LegalizeJSInterface.cpp
   LocalCSE.cpp
   LogExecution.cpp
+  InstrumentLocals.cpp
   InstrumentMemory.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
