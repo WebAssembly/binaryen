@@ -1091,7 +1091,7 @@ int main() {
   expressions[11] = BinaryenConst(the_module, BinaryenLiteralFloat32(1.3));
   expressions[12] = BinaryenConst(the_module, BinaryenLiteralFloat64(3.7));
   {
-    BinaryenIndex paramTypes[] = { 1, 2, 3, 4 };
+    BinaryenType paramTypes[] = { 1, 2, 3, 4 };
     functionTypes[0] = BinaryenAddFunctionType(the_module, "iiIfF", 1, paramTypes, 4);
   }
   expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
@@ -1280,7 +1280,7 @@ int main() {
   expressions[196] = BinaryenBinary(the_module, 62, expressions[195], expressions[194]);
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[197] = BinaryenBlock(the_module, NULL, children, 0);
+    expressions[197] = BinaryenBlock(the_module, NULL, children, 0, BinaryenUndefined());
   }
     expressions[198] = BinaryenIf(the_module, expressions[13], expressions[14], expressions[15]);
     expressions[199] = BinaryenIf(the_module, expressions[16], expressions[17], expressions[0]);
@@ -1348,24 +1348,24 @@ int main() {
 )
   {
     BinaryenExpressionRef children[] = { expressions[30], expressions[32], expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[86], expressions[88], expressions[90], expressions[92], expressions[94], expressions[96], expressions[98], expressions[100], expressions[103], expressions[106], expressions[109], expressions[112], expressions[115], expressions[118], expressions[121], expressions[124], expressions[127], expressions[130], expressions[133], expressions[136], expressions[139], expressions[142], expressions[145], expressions[148], expressions[151], expressions[154], expressions[157], expressions[160], expressions[163], expressions[166], expressions[169], expressions[172], expressions[175], expressions[178], expressions[181], expressions[184], expressions[187], expressions[190], expressions[193], expressions[196], expressions[197], expressions[198], expressions[199], expressions[201], expressions[203], expressions[204], expressions[206], expressions[208], expressions[209], expressions[210], expressions[212], expressions[214], expressions[217], expressions[220], expressions[222], expressions[224], expressions[227], expressions[229], expressions[231], expressions[233], expressions[235], expressions[236], expressions[237], expressions[238], expressions[240], expressions[241], expressions[242] };
-    expressions[243] = BinaryenBlock(the_module, "the-value", children, 95);
+    expressions[243] = BinaryenBlock(the_module, "the-value", children, 95, BinaryenUndefined());
   }
   expressions[244] = BinaryenDrop(the_module, expressions[243]);
   {
     BinaryenExpressionRef children[] = { expressions[244] };
-    expressions[245] = BinaryenBlock(the_module, "the-nothing", children, 1);
+    expressions[245] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenUndefined());
   }
   expressions[246] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
     BinaryenExpressionRef children[] = { expressions[245], expressions[246] };
-    expressions[247] = BinaryenBlock(the_module, "the-body", children, 2);
+    expressions[247] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenUndefined());
   }
   {
     BinaryenType varTypes[] = { 1 };
     functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[247]);
   }
   {
-    BinaryenIndex paramTypes[] = { 1, 4 };
+    BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
   BinaryenAddImport(the_module, "an-imported", "module", "base", functionTypes[1]);
@@ -1383,7 +1383,7 @@ int main() {
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
   }
   {
-    BinaryenIndex paramTypes[] = { 0 };
+    BinaryenType paramTypes[] = { 0 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   expressions[249] = BinaryenNop(the_module);
@@ -1393,7 +1393,7 @@ int main() {
   }
   BinaryenSetStart(the_module, functions[1]);
   {
-    BinaryenIndex paramTypes[] = { 0 };
+    BinaryenType paramTypes[] = { 0 };
     functionTypes[3] = BinaryenAddFunctionType(the_module, NULL, 0, paramTypes, 0);
   }
   BinaryenModuleAutoDrop(the_module);
@@ -1937,11 +1937,11 @@ int main() {
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   {
-    BinaryenIndex paramTypes[] = { 0 };
+    BinaryenType paramTypes[] = { 0 };
     functionTypes[0] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
   {
-    BinaryenIndex paramTypes[] = { 1 };
+    BinaryenType paramTypes[] = { 1 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
   BinaryenAddImport(the_module, "check", "module", "check", functionTypes[1]);
@@ -2367,7 +2367,7 @@ int main() {
     functions[13] = BinaryenAddFunction(the_module, "duffs-device", functionTypes[0], varTypes, 7, expressions[135]);
   }
   {
-    BinaryenIndex paramTypes[] = { 0 };
+    BinaryenType paramTypes[] = { 0 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "i", 1, paramTypes, 0);
   }
   the_relooper = RelooperCreate();
@@ -2380,7 +2380,7 @@ int main() {
   expressions[139] = BinaryenReturn(the_module, expressions[138]);
   {
     BinaryenExpressionRef children[] = { expressions[137], expressions[139] };
-    expressions[140] = BinaryenBlock(the_module, "the-list", children, 2);
+    expressions[140] = BinaryenBlock(the_module, "the-list", children, 2, BinaryenUndefined());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[140]);
   expressions[141] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
