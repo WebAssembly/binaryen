@@ -27,6 +27,7 @@
   Module['i64'] = Module['_BinaryenInt64']();
   Module['f32'] = Module['_BinaryenFloat32']();
   Module['f64'] = Module['_BinaryenFloat64']();
+  Module['undefined'] = Module['_BinaryenUndefined']();
 
   Module['ClzInt32'] = Module['_BinaryenClzInt32']();
   Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
@@ -170,11 +171,18 @@
                                                   i32sToStack(paramTypes), paramTypes.length);
       });
     };
+    this['getFunctionTypeBySignature'] = function(result, paramTypes) {
+      return preserveStack(function() {
+        return Module['_BinaryenGetFunctionTypeBySignature'](module, result,
+                                                             i32sToStack(paramTypes), paramTypes.length);
+      });
+    };
 
-    this['block'] = function(name, children) {
+    this['block'] = function(name, children, type) {
       return preserveStack(function() {
         return Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
-                                        i32sToStack(children), children.length);
+                                        i32sToStack(children), children.length,
+                                        typeof type !== 'undefined' ? type : Module['undefined']);
       });
     };
     this['if'] = function(condition, ifTrue, ifFalse) {
@@ -224,6 +232,21 @@
     this['teeLocal'] = function(index, value) {
       return Module['_BinaryenTeeLocal'](module, index, value);
     };
+    this['getGlobal'] = function(name, type) {
+      return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
+    }
+    this['setGlobal'] = function(name, value) {
+      return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
+    }
+    this['currentMemory'] = function() {
+      return Module['_BinaryenHost'](module, Module['CurrentMemory']);
+    }
+    this['growMemory'] = function(value) {
+      return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
+    }
+    this['hasFeature'] = function(name) {
+      return Module['_BinaryenHost'](module, Module['HasFeature'], strToStack(name));
+    }
 
     // The Const creation API is a little different: we don't want users to
     // need to make their own Literals, as the C API handles them by value,
@@ -745,14 +768,29 @@
         return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
       });
     };
+    this['addGlobal'] = function(name, type, mutable, init) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddGlobal'](module, strToStack(name), type, mutable, init);
+      });
+    }
     this['addImport'] = function(internalName, externalModuleName, externalBaseName, type) {
       return preserveStack(function() {
         return Module['_BinaryenAddImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), type);
       });
     };
+    this['removeImport'] = function(internalName) {
+      return preserveStack(function() {
+        return Module['_BinaryenRemoveImport'](module, strToStack(internalName));
+      });
+    };
     this['addExport'] = function(internalName, externalName) {
       return preserveStack(function() {
         return Module['_BinaryenAddExport'](module, strToStack(internalName), strToStack(externalName));
+      });
+    };
+    this['removeExport'] = function(externalName) {
+      return preserveStack(function() {
+        return Module['_BinaryenRemoveExport'](module, strToStack(externalName));
       });
     };
     this['setFunctionTable'] = function(funcs) {
@@ -883,7 +921,7 @@ if (typeof exports != 'undefined') {
 (typeof window !== 'undefined' ? window :
  typeof global !== 'undefined' && (
   typeof process === 'undefined' ||
-  
+
   // Note: We must export "Binaryen" even inside a CommonJS/AMD/UMD module
   // space because check.py generates a.js which requires Binaryen global var
   ( process.argv &&

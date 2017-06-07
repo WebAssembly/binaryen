@@ -182,7 +182,7 @@ void test_core() {
     makeBinary(module, BinaryenGtFloat64(), 4),
     makeBinary(module, BinaryenGeFloat32(), 3),
     // All the rest
-    BinaryenBlock(module, NULL, NULL, 0), // block with no name
+    BinaryenBlock(module, NULL, NULL, 0, -1), // block with no name and no type
     BinaryenIf(module, temp1, temp2, temp3),
     BinaryenIf(module, temp4, temp5, NULL),
     BinaryenLoop(module, "in", makeInt32(module, 0)),
@@ -224,11 +224,11 @@ void test_core() {
   BinaryenExpressionPrint(valueList[3]); // test printing a standalone expression
 
   // Make the main body of the function. and one block with a return value, one without
-  BinaryenExpressionRef value = BinaryenBlock(module, "the-value", valueList, sizeof(valueList) / sizeof(BinaryenExpressionRef));
+  BinaryenExpressionRef value = BinaryenBlock(module, "the-value", valueList, sizeof(valueList) / sizeof(BinaryenExpressionRef), -1);
   BinaryenExpressionRef droppedValue = BinaryenDrop(module, value);
-  BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &droppedValue, 1);
+  BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &droppedValue, 1, -1);
   BinaryenExpressionRef bodyList[] = { nothing, makeInt32(module, 42) };
-  BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, 2);
+  BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, 2, -1);
 
   // Create the function
   BinaryenType localTypes[] = { BinaryenInt32() };
@@ -460,7 +460,7 @@ void test_relooper() {
   { // return in a block
     RelooperRef relooper = RelooperCreate();
     BinaryenExpressionRef listList[] = { makeCallCheck(module,  42), BinaryenReturn(module, makeInt32(module, 1337)) };
-    BinaryenExpressionRef list = BinaryenBlock(module, "the-list", listList, 2);
+    BinaryenExpressionRef list = BinaryenBlock(module, "the-list", listList, 2, -1);
     RelooperBlockRef block = RelooperAddBlock(relooper, list);
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block, 0, module);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "return", i, localTypes, 1, body);

@@ -663,6 +663,17 @@ void Module::removeImport(Name name) {
   }
   importsMap.erase(name);
 }
+
+void Module::removeExport(Name name) {
+  for (size_t i = 0; i < exports.size(); i++) {
+    if (exports[i]->name == name) {
+      exports.erase(exports.begin() + i);
+      break;
+    }
+  }
+  exportsMap.erase(name);
+}
+
   // TODO: remove* for other elements
 
 void Module::updateMaps() {
