@@ -24,6 +24,8 @@
 #include "wasm-binary.h"
 #include "wasm-s-parser.h"
 
+#include "tool-utils.h"
+
 using namespace cashew;
 using namespace wasm;
 
@@ -67,6 +69,11 @@ int main(int argc, const char *argv[]) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
+
+  // default output is infile with changed suffix
+  if (options.extra.find("output") == options.extra.end()) {
+    options.extra["output"] = removeSpecificSuffix(options.extra["infile"], ".wast") + ".wasm";
+  }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
