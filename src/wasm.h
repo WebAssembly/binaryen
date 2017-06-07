@@ -704,6 +704,7 @@ public:
   void addStart(const Name& s);
 
   void removeImport(Name name);
+  void removeExport(Name name);
   // TODO: remove* for other elements
 
   void updateMaps();

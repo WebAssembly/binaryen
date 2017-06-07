@@ -56,7 +56,7 @@ int main() {
     BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(), BinaryenConst(module, BinaryenLiteralInt32(4)))
   );
   BinaryenExpressionRef checkBodyList[] = { halter, incer, debugger, returner };
-  BinaryenExpressionRef checkBody = BinaryenBlock(module, NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef));
+  BinaryenExpressionRef checkBody = BinaryenBlock(module, NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef), BinaryenUndefined());
   BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
   BinaryenAddFunction(module, "check", i, NULL, 0, checkBody);
 
@@ -72,7 +72,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b0 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b0 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b1;
@@ -82,7 +82,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b1 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b1 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b2;
@@ -92,7 +92,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b2 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b2 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b3;
@@ -102,7 +102,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b3 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b3 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b4;
@@ -112,7 +112,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b4 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b4 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b5;
@@ -122,7 +122,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b5 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b5 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b6;
@@ -132,7 +132,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b6 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b6 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b7;
@@ -142,7 +142,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b7 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b7 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperBlockRef b8;
@@ -152,7 +152,7 @@ int main() {
       BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0, BinaryenInt32()))
     };
-    b8 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b8 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenUndefined()));
   }
 
   RelooperAddBranch(b0, b5, BinaryenBinary(module,
@@ -242,7 +242,7 @@ int main() {
     }
   }
   full[numDecisions] = body;
-  BinaryenExpressionRef all = BinaryenBlock(module, NULL, full, numDecisions + 1);
+  BinaryenExpressionRef all = BinaryenBlock(module, NULL, full, numDecisions + 1, BinaryenUndefined());
 
   BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
   BinaryenType localTypes[] = { BinaryenInt32(), BinaryenInt32() }; // state, free-for-label
