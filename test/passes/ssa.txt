@@ -467,4 +467,46 @@
    )
   )
  )
+ (func $loop-loop-param (type $0) (param $param i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (set_local $3
+   (get_local $param)
+  )
+  (set_local $4
+   (get_local $param)
+  )
+  (block
+   (loop $loop1
+    (block $out1
+     (if
+      (get_local $3)
+      (br $out1)
+     )
+     (set_local $1
+      (tee_local $3
+       (i32.const 1)
+      )
+     )
+     (br $loop1)
+    )
+   )
+   (loop $loop2
+    (block $out2
+     (if
+      (get_local $4)
+      (br $out2)
+     )
+     (set_local $2
+      (tee_local $4
+       (i32.const 2)
+      )
+     )
+     (br $loop2)
+    )
+   )
+  )
+ )
 )
