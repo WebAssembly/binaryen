@@ -140,13 +140,11 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       // we can detect this as follows: if a get of oldIndex has the same sets
       // as the sets at the entrance to the loop, then it is affected by the loop
       // header sets, and we can add to there sets that looped back
-      auto& gets = loopGetStack.back();
-      for (auto* get : gets) {
-        auto& beforeSets = before[get->index];
-        auto& getSets = getSetses[get];
+      auto linkLoopTop = [&](Index i, Sets& getSets) {
+        auto& beforeSets = before[i];
         if (getSets.size() < beforeSets.size()) {
           // the get trivially has fewer sets, so it overrode the loop entry sets
-          continue;
+          return;
         }
         std::vector<SetLocal*> intersection;
         std::set_intersection(beforeSets.begin(), beforeSets.end(),
@@ -154,12 +152,16 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
                               std::back_inserter(intersection));
         if (intersection.size() < beforeSets.size()) {
           // the get has not the same sets as in the loop entry
-          continue;
+          return;
         }
         // the get has the entry sets, so add any new ones
-        for (auto* set : merged[get->index]) {
+        for (auto* set : merged[i]) {
           getSets.insert(set);
         }
+      };
+      auto& gets = loopGetStack.back();
+      for (auto* get : gets) {
+        linkLoopTop(get->index, getSetses[get]);
       }
     }
     mappingStack.pop_back();
