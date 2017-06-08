@@ -28,13 +28,20 @@
 // If control flow reaches the point of the WASM_UNREACHABLE(), the program is
 // undefined.
 #if __has_builtin(__builtin_unreachable)
-# define WASM_UNREACHABLE() __builtin_unreachable()
+# define WASM_UNREACHABLE_IMPL() __builtin_unreachable()
 #elif defined(_MSC_VER)
-# define WASM_UNREACHABLE() __assume(false)
+# define WASM_UNREACHABLE_IMPL() __assume(false)
 #else
 # include <stdlib.h>
-# define WASM_UNREACHABLE() abort()
+# define WASM_UNREACHABLE_IMPL() abort()
 #endif
+
+#include <stdio.h>
+#define WASM_UNREACHABLE()                                                \
+  do {                                                                    \
+    fprintf(stderr, "UNREACHABLE executed: %s:%d\n", __FILE__, __LINE__); \
+    WASM_UNREACHABLE_IMPL(); \
+  } while (0)
 
 // The code might contain TODOs or stubs that read some values but do nothing
 // with them. The compiler might fail with [-Werror,-Wunused-variable].
