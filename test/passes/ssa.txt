@@ -511,4 +511,37 @@
    )
   )
  )
+ (func $loop-loop-param-nomerge (type $0) (param $param i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (loop $loop1
+   (block $out1
+    (set_local $1
+     (tee_local $3
+      (i32.const 1)
+     )
+    )
+    (if
+     (get_local $1)
+     (br $out1)
+    )
+    (br $loop1)
+   )
+  )
+  (loop $loop2
+   (block $out2
+    (if
+     (get_local $3)
+     (br $out2)
+    )
+    (set_local $2
+     (tee_local $3
+      (i32.const 2)
+     )
+    )
+    (br $loop2)
+   )
+  )
+ )
 )

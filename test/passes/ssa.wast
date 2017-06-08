@@ -216,5 +216,28 @@
       )
     )
   )
+  (func $loop-loop-param-nomerge
+    (param $param i32)
+    (loop $loop1
+      (block $out1
+        (set_local $param (i32.const 1))
+        (if
+          (get_local $param)
+          (br $out1)
+        )
+        (br $loop1)
+      )
+    )
+    (loop $loop2
+      (block $out2
+        (if
+          (get_local $param)
+          (br $out2)
+        )
+        (set_local $param (i32.const 2))
+        (br $loop2)
+      )
+    )
+  )
 )
 
