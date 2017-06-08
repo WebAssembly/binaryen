@@ -486,8 +486,10 @@
       (br $out1)
      )
      (set_local $1
-      (tee_local $3
-       (i32.const 1)
+      (tee_local $4
+       (tee_local $3
+        (i32.const 1)
+       )
       )
      )
      (br $loop1)

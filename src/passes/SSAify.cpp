@@ -163,6 +163,11 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       for (auto* get : gets) {
         linkLoopTop(get->index, getSetses[get]);
       }
+      // and the same for the loop fallthrough: any local that still has the
+      // entry sets should also have the loop-back sets as well
+      for (Index i = 0; i < numLocals; i++) {
+        linkLoopTop(i, currMapping[i]);
+      }
     }
     mappingStack.pop_back();
     loopGetStack.pop_back();
