@@ -192,6 +192,34 @@
       (br $more)
      )
     )
+    (drop (get_local $loopvar))
+  )
+  (func $real-loop-outblock
+    (param $param i32)
+    (local $loopvar i32)
+    (local $inc i32)
+    (set_local $loopvar
+     (get_local $param)
+    )
+    (block $stop
+     (loop $more
+      (if
+       (i32.const 1)
+       (br $stop)
+      )
+      (set_local $inc
+       (i32.add
+        (get_local $loopvar) ;; this var should be written to from before the loop and the inc at the end
+        (i32.const 1)
+       )
+      )
+      (set_local $loopvar
+       (get_local $inc)
+      )
+      (br $more)
+     )
+    )
+    (drop (get_local $loopvar))
   )
   (func $loop-loop-param
     (param $param i32)
