@@ -95,6 +95,7 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       auto& infos = breakMappings[curr->name];
       infos.emplace_back(std::move(currMapping));
       currMapping = std::move(merge(infos));
+      breakMappings.erase(curr->name);
     }
   }
 
@@ -168,6 +169,19 @@ struct SSAify : public WalkerPass<PostWalker<SSAify>> {
       for (Index i = 0; i < numLocals; i++) {
         linkLoopTop(i, currMapping[i]);
       }
+      // finally, breaks still in flight must be updated too
+      for (auto& iter : breakMappings) {
+        auto name = iter.first;
+        if (name == curr->name) continue; // skip our own (which is still in use)
+        auto& mappings = iter.second;
+        for (auto& mapping : mappings) {
+          for (Index i = 0; i < numLocals; i++) {
+            linkLoopTop(i, mapping[i]);
+          }
+        }
+      }
+      // now that we are done with using the mappings, erase our own
+      breakMappings.erase(curr->name);
     }
     mappingStack.pop_back();
     loopGetStack.pop_back();

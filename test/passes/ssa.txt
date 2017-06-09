@@ -466,6 +466,45 @@
     (br $more)
    )
   )
+  (drop
+   (get_local $6)
+  )
+ )
+ (func $real-loop-outblock (type $0) (param $param i32)
+  (local $loopvar i32)
+  (local $inc i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
+  (local $6 i32)
+  (set_local $3
+   (tee_local $6
+    (get_local $param)
+   )
+  )
+  (block $stop
+   (loop $more
+    (if
+     (i32.const 1)
+     (br $stop)
+    )
+    (set_local $4
+     (i32.add
+      (get_local $6)
+      (i32.const 1)
+     )
+    )
+    (set_local $5
+     (tee_local $6
+      (get_local $4)
+     )
+    )
+    (br $more)
+   )
+  )
+  (drop
+   (get_local $6)
+  )
  )
  (func $loop-loop-param (type $0) (param $param i32)
   (local $1 i32)
@@ -541,6 +580,114 @@
      )
     )
     (br $loop2)
+   )
+  )
+ )
+ (func $loop-nesting (type $0) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
+  (set_local $3
+   (get_local $x)
+  )
+  (set_local $4
+   (get_local $x)
+  )
+  (set_local $5
+   (get_local $x)
+  )
+  (block
+   (block $out
+    (loop $loop1
+     (if
+      (get_local $3)
+      (br $out)
+     )
+     (loop $loop2
+      (if
+       (get_local $4)
+       (br $out)
+      )
+      (set_local $1
+       (tee_local $5
+        (tee_local $4
+         (i32.const 1)
+        )
+       )
+      )
+      (br $loop2)
+     )
+     (set_local $2
+      (tee_local $5
+       (tee_local $4
+        (tee_local $3
+         (i32.const 2)
+        )
+       )
+      )
+     )
+     (br $loop1)
+    )
+   )
+   (drop
+    (get_local $5)
+   )
+  )
+ )
+ (func $loop-nesting-2 (type $0) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
+  (set_local $3
+   (get_local $x)
+  )
+  (set_local $4
+   (get_local $x)
+  )
+  (set_local $5
+   (get_local $x)
+  )
+  (block
+   (block $out
+    (loop $loop1
+     (if
+      (get_local $3)
+      (br $out)
+     )
+     (loop $loop2
+      (if
+       (get_local $4)
+       (br $out)
+      )
+      (set_local $1
+       (tee_local $5
+        (tee_local $4
+         (i32.const 1)
+        )
+       )
+      )
+      (br_if $loop2
+       (i32.const 3)
+      )
+     )
+     (set_local $2
+      (tee_local $5
+       (tee_local $4
+        (tee_local $3
+         (i32.const 2)
+        )
+       )
+      )
+     )
+     (br $loop1)
+    )
+   )
+   (drop
+    (get_local $5)
    )
   )
  )
