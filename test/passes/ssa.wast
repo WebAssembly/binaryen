@@ -239,5 +239,49 @@
       )
     )
   )
+  (func $loop-nesting
+    (param $x i32)
+    (block $out
+      (loop $loop1
+        (if
+          (get_local $x)
+          (br $out)
+        )
+        (loop $loop2
+          (if
+            (get_local $x)
+            (br $out)
+          )
+          (set_local $x (i32.const 1))
+          (br $loop2)
+        )
+        (set_local $x (i32.const 2))
+        (br $loop1)
+      )
+    )
+    (drop (get_local $x)) ;; can receive from either set, or input param
+  )
+  (func $loop-nesting-2
+    (param $x i32)
+    (block $out
+      (loop $loop1
+        (if
+          (get_local $x)
+          (br $out)
+        )
+        (loop $loop2
+          (if
+            (get_local $x)
+            (br $out)
+          )
+          (set_local $x (i32.const 1))
+          (br_if $loop2 (i32.const 3)) ;; add fallthrough
+        )
+        (set_local $x (i32.const 2))
+        (br $loop1)
+      )
+    )
+    (drop (get_local $x)) ;; can receive from either set, or input param
+  )
 )
 
