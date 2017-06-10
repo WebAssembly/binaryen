@@ -23,6 +23,8 @@
 //       can utilize
 //
 
+#include <iterator>
+
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
