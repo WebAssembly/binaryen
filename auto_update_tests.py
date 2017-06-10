@@ -4,7 +4,7 @@ import os, sys, subprocess, difflib
 
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
-    ASM2WASM, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS)
+    ASM2WASM, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL)
 
 print '[ processing and updating testcases... ]\n'
 
@@ -242,7 +242,7 @@ for t in os.listdir(os.path.join('test', 'ctor-eval')):
     print '..', t
     t = os.path.join('test', 'ctor-eval', t)
     ctors = open(t + '.ctors').read().strip()
-    cmd = [os.path.join('bin', 'wasm-ctor-eval'), t, '-o', 'a.wast', '-S', '--ctors', ctors]
+    cmd = WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
     stdout = run_command(cmd)
     actual = open('a.wast').read()
     out = t + '.out'
