@@ -833,7 +833,7 @@
   )
   (func $loop-if (result i32)
     (block $outer i32
-      (loop $typed i32
+      (loop $typed (result i32)
         ;; we can move the br after us into our if-else, which means we are the final
         ;; element in the block,
         (if

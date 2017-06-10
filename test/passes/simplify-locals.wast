@@ -396,7 +396,7 @@
         (i32.const 1337)
       )
       (drop
-        (loop $loop-in5 i32
+        (loop $loop-in5 (result i32)
           (drop
             (get_local $a)
           )

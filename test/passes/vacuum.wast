@@ -109,7 +109,7 @@
       (nop)
     )
     (drop
-      (loop $loop-in5 i32
+      (loop $loop-in5 (result i32)
         (drop
           (get_local $0)
         )

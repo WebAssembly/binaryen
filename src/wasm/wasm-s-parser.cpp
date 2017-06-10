@@ -1062,13 +1062,24 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     }
     curr->name = nameMapper.pushLabelName(sName);
     if (i >= s.size()) break; // empty block
+
+    // block signature
+    // TODO(sbc): Remove support for old result syntax once the spec tests
+    // are updated.
     if (s[i]->isStr()) {
-      // block signature
       curr->type = stringToWasmType(s[i++]->str());
-      if (i >= s.size()) break; // empty block
     } else {
-      curr->type = none;
+      Element& params = *s[i];
+      IString id = params[0]->str();
+      if (id == RESULT) {
+        curr->type = stringToWasmType(params[1]->str());
+        i++;
+      } else {
+        curr->type = none;
+      }
     }
+
+    if (i >= s.size()) break; // empty block
     auto& first = *s[i];
     if (first[0]->str() == BLOCK) {
       // recurse
@@ -1086,6 +1097,9 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     size_t i = 1;
     if (i < s.size()) {
       while (i < s.size() && s[i]->isStr()) {
+        i++;
+      }
+      if (i < s.size() && (*s[i])[0]->str() == RESULT) {
         i++;
       }
       if (t < int(stack.size()) - 1) {
@@ -1217,9 +1231,19 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
     sName = "if";
   }
   auto label = nameMapper.pushLabelName(sName);
+  // if signature
+  // TODO(sbc): Remove support for old result syntax once the spec tests
+  // are updated.
   WasmType type = none;
   if (s[i]->isStr()) {
     type = stringToWasmType(s[i++]->str());
+  } else {
+    Element& params = *s[i];
+    IString id = params[0]->str();
+    if (id == RESULT) {
+      type = stringToWasmType(params[1]->str());
+      i++;
+    }
   }
   ret->condition = parseExpression(s[i++]);
   ret->ifTrue = parseExpression(*s[i++]);
@@ -1266,9 +1290,21 @@ Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
   }
   ret->name = nameMapper.pushLabelName(sName);
   ret->type = none;
-  if (i < s.size() && s[i]->isStr()) {
-    // block signature
-    ret->type = stringToWasmType(s[i++]->str());
+
+  if (i < s.size()) {
+    // loop signature
+    // TODO(sbc): Remove support for old result syntax once the spec tests
+    // are updated.
+    if (s[i]->isStr()) {
+      ret->type = stringToWasmType(s[i++]->str());
+    } else {
+      Element& params = *s[i];
+      IString id = params[0]->str();
+      if (id == RESULT) {
+        ret->type = stringToWasmType(params[1]->str());
+        i++;
+      }
+    }
   }
   ret->body = makeMaybeBlock(s, i, ret->type);
   nameMapper.popLabelName(ret->name);

@@ -574,7 +574,7 @@
         )
       ))
       (drop (i32.add (i32.const 1)
-        (loop i32
+        (loop (result i32)
           (i32.const 5)
         )
       ))

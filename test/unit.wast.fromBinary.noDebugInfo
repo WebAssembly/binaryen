@@ -445,7 +445,7 @@
   )
  )
  (func $20 (type $7) (param $var$0 f64) (result f64)
-  (loop $label$0 f64
+  (loop $label$0 (result f64)
    (drop
     (get_local $var$0)
    )

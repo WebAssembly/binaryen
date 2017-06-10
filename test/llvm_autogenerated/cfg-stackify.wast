@@ -231,7 +231,7 @@
    (get_local $0)
    (i32.const 0)
   )
-  (loop $label$0 i32
+  (loop $label$0 (result i32)
    (i32.store
     (get_local $0)
     (i32.const 1)
@@ -335,7 +335,7 @@
   )
  )
  (func $doublediamond_in_a_loop (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (loop $label$0 i32
+  (loop $label$0 (result i32)
    (i32.store
     (get_local $2)
     (i32.const 0)
@@ -611,7 +611,7 @@
   (unreachable)
  )
  (func $test8 (result i32)
-  (loop $label$0 i32
+  (loop $label$0 (result i32)
    (br_if $label$0
     (i32.const 0)
    )
