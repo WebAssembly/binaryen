@@ -16,9 +16,14 @@
 
 //
 // Transforms code into SSA form. That ensures each variable has a
-// single assignment. For phis, we do not add a new node to the AST,
-// so the result is multiple assignments but with the guarantee that
-// they all lead to the same get_local
+// single assignment.
+//
+// Note that "SSA form" usually means SSA + phis. This pass does not
+// create phis, we still emit something in our AST, which does not
+// have a phi instruction. What we emit when control flow joins
+// require more than one input to a value is multiple assignments
+// to the same local, with the SSA guarantee that one and only one
+// of those assignments will arrive at the uses of that "merge local".
 // TODO: consider adding a "proper" phi node to the AST, that passes
 //       can utilize
 //
