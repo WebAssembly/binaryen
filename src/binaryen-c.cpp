@@ -913,9 +913,9 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
 
   auto* wasm = new Module;
   try {
-    SExpressionParser parser(text);
+    SExpressionParser parser(const_cast<char*>(text));
     Element& root = *parser.root;
-    SExpressionWasmBuilder builder(wasm, *root[0]);
+    SExpressionWasmBuilder builder(*wasm, *root[0]);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm text";
