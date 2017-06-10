@@ -56,7 +56,69 @@ else
   # See https://gist.github.com/rsms/e33c61a25a31c08260161a087be03169
 fi
 
+echo "building wasm.js"
 
+"$EMSCRIPTEN/em++" \
+  $EMCC_ARGS \
+  src/wasm-js.cpp \
+  src/ast/ExpressionAnalyzer.cpp \
+  src/ast/ExpressionManipulator.cpp \
+  src/passes/pass.cpp \
+  src/passes/CoalesceLocals.cpp \
+  src/passes/CodePushing.cpp \
+  src/passes/DeadCodeElimination.cpp \
+  src/passes/DuplicateFunctionElimination.cpp \
+  src/passes/ExtractFunction.cpp \
+  src/passes/FlattenControlFlow.cpp \
+  src/passes/Inlining.cpp \
+  src/passes/InstrumentMemory.cpp \
+  src/passes/LegalizeJSInterface.cpp \
+  src/passes/LocalCSE.cpp \
+  src/passes/LogExecution.cpp \
+  src/passes/MemoryPacking.cpp \
+  src/passes/MergeBlocks.cpp \
+  src/passes/Metrics.cpp \
+  src/passes/NameList.cpp \
+  src/passes/NameManager.cpp \
+  src/passes/OptimizeInstructions.cpp \
+  src/passes/PickLoadSigns.cpp \
+  src/passes/PostEmscripten.cpp \
+  src/passes/Precompute.cpp \
+  src/passes/PrintCallGraph.cpp \
+  src/passes/Print.cpp \
+  src/passes/RelooperJumpThreading.cpp \
+  src/passes/RemoveImports.cpp \
+  src/passes/RemoveMemory.cpp \
+  src/passes/RemoveUnusedBrs.cpp \
+  src/passes/RemoveUnusedModuleElements.cpp \
+  src/passes/RemoveUnusedNames.cpp \
+  src/passes/ReorderFunctions.cpp \
+  src/passes/ReorderLocals.cpp \
+  src/passes/ReReloop.cpp \
+  src/passes/SimplifyLocals.cpp \
+  src/passes/Vacuum.cpp \
+  src/emscripten-optimizer/parser.cpp \
+  src/emscripten-optimizer/simple_ast.cpp \
+  src/emscripten-optimizer/optimizer-shared.cpp \
+  src/wasm-emscripten.cpp \
+  src/support/colors.cpp \
+  src/support/safe_integer.cpp \
+  src/support/bits.cpp \
+  src/support/threads.cpp \
+  src/asmjs/asm_v_wasm.cpp \
+  src/asmjs/shared-constants.cpp \
+  src/wasm/wasm.cpp \
+  src/wasm/wasm-type.cpp \
+  src/wasm/wasm-s-parser.cpp \
+  src/wasm/wasm-binary.cpp \
+  src/wasm/literal.cpp \
+  src/cfg/Relooper.cpp \
+  -Isrc/ \
+  -o bin/wasm${OUT_FILE_SUFFIX}.js \
+  -s MODULARIZE=1 \
+  -s 'EXPORT_NAME="WasmJS"'
+  #-DWASM_JS_DEBUG
+  #-DWASM_INTERPRETER_DEBUG=2
 
 echo "building binaryen.js to bitcode"
 
