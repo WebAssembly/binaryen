@@ -257,4 +257,20 @@
       (i32.const 1024)
     )
   )
+  (func $tees
+    (local $y i32)
+    (drop ;; a "use", so we can't alter the value
+      (tee_local $y
+        (i32.load8_s
+          (i32.const 1024)
+        )
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $y)
+        (i32.const 255)
+      )
+    )
+  )
 )
