@@ -1025,9 +1025,6 @@ raw:
 )
 optimized:
 (module
- (type $v (func))
- (type $vi (func (param i32)))
- (type $i (func (result i32)))
  (memory $0 0)
 )
 module loaded from binary form:
@@ -2882,9 +2879,6 @@ raw:
 optimized:
   BinaryenModulePrint(the_module);
 (module
- (type $v (func))
- (type $vi (func (param i32)))
- (type $i (func (result i32)))
  (memory $0 0)
 )
   BinaryenModuleDispose(the_module);

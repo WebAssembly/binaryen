@@ -1,10 +1,14 @@
 (module
  (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32) (result i32)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $called_indirect)
  (memory $0 0)
  (export "memory" (memory $0))
  (export "exported" (func $exported))
+ (export "other1" (func $other1))
+ (export "other2" (func $other2))
  (start $start)
  (func $start (type $0)
   (call $called0)
@@ -30,6 +34,49 @@
  )
  (func $called4 (type $0)
   (call $called3)
+ )
+ (func $other1 (type $1) (param $0 i32)
+  (call_indirect $0
+   (i32.const 0)
+  )
+  (call_indirect $0
+   (i32.const 0)
+  )
+  (call_indirect $0
+   (i32.const 0)
+  )
+  (call_indirect $0
+   (i32.const 0)
+  )
+  (call_indirect $1
+   (i32.const 0)
+   (i32.const 0)
+  )
+  (call_indirect $1
+   (i32.const 0)
+   (i32.const 0)
+  )
+  (drop
+   (call_indirect $2
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (call_indirect $2
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (call_indirect $2
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+ (func $other2 (type $1) (param $0 i32)
+  (unreachable)
  )
 )
 (module

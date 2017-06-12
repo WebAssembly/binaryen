@@ -17,6 +17,8 @@
 #ifndef wasm_support_utilities_h
 #define wasm_support_utilities_h
 
+#include "compiler-support.h"
+
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -69,7 +71,7 @@ class Fatal {
     std::cerr << arg;
     return *this;
   }
-  ~Fatal() {
+  WASM_NORETURN ~Fatal() {
     std::cerr << "\n";
     exit(1);
   }
