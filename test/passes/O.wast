@@ -1,6 +1,6 @@
 (module
   (func $ret (export "ret") (result i32)
-    (block $out i32
+    (block $out (result i32)
       (drop (call $ret))
       (if (call $ret)
         (return

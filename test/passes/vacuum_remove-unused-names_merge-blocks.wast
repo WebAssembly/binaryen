@@ -6,7 +6,7 @@
   ;; in that position
   (func $return-block (param $x i32) (result i32)
     (return
-      (block i32
+      (block (result i32)
         (set_local $x (get_local $x))
         (get_local $x)
       )

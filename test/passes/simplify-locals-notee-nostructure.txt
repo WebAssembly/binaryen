@@ -20,7 +20,7 @@
   )
   (nop)
   (drop
-   (if i32
+   (if (result i32)
     (i32.const 2)
     (i32.const 3)
     (i32.const 4)
@@ -28,7 +28,7 @@
   )
   (nop)
   (drop
-   (block $block i32
+   (block $block (result i32)
     (i32.const 5)
    )
   )

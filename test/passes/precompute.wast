@@ -59,7 +59,7 @@
       (br $c)
     )
     (drop
-      (block $val i32
+      (block $val (result i32)
         (drop (br_if $val (i32.const 100) (i32.const 0)))
         (call $x (i32.const 4))
         (drop (br_if $val (i32.const 101) (i32.const 1)))
@@ -74,7 +74,7 @@
       )
     )
     (drop
-      (block $d i32
+      (block $d (result i32)
         (call $x (i32.const 5))
         (block $e
           (drop (br_if $d (br $e) (i32.const 1)))
@@ -87,7 +87,7 @@
       )
     )
     (drop
-      (block $d i32
+      (block $d (result i32)
         (call $x (i32.const 6))
         (block $e
           (drop (br_if $d (br $e) (i32.const 0)))
@@ -99,7 +99,7 @@
       )
     )
     (drop
-      (block $d i32
+      (block $d (result i32)
         (call $x (i32.const 7))
         (block $e
           (drop (br_if $d (i32.const 1) (br $e)))
@@ -108,7 +108,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -124,7 +124,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -140,7 +140,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -156,7 +156,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -197,11 +197,11 @@
   )
   (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky
    (drop
-    (block $label$1 i32
+    (block $label$1 (result i32)
      (drop
       (br_if $label$1
        (i32.const 100)
-       (block $label$3 i32
+       (block $label$3 (result i32)
         (unreachable)
        )
       )

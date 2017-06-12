@@ -131,7 +131,7 @@
   )
  )
  (func $i64u-div (param $0 i64) (param $1 i64) (result i64)
-  (if i64
+  (if (result i64)
    (i64.eqz
     (get_local $1)
    )
@@ -143,12 +143,12 @@
   )
  )
  (func $i64s-div (param $0 i64) (param $1 i64) (result i64)
-  (if i64
+  (if (result i64)
    (i64.eqz
     (get_local $1)
    )
    (i64.const 0)
-   (if i64
+   (if (result i64)
     (i32.and
      (i64.eq
       (get_local $0)
@@ -168,7 +168,7 @@
   )
  )
  (func $i64u-rem (param $0 i64) (param $1 i64) (result i64)
-  (if i64
+  (if (result i64)
    (i64.eqz
     (get_local $1)
    )
@@ -180,7 +180,7 @@
   )
  )
  (func $i64s-rem (param $0 i64) (param $1 i64) (result i64)
-  (if i64
+  (if (result i64)
    (i64.eqz
     (get_local $1)
    )
@@ -317,7 +317,7 @@
   )
  )
  (func $switch64 (param $0 i64) (result i32)
-  (block $switch i32
+  (block $switch (result i32)
    (block $switch-default
     (block $switch-case0
      (block $switch-case

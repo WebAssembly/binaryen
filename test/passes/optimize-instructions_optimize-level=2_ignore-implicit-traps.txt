@@ -23,8 +23,8 @@
      )
     )
     (set_local $0
-     (if i32
-      (if i32
+     (if (result i32)
+      (if (result i32)
        (i32.rem_s
         (i32.add
          (i32.mul
@@ -108,7 +108,7 @@
      )
     )
     (set_local $0
-     (if i32
+     (if (result i32)
       (i32.or
        (i32.eqz
         (i32.rem_s
@@ -191,8 +191,8 @@
      )
     )
     (set_local $0
-     (if i32
-      (if i32
+     (if (result i32)
+      (if (result i32)
        (i32.rem_u
         (i32.add
          (i32.mul
