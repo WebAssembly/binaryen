@@ -12,8 +12,8 @@
  (func $return_void
  )
  (func $fallthrough_return_nested_loop_i32 (result i32)
-  (loop $label$0 i32
-   (loop $label$1 i32
+  (loop $label$0 (result i32)
+   (loop $label$1 (result i32)
     (return
      (i32.const 1)
     )

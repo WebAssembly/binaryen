@@ -768,7 +768,7 @@ public:
           // We accept concrete => undefined,
           // e.g.
           //
-          //  (drop (block i32 (unreachable)))
+          //  (drop (block (result i32) (unreachable)))
           //
           // The block has an added type, not derived from the ast itself, so it is
           // ok for it to be either i32 or unreachable.

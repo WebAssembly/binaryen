@@ -351,7 +351,7 @@
   (type $0 (func))
   (func $keep2 (type $0)
     (drop
-      (block $foo i32
+      (block $foo (result i32)
         (br_table $foo $foo
           (i32.const 0)
           (i32.const 0)
@@ -361,7 +361,7 @@
   )
   (func $other (type $0)
     (drop
-      (block $bar i32
+      (block $bar (result i32)
         (br_table $bar $bar
           (i32.const 0)
           (i32.const 1)

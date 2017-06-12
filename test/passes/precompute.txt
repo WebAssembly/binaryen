@@ -30,7 +30,7 @@
    (br $c)
   )
   (drop
-   (block $val i32
+   (block $val (result i32)
     (nop)
     (call $x
      (i32.const 4)
@@ -45,7 +45,7 @@
   )
   (nop)
   (drop
-   (block $d0 i32
+   (block $d0 (result i32)
     (call $x
      (i32.const 5)
     )
@@ -54,7 +54,7 @@
    )
   )
   (drop
-   (block $d2 i32
+   (block $d2 (result i32)
     (call $x
      (i32.const 6)
     )
@@ -63,7 +63,7 @@
    )
   )
   (drop
-   (block $d4 i32
+   (block $d4 (result i32)
     (call $x
      (i32.const 7)
     )

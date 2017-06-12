@@ -233,13 +233,13 @@
   (local $J f64)
   (set_local $J
    (f64.sub
-    (block f64
+    (block (result f64)
      (drop
       (f64.const 0.1)
      )
      (f64.const 5.1)
     )
-    (block f64
+    (block (result f64)
      (drop
       (f64.const 3.2)
      )
@@ -384,7 +384,7 @@
   )
  )
  (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
-  (if i32
+  (if (result i32)
    (i32.eqz
     (get_local $1)
    )
@@ -445,7 +445,7 @@
   (local $z f32)
   (local $asm2wasm_i32_temp i32)
   (set_local $x
-   (block i32
+   (block (result i32)
     (set_local $asm2wasm_i32_temp
      (i32.const 0)
     )
@@ -722,20 +722,20 @@
     (i32.add
      (i32.add
       (i32.add
-       (block i32
+       (block (result i32)
         (drop
          (i32.const 1)
         )
         (get_local $x)
        )
-       (block i32
+       (block (result i32)
         (drop
          (i32.const 2)
         )
         (i32.const 3)
        )
       )
-      (block i32
+      (block (result i32)
        (block
         (block
          (drop
@@ -752,19 +752,19 @@
        (i32.const 7)
       )
      )
-     (block i32
+     (block (result i32)
       (drop
        (i32.const 8)
       )
-      (block i32
+      (block (result i32)
        (drop
         (i32.const 9)
        )
-       (block i32
+       (block (result i32)
         (drop
          (i32.const 10)
         )
-        (block i32
+        (block (result i32)
          (drop
           (i32.const 11)
          )
@@ -780,7 +780,7 @@
    (i32.add
     (i32.add
      (i32.add
-      (block i32
+      (block (result i32)
        (drop
         (call $lb
          (i32.const 1)
@@ -788,7 +788,7 @@
        )
        (get_local $x)
       )
-      (block i32
+      (block (result i32)
        (drop
         (call $lb
          (i32.const 2)
@@ -799,7 +799,7 @@
        )
       )
      )
-     (block i32
+     (block (result i32)
       (block
        (block
         (drop
@@ -824,25 +824,25 @@
       )
      )
     )
-    (block i32
+    (block (result i32)
      (drop
       (call $lb
        (i32.const 8)
       )
      )
-     (block i32
+     (block (result i32)
       (drop
        (call $lb
         (i32.const 9)
        )
       )
-      (block i32
+      (block (result i32)
        (drop
         (call $lb
          (i32.const 10)
         )
        )
-       (block i32
+       (block (result i32)
         (drop
          (call $lb
           (i32.const 11)
@@ -980,7 +980,7 @@
  (func $useSetGlobal (result i32)
   (local $x i32)
   (set_local $x
-   (block i32
+   (block (result i32)
     (set_global $Int
      (i32.const 10)
     )
@@ -991,7 +991,7 @@
    (i32.const 20)
   )
   (return
-   (block i32
+   (block (result i32)
     (set_global $Int
      (i32.const 30)
     )
@@ -1001,7 +1001,7 @@
  )
  (func $usesSetGlobal2 (result i32)
   (return
-   (block i32
+   (block (result i32)
     (block
      (set_global $Int
       (i32.const 40)
@@ -1071,7 +1071,7 @@
   (local $x i32)
   (local $y f64)
   (set_local $x
-   (if i32
+   (if (result i32)
     (call $return_int)
     (i32.trunc_s/f64
      (call $abort
@@ -1084,7 +1084,7 @@
    )
   )
   (set_local $y
-   (if f64
+   (if (result f64)
     (call $return_int)
     (call $abort
      (f64.convert_s/i32
@@ -1938,7 +1938,7 @@
  (func $indirectInSequence
   (local $i1 i32)
   (set_local $i1
-   (block i32
+   (block (result i32)
     (call_indirect $FUNCSIG$vi
      (i32.const 0)
      (i32.add

@@ -998,7 +998,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (get_local $x)
           (get_local $y)
@@ -1014,7 +1014,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (get_local $y)
           (get_local $x)
@@ -1030,7 +1030,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (unreachable)
           (get_local $x)
@@ -1046,7 +1046,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (unreachable)
           (get_local $y)
@@ -1063,7 +1063,7 @@
     (loop $top
       (drop
         (tee_local $x
-          (if i32
+          (if (result i32)
             (i32.const 1)
             (get_local $x)
             (i32.const 2)
