@@ -41,5 +41,8 @@
     (get_local $x)
    )
   )
+  (drop
+   (unreachable)
+  )
  )
 )
