@@ -1,11 +1,7 @@
 (module
- (type $0 (func (param i32 i32)))
  (type $1 (func (param i32) (result i32)))
  (type $2 (func (result i32)))
  (type $3 (func))
- (type $0$0 (func (param i32 i32)))
- (type $1$0 (func (result i32)))
- (type $2$0 (func))
  (import "env" "memoryBase" (global $import$0 i32))
  (import "env" "_puts" (func $import$1 (param i32) (result i32)))
  (import "env" "memory" (memory $0 256))
@@ -61,7 +57,7 @@
    )
   )
  )
- (func $_foo (type $1$0) (result i32)
+ (func $_foo (type $2) (result i32)
   (local $var$0 i32)
   (block $label$0 i32
    (block $label$1 i32
@@ -72,10 +68,10 @@
    )
   )
  )
- (func $runPostSets$0 (type $2$0)
+ (func $runPostSets$0 (type $3)
   (nop)
  )
- (func $__post_instantiate$0 (type $2$0)
+ (func $__post_instantiate$0 (type $3)
   (block $label$0
    (block $label$1
     (set_global $global$0$0

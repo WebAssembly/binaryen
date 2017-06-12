@@ -1,6 +1,5 @@
 (module
  (type $FUNCSIG$v (func))
- (type $FUNCSIG$v$0 (func))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "memory" (memory $0 256))
@@ -23,7 +22,7 @@
    (get_global $b-global)
   )
  )
- (func $bar-func (type $FUNCSIG$v$0)
+ (func $bar-func (type $FUNCSIG$v)
   (nop)
   (drop
    (get_global $a-global)
