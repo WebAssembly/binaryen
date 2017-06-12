@@ -18,6 +18,11 @@ FUNCTION(ADD_COMPILE_FLAG value)
   ENDFOREACH(variable)
 ENDFUNCTION()
 
+FUNCTION(ADD_CXX_FLAG value)
+  MESSAGE(STATUS "Building with ${value}")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${value}" PARENT_SCOPE)
+ENDFUNCTION()
+
 FUNCTION(ADD_DEBUG_COMPILE_FLAG value)
   IF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     MESSAGE(STATUS "Building with ${value}")
@@ -94,7 +99,7 @@ ELSE()
   SET(THREADS_PREFER_PTHREAD_FLAG ON)
   SET(CMAKE_THREAD_PREFER_PTHREAD ON)
   FIND_PACKAGE(Threads REQUIRED)
-  ADD_COMPILE_FLAG("-std=c++11")
+  ADD_CXX_FLAG("-std=c++11")
   if (NOT EMSCRIPTEN)
     # try to get the target architecture by compiling a dummy.c file and
     # checking the architecture using the file command.
@@ -103,6 +108,7 @@ ELSE()
       COMPILE_OK
       ${PROJECT_BINARY_DIR}
       ${PROJECT_BINARY_DIR}/dummy.c
+      OUTPUT_VARIABLE COMPILE_OUTPUT
       COPY_FILE ${PROJECT_BINARY_DIR}/dummy
     )
     if (COMPILE_OK)
@@ -130,7 +136,7 @@ ELSE()
         message(WARNING "Error running file on dummy executable")
       endif ()
     else ()
-      message(WARNING "Error compiling dummy.c file")
+      message(WARNING "Error compiling dummy.c file: ${COMPILE_OUTPUT}")
     endif ()
 
     if (TARGET_ARCH STREQUAL "i386")
