@@ -155,6 +155,7 @@ int main(int argc, const char *argv[]) {
   if (generateEmscriptenGlue) {
     emscripten::generateRuntimeFunctions(linker.getOutput());
   }
+  emscripten::generateStackRestoreFunction(linker.getOutput());
 
   linker.layout();
 

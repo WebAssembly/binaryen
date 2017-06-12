@@ -27,6 +27,7 @@ namespace emscripten {
 
 void generateRuntimeFunctions(LinkerObject& linker);
 void generateMemoryGrowthFunction(Module&);
+void generateStackRestoreFunction(LinkerObject& linker);
 
 // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
 // signature in the indirect function table.

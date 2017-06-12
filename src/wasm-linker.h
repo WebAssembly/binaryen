@@ -159,6 +159,7 @@ class LinkerObject {
   friend class Linker;
 
   Module wasm;
+  Name stackPointerGlobalName;
 
  private:
   struct StaticObject {

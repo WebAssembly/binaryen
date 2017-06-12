@@ -46,6 +46,7 @@ class S2WasmBuilder {
   std::unique_ptr<LinkerObject::SymbolInfo> symbolInfo;
   std::unordered_map<uint32_t, uint32_t> fileIndexMap;
   std::vector<Global*> globalVars;
+  int stackPointerGlobalIndex;
 
  public:
   S2WasmBuilder(const char* input, bool debug)
@@ -54,7 +55,8 @@ class S2WasmBuilder {
         debug(debug),
         wasm(nullptr),
         allocator(nullptr),
-        linkerObj(nullptr)
+        linkerObj(nullptr),
+        stackPointerGlobalIndex(-1)
         {}
 
   void build(LinkerObject *obj) {
@@ -65,7 +67,15 @@ class S2WasmBuilder {
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
     for (auto global : globalVars) {
+      auto c = allocator->alloc<Const>();
+      c->type = i32;
+      c->value = Literal(0);
+      global->init = c;
       wasm->addGlobal(global);
+    }
+    if (stackPointerGlobalIndex != -1) {
+      auto g = globalVars[stackPointerGlobalIndex];
+      obj->stackPointerGlobalName = g->name;
     }
 
     s = inputStart;
@@ -474,6 +484,9 @@ class S2WasmBuilder {
         global->type = type;
         global->mutable_ = true;
         globalVars.push_back(global);
+      } else if (match(".stack_pointer")) {
+        assert(stackPointerGlobalIndex == -1);
+        stackPointerGlobalIndex = getInt();
       } else {
         // add data aliases
         Name lhs = getStrToSep();
@@ -1272,9 +1285,16 @@ class S2WasmBuilder {
         Name assign = getAssign();
         skipComma();
         auto curr = allocator->alloc<GetLocal>();
-        curr->index = getInt();
-        curr->type = i32;
+        int index = getInt();
+        curr->index = index;
+        curr->type = func->getLocalType(index);
         setOutput(curr, assign);
+      } else if (match("set_local")) {
+        auto curr = allocator->alloc<SetLocal>();
+        curr->index = getInt();
+        skipComma();
+        curr->value = getInput();
+        addToBlock(curr);
       } else if (match("get_global")) {
         Name assign = getAssign();
         skipComma();

@@ -65,32 +65,40 @@ void addStackPointerRelocation(LinkerObject& linker, uint32_t* data) {
   ));
 }
 
-Load* generateLoadStackPointer(Builder& builder, LinkerObject& linker) {
-  Load* load = builder.makeLoad(
-    /* bytes  =*/ 4,
-    /* signed =*/ false,
-    /* offset =*/ 0,
-    /* align  =*/ 4,
-    /* ptr    =*/ builder.makeConst(Literal(0)),
-    /* type   =*/ i32
-  );
-  addStackPointerRelocation(linker, &load->offset.addr);
-  return load;
+Expression* generateLoadStackPointer(Builder& builder, LinkerObject& linker) {
+  if (linker.stackPointerGlobalName.str) {
+    return builder.makeGetGlobal(linker.stackPointerGlobalName, i32);
+  } else {
+    Load* load = builder.makeLoad(
+      /* bytes  =*/ 4,
+      /* signed =*/ false,
+      /* offset =*/ 0,
+      /* align  =*/ 4,
+      /* ptr    =*/ builder.makeConst(Literal(0)),
+      /* type   =*/ i32
+    );
+    addStackPointerRelocation(linker, &load->offset.addr);
+    return load;
+  }
 }
 
-Store* generateStoreStackPointer(Builder& builder,
-                                 LinkerObject& linker,
-                                 Expression* value) {
-  Store* store = builder.makeStore(
-    /* bytes  =*/ 4,
-    /* offset =*/ 0,
-    /* align  =*/ 4,
-    /* ptr    =*/ builder.makeConst(Literal(0)),
-    /* value  =*/ value,
-    /* type   =*/ i32
-  );
-  addStackPointerRelocation(linker, &store->offset.addr);
-  return store;
+Expression* generateStoreStackPointer(Builder& builder,
+                                      LinkerObject& linker,
+                                      Expression* value) {
+  if (linker.stackPointerGlobalName.str) {
+    return builder.makeSetGlobal(linker.stackPointerGlobalName, value);
+  } else {
+    Store* store = builder.makeStore(
+      /* bytes  =*/ 4,
+      /* offset =*/ 0,
+      /* align  =*/ 4,
+      /* ptr    =*/ builder.makeConst(Literal(0)),
+      /* value  =*/ value,
+      /* type   =*/ i32
+    );
+    addStackPointerRelocation(linker, &store->offset.addr);
+    return store;
+  }
 }
 
 void generateStackSaveFunction(LinkerObject& linker) {
@@ -115,7 +123,7 @@ void generateStackAllocFunction(LinkerObject& linker) {
   Function* function = builder.makeFunction(
     name, std::move(params), i32, { { "1", i32 } }
   );
-  Load* loadStack = generateLoadStackPointer(builder, linker);
+  Expression* loadStack = generateLoadStackPointer(builder, linker);
   SetLocal* setStackLocal = builder.makeSetLocal(1, loadStack);
   GetLocal* getStackLocal = builder.makeGetLocal(1, i32);
   GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
@@ -128,7 +136,7 @@ void generateStackAllocFunction(LinkerObject& linker) {
     builder.makeBinary(AddInt32, add, addConst),
     builder.makeConst(Literal(~bitMask))
   );
-  Store* storeStack = generateStoreStackPointer(builder, linker, maskedAdd);
+  Expression* storeStack = generateStoreStackPointer(builder, linker, maskedAdd);
 
   Block* block = builder.makeBlock();
   block->list.push_back(setStackLocal);
@@ -149,7 +157,7 @@ void generateStackRestoreFunction(LinkerObject& linker) {
     name, std::move(params), none, {}
   );
   GetLocal* getArg = builder.makeGetLocal(0, i32);
-  Store* store = generateStoreStackPointer(builder, linker, getArg);
+  Expression* store = generateStoreStackPointer(builder, linker, getArg);
 
   function->body = store;
 
@@ -159,7 +167,6 @@ void generateStackRestoreFunction(LinkerObject& linker) {
 void generateRuntimeFunctions(LinkerObject& linker) {
   generateStackSaveFunction(linker);
   generateStackAllocFunction(linker);
-  generateStackRestoreFunction(linker);
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
