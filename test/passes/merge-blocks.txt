@@ -42,7 +42,7 @@
  (func $undroppable-block-br-if (type $1) (param $0 i32)
   (block $block
    (drop
-    (block $x i32
+    (block $x (result i32)
      (call $undroppable-block-br-if
       (br_if $x
        (i32.const 1)

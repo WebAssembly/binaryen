@@ -89,7 +89,7 @@
   (if
    (i32.const 0)
    (drop
-    (block $out11 i32
+    (block $out11 (result i32)
      (br $out11
       (unreachable)
      )
@@ -103,7 +103,7 @@
   (if
    (i32.const 0)
    (drop
-    (block $out13 i32
+    (block $out13 (result i32)
      (br_if $out13
       (unreachable)
       (i32.const 0)
@@ -118,7 +118,7 @@
   (if
    (i32.const 0)
    (drop
-    (block $out15 i32
+    (block $out15 (result i32)
      (br_if $out15
       (unreachable)
       (unreachable)
@@ -398,7 +398,7 @@
   )
  )
  (func $typed-block-none-then-unreachable (type $2) (result i32)
-  (block $top-typed i32
+  (block $top-typed (result i32)
    (block $switch$0
     (return
      (i32.const 0)
@@ -450,7 +450,7 @@
   (i32.const 0)
  )
  (func $unreachable-br (type $2) (result i32)
-  (block $out i32
+  (block $out (result i32)
    (br $out
     (br $out
      (i32.const 0)
@@ -464,7 +464,7 @@
   )
  )
  (func $unreachable-block-ends-switch (type $2) (result i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (block $label$3
     (nop)
     (br_table $label$3
@@ -476,7 +476,7 @@
   )
  )
  (func $unreachable-block-ends-br_if (result i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (block $label$2
     (nop)
     (br_if $label$2
@@ -488,7 +488,7 @@
   )
  )
  (func $unreachable-brs-3 (result i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (br $label$0
     (grow_memory
      (br $label$0
@@ -502,9 +502,9 @@
  (func $unreachable-brs-4 (param $var$0 i32) (result i32)
   (i32.add
    (i32.const 1)
-   (block $label$0 i32
+   (block $label$0 (result i32)
     (br $label$0
-     (block $label$1 i32
+     (block $label$1 (result i32)
       (drop
        (br_if $label$0
         (i32.const 4104)
@@ -520,21 +520,21 @@
  )
  (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $2 i64)
-  (if i64
+  (if (result i64)
    (i64.eqz
     (get_local $var$0)
    )
-   (block $label$0 i64
+   (block $label$0 (result i64)
     (get_local $var$1)
    )
-   (block $label$1 i64
+   (block $label$1 (result i64)
     (call $call-unreach
      (i64.sub
       (get_local $var$0)
       (i64.const 1)
      )
      (i64.mul
-      (block $block i64
+      (block $block (result i64)
        (set_local $2
         (get_local $var$0)
        )
@@ -556,16 +556,16 @@
       (drop (i32.add (br $out) (i32.const 1)))
       (drop (i32.add (i32.const 1) (br_table $out $out $out $out (i32.const 3))))
       (drop (i32.add (i32.const 1)
-        (block i32
+        (block (result i32)
           (drop (i32.const 2))
           (drop (i32.const 3))
           (i32.const 4)
         )
       ))
       (drop (i32.add (i32.const 1)
-        (block $in i32
+        (block $in (result i32)
           (drop
-            (block $switch-in i32
+            (block $switch-in (result i32)
               (br_table $in $switch-in $in (i32.const 2) (i32.const 777))
             )
           )
@@ -579,7 +579,7 @@
         )
       ))
       (drop (i32.add (i32.const 1)
-        (if i32
+        (if (result i32)
           (i32.const 6)
           (i32.const 7)
           (i32.const 8)
@@ -615,7 +615,7 @@
       )
       (drop
         (select
-          (if i32
+          (if (result i32)
             (i32.const 11)
             (i32.const 12)
             (i32.const 13)
@@ -627,7 +627,7 @@
       (drop
         (select
           (i32.const 9)
-          (if i32
+          (if (result i32)
             (i32.const 11)
             (i32.const 12)
             (i32.const 13)
@@ -639,7 +639,7 @@
         (select
           (i32.const 9)
           (i32.const 10)
-          (if i32
+          (if (result i32)
             (i32.const 11)
             (i32.const 12)
             (i32.const 13)
@@ -648,13 +648,13 @@
       )
       (drop
         (select
-          (if i32
+          (if (result i32)
             (i32.const 11)
             (i32.const 12)
             (i32.const 13)
           )
           (i32.const 14)
-          (if i32
+          (if (result i32)
             (i32.const 15)
             (i32.const 16)
             (i32.const 17)
@@ -664,14 +664,14 @@
       (drop (i32.add (i32.const 1) (return)))
       (drop (i32.add (i32.const 1) (unreachable)))
       (drop
-        (if i32
-          (if i32
+        (if (result i32)
+          (if (result i32)
             (i32.const 5)
             (i32.const 6)
             (i32.const 7)
           )
           (i32.const 8)
-          (if i32
+          (if (result i32)
             (i32.const 9)
             (i32.const 10)
             (i32.const 11)
@@ -679,7 +679,7 @@
         )
       )
       (drop
-        (block $temp i32
+        (block $temp (result i32)
           (br_if $temp
             (i32.const 1)
             (i32.const 2)
@@ -701,7 +701,7 @@
    (local $5 i32)
    (local $433 i32)
    (drop
-    (block i32
+    (block (result i32)
      (if
       (i32.eq
        (get_local $12)
@@ -750,10 +750,10 @@
    )
   )
   (func $outer-block-typed (type $3) (param $var$0 i32) (result i32)
-   (block i32
+   (block (result i32)
     (i32.add
      (i32.const 1)
-     (block $label$0 i32
+     (block $label$0 (result i32)
       (i32.const 16)
      )
     )
@@ -761,11 +761,11 @@
   )
   (func $nested-br_if-with-value (result i32)
    (local $0 i32)
-   (block $label$0 i32
+   (block $label$0 (result i32)
     (drop
      (br_if $label$0
       (i32.const 0)
-      (block i32
+      (block (result i32)
        (get_local $0)
       )
      )

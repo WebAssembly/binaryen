@@ -75,7 +75,7 @@
   )
   (func $push-dropped (result i32)
     (local $x i32)
-    (block $out i32
+    (block $out (result i32)
       (set_local $x (i32.const 1))
       (drop (br_if $out (i32.const 2) (i32.const 3)))
       (drop (get_local $x))

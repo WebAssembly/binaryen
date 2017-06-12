@@ -18,7 +18,7 @@
   )
  (func $to-drop-unreachable
   (drop
-   (block i32
+   (block (result i32)
     (unreachable)
    )
   )

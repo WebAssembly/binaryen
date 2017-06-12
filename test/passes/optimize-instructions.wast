@@ -316,7 +316,7 @@
   )
   (func $recurse-bool
     (if
-      (if i32
+      (if (result i32)
         (i32.const 1)
         (i32.ne (call $ne0) (i32.const 0))
         (i32.ne (call $ne1) (i32.const 0))
@@ -324,7 +324,7 @@
       (nop)
     )
     (if
-      (block i32
+      (block (result i32)
         (nop)
         (i32.ne (call $ne0) (i32.const 0))
       )
@@ -1446,7 +1446,7 @@
   )
   (func $sign-ext-boolean (param $0 i32) (param $1 i32)
     (drop
-      (if i32
+      (if (result i32)
         (i32.shr_s
           (i32.shl
             (get_local $0)
@@ -2308,14 +2308,14 @@
   )
   (func $if-parallel (param $0 i32) (param $1 i32)
     (drop
-      (if i32
+      (if (result i32)
         (get_local $0)
         (i32.add (get_local $1) (i32.const 1))
         (i32.add (get_local $1) (i32.const 1))
       )
     )
     (drop
-      (if i32
+      (if (result i32)
         (tee_local $0 (get_local $1)) ;; side effects!
         (i32.add (get_local $1) (i32.const 1))
         (i32.add (get_local $1) (i32.const 1))

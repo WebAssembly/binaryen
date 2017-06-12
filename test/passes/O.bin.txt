@@ -7,7 +7,7 @@
  (export "fac-iter-named" (func $3))
  (export "fac-opt" (func $4))
  (func $0 (type $0) (param $0 i64) (result i64)
-  (if i64
+  (if (result i64)
    (i64.eq
     (get_local $0)
     (i64.const 0)
@@ -25,7 +25,7 @@
   )
  )
  (func $1 (type $0) (param $0 i64) (result i64)
-  (if i64
+  (if (result i64)
    (i64.eq
     (get_local $0)
     (i64.const 0)

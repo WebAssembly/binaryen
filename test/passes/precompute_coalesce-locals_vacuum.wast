@@ -6,7 +6,7 @@
    (drop
     (i32.const 2)
    )
-   (block i32
+   (block (result i32)
     (set_local $2
      (i32.const 4)
     )

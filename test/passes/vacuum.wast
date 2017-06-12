@@ -87,12 +87,12 @@
       )
     )
     (set_local $x
-      (block $result-used i32
+      (block $result-used (result i32)
         (get_local $x)
       )
     )
     (set_local $x
-      (block $two-and-result-used i32
+      (block $two-and-result-used (result i32)
         (drop
           (get_local $x)
         )
@@ -276,9 +276,9 @@
   )
   (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
     (if
-      (if i32
+      (if (result i32)
         (get_local $d)
-        (block $block1 i32
+        (block $block1 (result i32)
           (nop)
           (f64.ne
             (f64.promote/f32
@@ -302,14 +302,14 @@
   (func $if-drop (result i32)
     (block $out
       (drop
-        (if i32
+        (if (result i32)
           (call $if-drop)
           (call $int)
           (br $out)
         )
       )
       (drop
-        (if i32
+        (if (result i32)
           (call $if-drop)
           (br $out)
           (call $int)
@@ -360,7 +360,7 @@
   )
   (func $drop-get-global
     (drop
-      (block i32
+      (block (result i32)
         (call $drop-get-global)
         (get_global $Int) ;; this is not needed due to the block being drop'd, but make sure the call is not then dropped either
       )
@@ -371,7 +371,7 @@
     (local $$11 i32)
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8 i32
+        (block $jumpthreading$outer$8 (result i32)
           (block $jumpthreading$inner$8
             (br $jumpthreading$outer$8 ;; the rest is dead in the outer block, but be careful to leave the return value!
               (i32.const 0)
@@ -389,7 +389,7 @@
   (func $relooperJumpThreading2
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8 i32
+        (block $jumpthreading$outer$8 (result i32)
           (block $jumpthreading$inner$8
             (br $jumpthreading$outer$8
               (i32.const 0)
@@ -403,7 +403,7 @@
   (func $relooperJumpThreading3
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8 i32
+        (block $jumpthreading$outer$8 (result i32)
           (br $jumpthreading$outer$8 ;; code after this is dead, can kill it, but preserve the return value at the end!
             (i32.const 0)
           )
@@ -448,7 +448,7 @@
   (func $drop-if-both-unreachable (param $0 i32)
     (block $out
       (drop
-        (if i32
+        (if (result i32)
           (get_local $0)
           (br $out)
           (br $out)
@@ -456,7 +456,7 @@
       )
     )
     (drop
-      (if i32
+      (if (result i32)
         (get_local $0)
         (unreachable)
         (unreachable)

@@ -121,7 +121,7 @@
     (local $var$1 i32)
     (local $var$2 i32)
     (local $var$3 i32)
-    (block $label$0 i32
+    (block $label$0 (result i32)
       (i32.store
         (tee_local $var$2
           (i32.add
