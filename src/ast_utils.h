@@ -325,7 +325,7 @@ struct ExpressionAnalyzer {
 // Re-Finalizes all node types
 // This removes "unnecessary' block/if/loop types, i.e., that are added
 // specifically, as in
-//  (block i32 (unreachable))
+//  (block (result i32) (unreachable))
 // vs
 //  (block (unreachable))
 // This converts to the latter form.

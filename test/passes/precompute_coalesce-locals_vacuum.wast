@@ -2,11 +2,11 @@
  (func $nested-br_if-value (param $var$0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
-  (loop $label$0 i32
+  (loop $label$0 (result i32)
    (drop
     (i32.const 2)
    )
-   (block i32
+   (block (result i32)
     (set_local $2
      (i32.const 4)
     )

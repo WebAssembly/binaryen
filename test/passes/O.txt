@@ -5,7 +5,7 @@
  (export "ret" (func $ret))
  (export "waka" (func $if-0-unreachable-to-none))
  (func $ret (type $0) (result i32)
-  (block $out i32
+  (block $out (result i32)
    (drop
     (call $ret)
    )

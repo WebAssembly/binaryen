@@ -51,7 +51,7 @@
  )
  (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
   (if
-   (if i32
+   (if (result i32)
     (get_local $d)
     (f64.ne
      (f64.promote/f32
@@ -123,7 +123,7 @@
  )
  (func $if2drops (type $3) (result i32)
   (drop
-   (if i32
+   (if (result i32)
     (call $if2drops)
     (call $if2drops)
     (call $if2drops)
@@ -157,7 +157,7 @@
  (func $drop-if-both-unreachable (type $1) (param $0 i32)
   (block $out
    (drop
-    (if i32
+    (if (result i32)
      (get_local $0)
      (br $out)
      (br $out)
@@ -165,7 +165,7 @@
    )
   )
   (drop
-   (if i32
+   (if (result i32)
     (get_local $0)
     (unreachable)
     (unreachable)

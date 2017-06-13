@@ -3,7 +3,7 @@
   (type $0 (func (param i32) (result i32)))
   (type $1 (func))
   (func $b0 (type $0) (param $i1 i32) (result i32)
-    (block $topmost i32
+    (block $topmost (result i32)
       (i32.const 0)
     )
   )

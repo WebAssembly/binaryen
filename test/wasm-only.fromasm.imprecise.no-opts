@@ -1459,7 +1459,7 @@
    )
   )
   (set_local $$cond
-   (if i32
+   (if (result i32)
     (get_local $$tobool36)
     (get_local $$s$2)
     (i32.const 0)

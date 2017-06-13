@@ -6,10 +6,10 @@
  (func $b14 (type $2) (result i32)
   (drop
    (select
-    (block $block1 i32
+    (block $block1 (result i32)
      (i32.const 12)
     )
-    (block $block3 i32
+    (block $block3 (result i32)
      (i32.const 27)
     )
     (i32.const 1)

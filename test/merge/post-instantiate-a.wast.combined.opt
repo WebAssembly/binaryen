@@ -1,6 +1,5 @@
 (module
  (type $0 (func))
- (type $0$0 (func))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (memory $0 0)

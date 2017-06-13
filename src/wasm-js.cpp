@@ -266,7 +266,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
     Literal getResultFromJS(double ret, WasmType type) {
       switch (type) {
-        case none: return Literal(0);
+        case none: return Literal();
         case i32: return Literal((int32_t)ret);
         case f32: return Literal((float)ret);
         case f64: return Literal((double)ret);
@@ -303,7 +303,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         return lookup.apply(null, tempArguments);
       }, import->module.str, import->base.str);
 
-      if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
+      if (wasmJSDebug) std::cout << "calling import returning " << ret << " and function type is " << module->getFunctionType(import->functionType)->result << '\n';
 
       return getResultFromJS(ret, module->getFunctionType(import->functionType)->result);
     }

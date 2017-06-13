@@ -6,7 +6,7 @@
   )
   (func $b (type $0)
     (drop
-      (loop $loop-in1 i32
+      (loop $loop-in1 (result i32)
         (nop)
         (i32.const 1000)
       )
