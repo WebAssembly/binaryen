@@ -1162,6 +1162,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     } else if (curr[0] == DEFUN) {
       // function
       auto* func = processFunction(curr);
+      if (wasm.getFunctionOrNull(func->name)) {
+        Fatal() << "duplicate function: " << func->name;
+      }
       if (runOptimizationPasses) {
         optimizingBuilder->addFunction(func);
       } else {
