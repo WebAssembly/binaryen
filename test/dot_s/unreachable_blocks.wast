@@ -61,7 +61,7 @@
   (return
    (i32.const 7)
   )
-  (loop $label$0 i32
+  (loop $label$0 (result i32)
    (br $label$0)
   )
  )
@@ -69,7 +69,7 @@
   (return
    (i64.const 8)
   )
-  (loop $label$0 i64
+  (loop $label$0 (result i64)
    (br $label$0)
   )
  )
@@ -77,7 +77,7 @@
   (return
    (f32.const 9.5)
   )
-  (loop $label$0 f32
+  (loop $label$0 (result f32)
    (br $label$0)
   )
  )
@@ -85,7 +85,7 @@
   (return
    (f64.const 10.5)
   )
-  (loop $label$0 f64
+  (loop $label$0 (result f64)
    (br $label$0)
   )
  )

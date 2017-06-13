@@ -246,7 +246,7 @@
   )
  )
  (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
-  (if i32
+  (if (result i32)
    (get_local $1)
    (i32.div_u
     (get_local $0)
@@ -424,7 +424,7 @@
       (i32.const 3)
      )
     )
-    (block i32
+    (block (result i32)
      (drop
       (call $lb
        (i32.const 4)
@@ -445,7 +445,7 @@
      )
     )
    )
-   (block i32
+   (block (result i32)
     (drop
      (call $lb
       (i32.const 8)
@@ -513,7 +513,7 @@
   )
  )
  (func $phi (result i32)
-  (block $do-once i32
+  (block $do-once (result i32)
    (drop
     (br_if $do-once
      (i32.const 0)
@@ -611,7 +611,7 @@
  )
  (func $conditionalTypeFun
   (drop
-   (if i32
+   (if (result i32)
     (call $return_int)
     (i32.trunc_s/f64
      (call $abort
@@ -624,7 +624,7 @@
    )
   )
   (drop
-   (if f64
+   (if (result f64)
     (call $return_int)
     (call $abort
      (f64.convert_s/i32
@@ -1095,7 +1095,7 @@
  )
  (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
-   (if i32
+   (if (result i32)
     (get_local $0)
     (call $lb
      (get_local $1)

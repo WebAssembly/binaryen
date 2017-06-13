@@ -12,7 +12,7 @@
   (local $$1$1 i32)
   (local $$1$0 i32)
   (return
-   (block i32
+   (block (result i32)
     (drop
      (call $setTempRet0
       (i32.or

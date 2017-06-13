@@ -1,7 +1,5 @@
 (module
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (type $FUNCSIG$iii$0 (func (param i32 i32) (result i32)))
- (type $1 (func))
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table 8 anyfunc))
  

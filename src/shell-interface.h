@@ -142,8 +142,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       std::cout << "exit()\n";
       throw ExitException();
     }
-    std::cout << "callImport " << import->name.str << "\n";
-    WASM_UNREACHABLE();
+    Fatal() << "callImport: unknown import: " << import->module.str << "."
+            << import->name.str;
   }
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {

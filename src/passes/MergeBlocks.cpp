@@ -225,7 +225,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       if (!block->name.is() && block->list.size() >= 2) {
         child = block->list.back();
         // we modified child (which is a reference to a pointer), which modifies curr, which might change its type
-        // (e.g. (drop (block i32 .. (unreachable)))
+        // (e.g. (drop (block (result i32) .. (unreachable)))
         // the child was a block of i32, and is being replaced with an unreachable, so the
         // parent will likely need to be unreachable too
         auto oldType = curr->type;

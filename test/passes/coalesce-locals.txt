@@ -1046,7 +1046,7 @@
   (local $1 i32)
   (loop $top
    (set_local $1
-    (if i32
+    (if (result i32)
      (i32.const 1)
      (unreachable)
      (get_local $0)
@@ -1066,7 +1066,7 @@
   (local $1 i32)
   (loop $top
    (drop
-    (if i32
+    (if (result i32)
      (i32.const 1)
      (get_local $0)
      (tee_local $0

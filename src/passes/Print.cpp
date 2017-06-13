@@ -134,7 +134,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         printName(curr->name);
       }
       if (isConcreteWasmType(curr->type)) {
-        o << ' ' << printWasmType(curr->type);
+        o << " (result " << printWasmType(curr->type) << ')';
       }
       incIndent();
       if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
@@ -165,7 +165,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitIf(If *curr) {
     printOpening(o, "if");
     if (isConcreteWasmType(curr->type)) {
-      o << ' ' << printWasmType(curr->type);
+      o << " (result " << printWasmType(curr->type) << ')';
     }
     incIndent();
     printFullLine(curr->condition);
@@ -190,7 +190,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ' ' << curr->name;
     }
     if (isConcreteWasmType(curr->type)) {
-      o << ' ' << printWasmType(curr->type);
+      o << " (result " << printWasmType(curr->type) << ')';
     }
     incIndent();
     auto block = curr->body->dynCast<Block>();

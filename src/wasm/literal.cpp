@@ -145,7 +145,7 @@ void Literal::printDouble(std::ostream& o, double d) {
     return;
   }
   if (!std::isfinite(d)) {
-    o << (std::signbit(d) ? "-infinity" : "infinity");
+    o << (std::signbit(d) ? "-inf" : "inf");
     return;
   }
   const char* text = cashew::JSPrinter::numToString(d);

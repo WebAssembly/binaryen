@@ -1048,7 +1048,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
   while (1) {
     stack.emplace_back(sp, curr);
     auto& s = *sp;
-    size_t i = 1;
+    Index i = 1;
     Name sName;
     if (i < s.size() && s[i]->isStr()) {
       // could be a name or a type
@@ -1061,14 +1061,9 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
       sName = "block";
     }
     curr->name = nameMapper.pushLabelName(sName);
+    // block signature
+    curr->type = parseOptionalResultType(s, i);
     if (i >= s.size()) break; // empty block
-    if (s[i]->isStr()) {
-      // block signature
-      curr->type = stringToWasmType(s[i++]->str());
-      if (i >= s.size()) break; // empty block
-    } else {
-      curr->type = none;
-    }
     auto& first = *s[i];
     if (first[0]->str() == BLOCK) {
       // recurse
@@ -1086,6 +1081,9 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     size_t i = 1;
     if (i < s.size()) {
       while (i < s.size() && s[i]->isStr()) {
+        i++;
+      }
+      if (i < s.size() && (*s[i])[0]->str() == RESULT) {
         i++;
       }
       if (t < int(stack.size()) - 1) {
@@ -1217,10 +1215,8 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
     sName = "if";
   }
   auto label = nameMapper.pushLabelName(sName);
-  WasmType type = none;
-  if (s[i]->isStr()) {
-    type = stringToWasmType(s[i++]->str());
-  }
+  // if signature
+  WasmType type = parseOptionalResultType(s, i);
   ret->condition = parseExpression(s[i++]);
   ret->ifTrue = parseExpression(*s[i++]);
   if (i < s.size()) {
@@ -1255,9 +1251,27 @@ Expression* SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, WasmTyp
   return ret;
 }
 
+WasmType SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
+  if (s.size() == i)
+    return none;
+
+  // TODO(sbc): Remove support for old result syntax (bare streing) once the
+  // spec tests are updated.
+  if (s[i]->isStr())
+    return stringToWasmType(s[i++]->str());
+
+  Element& params = *s[i];
+  IString id = params[0]->str();
+  if (id != RESULT)
+    return none;
+
+  i++;
+  return stringToWasmType(params[1]->str());
+}
+
 Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
   auto ret = allocator.alloc<Loop>();
-  size_t i = 1;
+  Index i = 1;
   Name sName;
   if (s.size() > i && s[i]->dollared()) {
     sName = s[i++]->str();
@@ -1265,11 +1279,7 @@ Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
     sName = "loop-in";
   }
   ret->name = nameMapper.pushLabelName(sName);
-  ret->type = none;
-  if (i < s.size() && s[i]->isStr()) {
-    // block signature
-    ret->type = stringToWasmType(s[i++]->str());
-  }
+  ret->type = parseOptionalResultType(s, i);
   ret->body = makeMaybeBlock(s, i, ret->type);
   nameMapper.popLabelName(ret->name);
   ret->finalize(ret->type);

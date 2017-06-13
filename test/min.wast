@@ -16,7 +16,7 @@
     (local $n f32)
     (tee_local $n
       (f32.neg
-        (block $block0 f32
+        (block $block0 (result f32)
           (i32.store
             (get_local $k)
             (get_local $p)
@@ -29,7 +29,7 @@
     )
   )
   (func $littleswitch (type $2) (param $x i32) (result i32)
-    (block $topmost i32
+    (block $topmost (result i32)
       (block $switch-case$2
         (block $switch-case$1
           (br_table $switch-case$1 $switch-case$2 $switch-case$1
@@ -50,7 +50,7 @@
     )
   )
   (func $f1 (type $3) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
-    (block $topmost i32
+    (block $topmost (result i32)
       (get_local $i3)
     )
   )

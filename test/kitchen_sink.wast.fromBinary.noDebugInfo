@@ -3,7 +3,7 @@
  (memory $0 4096 4096)
  (data (i32.const 1026) "\14\00")
  (func $0 (type $0) (result i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (drop
     (i32.add
      (i32.const 10)

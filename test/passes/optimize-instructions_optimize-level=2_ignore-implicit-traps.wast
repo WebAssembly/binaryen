@@ -23,7 +23,7 @@
           )
         )
         (set_local $0
-          (if i32
+          (if (result i32)
             (i32.or ;; this or is very expensive. we should compute one side, then see if we even need the other
               (i32.eqz
                 (i32.rem_s
@@ -109,7 +109,7 @@
           )
         )
         (set_local $0
-          (if i32
+          (if (result i32)
             (i32.or ;; this or is very expensive, but has a side effect on both sides
               (i32.eqz
                 (i32.rem_s
@@ -195,7 +195,7 @@
           )
         )
         (set_local $0
-          (if i32
+          (if (result i32)
             (i32.or ;; this or is very expensive, and the first side has no side effect
               (i32.eqz
                 (i32.rem_s

@@ -403,7 +403,7 @@
  )
  (func $recurse-bool (type $1)
   (if
-   (if i32
+   (if (result i32)
     (i32.const 1)
     (call $ne0)
     (call $ne1)
@@ -411,7 +411,7 @@
    (nop)
   )
   (if
-   (block $block i32
+   (block $block (result i32)
     (nop)
     (call $ne0)
    )
@@ -1170,7 +1170,7 @@
  )
  (func $sign-ext-boolean (type $4) (param $0 i32) (param $1 i32)
   (drop
-   (if i32
+   (if (result i32)
     (i32.and
      (get_local $0)
      (i32.const 255)
@@ -1893,7 +1893,7 @@
    )
   )
   (drop
-   (block i32
+   (block (result i32)
     (drop
      (tee_local $0
       (get_local $1)
@@ -1925,7 +1925,7 @@
    )
   )
   (drop
-   (block i32
+   (block (result i32)
     (drop
      (tee_local $0
       (get_local $1)

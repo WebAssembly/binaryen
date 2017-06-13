@@ -105,12 +105,12 @@
  )
  (func $inf_f32 (result f32)
   (return
-   (f32.const infinity)
+   (f32.const inf)
   )
  )
  (func $neginf_f32 (result f32)
   (return
-   (f32.const -infinity)
+   (f32.const -inf)
   )
  )
  (func $custom_nan_f32 (result f32)
@@ -155,12 +155,12 @@
  )
  (func $inf_f64 (result f64)
   (return
-   (f64.const infinity)
+   (f64.const inf)
   )
  )
  (func $neginf_f64 (result f64)
   (return
-   (f64.const -infinity)
+   (f64.const -inf)
   )
  )
  (func $custom_nan_f64 (result f64)
