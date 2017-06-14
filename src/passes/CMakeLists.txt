@@ -10,6 +10,7 @@ SET(passes_SOURCES
   LegalizeJSInterface.cpp
   LocalCSE.cpp
   LogExecution.cpp
+  InstrumentLocals.cpp
   InstrumentMemory.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
@@ -32,6 +33,7 @@ SET(passes_SOURCES
   ReorderLocals.cpp
   ReorderFunctions.cpp
   SimplifyLocals.cpp
+  SSAify.cpp
   Vacuum.cpp
 )
 ADD_LIBRARY(passes STATIC ${passes_SOURCES})

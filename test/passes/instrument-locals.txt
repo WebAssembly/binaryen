@@ -1,0 +1,118 @@
+(module
+ (type $0 (func))
+ (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
+ (type $FUNCSIG$jiij (func (param i32 i32 i64) (result i64)))
+ (type $FUNCSIG$fiif (func (param i32 i32 f32) (result f32)))
+ (type $FUNCSIG$diid (func (param i32 i32 f64) (result f64)))
+ (import "instrument" "get_i32" (func $get_i32 (param i32 i32 i32) (result i32)))
+ (import "instrument" "get_i64" (func $get_i64 (param i32 i32 i64) (result i64)))
+ (import "instrument" "get_f32" (func $get_f32 (param i32 i32 f32) (result f32)))
+ (import "instrument" "get_f64" (func $get_f64 (param i32 i32 f64) (result f64)))
+ (import "instrument" "set_i32" (func $set_i32 (param i32 i32 i32) (result i32)))
+ (import "instrument" "set_i64" (func $set_i64 (param i32 i32 i64) (result i64)))
+ (import "instrument" "set_f32" (func $set_f32 (param i32 i32 f32) (result f32)))
+ (import "instrument" "set_f64" (func $set_f64 (param i32 i32 f64) (result f64)))
+ (memory $0 0)
+ (func $A (type $0)
+  (local $x i32)
+  (local $y i64)
+  (local $z f32)
+  (local $w f64)
+  (drop
+   (call $get_i32
+    (i32.const 0)
+    (i32.const 0)
+    (get_local $x)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (call $get_f32
+    (i32.const 1)
+    (i32.const 2)
+    (get_local $z)
+   )
+  )
+  (drop
+   (call $get_f64
+    (i32.const 2)
+    (i32.const 3)
+    (get_local $w)
+   )
+  )
+  (drop
+   (call $get_i32
+    (i32.const 3)
+    (i32.const 0)
+    (get_local $x)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (call $get_f32
+    (i32.const 4)
+    (i32.const 2)
+    (get_local $z)
+   )
+  )
+  (drop
+   (call $get_f64
+    (i32.const 5)
+    (i32.const 3)
+    (get_local $w)
+   )
+  )
+  (set_local $x
+   (call $set_i32
+    (i32.const 6)
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+  (set_local $y
+   (i64.const 2)
+  )
+  (set_local $z
+   (call $set_f32
+    (i32.const 7)
+    (i32.const 2)
+    (f32.const 3.2100000381469727)
+   )
+  )
+  (set_local $w
+   (call $set_f64
+    (i32.const 8)
+    (i32.const 3)
+    (f64.const 4.321)
+   )
+  )
+  (set_local $x
+   (call $set_i32
+    (i32.const 9)
+    (i32.const 0)
+    (i32.const 11)
+   )
+  )
+  (set_local $y
+   (i64.const 22)
+  )
+  (set_local $z
+   (call $set_f32
+    (i32.const 10)
+    (i32.const 2)
+    (f32.const 33.209999084472656)
+   )
+  )
+  (set_local $w
+   (call $set_f64
+    (i32.const 11)
+    (i32.const 3)
+    (f64.const 44.321)
+   )
+  )
+ )
+)

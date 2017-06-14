@@ -260,4 +260,20 @@
    (i32.const 1024)
   )
  )
+ (func $tees (type $0)
+  (local $y i32)
+  (drop
+   (tee_local $y
+    (i32.load8_s
+     (i32.const 1024)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (get_local $y)
+    (i32.const 255)
+   )
+  )
+ )
 )

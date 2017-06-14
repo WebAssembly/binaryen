@@ -94,6 +94,10 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   }
 
   void visitSetLocal(SetLocal* curr) {
+    if (curr->isTee()) {
+      // we can't modify a tee, the value is used elsewhere
+      return;
+    }
     if (auto* load = curr->value->dynCast<Load>()) {
       loads[load] = curr->index;
     }
