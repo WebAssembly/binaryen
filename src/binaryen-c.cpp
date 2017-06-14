@@ -27,6 +27,7 @@
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
 #include "wasm-printing.h"
+#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "cfg/Relooper.h"
 #include "shell-interface.h"
@@ -904,6 +905,23 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
 //
 // ========== Module Operations ==========
 //
+
+BinaryenModuleRef BinaryenModuleParse(const char* text) {
+  if (tracing) {
+    std::cout << "  // BinaryenModuleRead\n";
+  }
+
+  auto* wasm = new Module;
+  try {
+    SExpressionParser parser(const_cast<char*>(text));
+    Element& root = *parser.root;
+    SExpressionWasmBuilder builder(*wasm, *root[0]);
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    Fatal() << "error in parsing wasm text";
+  }
+  return wasm;
+}
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
   if (tracing) {

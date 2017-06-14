@@ -899,6 +899,14 @@
     return new Module['Module'](ptr);
   };
 
+  Module['parseText'] = function(text) {
+    var buffer = _malloc(text.length + 1);
+    writeAsciiToMemory(text, buffer);
+    var ptr = Module['_BinaryenModuleParse'](buffer);
+    _free(buffer);
+    return new Module['Module'](ptr);
+  };
+
   Module['setAPITracing'] = function(on) {
     return Module['_BinaryenSetAPITracing'](on);
   };
