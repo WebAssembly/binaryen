@@ -494,6 +494,30 @@ function test_tracing() {
   Binaryen.setAPITracing(0);
 }
 
+function test_parsing() {
+  var text;
+
+  // create a module and write it to text
+  module = new Binaryen.Module();
+  var iii = module.addFunctionType("iii", Binaryen.i32, [ Binaryen.i32, Binaryen.i32 ]);
+  var x = module.getLocal(0, Binaryen.i32),
+      y = module.getLocal(1, Binaryen.i32);
+  var add = module.i32.add(x, y);
+  var adder = module.addFunction("adder", iii, [], add);
+  text = module.emitText();
+  module.dispose();
+  module = null;
+  print('test_parsing text:\n' + text);
+
+  text = text.replace('adder', 'ADD_ER');
+
+  var module2 = Binaryen.parseText(text);
+  assert(module2.validate());
+  console.log("module loaded from text form:");
+  console.log(module2.emitText());
+  module2.dispose();
+}
+
 function main() {
   test_types();
   test_core();
@@ -502,6 +526,7 @@ function main() {
   test_interpret();
   test_nonvalid();
   test_tracing();
+  test_parsing();
 }
 
 main();

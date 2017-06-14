@@ -366,6 +366,9 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
 // ========== Module Operations ==========
 //
 
+// Parse a module in s-expression text format
+BinaryenModuleRef BinaryenModuleParse(const char* text);
+
 // Print a module to stdout. Useful for debugging.
 void BinaryenModulePrint(BinaryenModuleRef module);
 

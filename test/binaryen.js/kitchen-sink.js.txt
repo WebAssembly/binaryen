@@ -1028,9 +1028,6 @@ raw:
 
 optimized:
 (module
- (type $v (func))
- (type $vi (func (param i32)))
- (type $i (func (result i32)))
  (memory $0 0)
 )
 
@@ -2910,9 +2907,6 @@ raw:
 optimized:
   BinaryenModulePrint(the_module);
 (module
- (type $v (func))
- (type $vi (func (param i32)))
- (type $i (func (result i32)))
  (memory $0 0)
 )
 
@@ -2923,3 +2917,27 @@ optimized:
   relooperBlocks.clear();
   return 0;
 }
+test_parsing text:
+(module
+ (type $iii (func (param i32 i32) (result i32)))
+ (memory $0 0)
+ (func $adder (type $iii) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+)
+
+module loaded from text form:
+(module
+ (type $iii (func (param i32 i32) (result i32)))
+ (memory $0 0)
+ (func $ADD_ER (type $iii) (param $0 i32) (param $1 i32) (result i32)
+  (i32.add
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+)
+
