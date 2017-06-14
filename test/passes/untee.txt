@@ -5,7 +5,7 @@
   (local $x i32)
   (local $y f64)
   (drop
-   (block i32
+   (block (result i32)
     (set_local $x
      (i32.const 1)
     )
@@ -13,7 +13,7 @@
    )
   )
   (drop
-   (block f64
+   (block (result f64)
     (set_local $y
      (f64.const 2)
     )
@@ -21,7 +21,7 @@
    )
   )
   (set_local $x
-   (block i32
+   (block (result i32)
     (set_local $x
      (i32.const 3)
     )
@@ -29,9 +29,9 @@
    )
   )
   (set_local $x
-   (block i32
+   (block (result i32)
     (set_local $x
-     (block i32
+     (block (result i32)
       (set_local $x
        (i32.const 3)
       )
