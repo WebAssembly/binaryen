@@ -1,0 +1,48 @@
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (func $tee (type $0)
+  (local $x i32)
+  (local $y f64)
+  (drop
+   (block (result i32)
+    (set_local $x
+     (i32.const 1)
+    )
+    (get_local $x)
+   )
+  )
+  (drop
+   (block (result f64)
+    (set_local $y
+     (f64.const 2)
+    )
+    (get_local $y)
+   )
+  )
+  (set_local $x
+   (block (result i32)
+    (set_local $x
+     (i32.const 3)
+    )
+    (get_local $x)
+   )
+  )
+  (set_local $x
+   (block (result i32)
+    (set_local $x
+     (block (result i32)
+      (set_local $x
+       (i32.const 3)
+      )
+      (get_local $x)
+     )
+    )
+    (get_local $x)
+   )
+  )
+  (drop
+   (unreachable)
+  )
+ )
+)

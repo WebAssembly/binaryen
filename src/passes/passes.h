@@ -45,6 +45,7 @@ Pass *createNameManagerPass();
 Pass *createOptimizeInstructionsPass();
 Pass *createPickLoadSignsPass();
 Pass *createPostEmscriptenPass();
+Pass *createPrecomputePass();
 Pass *createPrinterPass();
 Pass *createPrintCallGraphPass();
 Pass *createRelooperJumpThreadingPass();
@@ -61,9 +62,8 @@ Pass *createSimplifyLocalsNoTeePass();
 Pass *createSimplifyLocalsNoStructurePass();
 Pass *createSimplifyLocalsNoTeeNoStructurePass();
 Pass *createSSAifyPass();
+Pass *createUnteePass();
 Pass *createVacuumPass();
-Pass *createPrecomputePass();
-//Pass *createLowerInt64Pass();
 
 }
 

@@ -34,6 +34,7 @@ SET(passes_SOURCES
   ReorderFunctions.cpp
   SimplifyLocals.cpp
   SSAify.cpp
+  Untee.cpp
   Vacuum.cpp
 )
 ADD_LIBRARY(passes STATIC ${passes_SOURCES})
