@@ -221,4 +221,52 @@
       )
     )
   )
+  (func $ifs-named-block (param $x i32) (param $y i32) (result i32)
+    (block $out
+      (block $out2
+        (if (get_local $x)
+          (block
+            (br_if $out (get_local $y i32))
+            (nop)
+          )
+          (block
+            (br_if $out (get_local $y i32))
+            (nop)
+          )
+        )
+        (if (get_local $x)
+          (block
+            (br_if $out (get_local $y i32))
+            (nop)
+          )
+          (block
+            (br_if $out2 (get_local $y i32))
+            (nop)
+          )
+        )
+        (if (get_local $x)
+          (block $left
+            (br_if $left (get_local $y i32))
+            (nop)
+          )
+          (block
+            (br_if $out (get_local $y i32))
+            (nop)
+          )
+        )
+        (if (get_local $x)
+          (block
+            (br_if $out (get_local $y i32))
+            (nop)
+          )
+          (block $right
+            (br_if $right (get_local $y i32))
+            (nop)
+          )
+        )
+      )
+      (return (i32.const 10))
+    )
+    (return (i32.const 20))
+  )
 )

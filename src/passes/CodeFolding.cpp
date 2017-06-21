@@ -67,7 +67,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // if both are blocks, look for a tail we can merge
       auto* leftBlock = curr->ifTrue->dynCast<Block>();
       auto* rightBlock = curr->ifFalse->dynCast<Block>();
-      if (leftBlock && rightBlock) {
+      if (leftBlock && rightBlock &&
+          !leftBlock->name.is() && !rightBlock->name.is()) {
         auto& left = leftBlock->list;
         auto& right = rightBlock->list;
         // we are going to remove duplicate elements and add a block.
