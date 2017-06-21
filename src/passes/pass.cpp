@@ -132,8 +132,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
   }
-  if (options.shrinkLevel >= 2) {
-    // XXX? add("code-folding");
+  if (options.shrinkLevel >= 1) {
+    add("code-folding");
   }
   add("simplify-locals-nostructure"); // don't create if/block return values yet, as coalesce can remove copies that that could inhibit
   add("vacuum"); // previous pass creates garbage
@@ -151,7 +151,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.shrinkLevel >= 2) {
     add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
     add("coalesce-locals"); // just for localCSE
-    //add("code-folding"); // XXX?
   }
   add("vacuum"); // just to be safe
 }
