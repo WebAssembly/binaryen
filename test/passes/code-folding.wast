@@ -61,6 +61,54 @@
         (unreachable)
       )
     )
+  )
+  (func $ifs-blocks-big
+    (if (i32.const 0)
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (unreachable)
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+      (block
+        (unreachable)
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+        (unreachable)
+      )
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+      )
+      (block
+        (drop (i32.add (i32.const 1) (i32.const 2)))
+        (unreachable)
+      )
+    )
+  )
+  (func $ifs-blocks-long
     (if (i32.const 0)
       (block
         (drop (i32.const -1234))

@@ -32,6 +32,8 @@
 
 namespace wasm {
 
+static const Index WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH = 3;
+
 struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   bool isFunctionParallel() override { return true; }
 
@@ -55,6 +57,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     if (!curr->ifFalse) return;
     if (ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
       Builder builder(*getModule());
+      // remove if (4 bytes), remove one arm, add drop (1), add block (3),
+      // so this must be a net savings
       replaceCurrent(builder.makeSequence(
         builder.makeDrop(curr->condition),
         curr->ifTrue
@@ -66,19 +70,37 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       if (leftBlock && rightBlock) {
         auto& left = leftBlock->list;
         auto& right = rightBlock->list;
+        // we are going to remove duplicate elements and add a block.
+        // so for this to make sense, we need the size of the duplicate
+        // elements to be worth that extra block (although, there is
+        // some chance the block would get merged higher up...)
         std::vector<Expression*> merged;
-        while (!left.empty() && !right.empty()) {
-          if (ExpressionAnalyzer::equal(left.back(), right.back())) {
-            merged.push_back(left.back());
-            left.pop_back();
-            leftBlock->finalize();
-            right.pop_back();
-            rightBlock->finalize();
+        Index num = 0;
+        Index saved = 0;
+        while (num < left.size() && num < right.size()) {
+          auto* leftExpr = left[left.size() - num - 1];
+          auto* rightExpr = right[right.size() - num - 1];
+          if (ExpressionAnalyzer::equal(leftExpr, rightExpr)) {
+            merged.push_back(leftExpr);
+            num++;
+            saved += Measurer::measure(leftExpr);
           } else {
+            // we can do no more
             break;
           }
         }
-        if (!merged.empty()) {
+        // if we save enough in elements, or we manage to remove
+        // a whole block's contents, then this is a good idea
+        if (saved >= WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH ||
+            num == left.size() ||
+            num == right.size()) {
+          // this is worth doing
+          for (Index i = 0; i < merged.size(); i++) {
+            left.pop_back();
+            right.pop_back();
+          }
+          leftBlock->finalize();
+          rightBlock->finalize();
           curr->finalize();
           Builder builder(*getModule());
           auto* block = builder.makeBlock();
