@@ -109,7 +109,7 @@
     )
   )
   (func $ifs-blocks-long
-    (if (i32.const 0)
+    (if (i32.const 1)
       (block
         (drop (i32.const -1234))
         (drop (i32.const -1000))
@@ -125,7 +125,7 @@
       )
     )
     (drop
-      (if (result i32) (i32.const 0)
+      (if (result i32) (i32.const 2)
         (block (result i32)
           (drop (i32.const -1234))
           (drop (i32.const -1000))
@@ -144,7 +144,7 @@
       )
     )
     (drop
-      (if (result i32) (i32.const 0)
+      (if (result i32) (i32.const 3)
         (block (result i32)
           (drop (i32.const -1234))
           (drop (i32.const -1000))

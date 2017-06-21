@@ -142,8 +142,13 @@ private:
       for (Index i = 0; i < mergeable.size(); i++) {
         tail.block->list.pop_back();
       }
+      // the blocks lose their endings, so any values are gone, and the blocks
+      // are now either none or unreachable
       tail.block->finalize();
     }
+    // NB: we template-specialize so that this calls the proper finalizer for
+    //     the type
+    auto oldType = curr->type;
     curr->finalize();
     Builder builder(*getModule());
     auto* block = builder.makeBlock();
@@ -152,7 +157,8 @@ private:
       block->list.push_back(mergeable.back());
       mergeable.pop_back();
     }
-    block->finalize();
+    // ensure the replacement has the same type, so the outside is not surprised
+    block->finalize(oldType);
     replaceCurrent(block);
     // TODO: vacuuming (emptied out blocks etc.)?
   }

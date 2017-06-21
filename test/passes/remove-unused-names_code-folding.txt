@@ -169,7 +169,7 @@
  (func $ifs-blocks-long (type $0)
   (block
    (if
-    (i32.const 0)
+    (i32.const 1)
     (block
      (drop
       (i32.const -1234)
@@ -189,9 +189,9 @@
    (unreachable)
   )
   (drop
-   (block
+   (block (result i32)
     (if
-     (i32.const 0)
+     (i32.const 2)
      (block
       (drop
        (i32.const -1234)
@@ -215,7 +215,7 @@
   (drop
    (block (result i32)
     (if
-     (i32.const 0)
+     (i32.const 3)
      (block
       (drop
        (i32.const -1234)
