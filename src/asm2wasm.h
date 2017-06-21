@@ -34,7 +34,6 @@
 #include "ast_utils.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
-#include "wasm-printing.h"
 #include "wasm-module-building.h"
 
 namespace wasm {
@@ -1302,10 +1301,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       auto importResult = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
       if (curr->type != importResult) {
+        auto old = curr->type;
+        curr->type = importResult;
         if (importResult == f64) {
           // we use a JS f64 value which is the most general, and convert to it
-          switch (curr->type) {
-            case i32: replaceCurrent(parent->builder.makeUnary(TruncSFloat64ToInt32, curr)); break;
+          switch (old) {
+            case i32: replaceCurrent(parent->makeTrappingFloatToInt(true /* signed, asm.js ffi */, curr)); break;
             case f32: replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr)); break;
             case none: {
               // this function returns a value, but we are not using it, so it must be dropped.
@@ -1315,11 +1316,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             default: WASM_UNREACHABLE();
           }
         } else {
-          assert(curr->type == none);
+          assert(old == none);
           // we don't want a return value here, but the import does provide one
           // autodrop will do that for us.
         }
-        curr->type = importResult;
       }
     }
 
