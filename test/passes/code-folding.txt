@@ -1,0 +1,45 @@
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (func $ifs (type $0)
+  (if
+   (i32.const 0)
+   (nop)
+  )
+  (block
+   (drop
+    (i32.const 0)
+   )
+   (nop)
+  )
+  (if
+   (i32.const 0)
+   (nop)
+   (unreachable)
+  )
+  (drop
+   (block (result i32)
+    (drop
+     (i32.const 0)
+    )
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
+   )
+  )
+  (drop
+   (if (result i32)
+    (i32.const 0)
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
+    (i32.add
+     (i32.const 1)
+     (i32.const 333333333)
+    )
+   )
+  )
+ )
+)
