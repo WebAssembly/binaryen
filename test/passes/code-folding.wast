@@ -194,5 +194,31 @@
         (unreachable)
       )
     )
+    ;; just 2, but we'll empty out a block
+    (if (i32.const 0)
+      (block
+        (unreachable)
+        (unreachable)
+      )
+      (block
+        (drop (i32.const 999))
+        (drop (i32.const 1))
+        (unreachable)
+        (unreachable)
+      )
+    )
+    ;; just 2, but we'll empty out a block
+    (if (i32.const 0)
+      (block
+        (drop (i32.const -1234))
+        (drop (i32.const -1000))
+        (unreachable)
+        (unreachable)
+      )
+      (block
+        (unreachable)
+        (unreachable)
+      )
+    )
   )
 )

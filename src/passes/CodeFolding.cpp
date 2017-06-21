@@ -111,6 +111,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
           }
           block->finalize();
           replaceCurrent(block);
+          // TODO: vacuum an emptied-out block here?
         }
       }
     }
