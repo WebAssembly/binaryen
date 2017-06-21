@@ -16,5 +16,51 @@
       )
     )
   )
+  (func $ifs-blocks
+    (if (i32.const 0)
+      (block
+        (nop)
+      )
+      (block
+        (nop)
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (unreachable)
+        (nop)
+      )
+      (block
+        (nop)
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (nop)
+      )
+      (block
+        (unreachable)
+        (nop)
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (nop)
+        (unreachable)
+      )
+      (block
+        (nop)
+      )
+    )
+    (if (i32.const 0)
+      (block
+        (nop)
+      )
+      (block
+        (nop)
+        (unreachable)
+      )
+    )
+  )
 )
 
