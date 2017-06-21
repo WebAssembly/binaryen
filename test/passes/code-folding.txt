@@ -257,4 +257,53 @@
    )
   )
  )
+ (func $if-worth-it-i-dunno (type $0)
+  (if
+   (i32.const 0)
+   (block $block
+    (drop
+     (i32.const -1234)
+    )
+    (drop
+     (i32.const -1000)
+    )
+    (unreachable)
+    (unreachable)
+   )
+   (block $block37
+    (drop
+     (i32.const 999)
+    )
+    (drop
+     (i32.const 1)
+    )
+    (unreachable)
+    (unreachable)
+   )
+  )
+  (block
+   (if
+    (i32.const 0)
+    (block $block39
+     (drop
+      (i32.const -1234)
+     )
+     (drop
+      (i32.const -1000)
+     )
+    )
+    (block $block40
+     (drop
+      (i32.const 999)
+     )
+     (drop
+      (i32.const 1)
+     )
+    )
+   )
+   (unreachable)
+   (unreachable)
+   (unreachable)
+  )
+ )
 )

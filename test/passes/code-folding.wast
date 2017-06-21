@@ -161,4 +161,38 @@
       )
     )
   )
+  (func $if-worth-it-i-dunno
+    ;; just 2, so not worth it
+    (if (i32.const 0)
+      (block
+        (drop (i32.const -1234))
+        (drop (i32.const -1000))
+        (unreachable)
+        (unreachable)
+      )
+      (block
+        (drop (i32.const 999))
+        (drop (i32.const 1))
+        (unreachable)
+        (unreachable)
+      )
+    )
+    ;; 3, so why not
+    (if (i32.const 0)
+      (block
+        (drop (i32.const -1234))
+        (drop (i32.const -1000))
+        (unreachable)
+        (unreachable)
+        (unreachable)
+      )
+      (block
+        (drop (i32.const 999))
+        (drop (i32.const 1))
+        (unreachable)
+        (unreachable)
+        (unreachable)
+      )
+    )
+  )
 )
