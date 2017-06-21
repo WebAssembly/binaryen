@@ -42,9 +42,10 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   // information about a "tail" - code that reaches a point that we can
   // merge (e.g., a branch and some code leading up to it)
   struct Tail {
-    Expression* expr;
+    Expression* expr; // nullptr if this is a fallthrough
     Expression** pointer; // pointer in parent, for updating
     Block* block; // the enclosing block where we are at the tail
+    Tail(Block* block) : expr(nullptr), pointer(nullptr), block(block) {}
     Tail(Expression* expr, Expression** pointer, Block* block) : expr(expr), pointer(pointer), block(block) {}
   };
 
@@ -65,55 +66,13 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       ));
     } else {
       // if both are blocks, look for a tail we can merge
-      auto* leftBlock = curr->ifTrue->dynCast<Block>();
-      auto* rightBlock = curr->ifFalse->dynCast<Block>();
-      if (leftBlock && rightBlock &&
-          !leftBlock->name.is() && !rightBlock->name.is()) {
-        auto& left = leftBlock->list;
-        auto& right = rightBlock->list;
-        // we are going to remove duplicate elements and add a block.
-        // so for this to make sense, we need the size of the duplicate
-        // elements to be worth that extra block (although, there is
-        // some chance the block would get merged higher up...)
-        std::vector<Expression*> merged;
-        Index num = 0;
-        Index saved = 0;
-        while (num < left.size() && num < right.size()) {
-          auto* leftExpr = left[left.size() - num - 1];
-          auto* rightExpr = right[right.size() - num - 1];
-          if (ExpressionAnalyzer::equal(leftExpr, rightExpr)) {
-            merged.push_back(leftExpr);
-            num++;
-            saved += Measurer::measure(leftExpr);
-          } else {
-            // we can do no more
-            break;
-          }
-        }
-        // if we save enough in elements, or we manage to remove
-        // a whole block's contents, then this is a good idea
-        if (saved >= WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH ||
-            num == left.size() ||
-            num == right.size()) {
-          // this is worth doing
-          for (Index i = 0; i < merged.size(); i++) {
-            left.pop_back();
-            right.pop_back();
-          }
-          leftBlock->finalize();
-          rightBlock->finalize();
-          curr->finalize();
-          Builder builder(*getModule());
-          auto* block = builder.makeBlock();
-          block->list.push_back(curr);
-          while (!merged.empty()) {
-            block->list.push_back(merged.back());
-            merged.pop_back();
-          }
-          block->finalize();
-          replaceCurrent(block);
-          // TODO: vacuum an emptied-out block here?
-        }
+      auto* left = curr->ifTrue->dynCast<Block>();
+      auto* right = curr->ifFalse->dynCast<Block>();
+      // we need nameless blocks, as if there is a name, someone might branch
+      // to the end, skipping the code we want to merge
+      if (left && right &&
+          !left->name.is() && !right->name.is()) {
+        optimizeTails({ Tail(left), Tail(right) }, curr);
       }
     }
   }
@@ -122,6 +81,80 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     // TODO: multiple passes?
     WalkerPass<ControlFlowWalker<CodeFolding>>::walk(func->body);
     assert(breakTails.empty());
+  }
+
+private:
+  // given a set of tails that all arrive at the end of an expression,
+  // optimize foldable code out of the separate tails and put it right
+  // after this expression
+  template<typename T>
+  void optimizeTails(const std::vector<Tail>& tails, T* curr) {
+    assert(tails.size() > 1);
+    // we are going to remove duplicate elements and add a block.
+    // so for this to make sense, we need the size of the duplicate
+    // elements to be worth that extra block (although, there is
+    // some chance the block would get merged higher up...)
+    std::vector<Expression*> mergeable; // the elements we can merge
+    Index num = 0; // how many elements back from the tail to look at
+    Index saved = 0; // how much we can save
+    while (1) {
+      // check if this num is still relevant
+      bool stop = false;
+      for (auto& tail : tails) {
+        assert(tail.block);
+        if (num >= tail.block->list.size()) {
+          // one of the lists is too short
+          stop = true;
+          break;
+        }
+      }
+      if (stop) break;
+      auto* item = tails[0].block->list[tails[0].block->list.size() - num - 1];
+      for (auto& tail : tails) {
+        if (!ExpressionAnalyzer::equal(item, tail.block->list[tail.block->list.size() - num - 1])) {
+          // one of the lists has a different item
+          stop = true;
+          break;
+        }
+      }
+      if (stop) break;
+      // we found another one we can merge
+      mergeable.push_back(item);
+      num++;
+      saved += Measurer::measure(item);
+    }
+    if (saved == 0) return;
+    // we may be able to save enough.
+    if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
+      // it's not obvious we can save enough. see if we get rid
+      // of a block, that would justify this
+      bool willEmptyBlock = false;
+      for (auto& tail : tails) {
+        if (num == tail.block->list.size()) {
+          willEmptyBlock = true;
+          break;
+        }
+      }
+      if (!willEmptyBlock) return;
+    }
+    // this is worth doing, do it!
+    for (auto& tail : tails) {
+      for (Index i = 0; i < mergeable.size(); i++) {
+        tail.block->list.pop_back();
+      }
+      tail.block->finalize();
+    }
+    curr->finalize();
+    Builder builder(*getModule());
+    auto* block = builder.makeBlock();
+    block->list.push_back(curr);
+    while (!mergeable.empty()) {
+      block->list.push_back(mergeable.back());
+      mergeable.pop_back();
+    }
+    block->finalize();
+    replaceCurrent(block);
+    // TODO: vacuuming (emptied out blocks etc.)?
   }
 };
 
