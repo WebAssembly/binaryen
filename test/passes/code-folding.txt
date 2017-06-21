@@ -93,5 +93,28 @@
     (unreachable)
    )
   )
+  (block
+   (if
+    (i32.const 0)
+    (block $block18
+     (drop
+      (i32.const -1234)
+     )
+     (drop
+      (i32.const -1000)
+     )
+    )
+    (block $block19
+     (drop
+      (i32.const 999)
+     )
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+   (nop)
+   (unreachable)
+  )
  )
 )

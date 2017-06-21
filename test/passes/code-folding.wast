@@ -61,6 +61,21 @@
         (unreachable)
       )
     )
+    (if (i32.const 0)
+      (block
+        (drop (i32.const -1234))
+        (drop (i32.const -1000))
+        (drop (i32.const 1))
+        (nop)
+        (unreachable)
+      )
+      (block
+        (drop (i32.const 999))
+        (drop (i32.const 1))
+        (nop)
+        (unreachable)
+      )
+    )
   )
 )
 
