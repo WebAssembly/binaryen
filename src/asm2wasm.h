@@ -2108,8 +2108,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
                 if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
                 if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
-                if (name == I64_F2S || name == I64_D2S) return makeTrappingFloatToInt64(true, value);
-                if (name == I64_F2U || name == I64_D2U) return makeTrappingFloatToInt64(false, value);
+                if (name == I64_F2S || name == I64_D2S) return makeTrappingFloatToInt64(true /* signed */, value);
+                if (name == I64_F2U || name == I64_D2U) return makeTrappingFloatToInt64(false /* unsigned */, value);
                 if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
                 if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
                 if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
