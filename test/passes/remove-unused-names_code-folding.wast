@@ -484,5 +484,32 @@
       (drop (i32.const 1))
       (drop (i32.const 2))
     )
+    ;; switches
+    (block $side
+      (block $x2
+        (br_table $x2 $side (i32.const 0))
+        (if (i32.const 0)
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x2)
+          )
+        )
+        (drop (i32.const 1))
+        (drop (i32.const 2))
+      )
+      (block $x3
+        (br_table $side $x3 (i32.const 0))
+        (if (i32.const 0)
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x3)
+          )
+        )
+        (drop (i32.const 1))
+        (drop (i32.const 2))
+      )
+    )
   )
 )
