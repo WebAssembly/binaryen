@@ -1440,6 +1440,23 @@ void SExpressionWasmBuilder::stringToBinary(const char* input, size_t size, std:
   data.resize(actual);
 }
 
+Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
+  wasm.memory.initial = getCheckedAddress(s[i++], "excessive memory init");
+  if (i == s.size()) return i;
+  while (i < s.size() && s[i]->isStr()) {
+    auto* curr = s[i]->c_str();
+    i++;
+    if (strstr(curr, "shared")) {
+      wasm.memory.shared = strncmp(curr, "notshared", 9) != 0;
+      break;
+    }
+    uint64_t max = atoll(curr);
+    if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
+    wasm.memory.max = max;
+  }
+  return i;
+}
+
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (wasm.memory.exists) throw ParseException("too many memories");
   wasm.memory.exists = true;
@@ -1479,20 +1496,8 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       return;
     }
   }
-  wasm.memory.initial = getCheckedAddress(s[i++], "excessive memory init");
-  if (i == s.size()) return;
-  // Parse memory limits.
-  while (i < s.size() && s[i]->isStr()) {
-    auto* curr = s[i]->c_str();
-    i++;
-    if (strstr(curr, "shared")) {
-      wasm.memory.shared = strncmp(curr, "notshared", 9) != 0;
-      break;
-    }
-    uint64_t max = atoll(curr);
-    if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
-    wasm.memory.max = max;
-  }
+  i = parseMemoryLimits(s, i);
+
   // Parse memory initializers.
   while (i < s.size()) {
     Element& curr = *s[i];
@@ -1691,12 +1696,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
     // ends with the table element type
   } else if (im->kind == ExternalKind::Memory) {
-    if (j < inner.size()) {
-      wasm.memory.initial = getCheckedAddress(inner[j++], "excessive memory init size");
-    }
-    if (j < inner.size()) {
-      wasm.memory.max = getCheckedAddress(inner[j++], "excessive memory max size");
-    }
+    j = parseMemoryLimits(inner, j);
   }
   if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
   wasm.addImport(im.release());
