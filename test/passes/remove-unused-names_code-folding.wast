@@ -471,5 +471,18 @@
       (drop (i32.const 1))
       (drop (i32.const 2))
     )
+    ;; not at the end
+    (block $x1
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x1)
+          (nop)
+        )
+      )
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+    )
   )
 )
