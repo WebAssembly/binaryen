@@ -227,7 +227,6 @@ private:
       if (!willEmptyBlock) {
         // last chance, if our parent is a block, then it should be
         // fine to create a new block here, it will be merged up
-        // TODO
         assert(curr == controlFlowStack.back()); // we are an if or a block, at the top
         if (controlFlowStack.size() <= 1) {
           return; // no parent at all
