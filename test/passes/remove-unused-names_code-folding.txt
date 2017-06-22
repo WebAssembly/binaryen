@@ -544,5 +544,35 @@
     (br $out2)
    )
   )
+  (block
+   (block $out3
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (block
+      (br $out3)
+     )
+    )
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (block
+      (br $out3)
+     )
+    )
+    (br $out3)
+   )
+   (drop
+    (i32.const 2)
+   )
+   (nop)
+   (nop)
+   (nop)
+   (nop)
+   (nop)
+   (nop)
+  )
  )
 )
