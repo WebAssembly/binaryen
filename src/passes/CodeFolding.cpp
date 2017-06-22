@@ -286,6 +286,8 @@ private:
   }
 };
 
+// TODO: merge things leading to (unreachable) or (return)
+
 Pass *createCodeFoldingPass() {
   return new CodeFolding();
 }

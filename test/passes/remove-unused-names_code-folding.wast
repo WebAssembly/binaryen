@@ -416,4 +416,60 @@
       (br $out3)
     )
   )
+  (func $block-corners
+    ;; these should be merged
+    (block $x
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+    )
+    ;; these should not
+    ;; values
+    (drop
+      (block $y (result i32)
+        (if (i32.const 0)
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $y (i32.const 3))
+          )
+        )
+        (drop (i32.const 1))
+        (drop (i32.const 2))
+        (br $y (i32.const 3))
+      )
+    )
+    (drop
+      (block $z (result i32)
+        (if (i32.const 0)
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $z (i32.const 2))
+          )
+        )
+        (drop (i32.const 1))
+        (drop (i32.const 2))
+        (i32.const 3)
+      )
+    )
+    ;; condition
+    (block $w
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br_if $w (i32.const 3))
+        )
+      )
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+    )
+  )
 )

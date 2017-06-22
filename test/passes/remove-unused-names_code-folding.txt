@@ -575,4 +575,94 @@
    (nop)
   )
  )
+ (func $block-corners (type $0)
+  (block
+   (block $x
+    (if
+     (i32.const 0)
+     (br $x)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 2)
+   )
+  )
+  (drop
+   (block $y (result i32)
+    (if
+     (i32.const 0)
+     (block
+      (drop
+       (i32.const 1)
+      )
+      (drop
+       (i32.const 2)
+      )
+      (br $y
+       (i32.const 3)
+      )
+     )
+    )
+    (drop
+     (i32.const 1)
+    )
+    (drop
+     (i32.const 2)
+    )
+    (br $y
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (block $z (result i32)
+    (if
+     (i32.const 0)
+     (block
+      (drop
+       (i32.const 1)
+      )
+      (drop
+       (i32.const 2)
+      )
+      (br $z
+       (i32.const 2)
+      )
+     )
+    )
+    (drop
+     (i32.const 1)
+    )
+    (drop
+     (i32.const 2)
+    )
+    (i32.const 3)
+   )
+  )
+  (block $w
+   (if
+    (i32.const 0)
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (drop
+      (i32.const 2)
+     )
+     (br_if $w
+      (i32.const 3)
+     )
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 2)
+   )
+  )
+ )
 )
