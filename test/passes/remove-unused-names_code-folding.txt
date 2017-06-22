@@ -239,28 +239,6 @@
  (func $if-worth-it-i-dunno (type $0)
   (if
    (i32.const 0)
-   (block
-    (drop
-     (i32.const -1234)
-    )
-    (drop
-     (i32.const -1000)
-    )
-    (unreachable)
-    (unreachable)
-   )
-   (block
-    (drop
-     (i32.const 999)
-    )
-    (drop
-     (i32.const 1)
-    )
-    (unreachable)
-    (unreachable)
-   )
-  )
-  (block
    (if
     (i32.const 0)
     (block
@@ -270,6 +248,8 @@
      (drop
       (i32.const -1000)
      )
+     (unreachable)
+     (unreachable)
     )
     (block
      (drop
@@ -278,41 +258,202 @@
      (drop
       (i32.const 1)
      )
+     (unreachable)
+     (unreachable)
     )
    )
-   (unreachable)
-   (unreachable)
-   (unreachable)
+  )
+  (if
+   (i32.const 0)
+   (block
+    (if
+     (i32.const 0)
+     (block
+      (drop
+       (i32.const -1234)
+      )
+      (drop
+       (i32.const -1000)
+      )
+     )
+     (block
+      (drop
+       (i32.const 999)
+      )
+      (drop
+       (i32.const 1)
+      )
+     )
+    )
+    (unreachable)
+    (unreachable)
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (block
+    (if
+     (i32.const 0)
+     (block
+     )
+     (block
+      (drop
+       (i32.const 999)
+      )
+      (drop
+       (i32.const 1)
+      )
+     )
+    )
+    (unreachable)
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 0)
+   (block
+    (if
+     (i32.const 0)
+     (block
+      (drop
+       (i32.const -1234)
+      )
+      (drop
+       (i32.const -1000)
+      )
+     )
+     (block
+     )
+    )
+    (unreachable)
+    (unreachable)
+   )
   )
   (block
-   (if
-    (i32.const 0)
-    (block
-    )
-    (block
-     (drop
-      (i32.const 999)
+   (block
+    (if
+     (i32.const 9999)
+     (block
+      (drop
+       (i32.const -51234)
+      )
+      (drop
+       (i32.const -51000)
+      )
      )
-     (drop
-      (i32.const 1)
+     (block
+      (drop
+       (i32.const 5999)
+      )
+      (drop
+       (i32.const 51)
+      )
+     )
+    )
+    (unreachable)
+    (unreachable)
+   )
+  )
+  (drop
+   (block (result i32)
+    (block (result i32)
+     (if
+      (i32.const 9999)
+      (block
+       (drop
+        (i32.const -51234)
+       )
+       (drop
+        (i32.const -51000)
+       )
+      )
+      (block
+       (drop
+        (i32.const 5999)
+       )
+       (drop
+        (i32.const 51)
+       )
+      )
+     )
+     (unreachable)
+     (i32.const 10)
+    )
+   )
+  )
+  (block
+   (drop
+    (if (result i32)
+     (i32.const 9999)
+     (block (result i32)
+      (drop
+       (i32.const -51234)
+      )
+      (drop
+       (i32.const -51000)
+      )
+      (unreachable)
+      (i32.const 10)
+     )
+     (block (result i32)
+      (drop
+       (i32.const 5999)
+      )
+      (drop
+       (i32.const 51)
+      )
+      (unreachable)
+      (i32.const 10)
      )
     )
    )
-   (unreachable)
-   (unreachable)
   )
+ )
+ (func $no-grandparent (type $0)
+  (if
+   (i32.const 9999)
+   (block
+    (drop
+     (i32.const -51234)
+    )
+    (drop
+     (i32.const -51000)
+    )
+    (unreachable)
+    (unreachable)
+   )
+   (block
+    (drop
+     (i32.const 5999)
+    )
+    (drop
+     (i32.const 51)
+    )
+    (unreachable)
+    (unreachable)
+   )
+  )
+ )
+ (func $yes-grandparent (type $0)
   (block
    (if
-    (i32.const 0)
+    (i32.const 9999)
     (block
      (drop
-      (i32.const -1234)
+      (i32.const -51234)
      )
      (drop
-      (i32.const -1000)
+      (i32.const -51000)
      )
     )
     (block
+     (drop
+      (i32.const 5999)
+     )
+     (drop
+      (i32.const 51)
+     )
     )
    )
    (unreachable)
@@ -346,20 +487,23 @@
      (nop)
     )
     (if
-     (get_local $x)
-     (block
-      (nop)
-      (br_if $out
-       (get_local $y)
+     (i32.const 1234)
+     (if
+      (get_local $x)
+      (block
+       (nop)
+       (br_if $out
+        (get_local $y)
+       )
+       (nop)
       )
-      (nop)
-     )
-     (block
-      (nop)
-      (br_if $out2
-       (get_local $y)
+      (block
+       (nop)
+       (br_if $out2
+        (get_local $y)
+       )
+       (nop)
       )
-      (nop)
      )
     )
     (if

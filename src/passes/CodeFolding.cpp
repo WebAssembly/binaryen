@@ -228,7 +228,26 @@ private:
         // last chance, if our parent is a block, then it should be
         // fine to create a new block here, it will be merged up
         // TODO
-        return;
+        assert(curr == controlFlowStack.back()); // we are an if or a block, at the top
+        if (controlFlowStack.size() <= 1) {
+          return; // no parent at all
+                  // TODO: if we are the toplevel in the function, then in the binary format
+                  //       we might avoid emitting a block, so the same logic applies here?
+        }
+        auto* parent = controlFlowStack[controlFlowStack.size() - 2]->dynCast<Block>();
+        if (!parent) {
+          return; // parent is not a block
+        }
+        bool isChild = false;
+        for (auto* child : parent->list) {
+          if (child == curr) {
+            isChild = true;
+            break;
+          }
+        }
+        if (!isChild) {
+          return; // not a child, something in between
+        }
       }
     }
     // this is worth doing, do it!
