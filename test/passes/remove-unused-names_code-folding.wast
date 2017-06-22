@@ -245,6 +245,18 @@
           )
         )
         (if (get_local $x)
+          (block
+            (nop)
+            (br_if $out (get_local $y i32))
+            (nop)
+          )
+          (block
+            (nop)
+            (br_if $out2 (get_local $y i32))
+            (nop)
+          )
+        )
+        (if (get_local $x)
           (block $left
             (br_if $left (get_local $y i32))
             (nop)

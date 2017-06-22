@@ -168,11 +168,11 @@ private:
     if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
       // it's not obvious we can save enough. see if we get rid
       // of a block, that would justify this
-      // TODO: leaving a block at size 1 is good enough too, it
-      //       can be removed later
       bool willEmptyBlock = false;
       for (auto& tail : tails) {
-        if (num == tail.block->list.size()) {
+        // it is enough to zero out the block, or leave just one
+        // element, as then the block can be replaced with that
+        if (num >= tail.block->list.size() - 1) {
           willEmptyBlock = true;
           break;
         }
