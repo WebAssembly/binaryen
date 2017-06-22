@@ -353,4 +353,37 @@
       (br $x)
     )
   )
+  (func $mixture
+    (block $out ;; then we reach the block, and the tail infos are stale, should ignore
+      (if (i32.const 1) ;; then we optimize the if, pushing those brs outside!
+        (block
+          (drop (i32.const 2)) ;; first we note the block tails for $out
+          (nop) (nop) (nop) (nop) (nop) (nop) ;; totally worth it
+          (br $out)
+        )
+        (block
+          (drop (i32.const 2))
+          (nop) (nop) (nop) (nop) (nop) (nop)
+          (br $out)
+        )
+      )
+    )
+    (block $out2
+      (if (i32.const 1)
+        (block
+          (drop (i32.const 3)) ;; leave something
+          (drop (i32.const 2))
+          (nop) (nop) (nop) (nop) (nop) (nop)
+          (br $out2)
+        )
+        (block
+          (drop (i32.const 4)) ;; leave something
+          (drop (i32.const 5)) ;; leave something
+          (drop (i32.const 2))
+          (nop) (nop) (nop) (nop) (nop) (nop)
+          (br $out2)
+        )
+      )
+    )
+  )
 )

@@ -496,4 +496,53 @@
    (i32.const 2)
   )
  )
+ (func $mixture (type $0)
+  (block $out
+   (block
+    (drop
+     (i32.const 1)
+    )
+    (block
+     (drop
+      (i32.const 2)
+     )
+     (nop)
+     (nop)
+     (nop)
+     (nop)
+     (nop)
+     (nop)
+     (br $out)
+    )
+   )
+  )
+  (block $out2
+   (block
+    (if
+     (i32.const 1)
+     (drop
+      (i32.const 3)
+     )
+     (block
+      (drop
+       (i32.const 4)
+      )
+      (drop
+       (i32.const 5)
+      )
+     )
+    )
+    (drop
+     (i32.const 2)
+    )
+    (nop)
+    (nop)
+    (nop)
+    (nop)
+    (nop)
+    (nop)
+    (br $out2)
+   )
+  )
+ )
 )

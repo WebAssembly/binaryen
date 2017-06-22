@@ -23,16 +23,27 @@
 //  * if-else, we merge the arms
 //
 
-#include <iterator>
-
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "ast_utils.h"
+#include "wasm-printing.h"
 
 namespace wasm {
 
 static const Index WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH = 3;
+
+struct ExpressionMarker : public PostWalker<ExpressionMarker, UnifiedExpressionVisitor<ExpressionMarker>> {
+  std::set<Expression*>& marked;
+
+  ExpressionMarker(std::set<Expression*>& marked, Expression* expr) : marked(marked) {
+    walk(expr);
+  }
+
+  void visitExpression(Expression* expr) {
+    marked.insert(expr);
+  }
+};
 
 struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   bool isFunctionParallel() override { return true; }
@@ -48,13 +59,30 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     // For a fallthrough
     Tail(Block* block) : expr(nullptr), block(block) {}
     // For a break
-    Tail(Expression* expr, Block* block) : expr(expr), block(block) {}
+    Tail(Expression* expr, Block* block) : expr(expr), block(block) {
+      validate();
+    }
 
     bool isFallthrough() const { return expr == nullptr; }
+
+    void validate() const {
+      if (expr) {
+        assert(block->list.back() == expr);
+      }
+    }
   };
+
+  // state
+
+  bool anotherPass;
+
+  // pass state
 
   std::map<Name, std::vector<Tail>> breakTails; // break target name => tails that reach it
   std::set<Name> unoptimizables; // break target names that we can't handle
+  std::set<Expression*> modifieds; // modified code should not be processed again, wait for next pass
+
+  // walking
 
   void visitBreak(Break* curr) {
     if (curr->condition || curr->value) {
@@ -105,6 +133,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       Builder builder(*getModule());
       // remove if (4 bytes), remove one arm, add drop (1), add block (3),
       // so this must be a net savings
+      markAsModified(curr);
       replaceCurrent(builder.makeSequence(
         builder.makeDrop(curr->condition),
         curr->ifTrue
@@ -122,6 +151,18 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     }
   }
 
+  void doWalkFunction(Function* func) {
+    anotherPass = true;
+    while (anotherPass) {
+      anotherPass = false;
+      WalkerPass<ControlFlowWalker<CodeFolding>>::doWalkFunction(func);
+      // clean up
+      breakTails.clear();
+      unoptimizables.clear();
+      modifieds.clear();
+    }
+  }
+
 private:
   // given a set of tails that all arrive at the end of an expression,
   // optimize foldable code out of the separate tails and put it right
@@ -129,6 +170,13 @@ private:
   template<typename T>
   void optimizeTails(const std::vector<Tail>& tails, T* curr) {
     assert(tails.size() > 1);
+    // see if anything is untoward, and we should not do this
+    for (auto& tail : tails) {
+      if (tail.expr && modifieds.count(tail.expr) > 0) return;
+      if (modifieds.count(tail.block) > 0) return;
+      // if we were not modified, then we should be valid for processing
+      tail.validate();
+    }
     // we are going to remove duplicate elements and add a block.
     // so for this to make sense, we need the size of the duplicate
     // elements to be worth that extra block (although, there is
@@ -176,13 +224,21 @@ private:
           break;
         }
       }
-      if (!willEmptyBlock) return;
+      if (!willEmptyBlock) {
+        // last chance, if our parent is a block, then it should be
+        // fine to create a new block here, it will be merged up
+        // TODO
+        return;
+      }
     }
     // this is worth doing, do it!
     for (auto& tail : tails) {
-      // remove the items we are merging
+      // remove the items we are merging / moving
+      // first, mark them as modified, so we don't try to handle them
+      // again in this pass, which might be buggy
+      markAsModified(tail.block);
       // we must preserve the br if there is one
-      Expression* last;
+      Expression* last = nullptr;
       if (!tail.isFallthrough()) {
         last = tail.block->list.back();
         tail.block->list.pop_back();
@@ -212,6 +268,8 @@ private:
     block->finalize(oldType);
     replaceCurrent(block);
     // TODO: vacuuming (emptied out blocks etc.)?
+    // since we managed a merge, then it might open up more opportunities later
+    anotherPass = true;
   }
 
   // we can ignore the final br in a tail
@@ -221,6 +279,10 @@ private:
       ret--;
     }
     return ret;
+  }
+
+  void markAsModified(Expression* curr) {
+    ExpressionMarker marker(modifieds, curr);
   }
 };
 
