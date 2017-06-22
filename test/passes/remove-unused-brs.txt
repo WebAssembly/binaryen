@@ -4,7 +4,7 @@
  (type $2 (func (result i32)))
  (type $3 (func (param i32 i32) (result i32)))
  (type $4 (func (param i32 i32)))
- (memory $0 256 256)
+ (memory $0 256 256 notshared)
  (func $b0-yes (type $0) (param $i1 i32)
   (block $topmost
   )

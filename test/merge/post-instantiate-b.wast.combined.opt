@@ -2,7 +2,7 @@
  (type $0$0 (func))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
- (memory $0 0)
+ (memory $0 0 notshared)
  (data (get_global $memoryBase) "")
  (export "__post_instantiate" (func $0$0))
  (func $0$0 (type $0$0)

@@ -1,6 +1,6 @@
 (module
  (type $FUNCSIG$v (func))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 2 2 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $__exit)
  (data (i32.const 16) "\d2\04\00\00\00\00\00\00)\t\00\00")

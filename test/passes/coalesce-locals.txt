@@ -9,7 +9,7 @@
  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
  (import "env" "get" (func $get (result i32)))
  (import "env" "set" (func $set (param i32)))
- (memory $0 10)
+ (memory $0 10 notshared)
  (func $nothing-to-do (type $2)
   (local $0 i32)
   (nop)

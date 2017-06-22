@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
  (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (data (i32.const 4) "\b0\08\00\00")
  (data (i32.const 12) "9\05\00\00")

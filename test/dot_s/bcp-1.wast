@@ -5,7 +5,7 @@
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "abort" (func $abort))
  (import "env" "exit" (func $exit (param i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 18 18 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $bad0 $bad1 $bad5 $bad7 $bad8 $bad10 $bad2 $bad3 $bad6 $bad4 $bad9 $good0 $good1 $good2 $opt0 $opt1 $opt2)
  (data (i32.const 16) "\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\05\00\00\00\06\00\00\00")

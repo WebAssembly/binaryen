@@ -1444,6 +1444,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (wasm.memory.exists) throw ParseException("too many memories");
   wasm.memory.exists = true;
   wasm.memory.imported = preParseImport;
+  wasm.memory.shared = false;
   Index i = 1;
   if (s[i]->dollared()) {
     wasm.memory.name = s[i++]->str();
@@ -1480,12 +1481,19 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   }
   wasm.memory.initial = getCheckedAddress(s[i++], "excessive memory init");
   if (i == s.size()) return;
-  if (s[i]->isStr()) {
-    uint64_t max = atoll(s[i]->c_str());
+  // Parse memory limits.
+  while (i < s.size() && s[i]->isStr()) {
+    auto* curr = s[i]->c_str();
+    i++;
+    if (strstr(curr, "shared")) {
+      wasm.memory.shared = strncmp(curr, "notshared", 9) != 0;
+      break;
+    }
+    uint64_t max = atoll(curr);
     if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
     wasm.memory.max = max;
-    i++;
   }
+  // Parse memory initializers.
   while (i < s.size()) {
     Element& curr = *s[i];
     size_t j = 1;

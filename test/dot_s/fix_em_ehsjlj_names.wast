@@ -12,7 +12,7 @@
  (import "env" "invoke_iii" (func $invoke_iii (param i32 i32 i32) (result i32)))
  (import "env" "invoke_iiii" (func $invoke_iiii (param i32 i32 i32 i32) (result i32)))
  (import "env" "invoke_v" (func $invoke_v (param i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 5 5 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $_Z5func1v $_Z5func2iii $_Z5func3fd $_Z5func4P8mystructS_)
  (export "stackSave" (func $stackSave))

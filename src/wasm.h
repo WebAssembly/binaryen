@@ -632,8 +632,9 @@ public:
   // See comment in Table.
   bool exists;
   bool imported;
+  bool shared;
 
-  Memory() : initial(0), max(kMaxSize), exists(false), imported(false) {
+  Memory() : initial(0), max(kMaxSize), exists(false), imported(false), shared(false) {
     name = Name::fromInt(0);
   }
 };

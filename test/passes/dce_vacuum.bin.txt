@@ -1,7 +1,7 @@
 (module
  (type $0 (func (param f32 f32) (result f32)))
  (type $1 (func (param f64 f64) (result f64)))
- (memory $0 0)
+ (memory $0 0 notshared)
  (export "f32.compute_radix" (func $0))
  (export "f64.compute_radix" (func $1))
  (func $0 (type $0) (param $var$0 f32) (param $var$1 f32) (result f32)

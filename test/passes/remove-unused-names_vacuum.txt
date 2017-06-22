@@ -1,7 +1,7 @@
 (module
  (type $0 (func (result i32)))
  (type $1 (func))
- (memory $0 0)
+ (memory $0 0 notshared)
  (func $return-i32-but-body-is-unreachable3 (type $0) (result i32)
   (local $label i32)
   (unreachable)

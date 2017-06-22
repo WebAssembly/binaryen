@@ -7,7 +7,7 @@
  (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
  (import "env" "memmove" (func $memmove (param i32 i32 i32) (result i32)))
  (import "env" "memset" (func $memset (param i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

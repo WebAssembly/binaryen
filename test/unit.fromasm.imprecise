@@ -14,7 +14,7 @@
  (import "env" "h" (func $h (param i32)))
  (import "env" "return_int" (func $return_int (result i32)))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
- (import "env" "memory" (memory $0 256 256))
+ (import "env" "memory" (memory $0 256 256 notshared))
  (import "env" "table" (table 25 25 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))

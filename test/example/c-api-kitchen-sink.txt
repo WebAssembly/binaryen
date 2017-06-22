@@ -14,7 +14,7 @@ BinaryenFloat64: 4
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) "$kitchen()sinker")
- (memory $0 1 256)
+ (memory $0 1 256 notshared)
  (data (i32.const 10) "hello, world")
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
@@ -542,7 +542,7 @@ raw:
  (type $vi (func (param i32)))
  (type $i (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (memory $0 0)
+ (memory $0 0 notshared)
  (func $just-one-block (type $v)
   (local $0 i32)
   (call $check
@@ -1025,12 +1025,12 @@ raw:
 )
 optimized:
 (module
- (memory $0 0)
+ (memory $0 0 notshared)
 )
 module loaded from binary form:
 (module
  (type $0 (func (param i32 i32) (result i32)))
- (memory $0 0)
+ (memory $0 0 notshared)
  (func $adder (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
   (i32.add
    (get_local $var$0)
@@ -1042,7 +1042,7 @@ module loaded from binary form:
  (type $vi (func (param i32)))
  (type $v (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
- (memory $0 0)
+ (memory $0 0 notshared)
  (start $starter)
  (func $starter (type $v)
   (call $print-i32
@@ -1053,7 +1053,7 @@ module loaded from binary form:
 (i32.const 1234)
 (module
  (type $v (func))
- (memory $0 0)
+ (memory $0 0 notshared)
  (func $func (type $v)
   (local $0 i32)
   (set_local $0
@@ -1404,7 +1404,7 @@ int main() {
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) "$kitchen()sinker")
- (memory $0 1 256)
+ (memory $0 1 256 notshared)
  (data (i32.const 10) "hello, world")
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
@@ -2392,7 +2392,7 @@ raw:
  (type $vi (func (param i32)))
  (type $i (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (memory $0 0)
+ (memory $0 0 notshared)
  (func $just-one-block (type $v)
   (local $0 i32)
   (call $check
@@ -2879,7 +2879,7 @@ raw:
 optimized:
   BinaryenModulePrint(the_module);
 (module
- (memory $0 0)
+ (memory $0 0 notshared)
 )
   BinaryenModuleDispose(the_module);
   functionTypes.clear();

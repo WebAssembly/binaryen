@@ -1,6 +1,6 @@
 (module
  (type $0 (func (param i64) (result i64)))
- (memory $0 0)
+ (memory $0 0 notshared)
  (export "fac-rec" (func $0))
  (export "fac-rec-named" (func $1))
  (export "fac-iter" (func $2))

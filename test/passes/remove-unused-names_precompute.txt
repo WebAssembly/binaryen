@@ -1,6 +1,6 @@
 (module
  (type $0 (func (param i32)))
- (memory $0 256 256)
+ (memory $0 256 256 notshared)
  (func $__ZN10WasmAssertC2Ev__async_cb (type $0) (param $$0 i32)
   (block $switch-default
    (nop)

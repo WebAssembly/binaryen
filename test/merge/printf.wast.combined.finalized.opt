@@ -1,6 +1,6 @@
 (module
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (import "env" "memory" (memory $0 256))
+ (import "env" "memory" (memory $0 256 notshared))
  (import "env" "table" (table 8 anyfunc))
  
  (export "_printf" (func $625))

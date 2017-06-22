@@ -1,6 +1,6 @@
 (module
  (type $0 (func))
- (memory $0 0)
+ (memory $0 0 notshared)
  (func $0 (type $0)
   (if
    (i32.const 0)

@@ -3,7 +3,7 @@
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
  (import "env" "puts" (func $puts (param i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 2 2 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $main)
  (data (i32.const 16) "hello, world!\n\00")

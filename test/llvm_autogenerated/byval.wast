@@ -9,7 +9,7 @@
  (import "env" "ext_func" (func $ext_func (param i32)))
  (import "env" "ext_func_empty" (func $ext_func_empty (param i32)))
  (import "env" "memcpy" (func $memcpy (param i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

@@ -10,7 +10,7 @@
  (import "env" "invoke_v" (func $invoke_v (param i32)))
  (import "env" "longjmp" (func $longjmp (param i32 i32)))
  (import "env" "setjmp" (func $setjmp (param i32) (result i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (import "env" "foo" (func $foo))
  (table 2 2 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $__importThunk_foo)

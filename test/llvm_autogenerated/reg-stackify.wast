@@ -17,7 +17,7 @@
  (import "env" "use_a" (func $use_a (param i32)))
  (import "env" "use_b" (func $use_b (param i32)))
  (import "env" "use_memory" (func $use_memory (param i32) (result i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (data (i32.const 12) "\00\00\00\00")

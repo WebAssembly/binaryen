@@ -2,7 +2,7 @@
  (type $FUNCSIG$vijji (func (param i32 i64 i64 i32)))
  (import "env" "__ashlti3" (func $__ashlti3 (param i32 i64 i64 i32)))
  (import "env" "__lshrti3" (func $__lshrti3 (param i32 i64 i64 i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

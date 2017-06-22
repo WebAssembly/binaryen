@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$v (func))
  (import "env" "abort" (func $abort))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

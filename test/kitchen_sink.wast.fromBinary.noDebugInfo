@@ -1,6 +1,6 @@
 (module
  (type $0 (func (result i32)))
- (memory $0 4096 4096)
+ (memory $0 4096 4096 notshared)
  (data (i32.const 1026) "\14\00")
  (func $0 (type $0) (result i32)
   (block $label$0 (result i32)

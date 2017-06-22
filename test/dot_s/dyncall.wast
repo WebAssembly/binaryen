@@ -4,7 +4,7 @@
  (type $FUNCSIG$if (func (param f32) (result i32)))
  (type $FUNCSIG$vd (func (param f64)))
  (type $FUNCSIG$ffjjdi (func (param f32 i64 i64 f64 i32) (result f32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 6 6 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $i $i_f $vd $ffjjdi $vd2)
  (export "stackSave" (func $stackSave))

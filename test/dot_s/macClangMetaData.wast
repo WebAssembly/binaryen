@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (data (i32.const 16) "Hello, World!\00")
  (export "stackSave" (func $stackSave))

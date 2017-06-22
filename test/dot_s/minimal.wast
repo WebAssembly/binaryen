@@ -1,5 +1,5 @@
 (module
- (import "env" "memory" (memory $0 1))
+ (import "env" "memory" (memory $0 1 notshared))
  (table 0 anyfunc)
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
