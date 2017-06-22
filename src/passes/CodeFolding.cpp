@@ -45,8 +45,13 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     Expression* expr; // nullptr if this is a fallthrough
     Expression** pointer; // pointer in parent, for updating XXX needed?
     Block* block; // the enclosing block where we are at the tail
+
+    // For a fallthrough
     Tail(Block* block) : expr(nullptr), pointer(nullptr), block(block) {}
+    // For a break
     Tail(Expression* expr, Expression** pointer, Block* block) : expr(expr), pointer(pointer), block(block) {}
+
+    bool isFallthrough() const { return expr == nullptr; }
   };
 
   std::map<Name, std::vector<Tail>> breakTails; // break target name => tails that reach it
@@ -90,8 +95,9 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     if (hasFallthrough) {
       tails.push_back({ Tail(curr) });
     }
-    // XXX need to keep the brs in the tails that have them, and not emit one with the mergeables
-    optimizeTails(tails, curr);
+    if (tails.size() >= 2) {
+      optimizeTails(tails, curr);
+    }
   }
 
   void visitIf(If* curr) {
@@ -136,16 +142,16 @@ private:
       bool stop = false;
       for (auto& tail : tails) {
         assert(tail.block);
-        if (num >= tail.block->list.size()) {
+        if (num >= effectiveSize(tail)) {
           // one of the lists is too short
           stop = true;
           break;
         }
       }
       if (stop) break;
-      auto* item = tails[0].block->list[tails[0].block->list.size() - num - 1];
+      auto* item = tails[0].block->list[effectiveSize(tails[0]) - num - 1];
       for (auto& tail : tails) {
-        if (!ExpressionAnalyzer::equal(item, tail.block->list[tail.block->list.size() - num - 1])) {
+        if (!ExpressionAnalyzer::equal(item, tail.block->list[effectiveSize(tail) - num - 1])) {
           // one of the lists has a different item
           stop = true;
           break;
@@ -162,6 +168,8 @@ private:
     if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
       // it's not obvious we can save enough. see if we get rid
       // of a block, that would justify this
+      // TODO: leaving a block at size 1 is good enough too, it
+      //       can be removed later
       bool willEmptyBlock = false;
       for (auto& tail : tails) {
         if (num == tail.block->list.size()) {
@@ -173,16 +181,26 @@ private:
     }
     // this is worth doing, do it!
     for (auto& tail : tails) {
+      // remove the items we are merging
+      // we must preserve the br if there is one
+      Expression* last;
+      if (!tail.isFallthrough()) {
+        last = tail.block->list.back();
+        tail.block->list.pop_back();
+      }
       for (Index i = 0; i < mergeable.size(); i++) {
         tail.block->list.pop_back();
+      }
+      if (!tail.isFallthrough()) {
+        tail.block->list.push_back(last);
       }
       // the blocks lose their endings, so any values are gone, and the blocks
       // are now either none or unreachable
       tail.block->finalize();
     }
+    auto oldType = curr->type;
     // NB: we template-specialize so that this calls the proper finalizer for
     //     the type
-    auto oldType = curr->type;
     curr->finalize();
     Builder builder(*getModule());
     auto* block = builder.makeBlock();
@@ -195,6 +213,15 @@ private:
     block->finalize(oldType);
     replaceCurrent(block);
     // TODO: vacuuming (emptied out blocks etc.)?
+  }
+
+  // we can ignore the final br in a tail
+  Index effectiveSize(const Tail& tail) {
+    auto ret = tail.block->list.size();
+    if (!tail.isFallthrough()) {
+      ret--;
+    }
+    return ret;
   }
 };
 

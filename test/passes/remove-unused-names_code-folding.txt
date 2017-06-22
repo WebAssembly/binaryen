@@ -387,4 +387,99 @@
    (i32.const 20)
   )
  )
+ (func $block (type $0)
+  (block $x
+   (if
+    (i32.const 0)
+    (br $x)
+   )
+   (if
+    (i32.const 0)
+    (br $x)
+   )
+   (br $x)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 2)
+  )
+ )
+ (func $block2 (type $0)
+  (block $x
+   (if
+    (i32.const 0)
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (drop
+      (i32.const 333333)
+     )
+     (br $x)
+    )
+   )
+   (if
+    (i32.const 0)
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (drop
+      (i32.const 2)
+     )
+     (br $x)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 2)
+   )
+   (br $x)
+  )
+ )
+ (func $block3 (type $0)
+  (block $x
+   (if
+    (i32.const 0)
+    (block
+     (drop
+      (i32.const 1000)
+     )
+     (br $x)
+    )
+   )
+   (if
+    (i32.const 0)
+    (block
+     (drop
+      (i32.const 2000)
+     )
+     (drop
+      (i32.const 3000)
+     )
+     (br $x)
+    )
+   )
+   (drop
+    (i32.const 4000)
+   )
+   (drop
+    (i32.const 5000)
+   )
+   (drop
+    (i32.const 6000)
+   )
+   (br $x)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 2)
+  )
+ )
 )

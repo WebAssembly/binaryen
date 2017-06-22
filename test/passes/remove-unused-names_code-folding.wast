@@ -291,4 +291,54 @@
       (br $x)
     )
   )
+  (func $block2
+    (block $x
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 333333))
+          (br $x)
+        )
+      )
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      ;; no fallthrough, another thing to merge
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+      (br $x)
+    )
+  )
+  (func $block3
+    (block $x
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1000))
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 2000))
+          (drop (i32.const 3000))
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      (drop (i32.const 4000))
+      (drop (i32.const 5000))
+      (drop (i32.const 6000))
+      ;; no fallthrough, another thing to merge
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+      (br $x)
+    )
+  )
 )
