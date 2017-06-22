@@ -43,15 +43,55 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   // merge (e.g., a branch and some code leading up to it)
   struct Tail {
     Expression* expr; // nullptr if this is a fallthrough
-    Expression** pointer; // pointer in parent, for updating
+    Expression** pointer; // pointer in parent, for updating XXX needed?
     Block* block; // the enclosing block where we are at the tail
     Tail(Block* block) : expr(nullptr), pointer(nullptr), block(block) {}
     Tail(Expression* expr, Expression** pointer, Block* block) : expr(expr), pointer(pointer), block(block) {}
   };
 
   std::map<Name, std::vector<Tail>> breakTails; // break target name => tails that reach it
+  std::set<Name> unoptimizables; // break target names that we can't handle
+
+  void visitBreak(Break* curr) {
+    if (curr->condition || curr->value) {
+      unoptimizables.insert(curr->name);
+    } else {
+      // we can only optimize if we are at the end of the parent block
+      Block* parent = controlFlowStack.back()->dynCast<Block>();
+      if (parent && curr == parent->list.back()) {
+        breakTails[curr->name].push_back(Tail(curr, getCurrentPointer(), parent));
+      } else {
+        unoptimizables.insert(curr->name);
+      }
+    }
+  }
+
+  void visitSwitch(Switch* curr) {
+    for (auto target : curr->targets) {
+      unoptimizables.insert(target);
+    }
+    unoptimizables.insert(curr->default_);
+  }
 
   void visitBlock(Block* curr) {
+    if (!curr->name.is()) return;
+    if (unoptimizables.count(curr->name) > 0) return;
+    auto iter = breakTails.find(curr->name);
+    if (iter == breakTails.end()) return;
+    // looks promising
+    auto& tails = iter->second;
+    // see if there is a fallthrough
+    bool hasFallthrough = true;
+    for (auto* child : curr->list) {
+      if (child->type == unreachable) {
+        hasFallthrough = false;
+      }
+    }
+    if (hasFallthrough) {
+      tails.push_back({ Tail(curr) });
+    }
+    // XXX need to keep the brs in the tails that have them, and not emit one with the mergeables
+    optimizeTails(tails, curr);
   }
 
   void visitIf(If* curr) {
@@ -75,12 +115,6 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
         optimizeTails({ Tail(left), Tail(right) }, curr);
       }
     }
-  }
-
-  void doWalkFunction(Function* func) {
-    // TODO: multiple passes?
-    WalkerPass<ControlFlowWalker<CodeFolding>>::walk(func->body);
-    assert(breakTails.empty());
   }
 
 private:

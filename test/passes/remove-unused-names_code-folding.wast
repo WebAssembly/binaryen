@@ -269,4 +269,26 @@
     )
     (return (i32.const 20))
   )
+  (func $block
+    (block $x
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      (if (i32.const 0)
+        (block
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $x)
+        )
+      )
+      ;; no fallthrough, another thing to merge
+      (drop (i32.const 1))
+      (drop (i32.const 2))
+      (br $x)
+    )
+  )
 )
