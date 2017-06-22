@@ -43,13 +43,12 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   // merge (e.g., a branch and some code leading up to it)
   struct Tail {
     Expression* expr; // nullptr if this is a fallthrough
-    Expression** pointer; // pointer in parent, for updating XXX needed?
-    Block* block; // the enclosing block where we are at the tail
+    Block* block; // the enclosing block of code we hope to merge at its tail
 
     // For a fallthrough
-    Tail(Block* block) : expr(nullptr), pointer(nullptr), block(block) {}
+    Tail(Block* block) : expr(nullptr), block(block) {}
     // For a break
-    Tail(Expression* expr, Expression** pointer, Block* block) : expr(expr), pointer(pointer), block(block) {}
+    Tail(Expression* expr, Block* block) : expr(expr), block(block) {}
 
     bool isFallthrough() const { return expr == nullptr; }
   };
@@ -64,7 +63,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // we can only optimize if we are at the end of the parent block
       Block* parent = controlFlowStack.back()->dynCast<Block>();
       if (parent && curr == parent->list.back()) {
-        breakTails[curr->name].push_back(Tail(curr, getCurrentPointer(), parent));
+        breakTails[curr->name].push_back(Tail(curr, parent));
       } else {
         unoptimizables.insert(curr->name);
       }
