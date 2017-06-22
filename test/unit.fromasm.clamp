@@ -637,7 +637,7 @@
   (drop
    (if (result i32)
     (call $return_int)
-    (i32.trunc_s/f64
+    (call $f64-to-int
      (call $abort
       (f64.convert_s/i32
        (i32.const 5)

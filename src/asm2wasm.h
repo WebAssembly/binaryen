@@ -34,7 +34,6 @@
 #include "ast_utils.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
-#include "wasm-printing.h"
 #include "wasm-module-building.h"
 
 namespace wasm {
@@ -788,7 +787,7 @@ private:
   }
 
   // Some conversions might trap, so emit them safely if necessary
-  Expression* makeTrappingFloatToInt(bool signed_, Expression* value) {
+  Expression* makeTrappingFloatToInt32(bool signed_, Expression* value) {
     if (trapMode == TrapMode::Allow) {
       auto ret = allocator.alloc<Unary>();
       ret->value = value;
@@ -872,6 +871,76 @@ private:
           builder.makeGetLocal(0, f64)
         ),
         builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))), // NB: min here as well. anything invalid => to the min
+        func->body
+      );
+      wasm.addFunction(func);
+    }
+    return ret;
+  }
+
+  Expression* makeTrappingFloatToInt64(bool signed_, Expression* value) {
+    if (trapMode == TrapMode::Allow) {
+      auto ret = allocator.alloc<Unary>();
+      ret->value = value;
+      bool isF64 = ret->value->type == f64;
+      if (signed_) {
+        ret->op = isF64 ? TruncSFloat64ToInt64 : TruncSFloat32ToInt64;
+      } else {
+        ret->op = isF64 ? TruncUFloat64ToInt64 : TruncUFloat32ToInt64;
+      }
+      ret->type = WasmType::i64;
+      return ret;
+    }
+    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
+    // First, normalize input to f64
+    auto input = value;
+    if (input->type == f32) {
+      auto conv = allocator.alloc<Unary>();
+      conv->op = PromoteFloat32;
+      conv->value = input;
+      conv->type = WasmType::f64;
+      input = conv;
+    }
+    // There is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
+    Call *ret = allocator.alloc<Call>();
+    ret->target = F64_TO_INT64;
+    ret->operands.push_back(input);
+    ret->type = i64;
+    static bool added = false;
+    if (!added) {
+      added = true;
+      auto func = new Function;
+      func->name = ret->target;
+      func->params.push_back(f64);
+      func->result = i64;
+      func->body = builder.makeUnary(TruncSFloat64ToInt64,
+        builder.makeGetLocal(0, f64)
+      );
+      // too small
+      func->body = builder.makeIf(
+        builder.makeBinary(LeFloat64,
+          builder.makeGetLocal(0, f64),
+          builder.makeConst(Literal(double(std::numeric_limits<int64_t>::min()) - 1))
+        ),
+        builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))),
+        func->body
+      );
+      // too big
+      func->body = builder.makeIf(
+        builder.makeBinary(GeFloat64,
+          builder.makeGetLocal(0, f64),
+          builder.makeConst(Literal(double(std::numeric_limits<int64_t>::max()) + 1))
+        ),
+        builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything out of range => to the min
+        func->body
+      );
+      // nan
+      func->body = builder.makeIf(
+        builder.makeBinary(NeFloat64,
+          builder.makeGetLocal(0, f64),
+          builder.makeGetLocal(0, f64)
+        ),
+        builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything invalid => to the min
         func->body
       );
       wasm.addFunction(func);
@@ -1302,10 +1371,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       auto importResult = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
       if (curr->type != importResult) {
+        auto old = curr->type;
+        curr->type = importResult;
         if (importResult == f64) {
           // we use a JS f64 value which is the most general, and convert to it
-          switch (curr->type) {
-            case i32: replaceCurrent(parent->builder.makeUnary(TruncSFloat64ToInt32, curr)); break;
+          switch (old) {
+            case i32: replaceCurrent(parent->makeTrappingFloatToInt32(true /* signed, asm.js ffi */, curr)); break;
             case f32: replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr)); break;
             case none: {
               // this function returns a value, but we are not using it, so it must be dropped.
@@ -1315,11 +1386,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             default: WASM_UNREACHABLE();
           }
         } else {
-          assert(curr->type == none);
+          assert(old == none);
           // we don't want a return value here, but the import does provide one
           // autodrop will do that for us.
         }
-        curr->type = importResult;
       }
     }
 
@@ -1836,7 +1906,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == B_NOT) {
           // if we have an unsigned coercion on us, it is an unsigned op
-          return makeTrappingFloatToInt(!isParentUnsignedCoercion(astStackHelper.getParent()), process(ast[2][2]));
+          return makeTrappingFloatToInt32(!isParentUnsignedCoercion(astStackHelper.getParent()), process(ast[2][2]));
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
@@ -2038,10 +2108,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
                 if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
                 if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
-                if (name == I64_F2S) return builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
-                if (name == I64_D2S) return builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
-                if (name == I64_F2U) return builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
-                if (name == I64_D2U) return builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
+                if (name == I64_F2S || name == I64_D2S) return makeTrappingFloatToInt64(true /* signed */, value);
+                if (name == I64_F2U || name == I64_D2U) return makeTrappingFloatToInt64(false /* unsigned */, value);
                 if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
                 if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
                 if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
