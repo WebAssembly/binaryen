@@ -1456,7 +1456,7 @@ static int32_t readBase64VLQ(std::istream& in) {
   uint32_t value = 0;
   uint32_t shift = 0;
   while (1) {
-    char ch = in.get();
+    auto ch = in.get();
     if (ch == EOF)
       throw MapParseException("unexpected EOF in the middle of VLQ");
     if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch < 'g')) {
