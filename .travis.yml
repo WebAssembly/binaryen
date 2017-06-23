@@ -4,7 +4,8 @@ language: cpp
 
 jobs:
   include:
-    - &test
+    # Build with clang and run tests on the host system (Ubuntu).
+    - &test-ubuntu
       stage: test
       compiler: clang
       python: 2.7
@@ -30,29 +31,70 @@ jobs:
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
 
-    - <<: *test
+    - <<: *test-ubuntu
       env: |
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
         COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
-    - <<: *test
+    - <<: *test-ubuntu
       env: |
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
         COMPILER_FLAGS="-fsanitize=address"
 
-    - <<: *test
+    - <<: *test-ubuntu
       env: |
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
         COMPILER_FLAGS="-fsanitize=thread"
 
-    - <<: *test
+    # Build with gcc 5 and run tests on the host system (Ubuntu).
+    - <<: *test-ubuntu
       compiler: gcc
       env: |
         CC_COMPILER="gcc-5"
         CXX_COMPILER="g++-5"
+
+    # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+    # Note: Alpine uses musl libc.
+    - &test-alpine
+      stage: test
+      sudo: true
+      language: minimal
+      compiler: gcc
+      before_install:
+        - "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
+              && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || exit 1"
+        - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+      install:
+        - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
+      before_script:
+        - alpine ./check.py --only-prepare
+      script:
+        - alpine cmake .
+        - alpine make -j2
+        - alpine ./check.py
+      env: ARCH=x86_64
+
+    # Build with gcc 6.3 on Alpine Linux (inside chroot) with QEMU emulation.
+    # XXX: We don't run tests, because some fail with QEMU/binfmt and it takes
+    # too long time (hits time limit on Travis).
+    - &test-alpine-no-check
+      <<: *test-alpine
+      script:
+       - alpine cmake .
+       - alpine make -j2
+      env: ARCH=x86
+
+    - <<: *test-alpine-no-check
+      env: ARCH=aarch64
+
+    - <<: *test-alpine-no-check
+      env: ARCH=armhf
+
+    - <<: *test-alpine-no-check
+      env: ARCH=ppc64le
 
 notifications:
   email: false
