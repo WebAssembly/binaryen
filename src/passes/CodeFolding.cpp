@@ -177,6 +177,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       WalkerPass<ControlFlowWalker<CodeFolding>>::doWalkFunction(func);
       // TODO optimizeTerminatingTails(unreachableTails);
       // TODO optimizeTerminatingTails(returnTails);
+      // TODO add fallthrough for returns
       // clean up
       breakTails.clear();
       unreachableTails.clear();
@@ -191,7 +192,7 @@ private:
   // paths leading to the block exit can be merged.
   template<typename T>
   void optimizeExpressionTails(std::vector<Tail>& tails, T* curr) {
-    auto* block = optimizeTails(tails, curr, false /* terminating */);
+    auto* block = optimizeTails(tails, curr, false /* not terminating */);
     if (!block) return;
     auto oldType = curr->type;
     // NB: we template-specialize so that this calls the proper finalizer for
@@ -216,8 +217,7 @@ private:
   // after this expression
   // returns a block of merged code if successful (with curr at the
   // beginning), nullptr otherwise
-  template<typename T>
-  Block* optimizeTails(std::vector<Tail>& tails, T* curr, bool terminating) {
+  Block* optimizeTails(std::vector<Tail>& tails, Expression* curr, bool terminating) {
     assert(tails.size() > 1);
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
@@ -349,8 +349,6 @@ private:
     ExpressionMarker marker(modifieds, curr);
   }
 };
-
-// TODO: merge things leading to (unreachable) or (return)
 
 Pass *createCodeFoldingPass() {
   return new CodeFolding();
