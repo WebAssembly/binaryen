@@ -192,37 +192,11 @@ private:
   // paths leading to the block exit can be merged.
   template<typename T>
   void optimizeExpressionTails(std::vector<Tail>& tails, T* curr) {
-    auto* block = optimizeTails(tails, curr, false /* not terminating */);
-    if (!block) return;
-    auto oldType = curr->type;
-    // NB: we template-specialize so that this calls the proper finalizer for
-    //     the type
-    curr->finalize();
-    // ensure the replacement has the same type, so the outside is not surprised
-    block->finalize(oldType);
-    replaceCurrent(block);
-  }
-
-  // optimize tails that terminate control flow in this function, so we
-  // are (1) merge just a few of them, we don't need all like with the
-  // branches to a block, and (2) we do it on the function body
-  void optimizeTerminatingTails(std::vector<Tail>& tails) {
-    auto* body = getFunction()->body;
-    auto* block = optimizeTails(tails, body, true /* terminating */);
-    if (!block) return;
-  }
-
-  // given a set of tails that all arrive at the end of an expression,
-  // optimize foldable code out of the separate tails and put it right
-  // after this expression
-  // returns a block of merged code if successful (with curr at the
-  // beginning), nullptr otherwise
-  Block* optimizeTails(std::vector<Tail>& tails, Expression* curr, bool terminating) {
     assert(tails.size() > 1);
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
-      if (tail.expr && modifieds.count(tail.expr) > 0) return nullptr;
-      if (modifieds.count(tail.block) > 0) return nullptr;
+      if (tail.expr && modifieds.count(tail.expr) > 0) return;
+      if (modifieds.count(tail.block) > 0) return;
       // if we were not modified, then we should be valid for processing
       tail.validate();
     }
@@ -259,7 +233,7 @@ private:
       num++;
       saved += Measurer::measure(item);
     }
-    if (saved == 0) return nullptr;
+    if (saved == 0) return;
     // we may be able to save enough.
     if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
       // it's not obvious we can save enough. see if we get rid
@@ -276,18 +250,15 @@ private:
       if (!willEmptyBlock) {
         // last chance, if our parent is a block, then it should be
         // fine to create a new block here, it will be merged up
-        if (terminating) {
-          return nullptr; // nothing above us, that's it
-        }
         assert(curr == controlFlowStack.back()); // we are an if or a block, at the top
         if (controlFlowStack.size() <= 1) {
-          return nullptr; // no parent at all
+          return; // no parent at all
                   // TODO: if we are the toplevel in the function, then in the binary format
                   //       we might avoid emitting a block, so the same logic applies here?
         }
         auto* parent = controlFlowStack[controlFlowStack.size() - 2]->dynCast<Block>();
         if (!parent) {
-          return nullptr; // parent is not a block
+          return; // parent is not a block
         }
         bool isChild = false;
         for (auto* child : parent->list) {
@@ -297,7 +268,7 @@ private:
           }
         }
         if (!isChild) {
-          return nullptr; // not a child, something in between
+          return; // not a child, something in between
         }
       }
     }
@@ -333,7 +304,20 @@ private:
       block->list.push_back(mergeable.back());
       mergeable.pop_back();
     }
-    return block;
+    auto oldType = curr->type;
+    // NB: we template-specialize so that this calls the proper finalizer for
+    //     the type
+    curr->finalize();
+    // ensure the replacement has the same type, so the outside is not surprised
+    block->finalize(oldType);
+    replaceCurrent(block);
+  }
+
+  // optimize tails that terminate control flow in this function, so we
+  // are (1) merge just a few of them, we don't need all like with the
+  // branches to a block, and (2) we do it on the function body
+  void optimizeTerminatingTails(std::vector<Tail>& tails) {
+    abort();
   }
 
   // we can ignore the final br in a tail
