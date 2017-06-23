@@ -79,6 +79,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   // pass state
 
   std::map<Name, std::vector<Tail>> breakTails; // break target name => tails that reach it
+  std::vector<Tail> unreachableTails; // tails leading to (unreachable)
+  std::vector<Tail> returnTails; // tails leading to (return)
   std::set<Name> unoptimizables; // break target names that we can't handle
   std::set<Expression*> modifieds; // modified code should not be processed again, wait for next pass
 
@@ -105,6 +107,22 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     unoptimizables.insert(curr->default_);
   }
 
+  void visitUnreachable(Unreachable* curr) {
+    // we can only optimize if we are at the end of the parent block
+    Block* parent = controlFlowStack.back()->dynCast<Block>();
+    if (parent && curr == parent->list.back()) {
+      unreachableTails.push_back(Tail(curr, parent));
+    }
+  }
+
+  void visitReturn(Return* curr) {
+    // we can only optimize if we are at the end of the parent block
+    Block* parent = controlFlowStack.back()->dynCast<Block>();
+    if (parent && curr == parent->list.back()) {
+      returnTails.push_back(Tail(curr, parent));
+    }
+  }
+
   void visitBlock(Block* curr) {
     if (!curr->name.is()) return;
     if (unoptimizables.count(curr->name) > 0) return;
@@ -123,7 +141,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       tails.push_back({ Tail(curr) });
     }
     if (tails.size() >= 2) {
-      optimizeTails(tails, curr);
+      optimizeExpressionTails(tails, curr);
     }
   }
 
@@ -146,7 +164,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // to the end, skipping the code we want to merge
       if (left && right &&
           !left->name.is() && !right->name.is()) {
-        optimizeTails({ Tail(left), Tail(right) }, curr);
+        std::vector<Tail> tails = { Tail(left), Tail(right) };
+        optimizeExpressionTails(tails, curr);
       }
     }
   }
@@ -156,31 +175,61 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     while (anotherPass) {
       anotherPass = false;
       WalkerPass<ControlFlowWalker<CodeFolding>>::doWalkFunction(func);
+      // TODO optimizeTerminatingTails(unreachableTails);
+      // TODO optimizeTerminatingTails(returnTails);
       // clean up
       breakTails.clear();
+      unreachableTails.clear();
+      returnTails.clear();
       unoptimizables.clear();
       modifieds.clear();
     }
   }
 
 private:
+  // optimize tails that reach the outside of an expression. code that is identical in all
+  // paths leading to the block exit can be merged.
+  template<typename T>
+  void optimizeExpressionTails(std::vector<Tail>& tails, T* curr) {
+    auto* block = optimizeTails(tails, curr, false /* terminating */);
+    if (!block) return;
+    auto oldType = curr->type;
+    // NB: we template-specialize so that this calls the proper finalizer for
+    //     the type
+    curr->finalize();
+    // ensure the replacement has the same type, so the outside is not surprised
+    block->finalize(oldType);
+    replaceCurrent(block);
+  }
+
+  // optimize tails that terminate control flow in this function, so we
+  // are (1) merge just a few of them, we don't need all like with the
+  // branches to a block, and (2) we do it on the function body
+  void optimizeTerminatingTails(std::vector<Tail>& tails) {
+    auto* body = getFunction()->body;
+    auto* block = optimizeTails(tails, body, true /* terminating */);
+    if (!block) return;
+  }
+
   // given a set of tails that all arrive at the end of an expression,
   // optimize foldable code out of the separate tails and put it right
   // after this expression
+  // returns a block of merged code if successful (with curr at the
+  // beginning), nullptr otherwise
   template<typename T>
-  void optimizeTails(const std::vector<Tail>& tails, T* curr) {
+  Block* optimizeTails(std::vector<Tail>& tails, T* curr, bool terminating) {
     assert(tails.size() > 1);
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
-      if (tail.expr && modifieds.count(tail.expr) > 0) return;
-      if (modifieds.count(tail.block) > 0) return;
+      if (tail.expr && modifieds.count(tail.expr) > 0) return nullptr;
+      if (modifieds.count(tail.block) > 0) return nullptr;
       // if we were not modified, then we should be valid for processing
       tail.validate();
     }
     // we are going to remove duplicate elements and add a block.
     // so for this to make sense, we need the size of the duplicate
     // elements to be worth that extra block (although, there is
-    // some chance the block would get merged higher up...)
+    // some chance the block would get merged higher up, see later)
     std::vector<Expression*> mergeable; // the elements we can merge
     Index num = 0; // how many elements back from the tail to look at
     Index saved = 0; // how much we can save
@@ -210,7 +259,7 @@ private:
       num++;
       saved += Measurer::measure(item);
     }
-    if (saved == 0) return;
+    if (saved == 0) return nullptr;
     // we may be able to save enough.
     if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
       // it's not obvious we can save enough. see if we get rid
@@ -227,15 +276,18 @@ private:
       if (!willEmptyBlock) {
         // last chance, if our parent is a block, then it should be
         // fine to create a new block here, it will be merged up
+        if (terminating) {
+          return nullptr; // nothing above us, that's it
+        }
         assert(curr == controlFlowStack.back()); // we are an if or a block, at the top
         if (controlFlowStack.size() <= 1) {
-          return; // no parent at all
+          return nullptr; // no parent at all
                   // TODO: if we are the toplevel in the function, then in the binary format
                   //       we might avoid emitting a block, so the same logic applies here?
         }
         auto* parent = controlFlowStack[controlFlowStack.size() - 2]->dynCast<Block>();
         if (!parent) {
-          return; // parent is not a block
+          return nullptr; // parent is not a block
         }
         bool isChild = false;
         for (auto* child : parent->list) {
@@ -245,7 +297,7 @@ private:
           }
         }
         if (!isChild) {
-          return; // not a child, something in between
+          return nullptr; // not a child, something in between
         }
       }
     }
@@ -271,10 +323,9 @@ private:
       // are now either none or unreachable
       tail.block->finalize();
     }
-    auto oldType = curr->type;
-    // NB: we template-specialize so that this calls the proper finalizer for
-    //     the type
-    curr->finalize();
+    // since we managed a merge, then it might open up more opportunities later
+    anotherPass = true;
+    // make a block with curr + the merged code
     Builder builder(*getModule());
     auto* block = builder.makeBlock();
     block->list.push_back(curr);
@@ -282,12 +333,7 @@ private:
       block->list.push_back(mergeable.back());
       mergeable.pop_back();
     }
-    // ensure the replacement has the same type, so the outside is not surprised
-    block->finalize(oldType);
-    replaceCurrent(block);
-    // TODO: vacuuming (emptied out blocks etc.)?
-    // since we managed a merge, then it might open up more opportunities later
-    anotherPass = true;
+    return block;
   }
 
   // we can ignore the final br in a tail
