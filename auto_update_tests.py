@@ -4,7 +4,7 @@ import os, sys, subprocess, difflib
 
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
-    ASM2WASM, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL)
+    ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL)
 
 print '[ processing and updating testcases... ]\n'
 
@@ -198,6 +198,7 @@ for t in os.listdir('test'):
     print '..', t
     t = os.path.join('test', t)
     cmd = WASM_DIS + [t]
+    if os.path.isfile(t + '.map'): cmd += ['--source-map', t + '.map']
     actual = run_command(cmd)
 
     open(t + '.fromBinary', 'w').write(actual)
@@ -222,18 +223,19 @@ for t in os.listdir(os.path.join('test', 'merge')):
         with open(out, 'w') as o: o.write(actual)
         with open(out + '.stdout', 'w') as o: o.write(stdout)
 
-print '\n[ checking binaryen.js testcases... ]\n'
+if MOZJS:
+  print '\n[ checking binaryen.js testcases... ]\n'
 
-for s in sorted(os.listdir(os.path.join('test', 'binaryen.js'))):
-  if not s.endswith('.js'): continue
-  print s
-  f = open('a.js', 'w')
-  f.write(open(os.path.join('bin', 'binaryen.js')).read())
-  f.write(open(os.path.join('test', 'binaryen.js', s)).read())
-  f.close()
-  cmd = ['mozjs', 'a.js']
-  out = run_command(cmd, stderr=subprocess.STDOUT)
-  open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w').write(out)
+  for s in sorted(os.listdir(os.path.join('test', 'binaryen.js'))):
+    if not s.endswith('.js'): continue
+    print s
+    f = open('a.js', 'w')
+    f.write(open(os.path.join('bin', 'binaryen.js')).read())
+    f.write(open(os.path.join('test', 'binaryen.js', s)).read())
+    f.close()
+    cmd = ['mozjs', 'a.js']
+    out = run_command(cmd, stderr=subprocess.STDOUT)
+    open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w').write(out)
 
 print '\n[ checking wasm-ctor-eval... ]\n'
 

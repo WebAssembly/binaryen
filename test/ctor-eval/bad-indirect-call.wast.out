@@ -2,7 +2,7 @@
  (type $v (func))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-indirect)
- (memory $0 256 256)
+ (memory $0 256 256 notshared)
  (data (i32.const 10) "waka waka waka waka waka")
  (export "test1" (func $test1))
  (func $test1 (type $v)
