@@ -1,56 +1,58 @@
 sudo: false
+dist: trusty
 language: cpp
-python:
-  - "2.7"
 
-matrix:
+jobs:
   include:
-
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-      dist: trusty
+    - &test
+      stage: test
       compiler: clang
-      addons: &gcc5
+      python: 2.7
+      addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'nodejs', 'g++-5']
+      before_install:
+        - export CC="${CC_COMPILER}"
+        - export CXX="${CXX_COMPILER}"
+        - export ASAN_OPTIONS="symbolize=1"
+      install:
+        - pip install --user flake8
+      before_script:
+        # Check the style of a subset of Python code until the other code is updated.
+        - flake8 ./scripts/
+        - ./check.py --only-prepare
+      script:
+        - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        - make -j2
+        - ./check.py
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
 
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=`pwd`/ubsan.blacklist"
-      dist: trusty
-      compiler: clang
-      addons: *gcc5
+    - <<: *test
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=address"
-      dist: trusty
-      compiler: clang
-      addons: *gcc5
+    - <<: *test
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=address"
 
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=thread"
-      dist: trusty
-      compiler: clang
-      addons: *gcc5
+    - <<: *test
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=thread"
 
-    - env: CC_COMPILER="gcc-5" CXX_COMPILER="g++-5"
-      dist: trusty
+    - <<: *test
       compiler: gcc
-      addons: *gcc5
-
-before_install:
-  - export CC="${CC_COMPILER}"
-  - export CXX="${CXX_COMPILER}"
-  - export ASAN_OPTIONS="symbolize=1"
-
-install:
-  - pip install --user flake8
-
-before_script:
-  # Check the style of a subset of Python code until the other code is updated.
-  - flake8 ./scripts/
-
-script:
-  - ./check.py --only-prepare
-  - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
-  - make -j2
-  - ./check.py
+      env: |
+        CC_COMPILER="gcc-5"
+        CXX_COMPILER="g++-5"
 
 notifications:
   email: false
