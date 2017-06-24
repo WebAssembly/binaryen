@@ -140,9 +140,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     if (hasFallthrough) {
       tails.push_back({ Tail(curr) });
     }
-    if (tails.size() >= 2) {
-      optimizeExpressionTails(tails, curr);
-    }
+    optimizeExpressionTails(tails, curr);
   }
 
   void visitIf(If* curr) {
@@ -192,7 +190,7 @@ private:
   // paths leading to the block exit can be merged.
   template<typename T>
   void optimizeExpressionTails(std::vector<Tail>& tails, T* curr) {
-    assert(tails.size() > 1);
+    if (tails.size() < 2) return;
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
       if (tail.expr && modifieds.count(tail.expr) > 0) return;
@@ -317,7 +315,168 @@ private:
   // are (1) merge just a few of them, we don't need all like with the
   // branches to a block, and (2) we do it on the function body
   void optimizeTerminatingTails(std::vector<Tail>& tails) {
-    abort();
+    if (tails.size() < 2) return;
+    // remove things that are untoward and cannot be optimized
+    tails.erase(std::remove_if(tails.begin(), tails.end(), [&](Tail& tail) {
+      if (tail.expr && modifieds.count(tail.expr) > 0) return true;
+      if (modifieds.count(tail.block) > 0) return true;
+      // if we were not modified, then we should be valid for processing
+      tail.validate();
+      return false;
+    }), tails.end());
+    // now let's try to find subsets that are mergeable. we don't look hard
+    // for the most optimal; further passes may find more
+    // getItem:
+    auto getItem = [&](Tail& tail, Index num) {
+      return tail.block->list[effectiveSize(tails) - num - 1];
+    };
+    Index num = 0; // how many elements back from the tail to look at
+    while (1) {
+      // work on a test set of tails, see if we can optimize here. if we fail,
+      // we'll go back to the previous num and set of tails
+      auto test = tails;
+      // remove too-short tails
+      test.erase(std::remove_if(test.begin(), test.end(), [&](Tail& tail) {
+        assert(tail.block);
+        return num >= effectiveSize(tail);
+      }), test.end());
+      // if no tails passed the test, this num was too much
+      if (test.empty()) break;
+      // now we want to find a mergeable item - any item that is equal among a subset
+      std::unordered_map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
+      for (auto& tail : tails) {
+        auto* item = getItem(tail, num);
+        hashed[ExpressionAnalyzer::hash(item)].push_back(item);
+      }
+      // hash collisions are rare, so just check each set with the same hash vs the first TODO: optimize?
+      std::vector<Expression*>* best = nullptr;
+      for (auto& iter : hashed) {
+        auto& items = iter.second;
+        if (items.size() == 1) continue;
+        assert(items.size() > 0);
+        auto first = items[0];
+        items.erase(std::remove_if(test.begin(), test.end(), [&](Expression* item) {
+          if (item == first) return false; // don't bother comparing the first
+          return !ExpressionAnalyzer::equal(item, first);
+        }), items.end());
+        if (items.size() > 1) {
+          if (!best || best->size() < items.size()) {
+            best = &items;
+          }
+        }
+      }
+      // if there are no mergeable items, this num was too much
+      if (!best) break;
+      // we found another one we can merge, carry on
+      num++;
+      tails.swap(test);
+    }
+    // if we found nothing, stop
+    if (num == 0) return;
+    // great, we found something! let's scan and measure it
+    std::vector<Expression*> mergeable; // the elements we can merge
+    Index saved = 0; // how much we can save
+    for (Index i = 0; i < num; i++) {
+      auto item = getItem(tails[0], i);
+      mergeable.push_back(item);
+      saved += Measurer::measure(item);
+    }
+    // compure the cost: in non-fallthroughs, we are replacing the final
+    // element with a br; for a fallthrough, if there is one, we must
+    // add a return element (for the function body, so it doesn't reach us)
+    Index cost = 0;
+    for (auto& tail : tails) {
+      cost++;
+      if (!tail.isFallThrough()) {
+        // we add a break, but the benefit is we get to remove the
+        // final item
+        saved += Measurer::measure(tail.block->list.back());
+      }
+    }
+UGH, the final element must also be equal here. in fact it is not special at all, so getItem should not notice it!
+    // we also need to add two blocks: for us to break to, and to contain
+    // that block and the merged code
+    cost += 2 * WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
+    // we can now decided if this is worth it. what we are doing here is
+    // this: we replace the final element (in non-fallthroughs) with
+    // brs, which we must compare
+    // we may be able to save enough.
+    if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
+      // it's not obvious we can save enough. see if we get rid
+      // of a block, that would justify this
+      bool willEmptyBlock = false;
+      for (auto& tail : tails) {
+        // it is enough to zero out the block, or leave just one
+        // element, as then the block can be replaced with that
+        if (num >= tail.block->list.size() - 1) {
+          willEmptyBlock = true;
+          break;
+        }
+      }
+      if (!willEmptyBlock) {
+        // last chance, if our parent is a block, then it should be
+        // fine to create a new block here, it will be merged up
+        assert(curr == controlFlowStack.back()); // we are an if or a block, at the top
+        if (controlFlowStack.size() <= 1) {
+          return; // no parent at all
+                  // TODO: if we are the toplevel in the function, then in the binary format
+                  //       we might avoid emitting a block, so the same logic applies here?
+        }
+        auto* parent = controlFlowStack[controlFlowStack.size() - 2]->dynCast<Block>();
+        if (!parent) {
+          return; // parent is not a block
+        }
+        bool isChild = false;
+        for (auto* child : parent->list) {
+          if (child == curr) {
+            isChild = true;
+            break;
+          }
+        }
+        if (!isChild) {
+          return; // not a child, something in between
+        }
+      }
+    }
+    // this is worth doing, do it!
+    for (auto& tail : tails) {
+      // remove the items we are merging / moving
+      // first, mark them as modified, so we don't try to handle them
+      // again in this pass, which might be buggy
+      markAsModified(tail.block);
+      // we must preserve the br if there is one
+      Expression* last = nullptr;
+      if (!tail.isFallthrough()) {
+        last = tail.block->list.back();
+        tail.block->list.pop_back();
+      }
+      for (Index i = 0; i < mergeable.size(); i++) {
+        tail.block->list.pop_back();
+      }
+      if (!tail.isFallthrough()) {
+        tail.block->list.push_back(last);
+      }
+      // the blocks lose their endings, so any values are gone, and the blocks
+      // are now either none or unreachable
+      tail.block->finalize();
+    }
+    // since we managed a merge, then it might open up more opportunities later
+    anotherPass = true;
+    // make a block with curr + the merged code
+    Builder builder(*getModule());
+    auto* block = builder.makeBlock();
+    block->list.push_back(curr);
+    while (!mergeable.empty()) {
+      block->list.push_back(mergeable.back());
+      mergeable.pop_back();
+    }
+    auto oldType = curr->type;
+    // NB: we template-specialize so that this calls the proper finalizer for
+    //     the type
+    curr->finalize();
+    // ensure the replacement has the same type, so the outside is not surprised
+    block->finalize(oldType);
+    replaceCurrent(block);
   }
 
   // we can ignore the final br in a tail
