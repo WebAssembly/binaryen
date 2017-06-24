@@ -42,7 +42,6 @@ Pass *createMergeBlocksPass();
 Pass *createMinifiedPrinterPass();
 Pass *createMetricsPass();
 Pass *createNameListPass();
-Pass *createNameManagerPass();
 Pass *createOptimizeInstructionsPass();
 Pass *createPickLoadSignsPass();
 Pass *createPostEmscriptenPass();

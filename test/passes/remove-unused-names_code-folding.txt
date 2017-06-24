@@ -89,7 +89,7 @@
   )
  )
  (func $ifs-blocks-big (type $0)
-  (block $folding-inner
+  (block $folding-inner0
    (block
     (block
      (drop
@@ -134,7 +134,7 @@
     )
     (if
      (i32.const 0)
-     (br $folding-inner)
+     (br $folding-inner0)
      (drop
       (i32.add
        (i32.const 1)
@@ -150,7 +150,7 @@
        (i32.const 2)
       )
      )
-     (br $folding-inner)
+     (br $folding-inner0)
     )
    )
    (return)
@@ -234,7 +234,7 @@
   )
  )
  (func $if-worth-it-i-dunno (type $0)
-  (block $folding-inner
+  (block $folding-inner0
    (block
     (if
      (i32.const 0)
@@ -247,7 +247,7 @@
        (drop
         (i32.const -1000)
        )
-       (br $folding-inner)
+       (br $folding-inner0)
       )
       (block
        (drop
@@ -256,7 +256,7 @@
        (drop
         (i32.const 1)
        )
-       (br $folding-inner)
+       (br $folding-inner0)
       )
      )
     )
@@ -283,7 +283,7 @@
        )
       )
       (unreachable)
-      (br $folding-inner)
+      (br $folding-inner0)
      )
     )
     (if
@@ -302,7 +302,7 @@
         )
        )
       )
-      (br $folding-inner)
+      (br $folding-inner0)
      )
     )
     (if
@@ -321,7 +321,7 @@
        (block
        )
       )
-      (br $folding-inner)
+      (br $folding-inner0)
      )
     )
     (block
@@ -345,7 +345,7 @@
         )
        )
       )
-      (br $folding-inner)
+      (br $folding-inner0)
      )
     )
     (drop
@@ -876,19 +876,19 @@
   )
  )
  (func $terminating (type $0)
-  (block $folding-inner
+  (block $folding-inner0
    (block
     (if
      (i32.const 1)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
     (if
      (i32.const 2)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
     (if
      (i32.const 3)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
    )
    (return)
@@ -907,19 +907,19 @@
   (unreachable)
  )
  (func $terminating-unreachable (type $0)
-  (block $folding-inner
+  (block $folding-inner0
    (block
     (if
      (i32.const 1)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
     (if
      (i32.const 2)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
     (if
      (i32.const 3)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
     (unreachable)
    )
@@ -938,20 +938,20 @@
   (unreachable)
  )
  (func $terminating-value (type $2) (result i32)
-  (block $folding-inner
+  (block $folding-inner0
    (return
     (block (result i32)
      (if
       (i32.const 1)
-      (br $folding-inner)
+      (br $folding-inner0)
      )
      (if
       (i32.const 2)
-      (br $folding-inner)
+      (br $folding-inner0)
      )
      (if
       (i32.const 3)
-      (br $folding-inner)
+      (br $folding-inner0)
      )
      (i32.const 4)
     )
@@ -971,15 +971,15 @@
   (unreachable)
  )
  (func $terminating-just-2 (type $0)
-  (block $folding-inner
+  (block $folding-inner0
    (block
     (if
      (i32.const 1)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
     (if
      (i32.const 2)
-     (br $folding-inner)
+     (br $folding-inner0)
     )
     (if
      (i32.const 3)
@@ -1005,6 +1005,47 @@
    (return)
   )
   (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (unreachable)
+ )
+ (func $terminating-shortness (type $0)
+  (block $folding-inner1
+   (block
+    (block $folding-inner0
+     (block
+      (if
+       (i32.const 1)
+       (br $folding-inner0)
+      )
+      (if
+       (i32.const 2)
+       (br $folding-inner1)
+      )
+      (if
+       (i32.const 3)
+       (block
+        (drop
+         (i32.const 10)
+        )
+        (br $folding-inner0)
+       )
+      )
+     )
+     (return)
+    )
+    (nop)
+    (br $folding-inner1)
+   )
+  )
   (nop)
   (nop)
   (nop)

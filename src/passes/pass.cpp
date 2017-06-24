@@ -82,7 +82,6 @@ void PassRegistry::registerPasses() {
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
-  registerPass("name-manager", "utility pass to manage names in modules", createNameManagerPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
   registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);

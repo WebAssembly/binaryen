@@ -28,6 +28,7 @@
 #include "wasm-builder.h"
 #include "ast_utils.h"
 #include "wasm-printing.h"
+#include "ast/label-utils.h"
 
 namespace wasm {
 
@@ -420,7 +421,8 @@ private:
     // since we managed a merge, then it might open up more opportunities later
     anotherPass = true;
     Builder builder(*getModule());
-    Name innerName = "folding-inner"; // FIXME: uniquify
+    LabelUtils::LabelManager labels(getFunction()); // TODO: don't create one per merge, linear in function size
+    Name innerName = labels.getUnique("folding-inner");
     for (auto& tail : tails) {
       // remove the items we are merging / moving
       // first, mark them as modified, so we don't try to handle them

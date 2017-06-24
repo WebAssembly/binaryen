@@ -695,4 +695,25 @@
       )
     )
   )
+  (func $terminating-shortness
+    (if (i32.const 1)
+      (block
+        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 2)
+      (block
+        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 3)
+      (block
+        (drop (i32.const 10))
+        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+  )
 )

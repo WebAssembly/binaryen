@@ -16,7 +16,6 @@ SET(passes_SOURCES
   MemoryPacking.cpp
   MergeBlocks.cpp
   Metrics.cpp
-  NameManager.cpp
   NameList.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
