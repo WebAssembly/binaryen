@@ -173,7 +173,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     while (anotherPass) {
       anotherPass = false;
       WalkerPass<ControlFlowWalker<CodeFolding>>::doWalkFunction(func);
-      // TODO optimizeTerminatingTails(unreachableTails);
+      optimizeTerminatingTails(unreachableTails);
+      // optimize returns at the end, so we can benefit from a fallthrough if there is a value TODO: separate passes for them?
       // TODO optimizeTerminatingTails(returnTails);
       // TODO add fallthrough for returns
       // clean up
@@ -355,14 +356,13 @@ private:
       auto test = tails;
       // remove too-short tails
       test.erase(std::remove_if(test.begin(), test.end(), [&](Tail& tail) {
-        assert(tail.block);
         return num >= effectiveSize(tail);
       }), test.end());
       // if no tails passed the test, this num was too much
       if (test.empty()) break;
       // now we want to find a mergeable item - any item that is equal among a subset
       std::unordered_map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
-      for (auto& tail : tails) {
+      for (auto& tail : test) {
         auto* item = getItem(tail, num);
         hashed[ExpressionAnalyzer::hash(item)].push_back(item);
       }
@@ -428,14 +428,31 @@ private:
       tail.block->finalize(tail.block->type);
     }
     // make a block with the old body + the merged code
-    auto* block = builder.makeBlock();
-    block->list.push_back(getFunction()->body);
+    auto* old = getFunction()->body;
+    auto* inner = builder.makeBlock();
+    inner->name = innerName;
+    if (old->type == unreachable) {
+      // the old body is not flowed out of anyhow, so just put it there
+      inner->list.push_back(old);
+    } else {
+      // otherwise, we must not flow out to the merged code
+      if (old->type == none) {
+        inner->list.push_back(old);
+        inner->list.push_back(builder.makeReturn());
+      } else {
+        inner->list.push_back(builder.makeReturn(old));
+      }
+    }
+    inner->finalize();
+    auto* outer = builder.makeBlock();
+    outer->list.push_back(inner);
     while (!mergeable.empty()) {
-      block->list.push_back(mergeable.back());
+      outer->list.push_back(mergeable.back());
       mergeable.pop_back();
     }
+    outer->finalize(getFunction()->result);
+    getFunction()->body = outer;
     // ensure the replacement has the same type, so the outside is not surprised
-    block->finalize(getFunction()->result);
   }
 
   void markAsModified(Expression* curr) {
