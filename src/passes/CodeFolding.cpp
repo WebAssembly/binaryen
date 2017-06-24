@@ -198,6 +198,18 @@ private:
       // if we were not modified, then we should be valid for processing
       tail.validate();
     }
+    // we can ignore the final br in a tail
+    auto effectiveSize = [&](const Tail& tail) {
+      auto ret = tail.block->list.size();
+      if (!tail.isFallthrough()) {
+        ret--;
+      }
+      return ret;
+    };
+    // the mergeable items do not include the final br in a tail
+    auto getMergeable = [&](const Tail& tail, Index num) {
+      return tail.block->list[effectiveSize(tail) - num - 1];
+    };
     // we are going to remove duplicate elements and add a block.
     // so for this to make sense, we need the size of the duplicate
     // elements to be worth that extra block (although, there is
@@ -217,9 +229,9 @@ private:
         }
       }
       if (stop) break;
-      auto* item = tails[0].block->list[effectiveSize(tails[0]) - num - 1];
+      auto* item = getMergeable(tails[0], num);
       for (auto& tail : tails) {
-        if (!ExpressionAnalyzer::equal(item, tail.block->list[effectiveSize(tail) - num - 1])) {
+        if (!ExpressionAnalyzer::equal(item, getMergeable(tail, num)) {
           // one of the lists has a different item
           stop = true;
           break;
@@ -326,9 +338,15 @@ private:
     }), tails.end());
     // now let's try to find subsets that are mergeable. we don't look hard
     // for the most optimal; further passes may find more
-    // getItem:
+    // effectiveSize: TODO: special-case fallthrough, matters for returns
+    auto effectiveSize = [&](Tail& tail) {
+      return tail.block->list.size();
+    };
+    // getItem: returns the relevant item from the tail. this includes the
+    //          final item
+    //          TODO: special-case fallthrough, matters for returns
     auto getItem = [&](Tail& tail, Index num) {
-      return tail.block->list[effectiveSize(tails) - num - 1];
+      return tail.block->list[effectiveSize(tail) - num - 1];
     };
     Index num = 0; // how many elements back from the tail to look at
     while (1) {
@@ -379,91 +397,38 @@ private:
     for (Index i = 0; i < num; i++) {
       auto item = getItem(tails[0], i);
       mergeable.push_back(item);
-      saved += Measurer::measure(item);
+      saved += Measurer::measure(item) * tails.size();
     }
     // compure the cost: in non-fallthroughs, we are replacing the final
     // element with a br; for a fallthrough, if there is one, we must
     // add a return element (for the function body, so it doesn't reach us)
-    Index cost = 0;
-    for (auto& tail : tails) {
-      cost++;
-      if (!tail.isFallThrough()) {
-        // we add a break, but the benefit is we get to remove the
-        // final item
-        saved += Measurer::measure(tail.block->list.back());
-      }
-    }
-UGH, the final element must also be equal here. in fact it is not special at all, so getItem should not notice it!
+    // TODO: handle fallthroughts for return
+    Index cost = tails.size();
     // we also need to add two blocks: for us to break to, and to contain
     // that block and the merged code
     cost += 2 * WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
-    // we can now decided if this is worth it. what we are doing here is
-    // this: we replace the final element (in non-fallthroughs) with
-    // brs, which we must compare
-    // we may be able to save enough.
-    if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
-      // it's not obvious we can save enough. see if we get rid
-      // of a block, that would justify this
-      bool willEmptyBlock = false;
-      for (auto& tail : tails) {
-        // it is enough to zero out the block, or leave just one
-        // element, as then the block can be replaced with that
-        if (num >= tail.block->list.size() - 1) {
-          willEmptyBlock = true;
-          break;
-        }
-      }
-      if (!willEmptyBlock) {
-        // last chance, if our parent is a block, then it should be
-        // fine to create a new block here, it will be merged up
-        assert(curr == controlFlowStack.back()); // we are an if or a block, at the top
-        if (controlFlowStack.size() <= 1) {
-          return; // no parent at all
-                  // TODO: if we are the toplevel in the function, then in the binary format
-                  //       we might avoid emitting a block, so the same logic applies here?
-        }
-        auto* parent = controlFlowStack[controlFlowStack.size() - 2]->dynCast<Block>();
-        if (!parent) {
-          return; // parent is not a block
-        }
-        bool isChild = false;
-        for (auto* child : parent->list) {
-          if (child == curr) {
-            isChild = true;
-            break;
-          }
-        }
-        if (!isChild) {
-          return; // not a child, something in between
-        }
-      }
-    }
+    // is it worth it?
+    // TODO: if not worth it, perhaps a smaller num or choice of options might have worked?
+    if (saved < cost); return;
     // this is worth doing, do it!
+    // since we managed a merge, then it might open up more opportunities later
+    anotherPass = true;
+    Builder builder(*getModule());
+    Name innerName = "folding-inner"; // FIXME: uniquify
     for (auto& tail : tails) {
       // remove the items we are merging / moving
       // first, mark them as modified, so we don't try to handle them
       // again in this pass, which might be buggy
       markAsModified(tail.block);
-      // we must preserve the br if there is one
-      Expression* last = nullptr;
-      if (!tail.isFallthrough()) {
-        last = tail.block->list.back();
-        tail.block->list.pop_back();
-      }
       for (Index i = 0; i < mergeable.size(); i++) {
         tail.block->list.pop_back();
       }
-      if (!tail.isFallthrough()) {
-        tail.block->list.push_back(last);
-      }
-      // the blocks lose their endings, so any values are gone, and the blocks
-      // are now either none or unreachable
-      tail.block->finalize();
+      // add a break to the right place
+      tail.block->list.push_back(builder.makeBreak(innerName));
+      tail.block->finalize(tail.block->type);
     }
-    // since we managed a merge, then it might open up more opportunities later
-    anotherPass = true;
-    // make a block with curr + the merged code
-    Builder builder(*getModule());
+TODO
+    // make a block with the old body + the merged code
     auto* block = builder.makeBlock();
     block->list.push_back(curr);
     while (!mergeable.empty()) {
@@ -477,15 +442,6 @@ UGH, the final element must also be equal here. in fact it is not special at all
     // ensure the replacement has the same type, so the outside is not surprised
     block->finalize(oldType);
     replaceCurrent(block);
-  }
-
-  // we can ignore the final br in a tail
-  Index effectiveSize(const Tail& tail) {
-    auto ret = tail.block->list.size();
-    if (!tail.isFallthrough()) {
-      ret--;
-    }
-    return ret;
   }
 
   void markAsModified(Expression* curr) {
