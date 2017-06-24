@@ -27,7 +27,6 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "ast_utils.h"
-#include "wasm-printing.h"
 #include "ast/label-utils.h"
 
 namespace wasm {
@@ -412,11 +411,12 @@ private:
     // TODO: handle fallthroughts for return
     Index cost = tails.size();
     // we also need to add two blocks: for us to break to, and to contain
-    // that block and the merged code
-    cost += 2 * WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
+    // that block and the merged code. very possibly one of the blocks
+    // can be removed, though
+    cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
     // is it worth it?
     // TODO: if not worth it, perhaps a smaller num or choice of options might have worked?
-    if (saved < cost) return;
+    if (saved <= cost) return;
     // this is worth doing, do it!
     // since we managed a merge, then it might open up more opportunities later
     anotherPass = true;
