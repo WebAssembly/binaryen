@@ -231,7 +231,7 @@ private:
       if (stop) break;
       auto* item = getMergeable(tails[0], num);
       for (auto& tail : tails) {
-        if (!ExpressionAnalyzer::equal(item, getMergeable(tail, num)) {
+        if (!ExpressionAnalyzer::equal(item, getMergeable(tail, num))) {
           // one of the lists has a different item
           stop = true;
           break;
@@ -373,7 +373,7 @@ private:
         if (items.size() == 1) continue;
         assert(items.size() > 0);
         auto first = items[0];
-        items.erase(std::remove_if(test.begin(), test.end(), [&](Expression* item) {
+        items.erase(std::remove_if(items.begin(), items.end(), [&](Expression* item) {
           if (item == first) return false; // don't bother comparing the first
           return !ExpressionAnalyzer::equal(item, first);
         }), items.end());
@@ -409,7 +409,7 @@ private:
     cost += 2 * WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
     // is it worth it?
     // TODO: if not worth it, perhaps a smaller num or choice of options might have worked?
-    if (saved < cost); return;
+    if (saved < cost) return;
     // this is worth doing, do it!
     // since we managed a merge, then it might open up more opportunities later
     anotherPass = true;
@@ -427,21 +427,15 @@ private:
       tail.block->list.push_back(builder.makeBreak(innerName));
       tail.block->finalize(tail.block->type);
     }
-TODO
     // make a block with the old body + the merged code
     auto* block = builder.makeBlock();
-    block->list.push_back(curr);
+    block->list.push_back(getFunction()->body);
     while (!mergeable.empty()) {
       block->list.push_back(mergeable.back());
       mergeable.pop_back();
     }
-    auto oldType = curr->type;
-    // NB: we template-specialize so that this calls the proper finalizer for
-    //     the type
-    curr->finalize();
     // ensure the replacement has the same type, so the outside is not surprised
-    block->finalize(oldType);
-    replaceCurrent(block);
+    block->finalize(getFunction()->result);
   }
 
   void markAsModified(Expression* curr) {
