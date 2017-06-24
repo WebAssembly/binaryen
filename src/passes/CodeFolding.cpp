@@ -385,7 +385,13 @@ private:
       }
       // if there are no mergeable items, this num was too much
       if (!best) break;
-      // we found another one we can merge, carry on
+      // we found another one we can merge. remove the irrelevant tails
+      auto* correct = (*best)[0];
+      test.erase(std::remove_if(test.begin(), test.end(), [&](Tail& tail) {
+        auto* item = getItem(tail, num);
+        return !ExpressionAnalyzer::equal(item, correct);
+      }), test.end());
+      // carry on
       num++;
       tails.swap(test);
     }

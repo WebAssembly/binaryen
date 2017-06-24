@@ -674,4 +674,25 @@
     )
     (i32.const 4)
   )
+  (func $terminating-just-2
+    (if (i32.const 1)
+      (block
+        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 2)
+      (block
+        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 3)
+      (block
+        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+        (drop (i32.const 10))
+        (unreachable)
+      )
+    )
+  )
 )
