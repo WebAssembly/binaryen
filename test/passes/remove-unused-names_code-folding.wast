@@ -704,7 +704,7 @@
     )
     (if (i32.const 2)
       (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) ;; shorter. we do the two long ones greedily, then the merged one and this can also be opted
         (unreachable)
       )
     )
