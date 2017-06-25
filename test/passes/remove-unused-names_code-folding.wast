@@ -883,4 +883,67 @@
   (func $just-return (result i32)
     (return (i32.add (i32.const 1) (i32.const 2))) ;; on a block, and the toplevel in fact
   )
+  (func $drop-if-with-value-but-unreachable
+   (block $label$0
+    (if
+     (i32.const 0)
+     (block $label$1
+      (nop)
+     )
+    )
+    (if
+     (i32.const 0)
+     (block $label$2
+      (nop)
+     )
+     (block $label$3
+      (nop)
+     )
+    )
+    (if
+     (i32.const 0)
+     (block $label$4
+      (nop)
+     )
+     (block $label$5
+      (unreachable)
+     )
+    )
+    (nop)
+    (drop
+     (if (result i32) ;; we replace this if, must replace with same type!
+      (unreachable)
+      (block $label$6 (result i32)
+       (i32.add
+        (i32.const 1)
+        (i32.const 2)
+       )
+      )
+      (block $label$7 (result i32)
+       (i32.add
+        (i32.const 1)
+        (i32.const 2)
+       )
+      )
+     )
+    )
+    (drop
+     (if (result i32)
+      (i32.const 0)
+      (block $label$8 (result i32)
+       (i32.add
+        (i32.const 1)
+        (i32.const 2)
+       )
+      )
+      (block $label$9 (result i32)
+       (i32.add
+        (i32.const 1)
+        (i32.const 333333333)
+       )
+      )
+     )
+    )
+   )
+  )
 )

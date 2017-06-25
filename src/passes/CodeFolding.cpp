@@ -154,15 +154,21 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
 
   void visitIf(If* curr) {
     if (!curr->ifFalse) return;
+    // if both sides are identical, this is easy to fold
+    // (except if the condition is unreachable and we return a value, then we can't just replace
+    // outselves with a drop
     if (ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
       Builder builder(*getModule());
       // remove if (4 bytes), remove one arm, add drop (1), add block (3),
       // so this must be a net savings
       markAsModified(curr);
-      replaceCurrent(builder.makeSequence(
+      auto* ret = builder.makeSequence(
         builder.makeDrop(curr->condition),
         curr->ifTrue
-      ));
+      );
+      // we must ensure we present the same type as the if had
+      ret->finalize(curr->type);
+      replaceCurrent(ret);
     } else {
       // if both are blocks, look for a tail we can merge
       auto* left = curr->ifTrue->dynCast<Block>();

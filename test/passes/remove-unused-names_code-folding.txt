@@ -1365,4 +1365,50 @@
    )
   )
  )
+ (func $drop-if-with-value-but-unreachable (type $0)
+  (if
+   (i32.const 0)
+   (nop)
+  )
+  (block
+   (drop
+    (i32.const 0)
+   )
+   (block
+    (nop)
+   )
+  )
+  (if
+   (i32.const 0)
+   (nop)
+   (unreachable)
+  )
+  (nop)
+  (drop
+   (block (result i32)
+    (drop
+     (unreachable)
+    )
+    (block (result i32)
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
+    )
+   )
+  )
+  (drop
+   (if (result i32)
+    (i32.const 0)
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
+    (i32.add
+     (i32.const 1)
+     (i32.const 333333333)
+    )
+   )
+  )
+ )
 )
