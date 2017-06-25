@@ -385,7 +385,7 @@ private:
       // if no tails passed the test, this num was too much
       if (test.empty()) break;
       // now we want to find a mergeable item - any item that is equal among a subset
-      std::map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
+      std::unordered_map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
       for (auto& tail : test) {
         auto* item = getItem(tail, num);
         hashed[ExpressionAnalyzer::hash(item)].push_back(item);
