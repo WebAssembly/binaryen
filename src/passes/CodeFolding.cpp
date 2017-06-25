@@ -390,31 +390,42 @@ private:
         auto* item = getItem(tail, num);
         hashed[ExpressionAnalyzer::hash(item)].push_back(item);
       }
-      // hash collisions are rare, so just check each set with the same hash vs the first TODO: optimize?
-      std::vector<Expression*>* best = nullptr;
+      std::vector<Expression*> best;
       for (auto& iter : hashed) {
         auto& items = iter.second;
         if (items.size() == 1) continue;
         assert(items.size() > 0);
-        auto first = items[0];
-        items.erase(std::remove_if(items.begin(), items.end(), [&](Expression* item) {
-          if (item == first) return false; // don't bother comparing the first
-          return !ExpressionAnalyzer::equal(item, first);
-        }), items.end());
-        if (items.size() > 1) {
-          if (!best || best->size() < items.size()) {
-            best = &items;
+        // look for an item that has another match.
+        while (items.size() >= 2) {
+          auto first = items[0];
+          std::vector<Expression*> others;
+          items.erase(std::remove_if(items.begin(), items.end(), [&](Expression* item) {
+            if (item == first || // don't bother comparing the first
+                ExpressionAnalyzer::equal(item, first)) {
+              // equal, keep it
+              return false;
+            } else {
+              // unequal, look at it later
+              others.push_back(item);
+              return true;
+            }
+          }), items.end());
+          if (items.size() >= 2 && items.size() > best.size()) {
+            best.swap(items);
           }
+          items.swap(others);
         }
       }
       // if there are no mergeable items, this num was too much
-      if (!best) break;
+      if (best.empty()) break;
+      assert(best.size() >= 2);
       // we found another one we can merge. remove the irrelevant tails
-      auto* correct = (*best)[0];
+      auto* correct = best[0];
       test.erase(std::remove_if(test.begin(), test.end(), [&](Tail& tail) {
         auto* item = getItem(tail, num);
         return !ExpressionAnalyzer::equal(item, correct);
       }), test.end());
+      assert(test.size() >= 2);
       // carry on
       num++;
       tails.swap(test);
