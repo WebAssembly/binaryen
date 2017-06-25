@@ -89,79 +89,83 @@
   )
  )
  (func $ifs-blocks-big (type $0)
-  (block $folding-inner0
+  (block
+   (drop
+    (i32.const 0)
+   )
    (block
-    (block
-     (drop
-      (i32.const 0)
+    (drop
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
      )
-     (block
-      (drop
-       (i32.add
-        (i32.const 1)
-        (i32.const 2)
-       )
-      )
-     )
-    )
-    (block
-     (if
-      (i32.const 0)
-      (unreachable)
-      (block
-      )
-     )
-     (drop
-      (i32.add
-       (i32.const 1)
-       (i32.const 2)
-      )
-     )
-    )
-    (block
-     (if
-      (i32.const 0)
-      (block
-      )
-      (unreachable)
-     )
-     (drop
-      (i32.add
-       (i32.const 1)
-       (i32.const 2)
-      )
-     )
-    )
-    (if
-     (i32.const 0)
-     (br $folding-inner0)
-     (drop
-      (i32.add
-       (i32.const 1)
-       (i32.const 2)
-      )
-     )
-    )
-    (if
-     (i32.const 0)
-     (drop
-      (i32.add
-       (i32.const 1)
-       (i32.const 2)
-      )
-     )
-     (br $folding-inner0)
     )
    )
-   (return)
   )
-  (drop
-   (i32.add
-    (i32.const 1)
-    (i32.const 2)
+  (block
+   (if
+    (i32.const 0)
+    (unreachable)
+    (block
+    )
+   )
+   (drop
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
    )
   )
-  (unreachable)
+  (block
+   (if
+    (i32.const 0)
+    (block
+    )
+    (unreachable)
+   )
+   (drop
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
+   )
+  )
+  (if
+   (i32.const 0)
+   (block
+    (drop
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
+    )
+    (unreachable)
+   )
+   (drop
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
+   )
+  )
+  (if
+   (i32.const 0)
+   (drop
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
+    )
+   )
+   (block
+    (drop
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
+    )
+    (unreachable)
+   )
+  )
  )
  (func $ifs-blocks-long (type $0)
   (block
@@ -1114,5 +1118,54 @@
    (i32.const 1)
   )
   (unreachable)
+ )
+ (func $terminating-just-worth-it (type $0)
+  (block $folding-inner0
+   (block
+    (if
+     (i32.const 1)
+     (br $folding-inner0)
+    )
+    (if
+     (i32.const 2)
+     (br $folding-inner0)
+    )
+    (if
+     (i32.const 3)
+     (br $folding-inner0)
+    )
+   )
+   (return)
+  )
+  (nop)
+  (nop)
+  (nop)
+  (unreachable)
+ )
+ (func $terminating-not-worth-it (type $0)
+  (if
+   (i32.const 1)
+   (block
+    (nop)
+    (nop)
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 2)
+   (block
+    (nop)
+    (nop)
+    (unreachable)
+   )
+  )
+  (if
+   (i32.const 3)
+   (block
+    (nop)
+    (nop)
+    (unreachable)
+   )
+  )
  )
 )

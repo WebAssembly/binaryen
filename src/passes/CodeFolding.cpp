@@ -403,7 +403,7 @@ private:
     for (Index i = 0; i < num; i++) {
       auto item = getItem(tails[0], i);
       mergeable.push_back(item);
-      saved += Measurer::measure(item) * tails.size();
+      saved += Measurer::measure(item) * (tails.size() - 1);
     }
     // compure the cost: in non-fallthroughs, we are replacing the final
     // element with a br; for a fallthrough, if there is one, we must

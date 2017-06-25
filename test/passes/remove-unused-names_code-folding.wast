@@ -746,4 +746,44 @@
       )
     )
   )
+  (func $terminating-just-worth-it
+    (if (i32.const 1)
+      (block
+        (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 2)
+      (block
+        (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 3)
+      (block
+        (nop) (nop) (nop)
+        (unreachable)
+      )
+    )
+  )
+  (func $terminating-not-worth-it
+    (if (i32.const 1)
+      (block
+        (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 2)
+      (block
+        (nop) (nop)
+        (unreachable)
+      )
+    )
+    (if (i32.const 3)
+      (block
+        (nop) (nop)
+        (unreachable)
+      )
+    )
+  )
 )
