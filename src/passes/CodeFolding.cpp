@@ -466,7 +466,18 @@ private:
         inner->list.push_back(old);
         inner->list.push_back(builder.makeReturn());
       } else {
-        inner->list.push_back(builder.makeReturn(old));
+        // looks like we must return this. but if it's a toplevel block
+        // then it might be marked as having a type, but not actually
+        // returning it (we marked it as such for wasm type-checking
+        // rules, and now it won't be toplevel in the function, it can
+        // change)
+        auto* toplevel = old->dynCast<Block>();
+        if (toplevel) toplevel->finalize();
+        if (old->type != unreachable) {
+          inner->list.push_back(builder.makeReturn(old));
+        } else {
+          inner->list.push_back(old);
+        }
       }
     }
     inner->finalize();
