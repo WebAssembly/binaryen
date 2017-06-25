@@ -877,4 +877,10 @@
     (if (i32.const 3) (return (i32.add (i32.const 1) (i32.const 234567))))
     (return (i32.add (i32.const 1) (i32.const 2))) ;; on a block, and the toplevel in fact
   )
+  (func $just-unreachable
+    (unreachable)
+  )
+  (func $just-return (result i32)
+    (return (i32.add (i32.const 1) (i32.const 2))) ;; on a block, and the toplevel in fact
+  )
 )

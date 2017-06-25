@@ -1354,4 +1354,15 @@
    )
   )
  )
+ (func $just-unreachable (type $0)
+  (unreachable)
+ )
+ (func $just-return (type $2) (result i32)
+  (return
+   (i32.add
+    (i32.const 1)
+    (i32.const 2)
+   )
+  )
+ )
 )

@@ -111,21 +111,25 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
 
   void visitUnreachable(Unreachable* curr) {
     // we can only optimize if we are at the end of the parent block
-    Block* parent = controlFlowStack.back()->dynCast<Block>();
-    if (parent && curr == parent->list.back()) {
-      unreachableTails.push_back(Tail(curr, parent));
+    if (!controlFlowStack.empty()) {
+      Block* parent = controlFlowStack.back()->dynCast<Block>();
+      if (parent && curr == parent->list.back()) {
+        unreachableTails.push_back(Tail(curr, parent));
+      }
     }
   }
 
   void visitReturn(Return* curr) {
-    // we can easily optimize if we are at the end of the parent block
-    Block* parent = controlFlowStack.back()->dynCast<Block>();
-    if (parent && curr == parent->list.back()) {
-      returnTails.push_back(Tail(curr, parent));
-    } else {
-      // otherwise, if we have a large value, it might be worth optimizing us as well
-      returnTails.push_back(Tail(curr, getCurrentPointer()));
+    if (!controlFlowStack.empty()) {
+      // we can easily optimize if we are at the end of the parent block
+      Block* parent = controlFlowStack.back()->dynCast<Block>();
+      if (parent && curr == parent->list.back()) {
+        returnTails.push_back(Tail(curr, parent));
+        return;
+      }
     }
+    // otherwise, if we have a large value, it might be worth optimizing us as well
+    returnTails.push_back(Tail(curr, getCurrentPointer()));
   }
 
   void visitBlock(Block* curr) {
