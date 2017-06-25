@@ -2947,7 +2947,7 @@
          )
         )
        )
-       (br $folding-inner1)
+       (br $folding-inner0)
       )
      )
      (if
@@ -2996,7 +2996,7 @@
          (i32.const 3)
         )
        )
-       (br $folding-inner1)
+       (br $folding-inner0)
       )
      )
      (if
@@ -3054,7 +3054,7 @@
        (i32.const 48)
       )
      )
-     (br_if $folding-inner0
+     (br_if $folding-inner1
       (i32.le_u
        (tee_local $13
         (i32.and
@@ -3090,7 +3090,7 @@
         (i32.const 1648)
        )
       )
-      (br_if $folding-inner0
+      (br_if $folding-inner1
        (i32.or
         (i32.le_u
          (tee_local $6
@@ -5900,15 +5900,15 @@
      )
     )
     (set_local $2
-     (i32.const 0)
+     (i32.add
+      (get_local $14)
+      (i32.const 8)
+     )
     )
     (br $folding-inner2)
    )
    (set_local $2
-    (i32.add
-     (get_local $14)
-     (i32.const 8)
-    )
+    (i32.const 0)
    )
   )
   (set_global $r
