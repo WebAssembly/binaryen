@@ -55,18 +55,20 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   struct Tail {
     Expression* expr; // nullptr if this is a fallthrough
     Block* block; // the enclosing block of code we hope to merge at its tail
+    Expression** pointer; // for an expr with no parent block, the location it is at, so we can replace it
 
     // For a fallthrough
-    Tail(Block* block) : expr(nullptr), block(block) {}
+    Tail(Block* block) : expr(nullptr), block(block), pointer(nullptr) {}
     // For a break
-    Tail(Expression* expr, Block* block) : expr(expr), block(block) {
+    Tail(Expression* expr, Block* block) : expr(expr), block(block), pointer(nullptr) {
       validate();
     }
+    Tail(Expression* expr, Expression** pointer) : expr(expr), block(nullptr), pointer(pointer) {}
 
     bool isFallthrough() const { return expr == nullptr; }
 
     void validate() const {
-      if (expr) {
+      if (expr && block) {
         assert(block->list.back() == expr);
       }
     }
@@ -116,10 +118,13 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   }
 
   void visitReturn(Return* curr) {
-    // we can only optimize if we are at the end of the parent block
+    // we can easily optimize if we are at the end of the parent block
     Block* parent = controlFlowStack.back()->dynCast<Block>();
     if (parent && curr == parent->list.back()) {
       returnTails.push_back(Tail(curr, parent));
+    } else {
+      // otherwise, if we have a large value, it might be worth optimizing us as well
+      returnTails.push_back(Tail(curr, getCurrentPointer()));
     }
   }
 
@@ -333,7 +338,7 @@ private:
     // remove things that are untoward and cannot be optimized
     tails.erase(std::remove_if(tails.begin(), tails.end(), [&](Tail& tail) {
       if (tail.expr && modifieds.count(tail.expr) > 0) return true;
-      if (modifieds.count(tail.block) > 0) return true;
+      if (tail.block && modifieds.count(tail.block) > 0) return true;
       // if we were not modified, then we should be valid for processing
       tail.validate();
       return false;
@@ -341,14 +346,22 @@ private:
     // now let's try to find subsets that are mergeable. we don't look hard
     // for the most optimal; further passes may find more
     // effectiveSize: TODO: special-case fallthrough, matters for returns
-    auto effectiveSize = [&](Tail& tail) {
-      return tail.block->list.size();
+    auto effectiveSize = [&](Tail& tail) -> Index {
+      if (tail.block) {
+        return tail.block->list.size();
+      } else {
+        return 1;
+      }
     };
     // getItem: returns the relevant item from the tail. this includes the
     //          final item
     //          TODO: special-case fallthrough, matters for returns
     auto getItem = [&](Tail& tail, Index num) {
-      return tail.block->list[effectiveSize(tail) - num - 1];
+      if (tail.block) {
+        return tail.block->list[effectiveSize(tail) - num - 1];
+      } else {
+        return tail.expr;
+      }
     };
     Index num = 0; // how many elements back from the tail to look at
     while (1) {
@@ -425,16 +438,20 @@ private:
     LabelUtils::LabelManager labels(getFunction()); // TODO: don't create one per merge, linear in function size
     Name innerName = labels.getUnique("folding-inner");
     for (auto& tail : tails) {
-      // remove the items we are merging / moving
-      // first, mark them as modified, so we don't try to handle them
+      // remove the items we are merging / moving, and add a break
+      // also mark as modified, so we don't try to handle them
       // again in this pass, which might be buggy
-      markAsModified(tail.block);
-      for (Index i = 0; i < mergeable.size(); i++) {
-        tail.block->list.pop_back();
+      if (tail.block) {
+        markAsModified(tail.block);
+        for (Index i = 0; i < mergeable.size(); i++) {
+          tail.block->list.pop_back();
+        }
+        tail.block->list.push_back(builder.makeBreak(innerName));
+        tail.block->finalize(tail.block->type);
+      } else {
+        markAsModified(tail.expr);
+        *tail.pointer = builder.makeBreak(innerName);
       }
-      // add a break to the right place
-      tail.block->list.push_back(builder.makeBreak(innerName));
-      tail.block->finalize(tail.block->type);
     }
     // make a block with the old body + the merged code
     auto* old = getFunction()->body;

@@ -1241,4 +1241,43 @@
    )
   )
  )
+ (func $big-return (type $2) (result i32)
+  (block $folding-inner0
+   (return
+    (block (result i32)
+     (if
+      (i32.const 1)
+      (br $folding-inner0)
+     )
+     (if
+      (i32.const 2)
+      (br $folding-inner0)
+     )
+     (if
+      (i32.const 3)
+      (br $folding-inner0)
+     )
+     (if
+      (i32.const 4)
+      (br $folding-inner0)
+     )
+     (if
+      (i32.const 5)
+      (br $folding-inner0)
+     )
+     (if
+      (i32.const 6)
+      (br $folding-inner0)
+     )
+     (unreachable)
+    )
+   )
+  )
+  (return
+   (i32.add
+    (i32.const 1)
+    (i32.const 2)
+   )
+  )
+ )
 )
