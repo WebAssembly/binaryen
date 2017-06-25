@@ -175,8 +175,9 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       WalkerPass<ControlFlowWalker<CodeFolding>>::doWalkFunction(func);
       optimizeTerminatingTails(unreachableTails);
       // optimize returns at the end, so we can benefit from a fallthrough if there is a value TODO: separate passes for them?
-      // TODO optimizeTerminatingTails(returnTails);
+      optimizeTerminatingTails(returnTails);
       // TODO add fallthrough for returns
+      // TODO optimzier returns not in blocks, a big return value can be worth it
       // clean up
       breakTails.clear();
       unreachableTails.clear();
