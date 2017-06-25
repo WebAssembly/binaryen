@@ -869,4 +869,12 @@
     (if (i32.const 6) (return (i32.add (i32.const 1) (i32.const 2))))
     (unreachable)
   )
+  (func $return-mix (result i32)
+    (if (i32.const 1) (return (i32.add (i32.const 1) (i32.const 2))))
+    (if (i32.const 2) (return (i32.add (i32.const 1) (i32.const 2))))
+    (if (i32.const 3) (return (i32.add (i32.const 1) (i32.const 2))))
+    (if (i32.const 4) (return (i32.add (i32.const 1) (i32.const 2))))
+    (if (i32.const 3) (return (i32.add (i32.const 1) (i32.const 234567))))
+    (return (i32.add (i32.const 1) (i32.const 2))) ;; on a block, and the toplevel in fact
+  )
 )
