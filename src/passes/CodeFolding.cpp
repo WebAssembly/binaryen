@@ -373,6 +373,34 @@ private:
         return tail.expr;
       }
     };
+    // gets the tail elements of a certain depth
+    auto getTailItems = [&](Index num, std::vector<Tail>& tails) {
+      std::vector<Expression*> items;
+      for (Index i = 0; i < num; i++) {
+        auto item = getItem(tails[0], i);
+        items.push_back(item);
+      }
+      return items;
+    };
+    // estimate if a merging is worth the cost
+    auto worthIt = [&](Index num, std::vector<Tail>& tails) {
+      auto items = getTailItems(num, tails); // the elements we can merge
+      Index saved = 0; // how much we can save
+      for (auto* item : items) {
+        saved += Measurer::measure(item) * (tails.size() - 1);
+      }
+      // compure the cost: in non-fallthroughs, we are replacing the final
+      // element with a br; for a fallthrough, if there is one, we must
+      // add a return element (for the function body, so it doesn't reach us)
+      // TODO: handle fallthroughts for return
+      Index cost = tails.size();
+      // we also need to add two blocks: for us to break to, and to contain
+      // that block and the merged code. very possibly one of the blocks
+      // can be removed, though
+      cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
+      // is it worth it?
+      return saved > cost;
+    };
     Index num = 0; // how many elements back from the tail to look at
     while (1) {
       // work on a test set of tails, see if we can optimize here. if we fail,
@@ -385,6 +413,7 @@ private:
       // if no tails passed the test, this num was too much
       if (test.empty()) break;
       // now we want to find a mergeable item - any item that is equal among a subset
+// FIXME XXX make this ordered
       std::unordered_map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
       for (auto& tail : test) {
         auto* item = getItem(tail, num);
@@ -432,26 +461,9 @@ private:
     }
     // if we found nothing, stop
     if (num == 0) return;
-    // great, we found something! let's scan and measure it
-    std::vector<Expression*> mergeable; // the elements we can merge
-    Index saved = 0; // how much we can save
-    for (Index i = 0; i < num; i++) {
-      auto item = getItem(tails[0], i);
-      mergeable.push_back(item);
-      saved += Measurer::measure(item) * (tails.size() - 1);
-    }
-    // compure the cost: in non-fallthroughs, we are replacing the final
-    // element with a br; for a fallthrough, if there is one, we must
-    // add a return element (for the function body, so it doesn't reach us)
-    // TODO: handle fallthroughts for return
-    Index cost = tails.size();
-    // we also need to add two blocks: for us to break to, and to contain
-    // that block and the merged code. very possibly one of the blocks
-    // can be removed, though
-    cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
-    // is it worth it?
-    // TODO: if not worth it, perhaps a smaller num or choice of options might have worked?
-    if (saved <= cost) return;
+    // if what we found isn't worth it, stop
+    if (!worthIt(num, tails)) return;
+    auto mergeable = getTailItems(num, tails); // the elements we can merge
     // this is worth doing, do it!
     // since we managed a merge, then it might open up more opportunities later
     anotherPass = true;
