@@ -15,7 +15,7 @@
  */
 
 //
-// Folds duplicate code together, saving space
+// Folds duplicate code together, saving space.
 //
 // We fold tails of code where they merge and moving the code
 // to the merge point is helpful. There are two cases here: (1) expressions,
@@ -24,6 +24,28 @@
 //  * if-else, we merge the arms
 // and (2) the function body as a whole, in which we can merge returns or
 // unreachables, putting the merged code at the end of the function body.
+//
+// For example, with an if-else, we might merge this:
+//  (if (condition)
+//    (block
+//      A
+//      C
+//    )
+//    (block
+//      B
+//      C
+//    )
+//  )
+// to
+//  (if (condition)
+//    (block
+//      A
+//    )
+//    (block
+//      B
+//    )
+//  )
+//  C
 //
 
 #include "wasm.h"
