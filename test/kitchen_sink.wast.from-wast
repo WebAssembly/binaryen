@@ -1,6 +1,6 @@
 (module
  (type $0 (func (result i32)))
- (memory $0 4096 4096 notshared)
+ (memory $0 4096 4096)
  (data (i32.const 1026) "\14\00")
  (func $kitchensink (type $0) (result i32)
   (block $block0 (result i32)

@@ -5,7 +5,7 @@
  (type $3 (func (param f32 i64)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $tabled)
- (memory $0 0 notshared)
+ (memory $0 0)
  (export "user" (func $user))
  (export "exported" (func $exported))
  (func $user (type $0)

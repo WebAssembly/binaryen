@@ -14,7 +14,7 @@ Counts
  (global $glob i32 (i32.const 1337))
  (table 256 256 anyfunc)
  (elem (i32.const 0) $ifs $ifs $ifs)
- (memory $0 256 256 notshared)
+ (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (func $ifs (type $0) (param $x i32)
   (local $y f32)
@@ -61,5 +61,5 @@ Counts
  [total]        : 0       
  [vars]         : 0       
 (module
- (memory $0 0 notshared)
+ (memory $0 0)
 )

@@ -137,7 +137,7 @@ digraph call {
  (import "env" "___syscall54" (func $___syscall54 (param i32 i32) (result i32)))
  (import "env" "___unlock" (func $___unlock (param i32)))
  (import "env" "___syscall146" (func $___syscall146 (param i32 i32) (result i32)))
- (import "env" "memory" (memory $0 256 256 notshared))
+ (import "env" "memory" (memory $0 256 256))
  (import "env" "table" (table 9 9 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))

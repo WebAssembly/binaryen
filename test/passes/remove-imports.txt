@@ -2,7 +2,7 @@
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$d (func (result f64)))
- (memory $0 1024 1024 notshared)
+ (memory $0 1024 1024)
  (func $nada (type $FUNCSIG$v)
   (nop)
   (drop

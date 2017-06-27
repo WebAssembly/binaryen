@@ -670,9 +670,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printName(curr->name) << ' ';
     o << curr->initial;
     if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
-    o << ' ';
-    if (!curr->shared) o << "not";
-    o << "shared";
+    if (curr->shared) o << " shared";
     o << ")";
   }
   void visitMemory(Memory* curr) {

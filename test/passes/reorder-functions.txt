@@ -1,6 +1,6 @@
 (module
  (type $0 (func))
- (memory $0 256 256 notshared)
+ (memory $0 256 256)
  (func $c (type $0)
   (call $c)
   (call $c)

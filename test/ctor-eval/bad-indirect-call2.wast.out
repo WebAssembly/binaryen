@@ -4,7 +4,7 @@
  (import "env" "_abort" (func $_abort))
  (table 2 2 anyfunc)
  (elem (i32.const 0) $_abort $call-indirect)
- (memory $0 256 256 notshared)
+ (memory $0 256 256)
  (data (i32.const 10) "waka waka waka waka waka")
  (export "test1" (func $test1))
  (func $test1 (type $v)

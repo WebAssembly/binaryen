@@ -1,7 +1,7 @@
 (module
  (type $rustfn-0-3 (func))
  (type $__wasm_start (func))
- (memory $0 1024 1024 notshared)
+ (memory $0 1024 1024)
  (export "memory" (memory $0))
  (export "main" (func $main))
  (export "rust_entry" (func $__wasm_start))
@@ -50,7 +50,7 @@
 (module
  (type $0 (func))
  (type $1 (func))
- (memory $0 1024 1024 notshared)
+ (memory $0 1024 1024)
  (export "memory" (memory $0))
  (export "main" (func $main))
  (export "rust_entry" (func $__wasm_start))

@@ -2,7 +2,7 @@
  (type $0 (func (param i32)))
  (type $1 (func (result i32)))
  (type $2 (func))
- (memory $0 0 notshared)
+ (memory $0 0)
  (func $x (type $0) (param $x i32)
   (call $x
    (i32.const 2300)

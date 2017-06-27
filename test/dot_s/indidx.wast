@@ -2,7 +2,7 @@
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$v (func))
  (import "env" "getchar" (func $getchar (result i32)))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (table 5 5 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $c $b $d $a)
  (data (i32.const 16) "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")

@@ -1,6 +1,6 @@
 (module
  (type $FUNCSIG$v (func))
- (import "env" "memory" (memory $0 256 notshared))
+ (import "env" "memory" (memory $0 256))
  (import "env" "table" (table 8 anyfunc))
  (global $a-global i32 (i32.const 0))
  (global $b-global f64 (f64.const 2.14281428))

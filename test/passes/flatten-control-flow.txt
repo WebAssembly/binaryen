@@ -7,7 +7,7 @@
  (global $x (mut i32) (i32.const 0))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-me)
- (memory $0 10 notshared)
+ (memory $0 10)
  (func $call-me (type $ii) (param $0 i32) (param $1 i32)
   (nop)
  )

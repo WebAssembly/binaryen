@@ -7,7 +7,7 @@
  (import "env" "extern_ijidf" (func $extern_ijidf (param i64 i32 f64 f32) (result i32)))
  (import "env" "extern_v" (func $extern_v))
  (import "env" "extern_vj" (func $extern_vj (param i64)))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (import "env" "extern_fd" (func $extern_fd (param f64) (result f32)))
  (import "env" "extern_struct" (func $extern_struct (param i32)))
  (import "env" "extern_sret" (func $extern_sret (param i32)))

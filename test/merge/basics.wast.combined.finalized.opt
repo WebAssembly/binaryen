@@ -1,7 +1,7 @@
 (module
  (type $ii (func (param i32 i32)))
  (type $FUNCSIG$v (func))
- (import "env" "memory" (memory $0 256 notshared))
+ (import "env" "memory" (memory $0 256))
  (import "env" "table" (table 18 anyfunc))
  (import "env" "some-func" (func $some-func))
  (import "env" "some-collide" (func $some-collide))

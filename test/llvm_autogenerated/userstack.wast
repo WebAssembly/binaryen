@@ -3,7 +3,7 @@
  (import "env" "ext_func" (func $ext_func (param i32)))
  (import "env" "ext_func_i32" (func $ext_func_i32 (param i32)))
  (import "env" "use_i8_star" (func $use_i8_star (param i32)))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

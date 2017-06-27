@@ -1,7 +1,7 @@
 (module
  (type $0 (func (param i32) (result i32)))
  (type $1 (func))
- (memory $0 256 256 notshared)
+ (memory $0 256 256)
  (func $b0 (type $0) (param $i1 i32) (result i32)
   (i32.const 0)
  )

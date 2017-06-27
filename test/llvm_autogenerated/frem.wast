@@ -3,7 +3,7 @@
  (type $FUNCSIG$fff (func (param f32 f32) (result f32)))
  (import "env" "fmod" (func $fmod (param f64 f64) (result f64)))
  (import "env" "fmodf" (func $fmodf (param f32 f32) (result f32)))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

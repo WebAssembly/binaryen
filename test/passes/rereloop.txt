@@ -3,7 +3,7 @@
  (type $1 (func (result i32)))
  (type $2 (func (param i32) (result i32)))
  (type $3 (func (param i32)))
- (memory $0 0 notshared)
+ (memory $0 0)
  (func $trivial (type $0)
   (local $0 i32)
   (block

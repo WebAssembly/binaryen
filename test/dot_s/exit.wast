@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "exit" (func $exit (param i32)))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))

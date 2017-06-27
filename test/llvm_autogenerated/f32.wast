@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$ffff (func (param f32 f32 f32) (result f32)))
  (import "env" "fmaf" (func $fmaf (param f32 f32 f32) (result f32)))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

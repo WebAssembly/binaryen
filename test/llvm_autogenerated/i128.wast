@@ -9,7 +9,7 @@
  (import "env" "__multi3" (func $__multi3 (param i32 i64 i64 i64 i64)))
  (import "env" "__udivti3" (func $__udivti3 (param i32 i64 i64 i64 i64)))
  (import "env" "__umodti3" (func $__umodti3 (param i32 i64 i64 i64 i64)))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))

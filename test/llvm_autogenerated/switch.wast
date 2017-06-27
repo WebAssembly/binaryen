@@ -6,7 +6,7 @@
  (import "env" "foo3" (func $foo3))
  (import "env" "foo4" (func $foo4))
  (import "env" "foo5" (func $foo5))
- (import "env" "memory" (memory $0 1 notshared))
+ (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (export "stackSave" (func $stackSave))
