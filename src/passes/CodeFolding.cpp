@@ -342,13 +342,14 @@ private:
 
   // optimize tails that terminate control flow in this function, so we
   // are (1) merge just a few of them, we don't need all like with the
-  // branches to a block, and (2) we do it on the function body
+  // branches to a block, and (2) we do it on the function body.
   // num is the depth, i.e., how many tail items we can merge. 0 means
-  // we are just starting; num > 1 means that tails is guaranteed to be
+  // we are just starting; num > 0 means that tails is guaranteed to be
   // equal in the last num items, so we can merge there, but we look for
   // deeper merges first.
-  void optimizeTerminatingTails(std::vector<Tail>& tails, Index num = 0) {
-    if (tails.size() < 2) return;
+  // returns whether we optimized something.
+  bool optimizeTerminatingTails(std::vector<Tail>& tails, Index num = 0) {
+    if (tails.size() < 2) return false;
     // remove things that are untoward and cannot be optimized
     tails.erase(std::remove_if(tails.begin(), tails.end(), [&](Tail& tail) {
       if (tail.expr && modifieds.count(tail.expr) > 0) return true;
@@ -405,69 +406,65 @@ private:
       // is it worth it?
       return saved > cost;
     };
-    // remove tails that are too short
-    tails.erase(std::remove_if(tails.begin(), tails.end(), [&](Tail& tail) {
-      return num >= effectiveSize(tail);
-    }), tails.end());
-    // if not enough to merge, stop
-    if (tails.size() < 2) return;
     // let's see if we can merge deeper than num, to num + 1
-    // now we want to find a mergeable item - any item that is equal among a subset
-// FIXME XXX make this ordered
-    std::unordered_map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
-    for (auto& tail : tails) {
-      auto* item = getItem(tail, num);
-      hashed[ExpressionAnalyzer::hash(item)].push_back(item);
-    }
-    for (auto& iter : hashed) {
-      auto& items = iter.second;
-      if (items.size() == 1) continue;
-      assert(items.size() > 0);
-      // look for an item that has another match.
-      while (items.size() >= 2) {
-        auto first = items[0];
-        std::vector<Expression*> others;
-        items.erase(std::remove_if(items.begin(), items.end(), [&](Expression* item) {
-          if (item == first || // don't bother comparing the first
-              ExpressionAnalyzer::equal(item, first)) {
-            // equal, keep it
-            return false;
-          } else {
-            // unequal, look at it later
-            others.push_back(item);
-            return true;
+    auto next = tails;
+    // remove tails that are too short
+    next.erase(std::remove_if(next.begin(), next.end(), [&](Tail& tail) {
+      return effectiveSize(tail) < num + 1;
+    }), next.end());
+    // if we have enough to investigate, do so
+    if (next.size() >= 2) {
+      // now we want to find a mergeable item - any item that is equal among a subset
+  // FIXME XXX make this ordered
+      std::unordered_map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
+      for (auto& tail : next) {
+        auto* item = getItem(tail, num);
+        hashed[ExpressionAnalyzer::hash(item)].push_back(item);
+      }
+      for (auto& iter : hashed) {
+        auto& items = iter.second;
+        if (items.size() == 1) continue;
+        assert(items.size() > 0);
+        // look for an item that has another match.
+        while (items.size() >= 2) {
+          auto first = items[0];
+          std::vector<Expression*> others;
+          items.erase(std::remove_if(items.begin(), items.end(), [&](Expression* item) {
+            if (item == first || // don't bother comparing the first
+                ExpressionAnalyzer::equal(item, first)) {
+              // equal, keep it
+              return false;
+            } else {
+              // unequal, look at it later
+              others.push_back(item);
+              return true;
+            }
+          }), items.end());
+          if (items.size() >= 2) {
+            // possible merge here, investigate it
+            auto* correct = items[0];
+            auto explore = next;
+            explore.erase(std::remove_if(explore.begin(), explore.end(), [&](Tail& tail) {
+              auto* item = getItem(tail, num);
+              return !ExpressionAnalyzer::equal(item, correct);
+            }), explore.end());
+            // try to optimize this deeper tail. if we succeed, then stop here, as the
+            // changes may influence us. we leave further opts to further passes (as this
+            // is rare in practice, it's generally not a perf issue, but TODO optimize)
+            if (optimizeTerminatingTails(explore, num + 1)) {
+              return true;
+            }
           }
-        }), items.end());
-        if (items.size() >= 2) {
-          // possible merge here, investigate it
-          auto* correct = items[0];
-          auto explore = tails;
-          explore.erase(std::remove_if(explore.begin(), explore.end(), [&](Tail& tail) {
-            auto* item = getItem(tail, num);
-            return !ExpressionAnalyzer::equal(item, correct);
-          }), explore.end());
-          optimizeTerminatingTails(explore, num + 1);
+          items.swap(others);
         }
-        items.swap(others);
       }
     }
     // we explored deeper (higher num) options, but perhaps there
     // was nothing there while there is something we can do at this level
     // but if we are at num == 0, then we found nothing at all
-    if (num == 0) return;
-    // first, though, we may have modified code and so much not work on
-    // what we have left
-    tails.erase(std::remove_if(tails.begin(), tails.end(), [&](Tail& tail) {
-      if (tail.expr && modifieds.count(tail.expr) > 0) return true;
-      if (tail.block && modifieds.count(tail.block) > 0) return true;
-      // if we were not modified, then we should be valid for processing
-      tail.validate();
-      return false;
-    }), tails.end());
-    // if not enough to merge, stop
-    if (tails.size() < 2) return;
+    if (num == 0) return false;
     // if not worth it, stop
-    if (!worthIt(num, tails)) return;
+    if (!worthIt(num, tails)) return false;
     // this is worth doing, do it!
     auto mergeable = getTailItems(num, tails); // the elements we can merge
     // since we managed a merge, then it might open up more opportunities later
@@ -525,9 +522,10 @@ private:
       outer->list.push_back(mergeable.back());
       mergeable.pop_back();
     }
+    // ensure the replacement has the same type, so the outside is not surprised
     outer->finalize(getFunction()->result);
     getFunction()->body = outer;
-    // ensure the replacement has the same type, so the outside is not surprised
+    return true;
   }
 
   void markAsModified(Expression* curr) {
