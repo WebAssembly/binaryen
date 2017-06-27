@@ -78,11 +78,12 @@ for t in sorted(os.listdir(os.path.join('test', 'print'))):
   if t.endswith('.wast'):
     print '..', t
     wasm = os.path.basename(t).replace('.wast', '')
-    cmd = WASM_SHELL + [os.path.join('test', 'print', t), '--print']
+    cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    print cmd, actual, err
     with open(os.path.join('test', 'print', wasm + '.txt'), 'w') as o: o.write(actual)
-    cmd = WASM_SHELL + [os.path.join('test', 'print', t), '--print-minified']
+    cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print-minified']
     print '    ', ' '.join(cmd)
     actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     with open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w') as o: o.write(actual)
