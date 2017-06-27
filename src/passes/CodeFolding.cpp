@@ -18,9 +18,12 @@
 // Folds duplicate code together, saving space
 //
 // We fold tails of code where they merge and moving the code
-// to the merge point is helpful. There are two cases here:
+// to the merge point is helpful. There are two cases here: (1) expressions,
+// in which we merge to right after the expression itself, in these cases:
 //  * blocks, we merge the fallthrough + the breaks
 //  * if-else, we merge the arms
+// and (2) the function body as a whole, in which we can merge returns or
+// unreachables, putting the merged code at the end of the function body.
 //
 
 #include "wasm.h"
