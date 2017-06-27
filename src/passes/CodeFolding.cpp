@@ -47,6 +47,12 @@
 //  )
 //  C
 //
+// Note that the merged code, C in the example above, can be anything,
+// including code with control flow. If C is identical in all the locations,
+// then it must be safe to merge (if it contains a branch to something
+// higher up, then since our branch target names are unique, it must be
+// to the same thing, and after merging it can still reach it).
+//
 
 #include "wasm.h"
 #include "pass.h"
