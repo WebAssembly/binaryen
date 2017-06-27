@@ -73,7 +73,9 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
 
 void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum,
                                             bool hasMaximum, bool shared) {
-  uint32_t flags = (uint32_t) hasMaximum | (uint32_t) shared << 1;
+  uint32_t flags =
+      (hasMaximum ? (uint32_t) BinaryConsts::HasMaximum : 0U) |
+      (shared ? (uint32_t) BinaryConsts::IsShared : 0U);
   o << U32LEB(flags);
   o << U32LEB(initial);
   if (hasMaximum) {
@@ -163,7 +165,7 @@ void WasmBinaryWriter::writeImports() {
       case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType)); break;
       case ExternalKind::Table: {
         o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, false);
+        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
         break;
       }
       case ExternalKind::Memory: {
@@ -371,7 +373,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
   o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, false);
+  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
   finishSection(start);
 }
 
@@ -1290,8 +1292,8 @@ Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
 void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool &shared, Address defaultIfNoMax) {
   auto flags = getU32LEB();
   initial = getU32LEB();
-  bool hasMax = flags & 0x1;
-  bool isShared = flags & 0x2;
+  bool hasMax = flags & BinaryConsts::HasMaximum;
+  bool isShared = flags & BinaryConsts::IsShared;
   if (isShared && !hasMax) throw ParseException("shared memory must have max size");
   shared = isShared;
   if (hasMax) max = getU32LEB();

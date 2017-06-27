@@ -515,6 +515,11 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
+enum MemoryFlags {
+  HasMaximum = 1 << 0,
+  IsShared = 1 << 1
+};
+
 } // namespace BinaryConsts
 
 
