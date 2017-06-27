@@ -196,6 +196,7 @@ private:
   Expression* makeReturn(Element& s);
 
   WasmType parseOptionalResultType(Element& s, Index& i);
+  Index parseMemoryLimits(Element& s, Index i);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

@@ -515,6 +515,11 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
+enum MemoryFlags {
+  HasMaximum = 1 << 0,
+  IsShared = 1 << 1
+};
+
 } // namespace BinaryConsts
 
 
@@ -560,7 +565,7 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum);
+  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum, bool shared);
   int32_t startSection(BinaryConsts::Section code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
@@ -712,7 +717,7 @@ public:
 
   // gets a name in the combined function import+defined function space
   Name getFunctionIndexName(Index i);
-  void getResizableLimits(Address& initial, Address& max, Address defaultIfNoMax);
+  void getResizableLimits(Address& initial, Address& max, bool& shared, Address defaultIfNoMax);
   void readImports();
 
   std::vector<FunctionType*> functionTypes; // types of defined functions
