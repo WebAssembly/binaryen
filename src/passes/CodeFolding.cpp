@@ -415,8 +415,7 @@ private:
     // if we have enough to investigate, do so
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a subset
-  // FIXME XXX make this ordered
-      std::unordered_map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
+      std::map<uint32_t, std::vector<Expression*>> hashed; // hash value => expressions with that hash
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         hashed[ExpressionAnalyzer::hash(item)].push_back(item);
