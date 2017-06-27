@@ -119,13 +119,13 @@ void generateStackAllocFunction(LinkerObject& linker) {
   SetLocal* setStackLocal = builder.makeSetLocal(1, loadStack);
   GetLocal* getStackLocal = builder.makeGetLocal(1, i32);
   GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
-  Binary* add = builder.makeBinary(AddInt32, getStackLocal, getSizeArg);
+  Binary* add = builder.makeBinary(SubInt32, getStackLocal, getSizeArg);
   const static uint32_t bitAlignment = 16;
   const static uint32_t bitMask = bitAlignment - 1;
   Const* addConst = builder.makeConst(Literal(bitMask));
   Binary* maskedAdd = builder.makeBinary(
     AndInt32,
-    builder.makeBinary(AddInt32, add, addConst),
+    builder.makeBinary(SubInt32, add, addConst),
     builder.makeConst(Literal(~bitMask))
   );
   Store* storeStack = generateStoreStackPointer(builder, linker, maskedAdd);
