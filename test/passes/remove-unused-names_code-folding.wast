@@ -980,4 +980,38 @@
       (drop (i32.const 3))
     )
   )
+  (func $nested-control-flow-terminating
+    (block $out
+      (block $x
+        (if (i32.const 0)
+          (block
+            (if (i32.const 1)
+              (br $out)
+            )
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (return)
+          )
+        )
+        (if (i32.const 0)
+          (block
+            (if (i32.const 1)
+              (br $out)
+            )
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (return)
+          )
+        )
+        ;; no fallthrough, another thing to merge
+        (if (i32.const 1)
+          (br $out)
+        )
+        (drop (i32.const 1))
+        (drop (i32.const 2))
+        (return)
+      )
+      (drop (i32.const 3))
+    )
+  )
 )
