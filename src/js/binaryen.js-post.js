@@ -911,34 +911,12 @@
     return Module['_BinaryenSetAPITracing'](on);
   };
 
-  return Module;
-};
+  // Always expose globally because check.py generates a.js which requires 'Binaryen' as a global var
+  (typeof global != "undefined" && global || typeof window != "undefined" && window || this)["Binaryen"] = Module;
 
-if (typeof exports != 'undefined') {
-  (function(){
-    var a = Binaryen();
-    if (typeof module === 'object') {
-      module.exports = a;
-    } else {
-      for (var k in a) {
-        exports[k] = a[k];
-      }
-    }
-  })();
-}
-(typeof window !== 'undefined' ? window :
- typeof global !== 'undefined' && (
-  typeof process === 'undefined' ||
+  if (typeof module != "undefined" && module && module.exports)
+    module.exports = Module;
+  else if (typeof define === "function" && define["amd"])
+    define(function() { return Module; });
 
-  // Note: We must export "Binaryen" even inside a CommonJS/AMD/UMD module
-  // space because check.py generates a.js which requires Binaryen global var
-  ( process.argv &&
-    Array.isArray(process.argv) &&
-    process.argv[1] &&
-    (process.argv[1].substr(-5) === '/a.js' ||
-     process.argv[1].substr(-5) === '\\a.js')
-  )
-
- ) ? global :
- this
-)['Binaryen'] = Binaryen();
+})();

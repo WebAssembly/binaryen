@@ -71,6 +71,7 @@ echo "building wasm.js"
   src/passes/ExtractFunction.cpp \
   src/passes/FlattenControlFlow.cpp \
   src/passes/Inlining.cpp \
+  src/passes/InstrumentLocals.cpp \
   src/passes/InstrumentMemory.cpp \
   src/passes/LegalizeJSInterface.cpp \
   src/passes/LocalCSE.cpp \
@@ -95,7 +96,9 @@ echo "building wasm.js"
   src/passes/ReorderFunctions.cpp \
   src/passes/ReorderLocals.cpp \
   src/passes/ReReloop.cpp \
+  src/passes/SSAify.cpp \
   src/passes/SimplifyLocals.cpp \
+  src/passes/Untee.cpp \
   src/passes/Vacuum.cpp \
   src/emscripten-optimizer/parser.cpp \
   src/emscripten-optimizer/simple_ast.cpp \
@@ -139,6 +142,7 @@ fi
   src/passes/ExtractFunction.cpp \
   src/passes/FlattenControlFlow.cpp \
   src/passes/Inlining.cpp \
+  src/passes/InstrumentLocals.cpp \
   src/passes/InstrumentMemory.cpp \
   src/passes/LegalizeJSInterface.cpp \
   src/passes/LocalCSE.cpp \
@@ -163,7 +167,9 @@ fi
   src/passes/ReorderFunctions.cpp \
   src/passes/ReorderLocals.cpp \
   src/passes/ReReloop.cpp \
+  src/passes/SSAify.cpp \
   src/passes/SimplifyLocals.cpp \
+  src/passes/Untee.cpp \
   src/passes/Vacuum.cpp \
   src/wasm-emscripten.cpp \
   src/support/colors.cpp \
