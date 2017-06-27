@@ -1291,9 +1291,9 @@ void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool 
   auto flags = getU32LEB();
   initial = getU32LEB();
   bool hasMax = flags & 0x1;
-  bool is_shared = flags & 0x2;
-  if (is_shared && !hasMax) throw ParseException("shared memory must have max size");
-  shared = is_shared;
+  bool isShared = flags & 0x2;
+  if (isShared && !hasMax) throw ParseException("shared memory must have max size");
+  shared = isShared;
   if (hasMax) max = getU32LEB();
   else max = defaultIfNoMax;
 }

@@ -235,7 +235,7 @@ if MOZJS:
     f.close()
     cmd = ['mozjs', 'a.js']
     out = run_command(cmd, stderr=subprocess.STDOUT)
-    open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w').write(out)
+    with open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w') as o: o.write(out)
 
 print '\n[ checking wasm-ctor-eval... ]\n'
 
