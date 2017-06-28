@@ -58,6 +58,7 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "ast_utils.h"
+#include "ast/branch-utils.h"
 #include "ast/label-utils.h"
 
 namespace wasm {
@@ -234,6 +235,24 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   }
 
 private:
+  // check if we can move a list of items out of another item. we can't do so
+  // if one of the items has a branch to something inside outOf that is not
+  // inside that item
+  bool canMove(std::vector<Expression*>& items, Expression* outOf) {
+    auto allTargets = BranchUtils::getBranchTargets(outOf);
+    for (auto* item : items) {
+      auto exiting = BranchUtils::getExitingBranches(item);
+      std::vector<Name> intersection;
+      std::set_intersection(allTargets.begin(), allTargets.end(), exiting.begin(), exiting.end(),
+                            std::back_inserter(intersection));
+      if (intersection.size() > 0) {
+        // anything exiting that is in all targets is something bad
+        return false;
+      }
+    }
+    return true;
+  }
+
   // optimize tails that reach the outside of an expression. code that is identical in all
   // paths leading to the block exit can be merged.
   template<typename T>
@@ -292,6 +311,7 @@ private:
       saved += Measurer::measure(item);
     }
     if (saved == 0) return;
+    if (!canMove(mergeable, curr)) return;
     // we may be able to save enough.
     if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
       // it's not obvious we can save enough. see if we get rid
@@ -434,6 +454,15 @@ private:
       // that block and the merged code. very possibly one of the blocks
       // can be removed, though
       cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
+      // if we cannot merge to the end, then we definitely need 2 blocks,
+      // and a branch
+      if (!canMove(items, getFunction()->body)) { // TODO: efficiency, entire body
+        cost += 1 + WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
+        // TODO: to do this, we need to maintain a map of element=>parent,
+        //       so that we can insert the new blocks in the right place
+        //       for now, just don't do this optimization
+        return false;
+      }
       // is it worth it?
       return saved > cost;
     };

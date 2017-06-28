@@ -1441,4 +1441,103 @@
    )
   )
  )
+ (func $nested-control-flow-dangerous (type $0)
+  (block $folding-inner0
+   (block $out
+    (block
+     (if
+      (i32.const 0)
+      (block
+       (if
+        (i32.const 1)
+        (br $out)
+       )
+       (br $folding-inner0)
+      )
+     )
+     (if
+      (i32.const 0)
+      (block
+       (if
+        (i32.const 1)
+        (br $out)
+       )
+       (br $folding-inner0)
+      )
+     )
+     (if
+      (i32.const 1)
+      (br $out)
+     )
+     (br $folding-inner0)
+    )
+    (drop
+     (i32.const 3)
+    )
+   )
+   (return)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (return)
+ )
+ (func $nested-control-flow-dangerous-but-ok (type $0)
+  (block $folding-inner0
+   (block
+    (block $middle
+     (block
+      (if
+       (i32.const 0)
+       (block
+        (if
+         (i32.add
+          (i32.const 0)
+          (i32.const 1)
+         )
+         (br $middle)
+        )
+        (br $folding-inner0)
+       )
+      )
+      (if
+       (i32.const 0)
+       (block
+        (if
+         (i32.add
+          (i32.const 0)
+          (i32.const 1)
+         )
+         (br $middle)
+        )
+        (br $folding-inner0)
+       )
+      )
+      (if
+       (i32.add
+        (i32.const 0)
+        (i32.const 1)
+       )
+       (br $middle)
+      )
+      (br $folding-inner0)
+     )
+    )
+    (drop
+     (i32.const 3)
+    )
+   )
+   (return)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (return)
+ )
 )

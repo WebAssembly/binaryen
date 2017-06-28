@@ -980,13 +980,13 @@
       (drop (i32.const 3))
     )
   )
-  (func $nested-control-flow-terminating
+  (func $nested-control-flow-dangerous
     (block $out
       (block $x
         (if (i32.const 0)
           (block
             (if (i32.const 1)
-              (br $out)
+              (br $out) ;; this br cannot be moved out of the $out block!
             )
             (drop (i32.const 1))
             (drop (i32.const 2))
@@ -1010,6 +1010,42 @@
         (drop (i32.const 1))
         (drop (i32.const 2))
         (return)
+      )
+      (drop (i32.const 3))
+    )
+  )
+  (func $nested-control-flow-dangerous-but-ok
+    (block $out
+      (block $middle
+        (block $x
+          (if (i32.const 0)
+            (block
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $middle)
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (return)
+            )
+          )
+          (if (i32.const 0)
+            (block
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $middle)
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (return)
+            )
+          )
+          ;; no fallthrough, another thing to merge
+          (if (i32.add (i32.const 0) (i32.const 1))
+            (br $middle)
+          )
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (return)
+        )
       )
       (drop (i32.const 3))
     )
