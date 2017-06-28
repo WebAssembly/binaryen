@@ -324,7 +324,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitStore(Store *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->valueType) << ".store";
+    prepareColor(o) << printWasmType(curr->valueType);
+    if (curr->isAtomic) o << ".atomic";
+    o << ".store";
     if (curr->bytes < 4 || (curr->valueType == i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
