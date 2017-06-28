@@ -1937,7 +1937,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitBinary(curr, code)) break;
       if (maybeVisitUnary(curr, code)) break;
       if (maybeVisitConst(curr, code)) break;
-      if (maybeVisitLoad(curr, code, /*isAtomc=*/false)) break;
+      if (maybeVisitLoad(curr, code, /*isAtomic=*/false)) break;
       if (maybeVisitStore(curr, code, /*isAtomic=*/false)) break;
       if (maybeVisitHost(curr, code)) break;
       throw ParseException("bad node code " + std::to_string(code));
