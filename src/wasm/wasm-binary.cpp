@@ -1934,6 +1934,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       code = getInt8();
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) break;
       if (maybeVisitStore(curr, code, /*isAtomic=*/true)) break;
+      //if (maybeVisitRMW(curr, code)) break;
       throw ParseException("invalid code after atomic prefix: " + std::to_string(code));
     }
     default: {

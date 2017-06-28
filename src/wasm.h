@@ -130,6 +130,10 @@ enum HostOp {
   PageSize, CurrentMemory, GrowMemory, HasFeature
 };
 
+enum AtomicRMWOp {
+  Add, Sub, And, Or, Xor, Xchg,
+};
+
 //
 // Expressions
 //
@@ -177,6 +181,7 @@ public:
     HostId,
     NopId,
     UnreachableId,
+    AtomicCmpxchgId,
     AtomicRMWId,
     NumExpressionIds
   };
@@ -423,6 +428,26 @@ public:
   void finalize();
 };
 
+class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
+ public:
+  AtomicRMW() = default;
+  AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
+
+  AtomicRMWOp op;
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* value;
+  WasmType valueType;
+
+  void finalize();
+};
+
+class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
+ public:
+  AtomicCmpxchg() = default;
+};
+
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
   Const() {}
@@ -512,13 +537,6 @@ public:
     type = unreachable;
   }
   Unreachable(MixedArena& allocator) : Unreachable() {}
-};
-
-class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
- public:
-  AtomicRMW() {}
-  AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
-  bool finalize();
 };
 
 // Globals

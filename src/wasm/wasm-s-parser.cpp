@@ -666,6 +666,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         if (op[1] == 't' && !strncmp(op, "atomic.", strlen("atomic."))) {
           if (op[7] == 'l') return makeLoad(s, type, /*isAtomic=*/true);
           if (op[7] == 's') return makeStore(s, type, /*isAtomic=*/true);
+          if (op[7] == 'r') return makeAtomicRMW(s, type);
         }
         abort_on(op);
       }
@@ -1125,6 +1126,49 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, WasmType type) {
   return ret;
 }
 
+static uint8_t parseMemBytes(const char** in, uint8_t fallback) {
+  uint8_t ret;
+  const char* s = *in;
+  if (s[0] == '8') {
+    ret = 1;
+    (*in)++;
+  } else if (s[0] == '1') {
+    if (s[1] != '6') throw ParseException("expected 16 for memop size");
+    ret = 2;
+    *in += 2;
+  } else if (s[0] == '3') {
+    if (s[1] != '2') throw ParseException("expected 32 for memop size");;
+    ret = 4;
+    *in += 2;
+  } else {
+    ret = fallback;
+  }
+  return ret;
+}
+
+static size_t parseMemAttributes(Element& s, Address* offset, Address* align, Address fallback) {
+  size_t i = 1;
+  *offset = 0;
+  *align = fallback;
+  while (!s[i]->isList()) {
+    const char *str = s[i]->c_str();
+    const char *eq = strchr(str, '=');
+    if (!eq) throw ParseException("missing = in memory attribute");
+    eq++;
+    if (str[0] == 'a') {
+      uint64_t a = atoll(eq);
+      if (a > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
+      *align = a;
+    } else if (str[0] == 'o') {
+      uint64_t o = atoll(eq);
+      if (o > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset");
+      *offset = o;
+    } else throw ParseException("bad memory attribute");
+    i++;
+  }
+  return i;
+}
+
 
 Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
@@ -1132,84 +1176,48 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isA
   auto* ret = allocator.alloc<Load>();
   ret->isAtomic = isAtomic;
   ret->type = type;
-  ret->bytes = getWasmTypeSize(type);
-  if (extra[0] == '8') {
-    ret->bytes = 1;
-    extra++;
-  } else if (extra[0] == '1') {
-    if (extra[1] != '6') throw ParseException("expected load16");
-    ret->bytes = 2;
-    extra += 2;
-  } else if (extra[0] == '3') {
-    if (extra[1] != '2') throw ParseException("expected load32");
-    ret->bytes = 4;
-    extra += 2;
-  }
+  ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
   ret->signed_ = extra[0] && extra[1] == 's';
-  size_t i = 1;
-  ret->offset = 0;
-  ret->align = ret->bytes;
-  while (!s[i]->isList()) {
-    const char *str = s[i]->c_str();
-    const char *eq = strchr(str, '=');
-    if (!eq) throw ParseException("no = in load attribute");
-    eq++;
-    if (str[0] == 'a') {
-      uint64_t align = atoll(eq);
-      if (align > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
-      ret->align = align;
-    } else if (str[0] == 'o') {
-      uint64_t offset = atoll(eq);
-      if (offset > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset");
-      ret->offset = (uint32_t)offset;
-    } else throw ParseException("bad load attribute");
-    i++;
-  }
+  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
 }
-
+  
 Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
   if (isAtomic) extra += 7; // after "type.atomic.store"
   auto ret = allocator.alloc<Store>();
   ret->isAtomic = isAtomic;
   ret->valueType = type;
-  ret->bytes = getWasmTypeSize(type);
-  if (extra[0] == '8') {
-    ret->bytes = 1;
-    extra++;
-  } else if (extra[0] == '1') {
-    if (extra[1] != '6') throw ParseException("expected store16");
-    ret->bytes = 2;
-    extra += 2;
-  } else if (extra[0] == '3') {
-    if (extra[1] != '2') throw ParseException("expected store32");;
-    ret->bytes = 4;
-    extra += 2;
-  }
-  size_t i = 1;
-  ret->offset = 0;
-  ret->align = ret->bytes;
-  while (!s[i]->isList()) {
-    const char *str = s[i]->c_str();
-    const char *eq = strchr(str, '=');
-    if (!eq) throw ParseException("missing = in store attribute");;
-    eq++;
-    if (str[0] == 'a') {
-      uint64_t align = atoll(eq);
-      if (align > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
-      ret->align = align;
-    } else if (str[0] == 'o') {
-      ret->offset = atoi(eq);
-    } else throw ParseException("bad store attribute");
-    i++;
-  }
+  ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
+  size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
+
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i+1]);
   ret->finalize();
   return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type) {
+  const char* extra = strchr(s[0]->c_str(), '.') + 10; // afer "type.atomic.rmw"
+  auto ret = allocator.alloc<AtomicRMW>();
+  ret->valueType = type;
+  ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
+  extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
+  if (!extra) throw ParseException("malformed atomic rmw instruction");
+  extra++; // after the '.'
+  if (!strncmp(extra, "add", 3)) ret->op = Add;
+  else if (!strncmp(extra, "and", 3)) ret->op = And;
+  else if (!strncmp(extra, "or", 2)) ret->op = Or;
+  else if (!strncmp(extra, "sub", 3)) ret->op = Sub;
+  else if (!strncmp(extra, "xor", 3)) ret->op = Xor;
+  else if (!strncmp(extra, "xchg", 4)) ret->op = Xchg;
+  else throw ParseException("bad atomic rmw operator");
+  Address align;
+  parseMemAttributes(s, &ret->offset, &align, ret->bytes);
+  if (align != ret->bytes) throw ParseException("Align of Atomic RMW must match size");
+  return nullptr;
 }
 
 Expression* SExpressionWasmBuilder::makeIf(Element& s) {
