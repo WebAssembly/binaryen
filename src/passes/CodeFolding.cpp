@@ -238,7 +238,7 @@ private:
   // check if we can move a list of items out of another item. we can't do so
   // if one of the items has a branch to something inside outOf that is not
   // inside that item
-  bool canMove(std::vector<Expression*>& items, Expression* outOf) {
+  bool canMove(const std::vector<Expression*>& items, Expression* outOf) {
     auto allTargets = BranchUtils::getBranchTargets(outOf);
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
@@ -305,13 +305,14 @@ private:
         }
       }
       if (stop) break;
+      // we may have found another one we can merge - can we move it?
+      if (!canMove({ item }, curr)) break;
       // we found another one we can merge
       mergeable.push_back(item);
       num++;
       saved += Measurer::measure(item);
     }
     if (saved == 0) return;
-    if (!canMove(mergeable, curr)) return;
     // we may be able to save enough.
     if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
       // it's not obvious we can save enough. see if we get rid
