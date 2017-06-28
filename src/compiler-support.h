@@ -27,7 +27,7 @@
 
 // If control flow reaches the point of the WASM_UNREACHABLE(), the program is
 // undefined.
-#if __has_builtin(__builtin_unreachable)
+#if __has_builtin(__builtin_unreachable) && defined(NDEBUG)
 # define WASM_UNREACHABLE() __builtin_unreachable()
 #elif defined(_MSC_VER)
 # define WASM_UNREACHABLE() __assume(false)

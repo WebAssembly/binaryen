@@ -663,6 +663,9 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         if (op[1] == 'b') return makeUnary(s, type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
         if (op[1] == 'd') return makeBinary(s, BINARY_INT_OR_FLOAT(Add), type);
         if (op[1] == 'n') return makeBinary(s, BINARY_INT(And), type);
+        if (op[1] == 't' && !strncmp(op, "atomic.", strlen("atomic."))) {
+          if (op[7] == 'l') return makeLoad(s, type, /*isAtomic=*/true);
+        }
         abort_on(op);
       }
       case 'c': {
@@ -721,7 +724,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
           if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BINARY_INT(LeU) : BINARY_INT(LeS), type);
           if (op[2] == 0) return makeBinary(s, BINARY_FLOAT(Le), type);
         }
-        if (op[1] == 'o') return makeLoad(s, type);
+        if (op[1] == 'o') return makeLoad(s, type, /*isAtomic=*/false);
         abort_on(op);
       }
       case 'm': {
@@ -1122,9 +1125,12 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, WasmType type) {
 }
 
 
-Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
-  auto ret = allocator.alloc<Load>();
+  if (isAtomic) extra += 7; // after "type.atomic.load"
+  auto* ret = allocator.alloc<Load>();
+
+  ret->isAtomic = isAtomic;
   ret->type = type;
   ret->bytes = getWasmTypeSize(type);
   if (extra[0] == '8') {
