@@ -1771,10 +1771,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       IString heap = target[1]->getIString();
       assert(views.find(heap) != views.end());
       View& view = views[heap];
-      auto* ret = builder.makeStore(view.bytes, 0, view.bytes,
-                                    processUnshifted(target[2], view.bytes),
-                                    process(assign->value()),
-                                    asmToWasmType(view.type));
+      auto ret = allocator.alloc<Store>();
+      ret->isAtomic = false;
+      ret->bytes = view.bytes;
+      ret->offset = 0;
+      ret->align = view.bytes;
+      ret->ptr = processUnshifted(target[2], view.bytes);
+      ret->value = process(assign->value());
+      ret->valueType = asmToWasmType(view.type);
+      ret->finalize();
       if (ret->valueType != ret->value->type) {
         // in asm.js we have some implicit coercions that we must do explicitly here
         if (ret->valueType == f32 && ret->value->type == f64) {
@@ -1838,9 +1843,15 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       IString heap = target->getIString();
       assert(views.find(heap) != views.end());
       View& view = views[heap];
-      return builder.makeLoad(view.bytes, view.signed_, 0, view.bytes,
-                                   processUnshifted(ast[2], view.bytes),
-                                   getWasmType(view.bytes, !view.integer));
+      auto ret = allocator.alloc<Load>();
+      ret->isAtomic = false;
+      ret->bytes = view.bytes;
+      ret->signed_ = view.signed_;
+      ret->offset = 0;
+      ret->align = view.bytes;
+      ret->ptr = processUnshifted(ast[2], view.bytes);
+      ret->type = getWasmType(view.bytes, !view.integer);
+      return ret;
     } else if (what == UNARY_PREFIX) {
       if (ast[1] == PLUS) {
         Literal literal = checkLiteral(ast);
