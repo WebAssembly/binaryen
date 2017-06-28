@@ -911,12 +911,11 @@
     return Module['_BinaryenSetAPITracing'](on);
   };
 
-  // Always expose globally because check.py generates a.js which requires 'Binaryen' as a global var
-  (typeof global != "undefined" && global || typeof window != "undefined" && window || this)["Binaryen"] = Module;
-
   if (typeof module != "undefined" && module && module.exports)
     module.exports = Module;
   else if (typeof define === "function" && define["amd"])
     define(function() { return Module; });
+  else
+    (typeof global !== "undefined" ? global : typeof window !== "undefined" ? window : this)["Binaryen"] = Module;
 
 })();
