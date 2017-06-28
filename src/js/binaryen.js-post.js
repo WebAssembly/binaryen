@@ -911,7 +911,7 @@
     return Module['_BinaryenSetAPITracing'](on);
   };
 
-  if (typeof module != "undefined" && module && module.exports)
+  if (typeof module !== "undefined" && module && module.exports)
     module.exports = Module;
   else if (typeof define === "function" && define["amd"])
     define(function() { return Module; });
