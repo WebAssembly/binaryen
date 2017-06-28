@@ -1050,4 +1050,124 @@
       (drop (i32.const 3))
     )
   )
+  (func $nested-control-flow-dangerous-but-ok-b
+    (block $out
+      (block $middle
+        (block $x
+          (if (i32.const 0)
+            (block
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $middle) ;; this is dangerous - we branch to middle with is inside out, so we can't move this out of out
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (drop (i32.const 3))
+              (drop (i32.const 4))
+              (br $out)
+            )
+          )
+          (if (i32.const 0)
+            (block
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $middle)
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (drop (i32.const 3))
+              (drop (i32.const 4))
+              (br $out)
+            )
+          )
+          ;; no fallthrough, another thing to merge
+          (if (i32.add (i32.const 0) (i32.const 1))
+            (br $middle)
+          )
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (drop (i32.const 3))
+          (drop (i32.const 4))
+          (br $out)
+        )
+      )
+      (drop (i32.const 3))
+    )
+  )
+  (func $nested-control-flow-dangerous-but-ok-c
+    (block $x
+      (block $out
+        (block $middle
+          (if (i32.const 0)
+            (block
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $x) ;; this is ok - we branch to x which is outside of out
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $out)
+            )
+          )
+          (if (i32.const 0)
+            (block
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $middle)
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $out)
+            )
+          )
+          ;; no fallthrough, another thing to merge
+          (if (i32.add (i32.const 0) (i32.const 1))
+            (br $middle)
+          )
+          (drop (i32.const 1))
+          (drop (i32.const 2))
+          (br $out)
+        )
+        (drop (i32.const 4))
+      )
+      (drop (i32.const 3))
+    )
+    (drop (i32.const 5))
+  )
+  (func $nested-control-flow-dangerous-but-ok-d
+    (block $out
+      (block $middle
+        (if (i32.const 0)
+          (block
+            (block $x
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $x) ;; this is ok - we branch to x which is nested in us
+              )
+            )
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $out)
+          )
+        )
+        (if (i32.const 0)
+          (block
+            (block $x
+              (if (i32.add (i32.const 0) (i32.const 1))
+                (br $x) ;; this is ok - we branch to x which is nested in us
+              )
+            )
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $out)
+          )
+        )
+        ;; no fallthrough, another thing to merge
+        (block $x
+          (if (i32.add (i32.const 0) (i32.const 1))
+            (br $x) ;; this is ok - we branch to x which is nested in us
+          )
+        )
+        (drop (i32.const 1))
+        (drop (i32.const 2))
+        (br $out)
+      )
+    )
+    (drop (i32.const 3))
+  )
 )
