@@ -920,6 +920,7 @@ class S2WasmBuilder {
     auto makeLoad = [&](WasmType type) {
       skipComma();
       auto curr = allocator->alloc<Load>();
+      curr->isAtomic = false;
       curr->type = type;
       int32_t bytes = getInt() / CHAR_BIT;
       curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
@@ -939,6 +940,7 @@ class S2WasmBuilder {
     };
     auto makeStore = [&](WasmType type) {
       auto curr = allocator->alloc<Store>();
+      curr->isAtomic = false;
       curr->valueType = type;
       s += strlen("store");
       if(!isspace(*s)) {

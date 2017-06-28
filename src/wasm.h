@@ -177,6 +177,7 @@ public:
     HostId,
     NopId,
     UnreachableId,
+    AtomicRMWId,
     NumExpressionIds
   };
   Id _id;
@@ -398,6 +399,7 @@ public:
   bool signed_;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
 
   // type must be set during creation, cannot be inferred
@@ -413,6 +415,7 @@ public:
   uint8_t bytes;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
   Expression* value;
   WasmType valueType; // the store never returns a value
@@ -509,6 +512,13 @@ public:
     type = unreachable;
   }
   Unreachable(MixedArena& allocator) : Unreachable() {}
+};
+
+class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
+ public:
+  AtomicRMW() {}
+  AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
+  bool finalize();
 };
 
 // Globals

@@ -1772,6 +1772,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       assert(views.find(heap) != views.end());
       View& view = views[heap];
       auto ret = allocator.alloc<Store>();
+      ret->isAtomic = false;
       ret->bytes = view.bytes;
       ret->offset = 0;
       ret->align = view.bytes;
@@ -1843,6 +1844,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       assert(views.find(heap) != views.end());
       View& view = views[heap];
       auto ret = allocator.alloc<Load>();
+      ret->isAtomic = false;
       ret->bytes = view.bytes;
       ret->signed_ = view.signed_;
       ret->offset = 0;
