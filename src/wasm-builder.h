@@ -188,12 +188,14 @@ public:
   }
   Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
     auto* ret = allocator.alloc<Load>();
+    ret->isAtomic = false;
     ret->bytes = bytes; ret->signed_ = signed_; ret->offset = offset; ret->align = align; ret->ptr = ptr;
     ret->type = type;
     return ret;
   }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();
+    ret->isAtomic = false;
     ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value; ret->valueType = type;
     ret->finalize();
     assert(isConcreteWasmType(ret->value->type) ? ret->value->type == type : true);

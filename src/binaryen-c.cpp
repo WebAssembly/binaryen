@@ -549,7 +549,7 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenLoad(the_module, " << bytes << ", " << int(signed_) << ", " << offset << ", " << align << ", " << type << ", expressions[" << expressions[ptr] << "]);\n";
   }
-
+  ret->isAtomic = false;
   ret->bytes = bytes;
   ret->signed_ = !!signed_;
   ret->offset = offset;
@@ -566,7 +566,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenStore(the_module, " << bytes << ", " << offset << ", " << align << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
   }
-
+  ret->isAtomic = false;
   ret->bytes = bytes;
   ret->offset = offset;
   ret->align = align ? align : bytes;
