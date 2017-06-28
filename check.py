@@ -413,6 +413,7 @@ if MOZJS:
     print s
     f = open('a.js', 'w')
     f.write(open(os.path.join(options.binaryen_bin, 'binaryen.js')).read())
+    f.write('var Binaryen = module.exports;\n')
     f.write(open(os.path.join(options.binaryen_test, 'binaryen.js', s)).read())
     f.close()
     cmd = [MOZJS, 'a.js']
@@ -511,7 +512,7 @@ if has_vanilla_emcc and has_vanilla_llvm and 0:
 print '\n[ checking example testcases... ]\n'
 
 if options.run_gcc_tests:
-  print '\n[ checking native gcc testcases...]\n'  
+  print '\n[ checking native gcc testcases...]\n'
   if not NATIVECC or not NATIVEXX:
     fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
   else:
