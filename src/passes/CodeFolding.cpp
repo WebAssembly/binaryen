@@ -54,6 +54,8 @@
 // to the same thing, and after merging it can still reach it).
 //
 
+#include <iterator>
+
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
