@@ -31,6 +31,9 @@
 # define WASM_UNREACHABLE() __builtin_unreachable()
 #elif defined(_MSC_VER)
 # define WASM_UNREACHABLE() __assume(false)
+#elif __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+# include "sanitizer/common_interface_defs.h"
+# define WASM_UNREACHABLE() do { __sanitizer_print_stack_trace(); __builtin_trap(); } while (0)
 #else
 # include <stdlib.h>
 # define WASM_UNREACHABLE() abort()
