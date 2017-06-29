@@ -1169,7 +1169,6 @@ static size_t parseMemAttributes(Element& s, Address* offset, Address* align, Ad
   return i;
 }
 
-
 Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
   if (isAtomic) extra += 7; // after "type.atomic.load"
@@ -1183,7 +1182,7 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isA
   ret->finalize();
   return ret;
 }
-  
+
 Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
   if (isAtomic) extra += 7; // after "type.atomic.store"
@@ -1204,6 +1203,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type) {
   auto ret = allocator.alloc<AtomicRMW>();
   ret->valueType = type;
   ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
+  std::cout << "bytes "<<(int)ret->bytes;
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) throw ParseException("malformed atomic rmw instruction");
   extra++; // after the '.'
@@ -1215,9 +1215,12 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type) {
   else if (!strncmp(extra, "xchg", 4)) ret->op = Xchg;
   else throw ParseException("bad atomic rmw operator");
   Address align;
-  parseMemAttributes(s, &ret->offset, &align, ret->bytes);
+  size_t i = parseMemAttributes(s, &ret->offset, &align, ret->bytes);
   if (align != ret->bytes) throw ParseException("Align of Atomic RMW must match size");
-  return nullptr;
+  ret->ptr = parseExpression(s[i]);
+  ret->value = parseExpression(s[i+1]);
+  ret->finalize();
+  return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeIf(Element& s) {
