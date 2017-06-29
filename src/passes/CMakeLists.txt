@@ -2,6 +2,7 @@ SET(passes_SOURCES
   pass.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
+  CodeFolding.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
@@ -15,7 +16,6 @@ SET(passes_SOURCES
   MemoryPacking.cpp
   MergeBlocks.cpp
   Metrics.cpp
-  NameManager.cpp
   NameList.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp

@@ -237,29 +237,6 @@ public:
 // but registering them here in addition allows them to communicate
 // e.g. through PassRunner::getLast
 
-// Handles names in a module, in particular adding names without duplicates
-class NameManager : public WalkerPass<PostWalker<NameManager>> {
- public:
-  Name getUnique(std::string prefix);
-  // TODO: getUniqueInFunction
-
-  // visitors
-  void visitBlock(Block* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallImport(CallImport* curr);
-  void visitFunctionType(FunctionType* curr);
-  void visitFunction(Function* curr);
-  void visitImport(Import* curr);
-  void visitExport(Export* curr);
-
-private:
-  std::set<Name> names;
-  size_t counter = 0;
-};
-
 // Prints out a module
 class Printer : public Pass {
 protected:

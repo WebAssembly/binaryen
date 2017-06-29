@@ -24,6 +24,7 @@ class Pass;
 // All passes:
 Pass *createCoalesceLocalsPass();
 Pass *createCoalesceLocalsWithLearningPass();
+Pass *createCodeFoldingPass();
 Pass *createCodePushingPass();
 Pass *createDeadCodeEliminationPass();
 Pass *createDuplicateFunctionEliminationPass();
@@ -41,7 +42,6 @@ Pass *createMergeBlocksPass();
 Pass *createMinifiedPrinterPass();
 Pass *createMetricsPass();
 Pass *createNameListPass();
-Pass *createNameManagerPass();
 Pass *createOptimizeInstructionsPass();
 Pass *createPickLoadSignsPass();
 Pass *createPostEmscriptenPass();
