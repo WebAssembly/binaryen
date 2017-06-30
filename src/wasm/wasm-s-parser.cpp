@@ -1199,11 +1199,10 @@ Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type, bool is
 }
 
 Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type) {
-  const char* extra = strchr(s[0]->c_str(), '.') + 10; // afer "type.atomic.rmw"
+  const char* extra = strchr(s[0]->c_str(), '.') + 11; // afer "type.atomic.rmw"
   auto ret = allocator.alloc<AtomicRMW>();
-  ret->valueType = type;
+  ret->type = type;
   ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
-  std::cout << "bytes "<<(int)ret->bytes;
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) throw ParseException("malformed atomic rmw instruction");
   extra++; // after the '.'

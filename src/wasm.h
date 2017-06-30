@@ -438,7 +438,6 @@ class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
   Address offset;
   Expression* ptr;
   Expression* value;
-  WasmType valueType;
 
   void finalize();
 };

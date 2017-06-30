@@ -350,6 +350,39 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->value);
     decIndent();
   }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    o << '(';
+    prepareColor(o) << printWasmType(curr->type) << ".atomic.rmw";
+    if (curr->bytes != getWasmTypeSize(curr->type)) {
+      if (curr->bytes == 1) {
+        o << '8';
+      } else if (curr->bytes == 2) {
+        o << "16";
+      } else if (curr->bytes == 4) {
+        o << "32";
+      } else {
+        WASM_UNREACHABLE();
+      }
+      o << "_u";
+    }
+    o << '.';
+    switch (curr->op) {
+      case Add:  o << "add";  break;
+      case Sub:  o << "sub";  break;
+      case And:  o << "and";  break;
+      case Or:   o << "or";   break;
+      case Xor:  o << "xor";  break;
+      case Xchg: o << "xchg"; break;
+    }
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->value);
+    decIndent();
+  }
   void visitConst(Const *curr) {
     o << curr->value;
   }
