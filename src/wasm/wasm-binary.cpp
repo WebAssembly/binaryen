@@ -1184,7 +1184,9 @@ Name WasmBinaryBuilder::getInlineString() {
   std::string str;
   for (size_t i = 0; i < len; i++) {
     auto curr = char(getInt8());
-    if (curr == 0) throw ParseException("inline string contains NULL (0)");
+    if (curr == 0) {
+      throw ParseException("inline string contains NULL (0). that is technically valid in wasm, but you shouldn't do it, and it's not supported in binaryen");
+    }
     str = str + curr;
   }
   if (debug) std::cerr << "getInlineString: " << str << " ==>" << std::endl;
