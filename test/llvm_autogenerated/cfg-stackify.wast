@@ -978,12 +978,9 @@
   (i32.store offset=4
    (i32.const 0)
    (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
-      (get_local $0)
-     )
-     (i32.const 15)
+    (i32.sub
+     (get_local $1)
+     (get_local $0)
     )
     (i32.const -16)
    )

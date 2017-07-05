@@ -67,6 +67,7 @@ void PassRegistry::registerPasses() {
   registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
   registerPass("code-pushing", "push code forward, potentially making it not always execute", createCodePushingPass);
+  registerPass("code-folding", "fold code, merging duplicates", createCodeFoldingPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
@@ -81,7 +82,6 @@ void PassRegistry::registerPasses() {
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
-  registerPass("name-manager", "utility pass to manage names in modules", createNameManagerPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
   registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);
@@ -139,6 +139,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
+  if (options.shrinkLevel >= 1) {
+    add("code-folding");
+  }
   add("merge-blocks"); // makes remove-unused-brs more effective
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
   add("merge-blocks"); // clean up remove-unused-brs new blocks
@@ -148,7 +151,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
     add("coalesce-locals"); // just for localCSE
   }
-  add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
+  add("vacuum"); // just to be safe
 }
 
 void PassRunner::addDefaultGlobalOptimizationPasses() {

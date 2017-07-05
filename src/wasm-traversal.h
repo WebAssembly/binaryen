@@ -513,7 +513,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   }
 
   static void doPostVisitControlFlow(SubType* self, Expression** currp) {
-    assert(self->controlFlowStack.back() == *currp);
+    // note that we might be popping something else, as we may have been replaced
     self->controlFlowStack.pop_back();
   }
 

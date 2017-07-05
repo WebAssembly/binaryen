@@ -663,6 +663,10 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         if (op[1] == 'b') return makeUnary(s, type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
         if (op[1] == 'd') return makeBinary(s, BINARY_INT_OR_FLOAT(Add), type);
         if (op[1] == 'n') return makeBinary(s, BINARY_INT(And), type);
+        if (op[1] == 't' && !strncmp(op, "atomic.", strlen("atomic."))) {
+          if (op[7] == 'l') return makeLoad(s, type, /*isAtomic=*/true);
+          if (op[7] == 's') return makeStore(s, type, /*isAtomic=*/true);
+        }
         abort_on(op);
       }
       case 'c': {
@@ -721,7 +725,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
           if (op[2] == '_') return makeBinary(s, op[3] == 'u' ? BINARY_INT(LeU) : BINARY_INT(LeS), type);
           if (op[2] == 0) return makeBinary(s, BINARY_FLOAT(Le), type);
         }
-        if (op[1] == 'o') return makeLoad(s, type);
+        if (op[1] == 'o') return makeLoad(s, type, /*isAtomic=*/false);
         abort_on(op);
       }
       case 'm': {
@@ -764,7 +768,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         }
         if (op[1] == 'u') return makeBinary(s, BINARY_INT_OR_FLOAT(Sub), type);
         if (op[1] == 'q') return makeUnary(s, type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
-        if (op[1] == 't') return makeStore(s, type);
+        if (op[1] == 't') return makeStore(s, type, /*isAtomic=*/false);
         abort_on(op);
       }
       case 't': {
@@ -1122,9 +1126,11 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, WasmType type) {
 }
 
 
-Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
-  auto ret = allocator.alloc<Load>();
+  if (isAtomic) extra += 7; // after "type.atomic.load"
+  auto* ret = allocator.alloc<Load>();
+  ret->isAtomic = isAtomic;
   ret->type = type;
   ret->bytes = getWasmTypeSize(type);
   if (extra[0] == '8') {
@@ -1164,9 +1170,11 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
+  if (isAtomic) extra += 7; // after "type.atomic.store"
   auto ret = allocator.alloc<Store>();
+  ret->isAtomic = isAtomic;
   ret->valueType = type;
   ret->bytes = getWasmTypeSize(type);
   if (extra[0] == '8') {
@@ -1440,10 +1448,28 @@ void SExpressionWasmBuilder::stringToBinary(const char* input, size_t size, std:
   data.resize(actual);
 }
 
+Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
+  wasm.memory.initial = getCheckedAddress(s[i++], "excessive memory init");
+  if (i == s.size()) return i;
+  while (i < s.size() && s[i]->isStr()) {
+    auto* curr = s[i]->c_str();
+    i++;
+    if (strstr(curr, "shared")) {
+      wasm.memory.shared = strncmp(curr, "notshared", 9) != 0;
+      break;
+    }
+    uint64_t max = atoll(curr);
+    if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
+    wasm.memory.max = max;
+  }
+  return i;
+}
+
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (wasm.memory.exists) throw ParseException("too many memories");
   wasm.memory.exists = true;
   wasm.memory.imported = preParseImport;
+  wasm.memory.shared = false;
   Index i = 1;
   if (s[i]->dollared()) {
     wasm.memory.name = s[i++]->str();
@@ -1478,14 +1504,9 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       return;
     }
   }
-  wasm.memory.initial = getCheckedAddress(s[i++], "excessive memory init");
-  if (i == s.size()) return;
-  if (s[i]->isStr()) {
-    uint64_t max = atoll(s[i]->c_str());
-    if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
-    wasm.memory.max = max;
-    i++;
-  }
+  i = parseMemoryLimits(s, i);
+
+  // Parse memory initializers.
   while (i < s.size()) {
     Element& curr = *s[i];
     size_t j = 1;
@@ -1683,12 +1704,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
     // ends with the table element type
   } else if (im->kind == ExternalKind::Memory) {
-    if (j < inner.size()) {
-      wasm.memory.initial = getCheckedAddress(inner[j++], "excessive memory init size");
-    }
-    if (j < inner.size()) {
-      wasm.memory.max = getCheckedAddress(inner[j++], "excessive memory max size");
-    }
+    j = parseMemoryLimits(inner, j);
   }
   if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
   wasm.addImport(im.release());

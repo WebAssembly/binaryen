@@ -506,13 +506,37 @@ enum ASTNodes {
   I32ReinterpretF32 = 0xbc,
   I64ReinterpretF64 = 0xbd,
   F32ReinterpretI32 = 0xbe,
-  F64ReinterpretI64 = 0xbf
+  F64ReinterpretI64 = 0xbf,
+
+  AtomicPrefix = 0xfe
+};
+
+enum AtomicOpcodes {
+  I32AtomicLoad = 0x10,
+  I64AtomicLoad = 0x11,
+  I32AtomicLoad8U = 0x12,
+  I32AtomicLoad16U = 0x13,
+  I64AtomicLoad8U = 0x14,
+  I64AtomicLoad16U = 0x15,
+  I64AtomicLoad32U = 0x16,
+  I32AtomicStore = 0x17,
+  I64AtomicStore = 0x18,
+  I32AtomicStore8 = 0x19,
+  I32AtomicStore16 = 0x1a,
+  I64AtomicStore8 = 0x1b,
+  I64AtomicStore16 = 0x1c,
+  I64AtomicStore32 = 0x1d
 };
 
 enum MemoryAccess {
   Offset = 0x10,     // bit 4
   Alignment = 0x80,  // bit 7
   NaturalAlignment = 0
+};
+
+enum MemoryFlags {
+  HasMaximum = 1 << 0,
+  IsShared = 1 << 1
 };
 
 } // namespace BinaryConsts
@@ -560,7 +584,7 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum);
+  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum, bool shared);
   int32_t startSection(BinaryConsts::Section code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
@@ -712,7 +736,7 @@ public:
 
   // gets a name in the combined function import+defined function space
   Name getFunctionIndexName(Index i);
-  void getResizableLimits(Address& initial, Address& max, Address defaultIfNoMax);
+  void getResizableLimits(Address& initial, Address& max, bool& shared, Address defaultIfNoMax);
   void readImports();
 
   std::vector<FunctionType*> functionTypes; // types of defined functions
@@ -807,8 +831,8 @@ public:
   void visitGetGlobal(GetGlobal *curr);
   void visitSetGlobal(SetGlobal *curr);
   void readMemoryAccess(Address& alignment, size_t bytes, Address& offset);
-  bool maybeVisitLoad(Expression*& out, uint8_t code);
-  bool maybeVisitStore(Expression*& out, uint8_t code);
+  bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);

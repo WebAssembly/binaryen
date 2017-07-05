@@ -511,7 +511,7 @@ if has_vanilla_emcc and has_vanilla_llvm and 0:
 print '\n[ checking example testcases... ]\n'
 
 if options.run_gcc_tests:
-  print '\n[ checking native gcc testcases...]\n'  
+  print '\n[ checking native gcc testcases...]\n'
   if not NATIVECC or not NATIVEXX:
     fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
   else:

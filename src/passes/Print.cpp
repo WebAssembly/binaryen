@@ -296,7 +296,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitLoad(Load *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->type) << ".load";
+    prepareColor(o) << printWasmType(curr->type);
+    if (curr->isAtomic) o << ".atomic";
+    o << ".load";
     if (curr->bytes < 4 || (curr->type == i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
@@ -322,7 +324,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitStore(Store *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->valueType) << ".store";
+    prepareColor(o) << printWasmType(curr->valueType);
+    if (curr->isAtomic) o << ".atomic";
+    o << ".store";
     if (curr->bytes < 4 || (curr->valueType == i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
@@ -670,6 +674,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printName(curr->name) << ' ';
     o << curr->initial;
     if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
+    if (curr->shared) o << " shared";
     o << ")";
   }
   void visitMemory(Memory* curr) {

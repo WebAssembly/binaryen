@@ -911,34 +911,19 @@
     return Module['_BinaryenSetAPITracing'](on);
   };
 
-  return Module;
-};
+  // Support AMD-compatible loaders by defining a factory function that returns 'Module'
+  if (typeof define === "function" && define["amd"])
+    define(function() { return Module; });
 
-if (typeof exports != 'undefined') {
-  (function(){
-    var a = Binaryen();
-    if (typeof module === 'object') {
-      module.exports = a;
-    } else {
-      for (var k in a) {
-        exports[k] = a[k];
-      }
-    }
-  })();
-}
-(typeof window !== 'undefined' ? window :
- typeof global !== 'undefined' && (
-  typeof process === 'undefined' ||
+  // Support CommonJS-compatible loaders by checking for 'require' and 'module.exports'
+  else if (typeof require === "function" && typeof module !== "undefined" && module && module.exports)
+    module.exports = Module;
 
-  // Note: We must export "Binaryen" even inside a CommonJS/AMD/UMD module
-  // space because check.py generates a.js which requires Binaryen global var
-  ( process.argv &&
-    Array.isArray(process.argv) &&
-    process.argv[1] &&
-    (process.argv[1].substr(-5) === '/a.js' ||
-     process.argv[1].substr(-5) === '\\a.js')
-  )
+  // Otherwise expose as 'Binaryen' globally checking for common names of the global object
+  // first (namely 'global' and 'window') and fall back to 'this' (i.e. within web workers).
+  else
+    (typeof global !== "undefined" && global ||
+     typeof window !== "undefined" && window ||
+     this)["Binaryen"] = Module;
 
- ) ? global :
- this
-)['Binaryen'] = Binaryen();
+})();

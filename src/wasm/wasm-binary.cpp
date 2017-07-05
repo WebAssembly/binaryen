@@ -71,8 +71,11 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
   return ret;
 }
 
-void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum, bool hasMaximum) {
-  uint32_t flags = hasMaximum ? 1 : 0;
+void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum,
+                                            bool hasMaximum, bool shared) {
+  uint32_t flags =
+      (hasMaximum ? (uint32_t) BinaryConsts::HasMaximum : 0U) |
+      (shared ? (uint32_t) BinaryConsts::IsShared : 0U);
   o << U32LEB(flags);
   o << U32LEB(initial);
   if (hasMaximum) {
@@ -113,7 +116,8 @@ void WasmBinaryWriter::writeMemory() {
   if (debug) std::cerr << "== writeMemory" << std::endl;
   auto start = startSection(BinaryConsts::Section::Memory);
   o << U32LEB(1); // Define 1 memory
-  writeResizableLimits(wasm->memory.initial, wasm->memory.max, wasm->memory.max != Memory::kMaxSize);
+  writeResizableLimits(wasm->memory.initial, wasm->memory.max,
+                       wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
   finishSection(start);
 }
 
@@ -161,11 +165,12 @@ void WasmBinaryWriter::writeImports() {
       case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType)); break;
       case ExternalKind::Table: {
         o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
+        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
         break;
       }
       case ExternalKind::Memory: {
-        writeResizableLimits(wasm->memory.initial, wasm->memory.max, wasm->memory.max != Memory::kMaxSize);
+        writeResizableLimits(wasm->memory.initial, wasm->memory.max,
+                             wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
         break;
       }
       case ExternalKind::Global:
@@ -368,7 +373,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
   o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
+  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
   finishSection(start);
 }
 
@@ -715,30 +720,57 @@ void WasmBinaryWriter::emitMemoryAccess(size_t alignment, size_t bytes, uint32_t
 void WasmBinaryWriter::visitLoad(Load *curr) {
   if (debug) std::cerr << "zz node: Load" << std::endl;
   recurse(curr->ptr);
-  switch (curr->type) {
-    case i32: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem8S : BinaryConsts::I32LoadMem8U); break;
-        case 2: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem16S : BinaryConsts::I32LoadMem16U); break;
-        case 4: o << int8_t(BinaryConsts::I32LoadMem); break;
-        default: abort();
+  if (!curr->isAtomic) {
+    switch (curr->type) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem8S : BinaryConsts::I32LoadMem8U); break;
+          case 2: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem16S : BinaryConsts::I32LoadMem16U); break;
+          case 4: o << int8_t(BinaryConsts::I32LoadMem); break;
+          default: abort();
+        }
+        break;
       }
-      break;
-    }
-    case i64: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem8S : BinaryConsts::I64LoadMem8U); break;
-        case 2: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem16S : BinaryConsts::I64LoadMem16U); break;
-        case 4: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem32S : BinaryConsts::I64LoadMem32U); break;
-        case 8: o << int8_t(BinaryConsts::I64LoadMem); break;
-        default: abort();
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem8S : BinaryConsts::I64LoadMem8U); break;
+          case 2: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem16S : BinaryConsts::I64LoadMem16U); break;
+          case 4: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem32S : BinaryConsts::I64LoadMem32U); break;
+          case 8: o << int8_t(BinaryConsts::I64LoadMem); break;
+          default: abort();
+        }
+        break;
       }
-      break;
+      case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
+      case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
+      case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
+      default: WASM_UNREACHABLE();
     }
-    case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
-    case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
-    case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
-    default: WASM_UNREACHABLE();
+  } else {
+    o << int8_t(BinaryConsts::AtomicPrefix);
+    switch (curr->type) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I32AtomicLoad8U); break;
+          case 2: o << int8_t(BinaryConsts::I32AtomicLoad16U); break;
+          case 4: o << int8_t(BinaryConsts::I32AtomicLoad); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I64AtomicLoad8U); break;
+          case 2: o << int8_t(BinaryConsts::I64AtomicLoad16U); break;
+          case 4: o << int8_t(BinaryConsts::I64AtomicLoad32U); break;
+          case 8: o << int8_t(BinaryConsts::I64AtomicLoad); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case unreachable: return;
+      default: WASM_UNREACHABLE();
+    }
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
@@ -747,29 +779,55 @@ void WasmBinaryWriter::visitStore(Store *curr) {
   if (debug) std::cerr << "zz node: Store" << std::endl;
   recurse(curr->ptr);
   recurse(curr->value);
-  switch (curr->valueType) {
-    case i32: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(BinaryConsts::I32StoreMem8); break;
-        case 2: o << int8_t(BinaryConsts::I32StoreMem16); break;
-        case 4: o << int8_t(BinaryConsts::I32StoreMem); break;
-        default: abort();
+  if (!curr->isAtomic) {
+    switch (curr->valueType) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I32StoreMem8); break;
+          case 2: o << int8_t(BinaryConsts::I32StoreMem16); break;
+          case 4: o << int8_t(BinaryConsts::I32StoreMem); break;
+          default: abort();
+        }
+        break;
       }
-      break;
-    }
-    case i64: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(BinaryConsts::I64StoreMem8); break;
-        case 2: o << int8_t(BinaryConsts::I64StoreMem16); break;
-        case 4: o << int8_t(BinaryConsts::I64StoreMem32); break;
-        case 8: o << int8_t(BinaryConsts::I64StoreMem); break;
-        default: abort();
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I64StoreMem8); break;
+          case 2: o << int8_t(BinaryConsts::I64StoreMem16); break;
+          case 4: o << int8_t(BinaryConsts::I64StoreMem32); break;
+          case 8: o << int8_t(BinaryConsts::I64StoreMem); break;
+          default: abort();
+        }
+        break;
       }
-      break;
+      case f32: o << int8_t(BinaryConsts::F32StoreMem); break;
+      case f64: o << int8_t(BinaryConsts::F64StoreMem); break;
+      default: abort();
     }
-    case f32: o << int8_t(BinaryConsts::F32StoreMem); break;
-    case f64: o << int8_t(BinaryConsts::F64StoreMem); break;
-    default: abort();
+  } else {
+    o << int8_t(BinaryConsts::AtomicPrefix);
+    switch (curr->valueType) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I32AtomicStore8); break;
+          case 2: o << int8_t(BinaryConsts::I32AtomicStore16); break;
+          case 4: o << int8_t(BinaryConsts::I32AtomicStore); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I64AtomicStore8); break;
+          case 2: o << int8_t(BinaryConsts::I64AtomicStore16); break;
+          case 4: o << int8_t(BinaryConsts::I64AtomicStore32); break;
+          case 8: o << int8_t(BinaryConsts::I64AtomicStore); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      default: WASM_UNREACHABLE();
+    }
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
@@ -1241,7 +1299,7 @@ void WasmBinaryBuilder::readMemory() {
     throw ParseException("Memory cannot be both imported and defined");
   }
   wasm.memory.exists = true;
-  getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
+  getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
 }
 
 void WasmBinaryBuilder::readSignatures() {
@@ -1288,10 +1346,13 @@ Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
   }
 }
 
-void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, Address defaultIfNoMax) {
+void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool &shared, Address defaultIfNoMax) {
   auto flags = getU32LEB();
   initial = getU32LEB();
-  bool hasMax = flags & 0x1;
+  bool hasMax = flags & BinaryConsts::HasMaximum;
+  bool isShared = flags & BinaryConsts::IsShared;
+  if (isShared && !hasMax) throw ParseException("shared memory must have max size");
+  shared = isShared;
   if (hasMax) max = getU32LEB();
   else max = defaultIfNoMax;
 }
@@ -1324,13 +1385,15 @@ void WasmBinaryBuilder::readImports() {
         if (elementType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
         wasm.table.exists = true;
         wasm.table.imported = true;
-        getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
+        bool is_shared;
+        getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
+        if (is_shared) throw ParseException("Tables may not be shared");
         break;
       }
       case ExternalKind::Memory: {
         wasm.memory.exists = true;
         wasm.memory.imported = true;
-        getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
+        getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
         break;
       }
       case ExternalKind::Global: {
@@ -1763,7 +1826,9 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
   wasm.table.exists = true;
   auto elemType = getS32LEB();
   if (elemType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");
-  getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
+  bool is_shared;
+  getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
+  if (is_shared) throw ParseException("Tables may not be shared");
 }
 
 void WasmBinaryBuilder::readTableElements() {
@@ -1865,13 +1930,19 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Drop:         visitDrop((curr = allocator.alloc<Drop>())->cast<Drop>()); break;
     case BinaryConsts::End:
     case BinaryConsts::Else:         curr = nullptr; break;
+    case BinaryConsts::AtomicPrefix: {
+      code = getInt8();
+      if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) break;
+      if (maybeVisitStore(curr, code, /*isAtomic=*/true)) break;
+      throw ParseException("invalid code after atomic prefix: " + std::to_string(code));
+    }
     default: {
       // otherwise, the code is a subcode TODO: optimize
       if (maybeVisitBinary(curr, code)) break;
       if (maybeVisitUnary(curr, code)) break;
       if (maybeVisitConst(curr, code)) break;
-      if (maybeVisitLoad(curr, code)) break;
-      if (maybeVisitStore(curr, code)) break;
+      if (maybeVisitLoad(curr, code, /*isAtomic=*/false)) break;
+      if (maybeVisitStore(curr, code, /*isAtomic=*/false)) break;
       if (maybeVisitHost(curr, code)) break;
       throw ParseException("bad node code " + std::to_string(code));
     }
@@ -2129,26 +2200,43 @@ void WasmBinaryBuilder::readMemoryAccess(Address& alignment, size_t bytes, Addre
   offset = getU32LEB();
 }
 
-bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out, uint8_t code) {
+bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic) {
   Load* curr;
-  switch (code) {
-    case BinaryConsts::I32LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = true; break;
-    case BinaryConsts::I32LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = false; break;
-    case BinaryConsts::I32LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = true; break;
-    case BinaryConsts::I32LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = false; break;
-    case BinaryConsts::I32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i32; break;
-    case BinaryConsts::I64LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = true; break;
-    case BinaryConsts::I64LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = false; break;
-    case BinaryConsts::I64LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = true; break;
-    case BinaryConsts::I64LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = false; break;
-    case BinaryConsts::I64LoadMem32S: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = true; break;
-    case BinaryConsts::I64LoadMem32U: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = false; break;
-    case BinaryConsts::I64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = i64; break;
-    case BinaryConsts::F32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = f32; break;
-    case BinaryConsts::F64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = f64; break;
-    default: return false;
+  if (!isAtomic) {
+    switch (code) {
+      case BinaryConsts::I32LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = true; break;
+      case BinaryConsts::I32LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = false; break;
+      case BinaryConsts::I32LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = true; break;
+      case BinaryConsts::I32LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = false; break;
+      case BinaryConsts::I32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i32; break;
+      case BinaryConsts::I64LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem32S: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem32U: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = i64; break;
+      case BinaryConsts::F32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = f32; break;
+      case BinaryConsts::F64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = f64; break;
+      default: return false;
+    }
+    if (debug) std::cerr << "zz node: Load" << std::endl;
+  } else {
+    switch (code) {
+      case BinaryConsts::I32AtomicLoad8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; break;
+      case BinaryConsts::I32AtomicLoad16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; break;
+      case BinaryConsts::I32AtomicLoad:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i32; break;
+      case BinaryConsts::I64AtomicLoad8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; break;
+      case BinaryConsts::I64AtomicLoad16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; break;
+      case BinaryConsts::I64AtomicLoad32U: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; break;
+      case BinaryConsts::I64AtomicLoad:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = i64; break;
+      default: return false;
+    }
+    curr->signed_ = false;
+    if (debug) std::cerr << "zz node: AtomicLoad" << std::endl;
   }
-  if (debug) std::cerr << "zz node: Load" << std::endl;
+
+  curr->isAtomic = isAtomic;
   readMemoryAccess(curr->align, curr->bytes, curr->offset);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
@@ -2156,20 +2244,35 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out, uint8_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code) {
+bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic) {
   Store* curr;
-  switch (code) {
-    case BinaryConsts::I32StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i32; break;
-    case BinaryConsts::I32StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i32; break;
-    case BinaryConsts::I32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i32; break;
-    case BinaryConsts::I64StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i64; break;
-    case BinaryConsts::I64StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i64; break;
-    case BinaryConsts::I64StoreMem32: curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i64; break;
-    case BinaryConsts::I64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = i64; break;
-    case BinaryConsts::F32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = f32; break;
-    case BinaryConsts::F64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = f64; break;
-    default: return false;
+  if (!isAtomic) {
+    switch (code) {
+      case BinaryConsts::I32StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i32; break;
+      case BinaryConsts::I32StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i32; break;
+      case BinaryConsts::I32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i32; break;
+      case BinaryConsts::I64StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i64; break;
+      case BinaryConsts::I64StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i64; break;
+      case BinaryConsts::I64StoreMem32: curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i64; break;
+      case BinaryConsts::I64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = i64; break;
+      case BinaryConsts::F32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = f32; break;
+      case BinaryConsts::F64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = f64; break;
+      default: return false;
+    }
+  } else {
+    switch (code) {
+      case BinaryConsts::I32AtomicStore8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i32; break;
+      case BinaryConsts::I32AtomicStore16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i32; break;
+      case BinaryConsts::I32AtomicStore:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i32; break;
+      case BinaryConsts::I64AtomicStore8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i64; break;
+      case BinaryConsts::I64AtomicStore16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i64; break;
+      case BinaryConsts::I64AtomicStore32: curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i64; break;
+      case BinaryConsts::I64AtomicStore:  curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = i64; break;
+      default: return false;
+    }
   }
+
+  curr->isAtomic = isAtomic;
   if (debug) std::cerr << "zz node: Store" << std::endl;
   readMemoryAccess(curr->align, curr->bytes, curr->offset);
   curr->value = popNonVoidExpression();

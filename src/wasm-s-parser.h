@@ -175,8 +175,8 @@ private:
   Expression* makeBlock(Element& s);
   Expression* makeThenOrElse(Element& s);
   Expression* makeConst(Element& s, WasmType type);
-  Expression* makeLoad(Element& s, WasmType type);
-  Expression* makeStore(Element& s, WasmType type);
+  Expression* makeLoad(Element& s, WasmType type, bool isAtomic);
+  Expression* makeStore(Element& s, WasmType type, bool isAtomic);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, WasmType type);
   Expression* makeLoop(Element& s);
@@ -196,6 +196,7 @@ private:
   Expression* makeReturn(Element& s);
 
   WasmType parseOptionalResultType(Element& s, Index& i);
+  Index parseMemoryLimits(Element& s, Index i);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

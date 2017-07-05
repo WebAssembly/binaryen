@@ -18,6 +18,7 @@
 #define wasm_ast_branch_h
 
 #include "wasm.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 
@@ -34,6 +35,60 @@ inline bool isBranchTaken(Break* br) {
 inline bool isBranchTaken(Switch* sw) {
   return !(sw->value && sw->value->type     == unreachable) &&
                         sw->condition->type != unreachable;
+}
+
+// returns the set of targets to which we branch that are
+// outside of a node
+inline std::set<Name> getExitingBranches(Expression* ast) {
+  struct Scanner : public PostWalker<Scanner> {
+    std::set<Name> targets;
+
+    void visitBreak(Break* curr) {
+      targets.insert(curr->name);
+    }
+    void visitSwitch(Switch* curr) {
+      for (auto target : targets) {
+        targets.insert(target);
+      }
+      targets.insert(curr->default_);
+    }
+    void visitBlock(Block* curr) {
+      if (curr->name.is()) {
+        targets.erase(curr->name);
+      }
+    }
+    void visitLoop(Loop* curr) {
+      if (curr->name.is()) {
+        targets.erase(curr->name);
+      }
+    }
+  };
+  Scanner scanner;
+  scanner.walk(ast);
+  // anything not erased is a branch out
+  return scanner.targets;
+}
+
+// returns the list of all branch targets in a node
+
+inline std::set<Name> getBranchTargets(Expression* ast) {
+  struct Scanner : public PostWalker<Scanner> {
+    std::set<Name> targets;
+
+    void visitBlock(Block* curr) {
+      if (curr->name.is()) {
+        targets.insert(curr->name);
+      }
+    }
+    void visitLoop(Loop* curr) {
+      if (curr->name.is()) {
+        targets.insert(curr->name);
+      }
+    }
+  };
+  Scanner scanner;
+  scanner.walk(ast);
+  return scanner.targets;
 }
 
 } // namespace BranchUtils

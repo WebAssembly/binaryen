@@ -400,7 +400,7 @@
        (get_local $0)
       )
       (loop $while-in
-       (if
+       (br_if $__rjti$2
         (i32.eq
          (i32.load8_u
           (get_local $2)
@@ -409,12 +409,6 @@
           (get_local $4)
           (i32.const 255)
          )
-        )
-        (block
-         (set_local $0
-          (get_local $3)
-         )
-         (br $__rjti$2)
         )
        )
        (br_if $while-in
@@ -458,19 +452,16 @@
       )
      )
     )
-    (if
+    (br_if $__rjti$2
      (get_local $0)
-     (block
-      (set_local $0
-       (get_local $3)
-      )
-      (br $__rjti$2)
-     )
-     (set_local $0
-      (i32.const 0)
-     )
+    )
+    (set_local $0
+     (i32.const 0)
     )
     (br $label$break$L8)
+   )
+   (set_local $0
+    (get_local $3)
    )
    (if
     (i32.ne
