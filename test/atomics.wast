@@ -83,5 +83,23 @@
     (get_local $0)
    )
   )
+  (drop
+   (i32.atomic.rmw16_u.and align=2
+    (get_local $0)
+    (get_local $0)
+   )
+  )
+  (drop
+   (i64.atomic.rmw32_u.or
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (i32.atomic.rmw8_u.xchg align=1
+    (get_local $0)
+    (get_local $0)
+   )
+  )
  )
 )
