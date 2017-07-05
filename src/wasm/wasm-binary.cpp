@@ -872,6 +872,7 @@ void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
     CASE_FOR_OP(Xchg);
     default: WASM_UNREACHABLE();
   }
+#undef CASE_FOR_OP
 
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
