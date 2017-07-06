@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (memory $0 23 256 shared)
- (func $atomic-loadstoare (type $0)
+ (func $atomic-loadstore (type $0)
   (local $0 i32)
   (local $1 i64)
   (drop
