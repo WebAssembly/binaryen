@@ -2330,7 +2330,7 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code, bool isA
 
 
 bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
-  if (code < BinaryConsts::I32AtomicRMWAdd || code > BinaryConsts::I64AtomicRMWXchg32U) return false;
+  if (code < BinaryConsts::AtomicRMWOps_Begin || code >= BinaryConsts::AtomicRMWOps_End) return false;
   auto* curr = allocator.alloc<AtomicRMW>();
 
   // Set curr to the given opcode, type and size.

@@ -1155,14 +1155,13 @@ static size_t parseMemAttributes(Element& s, Address* offset, Address* align, Ad
     const char *eq = strchr(str, '=');
     if (!eq) throw ParseException("missing = in memory attribute");
     eq++;
+    uint64_t value = atoll(eq);
     if (str[0] == 'a') {
-      uint64_t a = atoll(eq);
-      if (a > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
-      *align = a;
+      if (value > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
+      *align = value;
     } else if (str[0] == 'o') {
-      uint64_t o = atoll(eq);
-      if (o > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset");
-      *offset = o;
+      if (value > std::numeric_limits<uint32_t>::max()) throw ParseException("bad offset");
+      *offset = value;
     } else throw ParseException("bad memory attribute");
     i++;
   }

@@ -527,6 +527,7 @@ enum AtomicOpcodes {
   I64AtomicStore16 = 0x1c,
   I64AtomicStore32 = 0x1d,
 
+  AtomicRMWOps_Begin = 0x1e,
   I32AtomicRMWAdd = 0x1e,
   I64AtomicRMWAdd = 0x1f,
   I32AtomicRMWAdd8U = 0x20,
@@ -568,8 +569,10 @@ enum AtomicOpcodes {
   I32AtomicRMWXchg16U = 0x44,
   I64AtomicRMWXchg8U = 0x45,
   I64AtomicRMWXchg16U = 0x46,
-  I64AtomicRMWXchg32U = 0x47
+  I64AtomicRMWXchg32U = 0x47,
+  AtomicRMWOps_End = 0x48,
 };
+
 
 enum MemoryAccess {
   Offset = 0x10,     // bit 4
