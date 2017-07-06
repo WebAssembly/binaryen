@@ -41,6 +41,7 @@ using namespace wasm;
 struct ExecutionResults {
   std::map<Name, Literal> results;
 
+  // get results of execution
   void get(Module& wasm) {
     if (wasm.imports.size() > 0) {
       std::cout << "[fuzz-exec] imports, so quitting\n";
@@ -53,6 +54,16 @@ struct ExecutionResults {
       }
     }
     std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
+  }
+
+  // get current results and check them against previous ones
+  void check(Module& wasm) {
+    ExecutionResults optimizedResults;
+    optimizedResults.get(wasm);
+    if (optimizedResults != *this) {
+      Fatal() << "[fuzz-exec] optimization passes changed execution results";
+    }
+    std::cout << "[fuzz-exec] results match\n";
   }
 
   bool operator==(ExecutionResults& other) {
@@ -99,7 +110,7 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool fuzzExec = false;
 
-  OptimizationOptions options("wasm-opt", "Optimize .wast files");
+  OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -158,12 +169,7 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExec) {
-    ExecutionResults optimizedResults;
-    optimizedResults.get(wasm);
-    if (optimizedResults != results) {
-      Fatal() << "[fuzz-exec] optimization passes changed execution results";
-    }
-    std::cout << "[fuzz-exec] results match\n";
+    results.check(wasm);
   }
 
   if (options.extra.count("output") > 0) {
