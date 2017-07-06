@@ -131,7 +131,7 @@ enum HostOp {
 };
 
 enum AtomicRMWOp {
-  Add, Sub, And, Or, Xor, Xchg,
+  Add, Sub, And, Or, Xor, Xchg
 };
 
 //
@@ -445,6 +445,15 @@ class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
 class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
  public:
   AtomicCmpxchg() = default;
+  AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
+
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* expected;
+  Expression* replacement;
+
+  void finalize();
 };
 
 class Const : public SpecificExpression<Expression::ConstId> {

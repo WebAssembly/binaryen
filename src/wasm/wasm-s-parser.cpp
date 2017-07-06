@@ -666,7 +666,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         if (op[1] == 't' && !strncmp(op, "atomic.", strlen("atomic."))) {
           if (op[7] == 'l') return makeLoad(s, type, /*isAtomic=*/true);
           if (op[7] == 's') return makeStore(s, type, /*isAtomic=*/true);
-          if (op[7] == 'r') return makeAtomicRMW(s, type);
+          if (op[7] == 'r') return makeAtomicRMWOrCmpxchg(s, type);
         }
         abort_on(op);
       }
@@ -1197,14 +1197,20 @@ Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type, bool is
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s, WasmType type) {
   const char* extra = strchr(s[0]->c_str(), '.') + 11; // afer "type.atomic.rmw"
-  auto ret = allocator.alloc<AtomicRMW>();
-  ret->type = type;
-  ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
+  auto bytes = parseMemBytes(&extra, getWasmTypeSize(type));
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) throw ParseException("malformed atomic rmw instruction");
   extra++; // after the '.'
+  if (!strncmp(extra, "cmpxchg", 7)) return makeAtomicCmpxchg(s, type, bytes, extra);
+  return makeAtomicRMW(s, type, bytes, extra);
+}
+
+Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type, uint8_t bytes, const char* extra) {
+  auto ret = allocator.alloc<AtomicRMW>();
+  ret->type = type;
+  ret->bytes = bytes;
   if (!strncmp(extra, "add", 3)) ret->op = Add;
   else if (!strncmp(extra, "and", 3)) ret->op = And;
   else if (!strncmp(extra, "or", 2)) ret->op = Or;
@@ -1217,6 +1223,20 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type) {
   if (align != ret->bytes) throw ParseException("Align of Atomic RMW must match size");
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i+1]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s, WasmType type, uint8_t bytes, const char* extra) {
+  auto ret = allocator.alloc<AtomicCmpxchg>();
+  ret->type = type;
+  ret->bytes = bytes;
+  Address align;
+  size_t i = parseMemAttributes(s, &ret->offset, &align, ret->bytes);
+  if (align != ret->bytes) throw ParseException("Align of Atomic Cmpxchg must match size");
+  ret->ptr = parseExpression(s[i]);
+  ret->expected = parseExpression(s[i+1]);
+  ret->replacement = parseExpression(s[i+2]);
   ret->finalize();
   return ret;
 }

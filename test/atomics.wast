@@ -102,4 +102,36 @@
    )
   )
  )
+ (func $atomic-cmpxchg (type $0)
+  (local $0 i32)
+  (local $1 i32)
+  (drop
+   (i32.atomic.rmw.cmpxchg offset=4
+    (get_local $0)
+    (get_local $0)
+    (get_local $0)
+   )
+  )
+  (drop
+   (i32.atomic.rmw8_u.cmpxchg
+    (get_local $0)
+    (get_local $0)
+    (get_local $0)
+   )
+  )
+  (drop
+   (i64.atomic.rmw.cmpxchg offset=4
+    (get_local $0)
+    (get_local $0)
+    (get_local $0)
+   )
+  )
+  (drop
+   (i64.atomic.rmw32_u.cmpxchg align=4
+    (get_local $0)
+    (get_local $0)
+    (get_local $0)
+   )
+  )
+ )
 )
