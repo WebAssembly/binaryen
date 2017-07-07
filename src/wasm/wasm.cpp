@@ -353,6 +353,12 @@ void Store::finalize() {
   }
 }
 
+void AtomicRMW::finalize() {
+  if (ptr->type == unreachable || value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
 Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;

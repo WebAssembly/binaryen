@@ -525,8 +525,54 @@ enum AtomicOpcodes {
   I32AtomicStore16 = 0x1a,
   I64AtomicStore8 = 0x1b,
   I64AtomicStore16 = 0x1c,
-  I64AtomicStore32 = 0x1d
+  I64AtomicStore32 = 0x1d,
+
+  AtomicRMWOps_Begin = 0x1e,
+  I32AtomicRMWAdd = 0x1e,
+  I64AtomicRMWAdd = 0x1f,
+  I32AtomicRMWAdd8U = 0x20,
+  I32AtomicRMWAdd16U = 0x21,
+  I64AtomicRMWAdd8U = 0x22,
+  I64AtomicRMWAdd16U = 0x23,
+  I64AtomicRMWAdd32U = 0x24,
+  I32AtomicRMWSub = 0x25,
+  I64AtomicRMWSub = 0x26,
+  I32AtomicRMWSub8U = 0x27,
+  I32AtomicRMWSub16U = 0x28,
+  I64AtomicRMWSub8U = 0x29,
+  I64AtomicRMWSub16U = 0x2a,
+  I64AtomicRMWSub32U = 0x2b,
+  I32AtomicRMWAnd = 0x2c,
+  I64AtomicRMWAnd = 0x2d,
+  I32AtomicRMWAnd8U = 0x2e,
+  I32AtomicRMWAnd16U = 0x2f,
+  I64AtomicRMWAnd8U = 0x30,
+  I64AtomicRMWAnd16U = 0x31,
+  I64AtomicRMWAnd32U = 0x32,
+  I32AtomicRMWOr = 0x33,
+  I64AtomicRMWOr = 0x34,
+  I32AtomicRMWOr8U = 0x35,
+  I32AtomicRMWOr16U = 0x36,
+  I64AtomicRMWOr8U = 0x37,
+  I64AtomicRMWOr16U = 0x38,
+  I64AtomicRMWOr32U = 0x39,
+  I32AtomicRMWXor = 0x3a,
+  I64AtomicRMWXor = 0x3b,
+  I32AtomicRMWXor8U = 0x3c,
+  I32AtomicRMWXor16U = 0x3d,
+  I64AtomicRMWXor8U = 0x3e,
+  I64AtomicRMWXor16U = 0x3f,
+  I64AtomicRMWXor32U = 0x40,
+  I32AtomicRMWXchg = 0x41,
+  I64AtomicRMWXchg = 0x42,
+  I32AtomicRMWXchg8U = 0x43,
+  I32AtomicRMWXchg16U = 0x44,
+  I64AtomicRMWXchg8U = 0x45,
+  I64AtomicRMWXchg16U = 0x46,
+  I64AtomicRMWXchg32U = 0x47,
+  AtomicRMWOps_End = 0x47,
 };
+
 
 enum MemoryAccess {
   Offset = 0x10,     // bit 4
@@ -676,6 +722,7 @@ public:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
   void visitLoad(Load *curr);
   void visitStore(Store *curr);
+  void visitAtomicRMW(AtomicRMW *curr);
   void visitConst(Const *curr);
   void visitUnary(Unary *curr);
   void visitBinary(Binary *curr);
@@ -833,6 +880,7 @@ public:
   void readMemoryAccess(Address& alignment, size_t bytes, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);

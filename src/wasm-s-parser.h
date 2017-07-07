@@ -177,6 +177,7 @@ private:
   Expression* makeConst(Element& s, WasmType type);
   Expression* makeLoad(Element& s, WasmType type, bool isAtomic);
   Expression* makeStore(Element& s, WasmType type, bool isAtomic);
+  Expression* makeAtomicRMW(Element& s, WasmType type);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, WasmType type);
   Expression* makeLoop(Element& s);
