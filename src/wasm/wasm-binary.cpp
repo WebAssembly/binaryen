@@ -2409,7 +2409,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) 
   auto* curr = allocator.alloc<AtomicCmpxchg>();
 
   // Set curr to the given type and size.
-#define SET(optype, size) \
+#define SET(optype, size)         \
   curr->type = optype;            \
   curr->bytes = size
 
