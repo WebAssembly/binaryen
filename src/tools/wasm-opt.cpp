@@ -45,6 +45,7 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool fuzzExec = false;
+  bool translateToFuzz = false;
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
@@ -63,21 +64,22 @@ int main(int argc, const char* argv[]) {
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { fuzzExec = true; })
+      .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { translateToFuzz = true; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
-
   Module wasm;
 
-  {
-    if (options.debug) std::cerr << "reading...\n";
+  if (options.debug) std::cerr << "reading...\n";
+
+  if (!translateToFuzz) {
     ModuleReader reader;
     reader.setDebug(options.debug);
-
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
@@ -86,10 +88,18 @@ int main(int argc, const char* argv[]) {
     } catch (std::bad_alloc& b) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
-  }
 
-  if (!WasmValidator().validate(wasm)) {
-    Fatal() << "error in validating input";
+    if (!WasmValidator().validate(wasm)) {
+      Fatal() << "error in validating input";
+    }
+  } else {
+    // translate-to-fuzz
+    TranslateToFuzzReader reader;
+    reader.read(options.extra["infile"], wasm);
+    if (!WasmValidator().validate(wasm)) {
+      std::cerr << "translate-to-fuzz must always generate a valid module";
+      abort();
+    }
   }
 
   ExecutionResults results;
