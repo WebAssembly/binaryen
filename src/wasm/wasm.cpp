@@ -360,8 +360,9 @@ void AtomicRMW::finalize() {
 }
 
 void AtomicCmpxchg::finalize() {
-  if (ptr->type == unreachable || expected->type == unreachable || replacement->type == unreachable)
+  if (ptr->type == unreachable || expected->type == unreachable || replacement->type == unreachable) {
     type = unreachable;
+  }
 }
 
 Const* Const::set(Literal value_) {
