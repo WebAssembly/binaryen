@@ -94,8 +94,8 @@ int main(int argc, const char* argv[]) {
     }
   } else {
     // translate-to-fuzz
-    TranslateToFuzzReader reader;
-    reader.read(options.extra["infile"], wasm);
+    TranslateToFuzzReader reader(wasm);
+    reader.read(options.extra["infile"]);
     if (!WasmValidator().validate(wasm)) {
       std::cerr << "translate-to-fuzz must always generate a valid module";
       abort();
