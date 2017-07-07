@@ -570,7 +570,7 @@ enum AtomicOpcodes {
   I64AtomicRMWXchg8U = 0x45,
   I64AtomicRMWXchg16U = 0x46,
   I64AtomicRMWXchg32U = 0x47,
-  AtomicRMWOps_End = 0x48,
+  AtomicRMWOps_End = 0x47,
 };
 
 
