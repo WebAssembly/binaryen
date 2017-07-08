@@ -32,6 +32,7 @@
 #include "shell-interface.h"
 #include "optimization-options.h"
 #include "execution-results.h"
+#include "translate-to-fuzz.h"
 
 using namespace wasm;
 

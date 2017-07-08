@@ -45,7 +45,7 @@ private:
   bool finishedInput; // whether we already cycled through all the input (if so, we should try to finish things off)
 
   // some things require luck, try them a few times
-  static int TRIES = 10;
+  static const int TRIES = 10;
 
   int8_t get() {
     if (pos == bytes.size()) {
@@ -129,6 +129,7 @@ private:
       case none: return makenone();
       case unreachable: return makeunreachable();
     }
+    WASM_UNREACHABLE();
   }
 
   Expression* makei32() {
@@ -147,6 +148,7 @@ private:
       case 11: return makeBinary(i32);
       case 12: return makeSelect(i32);
     }
+    WASM_UNREACHABLE();
   }
 
   Expression* makei64() {
@@ -165,6 +167,7 @@ private:
       case 11: return makeBinary(i64);
       case 12: return makeSelect(i64);
     }
+    WASM_UNREACHABLE();
   }
 
   Expression* makef32() {
@@ -183,6 +186,7 @@ private:
       case 11: return makeBinary(f32);
       case 12: return makeSelect(f32);
     }
+    WASM_UNREACHABLE();
   }
 
   Expression* makef64() {
@@ -201,6 +205,7 @@ private:
       case 11: return makeBinary(f64);
       case 12: return makeSelect(f64);
     }
+    WASM_UNREACHABLE();
   }
 
   Expression* makenone() {
@@ -216,6 +221,7 @@ private:
       case 9: return makeDrop(none);
       case 11: return makeNop(none);
     }
+    WASM_UNREACHABLE();
   }
 
   Expression* makeunreachable() {
@@ -237,6 +243,7 @@ private:
       case 14: return makeReturn(unreachable);
       case 15: return makeUnreachable(unreachable);
     }
+    WASM_UNREACHABLE();
   }
 
   // specific expression creators
@@ -248,20 +255,19 @@ private:
     breakableStack.push_back(ret);
     Index num = logify(get());
     while (num > 0) {
-      ret->block.push_back(makenone());
+      ret->list.push_back(makenone());
     }
-    ret->block.push_back(make(type));
+    ret->list.push_back(make(type));
     breakableStack.pop_back();
     ret->finalize(type);
     return ret;
   }
 
   Expression* makeLoop(WasmType type) {
-    auto* ret = builder.makeLoop();
+    auto* ret = wasm.allocator.alloc<Loop>();
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
     breakableStack.push_back(ret);
-    Index num = logify(get());
     ret->body = make(type);
     breakableStack.pop_back();
     ret->finalize(type);
@@ -281,25 +287,25 @@ private:
     // we need to find a proper target to break to; try a few times 
     int tries = TRIES;
     while (tries-- > 0) {
-      auto* target = choice(breakableStack);
+      auto* target = vectorPick(breakableStack);
       auto name = getTargetName(target);
       auto valueType = target->type;
       if (isConcreteWasmType(type)) {
         // we are flowing out a value
-        if (targetType != type) {
+        if (valueType != type) {
           // we need to break to a proper place
           continue;
         }
         return builder.makeBreak(name, make(type), condition);
       } else if (type == none) {
-        if (targetType != none) {
+        if (valueType != none) {
           // we need to break to a proper place
           continue;
         }
         return builder.makeBreak(name, nullptr, condition);
       } else {
         assert(type == unreachable);
-        if (targetType != none) {
+        if (valueType != none) {
           // we need to break to a proper place
           continue;
         }
@@ -315,7 +321,7 @@ private:
     while (tries-- > 0) {
       Function* target = func;
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
-        target = choice(wasm.functions).get();
+        target = vectorPick(wasm.functions).get();
       }
       if (target->result != type) continue;
       // we found one!
@@ -373,8 +379,8 @@ private:
         bool signed_ = get() & 1;
         switch (upTo(3)) {
           case 0: return builder.makeLoad(1, signed_, offset, 1, ptr, type);
-          case 1: return builder.makeLoad(2, signed_, offset, choice({ 1, 2 }), ptr, type);
-          case 2: return builder.makeLoad(4, signed_, offset, choice({ 1, 2, 4 }), ptr, type);
+          case 1: return builder.makeLoad(2, signed_, offset, pick(1, 2), ptr, type);
+          case 2: return builder.makeLoad(4, signed_, offset, pick(1, 2, 4), ptr, type);
         }
         WASM_UNREACHABLE();
       }
@@ -382,17 +388,17 @@ private:
         bool signed_ = get() & 1;
         switch (upTo(4)) {
           case 0: return builder.makeLoad(1, signed_, offset, 1, ptr, type);
-          case 1: return builder.makeLoad(2, signed_, offset, choice({ 1, 2 }), ptr, type);
-          case 2: return builder.makeLoad(4, signed_, offset, choice({ 1, 2, 4 }), ptr, type);
-          case 3: return builder.makeLoad(8, signed_, offset, choice({ 1, 2, 4, 8 }), ptr, type);
+          case 1: return builder.makeLoad(2, signed_, offset, pick(1, 2), ptr, type);
+          case 2: return builder.makeLoad(4, signed_, offset, pick(1, 2, 4), ptr, type);
+          case 3: return builder.makeLoad(8, signed_, offset, pick(1, 2, 4, 8), ptr, type);
         }
         WASM_UNREACHABLE();
       }
       case f32: {
-        return builder.makeLoad(4, false, offset, choice({ 1, 2, 4 }), ptr, type);
+        return builder.makeLoad(4, false, offset, pick(1, 2, 4), ptr, type);
       }
       case f64: {
-        return builder.makeLoad(8, false, offset, choice({ 1, 2, 4, 8 }), ptr, type);
+        return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
       }
       default: WASM_UNREACHABLE();
     }
@@ -405,25 +411,25 @@ private:
       case i32: {
         switch (upTo(3)) {
           case 0: return builder.makeStore(1, offset, 1, ptr, make(type), type);
-          case 1: return builder.makeStore(2, offset, choice({ 1, 2 }), ptrmake(type), type);
-          case 2: return builder.makeStore(4, offset, choice({ 1, 2, 4 }), ptrmake(type), type);
+          case 1: return builder.makeStore(2, offset, pick(1, 2), ptr, make(type), type);
+          case 2: return builder.makeStore(4, offset, pick(1, 2, 4), ptr, make(type), type);
         }
         WASM_UNREACHABLE();
       }
       case i64: {
         switch (upTo(4)) {
-          case 0: return builder.makeStore(1, offset, 1, ptrmake(type), type);
-          case 1: return builder.makeStore(2, offset, choice({ 1, 2 }), ptrmake(type), type);
-          case 2: return builder.makeStore(4, offset, choice({ 1, 2, 4 }), ptrmake(type), type);
-          case 3: return builder.makeStore(8, offset, choice({ 1, 2, 4, 8 }), ptrmake(type), type);
+          case 0: return builder.makeStore(1, offset, 1, ptr, make(type), type);
+          case 1: return builder.makeStore(2, offset, pick(1, 2), ptr, make(type), type);
+          case 2: return builder.makeStore(4, offset, pick(1, 2, 4), ptr, make(type), type);
+          case 3: return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, make(type), type);
         }
         WASM_UNREACHABLE();
       }
       case f32: {
-        return builder.makeStore(4, offset, choice({ 1, 2, 4 }), ptrmake(type), type);
+        return builder.makeStore(4, offset, pick(1, 2, 4), ptr, make(type), type);
       }
       case f64: {
-        return builder.makeStore(8, offset, choice({ 1, 2, 4, 8 }), ptrmake(type), type);
+        return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, make(type), type);
       }
       default: WASM_UNREACHABLE();
     }
@@ -452,40 +458,41 @@ private:
     switch (type) {
       case i32: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(choice({ EqZInt32, ClzInt32, CtzInt32, PopcntInt32 }), make(i32));
-          case 1: return builder.makeUnary(choice({ WrapInt64 }), make(i64));
-          case 2: return builder.makeUnary(choice({ TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32 }), make(f32));
-          case 3: return builder.makeUnary(choice({ TruncSFloat64ToInt32, TruncUFloat64ToInt32 }), make(f64));
+          case 0: return builder.makeUnary(pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32), make(i32));
+          case 1: return builder.makeUnary(WrapInt64, make(i64));
+          case 2: return builder.makeUnary(pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32));
+          case 3: return builder.makeUnary(pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64));
         }
         WASM_UNREACHABLE();
       }
       case i64: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(choice({ EqZInt64, ClzInt64, CtzInt64, PopcntInt64 }), make(i64));
-          case 1: return builder.makeUnary(choice({ ExtendSInt32, ExtendUInt32 }), make(i32));
-          case 2: return builder.makeUnary(choice({ TruncSFloat32ToInt64, TruncUFloat32ToInt64 }), make(f32));
-          case 3: return builder.makeUnary(choice({ TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64 }), make(f64));
+          case 0: return builder.makeUnary(pick(EqZInt64, ClzInt64, CtzInt64, PopcntInt64), make(i64));
+          case 1: return builder.makeUnary(pick(ExtendSInt32, ExtendUInt32), make(i32));
+          case 2: return builder.makeUnary(pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32));
+          case 3: return builder.makeUnary(pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64));
         }
         WASM_UNREACHABLE();
       }
       case f32: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(choice({ NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32 }), make(f32));
-          case 1: return builder.makeUnary(choice({ ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32 }), make(i32));
-          case 2: return builder.makeUnary(choice({ ConvertUInt64ToFloat32, ConvertSInt64ToFloat32 }), make(i64));
+          case 0: return builder.makeUnary(pick(NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32), make(f32));
+          case 1: return builder.makeUnary(pick(ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32), make(i32));
+          case 2: return builder.makeUnary(pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32), make(i64));
           case 3: return builder.makeUnary(DemoteFloat64, make(f64));
         }
         WASM_UNREACHABLE();
       }
       case f64: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(choice({ NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64 }), make(f64));
-          case 1: return builder.makeUnary(choice({ ConvertUInt32ToFloat64, ConvertSInt32ToFloat64 }), make(i32));
-          case 2: return builder.makeUnary(choice({ ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64 }), make(i64));
+          case 0: return builder.makeUnary(pick(NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64), make(f64));
+          case 1: return builder.makeUnary(pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64), make(i32));
+          case 2: return builder.makeUnary(pick(ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64), make(i64));
           case 3: return builder.makeUnary(PromoteFloat32, make(f32));
         }
         WASM_UNREACHABLE();
       }
+      default: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
@@ -497,22 +504,23 @@ private:
     switch (type) {
       case i32: {
         switch (upTo(4)) {
-          case 0: return builder.makeBinary(choice({ AddInt32, SubInt32, MulInt32, DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, EqInt32, NeInt32, LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32 }), make(i32), make(i32));
-          case 1: return builder.makeBinary(choice({ EqInt64, NeInt64, LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64 }), make(i64), make(i64));
-          case 2: return builder.makeBinary(choice({ EqFloat32, NeFloat32, LtFloat32, LeFloat32, GtFloat32, GeFloat32 }), make(f32), make(f32));
-          case 3: return builder.makeBinary(choice({ EqFloat64, NeFloat64, LtFloat64, LeFloat64, GtFloat64, GeFloat64 }), make(f64), make(f64));
+          case 0: return builder.makeBinary(pick(AddInt32, SubInt32, MulInt32, DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, EqInt32, NeInt32, LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32), make(i32), make(i32));
+          case 1: return builder.makeBinary(pick(EqInt64, NeInt64, LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64), make(i64), make(i64));
+          case 2: return builder.makeBinary(pick(EqFloat32, NeFloat32, LtFloat32, LeFloat32, GtFloat32, GeFloat32), make(f32), make(f32));
+          case 3: return builder.makeBinary(pick(EqFloat64, NeFloat64, LtFloat64, LeFloat64, GtFloat64, GeFloat64), make(f64), make(f64));
         }
         WASM_UNREACHABLE();
       }
       case i64: {
-        return builder.makeBinary(choice({ AddInt64, SubInt64, MulInt64, DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64 }), make(i64), make(i64));
+        return builder.makeBinary(pick(AddInt64, SubInt64, MulInt64, DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64), make(i64), make(i64));
       }
       case f32: {
-        return builder.makeBinary(choice({ AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32 }), make(f32), make(f32));
+        return builder.makeBinary(pick(AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32), make(f32), make(f32));
       }
       case f64: {
-        return builder.makeBinary(choice({ AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64 }), make(f64), make(f64));
+        return builder.makeBinary(pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64));
       }
+      default: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
@@ -527,12 +535,12 @@ private:
     // we need to find proper targets to break to; try a bunch
     int tries = 2 * TRIES;
     std::vector<Name> names;
-    WasmType valueType;
+    WasmType valueType = unreachable;
     while (tries-- > 0) {
-      auto* target = choice(breakableStack);
+      auto* target = vectorPick(breakableStack);
       auto name = getTargetName(target);
       if (names.empty()) {
-        valueType == target->type;
+        valueType = target->type;
       } else {
         if (valueType != target->type) {
           continue; // all values must be the same
@@ -546,7 +554,7 @@ private:
     }
     auto default_ = names.back();
     names.pop_back();
-    return builder.makeSwitch(names, default_, nullptr, isConcreteValueType(valueType) ? make(valueType) : nullptr);
+    return builder.makeSwitch(names, default_, nullptr, isConcreteWasmType(valueType) ? make(valueType) : nullptr);
   }
 
   Expression* makeDrop(WasmType type) {
@@ -554,12 +562,17 @@ private:
   }
 
   Expression* makeReturn(WasmType type) {
-    return builder.makeReturn(isConcreteValueType(func->result) ? make(func->result) : nullptr);
+    return builder.makeReturn(isConcreteWasmType(func->result) ? make(func->result) : nullptr);
   }
 
   Expression* makeNop(WasmType type) {
     assert(type == none);
     return builder.makeNop();
+  }
+
+  Expression* makeUnreachable(WasmType type) {
+    assert(type == unreachable);
+    return builder.makeUnreachable();
   }
 
   // special getters
@@ -583,6 +596,7 @@ private:
       case 3: return f64;
       case 4: return none;
     }
+    WASM_UNREACHABLE();
   }
 
   WasmType getConcreteType() {
@@ -592,6 +606,7 @@ private:
       case 2: return f32;
       case 3: return f64;
     }
+    WASM_UNREACHABLE();
   }
 
   // statistical distributions
@@ -605,16 +620,36 @@ private:
     return (get32() % x) == 0;
   }
 
-  bool upTo(Index x) {
+  Index upTo(Index x) {
     return get32() % x;
   }
 
+  // pick from a vector
   template<typename T>
-  T choice(std::vector<T>& vec) {
+  const T& vectorPick(const std::vector<T>& vec) {
     // TODO: get32?
     assert(!vec.empty());
     auto index = get() % vec.size();
     return vec[index];
+  }
+
+  // pick from a fixed list
+  template<typename T, typename... Args>
+  T pick(T first, Args... args) {
+    auto num = sizeof...(Args) + 1;
+    return pickGivenNum(num, first, args...);
+  }
+
+  template<typename T>
+  T pickGivenNum(size_t num, T first) {
+    assert(num == 0);
+    return first;
+  }
+
+  template<typename T, typename... Args>
+  T pickGivenNum(size_t num, T first, Args... args) {
+    if (num == 0) return first;
+    return pickGivenNum(num - 1, args...);
   }
 
   // utilities
@@ -624,9 +659,8 @@ private:
       return block->name;
     } else if (auto* loop = target->dynCast<Loop>()) {
       return loop->name;
-    } else {
-      WASM_UNREACHABLE();
     }
+    WASM_UNREACHABLE();
   }
 };
 
