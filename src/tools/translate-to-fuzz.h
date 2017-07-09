@@ -487,7 +487,7 @@ private:
       case i32: {
         switch (upTo(4)) {
           case 0: return builder.makeUnary(pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32), make(i32));
-          case 1: return builder.makeUnary(WrapInt64, make(i64));
+          case 1: return builder.makeUnary(pick(EqZInt64, WrapInt64), make(i64));
           case 2: return builder.makeUnary(pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32));
           case 3: return builder.makeUnary(pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64));
         }
@@ -495,7 +495,7 @@ private:
       }
       case i64: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(pick(EqZInt64, ClzInt64, CtzInt64, PopcntInt64), make(i64));
+          case 0: return builder.makeUnary(pick(ClzInt64, CtzInt64, PopcntInt64), make(i64));
           case 1: return builder.makeUnary(pick(ExtendSInt32, ExtendUInt32), make(i32));
           case 2: return builder.makeUnary(pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32));
           case 3: return builder.makeUnary(pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64));
