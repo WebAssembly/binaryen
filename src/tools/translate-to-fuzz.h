@@ -312,7 +312,7 @@ private:
     while (tries-- > 0) {
       auto* target = vectorPick(breakableStack);
       auto name = getTargetName(target);
-      auto valueType = target->type;
+      auto valueType = getTargetType(target);
       if (isConcreteWasmType(type)) {
         // we are flowing out a value
         if (valueType != type) {
@@ -567,10 +567,11 @@ private:
     while (tries-- > 0) {
       auto* target = vectorPick(breakableStack);
       auto name = getTargetName(target);
+      auto currValueType = getTargetType(target);
       if (names.empty()) {
-        valueType = target->type;
+        valueType = currValueType;
       } else {
-        if (valueType != target->type) {
+        if (valueType != currValueType) {
           continue; // all values must be the same
         }
       }
@@ -687,6 +688,15 @@ private:
       return block->name;
     } else if (auto* loop = target->dynCast<Loop>()) {
       return loop->name;
+    }
+    WASM_UNREACHABLE();
+  }
+
+  WasmType getTargetType(Expression* target) {
+    if (auto* block = target->dynCast<Block>()) {
+      return block->type;
+    } else if (target->is<Loop>()) {
+      return none;
     }
     WASM_UNREACHABLE();
   }
