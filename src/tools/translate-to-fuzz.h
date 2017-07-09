@@ -75,7 +75,7 @@ private:
     return Literal(get32()).reinterpretf32();
   }
 
-  float getDouble() {
+  double getDouble() {
     return Literal(get64()).reinterpretf64();
   }
 
@@ -278,6 +278,7 @@ private:
     Index num = logify(get());
     while (num > 0) {
       ret->list.push_back(make(none));
+      num--;
     }
     ret->list.push_back(make(type));
     breakableStack.pop_back();
