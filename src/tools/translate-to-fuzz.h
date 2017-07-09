@@ -428,6 +428,11 @@ private:
   }
 
   Expression* makeStore(WasmType type) {
+    // the type is none or unreachable. we also need to pick the value
+    // type. if it's unreachable, use that; otherwise, pick one
+    if (type == none) {
+      type = getConcreteType();
+    }
     auto offset = logify(get());
     auto ptr = make(i32); // TODO: mask it, think about memory properly
     switch (type) {
@@ -581,7 +586,7 @@ private:
   }
 
   Expression* makeDrop(WasmType type) {
-    return builder.makeDrop(make(type));
+    return builder.makeDrop(make(type == unreachable ? type : getConcreteType()));
   }
 
   Expression* makeReturn(WasmType type) {
