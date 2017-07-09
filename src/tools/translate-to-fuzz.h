@@ -19,6 +19,8 @@
 // This is helpful for fuzzing.
 //
 
+//#include <wasm-printing.h>
+
 namespace wasm {
 
 class TranslateToFuzzReader {
@@ -35,6 +37,7 @@ public:
       bytes.push_back(0);
     }
     build();
+    //WasmPrinter::printModule(&wasm, std::cout);
   }
 
 private:
@@ -247,7 +250,7 @@ private:
   }
 
   Expression* __makeunreachable() {
-    switch (upTo(16)) {
+    switch (upTo(15)) {
       case 0: return makeBlock(unreachable);
       case 1: return makeIf(unreachable);
       case 2: return makeLoop(unreachable);
@@ -260,10 +263,9 @@ private:
       case 9: return makeBinary(unreachable);
       case 10: return makeSelect(unreachable);
       case 11: return makeSwitch(unreachable);
-      case 12: return makeStore(unreachable);
-      case 13: return makeDrop(unreachable);
-      case 14: return makeReturn(unreachable);
-      case 15: return makeUnreachable(unreachable);
+      case 12: return makeDrop(unreachable);
+      case 13: return makeReturn(unreachable);
+      case 14: return makeUnreachable(unreachable);
     }
     WASM_UNREACHABLE();
   }
@@ -427,9 +429,20 @@ private:
     }
   }
 
-  Expression* makeStore(WasmType type) {
+  Store* makeStore(WasmType type) {
+    if (type == unreachable) {
+      // make a normal store, then make it unreachable
+      auto* ret = makeStore(getConcreteType());
+      switch (upTo(3)) {
+        case 0: ret->ptr = make(unreachable); break;
+        case 1: ret->value = make(unreachable); break;
+        case 2: ret->ptr = make(unreachable); ret->value = make(unreachable); break;
+      }
+      ret->finalize();
+      return ret;
+    }
     // the type is none or unreachable. we also need to pick the value
-    // type. if it's unreachable, use that; otherwise, pick one
+    // type.
     if (type == none) {
       type = getConcreteType();
     }
@@ -479,9 +492,9 @@ private:
     return ret;
   }
 
-  Expression* makeUnary(WasmType type) {
+  Unary* makeUnary(WasmType type) {
     if (type == unreachable) {
-      return builder.makeUnary(makeUnary(getConcreteType())->cast<Unary>()->op, make(unreachable));
+      return builder.makeUnary(makeUnary(getConcreteType())->op, make(unreachable));
     }
     switch (type) {
       case i32: {
@@ -525,9 +538,9 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* makeBinary(WasmType type) {
+  Binary* makeBinary(WasmType type) {
     if (type == unreachable) {
-      return builder.makeBinary(makeBinary(getConcreteType())->cast<Binary>()->op, make(unreachable), make(unreachable));
+      return builder.makeBinary(makeBinary(getConcreteType())->op, make(unreachable), make(unreachable));
     }
     switch (type) {
       case i32: {
@@ -583,7 +596,7 @@ private:
     }
     auto default_ = names.back();
     names.pop_back();
-    return builder.makeSwitch(names, default_, nullptr, isConcreteWasmType(valueType) ? make(valueType) : nullptr);
+    return builder.makeSwitch(names, default_, make(i32), isConcreteWasmType(valueType) ? make(valueType) : nullptr);
   }
 
   Expression* makeDrop(WasmType type) {
