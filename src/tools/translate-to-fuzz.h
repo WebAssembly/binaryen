@@ -47,6 +47,9 @@ private:
   // some things require luck, try them a few times
   static const int TRIES = 10;
 
+  // beyond a nesting limit, greatly decrease the chance to continue to nest
+  static const int NESTING_LIMIT = 5;
+
   int8_t get() {
     if (pos == bytes.size()) {
       // we ran out of input, go to the start for more stuff
@@ -118,22 +121,41 @@ private:
     return std::string("label$") + std::to_string(labelIndex++);
   }
 
-  // TODO: avoid recursion in core make and makeTYPE, if finishedInput, return simple to quit quickly
+  // always call the toplevel make(type) command, not the internal specific ones
+
+  int nesting = 0;
 
   Expression* make(WasmType type) {
-    switch (type) {
-      case i32: return makei32();
-      case i64: return makei64();
-      case f32: return makef32();
-      case f64: return makef64();
-      case none: return makenone();
-      case unreachable: return makeunreachable();
+    // when we should stop, emit something small
+    if (finishedInput ||
+        (nesting >= NESTING_LIMIT && oneIn(2))) {
+      switch (type) {
+        case i32: return makeConst(i32);
+        case i64: return makeConst(i64);
+        case f32: return makeConst(f32);
+        case f64: return makeConst(f64);
+        case none: return makeNop(none);
+        case unreachable: return makeUnreachable(unreachable);
+        default: WASM_UNREACHABLE();
+      }
     }
-    WASM_UNREACHABLE();
+    nesting++;
+    Expression* ret;
+    switch (type) {
+      case i32: ret = __makei32(); break;
+      case i64: ret = __makei64(); break;
+      case f32: ret = __makef32(); break;
+      case f64: ret = __makef64(); break;
+      case none: ret = __makenone(); break;
+      case unreachable: ret = __makeunreachable(); break;
+      default: WASM_UNREACHABLE();
+    }
+    nesting--;
+    return ret;
   }
 
-  Expression* makei32() {
-    switch (get() % 13) {
+  Expression* __makei32() {
+    switch (upTo(13)) {
       case 0: return makeBlock(i32);
       case 1: return makeIf(i32);
       case 2: return makeLoop(i32);
@@ -151,8 +173,8 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* makei64() {
-    switch (get() % 13) {
+  Expression* __makei64() {
+    switch (upTo(13)) {
       case 0: return makeBlock(i64);
       case 1: return makeIf(i64);
       case 2: return makeLoop(i64);
@@ -170,8 +192,8 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* makef32() {
-    switch (get() % 13) {
+  Expression* __makef32() {
+    switch (upTo(13)) {
       case 0: return makeBlock(f32);
       case 1: return makeIf(f32);
       case 2: return makeLoop(f32);
@@ -189,8 +211,8 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* makef64() {
-    switch (get() % 13) {
+  Expression* __makef64() {
+    switch (upTo(13)) {
       case 0: return makeBlock(f64);
       case 1: return makeIf(f64);
       case 2: return makeLoop(f64);
@@ -208,8 +230,8 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* makenone() {
-    switch (get() % 12) {
+  Expression* __makenone() {
+    switch (upTo(10)) {
       case 0: return makeBlock(none);
       case 1: return makeIf(none);
       case 2: return makeLoop(none);
@@ -217,15 +239,15 @@ private:
       case 4: return makeCall(none);
       case 5: return makeCallIndirect(none);
       case 6: return makeSetLocal(none);
-      case 8: return makeStore(none);
-      case 9: return makeDrop(none);
-      case 11: return makeNop(none);
+      case 7: return makeStore(none);
+      case 8: return makeDrop(none);
+      case 9: return makeNop(none);
     }
     WASM_UNREACHABLE();
   }
 
-  Expression* makeunreachable() {
-    switch (get() % 16) {
+  Expression* __makeunreachable() {
+    switch (upTo(16)) {
       case 0: return makeBlock(unreachable);
       case 1: return makeIf(unreachable);
       case 2: return makeLoop(unreachable);
@@ -255,7 +277,7 @@ private:
     breakableStack.push_back(ret);
     Index num = logify(get());
     while (num > 0) {
-      ret->list.push_back(makenone());
+      ret->list.push_back(make(none));
     }
     ret->list.push_back(make(type));
     breakableStack.pop_back();
@@ -275,14 +297,14 @@ private:
   }
 
   Expression* makeIf(WasmType type) {
-    return builder.makeIf(makei32(), make(type), make(type));
+    return builder.makeIf(make(i32), make(type), make(type));
   }
 
   Expression* makeBreak(WasmType type) {
     if (breakableStack.empty()) return make(type);
     Expression* condition = nullptr;
     if (type != unreachable) {
-      condition = makei32();
+      condition = make(i32);
     }
     // we need to find a proper target to break to; try a few times 
     int tries = TRIES;
@@ -578,7 +600,7 @@ private:
   // special getters
 
   WasmType getType() {
-    switch (get() % 6) {
+    switch (upTo(6)) {
       case 0: return i32;
       case 1: return i64;
       case 2: return f32;
@@ -589,7 +611,7 @@ private:
   }
 
   WasmType getReachableType() {
-    switch (get() % 5) {
+    switch (upTo(5)) {
       case 0: return i32;
       case 1: return i64;
       case 2: return f32;
@@ -600,7 +622,7 @@ private:
   }
 
   WasmType getConcreteType() {
-    switch (get() % 4) {
+    switch (upTo(4)) {
       case 0: return i32;
       case 1: return i64;
       case 2: return f32;
@@ -629,7 +651,7 @@ private:
   const T& vectorPick(const std::vector<T>& vec) {
     // TODO: get32?
     assert(!vec.empty());
-    auto index = get() % vec.size();
+    auto index = upTo(vec.size());
     return vec[index];
   }
 
@@ -637,7 +659,7 @@ private:
   template<typename T, typename... Args>
   T pick(T first, Args... args) {
     auto num = sizeof...(Args) + 1;
-    return pickGivenNum(num, first, args...);
+    return pickGivenNum(upTo(num), first, args...);
   }
 
   template<typename T>
