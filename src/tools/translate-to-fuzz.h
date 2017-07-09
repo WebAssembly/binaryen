@@ -118,6 +118,14 @@ private:
     }
     assert(breakableStack.empty());
     wasm.addFunction(func);
+    // export a good deal of functions
+    if (oneIn(2)) {
+      auto* export_ = new Export;
+      export_->name = func->name;
+      export_->value = func->name;
+      export_->kind = ExternalKind::Function;
+      wasm.addExport(export_);
+    }
   }
 
   Name makeLabel() {
