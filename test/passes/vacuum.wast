@@ -534,4 +534,34 @@
     (f64.const 2097914503796645752267195e31)
    )
   )
+  (func $executed-if-in-block
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (unreachable)
+      (br $label$0)
+     )
+    )
+    (unreachable)
+  )
+  (func $executed-if-in-block2
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (nop)
+      (br $label$0)
+     )
+    )
+    (unreachable)
+  )
+  (func $executed-if-in-block3
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (br $label$0)
+      (nop)
+     )
+    )
+    (unreachable)
+  )
 )

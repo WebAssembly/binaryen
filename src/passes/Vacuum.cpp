@@ -204,9 +204,13 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
       Expression* child;
       if (value->value.getInteger()) {
         child = curr->ifTrue;
+        if (curr->ifFalse) {
+          typeUpdater.noteRecursiveRemoval(curr->ifFalse);
+        }
       } else {
         if (curr->ifFalse) {
           child = curr->ifFalse;
+          typeUpdater.noteRecursiveRemoval(curr->ifTrue);
         } else {
           ExpressionManipulator::nop(curr);
           return;
