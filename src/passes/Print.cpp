@@ -350,15 +350,14 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->value);
     decIndent();
   }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    o << '(';
-    prepareColor(o) << printWasmType(curr->type) << ".atomic.rmw";
-    if (curr->bytes != getWasmTypeSize(curr->type)) {
-      if (curr->bytes == 1) {
+  static void printRMWSize(std::ostream& o, WasmType type, uint8_t bytes) {
+    prepareColor(o) << printWasmType(type) << ".atomic.rmw";
+    if (bytes != getWasmTypeSize(type)) {
+      if (bytes == 1) {
         o << '8';
-      } else if (curr->bytes == 2) {
+      } else if (bytes == 2) {
         o << "16";
-      } else if (curr->bytes == 4) {
+      } else if (bytes == 4) {
         o << "32";
       } else {
         WASM_UNREACHABLE();
@@ -366,6 +365,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << "_u";
     }
     o << '.';
+  }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    o << '(';
+    printRMWSize(o, curr->type, curr->bytes);
     switch (curr->op) {
       case Add:  o << "add";  break;
       case Sub:  o << "sub";  break;
@@ -381,6 +384,20 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->ptr);
     printFullLine(curr->value);
+    decIndent();
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    o << '(';
+    printRMWSize(o, curr->type, curr->bytes);
+    o << "cmpxchg";
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->expected);
+    printFullLine(curr->replacement);
     decIndent();
   }
   void visitConst(Const *curr) {

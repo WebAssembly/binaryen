@@ -50,6 +50,7 @@ struct Visitor {
   ReturnType visitLoad(Load* curr) {}
   ReturnType visitStore(Store* curr) {}
   ReturnType visitAtomicRMW(AtomicRMW* curr) {return ReturnType();} //Stub impl so not every pass has to implement this yet.
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) {return ReturnType();} //Stub impl so not every pass has to implement this yet.
   ReturnType visitConst(Const* curr) {}
   ReturnType visitUnary(Unary* curr) {}
   ReturnType visitBinary(Binary* curr) {}
@@ -92,6 +93,7 @@ struct Visitor {
       case Expression::Id::LoadId: DELEGATE(Load);
       case Expression::Id::StoreId: DELEGATE(Store);
       case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
+      case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
       case Expression::Id::ConstId: DELEGATE(Const);
       case Expression::Id::UnaryId: DELEGATE(Unary);
       case Expression::Id::BinaryId: DELEGATE(Binary);
@@ -133,6 +135,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType> {
   ReturnType visitLoad(Load* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitStore(Store* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitAtomicRMW(AtomicRMW* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitConst(Const* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitUnary(Unary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitBinary(Binary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -310,6 +313,7 @@ struct Walker : public VisitorType {
   static void doVisitLoad(SubType* self, Expression** currp)         { self->visitLoad((*currp)->cast<Load>()); }
   static void doVisitStore(SubType* self, Expression** currp)        { self->visitStore((*currp)->cast<Store>()); }
   static void doVisitAtomicRMW(SubType* self, Expression** currp)    { self->visitAtomicRMW((*currp)->cast<AtomicRMW>()); }
+  static void doVisitAtomicCmpxchg(SubType* self, Expression** currp){ self->visitAtomicCmpxchg((*currp)->cast<AtomicCmpxchg>()); }
   static void doVisitConst(SubType* self, Expression** currp)        { self->visitConst((*currp)->cast<Const>()); }
   static void doVisitUnary(SubType* self, Expression** currp)        { self->visitUnary((*currp)->cast<Unary>()); }
   static void doVisitBinary(SubType* self, Expression** currp)       { self->visitBinary((*currp)->cast<Binary>()); }
@@ -436,6 +440,13 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitAtomicRMW, currp);
         self->pushTask(SubType::scan, &curr->cast<AtomicRMW>()->value);
         self->pushTask(SubType::scan, &curr->cast<AtomicRMW>()->ptr);
+        break;
+      }
+      case Expression::Id::AtomicCmpxchgId: {
+        self->pushTask(SubType::doVisitAtomicCmpxchg, currp);
+        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->replacement);
+        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->expected);
+        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->ptr);
         break;
       }
       case Expression::Id::ConstId: {

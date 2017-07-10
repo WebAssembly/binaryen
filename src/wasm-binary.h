@@ -571,6 +571,16 @@ enum AtomicOpcodes {
   I64AtomicRMWXchg16U = 0x46,
   I64AtomicRMWXchg32U = 0x47,
   AtomicRMWOps_End = 0x47,
+
+  AtomicCmpxchgOps_Begin = 0x48,
+  I32AtomicCmpxchg = 0x48,
+  I64AtomicCmpxchg = 0x49,
+  I32AtomicCmpxchg8U = 0x4a,
+  I32AtomicCmpxchg16U = 0x4b,
+  I64AtomicCmpxchg8U = 0x4c,
+  I64AtomicCmpxchg16U = 0x4d,
+  I64AtomicCmpxchg32U = 0x4e,
+  AtomicCmpxchgOps_End = 0x4e
 };
 
 
@@ -723,6 +733,7 @@ public:
   void visitLoad(Load *curr);
   void visitStore(Store *curr);
   void visitAtomicRMW(AtomicRMW *curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
   void visitConst(Const *curr);
   void visitUnary(Unary *curr);
   void visitBinary(Binary *curr);
@@ -881,6 +892,7 @@ public:
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);

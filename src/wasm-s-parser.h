@@ -177,7 +177,9 @@ private:
   Expression* makeConst(Element& s, WasmType type);
   Expression* makeLoad(Element& s, WasmType type, bool isAtomic);
   Expression* makeStore(Element& s, WasmType type, bool isAtomic);
-  Expression* makeAtomicRMW(Element& s, WasmType type);
+  Expression* makeAtomicRMWOrCmpxchg(Element& s, WasmType type);
+  Expression* makeAtomicRMW(Element& s, WasmType type, uint8_t bytes, const char* extra);
+  Expression* makeAtomicCmpxchg(Element& s, WasmType type, uint8_t bytes, const char* extra);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, WasmType type);
   Expression* makeLoop(Element& s);
