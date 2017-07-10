@@ -28,5 +28,13 @@
     )
     (drop (get_local $b))
   )
+  (func $no-unreachable
+    (local $x i32)
+    (drop
+      (tee_local $x
+        (unreachable)
+      )
+    )
+  )
 )
 
