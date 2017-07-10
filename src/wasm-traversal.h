@@ -35,40 +35,40 @@ namespace wasm {
 template<typename SubType, typename ReturnType = void>
 struct Visitor {
   // Expression visitors
-  ReturnType visitBlock(Block* curr) {}
-  ReturnType visitIf(If* curr) {}
-  ReturnType visitLoop(Loop* curr) {}
-  ReturnType visitBreak(Break* curr) {}
-  ReturnType visitSwitch(Switch* curr) {}
-  ReturnType visitCall(Call* curr) {}
-  ReturnType visitCallImport(CallImport* curr) {}
-  ReturnType visitCallIndirect(CallIndirect* curr) {}
-  ReturnType visitGetLocal(GetLocal* curr) {}
-  ReturnType visitSetLocal(SetLocal* curr) {}
-  ReturnType visitGetGlobal(GetGlobal* curr) {}
-  ReturnType visitSetGlobal(SetGlobal* curr) {}
-  ReturnType visitLoad(Load* curr) {}
-  ReturnType visitStore(Store* curr) {}
-  ReturnType visitAtomicRMW(AtomicRMW* curr) {return ReturnType();} //Stub impl so not every pass has to implement this yet.
-  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) {return ReturnType();} //Stub impl so not every pass has to implement this yet.
-  ReturnType visitConst(Const* curr) {}
-  ReturnType visitUnary(Unary* curr) {}
-  ReturnType visitBinary(Binary* curr) {}
-  ReturnType visitSelect(Select* curr) {}
-  ReturnType visitDrop(Drop* curr) {}
-  ReturnType visitReturn(Return* curr) {}
-  ReturnType visitHost(Host* curr) {}
-  ReturnType visitNop(Nop* curr) {}
-  ReturnType visitUnreachable(Unreachable* curr) {}
+  ReturnType visitBlock(Block* curr) { return ReturnType(); }
+  ReturnType visitIf(If* curr) { return ReturnType(); }
+  ReturnType visitLoop(Loop* curr) { return ReturnType(); }
+  ReturnType visitBreak(Break* curr) { return ReturnType(); }
+  ReturnType visitSwitch(Switch* curr) { return ReturnType(); }
+  ReturnType visitCall(Call* curr) { return ReturnType(); }
+  ReturnType visitCallImport(CallImport* curr) { return ReturnType(); }
+  ReturnType visitCallIndirect(CallIndirect* curr) { return ReturnType(); }
+  ReturnType visitGetLocal(GetLocal* curr) { return ReturnType(); }
+  ReturnType visitSetLocal(SetLocal* curr) { return ReturnType(); }
+  ReturnType visitGetGlobal(GetGlobal* curr) { return ReturnType(); }
+  ReturnType visitSetGlobal(SetGlobal* curr) { return ReturnType(); }
+  ReturnType visitLoad(Load* curr) { return ReturnType(); }
+  ReturnType visitStore(Store* curr) { return ReturnType(); }
+  ReturnType visitAtomicRMW(AtomicRMW* curr) { return ReturnType(); }
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return ReturnType(); }
+  ReturnType visitConst(Const* curr) { return ReturnType(); }
+  ReturnType visitUnary(Unary* curr) { return ReturnType(); }
+  ReturnType visitBinary(Binary* curr) { return ReturnType(); }
+  ReturnType visitSelect(Select* curr) { return ReturnType(); }
+  ReturnType visitDrop(Drop* curr) { return ReturnType(); }
+  ReturnType visitReturn(Return* curr) { return ReturnType(); }
+  ReturnType visitHost(Host* curr) { return ReturnType(); }
+  ReturnType visitNop(Nop* curr) { return ReturnType(); }
+  ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
   // Module-level visitors
-  ReturnType visitFunctionType(FunctionType* curr) {}
-  ReturnType visitImport(Import* curr) {}
-  ReturnType visitExport(Export* curr) {}
-  ReturnType visitGlobal(Global* curr) {}
-  ReturnType visitFunction(Function* curr) {}
-  ReturnType visitTable(Table* curr) {}
-  ReturnType visitMemory(Memory* curr) {}
-  ReturnType visitModule(Module* curr) {}
+  ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
+  ReturnType visitImport(Import* curr) { return ReturnType(); }
+  ReturnType visitExport(Export* curr) { return ReturnType(); }
+  ReturnType visitGlobal(Global* curr) { return ReturnType(); }
+  ReturnType visitFunction(Function* curr) { return ReturnType(); }
+  ReturnType visitTable(Table* curr) { return ReturnType(); }
+  ReturnType visitMemory(Memory* curr) { return ReturnType(); }
+  ReturnType visitModule(Module* curr) { return ReturnType(); }
 
   ReturnType visit(Expression* curr) {
     assert(curr);
@@ -117,7 +117,7 @@ struct Visitor {
 template<typename SubType, typename ReturnType = void>
 struct UnifiedExpressionVisitor : public Visitor<SubType> {
   // called on each node
-  ReturnType visitExpression(Expression* curr) {}
+  ReturnType visitExpression(Expression* curr) { return ReturnType(); }
 
   // redirects
   ReturnType visitBlock(Block* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
