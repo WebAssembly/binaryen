@@ -292,7 +292,7 @@ private:
     }
     ret->list.push_back(make(type));
     breakableStack.pop_back();
-    ret->finalize(type);
+    ret->finalize();
     return ret;
   }
 
@@ -303,7 +303,7 @@ private:
     breakableStack.push_back(ret);
     ret->body = make(type);
     breakableStack.pop_back();
-    ret->finalize(type);
+    ret->finalize();
     return ret;
   }
 
