@@ -49,6 +49,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
 
   // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
+    // an unreachable node must not be changed
+    if (curr->type == unreachable) return curr;
     while (1) {
       switch (curr->_id) {
         case Expression::Id::NopId: return nullptr; // never needed

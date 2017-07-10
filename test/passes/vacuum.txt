@@ -28,16 +28,25 @@
   (nop)
  )
  (func $unary (type $2) (result f32)
-  (unreachable)
+  (f32.abs
+   (unreachable)
+  )
  )
  (func $binary (type $2) (result f32)
   (drop
-   (unreachable)
+   (f32.add
+    (unreachable)
+    (f32.const 3)
+   )
   )
  )
  (func $select (type $3) (result i32)
   (drop
-   (unreachable)
+   (select
+    (unreachable)
+    (i32.const 4)
+    (i32.const 5)
+   )
   )
  )
  (func $block-to-one (type $0)
@@ -197,5 +206,19 @@
  (func $block-unreachable-but-last-element-concrete (type $0)
   (local $2 i32)
   (nop)
+ )
+ (func $a (type $0)
+  (block $block
+   (i32.store
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (f64.div
+    (f64.const -nan:0xfffffffffa361)
+    (loop $label$1
+     (br $label$1)
+    )
+   )
+  )
  )
 )

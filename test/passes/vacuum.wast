@@ -509,4 +509,15 @@
     )
    )
   )
+  (func $a
+    (block
+      (i32.store (i32.const 1) (i32.const 2))
+      (f64.div
+        (f64.const -nan:0xfffffffffa361)
+        (loop $label$1 ;; unreachable, so the div is too. keep
+          (br $label$1)
+        )
+      )
+    )
+  )
 )
