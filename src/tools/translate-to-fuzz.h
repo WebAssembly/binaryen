@@ -293,6 +293,11 @@ private:
     ret->list.push_back(make(type));
     breakableStack.pop_back();
     ret->finalize();
+    if (ret->type != type) {
+      // e.g. we might want an unreachable block, but a child breaks to it
+      assert(type == unreachable && ret->type == none);
+      return builder.makeSequence(ret, make(unreachable));
+    }
     return ret;
   }
 
