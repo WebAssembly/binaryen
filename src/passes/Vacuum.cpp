@@ -73,7 +73,9 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         case Expression::Id::UnreachableId: return curr; // always needed
 
         case Expression::Id::LoadId: {
-          if (!resultUsed) {
+          // it is ok to remove a load if the result is not used, and it has no
+          // side effects (the load itself may trap, if we are not ignoring such things)
+          if (!resultUsed && !EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
             return curr->cast<Load>()->ptr;
           }
           return curr;
