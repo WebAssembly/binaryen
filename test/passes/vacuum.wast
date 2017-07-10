@@ -520,4 +520,18 @@
       )
     )
   )
+  (func $leave-block-even-if-br-not-taken (result f64)
+   (block $label$0 (result f64)
+    (f64.store align=1
+     (i32.const 879179022)
+     (br_if $label$0
+      (loop $label$9
+       (br $label$9)
+      )
+      (i32.const 677803374)
+     )
+    )
+    (f64.const 2097914503796645752267195e31)
+   )
+  )
 )

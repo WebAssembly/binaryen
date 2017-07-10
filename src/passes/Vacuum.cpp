@@ -20,9 +20,9 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
 #include <ast/block-utils.h>
+#include <ast/effects.h>
 #include <ast/type-updating.h>
 
 namespace wasm {
@@ -272,10 +272,11 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
           // we may be able to remove this, if there are no brs
           bool canPop = true;
           if (block->name.is()) {
-            BreakSeeker breakSeeker(block->name);
+            BranchUtils::BranchSeeker seeker(block->name);
+            seeker.named = true;
             Expression* temp = block;
-            breakSeeker.walk(temp);
-            if (breakSeeker.found && breakSeeker.valueType != none) {
+            seeker.walk(temp);
+            if (seeker.found && seeker.valueType != none) {
               canPop = false;
             }
           }
