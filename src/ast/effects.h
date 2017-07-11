@@ -39,7 +39,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     if (breakNames.size() > 0) branches = true;
   }
 
-  bool branches = false; // branches out of this expression
+  bool branches = false; // branches out of this expression, returns, infinite loops, etc
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
@@ -138,6 +138,18 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   }
   void visitLoop(Loop* curr) {
     if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
+    // if the loop is unreachable, then there is branching control flow:
+    //  (1) if the body is unreachable because of a (return), uncaught (br) etc., then we
+    //      already noted branching, so it is ok to mark it again  (if we have *caught*
+    //      (br)s, then they did not lead to the loop body being unreachable).
+    //      (same logic applies to blocks)
+    //  (2) if the loop is unreachable because it only has branches up to the loop
+    //      top, but no way to get out, then it is an infinite loop, and we consider
+    //      that a branching side effect (note how the same logic does not apply to
+    //      blocks).
+    if (curr->type == unreachable) {
+      branches = true;
+    }
   }
 
   void visitCall(Call *curr) { calls = true; }
@@ -182,6 +194,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
         case TruncUFloat64ToInt32:
         case TruncUFloat64ToInt64: {
           implicitTrap = true;
+          break;
         }
         default: {}
       }
@@ -199,6 +212,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
         case RemSInt64:
         case RemUInt64: {
           implicitTrap = true;
+          break;
         }
         default: {}
       }
