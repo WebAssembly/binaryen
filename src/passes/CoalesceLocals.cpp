@@ -196,7 +196,9 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     if (auto* get = set->value->dynCast<GetLocal>()) return get;
     if (auto* iff = set->value->dynCast<If>()) {
       if (auto* get = iff->ifTrue->dynCast<GetLocal>()) return get;
-      if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
+      if (iff->ifFalse) {
+        if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
+      }
     }
     return nullptr;
   }

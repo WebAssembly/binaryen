@@ -1112,4 +1112,14 @@
   )
   (i32.const 1)
  )
+ (func $unused-tee-with-child-if-no-else (type $4) (param $0 i32)
+  (loop $label$0
+   (drop
+    (if
+     (br $label$0)
+     (nop)
+    )
+   )
+  )
+ )
 )
