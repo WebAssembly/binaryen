@@ -371,6 +371,10 @@ Const* Const::set(Literal value_) {
   return this;
 }
 
+void Const::finalize() {
+  type = value.type;
+}
+
 bool Unary::isRelational() {
   return op == EqZInt32 || op == EqZInt64;
 }
