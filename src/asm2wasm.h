@@ -1984,9 +1984,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             // No wasm support, so use a temp local
             ensureI32Temp();
             auto set = allocator.alloc<SetLocal>();
-            set->setTee(false);
             set->index = function->getLocalIndex(I32_TEMP);
             set->value = value;
+            set->setTee(false);
             set->finalize();
             auto get = [&]() {
               auto ret = allocator.alloc<GetLocal>();

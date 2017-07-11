@@ -64,8 +64,6 @@
  )
  (func $no-unreachable (type $0)
   (local $x i32)
-  (drop
-   (unreachable)
-  )
+  (unreachable)
  )
 )
