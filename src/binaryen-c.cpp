@@ -30,6 +30,7 @@
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "cfg/Relooper.h"
+#include "ast_utils.h"
 #include "shell-interface.h"
 
 using namespace wasm;

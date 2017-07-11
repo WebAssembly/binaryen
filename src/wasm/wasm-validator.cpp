@@ -57,7 +57,8 @@ void WasmValidator::visitBlock(Block *curr) {
         }
       }
     }
-    breakTargets[curr->name].pop_back();
+    breakTargets.erase(curr->name);
+    namedBreakTargets.erase(curr->name);
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
@@ -88,7 +89,8 @@ void WasmValidator::visitBlock(Block *curr) {
 void WasmValidator::visitLoop(Loop *curr) {
   if (curr->name.is()) {
     noteLabelName(curr->name);
-    breakTargets[curr->name].pop_back();
+    breakTargets.erase(curr->name);
+    namedBreakTargets.erase(curr->name);
     if (breakInfos.count(curr) > 0) {
       auto& info = breakInfos[curr];
       shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
@@ -120,6 +122,11 @@ void WasmValidator::visitIf(If *curr) {
 }
 
 void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
+  if (!BranchUtils::isBranchTaken(curr)) {
+    // if not actually taken, just note the name
+    namedBreakTargets.insert(name);
+    return;
+  }
   WasmType valueType = none;
   Index arity = 0;
   if (value) {
@@ -127,8 +134,8 @@ void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
     shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
     arity = 1;
   }
-  if (!shouldBeTrue(breakTargets[name].size() > 0, curr, "all break targets must be valid")) return;
-  auto* target = breakTargets[name].back();
+  if (!shouldBeTrue(breakTargets.count(name) > 0, curr, "all break targets must be valid")) return;
+  auto* target = breakTargets[name];
   if (breakInfos.count(target) == 0) {
     breakInfos[target] = BreakInfo(valueType, arity);
   } else {
@@ -146,23 +153,17 @@ void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
   }
 }
 void WasmValidator::visitBreak(Break *curr) {
-  // note breaks (that are actually taken)
-  if (BranchUtils::isBranchTaken(curr)) {
-    noteBreak(curr->name, curr->value, curr);
-  }
+  noteBreak(curr->name, curr->value, curr);
   if (curr->condition) {
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "break condition must be i32");
   }
 }
 
 void WasmValidator::visitSwitch(Switch *curr) {
-  // note breaks (that are actually taken)
-  if (BranchUtils::isBranchTaken(curr)) {
-    for (auto& target : curr->targets) {
-      noteBreak(target, curr->value, curr);
-    }
-    noteBreak(curr->default_, curr->value, curr);
+  for (auto& target : curr->targets) {
+    noteBreak(target, curr->value, curr);
   }
+  noteBreak(curr->default_, curr->value, curr);
   shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
 }
 void WasmValidator::visitCall(Call *curr) {
@@ -467,7 +468,7 @@ void WasmValidator::visitGlobal(Global* curr) {
   shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
   shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
   if (!shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type")) {
-    std::cerr << "(on global " << curr->name << '\n';
+    std::cerr << "(on global " << curr->name << ")\n";
   }
 }
 
@@ -479,6 +480,9 @@ void WasmValidator::visitFunction(Function *curr) {
   }
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
+  }
+  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist (even if not taken)")) {
+    std::cerr << "(on label " << *namedBreakTargets.begin() << ")\n";
   }
   returnType = unreachable;
   labelNames.clear();

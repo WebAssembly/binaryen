@@ -37,6 +37,15 @@ inline bool isBranchTaken(Switch* sw) {
                         sw->condition->type != unreachable;
 }
 
+inline bool isBranchTaken(Expression* expr) {
+  if (auto* br = expr->dynCast<Break>()) {
+    return isBranchTaken(br);
+  } else if (auto* sw = expr->dynCast<Switch>()) {
+    return isBranchTaken(sw);
+  }
+  WASM_UNREACHABLE();
+}
+
 // returns the set of targets to which we branch that are
 // outside of a node
 inline std::set<Name> getExitingBranches(Expression* ast) {
