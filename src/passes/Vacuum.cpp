@@ -93,8 +93,14 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
           if (resultUsed) {
             return curr; // used, keep it
           }
-          // for unary, binary, and select, we need to check their arguments for side effects
+          // for unary, binary, and select, we need to check their arguments for side effects,
+          // as well as the node itself, as some unaries and binaries have implicit traps
           if (auto* unary = curr->dynCast<Unary>()) {
+            EffectAnalyzer tester(getPassOptions());
+            tester.visitUnary(unary);
+            if (tester.hasSideEffects()) {
+              return curr;
+            }
             if (EffectAnalyzer(getPassOptions(), unary->value).hasSideEffects()) {
               curr = unary->value;
               continue;
@@ -102,6 +108,11 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
               return nullptr;
             }
           } else if (auto* binary = curr->dynCast<Binary>()) {
+            EffectAnalyzer tester(getPassOptions());
+            tester.visitBinary(binary);
+            if (tester.hasSideEffects()) {
+              return curr;
+            }
             if (EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
               if (EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
                 return curr; // leave them

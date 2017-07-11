@@ -15,5 +15,18 @@
     (i64.const 0)
    )
   )
+  (func $unary-binary-may-trap
+   (drop
+    (i64.div_s
+     (i64.const 70847791997969805621592064)
+     (i64.const 729618461987467893)
+    )
+   )
+   (drop
+    (i64.trunc_u/f32
+     (f32.const 70847791997969805621592064)
+    )
+   )
+  )
 )
 
