@@ -122,6 +122,11 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
     if (curr->value && curr->name == origin) {
       Builder builder(*getModule());
       auto* value = curr->value;
+      if (value->type == unreachable) {
+        // the break isn't even reached
+        replaceCurrent(value);
+        return;
+      }
       curr->value = nullptr;
       curr->finalize();
       replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
@@ -130,7 +135,8 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
 
   void visitDrop(Drop* curr) {
     // if we dropped a br_if whose value we removed, then we are now dropping a (block (drop value) (br_if)) with type none, which does not need a drop
-    if (curr->value->type == none) {
+    // likewise, unreachable does not need to be dropped, so we just leave drops of concrete values
+    if (!isConcreteWasmType(curr->value->type)) {
       replaceCurrent(curr->value);
     }
   }
