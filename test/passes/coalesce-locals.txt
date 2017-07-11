@@ -6,6 +6,7 @@
  (type $4 (func (param i32)))
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$vi (func (param i32)))
+ (type $7 (func (param i32) (result i32)))
  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
  (import "env" "get" (func $get (result i32)))
  (import "env" "set" (func $set (param i32)))
@@ -112,11 +113,15 @@
   )
   (block $block
    (br $block)
-   (nop)
    (drop
     (i32.const 0)
    )
-   (nop)
+   (drop
+    (i32.const 0)
+   )
+   (drop
+    (i32.const -1)
+   )
   )
   (drop
    (get_local $0)
@@ -902,37 +907,53 @@
   (local $0 i32)
   (block $x
    (return)
-   (nop)
+   (drop
+    (i32.const 1)
+   )
    (drop
     (i32.const 0)
    )
-   (nop)
+   (drop
+    (i32.const 0)
+   )
   )
   (block $y
    (unreachable)
-   (nop)
+   (drop
+    (i32.const 1)
+   )
    (drop
     (i32.const 0)
    )
-   (nop)
+   (drop
+    (i32.const 0)
+   )
   )
   (block $z
    (br $z)
-   (nop)
+   (drop
+    (i32.const 1)
+   )
    (drop
     (i32.const 0)
    )
-   (nop)
+   (drop
+    (i32.const 0)
+   )
   )
   (block $z14
    (br_table $z14 $z14
     (i32.const 100)
    )
-   (nop)
+   (drop
+    (i32.const 1)
+   )
    (drop
     (i32.const 0)
    )
-   (nop)
+   (drop
+    (i32.const 0)
+   )
   )
  )
  (func $nop-in-unreachable (type $2)
@@ -1082,5 +1103,13 @@
    )
    (br $top)
   )
+ )
+ (func $tee_br (type $7) (param $0 i32) (result i32)
+  (block $b
+   (return
+    (br $b)
+   )
+  )
+  (i32.const 1)
  )
 )

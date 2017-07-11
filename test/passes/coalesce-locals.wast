@@ -1075,4 +1075,14 @@
       (br $top)
     )
   )
+  (func $tee_br (param $x i32) (result i32)
+    (block $b
+      (return
+        (tee_local $x
+          (br $b)
+        )
+      )
+    )
+    (i32.const 1)
+  )
 )
