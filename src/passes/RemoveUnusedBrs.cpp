@@ -259,7 +259,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // so only do it if it looks useful, which it definitely is if
             //  (a) $somewhere is straight out (so the br out vanishes), and
             //  (b) this br_if is the only branch to that block (so the block will vanish)
-            if (brIf->name == block->name && BranchUtils::BranchSeeker::count(block, block->name) == 1) {
+            if (brIf->name == block->name && BranchUtils::BranchSeeker::countNamed(block, block->name) == 1) {
               // note that we could drop the last element here, it is a br we know for sure is removable,
               // but telling stealSlice to steal all to the end is more efficient, it can just truncate.
               list[i] = builder.makeIf(brIf->condition, builder.makeBreak(brIf->name), builder.stealSlice(block, i + 1, list.size()));
@@ -449,7 +449,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto* br = list[0]->dynCast<Break>();
             if (br && br->condition && br->name == curr->name) {
               assert(!br->value); // can't, it would be dropped or last in the block
-              if (BranchUtils::BranchSeeker::count(curr, curr->name) == 1) {
+              if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
                 // no other breaks to that name, so we can do this
                 Builder builder(*getModule());
                 replaceCurrent(builder.makeIf(
