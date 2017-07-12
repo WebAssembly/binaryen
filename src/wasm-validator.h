@@ -47,13 +47,13 @@ namespace wasm {
 
 // Print anything that can be streamed to an ostream
 template <typename T>
-std::ostream& printModuleComponent(T curr, std::ostream& stream) {
+inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
   stream << curr << std::endl;
   return stream;
 }
 // Specialization for Expressions to print type info too
 template <>
-std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
+inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
   WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
   return stream;
 }
