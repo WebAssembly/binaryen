@@ -53,7 +53,7 @@ std::ostream& printModuleComponent(T curr, std::ostream& stream) {
 }
 // Specialization for Expressions to print type info too
 template <>
-inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
+std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
   WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
   return stream;
 }
