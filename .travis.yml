@@ -1,56 +1,131 @@
 sudo: false
+dist: trusty
 language: cpp
-python:
-  - "2.7"
 
-matrix:
+jobs:
   include:
-
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-      dist: trusty
+    # Build with clang and run tests on the host system (Ubuntu).
+    - &test-ubuntu
+      stage: test
       compiler: clang
-      addons: &gcc5
+      python: 2.7
+      addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['cmake', 'nodejs', 'g++-5']
+      before_install:
+        - export CC="${CC_COMPILER}"
+        - export CXX="${CXX_COMPILER}"
+        - export ASAN_OPTIONS="symbolize=1"
+      install:
+        - pip install --user flake8
+      before_script:
+        # Check the style of a subset of Python code until the other code is updated.
+        - flake8 ./scripts/
+        - ./check.py --only-prepare
+      script:
+        - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        - make -j2
+        - ./check.py
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
 
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=`pwd`/ubsan.blacklist"
-      dist: trusty
-      compiler: clang
-      addons: *gcc5
+    - <<: *test-ubuntu
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=address"
-      dist: trusty
-      compiler: clang
-      addons: *gcc5
+    - <<: *test-ubuntu
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=address"
 
-    - env: CC_COMPILER="./test/wasm-install/wasm-install/bin/clang" CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++" COMPILER_FLAGS="-fsanitize=thread"
-      dist: trusty
-      compiler: clang
-      addons: *gcc5
+    - <<: *test-ubuntu
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=thread"
 
-    - env: CC_COMPILER="gcc-5" CXX_COMPILER="g++-5"
-      dist: trusty
+    # Build with gcc 5 and run tests on the host system (Ubuntu).
+    - <<: *test-ubuntu
       compiler: gcc
-      addons: *gcc5
+      env: |
+        CC_COMPILER="gcc-5"
+        CXX_COMPILER="g++-5"
 
-before_install:
-  - export CC="${CC_COMPILER}"
-  - export CXX="${CXX_COMPILER}"
-  - export ASAN_OPTIONS="symbolize=1"
+    # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+    # Note: Alpine uses musl libc.
+    - &test-alpine
+      stage: test
+      sudo: true
+      language: minimal
+      compiler: gcc
+      env: ARCH=x86_64
+      before_install:
+        - "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
+              && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || exit 1"
+        - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+      install:
+        - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
+      before_script:
+        - alpine ./check.py --only-prepare
+      script:
+        - alpine cmake .
+        - alpine make -j2
+        - alpine ./check.py
 
-install:
-  - pip install --user flake8
 
-before_script:
-  # Check the style of a subset of Python code until the other code is updated.
-  - flake8 ./scripts/
+    # Build statically linked release binaries with gcc 6.3 on Alpine Linux
+    # (inside chroot). If building a tagged commit, then deploy release tarball
+    # to GitHub Releases.
+    - &build-alpine
+      <<: *test-alpine
+      stage: build
+      env: ARCH=x86_64
+      script:
+        - alpine cmake -DCMAKE_BUILD_TYPE=Release
+                       -DCMAKE_VERBOSE_MAKEFILE=ON
+                       -DCMAKE_CXX_FLAGS="-static -no-pie"
+                       -DCMAKE_C_FLAGS="-static -no-pie" .
+        - alpine make -j2
+        - alpine find bin/ -type f -perm -u=x -exec strip {} +
+        - alpine ls -lh bin/
+        # Check if the built executables are really statically linked.
+        - if [ -n "$(find bin/ -type f -perm -u=x -exec file {} + | grep -Fvw 'statically linked')" ]; then
+              file bin/*; exit 1;
+          fi
+      before_deploy:
+        - PKGNAME="binaryen-$TRAVIS_TAG-$ARCH-linux"
+        - mv bin binaryen-$TRAVIS_TAG
+        - tar -czf $PKGNAME.tar.gz binaryen-$TRAVIS_TAG
+        - sha256sum $PKGNAME.tar.gz > $PKGNAME.tar.gz.sha256
+      deploy:
+        provider: releases
+        api_key:
+          secret: TODO
+        file: binaryen-$TRAVIS_TAG-*.tar.gz*
+        file_glob: true
+        skip_cleanup: true
+        on:
+          tags: true
 
-script:
-  - ./check.py --only-prepare
-  - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
-  - make -j2
-  - ./check.py
+    # Build binaries for other architectures using QEMU user-mode emulation.
+    # Note: We don't run tests for these architectures, because some fail under
+    # QEMU/binfmt and it takes too long time (hits time limit on Travis).
+    - <<: *build-alpine
+      env: ARCH=x86
+
+    - <<: *build-alpine
+      env: ARCH=aarch64
+
+    - <<: *build-alpine
+      env: ARCH=armhf
+
+    - <<: *build-alpine
+      env: ARCH=ppc64le
 
 notifications:
   email: false
