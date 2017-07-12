@@ -517,6 +517,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
+        // some operations have no effect TODO: many more
+        if (right->value == Literal(int32_t(0))) {
+          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32) {
+            return binary->left;
+          }
+        }
         // the square of some operations can be merged
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == binary->op) {

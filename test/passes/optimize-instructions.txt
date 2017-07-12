@@ -1965,30 +1965,31 @@
  (func $zero-shifts-is-not-sign-ext (type $1)
   (drop
    (i32.eq
-    (i32.shr_s
-     (i32.shl
-      (i32.load16_s align=1
-       (i32.const 790656516)
-      )
-      (i32.const 0)
-     )
-     (i32.const 0)
+    (i32.load16_s align=1
+     (i32.const 790656516)
     )
     (i32.const -5431187)
    )
   )
   (drop
    (i32.eq
-    (i32.shr_s
-     (i32.shl
-      (i32.load16_s align=1
-       (i32.const 790656516)
-      )
-      (i32.const 1)
+    (i32.shl
+     (i32.load16_s align=1
+      (i32.const 790656516)
      )
-     (i32.const 0)
+     (i32.const 1)
     )
     (i32.const -5431187)
+   )
+  )
+ )
+ (func $zero-ops (type $2) (result i32)
+  (return
+   (i32.eq
+    (i32.load16_s align=1
+     (i32.const 790656516)
+    )
+    (i32.const -1337)
    )
   )
  )
