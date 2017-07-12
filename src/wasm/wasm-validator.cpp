@@ -168,7 +168,12 @@ void WasmValidator::visitSwitch(Switch *curr) {
 void WasmValidator::visitCall(Call *curr) {
   if (!validateGlobally) return;
   auto* target = getModule()->getFunctionOrNull(curr->target);
-  if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
+  if (!shouldBeTrue(!!target, curr, "call target must exist")) {
+    if (getModule()->getImportOrNull(curr->target)) {
+      std::cerr << "(perhaps it should be a CallImport instead of Call?)\n";
+    }
+    return;
+  }
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match")) {
