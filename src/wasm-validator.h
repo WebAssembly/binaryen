@@ -216,7 +216,7 @@ public:
 
   void validateAlignment(size_t align, WasmType type, Index bytes, bool isAtomic,
                          Expression* curr);
-  void validateMemBytes(uint8_t bytes, Expression* curr);
+  void validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr);
   void validateBinaryenIR(Module& wasm);
 };
 

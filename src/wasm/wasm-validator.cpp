@@ -214,28 +214,31 @@ void WasmValidator::visitSetLocal(SetLocal *curr) {
   }
 }
 void WasmValidator::visitLoad(Load *curr) {
+  validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
 }
 void WasmValidator::visitStore(Store *curr) {
+  validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
   shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
 }
 void WasmValidator::visitAtomicRMW(AtomicRMW* curr) {
-  //validateAlignment(curr->
+  validateMemBytes(curr->bytes, curr->type, curr);
 }
 void WasmValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+  validateMemBytes(curr->bytes, curr->type, curr);
 }
-void WasmValidator::validateMemBytes(uint8_t bytes, Expression* curr) {
+void WasmValidator::validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr) {
   switch (bytes) {
     case 1:
     case 2:
     case 4:
       break;
     case 8:
-      shouldBeEqual(getWasmTypeSize(curr->type), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
+      shouldBeEqual(getWasmTypeSize(ty), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
       break;
     default: fail("Memory operations must be 1,2,4, or 8 bytes", curr);
   }
