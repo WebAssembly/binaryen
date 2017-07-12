@@ -237,9 +237,10 @@ void WasmValidator::validateMemBytes(uint8_t bytes, WasmType ty, Expression* cur
     case 2:
     case 4:
       break;
-    case 8:
+    case 8: {
       shouldBeEqual(getWasmTypeSize(ty), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
       break;
+    }
     default: fail("Memory operations must be 1,2,4, or 8 bytes", curr);
   }
 }
