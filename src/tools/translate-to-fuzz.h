@@ -19,7 +19,7 @@
 // This is helpful for fuzzing.
 //
 
-//#include <wasm-printing.h>
+#include <wasm-builder.h>
 
 namespace wasm {
 
