@@ -2763,17 +2763,21 @@
               )
               (i32.const 10)
              )
-             (set_local $6
-              (i32.add
-               (get_local $3)
-               (i32.shl
+             (drop
+              (i32.load offset=4
+               (tee_local $6
                 (i32.add
-                 (i32.load8_s
-                  (get_local $6)
+                 (get_local $3)
+                 (i32.shl
+                  (i32.add
+                   (i32.load8_s
+                    (get_local $6)
+                   )
+                   (i32.const -48)
+                  )
+                  (i32.const 3)
                  )
-                 (i32.const -48)
                 )
-                (i32.const 3)
                )
               )
              )
@@ -3102,17 +3106,21 @@
               )
               (i32.const 10)
              )
-             (set_local $6
-              (i32.add
-               (get_local $3)
-               (i32.shl
+             (drop
+              (i32.load offset=4
+               (tee_local $6
                 (i32.add
-                 (i32.load8_s
-                  (get_local $6)
+                 (get_local $3)
+                 (i32.shl
+                  (i32.add
+                   (i32.load8_s
+                    (get_local $6)
+                   )
+                   (i32.const -48)
+                  )
+                  (i32.const 3)
                  )
-                 (i32.const -48)
                 )
-                (i32.const 3)
                )
               )
              )
@@ -3830,8 +3838,12 @@
                      )
                      (br $__rjti$4)
                     )
-                    (set_local $5
-                     (get_local $19)
+                    (drop
+                     (i32.load offset=4
+                      (tee_local $5
+                       (get_local $19)
+                      )
+                     )
                     )
                     (i32.store8
                      (get_local $40)
@@ -3880,8 +3892,12 @@
                   )
                   (br $__rjti$5)
                  )
-                 (set_local $5
-                  (get_local $19)
+                 (drop
+                  (i32.load offset=4
+                   (tee_local $5
+                    (get_local $19)
+                   )
+                  )
                  )
                  (i32.store
                   (get_local $41)

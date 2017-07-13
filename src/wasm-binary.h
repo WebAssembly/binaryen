@@ -30,7 +30,6 @@
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
-#include "ast_utils.h"
 #include "parsing.h"
 #include "wasm-validator.h"
 

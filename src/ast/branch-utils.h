@@ -37,6 +37,15 @@ inline bool isBranchTaken(Switch* sw) {
                         sw->condition->type != unreachable;
 }
 
+inline bool isBranchTaken(Expression* expr) {
+  if (auto* br = expr->dynCast<Break>()) {
+    return isBranchTaken(br);
+  } else if (auto* sw = expr->dynCast<Switch>()) {
+    return isBranchTaken(sw);
+  }
+  WASM_UNREACHABLE();
+}
+
 // returns the set of targets to which we branch that are
 // outside of a node
 inline std::set<Name> getExitingBranches(Expression* ast) {
@@ -90,6 +99,81 @@ inline std::set<Name> getBranchTargets(Expression* ast) {
   scanner.walk(ast);
   return scanner.targets;
 }
+
+// Finds if there are branches targeting a name. Note that since names are
+// unique in our IR, we just need to look for the name, and do not need
+// to analyze scoping.
+// By default we ignore untaken branches. You can set named to
+// note those as well, then any named branch is noted, even if untaken
+struct BranchSeeker : public PostWalker<BranchSeeker> {
+  Name target;
+  bool named = false;
+
+  Index found;
+  WasmType valueType;
+
+  BranchSeeker(Name target) : target(target), found(0) {}
+
+  void noteFound(Expression* value) {
+    found++;
+    if (found == 1) valueType = unreachable;
+    if (!value) valueType = none;
+    else if (value->type != unreachable) valueType = value->type;
+  }
+
+  void visitBreak(Break *curr) {
+    if (!named) {
+      // ignore an unreachable break
+      if (curr->condition && curr->condition->type == unreachable) return;
+      if (curr->value && curr->value->type == unreachable) return;
+    }
+    // check the break
+    if (curr->name == target) noteFound(curr->value);
+  }
+
+  void visitSwitch(Switch *curr) {
+    if (!named) {
+      // ignore an unreachable switch
+      if (curr->condition->type == unreachable) return;
+      if (curr->value && curr->value->type == unreachable) return;
+    }
+    // check the switch
+    for (auto name : curr->targets) {
+      if (name == target) noteFound(curr->value);
+    }
+    if (curr->default_ == target) noteFound(curr->value);
+  }
+
+  static bool has(Expression* tree, Name target) {
+    if (!target.is()) return false;
+    BranchSeeker seeker(target);
+    seeker.walk(tree);
+    return seeker.found > 0;
+  }
+
+  static Index count(Expression* tree, Name target) {
+    if (!target.is()) return 0;
+    BranchSeeker seeker(target);
+    seeker.walk(tree);
+    return seeker.found;
+  }
+
+  static bool hasNamed(Expression* tree, Name target) {
+    if (!target.is()) return false;
+    BranchSeeker seeker(target);
+    seeker.named = true;
+    seeker.walk(tree);
+    return seeker.found > 0;
+  }
+
+  static Index countNamed(Expression* tree, Name target) {
+    if (!target.is()) return 0;
+    BranchSeeker seeker(target);
+    seeker.named = true;
+    seeker.walk(tree);
+    return seeker.found;
+  }
+};
 
 } // namespace BranchUtils
 

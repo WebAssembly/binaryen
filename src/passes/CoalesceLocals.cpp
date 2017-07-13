@@ -168,9 +168,13 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   static void doVisitSetLocal(CoalesceLocals* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
-    // if in unreachable code, ignore
+    // if in unreachable code, we don't need the tee (but might need the value, if it has side effects)
     if (!self->currBasicBlock) {
-      *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
+      if (curr->isTee()) {
+        *currp = curr->value;
+      } else {
+        *currp = Builder(*self->getModule()).makeDrop(curr->value);
+      }
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);

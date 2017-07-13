@@ -32,6 +32,7 @@
 #include "pass.h"
 #include "parsing.h"
 #include "ast_utils.h"
+#include "ast/branch-utils.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-module-building.h"
@@ -1983,9 +1984,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             // No wasm support, so use a temp local
             ensureI32Temp();
             auto set = allocator.alloc<SetLocal>();
-            set->setTee(false);
             set->index = function->getLocalIndex(I32_TEMP);
             set->value = value;
+            set->setTee(false);
             set->finalize();
             auto get = [&]() {
               auto ret = allocator.alloc<GetLocal>();
@@ -2335,9 +2336,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         nameMapper.popLabelName(more);
         nameMapper.popLabelName(stop);
         // if we never continued, we don't need a loop
-        BreakSeeker breakSeeker(more);
-        breakSeeker.walk(child);
-        if (breakSeeker.found == 0) {
+        BranchUtils::BranchSeeker seeker(more);
+        seeker.walk(child);
+        if (seeker.found == 0) {
           auto block = allocator.alloc<Block>();
           block->list.push_back(child);
           if (isConcreteWasmType(child->type)) {

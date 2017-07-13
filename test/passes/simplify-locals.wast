@@ -860,4 +860,15 @@
     )
     (get_local $label)
   )
+  (func $drop-tee-unreachable
+    (local $x i32)
+    (drop
+      (tee_local $x
+        (unreachable)
+      )
+    )
+    (drop
+      (get_local $x)
+    )
+  )
 )

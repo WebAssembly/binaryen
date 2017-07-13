@@ -19,7 +19,8 @@
 
 #include "literal.h"
 #include "wasm.h"
-#include "ast_utils.h"
+#include "ast/branch-utils.h"
+#include "ast/effects.h"
 
 namespace wasm {
 
@@ -29,7 +30,7 @@ namespace BlockUtils {
   template<typename T>
   inline Expression* simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
     auto& list = block->list;
-    if (list.size() == 1 && !BreakSeeker::has(list[0], block->name)) {
+    if (list.size() == 1 && !BranchUtils::BranchSeeker::hasNamed(list[0], block->name)) {
       // just one element. try to replace the block
       auto* singleton = list[0];
       auto sideEffects = EffectAnalyzer(parent->getPassOptions(), singleton).hasSideEffects();

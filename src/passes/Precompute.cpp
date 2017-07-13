@@ -100,6 +100,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
             if (ret->value) {
               if (auto* value = ret->value->dynCast<Const>()) {
                 value->value = flow.value;
+                value->finalize();
                 return;
               }
             }
@@ -117,12 +118,13 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        br->finalize(); // if we removed a condition, the type may change
         if (flow.value.type != none) {
           // reuse a const value if there is one
           if (br->value) {
             if (auto* value = br->value->dynCast<Const>()) {
               value->value = flow.value;
+              value->finalize();
+              br->finalize();
               return;
             }
           }
@@ -130,6 +132,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
         } else {
           br->value = nullptr;
         }
+        br->finalize();
       } else {
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(flow.breakTo, flow.value.type != none ? builder.makeConst(flow.value) : nullptr));

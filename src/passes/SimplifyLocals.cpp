@@ -45,8 +45,8 @@
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <ast/count.h>
+#include <ast/effects.h>
 #include <ast/manipulation.h>
 
 namespace wasm {
@@ -64,6 +64,7 @@ struct SetLocalRemover : public PostWalker<SetLocalRemover> {
       } else {
         Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
         drop->value = value;
+        drop->finalize();
       }
     }
   }
@@ -268,6 +269,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
         auto* previousValue = previous->value;
         Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(previous);
         drop->value = previousValue;
+        drop->finalize();
         self->sinkables.erase(found);
         self->anotherCycle = true;
       }

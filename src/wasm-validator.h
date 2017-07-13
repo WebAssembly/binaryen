@@ -72,8 +72,9 @@ struct WasmValidator : public PostWalker<WasmValidator> {
     BreakInfo(WasmType type, Index arity) : type(type), arity(arity) {}
   };
 
-  std::map<Name, std::vector<Expression*>> breakTargets; // more than one block/loop may use a label name, so stack them
+  std::map<Name, Expression*> breakTargets;
   std::map<Expression*, BreakInfo> breakInfos;
+  std::set<Name> namedBreakTargets; // even breaks not taken must not be named if they go to a place that does not exist
 
   WasmType returnType = unreachable; // type used in returns
 
@@ -105,14 +106,14 @@ public:
 
   static void visitPreBlock(WasmValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
-    if (curr->name.is()) self->breakTargets[curr->name].push_back(curr);
+    if (curr->name.is()) self->breakTargets[curr->name] = curr;
   }
 
   void visitBlock(Block *curr);
 
   static void visitPreLoop(WasmValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
-    if (curr->name.is()) self->breakTargets[curr->name].push_back(curr);
+    if (curr->name.is()) self->breakTargets[curr->name] = curr;
   }
 
   void visitLoop(Loop *curr);

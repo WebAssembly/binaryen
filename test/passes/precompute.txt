@@ -2,6 +2,7 @@
  (type $0 (func (param i32)))
  (type $1 (func (result i32)))
  (type $2 (func))
+ (type $3 (func (result f64)))
  (memory $0 0)
  (func $x (type $0) (param $x i32)
   (call $x
@@ -127,6 +128,33 @@
     )
     (i32.const 0)
    )
+  )
+ )
+ (func $reuse-br-value (type $3) (result f64)
+  (block $label$0 (result f64)
+   (i32.store8
+    (i32.const 1919623207)
+    (if (result i32)
+     (i32.const 1)
+     (block $label$2
+      (drop
+       (i64.and
+        (i64.trunc_u/f32
+         (f32.const 70847791997969805621592064)
+        )
+        (i64.const 729618461987467893)
+       )
+      )
+      (br $label$0
+       (f64.const 6.134856208230095e-154)
+      )
+     )
+     (i32.load offset=3 align=2
+      (i32.const 169901344)
+     )
+    )
+   )
+   (f64.const 4776014875438170098655851e156)
   )
  )
 )

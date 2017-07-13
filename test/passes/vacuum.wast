@@ -509,4 +509,88 @@
     )
    )
   )
+  (func $a
+    (block
+      (i32.store (i32.const 1) (i32.const 2))
+      (f64.div
+        (f64.const -nan:0xfffffffffa361)
+        (loop $label$1 ;; unreachable, so the div is too. keep
+          (br $label$1)
+        )
+      )
+    )
+  )
+  (func $leave-block-even-if-br-not-taken (result f64)
+   (block $label$0 (result f64)
+    (f64.store align=1
+     (i32.const 879179022)
+     (br_if $label$0
+      (loop $label$9
+       (br $label$9)
+      )
+      (i32.const 677803374)
+     )
+    )
+    (f64.const 2097914503796645752267195e31)
+   )
+  )
+  (func $executed-if-in-block
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (unreachable)
+      (br $label$0)
+     )
+    )
+    (unreachable)
+  )
+  (func $executed-if-in-block2
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (nop)
+      (br $label$0)
+     )
+    )
+    (unreachable)
+  )
+  (func $executed-if-in-block3
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (br $label$0)
+      (nop)
+     )
+    )
+    (unreachable)
+  )
+  (func $load-may-have-side-effects (result i32)
+   (i64.ge_s
+    (block (result i64)
+     (drop
+      (i64.eq
+       (i64.load32_s
+        (i32.const 678585719)
+       )
+       (i64.const 8097879367757079605)
+      )
+     )
+     (i64.const 2912825531628789796)
+    )
+    (i64.const 0)
+   )
+  )
+  (func $unary-binary-may-trap
+   (drop
+    (i64.div_s
+     (i64.const 70847791997969805621592064)
+     (i64.const 729618461987467893)
+    )
+   )
+   (drop
+    (i64.trunc_u/f32
+     (f32.const 70847791997969805621592064)
+    )
+   )
+  )
 )
