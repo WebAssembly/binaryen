@@ -1,6 +1,7 @@
 (module
  (type $0 (func))
  (type $1 (func (param i32)))
+ (type $2 (func (result i32)))
  (memory $0 0)
  (func $drop-block (type $0)
   (block $block
@@ -71,6 +72,17 @@
     )
     (drop
      (i32.const 0)
+    )
+   )
+  )
+ )
+ (func $drop-unreachable-br_if (type $2) (result i32)
+  (block $label$0 (result i32)
+   (block $label$2
+    (drop
+     (br $label$0
+      (i32.const 538976371)
+     )
     )
    )
   )

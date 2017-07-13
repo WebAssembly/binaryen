@@ -57,7 +57,8 @@ void WasmValidator::visitBlock(Block *curr) {
         }
       }
     }
-    breakTargets[curr->name].pop_back();
+    breakTargets.erase(curr->name);
+    namedBreakTargets.erase(curr->name);
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
@@ -88,7 +89,8 @@ void WasmValidator::visitBlock(Block *curr) {
 void WasmValidator::visitLoop(Loop *curr) {
   if (curr->name.is()) {
     noteLabelName(curr->name);
-    breakTargets[curr->name].pop_back();
+    breakTargets.erase(curr->name);
+    namedBreakTargets.erase(curr->name);
     if (breakInfos.count(curr) > 0) {
       auto& info = breakInfos[curr];
       shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
@@ -120,6 +122,11 @@ void WasmValidator::visitIf(If *curr) {
 }
 
 void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
+  if (!BranchUtils::isBranchTaken(curr)) {
+    // if not actually taken, just note the name
+    namedBreakTargets.insert(name);
+    return;
+  }
   WasmType valueType = none;
   Index arity = 0;
   if (value) {
@@ -127,8 +134,8 @@ void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
     shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
     arity = 1;
   }
-  if (!shouldBeTrue(breakTargets[name].size() > 0, curr, "all break targets must be valid")) return;
-  auto* target = breakTargets[name].back();
+  if (!shouldBeTrue(breakTargets.count(name) > 0, curr, "all break targets must be valid")) return;
+  auto* target = breakTargets[name];
   if (breakInfos.count(target) == 0) {
     breakInfos[target] = BreakInfo(valueType, arity);
   } else {
@@ -146,29 +153,28 @@ void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
   }
 }
 void WasmValidator::visitBreak(Break *curr) {
-  // note breaks (that are actually taken)
-  if (BranchUtils::isBranchTaken(curr)) {
-    noteBreak(curr->name, curr->value, curr);
-  }
+  noteBreak(curr->name, curr->value, curr);
   if (curr->condition) {
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "break condition must be i32");
   }
 }
 
 void WasmValidator::visitSwitch(Switch *curr) {
-  // note breaks (that are actually taken)
-  if (BranchUtils::isBranchTaken(curr)) {
-    for (auto& target : curr->targets) {
-      noteBreak(target, curr->value, curr);
-    }
-    noteBreak(curr->default_, curr->value, curr);
+  for (auto& target : curr->targets) {
+    noteBreak(target, curr->value, curr);
   }
+  noteBreak(curr->default_, curr->value, curr);
   shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
 }
 void WasmValidator::visitCall(Call *curr) {
   if (!validateGlobally) return;
   auto* target = getModule()->getFunctionOrNull(curr->target);
-  if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
+  if (!shouldBeTrue(!!target, curr, "call target must exist")) {
+    if (getModule()->getImportOrNull(curr->target)) {
+      std::cerr << "(perhaps it should be a CallImport instead of Call?)\n";
+    }
+    return;
+  }
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match")) {
@@ -214,14 +220,35 @@ void WasmValidator::visitSetLocal(SetLocal *curr) {
   }
 }
 void WasmValidator::visitLoad(Load *curr) {
-  validateAlignment(curr->align, curr->type, curr->bytes);
+  validateMemBytes(curr->bytes, curr->type, curr);
+  validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
 }
 void WasmValidator::visitStore(Store *curr) {
-  validateAlignment(curr->align, curr->type, curr->bytes);
+  validateMemBytes(curr->bytes, curr->valueType, curr);
+  validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
   shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
+}
+void WasmValidator::visitAtomicRMW(AtomicRMW* curr) {
+  validateMemBytes(curr->bytes, curr->type, curr);
+}
+void WasmValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+  validateMemBytes(curr->bytes, curr->type, curr);
+}
+void WasmValidator::validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr) {
+  switch (bytes) {
+    case 1:
+    case 2:
+    case 4:
+      break;
+    case 8: {
+      shouldBeEqual(getWasmTypeSize(ty), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
+      break;
+    }
+    default: fail("Memory operations must be 1,2,4, or 8 bytes", curr);
+  }
 }
 void WasmValidator::visitBinary(Binary *curr) {
   if (curr->left->type != unreachable && curr->right->type != unreachable) {
@@ -467,7 +494,7 @@ void WasmValidator::visitGlobal(Global* curr) {
   shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
   shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
   if (!shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type")) {
-    std::cerr << "(on global " << curr->name << '\n';
+    std::cerr << "(on global " << curr->name << ")\n";
   }
 }
 
@@ -479,6 +506,9 @@ void WasmValidator::visitFunction(Function *curr) {
   }
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
+  }
+  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist (even if not taken)")) {
+    std::cerr << "(on label " << *namedBreakTargets.begin() << ")\n";
   }
   returnType = unreachable;
   labelNames.clear();
@@ -561,28 +591,32 @@ void WasmValidator::visitModule(Module *curr) {
   }
 }
 
-void WasmValidator::validateAlignment(size_t align, WasmType type, Index bytes) {
+void WasmValidator::validateAlignment(size_t align, WasmType type, Index bytes,
+                                      bool isAtomic, Expression* curr) {
+  if (isAtomic) {
+    shouldBeEqual(align, (size_t)bytes, curr, "atomic accesses must have natural alignment");
+    return;
+  }
   switch (align) {
     case 1:
     case 2:
     case 4:
     case 8: break;
     default:{
-      fail() << "bad alignment: " << align << std::endl;
-      valid = false;
+      fail("bad alignment: " + std::to_string(align), curr);
       break;
     }
   }
-  shouldBeTrue(align <= bytes, align, "alignment must not exceed natural");
+  shouldBeTrue(align <= bytes, curr, "alignment must not exceed natural");
   switch (type) {
     case i32:
     case f32: {
-      shouldBeTrue(align <= 4, align, "alignment must not exceed natural");
+      shouldBeTrue(align <= 4, curr, "alignment must not exceed natural");
       break;
     }
     case i64:
     case f64: {
-      shouldBeTrue(align <= 8, align, "alignment must not exceed natural");
+      shouldBeTrue(align <= 8, curr, "alignment must not exceed natural");
       break;
     }
     default: {}
@@ -609,7 +643,7 @@ void WasmValidator::validateBinaryenIR(Module& wasm) {
         // The block has an added type, not derived from the ast itself, so it is
         // ok for it to be either i32 or unreachable.
         if (!(isConcreteWasmType(oldType) && newType == unreachable)) {
-          parent.fail() << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
+          parent.printFailureHeader() << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
           parent.valid = false;
         }
         curr->type = oldType;
@@ -620,7 +654,14 @@ void WasmValidator::validateBinaryenIR(Module& wasm) {
   binaryenIRValidator.walkModule(&wasm);
 }
 
-std::ostream& WasmValidator::fail() {
+template <typename T, typename S>
+std::ostream& WasmValidator::fail(T curr, S text) {
+  valid = false;
+  auto& ret = printFailureHeader() << text << ", on \n";
+  return printModuleComponent(curr, ret);
+}
+
+std::ostream& WasmValidator::printFailureHeader() {
   Colors::red(std::cerr);
   if (getFunction()) {
     std::cerr << "[wasm-validator error in function ";

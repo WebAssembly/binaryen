@@ -29,7 +29,7 @@
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
-#include <ast_utils.h>
+#include <ast/effects.h>
 #include <ast/hashed.h>
 
 namespace wasm {

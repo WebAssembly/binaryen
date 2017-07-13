@@ -20,9 +20,9 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
 #include <ast/block-utils.h>
+#include <ast/effects.h>
 #include <ast/type-updating.h>
 
 namespace wasm {
@@ -49,6 +49,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
 
   // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
+    // an unreachable node must not be changed
+    if (curr->type == unreachable) return curr;
     while (1) {
       switch (curr->_id) {
         case Expression::Id::NopId: return nullptr; // never needed
@@ -71,7 +73,9 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         case Expression::Id::UnreachableId: return curr; // always needed
 
         case Expression::Id::LoadId: {
-          if (!resultUsed) {
+          // it is ok to remove a load if the result is not used, and it has no
+          // side effects (the load itself may trap, if we are not ignoring such things)
+          if (!resultUsed && !EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
             return curr->cast<Load>()->ptr;
           }
           return curr;
@@ -89,8 +93,14 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
           if (resultUsed) {
             return curr; // used, keep it
           }
-          // for unary, binary, and select, we need to check their arguments for side effects
+          // for unary, binary, and select, we need to check their arguments for side effects,
+          // as well as the node itself, as some unaries and binaries have implicit traps
           if (auto* unary = curr->dynCast<Unary>()) {
+            EffectAnalyzer tester(getPassOptions());
+            tester.visitUnary(unary);
+            if (tester.hasSideEffects()) {
+              return curr;
+            }
             if (EffectAnalyzer(getPassOptions(), unary->value).hasSideEffects()) {
               curr = unary->value;
               continue;
@@ -98,6 +108,11 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
               return nullptr;
             }
           } else if (auto* binary = curr->dynCast<Binary>()) {
+            EffectAnalyzer tester(getPassOptions());
+            tester.visitBinary(binary);
+            if (tester.hasSideEffects()) {
+              return curr;
+            }
             if (EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
               if (EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
                 return curr; // leave them
@@ -202,9 +217,13 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
       Expression* child;
       if (value->value.getInteger()) {
         child = curr->ifTrue;
+        if (curr->ifFalse) {
+          typeUpdater.noteRecursiveRemoval(curr->ifFalse);
+        }
       } else {
         if (curr->ifFalse) {
           child = curr->ifFalse;
+          typeUpdater.noteRecursiveRemoval(curr->ifTrue);
         } else {
           ExpressionManipulator::nop(curr);
           return;
@@ -270,10 +289,11 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
           // we may be able to remove this, if there are no brs
           bool canPop = true;
           if (block->name.is()) {
-            BreakSeeker breakSeeker(block->name);
+            BranchUtils::BranchSeeker seeker(block->name);
+            seeker.named = true;
             Expression* temp = block;
-            breakSeeker.walk(temp);
-            if (breakSeeker.found && breakSeeker.valueType != none) {
+            seeker.walk(temp);
+            if (seeker.found && seeker.valueType != none) {
               canPop = false;
             }
           }

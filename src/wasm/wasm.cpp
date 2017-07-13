@@ -16,7 +16,7 @@
 
 #include "wasm.h"
 #include "wasm-traversal.h"
-#include "ast_utils.h"
+#include "ast/branch-utils.h"
 
 namespace wasm {
 
@@ -175,7 +175,7 @@ static void handleUnreachable(Block* block) {
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
-      BreakSeeker seeker(block->name);
+      BranchUtils::BranchSeeker seeker(block->name);
       Expression* expr = block;
       seeker.walk(expr);
       if (!seeker.found) {
@@ -324,6 +324,7 @@ bool SetLocal::isTee() {
 void SetLocal::setTee(bool is) {
   if (is) type = value->type;
   else type = none;
+  finalize(); // type may need to be unreachable
 }
 
 void SetLocal::finalize() {
@@ -369,6 +370,10 @@ Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;
   return this;
+}
+
+void Const::finalize() {
+  type = value.type;
 }
 
 bool Unary::isRelational() {

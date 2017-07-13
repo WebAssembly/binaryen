@@ -26,7 +26,116 @@
  (export "illegalResult" (func $legalstub$result))
  (export "keepAlive" (func $keepAlive))
  (func $loads
-  (nop)
+  (drop
+   (i32.load8_s
+    (i32.const 100)
+   )
+  )
+  (drop
+   (i32.load8_s
+    (i32.const 101)
+   )
+  )
+  (drop
+   (i32.load16_s
+    (i32.const 102)
+   )
+  )
+  (drop
+   (i32.load16_s
+    (i32.const 103)
+   )
+  )
+  (drop
+   (i32.load16_s align=1
+    (i32.const 104)
+   )
+  )
+  (drop
+   (i32.load16_s
+    (i32.const 105)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 106)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 107)
+   )
+  )
+  (drop
+   (i32.load align=1
+    (i32.const 108)
+   )
+  )
+  (drop
+   (i32.load align=2
+    (i32.const 109)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 110)
+   )
+  )
+  (drop
+   (f32.load
+    (i32.const 111)
+   )
+  )
+  (drop
+   (f32.load
+    (i32.const 112)
+   )
+  )
+  (drop
+   (f32.load align=1
+    (i32.const 113)
+   )
+  )
+  (drop
+   (f32.load align=2
+    (i32.const 114)
+   )
+  )
+  (drop
+   (f32.load
+    (i32.const 115)
+   )
+  )
+  (drop
+   (f64.load
+    (i32.const 116)
+   )
+  )
+  (drop
+   (f64.load
+    (i32.const 117)
+   )
+  )
+  (drop
+   (f64.load align=1
+    (i32.const 118)
+   )
+  )
+  (drop
+   (f64.load align=2
+    (i32.const 119)
+   )
+  )
+  (drop
+   (f64.load align=4
+    (i32.const 120)
+   )
+  )
+  (drop
+   (f64.load
+    (i32.const 121)
+   )
+  )
  )
  (func $stores
   (local $0 i32)
@@ -247,6 +356,26 @@
      (get_local $1)
     )
     (get_local $1)
+   )
+  )
+  (drop
+   (i64.load
+    (i32.const 120)
+   )
+  )
+  (drop
+   (i64.load
+    (i32.const 120)
+   )
+  )
+  (drop
+   (i64.load align=2
+    (i32.const 120)
+   )
+  )
+  (drop
+   (i64.load align=4
+    (i32.const 120)
    )
   )
   (i64.store

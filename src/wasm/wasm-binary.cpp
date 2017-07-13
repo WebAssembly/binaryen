@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "wasm-binary.h"
-
 #include <fstream>
+
 #include "support/bits.h"
+#include "wasm-binary.h"
+#include "ast/branch-utils.h"
 
 namespace wasm {
 
@@ -544,7 +545,7 @@ void WasmBinaryWriter::recurse(Expression*& curr) {
 }
 
 static bool brokenTo(Block* block) {
-  return block->name.is() && BreakSeeker::has(block, block->name);
+  return block->name.is() && BranchUtils::BranchSeeker::has(block, block->name);
 }
 
 void WasmBinaryWriter::visitBlock(Block *curr) {

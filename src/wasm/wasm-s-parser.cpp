@@ -22,7 +22,7 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ast_utils.h"
+#include "ast/branch-utils.h"
 #include "shared-constants.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
@@ -1262,7 +1262,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   ret->finalize(type);
   nameMapper.popLabelName(label);
   // create a break target if we must
-  if (BreakSeeker::has(ret, label)) {
+  if (BranchUtils::BranchSeeker::hasNamed(ret, label)) {
     auto* block = allocator.alloc<Block>();
     block->name = label;
     block->list.push_back(ret);

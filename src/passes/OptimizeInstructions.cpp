@@ -26,8 +26,9 @@
 #include <support/threads.h>
 #include <ast_utils.h>
 #include <ast/cost.h>
-#include <ast/properties.h>
+#include <ast/effects.h>
 #include <ast/manipulation.h>
+#include <ast/properties.h>
 
 namespace wasm {
 

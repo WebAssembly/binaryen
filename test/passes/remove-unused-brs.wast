@@ -866,5 +866,40 @@
       )
     )
   )
+  (func $untaken-brs-might-prevent-block-removal (param $0 f32) (param $1 i32) (param $2 f32) (param $3 i32) (param $4 i32) (param $5 f64) (param $6 f32) (result i32)
+   (block $label$0 (result i32)
+    (block $label$1 ;; this block has no taken brs, but we can't remove it without removing them first
+     (br_if $label$1
+      (i32.const 607395945)
+     )
+     (br_if $label$1
+      (i32.load16_s offset=3 align=1
+       (select
+        (call $untaken-brs-might-prevent-block-removal
+         (f32.const 1.4904844647389837e-07)
+         (br_if $label$0
+          (i32.store16 offset=4 align=1
+           (i32.const 1900641)
+           (br $label$0
+            (i32.const 1628075109)
+           )
+          )
+          (i32.const 1764950569)
+         )
+         (f32.const 1.1910939690100655e-32)
+         (i32.const 1628057906)
+         (i32.const 859068982)
+         (f64.const 2.524518840347722e-258)
+         (f32.const -nan:0x40a63)
+        )
+        (i32.const 688529440)
+        (i32.const 1751478890)
+       )
+      )
+     )
+    )
+    (i32.const 1935947830)
+   )
+  )
 )
 

@@ -5,6 +5,7 @@
  (type $3 (func (result i32)))
  (type $4 (func (param i32 f64 i32 i32)))
  (type $FUNCSIG$i (func (result i32)))
+ (type $6 (func (result f64)))
  (import "env" "int" (func $int (result i32)))
  (global $Int i32 (i32.const 0))
  (memory $0 256 256)
@@ -28,16 +29,25 @@
   (nop)
  )
  (func $unary (type $2) (result f32)
-  (unreachable)
+  (f32.abs
+   (unreachable)
+  )
  )
  (func $binary (type $2) (result f32)
   (drop
-   (unreachable)
+   (f32.add
+    (unreachable)
+    (f32.const 3)
+   )
   )
  )
  (func $select (type $3) (result i32)
   (drop
-   (unreachable)
+   (select
+    (unreachable)
+    (i32.const 4)
+    (i32.const 5)
+   )
   )
  )
  (func $block-to-one (type $0)
@@ -197,5 +207,70 @@
  (func $block-unreachable-but-last-element-concrete (type $0)
   (local $2 i32)
   (nop)
+ )
+ (func $a (type $0)
+  (block $block
+   (i32.store
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (f64.div
+    (f64.const -nan:0xfffffffffa361)
+    (loop $label$1
+     (br $label$1)
+    )
+   )
+  )
+ )
+ (func $leave-block-even-if-br-not-taken (type $6) (result f64)
+  (block $label$0
+   (f64.store align=1
+    (i32.const 879179022)
+    (br_if $label$0
+     (loop $label$9
+      (br $label$9)
+     )
+     (i32.const 677803374)
+    )
+   )
+  )
+ )
+ (func $executed-if-in-block (type $0)
+  (unreachable)
+ )
+ (func $executed-if-in-block2 (type $0)
+  (unreachable)
+ )
+ (func $executed-if-in-block3 (type $0)
+  (block $label$0
+   (br $label$0)
+  )
+  (unreachable)
+ )
+ (func $load-may-have-side-effects (type $3) (result i32)
+  (i64.ge_s
+   (block $block (result i64)
+    (drop
+     (i64.load32_s
+      (i32.const 678585719)
+     )
+    )
+    (i64.const 2912825531628789796)
+   )
+   (i64.const 0)
+  )
+ )
+ (func $unary-binary-may-trap (type $0)
+  (drop
+   (i64.div_s
+    (i64.const -1)
+    (i64.const 729618461987467893)
+   )
+  )
+  (drop
+   (i64.trunc_u/f32
+    (f32.const 70847791997969805621592064)
+   )
+  )
  )
 )

@@ -30,9 +30,9 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
 #include <ast/block-utils.h>
+#include <ast/branch-utils.h>
 #include <ast/type-updating.h>
 
 namespace wasm {
@@ -184,7 +184,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (curr->name.is()) {
       reachableBreaks.erase(curr->name);
     }
-    if (isUnreachable(curr->body) && !BreakSeeker::has(curr->body, curr->name)) {
+    if (isUnreachable(curr->body) && !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }

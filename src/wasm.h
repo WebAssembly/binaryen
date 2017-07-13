@@ -464,6 +464,8 @@ public:
   Literal value;
 
   Const* set(Literal value_);
+
+  void finalize();
 };
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
