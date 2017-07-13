@@ -220,11 +220,13 @@ void WasmValidator::visitSetLocal(SetLocal *curr) {
   }
 }
 void WasmValidator::visitLoad(Load *curr) {
+  if (curr->isAtomic && !getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
 }
 void WasmValidator::visitStore(Store *curr) {
+  if (curr->isAtomic && !getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
@@ -232,6 +234,7 @@ void WasmValidator::visitStore(Store *curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
 }
 void WasmValidator::visitAtomicRMW(AtomicRMW* curr) {
+  if (!getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "AtomicRMW result type must match operand");
@@ -244,6 +247,7 @@ void WasmValidator::visitAtomicRMW(AtomicRMW* curr) {
   }
 }
 void WasmValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+  if (!getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
   if (curr->expected->type != unreachable && curr->replacement->type != unreachable) {
@@ -677,7 +681,7 @@ void WasmValidator::validateBinaryenIR(Module& wasm) {
 }
 
 template <typename T, typename S>
-std::ostream& WasmValidator::fail(T curr, S text) {
+std::ostream& WasmValidator::fail(S text, T curr) {
   valid = false;
   auto& ret = printFailureHeader() << text << ", on \n";
   return printModuleComponent(curr, ret);
