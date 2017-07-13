@@ -233,9 +233,31 @@ void WasmValidator::visitStore(Store *curr) {
 }
 void WasmValidator::visitAtomicRMW(AtomicRMW* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
+  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "AtomicRMW result type must match operand");
+  switch (curr->type) {
+    case i32:
+    case i64:
+    case unreachable:
+      break;
+    default: fail("Atomic operations are only valid on int types", curr);
+  }
 }
 void WasmValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
+  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
+  if (curr->expected->type != unreachable && curr->replacement->type != unreachable) {
+    shouldBeEqual(curr->expected->type, curr->replacement->type, curr, "cmpxchg operand types must match");
+  }
+  shouldBeEqualOrFirstIsUnreachable(curr->expected->type, curr->type, curr, "Cmpxchg result type must match expected");
+  shouldBeEqualOrFirstIsUnreachable(curr->replacement->type, curr->type, curr, "Cmpxchg result type must match replacement");
+  switch (curr->expected->type) {
+    case i32:
+    case i64:
+    case unreachable:
+      break;
+    default: fail("Atomic operations are only valid on int types", curr);
+  }
 }
 void WasmValidator::validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr) {
   switch (bytes) {
