@@ -59,8 +59,6 @@ FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
 ENDFOREACH()
 
-SET(all_passes passes)
-
 IF(MSVC)
   IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled. 
     ADD_COMPILE_FLAG("/arch:sse2")
@@ -172,6 +170,9 @@ IF (UNIX AND
 ENDIF()
 
 # Static libraries
+# Current (partial) dependency structure is as follows:
+# passes -> wasm -> asmjs -> support
+# TODO: It's odd that wasm should depend on asmjs, maybe we should fix that.
 ADD_SUBDIRECTORY(src/ast)
 ADD_SUBDIRECTORY(src/asmjs)
 ADD_SUBDIRECTORY(src/cfg)
@@ -191,7 +192,7 @@ IF(BUILD_STATIC_LIB)
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
-TARGET_LINK_LIBRARIES(binaryen ${all_passes} wasm asmjs ast cfg support)
+TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs ast cfg support)
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -204,7 +205,7 @@ SET(wasm-shell_SOURCES
 )
 ADD_EXECUTABLE(wasm-shell
                ${wasm-shell_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
+TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer passes ast cfg support)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -215,7 +216,7 @@ SET(wasm-opt_SOURCES
 )
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
+TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ast cfg support)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -225,7 +226,7 @@ SET(wasm-merge_SOURCES
 )
 ADD_EXECUTABLE(wasm-merge
                ${wasm-merge_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
+TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer passes ast cfg support)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-merge DESTINATION bin)
@@ -236,7 +237,7 @@ SET(asm2wasm_SOURCES
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer ${all_passes} wasm asmjs ast cfg support)
+TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -258,7 +259,7 @@ SET(wasm_as_SOURCES
 )
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes ast cfg support)
+TARGET_LINK_LIBRARIES(wasm-as passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -278,7 +279,7 @@ SET(wasm-ctor-eval_SOURCES
 )
 ADD_EXECUTABLE(wasm-ctor-eval
                ${wasm-ctor-eval_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-ctor-eval wasm asmjs emscripten-optimizer ${all_passes} ast cfg support)
+TARGET_LINK_LIBRARIES(wasm-ctor-eval emscripten-optimizer passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)

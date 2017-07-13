@@ -5,5 +5,6 @@ SET(wasm_SOURCES
   wasm-io.cpp
   wasm-s-parser.cpp
   wasm-type.cpp
+  wasm-validator.cpp
 )
 ADD_LIBRARY(wasm STATIC ${wasm_SOURCES})

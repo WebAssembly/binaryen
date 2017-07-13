@@ -832,6 +832,82 @@ void WasmBinaryWriter::visitStore(Store *curr) {
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
 
+void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
+  if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
+  recurse(curr->ptr);
+  recurse(curr->value);
+
+  o << int8_t(BinaryConsts::AtomicPrefix);
+
+#define CASE_FOR_OP(Op) \
+  case Op: \
+    switch (curr->type) {                                               \
+      case i32:                                                         \
+        switch (curr->bytes) {                                          \
+          case 1: o << int8_t(BinaryConsts::I32AtomicRMW##Op##8U); break; \
+          case 2: o << int8_t(BinaryConsts::I32AtomicRMW##Op##16U); break; \
+          case 4: o << int8_t(BinaryConsts::I32AtomicRMW##Op); break;   \
+          default: WASM_UNREACHABLE();                                  \
+        }                                                               \
+        break;                                                          \
+      case i64:                                                         \
+        switch (curr->bytes) {                                          \
+          case 1: o << int8_t(BinaryConsts::I64AtomicRMW##Op##8U); break; \
+          case 2: o << int8_t(BinaryConsts::I64AtomicRMW##Op##16U); break; \
+          case 4: o << int8_t(BinaryConsts::I64AtomicRMW##Op##32U); break; \
+          case 8: o << int8_t(BinaryConsts::I64AtomicRMW##Op); break;   \
+          default: WASM_UNREACHABLE();                                  \
+        }                                                               \
+        break;                                                          \
+      default: WASM_UNREACHABLE();                                      \
+    }                                                                   \
+    break
+
+  switch(curr->op) {
+    CASE_FOR_OP(Add);
+    CASE_FOR_OP(Sub);
+    CASE_FOR_OP(And);
+    CASE_FOR_OP(Or);
+    CASE_FOR_OP(Xor);
+    CASE_FOR_OP(Xchg);
+    default: WASM_UNREACHABLE();
+  }
+#undef CASE_FOR_OP
+
+  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
+}
+
+void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+  if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
+  recurse(curr->ptr);
+  recurse(curr->expected);
+  recurse(curr->replacement);
+
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->type) {
+    case i32:
+      switch (curr->bytes) {
+        case 1: o << int8_t(BinaryConsts::I32AtomicCmpxchg8U); break;
+        case 2: o << int8_t(BinaryConsts::I32AtomicCmpxchg16U); break;
+        case 4: o << int8_t(BinaryConsts::I32AtomicCmpxchg); break;
+        default: WASM_UNREACHABLE();
+      }
+      break;
+    case i64:
+      switch (curr->bytes) {
+        case 1: o << int8_t(BinaryConsts::I64AtomicCmpxchg8U); break;
+        case 2: o << int8_t(BinaryConsts::I64AtomicCmpxchg16U); break;
+        case 4: o << int8_t(BinaryConsts::I64AtomicCmpxchg32U); break;
+        case 8: o << int8_t(BinaryConsts::I64AtomicCmpxchg); break;
+        default: WASM_UNREACHABLE();
+      }
+      break;
+    default: WASM_UNREACHABLE();
+  }
+  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
+}
+
+
 void WasmBinaryWriter::visitConst(Const *curr) {
   if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
   switch (curr->type) {
@@ -1934,6 +2010,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       code = getInt8();
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) break;
       if (maybeVisitStore(curr, code, /*isAtomic=*/true)) break;
+      if (maybeVisitAtomicRMW(curr, code)) break;
+      if (maybeVisitAtomicCmpxchg(curr, code)) break;
       throw ParseException("invalid code after atomic prefix: " + std::to_string(code));
     }
     default: {
@@ -2276,6 +2354,82 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code, bool isA
   if (debug) std::cerr << "zz node: Store" << std::endl;
   readMemoryAccess(curr->align, curr->bytes, curr->offset);
   curr->value = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+
+bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
+  if (code < BinaryConsts::AtomicRMWOps_Begin || code > BinaryConsts::AtomicRMWOps_End) return false;
+  auto* curr = allocator.alloc<AtomicRMW>();
+
+  // Set curr to the given opcode, type and size.
+#define SET(opcode, optype, size) \
+  curr->op = opcode;              \
+  curr->type = optype;            \
+  curr->bytes = size
+
+  // Handle the cases for all the valid types for a particular opcode
+#define SET_FOR_OP(Op) \
+    case BinaryConsts::I32AtomicRMW##Op: SET(Op, i32, 4); break;      \
+    case BinaryConsts::I32AtomicRMW##Op##8U: SET(Op, i32, 1); break;  \
+    case BinaryConsts::I32AtomicRMW##Op##16U: SET(Op, i32, 2); break; \
+    case BinaryConsts::I64AtomicRMW##Op: SET(Op, i64, 8); break;      \
+    case BinaryConsts::I64AtomicRMW##Op##8U: SET(Op, i64, 1); break;  \
+    case BinaryConsts::I64AtomicRMW##Op##16U: SET(Op, i64, 2); break; \
+    case BinaryConsts::I64AtomicRMW##Op##32U: SET(Op, i64, 4); break;
+
+  switch(code) {
+    SET_FOR_OP(Add);
+    SET_FOR_OP(Sub);
+    SET_FOR_OP(And);
+    SET_FOR_OP(Or);
+    SET_FOR_OP(Xor);
+    SET_FOR_OP(Xchg);
+    default: WASM_UNREACHABLE();
+  }
+#undef SET_FOR_OP
+#undef SET
+
+  if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->bytes, curr->offset);
+  if (readAlign != curr->bytes) throw ParseException("Align of AtomicRMW must match size");
+  curr->value = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) {
+  if (code < BinaryConsts::AtomicCmpxchgOps_Begin || code > BinaryConsts::AtomicCmpxchgOps_End) return false;
+  auto* curr = allocator.alloc<AtomicCmpxchg>();
+
+  // Set curr to the given type and size.
+#define SET(optype, size)         \
+  curr->type = optype;            \
+  curr->bytes = size
+
+  switch (code) {
+    case BinaryConsts::I32AtomicCmpxchg: SET(i32, 4); break;
+    case BinaryConsts::I64AtomicCmpxchg: SET(i64, 8); break;
+    case BinaryConsts::I32AtomicCmpxchg8U: SET(i32, 1); break;
+    case BinaryConsts::I32AtomicCmpxchg16U: SET(i32, 2); break;
+    case BinaryConsts::I64AtomicCmpxchg8U: SET(i64, 1); break;
+    case BinaryConsts::I64AtomicCmpxchg16U: SET(i64, 2); break;
+    case BinaryConsts::I64AtomicCmpxchg32U: SET(i64, 4); break;
+    default: WASM_UNREACHABLE();
+  }
+
+  if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->bytes, curr->offset);
+  if (readAlign != curr->bytes) throw ParseException("Align of AtomicCpxchg must match size");
+  curr->replacement = popNonVoidExpression();
+  curr->expected = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
