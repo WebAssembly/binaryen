@@ -493,13 +493,67 @@ private:
 
   Expression* makeConst(WasmType type) {
     Literal value;
-    // TODO: favor special numbers like 0, -1, i8 size, etc.?
-    switch (type) {
-      case i32: value = Literal(get32()); break;
-      case i64: value = Literal(get64()); break;
-      case f32: value = Literal(getFloat()); break;
-      case f64: value = Literal(getDouble()); break;
-      default: WASM_UNREACHABLE();
+    switch (upTo(3)) {
+      case 0: {
+        // totally random, entire range
+        switch (type) {
+          case i32: value = Literal(get32()); break;
+          case i64: value = Literal(get64()); break;
+          case f32: value = Literal(getFloat()); break;
+          case f64: value = Literal(getDouble()); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case 1: {
+        // small range
+        auto small = oneIn(2) ? int32_t(oneIn(2) ? int8_t(get())    : uint8_t(get())) :
+                                int32_t(oneIn(2) ? int16_t(get16()) : uint16_t(get16()));
+        switch (type) {
+          case i32: value = Literal(int32_t(small)); break;
+          case i64: value = Literal(int64_t(small)); break;
+          case f32: value = Literal(float(small)); break;
+          case f64: value = Literal(double(small)); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case 2: {
+        // special values
+        switch (type) {
+          case i32: value = Literal(pick<int32_t>(0, -1, 1,
+                                                  std::numeric_limits<int8_t>::min(),  std::numeric_limits<int8_t>::max(),
+                                                  std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(),
+                                                  std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
+                                                  std::numeric_limits<uint8_t>::max(),
+                                                  std::numeric_limits<uint16_t>::max(),
+                                                  std::numeric_limits<uint32_t>::max())); break;
+          case i64: value = Literal(pick<int64_t>(0, -1, 1,
+                                                  std::numeric_limits<int8_t>::min(),  std::numeric_limits<int8_t>::max(),
+                                                  std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(),
+                                                  std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
+                                                  std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(),
+                                                  std::numeric_limits<uint8_t>::max(),
+                                                  std::numeric_limits<uint16_t>::max(),
+                                                  std::numeric_limits<uint32_t>::max(),
+                                                  std::numeric_limits<uint64_t>::max())); break;
+          case f32: value = Literal(pick<float>(0, -1, 1,
+                                                std::numeric_limits<float>::min(),  std::numeric_limits<float>::max(),
+                                                std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
+                                                std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(),
+                                                std::numeric_limits<uint32_t>::max(),
+                                                std::numeric_limits<uint64_t>::max())); break;
+          case f64: value = Literal(pick<double>(0, -1, 1,
+                                                 std::numeric_limits<float>::min(),  std::numeric_limits<float>::max(),
+                                                 std::numeric_limits<double>::min(),  std::numeric_limits<double>::max(),
+                                                 std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
+                                                 std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(),
+                                                 std::numeric_limits<uint32_t>::max(),
+                                                 std::numeric_limits<uint64_t>::max())); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
     }
     auto* ret = wasm.allocator.alloc<Const>();
     ret->value = value;
@@ -694,7 +748,7 @@ private:
   template<typename T, typename... Args>
   T pick(T first, Args... args) {
     auto num = sizeof...(Args) + 1;
-    return pickGivenNum(upTo(num), first, args...);
+    return pickGivenNum<T>(upTo(num), first, args...);
   }
 
   template<typename T>
@@ -706,7 +760,7 @@ private:
   template<typename T, typename... Args>
   T pickGivenNum(size_t num, T first, Args... args) {
     if (num == 0) return first;
-    return pickGivenNum(num - 1, args...);
+    return pickGivenNum<T>(num - 1, args...);
   }
 
   // utilities
