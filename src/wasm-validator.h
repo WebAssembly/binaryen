@@ -38,11 +38,25 @@
 #define wasm_wasm_validator_h
 
 #include <set>
+#include <sstream>
 
 #include "wasm.h"
 #include "wasm-printing.h"
 
 namespace wasm {
+
+// Print anything that can be streamed to an ostream
+template <typename T>
+inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
+  stream << curr << std::endl;
+  return stream;
+}
+// Specialization for Expressions to print type info too
+template <>
+inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
+  WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
+  return stream;
+}
 
 struct WasmValidator : public PostWalker<WasmValidator> {
   bool valid = true;
@@ -123,6 +137,8 @@ public:
   void visitSetLocal(SetLocal *curr);
   void visitLoad(Load *curr);
   void visitStore(Store *curr);
+  void visitAtomicRMW(AtomicRMW *curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
   void visitBinary(Binary *curr);
   void visitUnary(Unary *curr);
   void visitSelect(Select* curr);
@@ -144,12 +160,14 @@ public:
 
   // helpers
  private:
-  std::ostream& fail();
+  template <typename T, typename S>
+  std::ostream& fail(T curr, S text);
+  std::ostream& printFailureHeader();
+
   template<typename T>
   bool shouldBeTrue(bool result, T curr, const char* text) {
     if (!result) {
-      fail() << "unexpected false: " << text << ", on \n" << curr << std::endl;
-      valid = false;
+      fail(curr, "unexpected false: " + std::string(text));
       return false;
     }
     return result;
@@ -157,8 +175,7 @@ public:
   template<typename T>
   bool shouldBeFalse(bool result, T curr, const char* text) {
     if (result) {
-      fail() << "unexpected true: " << text << ", on \n" << curr << std::endl;
-      valid = false;
+      fail(curr, "unexpected true: " + std::string(text));
       return false;
     }
     return result;
@@ -167,18 +184,9 @@ public:
   template<typename T, typename S>
   bool shouldBeEqual(S left, S right, T curr, const char* text) {
     if (left != right) {
-      fail() << "" << left << " != " << right << ": " << text << ", on \n";
-      WasmPrinter::printExpression(curr, std::cerr, false, true) << std::endl;
-      valid = false;
-      return false;
-    }
-    return true;
-  }
-  template<typename T, typename S, typename U>
-  bool shouldBeEqual(S left, S right, T curr, U other, const char* text) {
-    if (left != right) {
-      fail() << "" << left << " != " << right << ": " << text << ", on \n" << curr << " / " << other << std::endl;
-      valid = false;
+      std::ostringstream ss;
+      ss << left << " != " << right << ": " << text;
+      fail(curr, ss.str());
       return false;
     }
     return true;
@@ -187,9 +195,9 @@ public:
   template<typename T, typename S>
   bool shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
     if (left != unreachable && left != right) {
-      fail() << "" << left << " != " << right << ": " << text << ", on \n";
-      WasmPrinter::printExpression(curr, std::cerr, false, true) << std::endl;
-      valid = false;
+      std::ostringstream ss;
+      ss << left << " != " << right << ": " << text;
+      fail(curr, ss.str());
       return false;
     }
     return true;
@@ -198,14 +206,17 @@ public:
   template<typename T, typename S>
   bool shouldBeUnequal(S left, S right, T curr, const char* text) {
     if (left == right) {
-      fail() << "" << left << " == " << right << ": " << text << ", on \n" << curr << std::endl;
-      valid = false;
+      std::ostringstream ss;
+      ss << left << " == " << right << ": " << text;
+      fail(curr, ss.str());
       return false;
     }
     return true;
   }
 
-  void validateAlignment(size_t align, WasmType type, Index bytes);
+  void validateAlignment(size_t align, WasmType type, Index bytes, bool isAtomic,
+                         Expression* curr);
+  void validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr);
   void validateBinaryenIR(Module& wasm);
 };
 
