@@ -37,7 +37,6 @@ public:
       bytes.push_back(0);
     }
     build();
-    //WasmPrinter::printModule(&wasm, std::cout);
   }
 
 private:
@@ -51,7 +50,7 @@ private:
   static const int TRIES = 10;
 
   // beyond a nesting limit, greatly decrease the chance to continue to nest
-  static const int NESTING_LIMIT = 5;
+  static const int NESTING_LIMIT = 7;
 
   int8_t get() {
     if (pos == bytes.size()) {
@@ -100,7 +99,7 @@ private:
     func = new Function;
     func->name = std::string("func_") + std::to_string(num);
     func->result = getReachableType();
-    Index numParams = logify(get16());
+    Index numParams = logify(get16()) / 2;
     for (Index i = 0; i < numParams; i++) {
       func->params.push_back(getConcreteType());
     }
@@ -110,22 +109,25 @@ private:
     }
     labelIndex = 0;
     assert(breakableStack.empty());
-    // with small chance, make the body unreachable
-    if (oneIn(10)) {
-      func->body = make(unreachable);
+    // with reasonable chance make the body a block
+    if (oneIn(2)) {
+      func->body = makeBlock(func->result);
     } else {
-      func->body = make(func->result);
+      // with very small chance, make the body unreachable
+      if (oneIn(20)) {
+        func->body = make(unreachable);
+      } else {
+        func->body = make(func->result);
+      }
     }
     assert(breakableStack.empty());
     wasm.addFunction(func);
-    // export a good deal of functions
-    if (oneIn(2)) {
-      auto* export_ = new Export;
-      export_->name = func->name;
-      export_->value = func->name;
-      export_->kind = ExternalKind::Function;
-      wasm.addExport(export_);
-    }
+    // export them all TODO just some?
+    auto* export_ = new Export;
+    export_->name = func->name;
+    export_->value = func->name;
+    export_->kind = ExternalKind::Function;
+    wasm.addExport(export_);
   }
 
   Name makeLabel() {
@@ -139,7 +141,7 @@ private:
   Expression* make(WasmType type) {
     // when we should stop, emit something small
     if (finishedInput ||
-        (nesting >= NESTING_LIMIT && oneIn(2))) {
+        (nesting >= NESTING_LIMIT && oneIn(4))) {
       switch (type) {
         case i32: return makeConst(i32);
         case i64: return makeConst(i64);
@@ -380,7 +382,7 @@ private:
   Expression* makeGetLocal(WasmType type) {
     auto total = func->getNumLocals();
     if (total == 0) return make(type);
-    int tries = TRIES;
+    int tries = TRIES * 2;
     while (tries-- > 0) {
       auto index = upTo(total);
       if (func->getLocalType(index) != type) continue;
@@ -394,7 +396,7 @@ private:
   Expression* makeSetLocal(WasmType type) {
     auto total = func->getNumLocals();
     if (total == 0) return make(type);
-    int tries = TRIES;
+    int tries = TRIES * 2;
     while (tries-- > 0) {
       auto index = upTo(total);
       if (func->getLocalType(index) != type) continue;
@@ -587,7 +589,7 @@ private:
     assert(type == unreachable);
     if (breakableStack.empty()) return make(type);
     // we need to find proper targets to break to; try a bunch
-    int tries = 2 * TRIES;
+    int tries = TRIES;
     std::vector<Name> names;
     WasmType valueType = unreachable;
     while (tries-- > 0) {
