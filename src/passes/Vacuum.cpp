@@ -234,6 +234,10 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     }
     // if the condition is unreachable, just return it
     if (curr->condition->type == unreachable) {
+      typeUpdater.noteRecursiveRemoval(curr->ifTrue);
+      if (curr->ifFalse) {
+        typeUpdater.noteRecursiveRemoval(curr->ifFalse);
+      }
       replaceCurrent(curr->condition);
       return;
     }

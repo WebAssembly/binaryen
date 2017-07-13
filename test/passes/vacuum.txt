@@ -287,4 +287,18 @@
    )
   )
  )
+ (func $if-arm-vanishes (type $3) (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (i32.const 1)
+   )
+  )
+ )
+ (func $if-arm-vanishes-2 (type $3) (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (i32.const 1)
+   )
+  )
+ )
 )

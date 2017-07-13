@@ -611,4 +611,30 @@
     )
    )
   )
+  (func $if-arm-vanishes (result i32)
+   (block $label$0 (result i32)
+    (block $label$1
+     (if
+      (br $label$0
+       (i32.const 1)
+      )
+      (br $label$1)
+     )
+    )
+    (i32.const 1579493952)
+   )
+  )
+  (func $if-arm-vanishes-2 (result i32)
+   (block $label$0 (result i32)
+    (block $label$1
+     (if
+      (br $label$0
+       (i32.const 1)
+      )
+      (br $label$1)
+     )
+    )
+    (i32.const 1579493952)
+   )
+  )
 )
