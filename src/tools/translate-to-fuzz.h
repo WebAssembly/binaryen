@@ -288,7 +288,7 @@ private:
     ret->name = makeLabel();
     breakableStack.push_back(ret);
     Index num = logify(get());
-    while (num > 0) {
+    while (num > 0 && !finishedInput) {
       ret->list.push_back(make(none));
       num--;
     }
