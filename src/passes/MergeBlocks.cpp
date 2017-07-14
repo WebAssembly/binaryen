@@ -188,6 +188,15 @@ static void optimizeBlock(Block* curr, Module* module) {
       }
       if (!child) continue;
       if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
+      if (child->type == unreachable) {
+        // an unreachable block can have a concrete final element (which is never reached)
+        if (!child->list.empty()) {
+          if (isConcreteWasmType(child->list.back()->type)) {
+            // just remove it
+            child->list.pop_back();
+          }
+        }
+      }
       ExpressionList merged(module->allocator);
       for (size_t j = 0; j < i; j++) {
         merged.push_back(curr->list[j]);

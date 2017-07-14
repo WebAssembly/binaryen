@@ -926,4 +926,13 @@
    (unreachable)
   )
  )
+ (func $concrete_finale_in_unreachable (result f64)
+  (block $label$0 (result f64)
+   (block ;; this block is unreachable
+    (unreachable)
+    (f64.const 6.322092475576799e-96)
+   )
+   (f64.const -1)
+  )
+ )
 )
