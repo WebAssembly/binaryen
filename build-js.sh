@@ -117,6 +117,7 @@ echo "building shared bitcode"
   src/wasm/wasm-type.cpp \
   src/wasm/wasm-s-parser.cpp \
   src/wasm/wasm-binary.cpp \
+  src/wasm/wasm-validator.cpp \
   src/wasm/literal.cpp \
   src/cfg/Relooper.cpp \
   -Isrc/ \
