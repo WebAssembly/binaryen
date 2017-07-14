@@ -46,10 +46,10 @@
 namespace wasm {
 
 // Print anything that can be streamed to an ostream
-  template <typename T,
-    typename std::enable_if<
-      !std::is_base_of<Expression, typename std::remove_pointer<T>::type>::value
-    >::type* = nullptr>
+template <typename T,
+  typename std::enable_if<
+    !std::is_base_of<Expression, typename std::remove_pointer<T>::type>::value
+  >::type* = nullptr>
 inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
   stream << curr << std::endl;
   return stream;
