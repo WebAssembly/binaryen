@@ -241,8 +241,9 @@ void WasmValidator::visitAtomicRMW(AtomicRMW* curr) {
   switch (curr->type) {
     case i32:
     case i64:
-    case unreachable:
+    case unreachable: {
       break;
+    }
     default: fail("Atomic operations are only valid on int types", curr);
   }
 }
