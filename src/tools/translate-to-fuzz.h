@@ -697,6 +697,7 @@ private:
       case 4: return none;
       case 5: return unreachable;
     }
+    WASM_UNREACHABLE();
   }
 
   WasmType getReachableType() {
