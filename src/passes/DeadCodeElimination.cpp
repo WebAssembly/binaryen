@@ -28,6 +28,7 @@
 // have no side effects.
 //
 
+#include <vector>
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -321,84 +322,62 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     }
   }
 
-  void visitSetLocal(SetLocal* curr) {
-    if (isUnreachable(curr->value)) {
-      replaceCurrent(curr->value);
+  // Append the reachable operands of the current node to a block, and replace
+  // it with the block
+  void BlockifyReachableOperands(std::vector<Expression*> list, WasmType type) {
+    for (size_t i = 0; i < list.size(); ++i) {
+      auto* elem = list[i];
+      if (isUnreachable(elem)) {
+	auto* replacement = elem;
+	if (i > 0) {
+	  auto* block = getModule()->allocator.alloc<Block>();
+	  for (size_t j = 0; j < i; ++j) {
+	    block->list.push_back(drop(list[j]));
+	  }
+	  block->list.push_back(list[i]);
+	  block->finalize(type);
+	  replacement = block;
+	}
+	replaceCurrent(replacement);
+	return;
+      }
     }
+  }
+
+  void visitSetLocal(SetLocal* curr) {
+    BlockifyReachableOperands({curr->value}, curr->type);
   }
 
   void visitLoad(Load* curr) {
-    if (isUnreachable(curr->ptr)) {
-      replaceCurrent(curr->ptr);
-    }
+    BlockifyReachableOperands({curr->ptr}, curr->type);
   }
 
   void visitStore(Store* curr) {
-    if (isUnreachable(curr->ptr)) {
-      replaceCurrent(curr->ptr);
-      return;
-    }
-    if (isUnreachable(curr->value)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2);
-      block->list[0] = drop(curr->ptr);
-      block->list[1] = curr->value;
-      block->finalize(curr->type);
-      replaceCurrent(block);
-    }
+    BlockifyReachableOperands({curr->ptr, curr->value}, curr->type);
+  }
+
+  void visitAtomicRMW(AtomicRMW* curr) {
+    BlockifyReachableOperands({curr->ptr, curr->value}, curr->type);
+  }
+
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    BlockifyReachableOperands({curr->ptr, curr->expected, curr->replacement}, curr->type);
   }
 
   void visitUnary(Unary* curr) {
-    if (isUnreachable(curr->value)) {
-      replaceCurrent(curr->value);
-    }
+    BlockifyReachableOperands({curr->value}, curr->type);
   }
 
   void visitBinary(Binary* curr) {
-    if (isUnreachable(curr->left)) {
-      replaceCurrent(curr->left);
-      return;
-    }
-    if (isUnreachable(curr->right)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2);
-      block->list[0] = drop(curr->left);
-      block->list[1] = curr->right;
-      block->finalize(curr->type);
-      replaceCurrent(block);
-    }
+    BlockifyReachableOperands({curr->left, curr->right}, curr->type);
   }
 
   void visitSelect(Select* curr) {
-    if (isUnreachable(curr->ifTrue)) {
-      replaceCurrent(curr->ifTrue);
-      return;
-    }
-    if (isUnreachable(curr->ifFalse)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2);
-      block->list[0] = drop(curr->ifTrue);
-      block->list[1] = curr->ifFalse;
-      block->finalize(curr->type);
-      replaceCurrent(block);
-      return;
-    }
-    if (isUnreachable(curr->condition)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(3);
-      block->list[0] = drop(curr->ifTrue);
-      block->list[1] = drop(curr->ifFalse);
-      block->list[2] = curr->condition;
-      block->finalize(curr->type);
-      replaceCurrent(block);
-      return;
-    }
+    BlockifyReachableOperands({curr->ifTrue, curr->ifFalse, curr->condition}, curr->type);
   }
 
   void visitDrop(Drop* curr) {
-    if (isUnreachable(curr->value)) {
-      replaceCurrent(curr->value);
-    }
+    BlockifyReachableOperands({curr->value}, curr->type);
   }
 
   void visitHost(Host* curr) {

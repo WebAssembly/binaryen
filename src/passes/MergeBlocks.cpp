@@ -286,6 +286,22 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitStore(Store* curr) {
     optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
   }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
+  }
+  // XXX TODO: why doesn't this work for select?
+  void optimizeTernary(Expression* curr,
+		       Expression* first, Expression* second, Expression* third) {
+    Block* outer = nullptr;
+    outer = optimize(curr, first, outer);
+    if (EffectAnalyzer(getPassOptions(), first).hasSideEffects()) return;
+    outer = optimize(curr, second, outer);
+    if (EffectAnalyzer(getPassOptions(), second).hasSideEffects()) return;
+            optimize(curr, third, outer);
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    optimizeTernary(curr, curr->ptr, curr->expected, curr->replacement);
+  }
 
   void visitSelect(Select* curr) {
     // TODO: for now, just stop when we see any side effect. instead, we could
