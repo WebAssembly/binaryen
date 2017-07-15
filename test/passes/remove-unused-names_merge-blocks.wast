@@ -854,6 +854,50 @@
         (i32.const 60)
       )
     )
+    (call_indirect $ii
+      (block $block21 (result i32)
+        (drop
+          (i32.const 31)
+        )
+        (i32.const 41)
+      )
+      (unreachable)
+      (block $block22 (result i32)
+        (drop
+          (i32.const 51)
+        )
+        (i32.const 61)
+      )
+    )
+    (call_indirect $ii
+      (block $block21 (result i32)
+        (drop
+          (i32.const 32)
+        )
+        (i32.const 42)
+      )
+      (block $block22 (result i32)
+        (drop
+          (i32.const 52)
+        )
+        (i32.const 62)
+      )
+      (unreachable)
+    )
+  )
+  (func $mix-select (param $x i32)
+    (drop
+      (select
+        (get_local $x)
+        (get_local $x)
+        (block (result i32)
+          (set_local $x ;; cannot be moved before the gets
+            (i32.const 1)
+          )
+          (i32.const 2)
+        )
+      )
+    )
   )
   (func $block-type-change (type $3)
     (local $0 f64)
