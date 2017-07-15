@@ -46,13 +46,15 @@
 namespace wasm {
 
 // Print anything that can be streamed to an ostream
-template <typename T>
+template <typename T,
+  typename std::enable_if<
+    !std::is_base_of<Expression, typename std::remove_pointer<T>::type>::value
+  >::type* = nullptr>
 inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
   stream << curr << std::endl;
   return stream;
 }
-// Specialization for Expressions to print type info too
-template <>
+// Extra overload for Expressions, to print type info too
 inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
   WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
   return stream;
@@ -162,13 +164,13 @@ public:
   // helpers
  private:
   template <typename T, typename S>
-  std::ostream& fail(T curr, S text);
+  std::ostream& fail(S text, T curr);
   std::ostream& printFailureHeader();
 
   template<typename T>
   bool shouldBeTrue(bool result, T curr, const char* text) {
     if (!result) {
-      fail(curr, "unexpected false: " + std::string(text));
+      fail("unexpected false: " + std::string(text), curr);
       return false;
     }
     return result;
@@ -176,7 +178,7 @@ public:
   template<typename T>
   bool shouldBeFalse(bool result, T curr, const char* text) {
     if (result) {
-      fail(curr, "unexpected true: " + std::string(text));
+      fail("unexpected true: " + std::string(text), curr);
       return false;
     }
     return result;
@@ -187,7 +189,7 @@ public:
     if (left != right) {
       std::ostringstream ss;
       ss << left << " != " << right << ": " << text;
-      fail(curr, ss.str());
+      fail(ss.str(), curr);
       return false;
     }
     return true;
@@ -198,7 +200,7 @@ public:
     if (left != unreachable && left != right) {
       std::ostringstream ss;
       ss << left << " != " << right << ": " << text;
-      fail(curr, ss.str());
+      fail(ss.str(), curr);
       return false;
     }
     return true;
@@ -209,12 +211,13 @@ public:
     if (left == right) {
       std::ostringstream ss;
       ss << left << " == " << right << ": " << text;
-      fail(curr, ss.str());
+      fail(ss.str(), curr);
       return false;
     }
     return true;
   }
 
+  void shouldBeIntOrUnreachable(WasmType ty, Expression* curr, const char* text);
   void validateAlignment(size_t align, WasmType type, Index bytes, bool isAtomic,
                          Expression* curr);
   void validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr);
