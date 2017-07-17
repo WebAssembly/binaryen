@@ -1993,4 +1993,17 @@
    )
   )
  )
+ (func $sign-ext-1-and-ne (type $2) (result i32)
+  (select
+   (i32.ne
+    (i32.and
+     (call $sign-ext-1-and-ne)
+     (i32.const 2147483647)
+    )
+    (i32.const -2147483648)
+   )
+   (i32.const 2)
+   (i32.const 1)
+  )
+ )
 )
