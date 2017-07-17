@@ -301,4 +301,8 @@
    )
   )
  )
+ (func $nop-if-type-changes (type $0)
+  (local $0 i32)
+  (nop)
+ )
 )
