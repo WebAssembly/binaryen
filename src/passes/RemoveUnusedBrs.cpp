@@ -226,6 +226,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // we need the ifTrue to break, so it cannot reach the code we want to move
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            iff->finalize();
+            block->finalize();
             return true;
           }
         } else {
@@ -262,9 +264,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            iff->finalize();
+            block->finalize();
             return true;
           } else if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifFalse)) {
             iff->ifTrue = blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            iff->finalize();
+            block->finalize();
             return true;
           }
         }
