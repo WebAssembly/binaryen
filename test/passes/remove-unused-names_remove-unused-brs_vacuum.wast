@@ -127,5 +127,23 @@
   (func $23 (param i32) (param i32) (param i32) (result i32)
     (unreachable)
   )
+  (func $unexitable-loops-result (param $0 i32) (result i64)
+   (loop $label$0
+    (loop $label$1
+     (if
+      (i32.load8_s
+       (i32.const 201460482)
+      )
+      (br $label$0)
+      (block $label$3
+       (br_if $label$3
+        (get_local $0)
+       )
+      )
+     )
+     (br $label$1)
+    )
+   )
+  )
 )
 
