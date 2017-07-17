@@ -52,25 +52,33 @@ private:
   // beyond a nesting limit, greatly decrease the chance to continue to nest
   static const int NESTING_LIMIT = 7;
 
+  // after we finish the input, we start going through it again, but xoring
+  // so it's not identical
+  int xorFactor = 0;
+
   int8_t get() {
     if (pos == bytes.size()) {
       // we ran out of input, go to the start for more stuff
       finishedInput = true;
       pos = 0;
+      xorFactor++;
     }
-    return bytes[pos++];
+    return bytes[pos++] ^ xorFactor;
   }
 
   int16_t get16() {
-    return (int16_t(get()) << 8) | int16_t(get());
+    auto temp = int16_t(get()) << 8;
+    return temp | int16_t(get());
   }
 
   int32_t get32() {
-    return (int32_t(get16()) << 16) | int32_t(get16());
+    auto temp = int32_t(get16()) << 16;
+    return temp | int32_t(get16());
   }
 
   int64_t get64() {
-    return (int64_t(get32()) << 32) | int64_t(get32());
+    auto temp = int64_t(get32()) << 32;
+    return temp | int64_t(get32());
   }
 
   float getFloat() {
@@ -507,8 +515,14 @@ private:
       }
       case 1: {
         // small range
-        auto small = oneIn(2) ? int32_t(oneIn(2) ? int8_t(get())    : uint8_t(get())) :
-                                int32_t(oneIn(2) ? int16_t(get16()) : uint16_t(get16()));
+        int32_t small;
+        switch (upTo(4)) {
+          case 0: small = int8_t(get()); break;
+          case 1: small = uint8_t(get()); break;
+          case 2: small = int16_t(get16()); break;
+          case 3: small = uint16_t(get16()); break;
+          default: WASM_UNREACHABLE();
+        }
         switch (type) {
           case i32: value = Literal(int32_t(small)); break;
           case i64: value = Literal(int64_t(small)); break;
