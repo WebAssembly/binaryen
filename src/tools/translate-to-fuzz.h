@@ -23,6 +23,23 @@
 
 namespace wasm {
 
+// helper structs, since list initialization has a fixed order of
+// evaluation, avoiding UB
+
+struct ThreeArgs {
+  Expression *a;
+  Expression *b;
+  Expression *c;
+};
+
+struct BinaryArgs {
+  BinaryOp a;
+  Expression *b;
+  Expression *c;
+};
+
+// main reader
+
 class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm) : wasm(wasm), builder(wasm) {}
@@ -323,7 +340,11 @@ private:
   }
 
   Expression* makeIf(WasmType type) {
-    return builder.makeIf(make(i32), make(type), make(type));
+    return makeIf({ make(i32), make(type), make(type) });
+  }
+
+  Expression* makeIf(const struct ThreeArgs& args) {
+    return builder.makeIf(args.a, args.b, args.c);
   }
 
   Expression* makeBreak(WasmType type) {
@@ -577,7 +598,8 @@ private:
 
   Unary* makeUnary(WasmType type) {
     if (type == unreachable) {
-      return builder.makeUnary(makeUnary(getConcreteType())->op, make(unreachable));
+      auto op = makeUnary(getConcreteType())->op;
+      return builder.makeUnary(op, make(unreachable));
     }
     switch (type) {
       case i32: {
@@ -621,36 +643,44 @@ private:
     WASM_UNREACHABLE();
   }
 
+  Binary* makeBinary(const BinaryArgs& args) {
+    return builder.makeBinary(args.a, args.b, args.c);
+  }
+
   Binary* makeBinary(WasmType type) {
     if (type == unreachable) {
-      return builder.makeBinary(makeBinary(getConcreteType())->op, make(unreachable), make(unreachable));
+      return makeBinary({ makeBinary(getConcreteType())->op, make(unreachable), make(unreachable) });
     }
     switch (type) {
       case i32: {
         switch (upTo(4)) {
-          case 0: return builder.makeBinary(pick(AddInt32, SubInt32, MulInt32, DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, EqInt32, NeInt32, LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32), make(i32), make(i32));
-          case 1: return builder.makeBinary(pick(EqInt64, NeInt64, LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64), make(i64), make(i64));
-          case 2: return builder.makeBinary(pick(EqFloat32, NeFloat32, LtFloat32, LeFloat32, GtFloat32, GeFloat32), make(f32), make(f32));
-          case 3: return builder.makeBinary(pick(EqFloat64, NeFloat64, LtFloat64, LeFloat64, GtFloat64, GeFloat64), make(f64), make(f64));
+          case 0: return makeBinary({ pick(AddInt32, SubInt32, MulInt32, DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, EqInt32, NeInt32, LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32), make(i32), make(i32) });
+          case 1: return makeBinary({ pick(EqInt64, NeInt64, LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64), make(i64), make(i64) });
+          case 2: return makeBinary({ pick(EqFloat32, NeFloat32, LtFloat32, LeFloat32, GtFloat32, GeFloat32), make(f32), make(f32) });
+          case 3: return makeBinary({ pick(EqFloat64, NeFloat64, LtFloat64, LeFloat64, GtFloat64, GeFloat64), make(f64), make(f64) });
         }
         WASM_UNREACHABLE();
       }
       case i64: {
-        return builder.makeBinary(pick(AddInt64, SubInt64, MulInt64, DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64), make(i64), make(i64));
+        return makeBinary({ pick(AddInt64, SubInt64, MulInt64, DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64), make(i64), make(i64) });
       }
       case f32: {
-        return builder.makeBinary(pick(AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32), make(f32), make(f32));
+        return makeBinary({ pick(AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32), make(f32), make(f32) });
       }
       case f64: {
-        return builder.makeBinary(pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64));
+        return makeBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) });
       }
       default: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
 
+  Expression* makeSelect(const ThreeArgs& args) {
+    return builder.makeSelect(args.a, args.b, args.c);
+  }
+
   Expression* makeSelect(WasmType type) {
-    return builder.makeSelect(make(i32), make(type), make(type));
+    return makeSelect({ make(i32), make(type), make(type) });
   }
 
   Expression* makeSwitch(WasmType type) {
@@ -679,7 +709,8 @@ private:
     }
     auto default_ = names.back();
     names.pop_back();
-    return builder.makeSwitch(names, default_, make(i32), isConcreteWasmType(valueType) ? make(valueType) : nullptr);
+    auto temp1 = make(i32), temp2 = isConcreteWasmType(valueType) ? make(valueType) : nullptr;
+    return builder.makeSwitch(names, default_, temp1, temp2);
   }
 
   Expression* makeDrop(WasmType type) {
