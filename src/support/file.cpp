@@ -26,7 +26,8 @@ T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags
   if (debug == Flags::Debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
-  if (binary == Flags::Binary) flags |= std::ifstream::binary;
+  // asm2wasm.exe built with MinGW would crash with files containing '\r' when opened without the binary flag
+  /*if (binary == Flags::Binary) */flags |= std::ifstream::binary;
   infile.open(filename, flags);
   if (!infile.is_open()) {
     std::cerr << "Failed opening '" << filename << "'" << std::endl;
