@@ -262,16 +262,16 @@ void WasmValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeIntOrUnreachable(curr->expected->type, curr, "Atomic operations are only valid on int types");
 }
 void WasmValidator::validateMemBytes(uint8_t bytes, WasmType type, Expression* curr) {
-  if (type == unreachable) {
-    return; // nothing to validate in this case
-  }
   switch (bytes) {
     case 1:
     case 2:
-    case 4:
-      break;
+    case 4: break;
     case 8: {
-      shouldBeEqual(getWasmTypeSize(type), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
+      // if we have a concrete type for the load, then we know the size of the mem operation and
+      // can validate it
+      if (type != unreachable) {
+        shouldBeEqual(getWasmTypeSize(type), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
+      }
       break;
     }
     default: fail("Memory operations must be 1,2,4, or 8 bytes", curr);
