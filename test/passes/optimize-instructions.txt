@@ -1962,4 +1962,48 @@
    )
   )
  )
+ (func $zero-shifts-is-not-sign-ext (type $1)
+  (drop
+   (i32.eq
+    (i32.load16_s align=1
+     (i32.const 790656516)
+    )
+    (i32.const -5431187)
+   )
+  )
+  (drop
+   (i32.eq
+    (i32.shl
+     (i32.load16_s align=1
+      (i32.const 790656516)
+     )
+     (i32.const 1)
+    )
+    (i32.const -5431187)
+   )
+  )
+ )
+ (func $zero-ops (type $2) (result i32)
+  (return
+   (i32.eq
+    (i32.load16_s align=1
+     (i32.const 790656516)
+    )
+    (i32.const -1337)
+   )
+  )
+ )
+ (func $sign-ext-1-and-ne (type $2) (result i32)
+  (select
+   (i32.ne
+    (i32.and
+     (call $sign-ext-1-and-ne)
+     (i32.const 2147483647)
+    )
+    (i32.const -2147483648)
+   )
+   (i32.const 2)
+   (i32.const 1)
+  )
+ )
 )

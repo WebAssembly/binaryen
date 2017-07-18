@@ -220,31 +220,58 @@ void WasmValidator::visitSetLocal(SetLocal *curr) {
   }
 }
 void WasmValidator::visitLoad(Load *curr) {
+  if (curr->isAtomic && !getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
 }
 void WasmValidator::visitStore(Store *curr) {
+  if (curr->isAtomic && !getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
   shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
 }
+void WasmValidator::shouldBeIntOrUnreachable(WasmType ty, Expression* curr, const char* text) {
+  switch (ty) {
+    case i32:
+    case i64:
+    case unreachable: {
+      break;
+    }
+    default: fail(text, curr);
+  }
+}
 void WasmValidator::visitAtomicRMW(AtomicRMW* curr) {
+  if (!getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->type, curr);
+  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "AtomicRMW result type must match operand");
+  shouldBeIntOrUnreachable(curr->type, curr, "Atomic operations are only valid on int types");
 }
 void WasmValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+  if (!getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
   validateMemBytes(curr->bytes, curr->type, curr);
+  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
+  if (curr->expected->type != unreachable && curr->replacement->type != unreachable) {
+    shouldBeEqual(curr->expected->type, curr->replacement->type, curr, "cmpxchg operand types must match");
+  }
+  shouldBeEqualOrFirstIsUnreachable(curr->expected->type, curr->type, curr, "Cmpxchg result type must match expected");
+  shouldBeEqualOrFirstIsUnreachable(curr->replacement->type, curr->type, curr, "Cmpxchg result type must match replacement");
+  shouldBeIntOrUnreachable(curr->expected->type, curr, "Atomic operations are only valid on int types");
 }
-void WasmValidator::validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr) {
+void WasmValidator::validateMemBytes(uint8_t bytes, WasmType type, Expression* curr) {
+  if (type == unreachable) {
+    return; // nothing to validate in this case
+  }
   switch (bytes) {
     case 1:
     case 2:
     case 4:
       break;
     case 8: {
-      shouldBeEqual(getWasmTypeSize(ty), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
+      shouldBeEqual(getWasmTypeSize(type), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
       break;
     }
     default: fail("Memory operations must be 1,2,4, or 8 bytes", curr);
@@ -655,7 +682,7 @@ void WasmValidator::validateBinaryenIR(Module& wasm) {
 }
 
 template <typename T, typename S>
-std::ostream& WasmValidator::fail(T curr, S text) {
+std::ostream& WasmValidator::fail(S text, T curr) {
   valid = false;
   auto& ret = printFailureHeader() << text << ", on \n";
   return printModuleComponent(curr, ret);

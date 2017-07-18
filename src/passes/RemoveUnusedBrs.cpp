@@ -226,17 +226,51 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // we need the ifTrue to break, so it cannot reach the code we want to move
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            iff->finalize();
+            block->finalize();
             return true;
           }
         } else {
           // this is already an if-else. if one side is a dead end, we can append to the other, if
           // there is no returned value to concern us
           assert(!isConcreteWasmType(iff->type)); // can't be, since in the middle of a block
+
+          // ensures the first node is a block, if it isn't already, and merges in the second,
+          // either as a single element or, if a block, by appending to the first block. this
+          // keeps the order of operations in place, that is, the appended element will be
+          // executed after the first node's elements
+          auto blockifyMerge = [&](Expression* any, Expression* append) -> Block* {
+            Block* block = nullptr;
+            if (any) block = any->dynCast<Block>();
+            // if the first isn't a block, or it's a block with a name (so we might
+            // branch to the end, and so can't append to it, we might skip that code!)
+            // then make a new block
+            if (!block || block->name.is()) {
+              block = builder.makeBlock(any);
+            } else {
+              assert(!isConcreteWasmType(block->type));
+            }
+            auto* other = append->dynCast<Block>();
+            if (!other) {
+              block->list.push_back(append);
+            } else {
+              for (auto* item : other->list) {
+                block->list.push_back(item);
+              }
+            }
+            block->finalize();
+            return block;
+          };
+
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
-            iff->ifFalse = builder.blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            iff->ifFalse = blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            iff->finalize();
+            block->finalize();
             return true;
           } else if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifFalse)) {
-            iff->ifTrue = builder.blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            iff->ifTrue = blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            iff->finalize();
+            block->finalize();
             return true;
           }
         }

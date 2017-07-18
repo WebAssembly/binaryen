@@ -593,4 +593,71 @@
     )
    )
   )
+  (func $unreachable-if-with-nop-arm-that-leaves-a-concrete-value-if-nop-is-removed
+   (block $label$0
+    (loop $label$1
+     (if
+      (br_if $label$0
+       (i32.load8_s
+        (i32.const 1634541608)
+       )
+       (loop $label$9
+        (br $label$9)
+       )
+      )
+      (nop)
+      (i32.const 1920103026)
+     )
+    )
+   )
+  )
+  (func $if-arm-vanishes (result i32)
+   (block $label$0 (result i32)
+    (block $label$1
+     (if
+      (br $label$0
+       (i32.const 1)
+      )
+      (br $label$1)
+     )
+    )
+    (i32.const 1579493952)
+   )
+  )
+  (func $if-arm-vanishes-2 (result i32)
+   (block $label$0 (result i32)
+    (block $label$1
+     (if
+      (br $label$0
+       (i32.const 1)
+      )
+      (br $label$1)
+     )
+    )
+    (i32.const 1579493952)
+   )
+  )
+  (func $nop-if-type-changes (type $0)
+   (local $0 i32)
+   (block $label$0
+    (if
+     (i32.eqz
+      (get_local $0)
+     )
+     (block $label$1
+      (block
+       (if ;; we nop this if, which has a type change for block $label$1, no more brs to it
+        (i32.const 0)
+        (br_if $label$1
+          (i32.const 1717966400)
+        )
+       )
+       (drop
+        (br $label$0)
+       )
+      )
+     )
+    )
+   )
+  )
 )

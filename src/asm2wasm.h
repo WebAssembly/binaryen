@@ -1397,7 +1397,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
       // note that for an ftCall or mftCall, we have no asm.js mask, so have nothing to do here
-      auto* add = curr->target->dynCast<Binary>();
+      auto* target = curr->target;
+      // might be a block with a fallthrough
+      if (auto* block = target->dynCast<Block>()) {
+        target = block->list.back();
+      }
+      auto* add = target->dynCast<Binary>();
       if (!add) return;
       if (add->right->is<CallImport>()) {
         auto* offset = add->right->cast<CallImport>();

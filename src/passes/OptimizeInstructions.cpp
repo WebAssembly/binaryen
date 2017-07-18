@@ -453,7 +453,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             if ((count > 0 && count < 32 - bits) || (constSignBit && count == 0)) {
               // mixed or [zero upper const bits with sign bit set]; the compared values can never be identical, so
               // force something definitely impossible even after zext
-              assert(bits < 31);
+              assert(bits < 32);
               c->value = Literal(int32_t(0x80000000));
               // TODO: if no side effects, we can just replace it all with 1 or 0
             } else {
@@ -515,6 +515,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
               // a mask of lower bits is not needed if we are already smaller
               return binary->left;
             }
+          }
+        }
+        // some operations have no effect TODO: many more
+        if (right->value == Literal(int32_t(0))) {
+          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32) {
+            return binary->left;
           }
         }
         // the square of some operations can be merged

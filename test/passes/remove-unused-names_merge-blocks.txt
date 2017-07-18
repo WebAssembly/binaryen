@@ -4,6 +4,7 @@
  (type $iii (func (param i32 i32 i32)))
  (type $3 (func))
  (type $4 (func (result i32)))
+ (type $5 (func (result f64)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-i)
  (memory $0 256 256)
@@ -411,26 +412,34 @@
     )
    )
   )
-  (unreachable)
-  (drop
-   (i32.const 30)
-  )
-  (drop
-   (i32.const 50)
-  )
   (drop
    (select
-    (i32.const 20)
-    (i32.const 40)
-    (i32.const 60)
+    (block (result i32)
+     (unreachable)
+     (i32.const 20)
+    )
+    (block (result i32)
+     (drop
+      (i32.const 30)
+     )
+     (i32.const 40)
+    )
+    (block (result i32)
+     (drop
+      (i32.const 50)
+     )
+     (i32.const 60)
+    )
    )
   )
   (drop
-   (i32.const 10)
-  )
-  (drop
    (select
-    (unreachable)
+    (block (result i32)
+     (drop
+      (i32.const 10)
+     )
+     (unreachable)
+    )
     (block (result i32)
      (drop
       (i32.const 30)
@@ -448,27 +457,33 @@
   (drop
    (i32.const 10)
   )
-  (unreachable)
-  (drop
-   (i32.const 50)
-  )
   (drop
    (select
     (i32.const 20)
-    (i32.const 40)
-    (i32.const 60)
+    (block
+     (unreachable)
+     (i32.const 40)
+    )
+    (block (result i32)
+     (drop
+      (i32.const 50)
+     )
+     (i32.const 60)
+    )
    )
   )
   (drop
    (i32.const 10)
   )
   (drop
-   (i32.const 30)
-  )
-  (drop
    (select
     (i32.const 20)
-    (unreachable)
+    (block
+     (drop
+      (i32.const 30)
+     )
+     (unreachable)
+    )
     (block (result i32)
      (drop
       (i32.const 50)
@@ -483,12 +498,14 @@
   (drop
    (i32.const 30)
   )
-  (unreachable)
   (drop
    (select
     (i32.const 20)
     (i32.const 40)
-    (i32.const 60)
+    (block
+     (unreachable)
+     (i32.const 60)
+    )
    )
   )
   (drop
@@ -498,13 +515,15 @@
    (i32.const 30)
   )
   (drop
-   (i32.const 50)
-  )
-  (drop
    (select
     (i32.const 20)
     (i32.const 40)
-    (unreachable)
+    (block
+     (drop
+      (i32.const 50)
+     )
+     (unreachable)
+    )
    )
   )
  )
@@ -589,19 +608,25 @@
    (i32.const 20)
    (i32.const 40)
   )
-  (unreachable)
-  (drop
-   (i32.const 20)
+  (call $call-ii
+   (block (result i32)
+    (unreachable)
+    (i32.const 10)
+   )
+   (block (result i32)
+    (drop
+     (i32.const 20)
+    )
+    (i32.const 30)
+   )
   )
   (call $call-ii
-   (i32.const 10)
-   (i32.const 30)
-  )
-  (drop
-   (i32.const 10)
-  )
-  (call $call-ii
-   (unreachable)
+   (block (result i32)
+    (drop
+     (i32.const 10)
+    )
+    (unreachable)
+   )
    (block (result i32)
     (drop
      (i32.const 20)
@@ -612,20 +637,24 @@
   (drop
    (i32.const 10)
   )
-  (unreachable)
   (call $call-ii
    (i32.const 20)
-   (i32.const 30)
+   (block
+    (unreachable)
+    (i32.const 30)
+   )
   )
   (drop
    (i32.const 10)
   )
-  (drop
-   (i32.const 30)
-  )
   (call $call-ii
    (i32.const 20)
-   (unreachable)
+   (block
+    (drop
+     (i32.const 30)
+    )
+    (unreachable)
+   )
   )
   (drop
    (i32.const 10)
@@ -653,21 +682,18 @@
    (i32.const 50)
   )
   (drop
-   (i32.const 50)
-  )
-  (drop
    (i32.const 10)
   )
   (drop
    (i32.const 30)
+  )
+  (drop
+   (i32.const 50)
   )
   (call_indirect $ii
    (i32.const 20)
    (i32.const 40)
    (i32.const 60)
-  )
-  (drop
-   (i32.const 50)
   )
   (call_indirect $ii
    (unreachable)
@@ -677,7 +703,50 @@
     )
     (i32.const 40)
    )
-   (i32.const 60)
+   (block (result i32)
+    (drop
+     (i32.const 50)
+    )
+    (i32.const 60)
+   )
+  )
+  (drop
+   (i32.const 31)
+  )
+  (call_indirect $ii
+   (i32.const 41)
+   (unreachable)
+   (block (result i32)
+    (drop
+     (i32.const 51)
+    )
+    (i32.const 61)
+   )
+  )
+  (drop
+   (i32.const 32)
+  )
+  (drop
+   (i32.const 52)
+  )
+  (call_indirect $ii
+   (i32.const 42)
+   (i32.const 62)
+   (unreachable)
+  )
+ )
+ (func $mix-select (type $i) (param $x i32)
+  (drop
+   (select
+    (get_local $x)
+    (get_local $x)
+    (block (result i32)
+     (set_local $x
+      (i32.const 1)
+     )
+     (i32.const 2)
+    )
+   )
   )
  )
  (func $block-type-change (type $3)
@@ -747,5 +816,9 @@
    (unreachable)
   )
   (unreachable)
+ )
+ (func $concrete_finale_in_unreachable (type $5) (result f64)
+  (unreachable)
+  (f64.const -1)
  )
 )

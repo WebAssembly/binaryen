@@ -60,11 +60,13 @@ struct Properties {
     if (auto* outer = curr->dynCast<Binary>()) {
       if (outer->op == ShrSInt32) {
         if (auto* outerConst = outer->right->dynCast<Const>()) {
-          if (auto* inner = outer->left->dynCast<Binary>()) {
-            if (inner->op == ShlInt32) {
-              if (auto* innerConst = inner->right->dynCast<Const>()) {
-                if (outerConst->value == innerConst->value) {
-                  return inner->left;
+          if (outerConst->value.geti32() != 0) {
+            if (auto* inner = outer->left->dynCast<Binary>()) {
+              if (inner->op == ShlInt32) {
+                if (auto* innerConst = inner->right->dynCast<Const>()) {
+                  if (outerConst->value == innerConst->value) {
+                    return inner->left;
+                  }
                 }
               }
             }
@@ -87,11 +89,13 @@ struct Properties {
     if (auto* outer = curr->dynCast<Binary>()) {
       if (outer->op == ShrSInt32) {
         if (auto* outerConst = outer->right->dynCast<Const>()) {
-          if (auto* inner = outer->left->dynCast<Binary>()) {
-            if (inner->op == ShlInt32) {
-              if (auto* innerConst = inner->right->dynCast<Const>()) {
-                if (outerConst->value.leU(innerConst->value).geti32()) {
-                  return inner->left;
+          if (outerConst->value.geti32() != 0) {
+            if (auto* inner = outer->left->dynCast<Binary>()) {
+              if (inner->op == ShlInt32) {
+                if (auto* innerConst = inner->right->dynCast<Const>()) {
+                  if (outerConst->value.leU(innerConst->value).geti32()) {
+                    return inner->left;
+                  }
                 }
               }
             }

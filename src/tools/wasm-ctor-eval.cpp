@@ -352,7 +352,7 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   std::string ctorsString;
 
-  Options options("wasm-opt", "Optimize .wast files");
+  Options options("wasm-ctor-eval", "Optimize .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
