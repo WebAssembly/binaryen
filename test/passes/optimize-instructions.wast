@@ -2417,4 +2417,20 @@
     )
    )
   )
+  (func $sign-ext-1-and-ne (result i32)
+   (select
+    (i32.ne
+     (i32.const 1333788672)
+     (i32.shr_s
+      (i32.shl
+       (call $sign-ext-1-and-ne)
+       (i32.const 1)
+      )
+      (i32.const 1)
+     )
+    )
+    (i32.const 2)
+    (i32.const 1)
+   )
+  )
 )

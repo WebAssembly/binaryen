@@ -637,4 +637,27 @@
     (i32.const 1579493952)
    )
   )
+  (func $nop-if-type-changes (type $0)
+   (local $0 i32)
+   (block $label$0
+    (if
+     (i32.eqz
+      (get_local $0)
+     )
+     (block $label$1
+      (block
+       (if ;; we nop this if, which has a type change for block $label$1, no more brs to it
+        (i32.const 0)
+        (br_if $label$1
+          (i32.const 1717966400)
+        )
+       )
+       (drop
+        (br $label$0)
+       )
+      )
+     )
+    )
+   )
+  )
 )
