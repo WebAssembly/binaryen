@@ -709,12 +709,19 @@ function asm(global, env, buffer) {
    i1 = (FUNCTION_TABLE_vi[1 & 7](0), 1);
   }
 
+  function emterpretify_assertions_safeHeap() {
+   var i1 = 0;
+    // assignment into the function table param, optimizer can do things there
+   FUNCTION_TABLE_vi[(Int = 1) & 7](i1 | 0);
+  }
+
   function keepAlive() {
     sqrts(3.14159);
     f2u(100.0);
     f2s(100.0);
     autoDrop(52) | 0;
     indirectInSequence();
+    emterpretify_assertions_safeHeap();
   }
 
   function v() {

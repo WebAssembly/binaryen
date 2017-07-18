@@ -77,5 +77,21 @@
       (br_if $out8 (call $b14)) ;; side effect
     )
   )
+  (func $join-and-it-becomes-unreachable
+   (block $label$1
+    (block
+     (br_if $label$1
+      (i32.load8_u
+       (i32.const -93487262)
+      )
+     )
+     (br_if $label$1
+      (loop $label$5 ;; this is unreachable (infinite loop, no exit)
+       (br $label$5)
+      )
+     )
+    )
+   )
+  )
 )
 

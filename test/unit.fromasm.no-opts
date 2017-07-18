@@ -1953,6 +1953,24 @@
    )
   )
  )
+ (func $emterpretify_assertions_safeHeap
+  (local $i1 i32)
+  (call_indirect $FUNCSIG$vi
+   (get_local $i1)
+   (i32.add
+    (i32.and
+     (block (result i32)
+      (set_global $Int
+       (i32.const 1)
+      )
+      (get_global $Int)
+     )
+     (i32.const 7)
+    )
+    (i32.const 16)
+   )
+  )
+ )
  (func $keepAlive
   (drop
    (call $sqrts
@@ -1975,6 +1993,7 @@
    )
   )
   (call $indirectInSequence)
+  (call $emterpretify_assertions_safeHeap)
  )
  (func $v
   (nop)

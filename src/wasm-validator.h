@@ -220,7 +220,7 @@ public:
   void shouldBeIntOrUnreachable(WasmType ty, Expression* curr, const char* text);
   void validateAlignment(size_t align, WasmType type, Index bytes, bool isAtomic,
                          Expression* curr);
-  void validateMemBytes(uint8_t bytes, WasmType ty, Expression* curr);
+  void validateMemBytes(uint8_t bytes, WasmType type, Expression* curr);
   void validateBinaryenIR(Module& wasm);
 };
 

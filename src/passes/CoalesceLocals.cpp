@@ -196,7 +196,9 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     if (auto* get = set->value->dynCast<GetLocal>()) return get;
     if (auto* iff = set->value->dynCast<If>()) {
       if (auto* get = iff->ifTrue->dynCast<GetLocal>()) return get;
-      if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
+      if (iff->ifFalse) {
+        if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
+      }
     }
     return nullptr;
   }
@@ -595,11 +597,13 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
 // Remove a copy from a set of an if, where one if arm is a get of the same set
 static void removeIfCopy(Expression** origin, SetLocal* set, If* iff, Expression*& copy, Expression*& other, Module* module) {
   // replace the origin with the if, and sink the set into the other non-copying arm
+  bool tee = set->isTee();
   *origin = iff;
   set->value = other;
   set->finalize();
   other = set;
-  if (!isConcreteWasmType(set->type)) {
+  // if this is not a tee, then we can get rid of the copy in that arm
+  if (!tee) {
     // we don't need the copy at all
     copy = nullptr;
     if (!iff->ifTrue) {
