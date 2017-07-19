@@ -804,7 +804,8 @@ private:
   template<typename T, typename... Args>
   T pick(T first, Args... args) {
     auto num = sizeof...(Args) + 1;
-    return pickGivenNum<T>(upTo(num), first, args...);
+    auto temp = upTo(num);
+    return pickGivenNum<T>(temp, first, args...);
   }
 
   template<typename T>
