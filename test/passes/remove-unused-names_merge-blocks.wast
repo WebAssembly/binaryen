@@ -1,5 +1,5 @@
 (module
-  (memory 256 256)
+  (memory 256 256 shared)
   (type $i (func (param i32)))
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))
@@ -883,6 +883,41 @@
         (i32.const 62)
       )
       (unreachable)
+    )
+  )
+  (func $atomics (type $3)
+    (drop
+      (i32.atomic.rmw.cmpxchg ;; mergeblock logic should be same as select
+        (block $block0 (result i32)
+          (drop
+            (i32.const 10)
+          )
+          (i32.const 20)
+        )
+        (block $block1 (result i32)
+          (drop
+            (i32.const 30)
+          )
+          (i32.const 40)
+        )
+        (block $block2 (result i32)
+          (drop
+            (i32.const 50)
+          )
+          (i32.const 60)
+        )
+      )
+    )
+    (drop
+      (i32.atomic.rmw.add ;; atomicrmw is like a binary
+        (block $block1 (result i32)
+          (drop
+            (i32.const 10)
+          )
+          (i32.const 20)
+        )
+        (i32.const 30)
+      )
     )
   )
   (func $mix-select (param $x i32)

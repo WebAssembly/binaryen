@@ -289,9 +289,8 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitAtomicRMW(AtomicRMW* curr) {
     optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
   }
-  // XXX TODO: why doesn't this work for select?
   void optimizeTernary(Expression* curr,
-		       Expression* first, Expression* second, Expression* third) {
+		       Expression*& first, Expression*& second, Expression*& third) {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
     Block* outer = nullptr;
