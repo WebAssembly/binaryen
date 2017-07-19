@@ -324,7 +324,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   // Append the reachable operands of the current node to a block, and replace
   // it with the block
-  void BlockifyReachableOperands(std::vector<Expression*> list, WasmType type) {
+  void blockifyReachableOperands(std::vector<Expression*>&& list, WasmType type) {
     for (size_t i = 0; i < list.size(); ++i) {
       auto* elem = list[i];
       if (isUnreachable(elem)) {
@@ -345,39 +345,39 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitSetLocal(SetLocal* curr) {
-    BlockifyReachableOperands({curr->value}, curr->type);
+    blockifyReachableOperands({ curr->value }, curr->type);
   }
 
   void visitLoad(Load* curr) {
-    BlockifyReachableOperands({curr->ptr}, curr->type);
+    blockifyReachableOperands({ curr->ptr}, curr->type);
   }
 
   void visitStore(Store* curr) {
-    BlockifyReachableOperands({curr->ptr, curr->value}, curr->type);
+    blockifyReachableOperands({ curr->ptr, curr->value }, curr->type);
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
-    BlockifyReachableOperands({curr->ptr, curr->value}, curr->type);
+    blockifyReachableOperands({ curr->ptr, curr->value }, curr->type);
   }
 
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    BlockifyReachableOperands({curr->ptr, curr->expected, curr->replacement}, curr->type);
+    blockifyReachableOperands({ curr->ptr, curr->expected, curr->replacement }, curr->type);
   }
 
   void visitUnary(Unary* curr) {
-    BlockifyReachableOperands({curr->value}, curr->type);
+    blockifyReachableOperands({ curr->value }, curr->type);
   }
 
   void visitBinary(Binary* curr) {
-    BlockifyReachableOperands({curr->left, curr->right}, curr->type);
+    blockifyReachableOperands({ curr->left, curr->right}, curr->type);
   }
 
   void visitSelect(Select* curr) {
-    BlockifyReachableOperands({curr->ifTrue, curr->ifFalse, curr->condition}, curr->type);
+    blockifyReachableOperands({ curr->ifTrue, curr->ifFalse, curr->condition}, curr->type);
   }
 
   void visitDrop(Drop* curr) {
-    BlockifyReachableOperands({curr->value}, curr->type);
+    blockifyReachableOperands({ curr->value }, curr->type);
   }
 
   void visitHost(Host* curr) {
@@ -394,4 +394,3 @@ Pass *createDeadCodeEliminationPass() {
 }
 
 } // namespace wasm
-
