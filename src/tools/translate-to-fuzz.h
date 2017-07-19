@@ -32,6 +32,11 @@ struct ThreeArgs {
   Expression *c;
 };
 
+struct UnaryArgs {
+  UnaryOp a;
+  Expression *b;
+};
+
 struct BinaryArgs {
   BinaryOp a;
   Expression *b;
@@ -492,29 +497,30 @@ private:
     }
     auto offset = logify(get());
     auto ptr = make(i32); // TODO: mask it, think about memory properly
+    auto value = make(type);
     switch (type) {
       case i32: {
         switch (upTo(3)) {
-          case 0: return builder.makeStore(1, offset, 1, ptr, make(type), type);
-          case 1: return builder.makeStore(2, offset, pick(1, 2), ptr, make(type), type);
-          case 2: return builder.makeStore(4, offset, pick(1, 2, 4), ptr, make(type), type);
+          case 0: return builder.makeStore(1, offset, 1, ptr, value, type);
+          case 1: return builder.makeStore(2, offset, pick(1, 2), ptr, value, type);
+          case 2: return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
         }
         WASM_UNREACHABLE();
       }
       case i64: {
         switch (upTo(4)) {
-          case 0: return builder.makeStore(1, offset, 1, ptr, make(type), type);
-          case 1: return builder.makeStore(2, offset, pick(1, 2), ptr, make(type), type);
-          case 2: return builder.makeStore(4, offset, pick(1, 2, 4), ptr, make(type), type);
-          case 3: return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, make(type), type);
+          case 0: return builder.makeStore(1, offset, 1, ptr, value, type);
+          case 1: return builder.makeStore(2, offset, pick(1, 2), ptr, value, type);
+          case 2: return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
+          case 3: return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
         }
         WASM_UNREACHABLE();
       }
       case f32: {
-        return builder.makeStore(4, offset, pick(1, 2, 4), ptr, make(type), type);
+        return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
       }
       case f64: {
-        return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, make(type), type);
+        return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
       }
       default: WASM_UNREACHABLE();
     }
@@ -596,6 +602,10 @@ private:
     return ret;
   }
 
+  Unary* makeUnary(const UnaryArgs& args) {
+    return builder.makeUnary(args.a, args.b);
+  }
+
   Unary* makeUnary(WasmType type) {
     if (type == unreachable) {
       auto op = makeUnary(getConcreteType())->op;
@@ -604,37 +614,37 @@ private:
     switch (type) {
       case i32: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32), make(i32));
-          case 1: return builder.makeUnary(pick(EqZInt64, WrapInt64), make(i64));
-          case 2: return builder.makeUnary(pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32));
-          case 3: return builder.makeUnary(pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64));
+          case 0: return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32), make(i32) });
+          case 1: return makeUnary({ pick(EqZInt64, WrapInt64), make(i64) });
+          case 2: return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32) });
+          case 3: return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64) });
         }
         WASM_UNREACHABLE();
       }
       case i64: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(pick(ClzInt64, CtzInt64, PopcntInt64), make(i64));
-          case 1: return builder.makeUnary(pick(ExtendSInt32, ExtendUInt32), make(i32));
-          case 2: return builder.makeUnary(pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32));
-          case 3: return builder.makeUnary(pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64));
+          case 0: return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64), make(i64) });
+          case 1: return makeUnary({ pick(ExtendSInt32, ExtendUInt32), make(i32) });
+          case 2: return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32) });
+          case 3: return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64) });
         }
         WASM_UNREACHABLE();
       }
       case f32: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(pick(NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32), make(f32));
-          case 1: return builder.makeUnary(pick(ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32), make(i32));
-          case 2: return builder.makeUnary(pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32), make(i64));
-          case 3: return builder.makeUnary(DemoteFloat64, make(f64));
+          case 0: return makeUnary({ pick(NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32), make(f32) });
+          case 1: return makeUnary({ pick(ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32), make(i32) });
+          case 2: return makeUnary({ pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32), make(i64) });
+          case 3: return makeUnary({ DemoteFloat64, make(f64) });
         }
         WASM_UNREACHABLE();
       }
       case f64: {
         switch (upTo(4)) {
-          case 0: return builder.makeUnary(pick(NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64), make(f64));
-          case 1: return builder.makeUnary(pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64), make(i32));
-          case 2: return builder.makeUnary(pick(ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64), make(i64));
-          case 3: return builder.makeUnary(PromoteFloat32, make(f32));
+          case 0: return makeUnary({ pick(NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64), make(f64) });
+          case 1: return makeUnary({ pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64), make(i32) });
+          case 2: return makeUnary({ pick(ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64), make(i64) });
+          case 3: return makeUnary({ PromoteFloat32, make(f32) });
         }
         WASM_UNREACHABLE();
       }
