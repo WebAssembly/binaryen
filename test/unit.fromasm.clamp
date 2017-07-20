@@ -31,6 +31,7 @@
  (export "conversions" (func $conversions))
  (export "switcher" (func $switcher))
  (export "frem" (func $frem))
+ (export "frem_float" (func $legalstub$frem_float))
  (export "big_uint_div_u" (func $big_uint_div_u))
  (export "fr" (func $legalstub$fr))
  (export "negZero" (func $negZero))
@@ -267,6 +268,14 @@
   (call $f64-rem
    (f64.const 5.5)
    (f64.const 1.2)
+  )
+ )
+ (func $frem_float (result f32)
+  (f32.demote/f64
+   (call $f64-rem
+    (f64.const 5.5)
+    (f64.const 1.2000000476837158)
+   )
   )
  )
  (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
@@ -1240,6 +1249,11 @@
  )
  (func $ii (param $0 i32) (result i32)
   (get_local $0)
+ )
+ (func $legalstub$frem_float (result f64)
+  (f64.promote/f32
+   (call $frem_float)
+  )
  )
  (func $legalstub$fr (param $0 f64)
   (call $fr
