@@ -181,12 +181,12 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   }
   void visitLoad(Load *curr) {
     readsMemory = true;
-    isAtomic = curr->isAtomic;
+    isAtomic |= curr->isAtomic;
     if (!ignoreImplicitTraps) implicitTrap = true;
   }
   void visitStore(Store *curr) {
     writesMemory = true;
-    isAtomic = curr->isAtomic;
+    isAtomic |= curr->isAtomic;
     if (!ignoreImplicitTraps) implicitTrap = true;
   }
   void visitAtomicRMW(AtomicRMW* curr) {
@@ -249,4 +249,3 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
 } // namespace wasm
 
 #endif // wasm_ast_effects_h
-
