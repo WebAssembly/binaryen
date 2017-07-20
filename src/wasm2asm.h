@@ -209,7 +209,12 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
     addImport(asmFunc[3], import.get());
   }
   // figure out the table size
-  tableSize = wasm->table.names.size();
+  // tableSize = wasm->table.names.size();
+  tableSize = std::accumulate(wasm->table.segments.begin(),
+                              wasm->table.segments.end(),
+                              0, [&](size_t size, Table::Segment seg) -> size_t {
+                                return size + seg.data.size();
+                              });
   size_t pow2ed = 1;
   while (pow2ed < tableSize) {
     pow2ed <<= 1;
@@ -287,19 +292,22 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import *import) {
 
 void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
-  for (size_t i = 0; i < wasm->table.names.size(); i++) {
-    Name name = wasm->table.names[i];
-    auto func = wasm->getFunction(name);
-    std::string sig = getSig(func);
-    auto& table = tables[sig];
-    if (table.size() == 0) {
-      // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
-      table.resize(tableSize);
-      for (size_t j = 0; j < tableSize; j++) {
-        table[j] = fromName(name);
+  //  for (size_t i = 0; i < wasm->table.names.size(); i++) {
+  for (Table::Segment &seg : wasm->table.segments) {
+    for (size_t i = 0; i < seg.data.size(); i++) {
+      Name name = seg.data[i];
+      auto func = wasm->getFunction(name);
+      std::string sig = getSig(func);
+      auto& table = tables[sig];
+      if (table.size() == 0) {
+        // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
+        table.resize(tableSize);
+        for (size_t j = 0; j < tableSize; j++) {
+          table[j] = fromName(name);
+        }
+      } else {
+        table[i] = fromName(name);
       }
-    } else {
-      table[i] = fromName(name);
     }
   }
   for (auto& pair : tables) {
@@ -340,9 +348,13 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     ValueBuilder::appendArgumentToFunction(ret, name);
     ret[3]->push_back(
       ValueBuilder::makeStatement(
-        ValueBuilder::makeAssign(
-          ValueBuilder::makeName(name),
-          makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(func->getLocalType(i)))
+        // ValueBuilder::makeAssign(
+        //   ValueBuilder::makeName(name),
+        //   makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(func->getLocalType(i)))
+        ValueBuilder::makeBinary(
+          ValueBuilder::makeName(name), SET,
+          makeAsmCoercion(ValueBuilder::makeName(name),
+                          wasmToAsmType(func->getLocalType(i)))
         )
       )
     );
@@ -381,9 +393,10 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   for (auto f : frees[f64]) {
     ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_DOUBLE));
   }
-  if (theVar[1]->size() == 0) {
-    ret[3]->splice(theVarIndex, 1);
-  }
+  // if (theVar[1]->size() == 0) { XXX ???
+  //   ret[3]->splice(theVarIndex, 1);
+  // }
+  (void)theVarIndex;
   // checks
   assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
   assert(frees[f32].size() == temps[f32]); // all temp vars should be free at the end
@@ -557,7 +570,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // if it's not already a statement, then it's an expression, and we need to assign it
       // (if it is a statement, it already assigns to the result var)
       if (!isStatement(curr) && result != NO_RESULT) {
-        ret = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), ret));
+        // ret = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), ret));
+        ret = ValueBuilder::makeStatement(
+            ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
       }
       return ret;
     }
@@ -588,7 +603,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     std::map<Name, IString> breakResults;
 
     // Breaks to the top of a loop should be emitted as continues, to that loop's main label
-    std::map<Name, Name> continueLabels;
+    // std::map<Name, Name> continueLabels;
+    std::unordered_set<Name> continueLabels;
 
     IString fromName(Name name) {
       return parent->fromName(name);
@@ -629,14 +645,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return condition;
     }
     Ref visitLoop(Loop *curr) {
-      Name asmLabel = curr->out.is() ? curr->out : curr->in; // label using the outside, normal for breaks. if no outside, then inside
-      if (curr->in.is()) continueLabels[curr->in] = asmLabel;
+      Name asmLabel = curr->name;
+      continueLabels.insert(asmLabel);
       Ref body = visit(curr->body, result);
       Ref ret = ValueBuilder::makeDo(body, ValueBuilder::makeInt(0));
-      if (asmLabel.is()) {
-        ret = ValueBuilder::makeLabel(fromName(asmLabel), ret);
-      }
-      return ret;
+      return ValueBuilder::makeLabel(fromName(asmLabel), ret);
     }
     Ref visitBreak(Break *curr) {
       if (curr->condition) {
@@ -653,7 +666,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       if (iter == continueLabels.end()) {
         theBreak = ValueBuilder::makeBreak(fromName(curr->name));
       } else {
-        theBreak = ValueBuilder::makeContinue(fromName(iter->second));
+        theBreak = ValueBuilder::makeContinue(fromName(curr->name));
       }
       if (!curr->value) return theBreak;
       // generate the value, including assigning to the result, and then do the break
@@ -695,7 +708,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
       if (result != NO_RESULT) {
-        theCall = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall));
+        // theCall = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall));
+        theCall = ValueBuilder::makeStatement(
+            ValueBuilder::makeBinary(
+                ValueBuilder::makeName(result), SET, theCall));
       }
       flattenAppend(ret, theCall);
       for (auto temp : temps) {
@@ -720,7 +736,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       abort();
     }
     Ref visitCallIndirect(CallIndirect *curr)  {
-      std::string stable = std::string("FUNCTION_TABLE_") + getSig(curr->fullType);
+      // std::string stable = std::string("FUNCTION_TABLE_") + getSig(curr->fullType);
+      std::string stable = std::string("FUNCTION_TABLE_") + curr->fullType.c_str();
       IString table = IString(stable.c_str(), false);
       auto makeTableCall = [&](Ref target) {
         return ValueBuilder::makeCall(ValueBuilder::makeSub(
@@ -748,12 +765,19 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitSetLocal(SetLocal *curr) {
       if (!isStatement(curr)) {
-        return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(func->getLocalName(curr->index))), visit(curr->value, EXPRESSION_RESULT));
+        // return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(func->getLocalName(curr->index))), visit(curr->value, EXPRESSION_RESULT));
+        return ValueBuilder::makeBinary(
+            ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
+            SET, visit(curr->value, EXPRESSION_RESULT));
       }
       ScopedTemp temp(curr->type, parent, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
       Ref ret = blockify(visit(curr->value, temp));
       // the output was assigned to result, so we can just assign it to our target
-      ret[1]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(func->getLocalName(curr->index))), temp.getAstName())));
+      // ret[1]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(func->getLocalName(curr->index))), temp.getAstName())));
+      ret[1]->push_back(ValueBuilder::makeStatement(
+          ValueBuilder::makeBinary(
+              ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
+              SET, temp.getAstName())));
       return ret;
     }
     Ref visitLoad(Load *curr) {
@@ -785,7 +809,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           case i32: {
             rest = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
             for (size_t i = 1; i < curr->bytes; i++) {
-              load.offset += 1;
+              ++load.offset;
               Ref add = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
               add = ValueBuilder::makeBinary(add, LSHIFT, ValueBuilder::makeNum(8*i));
               rest = ValueBuilder::makeBinary(rest, OR, add);
@@ -866,12 +890,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               shift.value = Literal(int32_t(8*i));
               shift.type = i32;
               Binary shifted(allocator);
-              shifted.op = ShrU;
+              shifted.op = ShrUInt64;
               shifted.left = &getValue;
               shifted.right = &shift;
               shifted.type = i32;
               Binary anded(allocator);
-              anded.op = And;
+              anded.op = AndInt32;
               anded.left = i > 0 ? static_cast<Expression*>(&shifted) : static_cast<Expression*>(&getValue);
               anded.right = &_255;
               anded.type = i32;
@@ -882,7 +906,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               } else {
                 rest = ValueBuilder::makeSeq(rest, part);
               }
-              store.offset += 1;
+              ++store.offset;
             }
             break;
           }
@@ -911,7 +935,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
         default: abort();
       }
-      return ValueBuilder::makeAssign(ret, value);
+      // return ValueBuilder::makeAssign(ret, value);
+      return ValueBuilder::makeBinary(ret, SET, value);
     }
     Ref visitConst(Const *curr) {
       switch (curr->type) {
@@ -950,9 +975,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       switch (curr->type) {
         case i32: {
           switch (curr->op) {
-            case Clz:     return ValueBuilder::makeCall(MATH_CLZ32, value);
-            case Ctz:     return ValueBuilder::makeCall(MATH_CTZ32, value);
-            case Popcnt:  return ValueBuilder::makeCall(MATH_POPCNT32, value);
+            case ClzInt32:
+              return ValueBuilder::makeCall(MATH_CLZ32, value);
+            case CtzInt32:
+              return ValueBuilder::makeCall(MATH_CTZ32, value);
+            case PopcntInt32:
+              return ValueBuilder::makeCall(MATH_POPCNT32, value);
             default: abort();
           }
         }
@@ -960,26 +988,47 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case f64: {
           Ref ret;
           switch (curr->op) {
-            case Neg:           ret = ValueBuilder::makeUnary(MINUS, value); break;
-            case Abs:           ret = ValueBuilder::makeCall(MATH_ABS, value); break;
-            case Ceil:          ret = ValueBuilder::makeCall(MATH_CEIL, value); break;
-            case Floor:         ret = ValueBuilder::makeCall(MATH_FLOOR, value); break;
-            case Trunc:         ret = ValueBuilder::makeCall(MATH_TRUNC, value); break;
-            case Nearest:       ret = ValueBuilder::makeCall(MATH_NEAREST, value); break;
-            case Sqrt:          ret = ValueBuilder::makeCall(MATH_SQRT, value); break;
-            //case TruncSFloat32: ret = ValueBuilder::makePrefix(B_NOT, ValueBuilder::makePrefix(B_NOT, value)); break;
-            case PromoteFloat32:
-            //case ConvertSInt32: ret = ValueBuilder::makePrefix(PLUS, ValueBuilder::makeBinary(value, OR, ValueBuilder::makeNum(0))); break;
-            //case ConvertUInt32: ret = ValueBuilder::makePrefix(PLUS, ValueBuilder::makeBinary(value, TRSHIFT, ValueBuilder::makeNum(0))); break;
-            case DemoteFloat64: ret = value; break;
-            default: std::cerr << curr << '\n'; abort();
+            case NegFloat32:
+            case NegFloat64:
+              ret = ValueBuilder::makeUnary(MINUS, value);
+              break;
+            case AbsFloat32:
+            case AbsFloat64:
+              ret = ValueBuilder::makeCall(MATH_ABS, value);
+              break;
+            case CeilFloat32:
+            case CeilFloat64:
+              ret = ValueBuilder::makeCall(MATH_CEIL, value);
+              break;
+            case FloorFloat32:
+            case FloorFloat64:
+              ret = ValueBuilder::makeCall(MATH_FLOOR, value);
+              break;
+            case TruncFloat32:
+            case TruncFloat64:
+              ret = ValueBuilder::makeCall(MATH_TRUNC, value);
+              break;
+            case NearestFloat32:
+            case NearestFloat64:
+              ret = ValueBuilder::makeCall(MATH_NEAREST, value);
+              break;
+            case SqrtFloat32:
+            case SqrtFloat64:
+              ret = ValueBuilder::makeCall(MATH_SQRT, value);
+              break;
+            // TODO: more complex unary conversions
+            default:
+              std::cerr << curr << '\n';
+              abort();
           }
           if (curr->type == f32) { // doubles need much less coercing
             return makeAsmCoercion(ret, ASM_FLOAT);
           }
           return ret;
         }
-        default: abort();
+        default:
+          std::cerr << curr << '\n';
+          abort();
       }
     }
     Ref visitBinary(Binary *curr) {
@@ -1003,55 +1052,104 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref right = visit(curr->right, EXPRESSION_RESULT);
       Ref ret;
       switch (curr->op) {
-        case Add:      ret = ValueBuilder::makeBinary(left, PLUS, right); break;
-        case Sub:      ret = ValueBuilder::makeBinary(left, MINUS, right); break;
-        case Mul: {
+        case AddInt32:
+          ret = ValueBuilder::makeBinary(left, PLUS, right);
+          break;
+        case SubInt32:
+          ret = ValueBuilder::makeBinary(left, MINUS, right);
+          break;
+        case MulInt32: {
           if (curr->type == i32) {
-            return ValueBuilder::makeCall(MATH_IMUL, left, right); // TODO: when one operand is a small int, emit a multiply
+            // TODO: when one operand is a small int, emit a multiply
+            return ValueBuilder::makeCall(MATH_IMUL, left, right);
           } else {
-            return ValueBuilder::makeBinary(left, MINUS, right); break;
+            return ValueBuilder::makeBinary(left, MUL, right);
           }
         }
-        case DivS:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   DIV, makeSigning(right, ASM_SIGNED)); break;
-        case DivU:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), DIV, makeSigning(right, ASM_UNSIGNED)); break;
-        case RemS:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   MOD, makeSigning(right, ASM_SIGNED)); break;
-        case RemU:     ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), MOD, makeSigning(right, ASM_UNSIGNED)); break;
-        case And:      ret = ValueBuilder::makeBinary(left, AND, right); break;
-        case Or:       ret = ValueBuilder::makeBinary(left, OR, right); break;
-        case Xor:      ret = ValueBuilder::makeBinary(left, XOR, right); break;
-        case Shl:      ret = ValueBuilder::makeBinary(left, LSHIFT, right); break;
-        case ShrU:     ret = ValueBuilder::makeBinary(left, TRSHIFT, right); break;
-        case ShrS:     ret = ValueBuilder::makeBinary(left, RSHIFT, right); break;
-        case Div:      ret = ValueBuilder::makeBinary(left, DIV, right); break;
-        case Min:      ret = ValueBuilder::makeCall(MATH_MIN, left, right); break;
-        case Max:      ret = ValueBuilder::makeCall(MATH_MAX, left, right); break;
-        case Eq: {
+        case DivSInt32:
+          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), DIV,
+                                         makeSigning(right, ASM_SIGNED));
+          break;
+        case DivUInt32:
+          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), DIV,
+                                         makeSigning(right, ASM_UNSIGNED));
+          break;
+        case RemSInt32:
+          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), MOD,
+                                         makeSigning(right, ASM_SIGNED));
+          break;
+        case RemUInt32:
+          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), MOD,
+                                         makeSigning(right, ASM_UNSIGNED));
+          break;
+        case AndInt32:
+          ret = ValueBuilder::makeBinary(left, AND, right);
+          break;
+        case OrInt32:
+          ret = ValueBuilder::makeBinary(left, OR, right);
+          break;
+        case XorInt32:
+          ret = ValueBuilder::makeBinary(left, XOR, right);
+          break;
+        case ShlInt32:
+          ret = ValueBuilder::makeBinary(left, LSHIFT, right);
+          break;
+        case ShrUInt32:
+          ret = ValueBuilder::makeBinary(left, TRSHIFT, right);
+          break;
+        case ShrSInt32:
+          ret = ValueBuilder::makeBinary(left, RSHIFT, right);
+          break;
+        case MinFloat32:
+          ret = ValueBuilder::makeCall(MATH_MIN, left, right);
+          break;
+        case MaxFloat32:
+          ret = ValueBuilder::makeCall(MATH_MAX, left, right);
+          break;
+        case EqInt32: {
+          // TODO: check if this condition is still valid/necessary
           if (curr->left->type == i32) {
-            return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ, makeSigning(right, ASM_SIGNED));
+            return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
+                                            makeSigning(right, ASM_SIGNED));
           } else {
             return ValueBuilder::makeBinary(left, EQ, right);
           }
         }
-        case Ne: {
+        case NeInt32: {
           if (curr->left->type == i32) {
-            return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE, makeSigning(right, ASM_SIGNED));
+            return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
+                                            makeSigning(right, ASM_SIGNED));
           } else {
             return ValueBuilder::makeBinary(left, NE, right);
           }
         }
-        case LtS:      return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   LT, makeSigning(right, ASM_SIGNED));
-        case LtU:      return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LT, makeSigning(right, ASM_UNSIGNED));
-        case LeS:      return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   LE, makeSigning(right, ASM_SIGNED));
-        case LeU:      return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LE, makeSigning(right, ASM_UNSIGNED));
-        case GtS:      return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   GT, makeSigning(right, ASM_SIGNED));
-        case GtU:      return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GT, makeSigning(right, ASM_UNSIGNED));
-        case GeS:      return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),   GE, makeSigning(right, ASM_SIGNED));
-        case GeU:      return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE, makeSigning(right, ASM_UNSIGNED));
-        case Lt:       return ValueBuilder::makeBinary(left, LT, right);
-        case Le:       return ValueBuilder::makeBinary(left, LE, right);
-        case Gt:       return ValueBuilder::makeBinary(left, GT, right);
-        case Ge:       return ValueBuilder::makeBinary(left, GE, right);
-        default: abort();
+        case LtSInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LT,
+                                          makeSigning(right, ASM_SIGNED));
+        case LtUInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LT,
+                                          makeSigning(right, ASM_UNSIGNED));
+        case LeSInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LE,
+                                          makeSigning(right, ASM_SIGNED));
+        case LeUInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LE,
+                                          makeSigning(right, ASM_UNSIGNED));
+        case GtSInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GT,
+                                          makeSigning(right, ASM_SIGNED));
+        case GtUInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GT,
+                                          makeSigning(right, ASM_UNSIGNED));
+        case GeSInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GE,
+                                          makeSigning(right, ASM_SIGNED));
+        case GeUInt32:
+          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
+                                          makeSigning(right, ASM_UNSIGNED));
+        default:
+          std::cerr << curr << '\n';
+          abort();
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
@@ -1085,11 +1183,14 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           tempCondition(i32, parent);
       return
         ValueBuilder::makeSeq(
-          ValueBuilder::makeAssign(tempCondition.getAstName(), condition),
+          // ValueBuilder::makeAssign(tempCondition.getAstName(), condition),
+          ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
           ValueBuilder::makeSeq(
-            ValueBuilder::makeAssign(tempIfTrue.getAstName(), ifTrue),
+            // ValueBuilder::makeAssign(tempIfTrue.getAstName(), ifTrue),
+            ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
             ValueBuilder::makeSeq(
-              ValueBuilder::makeAssign(tempIfFalse.getAstName(), ifFalse),
+              // ValueBuilder::makeAssign(tempIfFalse.getAstName(), ifFalse),
+              ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
               ValueBuilder::makeConditional(tempCondition.getAstName(), tempIfTrue.getAstName(), tempIfFalse.getAstName())
             )
           )
