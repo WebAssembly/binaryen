@@ -23,6 +23,7 @@
 #define wasm_wasm2asm_h
 
 #include <cmath>
+#include <numeric>
 
 #include "asmjs/shared-constants.h"
 #include "wasm.h"
