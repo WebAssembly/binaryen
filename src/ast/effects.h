@@ -69,9 +69,12 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
                  || (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
     }
-    // All atomics are sequentially consistent for now, but have no ordering
-    // constraints wrt non-atomics.
-    if (isAtomic && other.isAtomic) return true;
+    // All atomics are sequentially consistent for now, and ordered wrt other
+    // memory references.
+    if ((isAtomic && other.accessesMemory()) ||
+        (other.isAtomic && accessesMemory())) {
+      return true;
+    }
     for (auto local : localsWritten) {
       if (other.localsWritten.count(local) || other.localsRead.count(local)) {
         return true;
@@ -240,6 +243,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   void visitReturn(Return *curr) { branches = true; }
   void visitHost(Host *curr) {
     calls = true;
+    // grow_memory modifies the set of valid addresses, and thus can be modeled as modifying memory
+    writesMemory = true;
     // Atomics are also sequentially consistent with grow_memory.
     isAtomic = true;
   }
