@@ -66,6 +66,7 @@ namespace wasm {
 
 Name load("load");
 Name store("store");
+// TODO: Add support for atomicRMW/cmpxchg
 
 struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitLoad(Load* curr) {

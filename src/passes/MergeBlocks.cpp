@@ -286,17 +286,27 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitStore(Store* curr) {
     optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
   }
-
-  void visitSelect(Select* curr) {
+  void visitAtomicRMW(AtomicRMW* curr) {
+    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
+  }
+  void optimizeTernary(Expression* curr,
+		       Expression*& first, Expression*& second, Expression*& third) {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), curr->ifTrue).hasSideEffects()) return;
-    outer = optimize(curr, curr->ifTrue, outer);
-    if (EffectAnalyzer(getPassOptions(), curr->ifFalse).hasSideEffects()) return;
-    outer = optimize(curr, curr->ifFalse, outer);
-    if (EffectAnalyzer(getPassOptions(), curr->condition).hasSideEffects()) return;
-            optimize(curr, curr->condition, outer);
+    if (EffectAnalyzer(getPassOptions(), first).hasSideEffects()) return;
+    outer = optimize(curr, first, outer);
+    if (EffectAnalyzer(getPassOptions(), second).hasSideEffects()) return;
+    outer = optimize(curr, second, outer);
+    if (EffectAnalyzer(getPassOptions(), third).hasSideEffects()) return;
+    optimize(curr, third, outer);
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    optimizeTernary(curr, curr->ptr, curr->expected, curr->replacement);
+  }
+
+  void visitSelect(Select* curr) {
+    optimizeTernary(curr, curr->ifTrue, curr->ifFalse, curr->condition);
   }
 
   void visitDrop(Drop* curr) {
@@ -344,4 +354,3 @@ Pass *createMergeBlocksPass() {
 }
 
 } // namespace wasm
-
