@@ -154,6 +154,8 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
   void visitLoad(Load *curr) { curr->finalize(); }
   void visitStore(Store *curr) { curr->finalize(); }
+  void visitAtomicRMW(AtomicRMW *curr) { curr->finalize(); }
+  void visitAtomicCmpxchg(AtomicCmpxchg *curr) { curr->finalize(); }
   void visitConst(Const *curr) { curr->finalize(); }
   void visitUnary(Unary *curr) { curr->finalize(); }
   void visitBinary(Binary *curr) { curr->finalize(); }

@@ -7,7 +7,7 @@
  (type $5 (func (result f64)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-i)
- (memory $0 256 256)
+ (memory $0 256 256 shared)
  (func $call-i (type $i) (param $0 i32)
   (nop)
  )
@@ -733,6 +733,33 @@
    (i32.const 42)
    (i32.const 62)
    (unreachable)
+  )
+ )
+ (func $atomics (type $3)
+  (drop
+   (i32.const 10)
+  )
+  (drop
+   (i32.const 30)
+  )
+  (drop
+   (i32.const 50)
+  )
+  (drop
+   (i32.atomic.rmw.cmpxchg
+    (i32.const 20)
+    (i32.const 40)
+    (i32.const 60)
+   )
+  )
+  (drop
+   (i32.const 10)
+  )
+  (drop
+   (i32.atomic.rmw.add
+    (i32.const 20)
+    (i32.const 30)
+   )
   )
  )
  (func $mix-select (type $i) (param $x i32)
