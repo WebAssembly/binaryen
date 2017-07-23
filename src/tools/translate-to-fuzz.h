@@ -420,8 +420,7 @@ private:
           auto* item = hangStack[i];
           if (item == nullptr) {
             conditions++;
-          } else {
-            auto* loop = item->cast<Loop>();
+          } else if (auto* loop = item->cast<Loop>()) {
             if (loop->name == name) {
               // we found the target, no more conditions matter
               break;
@@ -444,6 +443,21 @@ private:
   }
 
   Expression* makeCall(WasmType type) {
+    // avoid calls if there is a high chance of infinite recursion
+    size_t conditions = 0;
+    int i = hangStack.size();
+    while (--i >= 0) {
+      auto* item = hangStack[i];
+      if (item == nullptr) {
+        conditions++;
+      }
+    }
+    switch (conditions) {
+      case 0: if (!oneIn(6)) return make(type);
+      case 1: if (!oneIn(2)) return make(type);
+      default: {}
+    }
+    // seems ok, go on
     int tries = TRIES;
     while (tries-- > 0) {
       Function* target = func;
