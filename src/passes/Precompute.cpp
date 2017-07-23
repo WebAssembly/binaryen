@@ -67,6 +67,12 @@ public:
   Flow visitStore(Store *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }
+  Flow visitAtomicRMW(AtomicRMW *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
   Flow visitHost(Host *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }

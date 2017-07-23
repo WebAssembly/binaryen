@@ -675,6 +675,19 @@ private:
     return ret;
   }
 
+  // converts an f32 to an f64 if necessary
+  Expression* ensureDouble(Expression* expr) {
+    if (expr->type == f32) {
+      auto conv = allocator.alloc<Unary>();
+      conv->op = PromoteFloat32;
+      conv->value = expr;
+      conv->type = WasmType::f64;
+      return conv;
+    }
+    assert(expr->type == f64);
+    return expr;
+  }
+
   // Some binary opts might trap, so emit them safely if necessary
   Expression* makeTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
     if (trapMode == TrapMode::Allow) return builder.makeBinary(op, left, right);
@@ -803,14 +816,7 @@ private:
     }
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
     // First, normalize input to f64
-    auto input = value;
-    if (input->type == f32) {
-      auto conv = allocator.alloc<Unary>();
-      conv->op = PromoteFloat32;
-      conv->value = input;
-      conv->type = WasmType::f64;
-      input = conv;
-    }
+    auto input = ensureDouble(value);
     // We can handle this in one of two ways: clamping, which is fast, or JS, which
     // is precisely like JS but in order to do that we do a slow ffi
     if (trapMode == TrapMode::JS) {
@@ -894,14 +900,7 @@ private:
     }
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
     // First, normalize input to f64
-    auto input = value;
-    if (input->type == f32) {
-      auto conv = allocator.alloc<Unary>();
-      conv->op = PromoteFloat32;
-      conv->value = input;
-      conv->type = WasmType::f64;
-      input = conv;
-    }
+    auto input = ensureDouble(value);
     // There is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
     Call *ret = allocator.alloc<Call>();
     ret->target = F64_TO_INT64;
@@ -1795,11 +1794,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           conv->type = WasmType::f32;
           ret->value = conv;
         } else if (ret->valueType == f64 && ret->value->type == f32) {
-          auto conv = allocator.alloc<Unary>();
-          conv->op = PromoteFloat32;
-          conv->value = ret->value;
-          conv->type = WasmType::f64;
-          ret->value = conv;
+          ret->value = ensureDouble(ret->value);
         } else {
           abort_on("bad sub[] types", ast);
         }
@@ -1822,8 +1817,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
         CallImport *call = allocator.alloc<CallImport>();
         call->target = F64_REM;
-        call->operands.push_back(ret->left);
-        call->operands.push_back(ret->right);
+        call->operands.push_back(ensureDouble(ret->left));
+        call->operands.push_back(ensureDouble(ret->right));
         call->type = f64;
         static bool addedImport = false;
         if (!addedImport) {
@@ -1873,11 +1868,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           return conv;
         }
         if (ret->type == f32) {
-          auto conv = allocator.alloc<Unary>();
-          conv->op = PromoteFloat32;
-          conv->value = ret;
-          conv->type = WasmType::f64;
-          return conv;
+          return ensureDouble(ret);
         }
         fixCallType(ret, f64);
         return ret;
@@ -2485,11 +2476,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                   conv->value = process(writtenValue);
                   conv->type = WasmType::f32;
                   if (readType == ASM_DOUBLE) {
-                    auto promote = allocator.alloc<Unary>();
-                    promote->op = PromoteFloat32;
-                    promote->value = conv;
-                    promote->type = WasmType::f64;
-                    return promote;
+                    return ensureDouble(conv);
                   }
                   return conv;
                 } else if (writeType == ASM_FLOAT && readType == ASM_INT) {

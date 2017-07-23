@@ -193,12 +193,47 @@ public:
     ret->type = type;
     return ret;
   }
+  Load* makeAtomicLoad(unsigned bytes, bool signed_, uint32_t offset, Expression* ptr, WasmType type) {
+    Load* load = makeLoad(bytes, signed_, offset, getWasmTypeSize(type), ptr, type);
+    load->isAtomic = true;
+    return load;
+  }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();
     ret->isAtomic = false;
     ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value; ret->valueType = type;
     ret->finalize();
     assert(isConcreteWasmType(ret->value->type) ? ret->value->type == type : true);
+    return ret;
+  }
+  Store* makeAtomicStore(unsigned bytes, uint32_t offset, Expression* ptr, Expression* value, WasmType type) {
+    Store* store = makeStore(bytes, offset, getWasmTypeSize(type), ptr, value, type);
+    store->isAtomic = true;
+    return store;
+  }
+  AtomicRMW* makeAtomicRMW(AtomicRMWOp op, unsigned bytes, uint32_t offset,
+			   Expression* ptr, Expression* value, WasmType type) {
+    auto* ret = allocator.alloc<AtomicRMW>();
+    ret->op = op;
+    ret->bytes = bytes;
+    ret->offset = offset;
+    ret->ptr = ptr;
+    ret->value = value;
+    ret->type = type;
+    ret->finalize();
+    return ret;
+  }
+  AtomicCmpxchg* makeAtomicCmpxchg(unsigned bytes, uint32_t offset,
+			       Expression* ptr, Expression* expected, Expression* replacement,
+			       WasmType type) {
+    auto* ret = allocator.alloc<AtomicCmpxchg>();
+    ret->bytes = bytes;
+    ret->offset = offset;
+    ret->ptr = ptr;
+    ret->expected = expected;
+    ret->replacement = replacement;
+    ret->type = type;
+    ret->finalize();
     return ret;
   }
   Const* makeConst(Literal value) {

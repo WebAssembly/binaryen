@@ -78,10 +78,16 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     return 2;
   }
   Index visitLoad(Load *curr) {
-    return 1 + visit(curr->ptr);
+    return 1 + visit(curr->ptr) + 10 * curr->isAtomic;
   }
   Index visitStore(Store *curr) {
-    return 2 + visit(curr->ptr) + visit(curr->value);
+    return 2 + visit(curr->ptr) + visit(curr->value) + 10 * curr->isAtomic;
+  }
+  Index visitAtomicRMW(AtomicRMW *curr) {
+    return 100;
+  }
+  Index visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    return 100;
   }
   Index visitConst(Const *curr) {
     return 1;

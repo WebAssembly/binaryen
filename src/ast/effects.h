@@ -53,18 +53,26 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
                              // (so a trap may occur later or earlier, if it is
                              // going to occur anyhow), but we can't remove them,
                              // they count as side effects
+  bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
+                         // has a defined ordering wrt atomics (e.g. grow_memory)
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0 || implicitTrap; }
-  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap; }
+  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0 || implicitTrap || isAtomic; }
+  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
     if (branches || other.branches
                  || ((writesMemory || calls) && other.accessesMemory())
                  || (accessesMemory() && (other.writesMemory || other.calls))) {
+      return true;
+    }
+    // All atomics are sequentially consistent for now, and ordered wrt other
+    // memory references.
+    if ((isAtomic && other.accessesMemory()) ||
+        (other.isAtomic && accessesMemory())) {
       return true;
     }
     for (auto local : localsWritten) {
@@ -176,10 +184,24 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   }
   void visitLoad(Load *curr) {
     readsMemory = true;
+    isAtomic |= curr->isAtomic;
     if (!ignoreImplicitTraps) implicitTrap = true;
   }
   void visitStore(Store *curr) {
     writesMemory = true;
+    isAtomic |= curr->isAtomic;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    readsMemory = true;
+    writesMemory = true;
+    isAtomic = true;
+    if (!ignoreImplicitTraps) implicitTrap = true;
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    readsMemory = true;
+    writesMemory = true;
+    isAtomic = true;
     if (!ignoreImplicitTraps) implicitTrap = true;
   }
   void visitUnary(Unary *curr) {
@@ -219,11 +241,16 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     }
   }
   void visitReturn(Return *curr) { branches = true; }
-  void visitHost(Host *curr) { calls = true; }
+  void visitHost(Host *curr) {
+    calls = true;
+    // grow_memory modifies the set of valid addresses, and thus can be modeled as modifying memory
+    writesMemory = true;
+    // Atomics are also sequentially consistent with grow_memory.
+    isAtomic = true;
+  }
   void visitUnreachable(Unreachable *curr) { branches = true; }
 };
 
 } // namespace wasm
 
 #endif // wasm_ast_effects_h
-
