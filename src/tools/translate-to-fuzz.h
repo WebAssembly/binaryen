@@ -121,8 +121,12 @@ private:
   // function generation state
 
   Function* func;
-  std::vector<Expression*> breakableStack;
+  std::vector<Expression*> breakableStack; // things we can break to
   Index labelIndex;
+
+  // a list of things relevant to computing the odds of an infinite loop,
+  // which we try to minimize the risk of
+  std::vector<Expression*> hangStack;
 
   void addFunction() {
     Index num = wasm.functions.size();
@@ -139,6 +143,7 @@ private:
     }
     labelIndex = 0;
     assert(breakableStack.empty());
+    assert(hangStack.empty());
     // with reasonable chance make the body a block
     if (oneIn(2)) {
       func->body = makeBlock(func->result);
@@ -151,6 +156,7 @@ private:
       }
     }
     assert(breakableStack.empty());
+    assert(hangStack.empty());
     wasm.addFunction(func);
     // export them all TODO just some?
     auto* export_ = new Export;
@@ -171,7 +177,8 @@ private:
   Expression* make(WasmType type) {
     // when we should stop, emit something small
     if (finishedInput ||
-        (nesting >= NESTING_LIMIT && oneIn(4))) {
+        (nesting >= NESTING_LIMIT && oneIn(4)) ||
+        nesting >= 3 * NESTING_LIMIT) {
       switch (type) {
         case i32: return makeConst(i32);
         case i64: return makeConst(i64);
@@ -322,9 +329,19 @@ private:
       ret->list.push_back(make(none));
       num--;
     }
-    ret->list.push_back(make(type));
+    // give a chance to make the final element an unreachable break, instead
+    // of concrete - a common pattern (branch to the top of a loop etc.)
+    if (isConcreteWasmType(type) && oneIn(2)) {
+      ret->list.push_back(makeBreak(unreachable));
+    } else {
+      ret->list.push_back(make(type));
+    }
     breakableStack.pop_back();
-    ret->finalize();
+    if (isConcreteWasmType(type)) {
+      ret->finalize(type);
+    } else {
+      ret->finalize();
+    }
     if (ret->type != type) {
       // e.g. we might want an unreachable block, but a child breaks to it
       assert(type == unreachable && ret->type == none);
@@ -338,14 +355,20 @@ private:
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
     breakableStack.push_back(ret);
+    hangStack.push_back(ret);
     ret->body = make(type);
     breakableStack.pop_back();
+    hangStack.pop_back();
     ret->finalize();
     return ret;
   }
 
   Expression* makeIf(WasmType type) {
-    return makeIf({ make(i32), make(type), make(type) });
+    auto* condition = make(i32);
+    hangStack.push_back(nullptr);
+    auto* ret = makeIf({ condition, make(type), make(type) });
+    hangStack.pop_back();
+    return ret;
   }
 
   Expression* makeIf(const struct ThreeArgs& args) {
@@ -356,6 +379,7 @@ private:
     if (breakableStack.empty()) return make(type);
     Expression* condition = nullptr;
     if (type != unreachable) {
+      hangStack.push_back(nullptr);
       condition = make(i32);
     }
     // we need to find a proper target to break to; try a few times 
@@ -370,23 +394,52 @@ private:
           // we need to break to a proper place
           continue;
         }
-        return builder.makeBreak(name, make(type), condition);
+        auto* ret = builder.makeBreak(name, make(type), condition);
+        hangStack.pop_back();
+        return ret;
       } else if (type == none) {
         if (valueType != none) {
           // we need to break to a proper place
           continue;
         }
-        return builder.makeBreak(name, nullptr, condition);
+        auto* ret = builder.makeBreak(name, nullptr, condition);
+        hangStack.pop_back();
+        return ret;
       } else {
         assert(type == unreachable);
         if (valueType != none) {
           // we need to break to a proper place
           continue;
         }
+        // we are about to make an *un*conditional break. if it is
+        // to a loop, we prefer there to be a condition along the
+        // way, to reduce the chance of infinite looping
+        size_t conditions = 0;
+        int i = hangStack.size();
+        while (--i >= 0) {
+          auto* item = hangStack[i];
+          if (item == nullptr) {
+            conditions++;
+          } else {
+            auto* loop = item->cast<Loop>();
+            if (loop->name == name) {
+              // we found the target, no more conditions matter
+              break;
+            }
+          }
+        }
+        switch (conditions) {
+          case 0: if (!oneIn(4)) continue;
+          case 1: if (!oneIn(2)) continue;
+          default: if (oneIn(conditions + 1)) continue;
+        }
         return builder.makeBreak(name);
       }
     }
     // we failed to find something
+    if (type != unreachable) {
+      hangStack.pop_back();
+    }
     return make(type);
   }
 
