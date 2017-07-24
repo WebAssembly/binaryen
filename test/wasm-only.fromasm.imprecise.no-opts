@@ -2,6 +2,7 @@
  (type $FUNCSIG$vdji (func (param f64 i64 i32)))
  (type $FUNCSIG$j (func (result i64)))
  (type $FUNCSIG$ff (func (param f32) (result f32)))
+ (type $FUNCSIG$v (func))
  (type $legaltype$illegalImport (func (param f64 i32 i32 i32)))
  (type $legaltype$illegalImportResult (func (result i32)))
  (type $legaltype$_fabsf (func (param f64) (result f64)))
@@ -11,6 +12,7 @@
  (import "env" "illegalImportResult" (func $illegalImportResult (result i64)))
  (import "env" "_fabsf" (func $_fabsf (param f32) (result f32)))
  (import "env" "do_i64" (func $do_i64 (result i64)))
+ (import "env" "abort" (func $abort))
  (import "env" "illegalImport" (func $legalimport$illegalImport (param f64 i32 i32 i32)))
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
  (import "env" "_fabsf" (func $legalimport$_fabsf (param f64) (result f64)))
@@ -688,15 +690,29 @@
  )
  (func $switch64 (param $$a444 i64) (result i32)
   (local $$waka i32)
+  (local $2 i64)
   (block $switch
    (block $switch-default
     (block $switch-case0
      (block $switch-case
       (br_table $switch-case0 $switch-default $switch-case $switch-default
        (i32.wrap/i64
-        (i64.sub
-         (get_local $$a444)
-         (i64.const 42949672965)
+        (block (result i64)
+         (set_local $2
+          (i64.sub
+           (get_local $$a444)
+           (i64.const 42949672965)
+          )
+         )
+         (br_if $switch-default
+          (i32.wrap/i64
+           (i64.shr_u
+            (get_local $2)
+            (i64.const 32)
+           )
+          )
+         )
+         (get_local $2)
         )
        )
       )
@@ -1469,6 +1485,73 @@
    (get_local $$cond)
   )
  )
+ (func $switch64_big_condition1 (param $$x i64)
+  (local $1 i64)
+  (block $switch
+   (block $switch-default
+    (block $switch-case
+     (br_table $switch-case $switch-default
+      (i32.wrap/i64
+       (block (result i64)
+        (set_local $1
+         (i64.sub
+          (get_local $$x)
+          (i64.const 9218868437227405312)
+         )
+        )
+        (br_if $switch-default
+         (i32.wrap/i64
+          (i64.shr_u
+           (get_local $1)
+           (i64.const 32)
+          )
+         )
+        )
+        (get_local $1)
+       )
+      )
+     )
+    )
+    (block
+     (call $abort)
+     (br $switch)
+    )
+   )
+   (return)
+  )
+ )
+ (func $switch64_big_condition2 (param $$x i64)
+  (local $1 i64)
+  (block $switch
+   (block $switch-case
+    (br_table $switch-case $switch
+     (i32.wrap/i64
+      (block (result i64)
+       (set_local $1
+        (i64.sub
+         (get_local $$x)
+         (i64.const 9218868437227405312)
+        )
+       )
+       (br_if $switch
+        (i32.wrap/i64
+         (i64.shr_u
+          (get_local $1)
+          (i64.const 32)
+         )
+        )
+       )
+       (get_local $1)
+      )
+     )
+    )
+   )
+   (block
+    (call $abort)
+    (br $switch)
+   )
+  )
+ )
  (func $keepAlive
   (call $loads)
   (call $stores)
@@ -1525,6 +1608,12 @@
    (call $switch64TOOMUCH
     (i64.const 0)
    )
+  )
+  (call $switch64_big_condition1
+   (i64.const 0)
+  )
+  (call $switch64_big_condition2
+   (i64.const 0)
   )
  )
  (func $__emscripten_dceable_type_decls
