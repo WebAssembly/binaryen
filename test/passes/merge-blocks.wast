@@ -69,5 +69,18 @@
      )
     )
   )
+  (func $drop-block-squared-iloop
+   (drop
+    (block $label$0 (result i32) ;; this block's type should not change, so the drop remains none and valid
+     (drop
+      (block $label$1
+       (loop $label$2
+        (br $label$2)
+       )
+      )
+     )
+    )
+   )
+  )
 )
 

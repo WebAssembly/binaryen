@@ -87,4 +87,17 @@
    )
   )
  )
+ (func $drop-block-squared-iloop (type $0)
+  (drop
+   (block $label$0 (result i32)
+    (block $label$1
+     (drop
+      (loop $label$2
+       (br $label$2)
+      )
+     )
+    )
+   )
+  )
+ )
 )

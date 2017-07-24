@@ -213,7 +213,7 @@ static void optimizeBlock(Block* curr, Module* module) {
       break;
     }
   }
-  if (changed) curr->finalize();
+  if (changed) curr->finalize(curr->type);
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
