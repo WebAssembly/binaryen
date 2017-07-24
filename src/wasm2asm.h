@@ -210,7 +210,6 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
     addImport(asmFunc[3], import.get());
   }
   // figure out the table size
-  // tableSize = wasm->table.names.size();
   tableSize = std::accumulate(wasm->table.segments.begin(),
                               wasm->table.segments.end(),
                               0, [&](size_t size, Table::Segment seg) -> size_t {
@@ -293,7 +292,6 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import *import) {
 
 void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
-  //  for (size_t i = 0; i < wasm->table.names.size(); i++) {
   for (Table::Segment &seg : wasm->table.segments) {
     for (size_t i = 0; i < seg.data.size(); i++) {
       Name name = seg.data[i];
@@ -336,7 +334,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module *wasm) {
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
-  if (debug) std::cerr << "  processFunction " << func->name << '\n';
+  if (debug) std::cerr << "  processFunction " << func->name << std::endl;
   Ref ret = ValueBuilder::makeFunction(fromName(func->name));
   frees.clear();
   frees.resize(std::max(i32, std::max(f32, f64)) + 1);
@@ -349,9 +347,6 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     ValueBuilder::appendArgumentToFunction(ret, name);
     ret[3]->push_back(
       ValueBuilder::makeStatement(
-        // ValueBuilder::makeAssign(
-        //   ValueBuilder::makeName(name),
-        //   makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(func->getLocalType(i)))
         ValueBuilder::makeBinary(
           ValueBuilder::makeName(name), SET,
           makeAsmCoercion(ValueBuilder::makeName(name),
@@ -394,7 +389,8 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   for (auto f : frees[f64]) {
     ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_DOUBLE));
   }
-  // if (theVar[1]->size() == 0) { XXX ???
+  // if (theVar[1]->size() == 0) {
+  //   XXX What should splice do???
   //   ret[3]->splice(theVarIndex, 1);
   // }
   (void)theVarIndex;
@@ -571,7 +567,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // if it's not already a statement, then it's an expression, and we need to assign it
       // (if it is a statement, it already assigns to the result var)
       if (!isStatement(curr) && result != NO_RESULT) {
-        // ret = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), ret));
         ret = ValueBuilder::makeStatement(
             ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
       }
@@ -604,7 +599,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     std::map<Name, IString> breakResults;
 
     // Breaks to the top of a loop should be emitted as continues, to that loop's main label
-    // std::map<Name, Name> continueLabels;
     std::unordered_set<Name> continueLabels;
 
     IString fromName(Name name) {
@@ -709,7 +703,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
       if (result != NO_RESULT) {
-        // theCall = ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(result), theCall));
         theCall = ValueBuilder::makeStatement(
             ValueBuilder::makeBinary(
                 ValueBuilder::makeName(result), SET, theCall));
@@ -737,7 +730,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       abort();
     }
     Ref visitCallIndirect(CallIndirect *curr)  {
-      // std::string stable = std::string("FUNCTION_TABLE_") + getSig(curr->fullType);
       std::string stable = std::string("FUNCTION_TABLE_") + curr->fullType.c_str();
       IString table = IString(stable.c_str(), false);
       auto makeTableCall = [&](Ref target) {
@@ -774,7 +766,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       ScopedTemp temp(curr->type, parent, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
       Ref ret = blockify(visit(curr->value, temp));
       // the output was assigned to result, so we can just assign it to our target
-      // ret[1]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(func->getLocalName(curr->index))), temp.getAstName())));
       ret[1]->push_back(ValueBuilder::makeStatement(
           ValueBuilder::makeBinary(
               ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
@@ -936,7 +927,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
         default: abort();
       }
-      // return ValueBuilder::makeAssign(ret, value);
       return ValueBuilder::makeBinary(ret, SET, value);
     }
     Ref visitConst(Const *curr) {
@@ -1019,7 +1009,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               break;
             // TODO: more complex unary conversions
             default:
-              std::cerr << curr << '\n';
+              std::cerr << "Unhandled unary operator: " << curr << std::endl;
               abort();
           }
           if (curr->type == f32) { // doubles need much less coercing
@@ -1028,7 +1018,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           return ret;
         }
         default:
-          std::cerr << curr << '\n';
+          std::cerr << "Unhandled type: " << curr << std::endl;
           abort();
       }
     }
@@ -1149,7 +1139,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
                                           makeSigning(right, ASM_UNSIGNED));
         default:
-          std::cerr << curr << '\n';
+          std::cerr << "Unhandled binary operator: " << curr << std::endl;
           abort();
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
@@ -1184,13 +1174,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           tempCondition(i32, parent);
       return
         ValueBuilder::makeSeq(
-          // ValueBuilder::makeAssign(tempCondition.getAstName(), condition),
           ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
           ValueBuilder::makeSeq(
-            // ValueBuilder::makeAssign(tempIfTrue.getAstName(), ifTrue),
             ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
             ValueBuilder::makeSeq(
-              // ValueBuilder::makeAssign(tempIfFalse.getAstName(), ifFalse),
               ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
               ValueBuilder::makeConditional(tempCondition.getAstName(), tempIfTrue.getAstName(), tempIfFalse.getAstName())
             )

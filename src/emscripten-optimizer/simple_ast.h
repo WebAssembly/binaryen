@@ -557,23 +557,24 @@ struct JSPrinter {
   // Utils
 
   void ensure(int safety=100) {
-    if (size < used + safety) {
-      size = std::max((size_t)1024, size * 2) + safety;
+    if (size >= used + safety) {
+      return;
+    }
+    size = std::max((size_t)1024, size * 2) + safety;
+    if (!buffer) {
+      buffer = (char*)malloc(size);
       if (!buffer) {
-        buffer = (char*)malloc(size);
-        if (!buffer) {
-          printf("Out of memory allocating %zd bytes for output buffer!", size);
-          abort();
-        }
-      } else {
-        char *buf = (char*)realloc(buffer, size);
-        if (!buf) {
-          free(buffer);
-          printf("Out of memory allocating %zd bytes for output buffer!", size);
-          abort();
-        }
-        buffer = buf;
+        errv("Out of memory allocating %zd bytes for output buffer!", size);
+        abort();
       }
+    } else {
+      char *buf = (char*)realloc(buffer, size);
+      if (!buf) {
+        free(buffer);
+        errv("Out of memory allocating %zd bytes for output buffer!", size);
+        abort();
+      }
+      buffer = buf;
     }
   }
 
@@ -628,7 +629,6 @@ struct JSPrinter {
       printAssign(node);
     }
     IString type = node[0]->getIString();
-    //fprintf(stderr, "printing %s\n", type.str);
     switch (type.str[0]) {
       case 'a': {
         if (type == ARRAY) printArray(node);
@@ -709,7 +709,7 @@ struct JSPrinter {
         break;
       }
       default: {
-        printf("cannot yet print %s\n", type.str);
+        errv("cannot yet print %s\n", type.str);
         abort();
       }
     }
@@ -796,7 +796,7 @@ struct JSPrinter {
     emit(node->getCString());
   }
 
-    static char* numToString(double d, bool finalize=true) {
+  static char* numToString(double d, bool finalize=true) {
     bool neg = d < 0;
     if (neg) d = -d;
     // try to emit the fewest necessary characters
