@@ -33,6 +33,7 @@
 #include "optimization-options.h"
 #include "execution-results.h"
 #include "translate-to-fuzz.h"
+#include "js-wrapper.h"
 
 using namespace wasm;
 
@@ -47,6 +48,7 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool fuzzExec = false;
   bool translateToFuzz = false;
+  std::string emitJSWrapper;
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
@@ -68,6 +70,9 @@ int main(int argc, const char* argv[]) {
       .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { translateToFuzz = true; })
+      .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
+           Options::Arguments::One,
+           [&](Options *o, const std::string &arguments) { emitJSWrapper = arguments; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -126,5 +131,12 @@ int main(int argc, const char* argv[]) {
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);
+  }
+
+  if (emitJSWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitJSWrapper, std::ofstream::out);
+    outfile << generateJSWrapper(wasm);
+    outfile.close();
   }
 }
