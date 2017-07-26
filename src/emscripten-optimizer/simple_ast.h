@@ -428,6 +428,11 @@ struct Value {
     return arr->back();
   }
 
+  void splice(int x, int num) {
+    assert(isArray());
+    arr->erase(arr->begin() + x, arr->begin() + x + num);
+  }
+
   int indexOf(Ref other) {
     assert(isArray());
     for (size_t i = 0; i < arr->size(); i++) {

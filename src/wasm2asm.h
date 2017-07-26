@@ -389,11 +389,9 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   for (auto f : frees[f64]) {
     ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_DOUBLE));
   }
-  // if (theVar[1]->size() == 0) {
-  //   XXX What should splice do???
-  //   ret[3]->splice(theVarIndex, 1);
-  // }
-  (void)theVarIndex;
+  if (theVar[1]->size() == 0) {
+    ret[3]->splice(theVarIndex, 1);
+  }
   // checks
   assert(frees[i32].size() == temps[i32]); // all temp vars should be free at the end
   assert(frees[f32].size() == temps[f32]); // all temp vars should be free at the end
