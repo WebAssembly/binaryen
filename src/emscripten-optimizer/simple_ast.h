@@ -625,6 +625,10 @@ struct JSPrinter {
       printNum(node);
       return;
     }
+    if (node->isAssignName()) {
+      printAssignName(node);
+      return;
+    }
     if (node->isAssign()) {
       printAssign(node);
     }
@@ -780,12 +784,22 @@ struct JSPrinter {
   }
 
   bool isNothing(Ref node) {
-    return node[0] == TOPLEVEL && node[1]->size() == 0;
+    return node->isArray() && node[0] == TOPLEVEL && node[1]->size() == 0;
   }
 
   void printAssign(Ref node) {
+    assert(false && "printAssign still used!");
     auto* assign = node->asAssign();
     printChild(assign->target(), node, -1);
+    space();
+    emit('=');
+    space();
+    printChild(assign->value(), node, 1);
+  }
+
+  void printAssignName(Ref node) {
+    auto *assign = node->asAssignName();
+    emit(assign->target().c_str());
     space();
     emit('=');
     space();
@@ -938,6 +952,10 @@ struct JSPrinter {
   int getPrecedence(Ref node, bool parent) {
     if (node->isAssign()) {
       return OperatorClass::getPrecedence(OperatorClass::Binary, SET);
+    }
+    if (!node->isArray()) {
+      // node is a value
+      return -1;
     }
     Ref type = node[0];
     if (type == BINARY || type == UNARY_PREFIX) {

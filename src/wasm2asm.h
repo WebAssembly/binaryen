@@ -552,7 +552,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return visit(curr, temp.temp);
     }
 
-    Ref visitForExpression(Expression* curr, WasmType type, IString& tempName) { // this result is for an asm expression slot, but it might be a statement
+    // this result is for an asm expression slot, but it might be a statement
+    Ref visitForExpression(Expression* curr, WasmType type, IString& tempName) {
       if (isStatement(curr)) {
         ScopedTemp temp(type, parent);
         tempName = temp.temp;
@@ -815,22 +816,47 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // normal load
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
       if (curr->offset) {
-        ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
+        ptr = makeAsmCoercion(
+            ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)),
+            ASM_INT);
       }
       Ref ret;
       switch (curr->type) {
         case i32: {
           switch (curr->bytes) {
-            case 1: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP8  : HEAPU8 ), ValueBuilder::makePtrShift(ptr, 0)); break;
-            case 2: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16), ValueBuilder::makePtrShift(ptr, 1)); break;
-            case 4: ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32), ValueBuilder::makePtrShift(ptr, 2)); break;
-            default: abort();
+            case 1:
+              ret = ValueBuilder::makeSub(
+                  ValueBuilder::makeName(curr->signed_ ? HEAP8 : HEAPU8 ),
+                  ValueBuilder::makePtrShift(ptr, 0));
+              break;
+            case 2:
+              ret = ValueBuilder::makeSub(
+                  ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16),
+                  ValueBuilder::makePtrShift(ptr, 1));
+              break;
+            case 4:
+              ret = ValueBuilder::makeSub(
+                  ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32),
+                  ValueBuilder::makePtrShift(ptr, 2));
+              break;
+            default:
+              std::cerr << "Unhandled number of bytes in i32 load: "
+                        << curr->bytes << std::endl;
+              abort();
           }
           break;
         }
-        case f32: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2)); break;
-        case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
-        default: abort();
+        case f32:
+          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32),
+                                      ValueBuilder::makePtrShift(ptr, 2));
+          break;
+        case f64:
+          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
+                                      ValueBuilder::makePtrShift(ptr, 3));
+          break;
+        default:
+          std::cerr << "Unhandled type in load: " << curr->type << std::endl;
+          abort();
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
@@ -928,6 +954,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         default: abort();
       }
       return ValueBuilder::makeBinary(ret, SET, value);
+    }
+    Ref visitDrop(Drop *curr) {
+      assert(!isStatement(curr));
+      return visitAndAssign(curr->value, result);
     }
     Ref visitConst(Const *curr) {
       switch (curr->type) {
