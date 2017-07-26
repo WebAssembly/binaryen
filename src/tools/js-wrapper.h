@@ -23,8 +23,25 @@ namespace wasm {
 
 static std::string generateJSWrapper(Module& wasm) {
   std::string ret;
-  ret += "// the variable 'binary' must exist and contain the wasm file\n";
-  ret += "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {})\n";
+  ret += "var binary;\n"
+         "if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {\n"
+         "  var args = process.argv.slice(2);\n"
+         "  binary = require('fs').readFileSync(args[0]);\n"
+         "  if (!binary.buffer) binary = new Uint8Array(binary);\n"
+         "} else {\n"
+         "  var args;\n"
+         "  if (typeof scriptArgs != 'undefined') {\n"
+         "    args = scriptArgs;\n"
+         "  } else if (typeof arguments != 'undefined') {\n"
+         "    args = arguments;\n"
+         "  }\n"
+         "  if (typeof readbuffer === 'function') {\n"
+         "    binary = new Uint8Array(readbuffer(args[0]));\n"
+         "  } else {\n"
+         "    binary = read(args[0], 'binary');\n"
+         "  }\n"
+         "}\n"
+         "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {});\n";
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
     if (!func) continue; // something exported other than a function
@@ -37,7 +54,7 @@ static std::string generateJSWrapper(Module& wasm) {
     if (func->result != none) {
       ret += "console.log(";
     }
-    ret += std::string("instance.") + exp->name.str + "(";
+    ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
     for (WasmType param : func->params) {
       WASM_UNUSED(param);
