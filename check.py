@@ -105,6 +105,11 @@ for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
 
     fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + ('.bin' if binary else '') + '.txt'), 'rb').read())
 
+    if 'emit-js-wrapper' in t:
+      with open('a.js') as actual:
+        with open(t + '.js') as expected:
+          fail_if_not_identical(actual.read(), expected.read())
+
 print '[ checking asm2wasm testcases... ]\n'
 
 for asm in tests:
