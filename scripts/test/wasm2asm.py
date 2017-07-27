@@ -5,6 +5,7 @@ import os
 from support import run_command
 from shared import (WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, tests)
 
+
 def test_wasm2asm():
   print '\n[ checking wasm2asm testcases... ]\n'
 
@@ -45,6 +46,7 @@ def test_wasm2asm():
                         expected_err='Successfully compiled asm.js code',
                         err_contains=True)
       fail_if_not_identical(out, '')
+
 
 if __name__ == "__main__":
   test_wasm2asm()

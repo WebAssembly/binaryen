@@ -159,7 +159,7 @@ def run_command(cmd, expected_status=0, stderr=None,
   if proc.returncode != expected_status:
     raise Exception(('run_command failed', err))
   err_correct = expected_err is None or \
-                (expected_err in err if err_contains else expected_err == err)
+    (expected_err in err if err_contains else expected_err == err)
   if not err_correct:
     raise Exception(('run_command unexpected stderr',
                      "expected '%s', actual '%s'" % (expected_err, err)))
