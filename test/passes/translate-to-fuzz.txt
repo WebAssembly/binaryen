@@ -25,78 +25,136 @@
   (local $25 i32)
   (local $26 f32)
   (if (result i32)
-   (f64.lt
-    (if (result f64)
-     (i32.eqz
-      (i32.load8_s offset=3
-       (i32.const -128)
+   (i32.eqz
+    (f64.lt
+     (if (result f64)
+      (i32.eqz
+       (i32.load8_s offset=3
+        (i32.const -128)
+       )
       )
-     )
-     (select
-      (f64.const 32.501960784313724)
-      (f64.const -87)
-      (block $label$0 (result i32)
-       (loop $label$1
-        (nop)
-       )
-       (loop $label$2
-        (nop)
-       )
-       (drop
-        (f64.convert_s/i64
-         (i64.load32_s offset=22 align=1
-          (i32.const -126)
+      (select
+       (f64.const -nan:0xfffffffffffbe)
+       (f64.const 233)
+       (block $label$0 (result i32)
+        (loop $label$1
+         (nop)
+        )
+        (loop $label$2
+         (nop)
+        )
+        (drop
+         (f64.convert_s/i64
+          (i64.load32_s offset=22 align=1
+           (i32.const -126)
+          )
          )
         )
-       )
-       (drop
-        (i64.const 65476)
-       )
-       (drop
-        (i32.const 32767)
-       )
-       (i64.store offset=22 align=2
-        (loop $label$3 (result i32)
-         (select
-          (f64.ge
-           (f64.const 2.238912567806329e-207)
-           (tee_local $23
-            (tee_local $3
-             (f64.const 3.4216194324343367e-71)
-            )
-           )
-          )
-          (block $label$4 (result i32)
-           (nop)
-           (nop)
-           (block $label$5
-            (loop $label$6
-             (if
-              (i32.const -75)
-              (block $label$7
-               (nop)
-              )
-              (nop)
+        (drop
+         (i64.const 65476)
+        )
+        (drop
+         (i32.const 32767)
+        )
+        (i64.store32 offset=22
+         (loop $label$3 (result i32)
+          (select
+           (f64.ge
+            (f64.const 2.238912567806329e-207)
+            (tee_local $23
+             (tee_local $3
+              (f64.const 3.4216194324343367e-71)
              )
             )
-            (nop)
            )
-           (unreachable)
+           (block $label$4 (result i32)
+            (nop)
+            (nop)
+            (br_if $label$3
+             (i32.eqz
+              (if (result i32)
+               (block $label$5 (result i32)
+                (block $label$6
+                 (block $label$7
+                  (drop
+                   (f32.const -75)
+                  )
+                  (loop $label$8
+                   (nop)
+                  )
+                  (if
+                   (i32.eqz
+                    (if (result i32)
+                     (i32.eqz
+                      (i32.const 1)
+                     )
+                     (i32.const 1)
+                     (i32.const 1987451260)
+                    )
+                   )
+                   (nop)
+                   (nop)
+                  )
+                  (if
+                   (block $label$9 (result i32)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (nop)
+                    (i32.const -121)
+                   )
+                   (f32.store offset=4 align=1
+                    (i32.const 65506)
+                    (f32.const 1.1754943508222875e-38)
+                   )
+                   (nop)
+                  )
+                  (nop)
+                 )
+                 (nop)
+                )
+                (br $label$3)
+               )
+               (i32.const 1130320962)
+               (i32.const -53)
+              )
+             )
+            )
+            (i32.const 255)
+           )
+           (i32.const 1685485873)
           )
-          (i32.const 1685485873)
          )
+         (i64.const -121)
         )
-        (i64.const -2147483648)
+        (unreachable)
        )
-       (unreachable)
       )
+      (f64.const 0)
      )
-     (f64.const -nan:0xfffffffffffab)
+     (f64.const 1797693134862315708145274e284)
     )
-    (f64.const 0)
    )
-   (i32.const 255)
-   (i32.const -90)
+   (i32.const -74)
+   (i32.const -2147483648)
   )
  )
 )
