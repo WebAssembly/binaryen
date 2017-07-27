@@ -368,7 +368,7 @@ private:
     }
     // give a chance to make the final element an unreachable break, instead
     // of concrete - a common pattern (branch to the top of a loop etc.)
-    if (isConcreteWasmType(type) && oneIn(2)) {
+    if (!finishedInput && isConcreteWasmType(type) && oneIn(2)) {
       ret->list.push_back(makeBreak(unreachable));
     } else {
       ret->list.push_back(make(type));
@@ -424,7 +424,7 @@ private:
   }
 
   Expression* makeBreak(WasmType type) {
-    if (breakableStack.empty()) return make(type);
+    if (breakableStack.empty()) return makeTrivial(type);
     Expression* condition = nullptr;
     if (type != unreachable) {
       hangStack.push_back(nullptr);
@@ -487,7 +487,7 @@ private:
     if (type != unreachable) {
       hangStack.pop_back();
     }
-    return make(type);
+    return makeTrivial(type);
   }
 
   Expression* makeCall(WasmType type) {
