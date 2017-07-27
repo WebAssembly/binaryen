@@ -138,6 +138,8 @@ private:
   // which we try to minimize the risk of
   std::vector<Expression*> hangStack;
 
+  std::map<WasmType, std::vector<Index>> typeLocals; // type => list of locals with that type
+
   void addFunction() {
     Index num = wasm.functions.size();
     func = new Function;
@@ -145,11 +147,15 @@ private:
     func->result = getReachableType();
     Index numParams = logify(get16()) / 2;
     for (Index i = 0; i < numParams; i++) {
-      func->params.push_back(getConcreteType());
+      auto type = getConcreteType();
+      typeLocals[type].push_back(func->params.size());
+      func->params.push_back(type);
     }
     Index numVars = logify(get16());
     for (Index i = 0; i < numVars; i++) {
-      func->vars.push_back(getConcreteType());
+      auto type = getConcreteType();
+      typeLocals[type].push_back(func->params.size() + func->vars.size());
+      func->vars.push_back(type);
     }
     labelIndex = 0;
     assert(breakableStack.empty());
@@ -185,18 +191,28 @@ private:
   int nesting = 0;
 
   Expression* make(WasmType type) {
-    // when we should stop, emit something small
+    // when we should stop, emit something small (but not necessarily trivial)
     if (finishedInput ||
         (nesting >= NESTING_LIMIT && oneIn(4)) ||
         nesting >= 3 * NESTING_LIMIT) {
-      switch (type) {
-        case i32: return makeConst(i32);
-        case i64: return makeConst(i64);
-        case f32: return makeConst(f32);
-        case f64: return makeConst(f64);
-        case none: return makeNop(none);
-        case unreachable: return makeUnreachable(unreachable);
-        default: WASM_UNREACHABLE();
+      if (isConcreteWasmType(type)) {
+        if (oneIn(2)) {
+          return makeConst(type);
+        } else {
+          return makeGetLocal(type);
+        }
+      } else if (type == none) {
+        if (oneIn(2)) {
+          return makeNop(type);
+        } else {
+          return makeSetLocal(type);
+        }
+      }
+      assert(type == unreachable);
+      if (oneIn(2)) {
+        return makeUnreachable(type);
+      } else {
+        return makeBreak(type);
       }
     }
     nesting++;
@@ -325,6 +341,17 @@ private:
       case 14: return makeUnreachable(unreachable);
     }
     WASM_UNREACHABLE();
+  }
+
+  // make something with no chance of infinite recursion
+  Expression* makeTrivial(WasmType type) {
+    if (isConcreteWasmType(type)) {
+      return makeConst(type);
+    } else if (type == none) {
+      return makeNop(type);
+    }
+    assert(type == unreachable);
+    return makeUnreachable(type);
   }
 
   // specific expression creators
@@ -490,35 +517,21 @@ private:
   }
 
   Expression* makeGetLocal(WasmType type) {
-    auto total = func->getNumLocals();
-    if (total == 0) return make(type);
-    int tries = TRIES * 2;
-    while (tries-- > 0) {
-      auto index = upTo(total);
-      if (func->getLocalType(index) != type) continue;
-      // we found one
-      return builder.makeGetLocal(index, type);
-    }
-    // we failed to find something
-    return make(type);
+    auto& locals = typeLocals[type];
+    if (locals.empty()) return makeTrivial(type);
+    return builder.makeGetLocal(vectorPick(locals), type);
   }
 
   Expression* makeSetLocal(WasmType type) {
-    auto total = func->getNumLocals();
-    if (total == 0) return make(type);
-    int tries = TRIES * 2;
-    while (tries-- > 0) {
-      auto index = upTo(total);
-      if (func->getLocalType(index) != type) continue;
-      // we found one
-      if (type == none) {
-        return builder.makeSetLocal(index, make(type));
-      } else {
-        return builder.makeTeeLocal(index, make(type));
-      }
+    bool tee = type != none;
+    if (!tee) type = getConcreteType();
+    auto& locals = typeLocals[type];
+    if (locals.empty()) return makeTrivial(type);
+    if (tee) {
+      return builder.makeTeeLocal(vectorPick(locals), make(type));
+    } else {
+      return builder.makeSetLocal(vectorPick(locals), make(type));
     }
-    // we failed to find something
-    return make(type);
   }
 
   Expression* makeLoad(WasmType type) {
