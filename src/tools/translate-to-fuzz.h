@@ -534,9 +534,23 @@ private:
     }
   }
 
+  Expression* makePointer() {
+    auto* ret = make(i32);
+    // with high probability, mask the pointer so it's in a reasonable
+    // range. otherwise, most pointers are going to be out of range and
+    // most memory ops will just trap
+    if (!oneIn(10)) {
+      ret = builder.makeBinary(AndInt32,
+        ret,
+        builder.makeConst(Literal(int32_t(255)))
+      );
+    }
+    return ret;
+  }
+
   Expression* makeLoad(WasmType type) {
     auto offset = logify(get());
-    auto ptr = make(i32); // TODO: mask it, think about memory properly
+    auto ptr = makePointer();
     switch (type) {
       case i32: {
         bool signed_ = get() & 1;
@@ -585,7 +599,7 @@ private:
       type = getConcreteType();
     }
     auto offset = logify(get());
-    auto ptr = make(i32); // TODO: mask it, think about memory properly
+    auto ptr = makePointer();
     auto value = make(type);
     switch (type) {
       case i32: {
