@@ -396,7 +396,7 @@ private:
     ret->name = makeLabel();
     breakableStack.push_back(ret);
     hangStack.push_back(ret);
-    ret->body = make(type);
+    ret->body = makeMaybeBlock(type);
     breakableStack.pop_back();
     hangStack.pop_back();
     ret->finalize();
@@ -414,10 +414,19 @@ private:
     return ret;
   }
 
+  // make something, with a good chance of it being a block
+  Expression* makeMaybeBlock(WasmType type) {
+    if (oneIn(3)) {
+      return make(type);
+    } else {
+      return makeBlock(type);
+    }
+  }
+
   Expression* makeIf(WasmType type) {
     auto* condition = makeCondition();
     hangStack.push_back(nullptr);
-    auto* ret = makeIf({ condition, make(type), make(type) });
+    auto* ret = makeIf({ condition, makeMaybeBlock(type), makeMaybeBlock(type) });
     hangStack.pop_back();
     return ret;
   }
