@@ -51,6 +51,8 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     if (func->result == i64) bad = true;
     if (bad) continue;
+    ret += "try {\n";
+    ret += "  ";
     if (func->result != none) {
       ret += "console.log(";
     }
@@ -71,6 +73,9 @@ static std::string generateJSWrapper(Module& wasm) {
       ret += ")"; // for console.log
     }
     ret += ";\n";
+    ret += "} catch (e) {\n";
+    ret += "  console.log('exception: ' + e);\n";
+    ret += "}\n";
   }
   return ret;
 }
