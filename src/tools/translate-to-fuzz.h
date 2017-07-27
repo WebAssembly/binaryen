@@ -860,11 +860,18 @@ private:
   }
 
   bool oneIn(Index x) {
-    return (get32() % x) == 0;
+    // use extra bits as "noise" for later
+    auto raw = get32();
+    auto ret = (raw % x) == 0;
+    xorFactor += raw / x;
+    return ret;
   }
 
   Index upTo(Index x) {
-    return get32() % x;
+    auto raw = get32();
+    auto ret = raw % x;
+    xorFactor += raw / x;
+    return ret;
   }
 
   // pick from a vector
