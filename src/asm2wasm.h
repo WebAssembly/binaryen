@@ -2539,6 +2539,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
       auto top = allocator.alloc<Block>();
       if (canSwitch) {
+
+        // we may need a break for the case where the condition doesn't match
+        // any of the cases. it should go to the default, if we have one, or
+        // outside if not
+        Break* breakWhenNotMatching = nullptr;
+
         if (br->condition->type == i32) {
           Binary* offsetor = allocator.alloc<Binary>();
           offsetor->op = BinaryOp::SubInt32;
@@ -2554,7 +2560,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           offsetor->left = br->condition;
           offsetor->right = builder.makeConst(Literal(int64_t(min)));
           offsetor->type = i64;
-          br->condition = builder.makeUnary(UnaryOp::WrapInt64, offsetor); // TODO: check this fits in 32 bits
+          // the switch itself can be 32-bit, as the range is in a reasonable range. so after
+          // offsetting, we need to make sure there are no high bits, then we can just look
+          // at the lower 32 bits
+          auto temp = Builder::addVar(function, i64);
+          auto* block = builder.makeBlock();
+          block->list.push_back(builder.makeSetLocal(temp, offsetor));
+          // if high bits, we can break to the default (we'll fill in the name later)
+          breakWhenNotMatching = builder.makeBreak(Name(), nullptr,
+            builder.makeUnary(
+              UnaryOp::WrapInt64,
+              builder.makeBinary(BinaryOp::ShrUInt64,
+                builder.makeGetLocal(temp, i64),
+                builder.makeConst(Literal(int64_t(32)))
+              )
+            )
+          );
+          block->list.push_back(breakWhenNotMatching);
+          block->list.push_back(
+            builder.makeGetLocal(temp, i64)
+          );
+          block->finalize();
+          br->condition = builder.makeUnary(UnaryOp::WrapInt64, block);
         }
 
         top->list.push_back(br);
@@ -2594,6 +2621,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // ensure a default
         if (br->default_.isNull()) {
           br->default_ = top->name;
+        }
+        if (breakWhenNotMatching) {
+          breakWhenNotMatching->name = br->default_;
         }
         for (size_t i = 0; i < br->targets.size(); i++) {
           if (br->targets[i].isNull()) br->targets[i] = br->default_;
