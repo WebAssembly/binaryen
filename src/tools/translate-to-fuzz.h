@@ -145,6 +145,7 @@ private:
     func = new Function;
     func->name = std::string("func_") + std::to_string(num);
     func->result = getReachableType();
+    assert(typeLocals.empty());
     Index numParams = logify(get16()) / 2;
     for (Index i = 0; i < numParams; i++) {
       auto type = getConcreteType();
@@ -180,6 +181,8 @@ private:
     export_->value = func->name;
     export_->kind = ExternalKind::Function;
     wasm.addExport(export_);
+    // cleanup
+    typeLocals.clear();
   }
 
   Name makeLabel() {
@@ -524,13 +527,18 @@ private:
 
   Expression* makeSetLocal(WasmType type) {
     bool tee = type != none;
-    if (!tee) type = getConcreteType();
-    auto& locals = typeLocals[type];
+    WasmType valueType;
+    if (tee) {
+      valueType = type;
+    } else {
+      valueType = getConcreteType();
+    }
+    auto& locals = typeLocals[valueType];
     if (locals.empty()) return makeTrivial(type);
     if (tee) {
-      return builder.makeTeeLocal(vectorPick(locals), make(type));
+      return builder.makeTeeLocal(vectorPick(locals), make(valueType));
     } else {
-      return builder.makeSetLocal(vectorPick(locals), make(type));
+      return builder.makeSetLocal(vectorPick(locals), make(valueType));
     }
   }
 
