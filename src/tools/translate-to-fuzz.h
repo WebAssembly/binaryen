@@ -373,8 +373,19 @@ private:
     return ret;
   }
 
+  Expression* makeCondition() {
+    // we want a 50-50 chance for the condition to be taken, for interesting
+    // execution paths. by itself, there is bias (e.g. most consts are "yes")
+    // so even that out with noise
+    auto* ret = make(i32);
+    if (oneIn(2)) {
+      ret = builder.makeUnary(UnaryOp::EqZInt32, ret);
+    }
+    return ret;
+  }
+
   Expression* makeIf(WasmType type) {
-    auto* condition = make(i32);
+    auto* condition = makeCondition();
     hangStack.push_back(nullptr);
     auto* ret = makeIf({ condition, make(type), make(type) });
     hangStack.pop_back();
@@ -390,7 +401,7 @@ private:
     Expression* condition = nullptr;
     if (type != unreachable) {
       hangStack.push_back(nullptr);
-      condition = make(i32);
+      condition = makeCondition();
     }
     // we need to find a proper target to break to; try a few times 
     int tries = TRIES;
