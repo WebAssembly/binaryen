@@ -74,6 +74,9 @@ private:
   // beyond a nesting limit, greatly decrease the chance to continue to nest
   static const int NESTING_LIMIT = 7;
 
+  // reduce the chance for a function to call itself by this factor
+  static const int RECURSION_FACTOR = 10;
+
   // after we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
@@ -112,10 +115,17 @@ private:
   }
 
   void build() {
+    setupMemory();
     // keep adding functions until we run out of input
     while (!finishedInput) {
       addFunction();
     }
+  }
+
+  void setupMemory() {
+    wasm.memory.exists = true;
+    // use one page
+    wasm.memory.initial = wasm.memory.max = 1;
   }
 
   // function generation state
@@ -443,20 +453,6 @@ private:
   }
 
   Expression* makeCall(WasmType type) {
-    // avoid calls if there is a high chance of infinite recursion
-    size_t conditions = 0;
-    int i = hangStack.size();
-    while (--i >= 0) {
-      auto* item = hangStack[i];
-      if (item == nullptr) {
-        conditions++;
-      }
-    }
-    switch (conditions) {
-      case 0: if (!oneIn(6)) return make(type);
-      case 1: if (!oneIn(2)) return make(type);
-      default: {}
-    }
     // seems ok, go on
     int tries = TRIES;
     while (tries-- > 0) {
@@ -465,6 +461,8 @@ private:
         target = vectorPick(wasm.functions).get();
       }
       if (target->result != type) continue;
+      // reduce the odds of recursion dramatically, to limit infinite loops
+      if (target == func && !oneIn(RECURSION_FACTOR * TRIES)) continue;
       // we found one!
       std::vector<Expression*> args;
       for (auto argType : target->params) {
