@@ -31,7 +31,7 @@ from scripts.test.shared import (
 )
 
 import scripts.test.s2wasm as s2wasm
-# import scripts.test.wasm2asm as wasm2asm
+import scripts.test.wasm2asm as wasm2asm
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
