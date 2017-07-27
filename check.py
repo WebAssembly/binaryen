@@ -224,7 +224,7 @@ assert open('a.wasm', 'rb').read()[0] == '\0', 'we emit binary by default'
 run_command(ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
 assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
 
-#''' wasm2asm tests disabled for now. Use scripts/test/wasm2asm.py to test
+''' wasm2asm tests disabled for now. Use scripts/test/wasm2asm.py to test
 print '\n[ checking wasm2asm testcases... ]\n'
 
 # tests with i64s
@@ -270,7 +270,7 @@ for wasm in tests + [os.path.join('spec', name) for name in spec_tests]:
       out, err = proc.communicate()
       assert proc.returncode == 0
       fail_if_not_contained(err, 'Successfully compiled asm.js code')
-#'''
+'''
 
 print '\n[ checking wasm-opt parsing & printing... ]\n'
 
