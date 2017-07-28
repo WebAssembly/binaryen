@@ -20,6 +20,19 @@
 
 namespace wasm {
 
+static void verifyBitwiseEqual(Literal a, Literal b) {
+  if (a == b) return;
+  // accept equal nans if equal in all bits
+  assert(a.type == b.type);
+  if (a.type == f32) {
+    assert(a.reinterpreti32() == b.reinterpreti32());
+  } else if (a.type == f64) {
+    assert(a.reinterpreti64() == b.reinterpreti64());
+  } else {
+    abort();
+  }
+}
+
 // gets execution results from a wasm module. this is useful for fuzzing
 //
 // we can only get results when there are no imports. we then call each method
@@ -37,6 +50,7 @@ struct ExecutionResults {
       if (func->result != none) {
         // this is good
         results[func->name] = run(func.get(), wasm);
+        std::cout << "[fuzz-exec] note result: " << func->name.str << " => " << results[func->name] << '\n';
       }
     }
     std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
@@ -47,7 +61,8 @@ struct ExecutionResults {
     ExecutionResults optimizedResults;
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
-      Fatal() << "[fuzz-exec] optimization passes changed execution results";
+      std::cout << "[fuzz-exec] optimization passes changed execution results";
+      abort();
     }
     std::cout << "[fuzz-exec] results match\n";
   }
@@ -56,9 +71,7 @@ struct ExecutionResults {
     for (auto& iter : results) {
       auto name = iter.first;
       if (other.results.find(name) != other.results.end()) {
-        if (results[name] != other.results[name]) {
-          return false;
-        }
+        verifyBitwiseEqual(results[name], other.results[name]);
       }
     }
     return true;
