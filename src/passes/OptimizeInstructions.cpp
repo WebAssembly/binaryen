@@ -188,7 +188,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case OrInt32: case XorInt32: return std::max(getMaxBits(binary->left, localInfoProvider), getMaxBits(binary->right, localInfoProvider));
       case ShlInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::min(Index(32), getMaxBits(binary->left, localInfoProvider) + shifts->value.geti32());
+          return std::min(Index(32), getMaxBits(binary->left, localInfoProvider) + (shifts->value.geti32() & 31));
         }
         return 32;
       }

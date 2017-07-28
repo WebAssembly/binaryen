@@ -2442,4 +2442,13 @@
      (i32.const 255)
     )
   )
+  (func $neg-shifts-and-255-b (result i32)
+   (i32.and
+    (i32.shl
+     (i32.const -2349025)
+     (i32.const -32) ;; this shift does nothing
+    )
+    (i32.const 255)
+   )
+  )
 )
