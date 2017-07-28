@@ -1,0 +1,26 @@
+(module
+ (type $0 (func (result f32)))
+ (memory $0 0)
+ (func $0 (type $0) (result f32)
+  (if
+   (i32.const 1)
+   (block $label$0
+    (unreachable)
+   )
+   (block $label$1
+    (block $label$2
+     (drop
+      (i32.const 1)
+     )
+     (br_if $label$2
+      (unreachable)
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+  )
+  (unreachable)
+ )
+)
+

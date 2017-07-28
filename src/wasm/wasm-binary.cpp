@@ -545,7 +545,7 @@ void WasmBinaryWriter::recurse(Expression*& curr) {
 }
 
 static bool brokenTo(Block* block) {
-  return block->name.is() && BranchUtils::BranchSeeker::has(block, block->name);
+  return block->name.is() && BranchUtils::BranchSeeker::hasNamed(block, block->name);
 }
 
 void WasmBinaryWriter::visitBlock(Block *curr) {
@@ -636,7 +636,7 @@ int32_t WasmBinaryWriter::getBreakIndex(Name name) { // -1 if not found
       return breakStack.size() - 1 - i;
     }
   }
-  std::cerr << "bad break: " << name << std::endl;
+  std::cerr << "bad break: " << name << " in " << currFunction->name << std::endl;
   abort();
 }
 
@@ -2070,7 +2070,14 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     }
     for (size_t i = start; i < end; i++) {
       if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      curr->list.push_back(expressionStack[i]);
+      auto* item = expressionStack[i];
+      curr->list.push_back(item);
+      if (i < end - 1) {
+        // stacky&unreachable code may introduce elements that need to be dropped in non-final positoins
+        if (isConcreteWasmType(item->type)) {
+          curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
+        }
+      }
     }
     expressionStack.resize(start);
     curr->finalize(curr->type);
