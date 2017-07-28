@@ -731,7 +731,7 @@ struct JSPrinter {
     if (used == last) emit(otherwise);
   }
 
-  void printStats(Ref stats) {
+  void printStats(Ref stats, bool semicolons=false) {
     bool first = true;
     for (size_t i = 0; i < stats->size(); i++) {
       Ref curr = stats[i];
@@ -739,6 +739,7 @@ struct JSPrinter {
         if (first) first = false;
         else newline();
         print(stats[i]);
+        if (semicolons) emit(';');
       }
     }
   }
@@ -757,7 +758,7 @@ struct JSPrinter {
     emit('{');
     indent++;
     newline();
-    printStats(node[1]);
+    printStats(node[1], true);
     indent--;
     newline();
     emit('}');
