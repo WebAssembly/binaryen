@@ -93,7 +93,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
     print '..', t
     binary = '.wasm' in t
     passname = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
-    opts = ['-' + passname] if passname.startswith('O') else ['--' + p for p in passname.split('_')]
+    opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
     t = os.path.join('test', 'passes', t)
     actual = ''
     for module, asserts in split_wast(t):

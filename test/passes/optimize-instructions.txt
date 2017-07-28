@@ -462,16 +462,16 @@
    (i32.const 4)
    (get_local $0)
   )
-  (i32.store
-   (i32.const 0)
+  (i32.store offset=2
+   (i32.const -2)
    (get_local $0)
   )
   (i32.store
    (i32.const 25)
    (get_local $0)
   )
-  (i32.store
-   (i32.const -23)
+  (i32.store offset=2
+   (i32.const -25)
    (get_local $0)
   )
   (drop
