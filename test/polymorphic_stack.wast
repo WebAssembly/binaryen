@@ -41,9 +41,17 @@
     )
   )
   (func $tee (param $x i32)
+    (local $y f32)
     (drop
       (i64.eqz
         (tee_local $x
+          (unreachable)
+        )
+      )
+    )
+    (drop
+      (tee_local $y
+        (i64.eqz
           (unreachable)
         )
       )
