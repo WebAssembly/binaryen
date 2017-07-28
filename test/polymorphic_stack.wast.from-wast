@@ -1,8 +1,9 @@
 (module
- (type $0 (func (result i32)))
- (type $1 (func (param i32) (result i32)))
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $1 (func (result i32)))
+ (import "env" "table" (table 9 9 anyfunc))
  (memory $0 0)
- (func $break-and-binary (type $0) (result i32)
+ (func $break-and-binary (type $1) (result i32)
   (block $x (result i32)
    (f32.add
     (br_if $x
@@ -17,7 +18,7 @@
    )
   )
  )
- (func $call-and-unary (type $1) (param $0 i32) (result i32)
+ (func $call-and-unary (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (drop
    (i64.eqz
     (call $call-and-unary
@@ -28,6 +29,14 @@
   (drop
    (i64.eqz
     (i32.eqz
+     (unreachable)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (call_indirect $FUNCSIG$ii
+     (unreachable)
      (unreachable)
     )
    )

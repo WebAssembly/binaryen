@@ -687,7 +687,7 @@ void WasmBinaryWriter::visitCallImport(CallImport *curr) {
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
 }
-// waka
+
 void WasmBinaryWriter::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
 
@@ -698,6 +698,9 @@ void WasmBinaryWriter::visitCallIndirect(CallIndirect *curr) {
   o << int8_t(BinaryConsts::CallIndirect)
     << U32LEB(getFunctionTypeIndex(curr->fullType))
     << U32LEB(0); // Reserved flags field
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitGetLocal(GetLocal *curr) {
