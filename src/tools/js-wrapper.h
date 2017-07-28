@@ -54,8 +54,9 @@ static std::string generateJSWrapper(Module& wasm) {
     ret += "if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
     ret += "  ";
+    ret += std::string("console.log('calling: ") + exp->name.str + "');\n";
     if (func->result != none) {
-      ret += "console.log(";
+      ret += "console.log('   result: ' + ";
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
@@ -75,9 +76,10 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += ";\n";
     ret += "} catch (e) {\n";
-    ret += "  console.log('exception: ' + e);\n";
+    ret += "  console.log('   exception: ' + e);\n";
     ret += "}\n";
   }
+  ret += "console.log('done.')\n";
   return ret;
 }
 
