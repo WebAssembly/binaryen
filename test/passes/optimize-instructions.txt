@@ -805,7 +805,7 @@
      (i32.const -1)
      (i32.const 2147483647)
     )
-    (i32.const 32)
+    (i32.const 31)
    )
   )
   (drop
@@ -2004,6 +2004,15 @@
    )
    (i32.const 2)
    (i32.const 1)
+  )
+ )
+ (func $neg-shifts-and-255 (type $2) (result i32)
+  (i32.and
+   (i32.shr_u
+    (i32.const -99)
+    (i32.const -32)
+   )
+   (i32.const 255)
   )
  )
 )

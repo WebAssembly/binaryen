@@ -842,7 +842,7 @@
               (i32.const -1)
               (i32.const 2147483647)
             )
-            (i32.const 32)
+            (i32.const 31) ;; adjusted after we fixed shift computation to just look at lower 5 bits
           )
           (i32.const 24)
         )
@@ -2432,5 +2432,14 @@
     (i32.const 2)
     (i32.const 1)
    )
+  )
+  (func $neg-shifts-and-255 (result i32)
+    (i32.and
+     (i32.shr_u
+      (i32.const -99)
+      (i32.const -32) ;; this shift does nothing
+     )
+     (i32.const 255)
+    )
   )
 )
