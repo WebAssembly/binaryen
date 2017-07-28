@@ -544,10 +544,11 @@ private:
     }
     auto& locals = typeLocals[valueType];
     if (locals.empty()) return makeTrivial(type);
+    auto* value = make(valueType);
     if (tee) {
-      return builder.makeTeeLocal(vectorPick(locals), make(valueType));
+      return builder.makeTeeLocal(vectorPick(locals), value);
     } else {
-      return builder.makeSetLocal(vectorPick(locals), make(valueType));
+      return builder.makeSetLocal(vectorPick(locals), value);
     }
   }
 
