@@ -46,13 +46,7 @@ struct ExecutionResults {
       std::cout << "[fuzz-exec] imports, so quitting\n";
       return;
     }
-    auto* hangLimitInitializer = wasm.getFunctionOrNull("hangLimitInitializer");
     for (auto& func : wasm.functions) {
-      // init hang detection, if present
-      if (hangLimitInitializer) {
-        std::cout << "[fuzz-exec] init hang limit\n";
-        run(hangLimitInitializer, wasm);
-      }
       if (func->result != none) {
         // this has a result
         results[func->name] = run(func.get(), wasm);
@@ -96,6 +90,11 @@ struct ExecutionResults {
     try {
       ModuleInstance instance(wasm, &interface);
       LiteralList arguments;
+      // init hang support, if present
+      if (wasm.getFunctionOrNull("hangLimitInitializer")) {
+        instance.callFunction("hangLimitInitializer", arguments);
+      }
+      // call the method
       for (WasmType param : func->params) {
         // zeros in arguments TODO: more?
         arguments.push_back(Literal(param));
