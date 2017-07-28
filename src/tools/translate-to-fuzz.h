@@ -901,7 +901,7 @@ private:
 
   // 0 to the limit, logarithmic scale
   Index logify(Index x) {
-    return std::floor(std::log(1 + x));
+    return std::floor(std::log(std::max(Index(1) + x, Index(1))));
   }
 
   bool oneIn(Index x) {
