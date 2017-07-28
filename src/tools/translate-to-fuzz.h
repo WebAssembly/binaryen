@@ -72,7 +72,7 @@ private:
   static const int TRIES = 10;
 
   // beyond a nesting limit, greatly decrease the chance to continue to nest
-  static const int NESTING_LIMIT = 7;
+  static const int NESTING_LIMIT = 4;
 
   // reduce the chance for a function to call itself by this factor
   static const int RECURSION_FACTOR = 10;
@@ -255,8 +255,8 @@ private:
   Expression* make(WasmType type) {
     // when we should stop, emit something small (but not necessarily trivial)
     if (finishedInput ||
-        nesting >= 20 * NESTING_LIMIT || // hard limit
-        (nesting >= NESTING_LIMIT && oneIn(2))) { // soft limit
+        nesting >= 5 * NESTING_LIMIT || // hard limit
+        (nesting >= NESTING_LIMIT && !oneIn(3))) {
       if (isConcreteWasmType(type)) {
         if (oneIn(2)) {
           return makeConst(type);
@@ -424,6 +424,10 @@ private:
     ret->name = makeLabel();
     breakableStack.push_back(ret);
     Index num = logify(get());
+    if (nesting >= NESTING_LIMIT) {
+      // smaller blocks past the limit
+      num /= 3;
+    }
     while (num > 0 && !finishedInput) {
       ret->list.push_back(make(none));
       num--;
@@ -481,7 +485,8 @@ private:
 
   // make something, with a good chance of it being a block
   Expression* makeMaybeBlock(WasmType type) {
-    if (oneIn(3)) {
+    // if past the limit, prefer not to emit blocks
+    if (nesting >= NESTING_LIMIT || oneIn(3)) {
       return make(type);
     } else {
       return makeBlock(type);

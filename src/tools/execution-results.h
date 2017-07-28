@@ -46,11 +46,21 @@ struct ExecutionResults {
       std::cout << "[fuzz-exec] imports, so quitting\n";
       return;
     }
+    auto* hangLimitInitializer = wasm.getFunctionOrNull("hangLimitInitializer");
     for (auto& func : wasm.functions) {
+      // init hang detection, if present
+      if (hangLimitInitializer) {
+        std::cout << "[fuzz-exec] init hang limit\n";
+        run(hangLimitInitializer, wasm);
+      }
       if (func->result != none) {
-        // this is good
+        // this has a result
         results[func->name] = run(func.get(), wasm);
         std::cout << "[fuzz-exec] note result: " << func->name.str << " => " << results[func->name] << '\n';
+      } else {
+        // no result, run it anyhow (it might modify memory etc.)
+        run(func.get(), wasm);
+        std::cout << "[fuzz-exec] no result for void func: " << func->name.str << '\n';
       }
     }
     std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
