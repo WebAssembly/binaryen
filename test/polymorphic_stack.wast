@@ -14,5 +14,21 @@
       )
     )
   )
+  (func $call-and-unary (param i32) (result i32)
+    (drop
+      (i64.eqz
+        (call $call-and-unary
+          (unreachable)
+        )
+      )
+    )
+    (drop
+      (i64.eqz
+        (i32.eqz
+          (unreachable)
+        )
+      )
+    )
+  )
 )
 

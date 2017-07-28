@@ -479,6 +479,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $unreachable-block-toplevel (type $5) (result i32)
   (block $label$0
@@ -502,6 +503,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $unreachable-block0-toplevel (type $5) (result i32)
   (block $label$0
@@ -540,6 +542,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $unreachable-if-toplevel (type $5) (result i32)
   (if
@@ -567,6 +570,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $unreachable-loop0 (type $5) (result i32)
   (loop $label$0
@@ -577,6 +581,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $unreachable-loop-toplevel (type $5) (result i32)
   (loop $label$0

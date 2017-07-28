@@ -675,6 +675,9 @@ void WasmBinaryWriter::visitCall(Call *curr) {
     recurse(operand);
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitCallImport(CallImport *curr) {
@@ -684,7 +687,7 @@ void WasmBinaryWriter::visitCallImport(CallImport *curr) {
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
 }
-
+// waka
 void WasmBinaryWriter::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
 
@@ -991,6 +994,9 @@ void WasmBinaryWriter::visitUnary(Unary *curr) {
     case ReinterpretInt32: o << int8_t(BinaryConsts::F32ReinterpretI32); break;
     case ReinterpretInt64: o << int8_t(BinaryConsts::F64ReinterpretI64); break;
     default: abort();
+  }
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
   }
 }
 

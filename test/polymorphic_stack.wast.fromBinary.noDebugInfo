@@ -1,21 +1,46 @@
 (module
  (type $0 (func (result i32)))
+ (type $1 (func (param i32) (result i32)))
  (memory $0 0)
  (func $0 (type $0) (result i32)
   (block $label$0 (result i32)
+   (i32.trunc_u/f64
+    (unreachable)
+   )
+   (unreachable)
    (br_if $label$0
     (i32.trunc_u/f64
      (unreachable)
     )
-    (i32.trunc_u/f64
-     (unreachable)
-    )
+    (unreachable)
    )
    (f32.add
     (unreachable)
     (f32.const 1)
    )
    (unreachable)
+  )
+ )
+ (func $1 (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (call $1
+    (unreachable)
+   )
+   (i64.eqz
+    (unreachable)
+   )
+   (drop
+    (unreachable)
+   )
+   (i32.eqz
+    (unreachable)
+   )
+   (i64.eqz
+    (unreachable)
+   )
+   (drop
+    (unreachable)
+   )
   )
  )
 )
