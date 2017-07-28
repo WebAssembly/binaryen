@@ -196,8 +196,8 @@ private:
   Expression* make(WasmType type) {
     // when we should stop, emit something small (but not necessarily trivial)
     if (finishedInput ||
-        (nesting >= NESTING_LIMIT && oneIn(4)) ||
-        nesting >= 3 * NESTING_LIMIT) {
+        nesting >= 20 * NESTING_LIMIT || // hard limit
+        (nesting >= NESTING_LIMIT && oneIn(2))) { // soft limit
       if (isConcreteWasmType(type)) {
         if (oneIn(2)) {
           return makeConst(type);
