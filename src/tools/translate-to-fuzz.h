@@ -199,13 +199,13 @@ private:
     func->name = std::string("func_") + std::to_string(num);
     func->result = getReachableType();
     assert(typeLocals.empty());
-    Index numParams = logify(get16()) / 2;
+    Index numParams = upTo(upTo(5));
     for (Index i = 0; i < numParams; i++) {
       auto type = getConcreteType();
       typeLocals[type].push_back(func->params.size());
       func->params.push_back(type);
     }
-    Index numVars = logify(get16());
+    Index numVars = upTo(upTo(10));
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
       typeLocals[type].push_back(func->params.size() + func->vars.size());
@@ -423,7 +423,7 @@ private:
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
     breakableStack.push_back(ret);
-    Index num = oneIn(6);
+    Index num = upTo(upTo(7));
     if (nesting >= NESTING_LIMIT) {
       // smaller blocks past the limit
       num /= 3;
@@ -983,6 +983,7 @@ private:
   }
 
   Index upTo(Index x) {
+    if (x == 0) return 0;
     auto raw = get32();
     auto ret = raw % x;
     xorFactor += raw / x;
