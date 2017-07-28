@@ -75,6 +75,7 @@ struct ExecutionResults {
     for (auto& iter : results) {
       auto name = iter.first;
       if (other.results.find(name) != other.results.end()) {
+        std::cout << "[fuzz-exec] comparing " << name << '\n';
         verifyBitwiseEqual(results[name], other.results[name]);
       }
     }
