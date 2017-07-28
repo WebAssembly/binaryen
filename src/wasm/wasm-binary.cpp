@@ -648,6 +648,12 @@ void WasmBinaryWriter::visitBreak(Break *curr) {
   if (curr->condition) recurse(curr->condition);
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
+  if (curr->type == unreachable && curr->value && curr->condition) {
+    // if we have a value, which would normally be flowed out, but we
+    // are in fact unreachable - e.g. if the value is unreachable - then
+    // we must ensure the stack is polymophic for valid wasm
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitSwitch(Switch *curr) {
@@ -1074,6 +1080,9 @@ void WasmBinaryWriter::visitBinary(Binary *curr) {
     case GtFloat64:       o << int8_t(BinaryConsts::F64Gt);      break;
     case GeFloat64:       o << int8_t(BinaryConsts::F64Ge);      break;
     default: abort();
+  }
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
   }
 }
 
