@@ -39,6 +39,17 @@ struct Bits {
     // this is indeed a mask
     return 32 - CountLeadingZeroes(mask);
   }
+
+  // gets the number of effective shifts a shift operation does. In
+  // wasm, only 5 bits matter for 32-bit shifts, and 6 for 64.
+  static uint32_t getEffectiveShifts(Const* amount) {
+    if (amount->type == i32) {
+      return amount->value.geti32() & 31;
+    } else if (amount->type == i64) {
+      return amount->value.geti64() & 63;
+    }
+    WASM_UNREACHABLE();
+  }
 };
 
 } // namespace wasm
