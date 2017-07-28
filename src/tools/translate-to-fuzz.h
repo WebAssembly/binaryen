@@ -423,7 +423,7 @@ private:
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
     breakableStack.push_back(ret);
-    Index num = logify(get());
+    Index num = oneIn(6);
     if (nesting >= NESTING_LIMIT) {
       // smaller blocks past the limit
       num /= 3;
