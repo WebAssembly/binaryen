@@ -1101,6 +1101,9 @@ void WasmBinaryWriter::visitSelect(Select *curr) {
   recurse(curr->ifFalse);
   recurse(curr->condition);
   o << int8_t(BinaryConsts::Select);
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitReturn(Return *curr) {

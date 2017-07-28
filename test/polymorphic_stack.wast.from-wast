@@ -1,6 +1,8 @@
 (module
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (type $1 (func (result i32)))
+ (type $2 (func (param i32)))
+ (type $3 (func))
  (import "env" "table" (table 9 9 anyfunc))
  (memory $0 0)
  (func $break-and-binary (type $1) (result i32)
@@ -38,6 +40,26 @@
     (call_indirect $FUNCSIG$ii
      (unreachable)
      (unreachable)
+    )
+   )
+  )
+ )
+ (func $tee (type $2) (param $x i32)
+  (drop
+   (i64.eqz
+    (tee_local $x
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $select (type $3)
+  (drop
+   (i64.eqz
+    (select
+     (unreachable)
+     (i32.const 1)
+     (i32.const 2)
     )
    )
   )

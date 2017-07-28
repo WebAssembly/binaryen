@@ -40,5 +40,25 @@
       )
     )
   )
+  (func $tee (param $x i32)
+    (drop
+      (i64.eqz
+        (tee_local $x
+          (unreachable)
+        )
+      )
+    )
+  )
+  (func $select
+    (drop
+      (i64.eqz
+        (select
+          (unreachable)
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+  )
 )
 
