@@ -13,8 +13,6 @@ def test_wasm2asm():
   blacklist = ['atomics.wast', 'address.wast']
   spec_tests = [os.path.join('spec', t) for t in
                 sorted(os.listdir(os.path.join('test', 'spec')))]
-  print "spec_tests:", spec_tests
-  print "all tests:", (tests + spec_tests)
   for wasm in tests + spec_tests:
     if not wasm.endswith('.wast') or os.path.basename(wasm) in blacklist:
       continue
