@@ -77,6 +77,11 @@ private:
   // reduce the chance for a function to call itself by this factor
   static const int RECURSION_FACTOR = 10;
 
+  // the number of runtime iterations (function calls, loop backbranches) we
+  // allow before we stop execution with a trap, to prevent hangs. 0 means
+  // no hang protection.
+  static const int HANG_LIMIT = 25;
+
   // after we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
@@ -120,12 +125,60 @@ private:
     while (!finishedInput) {
       addFunction();
     }
+    if (HANG_LIMIT > 0) {
+      addHangLimitSupport();
+    }
   }
 
   void setupMemory() {
     wasm.memory.exists = true;
     // use one page
     wasm.memory.initial = wasm.memory.max = 1;
+  }
+
+  const Name HANG_LIMIT_GLOBAL = "hangLimit";
+
+  void addHangLimitSupport() {
+    auto* glob = new Global;
+    glob->name = HANG_LIMIT_GLOBAL;
+    glob->type = i32;
+    glob->init = builder.makeConst(Literal(int32_t(0)));
+    glob->mutable_ = true;
+    wasm.addGlobal(glob);
+
+    auto* func = new Function;
+    func->name = "hangLimitInitializer";
+    func->result = none;
+    func->body = builder.makeSetGlobal(glob->name,
+      builder.makeConst(Literal(int32_t(HANG_LIMIT)))
+    );
+    wasm.addFunction(func);
+
+    auto* export_ = new Export;
+    export_->name = func->name;
+    export_->value = func->name;
+    export_->kind = ExternalKind::Function;
+    wasm.addExport(export_);
+  }
+
+  Expression* makeHangLimitCheck() {
+    return builder.makeSequence(
+      builder.makeIf(
+        builder.makeUnary(
+          UnaryOp::EqZInt32,
+          builder.makeGetGlobal(HANG_LIMIT_GLOBAL, i32)
+        ),
+        builder.makeUnreachable()
+      ),
+      builder.makeSetGlobal(
+        HANG_LIMIT_GLOBAL,
+        builder.makeBinary(
+          BinaryOp::SubInt32,
+          builder.makeGetGlobal(HANG_LIMIT_GLOBAL, i32),
+          builder.makeConst(Literal(int32_t(1)))
+        )
+      )
+    );
   }
 
   // function generation state
@@ -171,6 +224,12 @@ private:
       } else {
         func->body = make(func->result);
       }
+    }
+    if (HANG_LIMIT > 0) {
+      func->body = builder.makeSequence(
+        makeHangLimitCheck(),
+        func->body
+      );
     }
     assert(breakableStack.empty());
     assert(hangStack.empty());
@@ -399,6 +458,12 @@ private:
     ret->body = makeMaybeBlock(type);
     breakableStack.pop_back();
     hangStack.pop_back();
+    if (HANG_LIMIT > 0) {
+      ret->body = builder.makeSequence(
+        makeHangLimitCheck(),
+        ret->body
+      );
+    }
     ret->finalize();
     return ret;
   }

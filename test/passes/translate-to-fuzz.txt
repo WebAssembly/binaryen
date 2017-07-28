@@ -1,6 +1,8 @@
 (module
+ (global $hangLimit (mut i32) (i32.const 0))
  (memory $0 1 1)
  (export "func_0" (func $func_0))
+ (export "hangLimitInitializer" (func $hangLimitInitializer))
  (func $func_0 (param $0 i32) (param $1 i32) (param $2 f32) (param $3 f64) (param $4 i32) (result i32)
   (local $5 f64)
   (local $6 i32)
@@ -24,11 +26,39 @@
   (local $24 f32)
   (local $25 i64)
   (local $26 f64)
+  (block
+   (if
+    (i32.eqz
+     (get_global $hangLimit)
+    )
+    (unreachable)
+   )
+   (set_global $hangLimit
+    (i32.sub
+     (get_global $hangLimit)
+     (i32.const 1)
+    )
+   )
+  )
   (block $label$0 (result i32)
    (drop
     (i64.load offset=22 align=2
      (i32.and
       (loop $label$1 (result i32)
+       (block
+        (if
+         (i32.eqz
+          (get_global $hangLimit)
+         )
+         (unreachable)
+        )
+        (set_global $hangLimit
+         (i32.sub
+          (get_global $hangLimit)
+          (i32.const 1)
+         )
+        )
+       )
        (block $label$2 (result i32)
         (drop
          (i64.load16_s offset=22
@@ -80,6 +110,20 @@
                    (set_local $1
                     (i64.le_u
                      (loop $label$5 (result i64)
+                      (block
+                       (if
+                        (i32.eqz
+                         (get_global $hangLimit)
+                        )
+                        (unreachable)
+                       )
+                       (set_global $hangLimit
+                        (i32.sub
+                         (get_global $hangLimit)
+                         (i32.const 1)
+                        )
+                       )
+                      )
                       (i64.const 106)
                      )
                      (get_local $17)
@@ -154,11 +198,39 @@
                                      (i32.and
                                       (select
                                        (loop $label$11 (result i32)
+                                        (block
+                                         (if
+                                          (i32.eqz
+                                           (get_global $hangLimit)
+                                          )
+                                          (unreachable)
+                                         )
+                                         (set_global $hangLimit
+                                          (i32.sub
+                                           (get_global $hangLimit)
+                                           (i32.const 1)
+                                          )
+                                         )
+                                        )
                                         (block $label$12 (result i32)
                                          (set_local $25
                                           (i64.const -6)
                                          )
                                          (loop $label$13
+                                          (block
+                                           (if
+                                            (i32.eqz
+                                             (get_global $hangLimit)
+                                            )
+                                            (unreachable)
+                                           )
+                                           (set_global $hangLimit
+                                            (i32.sub
+                                             (get_global $hangLimit)
+                                             (i32.const 1)
+                                            )
+                                           )
+                                          )
                                           (block $label$14
                                            (if
                                             (i32.const 233)
@@ -224,6 +296,20 @@
                                                   (get_local $14)
                                                   (tee_local $21
                                                    (loop $label$18 (result f64)
+                                                    (block
+                                                     (if
+                                                      (i32.eqz
+                                                       (get_global $hangLimit)
+                                                      )
+                                                      (unreachable)
+                                                     )
+                                                     (set_global $hangLimit
+                                                      (i32.sub
+                                                       (get_global $hangLimit)
+                                                       (i32.const 1)
+                                                      )
+                                                     )
+                                                    )
                                                     (f64.const 9563)
                                                    )
                                                   )
@@ -350,6 +436,11 @@
     )
    )
    (get_local $0)
+  )
+ )
+ (func $hangLimitInitializer
+  (set_global $hangLimit
+   (i32.const 25)
   )
  )
 )

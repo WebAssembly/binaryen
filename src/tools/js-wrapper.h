@@ -51,6 +51,7 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     if (func->result == i64) bad = true;
     if (bad) continue;
+    ret += "if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
     ret += "  ";
     if (func->result != none) {

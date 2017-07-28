@@ -17,16 +17,19 @@ if (typeof process === 'object' && typeof require === 'function' /* node.js dete
   }
 }
 var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {});
+if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
   console.log(instance.exports.add(0, 0));
 } catch (e) {
   console.log('exception: ' + e);
 }
+if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
   instance.exports.no_return(0);
 } catch (e) {
   console.log('exception: ' + e);
 }
+if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
   instance.exports.types2(0, 0, 0);
 } catch (e) {
