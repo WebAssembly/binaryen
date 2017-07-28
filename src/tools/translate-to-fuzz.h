@@ -92,18 +92,18 @@ private:
   }
 
   int16_t get16() {
-    auto temp = int16_t(get()) << 8;
-    return temp | int16_t(get());
+    auto temp = uint16_t(get()) << 8;
+    return temp | uint16_t(get());
   }
 
   int32_t get32() {
-    auto temp = int32_t(get16()) << 16;
-    return temp | int32_t(get16());
+    auto temp = uint32_t(get16()) << 16;
+    return temp | uint32_t(get16());
   }
 
   int64_t get64() {
-    auto temp = int64_t(get32()) << 32;
-    return temp | int64_t(get32());
+    auto temp = uint64_t(get32()) << 32;
+    return temp | uint64_t(get32());
   }
 
   float getFloat() {
