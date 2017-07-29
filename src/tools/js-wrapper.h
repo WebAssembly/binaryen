@@ -53,10 +53,9 @@ static std::string generateJSWrapper(Module& wasm) {
     if (bad) continue;
     ret += "if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
-    ret += "  ";
-    ret += std::string("console.log('calling: ") + exp->name.str + "');\n";
+    ret += std::string("  console.log('calling: ") + exp->name.str + "');\n";
     if (func->result != none) {
-      ret += "console.log('   result: ' + ";
+      ret += "  console.log('   result: ' + ";
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
