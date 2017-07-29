@@ -59,10 +59,11 @@
  (func $tee (type $2) (param $var$0 i32)
   (local $var$1 f32)
   (block $label$0
+   (tee_local $var$0
+    (unreachable)
+   )
    (i64.eqz
-    (tee_local $var$0
-     (unreachable)
-    )
+    (unreachable)
    )
    (drop
     (unreachable)
@@ -70,14 +71,27 @@
    (i64.eqz
     (unreachable)
    )
+   (tee_local $var$1
+    (unreachable)
+   )
    (drop
-    (tee_local $var$1
-     (unreachable)
-    )
+    (unreachable)
    )
    (unreachable)
   )
   (unreachable)
+ )
+ (func $tee2 (type $3)
+  (local $var$0 f32)
+  (if
+   (i32.const 259)
+   (block $label$0
+    (tee_local $var$0
+     (unreachable)
+    )
+    (unreachable)
+   )
+  )
  )
  (func $select (type $3)
   (select

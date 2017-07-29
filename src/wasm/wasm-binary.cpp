@@ -712,6 +712,9 @@ void WasmBinaryWriter::visitSetLocal(SetLocal *curr) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   recurse(curr->value);
   o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitGetGlobal(GetGlobal *curr) {

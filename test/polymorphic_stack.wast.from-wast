@@ -61,6 +61,15 @@
    )
   )
  )
+ (func $tee2 (type $3)
+  (local $0 f32)
+  (if
+   (i32.const 259)
+   (tee_local $0
+    (unreachable)
+   )
+  )
+ )
  (func $select (type $3)
   (drop
    (i64.eqz
