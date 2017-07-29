@@ -72,7 +72,7 @@ private:
   static const int TRIES = 10;
 
   // beyond a nesting limit, greatly decrease the chance to continue to nest
-  static const int NESTING_LIMIT = 4;
+  static const int NESTING_LIMIT = 7;
 
   // reduce the chance for a function to call itself by this factor
   static const int RECURSION_FACTOR = 10;
