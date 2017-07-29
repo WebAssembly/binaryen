@@ -168,7 +168,9 @@ private:
           UnaryOp::EqZInt32,
           builder.makeGetGlobal(HANG_LIMIT_GLOBAL, i32)
         ),
-        builder.makeUnreachable()
+        builder.makeReturn(
+          isConcreteWasmType(func->result) ? makeConst(func->result) : nullptr
+        )
       ),
       builder.makeSetGlobal(
         HANG_LIMIT_GLOBAL,

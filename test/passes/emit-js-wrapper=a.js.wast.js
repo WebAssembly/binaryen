@@ -1,3 +1,6 @@
+if (typeof console === 'undefined') {
+  console = { log: print };
+}
 var binary;
 if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {
   var args = process.argv.slice(2);
