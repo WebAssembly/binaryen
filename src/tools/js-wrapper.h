@@ -23,7 +23,10 @@ namespace wasm {
 
 static std::string generateJSWrapper(Module& wasm) {
   std::string ret;
-  ret += "var binary;\n"
+  ret += "if (typeof console === 'undefined') {\n"
+         "  console = { log: print };\n"
+         "}\n"
+         "var binary;\n"
          "if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {\n"
          "  var args = process.argv.slice(2);\n"
          "  binary = require('fs').readFileSync(args[0]);\n"
