@@ -168,9 +168,7 @@ private:
           UnaryOp::EqZInt32,
           builder.makeGetGlobal(HANG_LIMIT_GLOBAL, i32)
         ),
-        builder.makeReturn(
-          isConcreteWasmType(func->result) ? makeConst(func->result) : nullptr
-        )
+        makeTrivial(unreachable)
       ),
       builder.makeSetGlobal(
         HANG_LIMIT_GLOBAL,
@@ -273,11 +271,7 @@ private:
         }
       }
       assert(type == unreachable);
-      if (oneIn(2)) {
-        return makeUnreachable(type);
-      } else {
-        return makeBreak(type);
-      }
+      return makeTrivial(type);
     }
     nesting++;
     Expression* ret;
@@ -415,7 +409,9 @@ private:
       return makeNop(type);
     }
     assert(type == unreachable);
-    return makeUnreachable(type);
+    return builder.makeReturn(
+      isConcreteWasmType(func->result) ? makeConst(func->result) : nullptr
+    );
   }
 
   // specific expression creators
