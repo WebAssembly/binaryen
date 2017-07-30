@@ -42,11 +42,20 @@ struct Bits {
 
   // gets the number of effective shifts a shift operation does. In
   // wasm, only 5 bits matter for 32-bit shifts, and 6 for 64.
-  static uint32_t getEffectiveShifts(Const* amount) {
+  static Index getEffectiveShifts(Index amount, WasmType type) {
+    if (type == i32) {
+      return amount & 31;
+    } else if (type == i64) {
+      return amount & 63;
+    }
+    WASM_UNREACHABLE();
+  }
+
+  static Index getEffectiveShifts(Const* amount) {
     if (amount->type == i32) {
-      return amount->value.geti32() & 31;
+      return getEffectiveShifts(amount->value.geti32(), i32);
     } else if (amount->type == i64) {
-      return amount->value.geti64() & 63;
+      return getEffectiveShifts(amount->value.geti64(), i64);
     }
     WASM_UNREACHABLE();
   }

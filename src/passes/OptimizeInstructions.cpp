@@ -29,6 +29,7 @@
 #include <ast/effects.h>
 #include <ast/manipulation.h>
 #include <ast/properties.h>
+#include <ast/literal-utils.h>
 
 namespace wasm {
 
@@ -533,9 +534,16 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
               } else if (left->op == OrInt32) {
                 leftRight->value = leftRight->value.or_(right->value);
                 return left;
-              } else if (left->op == ShlInt32 || left->op == ShrUInt32 || left->op == ShrSInt32) {
-                leftRight->value = leftRight->value.add(right->value);
-                return left;
+              } else if (left->op == ShlInt32 || left->op == ShrUInt32 || left->op == ShrSInt32 ||
+                         left->op == ShlInt64 || left->op == ShrUInt64 || left->op == ShrSInt64) {
+                // shifts only use an effective amount from the constant, so adding must
+                // be done carefully
+                auto total = Bits::getEffectiveShifts(leftRight) + Bits::getEffectiveShifts(right);
+                if (total == Bits::getEffectiveShifts(total, left->type)) {
+                  // no overflow, we can do this
+                  leftRight->value = LiteralUtils::makeLiteralFromInt32(total, left->type);
+                  return left;
+                } // TODO: handle overflows
               }
             }
           }

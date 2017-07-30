@@ -2451,4 +2451,40 @@
     (i32.const 255)
    )
   )
+  (func $shifts-square-overflow (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (get_local $x)
+     (i32.const 65535) ;; 31 bits effectively
+    )
+    (i32.const 32767) ;; also 31 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  (func $shifts-square-no-overflow-small (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (get_local $x)
+     (i32.const 1031) ;; 7 bits effectively
+    )
+    (i32.const 4098) ;; 2 bits effectively
+   )
+  )
+  (func $shifts-square-overflow-64 (param $x i64) (result i64)
+   (i64.shr_u
+    (i64.shr_u
+     (get_local $x)
+     (i64.const 65535) ;; 63 bits effectively
+    )
+    (i64.const 64767) ;; also 63 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  (func $shifts-square-no-overflow-small-64 (param $x i64) (result i64)
+   (i64.shr_u
+    (i64.shr_u
+     (get_local $x)
+     (i64.const 1031) ;; 7 bits effectively
+    )
+    (i64.const 4098) ;; 2 bits effectively
+   )
+  )
 )
