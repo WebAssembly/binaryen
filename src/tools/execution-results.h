@@ -29,6 +29,7 @@ static void verifyBitwiseEqual(Literal a, Literal b) {
   } else if (a.type == f64) {
     assert(a.reinterpreti64() == b.reinterpreti64());
   } else {
+    std::cout << "not bitwise equal\n";
     abort();
   }
 }
