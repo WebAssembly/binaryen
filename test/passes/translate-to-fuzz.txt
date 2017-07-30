@@ -1,5 +1,5 @@
 (module
- (global $hangLimit (mut i32) (i32.const 0))
+ (global $hangLimit (mut i32) (i32.const 25))
  (memory $0 1 1)
  (export "func_0" (func $func_0))
  (export "func_1" (func $func_1))

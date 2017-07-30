@@ -149,7 +149,7 @@ private:
     auto* glob = new Global;
     glob->name = HANG_LIMIT_GLOBAL;
     glob->type = i32;
-    glob->init = builder.makeConst(Literal(int32_t(0)));
+    glob->init = builder.makeConst(Literal(int32_t(HANG_LIMIT)));
     glob->mutable_ = true;
     wasm.addGlobal(glob);
 
