@@ -82,5 +82,24 @@
     )
    )
   )
+  (func $br-goes-away-label2-becomes-unreachable
+   (block
+    (drop
+     (block $label$1 (result i32)
+      (block $label$2
+       (drop
+        (br_if $label$1
+         (unreachable)
+         (i32.eqz
+          (br $label$2)
+         )
+        )
+       )
+      )
+      (i32.const 1)
+     )
+    )
+   )
+  )
 )
 
