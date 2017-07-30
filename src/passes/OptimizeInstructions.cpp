@@ -874,14 +874,17 @@ private:
     auto* left = binary->left;
     auto* right = binary->right;
     if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) return nullptr;
-    auto leftEffects = EffectAnalyzer(getPassOptions(), left).hasSideEffects();
-    auto rightEffects = EffectAnalyzer(getPassOptions(), right).hasSideEffects();
-    if (leftEffects && rightEffects) return nullptr; // both must execute
-   // canonicalize with side effects, if any, happening on the left
-    if (rightEffects) {
+    auto leftEffects = EffectAnalyzer(getPassOptions(), left);
+    auto rightEffects = EffectAnalyzer(getPassOptions(), right);
+    auto leftSideEffects = leftEffects.hasSideEffects();
+    auto rightSideEffects = rightEffects.hasSideEffects();
+    if (leftSideEffects && rightSideEffects) return nullptr; // both must execute
+    // canonicalize with side effects, if any, happening on the left
+    if (rightSideEffects) {
       if (CostAnalyzer(left).cost < MIN_COST) return nullptr; // avoidable code is too cheap
+      if (leftEffects.invalidates(rightEffects)) return nullptr; // cannot reorder
       std::swap(left, right);
-    } else if (leftEffects) {
+    } else if (leftSideEffects) {
       if (CostAnalyzer(right).cost < MIN_COST) return nullptr; // avoidable code is too cheap
     } else {
       // no side effects, reorder based on cost estimation
