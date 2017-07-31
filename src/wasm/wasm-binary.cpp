@@ -1799,7 +1799,11 @@ Expression* WasmBinaryBuilder::popExpression() {
     throw ParseException("attempted pop from empty stack");
   }
   auto ret = expressionStack.back();
-  expressionStack.pop_back();
+  // to simulate the wasm polymorphic stack mode, leave a final
+  // unreachable, don't empty the stack in that case
+  if (!(expressionStack.size() == 1 && ret->type == unreachable)) {
+    expressionStack.pop_back();
+  }
   return ret;
 }
 

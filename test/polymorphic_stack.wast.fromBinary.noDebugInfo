@@ -7,6 +7,7 @@
  (memory $0 0)
  (func $0 (type $1) (result i32)
   (block $label$0 (result i32)
+   (unreachable)
    (i32.trunc_u/f64
     (unreachable)
    )
@@ -26,6 +27,7 @@
  )
  (func $1 (type $0) (param $var$0 i32) (result i32)
   (block $label$0 (result i32)
+   (unreachable)
    (call $1
     (unreachable)
    )
@@ -59,6 +61,7 @@
  (func $2 (type $2) (param $var$0 i32)
   (local $var$1 f32)
   (block $label$0
+   (unreachable)
    (tee_local $var$0
     (unreachable)
    )
@@ -86,6 +89,7 @@
   (if
    (i32.const 259)
    (block $label$0
+    (unreachable)
     (tee_local $var$0
      (unreachable)
     )
@@ -94,6 +98,7 @@
   )
  )
  (func $4 (type $3)
+  (unreachable)
   (select
    (unreachable)
    (i32.const 1)
@@ -103,6 +108,20 @@
    (unreachable)
   )
   (drop
+   (unreachable)
+  )
+ )
+ (func $5 (type $1) (result i32)
+  (block $label$0 (result i32)
+   (block $label$1
+    (unreachable)
+    (br_if $label$0
+     (unreachable)
+     (unreachable)
+    )
+    (unreachable)
+    (unreachable)
+   )
    (unreachable)
   )
  )

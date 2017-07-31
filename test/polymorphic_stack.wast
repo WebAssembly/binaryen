@@ -77,5 +77,14 @@
       )
     )
   )
+  (func $untaken-break-should-have-value (result i32)
+    (block $x (result i32)
+      (block
+        (br_if $x ;; ok to not have a value, since an untaken branch. but must emit valid binary for wasm
+          (unreachable)
+        )
+      )
+    )
+  )
 )
 

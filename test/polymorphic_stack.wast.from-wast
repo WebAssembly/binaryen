@@ -81,4 +81,13 @@
    )
   )
  )
+ (func $untaken-break-should-have-value (type $1) (result i32)
+  (block $x (result i32)
+   (block $block
+    (br_if $x
+     (unreachable)
+    )
+   )
+  )
+ )
 )
