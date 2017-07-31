@@ -648,10 +648,14 @@ void WasmBinaryWriter::visitBreak(Break *curr) {
   if (curr->condition) recurse(curr->condition);
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
-  if (curr->type == unreachable && curr->value && curr->condition) {
-    // if we have a value, which would normally be flowed out, but we
-    // are in fact unreachable - e.g. if the value is unreachable - then
-    // we must ensure the stack is polymophic for valid wasm
+  if (curr->condition && curr->type == unreachable) {
+    // a br_if is normally none or emits a value. if it is unreachable,
+    // then either the condition or the value is unreachable, which is
+    // extremely rare, and may require us to make the stack polymorphic
+    // (if the block we branch to has a value, we may lack one as we
+    // are not a taken branch; the wasm spec on the other hand does
+    // presume the br_if emits a value of the right type, even if it
+    // popped unreachable)
     o << int8_t(BinaryConsts::Unreachable);
   }
 }
