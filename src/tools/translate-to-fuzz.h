@@ -1017,20 +1017,17 @@ private:
     return std::floor(std::log(std::max(Index(1) + x, Index(1))));
   }
 
-  bool oneIn(Index x) {
-    // use extra bits as "noise" for later
-    auto raw = get32();
-    auto ret = (raw % x) == 0;
-    xorFactor += raw / x;
-    return ret;
-  }
-
   Index upTo(Index x) {
     if (x == 0) return 0;
     auto raw = get32();
     auto ret = raw % x;
+    // use extra bits as "noise" for later
     xorFactor += raw / x;
     return ret;
+  }
+
+  bool oneIn(Index x) {
+    return upTo(x) == 0;
   }
 
   // pick from a vector
