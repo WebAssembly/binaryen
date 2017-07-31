@@ -2496,4 +2496,34 @@
     (i32.const 4098) ;; 2 bits effectively
    )
   )
+  (func $mix-shifts (result i32)
+    (i32.shr_s
+     (i32.shl
+      (i32.const 23)
+      (i32.const -61)
+     )
+     (i32.const 168)
+    )
+  )
+  (func $actually-no-shifts (result i32)
+    (i32.add
+      (i32.shl
+        (i32.const 23)
+        (i32.const 32) ;; really 0
+      )
+      (i32.const 10)
+    )
+  )
+  (func $less-shifts-than-it-seems (param $x i32) (result i32)
+    (i32.add
+      (i32.shl
+        (i32.const 200)
+        (i32.const 36) ;; really 4
+      )
+      (i32.shl
+        (i32.const 100)
+        (i32.const 4)
+      )
+    )
+  )
 )

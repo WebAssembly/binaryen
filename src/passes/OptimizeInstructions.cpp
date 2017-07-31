@@ -779,7 +779,7 @@ private:
           return;
         } else if (binary->op == ShlInt32) {
           if (auto* c = binary->right->dynCast<Const>()) {
-            seek(binary->left, mul * Pow2(c->value.geti32()));
+            seek(binary->left, mul * Pow2(Bits::getEffectiveShifts(c)));
             return;
           }
         } else if (binary->op == MulInt32) {
@@ -836,7 +836,7 @@ private:
           }
         } else if (curr->op == ShlInt32) {
           // shifting a 0 is a 0, unless the shift has side effects
-          if (left && left->value.geti32() == 0 && !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
+          if (left && Bits::getEffectiveShifts(left) == 0 && !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
             replaceCurrent(left);
             return;
           }
