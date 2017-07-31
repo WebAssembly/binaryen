@@ -73,7 +73,7 @@ namespace wasm {
 // For example, if there is a switch targeting us, we can't do it - we can't remove the value from other targets
 struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
   Name origin;
-  bool noWay = false;
+  bool foundProblem = false;
   // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow value is used, and we can't drop it
   Index brIfs = 0;
   Index droppedBrIfs = 0;
@@ -88,7 +88,7 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
       }
       // if the value has side effects, we can't remove it
       if (EffectAnalyzer(passOptions, curr->value).hasSideEffects()) {
-        noWay = true;
+        foundProblem = true;
       }
     }
   }
@@ -103,12 +103,12 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   void visitSwitch(Switch* curr) {
     if (curr->default_ == origin) {
-      noWay = true;
+      foundProblem = true;
       return;
     }
     for (auto& target : curr->targets) {
       if (target == origin) {
-        noWay = true;
+        foundProblem = true;
         return;
       }
     }
@@ -116,7 +116,7 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   bool found() {
     assert(brIfs >= droppedBrIfs);
-    return noWay || brIfs > droppedBrIfs;
+    return foundProblem || brIfs > droppedBrIfs;
   }
 };
 

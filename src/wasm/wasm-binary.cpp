@@ -2073,7 +2073,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
       auto* item = expressionStack[i];
       curr->list.push_back(item);
       if (i < end - 1) {
-        // stacky&unreachable code may introduce elements that need to be dropped in non-final positoins
+        // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
         if (isConcreteWasmType(item->type)) {
           curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
         }
