@@ -1019,7 +1019,14 @@ private:
 
   Index upTo(Index x) {
     if (x == 0) return 0;
-    auto raw = get32();
+    Index raw;
+    if (x <= 255) {
+      raw = get();
+    } else if (x <= 65535) {
+      raw = get16();
+    } else {
+      raw = get32();
+    }
     auto ret = raw % x;
     // use extra bits as "noise" for later
     xorFactor += raw / x;
