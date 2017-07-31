@@ -2487,4 +2487,13 @@
     (i64.const 4098) ;; 2 bits effectively
    )
   )
+  (func $shifts-square-unreachable (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (unreachable)
+     (i32.const 1031) ;; 7 bits effectively
+    )
+    (i32.const 4098) ;; 2 bits effectively
+   )
+  )
 )

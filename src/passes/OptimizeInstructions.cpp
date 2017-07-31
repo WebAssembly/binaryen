@@ -539,9 +539,9 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
                 // shifts only use an effective amount from the constant, so adding must
                 // be done carefully
                 auto total = Bits::getEffectiveShifts(leftRight) + Bits::getEffectiveShifts(right);
-                if (total == Bits::getEffectiveShifts(total, left->type)) {
+                if (total == Bits::getEffectiveShifts(total, right->type)) {
                   // no overflow, we can do this
-                  leftRight->value = LiteralUtils::makeLiteralFromInt32(total, left->type);
+                  leftRight->value = LiteralUtils::makeLiteralFromInt32(total, right->type);
                   return left;
                 } // TODO: handle overflows
               }

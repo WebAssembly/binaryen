@@ -2055,4 +2055,10 @@
    (i64.const 9)
   )
  )
+ (func $shifts-square-unreachable (type $3) (param $x i32) (result i32)
+  (i32.shr_u
+   (unreachable)
+   (i32.const 9)
+  )
+ )
 )
