@@ -13,8 +13,8 @@ function asmFunc(global, env, buffer) {
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
  function add(x, y) {
-  x = (x | 0)
-  y = (y | 0)
+  x = x | 0
+  y = y | 0
   return x + y | 0 | 0;
  }
  

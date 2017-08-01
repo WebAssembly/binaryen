@@ -583,7 +583,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     // Expressions with control flow turn into a block, which we must
     // then handle, even if we are an expression.
     bool isBlock(Ref ast) {
-      return !!ast && ast[0] == BLOCK;
+      return !!ast && ast->isArray() && ast[0] == BLOCK;
     }
 
     Ref blockify(Ref ast) {
@@ -726,6 +726,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return makeStatementizedCall(curr->operands, ValueBuilder::makeBlock(), theCall, result, curr->type);
     }
     Ref visitCallImport(CallImport *curr) {
+      std::cerr << "visitCallImport not implemented yet" << std::endl;
       abort();
     }
     Ref visitCallIndirect(CallIndirect *curr)  {
@@ -807,7 +808,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             }
             break;
           }
-          default: abort();
+          default:
+            std::cerr << "Unhandled type in load: " << curr->type << std::endl;
+            abort();
         }
         return ValueBuilder::makeSeq(ptrSet, rest);
       }
@@ -926,7 +929,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             }
             break;
           }
-          default: abort();
+          default:
+            std::cerr << "Unhandled type in store: " <<  curr->type
+                      << std::endl;
+            abort();
         }
         return ValueBuilder::makeSeq(ValueBuilder::makeSeq(ptrSet, valueSet), rest);
       }
@@ -996,8 +1002,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           switch (curr->op) {
             case ClzInt32:
               return ValueBuilder::makeCall(MATH_CLZ32, value);
-            case CtzInt32:
-              return ValueBuilder::makeCall(MATH_CTZ32, value);
             case PopcntInt32:
               return ValueBuilder::makeCall(MATH_POPCNT32, value);
             default: abort();
@@ -1009,35 +1013,46 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           switch (curr->op) {
             case NegFloat32:
             case NegFloat64:
-              ret = ValueBuilder::makeUnary(MINUS, value);
+              ret = ValueBuilder::makeUnary(MINUS, visit(curr->value,
+                                                         EXPRESSION_RESULT));
               break;
             case AbsFloat32:
             case AbsFloat64:
-              ret = ValueBuilder::makeCall(MATH_ABS, value);
+              ret = ValueBuilder::makeCall(MATH_ABS, visit(curr->value,
+                                                           EXPRESSION_RESULT));
               break;
             case CeilFloat32:
             case CeilFloat64:
-              ret = ValueBuilder::makeCall(MATH_CEIL, value);
+              ret = ValueBuilder::makeCall(MATH_CEIL, visit(curr->value,
+                                                            EXPRESSION_RESULT));
               break;
             case FloorFloat32:
             case FloorFloat64:
-              ret = ValueBuilder::makeCall(MATH_FLOOR, value);
+              ret = ValueBuilder::makeCall(MATH_FLOOR,
+                                           visit(curr->value,
+                                                 EXPRESSION_RESULT));
               break;
             case TruncFloat32:
             case TruncFloat64:
-              ret = ValueBuilder::makeCall(MATH_TRUNC, value);
+              ret = ValueBuilder::makeCall(MATH_TRUNC,
+                                           visit(curr->value,
+                                                 EXPRESSION_RESULT));
               break;
             case NearestFloat32:
             case NearestFloat64:
-              ret = ValueBuilder::makeCall(MATH_NEAREST, value);
+              ret = ValueBuilder::makeCall(MATH_NEAREST,
+                                           visit(curr->value,
+                                                 EXPRESSION_RESULT));
               break;
             case SqrtFloat32:
             case SqrtFloat64:
-              ret = ValueBuilder::makeCall(MATH_SQRT, value);
+              ret = ValueBuilder::makeCall(MATH_SQRT, visit(curr->value,
+                                                            EXPRESSION_RESULT));
               break;
             // TODO: more complex unary conversions
             default:
-              std::cerr << "Unhandled unary operator: " << curr << std::endl;
+              std::cerr << "Unhandled unary float operator: " << curr
+                        << std::endl;
               abort();
           }
           if (curr->type == f32) { // doubles need much less coercing

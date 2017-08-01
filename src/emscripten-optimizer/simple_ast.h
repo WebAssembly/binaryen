@@ -956,7 +956,7 @@ struct JSPrinter {
   }
 
   int getPrecedence(Ref node, bool parent) {
-    if (node->isAssign()) {
+    if (node->isAssign() || node->isAssignName()) {
       return OperatorClass::getPrecedence(OperatorClass::Binary, SET);
     }
     if (!node->isArray()) {
@@ -1145,7 +1145,7 @@ struct JSPrinter {
   }
 
   static bool ifHasElse(Ref node) {
-    assert(node[0] == IF);
+    assert(node->isArray() && node[0] == IF);
     return node->size() >= 4 && !!node[3];
   }
 
@@ -1166,7 +1166,7 @@ struct JSPrinter {
     bool hasElse = ifHasElse(node);
     if (hasElse) {
       Ref child = node[2];
-      while (child[0] == IF) {
+      while (child->isArray() && child[0] == IF) {
         if (!ifHasElse(child)) {
           needBraces = true;
           break;
@@ -1185,11 +1185,13 @@ struct JSPrinter {
     } else {
       print(node[2], "{}");
     }
+    emit(';');
     if (hasElse) {
       space();
       emit("else");
       safeSpace();
       print(node[3], "{}");
+      emit(';');
     }
   }
 

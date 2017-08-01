@@ -212,7 +212,7 @@ public:
     return store;
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op, unsigned bytes, uint32_t offset,
-			   Expression* ptr, Expression* value, WasmType type) {
+                           Expression* ptr, Expression* value, WasmType type) {
     auto* ret = allocator.alloc<AtomicRMW>();
     ret->op = op;
     ret->bytes = bytes;
@@ -224,8 +224,8 @@ public:
     return ret;
   }
   AtomicCmpxchg* makeAtomicCmpxchg(unsigned bytes, uint32_t offset,
-			       Expression* ptr, Expression* expected, Expression* replacement,
-			       WasmType type) {
+                                   Expression* ptr, Expression* expected,
+                                   Expression* replacement, WasmType type) {
     auto* ret = allocator.alloc<AtomicCmpxchg>();
     ret->bytes = bytes;
     ret->offset = offset;
