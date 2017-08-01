@@ -69,7 +69,7 @@ struct ExecutionResults {
       std::cout << "[fuzz-exec] optimization passes changed execution results";
       abort();
     }
-    std::cout << "[fuzz-exec] results match\n";
+    std::cout << "[fuzz-exec] " << results.size() << " results match\n";
   }
 
   bool operator==(ExecutionResults& other) {

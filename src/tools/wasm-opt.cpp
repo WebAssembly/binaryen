@@ -29,6 +29,7 @@
 #include "wasm-validator.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
+#include "wasm-binary.h"
 #include "shell-interface.h"
 #include "optimization-options.h"
 #include "execution-results.h"
@@ -47,6 +48,7 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool fuzzExec = false;
+  bool fuzzBinary = false;
   bool translateToFuzz = false;
   std::string emitJSWrapper;
 
@@ -67,6 +69,9 @@ int main(int argc, const char* argv[]) {
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { fuzzExec = true; })
+      .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { fuzzBinary = true; })
       .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { translateToFuzz = true; })
@@ -121,7 +126,20 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExec) {
-    results.check(wasm);
+    auto* compare = &wasm;
+    Module second;
+    if (fuzzBinary) {
+      compare = &second;
+      BufferWithRandomAccess buffer(false);
+      // write the binary
+      WasmBinaryWriter writer(&wasm, buffer, false);
+      writer.write();
+      // read the binary
+      auto input = buffer.getAsChars();
+      WasmBinaryBuilder parser(second, input, false);
+      parser.read();
+    }
+    results.check(*compare);
   }
 
   if (options.extra.count("output") > 0) {
