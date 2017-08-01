@@ -2526,4 +2526,44 @@
       )
     )
   )
+  (func $and-popcount32 (result i32)
+    (i32.and
+      (i32.popcnt
+        (i32.const -1)
+      )
+      (i32.const 31)
+    )
+  )
+  (func $and-popcount32-big (result i32)
+    (i32.and
+      (i32.popcnt
+        (i32.const -1)
+      )
+      (i32.const 63)
+    )
+  )
+  (func $and-popcount64 (result i64) ;; these are TODOs
+    (i64.and
+      (i64.popcnt
+        (i64.const -1)
+      )
+      (i64.const 63)
+    )
+  )
+  (func $and-popcount64-big (result i64)
+    (i64.and
+      (i64.popcnt
+        (i64.const -1)
+      )
+      (i64.const 127)
+    )
+  )
+  (func $and-popcount64-bigger (result i64)
+    (i64.and
+      (i64.popcnt
+        (i64.const -1)
+      )
+      (i64.const 255)
+    )
+  )
 )

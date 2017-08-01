@@ -228,8 +228,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
     }
   } else if (auto* unary = curr->dynCast<Unary>()) {
     switch (unary->op) {
-      case ClzInt32: case CtzInt32: case PopcntInt32: return 5;
-      case ClzInt64: case CtzInt64: case PopcntInt64: return 6;
+      case ClzInt32: case CtzInt32: case PopcntInt32: return 6;
+      case ClzInt64: case CtzInt64: case PopcntInt64: return 7;
       case EqZInt32: case EqZInt64: return 1;
       case WrapInt64: return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
       default: {}
