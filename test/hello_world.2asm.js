@@ -13,9 +13,16 @@ function asmFunc(global, env, buffer) {
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
  function add(x, y) {
-  x = (x | 0)
-  y = (y | 0)
+  x = x | 0
+  y = y | 0
   return x + y | 0 | 0;
+ }
+ 
+ function __ctz__i32(x) {
+  x = x | 0
+  var wasm2asm_i32$0 = 0;
+  if ((x | 0) == (0 | 0)) wasm2asm_i32$0 = 32; else wasm2asm_i32$0 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return wasm2asm_i32$0 | 0;
  }
  
  return {

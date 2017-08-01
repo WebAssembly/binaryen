@@ -27,6 +27,7 @@
 
 #include "asmjs/shared-constants.h"
 #include "wasm.h"
+#include "wasm-builder.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
@@ -196,7 +197,39 @@ private:
   Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder &) = delete;
 };
 
+Function* makeCtzFunc(MixedArena& allocator, bool is32Bit=true) {
+  Builder b(allocator);
+  // ctz(x) is if eqz(x) then 32 else (32 - clz(x ^ (x - 1)))
+  BinaryOp subOp = is32Bit ? SubInt32 : SubInt64;
+  BinaryOp xorOp = is32Bit ? XorInt32 : XorInt64;
+  UnaryOp clzOp = is32Bit ? ClzInt32 : ClzInt64;
+  UnaryOp eqzOp = is32Bit ? EqZInt32 : EqZInt64;
+  Expression* xorExp =
+      b.makeBinary(xorOp, b.makeGetLocal(0, i32),
+                   b.makeBinary(subOp, b.makeGetLocal(0, i32),
+                                b.makeConst(Literal(1))));
+  Expression* subExp =
+      b.makeBinary(subOp,
+                   b.makeConst(is32Bit ? Literal(32 - 1) : Literal(64 - 1)),
+                   b.makeUnary(clzOp, xorExp));
+  Expression* body =
+      b.makeIf(b.makeUnary(eqzOp, b.makeGetLocal(0, i32)),
+               b.makeConst(is32Bit ? Literal(32) : Literal(64)),
+               subExp);
+  return b.makeFunction(Name("__ctz__i32"),
+                        std::vector<NameType>{NameType("x", i32)},
+                        i32,
+                        std::vector<NameType>{},
+                        body);
+}
+
+Function* makePopcntFunc(MixedArena& allocator, bool is32Bit=true) {
+  return nullptr;
+}
+
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
+  wasm->addFunction(makeCtzFunc(wasm->allocator));
+  wasm->addFunction(makePopcntFunc(wasm->allocator));
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
   ret[1]->push_back(asmFunc);
@@ -996,17 +1029,30 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         return ret;
       }
       // normal unary
-      Ref value = visit(curr->value, EXPRESSION_RESULT);
       switch (curr->type) {
         case i32: {
           switch (curr->op) {
             case ClzInt32:
-              return ValueBuilder::makeCall(MATH_CLZ32, value);
+              return ValueBuilder::makeCall(MATH_CLZ32,
+                                            visit(curr->value,
+                                                  EXPRESSION_RESULT));
             case CtzInt32:
-              return ValueBuilder::makeCall(MATH_CTZ32, value);
+              return ValueBuilder::makeCall("__ctz__i32",
+                                            visit(curr->value,
+                                                  EXPRESSION_RESULT));
             case PopcntInt32:
-              return ValueBuilder::makeCall(MATH_POPCNT32, value);
-            default: abort();
+              return ValueBuilder::makeCall(MATH_POPCNT32,
+                                            visit(curr->value,
+                                                  EXPRESSION_RESULT));
+            case EqZInt32:
+              return ValueBuilder::makeBinary(
+                  makeAsmCoercion(
+                      visit(curr->value, EXPRESSION_RESULT), ASM_INT), EQ,
+                  makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
+            default:
+              std::cerr << "Unhandled unary i32 operator: " << curr
+                        << std::endl;
+              abort();
           }
         }
         case f32:
@@ -1066,6 +1112,73 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           std::cerr << "Unhandled type: " << curr << std::endl;
           abort();
       }
+    }
+    Ref makeRot(Expression *x, Expression *k, BinaryOp op) {
+      // left rotate is:
+      // (((((~0) >>> k) & x) << k) | ((((~0) << (w - k)) & x) >>> (w - k)))
+      // reverse shifts for right rotate
+      assert(op == RotLInt32 || op == RotRInt32 ||
+             op == RotLInt64 || op == RotRInt64);
+      bool isLRot = (op == RotLInt32 || op == RotLInt64);
+      bool is32Bit = (op == RotLInt32 || op == RotRInt32);
+      BinaryOp shifters[2][2] = {{ShrUInt64, ShrUInt32}, {ShlInt64, ShlInt32}};
+      BinaryOp lshift = shifters[isLRot][is32Bit];
+      BinaryOp rshift = shifters[!isLRot][is32Bit];
+      BinaryOp orOp = is32Bit ? OrInt32 : OrInt64;
+      BinaryOp andOp = is32Bit ? AndInt32 : AndInt64;
+      BinaryOp subOp = is32Bit ? SubInt32 : SubInt64;
+      Const widthMask(allocator);
+      widthMask.set(is32Bit ? Literal(32 - 1) : Literal(64 - 1));
+      Binary shiftVal(allocator);
+      shiftVal.op = andOp;
+      shiftVal.left = k;
+      shiftVal.right = &widthMask;
+      shiftVal.finalize();
+      Const width(allocator);
+      width.set(is32Bit ? Literal(32) : Literal(64));
+      Binary widthSub(allocator);
+      widthSub.op = subOp;
+      widthSub.left = &width;
+      widthSub.right = &shiftVal;
+      widthSub.finalize();
+      Const fullMask(allocator);
+      fullMask.set(is32Bit ? Literal(~(uint32_t)0) : Literal(~(uint64_t)0));
+      Binary maskRShift(allocator);
+      maskRShift.op = rshift;
+      maskRShift.left = &fullMask;
+      maskRShift.right = &shiftVal;
+      maskRShift.finalize();
+      Binary lowMask(allocator);
+      lowMask.op = andOp;
+      lowMask.left = &maskRShift;
+      lowMask.right = x;
+      lowMask.finalize();
+      Binary lowShift(allocator);
+      lowShift.op = lshift;
+      lowShift.left = &lowMask;
+      lowShift.right = &shiftVal;
+      lowShift.finalize();
+      Binary maskLShift(allocator);
+      maskLShift.op = lshift;
+      maskLShift.left = &fullMask;
+      maskLShift.right = &widthSub;
+      maskLShift.finalize();
+      Binary highMask(allocator);
+      highMask.op = andOp;
+      highMask.left = &maskLShift;
+      highMask.right = x;
+      highMask.finalize();
+      Binary highShift(allocator);
+      highShift.op = rshift;
+      highShift.left = &highMask;
+      highShift.right = &widthSub;
+      highShift.finalize();
+      Binary combine(allocator);
+      combine.op = orOp;
+      combine.left = &lowShift;
+      combine.right = &highShift;
+      combine.finalize();
+      return visit(&combine, EXPRESSION_RESULT);
     }
     Ref visitBinary(Binary *curr) {
       if (isStatement(curr)) {
@@ -1183,6 +1296,58 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case GeUInt32:
           return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
                                           makeSigning(right, ASM_UNSIGNED));
+        case RotLInt32:
+        case RotRInt32:
+          return makeRot(curr->left, curr->right, curr->op);
+        case AddInt64:
+        case SubInt64:
+        case MulInt64:
+        case DivSInt64:
+        case DivUInt64:
+        case RemSInt64:
+        case RemUInt64:
+        case AndInt64:
+        case OrInt64:
+        case XorInt64:
+        case ShlInt64:
+        case ShrUInt64:
+        case ShrSInt64:
+        case RotLInt64:
+        case RotRInt64:
+        case EqInt64:
+        case NeInt64:
+        case LtSInt64:
+        case LtUInt64:
+        case LeSInt64:
+        case LeUInt64:
+        case GtSInt64:
+        case GtUInt64:
+        case GeSInt64:
+        case GeUInt64:
+        case AddFloat32:
+        case SubFloat32:
+        case MulFloat32:
+        case DivFloat32:
+        case CopySignFloat32:
+        case EqFloat32:
+        case NeFloat32:
+        case LtFloat32:
+        case LeFloat32:
+        case GtFloat32:
+        case GeFloat32:
+        case AddFloat64:
+        case SubFloat64:
+        case MulFloat64:
+        case DivFloat64:
+        case CopySignFloat64:
+        case MinFloat64:
+        case MaxFloat64:
+        case EqFloat64:
+        case NeFloat64:
+        case LtFloat64:
+        case LeFloat64:
+        case GtFloat64:
+        case GeFloat64:
         default:
           std::cerr << "Unhandled binary operator: " << curr << std::endl;
           abort();

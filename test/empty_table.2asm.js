@@ -12,6 +12,13 @@ function asmFunc(global, env, buffer) {
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
+ function __ctz__i32(x) {
+  x = x | 0
+  var wasm2asm_i32$0 = 0;
+  if ((x | 0) == (0 | 0)) wasm2asm_i32$0 = 32; else wasm2asm_i32$0 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return wasm2asm_i32$0 | 0;
+ }
+ 
  return {
   
  };
