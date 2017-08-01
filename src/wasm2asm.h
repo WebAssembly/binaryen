@@ -292,7 +292,7 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import *import) {
 
 void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
-  for (Table::Segment &seg : wasm->table.segments) {
+  for (Table::Segment& seg : wasm->table.segments) {
     for (size_t i = 0; i < seg.data.size(); i++) {
       Name name = seg.data[i];
       auto func = wasm->getFunction(name);
