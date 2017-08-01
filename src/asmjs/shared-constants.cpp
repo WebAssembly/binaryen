@@ -59,7 +59,6 @@ cashew::IString GLOBAL("global"),
                 INSTRUMENT("instrument"),
                 MATH_IMUL("Math_imul"),
                 MATH_CLZ32("Math_clz32"),
-                MATH_POPCNT32("Math_popcnt32"),
                 MATH_ABS("Math_abs"),
                 MATH_CEIL("Math_ceil"),
                 MATH_FLOOR("Math_floor"),
@@ -67,6 +66,13 @@ cashew::IString GLOBAL("global"),
                 MATH_NEAREST("Math_NEAREST"),
                 MATH_SQRT("Math_sqrt"),
                 MATH_MIN("Math_max"),
-                MATH_MAX("Math_min");
-
+                MATH_MAX("Math_min"),
+                CTZ32("__ctz_i32"),
+                CTZ64("__ctz_i64"),
+                POPCNT32("__popcnt_i32"),
+                POPCNT64("__popcnt_i64"),
+                ROTL32("__rotl_i32"),
+                ROTL64("__rotl_i64"),
+                ROTR32("__rotr_i32"),
+                ROTR64("__rotr_i64");
 }

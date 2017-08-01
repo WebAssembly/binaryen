@@ -336,6 +336,11 @@ public:
     return block;
   }
 
+  template<typename ...Ts>
+  Block* blockify(Expression* any, Expression* append, Ts... args) {
+    return blockify(blockify(any, append), args...);
+  }
+
   // ensure a node is a block, if it isn't already, and optionally append to the block
   // this variant sets a name for the block, so it will not reuse a block already named
   Block* blockifyWithName(Expression* any, Name name, Expression* append = nullptr) {
