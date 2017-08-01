@@ -80,6 +80,10 @@ private:
   // the maximum size of a block
   static const int BLOCK_FACTOR = 5;
 
+  // the memory that we use, a small portion so that we have a good chance of
+  // looking at writes (we also look outside of this region with small probability)
+  static const int USABLE_MEMORY = 32;
+
   // the number of runtime iterations (function calls, loop backbranches) we
   // allow before we stop execution with a trap, to prevent hangs. 0 means
   // no hang protection.
@@ -673,7 +677,7 @@ private:
     if (!oneIn(10)) {
       ret = builder.makeBinary(AndInt32,
         ret,
-        builder.makeConst(Literal(int32_t(255)))
+        builder.makeConst(Literal(int32_t(USABLE_MEMORY - 1)))
       );
     }
     return ret;
