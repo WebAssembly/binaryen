@@ -620,6 +620,22 @@ struct JSPrinter {
     }
   }
 
+  bool isNothing(Ref node) {
+    return node->isArray() && node[0] == TOPLEVEL && node[1]->size() == 0;
+  }
+
+  bool isDefun(Ref node) {
+    return node->isArray() && node[0] == DEFUN;
+  }
+
+  bool isBlock(Ref node) {
+    return node->isArray() && node[0] == BLOCK;
+  }
+
+  bool isIf(Ref node) {
+    return node->isArray() && node[0] == IF;
+  }
+
   void print(Ref node) {
     ensure();
     if (node->isString()) {
@@ -731,7 +747,7 @@ struct JSPrinter {
     if (used == last) emit(otherwise);
   }
 
-  void printStats(Ref stats, bool semicolons=false) {
+  void printStats(Ref stats) {
     bool first = true;
     for (size_t i = 0; i < stats->size(); i++) {
       Ref curr = stats[i];
@@ -739,7 +755,9 @@ struct JSPrinter {
         if (first) first = false;
         else newline();
         print(stats[i]);
-        if (semicolons) emit(';');
+        if (!isDefun(stats[i]) && !isBlock(stats[i]) && !isIf(stats[i])) {
+          emit(';');
+        }
       }
     }
   }
@@ -758,7 +776,7 @@ struct JSPrinter {
     emit('{');
     indent++;
     newline();
-    printStats(node[1], true);
+    printStats(node[1]);
     indent--;
     newline();
     emit('}');
@@ -787,10 +805,6 @@ struct JSPrinter {
     newline();
     emit('}');
     newline();
-  }
-
-  bool isNothing(Ref node) {
-    return node->isArray() && node[0] == TOPLEVEL && node[1]->size() == 0;
   }
 
   void printAssign(Ref node) {
@@ -1141,7 +1155,6 @@ struct JSPrinter {
         print(args[i][1]);
       }
     }
-    emit(';');
   }
 
   static bool ifHasElse(Ref node) {
@@ -1184,14 +1197,14 @@ struct JSPrinter {
       emit('}');
     } else {
       print(node[2], "{}");
+      if (!isBlock(node[2])) emit(';');
     }
-    emit(';');
     if (hasElse) {
       space();
       emit("else");
       safeSpace();
       print(node[3], "{}");
-      emit(';');
+      if (!isBlock(node[3])) emit(';');
     }
   }
 
@@ -1205,7 +1218,6 @@ struct JSPrinter {
     emit('(');
     print(node[1]);
     emit(')');
-    emit(';');
   }
 
   void printWhile(Ref node) {
@@ -1232,7 +1244,6 @@ struct JSPrinter {
       emit(' ');
       print(node[1]);
     }
-    emit(';');
   }
 
   void printBreak(Ref node) {
@@ -1241,7 +1252,6 @@ struct JSPrinter {
       emit(' ');
       emit(node[1]->getCString());
     }
-    emit(';');
   }
 
   void printContinue(Ref node) {
@@ -1250,7 +1260,6 @@ struct JSPrinter {
       emit(' ');
       emit(node[1]->getCString());
     }
-    emit(';');
   }
 
   void printNew(Ref node) {
