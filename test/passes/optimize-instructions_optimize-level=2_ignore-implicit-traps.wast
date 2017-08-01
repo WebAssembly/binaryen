@@ -259,5 +259,69 @@
       (get_local $5)
     )
   )
+  (func $invalidate-conditionalizeExpensiveOnBitwise (param $0 i32) (param $1 i32) (result i32)
+   (if
+    (i32.eqz
+     (i32.and
+      (i32.lt_s
+       (i32.and
+        (i32.shr_s
+         (i32.shl
+          (i32.add
+           (get_local $1) ;; conflict with tee
+           (i32.const -1)
+          )
+          (i32.const 24)
+         )
+         (i32.const 24)
+        )
+        (i32.const 255)
+       )
+       (i32.const 3)
+      )
+      (i32.ne
+       (tee_local $1
+        (i32.const 0)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (return (get_local $0))
+   )
+   (return (get_local $1))
+  )
+  (func $invalidate-conditionalizeExpensiveOnBitwise-ok (param $0 i32) (param $1 i32) (result i32)
+   (if
+    (i32.eqz
+     (i32.and
+      (i32.lt_s
+       (i32.and
+        (i32.shr_s
+         (i32.shl
+          (i32.add
+           (get_local $0) ;; no conflict
+           (i32.const -1)
+          )
+          (i32.const 24)
+         )
+         (i32.const 24)
+        )
+        (i32.const 255)
+       )
+       (i32.const 3)
+      )
+      (i32.ne
+       (tee_local $1
+        (i32.const 0)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (return (get_local $0))
+   )
+   (return (get_local $1))
+  )
 )
 

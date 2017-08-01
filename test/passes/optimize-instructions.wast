@@ -842,7 +842,7 @@
               (i32.const -1)
               (i32.const 2147483647)
             )
-            (i32.const 32)
+            (i32.const 31) ;; adjusted after we fixed shift computation to just look at lower 5 bits
           )
           (i32.const 24)
         )
@@ -2431,6 +2431,69 @@
     )
     (i32.const 2)
     (i32.const 1)
+   )
+  )
+  (func $neg-shifts-and-255 (result i32)
+    (i32.and
+     (i32.shr_u
+      (i32.const -99)
+      (i32.const -32) ;; this shift does nothing
+     )
+     (i32.const 255)
+    )
+  )
+  (func $neg-shifts-and-255-b (result i32)
+   (i32.and
+    (i32.shl
+     (i32.const -2349025)
+     (i32.const -32) ;; this shift does nothing
+    )
+    (i32.const 255)
+   )
+  )
+  (func $shifts-square-overflow (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (get_local $x)
+     (i32.const 65535) ;; 31 bits effectively
+    )
+    (i32.const 32767) ;; also 31 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  (func $shifts-square-no-overflow-small (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (get_local $x)
+     (i32.const 1031) ;; 7 bits effectively
+    )
+    (i32.const 4098) ;; 2 bits effectively
+   )
+  )
+  (func $shifts-square-overflow-64 (param $x i64) (result i64)
+   (i64.shr_u
+    (i64.shr_u
+     (get_local $x)
+     (i64.const 65535) ;; 63 bits effectively
+    )
+    (i64.const 64767) ;; also 63 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  (func $shifts-square-no-overflow-small-64 (param $x i64) (result i64)
+   (i64.shr_u
+    (i64.shr_u
+     (get_local $x)
+     (i64.const 1031) ;; 7 bits effectively
+    )
+    (i64.const 4098) ;; 2 bits effectively
+   )
+  )
+  (func $shifts-square-unreachable (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (unreachable)
+     (i32.const 1031) ;; 7 bits effectively
+    )
+    (i32.const 4098) ;; 2 bits effectively
    )
   )
 )
