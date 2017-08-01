@@ -73,14 +73,23 @@ namespace wasm {
 // For example, if there is a switch targeting us, we can't do it - we can't remove the value from other targets
 struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
   Name origin;
-  bool foundSwitch = false;
+  bool foundProblem = false;
   // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow value is used, and we can't drop it
   Index brIfs = 0;
   Index droppedBrIfs = 0;
+  PassOptions& passOptions;
+
+  ProblemFinder(PassOptions& passOptions) : passOptions(passOptions) {}
 
   void visitBreak(Break* curr) {
-    if (curr->name == origin && curr->condition) {
-      brIfs++;
+    if (curr->name == origin) {
+      if (curr->condition) {
+        brIfs++;
+      }
+      // if the value has side effects, we can't remove it
+      if (EffectAnalyzer(passOptions, curr->value).hasSideEffects()) {
+        foundProblem = true;
+      }
     }
   }
 
@@ -94,12 +103,12 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   void visitSwitch(Switch* curr) {
     if (curr->default_ == origin) {
-      foundSwitch = true;
+      foundProblem = true;
       return;
     }
     for (auto& target : curr->targets) {
       if (target == origin) {
-        foundSwitch = true;
+        foundProblem = true;
         return;
       }
     }
@@ -107,7 +116,7 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   bool found() {
     assert(brIfs >= droppedBrIfs);
-    return foundSwitch || brIfs > droppedBrIfs;
+    return foundProblem || brIfs > droppedBrIfs;
   }
 };
 
@@ -115,6 +124,9 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 // While doing so it can create new blocks, so optimize blocks as well.
 struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   Name origin;
+  PassOptions& passOptions;
+
+  BreakValueDropper(PassOptions& passOptions) : passOptions(passOptions) {}
 
   void visitBlock(Block* curr);
 
@@ -143,7 +155,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
 };
 
 // core block optimizer routine
-static void optimizeBlock(Block* curr, Module* module) {
+static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
   bool more = true;
   bool changed = false;
   while (more) {
@@ -159,14 +171,14 @@ static void optimizeBlock(Block* curr, Module* module) {
             if (child->name.is()) {
               Expression* expression = child;
               // check if it's ok to remove the value from all breaks to us
-              ProblemFinder finder;
+              ProblemFinder finder(passOptions);
               finder.origin = child->name;
               finder.walk(expression);
               if (finder.found()) {
                 child = nullptr;
               } else {
                 // fix up breaks
-                BreakValueDropper fixer;
+                BreakValueDropper fixer(passOptions);
                 fixer.origin = child->name;
                 fixer.setModule(module);
                 fixer.walk(expression);
@@ -217,7 +229,7 @@ static void optimizeBlock(Block* curr, Module* module) {
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
-  optimizeBlock(curr, getModule());
+  optimizeBlock(curr, getModule(), passOptions);
 }
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
@@ -226,7 +238,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   Pass* create() override { return new MergeBlocks; }
 
   void visitBlock(Block *curr) {
-    optimizeBlock(curr, getModule());
+    optimizeBlock(curr, getModule(), getPassOptions());
   }
 
   Block* optimize(Expression* curr, Expression*& child, Block* outer = nullptr, Expression** dependency1 = nullptr, Expression** dependency2 = nullptr) {
