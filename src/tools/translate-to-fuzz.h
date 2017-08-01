@@ -72,10 +72,13 @@ private:
   static const int TRIES = 10;
 
   // beyond a nesting limit, greatly decrease the chance to continue to nest
-  static const int NESTING_LIMIT = 7;
+  static const int NESTING_LIMIT = 11;
 
   // reduce the chance for a function to call itself by this factor
   static const int RECURSION_FACTOR = 10;
+
+  // the maximum size of a block
+  static const int BLOCK_FACTOR = 5;
 
   // the number of runtime iterations (function calls, loop backbranches) we
   // allow before we stop execution with a trap, to prevent hangs. 0 means
@@ -459,10 +462,14 @@ private:
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
     breakableStack.push_back(ret);
-    Index num = upTo(upTo(8));
-    if (nesting >= NESTING_LIMIT) {
+    Index num = upTo(upTo(BLOCK_FACTOR - 1)); // we add another later
+    if (nesting >= NESTING_LIMIT / 2) {
       // smaller blocks past the limit
-      num /= 3;
+      num /= 2;
+      if (nesting >= NESTING_LIMIT && oneIn(2)) {
+        // smaller blocks past the limit
+        num /= 2;
+      }
     }
     while (num > 0 && !finishedInput) {
       ret->list.push_back(make(none));
