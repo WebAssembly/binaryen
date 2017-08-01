@@ -19,6 +19,7 @@ function asm(global, env, buffer) {
   var print = env.print;
   var h = env.h;
   var return_int = env.return_int;
+  var emscripten_log = env.emscripten_log;
 
   var HEAP8 = new global.Int8Array(buffer);
   var HEAP16 = new global.Int16Array(buffer);
@@ -718,6 +719,11 @@ function asm(global, env, buffer) {
    FUNCTION_TABLE_vi[(Int = 1) & 7](i1 | 0);
   }
 
+  function call_emscripten_log() {
+    // emscripten_log has no return value, don't let the conditional after the comma confuse you
+    emscripten_log(), 2 ? abort() | 0 : 3;
+  }
+
   function keepAlive() {
     sqrts(3.14159);
     f2u(100.0);
@@ -725,6 +731,7 @@ function asm(global, env, buffer) {
     autoDrop(52) | 0;
     indirectInSequence();
     emterpretify_assertions_safeHeap();
+    call_emscripten_log();
   }
 
   function v() {

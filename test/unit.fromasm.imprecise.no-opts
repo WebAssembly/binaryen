@@ -17,6 +17,7 @@
  (import "env" "print" (func $print (param i32)))
  (import "env" "h" (func $h (param i32)))
  (import "env" "return_int" (func $return_int (result i32)))
+ (import "env" "emscripten_log" (func $emscripten_log))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (import "env" "memory" (memory $0 256 256))
  (import "env" "table" (table 25 25 anyfunc))
@@ -1970,6 +1971,22 @@
    )
   )
  )
+ (func $call_emscripten_log
+  (call $emscripten_log)
+  (if
+   (i32.const 2)
+   (drop
+    (i32.trunc_s/f64
+     (call $abort
+      (f64.const 0)
+     )
+    )
+   )
+   (drop
+    (i32.const 3)
+   )
+  )
+ )
  (func $keepAlive
   (drop
    (call $sqrts
@@ -1993,6 +2010,7 @@
   )
   (call $indirectInSequence)
   (call $emterpretify_assertions_safeHeap)
+  (call $call_emscripten_log)
  )
  (func $v
   (nop)

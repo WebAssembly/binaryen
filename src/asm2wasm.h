@@ -476,15 +476,20 @@ private:
     }
   }
 
-  FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
-    WasmType result = none;
+  WasmType getResultTypeOfCallUsingParent(Ref parent, AsmData* data) {
+    auto result = none;
     if (!!parent) {
       // if the parent is a seq, we cannot be the last element in it (we would have a coercion, which would be
       // the parent), so we must be (us, somethingElse), and so our return is void
       if (parent[0] != SEQ) {
-        result = detectWasmType(parent, nullptr);
+        result = detectWasmType(parent, data);
       }
     }
+    return result;
+  }
+
+  FunctionType* getFunctionType(Ref parent, ExpressionList& operands, AsmData* data) {
+    WasmType result = getResultTypeOfCallUsingParent(parent, data);
     return ensureFunctionType(getSig(result, operands), &wasm);
   }
 
@@ -2189,7 +2194,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (tableCall) {
           auto specific = ret->dynCast<CallIndirect>();
           // note that we could also get the type from the suffix of the name, e.g., mftCall_vi
-          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands);
+          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands, &asmData);
           specific->fullType = fullType->name;
           specific->type = fullType->result;
         }
@@ -2202,8 +2207,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // this is important as we run the optimizer on functions before we get
           // to finalizeCalls (which we can only do once we've read all the functions,
           // and we optimize in parallel starting earlier).
-          Ref parent = astStackHelper.getParent();
-          callImport->type = !!parent ? detectWasmType(parent, &asmData) : none;
+          callImport->type = getResultTypeOfCallUsingParent(astStackHelper.getParent(), &asmData);
           noteImportedFunctionCall(ast, callImport->type, callImport);
         }
         return ret;
@@ -2217,7 +2221,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       for (unsigned i = 0; i < args->size(); i++) {
         ret->operands.push_back(process(args[i]));
       }
-      auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands);
+      auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands, &asmData);
       ret->fullType = fullType->name;
       ret->type = fullType->result;
       // we don't know the table offset yet. emit target = target + callImport(tableName), which we fix up later when we know how asm function tables are layed out inside the wasm table.
