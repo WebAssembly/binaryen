@@ -138,6 +138,7 @@ int main(int argc, const char* argv[]) {
       auto input = buffer.getAsChars();
       WasmBinaryBuilder parser(second, input, false);
       parser.read();
+      assert(WasmValidator().validate(second));
     }
     results.check(*compare);
   }
