@@ -839,6 +839,9 @@ public:
   Expression* popExpression();
   Expression* popNonVoidExpression();
 
+  void startBlockScope();
+  void endBlockScope();
+
   std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
 
   Name getGlobalName(Index index);

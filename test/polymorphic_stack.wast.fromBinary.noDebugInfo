@@ -119,5 +119,26 @@
    (unreachable)
   )
  )
+ (func $6 (type $0) (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (if
+    (get_local $var$0)
+    (block $label$1
+     (return
+      (i32.const 127)
+     )
+    )
+   )
+   (block $label$2 (result i32)
+    (br_if $label$2
+     (unreachable)
+     (return
+      (i32.const -32)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
 )
 

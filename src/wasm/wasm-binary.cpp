@@ -1158,6 +1158,8 @@ void WasmBinaryWriter::visitDrop(Drop *curr) {
 
 static Name RETURN_BREAK("binaryen|break-to-return");
 
+static Expression* BLOCK_START = nullptr;
+
 void WasmBinaryBuilder::read() {
 
   readHeader();
@@ -1795,14 +1797,15 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
-  if (expressionStack.empty()) {
+  if (expressionStack.empty() || expressionStack.back() == BLOCK_START) {
     if (definitelyUnreachable) {
       // we are in unreachable wasm code. emit unreachable nodes, which are
       // suitable for any pop in such a location
       return allocator.alloc<Unreachable>();
     }
-    throw ParseException("attempted pop from empty stack");
+    throw ParseException("attempted pop from empty stack / beyond block start boundary");
   }
+  // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
   expressionStack.pop_back();
   return ret;
@@ -1835,6 +1838,17 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   block->list.push_back(builder.makeGetLocal(local, type));
   block->finalize();
   return block;
+}
+
+void WasmBinaryBuilder::startBlockScope() {
+  definitelyUnreachable = false; // starting a block
+  expressionStack.push_back(BLOCK_START);
+}
+
+void WasmBinaryBuilder::endBlockScope() {
+  assert(!expressionStack.empty());
+  assert(expressionStack.back() == BLOCK_START);
+  expressionStack.pop_back();
 }
 
 Name WasmBinaryBuilder::getGlobalName(Index index) {
@@ -2090,13 +2104,13 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
   while (stack.size() > 0) {
     curr = stack.back();
     stack.pop_back();
+    startBlockScope();
     size_t start = expressionStack.size(); // everything after this, that is left when we see the marker, is ours
     if (last) {
       // the previous block is our first-position element
       expressionStack.push_back(last);
     }
     last = curr;
-    definitelyUnreachable = false; // starting a block
     processExpressions();
     size_t end = expressionStack.size();
     if (end < start) {
@@ -2115,18 +2129,18 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     }
     expressionStack.resize(start);
     curr->finalize(curr->type);
-    definitelyUnreachable = false; // ending a block
+    endBlockScope();
     breakStack.pop_back();
   }
 }
 
 Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
-  definitelyUnreachable = false; // starting a block
+  startBlockScope();
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
   if (start - end == 1) {
-    definitelyUnreachable = false; // ending a block
+    endBlockScope();
     return popExpression();
   }
   if (start > end) {
@@ -2138,7 +2152,7 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
   }
   block->finalize(type);
   expressionStack.resize(start);
-  definitelyUnreachable = false; // ending a block
+  endBlockScope();
   return block;
 }
 
