@@ -754,8 +754,8 @@ struct JSPrinter {
       if (!isNothing(curr)) {
         if (first) first = false;
         else newline();
-        print(stats[i]);
-        if (!isDefun(stats[i]) && !isBlock(stats[i]) && !isIf(stats[i])) {
+        print(curr);
+        if (!isDefun(curr) && !isBlock(curr) && !isIf(curr)) {
           emit(';');
         }
       }
