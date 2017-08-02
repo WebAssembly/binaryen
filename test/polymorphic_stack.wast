@@ -101,5 +101,15 @@
     )
    )
   )
+  (func $br_table_unreachable_to_also_unreachable (result i32)
+    (block $a (result i32)
+      (block $b
+        (br_table $a $b ;; seems to send a value, but is not taken
+          (unreachable)
+          (unreachable)
+        )
+      )
+    )
+  )
 )
 

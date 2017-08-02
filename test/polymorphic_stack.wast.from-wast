@@ -105,4 +105,14 @@
    )
   )
  )
+ (func $br_table_unreachable_to_also_unreachable (type $1) (result i32)
+  (block $a (result i32)
+   (block $b
+    (br_table $a $b
+     (unreachable)
+     (unreachable)
+    )
+   )
+  )
+ )
 )

@@ -666,6 +666,14 @@ void WasmBinaryWriter::visitSwitch(Switch *curr) {
     recurse(curr->value);
   }
   recurse(curr->condition);
+  if (!BranchUtils::isBranchTaken(curr)) {
+    // if the branch is not taken, then it's dangerous to emit it, as
+    // wasm type checking rules are stricter than ours - we tolerate
+    // an untaken branch to a target with a different value, but not
+    // wasm. so just don't emit it
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
   o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
   for (auto target : curr->targets) {
     o << U32LEB(getBreakIndex(target));
@@ -1803,7 +1811,7 @@ Expression* WasmBinaryBuilder::popExpression() {
       // suitable for any pop in such a location
       return allocator.alloc<Unreachable>();
     }
-    throw ParseException("attempted pop from empty stack / beyond block start boundary");
+    throw ParseException("attempted pop from empty stack / beyond block start boundary at " + std::to_string(pos));
   }
   // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
