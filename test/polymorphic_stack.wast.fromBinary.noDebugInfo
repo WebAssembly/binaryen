@@ -125,5 +125,16 @@
    (unreachable)
   )
  )
+ (func $6 (type $1) (result i32)
+  (block $label$0 (result i32)
+   (block $label$1
+    (unreachable)
+    (unreachable)
+    (unreachable)
+    (unreachable)
+   )
+   (unreachable)
+  )
+ )
 )
 

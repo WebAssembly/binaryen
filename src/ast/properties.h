@@ -79,7 +79,7 @@ struct Properties {
 
   // gets the size of the sign-extended value
   static Index getSignExtBits(Expression* curr) {
-    return 32 - curr->cast<Binary>()->right->cast<Const>()->value.geti32();
+    return 32 - Bits::getEffectiveShifts(curr->cast<Binary>()->right);
   }
 
   // Check if an expression is almost a sign-extend: perhaps the inner shift
@@ -93,7 +93,7 @@ struct Properties {
             if (auto* inner = outer->left->dynCast<Binary>()) {
               if (inner->op == ShlInt32) {
                 if (auto* innerConst = inner->right->dynCast<Const>()) {
-                  if (outerConst->value.leU(innerConst->value).geti32()) {
+                  if (Bits::getEffectiveShifts(outerConst) <= Bits::getEffectiveShifts(innerConst)) {
                     return inner->left;
                   }
                 }
@@ -109,8 +109,8 @@ struct Properties {
   // gets the size of the almost sign-extended value, as well as the
   // extra shifts, if any
   static Index getAlmostSignExtBits(Expression* curr, Index& extraShifts) {
-    extraShifts = curr->cast<Binary>()->left->cast<Binary>()->right->cast<Const>()->value.geti32() -
-                  curr->cast<Binary>()->right->cast<Const>()->value.geti32();
+    extraShifts = Bits::getEffectiveShifts(curr->cast<Binary>()->left->cast<Binary>()->right) -
+                  Bits::getEffectiveShifts(curr->cast<Binary>()->right);
     return getSignExtBits(curr);
   }
 
