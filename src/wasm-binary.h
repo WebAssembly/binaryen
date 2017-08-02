@@ -830,6 +830,9 @@ public:
 
   std::vector<Expression*> expressionStack;
 
+  bool definitelyUnreachable; // set when we know code is definitely unreachable. this helps parse
+                              // stacky wasm code, which can be unsuitable for our IR when unreachable
+
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
   void processExpressions();

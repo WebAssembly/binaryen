@@ -1796,14 +1796,15 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 
 Expression* WasmBinaryBuilder::popExpression() {
   if (expressionStack.empty()) {
+    if (definitelyUnreachable) {
+      // we are in unreachable wasm code. emit unreachable nodes, which are
+      // suitable for any pop in such a location
+      return allocator.alloc<Unreachable>();
+    }
     throw ParseException("attempted pop from empty stack");
   }
   auto ret = expressionStack.back();
-  // to simulate the wasm polymorphic stack mode, leave a final
-  // unreachable, don't empty the stack in that case
-  if (!(expressionStack.size() == 1 && ret->type == unreachable)) {
-    expressionStack.pop_back();
-  }
+  expressionStack.pop_back();
   return ret;
 }
 
@@ -2095,6 +2096,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
       expressionStack.push_back(last);
     }
     last = curr;
+    definitelyUnreachable = false; // starting a block
     processExpressions();
     size_t end = expressionStack.size();
     if (end < start) {
@@ -2113,15 +2115,18 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     }
     expressionStack.resize(start);
     curr->finalize(curr->type);
+    definitelyUnreachable = false; // ending a block
     breakStack.pop_back();
   }
 }
 
 Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
+  definitelyUnreachable = false; // starting a block
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
   if (start - end == 1) {
+    definitelyUnreachable = false; // ending a block
     return popExpression();
   }
   if (start > end) {
@@ -2133,6 +2138,7 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
   }
   block->finalize(type);
   expressionStack.resize(start);
+  definitelyUnreachable = false; // ending a block
   return block;
 }
 
@@ -2192,12 +2198,14 @@ void WasmBinaryBuilder::visitBreak(Break *curr, uint8_t code) {
   if (code == BinaryConsts::BrIf) curr->condition = popNonVoidExpression();
   if (target.arity) curr->value = popNonVoidExpression();
   curr->finalize();
+  if (curr->type == unreachable) {
+    definitelyUnreachable = true;
+  }
 }
 
 void WasmBinaryBuilder::visitSwitch(Switch *curr) {
   if (debug) std::cerr << "zz node: Switch" << std::endl;
   curr->condition = popNonVoidExpression();
-
   auto numTargets = getU32LEB();
   if (debug) std::cerr << "targets: "<< numTargets<<std::endl;
   for (size_t i = 0; i < numTargets; i++) {
@@ -2208,6 +2216,7 @@ void WasmBinaryBuilder::visitSwitch(Switch *curr) {
   if (debug) std::cerr << "default: "<< curr->default_<<std::endl;
   if (defaultTarget.arity) curr->value = popNonVoidExpression();
   curr->finalize();
+  definitelyUnreachable = true;
 }
 
 Expression* WasmBinaryBuilder::visitCall() {
@@ -2635,6 +2644,7 @@ void WasmBinaryBuilder::visitReturn(Return *curr) {
     curr->value = popNonVoidExpression();
   }
   curr->finalize();
+  definitelyUnreachable = true;
 }
 
 bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
@@ -2669,6 +2679,7 @@ void WasmBinaryBuilder::visitNop(Nop *curr) {
 
 void WasmBinaryBuilder::visitUnreachable(Unreachable *curr) {
   if (debug) std::cerr << "zz node: Unreachable" << std::endl;
+  definitelyUnreachable = true;
 }
 
 void WasmBinaryBuilder::visitDrop(Drop *curr) {
