@@ -758,7 +758,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitSetLocal(SetLocal *curr) {
       if (!isStatement(curr)) {
-        // return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(func->getLocalName(curr->index))), visit(curr->value, EXPRESSION_RESULT));
         return ValueBuilder::makeBinary(
             ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
             SET, visit(curr->value, EXPRESSION_RESULT));
