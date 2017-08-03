@@ -168,32 +168,42 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
         if (drop) {
           child = drop->value->dynCast<Block>();
           if (child) {
-            if (child->name.is()) {
-              Expression* expression = child;
-              // check if it's ok to remove the value from all breaks to us
-              ProblemFinder finder(passOptions);
-              finder.origin = child->name;
-              finder.walk(expression);
-              if (finder.found()) {
+            // if we move around unreachable code, type changes could occur. avoid that, as
+            // anyhow it means we should have run dce before getting here
+            for (auto* test : child->list) {
+              if (test->type == unreachable) {
                 child = nullptr;
-              } else {
-                // fix up breaks
-                BreakValueDropper fixer(passOptions);
-                fixer.origin = child->name;
-                fixer.setModule(module);
-                fixer.walk(expression);
+                break;
               }
             }
             if (child) {
-              // we can do it!
-              // reuse the drop
-              drop->value = child->list.back();
-              drop->finalize();
-              child->list.back() = drop;
-              child->finalize();
-              curr->list[i] = child;
-              more = true;
-              changed = true;
+              if (child->name.is()) {
+                Expression* expression = child;
+                // check if it's ok to remove the value from all breaks to us
+                ProblemFinder finder(passOptions);
+                finder.origin = child->name;
+                finder.walk(expression);
+                if (finder.found()) {
+                  child = nullptr;
+                } else {
+                  // fix up breaks
+                  BreakValueDropper fixer(passOptions);
+                  fixer.origin = child->name;
+                  fixer.setModule(module);
+                  fixer.walk(expression);
+                }
+              }
+              if (child) {
+                // we can do it!
+                // reuse the drop
+                drop->value = child->list.back();
+                drop->finalize();
+                child->list.back() = drop;
+                child->finalize();
+                curr->list[i] = child;
+                more = true;
+                changed = true;
+              }
             }
           }
         }
