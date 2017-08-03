@@ -10,10 +10,12 @@ def test_wasm2asm():
   print '\n[ checking wasm2asm testcases... ]\n'
 
   # tests with i64s, invokes, etc.
-  blacklist = ['atomics.wast', 'address.wast']
+  blacklist = ['address.wast']
   spec_tests = [os.path.join('spec', t) for t in
                 sorted(os.listdir(os.path.join('test', 'spec')))]
-  for wasm in tests + spec_tests:
+
+  # verify output
+  for wasm in tests + [w for w in spec_tests if '.fail' not in w]:
     if not wasm.endswith('.wast') or os.path.basename(wasm) in blacklist:
       continue
 
@@ -31,6 +33,14 @@ def test_wasm2asm():
     expected = open(expected_file).read()
     fail_if_not_identical(out, expected)
 
+    if not NODEJS and not MOZJS:
+      print 'No JS interpreters. Skipping spec tests.'
+      continue
+
+    # run spec test asserts
+    cmd = WASM2ASM + ['--allow-asserts', os.path.join('test', wasm)]
+    out = run_command(cmd)
+
     open('a.2asm.js', 'w').write(out)
 
     if NODEJS:
@@ -45,7 +55,6 @@ def test_wasm2asm():
                         expected_err='Successfully compiled asm.js code',
                         err_contains=True)
       fail_if_not_identical(out, '')
-
 
 if __name__ == "__main__":
   test_wasm2asm()

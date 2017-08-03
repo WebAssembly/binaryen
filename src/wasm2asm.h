@@ -45,8 +45,8 @@ IString ASM_FUNC("asmFunc"),
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
-  if (ast->isArray() && ast[0] == BLOCK) index = 1;
-  else if (ast->isArray() && ast[0] == DEFUN) index = 3;
+  if (ast[0] == BLOCK || ast[0] == TOPLEVEL) index = 1;
+  else if (ast[0] == DEFUN) index = 3;
   else abort();
   if (extra->isArray() && extra[0] == BLOCK) {
     for (size_t i = 0; i < extra[1]->size(); i++) {
@@ -124,6 +124,8 @@ public:
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
   Ref processFunctionBody(Function* func, IString result);
+
+  Ref processAsserts(Element& e, SExpressionWasmBuilder& sexpBuilder);
 
   // Get a temp var.
   IString getTemp(WasmType type) {
@@ -1432,6 +1434,110 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
   };
   return ExpressionProcessor(this, func).visit(func->body, result);
 }
+
+static Ref makeInstantiation() {
+  Ref lib = ValueBuilder::makeObject();
+  auto insertItem = [&](IString item) {
+    ValueBuilder::appendToObject(lib, item, ValueBuilder::makeName(item));
+  };
+  insertItem(MATH);
+  insertItem(INT8ARRAY);
+  insertItem(INT16ARRAY);
+  insertItem(INT32ARRAY);
+  insertItem(UINT8ARRAY);
+  insertItem(UINT16ARRAY);
+  insertItem(UINT32ARRAY);
+  insertItem(FLOAT32ARRAY);
+  insertItem(FLOAT64ARRAY);
+  Ref env = ValueBuilder::makeObject();
+  Ref mem = ValueBuilder::makeNew(
+      ValueBuilder::makeCall(ARRAYBUFFER, ValueBuilder::makeInt(0x10000)));
+  Ref call = ValueBuilder::makeCall(IString(ASM_FUNC), lib, env, mem);
+  Ref ret = ValueBuilder::makeVar();
+  ValueBuilder::appendToVar(ret, ASMMODULE, call);
+  return ret;
+}
+
+static void prefixCalls(Ref asmjs) {
+  if (asmjs->isArray()) {
+    ArrayStorage& arr = asmjs->getArray();
+    for (Ref& r : arr) {
+      prefixCalls(r);
+    }
+    if (arr.size() > 0 && arr[0]->isString() && arr[0]->getIString() == CALL) {
+      assert(arr.size() >= 2);
+      Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASMMODULE),
+                                           arr[1]->getIString());
+      arr[1]->setArray(prefixed->getArray());
+    }
+  }
+}
+
+Ref Wasm2AsmBuilder::processAsserts(Element& root,
+                                   SExpressionWasmBuilder& sexpBuilder) {
+  Builder wasmBuilder(sexpBuilder.getAllocator());
+  Ref ret = ValueBuilder::makeBlock();
+  flattenAppend(ret, makeInstantiation());
+  for (size_t i = 1; i < root.size(); ++i) {
+    Element& e = *root[i];
+    if (!e.isList() || e.size() == 0 || !e[0]->isStr()) {
+      std::cerr << "skipping " << e << std::endl;
+      continue;
+    }
+    Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
+    if (e[0]->str() == Name("assert_return")) {
+      assert(e.size() == 3 && "Malformed assert_return");
+      Element& testOp = *e[1];
+      if (!testOp.isList() || testOp.size() < 2 ||
+          !testOp[0]->isStr() || testOp[0]->str() != Name("invoke")) {
+        std::cerr << "skipping " << e << std::endl;
+        continue;
+      }
+      // replace "invoke" with "call"
+      testOp[0]->setString(IString("call"), false, false);
+      // Need to claim dollared to get string as function target
+      testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
+      Expression* actual = sexpBuilder.parseExpression(e[1]);
+      Expression* expected = sexpBuilder.parseExpression(e[2]);
+      WasmType resType = expected->type;
+      actual->type = resType;
+      BinaryOp eqOp;
+      switch (resType) {
+        case i32: eqOp = EqInt32; break;
+        case i64: eqOp = EqInt64; break;
+        case f32: eqOp = EqFloat32; break;
+        case f64: eqOp = EqFloat64; break;
+        default:
+          std::cerr << "Unhandled type in assert: " << resType << std::endl;
+          abort();
+      }
+      Binary* test = wasmBuilder.makeBinary(eqOp, actual, expected);
+      Function* testFunc =
+          wasmBuilder.makeFunction(testFuncName,
+                                   std::vector<NameType>{},
+                                   i32,
+                                   std::vector<NameType>{},
+                                   test);
+      Ref jsFunc = processFunction(testFunc);
+      prefixCalls(jsFunc);
+      flattenAppend(ret, jsFunc);
+    } else if (e[0]->str() == Name("assert_trap")) {
+      std::cerr << "Unhandled assert_trap" << std::endl;
+      continue;
+    } else {
+      // other assert types only make sense when producing wasm modules
+      continue;
+    }
+    std::stringstream failFuncName;
+    failFuncName << "fail" << std::to_string(i);
+    flattenAppend(ret, ValueBuilder::makeIf(
+        ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testFuncName)),
+        ValueBuilder::makeCall(IString(failFuncName.str().c_str(), false)),
+        Ref()));
+  }
+  return ret;
+}
+
 
 } // namespace wasm
 
