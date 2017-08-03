@@ -29,6 +29,7 @@
 #include <ast/effects.h>
 #include <ast/manipulation.h>
 #include <ast/properties.h>
+#include <ast/literal-utils.h>
 
 namespace wasm {
 
@@ -188,14 +189,14 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case OrInt32: case XorInt32: return std::max(getMaxBits(binary->left, localInfoProvider), getMaxBits(binary->right, localInfoProvider));
       case ShlInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::min(Index(32), getMaxBits(binary->left, localInfoProvider) + shifts->value.geti32());
+          return std::min(Index(32), getMaxBits(binary->left, localInfoProvider) + Bits::getEffectiveShifts(shifts));
         }
         return 32;
       }
       case ShrUInt32: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          auto shifts = std::min(Index(shift->value.geti32()), maxBits); // can ignore more shifts than zero us out
+          auto shifts = std::min(Index(Bits::getEffectiveShifts(shift)), maxBits); // can ignore more shifts than zero us out
           return std::max(Index(0), maxBits - shifts);
         }
         return 32;
@@ -204,7 +205,7 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
           if (maxBits == 32) return 32;
-          auto shifts = std::min(Index(shift->value.geti32()), maxBits); // can ignore more shifts than zero us out
+          auto shifts = std::min(Index(Bits::getEffectiveShifts(shift)), maxBits); // can ignore more shifts than zero us out
           return std::max(Index(0), maxBits - shifts);
         }
         return 32;
@@ -227,8 +228,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
     }
   } else if (auto* unary = curr->dynCast<Unary>()) {
     switch (unary->op) {
-      case ClzInt32: case CtzInt32: case PopcntInt32: return 5;
-      case ClzInt64: case CtzInt64: case PopcntInt64: return 6;
+      case ClzInt32: case CtzInt32: case PopcntInt32: return 6;
+      case ClzInt64: case CtzInt64: case PopcntInt64: return 7;
       case EqZInt32: case EqZInt64: return 1;
       case WrapInt64: return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
       default: {}
@@ -533,9 +534,16 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
               } else if (left->op == OrInt32) {
                 leftRight->value = leftRight->value.or_(right->value);
                 return left;
-              } else if (left->op == ShlInt32 || left->op == ShrUInt32 || left->op == ShrSInt32) {
-                leftRight->value = leftRight->value.add(right->value);
-                return left;
+              } else if (left->op == ShlInt32 || left->op == ShrUInt32 || left->op == ShrSInt32 ||
+                         left->op == ShlInt64 || left->op == ShrUInt64 || left->op == ShrSInt64) {
+                // shifts only use an effective amount from the constant, so adding must
+                // be done carefully
+                auto total = Bits::getEffectiveShifts(leftRight) + Bits::getEffectiveShifts(right);
+                if (total == Bits::getEffectiveShifts(total, right->type)) {
+                  // no overflow, we can do this
+                  leftRight->value = LiteralUtils::makeLiteralFromInt32(total, right->type);
+                  return left;
+                } // TODO: handle overflows
               }
             }
           }
@@ -771,7 +779,7 @@ private:
           return;
         } else if (binary->op == ShlInt32) {
           if (auto* c = binary->right->dynCast<Const>()) {
-            seek(binary->left, mul * Pow2(c->value.geti32()));
+            seek(binary->left, mul * Pow2(Bits::getEffectiveShifts(c)));
             return;
           }
         } else if (binary->op == MulInt32) {
@@ -828,7 +836,7 @@ private:
           }
         } else if (curr->op == ShlInt32) {
           // shifting a 0 is a 0, unless the shift has side effects
-          if (left && left->value.geti32() == 0 && !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
+          if (left && Bits::getEffectiveShifts(left) == 0 && !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
             replaceCurrent(left);
             return;
           }
@@ -874,14 +882,17 @@ private:
     auto* left = binary->left;
     auto* right = binary->right;
     if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) return nullptr;
-    auto leftEffects = EffectAnalyzer(getPassOptions(), left).hasSideEffects();
-    auto rightEffects = EffectAnalyzer(getPassOptions(), right).hasSideEffects();
-    if (leftEffects && rightEffects) return nullptr; // both must execute
-   // canonicalize with side effects, if any, happening on the left
-    if (rightEffects) {
+    auto leftEffects = EffectAnalyzer(getPassOptions(), left);
+    auto rightEffects = EffectAnalyzer(getPassOptions(), right);
+    auto leftHasSideEffects = leftEffects.hasSideEffects();
+    auto rightHasSideEffects = rightEffects.hasSideEffects();
+    if (leftHasSideEffects && rightHasSideEffects) return nullptr; // both must execute
+    // canonicalize with side effects, if any, happening on the left
+    if (rightHasSideEffects) {
       if (CostAnalyzer(left).cost < MIN_COST) return nullptr; // avoidable code is too cheap
+      if (leftEffects.invalidates(rightEffects)) return nullptr; // cannot reorder
       std::swap(left, right);
-    } else if (leftEffects) {
+    } else if (leftHasSideEffects) {
       if (CostAnalyzer(right).cost < MIN_COST) return nullptr; // avoidable code is too cheap
     } else {
       // no side effects, reorder based on cost estimation
@@ -908,8 +919,15 @@ private:
     // it's better to do the opposite for gzip purposes as well as for readability.
     auto* last = ptr->dynCast<Const>();
     if (last) {
-      last->value = Literal(int32_t(last->value.geti32() + offset));
-      offset = 0;
+      // don't do this if it would wrap the pointer
+      uint64_t value64 = last->value.geti32();
+      uint64_t offset64 = offset;
+      if (value64 <= std::numeric_limits<int32_t>::max() &&
+          offset64 <= std::numeric_limits<int32_t>::max() &&
+          value64 + offset64 <= std::numeric_limits<int32_t>::max()) {
+        last->value = Literal(int32_t(value64 + offset64));
+        offset = 0;
+      }
     }
   }
 

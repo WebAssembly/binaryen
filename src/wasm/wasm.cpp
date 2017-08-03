@@ -109,18 +109,20 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   Name targetName;
   std::vector<WasmType> types;
 
+
   TypeSeeker(Expression* target, Name targetName) : target(target), targetName(targetName) {
     Expression* temp = target;
     walk(temp);
   }
 
   void visitBreak(Break* curr) {
-    if (curr->name == targetName) {
+    if (curr->name == targetName && BranchUtils::isBranchTaken(curr)) {
       types.push_back(curr->value ? curr->value->type : none);
     }
   }
 
   void visitSwitch(Switch* curr) {
+    if (!BranchUtils::isBranchTaken(curr)) return;
     for (auto name : curr->targets) {
       if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
     }

@@ -1035,4 +1035,17 @@
    )
   )
  )
+ (func $untaken-br-with-concrete-last-element (type $2) (result i32)
+  (block $label$8 (result i32)
+   (block $label$11 (result i32)
+    (block $label$14
+     (br_if $label$8
+      (br $label$11
+       (i32.const 103)
+      )
+     )
+    )
+   )
+  )
+ )
 )

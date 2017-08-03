@@ -545,7 +545,7 @@ void WasmBinaryWriter::recurse(Expression*& curr) {
 }
 
 static bool brokenTo(Block* block) {
-  return block->name.is() && BranchUtils::BranchSeeker::has(block, block->name);
+  return block->name.is() && BranchUtils::BranchSeeker::hasNamed(block, block->name);
 }
 
 void WasmBinaryWriter::visitBlock(Block *curr) {
@@ -636,7 +636,7 @@ int32_t WasmBinaryWriter::getBreakIndex(Name name) { // -1 if not found
       return breakStack.size() - 1 - i;
     }
   }
-  std::cerr << "bad break: " << name << std::endl;
+  std::cerr << "bad break: " << name << " in " << currFunction->name << std::endl;
   abort();
 }
 
@@ -648,6 +648,16 @@ void WasmBinaryWriter::visitBreak(Break *curr) {
   if (curr->condition) recurse(curr->condition);
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
+  if (curr->condition && curr->type == unreachable) {
+    // a br_if is normally none or emits a value. if it is unreachable,
+    // then either the condition or the value is unreachable, which is
+    // extremely rare, and may require us to make the stack polymorphic
+    // (if the block we branch to has a value, we may lack one as we
+    // are not a taken branch; the wasm spec on the other hand does
+    // presume the br_if emits a value of the right type, even if it
+    // popped unreachable)
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitSwitch(Switch *curr) {
@@ -656,6 +666,14 @@ void WasmBinaryWriter::visitSwitch(Switch *curr) {
     recurse(curr->value);
   }
   recurse(curr->condition);
+  if (!BranchUtils::isBranchTaken(curr)) {
+    // if the branch is not taken, then it's dangerous to emit it, as
+    // wasm type checking rules are stricter than ours - we tolerate
+    // an untaken branch to a target with a different value, but not
+    // wasm. so just don't emit it
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
   o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
   for (auto target : curr->targets) {
     o << U32LEB(getBreakIndex(target));
@@ -669,6 +687,9 @@ void WasmBinaryWriter::visitCall(Call *curr) {
     recurse(operand);
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitCallImport(CallImport *curr) {
@@ -689,6 +710,9 @@ void WasmBinaryWriter::visitCallIndirect(CallIndirect *curr) {
   o << int8_t(BinaryConsts::CallIndirect)
     << U32LEB(getFunctionTypeIndex(curr->fullType))
     << U32LEB(0); // Reserved flags field
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitGetLocal(GetLocal *curr) {
@@ -700,6 +724,9 @@ void WasmBinaryWriter::visitSetLocal(SetLocal *curr) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   recurse(curr->value);
   o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitGetGlobal(GetGlobal *curr) {
@@ -986,6 +1013,9 @@ void WasmBinaryWriter::visitUnary(Unary *curr) {
     case ReinterpretInt64: o << int8_t(BinaryConsts::F64ReinterpretI64); break;
     default: abort();
   }
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitBinary(Binary *curr) {
@@ -1075,6 +1105,9 @@ void WasmBinaryWriter::visitBinary(Binary *curr) {
     case GeFloat64:       o << int8_t(BinaryConsts::F64Ge);      break;
     default: abort();
   }
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitSelect(Select *curr) {
@@ -1083,6 +1116,9 @@ void WasmBinaryWriter::visitSelect(Select *curr) {
   recurse(curr->ifFalse);
   recurse(curr->condition);
   o << int8_t(BinaryConsts::Select);
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitReturn(Return *curr) {
@@ -1768,10 +1804,14 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 
 Expression* WasmBinaryBuilder::popExpression() {
   if (expressionStack.empty()) {
-    throw ParseException("attempted pop from empty stack");
+    throw ParseException("attempted pop from empty stack at " + std::to_string(pos));
   }
   auto ret = expressionStack.back();
-  expressionStack.pop_back();
+  // to simulate the wasm polymorphic stack mode, leave a final
+  // unreachable, don't empty the stack in that case
+  if (!(expressionStack.size() == 1 && ret->type == unreachable)) {
+    expressionStack.pop_back();
+  }
   return ret;
 }
 
@@ -2070,7 +2110,14 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     }
     for (size_t i = start; i < end; i++) {
       if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      curr->list.push_back(expressionStack[i]);
+      auto* item = expressionStack[i];
+      curr->list.push_back(item);
+      if (i < end - 1) {
+        // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
+        if (isConcreteWasmType(item->type)) {
+          curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
+        }
+      }
     }
     expressionStack.resize(start);
     curr->finalize(curr->type);

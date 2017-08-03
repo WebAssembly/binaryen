@@ -40,6 +40,7 @@ def test_wasm2asm():
 
     if MOZJS:
       # verify asm.js validates
+      # check only subset of err because mozjs emits timing info
       out = run_command([MOZJS, '-w', 'a.2asm.js'],
                         expected_err='Successfully compiled asm.js code',
                         err_contains=True)

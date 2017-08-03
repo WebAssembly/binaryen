@@ -476,15 +476,20 @@ private:
     }
   }
 
-  FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
-    WasmType result = none;
+  WasmType getResultTypeOfCallUsingParent(Ref parent, AsmData* data) {
+    auto result = none;
     if (!!parent) {
       // if the parent is a seq, we cannot be the last element in it (we would have a coercion, which would be
       // the parent), so we must be (us, somethingElse), and so our return is void
       if (parent[0] != SEQ) {
-        result = detectWasmType(parent, nullptr);
+        result = detectWasmType(parent, data);
       }
     }
+    return result;
+  }
+
+  FunctionType* getFunctionType(Ref parent, ExpressionList& operands, AsmData* data) {
+    WasmType result = getResultTypeOfCallUsingParent(parent, data);
     return ensureFunctionType(getSig(result, operands), &wasm);
   }
 
@@ -2189,7 +2194,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (tableCall) {
           auto specific = ret->dynCast<CallIndirect>();
           // note that we could also get the type from the suffix of the name, e.g., mftCall_vi
-          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands);
+          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands, &asmData);
           specific->fullType = fullType->name;
           specific->type = fullType->result;
         }
@@ -2202,8 +2207,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // this is important as we run the optimizer on functions before we get
           // to finalizeCalls (which we can only do once we've read all the functions,
           // and we optimize in parallel starting earlier).
-          Ref parent = astStackHelper.getParent();
-          callImport->type = !!parent ? detectWasmType(parent, &asmData) : none;
+          callImport->type = getResultTypeOfCallUsingParent(astStackHelper.getParent(), &asmData);
           noteImportedFunctionCall(ast, callImport->type, callImport);
         }
         return ret;
@@ -2217,7 +2221,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       for (unsigned i = 0; i < args->size(); i++) {
         ret->operands.push_back(process(args[i]));
       }
-      auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands);
+      auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands, &asmData);
       ret->fullType = fullType->name;
       ret->type = fullType->result;
       // we don't know the table offset yet. emit target = target + callImport(tableName), which we fix up later when we know how asm function tables are layed out inside the wasm table.
@@ -2539,6 +2543,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
       auto top = allocator.alloc<Block>();
       if (canSwitch) {
+
+        // we may need a break for the case where the condition doesn't match
+        // any of the cases. it should go to the default, if we have one, or
+        // outside if not
+        Break* breakWhenNotMatching = nullptr;
+
         if (br->condition->type == i32) {
           Binary* offsetor = allocator.alloc<Binary>();
           offsetor->op = BinaryOp::SubInt32;
@@ -2554,7 +2564,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           offsetor->left = br->condition;
           offsetor->right = builder.makeConst(Literal(int64_t(min)));
           offsetor->type = i64;
-          br->condition = builder.makeUnary(UnaryOp::WrapInt64, offsetor); // TODO: check this fits in 32 bits
+          // the switch itself can be 32-bit, as the range is in a reasonable range. so after
+          // offsetting, we need to make sure there are no high bits, then we can just look
+          // at the lower 32 bits
+          auto temp = Builder::addVar(function, i64);
+          auto* block = builder.makeBlock();
+          block->list.push_back(builder.makeSetLocal(temp, offsetor));
+          // if high bits, we can break to the default (we'll fill in the name later)
+          breakWhenNotMatching = builder.makeBreak(Name(), nullptr,
+            builder.makeUnary(
+              UnaryOp::WrapInt64,
+              builder.makeBinary(BinaryOp::ShrUInt64,
+                builder.makeGetLocal(temp, i64),
+                builder.makeConst(Literal(int64_t(32)))
+              )
+            )
+          );
+          block->list.push_back(breakWhenNotMatching);
+          block->list.push_back(
+            builder.makeGetLocal(temp, i64)
+          );
+          block->finalize();
+          br->condition = builder.makeUnary(UnaryOp::WrapInt64, block);
         }
 
         top->list.push_back(br);
@@ -2594,6 +2625,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // ensure a default
         if (br->default_.isNull()) {
           br->default_ = top->name;
+        }
+        if (breakWhenNotMatching) {
+          breakWhenNotMatching->name = br->default_;
         }
         for (size_t i = 0; i < br->targets.size(); i++) {
           if (br->targets[i].isNull()) br->targets[i] = br->default_;

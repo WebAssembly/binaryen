@@ -23,19 +23,29 @@ namespace wasm {
 
 namespace LiteralUtils {
 
-inline Expression* makeZero(WasmType type, Module& wasm) {
-  Literal value;
+inline Literal makeLiteralFromInt32(int32_t x, WasmType type) {
   switch (type) {
-    case i32: value = Literal(int32_t(0)); break;
-    case i64: value = Literal(int64_t(0)); break;
-    case f32: value = Literal(float(0)); break;
-    case f64: value = Literal(double(0)); break;
+    case i32: return Literal(int32_t(x)); break;
+    case i64: return Literal(int64_t(x)); break;
+    case f32: return Literal(float(x)); break;
+    case f64: return Literal(double(x)); break;
     default: WASM_UNREACHABLE();
   }
+}
+
+inline Literal makeLiteralZero(WasmType type) {
+  return makeLiteralFromInt32(0, type);
+}
+
+inline Expression* makeFromInt32(int32_t x, WasmType type, Module& wasm) {
   auto* ret = wasm.allocator.alloc<Const>();
-  ret->value = value;
-  ret->type = value.type;
+  ret->value = makeLiteralFromInt32(x, type);
+  ret->type = type;
   return ret;
+}
+
+inline Expression* makeZero(WasmType type, Module& wasm) {
+  return makeFromInt32(0, type, wasm);
 }
 
 } // namespace LiteralUtils

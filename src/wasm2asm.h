@@ -402,7 +402,7 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import *import) {
 
 void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
-  for (Table::Segment &seg : wasm->table.segments) {
+  for (Table::Segment& seg : wasm->table.segments) {
     for (size_t i = 0; i < seg.data.size(); i++) {
       Name name = seg.data[i];
       auto func = wasm->getFunction(name);
@@ -869,7 +869,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitSetLocal(SetLocal *curr) {
       if (!isStatement(curr)) {
-        // return ValueBuilder::makeAssign(ValueBuilder::makeName(fromName(func->getLocalName(curr->index))), visit(curr->value, EXPRESSION_RESULT));
         return ValueBuilder::makeBinary(
             ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
             SET, visit(curr->value, EXPRESSION_RESULT));
