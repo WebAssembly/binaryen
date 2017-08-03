@@ -51,7 +51,8 @@ struct Bits {
     WASM_UNREACHABLE();
   }
 
-  static Index getEffectiveShifts(Const* amount) {
+  static Index getEffectiveShifts(Expression* expr) {
+    auto* amount = expr->cast<Const>();
     if (amount->type == i32) {
       return getEffectiveShifts(amount->value.geti32(), i32);
     } else if (amount->type == i64) {

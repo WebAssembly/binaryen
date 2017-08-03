@@ -55,4 +55,11 @@ struct Name : public cashew::IString {
 
 } // namespace wasm
 
+namespace std {
+
+template <> struct hash<wasm::Name> : hash<cashew::IString> {};
+
+} // namespace std
+
+
 #endif // wasm_support_string_h
