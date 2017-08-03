@@ -191,15 +191,18 @@ private:
   void addImport(Ref ast, Import *import);
   void addTables(Ref ast, Module *wasm);
   void addExports(Ref ast, Module *wasm);
+  void addWasmCompatibilityFuncs(Module *wasm);
 
   Wasm2AsmBuilder() = delete;
   Wasm2AsmBuilder(const Wasm2AsmBuilder &) = delete;
   Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder &) = delete;
 };
 
-Function* makeCtzFunc(MixedArena& allocator, bool is32Bit=true) {
+static Function* makeCtzFunc(MixedArena& allocator, UnaryOp op) {
+  assert(op == CtzInt32 || op == CtzInt64);
   Builder b(allocator);
   // if eqz(x) then 32 else (32 - clz(x ^ (x - 1)))
+  bool is32Bit = (op == CtzInt32);
   Name funcName = is32Bit ? Name(CTZ32) : Name(CTZ64);
   BinaryOp subOp = is32Bit ? SubInt32 : SubInt64;
   BinaryOp xorOp = is32Bit ? XorInt32 : XorInt64;
@@ -223,9 +226,12 @@ Function* makeCtzFunc(MixedArena& allocator, bool is32Bit=true) {
                         body);
 }
 
-Function* makePopcntFunc(MixedArena& allocator, bool is32Bit=true) {
+static Function* makePopcntFunc(MixedArena& allocator, UnaryOp op) {
+  assert(op == PopcntInt32 || op == PopcntInt64);
   Builder b(allocator);
+  // popcnt implemented as:
   // int c; for (c = 0; x != 0; c++) { x = x & (x - 1) }; return c
+  bool is32Bit = (op == PopcntInt32);
   Name funcName = is32Bit ? Name(POPCNT32) : Name(POPCNT64);
   BinaryOp addOp = is32Bit ? AddInt32 : AddInt64;
   BinaryOp subOp = is32Bit ? SubInt32 : SubInt64;
@@ -258,11 +264,16 @@ Function* makePopcntFunc(MixedArena& allocator, bool is32Bit=true) {
                         std::vector<NameType>{NameType("count", argType)},
                         b.blockify(initCount, loopBlock));
 }
-Function* makeRotFunc(MixedArena& allocator, bool isLRot, bool is32Bit=true) {
+
+Function* makeRotFunc(MixedArena& allocator, BinaryOp op) {
+  assert(op == RotLInt32 || op == RotRInt32 ||
+         op == RotLInt64 || op == RotRInt64);
   Builder b(allocator);
   // left rotate is:
   // (((((~0) >>> k) & x) << k) | ((((~0) << (w - k)) & x) >>> (w - k)))
   // where k is shift modulo w. reverse shifts for right rotate
+  bool is32Bit = (op == RotLInt32 || op == RotRInt32);
+  bool isLRot = (op == RotLInt32 || op == RotLInt64);
   static Name names[2][2] = {{Name(ROTR64), Name(ROTR32)},
                              {Name(ROTL64), Name(ROTL32)}};
   static BinaryOp shifters[2][2] = {{ShrUInt64, ShrUInt32},
@@ -302,11 +313,15 @@ Function* makeRotFunc(MixedArena& allocator, bool isLRot, bool is32Bit=true) {
                         body);
 }
 
+void Wasm2AsmBuilder::addWasmCompatibilityFuncs(Module* wasm) {
+  wasm->addFunction(makeCtzFunc(wasm->allocator, CtzInt32));
+  wasm->addFunction(makePopcntFunc(wasm->allocator, PopcntInt32));
+  wasm->addFunction(makeRotFunc(wasm->allocator, RotLInt32));
+  wasm->addFunction(makeRotFunc(wasm->allocator, RotRInt32));
+}
+
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
-  wasm->addFunction(makeCtzFunc(wasm->allocator));
-  wasm->addFunction(makePopcntFunc(wasm->allocator));
-  wasm->addFunction(makeRotFunc(wasm->allocator, true));
-  wasm->addFunction(makeRotFunc(wasm->allocator, false));
+  addWasmCompatibilityFuncs(wasm);
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
   ret[1]->push_back(asmFunc);
