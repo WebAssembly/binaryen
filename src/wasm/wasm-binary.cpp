@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -1766,6 +1767,7 @@ void WasmBinaryBuilder::readNextDebugLocation() {
 
 Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
+  definitelyUnreachable = false;
   processExpressions();
   if (expressionStack.size() != 1) {
     throw ParseException("expected to read a single expression");
@@ -1793,6 +1795,7 @@ void WasmBinaryBuilder::readGlobals() {
 }
 
 void WasmBinaryBuilder::processExpressions() { // until an end or else marker, or the end of the function
+  bool seenUnreachable = false;
   while (1) {
     Expression* curr;
     auto ret = readExpression(curr);
@@ -1800,11 +1803,25 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
       lastSeparator = ret;
       return;
     }
+    if (curr->type == unreachable) {
+      if (!seenUnreachable) {
+        seenUnreachable = true;
+      } else {
+        // we are already unreachable, and now seeing this. just don't emit it,
+        // it may in fact be incorrect to emit it if it is stacky wasm code that
+        // is non-representable in our IR (but since it is unreachable, and will
+        // never execute, who cares)
+        continue;
+      }
+    }
     expressionStack.push_back(curr);
   }
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
+  if (definitelyUnreachable) {
+    return allocator.alloc<Unreachable>();
+  }
   if (expressionStack.empty() || expressionStack.back() == BLOCK_START) {
     if (definitelyUnreachable) {
       // we are in unreachable wasm code. emit unreachable nodes, which are
@@ -2088,6 +2105,20 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
+static void pushBlockElements(Block* curr, std::vector<Expression*>& expressionStack, size_t start, size_t end, Module& wasm) {
+  for (size_t i = start; i < end; i++) {
+    auto* item = expressionStack[i];
+    curr->list.push_back(item);
+    if (i < end - 1) {
+      // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
+      if (isConcreteWasmType(item->type)) {
+        curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
+      }
+    }
+  }
+  expressionStack.resize(start);
+}
+
 void WasmBinaryBuilder::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
   // special-case Block and de-recurse nested blocks in their first position, as that is
@@ -2124,18 +2155,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     if (end < start) {
       throw ParseException("block cannot pop from outside");
     }
-    for (size_t i = start; i < end; i++) {
-      if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      auto* item = expressionStack[i];
-      curr->list.push_back(item);
-      if (i < end - 1) {
-        // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
-        if (isConcreteWasmType(item->type)) {
-          curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
-        }
-      }
-    }
-    expressionStack.resize(start);
+    pushBlockElements(curr, expressionStack, start, end, wasm);
     curr->finalize(curr->type);
     endBlockScope();
     breakStack.pop_back();
@@ -2155,11 +2175,8 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
     throw ParseException("block cannot pop from outside");
   }
   auto* block = allocator.alloc<Block>();
-  for (size_t i = start; i < end; i++) {
-    block->list.push_back(expressionStack[i]);
-  }
+  pushBlockElements(block, expressionStack, start, end, wasm);
   block->finalize(type);
-  expressionStack.resize(start);
   endBlockScope();
   return block;
 }
