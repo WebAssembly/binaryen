@@ -835,12 +835,12 @@ public:
 
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
+  // process a block-type scope, until an end or else marker, or the end of the function
   void processExpressions();
+  void skipUnreachableCode();
+
   Expression* popExpression();
   Expression* popNonVoidExpression();
-
-  void startBlockScope();
-  void endBlockScope();
 
   std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
 
@@ -867,6 +867,9 @@ public:
   int depth = 0; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
+
+  void pushBlockElements(Block* curr, size_t start, size_t end);
+
   void visitBlock(Block *curr);
   Expression* getMaybeBlock(WasmType type);
   Expression* getBlock(WasmType type);

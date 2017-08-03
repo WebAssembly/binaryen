@@ -1167,8 +1167,6 @@ void WasmBinaryWriter::visitDrop(Drop *curr) {
 
 static Name RETURN_BREAK("binaryen|break-to-return");
 
-static Expression* BLOCK_START = nullptr;
-
 void WasmBinaryBuilder::read() {
 
   readHeader();
@@ -1767,7 +1765,6 @@ void WasmBinaryBuilder::readNextDebugLocation() {
 
 Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
-  definitelyUnreachable = false;
   processExpressions();
   if (expressionStack.size() != 1) {
     throw ParseException("expected to read a single expression");
@@ -1794,25 +1791,56 @@ void WasmBinaryBuilder::readGlobals() {
   }
 }
 
-void WasmBinaryBuilder::processExpressions() { // until an end or else marker, or the end of the function
-  bool seenUnreachable = false;
+void WasmBinaryBuilder::processExpressions() {
+  if (debug) std::cerr << "== processExpressions" << std::endl;
   while (1) {
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
       lastSeparator = ret;
+      if (debug) std::cerr << "== processExpressions finished" << std::endl;
       return;
     }
+    expressionStack.push_back(curr);
     if (curr->type == unreachable) {
-      if (!seenUnreachable) {
-        seenUnreachable = true;
-      } else {
-        // we are already unreachable, and now seeing this. just don't emit it,
-        // it may in fact be incorrect to emit it if it is stacky wasm code that
-        // is non-representable in our IR (but since it is unreachable, and will
-        // never execute, who cares)
-        continue;
+      // once we see something unreachable, we don't want to add anything else
+      // to the stack, as it could be stacky code that is non-representable in
+      // our AST. but we do need to skip it
+      // if there is nothing else here, just stop. otherwise, go into unreachable
+      // mode. peek to see what to do
+      if (pos == endOfFunction) {
+        throw ParseException("Reached function end without seeing End opcode");
       }
+      auto peek = BinaryConsts::ASTNodes(input[pos]);
+      if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
+        lastSeparator = peek;
+        pos++;
+        if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
+        return;
+      } else {
+        skipUnreachableCode();
+      }
+    }
+  }
+}
+
+void WasmBinaryBuilder::skipUnreachableCode() {
+  if (debug) std::cerr << "== skipUnreachableCode" << std::endl;
+  // preserve the stack, and restore it. it contains the instruction that made us
+  // unreachable, and we can ignore anything after it. things after it may pop,
+  // we want to undo that
+  auto savedStack = expressionStack;
+  while (1) {
+    // set the definitelyUnreachable flag each time, as sub-blocks may set and unset it
+    definitelyUnreachable = true;
+    Expression* curr;
+    auto ret = readExpression(curr);
+    if (!curr) {
+      lastSeparator = ret;
+      definitelyUnreachable = false;
+      expressionStack = savedStack;
+      if (debug) std::cerr << "== skipUnreachableCode finished" << std::endl;
+      return;
     }
     expressionStack.push_back(curr);
   }
@@ -1826,12 +1854,7 @@ Expression* WasmBinaryBuilder::popExpression() {
     // pop them to be their children - those later things won't be emitted.
     return allocator.alloc<Unreachable>();
   }
-  if (expressionStack.empty() || expressionStack.back() == BLOCK_START) {
-    if (definitelyUnreachable) {
-      // we are in unreachable wasm code. emit unreachable nodes, which are
-      // suitable for any pop in such a location
-      return allocator.alloc<Unreachable>();
-    }
+  if (expressionStack.empty()) {
     throw ParseException("attempted pop from empty stack / beyond block start boundary at " + std::to_string(pos));
   }
   // the stack is not empty, and we would not be going out of the current block
@@ -1867,17 +1890,6 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   block->list.push_back(builder.makeGetLocal(local, type));
   block->finalize();
   return block;
-}
-
-void WasmBinaryBuilder::startBlockScope() {
-  definitelyUnreachable = false; // starting a block
-  expressionStack.push_back(BLOCK_START);
-}
-
-void WasmBinaryBuilder::endBlockScope() {
-  assert(!expressionStack.empty());
-  assert(expressionStack.back() == BLOCK_START);
-  expressionStack.pop_back();
 }
 
 Name WasmBinaryBuilder::getGlobalName(Index index) {
@@ -2109,7 +2121,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
-static void pushBlockElements(Block* curr, std::vector<Expression*>& expressionStack, size_t start, size_t end, Module& wasm) {
+void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     auto* item = expressionStack[i];
     curr->list.push_back(item);
@@ -2147,7 +2159,6 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
   while (stack.size() > 0) {
     curr = stack.back();
     stack.pop_back();
-    startBlockScope();
     size_t start = expressionStack.size(); // everything after this, that is left when we see the marker, is ours
     if (last) {
       // the previous block is our first-position element
@@ -2159,29 +2170,25 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     if (end < start) {
       throw ParseException("block cannot pop from outside");
     }
-    pushBlockElements(curr, expressionStack, start, end, wasm);
+    pushBlockElements(curr, start, end);
     curr->finalize(curr->type);
-    endBlockScope();
     breakStack.pop_back();
   }
 }
 
 Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
-  startBlockScope();
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
   if (start - end == 1) {
-    endBlockScope();
     return popExpression();
   }
   if (start > end) {
     throw ParseException("block cannot pop from outside");
   }
   auto* block = allocator.alloc<Block>();
-  pushBlockElements(block, expressionStack, start, end, wasm);
+  pushBlockElements(block, start, end);
   block->finalize(type);
-  endBlockScope();
   return block;
 }
 
@@ -2241,9 +2248,6 @@ void WasmBinaryBuilder::visitBreak(Break *curr, uint8_t code) {
   if (code == BinaryConsts::BrIf) curr->condition = popNonVoidExpression();
   if (target.arity) curr->value = popNonVoidExpression();
   curr->finalize();
-  if (curr->type == unreachable) {
-    definitelyUnreachable = true;
-  }
 }
 
 void WasmBinaryBuilder::visitSwitch(Switch *curr) {
@@ -2259,7 +2263,6 @@ void WasmBinaryBuilder::visitSwitch(Switch *curr) {
   if (debug) std::cerr << "default: "<< curr->default_<<std::endl;
   if (defaultTarget.arity) curr->value = popNonVoidExpression();
   curr->finalize();
-  definitelyUnreachable = true;
 }
 
 Expression* WasmBinaryBuilder::visitCall() {
@@ -2687,7 +2690,6 @@ void WasmBinaryBuilder::visitReturn(Return *curr) {
     curr->value = popNonVoidExpression();
   }
   curr->finalize();
-  definitelyUnreachable = true;
 }
 
 bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
@@ -2722,7 +2724,6 @@ void WasmBinaryBuilder::visitNop(Nop *curr) {
 
 void WasmBinaryBuilder::visitUnreachable(Unreachable *curr) {
   if (debug) std::cerr << "zz node: Unreachable" << std::endl;
-  definitelyUnreachable = true;
 }
 
 void WasmBinaryBuilder::visitDrop(Drop *curr) {
