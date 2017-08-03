@@ -1820,6 +1820,10 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 
 Expression* WasmBinaryBuilder::popExpression() {
   if (definitelyUnreachable) {
+    // in unreachable code, don't pop things off the stack. after we are
+    // unreachable, nothing else matters, so leave those things on the stack
+    // for the block they are in, as opposed to letting things after them
+    // pop them to be their children - those later things won't be emitted.
     return allocator.alloc<Unreachable>();
   }
   if (expressionStack.empty() || expressionStack.back() == BLOCK_START) {
