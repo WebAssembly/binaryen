@@ -31,6 +31,7 @@ from scripts.test.shared import (
 )
 
 import scripts.test.s2wasm as s2wasm
+import scripts.test.wasm2asm as wasm2asm
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
@@ -423,6 +424,7 @@ if MOZJS:
 
 s2wasm.test_s2wasm()
 s2wasm.test_linker()
+# wasm2asm.test_wasm2asm()
 
 print '\n[ running validation tests... ]\n'
 # Ensure the tests validate by default
