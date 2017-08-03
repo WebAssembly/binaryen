@@ -537,4 +537,16 @@
     (if (i32.const 1) (nop) (unreachable))
     (if (i32.const 1) (unreachable) (unreachable))
   )
+  (func $unreachable-if-arm
+    (if
+      (i32.const 1)
+      (block
+        (nop)
+      )
+      (block
+        (unreachable)
+        (i32.const 1) ;; ends in a concrete, after an unreachable
+      )
+    )
+  )
 )
