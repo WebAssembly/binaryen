@@ -22,30 +22,20 @@
 #include "wasm.h"
 #include "pass.h"
 #include "ast_utils.h"
+#include "ast/manipulation.h"
 
 namespace wasm {
 
+
 static Name LABEL("label");
 
-// We need to use new label names, which we cannot create in parallel, so pre-create them
+static Name getInnerName(int i) {
+  return Name(std::string("__rjti$") + std::to_string(i));
+}
 
-const Index MAX_NAME_INDEX = 10000;
-
-std::vector<Name>* innerNames = nullptr;
-std::vector<Name>* outerNames = nullptr;
-
-struct NameEnsurer {
-  NameEnsurer() {
-    assert(!innerNames);
-    assert(!outerNames);
-    innerNames = new std::vector<Name>;
-    outerNames = new std::vector<Name>;
-    for (Index i = 0; i < MAX_NAME_INDEX; i++) {
-      innerNames->push_back(Name(std::string("__rjti$") + std::to_string(i)));
-      outerNames->push_back(Name(std::string("__rjto$") + std::to_string(i)));
-    }
-  }
-};
+static Name getOuterName(int i) {
+  return Name(std::string("__rjto$") + std::to_string(i));
+}
 
 static If* isLabelCheckingIf(Expression* curr, Index labelIndex) {
   if (!curr) return nullptr;
@@ -98,10 +88,6 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RelooperJumpThreading; }
-
-  void prepareToRun(PassRunner* runner, Module* module) override {
-    static NameEnsurer ensurer;
-  }
 
   std::map<Index, Index> labelChecks;
   std::map<Index, Index> labelSets;
@@ -163,6 +149,11 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
     }
   }
 
+  void visitFunction(Function* curr) {
+    // we may alter types
+    ReFinalize().walkFunctionInModule(curr, getModule());
+  }
+
 private:
 
   bool hasIrreducibleControlFlow(If* iff, Expression* origin) {
@@ -208,17 +199,13 @@ private:
   //  * iff is the if
   void optimizeJumpsToLabelCheck(Expression*& origin, If* iff) {
     Index nameCounter = newNameCounter++;
-    if (nameCounter >= MAX_NAME_INDEX) {
-      std::cerr << "too many names in RelooperJumpThreading :(\n";
-      return;
-    }
     Index num = getCheckedLabelValue(iff);
     // create a new block for this jump target
     Builder builder(*getModule());
     // origin is where all jumps to this target must come from - the element right before this if
     // we break out of inner to reach the target. instead of flowing out of normally, we break out of the outer, so we skip the target.
-    auto innerName = innerNames->at(nameCounter);
-    auto outerName = outerNames->at(nameCounter);
+    auto innerName = getInnerName(nameCounter);
+    auto outerName = getOuterName(nameCounter);
     auto* ifFalse = iff->ifFalse;
     // all assignments of label to the target can be replaced with breaks to the target, via innerName
     struct JumpUpdater : public PostWalker<JumpUpdater> {

@@ -95,7 +95,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
     for (auto& segment : wasm.memory.segments) {
-      Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
+      Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
       assert(offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
       for (size_t i = 0; i != segment.data.size(); ++i) {
         memory.set(offset + i, segment.data[i]);
@@ -104,7 +104,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
     table.resize(wasm.table.initial);
     for (auto& segment : wasm.table.segments) {
-      Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
+      Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
       assert(offset + segment.data.size() <= wasm.table.initial);
       for (size_t i = 0; i != segment.data.size(); ++i) {
         table[offset + i] = segment.data[i];
@@ -142,8 +142,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       std::cout << "exit()\n";
       throw ExitException();
     }
-    std::cout << "callImport " << import->name.str << "\n";
-    abort();
+    Fatal() << "callImport: unknown import: " << import->module.str << "."
+            << import->name.str;
   }
 
   Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
@@ -156,63 +156,25 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         trap("callIndirect: bad argument type");
       }
     }
+    if (func->result != result) {
+      trap("callIndirect: bad result type");
+    }
     return instance.callFunctionInternal(func->name, arguments);
   }
 
-  Literal load(Load* load, Address addr) override {
-    switch (load->type) {
-      case i32: {
-        switch (load->bytes) {
-          case 1: return load->signed_ ? Literal((int32_t)memory.get<int8_t>(addr)) : Literal((int32_t)memory.get<uint8_t>(addr));
-          case 2: return load->signed_ ? Literal((int32_t)memory.get<int16_t>(addr)) : Literal((int32_t)memory.get<uint16_t>(addr));
-          case 4: return load->signed_ ? Literal((int32_t)memory.get<int32_t>(addr)) : Literal((int32_t)memory.get<uint32_t>(addr));
-          default: abort();
-        }
-        break;
-      }
-      case i64: {
-        switch (load->bytes) {
-          case 1: return load->signed_ ? Literal((int64_t)memory.get<int8_t>(addr)) : Literal((int64_t)memory.get<uint8_t>(addr));
-          case 2: return load->signed_ ? Literal((int64_t)memory.get<int16_t>(addr)) : Literal((int64_t)memory.get<uint16_t>(addr));
-          case 4: return load->signed_ ? Literal((int64_t)memory.get<int32_t>(addr)) : Literal((int64_t)memory.get<uint32_t>(addr));
-          case 8: return load->signed_ ? Literal((int64_t)memory.get<int64_t>(addr)) : Literal((int64_t)memory.get<uint64_t>(addr));
-          default: abort();
-        }
-        break;
-      }
-      case f32: return Literal(memory.get<float>(addr));
-      case f64: return Literal(memory.get<double>(addr));
-      default: abort();
-    }
-  }
+  int8_t load8s(Address addr) override { return memory.get<int8_t>(addr); }
+  uint8_t load8u(Address addr) override { return memory.get<uint8_t>(addr); }
+  int16_t load16s(Address addr) override { return memory.get<int16_t>(addr); }
+  uint16_t load16u(Address addr) override { return memory.get<uint16_t>(addr); }
+  int32_t load32s(Address addr) override { return memory.get<int32_t>(addr); }
+  uint32_t load32u(Address addr) override { return memory.get<uint32_t>(addr); }
+  int64_t load64s(Address addr) override { return memory.get<int64_t>(addr); }
+  uint64_t load64u(Address addr) override { return memory.get<uint64_t>(addr); }
 
-  void store(Store* store, Address addr, Literal value) override {
-    switch (store->valueType) {
-      case i32: {
-        switch (store->bytes) {
-          case 1: memory.set<int8_t>(addr, value.geti32()); break;
-          case 2: memory.set<int16_t>(addr, value.geti32()); break;
-          case 4: memory.set<int32_t>(addr, value.geti32()); break;
-          default: abort();
-        }
-        break;
-      }
-      case i64: {
-        switch (store->bytes) {
-          case 1: memory.set<int8_t>(addr, (int8_t)value.geti64()); break;
-          case 2: memory.set<int16_t>(addr, (int16_t)value.geti64()); break;
-          case 4: memory.set<int32_t>(addr, (int32_t)value.geti64()); break;
-          case 8: memory.set<int64_t>(addr, value.geti64()); break;
-          default: abort();
-        }
-        break;
-      }
-      // write floats carefully, ensuring all bits reach memory
-      case f32: memory.set<int32_t>(addr, value.reinterpreti32()); break;
-      case f64: memory.set<int64_t>(addr, value.reinterpreti64()); break;
-      default: abort();
-    }
-  }
+  void store8(Address addr, int8_t value) override { memory.set<int8_t>(addr, value); }
+  void store16(Address addr, int16_t value) override { memory.set<int16_t>(addr, value); }
+  void store32(Address addr, int32_t value) override { memory.set<int32_t>(addr, value); }
+  void store64(Address addr, int64_t value) override { memory.set<int64_t>(addr, value); }
 
   void growMemory(Address /*oldSize*/, Address newSize) override {
     memory.resize(newSize);

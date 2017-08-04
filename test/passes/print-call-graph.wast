@@ -281,7 +281,7 @@
       )
     )
     (set_local $0
-      (block $jumpthreading$outer$1 i32
+      (block $jumpthreading$outer$1 (result i32)
         (block $jumpthreading$inner$1
           (block $jumpthreading$inner$0
             (loop $while-in
@@ -289,11 +289,11 @@
                 (i32.eq
                   (get_local $11)
                   (tee_local $4
-                    (if i32
+                    (if (result i32)
                       (i32.load
                         (i32.const 1140)
                       )
-                      (block i32
+                      (block (result i32)
                         (call $_pthread_cleanup_push
                           (i32.const 1)
                           (get_local $0)
@@ -325,7 +325,7 @@
                         )
                         (get_local $3)
                       )
-                      (block i32
+                      (block (result i32)
                         (i32.store
                           (get_local $8)
                           (i32.load
@@ -364,7 +364,7 @@
                 )
               )
               (set_local $1
-                (if i32
+                (if (result i32)
                   (i32.gt_u
                     (get_local $4)
                     (tee_local $12
@@ -373,7 +373,7 @@
                       )
                     )
                   )
-                  (block i32
+                  (block (result i32)
                     (i32.store
                       (get_local $6)
                       (tee_local $3
@@ -408,12 +408,12 @@
                       (get_local $1)
                     )
                   )
-                  (if i32
+                  (if (result i32)
                     (i32.eq
                       (get_local $5)
                       (i32.const 2)
                     )
-                    (block i32
+                    (block (result i32)
                       (i32.store
                         (get_local $6)
                         (i32.add
@@ -431,7 +431,7 @@
                       )
                       (get_local $12)
                     )
-                    (block i32
+                    (block (result i32)
                       (set_local $3
                         (get_local $1)
                       )
@@ -572,7 +572,7 @@
       (get_local $2)
     )
     (set_local $0
-      (if i32
+      (if (result i32)
         (i32.lt_s
           (call $___syscall_ret
             (call $___syscall140
@@ -582,7 +582,7 @@
           )
           (i32.const 0)
         )
-        (block i32
+        (block (result i32)
           (i32.store
             (get_local $0)
             (i32.const -1)
@@ -600,12 +600,12 @@
     (get_local $0)
   )
   (func $___syscall_ret (param $0 i32) (result i32)
-    (if i32
+    (if (result i32)
       (i32.gt_u
         (get_local $0)
         (i32.const -4096)
       )
-      (block i32
+      (block (result i32)
         (i32.store
           (call $___errno_location)
           (i32.sub
@@ -619,7 +619,7 @@
     )
   )
   (func $___errno_location (result i32)
-    (if i32
+    (if (result i32)
       (i32.load
         (i32.const 1140)
       )
@@ -718,10 +718,10 @@
   (func $_fflush (param $0 i32) (result i32)
     (local $1 i32)
     (local $2 i32)
-    (block $do-once i32
-      (if i32
+    (block $do-once (result i32)
+      (if (result i32)
         (get_local $0)
-        (block i32
+        (block (result i32)
           (if
             (i32.le_s
               (i32.load offset=76
@@ -747,10 +747,10 @@
               (get_local $0)
             )
           )
-          (if i32
+          (if (result i32)
             (get_local $2)
             (get_local $1)
-            (block i32
+            (block (result i32)
               (call $_free
                 (get_local $0)
               )
@@ -758,9 +758,9 @@
             )
           )
         )
-        (block i32
+        (block (result i32)
           (set_local $0
-            (if i32
+            (if (result i32)
               (i32.load
                 (i32.const 1136)
               )
@@ -783,7 +783,7 @@
             )
             (loop $while-in
               (set_local $2
-                (if i32
+                (if (result i32)
                   (i32.gt_s
                     (i32.load offset=76
                       (get_local $1)
@@ -797,7 +797,7 @@
                 )
               )
               (set_local $0
-                (if i32
+                (if (result i32)
                   (i32.gt_u
                     (i32.load offset=20
                       (get_local $1)
@@ -845,7 +845,7 @@
     (local $4 i32)
     (local $5 i32)
     (local $6 i32)
-    (block $jumpthreading$outer$0 i32
+    (block $jumpthreading$outer$0 (result i32)
       (block $jumpthreading$inner$0
         (br_if $jumpthreading$inner$0
           (i32.le_u

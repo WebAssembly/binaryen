@@ -8,9 +8,9 @@
     (set_local $x (i32.const 1))
     (if (get_local $x) (nop))
     (if (get_local $x) (nop))
-    (set_local $y (if i32 (i32.const 2) (i32.const 3) (i32.const 4)))
+    (set_local $y (if (result i32) (i32.const 2) (i32.const 3) (i32.const 4)))
     (drop (get_local $y))
-    (set_local $z (block i32 (i32.const 5)))
+    (set_local $z (block (result i32) (i32.const 5)))
     (drop (get_local $z))
     (if (i32.const 6)
       (set_local $a (i32.const 7))
@@ -27,6 +27,14 @@
       (set_local $b (i32.const 12))
     )
     (drop (get_local $b))
+  )
+  (func $no-unreachable
+    (local $x i32)
+    (drop
+      (tee_local $x
+        (unreachable)
+      )
+    )
   )
 )
 

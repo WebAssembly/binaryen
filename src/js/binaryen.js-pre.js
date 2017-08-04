@@ -1,1 +1,2 @@
-var Binaryen = function(Module) {
+(function() {
+  "use strict";

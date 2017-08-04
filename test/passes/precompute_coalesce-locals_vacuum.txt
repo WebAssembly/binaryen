@@ -1,0 +1,9 @@
+(module
+ (type $0 (func (param i32) (result i32)))
+ (memory $0 0)
+ (func $nested-br_if-value (type $0) (param $0 i32) (result i32)
+  (loop $label$0
+   (br $label$0)
+  )
+ )
+)

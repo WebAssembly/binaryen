@@ -240,7 +240,7 @@ public:
         case ConvertUInt32ToFloat64: return value.convertUToF64();
         case ConvertSInt32ToFloat32: return value.convertSToF32();
         case ConvertSInt32ToFloat64: return value.convertSToF64();
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
     if (value.type == i64) {
@@ -255,7 +255,7 @@ public:
         case ConvertUInt64ToFloat64: return value.convertUToF64();
         case ConvertSInt64ToFloat32: return value.convertSToF32();
         case ConvertSInt64ToFloat64: return value.convertSToF64();
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
     if (value.type == f32) {
@@ -273,7 +273,7 @@ public:
         case TruncUFloat32ToInt64: return truncUFloat(curr, value);
         case ReinterpretFloat32: return value.castToI32();
         case PromoteFloat32:   return value.extendToF64();
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
     if (value.type == f64) {
@@ -304,10 +304,10 @@ public:
           if (val > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
           return value.truncateToF32();
         }
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
-    abort();
+    WASM_UNREACHABLE();
   }
   Flow visitBinary(Binary *curr) {
     NOTE_ENTER("Binary");
@@ -361,7 +361,7 @@ public:
         case GtUInt32:  return left.gtU(right);
         case GeSInt32:  return left.geS(right);
         case GeUInt32:  return left.geU(right);
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     } else if (left.type == i64) {
       switch (curr->op) {
@@ -404,7 +404,7 @@ public:
         case GtUInt64:  return left.gtU(right);
         case GeSInt64:  return left.geS(right);
         case GeUInt64:  return left.geU(right);
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     } else if (left.type == f32 || left.type == f64) {
       switch (curr->op) {
@@ -421,10 +421,10 @@ public:
         case LeFloat32:       case LeFloat64:       return left.le(right);
         case GtFloat32:       case GtFloat64:       return left.gt(right);
         case GeFloat32:       case GeFloat64:       return left.ge(right);
-        default: abort();
+        default: WASM_UNREACHABLE();
       }
     }
-    abort();
+    WASM_UNREACHABLE();
   }
   Flow visitSelect(Select *curr) {
     NOTE_ENTER("Select");
@@ -510,10 +510,11 @@ public:
 };
 
 // Execute an constant expression in a global init or memory offset
-class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner> {
-  std::map<Name, Literal>& globals;
+template<typename GlobalManager>
+class ConstantExpressionRunner : public ExpressionRunner<ConstantExpressionRunner<GlobalManager>> {
+  GlobalManager& globals;
 public:
-  ConstantExpressionRunner(std::map<Name, Literal>& globals) : globals(globals) {}
+  ConstantExpressionRunner(GlobalManager& globals) : globals(globals) {}
 
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
   Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
@@ -538,7 +539,8 @@ public:
 // To call into the interpreter, use callExport.
 //
 
-class ModuleInstance {
+template<typename GlobalManager, typename SubType>
+class ModuleInstanceBase {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -546,32 +548,104 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
-    virtual void init(Module& wasm, ModuleInstance& instance) {}
-    virtual void importGlobals(std::map<Name, Literal>& globals, Module& wasm) = 0;
+    virtual void init(Module& wasm, SubType& instance) {}
+    virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) = 0;
-    virtual Literal load(Load* load, Address addr) = 0;
-    virtual void store(Store* store, Address addr, Literal value) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, SubType& instance) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
+
+    // the default impls for load and store switch on the sizes. you can either
+    // customize load/store, or the sub-functions which they call
+    virtual Literal load(Load* load, Address addr) {
+      switch (load->type) {
+        case i32: {
+          switch (load->bytes) {
+            case 1: return load->signed_ ? Literal((int32_t)load8s(addr)) : Literal((int32_t)load8u(addr));
+            case 2: return load->signed_ ? Literal((int32_t)load16s(addr)) : Literal((int32_t)load16u(addr));
+            case 4: return load->signed_ ? Literal((int32_t)load32s(addr)) : Literal((int32_t)load32u(addr));
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        case i64: {
+          switch (load->bytes) {
+            case 1: return load->signed_ ? Literal((int64_t)load8s(addr)) : Literal((int64_t)load8u(addr));
+            case 2: return load->signed_ ? Literal((int64_t)load16s(addr)) : Literal((int64_t)load16u(addr));
+            case 4: return load->signed_ ? Literal((int64_t)load32s(addr)) : Literal((int64_t)load32u(addr));
+            case 8: return load->signed_ ? Literal((int64_t)load64s(addr)) : Literal((int64_t)load64u(addr));
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        case f32: return Literal(load32u(addr)).castToF32();
+        case f64: return Literal(load64u(addr)).castToF64();
+        default: WASM_UNREACHABLE();
+      }
+    }
+    virtual void store(Store* store, Address addr, Literal value) {
+      switch (store->valueType) {
+        case i32: {
+          switch (store->bytes) {
+            case 1: store8(addr, value.geti32()); break;
+            case 2: store16(addr, value.geti32()); break;
+            case 4: store32(addr, value.geti32()); break;
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        case i64: {
+          switch (store->bytes) {
+            case 1: store8(addr, value.geti64()); break;
+            case 2: store16(addr, value.geti64()); break;
+            case 4: store32(addr, value.geti64()); break;
+            case 8: store64(addr, value.geti64()); break;
+            default: WASM_UNREACHABLE();
+          }
+          break;
+        }
+        // write floats carefully, ensuring all bits reach memory
+        case f32: store32(addr, value.reinterpreti32()); break;
+        case f64: store64(addr, value.reinterpreti64()); break;
+        default: WASM_UNREACHABLE();
+      }
+    }
+
+    virtual int8_t load8s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint8_t load8u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int16_t load16s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint16_t load16u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int32_t load32s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint32_t load32u(Address addr) { WASM_UNREACHABLE(); }
+    virtual int64_t load64s(Address addr) { WASM_UNREACHABLE(); }
+    virtual uint64_t load64u(Address addr) { WASM_UNREACHABLE(); }
+
+    virtual void store8(Address addr, int8_t value) { WASM_UNREACHABLE(); }
+    virtual void store16(Address addr, int16_t value) { WASM_UNREACHABLE(); }
+    virtual void store32(Address addr, int32_t value) { WASM_UNREACHABLE(); }
+    virtual void store64(Address addr, int64_t value) { WASM_UNREACHABLE(); }
   };
+
+  SubType* self() {
+    return static_cast<SubType*>(this);
+  }
 
   Module& wasm;
 
   // Values of globals
-  std::map<Name, Literal> globals;
+  GlobalManager globals;
 
-  ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
+  ModuleInstanceBase(Module& wasm, ExternalInterface* externalInterface) : wasm(wasm), externalInterface(externalInterface) {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // prepare memory
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     for (auto& global : wasm.globals) {
-      globals[global->name] = ConstantExpressionRunner(globals).visit(global->init).value;
+      globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals).visit(global->init).value;
     }
     // initialize the rest of the external interface
-    externalInterface->init(wasm, *this);
+    externalInterface->init(wasm, *self());
     // run start, if present
     if (wasm.start.is()) {
       LiteralList arguments;
@@ -584,6 +658,11 @@ public:
     Export *export_ = wasm.getExportOrNull(name);
     if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
+  }
+
+  Literal callExport(Name name) {
+    LiteralList arguments;
+    return callExport(name, arguments);
   }
 
   // get an exported global
@@ -613,6 +692,7 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
+public:
   // Call a function, starting an invocation.
   Literal callFunction(Name name, LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
@@ -621,7 +701,6 @@ private:
     return callFunctionInternal(name, arguments);
   }
 
-public:
   // Internal function call. Must be public so that callTable implementations can use it (refactor?)
   Literal callFunctionInternal(Name name, LiteralList& arguments) {
 
@@ -636,7 +715,7 @@ public:
           std::cerr << "Function `" << function->name << "` expects "
                     << function->params.size() << " parameters, got "
                     << arguments.size() << " arguments." << std::endl;
-          abort();
+          WASM_UNREACHABLE();
         }
         locals.resize(function->getNumLocals());
         for (size_t i = 0; i < function->getNumLocals(); i++) {
@@ -647,7 +726,7 @@ public:
                         << printWasmType(function->params[i])
                         << " for parameter " << i << ", got "
                         << printWasmType(arguments[i].type) << "." << std::endl;
-              abort();
+              WASM_UNREACHABLE();
             }
             locals[i] = arguments[i];
           } else {
@@ -660,17 +739,17 @@ public:
 
     // Executes expresions with concrete runtime info, the function and module at runtime
     class RuntimeExpressionRunner : public ExpressionRunner<RuntimeExpressionRunner> {
-      ModuleInstance& instance;
+      ModuleInstanceBase& instance;
       FunctionScope& scope;
 
     public:
-      RuntimeExpressionRunner(ModuleInstance& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
+      RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
 
       Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
         NOTE_ENTER_("generateArguments");
         arguments.reserve(operands.size());
         for (auto expression : operands) {
-          Flow flow = visit(expression);
+          Flow flow = this->visit(expression);
           if (flow.breaking()) return flow;
           NOTE_EVAL1(flow.value);
           arguments.push_back(flow.value);
@@ -702,10 +781,10 @@ public:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        Flow target = visit(curr->target);
+        Flow target = this->visit(curr->target);
         if (target.breaking()) return target;
         Index index = target.value.geti32();
-        return instance.externalInterface->callTable(index, arguments, curr->type, instance);
+        return instance.externalInterface->callTable(index, arguments, curr->type, *instance.self());
       }
 
       Flow visitGetLocal(GetLocal *curr) {
@@ -718,7 +797,7 @@ public:
       Flow visitSetLocal(SetLocal *curr) {
         NOTE_ENTER("SetLocal");
         auto index = curr->index;
-        Flow flow = visit(curr->value);
+        Flow flow = this->visit(curr->value);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
@@ -738,7 +817,7 @@ public:
       Flow visitSetGlobal(SetGlobal *curr) {
         NOTE_ENTER("SetGlobal");
         auto name = curr->name;
-        Flow flow = visit(curr->value);
+        Flow flow = this->visit(curr->value);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(name);
         NOTE_EVAL1(flow.value);
@@ -748,7 +827,7 @@ public:
 
       Flow visitLoad(Load *curr) {
         NOTE_ENTER("Load");
-        Flow flow = visit(curr->ptr);
+        Flow flow = this->visit(curr->ptr);
         if (flow.breaking()) return flow;
         NOTE_EVAL1(flow);
         auto addr = instance.getFinalAddress(curr, flow.value);
@@ -759,9 +838,9 @@ public:
       }
       Flow visitStore(Store *curr) {
         NOTE_ENTER("Store");
-        Flow ptr = visit(curr->ptr);
+        Flow ptr = this->visit(curr->ptr);
         if (ptr.breaking()) return ptr;
-        Flow value = visit(curr->value);
+        Flow value = this->visit(curr->value);
         if (value.breaking()) return value;
         auto addr = instance.getFinalAddress(curr, ptr.value);
         NOTE_EVAL1(addr);
@@ -777,7 +856,7 @@ public:
           case CurrentMemory: return Literal(int32_t(instance.memorySize));
           case GrowMemory: {
             auto fail = Literal(int32_t(-1));
-            Flow flow = visit(curr->operands[0]);
+            Flow flow = this->visit(curr->operands[0]);
             if (flow.breaking()) return flow;
             int32_t ret = instance.memorySize;
             uint32_t delta = flow.value.geti32();
@@ -794,7 +873,7 @@ public:
             if (id == WASM) return Literal(1);
             return Literal((int32_t)0);
           }
-          default: abort();
+          default: WASM_UNREACHABLE();
         }
       }
 
@@ -824,10 +903,9 @@ public:
     Flow flow = RuntimeExpressionRunner(*this, scope).visit(function->body);
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW); // cannot still be breaking, it means we missed our stop
     Literal ret = flow.value;
-    if (function->result == none) ret = Literal();
     if (function->result != ret.type) {
       std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
-      abort();
+      WASM_UNREACHABLE();
     }
     callDepth = previousCallDepth; // may decrease more than one, if we jumped up the stack
     // if we jumped up the stack, we also need to pop higher frames
@@ -840,7 +918,7 @@ public:
     return ret;
   }
 
-private:
+protected:
 
   Address memorySize; // in pages
 
@@ -864,6 +942,13 @@ private:
   }
 
   ExternalInterface* externalInterface;
+};
+
+// The default ModuleInstance uses a trivial global manager
+typedef std::map<Name, Literal> TrivialGlobalManager;
+class ModuleInstance : public ModuleInstanceBase<TrivialGlobalManager, ModuleInstance> {
+public:
+  ModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {}
 };
 
 } // namespace wasm

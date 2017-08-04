@@ -1,0 +1,99 @@
+(module
+ (type $0 (func (param f32 f32) (result f32)))
+ (type $1 (func (param f64 f64) (result f64)))
+ (memory $0 0)
+ (export "f32.compute_radix" (func $0))
+ (export "f64.compute_radix" (func $1))
+ (func $0 (type $0) (param $var$0 f32) (param $var$1 f32) (result f32)
+  (block $label$0
+   (loop $label$1
+    (br_if $label$1
+     (f32.eq
+      (f32.add
+       (f32.sub
+        (f32.add
+         (tee_local $var$0
+          (f32.add
+           (get_local $var$0)
+           (get_local $var$0)
+          )
+         )
+         (f32.const 1)
+        )
+        (get_local $var$0)
+       )
+       (f32.const -1)
+      )
+      (f32.const 0)
+     )
+    )
+   )
+   (block
+    (drop
+     (call $0
+      (f32.add
+       (get_local $var$0)
+       (tee_local $var$1
+        (f32.add
+         (get_local $var$1)
+         (f32.const 1)
+        )
+       )
+      )
+      (get_local $var$0)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $1 (type $1) (param $var$0 f64) (param $var$1 f64) (result f64)
+  (block $label$0 (result f64)
+   (loop $label$1
+    (br_if $label$1
+     (f64.eq
+      (f64.add
+       (f64.sub
+        (f64.add
+         (tee_local $var$0
+          (f64.add
+           (get_local $var$0)
+           (get_local $var$0)
+          )
+         )
+         (f64.const 1)
+        )
+        (get_local $var$0)
+       )
+       (f64.const -1)
+      )
+      (f64.const 0)
+     )
+    )
+   )
+   (loop $label$2
+    (br_if $label$2
+     (f64.ne
+      (f64.sub
+       (f64.sub
+        (f64.add
+         (get_local $var$0)
+         (tee_local $var$1
+          (f64.add
+           (get_local $var$1)
+           (f64.const 1)
+          )
+         )
+        )
+        (get_local $var$0)
+       )
+       (get_local $var$1)
+      )
+      (f64.const 0)
+     )
+    )
+   )
+   (get_local $var$1)
+  )
+ )
+)

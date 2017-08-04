@@ -87,12 +87,12 @@
       )
     )
     (set_local $x
-      (block $result-used i32
+      (block $result-used (result i32)
         (get_local $x)
       )
     )
     (set_local $x
-      (block $two-and-result-used i32
+      (block $two-and-result-used (result i32)
         (drop
           (get_local $x)
         )
@@ -109,7 +109,7 @@
       (nop)
     )
     (drop
-      (loop $loop-in5 i32
+      (loop $loop-in5 (result i32)
         (drop
           (get_local $0)
         )
@@ -276,9 +276,9 @@
   )
   (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
     (if
-      (if i32
+      (if (result i32)
         (get_local $d)
-        (block $block1 i32
+        (block $block1 (result i32)
           (nop)
           (f64.ne
             (f64.promote/f32
@@ -302,14 +302,14 @@
   (func $if-drop (result i32)
     (block $out
       (drop
-        (if i32
+        (if (result i32)
           (call $if-drop)
           (call $int)
           (br $out)
         )
       )
       (drop
-        (if i32
+        (if (result i32)
           (call $if-drop)
           (br $out)
           (call $int)
@@ -360,7 +360,7 @@
   )
   (func $drop-get-global
     (drop
-      (block i32
+      (block (result i32)
         (call $drop-get-global)
         (get_global $Int) ;; this is not needed due to the block being drop'd, but make sure the call is not then dropped either
       )
@@ -371,7 +371,7 @@
     (local $$11 i32)
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8 i32
+        (block $jumpthreading$outer$8 (result i32)
           (block $jumpthreading$inner$8
             (br $jumpthreading$outer$8 ;; the rest is dead in the outer block, but be careful to leave the return value!
               (i32.const 0)
@@ -389,7 +389,7 @@
   (func $relooperJumpThreading2
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8 i32
+        (block $jumpthreading$outer$8 (result i32)
           (block $jumpthreading$inner$8
             (br $jumpthreading$outer$8
               (i32.const 0)
@@ -403,7 +403,7 @@
   (func $relooperJumpThreading3
     (loop $while-in$1
       (drop
-        (block $jumpthreading$outer$8 i32
+        (block $jumpthreading$outer$8 (result i32)
           (br $jumpthreading$outer$8 ;; code after this is dead, can kill it, but preserve the return value at the end!
             (i32.const 0)
           )
@@ -444,5 +444,220 @@
     (if (i32.const 2) (call $if-const (i32.const 3)))
     (if (i32.const 0) (call $if-const (i32.const 4)) (call $if-const (i32.const 5)))
     (if (i32.const 6) (call $if-const (i32.const 7)) (call $if-const (i32.const 8)))
+  )
+  (func $drop-if-both-unreachable (param $0 i32)
+    (block $out
+      (drop
+        (if (result i32)
+          (get_local $0)
+          (br $out)
+          (br $out)
+        )
+      )
+    )
+    (drop
+      (if (result i32)
+        (get_local $0)
+        (unreachable)
+        (unreachable)
+      )
+    )
+  )
+  (func $if-1-block (param $x i32)
+   (block $out
+    (if
+     (get_local $x)
+     (block
+      (if
+       (i32.const 1)
+       (block
+        (set_local $x
+         (get_local $x)
+        )
+        (br $out)
+       )
+      )
+     )
+    )
+   )
+  )
+  (func $block-resize-br-gone
+    (block $out
+      (block $in
+        (call $block-resize-br-gone)
+        (br $in)
+        (br $out)
+      )
+      (return)
+    )
+    (block $out2
+      (block $in2
+        (br $in2)
+        (br $out2)
+      )
+      (return)
+    )
+  )
+  (func $block-unreachable-but-last-element-concrete
+   (local $2 i32)
+   (block $label$0
+    (drop
+     (block
+      (br $label$0)
+      (get_local $2)
+     )
+    )
+   )
+  )
+  (func $a
+    (block
+      (i32.store (i32.const 1) (i32.const 2))
+      (f64.div
+        (f64.const -nan:0xfffffffffa361)
+        (loop $label$1 ;; unreachable, so the div is too. keep
+          (br $label$1)
+        )
+      )
+    )
+  )
+  (func $leave-block-even-if-br-not-taken (result f64)
+   (block $label$0 (result f64)
+    (f64.store align=1
+     (i32.const 879179022)
+     (br_if $label$0
+      (loop $label$9
+       (br $label$9)
+      )
+      (i32.const 677803374)
+     )
+    )
+    (f64.const 2097914503796645752267195e31)
+   )
+  )
+  (func $executed-if-in-block
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (unreachable)
+      (br $label$0)
+     )
+    )
+    (unreachable)
+  )
+  (func $executed-if-in-block2
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (nop)
+      (br $label$0)
+     )
+    )
+    (unreachable)
+  )
+  (func $executed-if-in-block3
+    (block $label$0
+     (if
+      (i32.const 170996275)
+      (br $label$0)
+      (nop)
+     )
+    )
+    (unreachable)
+  )
+  (func $load-may-have-side-effects (result i32)
+   (i64.ge_s
+    (block (result i64)
+     (drop
+      (i64.eq
+       (i64.load32_s
+        (i32.const 678585719)
+       )
+       (i64.const 8097879367757079605)
+      )
+     )
+     (i64.const 2912825531628789796)
+    )
+    (i64.const 0)
+   )
+  )
+  (func $unary-binary-may-trap
+   (drop
+    (i64.div_s
+     (i64.const 70847791997969805621592064)
+     (i64.const 729618461987467893)
+    )
+   )
+   (drop
+    (i64.trunc_u/f32
+     (f32.const 70847791997969805621592064)
+    )
+   )
+  )
+  (func $unreachable-if-with-nop-arm-that-leaves-a-concrete-value-if-nop-is-removed
+   (block $label$0
+    (loop $label$1
+     (if
+      (br_if $label$0
+       (i32.load8_s
+        (i32.const 1634541608)
+       )
+       (loop $label$9
+        (br $label$9)
+       )
+      )
+      (nop)
+      (i32.const 1920103026)
+     )
+    )
+   )
+  )
+  (func $if-arm-vanishes (result i32)
+   (block $label$0 (result i32)
+    (block $label$1
+     (if
+      (br $label$0
+       (i32.const 1)
+      )
+      (br $label$1)
+     )
+    )
+    (i32.const 1579493952)
+   )
+  )
+  (func $if-arm-vanishes-2 (result i32)
+   (block $label$0 (result i32)
+    (block $label$1
+     (if
+      (br $label$0
+       (i32.const 1)
+      )
+      (br $label$1)
+     )
+    )
+    (i32.const 1579493952)
+   )
+  )
+  (func $nop-if-type-changes (type $0)
+   (local $0 i32)
+   (block $label$0
+    (if
+     (i32.eqz
+      (get_local $0)
+     )
+     (block $label$1
+      (block
+       (if ;; we nop this if, which has a type change for block $label$1, no more brs to it
+        (i32.const 0)
+        (br_if $label$1
+          (i32.const 1717966400)
+        )
+       )
+       (drop
+        (br $label$0)
+       )
+      )
+     )
+    )
+   )
   )
 )

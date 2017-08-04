@@ -34,7 +34,7 @@
       )
       (drop
         (i32.eq
-          (if i32
+          (if (result i32)
             (i32.const 4)
             (i32.const 5)
             (i32.const 6)

@@ -151,7 +151,7 @@
     )
   )
   (func $b13 (type $2) (result i32)
-    (block $topmost i32
+    (block $topmost (result i32)
       (if
         (i32.const 1)
         (block $block1
@@ -178,13 +178,13 @@
     )
   )
   (func $b14 (type $2) (result i32)
-    (block $topmost i32
-      (if i32
+    (block $topmost (result i32)
+      (if (result i32)
         (i32.const 1)
-        (block $block1 i32
+        (block $block1 (result i32)
           (i32.const 12)
         )
-        (block $block3 i32
+        (block $block3 (result i32)
           (i32.const 27)
         )
       )
@@ -355,7 +355,7 @@
         )
       )
       (if
-        (block $block6 i32
+        (block $block6 (result i32)
           (block
             (drop
               (i32.const 2)
@@ -372,7 +372,7 @@
         )
       )
       (if
-        (block $a i32
+        (block $a (result i32)
           (br $a
             (i32.const 0)
           )
@@ -440,7 +440,7 @@
         (i32.const 1)
       )
     )
-    (block $do-once$0 i32
+    (block $do-once$0 (result i32)
       (if
         (tee_local $x
           (i32.const 1)
@@ -606,7 +606,7 @@
           (call $loops)
         )
         (drop
-          (block $out2 i32
+          (block $out2 (result i32)
             (br $out2 (i32.const 1))
           )
         )
@@ -656,7 +656,7 @@
     )
   )
   (func $br_if_in_block (result i32)
-    (block $outval i32
+    (block $outval (result i32)
       (block $in
         (if (i32.const 1) (br $in) (br $in))
         (drop (i32.const 2))
@@ -665,13 +665,13 @@
         (if (i32.const 5) (br $in) (unreachable))
         (drop (i32.const 6))
       )
-      (if i32 (i32.const 6) (br $outval (i32.const 7)) (i32.const 8))
+      (if (result i32) (i32.const 6) (br $outval (i32.const 7)) (i32.const 8))
     )
   )
   (func $threading
     (drop
-      (block $value-out i32
-        (block $value-in i32
+      (block $value-out (result i32)
+        (block $value-in (result i32)
           (block $out
             (block $in
               (if (i32.const 1)
@@ -705,11 +705,11 @@
   (func $if-to-br_if-conflict (param $x i32) (param $y i32) (result i32)
     (block $leave
       (set_local $y
-        (block $out i32
+        (block $out (result i32)
           (if
             (get_local $x)
             (br $out
-              (block i32
+              (block (result i32)
                 (set_local $x (i32.const 0))
                 (i32.const 1)
               )
@@ -725,12 +725,12 @@
   (func $if-to-br_if-conflict2 (param $x i32) (param $y i32) (result i32)
     (block $leave
       (set_local $y
-        (block $out i32
+        (block $out (result i32)
           (if
             (get_local $x)
             (br_if $leave (i32.const 1))
             (br $out
-              (block i32
+              (block (result i32)
                 (set_local $x (i32.const 0))
                 (i32.const 1)
               )
@@ -745,11 +745,11 @@
   (func $if-to-br_if-value-sideeffect (param $x i32) (param $y i32) (result i32)
     (block $leave
       (set_local $y
-        (block $out i32
+        (block $out (result i32)
           (if
             (get_local $x)
             (br $out
-              (block i32
+              (block (result i32)
                 (drop (call $if-to-br_if-value-sideeffect (i32.const 0) (i32.const 1)))
                 (nop)
                 (i32.const 1)
@@ -832,8 +832,8 @@
     )
   )
   (func $loop-if (result i32)
-    (block $outer i32
-      (loop $typed i32
+    (block $outer (result i32)
+      (loop $typed (result i32)
         ;; we can move the br after us into our if-else, which means we are the final
         ;; element in the block,
         (if
@@ -846,6 +846,91 @@
         (br $typed)
       )
     )
+  )
+  (func $block-break (param $0 i32)
+    (block $block$7$break
+      (block $shape$6$continue
+        (call $block-break (i32.const 1))
+        (br $block$7$break)
+      )
+    )
+  )
+  (func $loop-break (param $0 i32)
+    (block $block$7$break
+      (loop $shape$6$continue
+        (call $loop-break (i32.const 1))
+        (br_if $shape$6$continue
+          (get_local $0)
+        )
+        (br $block$7$break)
+      )
+    )
+  )
+  (func $untaken-brs-might-prevent-block-removal (param $0 f32) (param $1 i32) (param $2 f32) (param $3 i32) (param $4 i32) (param $5 f64) (param $6 f32) (result i32)
+   (block $label$0 (result i32)
+    (block $label$1 ;; this block has no taken brs, but we can't remove it without removing them first
+     (br_if $label$1
+      (i32.const 607395945)
+     )
+     (br_if $label$1
+      (i32.load16_s offset=3 align=1
+       (select
+        (call $untaken-brs-might-prevent-block-removal
+         (f32.const 1.4904844647389837e-07)
+         (br_if $label$0
+          (i32.store16 offset=4 align=1
+           (i32.const 1900641)
+           (br $label$0
+            (i32.const 1628075109)
+           )
+          )
+          (i32.const 1764950569)
+         )
+         (f32.const 1.1910939690100655e-32)
+         (i32.const 1628057906)
+         (i32.const 859068982)
+         (f64.const 2.524518840347722e-258)
+         (f32.const -nan:0x40a63)
+        )
+        (i32.const 688529440)
+        (i32.const 1751478890)
+       )
+      )
+     )
+    )
+    (i32.const 1935947830)
+   )
+  )
+  (func $unexitable-loops-result (param $0 i32) (result i64)
+   (loop $label$0
+    (loop $label$1
+     (if
+      (i32.load8_s
+       (i32.const 201460482)
+      )
+      (br $label$0)
+      (block $label$3
+       (br_if $label$3
+        (get_local $0)
+       )
+      )
+     )
+     (br $label$1)
+    )
+   )
+  )
+  (func $untaken-br-with-concrete-last-element (result i32)
+   (block $label$8 (result i32)
+    (block $label$11 (result i32)
+     (block $label$14
+      (br_if $label$14
+       (br $label$11
+        (i32.const 103)
+       )
+      )
+     )
+    )
+   )
   )
 )
 

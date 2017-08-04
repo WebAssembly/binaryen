@@ -22,7 +22,7 @@ int main() {
   the_relooper = RelooperCreate();
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[1] = BinaryenBlock(the_module, "bb0", children, 0);
+    expressions[1] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenUndefined());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[1]);
   expressions[2] = BinaryenGetLocal(the_module, 0, 1);
@@ -31,12 +31,12 @@ int main() {
   expressions[5] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[4], expressions[5] };
-    expressions[6] = BinaryenBlock(the_module, "bb1", children, 2);
+    expressions[6] = BinaryenBlock(the_module, "bb1", children, 2, BinaryenUndefined());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[6]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
   {
-    BinaryenIndex paramTypes[] = { 0 };
+    BinaryenType paramTypes[] = { 0 };
     functionTypes[0] = BinaryenAddFunctionType(the_module, "rustfn-0-3", 0, paramTypes, 0);
   }
   expressions[7] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -51,7 +51,7 @@ int main() {
   }
   BinaryenAddExport(the_module, "main", "main");
   {
-    BinaryenIndex paramTypes[] = { 0 };
+    BinaryenType paramTypes[] = { 0 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "__wasm_start", 0, paramTypes, 0);
   }
   {
@@ -69,7 +69,7 @@ int main() {
   }
   {
     BinaryenExpressionRef children[] = { expressions[13], expressions[14] };
-    expressions[15] = BinaryenBlock(the_module, NULL, children, 2);
+    expressions[15] = BinaryenBlock(the_module, NULL, children, 2, BinaryenUndefined());
   }
   BinaryenAddExport(the_module, "__wasm_start", "rust_entry");
   {

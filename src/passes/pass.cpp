@@ -17,6 +17,7 @@
 #include <chrono>
 #include <sstream>
 
+#include <support/colors.h>
 #include <passes/passes.h>
 #include <pass.h>
 #include <wasm-validator.h>
@@ -66,22 +67,26 @@ void PassRegistry::registerPasses() {
   registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
   registerPass("code-pushing", "push code forward, potentially making it not always execute", createCodePushingPass);
+  registerPass("code-folding", "fold code, merging duplicates", createCodeFoldingPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
+  registerPass("flatten-control-flow", "flattens out control flow to be only on blocks, not nested as expressions", createFlattenControlFlowPass);
   registerPass("inlining", "inlines functions (currently only ones with a single use)", createInliningPass);
   registerPass("inlining-optimizing", "inlines functions (currently only ones with a single use) and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
   registerPass("local-cse", "common subexpression elimination inside basic blocks", createLocalCSEPass);
   registerPass("log-execution", "instrument the build with logging of where execution goes", createLogExecutionPass);
+  registerPass("instrument-locals", "instrument the build with code to intercept all loads and stores", createInstrumentLocalsPass);
+  registerPass("instrument-memory", "instrument the build with code to intercept all loads and stores", createInstrumentMemoryPass);
   registerPass("memory-packing", "packs memory into separate segments, skipping zeros", createMemoryPackingPass);
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
-  registerPass("name-manager", "utility pass to manage names in modules", createNameManagerPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
   registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);
+  registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
@@ -94,12 +99,14 @@ void PassRegistry::registerPasses() {
   registerPass("remove-unused-names", "removes names from locations that are never branched to", createRemoveUnusedNamesPass);
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
+  registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
   registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeeNoStructurePass);
+  registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
+  registerPass("untee", "removes tee_locals, replacing them with sets and gets", createUnteePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
-  registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
 //  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
@@ -110,7 +117,9 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
-  add("dce");
+  if (!options.debugInfo) { // debug info must be preserved, do not dce it
+    add("dce");
+  }
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
@@ -129,15 +138,19 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
+  if (options.shrinkLevel >= 1) {
+    add("code-folding");
+  }
+  add("merge-blocks"); // makes remove-unused-brs more effective
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
-  add("merge-blocks");
+  add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
   add("precompute");
   if (options.shrinkLevel >= 2) {
     add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
     add("coalesce-locals"); // just for localCSE
   }
-  add("vacuum"); // should not be needed, last few passes do not create garbage, but just to be safe
+  add("vacuum"); // just to be safe
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
@@ -153,12 +166,19 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("memory-packing");
 }
 
+static void dumpWast(Name name, Module* wasm) {
+  // write out the wast
+  Colors::disable();
+  static int counter = 0;
+  std::stringstream text;
+  WasmPrinter::printModule(wasm, text);
+  FILE* f = fopen((std::string("byn-") + std::to_string(counter++) + "-" + name.str + ".wast").c_str(), "w");
+  fputs(text.str().c_str(), f);
+  fclose(f);
+}
+
 void PassRunner::run() {
-  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
-  //                     and validate between each pass.
-  //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
-  //                     also is bad for e.g. printing which is a pass)
-  static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  static const int passDebug = getPassDebug();
   if (!isNested && (options.debug || passDebug)) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
@@ -166,6 +186,9 @@ void PassRunner::run() {
     std::cerr << "[PassRunner] running passes..." << std::endl;
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
+    }
+    if (passDebug >= 3) {
+      dumpWast("before", wasm);
     }
     for (auto* pass : passes) {
       // ignoring the time, save a printout of the module before, in case this pass breaks it, so we can print the before and after
@@ -197,9 +220,12 @@ void PassRunner::run() {
         if (passDebug >= 2) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
-          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state (FIXME: this is broken, need to prevent recursion of the print pass\n";
+          std::cerr << "Last pass (" << pass->name << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 in the env to see the earlier state, or 3 to dump byn-* files for each pass\n";
         }
         abort();
+      }
+      if (passDebug >= 3) {
+        dumpWast(pass->name, wasm);
       }
     }
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
@@ -276,18 +302,15 @@ void PassRunner::doAdd(Pass* pass) {
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
-#if 0
-  if (debug) {
-    std::cerr << "[PassRunner]   runPass " << pass->name << " OnFunction " << func->name << "\n";
-  }
-#endif
+  assert(pass->isFunctionParallel());
   // function-parallel passes get a new instance per function
-  if (pass->isFunctionParallel()) {
-    auto instance = std::unique_ptr<Pass>(pass->create());
-    instance->runFunction(this, wasm, func);
-  } else {
-    pass->runFunction(this, wasm, func);
-  }
+  auto instance = std::unique_ptr<Pass>(pass->create());
+  instance->runFunction(this, wasm, func);
+}
+
+int PassRunner::getPassDebug() {
+  static const int passDebug = getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
+  return passDebug;
 }
 
 } // namespace wasm

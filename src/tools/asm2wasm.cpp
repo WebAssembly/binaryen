@@ -24,6 +24,8 @@
 #include "wasm-builder.h"
 #include "wasm-printing.h"
 #include "wasm-io.h"
+#include "wasm-validator.h"
+#include "optimization-options.h"
 
 #include "asm2wasm.h"
 
@@ -31,15 +33,15 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  PassOptions passOptions;
-  bool runOptimizationPasses = false;
+  bool legalizeJavaScriptFFI = true;
   Asm2WasmBuilder::TrapMode trapMode = Asm2WasmBuilder::TrapMode::JS;
   bool wasmOnly = false;
-  bool debugInfo = false;
+  std::string sourceMapFilename;
+  std::string sourceMapUrl;
   std::string symbolMap;
   bool emitBinary = true;
 
-  Options options("asm2wasm", "Translate asm.js files to .wast files");
+  OptimizationOptions options("asm2wasm", "Translate asm.js files to .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -71,7 +73,6 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["table max"] = argument;
            })
-      #include "optimization-options.h"
       .add("--no-opts", "-n", "Disable optimization passes (deprecated)", Options::Arguments::Zero,
            [](Options *o, const std::string &) {
              std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
@@ -96,9 +97,19 @@ int main(int argc, const char *argv[]) {
            [&wasmOnly](Options *o, const std::string &) {
              wasmOnly = true;
            })
-      .add("--debuginfo", "-g", "Emit names section and debug info (for debug info you must emit text, -S, for this to work)",
+      .add("--no-legalize-javascript-ffi", "-nj", "Do not legalize (i64->i32, f32->f64) the imports and exports for interfacing with JS", Options::Arguments::Zero,
+           [&legalizeJavaScriptFFI](Options *o, const std::string &) {
+             legalizeJavaScriptFFI = false;
+           })
+      .add("--debuginfo", "-g", "Emit names section in wasm binary (or full debuginfo in wast)",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { debugInfo = true; })
+           [&](Options *o, const std::string &arguments) { options.passOptions.debugInfo = true; })
+      .add("--source-map", "-sm", "Emit source map (if using binary output) to the specified file",
+           Options::Arguments::One,
+           [&sourceMapFilename](Options *o, const std::string &argument) { sourceMapFilename = argument; })
+      .add("--source-map-url", "-su", "Use specified string as source map URL",
+           Options::Arguments::One,
+           [&sourceMapUrl](Options *o, const std::string &argument) { sourceMapUrl = argument; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
            Options::Arguments::One,
            [&](Options *o, const std::string &argument) { symbolMap = argument; })
@@ -117,6 +128,12 @@ int main(int argc, const char *argv[]) {
     emitBinary = false;
   }
 
+  if (options.runningDefaultOptimizationPasses()) {
+    if (options.passes.size() > 1) {
+      Fatal() << "asm2wasm can only run default optimization passes (-O, -Ox, etc.), and not specific additional passes";
+    }
+  }
+
   const auto &tm_it = options.extra.find("total memory");
   size_t totalMemory =
       tm_it == options.extra.end() ? 16 * 1024 * 1024 : atoi(tm_it->second.c_str());
@@ -127,8 +144,9 @@ int main(int argc, const char *argv[]) {
   }
 
   Asm2WasmPreProcessor pre;
-  // wasm binaries can contain a names section, but not full debug info
-  pre.debugInfo = debugInfo && !emitBinary;
+  // wasm binaries can contain a names section, but not full debug info --
+  // debug info is disabled if a map file is not specified with wasm binary
+  pre.debugInfo = options.passOptions.debugInfo && (!emitBinary || sourceMapFilename.size());
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
   char *start = pre.process(input.data());
@@ -140,7 +158,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
   wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, passOptions, runOptimizationPasses, wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // import mem init file, if provided
@@ -157,7 +175,7 @@ int main(int argc, const char *argv[]) {
       init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
     }
     wasm.memory.segments.emplace_back(init, data);
-    if (runOptimizationPasses) {
+    if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
       runner.add("memory-packing");
       runner.run();
@@ -185,12 +203,20 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  if (options.debug) std::cerr << "printing..." << std::endl;
+  if (!WasmValidator().validate(wasm)) {
+    Fatal() << "error in validating output";
+  }
+
+  if (options.debug) std::cerr << "emitting..." << std::endl;
   ModuleWriter writer;
   writer.setDebug(options.debug);
-  writer.setDebugInfo(debugInfo);
+  writer.setDebugInfo(options.passOptions.debugInfo);
   writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);
+  if (emitBinary) {
+    writer.setSourceMapFilename(sourceMapFilename);
+    writer.setSourceMapUrl(sourceMapUrl);
+  }
   writer.write(wasm, options.extra["output"]);
 
   if (options.debug) std::cerr << "done." << std::endl;

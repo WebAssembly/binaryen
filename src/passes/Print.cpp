@@ -25,6 +25,13 @@
 
 namespace wasm {
 
+static int isFullForced() {
+  if (getenv("BINARYEN_PRINT_FULL")) {
+    return std::stoi(getenv("BINARYEN_PRINT_FULL"));
+  }
+  return 0;
+}
+
 struct PrintSExpression : public Visitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
@@ -38,12 +45,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
+  Function::DebugLocation lastPrintedLocation;
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
-    if (getenv("BINARYEN_PRINT_FULL")) {
-      full = std::stoi(getenv("BINARYEN_PRINT_FULL"));
-    }
+    if (!full) full = isFullForced();
   }
 
   void visit(Expression* curr) {
@@ -53,8 +59,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       auto iter = debugLocations.find(curr);
       if (iter != debugLocations.end()) {
         auto fileName = currModule->debugInfoFileNames[iter->second.fileIndex];
-        o << ";; " << fileName << ":" << iter->second.lineNumber << '\n';
-        doIndent(o, indent);
+        if (lastPrintedLocation != iter->second) {
+          lastPrintedLocation = iter->second;
+          o << ";;@ " << fileName << ":" << iter->second.lineNumber << ":" << iter->second.columnNumber << '\n';
+          doIndent(o, indent);
+        }
       }
     }
     Visitor<PrintSExpression>::visit(curr);
@@ -125,7 +134,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         printName(curr->name);
       }
       if (isConcreteWasmType(curr->type)) {
-        o << ' ' << printWasmType(curr->type);
+        o << " (result " << printWasmType(curr->type) << ')';
       }
       incIndent();
       if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
@@ -156,7 +165,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitIf(If *curr) {
     printOpening(o, "if");
     if (isConcreteWasmType(curr->type)) {
-      o << ' ' << printWasmType(curr->type);
+      o << " (result " << printWasmType(curr->type) << ')';
     }
     incIndent();
     printFullLine(curr->condition);
@@ -181,7 +190,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << ' ' << curr->name;
     }
     if (isConcreteWasmType(curr->type)) {
-      o << ' ' << printWasmType(curr->type);
+      o << " (result " << printWasmType(curr->type) << ')';
     }
     incIndent();
     auto block = curr->body->dynCast<Block>();
@@ -287,7 +296,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitLoad(Load *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->type) << ".load";
+    prepareColor(o) << printWasmType(curr->type);
+    if (curr->isAtomic) o << ".atomic";
+    o << ".load";
     if (curr->bytes < 4 || (curr->type == i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
@@ -313,7 +324,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitStore(Store *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->valueType) << ".store";
+    prepareColor(o) << printWasmType(curr->valueType);
+    if (curr->isAtomic) o << ".atomic";
+    o << ".store";
     if (curr->bytes < 4 || (curr->valueType == i64 && curr->bytes < 8)) {
       if (curr->bytes == 1) {
         o << '8';
@@ -335,6 +348,56 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->ptr);
     printFullLine(curr->value);
+    decIndent();
+  }
+  static void printRMWSize(std::ostream& o, WasmType type, uint8_t bytes) {
+    prepareColor(o) << printWasmType(type) << ".atomic.rmw";
+    if (bytes != getWasmTypeSize(type)) {
+      if (bytes == 1) {
+        o << '8';
+      } else if (bytes == 2) {
+        o << "16";
+      } else if (bytes == 4) {
+        o << "32";
+      } else {
+        WASM_UNREACHABLE();
+      }
+      o << "_u";
+    }
+    o << '.';
+  }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    o << '(';
+    printRMWSize(o, curr->type, curr->bytes);
+    switch (curr->op) {
+      case Add:  o << "add";  break;
+      case Sub:  o << "sub";  break;
+      case And:  o << "and";  break;
+      case Or:   o << "or";   break;
+      case Xor:  o << "xor";  break;
+      case Xchg: o << "xchg"; break;
+    }
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    o << '(';
+    printRMWSize(o, curr->type, curr->bytes);
+    o << "cmpxchg";
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->expected);
+    printFullLine(curr->replacement);
     decIndent();
   }
   void visitConst(Const *curr) {
@@ -594,6 +657,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitFunction(Function *curr) {
     currFunction = curr;
+    lastPrintedLocation = { 0, 0, 0 };
     printOpening(o, "func ", true);
     printName(curr->name);
     if (curr->type.is()) {
@@ -660,6 +724,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printName(curr->name) << ' ';
     o << curr->initial;
     if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
+    if (curr->shared) o << " shared";
     o << ")";
   }
   void visitMemory(Memory* curr) {
@@ -802,7 +867,7 @@ std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream&
   }
   PrintSExpression print(o);
   print.setMinify(minify);
-  if (full) {
+  if (full || isFullForced()) {
     print.setFull(true);
     o << "[" << printWasmType(expression->type) << "] ";
   }

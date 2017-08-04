@@ -59,7 +59,7 @@
       (br $c)
     )
     (drop
-      (block $val i32
+      (block $val (result i32)
         (drop (br_if $val (i32.const 100) (i32.const 0)))
         (call $x (i32.const 4))
         (drop (br_if $val (i32.const 101) (i32.const 1)))
@@ -74,7 +74,7 @@
       )
     )
     (drop
-      (block $d i32
+      (block $d (result i32)
         (call $x (i32.const 5))
         (block $e
           (drop (br_if $d (br $e) (i32.const 1)))
@@ -87,7 +87,7 @@
       )
     )
     (drop
-      (block $d i32
+      (block $d (result i32)
         (call $x (i32.const 6))
         (block $e
           (drop (br_if $d (br $e) (i32.const 0)))
@@ -99,7 +99,7 @@
       )
     )
     (drop
-      (block $d i32
+      (block $d (result i32)
         (call $x (i32.const 7))
         (block $e
           (drop (br_if $d (i32.const 1) (br $e)))
@@ -108,7 +108,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -124,7 +124,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -140,7 +140,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -156,7 +156,7 @@
       )
     )
     (call $x
-      (block $out i32
+      (block $out (result i32)
         (block $waka1
           (block $waka2
             (block $waka3
@@ -185,5 +185,68 @@
     (if (call $ret)
       (return)
     )
+  )
+  (func $refinalize-br-condition-unreachable
+   (block $label$1
+    (drop
+     (br_if $label$1
+      (unreachable)
+     )
+    )
+   )
+  )
+  (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky
+   (drop
+    (block $label$1 (result i32)
+     (drop
+      (br_if $label$1
+       (i32.const 100)
+       (block $label$3 (result i32)
+        (unreachable)
+       )
+      )
+     )
+     (i32.const 0)
+    )
+   )
+  )
+  (func $reuse-br-value (result f64)
+   (block $label$0 (result f64)
+    (i32.store8
+     (i32.const 1919623207)
+     (if (result i32)
+      (i32.const 1)
+      (block $label$2 (result i32)
+       (drop
+        (i64.and
+         (i64.trunc_u/f32
+          (f32.const 70847791997969805621592064)
+         )
+         (i64.const 729618461987467893)
+        )
+       )
+       (br_if $label$2
+        (i32.const 2049535349)
+        (f32.eq
+         (f32.demote/f64
+          (f64.mul
+           (br_if $label$0 ;; this br is optimized, and br *and* values reused
+            (f64.const 6.134856208230095e-154)
+            (i32.const 690910817)
+           )
+           (f64.const 1.515470884183969e-152)
+          )
+         )
+         (f32.const 66524025679377434935296)
+        )
+       )
+      )
+      (i32.load offset=3 align=2
+        (i32.const 169901344)
+      )
+     )
+    )
+    (f64.const 4776014875438170098655851e156)
+   )
   )
 )

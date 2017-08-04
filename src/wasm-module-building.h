@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef optimizing_incremental_module_builder_h
-#define optimizing_incremental_module_builder_h
+#ifndef wasm_wasm_module_building_h
+#define wasm_wasm_module_building_h
 
 #include <wasm.h>
 #include <support/threads.h>
@@ -94,8 +94,9 @@ public:
       : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions), addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr), nextFunction(0),
         numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
         finishing(false), debug(debug), validateGlobally(validateGlobally) {
-    if (numFunctions == 0 || debug) {
-      // if no functions to be optimized, or debug non-parallel mode, don't create any threads.
+
+    if (!useWorkers()) {
+      // if we shouldn't use threads, don't
       return;
     }
 
@@ -117,6 +118,7 @@ public:
     DEBUG_THREAD("creating workers");
     numWorkers = ThreadPool::getNumCores();
     assert(numWorkers >= 1);
+    // worth it to use threads
     liveWorkers.store(0);
     activeWorkers.store(0);
     for (uint32_t i = 0; i < numWorkers; i++) { // TODO: one less, and add it at the very end, to not compete with main thread?
@@ -134,10 +136,14 @@ public:
     delete endMarker;
   }
 
+  bool useWorkers() {
+    return numFunctions > 0 && !debug && ThreadPool::getNumCores() > 1 && !PassRunner::getPassDebug();
+  }
+
   // Add a function to the module, and to be optimized
   void addFunction(Function* func) {
     wasm->addFunction(func);
-    if (debug) return; // we optimize at the end if debugging
+    if (!useWorkers()) return; // we optimize at the end in that case
     queueFunction(func);
     // wake workers if needed
     auto wake = availableFuncs.load();
@@ -149,12 +155,14 @@ public:
   // All functions have been added, block until all are optimized, and then do
   // global optimizations. When this returns, the module is ready and optimized.
   void finish() {
-    if (debug) {
-      // in debug mode, optimize each function now that we are done adding functions,
+    if (!useWorkers()) {
+      // optimize each function now that we are done adding functions,
       // then optimize globally
       PassRunner passRunner(wasm, passOptions);
-      passRunner.setDebug(true);
-      passRunner.setValidateGlobally(validateGlobally);
+      if (debug) {
+        passRunner.setDebug(true);
+        passRunner.setValidateGlobally(validateGlobally);
+      }
       addPrePasses(passRunner);
       passRunner.addDefaultFunctionOptimizationPasses();
       passRunner.addDefaultGlobalOptimizationPostPasses();
@@ -281,5 +289,4 @@ private:
 
 } // namespace wasm
 
-#endif // optimizing_incremental_module_builder_h
-
+#endif // wasm_wasm_module_building_h

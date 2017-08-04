@@ -6,17 +6,17 @@
  (func $b14 (type $2) (result i32)
   (drop
    (select
-    (block $block1 i32
+    (block $block1 (result i32)
      (i32.const 12)
     )
-    (block $block3 i32
+    (block $block3 (result i32)
      (i32.const 27)
     )
     (i32.const 1)
    )
   )
   (drop
-   (if i32
+   (if (result i32)
     (i32.const 1)
     (i32.load
      (i32.const 10)
@@ -25,7 +25,7 @@
    )
   )
   (drop
-   (if i32
+   (if (result i32)
     (i32.const 1)
     (i32.rem_s
      (i32.const 11)
@@ -35,7 +35,7 @@
    )
   )
   (drop
-   (if i32
+   (if (result i32)
     (i32.const 1)
     (i32.trunc_u/f64
      (f64.const 12.34)
@@ -43,6 +43,7 @@
     (i32.const 27)
    )
   )
+  (i32.const 0)
  )
  (func $join-br_ifs (type $1)
   (block $out
@@ -119,6 +120,22 @@
    )
    (br_if $out83
     (call $b14)
+   )
+  )
+ )
+ (func $join-and-it-becomes-unreachable (type $1)
+  (block $label$1
+   (block $block
+    (br_if $label$1
+     (i32.load8_u
+      (i32.const -93487262)
+     )
+    )
+    (br_if $label$1
+     (loop $label$5
+      (br $label$5)
+     )
+    )
    )
   )
  )

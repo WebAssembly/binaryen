@@ -1,0 +1,239 @@
+(module
+ (type $0 (func))
+ (type $1 (func (result i32)))
+ (type $2 (func (param i32) (result i32)))
+ (type $3 (func (param i32)))
+ (memory $0 0)
+ (func $trivial (type $0)
+  (nop)
+ )
+ (func $trivial2 (type $0)
+  (call $trivial)
+  (call $trivial)
+ )
+ (func $return-void (type $0)
+  (nop)
+ )
+ (func $return-val (type $1) (result i32)
+  (i32.const 1)
+ )
+ (func $ifs (type $2) (param $0 i32) (result i32)
+  (if (result i32)
+   (get_local $0)
+   (if (result i32)
+    (get_local $0)
+    (i32.const 2)
+    (i32.const 3)
+   )
+   (if (result i32)
+    (get_local $0)
+    (i32.const 4)
+    (i32.const 5)
+   )
+  )
+ )
+ (func $loops (type $3) (param $0 i32)
+  (if
+   (get_local $0)
+   (loop $shape$3$continue
+    (call $trivial)
+    (br $shape$3$continue)
+   )
+  )
+  (loop $shape$6$continue
+   (call $trivial)
+   (br_if $shape$6$continue
+    (get_local $0)
+   )
+  )
+  (block $block$11$break
+   (loop $shape$9$continue
+    (call $trivial)
+    (br_if $block$11$break
+     (i32.eqz
+      (get_local $0)
+     )
+    )
+    (br $shape$9$continue)
+   )
+  )
+ )
+ (func $br-out (type $3) (param $0 i32)
+  (call $br-out
+   (i32.const 5)
+  )
+ )
+ (func $unreachable (type $3) (param $0 i32)
+  (if
+   (i32.eqz
+    (get_local $0)
+   )
+   (call $unreachable
+    (i32.const 5)
+   )
+  )
+  (if
+   (get_local $0)
+   (block
+    (call $unreachable
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+   (call $unreachable
+    (i32.const 3)
+   )
+  )
+ )
+ (func $empty-blocks (type $3) (param $0 i32)
+  (nop)
+ )
+ (func $before-and-after (type $3) (param $0 i32)
+  (call $before-and-after
+   (i32.const 1)
+  )
+  (call $before-and-after
+   (i32.const 2)
+  )
+  (call $before-and-after
+   (i32.const 3)
+  )
+  (call $before-and-after
+   (i32.const 4)
+  )
+  (if
+   (i32.eqz
+    (get_local $0)
+   )
+   (call $before-and-after
+    (i32.const 5)
+   )
+  )
+  (call $before-and-after
+   (i32.const 6)
+  )
+  (call $before-and-after
+   (i32.const 7)
+  )
+  (call $before-and-after
+   (i32.const 8)
+  )
+  (loop $shape$7$continue
+   (call $before-and-after
+    (i32.const 9)
+   )
+   (br_if $shape$7$continue
+    (get_local $0)
+   )
+  )
+  (call $before-and-after
+   (i32.const 10)
+  )
+  (call $before-and-after
+   (i32.const 11)
+  )
+  (if
+   (get_local $0)
+   (call $before-and-after
+    (i32.const 12)
+   )
+  )
+  (call $before-and-after
+   (i32.const 13)
+  )
+  (if
+   (get_local $0)
+   (call $before-and-after
+    (i32.const 14)
+   )
+   (call $before-and-after
+    (i32.const 15)
+   )
+  )
+  (if
+   (get_local $0)
+   (call $before-and-after
+    (i32.const 16)
+   )
+  )
+  (call $before-and-after
+   (i32.const 17)
+  )
+  (call $before-and-after
+   (i32.const 18)
+  )
+  (call $before-and-after
+   (i32.const 19)
+  )
+  (call $before-and-after
+   (i32.const 20)
+  )
+  (call $before-and-after
+   (i32.const 21)
+  )
+  (call $before-and-after
+   (i32.const 22)
+  )
+  (call $before-and-after
+   (i32.const 23)
+  )
+  (call $before-and-after
+   (i32.const 24)
+  )
+  (call $before-and-after
+   (i32.const 25)
+  )
+ )
+ (func $switch (type $3) (param $0 i32)
+  (block $switch$1$case$3
+   (br_table $switch$1$case$3 $switch$1$case$3
+    (get_local $0)
+   )
+  )
+  (block $block$6$break
+   (call $switch
+    (i32.const 1)
+   )
+   (block $switch$3$default
+    (block $switch$3$case$6
+     (br_table $switch$3$case$6 $switch$3$case$6 $switch$3$case$6 $switch$3$default
+      (get_local $0)
+     )
+    )
+    (br $block$6$break)
+   )
+   (call $switch
+    (i32.const 2)
+   )
+  )
+  (call $switch
+   (i32.const 3)
+  )
+ )
+ (func $no-return (type $0)
+  (nop)
+ )
+ (func $if-br-wat (type $3) (param $0 i32)
+  (block $block$2$break
+   (call $if-br-wat
+    (i32.const 0)
+   )
+   (if
+    (get_local $0)
+    (call $if-br-wat
+     (i32.const 1)
+    )
+    (if
+     (get_local $0)
+     (br $block$2$break)
+    )
+   )
+   (call $if-br-wat
+    (i32.const 2)
+   )
+  )
+  (call $if-br-wat
+   (i32.const 3)
+  )
+ )
+)

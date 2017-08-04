@@ -18,7 +18,6 @@
 // wasm2asm console tool
 //
 
-
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
@@ -52,7 +51,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "w-parsing..." << std::endl;
   Module wasm;
-  SExpressionWasmBuilder builder(wasm, *root[0], [&]() { abort(); });
+  SExpressionWasmBuilder builder(wasm, *root[0]);
 
   if (options.debug) std::cerr << "asming..." << std::endl;
   Wasm2AsmBuilder wasm2asm(options.debug);

@@ -998,7 +998,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (get_local $x)
           (get_local $y)
@@ -1014,7 +1014,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (get_local $y)
           (get_local $x)
@@ -1030,7 +1030,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (unreachable)
           (get_local $x)
@@ -1046,7 +1046,7 @@
     (local $y i32)
     (loop $top
       (set_local $x
-        (if i32
+        (if (result i32)
           (i32.const 1)
           (unreachable)
           (get_local $y)
@@ -1063,7 +1063,7 @@
     (loop $top
       (drop
         (tee_local $x
-          (if i32
+          (if (result i32)
             (i32.const 1)
             (get_local $x)
             (i32.const 2)
@@ -1073,6 +1073,58 @@
       (drop (get_local $x))
       (drop (get_local $y))
       (br $top)
+    )
+  )
+  (func $tee_br (param $x i32) (result i32)
+    (block $b
+      (return
+        (tee_local $x
+          (br $b)
+        )
+      )
+    )
+    (i32.const 1)
+  )
+  (func $unused-tee-with-child-if-no-else (param $0 i32)
+   (loop $label$0
+    (drop
+     (tee_local $0
+      (if
+       (br $label$0)
+       (nop)
+      )
+     )
+    )
+   )
+  )
+  (func $tee_if_with_unreachable_else (param $0 f64) (param $1 i32) (result i64)
+    (call $tee_if_with_unreachable_else
+     (tee_local $0
+      (if (result f64)
+       (get_local $1)
+       (get_local $0)
+       (unreachable)
+      )
+     )
+     (f64.lt
+      (f64.const -128)
+      (get_local $0)
+     )
+    )
+  )
+  (func $tee_if_with_unreachable_true (param $0 f64) (param $1 i32) (result i64)
+    (call $tee_if_with_unreachable_else
+     (tee_local $0
+      (if (result f64)
+       (get_local $1)
+       (unreachable)
+       (get_local $0)
+      )
+     )
+     (f64.lt
+      (f64.const -128)
+      (get_local $0)
+     )
     )
   )
 )

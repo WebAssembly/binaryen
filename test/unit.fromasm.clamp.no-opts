@@ -17,9 +17,10 @@
  (import "env" "print" (func $print (param i32)))
  (import "env" "h" (func $h (param i32)))
  (import "env" "return_int" (func $return_int (result i32)))
+ (import "env" "emscripten_log" (func $emscripten_log))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (import "env" "memory" (memory $0 256 256))
- (import "env" "table" (table 24 24 anyfunc))
+ (import "env" "table" (table 25 25 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (global $t (mut f64) (get_global $t$asm2wasm$import))
@@ -30,7 +31,7 @@
  (global $n (mut i32) (get_global $n$asm2wasm$import))
  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (global $exportedNumber i32 (i32.const 42))
- (elem (get_global $tableBase) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi)
+ (elem (get_global $tableBase) $v $big_negative $v $v $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
  (export "big_negative" (func $big_negative))
  (export "pick" (func $exportMe))
  (export "doubleCompares" (func $doubleCompares))
@@ -38,6 +39,7 @@
  (export "conversions" (func $conversions))
  (export "switcher" (func $switcher))
  (export "frem" (func $frem))
+ (export "frem_float" (func $legalstub$frem_float))
  (export "big_uint_div_u" (func $big_uint_div_u))
  (export "fr" (func $legalstub$fr))
  (export "negZero" (func $negZero))
@@ -201,19 +203,19 @@
   )
  )
  (func $f64-to-int (param $0 f64) (result i32)
-  (if i32
+  (if (result i32)
    (f64.ne
     (get_local $0)
     (get_local $0)
    )
    (i32.const -2147483648)
-   (if i32
+   (if (result i32)
     (f64.ge
      (get_local $0)
      (f64.const 2147483648)
     )
     (i32.const -2147483648)
-    (if i32
+    (if (result i32)
      (f64.le
       (get_local $0)
       (f64.const -2147483649)
@@ -257,13 +259,13 @@
   (local $J f64)
   (set_local $J
    (f64.sub
-    (block f64
+    (block (result f64)
      (drop
       (f64.const 0.1)
      )
      (f64.const 5.1)
     )
-    (block f64
+    (block (result f64)
      (drop
       (f64.const 3.2)
      )
@@ -407,8 +409,22 @@
    )
   )
  )
+ (func $frem_float (result f32)
+  (return
+   (f32.demote/f64
+    (call $f64-rem
+     (f64.promote/f32
+      (f32.const 5.5)
+     )
+     (f64.promote/f32
+      (f32.const 1.2000000476837158)
+     )
+    )
+   )
+  )
+ )
  (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
-  (if i32
+  (if (result i32)
    (i32.eqz
     (get_local $1)
    )
@@ -469,7 +485,7 @@
   (local $z f32)
   (local $asm2wasm_i32_temp i32)
   (set_local $x
-   (block i32
+   (block (result i32)
     (set_local $asm2wasm_i32_temp
      (i32.const 0)
     )
@@ -746,20 +762,20 @@
     (i32.add
      (i32.add
       (i32.add
-       (block i32
+       (block (result i32)
         (drop
          (i32.const 1)
         )
         (get_local $x)
        )
-       (block i32
+       (block (result i32)
         (drop
          (i32.const 2)
         )
         (i32.const 3)
        )
       )
-      (block i32
+      (block (result i32)
        (block
         (block
          (drop
@@ -776,19 +792,19 @@
        (i32.const 7)
       )
      )
-     (block i32
+     (block (result i32)
       (drop
        (i32.const 8)
       )
-      (block i32
+      (block (result i32)
        (drop
         (i32.const 9)
        )
-       (block i32
+       (block (result i32)
         (drop
          (i32.const 10)
         )
-        (block i32
+        (block (result i32)
          (drop
           (i32.const 11)
          )
@@ -804,7 +820,7 @@
    (i32.add
     (i32.add
      (i32.add
-      (block i32
+      (block (result i32)
        (drop
         (call $lb
          (i32.const 1)
@@ -812,7 +828,7 @@
        )
        (get_local $x)
       )
-      (block i32
+      (block (result i32)
        (drop
         (call $lb
          (i32.const 2)
@@ -823,7 +839,7 @@
        )
       )
      )
-     (block i32
+     (block (result i32)
       (block
        (block
         (drop
@@ -848,25 +864,25 @@
       )
      )
     )
-    (block i32
+    (block (result i32)
      (drop
       (call $lb
        (i32.const 8)
       )
      )
-     (block i32
+     (block (result i32)
       (drop
        (call $lb
         (i32.const 9)
        )
       )
-      (block i32
+      (block (result i32)
        (drop
         (call $lb
          (i32.const 10)
         )
        )
-       (block i32
+       (block (result i32)
         (drop
          (call $lb
           (i32.const 11)
@@ -1004,7 +1020,7 @@
  (func $useSetGlobal (result i32)
   (local $x i32)
   (set_local $x
-   (block i32
+   (block (result i32)
     (set_global $Int
      (i32.const 10)
     )
@@ -1015,7 +1031,7 @@
    (i32.const 20)
   )
   (return
-   (block i32
+   (block (result i32)
     (set_global $Int
      (i32.const 30)
     )
@@ -1025,7 +1041,7 @@
  )
  (func $usesSetGlobal2 (result i32)
   (return
-   (block i32
+   (block (result i32)
     (block
      (set_global $Int
       (i32.const 40)
@@ -1095,9 +1111,9 @@
   (local $x i32)
   (local $y f64)
   (set_local $x
-   (if i32
+   (if (result i32)
     (call $return_int)
-    (i32.trunc_s/f64
+    (call $f64-to-int
      (call $abort
       (f64.convert_s/i32
        (i32.const 5)
@@ -1108,7 +1124,7 @@
    )
   )
   (set_local $y
-   (if f64
+   (if (result f64)
     (call $return_int)
     (call $abort
      (f64.convert_s/i32
@@ -1925,6 +1941,92 @@
    )
   )
  )
+ (func $autoDrop (param $x i32) (result i32)
+  (loop $while-in
+   (block $while-out
+    (if
+     (i32.eq
+      (get_local $x)
+      (i32.const 17)
+     )
+     (block
+      (return
+       (i32.const 5)
+      )
+      (drop
+       (call $autoDrop
+        (i32.const 1)
+       )
+      )
+     )
+     (block
+      (br $while-out)
+      (set_local $x
+       (call $autoDrop
+        (i32.const 2)
+       )
+      )
+     )
+    )
+    (br $while-in)
+   )
+  )
+  (return
+   (get_local $x)
+  )
+ )
+ (func $indirectInSequence
+  (local $i1 i32)
+  (set_local $i1
+   (block (result i32)
+    (call_indirect $FUNCSIG$vi
+     (i32.const 0)
+     (i32.add
+      (i32.and
+       (i32.const 1)
+       (i32.const 7)
+      )
+      (i32.const 16)
+     )
+    )
+    (i32.const 1)
+   )
+  )
+ )
+ (func $emterpretify_assertions_safeHeap
+  (local $i1 i32)
+  (call_indirect $FUNCSIG$vi
+   (get_local $i1)
+   (i32.add
+    (i32.and
+     (block (result i32)
+      (set_global $Int
+       (i32.const 1)
+      )
+      (get_global $Int)
+     )
+     (i32.const 7)
+    )
+    (i32.const 16)
+   )
+  )
+ )
+ (func $call_emscripten_log
+  (call $emscripten_log)
+  (if
+   (i32.const 2)
+   (drop
+    (call $f64-to-int
+     (call $abort
+      (f64.const 0)
+     )
+    )
+   )
+   (drop
+    (i32.const 3)
+   )
+  )
+ )
  (func $keepAlive
   (drop
    (call $sqrts
@@ -1946,12 +2048,30 @@
     (f64.const 100)
    )
   )
+  (drop
+   (call $autoDrop
+    (i32.const 52)
+   )
+  )
+  (call $indirectInSequence)
+  (call $emterpretify_assertions_safeHeap)
+  (call $call_emscripten_log)
  )
  (func $v
   (nop)
  )
  (func $vi (param $x i32)
   (nop)
+ )
+ (func $ii (param $x i32) (result i32)
+  (return
+   (get_local $x)
+  )
+ )
+ (func $legalstub$frem_float (result f64)
+  (f64.promote/f32
+   (call $frem_float)
+  )
  )
  (func $legalstub$fr (param $0 f64)
   (call $fr

@@ -24,7 +24,7 @@
   (local $n f32)
   (set_local $n
    (f32.neg
-    (block f32
+    (block (result f32)
      (i32.store
       (get_local $k)
       (get_local $p)

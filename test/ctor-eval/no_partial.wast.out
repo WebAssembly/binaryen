@@ -1,0 +1,13 @@
+(module
+ (type $0 (func))
+ (memory $0 256 256)
+ (data (i32.const 10) "waka waka waka waka waka")
+ (export "test1" (func $test1))
+ (func $test1 (type $0)
+  (i32.store8
+   (i32.const 12)
+   (i32.const 115)
+  )
+  (unreachable)
+ )
+)

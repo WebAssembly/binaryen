@@ -2,17 +2,20 @@ SET(passes_SOURCES
   pass.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
+  CodeFolding.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
+  FlattenControlFlow.cpp
   Inlining.cpp
   LegalizeJSInterface.cpp
   LocalCSE.cpp
   LogExecution.cpp
+  InstrumentLocals.cpp
+  InstrumentMemory.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   Metrics.cpp
-  NameManager.cpp
   NameList.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
@@ -21,6 +24,7 @@ SET(passes_SOURCES
   Print.cpp
   PrintCallGraph.cpp
   RelooperJumpThreading.cpp
+  ReReloop.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveUnusedBrs.cpp
@@ -29,6 +33,8 @@ SET(passes_SOURCES
   ReorderLocals.cpp
   ReorderFunctions.cpp
   SimplifyLocals.cpp
+  SSAify.cpp
+  Untee.cpp
   Vacuum.cpp
 )
 ADD_LIBRARY(passes STATIC ${passes_SOURCES})

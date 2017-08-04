@@ -23,7 +23,7 @@
           )
         )
         (set_local $0
-          (if i32
+          (if (result i32)
             (i32.or ;; this or is very expensive. we should compute one side, then see if we even need the other
               (i32.eqz
                 (i32.rem_s
@@ -109,7 +109,7 @@
           )
         )
         (set_local $0
-          (if i32
+          (if (result i32)
             (i32.or ;; this or is very expensive, but has a side effect on both sides
               (i32.eqz
                 (i32.rem_s
@@ -195,7 +195,7 @@
           )
         )
         (set_local $0
-          (if i32
+          (if (result i32)
             (i32.or ;; this or is very expensive, and the first side has no side effect
               (i32.eqz
                 (i32.rem_s
@@ -258,6 +258,70 @@
     (return
       (get_local $5)
     )
+  )
+  (func $invalidate-conditionalizeExpensiveOnBitwise (param $0 i32) (param $1 i32) (result i32)
+   (if
+    (i32.eqz
+     (i32.and
+      (i32.lt_s
+       (i32.and
+        (i32.shr_s
+         (i32.shl
+          (i32.add
+           (get_local $1) ;; conflict with tee
+           (i32.const -1)
+          )
+          (i32.const 24)
+         )
+         (i32.const 24)
+        )
+        (i32.const 255)
+       )
+       (i32.const 3)
+      )
+      (i32.ne
+       (tee_local $1
+        (i32.const 0)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (return (get_local $0))
+   )
+   (return (get_local $1))
+  )
+  (func $invalidate-conditionalizeExpensiveOnBitwise-ok (param $0 i32) (param $1 i32) (result i32)
+   (if
+    (i32.eqz
+     (i32.and
+      (i32.lt_s
+       (i32.and
+        (i32.shr_s
+         (i32.shl
+          (i32.add
+           (get_local $0) ;; no conflict
+           (i32.const -1)
+          )
+          (i32.const 24)
+         )
+         (i32.const 24)
+        )
+        (i32.const 255)
+       )
+       (i32.const 3)
+      )
+      (i32.ne
+       (tee_local $1
+        (i32.const 0)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (return (get_local $0))
+   )
+   (return (get_local $1))
   )
 )
 

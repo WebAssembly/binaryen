@@ -1,0 +1,103 @@
+(module
+ (type $FUNCSIG$ii (func (param i32) (result i32)))
+ (type $1 (func (result i32)))
+ (type $2 (func (param i32)))
+ (type $3 (func))
+ (import "env" "table" (table 9 9 anyfunc))
+ (memory $0 0)
+ (func $break-and-binary (type $1) (result i32)
+  (block $x (result i32)
+   (f32.add
+    (br_if $x
+     (i32.trunc_u/f64
+      (unreachable)
+     )
+     (i32.trunc_u/f64
+      (unreachable)
+     )
+    )
+    (f32.const 1)
+   )
+  )
+ )
+ (func $call-and-unary (type $FUNCSIG$ii) (param $0 i32) (result i32)
+  (drop
+   (i64.eqz
+    (call $call-and-unary
+     (unreachable)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (i32.eqz
+     (unreachable)
+    )
+   )
+  )
+  (drop
+   (i64.eqz
+    (call_indirect $FUNCSIG$ii
+     (unreachable)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $tee (type $2) (param $x i32)
+  (local $y f32)
+  (drop
+   (i64.eqz
+    (tee_local $x
+     (unreachable)
+    )
+   )
+  )
+  (drop
+   (tee_local $y
+    (i64.eqz
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $tee2 (type $3)
+  (local $0 f32)
+  (if
+   (i32.const 259)
+   (tee_local $0
+    (unreachable)
+   )
+  )
+ )
+ (func $select (type $3)
+  (drop
+   (i64.eqz
+    (select
+     (unreachable)
+     (i32.const 1)
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $untaken-break-should-have-value (type $1) (result i32)
+  (block $x (result i32)
+   (block $block
+    (br_if $x
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $br_table_unreachable_to_also_unreachable (type $1) (result i32)
+  (block $a (result i32)
+   (block $b
+    (br_table $a $b
+     (unreachable)
+     (unreachable)
+    )
+   )
+  )
+ )
+)

@@ -28,10 +28,13 @@
 // have no side effects.
 //
 
+#include <vector>
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/block-utils.h>
+#include <ast/branch-utils.h>
+#include <ast/type-updating.h>
 
 namespace wasm {
 
@@ -40,23 +43,48 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   Pass* create() override { return new DeadCodeElimination; }
 
+  // as we remove code, we must keep the types of other nodes valid
+  TypeUpdater typeUpdater;
+
+  Expression* replaceCurrent(Expression* expression) {
+    auto* old = getCurrent();
+    WalkerPass<PostWalker<DeadCodeElimination>>::replaceCurrent(expression);
+    // also update the type updater
+    typeUpdater.noteReplacement(old, expression);
+    return expression;
+  }
+
   // whether the current code is actually reachable
   bool reachable;
 
   void doWalkFunction(Function* func) {
     reachable = true;
+    typeUpdater.walk(func->body);
     walk(func->body);
   }
 
   std::set<Name> reachableBreaks;
 
   void addBreak(Name name) {
-    assert(reachable);
-    reachableBreaks.insert(name);
+    // we normally have already reduced unreachable code into (unreachable)
+    // nodes, so we would not get to this function at all anyhow, the breaking
+    // instruction itself would be removed. However, an exception are things
+    // like  (block (result i32) (call $x) (unreachable)) , which has type i32
+    // despite not being exited.
+    // TODO: optimize such cases
+    if (reachable) {
+      reachableBreaks.insert(name);
+    }
   }
 
-  bool isDead(Expression* curr) {
-    return curr && curr->is<Unreachable>();
+  // if a child exists and is unreachable, we can replace ourselves with it
+  bool isDead(Expression* child) {
+    return child && child->type == unreachable;
+  }
+
+  // a similar check, assumes the child exists
+  bool isUnreachable(Expression* child) {
+    return child->type == unreachable;
   }
 
   // things that stop control flow
@@ -65,6 +93,23 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (isDead(curr->value)) {
       // the condition is evaluated last, so if the value was unreachable, the whole thing is
       replaceCurrent(curr->value);
+      return;
+    }
+    if (isDead(curr->condition)) {
+      if (curr->value) {
+        auto* block = getModule()->allocator.alloc<Block>();
+        block->list.resize(2);
+        block->list[0] = drop(curr->value);
+        block->list[1] = curr->condition;
+        // if we previously returned a value, then this block
+        // must have the same type, so it fits in the ast
+        // properly. it ends in an unreachable
+        // anyhow, so that is ok.
+        block->finalize(curr->type);
+        replaceCurrent(block);
+      } else {
+        replaceCurrent(curr->condition);
+      }
       return;
     }
     addBreak(curr->name);
@@ -76,6 +121,19 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   void visitSwitch(Switch* curr) {
     if (isDead(curr->value)) {
       replaceCurrent(curr->value);
+      return;
+    }
+    if (isUnreachable(curr->condition)) {
+      if (curr->value) {
+        auto* block = getModule()->allocator.alloc<Block>();
+        block->list.resize(2);
+        block->list[0] = drop(curr->value);
+        block->list[1] = curr->condition;
+        block->finalize(curr->type);
+        replaceCurrent(block);
+      } else {
+        replaceCurrent(curr->condition);
+      }
       return;
     }
     for (auto target : curr->targets) {
@@ -97,48 +155,29 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     reachable = false;
   }
 
-  // we maintain a stack for blocks, as we visit each item, and the parameter is the index
-
-  std::vector<Index> blockStack; // index in current block
-
-  static void doPreBlock(DeadCodeElimination* self, Expression** currp) {
-    self->blockStack.push_back(0);
-  }
-
-  static void doAfterBlockElement(DeadCodeElimination* self, Expression** currp) {
-    auto* block = (*currp)->cast<Block>();
-    Index i = self->blockStack.back();
-    self->blockStack.back()++;
-    if (!self->reachable) {
-      // control flow ended in the middle of the block, so we can truncate the rest.
-      // note that we still visit the rest, so if we already truncated, do not lengthen.
-      // note that it is ok that we visit the others even though the list was shortened;
-      // our arena vectors leave things as they are when shrinking.
-      if (block->list.size() > i + 1) {
-        // but note that it is not legal to truncate a block if it leaves a bad last element,
-        // given the wasm type rules. For example, if the last element is a return, then
-        // the block doesn't care about it for type checking purposes, but if removing
-        // it would leave an element with type none as the last, that could be a problem,
-        // see https://github.com/WebAssembly/spec/issues/355
-        if (!(isConcreteWasmType(block->type) && block->list[i]->type == none)) {
-          block->list.resize(i + 1);
-          // note that we do *not* finalize here. it is incorrect to re-finalize a block
-          // after removing elements, as it may no longer have branches to it that would
-          // determine its type, so re-finalizing would just wipe out an existing type
-          // that it had.
+  void visitBlock(Block* curr) {
+    auto& list = curr->list;
+    // if we are currently unreachable (before we take into account
+    // breaks to the block) then a child may be unreachable, and we
+    // can shorten
+    if (!reachable && list.size() > 1) {
+      // to do here: nothing to remove after it)
+      for (Index i = 0; i < list.size() - 1; i++) {
+        if (list[i]->type == unreachable) {
+          list.resize(i + 1);
+          break;
         }
       }
     }
-  }
-
-  void visitBlock(Block* curr) {
-    blockStack.pop_back();
     if (curr->name.is()) {
       reachable = reachable || reachableBreaks.count(curr->name);
       reachableBreaks.erase(curr->name);
     }
-    if (curr->list.size() == 1 && isDead(curr->list[0])) {
-      replaceCurrent(curr->list[0]);
+    if (list.size() == 1 && isUnreachable(list[0])) {
+      replaceCurrent(BlockUtils::simplifyToContentsWithPossibleTypeChange(curr, this));
+    } else {
+      // the block may have had a type, but can now be unreachable, which allows more reduction outside
+      typeUpdater.maybeUpdateTypeToUnreachable(curr);
     }
   }
 
@@ -146,7 +185,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     if (curr->name.is()) {
       reachableBreaks.erase(curr->name);
     }
-    if (isDead(curr->body)) {
+    if (isUnreachable(curr->body) && !BranchUtils::BranchSeeker::hasNamed(curr->body, curr->name)) {
       replaceCurrent(curr->body);
       return;
     }
@@ -172,16 +211,21 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     // the ifStack has the branch that joins us, either from before if just an if, or the ifTrue if an if-else
     reachable = reachable || ifStack.back();
     ifStack.pop_back();
-    if (isDead(curr->condition)) {
+    if (isUnreachable(curr->condition)) {
       replaceCurrent(curr->condition);
     }
+    // the if may have had a type, but can now be unreachable, which allows more reduction outside
+    curr->finalize();
   }
 
   static void scan(DeadCodeElimination* self, Expression** currp) {
     if (!self->reachable) {
       // convert to an unreachable. do this without UB, even though we have no destructors on AST nodes
-      #define DELEGATE(CLASS_TO_VISIT) \
-        { ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); break; }
+      #define DELEGATE(CLASS_TO_VISIT) { \
+        self->typeUpdater.noteRecursiveRemoval(*currp); \
+        ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); \
+        break; \
+      }
       switch ((*currp)->_id) {
         case Expression::Id::BlockId: DELEGATE(Block);
         case Expression::Id::IfId: DELEGATE(If);
@@ -222,14 +266,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       self->pushTask(DeadCodeElimination::scan, &curr->cast<If>()->ifTrue);
       self->pushTask(DeadCodeElimination::doAfterIfCondition, currp);
       self->pushTask(DeadCodeElimination::scan, &curr->cast<If>()->condition);
-    } else if (curr->is<Block>()) {
-      self->pushTask(DeadCodeElimination::doVisitBlock, currp);
-      auto& list = curr->cast<Block>()->list;
-      for (int i = int(list.size()) - 1; i >= 0; i--) {
-        self->pushTask(DeadCodeElimination::doAfterBlockElement, currp);
-        self->pushTask(DeadCodeElimination::scan, &list[i]);
-      }
-      self->pushTask(DeadCodeElimination::doPreBlock, currp);
     } else {
       WalkerPass<PostWalker<DeadCodeElimination>>::scan(self, currp);
     }
@@ -237,15 +273,16 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   // other things
 
+  // we don't need to drop unreachable nodes
   Expression* drop(Expression* toDrop) {
-    if (toDrop->is<Unreachable>()) return toDrop;
+    if (toDrop->type == unreachable) return toDrop;
     return Builder(*getModule()).makeDrop(toDrop);
   }
 
   template<typename T>
   Expression* handleCall(T* curr) {
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (isDead(curr->operands[i])) {
+      if (isUnreachable(curr->operands[i])) {
         if (i > 0) {
           auto* block = getModule()->allocator.alloc<Block>();
           Index newSize = i + 1;
@@ -254,7 +291,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
           for (; j < newSize; j++) {
             block->list[j] = drop(curr->operands[j]);
           }
-          block->finalize();
+          block->finalize(curr->type);
           return replaceCurrent(block);
         } else {
           return replaceCurrent(curr->operands[i]);
@@ -274,93 +311,77 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   void visitCallIndirect(CallIndirect* curr) {
     if (handleCall(curr) != curr) return;
-    if (isDead(curr->target)) {
+    if (isUnreachable(curr->target)) {
       auto* block = getModule()->allocator.alloc<Block>();
       for (auto* operand : curr->operands) {
         block->list.push_back(drop(operand));
       }
       block->list.push_back(curr->target);
-      block->finalize();
+      block->finalize(curr->type);
       replaceCurrent(block);
+    }
+  }
+
+  // Append the reachable operands of the current node to a block, and replace
+  // it with the block
+  void blockifyReachableOperands(std::vector<Expression*>&& list, WasmType type) {
+    for (size_t i = 0; i < list.size(); ++i) {
+      auto* elem = list[i];
+      if (isUnreachable(elem)) {
+	auto* replacement = elem;
+	if (i > 0) {
+	  auto* block = getModule()->allocator.alloc<Block>();
+	  for (size_t j = 0; j < i; ++j) {
+	    block->list.push_back(drop(list[j]));
+	  }
+	  block->list.push_back(list[i]);
+	  block->finalize(type);
+	  replacement = block;
+	}
+	replaceCurrent(replacement);
+	return;
+      }
     }
   }
 
   void visitSetLocal(SetLocal* curr) {
-    if (isDead(curr->value)) {
-      replaceCurrent(curr->value);
-    }
+    blockifyReachableOperands({ curr->value }, curr->type);
   }
 
   void visitLoad(Load* curr) {
-    if (isDead(curr->ptr)) {
-      replaceCurrent(curr->ptr);
-    }
+    blockifyReachableOperands({ curr->ptr}, curr->type);
   }
 
   void visitStore(Store* curr) {
-    if (isDead(curr->ptr)) {
-      replaceCurrent(curr->ptr);
-      return;
-    }
-    if (isDead(curr->value)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2);
-      block->list[0] = drop(curr->ptr);
-      block->list[1] = curr->value;
-      block->finalize();
-      replaceCurrent(block);
-    }
+    blockifyReachableOperands({ curr->ptr, curr->value }, curr->type);
+  }
+
+  void visitAtomicRMW(AtomicRMW* curr) {
+    blockifyReachableOperands({ curr->ptr, curr->value }, curr->type);
+  }
+
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    blockifyReachableOperands({ curr->ptr, curr->expected, curr->replacement }, curr->type);
   }
 
   void visitUnary(Unary* curr) {
-    if (isDead(curr->value)) {
-      replaceCurrent(curr->value);
-    }
+    blockifyReachableOperands({ curr->value }, curr->type);
   }
 
   void visitBinary(Binary* curr) {
-    if (isDead(curr->left)) {
-      replaceCurrent(curr->left);
-      return;
-    }
-    if (isDead(curr->right)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2);
-      block->list[0] = drop(curr->left);
-      block->list[1] = curr->right;
-      block->finalize();
-      replaceCurrent(block);
-    }
+    blockifyReachableOperands({ curr->left, curr->right}, curr->type);
   }
 
   void visitSelect(Select* curr) {
-    if (isDead(curr->ifTrue)) {
-      replaceCurrent(curr->ifTrue);
-      return;
-    }
-    if (isDead(curr->ifFalse)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(2);
-      block->list[0] = drop(curr->ifTrue);
-      block->list[1] = curr->ifFalse;
-      block->finalize();
-      replaceCurrent(block);
-      return;
-    }
-    if (isDead(curr->condition)) {
-      auto* block = getModule()->allocator.alloc<Block>();
-      block->list.resize(3);
-      block->list[0] = drop(curr->ifTrue);
-      block->list[1] = drop(curr->ifFalse);
-      block->list[2] = curr->condition;
-      block->finalize();
-      replaceCurrent(block);
-      return;
-    }
+    blockifyReachableOperands({ curr->ifTrue, curr->ifFalse, curr->condition}, curr->type);
+  }
+
+  void visitDrop(Drop* curr) {
+    blockifyReachableOperands({ curr->value }, curr->type);
   }
 
   void visitHost(Host* curr) {
-    // TODO
+    handleCall(curr);
   }
 
   void visitFunction(Function* curr) {
@@ -373,4 +394,3 @@ Pass *createDeadCodeEliminationPass() {
 }
 
 } // namespace wasm
-

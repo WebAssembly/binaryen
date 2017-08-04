@@ -24,25 +24,29 @@ class Pass;
 // All passes:
 Pass *createCoalesceLocalsPass();
 Pass *createCoalesceLocalsWithLearningPass();
+Pass *createCodeFoldingPass();
 Pass *createCodePushingPass();
 Pass *createDeadCodeEliminationPass();
 Pass *createDuplicateFunctionEliminationPass();
 Pass *createExtractFunctionPass();
+Pass *createFlattenControlFlowPass();
 Pass *createFullPrinterPass();
 Pass *createInliningPass();
 Pass *createInliningOptimizingPass();
 Pass *createLegalizeJSInterfacePass();
 Pass *createLocalCSEPass();
 Pass *createLogExecutionPass();
+Pass *createInstrumentLocalsPass();
+Pass *createInstrumentMemoryPass();
 Pass *createMemoryPackingPass();
 Pass *createMergeBlocksPass();
 Pass *createMinifiedPrinterPass();
 Pass *createMetricsPass();
 Pass *createNameListPass();
-Pass *createNameManagerPass();
 Pass *createOptimizeInstructionsPass();
 Pass *createPickLoadSignsPass();
 Pass *createPostEmscriptenPass();
+Pass *createPrecomputePass();
 Pass *createPrinterPass();
 Pass *createPrintCallGraphPass();
 Pass *createRelooperJumpThreadingPass();
@@ -53,13 +57,14 @@ Pass *createRemoveUnusedModuleElementsPass();
 Pass *createRemoveUnusedNamesPass();
 Pass *createReorderFunctionsPass();
 Pass *createReorderLocalsPass();
+Pass *createReReloopPass();
 Pass *createSimplifyLocalsPass();
 Pass *createSimplifyLocalsNoTeePass();
 Pass *createSimplifyLocalsNoStructurePass();
 Pass *createSimplifyLocalsNoTeeNoStructurePass();
+Pass *createSSAifyPass();
+Pass *createUnteePass();
 Pass *createVacuumPass();
-Pass *createPrecomputePass();
-//Pass *createLowerInt64Pass();
 
 }
 

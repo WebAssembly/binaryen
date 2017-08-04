@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef wasm_emscripten_h
-#define wasm_emscripten_h
+#ifndef wasm_wasm_emscripten_h
+#define wasm_wasm_emscripten_h
 
 #include "wasm.h"
 
 namespace wasm {
 
+class LinkerObject;
+
 namespace emscripten {
 
+void generateRuntimeFunctions(LinkerObject& linker);
 void generateMemoryGrowthFunction(Module&);
 
 // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
@@ -39,4 +42,4 @@ void generateEmscriptenMetadata(std::ostream& o,
 
 } // namespace wasm
 
-#endif // wasm_emscripten_h
+#endif // wasm_wasm_emscripten_h

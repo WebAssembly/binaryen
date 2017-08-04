@@ -16,7 +16,8 @@
 
 //
 // Removes module elements that are are never used: functions and globals,
-// which may be imported or not.
+// which may be imported or not, and function types (which we merge
+// and remove if unneeded)
 //
 
 
@@ -25,6 +26,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "ast_utils.h"
+#include "asm_v_wasm.h"
 
 namespace wasm {
 
@@ -97,8 +99,37 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   }
 };
 
+// Finds function type usage
+
+struct FunctionTypeAnalyzer : public PostWalker<FunctionTypeAnalyzer> {
+  std::vector<Import*> functionImports;
+  std::vector<Function*> functions;
+  std::vector<CallIndirect*> indirectCalls;
+
+  void visitImport(Import* curr) {
+    if (curr->kind == ExternalKind::Function && curr->functionType.is()) {
+      functionImports.push_back(curr);
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (curr->type.is()) {
+      functions.push_back(curr);
+    }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    indirectCalls.push_back(curr);
+  }
+};
+
 struct RemoveUnusedModuleElements : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    optimizeGlobalsAndFunctions(module);
+    optimizeFunctionTypes(module);
+  }
+
+  void optimizeGlobalsAndFunctions(Module* module) {
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
@@ -145,6 +176,40 @@ struct RemoveUnusedModuleElements : public Pass {
       }), v.end());
     }
     module->updateMaps();
+  }
+
+  void optimizeFunctionTypes(Module* module) {
+    FunctionTypeAnalyzer analyzer;
+    analyzer.walkModule(module);
+    // maps each string signature to a single canonical function type
+    std::unordered_map<std::string, FunctionType*> canonicals;
+    std::unordered_set<FunctionType*> needed;
+    auto canonicalize = [&](Name name) {
+      FunctionType* type = module->getFunctionType(name);
+      auto sig = getSig(type);
+      auto iter = canonicals.find(sig);
+      if (iter == canonicals.end()) {
+        needed.insert(type);
+        canonicals[sig] = type;
+        return type->name;
+      } else {
+        return iter->second->name;
+      }
+    };
+    // canonicalize all uses of function types
+    for (auto* import : analyzer.functionImports) {
+      import->functionType = canonicalize(import->functionType);
+    }
+    for (auto* func : analyzer.functions) {
+      func->type = canonicalize(func->type);
+    }
+    for (auto* call : analyzer.indirectCalls) {
+      call->fullType = canonicalize(call->fullType);
+    }
+    // remove no-longer used types
+    module->functionTypes.erase(std::remove_if(module->functionTypes.begin(), module->functionTypes.end(), [&needed](std::unique_ptr<FunctionType>& type) {
+      return needed.count(type.get()) == 0;
+    }), module->functionTypes.end());
   }
 };
 

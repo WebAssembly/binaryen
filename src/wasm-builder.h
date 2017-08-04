@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef wasm_builder_h
-#define wasm_builder_h
+#ifndef wasm_wasm_builder_h
+#define wasm_wasm_builder_h
 
-#include <wasm.h>
+#include "wasm.h"
+#include "ast/manipulation.h"
 
 namespace wasm {
 
@@ -74,6 +75,11 @@ public:
       ret->list.push_back(first);
       ret->finalize();
     }
+    return ret;
+  }
+  Block* makeBlock(Name name, Expression* first = nullptr) {
+    auto* ret = makeBlock(first);
+    ret->name = name;
     return ret;
   }
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse = nullptr) {
@@ -182,15 +188,52 @@ public:
   }
   Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
     auto* ret = allocator.alloc<Load>();
+    ret->isAtomic = false;
     ret->bytes = bytes; ret->signed_ = signed_; ret->offset = offset; ret->align = align; ret->ptr = ptr;
     ret->type = type;
     return ret;
   }
+  Load* makeAtomicLoad(unsigned bytes, bool signed_, uint32_t offset, Expression* ptr, WasmType type) {
+    Load* load = makeLoad(bytes, signed_, offset, getWasmTypeSize(type), ptr, type);
+    load->isAtomic = true;
+    return load;
+  }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();
+    ret->isAtomic = false;
     ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value; ret->valueType = type;
     ret->finalize();
     assert(isConcreteWasmType(ret->value->type) ? ret->value->type == type : true);
+    return ret;
+  }
+  Store* makeAtomicStore(unsigned bytes, uint32_t offset, Expression* ptr, Expression* value, WasmType type) {
+    Store* store = makeStore(bytes, offset, getWasmTypeSize(type), ptr, value, type);
+    store->isAtomic = true;
+    return store;
+  }
+  AtomicRMW* makeAtomicRMW(AtomicRMWOp op, unsigned bytes, uint32_t offset,
+                           Expression* ptr, Expression* value, WasmType type) {
+    auto* ret = allocator.alloc<AtomicRMW>();
+    ret->op = op;
+    ret->bytes = bytes;
+    ret->offset = offset;
+    ret->ptr = ptr;
+    ret->value = value;
+    ret->type = type;
+    ret->finalize();
+    return ret;
+  }
+  AtomicCmpxchg* makeAtomicCmpxchg(unsigned bytes, uint32_t offset,
+                                   Expression* ptr, Expression* expected,
+                                   Expression* replacement, WasmType type) {
+    auto* ret = allocator.alloc<AtomicCmpxchg>();
+    ret->bytes = bytes;
+    ret->offset = offset;
+    ret->ptr = ptr;
+    ret->expected = expected;
+    ret->replacement = replacement;
+    ret->type = type;
+    ret->finalize();
     return ret;
   }
   Const* makeConst(Literal value) {
@@ -288,7 +331,7 @@ public:
     if (!block) block = makeBlock(any);
     if (append) {
       block->list.push_back(append);
-      block->finalize(); // TODO: move out of if
+      block->finalize();
     }
     return block;
   }
@@ -302,30 +345,8 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
-      block->finalize(); // TODO: move out of if
+      block->finalize();
     }
-    return block;
-  }
-
-  // ensures the first node is a block, if it isn't already, and merges in the second,
-  // either as a single element or, if a block, by appending to the first block
-  Block* blockifyMerge(Expression* any, Expression* append) {
-    Block* block = nullptr;
-    if (any) block = any->dynCast<Block>();
-    if (!block) {
-      block = makeBlock(any);
-    } else {
-      assert(!isConcreteWasmType(block->type));
-    }
-    auto* other = append->dynCast<Block>();
-    if (!other) {
-      block->list.push_back(append);
-    } else {
-      for (auto* item : other->list) {
-        block->list.push_back(item);
-      }
-    }
-    block->finalize(); // TODO: move out of if
     return block;
   }
 
@@ -374,8 +395,27 @@ public:
     std::swap(iff->ifTrue, iff->ifFalse);
     iff->condition = makeUnary(EqZInt32, iff->condition);
   }
+
+  // returns a replacement with the precise same type, and with
+  // minimal contents. as a replacement, this may reuse the
+  // input node
+  template<typename T>
+  Expression* replaceWithIdenticalType(T* curr) {
+    Literal value;
+    // TODO: reuse node conditionally when possible for literals
+    switch (curr->type) {
+      case i32: value = Literal(int32_t(0)); break;
+      case i64: value = Literal(int64_t(0)); break;
+      case f32: value = Literal(float(0)); break;
+      case f64: value = Literal(double(0)); break;
+      case none: return ExpressionManipulator::nop(curr);
+      case unreachable: return ExpressionManipulator::convert<T, Unreachable>(curr);
+    }
+    return makeConst(value);
+  }
+
 };
 
 } // namespace wasm
 
-#endif // wasm_builder_h
+#endif // wasm_wasm_builder_h

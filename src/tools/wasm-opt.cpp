@@ -28,8 +28,65 @@
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm-io.h"
+#include "wasm-interpreter.h"
+#include "shell-interface.h"
+#include "optimization-options.h"
 
 using namespace wasm;
+
+// gets execution results from a wasm module. this is useful for fuzzing
+//
+// we can only get results when there are no imports. we then call each method
+// that has a result, with some values
+struct ExecutionResults {
+  std::map<Name, Literal> results;
+
+  void get(Module& wasm) {
+    if (wasm.imports.size() > 0) {
+      std::cout << "[fuzz-exec] imports, so quitting\n";
+      return;
+    }
+    for (auto& func : wasm.functions) {
+      if (func->result != none) {
+        // this is good
+        results[func->name] = run(func.get(), wasm);
+      }
+    }
+    std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
+  }
+
+  bool operator==(ExecutionResults& other) {
+    for (auto& iter : results) {
+      auto name = iter.first;
+      if (other.results.find(name) != other.results.end()) {
+        if (results[name] != other.results[name]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool operator!=(ExecutionResults& other) {
+    return !((*this) == other);
+  }
+
+  Literal run(Function* func, Module& wasm) {
+    ShellExternalInterface interface;
+    try {
+      ModuleInstance instance(wasm, &interface);
+      LiteralList arguments;
+      for (WasmType param : func->params) {
+        // zeros in arguments TODO: more?
+        arguments.push_back(Literal(param));
+      }
+      return instance.callFunction(func->name, arguments);
+    } catch (const TrapException&) {
+      // may throw in instance creation (init of offsets) or call itself
+      return Literal();
+    }
+  }
+};
 
 //
 // main
@@ -38,12 +95,11 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
-  bool runOptimizationPasses = false;
-  PassOptions passOptions;
   bool emitBinary = true;
   bool debugInfo = false;
+  bool fuzzExec = false;
 
-  Options options("wasm-opt", "Optimize .wast files");
+  OptimizationOptions options("wasm-opt", "Optimize .wast files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -51,30 +107,20 @@ int main(int argc, const char* argv[]) {
              o->extra["output"] = argument;
              Colors::disable();
            })
-      #include "optimization-options.h"
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { emitBinary = false; })
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { debugInfo = true; })
+      .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { fuzzExec = true; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
-  for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
-    options.add(
-        std::string("--") + p, "", PassRegistry::get()->getPassDescription(p),
-        Options::Arguments::Zero,
-        [&passes, p](Options*, const std::string&) { passes.push_back(p); });
-  }
   options.parse(argc, argv);
-
-  if (runOptimizationPasses) {
-    passes.resize(passes.size() + 1);
-    std::move_backward(passes.begin(), passes.begin() + passes.size() - 1, passes.end());
-    passes[0] = "O";
-  }
 
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
@@ -90,6 +136,8 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing input";
+    } catch (std::bad_alloc& b) {
+      Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
   }
 
@@ -97,19 +145,25 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in validating input";
   }
 
-  if (passes.size() > 0) {
+  ExecutionResults results;
+  if (fuzzExec) {
+    results.get(wasm);
+  }
+
+  if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner(&wasm, passOptions);
-    if (options.debug) passRunner.setDebug(true);
-    for (auto& passName : passes) {
-      if (passName == "O") {
-        passRunner.addDefaultOptimizationPasses();
-      } else {
-        passRunner.add(passName);
-      }
-    }
+    PassRunner passRunner = options.getPassRunner(wasm);
     passRunner.run();
     assert(WasmValidator().validate(wasm));
+  }
+
+  if (fuzzExec) {
+    ExecutionResults optimizedResults;
+    optimizedResults.get(wasm);
+    if (optimizedResults != results) {
+      Fatal() << "[fuzz-exec] optimization passes changed execution results";
+    }
+    std::cout << "[fuzz-exec] results match\n";
   }
 
   if (options.extra.count("output") > 0) {

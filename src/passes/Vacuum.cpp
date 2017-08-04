@@ -20,18 +20,37 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/block-utils.h>
+#include <ast/effects.h>
+#include <ast/type-updating.h>
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
+struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Vacuum; }
 
+  TypeUpdater typeUpdater;
+
+  Expression* replaceCurrent(Expression* expression) {
+    auto* old = getCurrent();
+    WalkerPass<PostWalker<Vacuum>>::replaceCurrent(expression);
+    // also update the type updater
+    typeUpdater.noteReplacement(old, expression);
+    return expression;
+  }
+
+  void doWalkFunction(Function* func) {
+    typeUpdater.walk(func->body);
+    walk(func->body);
+  }
+
   // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
+    // an unreachable node must not be changed
+    if (curr->type == unreachable) return curr;
     while (1) {
       switch (curr->_id) {
         case Expression::Id::NopId: return nullptr; // never needed
@@ -54,7 +73,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         case Expression::Id::UnreachableId: return curr; // always needed
 
         case Expression::Id::LoadId: {
-          if (!resultUsed) {
+          // it is ok to remove a load if the result is not used, and it has no
+          // side effects (the load itself may trap, if we are not ignoring such things)
+          if (!resultUsed && !EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
             return curr->cast<Load>()->ptr;
           }
           return curr;
@@ -72,8 +93,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           if (resultUsed) {
             return curr; // used, keep it
           }
-          // for unary, binary, and select, we need to check their arguments for side effects
+          // for unary, binary, and select, we need to check their arguments for side effects,
+          // as well as the node itself, as some unaries and binaries have implicit traps
           if (auto* unary = curr->dynCast<Unary>()) {
+            EffectAnalyzer tester(getPassOptions());
+            tester.visitUnary(unary);
+            if (tester.hasSideEffects()) {
+              return curr;
+            }
             if (EffectAnalyzer(getPassOptions(), unary->value).hasSideEffects()) {
               curr = unary->value;
               continue;
@@ -81,6 +108,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
               return nullptr;
             }
           } else if (auto* binary = curr->dynCast<Binary>()) {
+            EffectAnalyzer tester(getPassOptions());
+            tester.visitBinary(binary);
+            if (tester.hasSideEffects()) {
+              return curr;
+            }
             if (EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
               if (EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
                 return curr; // leave them
@@ -140,71 +172,77 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     int skip = 0;
     auto& list = curr->list;
     size_t size = list.size();
-    bool needResize = false;
     for (size_t z = 0; z < size; z++) {
-      auto* optimized = optimize(list[z], z == size - 1 && isConcreteWasmType(curr->type));
+      auto* child = list[z];
+      auto* optimized = optimize(child, z == size - 1 && isConcreteWasmType(curr->type));
       if (!optimized) {
+        typeUpdater.noteRecursiveRemoval(child);
         skip++;
-        needResize = true;
       } else {
-        if (optimized != list[z]) {
+        if (optimized != child) {
+          typeUpdater.noteReplacement(child, optimized);
           list[z] = optimized;
         }
         if (skip > 0) {
           list[z - skip] = list[z];
+          list[z] = nullptr;
         }
-        // if this is an unconditional br, the rest is dead code
-        Break* br = list[z - skip]->dynCast<Break>();
-        Switch* sw = list[z - skip]->dynCast<Switch>();
-        if ((br && !br->condition) || sw) {
-          auto* last = list.back();
-          list.resize(z - skip + 1);
-          // if we removed the last one, and it was a return value, it must be returned
-          if (list.back() != last && isConcreteWasmType(last->type)) {
-            list.push_back(last);
+        // if this is unreachable, the rest is dead code
+        if (list[z - skip]->type == unreachable && z < size - 1) {
+          for (Index i = z - skip + 1; i < list.size(); i++) {
+            auto* remove = list[i];
+            if (remove) {
+              typeUpdater.noteRecursiveRemoval(remove);
+            }
           }
-          needResize = false;
+          list.resize(z - skip + 1);
+          typeUpdater.maybeUpdateTypeToUnreachable(curr);
+          skip = 0; // nothing more to do on the list
           break;
         }
       }
     }
-    if (needResize) {
+    if (skip > 0) {
       list.resize(size - skip);
+      typeUpdater.maybeUpdateTypeToUnreachable(curr);
     }
-    if (!curr->name.is()) {
-      if (list.size() == 1) {
-        // just one element. replace the block, either with it or with a nop if it's not needed
-        if (isConcreteWasmType(curr->type) || EffectAnalyzer(getPassOptions(), list[0]).hasSideEffects()) {
-          replaceCurrent(list[0]);
-        } else {
-          if (curr->type == unreachable) {
-            ExpressionManipulator::convert<Block, Unreachable>(curr);
-          } else {
-            ExpressionManipulator::nop(curr);
-          }
-        }
-      } else if (list.size() == 0) {
-        ExpressionManipulator::nop(curr);
-      }
-    }
+    // the block may now be a trivial one that we can get rid of and just leave its contents
+    replaceCurrent(BlockUtils::simplifyToContents(curr, this));
   }
 
   void visitIf(If* curr) {
     // if the condition is a constant, just apply it
     // we can just return the ifTrue or ifFalse.
     if (auto* value = curr->condition->dynCast<Const>()) {
+      Expression* child;
       if (value->value.getInteger()) {
-        replaceCurrent(curr->ifTrue);
-        return;
+        child = curr->ifTrue;
+        if (curr->ifFalse) {
+          typeUpdater.noteRecursiveRemoval(curr->ifFalse);
+        }
       } else {
         if (curr->ifFalse) {
-          replaceCurrent(curr->ifFalse);
+          child = curr->ifFalse;
+          typeUpdater.noteRecursiveRemoval(curr->ifTrue);
         } else {
+          typeUpdater.noteRecursiveRemoval(curr);
           ExpressionManipulator::nop(curr);
+          return;
         }
-        return;
       }
+      replaceCurrent(child);
+      return;
     }
+    // if the condition is unreachable, just return it
+    if (curr->condition->type == unreachable) {
+      typeUpdater.noteRecursiveRemoval(curr->ifTrue);
+      if (curr->ifFalse) {
+        typeUpdater.noteRecursiveRemoval(curr->ifFalse);
+      }
+      replaceCurrent(curr->condition);
+      return;
+    }
+    // from here on, we can assume the condition executed
     if (curr->ifFalse) {
       if (curr->ifFalse->is<Nop>()) {
         curr->ifFalse = nullptr;
@@ -253,17 +291,20 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // if we are dropping a block's return value, we might be able to remove it entirely
     if (auto* block = curr->value->dynCast<Block>()) {
       auto* last = block->list.back();
-      if (isConcreteWasmType(last->type)) {
-        assert(block->type == last->type);
+      // note that the last element may be concrete but not the block, if the
+      // block has an unreachable element in the middle, making the block unreachable
+      // despite later elements and in particular the last
+      if (isConcreteWasmType(last->type) && block->type == last->type) {
         last = optimize(last, false);
         if (!last) {
           // we may be able to remove this, if there are no brs
           bool canPop = true;
           if (block->name.is()) {
-            BreakSeeker breakSeeker(block->name);
+            BranchUtils::BranchSeeker seeker(block->name);
+            seeker.named = true;
             Expression* temp = block;
-            breakSeeker.walk(temp);
-            if (breakSeeker.found && breakSeeker.valueType != none) {
+            seeker.walk(temp);
+            if (seeker.found && seeker.valueType != none) {
               canPop = false;
             }
           }
@@ -288,14 +329,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && isConcreteWasmType(iff->type)) {
       // reuse the drop in both cases
-      if (iff->ifTrue->type == unreachable) {
-        assert(isConcreteWasmType(iff->ifFalse->type));
+      if (iff->ifTrue->type == unreachable && isConcreteWasmType(iff->ifFalse->type)) {
         curr->value = iff->ifFalse;
         iff->ifFalse = curr;
         iff->type = none;
         replaceCurrent(iff);
-      } else if (iff->ifFalse->type == unreachable) {
-        assert(isConcreteWasmType(iff->ifTrue->type));
+      } else if (iff->ifFalse->type == unreachable && isConcreteWasmType(iff->ifTrue->type)) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;
         iff->type = none;

@@ -27,8 +27,10 @@
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
 #include "wasm-printing.h"
+#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "cfg/Relooper.h"
+#include "ast_utils.h"
 #include "shell-interface.h"
 
 using namespace wasm;
@@ -59,6 +61,13 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     default: abort();
   }
 }
+
+// Mutexes (global for now; in theory if multiple modules
+// are used at once this should be optimized to be per-
+// module, but likely it doesn't matter)
+
+static std::mutex BinaryenFunctionMutex;
+static std::mutex BinaryenFunctionTypeMutex;
 
 // Tracing support
 
@@ -94,6 +103,7 @@ BinaryenType BinaryenInt32(void) { return i32; }
 BinaryenType BinaryenInt64(void) { return i64; }
 BinaryenType BinaryenFloat32(void) { return f32; }
 BinaryenType BinaryenFloat64(void) { return f64; }
+BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
 // Modules
 
@@ -136,15 +146,14 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
 
   // Lock. This can be called from multiple threads at once, and is a
   // point where they all access and modify the module.
-  static std::mutex BinaryenAddFunctionTypeMutex;
   {
-    std::lock_guard<std::mutex> lock(BinaryenAddFunctionTypeMutex);
+    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
     wasm->addFunctionType(ret);
   }
 
   if (tracing) {
     std::cout << "  {\n";
-    std::cout << "    BinaryenIndex paramTypes[] = { ";
+    std::cout << "    BinaryenType paramTypes[] = { ";
     for (BinaryenIndex i = 0; i < numParams; i++) {
       if (i > 0) std::cout << ", ";
       std::cout << paramTypes[i];
@@ -299,13 +308,14 @@ BinaryenOp BinaryenCurrentMemory(void) { return CurrentMemory; }
 BinaryenOp BinaryenGrowMemory(void) { return GrowMemory; }
 BinaryenOp BinaryenHasFeature(void) { return HasFeature; }
 
-BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren) {
+BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren, BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<Block>();
   if (name) ret->name = name;
   for (BinaryenIndex i = 0; i < numChildren; i++) {
     ret->list.push_back((Expression*)children[i]);
   }
-  ret->finalize();
+  if (type != BinaryenUndefined()) ret->finalize(WasmType(type));
+  else ret->finalize();
 
   if (tracing) {
     std::cout << "  {\n";
@@ -319,7 +329,10 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenBlock(the_module, ";
     traceNameOrNULL(name);
-    std::cout << ", children, " << numChildren << ");\n";
+    std::cout << ", children, " << numChildren << ", ";
+    if (type == BinaryenUndefined()) std::cout << "BinaryenUndefined()";
+    else std::cout << type;
+    std::cout <<  ");\n";
     std::cout << "  }\n";
   }
 
@@ -504,6 +517,32 @@ BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module, BinaryenIndex i
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
+BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char *name, BinaryenType type) {
+  auto* ret = ((Module*)module)->allocator.alloc<GetGlobal>();
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenGetGlobal(the_module, \"" << name << "\", " << type << ");\n";
+  }
+
+  ret->name = name;
+  ret->type = WasmType(type);
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module, const char *name, BinaryenExpressionRef value) {
+  auto* ret = ((Module*)module)->allocator.alloc<SetGlobal>();
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenSetGlobal(the_module, \"" << name << "\", expressions[" << expressions[value] << "]);\n";
+  }
+
+  ret->name = name;
+  ret->value = (Expression*)value;
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr) {
   auto* ret = ((Module*)module)->allocator.alloc<Load>();
 
@@ -511,7 +550,7 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenLoad(the_module, " << bytes << ", " << int(signed_) << ", " << offset << ", " << align << ", " << type << ", expressions[" << expressions[ptr] << "]);\n";
   }
-
+  ret->isAtomic = false;
   ret->bytes = bytes;
   ret->signed_ = !!signed_;
   ret->offset = offset;
@@ -528,7 +567,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenStore(the_module, " << bytes << ", " << offset << ", " << align << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
   }
-
+  ret->isAtomic = false;
   ret->bytes = bytes;
   ret->offset = offset;
   ret->align = align ? align : bytes;
@@ -697,12 +736,26 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
 
   // Lock. This can be called from multiple threads at once, and is a
   // point where they all access and modify the module.
-  static std::mutex BinaryenAddFunctionMutex;
   {
-    std::lock_guard<std::mutex> lock(BinaryenAddFunctionMutex);
+    std::lock_guard<std::mutex> lock(BinaryenFunctionMutex);
     wasm->addFunction(ret);
   }
 
+  return ret;
+}
+
+BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, bool mutable_, BinaryenExpressionRef init) {
+  if (tracing) {
+    std::cout << "  BinaryenAddGlobal(the_module, \"" << name << "\", types[" << type << "], " << mutable_ << ", " << expressions[init] << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  auto* ret = new Global();
+  ret->name = name;
+  ret->type = WasmType(type);
+  ret->mutable_ = mutable_;
+  ret->init = (Expression*)init;
+  wasm->addGlobal(ret);
   return ret;
 }
 
@@ -724,6 +777,15 @@ BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* intern
   return ret;
 }
 
+void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveImport(the_module, \"" << internalName << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->removeImport(internalName);
+}
+
 // Exports
 
 BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName) {
@@ -737,6 +799,15 @@ BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* intern
   ret->name = externalName;
   wasm->addExport(ret);
   return ret;
+}
+
+void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveExport(the_module, \"" << externalName << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->removeExport(externalName);
 }
 
 // Function table. One per module
@@ -835,6 +906,23 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
 //
 // ========== Module Operations ==========
 //
+
+BinaryenModuleRef BinaryenModuleParse(const char* text) {
+  if (tracing) {
+    std::cout << "  // BinaryenModuleRead\n";
+  }
+
+  auto* wasm = new Module;
+  try {
+    SExpressionParser parser(const_cast<char*>(text));
+    Element& root = *parser.root;
+    SExpressionWasmBuilder builder(*wasm, *root[0]);
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    Fatal() << "error in parsing wasm text";
+  }
+  return wasm;
+}
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
   if (tracing) {
@@ -1028,6 +1116,36 @@ void BinaryenSetAPITracing(int on) {
     std::cout << "  return 0;\n";
     std::cout << "}\n";
   }
+}
+
+//
+// ========= Utilities =========
+//
+
+BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams) {
+  if (tracing) {
+    std::cout << "  // BinaryenGetFunctionTypeBySignature\n";
+  }
+
+  auto* wasm = (Module*)module;
+  FunctionType test;
+  test.result = WasmType(result);
+  for (BinaryenIndex i = 0; i < numParams; i++) {
+    test.params.push_back(WasmType(paramTypes[i]));
+  }
+
+  // Lock. Guard against reading the list while types are being added.
+  {
+    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
+    for (BinaryenIndex i = 0; i < wasm->functionTypes.size(); i++) {
+      FunctionType* curr = wasm->functionTypes[i].get();
+      if (curr->structuralComparison(test)) {
+        return curr;
+      }
+    }
+  }
+
+  return NULL;
 }
 
 } // extern "C"

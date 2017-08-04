@@ -27,6 +27,7 @@ using namespace wasm;
 
 // Name of the dummy function to prevent erroneous nullptr comparisons.
 static constexpr const char* dummyFunction = "__wasm_nullptr";
+static constexpr const char* stackPointer = "__stack_pointer";
 
 void Linker::placeStackPointer(Address stackAllocation) {
   // ensure this is the first allocation
@@ -34,7 +35,7 @@ void Linker::placeStackPointer(Address stackAllocation) {
   const Address pointerSize = 4;
   // Unconditionally allocate space for the stack pointer. Emscripten
   // allocates the stack itself, and initializes the stack pointer itself.
-  out.addStatic(pointerSize, pointerSize, "__stack_pointer");
+  out.addStatic(pointerSize, pointerSize, stackPointer);
   if (stackAllocation) {
     // If we are allocating the stack, set up a relocation to initialize the
     // stack pointer to point to one past-the-end of the stack allocation.
@@ -44,7 +45,7 @@ void Linker::placeStackPointer(Address stackAllocation) {
       LinkerObject::Relocation::kData, (uint32_t*)&raw[0], ".stack", stackAllocation);
     out.addRelocation(relocation);
     assert(out.wasm.memory.segments.empty());
-    out.addSegment("__stack_pointer", raw);
+    out.addSegment(stackPointer, raw);
   }
 }
 

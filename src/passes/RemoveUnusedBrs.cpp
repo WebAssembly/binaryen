@@ -21,6 +21,8 @@
 #include <wasm.h>
 #include <pass.h>
 #include <ast_utils.h>
+#include <ast/branch-utils.h>
+#include <ast/effects.h>
 #include <wasm-builder.h>
 
 namespace wasm {
@@ -84,6 +86,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           flows.push_back(flow);
         }
         self->ifStack.pop_back();
+      } else {
+        // if without else stops the flow of values
+        self->valueCanFlow = false;
       }
     } else if (curr->is<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
@@ -122,6 +127,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     } else if (curr->is<Nop>()) {
       // ignore (could be result of a previous cycle)
       self->valueCanFlow = false;
+    } else if (curr->is<Loop>()) {
+      // do nothing - it's ok for values to flow out
     } else {
       // anything else stops the flow
       flows.clear();
@@ -219,17 +226,51 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // we need the ifTrue to break, so it cannot reach the code we want to move
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            iff->finalize();
+            block->finalize();
             return true;
           }
         } else {
           // this is already an if-else. if one side is a dead end, we can append to the other, if
           // there is no returned value to concern us
           assert(!isConcreteWasmType(iff->type)); // can't be, since in the middle of a block
+
+          // ensures the first node is a block, if it isn't already, and merges in the second,
+          // either as a single element or, if a block, by appending to the first block. this
+          // keeps the order of operations in place, that is, the appended element will be
+          // executed after the first node's elements
+          auto blockifyMerge = [&](Expression* any, Expression* append) -> Block* {
+            Block* block = nullptr;
+            if (any) block = any->dynCast<Block>();
+            // if the first isn't a block, or it's a block with a name (so we might
+            // branch to the end, and so can't append to it, we might skip that code!)
+            // then make a new block
+            if (!block || block->name.is()) {
+              block = builder.makeBlock(any);
+            } else {
+              assert(!isConcreteWasmType(block->type));
+            }
+            auto* other = append->dynCast<Block>();
+            if (!other) {
+              block->list.push_back(append);
+            } else {
+              for (auto* item : other->list) {
+                block->list.push_back(item);
+              }
+            }
+            block->finalize();
+            return block;
+          };
+
           if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
-            iff->ifFalse = builder.blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            iff->ifFalse = blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+            iff->finalize();
+            block->finalize();
             return true;
           } else if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifFalse)) {
-            iff->ifTrue = builder.blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            iff->ifTrue = blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+            iff->finalize();
+            block->finalize();
             return true;
           }
         }
@@ -252,7 +293,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // so only do it if it looks useful, which it definitely is if
             //  (a) $somewhere is straight out (so the br out vanishes), and
             //  (b) this br_if is the only branch to that block (so the block will vanish)
-            if (brIf->name == block->name && BreakSeeker::count(block, block->name) == 1) {
+            if (brIf->name == block->name && BranchUtils::BranchSeeker::countNamed(block, block->name) == 1) {
               // note that we could drop the last element here, it is a br we know for sure is removable,
               // but telling stealSlice to steal all to the end is more efficient, it can just truncate.
               list[i] = builder.makeIf(brIf->condition, builder.makeBreak(brIf->name), builder.stealSlice(block, i + 1, list.size()));
@@ -303,19 +344,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     if (worked) {
       // Our work may alter block and if types, they may now return values that we made flow through them
-      struct TypeUpdater : public WalkerPass<PostWalker<TypeUpdater>> {
-        void visitBlock(Block* curr) {
-          curr->finalize();
-        }
-        void visitLoop(Loop* curr) {
-          curr->finalize();
-        }
-        void visitIf(If* curr) {
-          curr->finalize();
-        }
-      };
-      TypeUpdater typeUpdater;
-      typeUpdater.walkFunction(func);
+      ReFinalize().walkFunctionInModule(func, getModule());
     }
 
     // thread trivial jumps
@@ -323,10 +352,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // map of all value-less breaks going to a block (and not a loop)
       std::map<Block*, std::vector<Break*>> breaksToBlock;
 
-      // number of definitions of each name - when a name is defined more than once, it is not trivially safe to do this
-      std::map<Name, Index> numDefs;
-
-      // the names to update, when we can (just one def)
+      // the names to update
       std::map<Break*, Name> newNames;
 
       void visitBreak(Break* curr) {
@@ -338,8 +364,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       // TODO: Switch?
       void visitBlock(Block* curr) {
-        if (curr->name.is()) numDefs[curr->name]++;
-
         auto& list = curr->list;
         if (list.size() == 1 && curr->name.is()) {
           // if this block has just one child, a sub-block, then jumps to the former are jumps to us, really
@@ -372,24 +396,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
         }
       }
-      void visitLoop(Loop* curr) {
-        if (curr->name.is()) numDefs[curr->name]++;
-      }
 
-      void finish() {
+      void finish(Function* func) {
         for (auto& iter : newNames) {
           auto* br = iter.first;
           auto name = iter.second;
-          if (numDefs[name] == 1) {
-            br->name = name;
-          }
+          br->name = name;
+        }
+        if (newNames.size() > 0) {
+          // by changing where brs go, we may change block types etc.
+          ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
     };
     JumpThreader jumpThreader;
     jumpThreader.setModule(getModule());
     jumpThreader.walkFunction(func);
-    jumpThreader.finish();
+    jumpThreader.finish(func);
 
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer> {
@@ -460,7 +483,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto* br = list[0]->dynCast<Break>();
             if (br && br->condition && br->name == curr->name) {
               assert(!br->value); // can't, it would be dropped or last in the block
-              if (BreakSeeker::count(curr, curr->name) == 1) {
+              if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
                 // no other breaks to that name, so we can do this
                 Builder builder(*getModule());
                 replaceCurrent(builder.makeIf(
@@ -469,6 +492,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 ));
                 curr->name = Name();
                 ExpressionManipulator::nop(br);
+                curr->finalize(curr->type);
                 return;
               }
             }

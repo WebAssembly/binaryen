@@ -130,6 +130,10 @@ enum HostOp {
   PageSize, CurrentMemory, GrowMemory, HasFeature
 };
 
+enum AtomicRMWOp {
+  Add, Sub, And, Or, Xor, Xchg
+};
+
 //
 // Expressions
 //
@@ -177,6 +181,8 @@ public:
     HostId,
     NopId,
     UnreachableId,
+    AtomicCmpxchgId,
+    AtomicRMWId,
     NumExpressionIds
   };
   Id _id;
@@ -299,6 +305,8 @@ public:
   Name default_;
   Expression* condition;
   Expression* value;
+
+  void finalize();
 };
 
 class Call : public SpecificExpression<Expression::CallId> {
@@ -307,6 +315,8 @@ public:
 
   ExpressionList operands;
   Name target;
+
+  void finalize();
 };
 
 class CallImport : public SpecificExpression<Expression::CallImportId> {
@@ -315,6 +325,8 @@ public:
 
   ExpressionList operands;
   Name target;
+
+  void finalize();
 };
 
 class FunctionType {
@@ -338,6 +350,8 @@ public:
   ExpressionList operands;
   Name fullType;
   Expression* target;
+
+  void finalize();
 };
 
 class GetLocal : public SpecificExpression<Expression::GetLocalId> {
@@ -352,6 +366,8 @@ class SetLocal : public SpecificExpression<Expression::SetLocalId> {
 public:
   SetLocal() {}
   SetLocal(MixedArena& allocator) {}
+
+  void finalize();
 
   Index index;
   Expression* value;
@@ -375,6 +391,8 @@ public:
 
   Name name;
   Expression* value;
+
+  void finalize();
 };
 
 class Load : public SpecificExpression<Expression::LoadId> {
@@ -386,9 +404,12 @@ public:
   bool signed_;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
 
   // type must be set during creation, cannot be inferred
+
+  void finalize();
 };
 
 class Store : public SpecificExpression<Expression::StoreId> {
@@ -399,9 +420,38 @@ public:
   uint8_t bytes;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
   Expression* value;
   WasmType valueType; // the store never returns a value
+
+  void finalize();
+};
+
+class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
+ public:
+  AtomicRMW() = default;
+  AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
+
+  AtomicRMWOp op;
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* value;
+
+  void finalize();
+};
+
+class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
+ public:
+  AtomicCmpxchg() = default;
+  AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
+
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* expected;
+  Expression* replacement;
 
   void finalize();
 };
@@ -414,6 +464,8 @@ public:
   Literal value;
 
   Const* set(Literal value_);
+
+  void finalize();
 };
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
@@ -464,6 +516,8 @@ public:
   Drop(MixedArena& allocator) {}
 
   Expression* value;
+
+  void finalize();
 };
 
 class Return : public SpecificExpression<Expression::ReturnId> {
@@ -511,7 +565,9 @@ public:
   std::map<Name, Index> localIndices;
 
   struct DebugLocation {
-    uint32_t fileIndex, lineNumber;
+    uint32_t fileIndex, lineNumber, columnNumber;
+    bool operator==(const DebugLocation& other) const { return fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber; }
+    bool operator!=(const DebugLocation& other) const { return !(*this == other); }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
 
@@ -614,8 +670,9 @@ public:
   // See comment in Table.
   bool exists;
   bool imported;
+  bool shared;
 
-  Memory() : initial(0), max(kMaxSize), exists(false), imported(false) {
+  Memory() : initial(0), max(kMaxSize), exists(false), imported(false), shared(false) {
     name = Name::fromInt(0);
   }
 };
@@ -686,6 +743,7 @@ public:
   void addStart(const Name& s);
 
   void removeImport(Name name);
+  void removeExport(Name name);
   // TODO: remove* for other elements
 
   void updateMaps();

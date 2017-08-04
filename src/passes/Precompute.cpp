@@ -23,10 +23,11 @@
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
 #include <ast_utils.h>
+#include "ast/manipulation.h"
 
 namespace wasm {
 
-Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
+static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
 
 // Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
 class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
@@ -66,6 +67,12 @@ public:
   Flow visitStore(Store *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }
+  Flow visitAtomicRMW(AtomicRMW *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
   Flow visitHost(Host *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }
@@ -99,6 +106,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
             if (ret->value) {
               if (auto* value = ret->value->dynCast<Const>()) {
                 value->value = flow.value;
+                value->finalize();
                 return;
               }
             }
@@ -121,6 +129,8 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
           if (br->value) {
             if (auto* value = br->value->dynCast<Const>()) {
               value->value = flow.value;
+              value->finalize();
+              br->finalize();
               return;
             }
           }
@@ -128,6 +138,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
         } else {
           br->value = nullptr;
         }
+        br->finalize();
       } else {
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(flow.breakTo, flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
@@ -140,6 +151,11 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     } else {
       ExpressionManipulator::nop(curr);
     }
+  }
+
+  void visitFunction(Function* curr) {
+    // removing breaks can alter types
+    ReFinalize().walkFunctionInModule(curr, getModule());
   }
 };
 

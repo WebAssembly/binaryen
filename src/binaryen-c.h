@@ -41,8 +41,8 @@
 //
 //================
 
-#ifndef binaryen_h
-#define binaryen_h
+#ifndef wasm_binaryen_c_h
+#define wasm_binaryen_c_h
 
 #include <stddef.h>
 #include <stdint.h>
@@ -71,6 +71,10 @@ BinaryenType BinaryenInt32(void);
 BinaryenType BinaryenInt64(void);
 BinaryenType BinaryenFloat32(void);
 BinaryenType BinaryenFloat64(void);
+
+// Not a real type. Used as the last parameter to BinaryenBlock to let
+// the API figure out the type instead of providing one.
+BinaryenType BinaryenUndefined(void);
 
 // Modules
 //
@@ -261,8 +265,11 @@ BinaryenOp BinaryenHasFeature(void);
 
 typedef void* BinaryenExpressionRef;
 
-// Block: name can be NULL
-BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren);
+// Block: name can be NULL. Specifying BinaryenUndefined() as the 'type'
+//        parameter indicates that the block's type shall be figured out
+//        automatically instead of explicitly providing it. This conforms
+//        to the behavior before the 'type' parameter has been introduced.
+BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren, BinaryenType type);
 // If: ifFalse can be NULL
 BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef condition, BinaryenExpressionRef ifTrue, BinaryenExpressionRef ifFalse);
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* in, BinaryenExpressionRef body);
@@ -274,6 +281,9 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
 //                   type returned by the function being called, as that
 //                   function might not have been created yet, so we don't
 //                   know what it is.
+//                   Also note that WebAssembly does not differentiate
+//                   between Call and CallImport, but Binaryen does, so you
+//                   must use CallImport if calling an import, and vice versa.
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
 BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, const char* type);
@@ -332,12 +342,14 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
 typedef void* BinaryenImportRef;
 
 BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
+void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName);
 
 // Exports
 
 typedef void* BinaryenExportRef;
 
 BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 
 // Function table. One per module
 
@@ -356,6 +368,9 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
 //
 // ========== Module Operations ==========
 //
+
+// Parse a module in s-expression text format
+BinaryenModuleRef BinaryenModuleParse(const char* text);
 
 // Print a module to stdout. Useful for debugging.
 void BinaryenModulePrint(BinaryenModuleRef module);
@@ -432,8 +447,19 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlo
 // TODO: compile-time option to enable/disable this feature entirely at build time?
 void BinaryenSetAPITracing(int on);
 
+//
+// ========= Utilities =========
+//
+
+// Note that this function has been added because there is no better alternative
+// currently and is scheduled for removal once there is one. It takes the same set
+// of parameters as BinaryenAddFunctionType but instead of adding a new function
+// signature, it returns a pointer to the existing signature or NULL if there is no
+// such signature yet.
+BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef module, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif  // binaryen_h
+#endif // wasm_binaryen_c_h

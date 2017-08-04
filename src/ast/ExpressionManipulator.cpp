@@ -19,7 +19,9 @@
 
 namespace wasm {
 
-Expression* ExpressionManipulator::flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
+namespace ExpressionManipulator {
+
+Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   struct Copier : public Visitor<Copier, Expression*> {
     Module& wasm;
     CustomCopier custom;
@@ -94,10 +96,26 @@ Expression* ExpressionManipulator::flexibleCopy(Expression* original, Module& wa
       return builder.makeSetGlobal(curr->name, copy(curr->value));
     }
     Expression* visitLoad(Load *curr) {
+      if (curr->isAtomic) {
+	return builder.makeAtomicLoad(curr->bytes, curr->signed_, curr->offset,
+				      copy(curr->ptr), curr->type);
+      }
       return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
     }
     Expression* visitStore(Store *curr) {
+      if (curr->isAtomic) {
+	return builder.makeAtomicStore(curr->bytes, curr->offset, copy(curr->ptr), copy(curr->value), curr->valueType);
+      }
       return builder.makeStore(curr->bytes, curr->offset, curr->align, copy(curr->ptr), copy(curr->value), curr->valueType);
+    }
+    Expression* visitAtomicRMW(AtomicRMW* curr) {
+      return builder.makeAtomicRMW(curr->op, curr->bytes, curr->offset,
+				   copy(curr->ptr), copy(curr->value), curr->type);
+    }
+    Expression* visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      return builder.makeAtomicCmpxchg(curr->bytes, curr->offset,
+				       copy(curr->ptr), copy(curr->expected), copy(curr->replacement),
+				       curr->type);
     }
     Expression* visitConst(Const *curr) {
       return builder.makeConst(curr->value);
@@ -135,7 +153,7 @@ Expression* ExpressionManipulator::flexibleCopy(Expression* original, Module& wa
 
 
 // Splice an item into the middle of a block's list
-void ExpressionManipulator::spliceIntoBlock(Block* block, Index index, Expression* add) {
+void spliceIntoBlock(Block* block, Index index, Expression* add) {
   auto& list = block->list;
   if (index == list.size()) {
     list.push_back(add); // simple append
@@ -147,6 +165,9 @@ void ExpressionManipulator::spliceIntoBlock(Block* block, Index index, Expressio
     }
     list[index] = add;
   }
+  block->finalize(block->type);
 }
+
+} // namespace ExpressionManipulator
 
 } // namespace wasm

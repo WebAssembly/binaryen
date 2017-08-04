@@ -14,17 +14,18 @@
  (import "env" "print" (func $print (param i32)))
  (import "env" "h" (func $h (param i32)))
  (import "env" "return_int" (func $return_int (result i32)))
+ (import "env" "emscripten_log" (func $emscripten_log))
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (import "env" "memory" (memory $0 256 256))
- (import "env" "table" (table 24 24 anyfunc))
+ (import "env" "table" (table 25 25 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (global $Int (mut i32) (i32.const 0))
  (global $Double (mut f64) (f64.const 0))
  (global $n (mut i32) (get_global $n$asm2wasm$import))
  (global $exportedNumber i32 (i32.const 42))
- (elem (get_global $tableBase) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $fr $cneg $fr $fr $fr $fr $fr $fr $vi $vi $vi $vi $vi $vi $vi $vi)
+ (elem (get_global $tableBase) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $fr $cneg $fr $fr $fr $fr $fr $fr $vi $vi $vi $vi $vi $vi $vi $vi $ii)
  (data (get_global $memoryBase) "unit.asm.js")
  (export "big_negative" (func $big_negative))
  (export "pick" (func $big_negative))
@@ -33,6 +34,7 @@
  (export "conversions" (func $conversions))
  (export "switcher" (func $switcher))
  (export "frem" (func $frem))
+ (export "frem_float" (func $legalstub$frem_float))
  (export "big_uint_div_u" (func $big_uint_div_u))
  (export "fr" (func $legalstub$fr))
  (export "negZero" (func $negZero))
@@ -197,18 +199,12 @@
     (i32.const 51)
    )
   )
-  (block $label$break$Lout
-   (block $switch-case9
-    (block $switch-case6
-     (block $switch-case5
-      (block $switch-case4
-       (br_table $switch-case9 $label$break$Lout $label$break$Lout $switch-case6 $label$break$Lout $label$break$Lout $label$break$Lout $label$break$Lout $switch-case5 $label$break$Lout $switch-case4 $label$break$Lout
-        (i32.sub
-         (get_local $0)
-         (i32.const 2)
-        )
-       )
-      )
+  (block $switch-case9
+   (block $switch-case4
+    (br_table $switch-case9 $switch-case9 $switch-case9 $switch-case4 $switch-case9 $switch-case9 $switch-case9 $switch-case9 $switch-case4 $switch-case9 $switch-case4 $switch-case9
+     (i32.sub
+      (get_local $0)
+      (i32.const 2)
      )
     )
    )
@@ -251,13 +247,21 @@
    (f64.const 1.2)
   )
  )
+ (func $frem_float (result f32)
+  (f32.demote/f64
+   (call $f64-rem
+    (f64.const 5.5)
+    (f64.const 1.2000000476837158)
+   )
+  )
+ )
  (func $big_uint_div_u (result i32)
   (local $0 i32)
   (local $1 i32)
   (set_local $0
    (i32.const -1)
   )
-  (if i32
+  (if (result i32)
    (tee_local $1
     (i32.const 2)
    )
@@ -431,7 +435,7 @@
       (i32.const 3)
      )
     )
-    (block i32
+    (block (result i32)
      (drop
       (call $lb
        (i32.const 4)
@@ -452,7 +456,7 @@
      )
     )
    )
-   (block i32
+   (block (result i32)
     (drop
      (call $lb
       (i32.const 8)
@@ -520,7 +524,7 @@
   )
  )
  (func $phi (result i32)
-  (block $do-once i32
+  (block $do-once (result i32)
    (drop
     (br_if $do-once
      (i32.const 0)
@@ -618,9 +622,9 @@
  )
  (func $conditionalTypeFun
   (drop
-   (if i32
+   (if (result i32)
     (call $return_int)
-    (i32.trunc_s/f64
+    (call $f64-to-int
      (call $abort
       (f64.convert_s/i32
        (i32.const 5)
@@ -631,7 +635,7 @@
    )
   )
   (drop
-   (if f64
+   (if (result f64)
     (call $return_int)
     (call $abort
      (f64.convert_s/i32
@@ -836,22 +840,19 @@
   (call $h
    (i32.const -1)
   )
-  (block $__rjti$1
-   (loop $while-in
-    (br_if $while-in
-     (i32.eqz
-      (tee_local $0
-       (i32.add
-        (get_local $0)
-        (i32.const 1)
-       )
+  (loop $while-in
+   (br_if $while-in
+    (i32.eqz
+     (tee_local $0
+      (i32.add
+       (get_local $0)
+       (i32.const 1)
       )
      )
     )
-    (call $h
-     (i32.const 2)
-    )
-    (br $__rjti$1)
+   )
+   (call $h
+    (i32.const 2)
    )
   )
   (call $h
@@ -1105,7 +1106,7 @@
  )
  (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
-   (if i32
+   (if (result i32)
     (get_local $0)
     (call $lb
      (get_local $1)
@@ -1162,6 +1163,8 @@
   )
  )
  (func $keepAlive
+  (local $0 i32)
+  (local $1 i32)
   (drop
    (call $sqrts
     (f64.const 3.14159)
@@ -1182,9 +1185,54 @@
     (f64.const 100)
    )
   )
+  (block $__inlined_func$autoDrop
+   (br_if $__inlined_func$autoDrop
+    (i32.eq
+     (tee_local $0
+      (i32.const 52)
+     )
+     (i32.const 17)
+    )
+   )
+  )
+  (call_indirect $FUNCSIG$vi
+   (i32.const 0)
+   (i32.const 17)
+  )
+  (call_indirect $FUNCSIG$vi
+   (get_local $1)
+   (block (result i32)
+    (set_global $Int
+     (i32.const 1)
+    )
+    (i32.add
+     (i32.and
+      (get_global $Int)
+      (i32.const 7)
+     )
+     (i32.const 16)
+    )
+   )
+  )
+  (call $emscripten_log)
+  (drop
+   (call $f64-to-int
+    (call $abort
+     (f64.const 0)
+    )
+   )
+  )
  )
  (func $vi (param $0 i32)
   (nop)
+ )
+ (func $ii (param $0 i32) (result i32)
+  (get_local $0)
+ )
+ (func $legalstub$frem_float (result f64)
+  (f64.promote/f32
+   (call $frem_float)
+  )
  )
  (func $legalstub$fr (param $0 f64)
   (call $fr

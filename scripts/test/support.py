@@ -94,6 +94,11 @@ def split_wast(wast):
   # this splits out a wast into [(module, assertions), ..]
   # we ignore module invalidity tests here.
   wast = open(wast).read()
+
+  # if it's a binary, leave it as is
+  if wast[0] == '\0':
+    return [[wast, '']]
+
   ret = []
 
   def to_end(j):
@@ -142,7 +147,8 @@ def split_wast(wast):
   return ret
 
 
-def run_command(cmd, expected_status=0, stderr=None, expected_err=None):
+def run_command(cmd, expected_status=0, stderr=None,
+                expected_err=None, err_contains=False):
   if expected_err is not None:
     assert stderr == subprocess.PIPE or stderr is None,\
         "Can't redirect stderr if using expected_err"
@@ -152,7 +158,9 @@ def run_command(cmd, expected_status=0, stderr=None, expected_err=None):
   out, err = proc.communicate()
   if proc.returncode != expected_status:
     raise Exception(('run_command failed', err))
-  if expected_err is not None and err != expected_err:
+  err_correct = expected_err is None or \
+      (expected_err in err if err_contains else expected_err == err)
+  if not err_correct:
     raise Exception(('run_command unexpected stderr',
                      "expected '%s', actual '%s'" % (expected_err, err)))
   return out

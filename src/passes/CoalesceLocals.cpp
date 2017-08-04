@@ -32,6 +32,7 @@
 #include "cfg/cfg-traversal.h"
 #include "wasm-builder.h"
 #include "support/learning.h"
+#include "support/permutations.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
 #endif
@@ -159,7 +160,7 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     auto* curr = (*currp)->cast<GetLocal>();
      // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      ExpressionManipulator::convert<GetLocal, Unreachable>(curr);
+      *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, currp);
@@ -167,12 +168,12 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   static void doVisitSetLocal(CoalesceLocals* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
-    // if in unreachable code, ignore
+    // if in unreachable code, we don't need the tee (but might need the value, if it has side effects)
     if (!self->currBasicBlock) {
       if (curr->isTee()) {
-        ExpressionManipulator::convert<SetLocal, Unreachable>(curr);
+        *currp = curr->value;
       } else {
-        ExpressionManipulator::nop(curr);
+        *currp = Builder(*self->getModule()).makeDrop(curr->value);
       }
       return;
     }
@@ -195,7 +196,9 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
     if (auto* get = set->value->dynCast<GetLocal>()) return get;
     if (auto* iff = set->value->dynCast<If>()) {
       if (auto* get = iff->ifTrue->dynCast<GetLocal>()) return get;
-      if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
+      if (iff->ifFalse) {
+        if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
+      }
     }
     return nullptr;
   }
@@ -537,35 +540,6 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   }
 }
 
-// Utilities for operating on permutation vectors
-
-static std::vector<Index> makeIdentity(Index num) {
-  std::vector<Index> ret;
-  ret.resize(num);
-  for (Index i = 0; i < num; i++) {
-    ret[i] = i;
-  }
-  return ret;
-}
-
-static void setIdentity(std::vector<Index>& ret) {
-  auto num = ret.size();
-  assert(num > 0); // must already be of the right size
-  for (Index i = 0; i < num; i++) {
-    ret[i] = i;
-  }
-}
-
-static std::vector<Index> makeReversed(std::vector<Index>& original) {
-  std::vector<Index> ret;
-  auto num = original.size();
-  ret.resize(num);
-  for (Index i = 0; i < num; i++) {
-    ret[original[i]] = i;
-  }
-  return ret;
-}
-
 // given a baseline order, adjust it based on an important order of priorities (higher values
 // are higher priority). The priorities take precedence, unless they are equal and then
 // the original order should be kept.
@@ -623,10 +597,13 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
 // Remove a copy from a set of an if, where one if arm is a get of the same set
 static void removeIfCopy(Expression** origin, SetLocal* set, If* iff, Expression*& copy, Expression*& other, Module* module) {
   // replace the origin with the if, and sink the set into the other non-copying arm
+  bool tee = set->isTee();
   *origin = iff;
   set->value = other;
+  set->finalize();
   other = set;
-  if (!set->isTee()) {
+  // if this is not a tee, then we can get rid of the copy in that arm
+  if (!tee) {
     // we don't need the copy at all
     copy = nullptr;
     if (!iff->ifTrue) {
@@ -657,6 +634,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
           }
           continue;
         }
+        // remove ineffective actions
         if (!action.effective) {
           *action.origin = set->value; // value may have no side effects, further optimizations can eliminate it
           if (!set->isTee()) {

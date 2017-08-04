@@ -18,6 +18,11 @@ FUNCTION(ADD_COMPILE_FLAG value)
   ENDFOREACH(variable)
 ENDFUNCTION()
 
+FUNCTION(ADD_CXX_FLAG value)
+  MESSAGE(STATUS "Building with ${value}")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${value}" PARENT_SCOPE)
+ENDFUNCTION()
+
 FUNCTION(ADD_DEBUG_COMPILE_FLAG value)
   IF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     MESSAGE(STATUS "Building with ${value}")
@@ -54,10 +59,8 @@ FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
 ENDFOREACH()
 
-SET(all_passes passes)
-
 IF(MSVC)
-  IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled. 
+  IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
     ADD_COMPILE_FLAG("/arch:sse2")
   ENDIF()
   ADD_COMPILE_FLAG("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
@@ -94,9 +97,55 @@ ELSE()
   SET(THREADS_PREFER_PTHREAD_FLAG ON)
   SET(CMAKE_THREAD_PREFER_PTHREAD ON)
   FIND_PACKAGE(Threads REQUIRED)
-  ADD_COMPILE_FLAG("-std=c++11")
-  ADD_COMPILE_FLAG("-msse2")
-  ADD_COMPILE_FLAG("-mfpmath=sse")
+  ADD_CXX_FLAG("-std=c++11")
+  if (NOT EMSCRIPTEN)
+    # try to get the target architecture by compiling a dummy.c file and
+    # checking the architecture using the file command.
+    file(WRITE ${PROJECT_BINARY_DIR}/dummy.c "main(){}")
+    try_compile(
+      COMPILE_OK
+      ${PROJECT_BINARY_DIR}
+      ${PROJECT_BINARY_DIR}/dummy.c
+      OUTPUT_VARIABLE COMPILE_OUTPUT
+      COPY_FILE ${PROJECT_BINARY_DIR}/dummy
+    )
+    if (COMPILE_OK)
+      execute_process(
+        COMMAND file ${PROJECT_BINARY_DIR}/dummy
+        RESULT_VARIABLE FILE_RESULT
+        OUTPUT_VARIABLE FILE_OUTPUT
+        ERROR_QUIET
+      )
+
+      if (FILE_RESULT EQUAL 0)
+        if (${FILE_OUTPUT} MATCHES "x86[-_]64")
+          set(TARGET_ARCH "x86-64")
+        elseif (${FILE_OUTPUT} MATCHES "Intel 80386")
+          set(TARGET_ARCH "i386")
+        elseif (${FILE_OUTPUT} MATCHES "ARM")
+          set(TARGET_ARCH "ARM")
+        else ()
+          message(WARNING "Unknown target architecture!")
+        endif ()
+        if(TARGET_ARCH)
+          MESSAGE(STATUS "Building for platform ${TARGET_ARCH}")
+        endif ()
+      else ()
+        message(WARNING "Error running file on dummy executable")
+      endif ()
+    else ()
+      message(WARNING "Error compiling dummy.c file: ${COMPILE_OUTPUT}")
+    endif ()
+
+    if (TARGET_ARCH STREQUAL "i386")
+      # wasm doesn't allow for x87 floating point math
+      ADD_COMPILE_FLAG("-msse2")
+      ADD_COMPILE_FLAG("-mfpmath=sse")
+    elseif(TARGET_ARCH STREQUAL "ARM")
+      # stub for ARM-specific instructions. GCC6 adds NEON with the below flags
+      ADD_COMPILE_FLAG("-march=native")
+    endif ()
+  endif ()
   ADD_COMPILE_FLAG("-Wall")
   ADD_COMPILE_FLAG("-Werror")
   ADD_COMPILE_FLAG("-Wextra")
@@ -104,6 +153,7 @@ ELSE()
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
   IF(WIN32)
     ADD_COMPILE_FLAG("-D_GNU_SOURCE")
+    ADD_LINK_FLAG("-Wl,--stack,8388608")
   ELSE()
     ADD_COMPILE_FLAG("-fPIC")
   ENDIF()
@@ -121,8 +171,12 @@ IF (UNIX AND
 ENDIF()
 
 # Static libraries
+# Current (partial) dependency structure is as follows:
+# passes -> wasm -> asmjs -> support
+# TODO: It's odd that wasm should depend on asmjs, maybe we should fix that.
 ADD_SUBDIRECTORY(src/ast)
 ADD_SUBDIRECTORY(src/asmjs)
+ADD_SUBDIRECTORY(src/cfg)
 ADD_SUBDIRECTORY(src/emscripten-optimizer)
 ADD_SUBDIRECTORY(src/passes)
 ADD_SUBDIRECTORY(src/support)
@@ -133,14 +187,13 @@ ADD_SUBDIRECTORY(src/wasm)
 
 SET(binaryen_SOURCES
   src/binaryen-c.cpp
-  src/cfg/Relooper.cpp
 )
 IF(BUILD_STATIC_LIB)
-  ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})    
+  ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
-TARGET_LINK_LIBRARIES(binaryen ${all_passes} wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs ast cfg support)
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -153,17 +206,18 @@ SET(wasm-shell_SOURCES
 )
 ADD_EXECUTABLE(wasm-shell
                ${wasm-shell_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer ${all_passes} ast support)
+TARGET_LINK_LIBRARIES(wasm-shell wasm asmjs emscripten-optimizer passes ast cfg support)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-shell PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(wasm-opt_SOURCES
   src/tools/wasm-opt.cpp
+  src/wasm-interpreter.cpp
 )
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer ${all_passes} ast support)
+TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ast cfg support)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -173,7 +227,7 @@ SET(wasm-merge_SOURCES
 )
 ADD_EXECUTABLE(wasm-merge
                ${wasm-merge_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer ${all_passes} ast support)
+TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer passes ast cfg support)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-merge DESTINATION bin)
@@ -184,10 +238,20 @@ SET(asm2wasm_SOURCES
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer ${all_passes} wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(asm2wasm emscripten-optimizer passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+SET(wasm2asm_SOURCES
+  src/wasm2asm-main.cpp
+)
+ADD_EXECUTABLE(wasm2asm
+               ${wasm2asm_SOURCES})
+TARGET_LINK_LIBRARIES(wasm2asm passes wasm asmjs emscripten-optimizer ast cfg support)
+SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm2asm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(s2wasm_SOURCES
   src/tools/s2wasm.cpp
@@ -196,7 +260,7 @@ SET(s2wasm_SOURCES
 )
 ADD_EXECUTABLE(s2wasm
                ${s2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(s2wasm passes wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(s2wasm passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -206,7 +270,7 @@ SET(wasm_as_SOURCES
 )
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes ast support)
+TARGET_LINK_LIBRARIES(wasm-as passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -216,7 +280,17 @@ SET(wasm_dis_SOURCES
 )
 ADD_EXECUTABLE(wasm-dis
                ${wasm_dis_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ast support)
+TARGET_LINK_LIBRARIES(wasm-dis passes wasm asmjs ast cfg support)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-dis PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-dis DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+SET(wasm-ctor-eval_SOURCES
+  src/tools/wasm-ctor-eval.cpp
+)
+ADD_EXECUTABLE(wasm-ctor-eval
+               ${wasm-ctor-eval_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-ctor-eval emscripten-optimizer passes wasm asmjs ast cfg support)
+SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)

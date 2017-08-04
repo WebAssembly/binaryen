@@ -86,7 +86,7 @@
     (if
       (i32.const 0)
       (drop
-        (block $out i32
+        (block $out (result i32)
           (br $out
             (unreachable)
           )
@@ -100,7 +100,7 @@
     (if
       (i32.const 0)
       (drop
-        (block $out i32
+        (block $out (result i32)
           (br_if $out
             (unreachable)
             (i32.const 0)
@@ -115,7 +115,7 @@
     (if
       (i32.const 0)
       (drop
-        (block $out i32
+        (block $out (result i32)
           (br_if $out
             (unreachable)
             (unreachable)
@@ -395,7 +395,7 @@
     )
   )
   (func $typed-block-none-then-unreachable (result i32)
-    (block $top-typed i32
+    (block $top-typed (result i32)
       (block $switch$0 ;; this looks like it can be broken to, so it gets type 'none'
         (return
           (i32.const 0)
@@ -440,5 +440,215 @@
       (i32.const 0)
     )
     (nop)
+    (i32.const 0)
   )
+  (func $unreachable-br (result i32)
+    (block $out (result i32)
+      (br $out
+        (br $out (i32.const 0))
+      )
+    )
+  )
+  (func $unreachable-br-loop (result i32)
+    (loop $out
+      (br $out)
+    )
+  )
+ (func $unreachable-block-ends-switch (result i32)
+  (block $label$0 (result i32)
+   (block $label$3
+    (nop)
+    (br_table $label$3
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (i32.const 19)
+  )
+ )
+ (func $unreachable-block-ends-br_if (type $1) (result i32)
+  (block $label$0 (result i32)
+   (block $label$2
+    (nop)
+    (br_if $label$2
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (i32.const 19)
+  )
+ )
+ (func $unreachable-brs-3 (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (grow_memory
+     (br $label$0
+      (i32.const 18)
+     )
+    )
+   )
+   (i32.const 21)
+  )
+ )
+ (func $unreachable-brs-4 (param $var$0 i32) (result i32)
+  (i32.add
+   (i32.const 1)
+   (block $label$0 (result i32)
+    (br $label$0
+     (block $label$1 (result i32) ;; this block is declared i32, but we can see it is unreachable
+      (drop
+       (br_if $label$0
+        (i32.const 4104)
+        (unreachable)
+       )
+      )
+      (i32.const 4)
+     )
+    )
+    (i32.const 16)
+   )
+  )
+ )
+ (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $2 i64)
+  (if (result i64)
+   (i64.eqz
+    (get_local $var$0)
+   )
+   (block $label$0 (result i64)
+    (get_local $var$1)
+   )
+   (block $label$1 (result i64)
+    (call $call-unreach
+     (i64.sub
+      (get_local $var$0)
+      (i64.const 1)
+     )
+     (i64.mul
+      (block (result i64)
+       (set_local $2
+        (get_local $var$0)
+       )
+       (nop)
+       (get_local $2)
+      )
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (block (result i32)
+     (nop)
+     (drop
+      (br_if $label$0
+       (unreachable)
+       (get_local $var$0)
+      )
+     )
+     (i32.const 4)
+    )
+   )
+  )
+ )
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (type $1) (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (block (result i32) ;; turns into unreachable when refinalized
+     (drop
+      (br_if $label$0
+       (i32.const 8)
+       (get_local $var$0)
+      )
+     )
+     (unreachable)
+    )
+   )
+   (i32.const 16)
+  )
+ )
+ (func $replace-br-value-of-i32-with-unreachable (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (block $label$1 (result i32)
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
+  (block $label$0
+   (unreachable)
+   (if
+    (unreachable)
+    (br_if $label$0
+     (get_local $var$1)
+    )
+   )
+  )
+ )
+ (func $block-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (block $block (result i32)
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $if-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (br $label$0
+    (if (result i32)
+     (get_local $var$0)
+     (unreachable)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $unreachable-loop
+  (loop $label$2
+   (unreachable)
+   (br $label$2)
+  )
+ )
+ (func $br-block-from-unary (result i32)
+  (block $label$6 (result i32)
+   (i32.ctz
+    (block $label$7 (result i32)
+     (br $label$6
+      (i32.const 8)
+     )
+    )
+   )
+  )
+ )
+ (func $replace-unary-with-br-child
+  (drop
+   (block $label$6 (result i32)
+    (i32.ctz
+     (br $label$6
+      (i32.const 8)
+     )
+    )
+   )
+  )
+ )
+ (func $br_if-unreach-then-br_if-normal
+  (block $out
+    (nop)
+    (br_if $out
+      (unreachable)
+    )
+    (br_if $out
+      (i32.const 1)
+    )
+  )
+ )
 )

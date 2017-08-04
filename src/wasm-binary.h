@@ -30,7 +30,6 @@
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
-#include "ast_utils.h"
 #include "parsing.h"
 #include "wasm-validator.h"
 
@@ -94,13 +93,16 @@ struct LEB {
                             : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
       T significant_payload = payload & shift_mask;
       if (significant_payload != payload) {
-        assert(std::is_signed<T>::value && last &&
-               "dropped bits only valid for signed LEB");
+        if (!(std::is_signed<T>::value && last)) {
+          throw ParseException("LEB dropped bits only valid for signed LEB");
+        }
       }
       value |= significant_payload << shift;
       if (last) break;
       shift += 7;
-      assert(size_t(shift) < sizeof(T) * 8 && "LEB overflow");
+      if (size_t(shift) >= sizeof(T) * 8) {
+        throw ParseException("LEB overflow");
+      }
     }
     // If signed LEB, then we might need to sign-extend. (compile should
     // optimize this out if not needed).
@@ -110,7 +112,9 @@ struct LEB {
         size_t sext_bits = 8 * sizeof(T) - size_t(shift);
         value <<= sext_bits;
         value >>= sext_bits;
-        assert(value < 0 && "sign-extend should produces a negative value");
+        if (value >= 0) {
+          throw ParseException(" LEBsign-extend should produce a negative value");
+        }
       }
     }
   }
@@ -303,6 +307,7 @@ enum EncodedType {
 
 namespace UserSections {
 extern const char* Name;
+extern const char* SourceMapUrl;
 
 enum Subsection {
   NameFunction = 1,
@@ -500,13 +505,93 @@ enum ASTNodes {
   I32ReinterpretF32 = 0xbc,
   I64ReinterpretF64 = 0xbd,
   F32ReinterpretI32 = 0xbe,
-  F64ReinterpretI64 = 0xbf
+  F64ReinterpretI64 = 0xbf,
+
+  AtomicPrefix = 0xfe
 };
+
+enum AtomicOpcodes {
+  I32AtomicLoad = 0x10,
+  I64AtomicLoad = 0x11,
+  I32AtomicLoad8U = 0x12,
+  I32AtomicLoad16U = 0x13,
+  I64AtomicLoad8U = 0x14,
+  I64AtomicLoad16U = 0x15,
+  I64AtomicLoad32U = 0x16,
+  I32AtomicStore = 0x17,
+  I64AtomicStore = 0x18,
+  I32AtomicStore8 = 0x19,
+  I32AtomicStore16 = 0x1a,
+  I64AtomicStore8 = 0x1b,
+  I64AtomicStore16 = 0x1c,
+  I64AtomicStore32 = 0x1d,
+
+  AtomicRMWOps_Begin = 0x1e,
+  I32AtomicRMWAdd = 0x1e,
+  I64AtomicRMWAdd = 0x1f,
+  I32AtomicRMWAdd8U = 0x20,
+  I32AtomicRMWAdd16U = 0x21,
+  I64AtomicRMWAdd8U = 0x22,
+  I64AtomicRMWAdd16U = 0x23,
+  I64AtomicRMWAdd32U = 0x24,
+  I32AtomicRMWSub = 0x25,
+  I64AtomicRMWSub = 0x26,
+  I32AtomicRMWSub8U = 0x27,
+  I32AtomicRMWSub16U = 0x28,
+  I64AtomicRMWSub8U = 0x29,
+  I64AtomicRMWSub16U = 0x2a,
+  I64AtomicRMWSub32U = 0x2b,
+  I32AtomicRMWAnd = 0x2c,
+  I64AtomicRMWAnd = 0x2d,
+  I32AtomicRMWAnd8U = 0x2e,
+  I32AtomicRMWAnd16U = 0x2f,
+  I64AtomicRMWAnd8U = 0x30,
+  I64AtomicRMWAnd16U = 0x31,
+  I64AtomicRMWAnd32U = 0x32,
+  I32AtomicRMWOr = 0x33,
+  I64AtomicRMWOr = 0x34,
+  I32AtomicRMWOr8U = 0x35,
+  I32AtomicRMWOr16U = 0x36,
+  I64AtomicRMWOr8U = 0x37,
+  I64AtomicRMWOr16U = 0x38,
+  I64AtomicRMWOr32U = 0x39,
+  I32AtomicRMWXor = 0x3a,
+  I64AtomicRMWXor = 0x3b,
+  I32AtomicRMWXor8U = 0x3c,
+  I32AtomicRMWXor16U = 0x3d,
+  I64AtomicRMWXor8U = 0x3e,
+  I64AtomicRMWXor16U = 0x3f,
+  I64AtomicRMWXor32U = 0x40,
+  I32AtomicRMWXchg = 0x41,
+  I64AtomicRMWXchg = 0x42,
+  I32AtomicRMWXchg8U = 0x43,
+  I32AtomicRMWXchg16U = 0x44,
+  I64AtomicRMWXchg8U = 0x45,
+  I64AtomicRMWXchg16U = 0x46,
+  I64AtomicRMWXchg32U = 0x47,
+  AtomicRMWOps_End = 0x47,
+
+  AtomicCmpxchgOps_Begin = 0x48,
+  I32AtomicCmpxchg = 0x48,
+  I64AtomicCmpxchg = 0x49,
+  I32AtomicCmpxchg8U = 0x4a,
+  I32AtomicCmpxchg16U = 0x4b,
+  I64AtomicCmpxchg8U = 0x4c,
+  I64AtomicCmpxchg16U = 0x4d,
+  I64AtomicCmpxchg32U = 0x4e,
+  AtomicCmpxchgOps_End = 0x4e
+};
+
 
 enum MemoryAccess {
   Offset = 0x10,     // bit 4
   Alignment = 0x80,  // bit 7
   NaturalAlignment = 0
+};
+
+enum MemoryFlags {
+  HasMaximum = 1 << 0,
+  IsShared = 1 << 1
 };
 
 } // namespace BinaryConsts
@@ -529,8 +614,11 @@ inline S32LEB binaryWasmType(WasmType type) {
 class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   Module* wasm;
   BufferWithRandomAccess& o;
+  Function* currFunction = nullptr;
   bool debug;
   bool debugInfo = true;
+  std::ostream* sourceMap = nullptr;
+  std::string sourceMapUrl;
   std::string symbolMap;
 
   MixedArena allocator;
@@ -541,13 +629,17 @@ public:
     prepare();
   }
 
-  void setDebugInfo(bool set) { debugInfo = set; }
+  void setNamesSection(bool set) { debugInfo = set; }
+  void setSourceMap(std::ostream* set, std::string url) {
+    sourceMap = set;
+    sourceMapUrl = url;
+  }
   void setSymbolMap(std::string set) { symbolMap = set; }
 
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum);
+  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum, bool shared);
   int32_t startSection(BinaryConsts::Section code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
@@ -577,7 +669,12 @@ public:
   void writeFunctionTableDeclaration();
   void writeTableElements();
   void writeNames();
+  void writeSourceMapUrl();
   void writeSymbolMap();
+
+  void writeSourceMapProlog();
+  void writeSourceMapEpilog();
+  void writeDebugLocation(size_t offset, const Function::DebugLocation& loc);
 
   // helpers
   void writeInlineString(const char* name);
@@ -601,6 +698,20 @@ public:
 
   void recurse(Expression*& curr);
   std::vector<Name> breakStack;
+  Function::DebugLocation lastDebugLocation;
+  size_t lastBytecodeOffset;
+
+  void visit(Expression* curr) {
+    if (sourceMap && currFunction) {
+      // Dump the sourceMap debug info
+      auto& debugLocations = currFunction->debugLocations;
+      auto iter = debugLocations.find(curr);
+      if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
+        writeDebugLocation(o.size(), iter->second);
+      }
+    }
+    Visitor<WasmBinaryWriter>::visit(curr);
+  }
 
   void visitBlock(Block *curr);
   // emits a node, but if it is a block with no name, emit a list of its contents
@@ -620,6 +731,8 @@ public:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
   void visitLoad(Load *curr);
   void visitStore(Store *curr);
+  void visitAtomicRMW(AtomicRMW *curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
   void visitConst(Const *curr);
   void visitUnary(Unary *curr);
   void visitBinary(Binary *curr);
@@ -636,12 +749,17 @@ class WasmBinaryBuilder {
   MixedArena& allocator;
   std::vector<char>& input;
   bool debug;
+  std::istream* sourceMap;
+  std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
 
   size_t pos = 0;
   Index startIndex = -1;
+  bool useDebugLocation;
+
+  std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug) {}
+  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -675,7 +793,7 @@ public:
 
   // gets a name in the combined function import+defined function space
   Name getFunctionIndexName(Index i);
-  void getResizableLimits(Address& initial, Address& max, Address defaultIfNoMax);
+  void getResizableLimits(Address& initial, Address& max, bool& shared, Address defaultIfNoMax);
   void readImports();
 
   std::vector<FunctionType*> functionTypes; // types of defined functions
@@ -730,6 +848,15 @@ public:
   void readTableElements();
   void readNames(size_t);
 
+  // Debug information reading helpers
+  void setDebugLocations(std::istream* sourceMap_) {
+      sourceMap = sourceMap_;
+  }
+  Function::DebugLocation debugLocation;
+  std::unordered_map<std::string, Index> debugInfoFileIndices;
+  void readNextDebugLocation();
+  void readSourceMapHeader();
+
   // AST reading
   int depth = 0; // only for debugging
 
@@ -761,8 +888,10 @@ public:
   void visitGetGlobal(GetGlobal *curr);
   void visitSetGlobal(SetGlobal *curr);
   void readMemoryAccess(Address& alignment, size_t bytes, Address& offset);
-  bool maybeVisitLoad(Expression*& out, uint8_t code);
-  bool maybeVisitStore(Expression*& out, uint8_t code);
+  bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);

@@ -21,8 +21,8 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
+#include <ast/effects.h>
 
 namespace wasm {
 

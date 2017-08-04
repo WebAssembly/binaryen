@@ -28,29 +28,29 @@
    )
   )
   (drop
-   (block i32
-    (block $__inlined_func$int i32
+   (block (result i32)
+    (block $__inlined_func$int (result i32)
      (i32.const 2)
     )
    )
   )
   (drop
-   (block f64
-    (block $__inlined_func$double f64
+   (block (result f64)
+    (block $__inlined_func$double (result f64)
      (f64.const 3.14159)
     )
    )
   )
   (set_local $x
-   (block i32
-    (block $__inlined_func$int2 i32
+   (block (result i32)
+    (block $__inlined_func$int2 (result i32)
      (i32.const 112)
     )
    )
   )
   (set_local $y
-   (block f64
-    (block $__inlined_func$double2 f64
+   (block (result f64)
+    (block $__inlined_func$double2 (result f64)
      (f64.const 113.14159)
     )
    )
@@ -70,8 +70,8 @@
    )
   )
   (drop
-   (block i32
-    (block $__inlined_func$return i32
+   (block (result i32)
+    (block $__inlined_func$return (result i32)
      (br $__inlined_func$return
       (i32.const 5)
      )

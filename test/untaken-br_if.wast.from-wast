@@ -1,0 +1,16 @@
+(module
+ (type $0 (func (result f32)))
+ (memory $0 0)
+ (func $binaryify-untaken-br_if (type $0) (result f32)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (block $label$1
+    (br_if $label$1
+     (i32.const 1)
+     (unreachable)
+    )
+   )
+  )
+ )
+)

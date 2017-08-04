@@ -61,6 +61,7 @@ struct PassOptions {
   int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
   bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
+  bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
 };
 
 //
@@ -136,6 +137,16 @@ struct PassRunner {
     isNested = nested;
   }
 
+  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
+  //                     and validate between each pass.
+  //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
+  //                     also is bad for e.g. printing which is a pass)
+  // this method returns whether we are in passDebug mode, and which value:
+  //  1: run pass by pass, validating in between
+  //  2: also save the last pass, so it breakage happens we can print the last one
+  //  3: also dump out byn-* files for each pass
+  static int getPassDebug();
+
 protected:
   bool isNested = false;
 
@@ -157,11 +168,14 @@ public:
   virtual void prepareToRun(PassRunner* runner, Module* module) {}
 
   // Implement this with code to run the pass on the whole module
-  virtual void run(PassRunner* runner, Module* module) = 0;
+  virtual void run(PassRunner* runner, Module* module) {
+    WASM_UNREACHABLE();
+  }
 
-  // Implement this with code to run the pass on a single function
+  // Implement this with code to run the pass on a single function, for
+  // a function-parallel pass
   virtual void runFunction(PassRunner* runner, Module* module, Function* function) {
-    WASM_UNREACHABLE(); // by default, passes cannot be run this way
+    WASM_UNREACHABLE();
   }
 
   // Function parallelism. By default, passes are not run in parallel, but you
@@ -228,29 +242,6 @@ public:
 // Standard passes. All passes in /passes/ are runnable from the shell,
 // but registering them here in addition allows them to communicate
 // e.g. through PassRunner::getLast
-
-// Handles names in a module, in particular adding names without duplicates
-class NameManager : public WalkerPass<PostWalker<NameManager>> {
- public:
-  Name getUnique(std::string prefix);
-  // TODO: getUniqueInFunction
-
-  // visitors
-  void visitBlock(Block* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallImport(CallImport* curr);
-  void visitFunctionType(FunctionType* curr);
-  void visitFunction(Function* curr);
-  void visitImport(Import* curr);
-  void visitExport(Export* curr);
-
-private:
-  std::set<Name> names;
-  size_t counter = 0;
-};
 
 // Prints out a module
 class Printer : public Pass {

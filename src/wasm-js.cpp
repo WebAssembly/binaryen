@@ -80,7 +80,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE load_asm2wasm(char *input) {
   module->memory.max = pre.memoryGrowth ? Address(Memory::kMaxSize) : module->memory.initial;
 
   if (wasmJSDebug) std::cerr << "wasming...\n";
-  asm2wasm = new Asm2WasmBuilder(*module, pre, debug, Asm2WasmBuilder::TrapMode::JS, PassOptions(), false /* TODO: support optimizing? */, false /* TODO: support asm2wasm-i64? */);
+  asm2wasm = new Asm2WasmBuilder(*module, pre, debug, Asm2WasmBuilder::TrapMode::JS, PassOptions(), true /* runJSFFIPass */, false /* TODO: support optimizing? */, false /* TODO: support asm2wasm-i64? */);
   asm2wasm->processAsm(asmjs);
 }
 
@@ -200,7 +200,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           var source = Module['HEAP8'].subarray($1, $1 + $2);
           var target = new Int8Array(Module['asmExports']['memory']);
           target.set(source, $0);
-        }, ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
+        }, ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32(), &segment.data[0], segment.data.size());
       }
       // look for imported table
       {
@@ -228,7 +228,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       // Emulated table support is in a JS array. If the entry is a number, it's a function pointer. If not, it's a JS method to be called directly
       // TODO: make them all JS methods, wrapping a dynCall where necessary?
       for (auto segment : wasm.table.segments) {
-        Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
+        Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
         assert(offset + segment.data.size() <= wasm.table.initial);
         for (size_t i = 0; i != segment.data.size(); ++i) {
           Name name = segment.data[i];
@@ -266,7 +266,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
     Literal getResultFromJS(double ret, WasmType type) {
       switch (type) {
-        case none: return Literal(0);
+        case none: return Literal();
         case i32: return Literal((int32_t)ret);
         case f32: return Literal((float)ret);
         case f64: return Literal((double)ret);
@@ -303,7 +303,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         return lookup.apply(null, tempArguments);
       }, import->module.str, import->base.str);
 
-      if (wasmJSDebug) std::cout << "calling import returning " << ret << '\n';
+      if (wasmJSDebug) std::cout << "calling import returning " << ret << " and function type is " << module->getFunctionType(import->functionType)->result << '\n';
 
       return getResultFromJS(ret, module->getFunctionType(import->functionType)->result);
     }

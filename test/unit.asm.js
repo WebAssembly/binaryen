@@ -19,6 +19,7 @@ function asm(global, env, buffer) {
   var print = env.print;
   var h = env.h;
   var return_int = env.return_int;
+  var emscripten_log = env.emscripten_log;
 
   var HEAP8 = new global.Int8Array(buffer);
   var HEAP16 = new global.Int16Array(buffer);
@@ -136,6 +137,9 @@ function asm(global, env, buffer) {
   }
   function frem() {
     return +(5.5 % 1.2);
+  }
+  function frem_float() {
+    return Math_fround(Math_fround(5.5) % Math_fround(1.2));
   }
   function big_uint_div_u() {
     var x = 0;
@@ -689,11 +693,46 @@ function asm(global, env, buffer) {
     return (~~x) | 0;
   }
 
+  function autoDrop(x) {
+    x = x | 0;
+    while (1) {
+      if ((x | 0) == 17) {
+        return 5;
+        autoDrop(1) | 0;
+      } else {
+        break;
+        x = autoDrop(2) | 0;
+      }
+    }
+    return x | 0;
+  }
+
+  function indirectInSequence() {
+   var i1 = 0;
+   // this indirect call should have the right type, vi
+   i1 = (FUNCTION_TABLE_vi[1 & 7](0), 1);
+  }
+
+  function emterpretify_assertions_safeHeap() {
+   var i1 = 0;
+    // assignment into the function table param, optimizer can do things there
+   FUNCTION_TABLE_vi[(Int = 1) & 7](i1 | 0);
+  }
+
+  function call_emscripten_log() {
+    // emscripten_log has no return value, don't let the conditional after the comma confuse you
+    emscripten_log(), 2 ? abort() | 0 : 3;
+  }
+
   function keepAlive() {
     sqrts(3.14159);
     sqrts(2.18281); // don't inline it either
     f2u(100.0);
     f2s(100.0);
+    autoDrop(52) | 0;
+    indirectInSequence();
+    emterpretify_assertions_safeHeap();
+    call_emscripten_log();
   }
 
   function v() {
@@ -701,12 +740,17 @@ function asm(global, env, buffer) {
   function vi(x) {
     x = x | 0;
   }
+  function ii(x) {
+    x = x | 0;
+    return x | 0;
+  }
 
   var FUNCTION_TABLE_a = [ v, big_negative, v, v ];
   var FUNCTION_TABLE_b = [ w, w, importedDoubles, w ];
   var FUNCTION_TABLE_c = [ z, cneg, z, z, z, z, z, z ];
   var FUNCTION_TABLE_vi = [ vi, vi, vi, vi, vi, vi, vi, vi ];
+  var FUNCTION_TABLE_ii = [ ii ];
 
-  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround, exportedNumber: 42, relocatableAndModules: relocatableAndModules, exported_f32_user: exported_f32_user, keepAlive: keepAlive };
+  return { big_negative: big_negative, pick: forgetMe, pick: exportMe, doubleCompares: doubleCompares, intOps: intOps, conversions: conversions, switcher: switcher, frem: frem, frem_float: frem_float, big_uint_div_u: big_uint_div_u, fr: fr, negZero: negZero, neg: neg, smallCompare: smallCompare, cneg_nosemicolon: cneg_nosemicolon, forLoop: forLoop, ceiling_32_64: ceiling_32_64, aborts: aborts, continues: continues, bitcasts: bitcasts, recursiveBlockMerging: recursiveBlockMerging, lb: lb, zeroInit: zeroInit, phi: phi, smallIf: smallIf, dropCall: dropCall, useSetGlobal: useSetGlobal, usesSetGlobal2: usesSetGlobal2, breakThroughMany: breakThroughMany, ifChainEmpty: ifChainEmpty, heap8NoShift: heap8NoShift, conditionalTypeFun: conditionalTypeFun, loadSigned: loadSigned, globalOpts: globalOpts, dropCallImport: dropCallImport, loophi: loophi, loophi2: loophi2, relooperJumpThreading: relooperJumpThreading, relooperJumpThreading__ZN4game14preloadweaponsEv: relooperJumpThreading__ZN4game14preloadweaponsEv, __Z12multi_varargiz: __Z12multi_varargiz, jumpThreadDrop: jumpThreadDrop, dropIgnoredImportInIf: dropIgnoredImportInIf, dropIgnoredImportsInIf: dropIgnoredImportsInIf, relooperJumpThreading_irreducible: relooperJumpThreading_irreducible, store_fround: store_fround, exportedNumber: 42, relocatableAndModules: relocatableAndModules, exported_f32_user: exported_f32_user, keepAlive: keepAlive };
 }
 

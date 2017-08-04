@@ -16,7 +16,7 @@
 
 #include "wasm.h"
 #include "wasm-traversal.h"
-#include "ast_utils.h"
+#include "ast/branch-utils.h"
 
 namespace wasm {
 
@@ -28,6 +28,7 @@ Name WASM("wasm"),
 namespace BinaryConsts {
 namespace UserSections {
 const char* Name = "name";
+const char* SourceMapUrl = "sourceMappingURL";
 }
 }
 
@@ -73,7 +74,7 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
-    case Expression::Id::InvalidId: abort();
+    case Expression::Id::InvalidId: WASM_UNREACHABLE();
     case Expression::Id::BlockId: return "block";
     case Expression::Id::IfId: return "if";
     case Expression::Id::LoopId: return "loop";
@@ -108,18 +109,20 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   Name targetName;
   std::vector<WasmType> types;
 
+
   TypeSeeker(Expression* target, Name targetName) : target(target), targetName(targetName) {
     Expression* temp = target;
     walk(temp);
   }
 
   void visitBreak(Break* curr) {
-    if (curr->name == targetName) {
+    if (curr->name == targetName && BranchUtils::isBranchTaken(curr)) {
       types.push_back(curr->value ? curr->value->type : none);
     }
   }
 
   void visitSwitch(Switch* curr) {
+    if (!BranchUtils::isBranchTaken(curr)) return;
     for (auto name : curr->targets) {
       if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
     }
@@ -174,7 +177,7 @@ static void handleUnreachable(Block* block) {
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
-      BreakSeeker seeker(block->name);
+      BranchUtils::BranchSeeker seeker(block->name);
       Expression* expr = block;
       seeker.walk(expr);
       if (!seeker.found) {
@@ -198,6 +201,16 @@ void Block::finalize() {
   if (!name.is()) {
     // nothing branches here, so this is easy
     if (list.size() > 0) {
+      // if we have an unreachable child, we are unreachable
+      // (we don't need to recurse into children, they can't
+      // break to us)
+      for (auto* child : list) {
+        if (child->type == unreachable) {
+          type = unreachable;
+          return;
+        }
+      }
+      // children are reachable, so last element determines type
       type = list.back()->type;
     } else {
       type = none;
@@ -248,12 +261,43 @@ void Loop::finalize() {
 
 void Break::finalize() {
   if (condition) {
-    if (value) {
+    if (condition->type == unreachable) {
+      type = unreachable;
+    } else if (value) {
       type = value->type;
     } else {
       type = none;
     }
   } else {
+    type = unreachable;
+  }
+}
+
+void Switch::finalize() {
+  type = unreachable;
+}
+
+template<typename T>
+void handleUnreachableOperands(T* curr) {
+  for (auto* child : curr->operands) {
+    if (child->type == unreachable) {
+      curr->type = unreachable;
+      break;
+    }
+  }
+}
+
+void Call::finalize() {
+  handleUnreachableOperands(this);
+}
+
+void CallImport::finalize() {
+  handleUnreachableOperands(this);
+}
+
+void CallIndirect::finalize() {
+  handleUnreachableOperands(this);
+  if (target->type == unreachable) {
     type = unreachable;
   }
 }
@@ -282,10 +326,46 @@ bool SetLocal::isTee() {
 void SetLocal::setTee(bool is) {
   if (is) type = value->type;
   else type = none;
+  finalize(); // type may need to be unreachable
+}
+
+void SetLocal::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SetGlobal::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void Load::finalize() {
+  if (ptr->type == unreachable) {
+    type = unreachable;
+  }
 }
 
 void Store::finalize() {
   assert(valueType != none); // must be set
+  if (ptr->type == unreachable || value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
+  }
+}
+
+void AtomicRMW::finalize() {
+  if (ptr->type == unreachable || value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void AtomicCmpxchg::finalize() {
+  if (ptr->type == unreachable || expected->type == unreachable || replacement->type == unreachable) {
+    type = unreachable;
+  }
 }
 
 Const* Const::set(Literal value_) {
@@ -294,11 +374,19 @@ Const* Const::set(Literal value_) {
   return this;
 }
 
+void Const::finalize() {
+  type = value.type;
+}
+
 bool Unary::isRelational() {
   return op == EqZInt32 || op == EqZInt64;
 }
 
 void Unary::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+    return;
+  }
   switch (op) {
     case ClzInt32:
     case CtzInt32:
@@ -390,16 +478,30 @@ bool Binary::isRelational() {
 
 void Binary::finalize() {
   assert(left && right);
-  if (isRelational()) {
+  if (left->type == unreachable || right->type == unreachable) {
+    type = unreachable;
+  } else if (isRelational()) {
     type = i32;
   } else {
-    type = getReachableWasmType(left->type, right->type);
+    type = left->type;
   }
 }
 
 void Select::finalize() {
   assert(ifTrue && ifFalse);
-  type = getReachableWasmType(ifTrue->type, ifFalse->type);
+  if (ifTrue->type == unreachable || ifFalse->type == unreachable || condition->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = ifTrue->type;
+  }
+}
+
+void Drop::finalize() {
+  if (value->type == unreachable) {
+    type = unreachable;
+  } else {
+    type = none;
+  }
 }
 
 void Host::finalize() {
@@ -409,10 +511,15 @@ void Host::finalize() {
       break;
     }
     case GrowMemory: {
-      type = i32;
+      // if the single operand is not reachable, so are we
+      if (operands[0]->type == unreachable) {
+        type = unreachable;
+      } else {
+        type = i32;
+      }
       break;
     }
-    default: abort();
+    default: WASM_UNREACHABLE();
   }
 }
 
@@ -575,6 +682,17 @@ void Module::removeImport(Name name) {
   }
   importsMap.erase(name);
 }
+
+void Module::removeExport(Name name) {
+  for (size_t i = 0; i < exports.size(); i++) {
+    if (exports[i]->name == name) {
+      exports.erase(exports.begin() + i);
+      break;
+    }
+  }
+  exportsMap.erase(name);
+}
+
   // TODO: remove* for other elements
 
 void Module::updateMaps() {

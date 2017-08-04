@@ -64,7 +64,8 @@ int main() {
   BinaryenExpressionRef checkBodyList[] = { halter, incer, debugger,
                                             returner };
   BinaryenExpressionRef checkBody = BinaryenBlock(module,
-    NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef)
+    NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef),
+    BinaryenUndefined()
   );
   BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i",
                                                       BinaryenInt32(),
@@ -87,7 +88,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b0 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b0 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -102,7 +104,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b1 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b1 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -117,7 +120,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b2 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b2 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -132,7 +136,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b3 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b3 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -147,7 +152,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b4 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b4 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -162,7 +168,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b5 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b5 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -177,7 +184,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b6 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b6 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -192,7 +200,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b7 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b7 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -207,7 +216,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b8 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b8 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -222,7 +232,8 @@ int main() {
                                                BinaryenInt32()))
     };
 
-    b9 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b9 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2,
+                                                  BinaryenUndefined()));
 
   }
 
@@ -296,7 +307,8 @@ int main() {
   }
   full[numDecisions] = body;
   BinaryenExpressionRef all = BinaryenBlock(module, NULL, full,
-                                            numDecisions + 1);
+                                            numDecisions + 1,
+                                            BinaryenUndefined());
 
   BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v",
                                                       BinaryenNone(),

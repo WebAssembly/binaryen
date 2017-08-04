@@ -32,6 +32,50 @@
 
 namespace wasm {
 
+struct ParseException {
+  std::string text;
+  size_t line, col;
+
+  ParseException() : text("unknown parse error"), line(-1), col(-1) {}
+  ParseException(std::string text) : text(text), line(-1), col(-1) {}
+  ParseException(std::string text, size_t line, size_t col) : text(text), line(line), col(col) {}
+
+  void dump(std::ostream& o) {
+    Colors::magenta(o);
+    o << "[";
+    Colors::red(o);
+    o << "parse exception: ";
+    Colors::green(o);
+    o << text;
+    if (line != size_t(-1)) {
+      Colors::normal(o);
+      o << " (at " << line << ":" << col << ")";
+    }
+    Colors::magenta(o);
+    o << "]";
+    Colors::normal(o);
+  }
+};
+
+struct MapParseException {
+  std::string text;
+
+  MapParseException() : text("unknown parse error") {}
+  MapParseException(std::string text) : text(text) {}
+
+  void dump(std::ostream& o) {
+    Colors::magenta(o);
+    o << "[";
+    Colors::red(o);
+    o << "map parse exception: ";
+    Colors::green(o);
+    o << text;
+    Colors::magenta(o);
+    o << "]";
+    Colors::normal(o);
+  }
+};
+
 inline Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) {
   const char *str = s.str;
   auto ret = allocator.alloc<Const>();
@@ -73,7 +117,9 @@ inline Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allo
     }
     if (positive[0] == 'n' && positive[1] == 'a' && positive[2] == 'n') {
       const char * modifier = positive[3] == ':' ? positive + 4 : nullptr;
-      assert(modifier ? positive[4] == '0' && positive[5] == 'x' : 1);
+      if (!(modifier ? positive[4] == '0' && positive[5] == 'x' : 1)) {
+        throw ParseException("bad nan input");
+      }
       switch (type) {
         case f32: {
           uint32_t pattern;
@@ -163,35 +209,12 @@ inline Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allo
     }
     default: return nullptr;
   }
-  assert(ret->value.type == type);
+  if (ret->value.type != type) {
+    throw ParseException("parsed type does not match expected type");
+  }
   //std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
   return ret;
 }
-
-struct ParseException {
-  std::string text;
-  size_t line, col;
-
-  ParseException() : text("unknown parse error"), line(-1), col(-1) {}
-  ParseException(std::string text) : text(text), line(-1), col(-1) {}
-  ParseException(std::string text, size_t line, size_t col) : text(text), line(line), col(col) {}
-
-  void dump(std::ostream& o) {
-    Colors::magenta(o);
-    o << "[";
-    Colors::red(o);
-    o << "parse exception: ";
-    Colors::green(o);
-    o << text;
-    if (line != size_t(-1)) {
-      Colors::normal(o);
-      o << " (at " << line << ":" << col << ")";
-    }
-    Colors::magenta(o);
-    o << "]";
-    Colors::normal(o);
-  }
-};
 
 // Helper for parsers that may not have unique label names. This transforms
 // the names into unique ones, as required by Binaryen IR.
@@ -227,11 +250,20 @@ struct UniqueNameMapper {
   }
 
   Name sourceToUnique(Name sName) {
-    return labelMappings.at(sName).back();
+    if (labelMappings.find(sName) == labelMappings.end()) {
+      throw ParseException("bad label in sourceToUnique");
+    }
+    if (labelMappings[sName].empty()) {
+      throw ParseException("use of popped label in sourceToUnique");
+    }
+    return labelMappings[sName].back();
   }
 
   Name uniqueToSource(Name name) {
-    return reverseLabelMapping.at(name);
+    if (reverseLabelMapping.find(name) == reverseLabelMapping.end()) {
+      throw ParseException("label mismatch in uniqueToSource");
+    }
+    return reverseLabelMapping[name];
   }
 
   void clear() {

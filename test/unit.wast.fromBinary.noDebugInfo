@@ -39,7 +39,7 @@
  )
  (func $1 (type $4) (result f64)
   (local $var$0 f64)
-  (block $label$0 f64
+  (block $label$0 (result f64)
    (set_local $var$0
     (f64.add
      (f64.add
@@ -97,7 +97,7 @@
   (local $var$2 i32)
   (local $var$3 f64)
   (local $var$4 f64)
-  (block $label$0 f64
+  (block $label$0 (result f64)
    (if
     (f64.gt
      (get_local $var$0)
@@ -191,13 +191,13 @@
   (local $var$0 f64)
   (set_local $var$0
    (f64.sub
-    (block $label$0 f64
+    (block $label$0 (result f64)
      (drop
       (f64.const 0.1)
      )
      (f64.const 5.1)
     )
-    (block $label$1 f64
+    (block $label$1 (result f64)
      (drop
       (f64.const 3.2)
      )
@@ -207,7 +207,7 @@
   )
  )
  (func $7 (type $6) (param $var$0 i32) (result i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (block $label$1
     (block $label$2
      (block $label$3
@@ -305,7 +305,7 @@
  )
  (func $10 (type $5) (result i32)
   (local $var$0 i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (set_local $var$0
     (i32.and
      (i32.div_u
@@ -354,7 +354,7 @@
   (local $var$3 f64)
   (block $label$0
    (set_local $var$0
-    (block $label$1 i32
+    (block $label$1 (result i32)
      (set_local $var$1
       (i32.const 0)
      )
@@ -434,7 +434,7 @@
   (nop)
  )
  (func $19 (type $5) (result i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (block $label$1
     (drop
      (i32.const 1)
@@ -445,7 +445,7 @@
   )
  )
  (func $20 (type $7) (param $var$0 f64) (result f64)
-  (loop $label$0 f64
+  (loop $label$0 (result f64)
    (drop
     (get_local $var$0)
    )
@@ -479,6 +479,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $25 (type $5) (result i32)
   (block $label$0
@@ -502,6 +503,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $27 (type $5) (result i32)
   (block $label$0
@@ -513,7 +515,7 @@
   (unreachable)
  )
  (func $28 (type $5) (result i32)
-  (block $label$0 i32
+  (block $label$0 (result i32)
    (block $label$1
     (drop
      (i32.const 1)
@@ -540,6 +542,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $30 (type $5) (result i32)
   (if
@@ -567,6 +570,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $32 (type $5) (result i32)
   (loop $label$0
@@ -577,6 +581,7 @@
   (f64.abs
    (unreachable)
   )
+  (unreachable)
  )
  (func $33 (type $5) (result i32)
   (loop $label$0
