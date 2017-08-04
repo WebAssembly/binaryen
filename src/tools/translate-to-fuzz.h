@@ -279,8 +279,9 @@ private:
     assert(breakableStack.empty());
     assert(hangStack.empty());
     wasm.addFunction(func);
-    // export some, but not all (to allow inlining etc.)
-    if (oneIn(2)) {
+    // export some, but not all (to allow inlining etc.). make sure to
+    // export at least one, though, to keep each testcase interesting
+    if (num == 0 || oneIn(2)) {
       auto* export_ = new Export;
       export_->name = func->name;
       export_->value = func->name;
