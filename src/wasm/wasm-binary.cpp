@@ -1793,6 +1793,7 @@ void WasmBinaryBuilder::readGlobals() {
 
 void WasmBinaryBuilder::processExpressions() {
   if (debug) std::cerr << "== processExpressions" << std::endl;
+  definitelyUnreachable = false;
   while (1) {
     Expression* curr;
     auto ret = readExpression(curr);
@@ -1813,12 +1814,13 @@ void WasmBinaryBuilder::processExpressions() {
       }
       auto peek = BinaryConsts::ASTNodes(input[pos]);
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
+        if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
         lastSeparator = peek;
         pos++;
-        if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
         return;
       } else {
         skipUnreachableCode();
+        return;
       }
     }
   }
@@ -1830,16 +1832,20 @@ void WasmBinaryBuilder::skipUnreachableCode() {
   // unreachable, and we can ignore anything after it. things after it may pop,
   // we want to undo that
   auto savedStack = expressionStack;
+  // clear the stack. nothing should be popped from there anyhow, just stuff
+  // can be pushed and then popped. Popping past the top of the stack will
+  // result in uneachables being returned
+  expressionStack.clear();
   while (1) {
     // set the definitelyUnreachable flag each time, as sub-blocks may set and unset it
     definitelyUnreachable = true;
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
+      if (debug) std::cerr << "== skipUnreachableCode finished" << std::endl;
       lastSeparator = ret;
       definitelyUnreachable = false;
       expressionStack = savedStack;
-      if (debug) std::cerr << "== skipUnreachableCode finished" << std::endl;
       return;
     }
     expressionStack.push_back(curr);
@@ -1847,14 +1853,14 @@ void WasmBinaryBuilder::skipUnreachableCode() {
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
-  if (definitelyUnreachable) {
-    // in unreachable code, don't pop things off the stack. after we are
-    // unreachable, nothing else matters, so leave those things on the stack
-    // for the block they are in, as opposed to letting things after them
-    // pop them to be their children - those later things won't be emitted.
-    return allocator.alloc<Unreachable>();
-  }
+  if (debug) std::cerr << "== popExpression" << std::endl;
   if (expressionStack.empty()) {
+    if (definitelyUnreachable) {
+      // in unreachable code, trying to pop past the polymorphic stack
+      // area results in receiving unreachables
+      if (debug) std::cerr << "== popping unreachable from polymorphic stack" << std::endl;
+      return allocator.alloc<Unreachable>();
+    }
     throw ParseException("attempted pop from empty stack / beyond block start boundary at " + std::to_string(pos));
   }
   // the stack is not empty, and we would not be going out of the current block

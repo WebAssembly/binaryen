@@ -72,9 +72,7 @@
    (return
     (get_local $var$1)
    )
-   (unreachable)
   )
-  (unreachable)
  )
  (func $stackSave (type $2) (result i32)
   (return
@@ -214,10 +212,7 @@
    (return
     (get_local $var$4)
    )
-   (unreachable)
-   (unreachable)
   )
-  (unreachable)
  )
  (func $runPostSets (type $4)
   (local $var$0 i32)
