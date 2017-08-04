@@ -105,6 +105,10 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
       with open('a.js') as i:
         with open(t + '.js', 'w') as o:
           o.write(i.read())
+    if 'emit-spec-wrapper' in t:
+      with open('a.wat') as i:
+        with open(t + '.wat', 'w') as o:
+          o.write(i.read())
 
 print '\n[ checking wasm-opt -o notation... ]\n'
 

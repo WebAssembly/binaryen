@@ -110,6 +110,10 @@ for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'passes'))):
       with open('a.js') as actual:
         with open(t + '.js') as expected:
           fail_if_not_identical(actual.read(), expected.read())
+    if 'emit-spec-wrapper' in t:
+      with open('a.wat') as actual:
+        with open(t + '.wat') as expected:
+          fail_if_not_identical(actual.read(), expected.read())
 
 print '[ checking asm2wasm testcases... ]\n'
 

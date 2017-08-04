@@ -35,6 +35,7 @@
 #include "execution-results.h"
 #include "translate-to-fuzz.h"
 #include "js-wrapper.h"
+#include "spec-wrapper.h"
 
 using namespace wasm;
 
@@ -51,6 +52,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzBinary = false;
   bool translateToFuzz = false;
   std::string emitJSWrapper;
+  std::string emitSpecWrapper;
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
@@ -78,6 +80,9 @@ int main(int argc, const char* argv[]) {
       .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
            [&](Options *o, const std::string &arguments) { emitJSWrapper = arguments; })
+      .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
+           Options::Arguments::One,
+           [&](Options *o, const std::string &arguments) { emitSpecWrapper = arguments; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -156,6 +161,13 @@ int main(int argc, const char* argv[]) {
     std::ofstream outfile;
     outfile.open(emitJSWrapper, std::ofstream::out);
     outfile << generateJSWrapper(wasm);
+    outfile.close();
+  }
+
+  if (emitSpecWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitSpecWrapper, std::ofstream::out);
+    outfile << generateSpecWrapper(wasm);
     outfile.close();
   }
 }
