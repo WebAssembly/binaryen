@@ -279,12 +279,14 @@ private:
     assert(breakableStack.empty());
     assert(hangStack.empty());
     wasm.addFunction(func);
-    // export them all TODO just some?
-    auto* export_ = new Export;
-    export_->name = func->name;
-    export_->value = func->name;
-    export_->kind = ExternalKind::Function;
-    wasm.addExport(export_);
+    // export some, but not all (to allow inlining etc.)
+    if (oneIn(2)) {
+      auto* export_ = new Export;
+      export_->name = func->name;
+      export_->value = func->name;
+      export_->kind = ExternalKind::Function;
+      wasm.addExport(export_);
+    }
     // cleanup
     typeLocals.clear();
   }
