@@ -1811,10 +1811,10 @@ void WasmBinaryBuilder::processExpressions() {
       if (pos == endOfFunction) {
         throw ParseException("Reached function end without seeing End opcode");
       }
-      auto peek = BinaryConsts::ASTNodes(input[pos]);
+      auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
         if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
-        lastSeparator = peek;
+        lastSeparator = BinaryConsts::ASTNodes(peek);
         pos++;
         return;
       } else {
