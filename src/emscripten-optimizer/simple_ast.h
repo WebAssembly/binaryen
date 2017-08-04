@@ -715,6 +715,7 @@ struct JSPrinter {
       }
       case 't': {
         if (type == TOPLEVEL) printToplevel(node);
+        else if (type == TRY) printTry(node);
         else abort();
         break;
       }
@@ -1133,6 +1134,15 @@ struct JSPrinter {
       }
     }
     emit('}');
+  }
+
+  void printTry(Ref node) {
+    emit("try ");
+    printBlock(node[1]);
+    emit(" catch (");
+    printName(node[2]);
+    emit(") ");
+    printBlock(node[3]);
   }
 
   void printSub(Ref node) {
@@ -1560,6 +1570,15 @@ public:
     } else {
       switch_[2]->back()->back()->push_back(code);
     }
+  }
+
+  static Ref makeTry(Ref try_, Ref arg, Ref catch_) {
+    assert(try_[0] == BLOCK);
+    assert(catch_[0] == BLOCK);
+    return &makeRawArray(3)->push_back(makeRawString(TRY))
+                            .push_back(try_)
+                            .push_back(arg)
+                            .push_back(catch_);
   }
 
   static Ref makeDot(Ref obj, IString key) {
