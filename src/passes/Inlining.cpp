@@ -92,7 +92,10 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
   }
 
   void visitCall(Call* curr) {
-    if (state->canInline.count(curr->target)) {
+    // plan to inline if we know this is valid to inline, and if the call is
+    // actually performed - if it is dead code, it's pointless to inline
+    if (state->canInline.count(curr->target) &&
+        curr->type != unreachable) {
       // nest the call in a block. that way the location of the pointer to the call will not
       // change even if we inline multiple times into the same function, otherwise
       // call1(call2()) might be a problem
