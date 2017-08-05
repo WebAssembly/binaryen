@@ -120,8 +120,6 @@ private:
 
 // Core inlining logic. Modifies the outside function (adding locals as
 // needed), and returns the inlined code.
-// Since we only inline once, and do not need the function afterwards, we
-// can just reuse all the nodes and even avoid copying.
 static Expression* doInlining(Module* module, Function* into, InliningAction& action) {
   auto* call = (*action.callSite)->cast<Call>();
   Builder builder(*module);
@@ -154,10 +152,10 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   for (Index i = 0; i < action.contents->params.size(); i++) {
     block->list.push_back(builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
   }
-  // update the inlined contents
-  updater.walk(action.contents->body);
-  block->list.push_back(action.contents->body);
-  action.contents->body = builder.makeUnreachable(); // not strictly needed, since it's going away
+  // generate and update the inlined contents
+  auto* contents = ExpressionManipulator::copy(action.contents->body, *module);
+  updater.walk(contents);
+  block->list.push_back(contents);
   return block;
 }
 
