@@ -1054,4 +1054,18 @@
    )
   )
  )
+ (func $drop-unreachable-block-with-concrete-final
+  (drop
+   (block
+    (drop
+     (block
+      (drop
+       (return)
+      )
+     )
+    )
+    (i32.const -452)
+   )
+  )
+ )
 )

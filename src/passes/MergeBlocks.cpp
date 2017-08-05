@@ -294,11 +294,12 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
           // here
           return outer;
         }
+        // we are going to replace the block with the final element, so they should
+        // be identically typed
+        if (block->type != back->type) {
+          return outer;
+        }
         child = back;
-        // we modified child (which is a reference to a pointer), which modifies curr, which might change its type
-        // (e.g. (drop (block (result i32) .. (unreachable)))
-        // the child was a block of i32, and is being replaced with an unreachable, so the
-        // parent will likely need to be unreachable too
         if (outer == nullptr) {
           // reuse the block, move it out
           block->list.back() = curr;
