@@ -1014,4 +1014,44 @@
    (f64.const -1)
   )
  )
+ (func $dont-move-unreachable
+  (loop $label$0
+   (drop
+    (block $label$3 (result i32)
+     (br $label$0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $dont-move-unreachable-last
+  (loop $label$0
+   (drop
+    (block $label$3 (result i32)
+     (call $dont-move-unreachable-last)
+     (br $label$0)
+    )
+   )
+  )
+ )
+ (func $move-around-unreachable-in-middle
+  (loop $label$0
+   (drop
+    (block $label$2 (result i32)
+     (block $block2
+      (nop)
+     )
+     (block $label$3 (result i32)
+      (drop
+       (br_if $label$3
+        (br $label$0)
+        (i32.const 0)
+       )
+      )
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
 )

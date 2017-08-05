@@ -154,6 +154,15 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   }
 };
 
+static bool hasUnreachableChild(Block* block) {
+  for (auto* test : block->list) {
+    if (test->type == unreachable) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // core block optimizer routine
 static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
   bool more = true;
@@ -168,42 +177,37 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
         if (drop) {
           child = drop->value->dynCast<Block>();
           if (child) {
-            // if we move around unreachable code, type changes could occur. avoid that, as
-            // anyhow it means we should have run dce before getting here
-            for (auto* test : child->list) {
-              if (test->type == unreachable) {
+            if (hasUnreachableChild(child)) {
+              // don't move around unreachable code, as it can change types
+              // dce should have been run anyhow
+              continue;
+            }
+            if (child->name.is()) {
+              Expression* expression = child;
+              // check if it's ok to remove the value from all breaks to us
+              ProblemFinder finder(passOptions);
+              finder.origin = child->name;
+              finder.walk(expression);
+              if (finder.found()) {
                 child = nullptr;
-                break;
+              } else {
+                // fix up breaks
+                BreakValueDropper fixer(passOptions);
+                fixer.origin = child->name;
+                fixer.setModule(module);
+                fixer.walk(expression);
               }
             }
             if (child) {
-              if (child->name.is()) {
-                Expression* expression = child;
-                // check if it's ok to remove the value from all breaks to us
-                ProblemFinder finder(passOptions);
-                finder.origin = child->name;
-                finder.walk(expression);
-                if (finder.found()) {
-                  child = nullptr;
-                } else {
-                  // fix up breaks
-                  BreakValueDropper fixer(passOptions);
-                  fixer.origin = child->name;
-                  fixer.setModule(module);
-                  fixer.walk(expression);
-                }
-              }
-              if (child) {
-                // we can do it!
-                // reuse the drop
-                drop->value = child->list.back();
-                drop->finalize();
-                child->list.back() = drop;
-                child->finalize();
-                curr->list[i] = child;
-                more = true;
-                changed = true;
-              }
+              // we can do it!
+              // reuse the drop
+              drop->value = child->list.back();
+              drop->finalize();
+              child->list.back() = drop;
+              child->finalize();
+              curr->list[i] = child;
+              more = true;
+              changed = true;
             }
           }
         }
@@ -251,6 +255,23 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     optimizeBlock(curr, getModule(), getPassOptions());
   }
 
+  // given
+  // (curr
+  //  (block=child
+  //   (..more..)
+  //   (back)
+  //  )
+  //  (..other..children..)
+  // )
+  // if child is a block, we can move this around to
+  // (block
+  //  (..more..)
+  //  (curr
+  //   (back)
+  //   (..other..children..)
+  //  )
+  // )
+  // at which point the block is on the outside and potentially mergeable with an outer block
   Block* optimize(Expression* curr, Expression*& child, Block* outer = nullptr, Expression** dependency1 = nullptr, Expression** dependency2 = nullptr) {
     if (!child) return outer;
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
@@ -261,18 +282,28 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
-        child = block->list.back();
+        // if we move around unreachable code, type changes could occur. avoid that, as
+        // anyhow it means we should have run dce before getting here
+        if (curr->type == none && hasUnreachableChild(block)) {
+          // moving the block to the outside would replace a none with an unreachable
+          return outer;
+        }
+        auto* back = block->list.back();
+        if (back->type == unreachable) {
+          // curr is not reachable, dce could remove it; don't try anything fancy
+          // here
+          return outer;
+        }
+        child = back;
         // we modified child (which is a reference to a pointer), which modifies curr, which might change its type
         // (e.g. (drop (block (result i32) .. (unreachable)))
         // the child was a block of i32, and is being replaced with an unreachable, so the
         // parent will likely need to be unreachable too
-        auto oldType = curr->type;
-        ReFinalize().walk(curr);
         if (outer == nullptr) {
           // reuse the block, move it out
           block->list.back() = curr;
           // we want the block outside to have the same type as curr had
-          block->finalize(oldType);
+          block->finalize(curr->type);
           replaceCurrent(block);
           return block;
         } else {
