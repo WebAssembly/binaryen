@@ -652,6 +652,7 @@ struct JSPrinter {
     }
     if (node->isAssign()) {
       printAssign(node);
+      return;
     }
     IString type = node[0]->getIString();
     switch (type.str[0]) {
@@ -809,7 +810,6 @@ struct JSPrinter {
   }
 
   void printAssign(Ref node) {
-    assert(false && "printAssign still used!");
     auto* assign = node->asAssign();
     printChild(assign->target(), node, -1);
     space();

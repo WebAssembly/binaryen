@@ -133,14 +133,20 @@ public:
   Ref processAsserts(Element& e, SExpressionWasmBuilder& sexpBuilder);
 
   // Get a temp var.
-  IString getTemp(WasmType type) {
+  IString getTemp(WasmType type, Function* func) {
     IString ret;
     if (frees[type].size() > 0) {
       ret = frees[type].back();
       frees[type].pop_back();
     } else {
       size_t index = temps[type]++;
-      ret = IString((std::string("wasm2asm_") + printWasmType(type) + "$" + std::to_string(index)).c_str(), false);
+      ret = IString((std::string("wasm2asm_") + printWasmType(type) + "$" +
+                     std::to_string(index)).c_str(), false);
+    }
+    if (func->localIndices.count(ret) == 0) {
+      func->vars.push_back(type);
+      func->localNames.push_back(ret);
+      func->localIndices[ret] = func->getVarIndexBase() + func->vars.size() - 1;
     }
     return ret;
   }
@@ -536,7 +542,8 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // body
   scanFunctionBody(func->body);
   if (isStatement(func->body)) {
-    IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
+    IString result =
+        func->result != none ? getTemp(func->result, func) : NO_RESULT;
     flattenAppend(ret, ValueBuilder::makeStatement(processFunctionBody(func, result)));
     if (func->result != none) {
       // do the actual return
@@ -554,15 +561,6 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(theVar, fromName(func->getLocalName(i)), makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i))));
-  }
-  for (auto f : frees[i32]) {
-    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_INT));
-  }
-  for (auto f : frees[f32]) {
-    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_FLOAT));
-  }
-  for (auto f : frees[f64]) {
-    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_DOUBLE));
   }
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
@@ -689,10 +687,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
       //                 going there anyhow.
-      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, IString possible = NO_RESULT) : parent(parent), type(type) {
+      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, Function* func,
+                 IString possible = NO_RESULT) : parent(parent), type(type) {
         assert(possible != EXPRESSION_RESULT);
         if (possible == NO_RESULT) {
-          temp = parent->getTemp(type);
+          temp = parent->getTemp(type, func);
           needFree = true;
         } else {
           temp = possible;
@@ -728,7 +727,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     // this result is for an asm expression slot, but it might be a statement
     Ref visitForExpression(Expression* curr, WasmType type, IString& tempName) {
       if (isStatement(curr)) {
-        ScopedTemp temp(type, parent);
+        ScopedTemp temp(type, parent, func);
         tempName = temp.temp;
         return visit(curr, temp);
       } else {
@@ -851,7 +850,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref ret = ValueBuilder::makeBlock();
       Ref condition;
       if (isStatement(curr->condition)) {
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         flattenAppend(ret[2], visit(curr->condition, temp));
         condition = temp.getAstName();
       } else {
@@ -871,7 +870,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, WasmType type) {
       std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
       for (auto& operand : operands) {
-        temps.push_back(new ScopedTemp(operand->type, parent));
+        temps.push_back(new ScopedTemp(operand->type, parent, func));
         IString temp = temps.back()->temp;
         flattenAppend(ret, visitAndAssign(operand, temp));
         theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
@@ -924,7 +923,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       // we must statementize them all
       Ref ret = ValueBuilder::makeBlock();
-      ScopedTemp temp(i32, parent);
+      ScopedTemp temp(i32, parent, func);
       flattenAppend(ret, visit(curr->target, temp));
       Ref theCall = makeTableCall(temp.getAstName());
       return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
@@ -938,7 +937,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
             SET, visit(curr->value, EXPRESSION_RESULT));
       }
-      ScopedTemp temp(curr->type, parent, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
+      ScopedTemp temp(curr->type, parent, func, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
       Ref ret = blockify(visit(curr->value, temp));
       // the output was assigned to result, so we can just assign it to our target
       ret[1]->push_back(ValueBuilder::makeStatement(
@@ -949,7 +948,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitLoad(Load *curr) {
       if (isStatement(curr)) {
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         GetLocal fakeLocal(allocator);
         fakeLocal.index = func->getLocalIndex(temp.getName());
         Load fakeLoad = *curr;
@@ -960,7 +959,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         SetLocal set(allocator);
         set.index = func->getLocalIndex(temp.getName());
         set.value = curr->ptr;
@@ -1038,8 +1037,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitStore(Store *curr) {
       if (isStatement(curr)) {
-        ScopedTemp tempPtr(i32, parent);
-        ScopedTemp tempValue(curr->type, parent);
+        ScopedTemp tempPtr(i32, parent, func);
+        ScopedTemp tempValue(curr->valueType, parent, func);
         GetLocal fakeLocalPtr(allocator);
         fakeLocalPtr.index = func->getLocalIndex(tempPtr.getName());
         GetLocal fakeLocalValue(allocator);
@@ -1054,7 +1053,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         SetLocal set(allocator);
         set.index = func->getLocalIndex(temp.getName());
         set.value = curr->ptr;
@@ -1062,7 +1061,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         GetLocal get(allocator);
         get.index = func->getLocalIndex(temp.getName());
         // set the value to a local
-        ScopedTemp tempValue(curr->value->type, parent);
+        ScopedTemp tempValue(curr->value->type, parent, func);
         SetLocal setValue(allocator);
         setValue.index = func->getLocalIndex(tempValue.getName());
         setValue.value = curr->value;
@@ -1074,7 +1073,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         store.ptr = &get;
         store.bytes = 1; // do the worst
         Ref rest;
-        switch (curr->type) {
+        switch (curr->valueType) {
           case i32: {
             Const _255(allocator);
             _255.value = Literal(int32_t(255));
@@ -1105,7 +1104,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             break;
           }
           default:
-            std::cerr << "Unhandled type in store: " <<  curr->type
+            std::cerr << "Unhandled type in store: " <<  curr->valueType
                       << std::endl;
             abort();
         }
@@ -1118,7 +1117,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->type) {
+      switch (curr->valueType) {
         case i32: {
           switch (curr->bytes) {
             case 1: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP8),  ValueBuilder::makePtrShift(ptr, 0)); break;
@@ -1130,7 +1129,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         }
         case f32: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2)); break;
         case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
-        default: abort();
+        default:
+          std::cerr << "Unhandled type in store: " << curr->valueType
+                    << std::endl;
+          abort();
       }
       return ValueBuilder::makeBinary(ret, SET, value);
     }
@@ -1161,7 +1163,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitUnary(Unary *curr) {
       if (isStatement(curr)) {
-        ScopedTemp temp(curr->value->type, parent);
+        ScopedTemp temp(curr->value->type, parent, func);
         GetLocal fakeLocal(allocator);
         fakeLocal.index = func->getLocalIndex(temp.getName());
         Unary fakeUnary = *curr;
@@ -1266,10 +1268,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitBinary(Binary *curr) {
       if (isStatement(curr)) {
-        ScopedTemp tempLeft(curr->left->type, parent);
+        ScopedTemp tempLeft(curr->left->type, parent, func);
         GetLocal fakeLocalLeft(allocator);
         fakeLocalLeft.index = func->getLocalIndex(tempLeft.getName());
-        ScopedTemp tempRight(curr->right->type, parent);
+        ScopedTemp tempRight(curr->right->type, parent, func);
         GetLocal fakeLocalRight(allocator);
         fakeLocalRight.index = func->getLocalIndex(tempRight.getName());
         Binary fakeBinary = *curr;
@@ -1392,13 +1394,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitSelect(Select *curr) {
       if (isStatement(curr)) {
-        ScopedTemp tempIfTrue(curr->ifTrue->type, parent);
+        ScopedTemp tempIfTrue(curr->ifTrue->type, parent, func);
         GetLocal fakeLocalIfTrue(allocator);
         fakeLocalIfTrue.index = func->getLocalIndex(tempIfTrue.getName());
-        ScopedTemp tempIfFalse(curr->ifFalse->type, parent);
+        ScopedTemp tempIfFalse(curr->ifFalse->type, parent, func);
         GetLocal fakeLocalIfFalse(allocator);
         fakeLocalIfFalse.index = func->getLocalIndex(tempIfFalse.getName());
-        ScopedTemp tempCondition(i32, parent);
+        ScopedTemp tempCondition(i32, parent, func);
         GetLocal fakeCondition(allocator);
         fakeCondition.index = func->getLocalIndex(tempCondition.getName());
         Select fakeSelect = *curr;
@@ -1415,9 +1417,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
       Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
       Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      ScopedTemp tempIfTrue(curr->type, parent),
-          tempIfFalse(curr->type, parent),
-          tempCondition(i32, parent);
+      ScopedTemp tempIfTrue(curr->type, parent, func),
+          tempIfFalse(curr->type, parent, func),
+          tempCondition(i32, parent, func);
       return
         ValueBuilder::makeSeq(
           ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
