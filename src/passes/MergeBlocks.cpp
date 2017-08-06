@@ -220,15 +220,19 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       }
       for (auto item : child->list) {
         merged.push_back(item);
-        if (item->type == unreachable) {
-          // we don't need anything else from the child,
-          // and it is always valid to end on an unreachable,
-          // so stop there (otherwise, we need to be careful)
-          break;
-        }
       }
       for (size_t j = i + 1; j < curr->list.size(); j++) {
         merged.push_back(curr->list[j]);
+      }
+      // if we merged a concrete element in the middle, drop it
+      if (!merged.empty()) {
+        auto* last = merged.back();
+        for (auto*& item : merged) {
+          if (item != last && isConcreteWasmType(item->type)) {
+            Builder builder(*module);
+            item = builder.makeDrop(item);
+          }
+        }
       }
       curr->list.swap(merged);
       more = true;

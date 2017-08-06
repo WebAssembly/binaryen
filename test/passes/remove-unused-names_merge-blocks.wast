@@ -1081,5 +1081,17 @@
    )
   )
  )
+ (func $remove-br-after-unreachable
+  (block $label$9
+   (drop
+    (block
+     (block
+      (return)
+      (br $label$9) ;; removing this leads to the block becoming unreachable
+     )
+    )
+   )
+  )
+ )
 )
 

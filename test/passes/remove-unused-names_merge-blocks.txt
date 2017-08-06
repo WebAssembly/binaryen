@@ -854,6 +854,9 @@
  )
  (func $concrete_finale_in_unreachable (type $5) (result f64)
   (unreachable)
+  (drop
+   (f64.const 6.322092475576799e-96)
+  )
   (f64.const -1)
  )
  (func $dont-move-unreachable (type $3)
@@ -909,6 +912,20 @@
  (func $merging-with-unreachable-in-middle (type $4) (result i32)
   (return
    (i32.const 21536)
+  )
+  (block $label$15
+   (br $label$15)
+  )
+  (i32.const 19299)
+ )
+ (func $remove-br-after-unreachable (type $3)
+  (block $label$9
+   (drop
+    (block
+     (return)
+     (br $label$9)
+    )
+   )
   )
  )
 )
