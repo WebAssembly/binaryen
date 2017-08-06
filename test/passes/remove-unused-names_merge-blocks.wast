@@ -1068,4 +1068,18 @@
    )
   )
  )
+ (func $merging-with-unreachable-in-middle (result i32)
+  (block $label$1 (result i32)
+   (block
+    (return
+     (i32.const 21536)
+    )
+    (block $label$15
+     (br $label$15)
+    )
+    (i32.const 19299)
+   )
+  )
+ )
 )
+
