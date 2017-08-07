@@ -165,7 +165,7 @@ public:
       }
       addPrePasses(passRunner);
       passRunner.addDefaultFunctionOptimizationPasses();
-      passRunner.addDefaultGlobalOptimizationPasses();
+      passRunner.addDefaultGlobalOptimizationPostPasses();
       passRunner.run();
       return;
     }
@@ -226,7 +226,7 @@ private:
 
   void optimizeGlobally() {
     PassRunner passRunner(wasm, passOptions);
-    passRunner.addDefaultGlobalOptimizationPasses();
+    passRunner.addDefaultGlobalOptimizationPostPasses();
     passRunner.run();
   }
 

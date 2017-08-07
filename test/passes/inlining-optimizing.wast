@@ -76,14 +76,4 @@
     (drop (get_local $z))
   )
 )
-(module
-  (func $child (param i32) (result i32)
-    (i32.const 1234)
-  )
-  (func $parent (result i32)
-    (call $child
-      (unreachable) ;; call is not performed, no sense to inline
-    )
-  )
-)
 

@@ -2034,6 +2034,11 @@
    )
   )
   (drop
+   (call $sqrts
+    (f64.const 2.18281)
+   )
+  )
+  (drop
    (call $f2u
     (f64.const 100)
    )

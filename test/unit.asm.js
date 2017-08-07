@@ -726,6 +726,7 @@ function asm(global, env, buffer) {
 
   function keepAlive() {
     sqrts(3.14159);
+    sqrts(2.18281); // don't inline it either
     f2u(100.0);
     f2s(100.0);
     autoDrop(52) | 0;

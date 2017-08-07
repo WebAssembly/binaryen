@@ -32,6 +32,7 @@ Pass *createExtractFunctionPass();
 Pass *createFlattenControlFlowPass();
 Pass *createFullPrinterPass();
 Pass *createInliningPass();
+Pass *createInliningOptimizingPass();
 Pass *createLegalizeJSInterfacePass();
 Pass *createLocalCSEPass();
 Pass *createLogExecutionPass();

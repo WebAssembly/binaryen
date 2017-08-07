@@ -73,6 +73,7 @@ void PassRegistry::registerPasses() {
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
   registerPass("flatten-control-flow", "flattens out control flow to be only on blocks, not nested as expressions", createFlattenControlFlowPass);
   registerPass("inlining", "inlines functions (currently only ones with a single use)", createInliningPass);
+  registerPass("inlining-optimizing", "inlines functions (currently only ones with a single use) and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
   registerPass("local-cse", "common subexpression elimination inside basic blocks", createLocalCSEPass);
   registerPass("log-execution", "instrument the build with logging of where execution goes", createLogExecutionPass);
@@ -110,11 +111,9 @@ void PassRegistry::registerPasses() {
 }
 
 void PassRunner::addDefaultOptimizationPasses() {
-  add("duplicate-function-elimination");
+  addDefaultGlobalOptimizationPrePasses();
   addDefaultFunctionOptimizationPasses();
-  add("duplicate-function-elimination"); // optimizations show more functions as duplicate
-  add("remove-unused-module-elements");
-  add("memory-packing");
+  addDefaultGlobalOptimizationPostPasses();
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
@@ -154,9 +153,16 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("vacuum"); // just to be safe
 }
 
-void PassRunner::addDefaultGlobalOptimizationPasses() {
+void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   add("duplicate-function-elimination");
+}
+
+void PassRunner::addDefaultGlobalOptimizationPostPasses() {
+  add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    add("inlining-optimizing");
+  }
   add("memory-packing");
 }
 
