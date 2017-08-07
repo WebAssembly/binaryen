@@ -87,25 +87,6 @@ struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> 
     (*infos)[curr->name].size = Measurer::measure(curr->body);
   }
 
-  void visitModule(Module* curr) {
-
-abort(); // waka waka, make this this is reached
-
-    // anything exported or used in a table should not be inlined
-    for (auto& ex : curr->exports) {
-      if (ex->kind == ExternalKind::Function) {
-        (*infos)[ex->value].usedGlobally = true;
-      }
-    }
-    for (auto& segment : curr->table.segments) {
-      for (auto name : segment.data) {
-        if (curr->getFunctionOrNull(name)) {
-          (*infos)[name].usedGlobally = true;
-        }
-      }
-    }
-  }
-
 private:
   NameInfoMap* infos;
 };
@@ -220,6 +201,20 @@ struct Inlining : public Pass {
     runner.setIsNested(true);
     runner.add<FunctionInfoScanner>(&infos);
     runner.run();
+    // fill in global uses
+    // anything exported or used in a table should not be inlined
+    for (auto& ex : module->exports) {
+      if (ex->kind == ExternalKind::Function) {
+        infos[ex->value].usedGlobally = true;
+      }
+    }
+    for (auto& segment : module->table.segments) {
+      for (auto name : segment.data) {
+        if (module->getFunctionOrNull(name)) {
+          infos[name].usedGlobally = true;
+        }
+      }
+    }
   }
 
   bool iteration(PassRunner* runner, Module* module) {
