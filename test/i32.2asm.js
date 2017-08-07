@@ -93,13 +93,13 @@ function asmFunc(global, env, buffer) {
  function $$13(x, y) {
   x = x | 0;
   y = y | 0;
-  return __rotl_i32(x, y) | 0;
+  return __wasm_rotl_i32(x, y) | 0;
  }
  
  function $$14(x, y) {
   x = x | 0;
   y = y | 0;
-  return __rotr_i32(x, y) | 0;
+  return __wasm_rotr_i32(x, y) | 0;
  }
  
  function $$15(x) {
@@ -109,12 +109,12 @@ function asmFunc(global, env, buffer) {
  
  function $$16(x) {
   x = x | 0;
-  return __ctz_i32(x) | 0;
+  return __wasm_ctz_i32(x) | 0;
  }
  
  function $$17(x) {
   x = x | 0;
-  return __popcnt_i32(x) | 0;
+  return __wasm_popcnt_i32(x) | 0;
  }
  
  function $$18(x) {
@@ -182,14 +182,14 @@ function asmFunc(global, env, buffer) {
   return x >>> 0 >= y >>> 0 | 0;
  }
  
- function __ctz_i32(x) {
+ function __wasm_ctz_i32(x) {
   x = x | 0;
   var wasm2asm_i32$0 = 0;
   if ((x | 0) == (0 | 0)) wasm2asm_i32$0 = 32; else wasm2asm_i32$0 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
   return wasm2asm_i32$0 | 0;
  }
  
- function __popcnt_i32(x) {
+ function __wasm_popcnt_i32(x) {
   x = x | 0;
   var count = 0, wasm2asm_i32$0 = 0;
   count = 0;
@@ -208,13 +208,13 @@ function asmFunc(global, env, buffer) {
   return wasm2asm_i32$0 | 0;
  }
  
- function __rotl_i32(x, k) {
+ function __wasm_rotl_i32(x, k) {
   x = x | 0;
   k = k | 0;
   return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
  }
  
- function __rotr_i32(x, k) {
+ function __wasm_rotr_i32(x, k) {
   x = x | 0;
   k = k | 0;
   return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
