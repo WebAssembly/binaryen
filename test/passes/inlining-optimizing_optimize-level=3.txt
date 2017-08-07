@@ -381,35 +381,28 @@
     (get_local $0)
    )
   )
-  (if
-   (i32.gt_u
-    (tee_local $0
-     (call $___syscall6
-      (i32.const 6)
-      (get_local $2)
-     )
-    )
-    (i32.const -4096)
-   )
-   (block
-    (i32.store
-     (if (result i32)
-      (i32.load
-       (i32.const 16)
+  (set_local $0
+   (if (result i32)
+    (i32.gt_u
+     (tee_local $0
+      (call $___syscall6
+       (i32.const 6)
+       (get_local $2)
       )
-      (i32.load offset=60
-       (call $_pthread_self)
-      )
-      (i32.const 60)
      )
-     (i32.sub
-      (i32.const 0)
-      (get_local $0)
-     )
+     (i32.const -4096)
     )
-    (set_local $0
+    (block (result i32)
+     (i32.store
+      (call $___errno_location)
+      (i32.sub
+       (i32.const 0)
+       (get_local $0)
+      )
+     )
      (i32.const -1)
     )
+    (get_local $0)
    )
   )
   (set_global $STACKTOP
@@ -561,15 +554,7 @@
       )
       (block (result i32)
        (i32.store
-        (if (result i32)
-         (i32.load
-          (i32.const 16)
-         )
-         (i32.load offset=60
-          (call $_pthread_self)
-         )
-         (i32.const 60)
-        )
+        (call $___errno_location)
         (i32.sub
          (i32.const 0)
          (get_local $1)
@@ -898,15 +883,7 @@
           )
           (block (result i32)
            (i32.store
-            (if (result i32)
-             (i32.load
-              (i32.const 16)
-             )
-             (i32.load offset=60
-              (call $_pthread_self)
-             )
-             (i32.const 60)
-            )
+            (call $___errno_location)
             (i32.sub
              (i32.const 0)
              (get_local $5)
@@ -949,15 +926,7 @@
           )
           (block (result i32)
            (i32.store
-            (if (result i32)
-             (i32.load
-              (i32.const 16)
-             )
-             (i32.load offset=60
-              (call $_pthread_self)
-             )
-             (i32.const 60)
-            )
+            (call $___errno_location)
             (i32.sub
              (i32.const 0)
              (get_local $5)

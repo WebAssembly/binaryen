@@ -52,13 +52,14 @@ struct FunctionInfo {
   bool lightweight = true;
   bool usedGlobally = false; // in a table or export
 
-  bool worthInlining(PassOptions& options) {
+  bool worthInlining(PassOptions& options, bool allowMultipleInliningsPerFunction) {
     // if it's big, it's just not worth doing (TODO: investigate more)
     if (size > FLEXIBLE_SIZE_LIMIT) return false;
     // if it has one use, then inlining it would likely reduce code size
     // since we are just moving code around, + optimizing, so worth it
     // if small enough that we are pretty sure its ok
     if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) return true;
+    if (!allowMultipleInliningsPerFunction) return false;
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
     // about size
@@ -192,10 +193,15 @@ struct Inlining : public Pass {
 
   NameInfoMap infos;
 
+  bool firstIteration;
+
   void run(PassRunner* runner, Module* module) override {
     // keep going while we inline, to handle nesting. TODO: optimize
     calculateInfos(module);
-    while (iteration(runner, module)) {}
+    firstIteration = true;
+    while (iteration(runner, module)) {
+      firstIteration = false;
+    }
   }
 
   void calculateInfos(Module* module) {
@@ -227,10 +233,12 @@ struct Inlining : public Pass {
     // decide which to inline
     InliningState state;
     for (auto& func : module->functions) {
-      if (infos[func->name].worthInlining(runner->options)) {
+      // on the first iteration, allow multiple inlinings per function
+      if (infos[func->name].worthInlining(runner->options, firstIteration /* allowMultipleInliningsPerFunction */)) {
         state.worthInlining.insert(func->name);
       }
     }
+    if (state.worthInlining.size() == 0) return false;
     // fill in actionsForFunction, as we operate on it in parallel (each function to its own entry)
     for (auto& func : module->functions) {
       state.actionsForFunction[func->name];
