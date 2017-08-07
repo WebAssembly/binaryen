@@ -154,6 +154,15 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   }
 };
 
+static bool hasUnreachableChild(Block* block) {
+  for (auto* test : block->list) {
+    if (test->type == unreachable) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // core block optimizer routine
 static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
   bool more = true;
@@ -168,6 +177,11 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
         if (drop) {
           child = drop->value->dynCast<Block>();
           if (child) {
+            if (hasUnreachableChild(child)) {
+              // don't move around unreachable code, as it can change types
+              // dce should have been run anyhow
+              continue;
+            }
             if (child->name.is()) {
               Expression* expression = child;
               // check if it's ok to remove the value from all breaks to us
@@ -200,15 +214,6 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       }
       if (!child) continue;
       if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
-      if (child->type == unreachable) {
-        // an unreachable block can have a concrete final element (which is never reached)
-        if (!child->list.empty()) {
-          if (isConcreteWasmType(child->list.back()->type)) {
-            // just remove it
-            child->list.pop_back();
-          }
-        }
-      }
       ExpressionList merged(module->allocator);
       for (size_t j = 0; j < i; j++) {
         merged.push_back(curr->list[j]);
@@ -218,6 +223,16 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       }
       for (size_t j = i + 1; j < curr->list.size(); j++) {
         merged.push_back(curr->list[j]);
+      }
+      // if we merged a concrete element in the middle, drop it
+      if (!merged.empty()) {
+        auto* last = merged.back();
+        for (auto*& item : merged) {
+          if (item != last && isConcreteWasmType(item->type)) {
+            Builder builder(*module);
+            item = builder.makeDrop(item);
+          }
+        }
       }
       curr->list.swap(merged);
       more = true;
@@ -241,6 +256,23 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     optimizeBlock(curr, getModule(), getPassOptions());
   }
 
+  // given
+  // (curr
+  //  (block=child
+  //   (..more..)
+  //   (back)
+  //  )
+  //  (..other..children..)
+  // )
+  // if child is a block, we can move this around to
+  // (block
+  //  (..more..)
+  //  (curr
+  //   (back)
+  //   (..other..children..)
+  //  )
+  // )
+  // at which point the block is on the outside and potentially mergeable with an outer block
   Block* optimize(Expression* curr, Expression*& child, Block* outer = nullptr, Expression** dependency1 = nullptr, Expression** dependency2 = nullptr) {
     if (!child) return outer;
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
@@ -251,18 +283,29 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
-        child = block->list.back();
-        // we modified child (which is a reference to a pointer), which modifies curr, which might change its type
-        // (e.g. (drop (block (result i32) .. (unreachable)))
-        // the child was a block of i32, and is being replaced with an unreachable, so the
-        // parent will likely need to be unreachable too
-        auto oldType = curr->type;
-        ReFinalize().walk(curr);
+        // if we move around unreachable code, type changes could occur. avoid that, as
+        // anyhow it means we should have run dce before getting here
+        if (curr->type == none && hasUnreachableChild(block)) {
+          // moving the block to the outside would replace a none with an unreachable
+          return outer;
+        }
+        auto* back = block->list.back();
+        if (back->type == unreachable) {
+          // curr is not reachable, dce could remove it; don't try anything fancy
+          // here
+          return outer;
+        }
+        // we are going to replace the block with the final element, so they should
+        // be identically typed
+        if (block->type != back->type) {
+          return outer;
+        }
+        child = back;
         if (outer == nullptr) {
           // reuse the block, move it out
           block->list.back() = curr;
           // we want the block outside to have the same type as curr had
-          block->finalize(oldType);
+          block->finalize(curr->type);
           replaceCurrent(block);
           return block;
         } else {

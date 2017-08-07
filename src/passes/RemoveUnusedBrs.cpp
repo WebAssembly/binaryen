@@ -481,7 +481,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // format. We need to flip the condition, which at worst adds 1.
           if (curr->name.is()) {
             auto* br = list[0]->dynCast<Break>();
-            if (br && br->condition && br->name == curr->name) {
+            // we seek a regular br_if; if the type is unreachable that means it is not
+            // actually taken, so ignore
+            if (br && br->condition && br->name == curr->name && br->type != unreachable) {
               assert(!br->value); // can't, it would be dropped or last in the block
               if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
                 // no other breaks to that name, so we can do this

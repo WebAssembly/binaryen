@@ -932,5 +932,16 @@
     )
    )
   )
+  (func $untaken-br_if-then-if
+   (block $label$0
+    (br_if $label$0
+     (unreachable)
+    )
+    (if
+     (i32.const 0)
+     (nop)
+    )
+   )
+  )
 )
 
