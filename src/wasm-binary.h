@@ -861,6 +861,7 @@ public:
   int depth = 0; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
+  void pushBlockElements(Block* curr, size_t start, size_t end);
   void visitBlock(Block *curr);
   Expression* getMaybeBlock(WasmType type);
   Expression* getBlock(WasmType type);

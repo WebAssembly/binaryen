@@ -61,8 +61,6 @@ extern cashew::IString GLOBAL,
                 ENV,
                 INSTRUMENT,
                 MATH_IMUL,
-                MATH_CLZ32,
-                MATH_POPCNT32,
                 MATH_ABS,
                 MATH_CEIL,
                 MATH_FLOOR,
@@ -70,8 +68,15 @@ extern cashew::IString GLOBAL,
                 MATH_NEAREST,
                 MATH_SQRT,
                 MATH_MIN,
-                MATH_MAX;
-
+                MATH_MAX,
+                CTZ32,
+                CTZ64,
+                POPCNT32,
+                POPCNT64,
+                ROTL32,
+                ROTL64,
+                ROTR32,
+                ROTR64;
 }
 
 #endif // wasm_asmjs_shared_constants_h
