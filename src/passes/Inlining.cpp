@@ -37,8 +37,13 @@
 
 namespace wasm {
 
-// A limit on how big a function to inline.
-static const int INLINING_SIZE_LIMIT = 15;
+// A limit on how big a function to inline when being careful about size
+static const int CAREFUL_SIZE_LIMIT = 15;
+
+// A limit on how big a function to inline when being more flexible. In
+// particular it's nice that with this limit we can inline the clamp
+// functions (i32s-div, f64-to-int, etc.), that can affect perf.
+static const int FLEXIBLE_SIZE_LIMIT = 20;
 
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
@@ -49,10 +54,11 @@ struct FunctionInfo {
 
   bool worthInlining(PassOptions& options) {
     // if it's big, it's just not worth doing (TODO: investigate more)
-    if (size > INLINING_SIZE_LIMIT) return false;
+    if (size > FLEXIBLE_SIZE_LIMIT) return false;
     // if it has one use, then inlining it would likely reduce code size
     // since we are just moving code around, + optimizing, so worth it
-    if (calls == 1 && !usedGlobally) return true;
+    // if small enough that we are pretty sure its ok
+    if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) return true;
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
     // about size
