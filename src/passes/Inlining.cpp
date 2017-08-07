@@ -197,14 +197,18 @@ struct Inlining : public Pass {
 
   void run(PassRunner* runner, Module* module) override {
     // keep going while we inline, to handle nesting. TODO: optimize
-    calculateInfos(module);
     firstIteration = true;
-    while (iteration(runner, module)) {
+    while (1) {
+      calculateInfos(module);
+      if (!iteration(runner, module)) {
+        return;
+      }
       firstIteration = false;
     }
   }
 
   void calculateInfos(Module* module) {
+    infos.clear();
     // fill in info, as we operate on it in parallel (each function to its own entry)
     for (auto& func : module->functions) {
       infos[func->name];
