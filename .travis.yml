@@ -1,4 +1,4 @@
-sudo: false
+sudo: required
 dist: trusty
 language: cpp
 
@@ -9,16 +9,19 @@ jobs:
       stage: test
       compiler: clang
       python: 2.7
+      node_js: 7
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'nodejs', 'g++-5']
+          packages: ['cmake', 'g++-5']
       before_install:
         - export CC="${CC_COMPILER}"
         - export CXX="${CXX_COMPILER}"
         - export ASAN_OPTIONS="symbolize=1"
       install:
         - pip install --user flake8
+        - "curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -"
+        - sudo apt-get install -y nodejs
       before_script:
         # Check the style of a subset of Python code until the other code is updated.
         - flake8 ./scripts/
