@@ -1504,12 +1504,14 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
       abort();
   }
   Binary* test = wasmBuilder.makeBinary(eqOp, actual, expected);
-  Function* testFunc = wasmBuilder.makeFunction(testFuncName,
-                                                std::vector<NameType>{},
-                                                i32,
-                                                std::vector<NameType>{},
-                                                test);
-  Ref jsFunc = processFunction(testFunc);
+  std::unique_ptr<Function> testFunc(
+    wasmBuilder.makeFunction(testFuncName,
+                             std::vector<NameType>{},
+                             i32,
+                             std::vector<NameType>{},
+                             test)
+  );
+  Ref jsFunc = processFunction(testFunc.get());
   prefixCalls(jsFunc);
   return jsFunc;
 }
@@ -1519,13 +1521,15 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                                         Element& e, Name testFuncName) {
   Name innerFuncName("f");
   Expression* expr = sexpBuilder.parseExpression(e[1]);
-  Function* exprFunc = wasmBuilder.makeFunction(innerFuncName,
-                                                std::vector<NameType>{},
-                                                expr->type,
-                                                std::vector<NameType>{},
-                                                expr);
+  std::unique_ptr<Function> exprFunc(
+    wasmBuilder.makeFunction(innerFuncName,
+                             std::vector<NameType>{},
+                             expr->type,
+                             std::vector<NameType>{},
+                             expr)
+  );
   IString expectedErr = e[2]->str();
-  Ref innerFunc = processFunction(exprFunc);
+  Ref innerFunc = processFunction(exprFunc.get());
   Ref outerFunc = ValueBuilder::makeFunction(testFuncName);
   outerFunc[3]->push_back(innerFunc);
   Ref tryBlock = ValueBuilder::makeBlock();
