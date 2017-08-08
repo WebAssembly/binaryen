@@ -62,8 +62,9 @@ struct FunctionInfo {
     if (!allowMultipleInliningsPerFunction) return false;
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size
-    return options.optimizeLevel >= 3 && options.shrinkLevel == 0;
+    // about size, and if it's lightweight so a good candidate for
+    // speeding us up
+    return options.optimizeLevel >= 3 && options.shrinkLevel == 0 && lightweight;
   }
 };
 
