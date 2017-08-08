@@ -18,20 +18,21 @@
 // Shared execution result checking code
 //
 
+#include "wasm.h"
+#include "shell-interface.h"
+
 namespace wasm {
 
-static void verifyBitwiseEqual(Literal a, Literal b) {
-  if (a == b) return;
+static bool areBitwiseEqual(Literal a, Literal b) {
+  if (a == b) return true;
   // accept equal nans if equal in all bits
-  assert(a.type == b.type);
+  if (a.type != b.type) return false;
   if (a.type == f32) {
-    assert(a.reinterpreti32() == b.reinterpreti32());
+    return a.reinterpreti32() == b.reinterpreti32();
   } else if (a.type == f64) {
-    assert(a.reinterpreti64() == b.reinterpreti64());
-  } else {
-    std::cout << "not bitwise equal\n";
-    abort();
+    return a.reinterpreti64() == b.reinterpreti64();
   }
+  return false;
 }
 
 // gets execution results from a wasm module. this is useful for fuzzing
@@ -77,7 +78,10 @@ struct ExecutionResults {
       auto name = iter.first;
       if (other.results.find(name) != other.results.end()) {
         std::cout << "[fuzz-exec] comparing " << name << '\n';
-        verifyBitwiseEqual(results[name], other.results[name]);
+        if (!areBitwiseEqual(results[name], other.results[name])) {
+          std::cout << "not identical!\n";
+          abort();
+        }
       }
     }
     return true;

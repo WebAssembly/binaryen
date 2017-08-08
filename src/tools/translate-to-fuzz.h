@@ -140,7 +140,7 @@ private:
       addHangLimitSupport();
     }
     if (DE_NAN) {
-      addDeNaNSupport();
+      addDeNanSupport();
     }
   }
 
@@ -195,7 +195,7 @@ private:
     );
   }
 
-  void addDeNaNSupport() {
+  void addDeNanSupport() {
     auto add = [&](Name name, WasmType type, Literal literal, BinaryOp op) {
       auto* func = new Function;
       func->name = name;
@@ -212,16 +212,16 @@ private:
       );
       wasm.addFunction(func);
     };
-    add("deNaN32", f32, Literal(float(0)), EqFloat32);
-    add("deNaN64", f64, Literal(double(0)), EqFloat64);
+    add("deNan32", f32, Literal(float(0)), EqFloat32);
+    add("deNan64", f64, Literal(double(0)), EqFloat64);
   }
 
-  Expression* makeDeNaNOp(Expression* expr) {
+  Expression* makeDeNanOp(Expression* expr) {
     if (!DE_NAN) return expr;
     if (expr->type == f32) {
-      return builder.makeCall("deNaN32", { expr }, f32);
+      return builder.makeCall("deNan32", { expr }, f32);
     } else if (expr->type == f64) {
-      return builder.makeCall("deNaN64", { expr }, f64);
+      return builder.makeCall("deNan64", { expr }, f64);
     }
     return expr; // unreachable etc. is fine
   }
@@ -244,13 +244,13 @@ private:
     func->name = std::string("func_") + std::to_string(num);
     func->result = getReachableType();
     assert(typeLocals.empty());
-    Index numParams = upTo(upTo(5));
+    Index numParams = upToSquared(5);
     for (Index i = 0; i < numParams; i++) {
       auto type = getConcreteType();
       typeLocals[type].push_back(func->params.size());
       func->params.push_back(type);
     }
-    Index numVars = upTo(upTo(10));
+    Index numVars = upToSquared(10);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
       typeLocals[type].push_back(func->params.size() + func->vars.size());
@@ -324,19 +324,19 @@ private:
     nesting++;
     Expression* ret;
     switch (type) {
-      case i32: ret = __makei32(); break;
-      case i64: ret = __makei64(); break;
-      case f32: ret = __makef32(); break;
-      case f64: ret = __makef64(); break;
-      case none: ret = __makenone(); break;
-      case unreachable: ret = __makeunreachable(); break;
+      case i32: ret = _makei32(); break;
+      case i64: ret = _makei64(); break;
+      case f32: ret = _makef32(); break;
+      case f64: ret = _makef64(); break;
+      case none: ret = _makenone(); break;
+      case unreachable: ret = _makeunreachable(); break;
       default: WASM_UNREACHABLE();
     }
     nesting--;
     return ret;
   }
 
-  Expression* __makei32() {
+  Expression* _makei32() {
     switch (upTo(13)) {
       case 0: return makeBlock(i32);
       case 1: return makeIf(i32);
@@ -355,7 +355,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* __makei64() {
+  Expression* _makei64() {
     switch (upTo(13)) {
       case 0: return makeBlock(i64);
       case 1: return makeIf(i64);
@@ -374,7 +374,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* __makef32() {
+  Expression* _makef32() {
     switch (upTo(13)) {
       case 0: return makeBlock(f32);
       case 1: return makeIf(f32);
@@ -393,7 +393,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* __makef64() {
+  Expression* _makef64() {
     switch (upTo(13)) {
       case 0: return makeBlock(f64);
       case 1: return makeIf(f64);
@@ -412,7 +412,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* __makenone() {
+  Expression* _makenone() {
     switch (upTo(10)) {
       case 0: return makeBlock(none);
       case 1: return makeIf(none);
@@ -428,7 +428,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  Expression* __makeunreachable() {
+  Expression* _makeunreachable() {
     switch (upTo(15)) {
       case 0: return makeBlock(unreachable);
       case 1: return makeIf(unreachable);
@@ -469,7 +469,7 @@ private:
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
     breakableStack.push_back(ret);
-    Index num = upTo(upTo(BLOCK_FACTOR - 1)); // we add another later
+    Index num = upToSquared(BLOCK_FACTOR - 1); // we add another later
     if (nesting >= NESTING_LIMIT / 2) {
       // smaller blocks past the limit
       num /= 2;
@@ -850,7 +850,7 @@ private:
   Expression* makeUnary(WasmType type) {
     if (type == unreachable) {
       if (auto* unary = makeUnary(getConcreteType())->dynCast<Unary>()) {
-        return makeDeNaNOp(builder.makeUnary(unary->op, make(unreachable)));
+        return makeDeNanOp(builder.makeUnary(unary->op, make(unreachable)));
       }
       // give up
       return makeTrivial(type);
@@ -876,19 +876,19 @@ private:
       }
       case f32: {
         switch (upTo(4)) {
-          case 0: return makeDeNaNOp(makeUnary({ pick(NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32), make(f32) }));
-          case 1: return makeDeNaNOp(makeUnary({ pick(ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32), make(i32) }));
-          case 2: return makeDeNaNOp(makeUnary({ pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32), make(i64) }));
-          case 3: return makeDeNaNOp(makeUnary({ DemoteFloat64, make(f64) }));
+          case 0: return makeDeNanOp(makeUnary({ pick(NegFloat32, AbsFloat32, CeilFloat32, FloorFloat32, TruncFloat32, NearestFloat32, SqrtFloat32), make(f32) }));
+          case 1: return makeDeNanOp(makeUnary({ pick(ConvertUInt32ToFloat32, ConvertSInt32ToFloat32, ReinterpretInt32), make(i32) }));
+          case 2: return makeDeNanOp(makeUnary({ pick(ConvertUInt64ToFloat32, ConvertSInt64ToFloat32), make(i64) }));
+          case 3: return makeDeNanOp(makeUnary({ DemoteFloat64, make(f64) }));
         }
         WASM_UNREACHABLE();
       }
       case f64: {
         switch (upTo(4)) {
-          case 0: return makeDeNaNOp(makeUnary({ pick(NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64), make(f64) }));
-          case 1: return makeDeNaNOp(makeUnary({ pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64), make(i32) }));
-          case 2: return makeDeNaNOp(makeUnary({ pick(ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64), make(i64) }));
-          case 3: return makeDeNaNOp(makeUnary({ PromoteFloat32, make(f32) }));
+          case 0: return makeDeNanOp(makeUnary({ pick(NegFloat64, AbsFloat64, CeilFloat64, FloorFloat64, TruncFloat64, NearestFloat64, SqrtFloat64), make(f64) }));
+          case 1: return makeDeNanOp(makeUnary({ pick(ConvertUInt32ToFloat64, ConvertSInt32ToFloat64), make(i32) }));
+          case 2: return makeDeNanOp(makeUnary({ pick(ConvertUInt64ToFloat64, ConvertSInt64ToFloat64, ReinterpretInt64), make(i64) }));
+          case 3: return makeDeNanOp(makeUnary({ PromoteFloat32, make(f32) }));
         }
         WASM_UNREACHABLE();
       }
@@ -904,7 +904,7 @@ private:
   Expression* makeBinary(WasmType type) {
     if (type == unreachable) {
       if (auto* binary = makeBinary(getConcreteType())->dynCast<Binary>()) {
-        return makeDeNaNOp(makeBinary({ binary->op, make(unreachable), make(unreachable) }));
+        return makeDeNanOp(makeBinary({ binary->op, make(unreachable), make(unreachable) }));
       }
       // give up
       return makeTrivial(type);
@@ -923,10 +923,10 @@ private:
         return makeBinary({ pick(AddInt64, SubInt64, MulInt64, DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64), make(i64), make(i64) });
       }
       case f32: {
-        return makeDeNaNOp(makeBinary({ pick(AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32), make(f32), make(f32) }));
+        return makeDeNanOp(makeBinary({ pick(AddFloat32, SubFloat32, MulFloat32, DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32), make(f32), make(f32) }));
       }
       case f64: {
-        return makeDeNaNOp(makeBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) }));
+        return makeDeNanOp(makeBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) }));
       }
       default: WASM_UNREACHABLE();
     }
@@ -938,7 +938,7 @@ private:
   }
 
   Expression* makeSelect(WasmType type) {
-    return makeDeNaNOp(makeSelect({ make(i32), make(type), make(type) }));
+    return makeDeNanOp(makeSelect({ make(i32), make(type), make(type) }));
   }
 
   Expression* makeSwitch(WasmType type) {
@@ -1031,6 +1031,9 @@ private:
     return std::floor(std::log(std::max(Index(1) + x, Index(1))));
   }
 
+  // one of the integer values in [0, x)
+  // this isn't a perfectly uniform distribution, but it's fast
+  // and reasonable
   Index upTo(Index x) {
     if (x == 0) return 0;
     Index raw;
@@ -1049,6 +1052,12 @@ private:
 
   bool oneIn(Index x) {
     return upTo(x) == 0;
+  }
+
+  // apply upTo twice, generating a skewed distribution towards
+  // low values
+  Index upToSquared(Index x) {
+    return upTo(upTo(x));
   }
 
   // pick from a vector

@@ -684,7 +684,7 @@
            )
            (block $label$24 (result i32)
             (i32.trunc_u/f64
-             (call $deNaN64
+             (call $deNan64
               (select
                (f64.const 6.013471909394168e-154)
                (f64.const -nan:0xfffffffffffbb)
@@ -955,9 +955,9 @@
                )
               )
               (tee_local $3
-               (call $deNaN32
+               (call $deNan32
                 (select
-                 (call $deNaN32
+                 (call $deNan32
                   (f32.convert_s/i32
                    (get_local $1)
                   )
@@ -1016,7 +1016,7 @@
         (if (result f64)
          (f32.gt
           (get_local $3)
-          (call $deNaN32
+          (call $deNan32
            (f32.sub
             (get_local $3)
             (get_local $3)
@@ -1103,7 +1103,7 @@
    (i32.const 25)
   )
  )
- (func $deNaN32 (param $0 f32) (result f32)
+ (func $deNan32 (param $0 f32) (result f32)
   (if (result f32)
    (f32.eq
     (get_local $0)
@@ -1113,7 +1113,7 @@
    (f32.const 0)
   )
  )
- (func $deNaN64 (param $0 f64) (result f64)
+ (func $deNan64 (param $0 f64) (result f64)
   (if (result f64)
    (f64.eq
     (get_local $0)

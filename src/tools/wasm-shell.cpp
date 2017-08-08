@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#include "execution-results.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/command-line.h"
@@ -30,7 +31,6 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
-#include "execution-results.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -201,11 +201,17 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
                                  ->dynCast<Const>()
                                  ->value;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
-          verifyBitwiseEqual(expected, result);
+          if (!areBitwiseEqual(expected, result)) {
+            std::cout << "unexpected, should be identical\n";
+            abort();
+          }
         } else {
           Literal expected;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
-          verifyBitwiseEqual(expected, result);
+          if (!areBitwiseEqual(expected, result)) {
+            std::cout << "unexpected, should be identical\n";
+            abort();
+          }
         }
       }
       if (id == ASSERT_TRAP) assert(trapped);
