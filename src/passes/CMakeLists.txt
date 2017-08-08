@@ -11,6 +11,7 @@ SET(passes_SOURCES
   LegalizeJSInterface.cpp
   LocalCSE.cpp
   LogExecution.cpp
+  I64ToI32Lowering.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   MemoryPacking.cpp

@@ -31,6 +31,8 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "ast_utils.h"
+#include "passes/passes.h"
 
 namespace wasm {
 
@@ -377,6 +379,12 @@ void Wasm2AsmBuilder::addWasmCompatibilityFuncs(Module* wasm) {
 
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   addWasmCompatibilityFuncs(wasm);
+  PassRunner runner(wasm);
+  runner.add<AutoDrop>();
+  runner.add("i64-to-i32-lowering");
+  runner.add("flatten-control-flow");
+  runner.setDebug(flags.debug);
+  runner.run();
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
   ret[1]->push_back(asmFunc);
@@ -655,7 +663,7 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitReturn(Return *curr) {
-      abort();
+      parent->setStatement(curr);
     }
     void visitHost(Host *curr) {
       for (auto item : curr->operands) {
@@ -887,7 +895,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return ret;
     }
 
-    Ref visitCall(Call *curr) {
+    Ref visitCall(Call* curr) {
       Ref theCall = ValueBuilder::makeCall(fromName(curr->target));
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a simple expression
@@ -899,11 +907,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // we must statementize them all
       return makeStatementizedCall(curr->operands, ValueBuilder::makeBlock(), theCall, result, curr->type);
     }
-    Ref visitCallImport(CallImport *curr) {
+    Ref visitCallImport(CallImport* curr) {
       std::cerr << "visitCallImport not implemented yet" << std::endl;
       abort();
     }
-    Ref visitCallIndirect(CallIndirect *curr)  {
+    Ref visitCallIndirect(CallIndirect* curr)  {
       std::string stable = std::string("FUNCTION_TABLE_") + curr->fullType.c_str();
       IString table = IString(stable.c_str(), false);
       auto makeTableCall = [&](Ref target) {
@@ -927,23 +935,41 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref theCall = makeTableCall(temp.getAstName());
       return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
     }
-    Ref visitGetLocal(GetLocal *curr) {
-      return ValueBuilder::makeName(fromName(func->getLocalNameOrGeneric(curr->index)));
-    }
-    Ref visitSetLocal(SetLocal *curr) {
+    Ref makeSetVar(Expression* curr, Expression* value, Name name) {
       if (!isStatement(curr)) {
         return ValueBuilder::makeBinary(
-            ValueBuilder::makeName(fromName(func->getLocalNameOrGeneric(curr->index))),
-            SET, visit(curr->value, EXPRESSION_RESULT));
+          ValueBuilder::makeName(fromName(name)), SET,
+          visit(value, EXPRESSION_RESULT)
+        );
       }
-      ScopedTemp temp(curr->type, parent, func, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
-      Ref ret = blockify(visit(curr->value, temp));
+      // if result was provided, our child can just assign there.
+      // Otherwise, allocate a temp for it to assign to.
+      ScopedTemp temp(value->type, parent, func, result);
+      Ref ret = blockify(visit(value, temp));
       // the output was assigned to result, so we can just assign it to our target
-      ret[1]->push_back(ValueBuilder::makeStatement(
+      ret[1]->push_back(
+        ValueBuilder::makeStatement(
           ValueBuilder::makeBinary(
-              ValueBuilder::makeName(fromName(func->getLocalNameOrGeneric(curr->index))),
-              SET, temp.getAstName())));
+            ValueBuilder::makeName(fromName(name)), SET,
+            temp.getAstName()
+          )
+        )
+      );
       return ret;
+    }
+    Ref visitGetLocal(GetLocal* curr) {
+      return ValueBuilder::makeName(
+        fromName(func->getLocalNameOrGeneric(curr->index))
+      );
+    }
+    Ref visitSetLocal(SetLocal* curr) {
+      return makeSetVar(curr, curr->value, func->getLocalNameOrGeneric(curr->index));
+    }
+    Ref visitGetGlobal(GetGlobal* curr) {
+      return ValueBuilder::makeName(fromName(curr->name));
+    }
+    Ref visitSetGlobal(SetGlobal* curr) {
+      return makeSetVar(curr, curr->value, curr->name);
     }
     Ref visitLoad(Load *curr) {
       if (isStatement(curr)) {
@@ -1434,13 +1460,20 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
             ValueBuilder::makeSeq(
               ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
-              ValueBuilder::makeConditional(tempCondition.getAstName(), tempIfTrue.getAstName(), tempIfFalse.getAstName())
+              ValueBuilder::makeConditional(
+                tempCondition.getAstName(),
+                tempIfTrue.getAstName(),
+                tempIfFalse.getAstName()
+              )
             )
           )
         );
     }
     Ref visitReturn(Return *curr) {
-      abort();
+      Ref val = (curr->value == nullptr) ?
+          Ref() :
+          visit(curr->value, NO_RESULT);
+      return ValueBuilder::makeReturn(val);
     }
     Ref visitHost(Host *curr) {
       abort();

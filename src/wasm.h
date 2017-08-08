@@ -614,7 +614,6 @@ public:
   Name getLocalNameOrDefault(Index index);
   Name getLocalNameOrGeneric(Index index);
 
-private:
   bool hasLocalName(Index index) const;
 };
 
