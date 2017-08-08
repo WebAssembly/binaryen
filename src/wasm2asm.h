@@ -1464,10 +1464,10 @@ static Ref makeInstantiation() {
   insertItem(FLOAT64ARRAY);
   Ref env = ValueBuilder::makeObject();
   Ref mem = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(ARRAYBUFFER, ValueBuilder::makeInt(0x10000)));
+      ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
   Ref call = ValueBuilder::makeCall(IString(ASM_FUNC), lib, env, mem);
   Ref ret = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(ret, ASMMODULE, call);
+  ValueBuilder::appendToVar(ret, ASM_MODULE, call);
   return ret;
 }
 
@@ -1479,7 +1479,7 @@ static void prefixCalls(Ref asmjs) {
     }
     if (arr.size() > 0 && arr[0]->isString() && arr[0]->getIString() == CALL) {
       assert(arr.size() >= 2);
-      Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASMMODULE),
+      Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASM_MODULE),
                                            arr[1]->getIString());
       arr[1]->setArray(prefixed->getArray());
     }
