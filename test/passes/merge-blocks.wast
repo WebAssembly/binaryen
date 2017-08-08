@@ -101,5 +101,16 @@
     )
    )
   )
+  (func $loop-block-drop-block-return
+   (loop $label$4
+    (block $label$5
+     (drop
+      (block $label$6 (result i32)
+       (return)
+      )
+     )
+    )
+   )
+  )
 )
 

@@ -583,6 +583,11 @@ void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
   for (auto* child : block->list) {
     recurse(child);
   }
+  if (block->type == unreachable && block->list.back()->type != unreachable) {
+    // similar to in visitBlock, here we could skip emitting the block itself,
+    // but must still end the 'block' (the contents, really) with an unreachable
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitIf(If *curr) {
@@ -2073,6 +2078,20 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
+void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    auto* item = expressionStack[i];
+    curr->list.push_back(item);
+    if (i < end - 1) {
+      // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
+      if (isConcreteWasmType(item->type)) {
+        curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
+      }
+    }
+  }
+  expressionStack.resize(start);
+}
+
 void WasmBinaryBuilder::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
   // special-case Block and de-recurse nested blocks in their first position, as that is
@@ -2108,18 +2127,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     if (end < start) {
       throw ParseException("block cannot pop from outside");
     }
-    for (size_t i = start; i < end; i++) {
-      if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      auto* item = expressionStack[i];
-      curr->list.push_back(item);
-      if (i < end - 1) {
-        // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
-        if (isConcreteWasmType(item->type)) {
-          curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
-        }
-      }
-    }
-    expressionStack.resize(start);
+    pushBlockElements(curr, start, end);
     curr->finalize(curr->type);
     breakStack.pop_back();
   }
@@ -2136,11 +2144,8 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
     throw ParseException("block cannot pop from outside");
   }
   auto* block = allocator.alloc<Block>();
-  for (size_t i = start; i < end; i++) {
-    block->list.push_back(expressionStack[i]);
-  }
+  pushBlockElements(block, start, end);
   block->finalize(type);
-  expressionStack.resize(start);
   return block;
 }
 

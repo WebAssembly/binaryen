@@ -646,5 +646,20 @@
   )
   (unreachable)
  )
+ (func $36 (type $1)
+  (if
+   (i32.const 1)
+   (block $label$0
+    (nop)
+   )
+   (block $label$1
+    (unreachable)
+    (drop
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+  )
+ )
 )
 

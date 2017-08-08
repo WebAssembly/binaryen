@@ -1124,38 +1124,35 @@
    )
   )
  )
- (func $f2u (param $0 f64) (result i32)
-  (i32.trunc_u/f64
-   (get_local $0)
-  )
- )
- (func $f2s (param $0 f64) (result i32)
-  (i32.trunc_s/f64
-   (get_local $0)
-  )
- )
- (func $autoDrop (param $0 i32) (result i32)
-  (if
-   (i32.eq
-    (get_local $0)
-    (i32.const 17)
-   )
-   (return
-    (i32.const 5)
+ (func $keepAlive
+  (local $0 i32)
+  (local $1 i32)
+  (drop
+   (call $sqrts
+    (f64.const 3.14159)
    )
   )
-  (get_local $0)
- )
- (func $indirectInSequence
+  (drop
+   (call $sqrts
+    (f64.const 2.18281)
+   )
+  )
+  (block $__inlined_func$autoDrop
+   (br_if $__inlined_func$autoDrop
+    (i32.eq
+     (tee_local $0
+      (i32.const 52)
+     )
+     (i32.const 17)
+    )
+   )
+  )
   (call_indirect $FUNCSIG$vi
    (i32.const 0)
    (i32.const 17)
   )
- )
- (func $emterpretify_assertions_safeHeap
-  (local $0 i32)
   (call_indirect $FUNCSIG$vi
-   (get_local $0)
+   (get_local $1)
    (block (result i32)
     (set_global $Int
      (i32.const 1)
@@ -1169,8 +1166,6 @@
     )
    )
   )
- )
- (func $call_emscripten_log
   (call $emscripten_log)
   (drop
    (i32.trunc_s/f64
@@ -1179,31 +1174,6 @@
     )
    )
   )
- )
- (func $keepAlive
-  (drop
-   (call $sqrts
-    (f64.const 3.14159)
-   )
-  )
-  (drop
-   (call $f2u
-    (f64.const 100)
-   )
-  )
-  (drop
-   (call $f2s
-    (f64.const 100)
-   )
-  )
-  (drop
-   (call $autoDrop
-    (i32.const 52)
-   )
-  )
-  (call $indirectInSequence)
-  (call $emterpretify_assertions_safeHeap)
-  (call $call_emscripten_log)
  )
  (func $vi (param $0 i32)
   (nop)

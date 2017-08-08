@@ -9220,7 +9220,7 @@
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (set_local $2
+  (set_local $3
    (if (result i32)
     (i32.gt_s
      (i32.load offset=76
@@ -9242,9 +9242,18 @@
    (block $do-once (result i32)
     (if (result i32)
      (i32.lt_s
-      (call $cb
-       (get_local $0)
-       (get_local $1)
+      (i32.add
+       (call $bb
+        (get_local $0)
+        (call $Za
+         (get_local $0)
+        )
+        (i32.const 1)
+        (tee_local $2
+         (get_local $1)
+        )
+       )
+       (i32.const -1)
       )
       (i32.const 0)
      )
@@ -9261,7 +9270,7 @@
         (i32.lt_u
          (tee_local $0
           (i32.load
-           (tee_local $3
+           (tee_local $2
             (i32.add
              (get_local $1)
              (i32.const 20)
@@ -9275,7 +9284,7 @@
         )
         (block
          (i32.store
-          (get_local $3)
+          (get_local $2)
           (i32.add
            (get_local $0)
            (i32.const 1)
@@ -9303,7 +9312,7 @@
    )
   )
   (if
-   (get_local $2)
+   (get_local $3)
    (call $Ta
     (get_local $1)
    )
@@ -9394,16 +9403,6 @@
    )
   )
  )
- (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
-  (if (result i32)
-   (get_local $1)
-   (i32.div_u
-    (get_local $0)
-    (get_local $1)
-   )
-   (i32.const 0)
-  )
- )
  (func $bb (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (local $4 i32)
   (local $5 i32)
@@ -9458,9 +9457,13 @@
     (get_local $4)
    )
    (set_local $2
-    (call $i32u-div
-     (get_local $0)
+    (if (result i32)
      (get_local $1)
+     (i32.div_u
+      (get_local $0)
+      (get_local $1)
+     )
+     (i32.const 0)
     )
    )
   )
@@ -9703,19 +9706,6 @@
    )
   )
   (get_local $1)
- )
- (func $cb (param $0 i32) (param $1 i32) (result i32)
-  (i32.add
-   (call $bb
-    (get_local $0)
-    (call $Za
-     (get_local $0)
-    )
-    (i32.const 1)
-    (get_local $1)
-   )
-   (i32.const -1)
-  )
  )
  (func $ob (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (call $ja

@@ -241,18 +241,6 @@
    )
   )
  )
- (func $i64u-div (param $0 i64) (param $1 i64) (result i64)
-  (if (result i64)
-   (i64.eqz
-    (get_local $1)
-   )
-   (i64.const 0)
-   (i64.div_u
-    (get_local $0)
-    (get_local $1)
-   )
-  )
- )
  (func $i64s-div (param $0 i64) (param $1 i64) (result i64)
   (if (result i64)
    (i64.eqz
@@ -275,30 +263,6 @@
      (get_local $0)
      (get_local $1)
     )
-   )
-  )
- )
- (func $i64u-rem (param $0 i64) (param $1 i64) (result i64)
-  (if (result i64)
-   (i64.eqz
-    (get_local $1)
-   )
-   (i64.const 0)
-   (i64.rem_u
-    (get_local $0)
-    (get_local $1)
-   )
-  )
- )
- (func $i64s-rem (param $0 i64) (param $1 i64) (result i64)
-  (if (result i64)
-   (i64.eqz
-    (get_local $1)
-   )
-   (i64.const 0)
-   (i64.rem_s
-    (get_local $0)
-    (get_local $1)
    )
   )
  )
@@ -331,33 +295,66 @@
  (func $test64
   (local $0 i64)
   (local $1 i64)
-  (local $2 i32)
+  (local $2 i64)
   (local $3 f32)
   (local $4 f64)
-  (drop
-   (call $i64s-rem
-    (call $i64u-rem
-     (call $i64s-div
-      (call $i64u-div
-       (i64.mul
-        (i64.sub
-         (i64.add
-          (tee_local $1
-           (i64.const 128849018897)
-          )
-          (i64.const 100)
+  (set_local $2
+   (call $i64s-div
+    (block (result i64)
+     (set_local $2
+      (i64.mul
+       (i64.sub
+        (i64.add
+         (tee_local $0
+          (i64.const 128849018897)
          )
-         (get_local $1)
+         (i64.const 100)
         )
-        (get_local $1)
+        (get_local $0)
        )
+       (get_local $0)
+      )
+     )
+     (if (result i64)
+      (i64.eqz
+       (tee_local $1
+        (get_local $0)
+       )
+      )
+      (i64.const 0)
+      (i64.div_u
+       (get_local $2)
        (get_local $1)
       )
-      (get_local $1)
      )
+    )
+    (get_local $0)
+   )
+  )
+  (set_local $1
+   (if (result i64)
+    (i64.eqz
+     (tee_local $1
+      (get_local $0)
+     )
+    )
+    (i64.const 0)
+    (i64.rem_u
+     (get_local $2)
      (get_local $1)
     )
-    (get_local $1)
+   )
+  )
+  (drop
+   (if (result i64)
+    (i64.eqz
+     (get_local $0)
+    )
+    (i64.const 0)
+    (i64.rem_s
+     (get_local $1)
+     (get_local $0)
+    )
    )
   )
   (drop
@@ -404,22 +401,18 @@
    (i32.const 120)
    (get_local $0)
   )
-  (set_local $2
-   (i32.wrap/i64
-    (get_local $0)
-   )
-  )
-  (set_local $0
-   (i64.extend_u/i32
-    (get_local $2)
-   )
-  )
   (drop
    (call $f64-to-int64
     (f64.promote/f32
      (tee_local $3
       (f32.convert_u/i64
-       (get_local $0)
+       (tee_local $0
+        (i64.extend_u/i32
+         (i32.wrap/i64
+          (get_local $0)
+         )
+        )
+       )
       )
      )
     )
@@ -903,13 +896,27 @@
  )
  (func $keepAlive
   (call $loads)
+  (call $loads)
+  (call $stores)
   (call $stores)
   (call $test)
+  (call $test)
+  (drop
+   (call $imports)
+  )
   (drop
    (call $imports)
   )
   (call $arg
    (i64.const 0)
+  )
+  (call $arg
+   (i64.const 0)
+  )
+  (drop
+   (call $call1
+    (i64.const 0)
+   )
   )
   (drop
    (call $call1
@@ -922,7 +929,21 @@
    )
   )
   (drop
+   (call $call2
+    (i64.const 0)
+   )
+  )
+  (drop
    (call $returnCastConst)
+  )
+  (drop
+   (call $returnCastConst)
+  )
+  (drop
+   (call $ifValue64
+    (i64.const 0)
+    (i64.const 0)
+   )
   )
   (drop
    (call $ifValue64
@@ -937,9 +958,25 @@
    )
   )
   (drop
+   (call $ifValue32
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+  (drop
    (call $switch64
     (i64.const 0)
    )
+  )
+  (drop
+   (call $switch64
+    (i64.const 0)
+   )
+  )
+  (call $unreachable_leftovers
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
   )
   (call $unreachable_leftovers
    (i32.const 0)
