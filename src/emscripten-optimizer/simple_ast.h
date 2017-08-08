@@ -554,6 +554,10 @@ struct JSPrinter {
 
   JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_) {}
 
+  ~JSPrinter() {
+    free(buffer);
+  }
+
   void printAst() {
     print(ast);
     buffer[used] = 0;
