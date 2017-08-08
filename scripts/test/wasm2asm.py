@@ -56,5 +56,6 @@ def test_wasm2asm():
                         err_contains=True)
       fail_if_not_identical(out, '')
 
+
 if __name__ == "__main__":
   test_wasm2asm()
