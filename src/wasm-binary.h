@@ -35,6 +35,11 @@
 
 namespace wasm {
 
+enum {
+  // the maximum amount of bytes we emit per LEB
+  MAX_LEB32_BYTES = 5
+};
+
 template<typename T, typename MiniT>
 struct LEB {
   static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
@@ -63,7 +68,9 @@ struct LEB {
     } while (more);
   }
 
-  void writeAt(std::vector<uint8_t>* out, size_t at, size_t minimum = 0) {
+  // @minimum: a minimum number of bytes to write, padding as necessary
+  // returns the number of bytes written
+  size_t writeAt(std::vector<uint8_t>* out, size_t at, size_t minimum = 0) {
     T temp = value;
     size_t offset = 0;
     bool more;
@@ -77,6 +84,7 @@ struct LEB {
       (*out)[at + offset] = byte;
       offset++;
     } while (more);
+    return offset;
   }
 
   void read(std::function<MiniT()> get) {
@@ -258,9 +266,18 @@ public:
     (*this)[i+2] = x & 0xff; x >>= 8;
     (*this)[i+3] = x & 0xff;
   }
-  void writeAt(size_t i, U32LEB x) {
+
+  // writes out an LEB to an arbitrary location. this writes the LEB as a full
+  // 5 bytes, the fixed amount that can easily be set aside ahead of time
+  void writeAtFullFixedSize(size_t i, U32LEB x) {
     if (debug) std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
-    x.writeAt(this, i, 5); // fill all 5 bytes, we have to do this when backpatching
+    x.writeAt(this, i, MAX_LEB32_BYTES); // fill all 5 bytes, we have to do this when backpatching
+  }
+  // writes out an LEB of normal size
+  // returns how many bytes were written
+  size_t writeAt(size_t i, U32LEB x) {
+    if (debug) std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")" << std::endl;
+    return x.writeAt(this, i);
   }
 
   template <typename T>
@@ -640,7 +657,8 @@ public:
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
   void writeResizableLimits(Address initial, Address maximum, bool hasMaximum, bool shared);
-  int32_t startSection(BinaryConsts::Section code);
+  template<typename T>
+  int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
   void finishSubsection(int32_t start);
