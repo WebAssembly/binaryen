@@ -983,9 +983,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             }
             break;
           }
-          default:
+          default: {
             std::cerr << "Unhandled type in load: " << curr->type << std::endl;
             abort();
+          }
         }
         return ValueBuilder::makeSeq(ptrSet, rest);
       }
@@ -1015,10 +1016,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                   ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32),
                   ValueBuilder::makePtrShift(ptr, 2));
               break;
-            default:
+            default: {
               std::cerr << "Unhandled number of bytes in i32 load: "
                         << curr->bytes << std::endl;
               abort();
+            }
           }
           break;
         }
@@ -1030,9 +1032,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
-        default:
+        default: {
           std::cerr << "Unhandled type in load: " << curr->type << std::endl;
           abort();
+        }
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
@@ -1104,10 +1107,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             }
             break;
           }
-          default:
+          default: {
             std::cerr << "Unhandled type in store: " <<  curr->valueType
                       << std::endl;
             abort();
+          }
         }
         return ValueBuilder::makeSeq(ValueBuilder::makeSeq(ptrSet, valueSet), rest);
       }
@@ -1130,10 +1134,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         }
         case f32: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2)); break;
         case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
-        default:
+        default: {
           std::cerr << "Unhandled type in store: " << curr->valueType
                     << std::endl;
           abort();
+        }
       }
       return ValueBuilder::makeBinary(ret, SET, value);
     }
@@ -1192,10 +1197,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                   makeAsmCoercion(visit(curr->value,
                                         EXPRESSION_RESULT), ASM_INT), EQ,
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
-            default:
+            default: {
               std::cerr << "Unhandled unary i32 operator: " << curr
                         << std::endl;
               abort();
+            }
           }
         }
         case f32:
@@ -1262,9 +1268,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           }
           return ret;
         }
-        default:
+        default: {
           std::cerr << "Unhandled type: " << curr << std::endl;
           abort();
+        }
       }
     }
     Ref visitBinary(Binary *curr) {
@@ -1387,9 +1394,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           return ValueBuilder::makeCall(ROTL32, left, right);
         case RotRInt32:
           return ValueBuilder::makeCall(ROTR32, left, right);
-        default:
+        default: {
           std::cerr << "Unhandled binary operator: " << curr << std::endl;
           abort();
+        }
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
@@ -1500,9 +1508,10 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
     case i64: eqOp = EqInt64; break;
     case f32: eqOp = EqFloat32; break;
     case f64: eqOp = EqFloat64; break;
-    default:
+    default: {
       std::cerr << "Unhandled type in assert: " << resType << std::endl;
       abort();
+    }
   }
   Binary* test = wasmBuilder.makeBinary(eqOp, actual, expected);
   std::unique_ptr<Function> testFunc(
