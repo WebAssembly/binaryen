@@ -206,6 +206,7 @@ private:
   void addTables(Ref ast, Module *wasm);
   void addExports(Ref ast, Module *wasm);
   void addWasmCompatibilityFuncs(Module *wasm);
+  bool isAssertHandled(Element& e);
   Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                            Builder& wasmBuilder,
                            Element& e, Name testFuncName);
@@ -1540,17 +1541,28 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
     ValueBuilder::makeReturn(
       ValueBuilder::makeCall(
         ValueBuilder::makeDot(
-          ValueBuilder::makeDot(
-            ValueBuilder::makeName((IString("e"))),
-            ValueBuilder::makeName((IString("message")))),
-          ValueBuilder::makeName(IString("includes"))),
-        ValueBuilder::makeString(expectedErr))));
+          ValueBuilder::makeName(IString("e")),
+          ValueBuilder::makeName(IString("message")),
+          ValueBuilder::makeName(IString("includes"))
+        ),
+        ValueBuilder::makeString(expectedErr)
+      )
+    )
+  );
   outerFunc[3]->push_back(ValueBuilder::makeTry(
       tryBlock,
       ValueBuilder::makeName((IString("e"))),
       catchBlock));
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
   return outerFunc;
+}
+
+bool Wasm2AsmBuilder::isAssertHandled(Element& e) {
+  return e.isList() && e.size() >= 2 && e[0]->isStr()
+      && (e[0]->str() == Name("assert_return") ||
+          (flags.pedantic && e[0]->str() == Name("assert_trap")))
+      && e[1]->isList() && e[1]->size() >= 2 && (*e[1])[0]->isStr()
+      && (*e[1])[0]->str() == Name("invoke");
 }
 
 Ref Wasm2AsmBuilder::processAsserts(Element& root,
@@ -1560,38 +1572,33 @@ Ref Wasm2AsmBuilder::processAsserts(Element& root,
   flattenAppend(ret, makeInstantiation());
   for (size_t i = 1; i < root.size(); ++i) {
     Element& e = *root[i];
-    if (!e.isList() || e.size() == 0 || !e[0]->isStr()) {
+    if (!isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
       continue;
     }
     Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
-    if (e[0]->str() == Name("assert_return") ||
-        (flags.pedantic && e[0]->str() == Name("assert_trap"))) {
-      assert(e.size() == 3 && "Malformed assert");
-      bool shouldReturn = (e[0]->str() == Name("assert_return"));
-      Element& testOp = *e[1];
-      if (!testOp.isList() || testOp.size() < 2 ||
-          !testOp[0]->isStr() || testOp[0]->str() != Name("invoke")) {
-        std::cerr << "skipping " << e << std::endl;
-        continue;
-      }
-      // Replace "invoke" with "call"
-      testOp[0]->setString(IString("call"), false, false);
-      // Need to claim dollared to get string as function target
-      testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
+    bool isReturn = (e[0]->str() == Name("assert_return"));
+    Element& testOp = *e[1];
+    // Replace "invoke" with "call"
+    testOp[0]->setString(IString("call"), false, false);
+    // Need to claim dollared to get string as function target
+    testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
 
-      Ref testFunc = shouldReturn ?
-          makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
-          makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName);
+    Ref testFunc = isReturn ?
+        makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
+        makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName);
 
-      flattenAppend(ret, testFunc);
-      std::stringstream failFuncName;
-      failFuncName << "fail" << std::to_string(i);
-      flattenAppend(ret, ValueBuilder::makeIf(
-          ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testFuncName)),
-          ValueBuilder::makeCall(IString(failFuncName.str().c_str(), false)),
-          Ref()));
-    }
+    flattenAppend(ret, testFunc);
+    std::stringstream failFuncName;
+    failFuncName << "fail" << std::to_string(i);
+    flattenAppend(
+      ret,
+      ValueBuilder::makeIf(
+        ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testFuncName)),
+        ValueBuilder::makeCall(IString(failFuncName.str().c_str(), false)),
+        Ref()
+      )
+    );
   }
   return ret;
 }

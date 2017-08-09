@@ -1591,6 +1591,11 @@ public:
                             .push_back(makeRawString(key));
   }
 
+  template<typename ...Ts>
+  static Ref makeDot(Ref obj, Ref key, Ts... args) {
+    return makeDot(makeDot(obj, key), args...);
+  }
+
   static Ref makeDot(Ref obj, Ref key) {
     assert(key->isString());
     return makeDot(obj, key->getIString());
