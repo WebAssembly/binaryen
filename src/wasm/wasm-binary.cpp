@@ -583,6 +583,11 @@ void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
   for (auto* child : block->list) {
     recurse(child);
   }
+  if (block->type == unreachable && block->list.back()->type != unreachable) {
+    // similar to in visitBlock, here we could skip emitting the block itself,
+    // but must still end the 'block' (the contents, really) with an unreachable
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitIf(If *curr) {

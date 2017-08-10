@@ -60,7 +60,7 @@ FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
 ENDFOREACH()
 
 IF(MSVC)
-  IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled. 
+  IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
     ADD_COMPILE_FLAG("/arch:sse2")
   ENDIF()
   ADD_COMPILE_FLAG("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
@@ -189,7 +189,7 @@ SET(binaryen_SOURCES
   src/binaryen-c.cpp
 )
 IF(BUILD_STATIC_LIB)
-  ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})    
+  ADD_LIBRARY(binaryen STATIC ${binaryen_SOURCES})
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
@@ -243,6 +243,16 @@ SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+SET(wasm2asm_SOURCES
+  src/wasm2asm-main.cpp
+)
+ADD_EXECUTABLE(wasm2asm
+               ${wasm2asm_SOURCES})
+TARGET_LINK_LIBRARIES(wasm2asm passes wasm asmjs emscripten-optimizer ast cfg support)
+SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm2asm DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 SET(s2wasm_SOURCES
   src/tools/s2wasm.cpp
   src/wasm-emscripten.cpp
@@ -284,4 +294,3 @@ TARGET_LINK_LIBRARIES(wasm-ctor-eval emscripten-optimizer passes wasm asmjs ast 
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)
-

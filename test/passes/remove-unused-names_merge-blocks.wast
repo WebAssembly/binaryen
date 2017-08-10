@@ -1014,4 +1014,84 @@
    (f64.const -1)
   )
  )
+ (func $dont-move-unreachable
+  (loop $label$0
+   (drop
+    (block $label$3 (result i32)
+     (br $label$0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $dont-move-unreachable-last
+  (loop $label$0
+   (drop
+    (block $label$3 (result i32)
+     (call $dont-move-unreachable-last)
+     (br $label$0)
+    )
+   )
+  )
+ )
+ (func $move-around-unreachable-in-middle
+  (loop $label$0
+   (drop
+    (block $label$2 (result i32)
+     (block $block2
+      (nop)
+     )
+     (block $label$3 (result i32)
+      (drop
+       (br_if $label$3
+        (br $label$0)
+        (i32.const 0)
+       )
+      )
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+ (func $drop-unreachable-block-with-concrete-final
+  (drop
+   (block
+    (drop
+     (block
+      (drop
+       (return)
+      )
+     )
+    )
+    (i32.const -452)
+   )
+  )
+ )
+ (func $merging-with-unreachable-in-middle (result i32)
+  (block $label$1 (result i32)
+   (block
+    (return
+     (i32.const 21536)
+    )
+    (block $label$15
+     (br $label$15)
+    )
+    (i32.const 19299)
+   )
+  )
+ )
+ (func $remove-br-after-unreachable
+  (block $label$9
+   (drop
+    (block
+     (block
+      (return)
+      (br $label$9) ;; removing this leads to the block becoming unreachable
+     )
+    )
+   )
+  )
+ )
 )
+

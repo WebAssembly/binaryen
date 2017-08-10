@@ -12,12 +12,7 @@ function asmFunc(global, env, buffer) {
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
- function add(x, y) {
-  x = x | 0;
-  y = y | 0;
-  return x + y | 0 | 0;
- }
- 
+ var import$table$0 = env.table;
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var wasm2asm_i32$0 = 0;
@@ -57,7 +52,7 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  add: add
+  
  };
 }
 
