@@ -35,11 +35,11 @@
 using namespace wasm;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer>> {
-  std::string command, output, temp;
+  std::string command, output, working;
 
   // output is the file we write to that the command will operate on
-  // temp is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string output, std::string temp) : command(command), output(output), temp(temp) {}
+  // working is the current temporary state, the reduction so far
+  Reducer(std::string command, std::string output, std::string working) : command(command), output(output), working(working) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -74,17 +74,24 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     };
     bool more = true;
     while (more) {
+      std::cout << "|    starting passes loop iteration\n";
       more = false;
       for (auto pass : passes) {
-        auto code = system(("bin/wasm-opt " + temp + " -o " + output + " " + pass).c_str());
-        if (code == 0 && file_size(output) < file_size(temp)) {
-          // the pass didn't fail, and the size looks smaller, so promising
-          // see if it is still has the property we are preserving
-          auto code = system(command.c_str());
-          if (code == 0) {
-            // great!
-            copy_file(output, temp);
-            more = true;
+        auto currCommand = "bin/wasm-opt " + working + " -o " + output + " " + pass;
+        std::cout << "|    trying pass command: " << currCommand << "\n";
+        auto code = system(currCommand.c_str());
+        if (code == 0) {
+          std::cout << "|      command did not fail\n";
+          if (file_size(output) < file_size(working)) {
+            std::cout << "|      command reduced size\n";
+            // the pass didn't fail, and the size looks smaller, so promising
+            // see if it is still has the property we are preserving
+            auto code = system(command.c_str());
+            if (code == 0) {
+              std::cout << "|      command preserved the property, keep\n";
+              copy_file(output, working);
+              more = true;
+            }
           }
         }
       }
@@ -95,11 +102,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   // succeeded or not
   // the criterion here is a logical change in the program. this may actually
   // increase wasm size in some cases, but it should allow more reduction later.
-  // we need to beware of infinite loops though.
   bool reduceDestructively() {
     Module wasm;
     ModuleReader reader;
-    reader.read(temp, wasm);
+    reader.read(working, wasm);
     reduced = false;
     builder = make_unique<Builder>(wasm);
     walkModule(&wasm);
@@ -134,6 +140,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       replaceCurrent(curr);
       return false;
     }
+    std::cout << "|      tryToReplaceCurrent succeeded\n";
     reduced = true;
     return true;
   }
@@ -147,6 +154,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       child = before;
       return false;
     }
+    std::cout << "|      tryToReplaceChild succeeded\n";
     reduced = true;
     return true;
   }
@@ -159,6 +167,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     // try to replace each none element with a nop
     Nop nop;
     for (auto*& child : curr->list) {
+      if (child->is<Nop>()) continue;
       if (tryToReplaceChild(child, &nop)) {
         // many of these, allocate only on success
         child = builder->makeNop();
@@ -255,7 +264,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
 //
 
 int main(int argc, const char* argv[]) {
-  std::string input, output, temp, command;
+  std::string input, output, working, command;
   Options options("wasm-reduce", "Reduce a wasm file to a smaller one that has the same behavior on a given command");
   options
       .add("--command", "-cmd", "The command to run on the output, that we want to reduce while keeping the command's output identical. "
@@ -270,43 +279,65 @@ int main(int argc, const char* argv[]) {
            [&](Options* o, const std::string& argument) {
              output = argument;
            })
-      .add("--temp", "-t", "Temp file (this will be written to for temporary computations)",
+      .add("--working", "-w", "Working file (this will contain the current state while doing temporary computations)",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
-             temp = argument;
+             working = argument;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&](Options* o, const std::string& argument) {
                         input = argument;
                       });
+  options.parse(argc, argv);
 
   // sanity check - we should start with an invalid module, and one
   // that we can read and write TODO: allow reducing things we can't
   // even do that with
+  std::cout << "|checking that command has expected behavior\n";
   {
     Module wasm;
     ModuleReader reader;
     reader.read(input, wasm);
-    Reducer reducer(command, output, temp);
+    Reducer reducer(command, output, working);
     reducer.setModule(&wasm);
     if (!reducer.writeAndTestReduction()) {
       Fatal() << "running command on the input module should fail";
     }
   }
 
-  // copy input file to temp, which we will use from now on
-  copy_file(input, temp);
+  // copy output file (that was just written) to working, which we will use from now on
+  // starting from the binary binaryen output canonicalizes, so we are not on text
+  // input or input from somewhere else
+  copy_file(output, working);
+  std::cout << "|canonicalized input size: " << file_size(working) << "\n";
+
+  unsigned currSize = 0;
 
   while (1) {
-    Reducer reducer(command, output, temp);
+    Reducer reducer(command, output, working);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
     // to detructive reduction (i.e., that doesn't preserve correctness as
     // passes do) since destrucive must operate one change at a time
+    std::cout << "|  reduce using passes\n";
     reducer.reduceUsingPasses();
 
+    // after we did a destructive reduction, and ran passes, the binary
+    // size should shrink. if that combo increased binary size, then we
+    // are at risk of an infinite loop
+    if (currSize != 0 && file_size(working) >= currSize) {
+      std::cout << "|quitting, destructive reduction + passes reduction did not reduce size :(\n";
+      break;
+    }
+
+    std::cout << "|  reduce destructively\n";
     if (!reducer.reduceDestructively()) break;
+
+    currSize = file_size(working);
+    std::cout << "|  destructive reduction led to size: " << currSize << '\n';
   }
+  std::cout << "|finished, final size: " << file_size(working) << "\n";
+  copy_file(working, output);
 }
 
