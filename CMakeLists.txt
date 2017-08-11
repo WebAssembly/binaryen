@@ -294,3 +294,15 @@ TARGET_LINK_LIBRARIES(wasm-ctor-eval emscripten-optimizer passes wasm asmjs ast 
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-ctor-eval PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-ctor-eval DESTINATION bin)
+
+SET(wasm-reduce_SOURCES
+  src/tools/wasm-reduce.cpp
+  src/wasm-interpreter.cpp
+)
+ADD_EXECUTABLE(wasm-reduce
+               ${wasm-reduce_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs emscripten-optimizer passes ast cfg support)
+SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
+

@@ -33,6 +33,8 @@
 #include "wasm-builder.h"
 #include "ast/literal-utils.h"
 
+using namespace wasm;
+
 struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   std::string command, output, temp;
 
@@ -44,7 +46,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   // the criterion here is wasm binary size
   void reduceUsingPasses() {
     // run optimization passes until we can't shrink it any more
-    auto passes = {
+    std::vector<std::string> passes = {
       "-Oz",
       "-Os",
       "-O1",
@@ -74,7 +76,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     bool more = true;
     while (more) {
       more = false;
-      for (pass : passes) {
+      for (auto pass : passes) {
         auto code = system(("bin/wasm-opt " + temp + " -o " + output + " " + pass).c_str());
         if (code == 0 && file_size(output) < file_size(temp)) {
           // the pass didn't fail, and the size looks smaller, so promising
@@ -101,7 +103,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     reader.read(temp, wasm);
     reduced = false;
     builder = make_unique<Builder>(wasm);
-    walk(wasm);
+    walkModule(&wasm);
+    return reduced;
   }
 
   // destructive reduction state
@@ -217,9 +220,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   void handleCondition(Expression*& condition) {
     if (!condition) return;
     auto* c = builder->makeConst(Literal(int32_t(0)));
-    if (!tryToReplaceChild(curr->condition, c)) {
+    if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
-      tryToReplaceChild(curr->condition, c);
+      tryToReplaceChild(condition, c);
     }
   }
 
@@ -236,7 +239,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       c = builder->makeConst(Literal(int32_t(0)));
     }
     // try to replace with a trivial value
-    c->value = LiteralUtils::makeLiteralZero(curr->type));
+    c->value = LiteralUtils::makeLiteralZero(curr->type);
     c->type = curr->type;
     if (tryToReplaceCurrent(c)) return;
     c->value = LiteralUtils::makeLiteralFromInt32(1, curr->type);
@@ -285,8 +288,8 @@ int main(int argc, const char* argv[]) {
     Module wasm;
     ModuleReader reader;
     reader.read(input, wasm);
-    Reducer reducer(command, input, output, temp);
-    reducer.setModule(wasm);
+    Reducer reducer(command, output, temp);
+    reducer.setModule(&wasm);
     if (!reducer.writeAndTestReduction()) {
       Fatal() << "running command on the input module should fail";
     }
