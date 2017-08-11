@@ -37,13 +37,15 @@ def test_asserts_output(wasm, expected_file):
   open('a.asserts.js', 'w').write(out)
 
   for engine in [NODEJS, MOZJS]:
-    if not engine: continue
+    if not engine:
+      continue
     out = run_command([engine, 'a.asserts.js'])
     fail_if_not_identical(out, '')
 
 
 def test_trap_asserts_output(wasm, expected_file):
-  cmd = WASM2ASM + [os.path.join('test', wasm), '--allow-asserts', '--pedantic']
+  cmd = WASM2ASM + [os.path.join('test', wasm),
+                    '--allow-asserts', '--pedantic']
   out = run_command(cmd)
   expected = open(expected_file).read()
   fail_if_not_identical(out, expected)
@@ -61,13 +63,13 @@ def test_wasm2asm():
     if not wasm.endswith('.wast') or os.path.basename(wasm) in blacklist:
       continue
 
-    asm     = os.path.basename(wasm).replace('.wast', '.2asm.js')
+    asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
     asserts = os.path.basename(wasm).replace('.wast', '.asserts.js')
-    traps   = os.path.basename(wasm).replace('.wast', '.traps.js')
+    traps = os.path.basename(wasm).replace('.wast', '.traps.js')
 
-    asm_expected_file     = os.path.join('test', asm)
+    asm_expected_file = os.path.join('test', asm)
     asserts_expected_file = os.path.join('test', asserts)
-    traps_expected_file   = os.path.join('test', traps)
+    traps_expected_file = os.path.join('test', traps)
 
     if not os.path.exists(asm_expected_file):
       continue
