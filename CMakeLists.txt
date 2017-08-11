@@ -301,7 +301,7 @@ SET(wasm-reduce_SOURCES
 )
 ADD_EXECUTABLE(wasm-reduce
                ${wasm-reduce_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs emscripten-optimizer passes ast cfg support)
+TARGET_LINK_LIBRARIES(wasm-reduce wasm asmjs passes wasm ast cfg support)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-reduce PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})

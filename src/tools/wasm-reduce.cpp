@@ -28,12 +28,11 @@
 #include "pass.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ast/literal-utils.h"
 
-namespace wasm {
+using namespace wasm;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   std::string command, output, temp;
@@ -250,10 +249,6 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     tryToReplaceCurrent(c);
   }
 };
-
-} // namespace wasm
-
-using namespace wasm;
 
 //
 // main
