@@ -66,6 +66,11 @@ class Output {
   std::ofstream outfile;
   std::ostream out;
 };
-}
+
+void copy_file(std::string input, std::string output);
+
+size_t file_size(std::string filename);
+
+} // namespace wasm
 
 #endif  // wasm_support_file_h
