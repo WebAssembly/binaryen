@@ -143,10 +143,8 @@ public:
       ret = IString((std::string("wasm2asm_") + printWasmType(type) + "$" +
                      std::to_string(index)).c_str(), false);
     }
-    if (func->localIndices.count(ret) == 0) {
-      func->vars.push_back(type);
-      func->localNames.push_back(ret);
-      func->localIndices[ret] = func->getVarIndexBase() + func->vars.size() - 1;
+    if (func->localIndices.find(ret) == func->localIndices.end()) {
+      Builder::addVar(func, ret, type);
     }
     return ret;
   }
