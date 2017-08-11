@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#include "execution-results.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/command-line.h"
@@ -85,19 +86,6 @@ struct Operation {
     }
   }
 };
-
-static void verify_result(Literal a, Literal b) {
-  if (a == b) return;
-  // accept equal nans if equal in all bits
-  assert(a.type == b.type);
-  if (a.type == f32) {
-    assert(a.reinterpreti32() == b.reinterpreti32());
-  } else if (a.type == f64) {
-    assert(a.reinterpreti64() == b.reinterpreti64());
-  } else {
-    abort();
-  }
-}
 
 static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
                         Element* root,
@@ -213,11 +201,17 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
                                  ->dynCast<Const>()
                                  ->value;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
-          verify_result(expected, result);
+          if (!areBitwiseEqual(expected, result)) {
+            std::cout << "unexpected, should be identical\n";
+            abort();
+          }
         } else {
           Literal expected;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
-          verify_result(expected, result);
+          if (!areBitwiseEqual(expected, result)) {
+            std::cout << "unexpected, should be identical\n";
+            abort();
+          }
         }
       }
       if (id == ASSERT_TRAP) assert(trapped);
