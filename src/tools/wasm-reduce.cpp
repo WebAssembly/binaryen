@@ -33,7 +33,7 @@
 #include "wasm-builder.h"
 #include "ast/literal-utils.h"
 
-using namespace wasm;
+namespace wasm {
 
 struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   std::string command, output, temp;
@@ -250,6 +250,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     tryToReplaceCurrent(c);
   }
 };
+
+} // namespace wasm
+
+using namespace wasm;
 
 //
 // main
