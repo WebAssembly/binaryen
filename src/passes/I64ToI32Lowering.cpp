@@ -106,6 +106,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitFunction(Function* func) {
+    static int nfs = 0;
+    std::cerr << "finished lowering " << (++nfs) << std::endl;
     if (func->result == i64) {
       func->result = i32;
       Index highBits = fetchOutParam(func->body);
@@ -210,16 +212,63 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     assert(false && "Switch not implemented");
   }
 
+  template <typename T>
+  void visitGenericCall(T* curr, std::function<T*(std::vector<Expression*>, WasmType)> callBuilder) {
+    std::vector<Expression*> args;
+    for (Expression* e : curr->operands) {
+      args.push_back(e);
+      if (returnIndices.find(e) != returnIndices.end()) {
+        Index argHighBits = fetchOutParam(e);
+        args.push_back(builder->makeGetLocal(argHighBits, i32));
+        freeTemp(argHighBits);
+      }
+    }
+    if (curr->type != i64) {
+      replaceCurrent(callBuilder(args, curr->type));
+      return;
+    }
+    Index lowBits = getTemp();
+    Index highBits = getTemp();
+    SetLocal* doCall = builder->makeSetLocal(
+      lowBits,
+      callBuilder(args, i32)
+    );
+    SetLocal* setHigh = builder->makeSetLocal(
+      highBits,
+      builder->makeGetGlobal(highBitsGlobal, i32)
+    );
+    GetLocal* getLow = builder->makeGetLocal(lowBits, i32);
+    Block* result = builder->blockify(doCall, setHigh, getLow);
+    freeTemp(lowBits);
+    setOutParam(result, highBits);
+    replaceCurrent(result);
+  }
   void visitCall(Call* curr) {
-    assert(false && "Call not implemented");
+    visitGenericCall<Call>(
+      curr,
+      [&](std::vector<Expression*> args, WasmType ty) {
+        return builder->makeCall(curr->target, args, ty);
+      }
+    );
   }
 
   void visitCallImport(CallImport* curr) {
-    assert(false && "CallImport not implemented");
+    // imports cannot contain i64s
+    return;
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    assert(false && "CallIndirect not implemented");
+    visitGenericCall<CallIndirect>(
+      curr,
+      [&](std::vector<Expression*> args, WasmType ty) {
+        return builder->makeCallIndirect(
+          curr->fullType,
+          curr->target,
+          args,
+          ty
+        );
+      }
+    );
   }
 
   void visitGetLocal(GetLocal* curr) {
@@ -270,13 +319,37 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitLoad(Load* curr) {
-    assert(false && "Load not implemented");
+    if (curr->type != i64) return;
+    assert(curr->bytes == 8 && "size change load not implemented");
+    assert(!curr->isAtomic && "atomic load not implemented");
+    Index highBits = getTemp();
+    Index ptrTemp = getTemp();
+    SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
+    SetLocal* loadHigh = builder->makeSetLocal(
+      highBits,
+      builder->makeLoad(
+        4,
+        curr->signed_,
+        curr->offset + 4,
+        0,
+        builder->makeGetLocal(ptrTemp, i32),
+        i32
+      )
+    );
+    curr->type = i32;
+    curr->bytes = 4;
+    curr->ptr = builder->makeGetLocal(ptrTemp, i32);
+    Block* result = builder->blockify(setPtr, loadHigh, curr);
+    replaceCurrent(result);
+    setOutParam(result, highBits);
+    freeTemp(ptrTemp);
   }
 
   void visitStore(Store* curr) {
     if (curr->valueType != i64) return;
     assert(curr->offset + 4 > curr->offset);
     assert(curr->bytes == 8 && "smaller stores not implemented");
+    assert(!curr->isAtomic && "atomic store not implemented");
     Index highBits = fetchOutParam(curr->value);
     Index ptrTemp = getTemp();
     SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
@@ -290,8 +363,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
     Store* storeHigh = builder->makeStore(
       4,
-      Address(curr->offset + 4),
-      Address(4),
+      curr->offset + 4,
+      0,
       builder->makeGetLocal(ptrTemp, i32),
       builder->makeGetLocal(highBits, i32),
       i32
@@ -327,7 +400,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitUnary(Unary* curr) {
-    if (curr->value->type != i64) return;
+    if (returnIndices.find(curr->value) == returnIndices.end() &&
+        curr->type != i64) return;
     assert(false && "Unary not implemented");
   }
 
@@ -372,6 +446,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitBinary(Binary* curr) {
     if (returnIndices.find(curr->left) == returnIndices.end()) return;
+    std::cerr << "Binary op " << curr->op << std::endl;
     Index leftLow = getTemp();
     Index leftHigh = fetchOutParam(curr->left);
     Index rightLow = getTemp();
@@ -408,6 +483,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case GtUInt64:
       case GeSInt64:
       case GeUInt64:
+        std::cerr << "BLAGH" << std::endl;
       default: {
         std::cerr << "Unhandled binary op " << curr->op << std::endl;
         abort();
@@ -420,8 +496,22 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     setOutParam(result, rightHigh);
   }
 
+  // TODO: deduplicate visitIf and visitSelect
   void visitSelect(Select* curr) {
-    assert(false && "Select not implemented");
+    if (returnIndices.find(curr->ifTrue) == returnIndices.end()) return;
+    Index highBits = fetchOutParam(curr->ifTrue);
+    Index falseBits = fetchOutParam(curr->ifFalse);
+    Index tmp = getTemp();
+    curr->ifFalse = builder->blockify(
+      builder->makeSetLocal(tmp, curr->ifFalse),
+      builder->makeSetLocal(
+        highBits,
+        builder->makeGetLocal(falseBits, i32)
+      ),
+      builder->makeGetLocal(tmp, i32)
+    );
+    freeTemp(falseBits);
+    setOutParam(curr, highBits);
   }
 
   void visitDrop(Drop* curr) {
@@ -430,7 +520,19 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitReturn(Return* curr) {
-    assert(false && "Return not implemented");
+    if (returnIndices.find(curr->value) == returnIndices.end()) return;
+    Index lowBits = getTemp();
+    Index highBits = fetchOutParam(curr->value);
+    SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
+    SetGlobal* setHigh = builder->makeSetGlobal(
+      highBitsGlobal,
+      builder->makeGetLocal(highBits, i32)
+    );
+    curr->value = builder->makeGetLocal(lowBits, i32);
+    Block* result = builder->blockify(setLow, setHigh, curr);
+    replaceCurrent(result);
+    freeTemp(lowBits);
+    freeTemp(highBits);
   }
 
 private:
