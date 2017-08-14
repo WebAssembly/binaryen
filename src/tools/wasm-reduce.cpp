@@ -24,6 +24,8 @@
 //
 
 #include <memory>
+#include <cstdio>
+#include <cstdlib>
 
 #include "pass.h"
 #include "support/command-line.h"
@@ -34,12 +36,49 @@
 
 using namespace wasm;
 
-struct Reducer : public WalkerPass<PostWalker<Reducer>> {
-  std::string command, output, working;
+struct ProgramResult {
+  int code;
+  std::string stdout;
 
-  // output is the file we write to that the command will operate on
+  ProgramResult() {}
+  ProgramResult(std::string command) {
+    getFromExecution(command);
+  }
+
+  // runs the command and notes the output
+  void getFromExecution(std::string command) {
+    // do this using just core stdio.h and stdlib.h, for portability
+    // sadly this requires two invokes
+    code = system(command.c_str());
+    const int MAX_BUFFER = 1024;
+    char buffer[MAX_BUFFER];
+    FILE *stream = popen(command.c_str(), "r");
+    while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
+      stdout.append(buffer);
+    }
+    pclose(stream);
+  }
+
+  bool operator==(ProgramResult& other) {
+    return code == other.code && stdout == other.stdout;
+  }
+  bool operator!=(ProgramResult& other) {
+    return !(*this == other);
+  }
+
+  bool failed() {
+    return code != 0;
+  }
+};
+
+ProgramResult expected;
+
+struct Reducer : public WalkerPass<PostWalker<Reducer>> {
+  std::string command, test, working;
+
+  // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string output, std::string working) : command(command), output(output), working(working) {}
+  Reducer(std::string command, std::string test, std::string working) : command(command), test(test), working(working) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -77,19 +116,17 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       std::cout << "|    starting passes loop iteration\n";
       more = false;
       for (auto pass : passes) {
-        auto currCommand = "bin/wasm-opt " + working + " -o " + output + " " + pass;
+        auto currCommand = "bin/wasm-opt " + working + " -o " + test + " " + pass;
         std::cout << "|    trying pass command: " << currCommand << "\n";
-        auto code = system(currCommand.c_str());
-        if (code == 0) {
-          std::cout << "|      command did not fail\n";
-          if (file_size(output) < file_size(working)) {
-            std::cout << "|      command reduced size\n";
+        if (!ProgramResult(currCommand).failed()) {
+          std::cout << "|      command did not fail...\n";
+          if (file_size(test) < file_size(working)) {
+            std::cout << "|      command reduced size...\n";
             // the pass didn't fail, and the size looks smaller, so promising
             // see if it is still has the property we are preserving
-            auto code = system(command.c_str());
-            if (code == 0) {
-              std::cout << "|      command preserved the property, keep\n";
-              copy_file(output, working);
+            if (ProgramResult(command) == expected) {
+              std::cout << "|      command preserved the property, keep!\n";
+              copy_file(test, working);
               more = true;
             }
           }
@@ -125,10 +162,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     // write the module out
     ModuleWriter writer;
     writer.setBinary(true);
-    writer.write(*getModule(), output);
+    writer.write(*getModule(), test);
     // test it
-    auto code = system(command.c_str());
-    return code != 0;
+    return ProgramResult(command) == expected;
   }
 
   // tests a reduction on the current traversal node, and undos if it failed
@@ -264,22 +300,23 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
 //
 
 int main(int argc, const char* argv[]) {
-  std::string input, output, working, command;
+  std::string input, test, working, command;
   Options options("wasm-reduce", "Reduce a wasm file to a smaller one that has the same behavior on a given command");
   options
-      .add("--command", "-cmd", "The command to run on the output, that we want to reduce while keeping the command's output identical. "
-                                "We look at the command's return code, and expect it to be nonzero (i.e., an error, "
-                                "and we reduce while keeping the error present).",
+      .add("--command", "-cmd", "The command to run on the test, that we want to reduce while keeping the command's output identical. "
+                                "We look at the command's return code and stdout here (TODO: stderr), "
+                                "and we reduce while keeping those unchanged.",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              command = argument;
            })
-      .add("--output", "-o", "Output file (this will be written to, and the given command should read it when we call it)",
+      .add("--test", "-o", "Test file (this will be written to to test, the given command should read it when we call it)",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
-             output = argument;
+             test = argument;
            })
-      .add("--working", "-w", "Working file (this will contain the current state while doing temporary computations)",
+      .add("--working", "-w", "Working file (this will contain the current good state while doing temporary computations, "
+                              "and will contain the final best result at the end)",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              working = argument;
@@ -290,6 +327,10 @@ int main(int argc, const char* argv[]) {
                       });
   options.parse(argc, argv);
 
+  // get the expected output
+  copy_file(input, test);
+  expected.getFromExecution(command);
+
   // sanity check - we should start with an invalid module, and one
   // that we can read and write TODO: allow reducing things we can't
   // even do that with
@@ -298,23 +339,23 @@ int main(int argc, const char* argv[]) {
     Module wasm;
     ModuleReader reader;
     reader.read(input, wasm);
-    Reducer reducer(command, output, working);
+    Reducer reducer(command, test, working);
     reducer.setModule(&wasm);
     if (!reducer.writeAndTestReduction()) {
       Fatal() << "running command on the input module should fail";
     }
   }
 
-  // copy output file (that was just written) to working, which we will use from now on
+  // copy test file (that was just written) to working, which we will use from now on
   // starting from the binary binaryen output canonicalizes, so we are not on text
   // input or input from somewhere else
-  copy_file(output, working);
+  copy_file(test, working);
   std::cout << "|canonicalized input size: " << file_size(working) << "\n";
 
   unsigned currSize = 0;
 
   while (1) {
-    Reducer reducer(command, output, working);
+    Reducer reducer(command, test, working);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
@@ -338,6 +379,6 @@ int main(int argc, const char* argv[]) {
     std::cout << "|  destructive reduction led to size: " << currSize << '\n';
   }
   std::cout << "|finished, final size: " << file_size(working) << "\n";
-  copy_file(working, output);
+  copy_file(working, test); // just to avoid confusion
 }
 
