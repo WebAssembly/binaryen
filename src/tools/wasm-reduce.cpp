@@ -123,13 +123,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
         auto currCommand = "bin/wasm-opt " + working + " -o " + test + " " + pass;
         std::cout << "|    trying pass command: " << currCommand << "\n";
         if (!ProgramResult(currCommand).failed()) {
-          std::cout << "|      command did not fail...\n";
           if (file_size(test) < file_size(working)) {
-            std::cout << "|      command reduced size...\n";
             // the pass didn't fail, and the size looks smaller, so promising
             // see if it is still has the property we are preserving
             if (ProgramResult(command) == expected) {
-              std::cout << "|      command preserved the property, keep!\n";
+              std::cout << "|      command succeeded, reduced size, and preserved the property, keep!\n";
               copy_file(test, working);
               more = true;
             }
