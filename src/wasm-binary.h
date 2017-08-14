@@ -267,6 +267,13 @@ public:
   void writeTo(T& o) {
     for (auto c : *this) o << c;
   }
+
+  std::vector<char> getAsChars() {
+    std::vector<char> ret;
+    ret.resize(size());
+    std::copy(begin(), end(), ret.begin());
+    return ret;
+  }
 };
 
 namespace BinaryConsts {

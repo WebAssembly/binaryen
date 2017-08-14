@@ -29,64 +29,15 @@
 #include "wasm-validator.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
+#include "wasm-binary.h"
 #include "shell-interface.h"
 #include "optimization-options.h"
+#include "execution-results.h"
+#include "translate-to-fuzz.h"
+#include "js-wrapper.h"
+#include "spec-wrapper.h"
 
 using namespace wasm;
-
-// gets execution results from a wasm module. this is useful for fuzzing
-//
-// we can only get results when there are no imports. we then call each method
-// that has a result, with some values
-struct ExecutionResults {
-  std::map<Name, Literal> results;
-
-  void get(Module& wasm) {
-    if (wasm.imports.size() > 0) {
-      std::cout << "[fuzz-exec] imports, so quitting\n";
-      return;
-    }
-    for (auto& func : wasm.functions) {
-      if (func->result != none) {
-        // this is good
-        results[func->name] = run(func.get(), wasm);
-      }
-    }
-    std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
-  }
-
-  bool operator==(ExecutionResults& other) {
-    for (auto& iter : results) {
-      auto name = iter.first;
-      if (other.results.find(name) != other.results.end()) {
-        if (results[name] != other.results[name]) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  bool operator!=(ExecutionResults& other) {
-    return !((*this) == other);
-  }
-
-  Literal run(Function* func, Module& wasm) {
-    ShellExternalInterface interface;
-    try {
-      ModuleInstance instance(wasm, &interface);
-      LiteralList arguments;
-      for (WasmType param : func->params) {
-        // zeros in arguments TODO: more?
-        arguments.push_back(Literal(param));
-      }
-      return instance.callFunction(func->name, arguments);
-    } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets) or call itself
-      return Literal();
-    }
-  }
-};
 
 //
 // main
@@ -98,8 +49,12 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   bool fuzzExec = false;
+  bool fuzzBinary = false;
+  bool translateToFuzz = false;
+  std::string emitJSWrapper;
+  std::string emitSpecWrapper;
 
-  OptimizationOptions options("wasm-opt", "Optimize .wast files");
+  OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -116,21 +71,31 @@ int main(int argc, const char* argv[]) {
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { fuzzExec = true; })
+      .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { fuzzBinary = true; })
+      .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { translateToFuzz = true; })
+      .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
+           Options::Arguments::One,
+           [&](Options *o, const std::string &arguments) { emitJSWrapper = arguments; })
+      .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
+           Options::Arguments::One,
+           [&](Options *o, const std::string &arguments) { emitSpecWrapper = arguments; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
-
   Module wasm;
 
-  {
-    if (options.debug) std::cerr << "reading...\n";
+  if (options.debug) std::cerr << "reading...\n";
+
+  if (!translateToFuzz) {
     ModuleReader reader;
     reader.setDebug(options.debug);
-
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
@@ -139,10 +104,18 @@ int main(int argc, const char* argv[]) {
     } catch (std::bad_alloc& b) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
-  }
 
-  if (!WasmValidator().validate(wasm)) {
-    Fatal() << "error in validating input";
+    if (!WasmValidator().validate(wasm)) {
+      Fatal() << "error in validating input";
+    }
+  } else {
+    // translate-to-fuzz
+    TranslateToFuzzReader reader(wasm);
+    reader.read(options.extra["infile"]);
+    if (!WasmValidator().validate(wasm)) {
+      std::cerr << "translate-to-fuzz must always generate a valid module";
+      abort();
+    }
   }
 
   ExecutionResults results;
@@ -158,12 +131,21 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExec) {
-    ExecutionResults optimizedResults;
-    optimizedResults.get(wasm);
-    if (optimizedResults != results) {
-      Fatal() << "[fuzz-exec] optimization passes changed execution results";
+    auto* compare = &wasm;
+    Module second;
+    if (fuzzBinary) {
+      compare = &second;
+      BufferWithRandomAccess buffer(false);
+      // write the binary
+      WasmBinaryWriter writer(&wasm, buffer, false);
+      writer.write();
+      // read the binary
+      auto input = buffer.getAsChars();
+      WasmBinaryBuilder parser(second, input, false);
+      parser.read();
+      assert(WasmValidator().validate(second));
     }
-    std::cout << "[fuzz-exec] results match\n";
+    results.check(*compare);
   }
 
   if (options.extra.count("output") > 0) {
@@ -173,5 +155,19 @@ int main(int argc, const char* argv[]) {
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);
+  }
+
+  if (emitJSWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitJSWrapper, std::ofstream::out);
+    outfile << generateJSWrapper(wasm);
+    outfile.close();
+  }
+
+  if (emitSpecWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitSpecWrapper, std::ofstream::out);
+    outfile << generateSpecWrapper(wasm);
+    outfile.close();
   }
 }

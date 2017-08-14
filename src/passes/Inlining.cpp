@@ -28,6 +28,7 @@
 #include <pass.h>
 #include <wasm-builder.h>
 #include <ast_utils.h>
+#include <ast/literal-utils.h>
 #include <parsing.h>
 
 namespace wasm {
@@ -121,11 +122,12 @@ private:
 // Core inlining logic. Modifies the outside function (adding locals as
 // needed), and returns the inlined code.
 static Expression* doInlining(Module* module, Function* into, InliningAction& action) {
+  Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   Builder builder(*module);
   auto* block = Builder(*module).makeBlock();
   block->type = call->type;
-  block->name = Name(std::string("__inlined_func$") + action.contents->name.str);
+  block->name = Name(std::string("__inlined_func$") + from->name.str);
   *action.callSite = block;
   // set up a locals mapping
   struct Updater : public PostWalker<Updater> {
@@ -145,15 +147,19 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   } updater;
   updater.returnName = block->name;
   updater.builder = &builder;
-  for (Index i = 0; i < action.contents->getNumLocals(); i++) {
-    updater.localMapping[i] = builder.addVar(into, action.contents->getLocalType(i));
+  for (Index i = 0; i < from->getNumLocals(); i++) {
+    updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
   }
   // assign the operands into the params
-  for (Index i = 0; i < action.contents->params.size(); i++) {
+  for (Index i = 0; i < from->params.size(); i++) {
     block->list.push_back(builder.makeSetLocal(updater.localMapping[i], call->operands[i]));
   }
+  // zero out the vars (as we may be in a loop, and may depend on their zero-init value
+  for (Index i = 0; i < from->vars.size(); i++) {
+    block->list.push_back(builder.makeSetLocal(updater.localMapping[from->getVarIndexBase() + i], LiteralUtils::makeZero(from->vars[i], *module)));
+  }
   // generate and update the inlined contents
-  auto* contents = ExpressionManipulator::copy(action.contents->body, *module);
+  auto* contents = ExpressionManipulator::copy(from->body, *module);
   updater.walk(contents);
   block->list.push_back(contents);
   return block;
