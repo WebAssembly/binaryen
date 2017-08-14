@@ -69,6 +69,10 @@ struct ProgramResult {
   bool failed() {
     return code != 0;
   }
+
+  void dump() {
+    std::cout << "[ProgramResult] code: " << code << " stdout: \n" << stdout << "\n[/ProgramResult]\n";
+  }
 };
 
 ProgramResult expected;
@@ -310,7 +314,7 @@ int main(int argc, const char* argv[]) {
            [&](Options* o, const std::string& argument) {
              command = argument;
            })
-      .add("--test", "-o", "Test file (this will be written to to test, the given command should read it when we call it)",
+      .add("--test", "-t", "Test file (this will be written to to test, the given command should read it when we call it)",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              test = argument;
@@ -327,9 +331,19 @@ int main(int argc, const char* argv[]) {
                       });
   options.parse(argc, argv);
 
+  if (test.size() == 0) Fatal() << "test file not provided\n";
+  if (working.size() == 0) Fatal() << "working file not provided\n";
+
+  std::cout << "|input: " << input << '\n';
+  std::cout << "|test: " << test << '\n';
+  std::cout << "|working: " << working << '\n';
+
   // get the expected output
   copy_file(input, test);
   expected.getFromExecution(command);
+
+  std::cout << "|expected result:\n";
+  expected.dump();
 
   // sanity check - we should start with an invalid module, and one
   // that we can read and write TODO: allow reducing things we can't
@@ -342,7 +356,7 @@ int main(int argc, const char* argv[]) {
     Reducer reducer(command, test, working);
     reducer.setModule(&wasm);
     if (!reducer.writeAndTestReduction()) {
-      Fatal() << "running command on the input module should fail";
+      Fatal() << "running command on the input module give the same results";
     }
   }
 
