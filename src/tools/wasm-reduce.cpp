@@ -49,10 +49,10 @@ struct ProgramResult {
   void getFromExecution(std::string command) {
     // do this using just core stdio.h and stdlib.h, for portability
     // sadly this requires two invokes
-    code = system(command.c_str());
+    code = system((command + " > /dev/null 2> /dev/null").c_str());
     const int MAX_BUFFER = 1024;
     char buffer[MAX_BUFFER];
-    FILE *stream = popen(command.c_str(), "r");
+    FILE *stream = popen((command + " 2> /dev/null").c_str(), "r");
     while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
       stdout.append(buffer);
     }
@@ -71,7 +71,7 @@ struct ProgramResult {
   }
 
   void dump() {
-    std::cout << "[ProgramResult] code: " << code << " stdout: \n" << stdout << "\n[/ProgramResult]\n";
+    std::cout << "[ProgramResult] code: " << code << " stdout: \n" << stdout << "[/ProgramResult]\n";
   }
 };
 
