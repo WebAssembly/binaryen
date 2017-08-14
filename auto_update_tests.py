@@ -4,7 +4,36 @@ import os, sys, subprocess, difflib
 
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
-    ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL)
+    ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL, WASM_REDUCE)
+
+print '\n[ MOVE TO END checking wasm-reduce... ]\n'
+
+
+
+
+
+
+
+# MOVE TO END, see above
+
+
+
+
+
+
+
+
+for t in os.listdir(os.path.join('test', 'reduce')):
+  if t.endswith('.wast'):
+    print '..', t
+    t = os.path.join('test', 'reduce', t)
+    # convert to wasm
+    run_command(WASM_AS + [t, '-o', 'a.wasm'])
+    print run_command(WASM_REDUCE + ['a.wasm', '--command="bin/wasm-opt t.wasm --fuzz-exec"', '-t', 'b.wasm', '-w', 'c.wasm'])
+    expected = t + '.txt'
+    run_command(WASM_DIS + ['c.wasm', '-o', expected])
+
+1/0
 
 print '[ processing and updating testcases... ]\n'
 

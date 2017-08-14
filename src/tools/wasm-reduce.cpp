@@ -115,21 +115,24 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       "--simplify-locals-notee-nostructure",
       "--vacuum"
     };
+    auto oldSize = file_size(working);
     bool more = true;
     while (more) {
-      std::cout << "|    starting passes loop iteration\n";
+      //std::cout << "|    starting passes loop iteration\n";
       more = false;
       for (auto pass : passes) {
         auto currCommand = "bin/wasm-opt " + working + " -o " + test + " " + pass;
-        std::cout << "|    trying pass command: " << currCommand << "\n";
+        //std::cout << "|    trying pass command: " << currCommand << "\n";
         if (!ProgramResult(currCommand).failed()) {
-          if (file_size(test) < file_size(working)) {
+          auto newSize = file_size(test);
+          if (newSize < oldSize) {
             // the pass didn't fail, and the size looks smaller, so promising
             // see if it is still has the property we are preserving
             if (ProgramResult(command) == expected) {
-              std::cout << "|      command succeeded, reduced size, and preserved the property, keep!\n";
+              std::cout << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
               copy_file(test, working);
               more = true;
+              oldSize = newSize;
             }
           }
         }
@@ -364,6 +367,8 @@ int main(int argc, const char* argv[]) {
   copy_file(test, working);
   std::cout << "|canonicalized input size: " << file_size(working) << "\n";
 
+  std::cout << "|starting reduction!\n";
+
   unsigned currSize = 0;
 
   while (1) {
@@ -373,18 +378,17 @@ int main(int argc, const char* argv[]) {
     // and can often reduce large amounts of code efficiently, as opposed
     // to detructive reduction (i.e., that doesn't preserve correctness as
     // passes do) since destrucive must operate one change at a time
-    std::cout << "|  reduce using passes\n";
+    std::cout << "|  reduce using passes...\n";
     reducer.reduceUsingPasses();
 
     // after we did a destructive reduction, and ran passes, the binary
     // size should shrink. if that combo increased binary size, then we
     // are at risk of an infinite loop
     if (currSize != 0 && file_size(working) >= currSize) {
-      std::cout << "|quitting, destructive reduction + passes reduction did not reduce size :(\n";
       break;
     }
 
-    std::cout << "|  reduce destructively\n";
+    std::cout << "|  reduce destructively...\n";
     if (!reducer.reduceDestructively()) break;
 
     currSize = file_size(working);
