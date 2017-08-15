@@ -37,7 +37,7 @@ namespace wasm {
 
 enum {
   // the maximum amount of bytes we emit per LEB
-  MAX_LEB32_BYTES = 5
+  MaxLEB32Bytes = 5
 };
 
 template<typename T, typename MiniT>
@@ -271,7 +271,7 @@ public:
   // 5 bytes, the fixed amount that can easily be set aside ahead of time
   void writeAtFullFixedSize(size_t i, U32LEB x) {
     if (debug) std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
-    x.writeAt(this, i, MAX_LEB32_BYTES); // fill all 5 bytes, we have to do this when backpatching
+    x.writeAt(this, i, MaxLEB32Bytes); // fill all 5 bytes, we have to do this when backpatching
   }
   // writes out an LEB of normal size
   // returns how many bytes were written

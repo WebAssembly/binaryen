@@ -91,13 +91,13 @@ int32_t WasmBinaryWriter::startSection(T code) {
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  int32_t size = o.size() - start - MAX_LEB32_BYTES; // section size does not include the reserved bytes of the size field itself
+  int32_t size = o.size() - start - MaxLEB32Bytes; // section size does not include the reserved bytes of the size field itself
   auto sizeFieldSize = o.writeAt(start, U32LEB(size));
-  if (sizeFieldSize != MAX_LEB32_BYTES) {
+  if (sizeFieldSize != MaxLEB32Bytes) {
     // we can save some room, nice
-    assert(sizeFieldSize < MAX_LEB32_BYTES);
-    std::move(&o[start + MAX_LEB32_BYTES], &o[start + MAX_LEB32_BYTES + size], &o[start + sizeFieldSize]);
-    o.resize(o.size() - (MAX_LEB32_BYTES - sizeFieldSize));
+    assert(sizeFieldSize < MaxLEB32Bytes);
+    std::move(&o[start + MaxLEB32Bytes], &o[start + MaxLEB32Bytes + size], &o[start + sizeFieldSize]);
+    o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
   }
 }
 
@@ -276,11 +276,11 @@ void WasmBinaryWriter::writeFunctions() {
     assert(size <= std::numeric_limits<uint32_t>::max());
     if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
     auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
-    if (sizeFieldSize != MAX_LEB32_BYTES) {
+    if (sizeFieldSize != MaxLEB32Bytes) {
       // we can save some room, nice
-      assert(sizeFieldSize < MAX_LEB32_BYTES);
+      assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start + size], &o[sizePos + sizeFieldSize]);
-      o.resize(o.size() - (MAX_LEB32_BYTES - sizeFieldSize));
+      o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
     }
   }
   currFunction = nullptr;
