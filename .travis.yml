@@ -1,4 +1,4 @@
-sudo: required
+sudo: false
 dist: trusty
 language: cpp
 
@@ -20,7 +20,6 @@ jobs:
         - export ASAN_OPTIONS="symbolize=1"
       install:
         - pip install --user flake8
-        - "curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -"
         - sudo apt-get install -y nodejs
       before_script:
         # Check the style of a subset of Python code until the other code is updated.
