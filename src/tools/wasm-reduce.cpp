@@ -38,7 +38,7 @@
 using namespace wasm;
 
 // after seeing these destructive reductions, skip and go back to fast pass reduction
-static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 5;
+static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 200;
 
 static void canonicalize(std::string input, std::string output) {
   // reading and writing may alter the size
@@ -48,7 +48,7 @@ static void canonicalize(std::string input, std::string output) {
     auto code = system(("bin/wasm-opt --vacuum " + input + " -o " + output).c_str());
     assert(code == 0);
     auto newSize = file_size(output);
-    if (oldSize == newSize) break;
+    if (newSize <= oldSize) break;
     std::cout << "|  <canonicalization: " << oldSize << " => " << newSize << ">\n";
     // do more work, now the input is the output
     input = output;
@@ -200,8 +200,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     ModuleWriter writer;
     writer.setBinary(true);
     writer.write(*getModule(), test);
+    canonicalize(test, test);
     if (file_size(test) > file_size(working)) {
-      std::cout << "sad sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
+      //std::cout << "|    sad sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
       return false;
     }
     // test it
@@ -213,7 +214,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   bool tryToReplaceCurrent(Expression* with) {
     if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     auto* curr = getCurrent();
-    std::cout << "try " << curr << " => " << with << '\n';
+    //std::cout << "try " << curr << " => " << with << '\n';
     if (curr->type != with->type) return false;
     replaceCurrent(with);
     if (!writeAndTestReduction()) {
@@ -231,7 +232,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     if (child->type != with->type) return false;
     auto* before = child;
-    std::cout << "try " << before << " => " << with << '\n';
+    //std::cout << "try " << before << " => " << with << '\n';
     child = with;
     if (!writeAndTestReduction()) {
       child = before;
@@ -429,7 +430,7 @@ int main(int argc, const char* argv[]) {
     // size should shrink. if that combo increased binary size, then we
     // are at risk of an infinite loop
     if (currSize != 0 && file_size(working) >= currSize) {
-      break;
+      //break;
     }
 
     std::cout << "|  reduce destructively...\n";
