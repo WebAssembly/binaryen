@@ -33,11 +33,29 @@
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ast/literal-utils.h"
+#include "wasm-printing.h"
 
 using namespace wasm;
 
 // after seeing these destructive reductions, skip and go back to fast pass reduction
-static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 1;
+static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 5;
+
+static void canonicalize(std::string input, std::string output) {
+  // reading and writing may alter the size
+  int counter = 0;
+  while (1) {
+    auto oldSize = file_size(input);
+    auto code = system(("bin/wasm-opt --vacuum " + input + " -o " + output).c_str());
+    assert(code == 0);
+    auto newSize = file_size(output);
+    if (oldSize == newSize) break;
+    std::cout << "|  <canonicalization: " << oldSize << " => " << newSize << ">\n";
+    // do more work, now the input is the output
+    input = output;
+    counter++;
+    assert(counter < 100);
+  }
+}
 
 struct ProgramResult {
   int code;
@@ -127,6 +145,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
         auto currCommand = "bin/wasm-opt " + working + " -o " + test + " " + pass;
         //std::cout << "|    trying pass command: " << currCommand << "\n";
         if (!ProgramResult(currCommand).failed()) {
+          canonicalize(test, test);
           auto newSize = file_size(test);
           if (newSize < oldSize) {
             // the pass didn't fail, and the size looks smaller, so promising
@@ -154,6 +173,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     reduced = 0;
     builder = make_unique<Builder>(wasm);
     funcsSeen = 0;
+    // before we do any changes, it should be valid to write out the module:
+    // size should be as expected, and output should be as expected
+    setModule(&wasm);
+    assert(writeAndTestReduction());
+    // destroy!
     walkModule(&wasm);
     return reduced;
   }
@@ -176,8 +200,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     ModuleWriter writer;
     writer.setBinary(true);
     writer.write(*getModule(), test);
-    if (file_size(test) >= file_size(working)) {
-      return false; // did not shrink it
+    if (file_size(test) > file_size(working)) {
+      std::cout << "sad sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
+      return false;
     }
     // test it
     out.getFromExecution(command);
@@ -188,6 +213,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   bool tryToReplaceCurrent(Expression* with) {
     if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     auto* curr = getCurrent();
+    std::cout << "try " << curr << " => " << with << '\n';
     if (curr->type != with->type) return false;
     replaceCurrent(with);
     if (!writeAndTestReduction()) {
@@ -205,6 +231,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     if (child->type != with->type) return false;
     auto* before = child;
+    std::cout << "try " << before << " => " << with << '\n';
     child = with;
     if (!writeAndTestReduction()) {
       child = before;
@@ -370,12 +397,7 @@ int main(int argc, const char* argv[]) {
   // even do that with
   std::cout << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
-    Module wasm;
-    ModuleReader reader;
-    reader.read(input, wasm);
-    ModuleWriter writer;
-    writer.setBinary(true);
-    writer.write(wasm, test);
+    canonicalize(input, test);
     ProgramResult result(command);
     if (result != expected) {
       result.dump();
