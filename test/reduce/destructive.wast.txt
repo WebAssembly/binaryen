@@ -3,18 +3,7 @@
  (memory $0 0)
  (export "x" (func $0))
  (func $0 (type $0) (param $var$0 i32) (result i32)
-  (block $label$0 (result i32)
-   (if
-    (i32.eq
-     (get_local $var$0)
-     (i32.const 98658746)
-    )
-    (block $label$1
-     (unreachable)
-    )
-   )
-   (i32.const 100)
-  )
+  (i32.const 0)
  )
 )
 

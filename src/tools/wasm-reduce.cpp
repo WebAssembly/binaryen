@@ -183,6 +183,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     }
     std::cout << "|      tryToReplaceCurrent succeeded\n";
     reduced = true;
+    copy_file(test, working);
     return true;
   }
 
@@ -197,6 +198,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     }
     std::cout << "|      tryToReplaceChild succeeded\n";
     reduced = true;
+    copy_file(test, working);
     return true;
   }
 
