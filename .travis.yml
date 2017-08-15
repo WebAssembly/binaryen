@@ -20,7 +20,6 @@ jobs:
         - export ASAN_OPTIONS="symbolize=1"
       install:
         - pip install --user flake8
-        - sudo apt-get install -y nodejs
       before_script:
         # Check the style of a subset of Python code until the other code is updated.
         - flake8 ./scripts/
