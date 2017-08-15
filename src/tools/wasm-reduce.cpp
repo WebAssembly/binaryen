@@ -36,6 +36,9 @@
 
 using namespace wasm;
 
+// after seeing these destructive reductions, skip and go back to fast pass reduction
+static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 1;
+
 struct ProgramResult {
   int code;
   std::string stdout;
@@ -148,32 +151,42 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     Module wasm;
     ModuleReader reader;
     reader.read(working, wasm);
-    reduced = false;
+    reduced = 0;
     builder = make_unique<Builder>(wasm);
+    funcsSeen = 0;
     walkModule(&wasm);
     return reduced;
   }
 
   // destructive reduction state
 
-  bool reduced;
-
+  Index reduced;
   Expression* beforeReduction;
-
   std::unique_ptr<Builder> builder;
+  Index funcsSeen;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
+    ProgramResult result;
+    return writeAndTestReduction(result);
+  }
+
+  bool writeAndTestReduction(ProgramResult& out) {
     // write the module out
     ModuleWriter writer;
     writer.setBinary(true);
     writer.write(*getModule(), test);
+    if (file_size(test) >= file_size(working)) {
+      return false; // did not shrink it
+    }
     // test it
-    return ProgramResult(command) == expected;
+    out.getFromExecution(command);
+    return out == expected;
   }
 
   // tests a reduction on the current traversal node, and undos if it failed
   bool tryToReplaceCurrent(Expression* with) {
+    if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     auto* curr = getCurrent();
     if (curr->type != with->type) return false;
     replaceCurrent(with);
@@ -181,14 +194,15 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       replaceCurrent(curr);
       return false;
     }
-    std::cout << "|      tryToReplaceCurrent succeeded\n";
-    reduced = true;
+    std::cout << "|      tryToReplaceCurrent succeeded (in " << getLocation() << ")\n";
+    reduced++;
     copy_file(test, working);
     return true;
   }
 
   // tests a reduction on an arbitrary child
   bool tryToReplaceChild(Expression*& child, Expression* with) {
+    if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     if (child->type != with->type) return false;
     auto* before = child;
     child = with;
@@ -196,10 +210,15 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       child = before;
       return false;
     }
-    std::cout << "|      tryToReplaceChild succeeded\n";
-    reduced = true;
+    std::cout << "|      tryToReplaceChild succeeded (in " << getLocation() << ")\n";
+    reduced++;
     copy_file(test, working);
     return true;
+  }
+
+  std::string getLocation() {
+    if (getFunction()) return getFunction()->name.str;
+    return "(non-function context)";
   }
 
   // visitors. in each we try to remove code in a destructive and nontrivial way.
@@ -265,6 +284,15 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     handleCondition(curr->condition);
   }
 
+  void visitFunction(Function* curr) {
+    funcsSeen++;
+    static int last = 0;
+    int percentage = (100 * funcsSeen) / getModule()->functions.size();
+    if (percentage != last) {
+      std::cout << "|    " << percentage << "% of funcs complete\n";
+    }
+  }
+
   // helpers
 
   // try to replace condition with always true and always false
@@ -281,22 +309,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   void handleConcreteCurrentValue() {
     auto* curr = getCurrent();
     if (!isConcreteWasmType(curr->type)) return;
-    Const* c = curr->dynCast<Const>();
-    if (c) {
-      // if it already has a trivial value, leave it
-      auto val = c->value.getBits();
-      if (val == 0 || val == 1 || val == -1) return;
-    } else {
-      c = builder->makeConst(Literal(int32_t(0)));
-    }
+    if (curr->is<Const>()) return;
     // try to replace with a trivial value
-    c->value = LiteralUtils::makeLiteralZero(curr->type);
-    c->type = curr->type;
+    Const* c = builder->makeConst(Literal(int32_t(0)));
     if (tryToReplaceCurrent(c)) return;
     c->value = LiteralUtils::makeLiteralFromInt32(1, curr->type);
-    c->type = curr->type;
-    if (tryToReplaceCurrent(c)) return;
-    c->value = LiteralUtils::makeLiteralFromInt32(-1, curr->type);
     c->type = curr->type;
     tryToReplaceCurrent(c);
   }
@@ -351,15 +368,18 @@ int main(int argc, const char* argv[]) {
   // sanity check - we should start with an invalid module, and one
   // that we can read and write TODO: allow reducing things we can't
   // even do that with
-  std::cout << "|checking that command has expected behavior\n";
+  std::cout << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     Module wasm;
     ModuleReader reader;
     reader.read(input, wasm);
-    Reducer reducer(command, test, working);
-    reducer.setModule(&wasm);
-    if (!reducer.writeAndTestReduction()) {
-      Fatal() << "running command on the input module give the same results";
+    ModuleWriter writer;
+    writer.setBinary(true);
+    writer.write(wasm, test);
+    ProgramResult result(command);
+    if (result != expected) {
+      result.dump();
+      Fatal() << "running command on the canonicalized module should give the same results";
     }
   }
 
