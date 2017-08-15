@@ -27,7 +27,7 @@ def test_wasm2asm_output():
     print '..', wasm
 
     cmd = WASM2ASM + [os.path.join('test', wasm)]
-    out = run_command(cmd, expected_err='')
+    out = run_command(cmd)
     expected = open(expected_file).read()
     fail_if_not_identical(out, expected)
 
