@@ -10,7 +10,7 @@ from shared import (WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, tests)
 blacklist = ['address.wast']
 spec_tests = [os.path.join('spec', t) for t in
               sorted(os.listdir(os.path.join('test', 'spec')))]
-assert_tests = ['wasm2asm_asserts.wast']
+assert_tests = ['wasm2asm.wast.asserts']
 
 
 def test_wasm2asm_output():
@@ -64,8 +64,8 @@ def test_asserts_output():
   for wasm in assert_tests:
     print '..', wasm
 
-    asserts = os.path.basename(wasm).replace('.wast', '.asserts.js')
-    traps = os.path.basename(wasm).replace('.wast', '.traps.js')
+    asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
+    traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
     asserts_expected_file = os.path.join('test', asserts)
     traps_expected_file = os.path.join('test', traps)
 
