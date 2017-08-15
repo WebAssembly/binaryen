@@ -21,11 +21,13 @@
 // global.
 //
 
+#include <algorithm>
 #include "wasm.h"
 #include "pass.h"
 #include "emscripten-optimizer/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
+
 
 namespace wasm {
 
@@ -38,13 +40,10 @@ static Name makeHighName(Name n) {
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   static Name highBitsGlobal;
 
-  // bool isFunctionParallel() override { return true; }
-  bool isFunctionParallel() override { return false; }
+  bool isFunctionParallel() override { return true; }
 
-  void doWalkModule(Module* module) {
-    builder = new Builder(*module);
-    PostWalker<I64ToI32Lowering>::doWalkModule(module);
-    delete builder;
+  Pass* create() override {
+    return new I64ToI32Lowering;
   }
 
   void visitFunctionType(FunctionType* curr) {
@@ -73,6 +72,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void doWalkFunction(Function* func) {
+    builder = new Builder(*getModule());
     indexMap.clear();
     returnIndices.clear();
     labelIndices.clear();
@@ -106,8 +106,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitFunction(Function* func) {
-    static int nfs = 0;
-    std::cerr << "finished lowering " << (++nfs) << std::endl;
     if (func->result == i64) {
       func->result = i32;
       Index highBits = fetchOutParam(func->body);
@@ -131,6 +129,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       Name tmpName("i64toi32_i32$" + std::to_string(idx++));
       builder->addVar(func, tmpName, i32);
     }
+    delete builder;
   }
 
   void visitBlock(Block* curr) {
@@ -164,7 +163,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     freeTemp(tmp);
   }
 
-  void visitIf(If* curr) {
+  // If and Select have identical code
+  template <typename T>
+  void visitBranching(T* curr) {
     if (returnIndices.find(curr->ifTrue) == returnIndices.end()) return;
     assert(curr->ifFalse != nullptr);
     Index highBits = fetchOutParam(curr->ifTrue);
@@ -178,8 +179,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       ),
       builder->makeGetLocal(tmp, i32)
     );
+    freeTemp(tmp);
     freeTemp(falseBits);
     setOutParam(curr, highBits);
+  }
+
+  void visitIf(If* curr) {
+    visitBranching<If>(curr);
   }
 
   void visitLoop(Loop* curr) {
@@ -250,7 +256,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   template <typename T>
-  using BuilderFunc = std::function<T*(std::vector<Expression*>, WasmType)>;
+  using BuilderFunc = std::function<T*(std::vector<Expression*>&, WasmType)>;
 
   template <typename T>
   void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
@@ -286,7 +292,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitCall(Call* curr) {
     visitGenericCall<Call>(
       curr,
-      [&](std::vector<Expression*> args, WasmType ty) {
+      [&](std::vector<Expression*>& args, WasmType ty) {
         return builder->makeCall(curr->target, args, ty);
       }
     );
@@ -300,7 +306,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitCallIndirect(CallIndirect* curr) {
     visitGenericCall<CallIndirect>(
       curr,
-      [&](std::vector<Expression*> args, WasmType ty) {
+      [&](std::vector<Expression*>& args, WasmType ty) {
         return builder->makeCallIndirect(
           curr->fullType,
           curr->target,
@@ -408,30 +414,27 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitStore(Store* curr) {
     if (curr->valueType != i64) return;
     assert(curr->offset + 4 > curr->offset);
-    assert(curr->bytes == 8 && "smaller stores not implemented");
     assert(!curr->isAtomic && "atomic store not implemented");
     Index highBits = fetchOutParam(curr->value);
-    Index ptrTemp = getTemp();
-    SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
-    Store* storeLow = builder->makeStore(
-      4,
-      curr->offset,
-      curr->align,
-      builder->makeGetLocal(ptrTemp, i32),
-      curr->value,
-      i32
-    );
-    Store* storeHigh = builder->makeStore(
-      4,
-      curr->offset + 4,
-      0,
-      builder->makeGetLocal(ptrTemp, i32),
-      builder->makeGetLocal(highBits, i32),
-      i32
-    );
-    replaceCurrent(builder->blockify(setPtr, storeLow, storeHigh));
+    uint8_t bytes = curr->bytes;
+    curr->bytes = std::min(bytes, uint8_t(4));
+    curr->valueType = i32;
+    if (bytes > 4) {
+      Index ptrTemp = getTemp();
+      SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
+      curr->ptr = builder->makeGetLocal(ptrTemp, i32);
+      Store* storeHigh = builder->makeStore(
+        bytes - 4,
+        curr->offset + 4,
+        0,
+        builder->makeGetLocal(ptrTemp, i32),
+        builder->makeGetLocal(highBits, i32),
+        i32
+      );
+      replaceCurrent(builder->blockify(setPtr, curr, storeHigh));
+      freeTemp(ptrTemp);
+    }
     freeTemp(highBits);
-    freeTemp(ptrTemp);
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
@@ -459,6 +462,18 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(result);
   }
 
+  void lowerEqZInt64(Unary* curr) {
+    Index highBits = fetchOutParam(curr->value);
+    replaceCurrent(
+      builder->makeBinary(
+        AndInt32,
+        builder->makeUnary(EqZInt32, builder->makeGetLocal(highBits, i32)),
+        builder->makeUnary(EqZInt32, curr->value)
+      )
+    );
+    freeTemp(highBits);
+  }
+
   void lowerExtendUInt32(Unary* curr) {
     Index highBits = getTemp();
     Block* result = builder->blockify(
@@ -469,20 +484,22 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(result);
   }
 
+  void lowerWrapInt64(Unary* curr) {
+    freeTemp(fetchOutParam(curr->value));
+    replaceCurrent(curr->value);
+  }
+
   void visitUnary(Unary* curr) {
     if (returnIndices.find(curr->value) == returnIndices.end() &&
         curr->type != i64) return;
     switch (curr->op) {
       case ClzInt64:
       case CtzInt64:
-      case PopcntInt64:
-      case EqZInt64:
-      case ExtendSInt32:
-        if (0) {
-      case ExtendUInt32:
-        return lowerExtendUInt32(curr);
-        }
-      case WrapInt64:
+      case PopcntInt64: goto err;
+      case EqZInt64:               lowerEqZInt64(curr);     break;
+      case ExtendSInt32: goto err;
+      case ExtendUInt32:           lowerExtendUInt32(curr); break;
+      case WrapInt64:              lowerWrapInt64(curr);    break;
       case TruncSFloat32ToInt64:
       case TruncUFloat32ToInt64:
       case TruncSFloat64ToInt64:
@@ -494,7 +511,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ConvertUInt64ToFloat64:
       case ReinterpretInt32:
       case ReinterpretInt64:
-      default:
+      err: default:
         std::cerr << "Unhandled unary operator: " << curr->op << std::endl;
         abort();
     }
@@ -535,7 +552,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       carryBit
     );
     GetLocal* getLow = builder->makeGetLocal(leftHigh, i32);
-    return builder->blockify(result, addLow, addHigh, checkOverflow, getLow);
+    result = builder->blockify(result, addLow, addHigh, checkOverflow, getLow);
+    freeTemp(leftLow);
+    freeTemp(leftHigh);
+    freeTemp(rightLow);
+    setOutParam(result, rightHigh);
+    return result;
   }
 
   Block* lowerMul(Block* result, Index leftLow, Index leftHigh, Index rightLow,
@@ -637,11 +659,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       builder->makeGetLocal(leftLow, i32),
       builder->makeGetLocal(rightLow, i32)
     );
-    freeTemp(leftLow0);
-    freeTemp(leftLow1);
-    freeTemp(rightLow0);
-    freeTemp(rightLow1);
-    return builder->blockify(
+    result = builder->blockify(
+      result,
       setLL0,
       setLL1,
       setRL0,
@@ -653,6 +672,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       addLL1RL0,
       getLow
     );
+    freeTemp(leftLow0);
+    freeTemp(leftLow1);
+    freeTemp(rightLow0);
+    freeTemp(rightLow1);
+    freeTemp(leftLow);
+    freeTemp(leftHigh);
+    freeTemp(rightLow);
+    setOutParam(result, rightHigh);
+    return result;
   }
 
   Block* lowerBitwise(BinaryOp op, Block* result, Index leftLow, Index leftHigh,
@@ -664,7 +692,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case XorInt64: op32 = XorInt32; break;
       default: abort();
     }
-    return builder->blockify(
+    result = builder->blockify(
+      result,
       builder->makeSetLocal(
         rightHigh,
         builder->makeBinary(
@@ -679,18 +708,107 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         builder->makeGetLocal(rightLow, i32)
       )
     );
+    freeTemp(leftLow);
+    freeTemp(leftHigh);
+    freeTemp(rightLow);
+    setOutParam(result, rightHigh);
+    return result;
   }
 
-  Block* lowerShl(Block* result, Index leftLow, Index leftHigh,
+  Block* makeLargeShl(Index highBits, Index leftLow, Index shift) {
+    return builder->blockify(
+      builder->makeSetLocal(
+        highBits,
+        builder->makeBinary(
+          ShlInt32,
+          builder->makeGetLocal(leftLow, i32),
+          builder->makeGetLocal(shift, i32)
+        )
+      ),
+      builder->makeConst(Literal(int32_t(0)))
+    );
+  }
+
+  Block* makeLargeShrU(Index highBits, Index leftHigh, Index shift) {
+    return builder->blockify(
+      builder->makeSetLocal(highBits, builder->makeConst(Literal(int32_t(0)))),
+      builder->makeBinary(
+        ShrUInt32,
+        builder->makeGetLocal(leftHigh, i32),
+        builder->makeGetLocal(shift, i32)
+      )
+    );
+  }
+
+  Block* makeSmallShl(Index highBits, Index leftLow, Index leftHigh,
+                      Index shift, Binary* shiftMask, Binary* widthLessShift) {
+    Binary* shiftedInBits = builder->makeBinary(
+      AndInt32,
+      shiftMask,
+      builder->makeBinary(
+        ShrUInt32,
+        builder->makeGetLocal(leftLow, i32),
+        widthLessShift
+      )
+    );
+    Binary* shiftHigh = builder->makeBinary(
+      ShlInt32,
+      builder->makeGetLocal(leftHigh, i32),
+      builder->makeGetLocal(shift, i32)
+    );
+    return builder->blockify(
+      builder->makeSetLocal(
+        highBits,
+        builder->makeBinary(OrInt32, shiftedInBits, shiftHigh)
+      ),
+      builder->makeBinary(
+        ShlInt32,
+        builder->makeGetLocal(leftLow, i32),
+        builder->makeGetLocal(shift, i32)
+      )
+    );
+  }
+
+  Block* makeSmallShrU(Index highBits, Index leftLow, Index leftHigh,
+                       Index shift, Binary* shiftMask, Binary* widthLessShift) {
+    Binary* shiftedInBits = builder->makeBinary(
+      ShlInt32,
+      builder->makeBinary(
+        AndInt32,
+        shiftMask,
+        builder->makeGetLocal(leftHigh, i32)
+      ),
+      widthLessShift
+    );
+    Binary* shiftLow = builder->makeBinary(
+      ShrUInt32,
+      builder->makeGetLocal(leftLow, i32),
+      builder->makeGetLocal(shift, i32)
+    );
+    return builder->blockify(
+      builder->makeSetLocal(
+        highBits,
+        builder->makeBinary(
+          ShrUInt32,
+          builder->makeGetLocal(leftHigh, i32),
+          builder->makeGetLocal(shift, i32)
+        )
+      ),
+      builder->makeBinary(OrInt32, shiftedInBits, shiftLow)
+    );
+  }
+
+  Block* lowerShU(BinaryOp op, Block* result, Index leftLow, Index leftHigh,
                   Index rightLow, Index rightHigh) {
+    assert(op == ShlInt64 || op == ShrUInt64);
     // shift left lowered as:
     // if 32 <= rightLow % 64:
     //     high = leftLow << k; low = 0
     // else:
     //     high = (((1 << k) - 1) & (leftLow >> (32 - k))) | (leftHigh << k);
     //     low = leftLow << k
-    // where k = shift % 32. Switch high and low and hshift dirs for shift right.
-    Index shift = rightHigh; // repurpose useless temp
+    // where k = shift % 32. shift right is similar.
+    Index shift = getTemp();
     SetLocal* setShift = builder->makeSetLocal(
       shift,
       builder->makeBinary(
@@ -708,17 +826,14 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         builder->makeConst(Literal(int32_t(64 - 1)))
       )
     );
-    Block* largeShiftBlock = builder->blockify(
-      builder->makeSetLocal(
-        rightHigh,
-        builder->makeBinary(
-          ShlInt32,
-          builder->makeGetLocal(leftLow, i32),
-          builder->makeGetLocal(shift, i32)
-        )
-      ),
-      builder->makeConst(Literal(int32_t(0)))
-    );
+    Block* largeShiftBlock;
+    switch (op) {
+      case ShlInt64:
+        largeShiftBlock = makeLargeShl(rightHigh, leftLow, shift); break;
+      case ShrUInt64:
+        largeShiftBlock = makeLargeShrU(rightHigh, leftHigh, shift); break;
+      default: abort();
+    }
     Binary* shiftMask = builder->makeBinary(
       SubInt32,
       builder->makeBinary(
@@ -733,42 +848,40 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       builder->makeConst(Literal(int32_t(32))),
       builder->makeGetLocal(shift, i32)
     );
-    Binary* shiftedInBits = builder->makeBinary(
-      AndInt32,
-      shiftMask,
-      builder->makeBinary(
-        ShrUInt32,
-        builder->makeGetLocal(leftLow, i32),
-        widthLessShift
-      )
-    );
-    Binary* shiftHigh = builder->makeBinary(
-      ShlInt32,
-      builder->makeGetLocal(leftHigh, i32),
-      builder->makeGetLocal(shift, i32)
-    );
-    Block* smallShiftBlock = builder->blockify(
-      builder->makeSetLocal(
-        rightHigh,
-        builder->makeBinary(OrInt32, shiftedInBits, shiftHigh)
-      ),
-      builder->makeBinary(
-        ShlInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeGetLocal(shift, i32)
-      )
-    );
+    Block* smallShiftBlock;
+    switch(op) {
+      case ShlInt64: {
+        smallShiftBlock = makeSmallShl(rightHigh, leftLow, leftHigh,
+                                       shift, shiftMask, widthLessShift);
+        break;
+      }
+      case ShrUInt64: {
+        smallShiftBlock = makeSmallShrU(rightHigh, leftLow, leftHigh,
+                                        shift, shiftMask, widthLessShift);
+        break;
+      }
+      default: abort();
+    }
     If* ifLargeShift = builder->makeIf(
       isLargeShift,
       largeShiftBlock,
       smallShiftBlock
     );
-    return builder->blockify(result, setShift, ifLargeShift);
+    result = builder->blockify(result, setShift, ifLargeShift);
+    freeTemp(shift);
+    freeTemp(leftLow);
+    freeTemp(leftHigh);
+    freeTemp(rightLow);
+    setOutParam(result, rightHigh);
+    return result;
   }
 
   Block* lowerEq(Block* result, Index leftLow, Index leftHigh,
                     Index rightLow, Index rightHigh) {
-    freeTemp(rightHigh); // no outparam for relational op
+    freeTemp(leftLow);
+    freeTemp(leftHigh);
+    freeTemp(rightLow);
+    freeTemp(rightHigh);
     return builder->blockify(
       result,
       builder->makeBinary(
@@ -787,9 +900,36 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
+  Block* lowerNe(Block* result, Index leftLow, Index leftHigh,
+                 Index rightLow, Index rightHigh) {
+    freeTemp(leftLow);
+    freeTemp(leftHigh);
+    freeTemp(rightLow);
+    freeTemp(rightHigh);
+    return builder->blockify(
+      result,
+      builder->makeBinary(
+        OrInt32,
+        builder->makeBinary(
+          NeInt32,
+          builder->makeGetLocal(leftLow, i32),
+          builder->makeGetLocal(rightLow, i32)
+        ),
+        builder->makeBinary(
+          NeInt32,
+          builder->makeGetLocal(leftHigh, i32),
+          builder->makeGetLocal(rightHigh, i32)
+        )
+      )
+    );
+  }
+
   Block* lowerUComp(BinaryOp op, Block* result, Index leftLow, Index leftHigh,
                     Index rightLow, Index rightHigh) {
-    freeTemp(rightHigh); // no outparam for relational op
+    freeTemp(leftLow);
+    freeTemp(leftHigh);
+    freeTemp(rightLow);
+    freeTemp(rightHigh);
     BinaryOp highOp, lowOp;
     switch (op) {
       case LtUInt64: highOp = LtUInt32; lowOp = LtUInt32; break;
@@ -823,7 +963,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
-
   void visitBinary(Binary* curr) {
     if (returnIndices.find(curr->left) == returnIndices.end()) return;
     assert(returnIndices.find(curr->right) != returnIndices.end());
@@ -836,12 +975,14 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     Block* result = builder->blockify(setLeft, setRight);
     switch (curr->op) {
       case AddInt64: {
-        result = lowerAdd(result, leftLow, leftHigh, rightLow, rightHigh);
+        replaceCurrent(lowerAdd(result, leftLow, leftHigh, rightLow,
+                                rightHigh));
         break;
       }
       case SubInt64: goto err;
       case MulInt64: {
-        result = lowerMul(result, leftLow, leftHigh, rightLow, rightHigh);
+        replaceCurrent(lowerMul(result, leftLow, leftHigh, rightLow,
+                                rightHigh));
         break;
       }
       case DivSInt64:
@@ -851,23 +992,27 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case AndInt64:
       case OrInt64:
       case XorInt64: {
-        result = lowerBitwise(curr->op, result, leftLow, leftHigh, rightLow,
-                              rightHigh);
+        replaceCurrent(lowerBitwise(curr->op, result, leftLow, leftHigh,
+                                    rightLow, rightHigh));
         break;
       }
-      case ShlInt64: {
-        result = lowerShl(result, leftLow, leftHigh, rightLow, rightHigh);
+      case ShlInt64:
+      case ShrUInt64: {
+        replaceCurrent(lowerShU(curr->op, result, leftLow, leftHigh, rightLow,
+                                rightHigh));
         break;
       }
-      case ShrUInt64:
       case ShrSInt64:
       case RotLInt64:
       case RotRInt64: goto err;
       case EqInt64: {
-        result = lowerEq(result, leftLow, leftHigh, rightLow, rightHigh);
+        replaceCurrent(lowerEq(result, leftLow, leftHigh, rightLow, rightHigh));
         break;
       }
-      case NeInt64:
+      case NeInt64: {
+        replaceCurrent(lowerNe(result, leftLow, leftHigh, rightLow, rightHigh));
+        break;
+      }
       case LtSInt64:
       case LeSInt64:
       case GtSInt64:
@@ -876,8 +1021,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case LeUInt64:
       case GtUInt64:
       case GeUInt64: {
-        result = lowerUComp(curr->op, result, leftLow, leftHigh, rightLow,
-                            rightHigh);
+        replaceCurrent(lowerUComp(curr->op, result, leftLow, leftHigh, rightLow,
+                                  rightHigh));
         break;
       }
       err: default: {
@@ -885,29 +1030,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         abort();
       }
     }
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    replaceCurrent(result);
-    setOutParam(result, rightHigh);
   }
 
-  // TODO: deduplicate visitIf and visitSelect
   void visitSelect(Select* curr) {
-    if (returnIndices.find(curr->ifTrue) == returnIndices.end()) return;
-    Index highBits = fetchOutParam(curr->ifTrue);
-    Index falseBits = fetchOutParam(curr->ifFalse);
-    Index tmp = getTemp();
-    curr->ifFalse = builder->blockify(
-      builder->makeSetLocal(tmp, curr->ifFalse),
-      builder->makeSetLocal(
-        highBits,
-        builder->makeGetLocal(falseBits, i32)
-      ),
-      builder->makeGetLocal(tmp, i32)
-    );
-    freeTemp(falseBits);
-    setOutParam(curr, highBits);
+    visitBranching<Select>(curr);
   }
 
   void visitDrop(Drop* curr) {
@@ -951,6 +1077,7 @@ private:
   }
 
   void freeTemp(Index t) {
+    assert(std::find(freeTemps.begin(), freeTemps.end(), t) == freeTemps.end());
     freeTemps.push_back(t);
   }
 
