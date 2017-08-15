@@ -27,7 +27,7 @@ def test_wasm2asm_output():
     print '..', wasm
 
     cmd = WASM2ASM + [os.path.join('test', wasm)]
-    out = run_command(cmd)
+    out = run_command(cmd, expected_err='')
     expected = open(expected_file).read()
     fail_if_not_identical(out, expected)
 
@@ -46,7 +46,7 @@ def test_wasm2asm_output():
     if NODEJS:
       out = run_command([NODEJS, 'a.2asm.js'])
       fail_if_not_identical(out, '')
-      out = run_command([NODEJS, 'a.2asm.asserts.js'])
+      out = run_command([NODEJS, 'a.2asm.asserts.js'], expected_err='')
       fail_if_not_identical(out, '')
 
     if MOZJS:
@@ -56,7 +56,7 @@ def test_wasm2asm_output():
                         expected_err='Successfully compiled asm.js code',
                         err_contains=True)
       fail_if_not_identical(out, '')
-      out = run_command([MOZJS, 'a.2asm.asserts.js'])
+      out = run_command([MOZJS, 'a.2asm.asserts.js'], expected_err='')
       fail_if_not_identical(out, '')
 
 
