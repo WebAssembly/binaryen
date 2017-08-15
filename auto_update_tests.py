@@ -29,9 +29,10 @@ for t in os.listdir(os.path.join('test', 'reduce')):
     t = os.path.join('test', 'reduce', t)
     # convert to wasm
     run_command(WASM_AS + [t, '-o', 'a.wasm'])
-    print run_command(WASM_REDUCE + ['a.wasm', '--command="bin/wasm-opt t.wasm --fuzz-exec"', '-t', 'b.wasm', '-w', 'c.wasm'])
+    print run_command(WASM_REDUCE + ['a.wasm', '--command="bin/wasm-opt b.wasm --fuzz-exec"', '-t', 'b.wasm', '-w', 'c.wasm'])
     expected = t + '.txt'
     run_command(WASM_DIS + ['c.wasm', '-o', expected])
+    1/0
 
 1/0
 
