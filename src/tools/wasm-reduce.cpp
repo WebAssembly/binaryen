@@ -38,7 +38,7 @@
 using namespace wasm;
 
 // after seeing these destructive reductions, skip and go back to fast pass reduction
-static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 200;
+static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 100;
 
 static void canonicalize(std::string input, std::string output) {
   // reading and writing may alter the size
@@ -70,10 +70,10 @@ struct ProgramResult {
   void getFromExecution(std::string command) {
     // do this using just core stdio.h and stdlib.h, for portability
     // sadly this requires two invokes
-    code = system((command + " > /dev/null 2> /dev/null").c_str());
+    code = system(("timeout 2s " + command + " > /dev/null 2> /dev/null").c_str());
     const int MAX_BUFFER = 1024;
     char buffer[MAX_BUFFER];
-    FILE *stream = popen((command + " 2> /dev/null").c_str(), "r");
+    FILE *stream = popen(("timeout 2s " + command + " 2> /dev/null").c_str(), "r");
     while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
       stdout.append(buffer);
     }
@@ -318,6 +318,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     int percentage = (100 * funcsSeen) / getModule()->functions.size();
     if (percentage != last) {
       std::cout << "|    " << percentage << "% of funcs complete\n";
+      last = percentage;
     }
   }
 
