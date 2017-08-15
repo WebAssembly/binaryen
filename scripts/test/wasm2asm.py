@@ -40,7 +40,7 @@ def test_wasm2asm_output():
     cmd += ['--allow-asserts']
     out = run_command(cmd)
 
-    open('a.asserts.js', 'w').write(out)
+    open('a.2asm.asserts.js', 'w').write(out)
 
     # verify asm.js is valid js
     if NODEJS:
@@ -56,7 +56,7 @@ def test_wasm2asm_output():
                         expected_err='Successfully compiled asm.js code',
                         err_contains=True)
       fail_if_not_identical(out, '')
-      out = run_command([MOZJS, 'a.asserts.js'])
+      out = run_command([MOZJS, 'a.2asm.asserts.js'])
       fail_if_not_identical(out, '')
 
 
