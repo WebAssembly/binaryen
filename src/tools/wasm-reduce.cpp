@@ -45,7 +45,7 @@ static void canonicalize(std::string input, std::string output) {
   int counter = 0;
   while (1) {
     auto oldSize = file_size(input);
-    auto code = system(("bin/wasm-opt --vacuum " + input + " -o " + output).c_str());
+    auto code = system(("bin/wasm-opt --dce --vacuum " + input + " -o " + output).c_str());
     assert(code == 0);
     auto newSize = file_size(output);
     if (newSize <= oldSize) break;
@@ -115,13 +115,15 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       "-O1",
       "-O2",
       "-O3",
-      "--coalesce-locals",
+      "--coalesce-locals --vacuum",
       "--dce",
       "--duplicate-function-elimination",
+      "--inlining",
       "--inlining-optimizing",
-      "--local-cse",
+      "--optimize-level=3 --inlining-optimizing",
+      "--local-cse --vacuum",
       "--memory-packing",
-      "--remove-unused-names --merge-blocks",
+      "--remove-unused-names --merge-blocks --vacuum",
       "--optimize-instructions",
       "--precompute",
       "--remove-imports",
@@ -130,10 +132,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       "--remove-unused-module-elements",
       "--reorder-functions",
       "--reorder-locals",
-      "--simplify-locals",
-      "--simplify-locals-notee",
-      "--simplify-locals-nostructure",
-      "--simplify-locals-notee-nostructure",
+      "--simplify-locals --vacuum",
+      "--simplify-locals-notee --vacuum",
+      "--simplify-locals-nostructure --vacuum",
+      "--simplify-locals-notee-nostructure --vacuum",
       "--vacuum"
     };
     auto oldSize = file_size(working);
@@ -142,7 +144,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       //std::cout << "|    starting passes loop iteration\n";
       more = false;
       for (auto pass : passes) {
-        auto currCommand = "bin/wasm-opt " + working + " -o " + test + " " + pass;
+        auto currCommand = "bin/wasm-opt --dce --vacuum " + working + " -o " + test + " " + pass;
         //std::cout << "|    trying pass command: " << currCommand << "\n";
         if (!ProgramResult(currCommand).failed()) {
           canonicalize(test, test);
@@ -170,6 +172,12 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     Module wasm;
     ModuleReader reader;
     reader.read(working, wasm);
+    // clean up
+    PassRunner runner(&wasm);
+    runner.add("dce");
+    runner.add("vacuum");
+    runner.run();
+    // prepare
     reduced = 0;
     builder = make_unique<Builder>(wasm);
     funcsSeen = 0;
@@ -202,8 +210,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     writer.write(*getModule(), test);
     canonicalize(test, test);
     if (file_size(test) > file_size(working)) {
-      //std::cout << "|    sad sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
-      return false;
+      // sometimes a destructive change increases the size (e.g. replace a small node with a const
+      // that happens to take more bytes), but this should not risk an infinite loop since we
+      // are actually changing behavior in a breaking way each time we find a destructive reduction
+      //std::cout << "|      odd sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
+      //return false;
     }
     // test it
     out.getFromExecution(command);
@@ -316,9 +327,28 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     funcsSeen++;
     static int last = 0;
     int percentage = (100 * funcsSeen) / getModule()->functions.size();
-    if (percentage != last) {
+    if (std::abs(percentage - last) >= 5) {
       std::cout << "|    " << percentage << "% of funcs complete\n";
       last = percentage;
+    }
+  }
+
+  void visitModule(Module* curr) {
+    // try to remove exports
+    std::cout << "|    try to remove exports\n";
+    std::vector<Export> exports;
+    for (auto& exp : curr->exports) {
+      exports.push_back(*exp);
+    }
+    for (auto& exp : exports) {
+      curr->removeExport(exp.name);
+      if (!writeAndTestReduction()) {
+        curr->addExport(new Export(exp));
+      } else {
+        std::cout << "|      removed export " << exp.name << '\n';
+        reduced++;
+        copy_file(test, working);
+      }
     }
   }
 
