@@ -133,11 +133,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitBlock(Block* curr) {
+    if (curr->type != i64) return;
+    curr->type = i32;
     size_t lastIdx = curr->list.size() - 1;
-    for (size_t i = 0; i < lastIdx; ++i) {
-      if (curr->list[i]->type != i64) continue;
-      freeTemp(fetchOutParam(curr->list[i]));
-    }
     Index lastHighBits = fetchOutParam(curr->list.back());
     auto highBitsIt = labelIndices.find(curr->name);
     if (highBitsIt == labelIndices.end() ||
@@ -167,10 +165,11 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   template <typename T>
   void visitBranching(T* curr) {
     if (returnIndices.find(curr->ifTrue) == returnIndices.end()) return;
-    assert(curr->ifFalse != nullptr);
+    assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
     Index highBits = fetchOutParam(curr->ifTrue);
     Index falseBits = fetchOutParam(curr->ifFalse);
     Index tmp = getTemp();
+    curr->type = i32;
     curr->ifFalse = builder->blockify(
       builder->makeSetLocal(tmp, curr->ifFalse),
       builder->makeSetLocal(
@@ -359,7 +358,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
     Index highBits = fetchOutParam(curr->value);
     curr->index = indexMap[curr->index];
-    curr->type = i32;
     SetLocal* setHigh = builder->makeSetLocal(
       curr->index + 1,
       builder->makeGetLocal(highBits, i32)
@@ -391,7 +389,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
           curr->bytes - 4,
           curr->signed_,
           curr->offset + 4,
-          0,
+          1,
           builder->makeGetLocal(ptrTemp, i32),
           i32
         )
@@ -404,6 +402,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
     curr->type = i32;
     curr->bytes = std::min(curr->bytes, uint8_t(4));
+    curr->align = std::min(uint32_t(curr->align), uint32_t(4));
     curr->ptr = builder->makeGetLocal(ptrTemp, i32);
     Block* result = builder->blockify(setPtr, loadHigh, curr);
     replaceCurrent(result);
@@ -417,7 +416,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     assert(!curr->isAtomic && "atomic store not implemented");
     Index highBits = fetchOutParam(curr->value);
     uint8_t bytes = curr->bytes;
-    curr->bytes = std::min(bytes, uint8_t(4));
+    curr->bytes = std::min(curr->bytes, uint8_t(4));
+    curr->align = std::min(uint32_t(curr->align), uint32_t(4));
     curr->valueType = i32;
     if (bytes > 4) {
       Index ptrTemp = getTemp();
@@ -426,7 +426,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       Store* storeHigh = builder->makeStore(
         bytes - 4,
         curr->offset + 4,
-        0,
+        1,
         builder->makeGetLocal(ptrTemp, i32),
         builder->makeGetLocal(highBits, i32),
         i32
