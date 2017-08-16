@@ -495,7 +495,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
         std::move(params),
         result,
         std::move(vars)
-                                                                        ));
+    ));
   };
   auto ensureAutoBlock = [&]() {
     if (!autoBlock) {

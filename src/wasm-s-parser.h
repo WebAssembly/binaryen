@@ -159,6 +159,10 @@ public:
   }
   Expression* parseExpression(Element& s);
 
+  MixedArena& getAllocator() {
+    return allocator;
+  }
+
 private:
   Expression* makeExpression(Element& s);
   Expression* makeBinary(Element& s, BinaryOp op, WasmType type);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <fstream>
 
 #include "support/bits.h"
@@ -84,24 +85,29 @@ void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum,
   }
 }
 
-int32_t WasmBinaryWriter::startSection(BinaryConsts::Section code) {
+template<typename T>
+int32_t WasmBinaryWriter::startSection(T code) {
   o << U32LEB(code);
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
-  o.writeAt(start, U32LEB(size));
+  int32_t size = o.size() - start - MaxLEB32Bytes; // section size does not include the reserved bytes of the size field itself
+  auto sizeFieldSize = o.writeAt(start, U32LEB(size));
+  if (sizeFieldSize != MaxLEB32Bytes) {
+    // we can save some room, nice
+    assert(sizeFieldSize < MaxLEB32Bytes);
+    std::move(&o[start + MaxLEB32Bytes], &o[start + MaxLEB32Bytes + size], &o[start + sizeFieldSize]);
+    o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
+  }
 }
 
 int32_t WasmBinaryWriter::startSubsection(BinaryConsts::UserSections::Subsection code) {
-  o << U32LEB(code);
-  return writeU32LEBPlaceholder(); // section size to be filled in later
+  return startSection(code);
 }
 
 void WasmBinaryWriter::finishSubsection(int32_t start) {
-  int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
-  o.writeAt(start, U32LEB(size));
+  finishSection(start);
 }
 
 void WasmBinaryWriter::writeStart() {
@@ -270,7 +276,13 @@ void WasmBinaryWriter::writeFunctions() {
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
     if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
-    o.writeAt(sizePos, U32LEB(size));
+    auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
+    if (sizeFieldSize != MaxLEB32Bytes) {
+      // we can save some room, nice
+      assert(sizeFieldSize < MaxLEB32Bytes);
+      std::move(&o[start], &o[start + size], &o[sizePos + sizeFieldSize]);
+      o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
+    }
   }
   currFunction = nullptr;
   finishSection(start);

@@ -28,19 +28,31 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
+  Wasm2AsmBuilder::Flags builderFlags;
   Options options("wasm2asm", "Transform .wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options* o, const std::string& argument) {
              o->extra["output"] = argument;
              Colors::disable();
+           })
+      .add("--allow-asserts", "", "Allow compilation of .wast testing asserts",
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             o->extra["asserts"] = "1";
+           })
+      .add("--pedantic", "", "Emulate WebAssembly trapping behavior",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             builderFlags.pedantic = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
+  if (options.debug) builderFlags.debug = true;
 
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
@@ -54,8 +66,13 @@ int main(int argc, const char *argv[]) {
   SExpressionWasmBuilder builder(wasm, *root[0]);
 
   if (options.debug) std::cerr << "asming..." << std::endl;
-  Wasm2AsmBuilder wasm2asm(options.debug);
+  Wasm2AsmBuilder wasm2asm(builderFlags);
   Ref asmjs = wasm2asm.processWasm(&wasm);
+
+  if (options.extra["asserts"] == "1") {
+    if (options.debug) std::cerr << "asserting..." << std::endl;
+    flattenAppend(asmjs, wasm2asm.processAsserts(root, builder));
+  }
 
   if (options.debug) {
     std::cerr << "a-printing..." << std::endl;
