@@ -45,8 +45,8 @@ IString ASM_FUNC("asmFunc"),
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
-  if (ast->isArray() && ast[0] == BLOCK) index = 1;
-  else if (ast->isArray() && ast[0] == DEFUN) index = 3;
+  if (ast[0] == BLOCK || ast[0] == TOPLEVEL) index = 1;
+  else if (ast[0] == DEFUN) index = 3;
   else abort();
   if (extra->isArray() && extra[0] == BLOCK) {
     for (size_t i = 0; i < extra[1]->size(); i++) {
@@ -108,7 +108,12 @@ class Wasm2AsmBuilder {
   MixedArena allocator;
 
 public:
-  Wasm2AsmBuilder(bool debug) : debug(debug), tableSize(-1) {}
+  struct Flags {
+    bool debug: 1;
+    bool pedantic: 1;
+  };
+
+  Wasm2AsmBuilder(Flags f) : flags(f) {}
 
   Ref processWasm(Module* wasm);
   Ref processFunction(Function* func);
@@ -125,15 +130,21 @@ public:
   //               if we have one.
   Ref processFunctionBody(Function* func, IString result);
 
+  Ref processAsserts(Element& e, SExpressionWasmBuilder& sexpBuilder);
+
   // Get a temp var.
-  IString getTemp(WasmType type) {
+  IString getTemp(WasmType type, Function* func) {
     IString ret;
     if (frees[type].size() > 0) {
       ret = frees[type].back();
       frees[type].pop_back();
     } else {
       size_t index = temps[type]++;
-      ret = IString((std::string("wasm2asm_") + printWasmType(type) + "$" + std::to_string(index)).c_str(), false);
+      ret = IString((std::string("wasm2asm_") + printWasmType(type) + "$" +
+                     std::to_string(index)).c_str(), false);
+    }
+    if (func->localIndices.find(ret) == func->localIndices.end()) {
+      Builder::addVar(func, ret, type);
     }
     return ret;
   }
@@ -175,7 +186,8 @@ public:
   }
 
 private:
-  bool debug;
+  Flags flags;
+
   // How many temp vars we need
   std::vector<size_t> temps; // type => num temps
   // Which are currently free to use
@@ -192,7 +204,13 @@ private:
   void addTables(Ref ast, Module *wasm);
   void addExports(Ref ast, Module *wasm);
   void addWasmCompatibilityFuncs(Module *wasm);
-
+  bool isAssertHandled(Element& e);
+  Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+                           Builder& wasmBuilder,
+                           Element& e, Name testFuncName);
+  Ref makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+                         Builder& wasmBuilder,
+                         Element& e, Name testFuncName);
   Wasm2AsmBuilder() = delete;
   Wasm2AsmBuilder(const Wasm2AsmBuilder &) = delete;
   Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder&) = delete;
@@ -496,7 +514,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module *wasm) {
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
-  if (debug) std::cerr << "  processFunction " << func->name << std::endl;
+  if (flags.debug) std::cerr << "  processFunction " << func->name << std::endl;
   Ref ret = ValueBuilder::makeFunction(fromName(func->name));
   frees.clear();
   frees.resize(std::max(i32, std::max(f32, f64)) + 1);
@@ -523,7 +541,8 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // body
   scanFunctionBody(func->body);
   if (isStatement(func->body)) {
-    IString result = func->result != none ? getTemp(func->result) : NO_RESULT;
+    IString result =
+        func->result != none ? getTemp(func->result, func) : NO_RESULT;
     flattenAppend(ret, ValueBuilder::makeStatement(processFunctionBody(func, result)));
     if (func->result != none) {
       // do the actual return
@@ -541,15 +560,6 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(theVar, fromName(func->getLocalName(i)), makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i))));
-  }
-  for (auto f : frees[i32]) {
-    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_INT));
-  }
-  for (auto f : frees[f32]) {
-    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_FLOAT));
-  }
-  for (auto f : frees[f64]) {
-    ValueBuilder::appendToVar(theVar, f, makeAsmCoercedZero(ASM_DOUBLE));
   }
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
@@ -676,10 +686,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
       //                 going there anyhow.
-      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, IString possible = NO_RESULT) : parent(parent), type(type) {
+      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, Function* func,
+                 IString possible = NO_RESULT) : parent(parent), type(type) {
         assert(possible != EXPRESSION_RESULT);
         if (possible == NO_RESULT) {
-          temp = parent->getTemp(type);
+          temp = parent->getTemp(type, func);
           needFree = true;
         } else {
           temp = possible;
@@ -715,7 +726,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     // this result is for an asm expression slot, but it might be a statement
     Ref visitForExpression(Expression* curr, WasmType type, IString& tempName) {
       if (isStatement(curr)) {
-        ScopedTemp temp(type, parent);
+        ScopedTemp temp(type, parent, func);
         tempName = temp.temp;
         return visit(curr, temp);
       } else {
@@ -838,7 +849,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref ret = ValueBuilder::makeBlock();
       Ref condition;
       if (isStatement(curr->condition)) {
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         flattenAppend(ret[2], visit(curr->condition, temp));
         condition = temp.getAstName();
       } else {
@@ -858,7 +869,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, WasmType type) {
       std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
       for (auto& operand : operands) {
-        temps.push_back(new ScopedTemp(operand->type, parent));
+        temps.push_back(new ScopedTemp(operand->type, parent, func));
         IString temp = temps.back()->temp;
         flattenAppend(ret, visitAndAssign(operand, temp));
         theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
@@ -911,7 +922,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       // we must statementize them all
       Ref ret = ValueBuilder::makeBlock();
-      ScopedTemp temp(i32, parent);
+      ScopedTemp temp(i32, parent, func);
       flattenAppend(ret, visit(curr->target, temp));
       Ref theCall = makeTableCall(temp.getAstName());
       return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
@@ -925,7 +936,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
             SET, visit(curr->value, EXPRESSION_RESULT));
       }
-      ScopedTemp temp(curr->type, parent, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
+      ScopedTemp temp(curr->type, parent, func, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
       Ref ret = blockify(visit(curr->value, temp));
       // the output was assigned to result, so we can just assign it to our target
       ret[1]->push_back(ValueBuilder::makeStatement(
@@ -936,7 +947,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitLoad(Load *curr) {
       if (isStatement(curr)) {
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         GetLocal fakeLocal(allocator);
         fakeLocal.index = func->getLocalIndex(temp.getName());
         Load fakeLoad = *curr;
@@ -947,7 +958,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         SetLocal set(allocator);
         set.index = func->getLocalIndex(temp.getName());
         set.value = curr->ptr;
@@ -970,9 +981,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             }
             break;
           }
-          default:
+          default: {
             std::cerr << "Unhandled type in load: " << curr->type << std::endl;
             abort();
+          }
         }
         return ValueBuilder::makeSeq(ptrSet, rest);
       }
@@ -1002,10 +1014,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                   ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32),
                   ValueBuilder::makePtrShift(ptr, 2));
               break;
-            default:
+            default: {
               std::cerr << "Unhandled number of bytes in i32 load: "
                         << curr->bytes << std::endl;
               abort();
+            }
           }
           break;
         }
@@ -1017,16 +1030,17 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
                                       ValueBuilder::makePtrShift(ptr, 3));
           break;
-        default:
+        default: {
           std::cerr << "Unhandled type in load: " << curr->type << std::endl;
           abort();
+        }
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
     Ref visitStore(Store *curr) {
       if (isStatement(curr)) {
-        ScopedTemp tempPtr(i32, parent);
-        ScopedTemp tempValue(curr->type, parent);
+        ScopedTemp tempPtr(i32, parent, func);
+        ScopedTemp tempValue(curr->valueType, parent, func);
         GetLocal fakeLocalPtr(allocator);
         fakeLocalPtr.index = func->getLocalIndex(tempPtr.getName());
         GetLocal fakeLocalValue(allocator);
@@ -1041,7 +1055,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       if (curr->align != 0 && curr->align < curr->bytes) {
         // set the pointer to a local
-        ScopedTemp temp(i32, parent);
+        ScopedTemp temp(i32, parent, func);
         SetLocal set(allocator);
         set.index = func->getLocalIndex(temp.getName());
         set.value = curr->ptr;
@@ -1049,7 +1063,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         GetLocal get(allocator);
         get.index = func->getLocalIndex(temp.getName());
         // set the value to a local
-        ScopedTemp tempValue(curr->value->type, parent);
+        ScopedTemp tempValue(curr->value->type, parent, func);
         SetLocal setValue(allocator);
         setValue.index = func->getLocalIndex(tempValue.getName());
         setValue.value = curr->value;
@@ -1061,7 +1075,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         store.ptr = &get;
         store.bytes = 1; // do the worst
         Ref rest;
-        switch (curr->type) {
+        switch (curr->valueType) {
           case i32: {
             Const _255(allocator);
             _255.value = Literal(int32_t(255));
@@ -1091,10 +1105,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             }
             break;
           }
-          default:
-            std::cerr << "Unhandled type in store: " <<  curr->type
+          default: {
+            std::cerr << "Unhandled type in store: " <<  curr->valueType
                       << std::endl;
             abort();
+          }
         }
         return ValueBuilder::makeSeq(ValueBuilder::makeSeq(ptrSet, valueSet), rest);
       }
@@ -1105,7 +1120,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->type) {
+      switch (curr->valueType) {
         case i32: {
           switch (curr->bytes) {
             case 1: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP8),  ValueBuilder::makePtrShift(ptr, 0)); break;
@@ -1117,7 +1132,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         }
         case f32: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2)); break;
         case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
-        default: abort();
+        default: {
+          std::cerr << "Unhandled type in store: " << curr->valueType
+                    << std::endl;
+          abort();
+        }
       }
       return ValueBuilder::makeBinary(ret, SET, value);
     }
@@ -1148,7 +1167,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
     Ref visitUnary(Unary *curr) {
       if (isStatement(curr)) {
-        ScopedTemp temp(curr->value->type, parent);
+        ScopedTemp temp(curr->value->type, parent, func);
         GetLocal fakeLocal(allocator);
         fakeLocal.index = func->getLocalIndex(temp.getName());
         Unary fakeUnary = *curr;
@@ -1176,10 +1195,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                   makeAsmCoercion(visit(curr->value,
                                         EXPRESSION_RESULT), ASM_INT), EQ,
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
-            default:
+            default: {
               std::cerr << "Unhandled unary i32 operator: " << curr
                         << std::endl;
               abort();
+            }
           }
         }
         case f32:
@@ -1246,17 +1266,18 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           }
           return ret;
         }
-        default:
+        default: {
           std::cerr << "Unhandled type: " << curr << std::endl;
           abort();
+        }
       }
     }
     Ref visitBinary(Binary *curr) {
       if (isStatement(curr)) {
-        ScopedTemp tempLeft(curr->left->type, parent);
+        ScopedTemp tempLeft(curr->left->type, parent, func);
         GetLocal fakeLocalLeft(allocator);
         fakeLocalLeft.index = func->getLocalIndex(tempLeft.getName());
-        ScopedTemp tempRight(curr->right->type, parent);
+        ScopedTemp tempRight(curr->right->type, parent, func);
         GetLocal fakeLocalRight(allocator);
         fakeLocalRight.index = func->getLocalIndex(tempRight.getName());
         Binary fakeBinary = *curr;
@@ -1371,21 +1392,22 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           return ValueBuilder::makeCall(ROTL32, left, right);
         case RotRInt32:
           return ValueBuilder::makeCall(ROTR32, left, right);
-        default:
+        default: {
           std::cerr << "Unhandled binary operator: " << curr << std::endl;
           abort();
+        }
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
     Ref visitSelect(Select *curr) {
       if (isStatement(curr)) {
-        ScopedTemp tempIfTrue(curr->ifTrue->type, parent);
+        ScopedTemp tempIfTrue(curr->ifTrue->type, parent, func);
         GetLocal fakeLocalIfTrue(allocator);
         fakeLocalIfTrue.index = func->getLocalIndex(tempIfTrue.getName());
-        ScopedTemp tempIfFalse(curr->ifFalse->type, parent);
+        ScopedTemp tempIfFalse(curr->ifFalse->type, parent, func);
         GetLocal fakeLocalIfFalse(allocator);
         fakeLocalIfFalse.index = func->getLocalIndex(tempIfFalse.getName());
-        ScopedTemp tempCondition(i32, parent);
+        ScopedTemp tempCondition(i32, parent, func);
         GetLocal fakeCondition(allocator);
         fakeCondition.index = func->getLocalIndex(tempCondition.getName());
         Select fakeSelect = *curr;
@@ -1402,9 +1424,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
       Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
       Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      ScopedTemp tempIfTrue(curr->type, parent),
-          tempIfFalse(curr->type, parent),
-          tempCondition(i32, parent);
+      ScopedTemp tempIfTrue(curr->type, parent, func),
+          tempIfFalse(curr->type, parent, func),
+          tempCondition(i32, parent, func);
       return
         ValueBuilder::makeSeq(
           ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
@@ -1432,6 +1454,162 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
   };
   return ExpressionProcessor(this, func).visit(func->body, result);
 }
+
+static Ref makeInstantiation() {
+  Ref lib = ValueBuilder::makeObject();
+  auto insertItem = [&](IString item) {
+    ValueBuilder::appendToObject(lib, item, ValueBuilder::makeName(item));
+  };
+  insertItem(MATH);
+  insertItem(INT8ARRAY);
+  insertItem(INT16ARRAY);
+  insertItem(INT32ARRAY);
+  insertItem(UINT8ARRAY);
+  insertItem(UINT16ARRAY);
+  insertItem(UINT32ARRAY);
+  insertItem(FLOAT32ARRAY);
+  insertItem(FLOAT64ARRAY);
+  Ref env = ValueBuilder::makeObject();
+  Ref mem = ValueBuilder::makeNew(
+      ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
+  Ref call = ValueBuilder::makeCall(IString(ASM_FUNC), lib, env, mem);
+  Ref ret = ValueBuilder::makeVar();
+  ValueBuilder::appendToVar(ret, ASM_MODULE, call);
+  return ret;
+}
+
+static void prefixCalls(Ref asmjs) {
+  if (asmjs->isArray()) {
+    ArrayStorage& arr = asmjs->getArray();
+    for (Ref& r : arr) {
+      prefixCalls(r);
+    }
+    if (arr.size() > 0 && arr[0]->isString() && arr[0]->getIString() == CALL) {
+      assert(arr.size() >= 2);
+      Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASM_MODULE),
+                                           arr[1]->getIString());
+      arr[1]->setArray(prefixed->getArray());
+    }
+  }
+}
+
+Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+                                          Builder& wasmBuilder,
+                                          Element& e, Name testFuncName) {
+  Expression* actual = sexpBuilder.parseExpression(e[1]);
+  Expression* expected = sexpBuilder.parseExpression(e[2]);
+  WasmType resType = expected->type;
+  actual->type = resType;
+  BinaryOp eqOp;
+  switch (resType) {
+    case i32: eqOp = EqInt32; break;
+    case i64: eqOp = EqInt64; break;
+    case f32: eqOp = EqFloat32; break;
+    case f64: eqOp = EqFloat64; break;
+    default: {
+      std::cerr << "Unhandled type in assert: " << resType << std::endl;
+      abort();
+    }
+  }
+  Binary* test = wasmBuilder.makeBinary(eqOp, actual, expected);
+  std::unique_ptr<Function> testFunc(
+    wasmBuilder.makeFunction(testFuncName,
+                             std::vector<NameType>{},
+                             i32,
+                             std::vector<NameType>{},
+                             test)
+  );
+  Ref jsFunc = processFunction(testFunc.get());
+  prefixCalls(jsFunc);
+  return jsFunc;
+}
+
+Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+                                        Builder& wasmBuilder,
+                                        Element& e, Name testFuncName) {
+  Name innerFuncName("f");
+  Expression* expr = sexpBuilder.parseExpression(e[1]);
+  std::unique_ptr<Function> exprFunc(
+    wasmBuilder.makeFunction(innerFuncName,
+                             std::vector<NameType>{},
+                             expr->type,
+                             std::vector<NameType>{},
+                             expr)
+  );
+  IString expectedErr = e[2]->str();
+  Ref innerFunc = processFunction(exprFunc.get());
+  Ref outerFunc = ValueBuilder::makeFunction(testFuncName);
+  outerFunc[3]->push_back(innerFunc);
+  Ref tryBlock = ValueBuilder::makeBlock();
+  ValueBuilder::appendToBlock(tryBlock, ValueBuilder::makeCall(innerFuncName));
+  Ref catchBlock = ValueBuilder::makeBlock();
+  ValueBuilder::appendToBlock(
+    catchBlock,
+    ValueBuilder::makeReturn(
+      ValueBuilder::makeCall(
+        ValueBuilder::makeDot(
+          ValueBuilder::makeName(IString("e")),
+          ValueBuilder::makeName(IString("message")),
+          ValueBuilder::makeName(IString("includes"))
+        ),
+        ValueBuilder::makeString(expectedErr)
+      )
+    )
+  );
+  outerFunc[3]->push_back(ValueBuilder::makeTry(
+      tryBlock,
+      ValueBuilder::makeName((IString("e"))),
+      catchBlock));
+  outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
+  return outerFunc;
+}
+
+bool Wasm2AsmBuilder::isAssertHandled(Element& e) {
+  return e.isList() && e.size() >= 2 && e[0]->isStr()
+      && (e[0]->str() == Name("assert_return") ||
+          (flags.pedantic && e[0]->str() == Name("assert_trap")))
+      && e[1]->isList() && e[1]->size() >= 2 && (*e[1])[0]->isStr()
+      && (*e[1])[0]->str() == Name("invoke");
+}
+
+Ref Wasm2AsmBuilder::processAsserts(Element& root,
+                                   SExpressionWasmBuilder& sexpBuilder) {
+  Builder wasmBuilder(sexpBuilder.getAllocator());
+  Ref ret = ValueBuilder::makeBlock();
+  flattenAppend(ret, makeInstantiation());
+  for (size_t i = 1; i < root.size(); ++i) {
+    Element& e = *root[i];
+    if (!isAssertHandled(e)) {
+      std::cerr << "skipping " << e << std::endl;
+      continue;
+    }
+    Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
+    bool isReturn = (e[0]->str() == Name("assert_return"));
+    Element& testOp = *e[1];
+    // Replace "invoke" with "call"
+    testOp[0]->setString(IString("call"), false, false);
+    // Need to claim dollared to get string as function target
+    testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
+
+    Ref testFunc = isReturn ?
+        makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
+        makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName);
+
+    flattenAppend(ret, testFunc);
+    std::stringstream failFuncName;
+    failFuncName << "fail" << std::to_string(i);
+    flattenAppend(
+      ret,
+      ValueBuilder::makeIf(
+        ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testFuncName)),
+        ValueBuilder::makeCall(IString(failFuncName.str().c_str(), false)),
+        Ref()
+      )
+    );
+  }
+  return ret;
+}
+
 
 } // namespace wasm
 

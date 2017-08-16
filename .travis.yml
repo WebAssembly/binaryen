@@ -9,10 +9,11 @@ jobs:
       stage: test
       compiler: clang
       python: 2.7
+      node_js: 7
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'nodejs', 'g++-5']
+          packages: ['cmake', 'g++-5']
       before_install:
         - export CC="${CC_COMPILER}"
         - export CXX="${CXX_COMPILER}"

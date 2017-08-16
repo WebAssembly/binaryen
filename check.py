@@ -433,7 +433,7 @@ if MOZJS:
 
 s2wasm.test_s2wasm()
 s2wasm.test_linker()
-# wasm2asm.test_wasm2asm()
+wasm2asm.test_wasm2asm()
 
 print '\n[ running validation tests... ]\n'
 # Ensure the tests validate by default
