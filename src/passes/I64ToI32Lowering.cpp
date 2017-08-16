@@ -40,7 +40,8 @@ static Name makeHighName(Name n) {
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   static Name highBitsGlobal;
 
-  bool isFunctionParallel() override { return true; }
+  // false since function types need to be lowered
+  bool isFunctionParallel() override { return false; }
 
   Pass* create() override {
     return new I64ToI32Lowering;
