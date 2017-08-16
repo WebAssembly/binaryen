@@ -56,12 +56,12 @@ struct ExecutionResults {
       auto* func = wasm.getFunction(exp->value);
       if (func->result != none) {
         // this has a result
-        results[func->name] = run(func, wasm, instance);
-        std::cout << "[fuzz-exec] note result: " << func->name.str << " => " << results[func->name] << '\n';
+        results[exp->name] = run(func, wasm, instance);
+        std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
       } else {
         // no result, run it anyhow (it might modify memory etc.)
         run(func, wasm, instance);
-        std::cout << "[fuzz-exec] no result for void func: " << func->name.str << '\n';
+        std::cout << "[fuzz-exec] no result for void func: " << exp->name << '\n';
       }
     }
     std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
