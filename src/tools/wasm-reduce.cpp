@@ -232,13 +232,13 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     if (child->type != with->type) return false;
     auto* before = child;
-    //std::cout << "try " << before << " => " << with << '\n';
     child = with;
     if (!writeAndTestReduction()) {
       child = before;
       return false;
     }
     std::cout << "|      tryToReplaceChild succeeded (in " << getLocation() << ")\n";
+    //std::cout << "|      " << before << " => " << with << '\n';
     reduced++;
     copy_file(test, working);
     return true;
@@ -327,6 +327,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   // try to replace condition with always true and always false
   void handleCondition(Expression*& condition) {
     if (!condition) return;
+    if (condition->is<Const>()) return;
     auto* c = builder->makeConst(Literal(int32_t(0)));
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
