@@ -48,11 +48,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool readsMemory = false;
   bool writesMemory = false;
   bool implicitTrap = false; // a load or div/rem, which may trap. we ignore trap
-                             // differences, so it is ok to reorder these, and we
-                             // also allow reordering them with other effects
-                             // (so a trap may occur later or earlier, if it is
-                             // going to occur anyhow), but we can't remove them,
-                             // they count as side effects
+                             // differences, so it is ok to reorder these, but we can't
+                             // remove them, as they count as side effects, and we
+                             // can't move them in a way that would cause other noticeable
+                             // (global) side effects
   bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
                          // has a defined ordering wrt atomics (e.g. grow_memory)
 
@@ -60,6 +59,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
   bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0 || implicitTrap || isAtomic; }
+  bool hasGlobalSideEffects() { return calls || globalsWritten.size() > 0 || writesMemory; }
   bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
@@ -96,6 +96,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     }
     // we are ok to reorder implicit traps, but not conditionalize them
     if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
+      return true;
+    }
+    // we can't reorder an implicit trap in a way that alters global state
+    if ((implicitTrap && other.hasGlobalSideEffects()) || (other.implicitTrap && hasGlobalSideEffects())) {
       return true;
     }
     return false;
