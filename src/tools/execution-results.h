@@ -50,14 +50,17 @@ struct ExecutionResults {
     }
     ShellExternalInterface interface;
     ModuleInstance instance(wasm, &interface);
-    for (auto& func : wasm.functions) {
+    // execute all exported methods (that are therefore preserved through opts)
+    for (auto& exp : wasm.exports) {
+      if (exp->kind != ExternalKind::Function) continue;
+      auto* func = wasm.getFunction(exp->value);
       if (func->result != none) {
         // this has a result
-        results[func->name] = run(func.get(), wasm, instance);
+        results[func->name] = run(func, wasm, instance);
         std::cout << "[fuzz-exec] note result: " << func->name.str << " => " << results[func->name] << '\n';
       } else {
         // no result, run it anyhow (it might modify memory etc.)
-        run(func.get(), wasm, instance);
+        run(func, wasm, instance);
         std::cout << "[fuzz-exec] no result for void func: " << func->name.str << '\n';
       }
     }
@@ -78,12 +81,14 @@ struct ExecutionResults {
   bool operator==(ExecutionResults& other) {
     for (auto& iter : results) {
       auto name = iter.first;
-      if (other.results.find(name) != other.results.end()) {
-        std::cout << "[fuzz-exec] comparing " << name << '\n';
-        if (!areBitwiseEqual(results[name], other.results[name])) {
-          std::cout << "not identical!\n";
-          abort();
-        }
+      if (other.results.find(name) == other.results.end()) {
+        std::cout << "[fuzz-exec] missing " << name << '\n';
+        abort();
+      }
+      std::cout << "[fuzz-exec] comparing " << name << '\n';
+      if (!areBitwiseEqual(results[name], other.results[name])) {
+        std::cout << "not identical!\n";
+        abort();
       }
     }
     return true;
