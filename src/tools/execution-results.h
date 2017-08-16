@@ -48,14 +48,16 @@ struct ExecutionResults {
       std::cout << "[fuzz-exec] imports, so quitting\n";
       return;
     }
+    ShellExternalInterface interface;
+    ModuleInstance instance(wasm, &interface);
     for (auto& func : wasm.functions) {
       if (func->result != none) {
         // this has a result
-        results[func->name] = run(func.get(), wasm);
+        results[func->name] = run(func.get(), wasm, instance);
         std::cout << "[fuzz-exec] note result: " << func->name.str << " => " << results[func->name] << '\n';
       } else {
         // no result, run it anyhow (it might modify memory etc.)
-        run(func.get(), wasm);
+        run(func.get(), wasm, instance);
         std::cout << "[fuzz-exec] no result for void func: " << func->name.str << '\n';
       }
     }
@@ -95,6 +97,15 @@ struct ExecutionResults {
     ShellExternalInterface interface;
     try {
       ModuleInstance instance(wasm, &interface);
+      return run(func, wasm, instance);
+    } catch (const TrapException&) {
+      // may throw in instance creation (init of offsets)
+      return Literal();
+    }
+  }
+
+  Literal run(Function* func, Module& wasm, ModuleInstance& instance) {
+    try {
       LiteralList arguments;
       // init hang support, if present
       if (wasm.getFunctionOrNull("hangLimitInitializer")) {
@@ -107,7 +118,6 @@ struct ExecutionResults {
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets) or call itself
       return Literal();
     }
   }
