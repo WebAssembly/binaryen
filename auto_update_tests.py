@@ -33,7 +33,7 @@ for t in os.listdir(os.path.join('test', 'reduce')):
     expected = t + '.txt'
     run_command(WASM_DIS + ['c.wasm', '-o', expected])
 
-1/0
+#1/0
 
 print '[ processing and updating testcases... ]\n'
 

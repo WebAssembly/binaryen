@@ -100,10 +100,11 @@ ProgramResult expected;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   std::string command, test, working;
+  bool verbose;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working) : command(command), test(test), working(working) {}
+  Reducer(std::string command, std::string test, std::string working, bool verbose) : command(command), test(test), working(working), verbose(verbose) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -145,7 +146,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
       more = false;
       for (auto pass : passes) {
         auto currCommand = "bin/wasm-opt --dce --vacuum " + working + " -o " + test + " " + pass;
-        //std::cout << "|    trying pass command: " << currCommand << "\n";
+        if (verbose) std::cout << "|    trying pass command: " << currCommand << "\n";
         if (!ProgramResult(currCommand).failed()) {
           canonicalize(test, test);
           auto newSize = file_size(test);
@@ -162,6 +163,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
         }
       }
     }
+    if (verbose) std::cout << "|    done with passes for now\n";
   }
 
   // does one pass of slow and destructive reduction. returns whether it
@@ -385,6 +387,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
 
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
+  bool verbose = false;
   Options options("wasm-reduce", "Reduce a wasm file to a smaller one that has the same behavior on a given command");
   options
       .add("--command", "-cmd", "The command to run on the test, that we want to reduce while keeping the command's output identical. "
@@ -404,6 +407,11 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              working = argument;
+           })
+      .add("--verbose", "-v", "Verbose output mode",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             verbose = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&](Options* o, const std::string& argument) {
@@ -449,7 +457,7 @@ int main(int argc, const char* argv[]) {
   unsigned currSize = 0;
 
   while (1) {
-    Reducer reducer(command, test, working);
+    Reducer reducer(command, test, working, verbose);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
