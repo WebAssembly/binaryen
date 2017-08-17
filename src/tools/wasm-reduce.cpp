@@ -37,9 +37,6 @@
 
 using namespace wasm;
 
-// after seeing these destructive reductions, skip and go back to fast pass reduction
-static const int MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP = 100;
-
 static void canonicalize(std::string input, std::string output) {
   // reading and writing may alter the size
   int counter = 0;
@@ -170,7 +167,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   // succeeded or not
   // the criterion here is a logical change in the program. this may actually
   // increase wasm size in some cases, but it should allow more reduction later.
-  bool reduceDestructively() {
+  // @param factor how much to ignore. starting with a high factor skips through
+  //               most of the file, which is often faster than going one by one
+  //               from the start
+  bool reduceDestructively(int factor_) {
+    factor = factor_;
     Module wasm;
     ModuleReader reader;
     reader.read(working, wasm);
@@ -198,6 +199,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   Expression* beforeReduction;
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
+  int factor;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -223,12 +225,17 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     return out == expected;
   }
 
+  bool shouldTryToReduce() {
+    static int counter = 0;
+    return counter++ % factor == 0;
+  }
+
   // tests a reduction on the current traversal node, and undos if it failed
   bool tryToReplaceCurrent(Expression* with) {
-    if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     auto* curr = getCurrent();
     //std::cout << "try " << curr << " => " << with << '\n';
     if (curr->type != with->type) return false;
+    if (!shouldTryToReduce()) return false;
     replaceCurrent(with);
     if (!writeAndTestReduction()) {
       replaceCurrent(curr);
@@ -242,8 +249,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
 
   // tests a reduction on an arbitrary child
   bool tryToReplaceChild(Expression*& child, Expression* with) {
-    if (reduced >= MIN_DESTRUCTIVE_REDUCTIONS_TO_STOP) return false;
     if (child->type != with->type) return false;
+    if (!shouldTryToReduce()) return false;
     auto* before = child;
     child = with;
     if (!writeAndTestReduction()) {
@@ -454,7 +461,7 @@ int main(int argc, const char* argv[]) {
 
   std::cout << "|starting reduction!\n";
 
-  unsigned currSize = 0;
+  int factor = 4096;
 
   while (1) {
     Reducer reducer(command, test, working, verbose);
@@ -464,20 +471,39 @@ int main(int argc, const char* argv[]) {
     // to detructive reduction (i.e., that doesn't preserve correctness as
     // passes do) since destrucive must operate one change at a time
     std::cout << "|  reduce using passes...\n";
+    auto oldSize = file_size(working);
     reducer.reduceUsingPasses();
+    auto newSize = file_size(working);
 
-    // after we did a destructive reduction, and ran passes, the binary
-    // size should shrink. if that combo increased binary size, then we
-    // are at risk of an infinite loop
-    if (currSize != 0 && file_size(working) >= currSize) {
-      //break;
+    // if we reduced quited a lot using passes, we don't need to decrease
+    // the factor - it's almost like we're on another file, so keep going
+    // in similar wide sweeps
+    if ((100*newSize)/oldSize <= 90) {
+      // don't change
+    } else {
+      if (factor > 10) {
+        factor = (factor / 2) - 1; // avoid being on the same multiples of 2 all the time
+      } else {
+        factor = (factor + 1) / 2; // stable on 1
+      }
     }
 
-    std::cout << "|  reduce destructively...\n";
-    if (!reducer.reduceDestructively()) break;
+    // try to reduce destructively. if a high factor fails to find anything,
+    // quickly try a lower one (no point in doing passes until we reduce
+    // destructively at least a little)
+    while (1) {
+      std::cout << "|  reduce destructively... (factor: " << factor << ")\n";
+      if (reducer.reduceDestructively(factor)) break;
+      // we failed to reduce destructively
+      if (factor == 1) {
+        factor = 0; // halt
+        break;
+      }
+      factor = std::max(1, factor / 10); // quickly now, try to find *something* we can reduce
+    }
+    if (factor == 0) break; // halt
 
-    currSize = file_size(working);
-    std::cout << "|  destructive reduction led to size: " << currSize << '\n';
+    std::cout << "|  destructive reduction led to size: " << file_size(working) << '\n';
   }
   std::cout << "|finished, final size: " << file_size(working) << "\n";
   copy_file(working, test); // just to avoid confusion
