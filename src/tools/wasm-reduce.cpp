@@ -322,41 +322,6 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     if (curr->segments.empty()) return;
     if (curr->segments[0].data.empty()) return;
     std::cout << "|    try to simplify table\n";
-/*
-    // try to remove a function from the table entirely (which would be a
-    // true reduction)
-    std::set<Name> names;
-    for (auto& segment : curr->segments) {
-      // replace segment elements
-      for (auto& name : segment.data) {
-        names.insert(name);
-      }
-    }
-    auto first = getModule()->functions.front()->name;
-    auto last = getModule()->functions.back()->name;
-    Name prev = first;
-    for (auto name : names) {
-      if (prev != first && !shouldTryToReduce()) continue;
-      // see if we can remove it
-      for (auto rep : { first, last, prev }) {
-        if (name == rep) continue;
-        // ok, try to replace
-        for (auto& segment : curr->segments) {
-          for (auto& name : segment.data) {
-          auto save = name;
-          name = rep;
-          if (writeAndTestReduction()) {
-            std::cout << "|       segment\n";
-            noteReduction();
-            break;
-          } else {
-            name = save;
-          }
-        }
-      }
-      prev = name;
-    }
-*/
     // shrink segment elements
     for (auto& segment : curr->segments) {
       auto& data = segment.data;
@@ -388,6 +353,42 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           noteReduction();
         } else {
           name = save;
+        }
+      }
+    }
+  }
+
+  void visitMemory(Memory* curr) {
+    if (curr->segments.empty()) return;
+    std::cout << "|    try to simplify memory\n";
+    // shrink segment elements
+    for (auto& segment : curr->segments) {
+      auto& data = segment.data;
+      for (size_t i = 0; i < data.size(); i++) {
+        if (!shouldTryToReduce()) continue;
+        auto back = data.back();
+        data.pop_back();
+        if (writeAndTestReduction()) {
+          std::cout << "|      shrank segment\n";
+          noteReduction();
+        } else {
+          data.push_back(back);
+          break;
+        }
+      }
+    }
+    // zero out
+    for (auto& segment : curr->segments) {
+      for (auto& item : segment.data) {
+        if (!shouldTryToReduce()) continue;
+        if (item == 0) continue;
+        auto save = item;
+        item = 0;
+        if (writeAndTestReduction()) {
+          std::cout << "|      zero'd in segment\n";
+          noteReduction();
+        } else {
+          item = save;
         }
       }
     }
