@@ -242,9 +242,13 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       return false;
     }
     std::cout << "|      tryToReplaceCurrent succeeded (in " << getLocation() << ")\n";
+    noteReduction();
+    return true;
+  }
+
+  void noteReduction() {
     reduced++;
     copy_file(test, working);
-    return true;
   }
 
   // tests a reduction on an arbitrary child
@@ -259,8 +263,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     std::cout << "|      tryToReplaceChild succeeded (in " << getLocation() << ")\n";
     //std::cout << "|      " << before << " => " << with << '\n';
-    reduced++;
-    copy_file(test, working);
+    noteReduction();
     return true;
   }
 
@@ -313,6 +316,82 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
   }
 
+  void visitTable(Table* curr) {
+    // try to reduce to first function
+    if (getModule()->functions.empty()) return;
+    if (curr->segments.empty()) return;
+    if (curr->segments[0].data.empty()) return;
+    std::cout << "|    try to simplify table\n";
+/*
+    // try to remove a function from the table entirely (which would be a
+    // true reduction)
+    std::set<Name> names;
+    for (auto& segment : curr->segments) {
+      // replace segment elements
+      for (auto& name : segment.data) {
+        names.insert(name);
+      }
+    }
+    auto first = getModule()->functions.front()->name;
+    auto last = getModule()->functions.back()->name;
+    Name prev = first;
+    for (auto name : names) {
+      if (prev != first && !shouldTryToReduce()) continue;
+      // see if we can remove it
+      for (auto rep : { first, last, prev }) {
+        if (name == rep) continue;
+        // ok, try to replace
+        for (auto& segment : curr->segments) {
+          for (auto& name : segment.data) {
+          auto save = name;
+          name = rep;
+          if (writeAndTestReduction()) {
+            std::cout << "|       segment\n";
+            noteReduction();
+            break;
+          } else {
+            name = save;
+          }
+        }
+      }
+      prev = name;
+    }
+*/
+    // shrink segment elements
+    for (auto& segment : curr->segments) {
+      auto& data = segment.data;
+      for (size_t i = 0; i < data.size(); i++) {
+        if (!shouldTryToReduce()) continue;
+        auto back = data.back();
+        data.pop_back();
+        if (writeAndTestReduction()) {
+          std::cout << "|      shrank segment\n";
+          noteReduction();
+        } else {
+          data.push_back(back);
+        }
+      }
+    }
+    // the "opposite" of shrinking: copy to the first
+    // the start
+    for (auto& segment : curr->segments) {
+      if (segment.data.empty()) continue;
+      Name first = segment.data[0];
+      for (auto& name : segment.data) {
+        if (!shouldTryToReduce()) continue;
+        if (name == first) continue;
+        auto save = name;
+        name = first;
+        if (writeAndTestReduction()) {
+          std::cout << "|      firstized segment\n";
+          noteReduction();
+        } else {
+          name = save;
+        }
+      }
+    }
+  }
+
   void visitModule(Module* curr) {
     // try to remove exports
     std::cout << "|    try to remove exports\n";
@@ -326,8 +405,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         curr->addExport(new Export(exp));
       } else {
         std::cout << "|      removed export " << exp.name << '\n';
-        reduced++;
-        copy_file(test, working);
+        noteReduction();
       }
     }
   }
