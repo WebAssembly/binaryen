@@ -297,8 +297,23 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     } else if (auto* set = curr->dynCast<SetLocal>()) {
       if (set->isTee()) {
         // maybe we don't need the set
-        if (tryToReplaceCurrent(set->value)) return;
+        tryToReplaceCurrent(set->value);
       }
+    } else if (auto* unary = curr->dynCast<Unary>()) {
+      // maybe we can pass through
+      tryToReplaceCurrent(unary->value);
+    } else if (auto* binary = curr->dynCast<Binary>()) {
+      // maybe we can pass through
+      if (!tryToReplaceCurrent(binary->left)) {
+        tryToReplaceCurrent(binary->right);
+      }
+    } else if (auto* call = curr->dynCast<Call>()) {
+      handleCall(call);
+    } else if (auto* call = curr->dynCast<CallImport>()) {
+      handleCall(call);
+    } else if (auto* call = curr->dynCast<CallIndirect>()) {
+      if (tryToReplaceCurrent(call->target)) return;
+      handleCall(call);
     }
   }
 
@@ -422,6 +437,13 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
       tryToReplaceChild(condition, c);
+    }
+  }
+
+  template<typename T>
+  void handleCall(T* call) {
+    for (auto* op : call->operands) {
+      if (tryToReplaceCurrent(op)) return;
     }
   }
 
