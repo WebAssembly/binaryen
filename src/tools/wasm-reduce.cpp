@@ -369,6 +369,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           noteReduction();
         } else {
           data.push_back(back);
+          break;
         }
       }
     }
