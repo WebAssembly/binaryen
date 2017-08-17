@@ -385,6 +385,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   runner.add<AutoDrop>();
   runner.add("i64-to-i32-lowering");
   runner.add("flatten-control-flow");
+  runner.add("vacuum");
   runner.setDebug(flags.debug);
   runner.run();
   Ref ret = ValueBuilder::makeToplevel();
@@ -518,7 +519,11 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module *wasm) {
 void Wasm2AsmBuilder::addExports(Ref ast, Module *wasm) {
   Ref exports = ValueBuilder::makeObject();
   for (auto& export_ : wasm->exports) {
-    ValueBuilder::appendToObject(exports, fromName(export_->name), ValueBuilder::makeName(fromName(export_->value)));
+    ValueBuilder::appendToObject(
+      exports,
+      fromName(export_->name),
+      ValueBuilder::makeName(fromName(export_->value))
+    );
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
 }
@@ -526,7 +531,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module *wasm) {
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
   if (flags.debug) {
     static int fns = 0;
-    std::cerr << "  processFunction " << (fns++) << " " << func->name
+    std::cerr << "processFunction " << (fns++) << " " << func->name
               << std::endl;
   }
   Ref ret = ValueBuilder::makeFunction(fromName(func->name));
@@ -554,26 +559,53 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   ret[3]->push_back(theVar);
   // body
   scanFunctionBody(func->body);
-  if (isStatement(func->body)) {
-    IString result =
-        func->result != none ? getTemp(func->result, func) : NO_RESULT;
-    flattenAppend(ret, ValueBuilder::makeStatement(processFunctionBody(func, result)));
-    if (func->result != none) {
-      // do the actual return
-      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(makeAsmCoercion(ValueBuilder::makeName(result), wasmToAsmType(func->result)))));
-      freeTemp(func->result, result);
-    }
+  bool isBodyBlock = (func->body->_id == Expression::BlockId);
+  ExpressionList* stats = isBodyBlock ?
+      &static_cast<Block*>(func->body)->list : nullptr;
+  bool endsInReturn =
+      (isBodyBlock && ((*stats)[stats->size()-1]->_id == Expression::ReturnId));
+  if (endsInReturn) {
+    flattenAppend(ret, processFunctionBody(func, NO_RESULT));
   } else {
-    // whole thing is an expression, just do a return
-    if (func->result != none) {
-      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(makeAsmCoercion(processFunctionBody(func, EXPRESSION_RESULT), wasmToAsmType(func->result)))));
+    if (isStatement(func->body)) {
+      IString result =
+          func->result != none ? getTemp(func->result, func) : NO_RESULT;
+      flattenAppend(ret, processFunctionBody(func, result));
+      if (func->result != none) {
+        // do the actual return
+        ret[3]->push_back(
+          ValueBuilder::makeReturn(
+            makeAsmCoercion(
+              ValueBuilder::makeName(result),
+              wasmToAsmType(func->result)
+            )
+          )
+        );
+        freeTemp(func->result, result);
+      }
     } else {
-      flattenAppend(ret, processFunctionBody(func, NO_RESULT));
+      // whole thing is an expression, just do a return
+      if (func->result != none) {
+        ret[3]->push_back(
+          ValueBuilder::makeReturn(
+            makeAsmCoercion(
+              processFunctionBody(func, EXPRESSION_RESULT),
+              wasmToAsmType(func->result)
+            )
+          )
+        );
+      } else {
+        flattenAppend(ret, processFunctionBody(func, NO_RESULT));
+      }
     }
   }
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    ValueBuilder::appendToVar(theVar, fromName(func->getLocalNameOrGeneric(i)), makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i))));
+    ValueBuilder::appendToVar(
+      theVar,
+      fromName(func->getLocalNameOrGeneric(i)),
+      makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i)))
+    );
   }
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
@@ -1324,7 +1356,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           return ret;
         }
         default: {
-          std::cerr << "Unhandled type: " << curr << std::endl;
+          std::cerr << "Unhandled type in unary: " << curr << std::endl;
           abort();
         }
       }
@@ -1506,7 +1538,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref visitReturn(Return *curr) {
       Ref val = (curr->value == nullptr) ?
           Ref() :
-          visit(curr->value, NO_RESULT);
+          makeAsmCoercion(
+            visit(curr->value, NO_RESULT),
+            wasmToAsmType(curr->value->type)
+          );
       return ValueBuilder::makeReturn(val);
     }
 
