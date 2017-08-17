@@ -560,6 +560,13 @@ Name Function::getLocalNameOrDefault(Index index) {
   return Name();
 }
 
+Name Function::getLocalNameOrGeneric(Index index) {
+  if (hasLocalName(index)) {
+    return localNames[index];
+  }
+  return Name::fromInt(index);
+}
+
 Index Function::getLocalIndex(Name name) {
   assert(localIndices.count(name) > 0);
   return localIndices[name];

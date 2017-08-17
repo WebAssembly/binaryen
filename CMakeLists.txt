@@ -193,7 +193,7 @@ IF(BUILD_STATIC_LIB)
 ELSE()
   ADD_LIBRARY(binaryen SHARED ${binaryen_SOURCES})
 ENDIF()
-TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs ast cfg support)
+TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs emscripten-optimizer ast cfg support)
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

@@ -29,6 +29,7 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "wasm2asm.h"
 #include "cfg/Relooper.h"
 #include "ast_utils.h"
 #include "shell-interface.h"
@@ -651,7 +652,7 @@ BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module, BinaryenExpressionR
 }
 BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressionRef value) {
   auto* ret = Builder(*((Module*)module)).makeReturn((Expression*)value);
- 
+
   if (tracing) {
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenReturn(the_module, expressions[" << expressions[value] << "]);\n";
@@ -930,6 +931,21 @@ void BinaryenModulePrint(BinaryenModuleRef module) {
   }
 
   WasmPrinter::printModule((Module*)module);
+}
+
+void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenModulePrintAsmjs(the_module);\n";
+  }
+
+  Module* wasm = (Module*)module;
+  Wasm2AsmBuilder::Flags builderFlags;
+  Wasm2AsmBuilder wasm2asm(builderFlags);
+  Ref asmjs = wasm2asm.processWasm(wasm);
+  JSPrinter jser(true, true, asmjs);
+  jser.printAst();
+
+  std::cout << jser.buffer;
 }
 
 int BinaryenModuleValidate(BinaryenModuleRef module) {
