@@ -277,7 +277,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     if (curr->type == none) {
       if (tryToReduceCurrentToNone()) return;
     } else if (isConcreteWasmType(curr->type)) {
-      if (tryToReduceCurrentToConcrete()) return;
+      if (tryToReduceCurrentToConst()) return;
+    } else {
+      assert(curr->type == unreachable);
+      if (tryToReduceCurrentToUnreachable()) return;
     }
     // specific reductions
     if (auto* iff = curr->dynCast<If>()) {
@@ -355,7 +358,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   }
 
   // try to replace a concrete value with a trivial constant
-  bool tryToReduceCurrentToConcrete() {
+  bool tryToReduceCurrentToConst() {
     auto* curr = getCurrent();
     if (curr->is<Const>()) return false;
     // try to replace with a trivial value
@@ -364,6 +367,19 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     c->value = LiteralUtils::makeLiteralFromInt32(1, curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
+  }
+
+  bool tryToReduceCurrentToUnreachable() {
+    auto* curr = getCurrent();
+    if (curr->is<Unreachable>()) return false;
+    // try to replace with a trivial value
+    Unreachable un;
+    if (tryToReplaceCurrent(&un)) {
+      replaceCurrent(builder->makeUnreachable());
+      return true;
+    }
+    // maybe a return? TODO
+    return false;
   }
 };
 
