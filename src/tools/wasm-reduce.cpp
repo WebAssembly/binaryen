@@ -95,7 +95,7 @@ struct ProgramResult {
 
 ProgramResult expected;
 
-struct Reducer : public WalkerPass<PostWalker<Reducer>> {
+struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
   bool verbose;
 
@@ -273,66 +273,34 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
   // "nontrivial" means something that optimization passes can't achieve, since we
   // don't need to duplicate work that they do
 
-  void visitBlock(Block* curr) {
-    // try to replace each none element with a nop
-    Nop nop;
-    for (auto*& child : curr->list) {
-      if (child->is<Nop>()) continue;
-      if (tryToReplaceChild(child, &nop)) {
-        // many of these, allocate only on success
-        child = builder->makeNop();
+  void visitExpression(Expression* curr) {
+    if (curr->type == none) {
+      if (tryToReduceCurrentToNone()) return;
+    } else if (isConcreteWasmType(curr->type)) {
+      if (tryToReduceCurrentToConcrete()) return;
+    }
+    // specific reductions
+    if (auto* iff = curr->dynCast<If>()) {
+      handleCondition(iff->condition);
+    } else if (auto* br = curr->dynCast<Break>()) {
+      handleCondition(br->condition);
+    } else if (auto* select = curr->dynCast<Select>()) {
+      handleCondition(select->condition);
+    } else if (auto* sw = curr->dynCast<Switch>()) {
+      handleCondition(sw->condition);
+    } else if (auto* set = curr->dynCast<SetLocal>()) {
+      if (set->isTee()) {
+        // maybe we don't need the set
+        if (tryToReplaceCurrent(set->value)) return;
       }
     }
   }
-  void visitIf(If* curr) {
-    handleCondition(curr->condition);
-  }
-  void visitBreak(Break* curr) {
-    handleCondition(curr->condition);
-  }
-  void visitSwitch(Switch* curr) {
-    // TODO: try more values in condition? but may be very large set of values
-    handleCondition(curr->condition);
-  }
-  void visitCall(Call* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitCallImport(CallImport* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitCallIndirect(CallIndirect* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitGetLocal(GetLocal* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitSetLocal(SetLocal* curr) {
-    if (curr->isTee()) {
-      // maybe we don't need the set
-      if (tryToReplaceCurrent(curr->value)) return;
-    }
-    handleConcreteCurrentValue();
-  }
-  void visitGetGlobal(GetGlobal* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitLoad(Load* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitConst(Const* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitUnary(Unary* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitBinary(Binary* curr) {
-    handleConcreteCurrentValue();
-  }
-  void visitSelect(Select* curr) {
-    handleCondition(curr->condition);
-  }
 
   void visitFunction(Function* curr) {
+    // extra chance to work on the function toplevel element, as if it can
+    // be reduced it's great
+    visitExpression(curr->body);
+    // finish function
     funcsSeen++;
     static int last = 0;
     int percentage = (100 * funcsSeen) / getModule()->functions.size();
@@ -374,17 +342,28 @@ struct Reducer : public WalkerPass<PostWalker<Reducer>> {
     }
   }
 
-  // try to replace a concrete value with a trivial constant
-  void handleConcreteCurrentValue() {
+  bool tryToReduceCurrentToNone() {
     auto* curr = getCurrent();
-    if (!isConcreteWasmType(curr->type)) return;
-    if (curr->is<Const>()) return;
+    if (curr->is<Nop>()) return false;
+    // try to replace with a trivial value
+    Nop nop;
+    if (tryToReplaceCurrent(&nop)) {
+      replaceCurrent(builder->makeNop());
+      return true;
+    }
+    return false;
+  }
+
+  // try to replace a concrete value with a trivial constant
+  bool tryToReduceCurrentToConcrete() {
+    auto* curr = getCurrent();
+    if (curr->is<Const>()) return false;
     // try to replace with a trivial value
     Const* c = builder->makeConst(Literal(int32_t(0)));
-    if (tryToReplaceCurrent(c)) return;
+    if (tryToReplaceCurrent(c)) return true;
     c->value = LiteralUtils::makeLiteralFromInt32(1, curr->type);
     c->type = curr->type;
-    tryToReplaceCurrent(c);
+    return tryToReplaceCurrent(c);
   }
 };
 
@@ -487,6 +466,10 @@ int main(int argc, const char* argv[]) {
         factor = (factor + 1) / 2; // stable on 1
       }
     }
+
+    // no point in a factor lorger than the size
+    assert(newSize > 1); // wasm modules are >4 bytes anyhow
+    factor = std::min(factor, int(newSize));
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
