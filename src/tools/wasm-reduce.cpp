@@ -337,24 +337,37 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
   }
 
+  // TODO: bisection on segment shrinking?
+
   void visitTable(Table* curr) {
-    // try to reduce to first function
-    if (getModule()->functions.empty()) return;
-    if (curr->segments.empty()) return;
-    if (curr->segments[0].data.empty()) return;
     std::cout << "|    try to simplify table\n";
+    visitSegmented(curr);
+  }
+
+  void visitMemory(Memory* curr) {
+    std::cout << "|    try to simplify memory\n";
+    visitSegmented(curr);
+  }
+
+  template<typename T>
+  void visitSegmented(T* curr) {
+    // try to reduce to first function
     // shrink segment elements
     for (auto& segment : curr->segments) {
       auto& data = segment.data;
-      for (size_t i = 0; i < data.size(); i++) {
+      size_t skip = 1; // when we succeed, try to shrink by more and more, similar to bisection
+      for (size_t i = 0; i < data.size() && !data.empty(); i++) {
         if (!shouldTryToReduce()) continue;
-        auto back = data.back();
-        data.pop_back();
+        auto save = data;
+        for (size_t j = 0; j < skip; j++) {
+          if (!data.empty()) data.pop_back();
+        }
         if (writeAndTestReduction()) {
-          std::cout << "|      shrank segment\n";
+          std::cout << "|      shrank segment (skip: " << skip << ")\n";
           noteReduction();
+          skip = std::min(size_t(factor), 2 * skip);
         } else {
-          data.push_back(back);
+          data = save;
           break;
         }
       }
@@ -363,50 +376,14 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // the start
     for (auto& segment : curr->segments) {
       if (segment.data.empty()) continue;
-      Name first = segment.data[0];
-      for (auto& name : segment.data) {
-        if (!shouldTryToReduce()) continue;
-        if (name == first) continue;
-        auto save = name;
-        name = first;
-        if (writeAndTestReduction()) {
-          std::cout << "|      firstized segment\n";
-          noteReduction();
-        } else {
-          name = save;
-        }
-      }
-    }
-  }
-
-  void visitMemory(Memory* curr) {
-    if (curr->segments.empty()) return;
-    std::cout << "|    try to simplify memory\n";
-    // shrink segment elements
-    for (auto& segment : curr->segments) {
-      auto& data = segment.data;
-      for (size_t i = 0; i < data.size(); i++) {
-        if (!shouldTryToReduce()) continue;
-        auto back = data.back();
-        data.pop_back();
-        if (writeAndTestReduction()) {
-          std::cout << "|      shrank segment\n";
-          noteReduction();
-        } else {
-          data.push_back(back);
-          break;
-        }
-      }
-    }
-    // zero out
-    for (auto& segment : curr->segments) {
+      auto first = segment.data[0];
       for (auto& item : segment.data) {
         if (!shouldTryToReduce()) continue;
-        if (item == 0) continue;
+        if (item == first) continue;
         auto save = item;
-        item = 0;
+        item = first;
         if (writeAndTestReduction()) {
-          std::cout << "|      zero'd in segment\n";
+          std::cout << "|      firstized segment\n";
           noteReduction();
         } else {
           item = save;
