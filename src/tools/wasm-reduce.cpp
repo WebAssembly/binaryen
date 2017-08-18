@@ -55,7 +55,7 @@ static void canonicalize(std::string input, std::string output) {
 
 struct ProgramResult {
   int code;
-  std::string stdout;
+  std::string output;
 
   ProgramResult() {}
   ProgramResult(std::string command) {
@@ -63,6 +63,7 @@ struct ProgramResult {
   }
 
   // runs the command and notes the output
+  // TODO: also stderr, not just stdout?
   void getFromExecution(std::string command) {
     // do this using just core stdio.h and stdlib.h, for portability
     // sadly this requires two invokes
@@ -71,13 +72,13 @@ struct ProgramResult {
     char buffer[MAX_BUFFER];
     FILE *stream = popen(("timeout 2s " + command + " 2> /dev/null").c_str(), "r");
     while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
-      stdout.append(buffer);
+      output.append(buffer);
     }
     pclose(stream);
   }
 
   bool operator==(ProgramResult& other) {
-    return code == other.code && stdout == other.stdout;
+    return code == other.code && output == other.output;
   }
   bool operator!=(ProgramResult& other) {
     return !(*this == other);
@@ -88,7 +89,7 @@ struct ProgramResult {
   }
 
   void dump() {
-    std::cout << "[ProgramResult] code: " << code << " stdout: \n" << stdout << "[/ProgramResult]\n";
+    std::cout << "[ProgramResult] code: " << code << " stdout: \n" << output << "[/ProgramResult]\n";
   }
 };
 
