@@ -582,15 +582,15 @@ int main(int argc, const char* argv[]) {
       // don't change
     } else {
       if (factor > 10) {
-        factor = (factor / 2) - 1; // avoid being on the same multiples of 2 all the time
+        factor = factor / 3;
       } else {
         factor = (factor + 1) / 2; // stable on 1
       }
     }
 
     // no point in a factor lorger than the size
-    assert(newSize > 1); // wasm modules are >4 bytes anyhow
-    factor = std::min(factor, int(newSize));
+    assert(newSize > 4); // wasm modules are >4 bytes anyhow
+    factor = std::min(factor, int(newSize) / 4);
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
