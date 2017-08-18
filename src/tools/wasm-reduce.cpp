@@ -88,10 +88,19 @@ struct ProgramResult {
     return code != 0;
   }
 
-  void dump() {
-    std::cout << "[ProgramResult] code: " << code << " stdout: \n" << output << "[/ProgramResult]\n";
+  void dump(std::ostream& o) {
+    o << "[ProgramResult] code: " << code << " stdout: \n" << output << "[/ProgramResult]\n";
   }
 };
+
+namespace std {
+
+inline std::ostream& operator<<(std::ostream& o, ProgramResult& result) {
+  result.dump(o);
+  return o;
+}
+
+}
 
 ProgramResult expected;
 
@@ -523,8 +532,7 @@ int main(int argc, const char* argv[]) {
   copy_file(input, test);
   expected.getFromExecution(command);
 
-  std::cout << "|expected result:\n";
-  expected.dump();
+  std::cout << "|expected result:\n" << expected << '\n';
 
   // sanity check - we should start with an invalid module, and one
   // that we can read and write TODO: allow reducing things we can't
@@ -534,8 +542,7 @@ int main(int argc, const char* argv[]) {
     canonicalize(input, test);
     ProgramResult result(command);
     if (result != expected) {
-      result.dump();
-      Fatal() << "running command on the canonicalized module should give the same results";
+      Fatal() << "running command on the canonicalized module should give the same results: " << result;
     }
     // we'll work on the canonicalized one
     copy_file(test, working);
@@ -549,8 +556,7 @@ int main(int argc, const char* argv[]) {
     }
     ProgramResult result(command);
     if (result == expected) {
-      result.dump();
-      Fatal() << "running command on an invalid module should give different results";
+      Fatal() << "running command on an invalid module should give different results: " << result;
     }
   }
 
