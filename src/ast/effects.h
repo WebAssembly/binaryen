@@ -58,8 +58,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasSideEffects() { return calls || localsWritten.size() > 0 || writesMemory || branches || globalsWritten.size() > 0 || implicitTrap || isAtomic; }
-  bool hasGlobalSideEffects() { return calls || globalsWritten.size() > 0 || writesMemory; }
+  bool hasGlobalSideEffects() { return calls || globalsWritten.size() > 0 || writesMemory || isAtomic; }
+  bool hasSideEffects() { return hasGlobalSideEffects() || localsWritten.size() > 0 || branches || implicitTrap; }
   bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
