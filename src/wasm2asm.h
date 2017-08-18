@@ -161,15 +161,17 @@ public:
     const char *str = name.str;
     // check the various issues, and recurse so we check the others
     if (strchr(str, '-')) {
-      char *mod = strdup(str); // XXX leak
+      char *mod = strdup(str);
       str = mod;
       while (*mod) {
         if (*mod == '-') *mod = '_';
         mod++;
       }
-      return fromName(IString(str, false));
+      IString result = fromName(IString(str, false));
+      free((void*)str);
+      return result;
     }
-    if (isdigit(str[0])) {
+    if (isdigit(str[0]) || strcmp(str, "if") == 0) {
       std::string prefixed = "$$";
       prefixed += name.str;
       return fromName(IString(prefixed.c_str(), false));
@@ -1602,27 +1604,36 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                                           Builder& wasmBuilder,
                                           Element& e, Name testFuncName) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
-  Expression* expected = sexpBuilder.parseExpression(e[2]);
-  WasmType resType = expected->type;
-  actual->type = resType;
-  BinaryOp eqOp;
-  switch (resType) {
-    case i32: eqOp = EqInt32; break;
-    case i64: eqOp = EqInt64; break;
-    case f32: eqOp = EqFloat32; break;
-    case f64: eqOp = EqFloat64; break;
-    default: {
-      std::cerr << "Unhandled type in assert: " << resType << std::endl;
-      abort();
+  Expression* body = nullptr;
+  if (e.size() == 2) {
+    body = actual;
+  } else if (e.size() == 3) {
+    Expression* expected = sexpBuilder.parseExpression(e[2]);
+    WasmType resType = expected->type;
+    actual->type = resType;
+    BinaryOp eqOp;
+    switch (resType) {
+      case i32: eqOp = EqInt32; break;
+      case i64: eqOp = EqInt64; break;
+      case f32: eqOp = EqFloat32; break;
+      case f64: eqOp = EqFloat64; break;
+      default: {
+        std::cerr << "Unhandled type in assert: " << resType << std::endl;
+        abort();
+      }
     }
+    body = wasmBuilder.makeBinary(eqOp, actual, expected);
+  } else {
+    assert(false && "Unexpected number of parameters in assert_return");
   }
-  Binary* test = wasmBuilder.makeBinary(eqOp, actual, expected);
   std::unique_ptr<Function> testFunc(
-    wasmBuilder.makeFunction(testFuncName,
-                             std::vector<NameType>{},
-                             i32,
-                             std::vector<NameType>{},
-                             test)
+    wasmBuilder.makeFunction(
+      testFuncName,
+      std::vector<NameType>{},
+      i32,
+      std::vector<NameType>{},
+      body
+    )
   );
   Ref jsFunc = processFunction(testFunc.get());
   prefixCalls(jsFunc);

@@ -1036,8 +1036,10 @@ struct JSPrinter {
   }
 
   void printUnaryPrefix(Ref node) {
-    if (finalize && node[1] == PLUS && (node[2]->isNumber() ||
-                                       (node[2][0] == UNARY_PREFIX && node[2][1] == MINUS && node[2][2]->isNumber()))) {
+    if (finalize && node[1] == PLUS &&
+        (node[2]->isNumber() ||
+         (node[2]->isArray() && node[2][0] == UNARY_PREFIX &&
+          node[2][1] == MINUS && node[2][2]->isNumber()))) {
       // emit a finalized number
       int last = used;
       print(node[2]);
