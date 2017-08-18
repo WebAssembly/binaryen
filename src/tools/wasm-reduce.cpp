@@ -341,16 +341,24 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   void visitTable(Table* curr) {
     std::cout << "|    try to simplify table\n";
-    visitSegmented(curr);
+    Name first;
+    for (auto& segment : curr->segments) {
+      for (auto item : segment.data) {
+        first = item;
+        break;
+      }
+      if (!first.isNull()) break;
+    }
+    visitSegmented(curr, first);
   }
 
   void visitMemory(Memory* curr) {
     std::cout << "|    try to simplify memory\n";
-    visitSegmented(curr);
+    visitSegmented(curr, 0);
   }
 
-  template<typename T>
-  void visitSegmented(T* curr) {
+  template<typename T, typename U>
+  void visitSegmented(T* curr, U zero) {
     // try to reduce to first function
     // shrink segment elements
     for (auto& segment : curr->segments) {
@@ -372,18 +380,16 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         }
       }
     }
-    // the "opposite" of shrinking: copy to the first
-    // the start
+    // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : curr->segments) {
       if (segment.data.empty()) continue;
-      auto first = segment.data[0];
       for (auto& item : segment.data) {
         if (!shouldTryToReduce()) continue;
-        if (item == first) continue;
+        if (item == zero) continue;
         auto save = item;
-        item = first;
+        item = zero;
         if (writeAndTestReduction()) {
-          std::cout << "|      firstized segment\n";
+          std::cout << "|      zeroed segment\n";
           noteReduction();
         } else {
           item = save;
@@ -531,12 +537,26 @@ int main(int argc, const char* argv[]) {
       result.dump();
       Fatal() << "running command on the canonicalized module should give the same results";
     }
+    // we'll work on the canonicalized one
+    copy_file(test, working);
+  }
+
+  std::cout << "|checking that command has different behavior on invalid binary\n";
+  {
+    {
+      std::ofstream dst(test, std::ios::binary);
+      dst << "waka waka\n";
+    }
+    ProgramResult result(command);
+    if (result == expected) {
+      result.dump();
+      Fatal() << "running command on an invalid module should give different results";
+    }
   }
 
   // copy test file (that was just written) to working, which we will use from now on
   // starting from the binary binaryen output canonicalizes, so we are not on text
   // input or input from somewhere else
-  copy_file(test, working);
   std::cout << "|canonicalized input size: " << file_size(working) << "\n";
 
   std::cout << "|starting reduction!\n";
