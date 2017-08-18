@@ -33,7 +33,6 @@
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ast/literal-utils.h"
-#include "wasm-printing.h"
 
 using namespace wasm;
 

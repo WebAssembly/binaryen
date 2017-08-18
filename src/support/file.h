@@ -67,8 +67,10 @@ class Output {
   std::ostream out;
 };
 
+// Copies a file to another file
 void copy_file(std::string input, std::string output);
 
+// Retusn the size of a file
 size_t file_size(std::string filename);
 
 } // namespace wasm

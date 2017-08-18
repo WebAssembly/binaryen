@@ -334,7 +334,7 @@ for t in os.listdir(os.path.join('test', 'reduce')):
     run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
     with open('a.wast') as seen:
       with open(expected) as correct:
-        fail_if_not_identical(f.read(), correct.read())
+        fail_if_not_identical(seen.read(), correct.read())
 
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
