@@ -287,6 +287,12 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     // specific reductions
     if (auto* iff = curr->dynCast<If>()) {
+      if (iff->type == none) {
+        // perhaps we need just the condition?
+        if (tryToReplaceCurrent(builder->makeDrop(iff->condition))) {
+          return;
+        }
+      }
       handleCondition(iff->condition);
     } else if (auto* br = curr->dynCast<Break>()) {
       handleCondition(br->condition);
