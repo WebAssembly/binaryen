@@ -224,7 +224,6 @@ void Linker::layout() {
     auto* func = new Function;
     func->name = start;
     out.wasm.addFunction(func);
-    exportFunction(start, true);
     out.wasm.addStart(start);
     Builder builder(out.wasm);
     auto* block = builder.makeBlock();
