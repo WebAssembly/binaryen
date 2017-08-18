@@ -45,7 +45,7 @@ static void canonicalize(std::string input, std::string output) {
     assert(code == 0);
     auto newSize = file_size(output);
     if (newSize <= oldSize) break;
-    std::cout << "|  <canonicalization: " << oldSize << " => " << newSize << ">\n";
+    std::cerr << "|  <canonicalization: " << oldSize << " => " << newSize << ">\n";
     // do more work, now the input is the output
     input = output;
     counter++;
@@ -148,11 +148,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     auto oldSize = file_size(working);
     bool more = true;
     while (more) {
-      //std::cout << "|    starting passes loop iteration\n";
+      //std::cerr << "|    starting passes loop iteration\n";
       more = false;
       for (auto pass : passes) {
         auto currCommand = "bin/wasm-opt --dce --vacuum " + working + " -o " + test + " " + pass;
-        if (verbose) std::cout << "|    trying pass command: " << currCommand << "\n";
+        if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
         if (!ProgramResult(currCommand).failed()) {
           canonicalize(test, test);
           auto newSize = file_size(test);
@@ -160,7 +160,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
             // the pass didn't fail, and the size looks smaller, so promising
             // see if it is still has the property we are preserving
             if (ProgramResult(command) == expected) {
-              std::cout << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
+              std::cerr << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
               copy_file(test, working);
               more = true;
               oldSize = newSize;
@@ -169,7 +169,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         }
       }
     }
-    if (verbose) std::cout << "|    done with passes for now\n";
+    if (verbose) std::cerr << "|    done with passes for now\n";
   }
 
   // does one pass of slow and destructive reduction. returns whether it
@@ -226,7 +226,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       // sometimes a destructive change increases the size (e.g. replace a small node with a const
       // that happens to take more bytes), but this should not risk an infinite loop since we
       // are actually changing behavior in a breaking way each time we find a destructive reduction
-      //std::cout << "|      odd sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
+      //std::cerr << "|      odd sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
       //return false;
     }
     // test it
@@ -242,7 +242,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // tests a reduction on the current traversal node, and undos if it failed
   bool tryToReplaceCurrent(Expression* with) {
     auto* curr = getCurrent();
-    //std::cout << "try " << curr << " => " << with << '\n';
+    //std::cerr << "try " << curr << " => " << with << '\n';
     if (curr->type != with->type) return false;
     if (!shouldTryToReduce()) return false;
     replaceCurrent(with);
@@ -250,7 +250,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       replaceCurrent(curr);
       return false;
     }
-    std::cout << "|      tryToReplaceCurrent succeeded (in " << getLocation() << ")\n";
+    std::cerr << "|      tryToReplaceCurrent succeeded (in " << getLocation() << ")\n";
     noteReduction();
     return true;
   }
@@ -270,8 +270,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       child = before;
       return false;
     }
-    std::cout << "|      tryToReplaceChild succeeded (in " << getLocation() << ")\n";
-    //std::cout << "|      " << before << " => " << with << '\n';
+    std::cerr << "|      tryToReplaceChild succeeded (in " << getLocation() << ")\n";
+    //std::cerr << "|      " << before << " => " << with << '\n';
     noteReduction();
     return true;
   }
@@ -341,7 +341,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     static int last = 0;
     int percentage = (100 * funcsSeen) / getModule()->functions.size();
     if (std::abs(percentage - last) >= 5) {
-      std::cout << "|    " << percentage << "% of funcs complete\n";
+      std::cerr << "|    " << percentage << "% of funcs complete\n";
       last = percentage;
     }
   }
@@ -349,7 +349,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // TODO: bisection on segment shrinking?
 
   void visitTable(Table* curr) {
-    std::cout << "|    try to simplify table\n";
+    std::cerr << "|    try to simplify table\n";
     Name first;
     for (auto& segment : curr->segments) {
       for (auto item : segment.data) {
@@ -362,7 +362,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   }
 
   void visitMemory(Memory* curr) {
-    std::cout << "|    try to simplify memory\n";
+    std::cerr << "|    try to simplify memory\n";
     visitSegmented(curr, 0);
   }
 
@@ -380,7 +380,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           if (!data.empty()) data.pop_back();
         }
         if (writeAndTestReduction()) {
-          std::cout << "|      shrank segment (skip: " << skip << ")\n";
+          std::cerr << "|      shrank segment (skip: " << skip << ")\n";
           noteReduction();
           skip = std::min(size_t(factor), 2 * skip);
         } else {
@@ -398,7 +398,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         auto save = item;
         item = zero;
         if (writeAndTestReduction()) {
-          std::cout << "|      zeroed segment\n";
+          std::cerr << "|      zeroed segment\n";
           noteReduction();
         } else {
           item = save;
@@ -409,7 +409,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   void visitModule(Module* curr) {
     // try to remove exports
-    std::cout << "|    try to remove exports\n";
+    std::cerr << "|    try to remove exports\n";
     std::vector<Export> exports;
     for (auto& exp : curr->exports) {
       exports.push_back(*exp);
@@ -419,7 +419,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       if (!writeAndTestReduction()) {
         curr->addExport(new Export(exp));
       } else {
-        std::cout << "|      removed export " << exp.name << '\n';
+        std::cerr << "|      removed export " << exp.name << '\n';
         noteReduction();
       }
     }
@@ -524,20 +524,20 @@ int main(int argc, const char* argv[]) {
   if (test.size() == 0) Fatal() << "test file not provided\n";
   if (working.size() == 0) Fatal() << "working file not provided\n";
 
-  std::cout << "|input: " << input << '\n';
-  std::cout << "|test: " << test << '\n';
-  std::cout << "|working: " << working << '\n';
+  std::cerr << "|input: " << input << '\n';
+  std::cerr << "|test: " << test << '\n';
+  std::cerr << "|working: " << working << '\n';
 
   // get the expected output
   copy_file(input, test);
   expected.getFromExecution(command);
 
-  std::cout << "|expected result:\n" << expected << '\n';
+  std::cerr << "|expected result:\n" << expected << '\n';
 
   // sanity check - we should start with an invalid module, and one
   // that we can read and write TODO: allow reducing things we can't
   // even do that with
-  std::cout << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
+  std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     canonicalize(input, test);
     ProgramResult result(command);
@@ -548,7 +548,7 @@ int main(int argc, const char* argv[]) {
     copy_file(test, working);
   }
 
-  std::cout << "|checking that command has different behavior on invalid binary\n";
+  std::cerr << "|checking that command has different behavior on invalid binary\n";
   {
     {
       std::ofstream dst(test, std::ios::binary);
@@ -563,9 +563,9 @@ int main(int argc, const char* argv[]) {
   // copy test file (that was just written) to working, which we will use from now on
   // starting from the binary binaryen output canonicalizes, so we are not on text
   // input or input from somewhere else
-  std::cout << "|canonicalized input size: " << file_size(working) << "\n";
+  std::cerr << "|canonicalized input size: " << file_size(working) << "\n";
 
-  std::cout << "|starting reduction!\n";
+  std::cerr << "|starting reduction!\n";
 
   int factor = 4096;
 
@@ -576,7 +576,7 @@ int main(int argc, const char* argv[]) {
     // and can often reduce large amounts of code efficiently, as opposed
     // to detructive reduction (i.e., that doesn't preserve correctness as
     // passes do) since destrucive must operate one change at a time
-    std::cout << "|  reduce using passes...\n";
+    std::cerr << "|  reduce using passes...\n";
     auto oldSize = file_size(working);
     reducer.reduceUsingPasses();
     auto newSize = file_size(working);
@@ -602,7 +602,7 @@ int main(int argc, const char* argv[]) {
     // quickly try a lower one (no point in doing passes until we reduce
     // destructively at least a little)
     while (1) {
-      std::cout << "|  reduce destructively... (factor: " << factor << ")\n";
+      std::cerr << "|  reduce destructively... (factor: " << factor << ")\n";
       if (reducer.reduceDestructively(factor)) break;
       // we failed to reduce destructively
       if (factor == 1) {
@@ -613,9 +613,9 @@ int main(int argc, const char* argv[]) {
     }
     if (factor == 0) break; // halt
 
-    std::cout << "|  destructive reduction led to size: " << file_size(working) << '\n';
+    std::cerr << "|  destructive reduction led to size: " << file_size(working) << '\n';
   }
-  std::cout << "|finished, final size: " << file_size(working) << "\n";
+  std::cerr << "|finished, final size: " << file_size(working) << "\n";
   copy_file(working, test); // just to avoid confusion
 }
 
