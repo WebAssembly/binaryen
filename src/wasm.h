@@ -183,6 +183,8 @@ public:
     UnreachableId,
     AtomicCmpxchgId,
     AtomicRMWId,
+    AtomicWaitId,
+    AtomicWakeId,
     NumExpressionIds
   };
   Id _id;
@@ -452,6 +454,29 @@ class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
   Expression* ptr;
   Expression* expected;
   Expression* replacement;
+
+  void finalize();
+};
+
+class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
+ public:
+  AtomicWait() = default;
+  AtomicWait(MixedArena& allocator) : AtomicWait() {}
+
+  Expression* ptr;
+  Expression* expected;
+  Expression* timeout;
+
+  void finalize();
+};
+
+class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
+ public:
+  AtomicWake() = default;
+  AtomicWake(MixedArena& allocator) : AtomicWake() {}
+
+  Expression* ptr;
+  Expression* wakeCount;
 
   void finalize();
 };

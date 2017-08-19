@@ -198,6 +198,21 @@ public:
     load->isAtomic = true;
     return load;
   }
+  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType type) {
+    auto* wait = allocator.alloc<AtomicWait>();
+    wait->ptr = ptr;
+    wait->expected = expected;
+    wait->timeout = timeout;
+    wait->type = type;
+    return wait;
+  }
+  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount, WasmType type) {
+    auto* wait = allocator.alloc<AtomicWake>();
+    wait->ptr = ptr;
+    wait->wakeCount = wakeCount;
+    wait->type = type;
+    return wait;
+  }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();
     ret->isAtomic = false;

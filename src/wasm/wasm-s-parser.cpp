@@ -781,6 +781,8 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         abort_on(op);
       }
       case 'w': {
+        if (!strncmp(op, "wait", strlen("wait"))) return makeAtomicWait(s, type);
+        if (!strncmp(op, "wake", strlen("wake"))) return makeAtomicWake(s, type);
         if (op[1] == 'r') return makeUnary(s,  UnaryOp::WrapInt64, type);
         abort_on(op);
       }
@@ -1237,6 +1239,25 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s, WasmType type,
   ret->ptr = parseExpression(s[i]);
   ret->expected = parseExpression(s[i+1]);
   ret->replacement = parseExpression(s[i+2]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, WasmType type) {
+  auto ret = allocator.alloc<AtomicWait>();
+  ret->type = type;
+  ret->ptr = parseExpression(s[1]);
+  ret->expected = parseExpression(s[2]);
+  ret->timeout = parseExpression(s[3]);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeAtomicWake(Element& s, WasmType type) {
+  auto ret = allocator.alloc<AtomicWake>();
+  ret->type = type;
+  ret->ptr = parseExpression(s[1]);
+  ret->wakeCount = parseExpression(s[2]);
   ret->finalize();
   return ret;
 }
