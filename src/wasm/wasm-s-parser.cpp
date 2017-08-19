@@ -782,7 +782,6 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
       }
       case 'w': {
         if (!strncmp(op, "wait", strlen("wait"))) return makeAtomicWait(s, type);
-        if (!strncmp(op, "wake", strlen("wake"))) return makeAtomicWake(s, type);
         if (op[1] == 'r') return makeUnary(s,  UnaryOp::WrapInt64, type);
         abort_on(op);
       }
@@ -867,6 +866,9 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
       case 'u': {
         if (str[1] == 'n') return allocator.alloc<Unreachable>();
         abort_on(str);
+      }
+      case 'w': {
+        if (!strncmp(str, "wake", strlen("wake"))) return makeAtomicWake(s);
       }
       default: abort_on(str);
     }
@@ -1253,9 +1255,9 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, WasmType type) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicWake(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeAtomicWake(Element& s) {
   auto ret = allocator.alloc<AtomicWake>();
-  ret->type = type;
+  ret->type = i32;
   ret->ptr = parseExpression(s[1]);
   ret->wakeCount = parseExpression(s[2]);
   ret->finalize();

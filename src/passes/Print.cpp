@@ -414,10 +414,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitAtomicWake(AtomicWake* curr) {
-    o << '(' ;
-    prepareColor(o);
-    o << printWasmType(curr->type) << ".wake";
-    restoreNormalColor(o);
+    printOpening(o, "wake");
     incIndent();
     printFullLine(curr->ptr);
     printFullLine(curr->wakeCount);

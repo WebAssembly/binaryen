@@ -145,7 +145,7 @@
    )
   )
   (drop
-   (i32.wake
+   (wake
     (get_local $0)
     (get_local $0)
    )

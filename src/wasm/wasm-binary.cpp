@@ -952,6 +952,27 @@ void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
 
+void WasmBinaryWriter::visitAtomicWait(AtomicWait *curr) {
+  if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
+  recurse(curr->ptr);
+  recurse(curr->expected);
+  recurse(curr->timeout);
+
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->type) {
+    case i32: o << int8_t(BinaryConsts::I32AtomicWait); break;
+    case i64: o << int8_t(BinaryConsts::I64AtomicWait); break;
+    default: WASM_UNREACHABLE();
+  }
+}
+
+void WasmBinaryWriter::visitAtomicWake(AtomicWake *curr) {
+  if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
+  recurse(curr->ptr);
+  recurse(curr->wakeCount);
+
+  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicWake);
+}
 
 void WasmBinaryWriter::visitConst(Const *curr) {
   if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
@@ -2070,6 +2091,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStore(curr, code, /*isAtomic=*/true)) break;
       if (maybeVisitAtomicRMW(curr, code)) break;
       if (maybeVisitAtomicCmpxchg(curr, code)) break;
+      if (maybeVisitAtomicWait(curr, code)) break;
+      if (maybeVisitAtomicWake(curr, code)) break;
       throw ParseException("invalid code after atomic prefix: " + std::to_string(code));
     }
     default: {
@@ -2495,6 +2518,37 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) 
   if (readAlign != curr->bytes) throw ParseException("Align of AtomicCpxchg must match size");
   curr->replacement = popNonVoidExpression();
   curr->expected = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
+  if (code < BinaryConsts::I32AtomicWait || code > BinaryConsts::I64AtomicWait) return false;
+  auto* curr = allocator.alloc<AtomicWait>();
+
+  switch (code) {
+    case BinaryConsts::I32AtomicWait: curr->type = i32; break;
+    case BinaryConsts::I64AtomicWait: curr->type = i64; break;
+    default: WASM_UNREACHABLE();
+  }
+  if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
+  curr->timeout = popNonVoidExpression();
+  curr->expected = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitAtomicWake(Expression*& out, uint8_t code) {
+  if (code != BinaryConsts::AtomicWake) return false;
+  auto* curr = allocator.alloc<AtomicWake>();
+  if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
+
+  curr->type = i32;
+  curr->wakeCount = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;

@@ -134,4 +134,28 @@
    )
   )
  )
+ (func $atomic-wait-wake (type $0)
+  (local $0 i32)
+  (local $1 i64)
+  (drop
+   (i32.wait
+    (get_local $0)
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (wake
+    (get_local $0)
+    (get_local $0)
+   )
+  )
+  (drop
+   (i64.wait
+    (get_local $0)
+    (get_local $1)
+    (get_local $1)
+   )
+  )
+ )
 )
