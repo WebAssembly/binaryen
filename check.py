@@ -323,18 +323,22 @@ for t in os.listdir(os.path.join('test', 'ctor-eval')):
 
 print '\n[ checking wasm-reduce ]\n'
 
-for t in os.listdir(os.path.join('test', 'reduce')):
-  if t.endswith('.wast'):
-    print '..', t
-    t = os.path.join('test', 'reduce', t)
-    # convert to wasm
-    run_command(WASM_AS + [t, '-o', 'a.wasm'])
-    print run_command(WASM_REDUCE + ['a.wasm', '--command=bin/wasm-opt b.wasm --fuzz-exec', '-t', 'b.wasm', '-w', 'c.wasm'])
-    expected = t + '.txt'
-    run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
-    with open('a.wast') as seen:
-      with open(expected) as correct:
-        fail_if_not_identical(seen.read(), correct.read())
+# check if we have `timeout`, which the reducer depends on
+has_shell_timeout = (os.system('timeout 1s pwd') == 0)
+
+if has_shell_timeout:
+  for t in os.listdir(os.path.join('test', 'reduce')):
+    if t.endswith('.wast'):
+      print '..', t
+      t = os.path.join('test', 'reduce', t)
+      # convert to wasm
+      run_command(WASM_AS + [t, '-o', 'a.wasm'])
+      print run_command(WASM_REDUCE + ['a.wasm', '--command=bin/wasm-opt b.wasm --fuzz-exec', '-t', 'b.wasm', '-w', 'c.wasm'])
+      expected = t + '.txt'
+      run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
+      with open('a.wast') as seen:
+        with open(expected) as correct:
+          fail_if_not_identical(seen.read(), correct.read())
 
 print '\n[ checking wasm-shell spec testcases... ]\n'
 
