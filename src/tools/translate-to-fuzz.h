@@ -452,14 +452,20 @@ private:
   // make something with no chance of infinite recursion
   Expression* makeTrivial(WasmType type) {
     if (isConcreteWasmType(type)) {
-      return makeConst(type);
+      if (oneIn(2)) {
+        return makeGetLocal(type);
+      } else {
+        return makeConst(type);
+      }
     } else if (type == none) {
       return makeNop(type);
     }
     assert(type == unreachable);
-    return builder.makeReturn(
-      isConcreteWasmType(func->result) ? makeConst(func->result) : nullptr
-    );
+    Expression* ret = nullptr;
+    if (isConcreteWasmType(func->result)) {
+      ret = makeTrivial(func->result);
+    }
+    return builder.makeReturn(ret);
   }
 
   // specific expression creators
@@ -650,7 +656,7 @@ private:
 
   Expression* makeGetLocal(WasmType type) {
     auto& locals = typeLocals[type];
-    if (locals.empty()) return makeTrivial(type);
+    if (locals.empty()) return makeConst(type);
     return builder.makeGetLocal(vectorPick(locals), type);
   }
 
