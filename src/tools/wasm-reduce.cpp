@@ -140,10 +140,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--reorder-functions",
       "--reorder-locals",
       "--simplify-locals --vacuum",
-      "--simplify-locals-notee --vacuum",
-      "--simplify-locals-nostructure --vacuum",
-      "--simplify-locals-notee-nostructure --vacuum",
-      "--vacuum"
+      //"--simplify-locals-notee --vacuum",
+      //"--simplify-locals-nostructure --vacuum",
+      //"--simplify-locals-notee-nostructure --vacuum",
+      //"--vacuum"
     };
     auto oldSize = file_size(working);
     bool more = true;
@@ -179,7 +179,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // @param factor how much to ignore. starting with a high factor skips through
   //               most of the file, which is often faster than going one by one
   //               from the start
-  bool reduceDestructively(int factor_) {
+  size_t reduceDestructively(int factor_) {
     factor = factor_;
     Module wasm;
     ModuleReader reader;
@@ -204,7 +204,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   // destructive reduction state
 
-  Index reduced;
+  size_t reduced;
   Expression* beforeReduction;
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
@@ -234,9 +234,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     return out == expected;
   }
 
-  bool shouldTryToReduce() {
-    static int counter = 0;
-    return counter++ % factor == 0;
+  bool shouldTryToReduce(size_t bonus = 1) {
+    static size_t counter = 0;
+    counter += bonus;
+    return (counter % factor) <= bonus;
   }
 
   // tests a reduction on the current traversal node, and undos if it failed
@@ -358,23 +359,23 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       }
       if (!first.isNull()) break;
     }
-    visitSegmented(curr, first);
+    visitSegmented(curr, first, 100);
   }
 
   void visitMemory(Memory* curr) {
     std::cerr << "|    try to simplify memory\n";
-    visitSegmented(curr, 0);
+    visitSegmented(curr, 0, 2);
   }
 
   template<typename T, typename U>
-  void visitSegmented(T* curr, U zero) {
+  void visitSegmented(T* curr, U zero, size_t bonus) {
     // try to reduce to first function
     // shrink segment elements
     for (auto& segment : curr->segments) {
       auto& data = segment.data;
       size_t skip = 1; // when we succeed, try to shrink by more and more, similar to bisection
       for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-        if (!shouldTryToReduce()) continue;
+        if (!shouldTryToReduce(bonus)) continue;
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
           if (!data.empty()) data.pop_back();
@@ -393,7 +394,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     for (auto& segment : curr->segments) {
       if (segment.data.empty()) continue;
       for (auto& item : segment.data) {
-        if (!shouldTryToReduce()) continue;
+        if (!shouldTryToReduce(bonus)) continue;
         if (item == zero) continue;
         auto save = item;
         item = zero;
@@ -412,6 +413,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     std::cerr << "|    try to remove exports\n";
     std::vector<Export> exports;
     for (auto& exp : curr->exports) {
+      if (!shouldTryToReduce(10000)) continue;
       exports.push_back(*exp);
     }
     for (auto& exp : exports) {
@@ -568,6 +570,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|starting reduction!\n";
 
   int factor = 4096;
+  size_t lastDestructiveReductions = 0;
 
   while (1) {
     Reducer reducer(command, test, working, verbose);
@@ -580,15 +583,17 @@ int main(int argc, const char* argv[]) {
     auto oldSize = file_size(working);
     reducer.reduceUsingPasses();
     auto newSize = file_size(working);
+    auto passProgress = oldSize - newSize;
 
-    // if we reduced quited a lot using passes, we don't need to decrease
-    // the factor - it's almost like we're on another file, so keep going
-    // in similar wide sweeps
-    if ((100*newSize)/oldSize <= 90) {
+    // if destructive reductions lead to useful proportionate pass reductions, keep
+    // going at the same factor, as pass reductions are far faster
+    std::cerr << "|  pass progress: " << passProgress << ", last destructive: " << lastDestructiveReductions << '\n';
+    if (passProgress >= 2 * lastDestructiveReductions) {
       // don't change
+      std::cerr << "|  progress is good, do not quickly decrease factor\n";
     } else {
       if (factor > 10) {
-        factor = factor / 3;
+        factor = (factor / 2) + 1; // avoid only doing powers of 2
       } else {
         factor = (factor + 1) / 2; // stable on 1
       }
@@ -603,13 +608,14 @@ int main(int argc, const char* argv[]) {
     // destructively at least a little)
     while (1) {
       std::cerr << "|  reduce destructively... (factor: " << factor << ")\n";
-      if (reducer.reduceDestructively(factor)) break;
+      lastDestructiveReductions = reducer.reduceDestructively(factor);
+      if (lastDestructiveReductions > 0) break;
       // we failed to reduce destructively
       if (factor == 1) {
         factor = 0; // halt
         break;
       }
-      factor = std::max(1, factor / 10); // quickly now, try to find *something* we can reduce
+      factor = std::max(1, (factor / 2) + 1); // quickly now, try to find *something* we can reduce
     }
     if (factor == 0) break; // halt
 
