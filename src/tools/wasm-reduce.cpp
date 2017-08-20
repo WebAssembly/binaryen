@@ -593,7 +593,7 @@ int main(int argc, const char* argv[]) {
       std::cerr << "|  progress is good, do not quickly decrease factor\n";
     } else {
       if (factor > 10) {
-        factor = (factor / 2) + 1; // avoid only doing powers of 2
+        factor = (factor / 3) + 1;
       } else {
         factor = (factor + 1) / 2; // stable on 1
       }
@@ -615,7 +615,7 @@ int main(int argc, const char* argv[]) {
         factor = 0; // halt
         break;
       }
-      factor = std::max(1, (factor / 2) + 1); // quickly now, try to find *something* we can reduce
+      factor = std::max(1, factor / 4); // quickly now, try to find *something* we can reduce
     }
     if (factor == 0) break; // halt
 
