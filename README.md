@@ -37,7 +37,7 @@ The differences between Binaryen IR and WebAssembly are:
  * Binaryen IR [is an AST](https://github.com/WebAssembly/binaryen/issues/663), for convenience of optimization. This differs from the WebAssembly binary format which is a stack machine.
  * WebAssembly limits block/if/loop types to none and the concrete value types (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows block/if/loop to take it, allowing [local transforms that don't need to know the global context](https://github.com/WebAssembly/binaryen/issues/903).
  * Binaryen IR's text format requires the names of blocks and loops to be unique. This differs from the WebAssembly s-expression format which allows duplicate names (and depends on scoping to disambiguate).
- * Binaryen ignores unreachable code when reading WebAssembly binaries (the code won't execute anyhow, and WebAssembly unreachable code has tricky corner cases that do not match up well against Binaryen IR).
+ * Binaryen ignores unreachable code when reading WebAssembly binaries. That means that if you read a wasm file with unreachable code, that code will be discarded as if it were optimized out (often this is what you want anyhow, and optimized programs have no unreachable code anyway, but if you write an unoptimized file and then read it, it may look different). The reason for this behavior is that unreachable code in WebAssembly has corner cases that are tricky to handle in Binaryen IR (it can be very unstructured, and Binaryen IR is more structured than WebAssembly).
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR => wasm) change code a little in some corner cases.
 
