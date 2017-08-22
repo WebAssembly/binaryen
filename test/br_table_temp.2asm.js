@@ -50009,19 +50009,20 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$54() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0;
   block : {
-   $5 = 10;
    i64toi32_i32$0 = 0;
-   $2 = 45;
-   $3 = $2;
-   $4 = $3;
+   $3 = 10;
+   i64toi32_i32$1 = 0;
+   $4 = 45;
+   $5 = $4;
+   $6 = $5;
    switch (0 | 0) {
    default:
     break block;
    };
   };
-  return $4 | 0;
+  return $6 | 0;
  }
  
  function $$55() {

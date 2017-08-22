@@ -152,7 +152,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     auto highBitsIt = labelIndices.find(curr->name);
     if (!hasOutParam(curr->list.back())) {
       if (highBitsIt != labelIndices.end()) {
-        freeTemp(highBitsIt->second);
+        setOutParam(curr, highBitsIt->second);
       }
       return;
     }

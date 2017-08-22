@@ -21,7 +21,7 @@
     (block i32 (i32.ctz (br_table 0 0 (i32.const 1) (i32.const 0))))
   )
   (func (export "type-i64-value") (result i32)
-    (block i32 (i32.wrap/i64 (i64.ctz (br_table 0 0 (i64.const 2) (i32.const 0)))))
+    (i32.wrap/i64 (block i64 (i64.ctz (br_table 0 0 (i64.const 2) (i32.const 0)))))
   )
   (func (export "type-f32-value") (result f32)
     (block f32 (f32.neg (br_table 0 0 (f32.const 3) (i32.const 0))))
@@ -903,7 +903,7 @@
   )
 
   (func (export "as-return-value") (result i32)
-    (block i32 (i32.wrap/i64 (return (br_table 0 (i64.const 7) (i32.const 0)))))
+    (i32.wrap/i64 (block i64 (return (br_table 0 (i64.const 7) (i32.const 0)))))
   )
 
   (func (export "as-if-cond") (result i32)
@@ -1027,7 +1027,7 @@
     (block i32 (i32.load (br_table 0 (i32.const 2) (i32.const 1))))
   )
   (func (export "as-loadN-address") (result i32)
-    (block i32 (i32.wrap/i64 (i64.load8_s (br_table 0 (i64.const 30) (i32.const 1)))))
+    (i32.wrap/i64 (block i64 (i64.load8_s (br_table 0 (i64.const 30) (i32.const 1)))))
   )
 
   (func (export "as-store-address") (result i32)
@@ -1066,8 +1066,8 @@
     )
   )
   (func (export "as-binary-right") (result i32)
-    (block i32
-      (i32.sub (i32.const 10) (i32.wrap/i64 (br_table 0 (i64.const 45) (i32.const 0))))
+    (i32.wrap/i64 (block i64
+      (i64.add (i64.const 10) (br_table 0 (i64.const 45) (i32.const 0))))
     )
   )
 
