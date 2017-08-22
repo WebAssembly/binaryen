@@ -12,16 +12,10 @@
      (drop
       (i32.const 1)
      )
-     (br_if $label$2
-      (unreachable)
-     )
-     (unreachable)
      (unreachable)
     )
-    (unreachable)
    )
   )
-  (unreachable)
  )
 )
 

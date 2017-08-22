@@ -86,6 +86,21 @@
       )
     )
   )
+  (func $unreachable-in-block-but-code-before (param $0 i32) (result i32)
+   (if
+    (get_local $0)
+    (return
+     (i32.const 127)
+    )
+   )
+   (block $label$0 (result i32)
+    (br_if $label$0
+     (return
+      (i32.const -32)
+     )
+    )
+   )
+  )
   (func $br_table_unreachable_to_also_unreachable (result i32)
     (block $a (result i32)
       (block $b
