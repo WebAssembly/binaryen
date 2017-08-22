@@ -48,6 +48,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     return new I64ToI32Lowering;
   }
 
+  void doWalkModule(Module* module) {
+    auto* moduleBuilder = builder = new Builder(*module);
+    PostWalker<I64ToI32Lowering>::doWalkModule(module);
+    delete moduleBuilder;
+  }
+
   void visitFunctionType(FunctionType* curr) {
     std::vector<WasmType> params;
     for (auto t : curr->params) {
@@ -66,14 +72,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitGlobal(Global* curr) {
     if (curr->type == i64) {
+      builder = new Builder(*getModule());
       curr->type = i32;
       auto* high = new Global(*curr);
       high->name = makeHighName(curr->name);
       getModule()->addGlobal(high);
+      delete builder;
     }
   }
 
   void doWalkFunction(Function* func) {
+    // create builder here because this may be first entry to module if parallel
     builder = new Builder(*getModule());
     indexMap.clear();
     returnIndices.clear();
@@ -138,7 +147,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitBlock(Block* curr) {
-    assert(curr->list.size() > 0);
+    if (curr->list.size() == 0) return;
     if (curr->type == i64) curr->type = i32;
     auto highBitsIt = labelIndices.find(curr->name);
     if (!hasOutParam(curr->list.back())) {
@@ -205,7 +214,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitBreak(Break* curr) {
-    if (curr->type != i64) return;
+    if (!hasOutParam(curr->value)) return;
     assert(curr->value != nullptr);
     Index valHighBits = fetchOutParam(curr->value);
     auto blockHighBitsIt = labelIndices.find(curr->name);
@@ -525,7 +534,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitUnary(Unary* curr) {
     if (!unaryNeedsLowering(curr->op)) return;
-    if (curr->value->type == unreachable) {
+    if (curr->type == unreachable || curr->value->type == unreachable) {
       assert(!hasOutParam(curr->value));
       replaceCurrent(curr->value);
       return;

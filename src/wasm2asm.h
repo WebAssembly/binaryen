@@ -865,7 +865,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Name asmLabel = curr->name;
       continueLabels.insert(asmLabel);
       Ref body = blockify(visit(curr->body, result));
-      flattenAppend(body, ValueBuilder::makeBreak(asmLabel));
+      flattenAppend(body, ValueBuilder::makeBreak(fromName(asmLabel)));
       Ref ret = ValueBuilder::makeDo(body, ValueBuilder::makeInt(1));
       return ValueBuilder::makeLabel(fromName(asmLabel), ret);
     }
@@ -908,7 +908,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       } else {
         condition = visit(curr->condition, EXPRESSION_RESULT);
       }
-      Ref theSwitch = ValueBuilder::makeSwitch(condition);
+      Ref theSwitch =
+        ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
       ret[1]->push_back(theSwitch);
       for (size_t i = 0; i < curr->targets.size(); i++) {
         ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
@@ -1606,7 +1607,14 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
-    body = actual;
+    if  (actual->type == none) {
+      body = wasmBuilder.blockify(
+        actual,
+        wasmBuilder.makeConst(Literal(uint32_t(1)))
+      );
+    } else {
+      body = actual;
+    }
   } else if (e.size() == 3) {
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     WasmType resType = expected->type;
@@ -1630,7 +1638,7 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
     wasmBuilder.makeFunction(
       testFuncName,
       std::vector<NameType>{},
-      i32,
+      body->type,
       std::vector<NameType>{},
       body
     )
