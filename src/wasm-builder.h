@@ -203,15 +203,18 @@ public:
     wait->ptr = ptr;
     wait->expected = expected;
     wait->timeout = timeout;
-    wait->type = type;
+    wait->expectedType = type;
+    wait->type = i32;
+    wait->finalize();
     return wait;
   }
-  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount, WasmType type) {
-    auto* wait = allocator.alloc<AtomicWake>();
-    wait->ptr = ptr;
-    wait->wakeCount = wakeCount;
-    wait->type = type;
-    return wait;
+  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount) {
+    auto* wake = allocator.alloc<AtomicWake>();
+    wake->ptr = ptr;
+    wake->wakeCount = wakeCount;
+    wake->type = i32;
+    wake->finalize();
+    return wake;
   }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();

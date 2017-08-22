@@ -1247,7 +1247,8 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s, WasmType type,
 
 Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, WasmType type) {
   auto ret = allocator.alloc<AtomicWait>();
-  ret->type = type;
+  ret->type = i32;
+  ret->expectedType = type;
   ret->ptr = parseExpression(s[1]);
   ret->expected = parseExpression(s[2]);
   ret->timeout = parseExpression(s[3]);

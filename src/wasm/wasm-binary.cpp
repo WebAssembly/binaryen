@@ -959,7 +959,7 @@ void WasmBinaryWriter::visitAtomicWait(AtomicWait *curr) {
   recurse(curr->timeout);
 
   o << int8_t(BinaryConsts::AtomicPrefix);
-  switch (curr->type) {
+  switch (curr->expectedType) {
     case i32: o << int8_t(BinaryConsts::I32AtomicWait); break;
     case i64: o << int8_t(BinaryConsts::I64AtomicWait); break;
     default: WASM_UNREACHABLE();
@@ -2529,10 +2529,11 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   auto* curr = allocator.alloc<AtomicWait>();
 
   switch (code) {
-    case BinaryConsts::I32AtomicWait: curr->type = i32; break;
-    case BinaryConsts::I64AtomicWait: curr->type = i64; break;
+    case BinaryConsts::I32AtomicWait: curr->expectedType = i32; break;
+    case BinaryConsts::I64AtomicWait: curr->expectedType = i64; break;
     default: WASM_UNREACHABLE();
   }
+  curr->type = i32;
   if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
   curr->timeout = popNonVoidExpression();
   curr->expected = popNonVoidExpression();

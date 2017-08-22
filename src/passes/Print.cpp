@@ -405,7 +405,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitAtomicWait(AtomicWait* curr) {
     o << '(' ;
     prepareColor(o);
-    o << printWasmType(curr->type) << ".wait";
+    o << printWasmType(curr->expectedType) << ".wait";
     restoreNormalColor(o);
     incIndent();
     printFullLine(curr->ptr);

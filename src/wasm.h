@@ -466,6 +466,7 @@ class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
   Expression* ptr;
   Expression* expected;
   Expression* timeout;
+  WasmType expectedType;
 
   void finalize();
 };
