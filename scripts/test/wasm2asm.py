@@ -6,19 +6,21 @@ from support import run_command
 from shared import (WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, tests)
 
 
-def test_wasm2asm():
-  print '\n[ checking wasm2asm testcases... ]\n'
+# tests with i64s, invokes, etc.
+blacklist = ['address.wast']
+spec_tests = [os.path.join('spec', t) for t in
+              sorted(os.listdir(os.path.join('test', 'spec')))]
+assert_tests = ['wasm2asm.wast.asserts']
 
-  # tests with i64s, invokes, etc.
-  blacklist = ['atomics.wast', 'address.wast']
-  spec_tests = [os.path.join('spec', t) for t in
-                sorted(os.listdir(os.path.join('test', 'spec')))]
-  for wasm in tests + spec_tests:
+
+def test_wasm2asm_output():
+  for wasm in tests + [w for w in spec_tests if '.fail' not in w]:
     if not wasm.endswith('.wast') or os.path.basename(wasm) in blacklist:
       continue
 
     asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
     expected_file = os.path.join('test', asm)
+
     if not os.path.exists(expected_file):
       continue
 
@@ -26,16 +28,25 @@ def test_wasm2asm():
 
     cmd = WASM2ASM + [os.path.join('test', wasm)]
     out = run_command(cmd)
-
-    # verify output
     expected = open(expected_file).read()
     fail_if_not_identical(out, expected)
 
+    if not NODEJS and not MOZJS:
+      print 'No JS interpreters. Skipping spec tests.'
+      continue
+
     open('a.2asm.js', 'w').write(out)
 
+    cmd += ['--allow-asserts']
+    out = run_command(cmd)
+
+    open('a.2asm.asserts.js', 'w').write(out)
+
+    # verify asm.js is valid js
     if NODEJS:
-      # verify asm.js is valid js
       out = run_command([NODEJS, 'a.2asm.js'])
+      fail_if_not_identical(out, '')
+      out = run_command([NODEJS, 'a.2asm.asserts.js'], expected_err='')
       fail_if_not_identical(out, '')
 
     if MOZJS:
@@ -45,6 +56,34 @@ def test_wasm2asm():
                         expected_err='Successfully compiled asm.js code',
                         err_contains=True)
       fail_if_not_identical(out, '')
+      out = run_command([MOZJS, 'a.2asm.asserts.js'], expected_err='')
+      fail_if_not_identical(out, '')
+
+
+def test_asserts_output():
+  for wasm in assert_tests:
+    print '..', wasm
+
+    asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
+    traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
+    asserts_expected_file = os.path.join('test', asserts)
+    traps_expected_file = os.path.join('test', traps)
+
+    cmd = WASM2ASM + [os.path.join('test', wasm), '--allow-asserts']
+    out = run_command(cmd)
+    expected = open(asserts_expected_file).read()
+    fail_if_not_identical(out, expected)
+
+    cmd += ['--pedantic']
+    out = run_command(cmd)
+    expected = open(traps_expected_file).read()
+    fail_if_not_identical(out, expected)
+
+
+def test_wasm2asm():
+  print '\n[ checking wasm2asm testcases... ]\n'
+  test_wasm2asm_output()
+  test_asserts_output()
 
 
 if __name__ == "__main__":

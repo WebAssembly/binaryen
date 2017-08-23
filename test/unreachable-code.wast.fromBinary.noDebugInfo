@@ -1,0 +1,122 @@
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (func $0 (type $0)
+  (if
+   (i32.const 1)
+   (block $label$0
+    (unreachable)
+   )
+  )
+ )
+ (func $1 (type $0)
+  (if
+   (i32.const 1)
+   (block $label$0
+    (unreachable)
+   )
+   (block $label$1
+    (unreachable)
+   )
+  )
+ )
+ (func $2 (type $0)
+  (block $label$0
+   (if
+    (i32.const 1)
+    (block $label$1
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $3 (type $0)
+  (block $label$0
+   (if
+    (i32.const 1)
+    (block $label$1
+     (unreachable)
+    )
+    (block $label$2
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $4 (type $0)
+  (block $label$0
+   (nop)
+   (if
+    (i32.const 1)
+    (block $label$1
+     (unreachable)
+    )
+   )
+   (nop)
+  )
+ )
+ (func $5 (type $0)
+  (block $label$0
+   (nop)
+   (if
+    (i32.const 1)
+    (block $label$1
+     (unreachable)
+    )
+    (block $label$2
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $6 (type $0)
+  (block $label$0
+   (nop)
+   (block $label$1
+    (if
+     (i32.const 1)
+     (block $label$2
+      (unreachable)
+     )
+    )
+   )
+   (nop)
+  )
+ )
+ (func $7 (type $0)
+  (block $label$0
+   (nop)
+   (block $label$1
+    (if
+     (i32.const 1)
+     (block $label$2
+      (unreachable)
+     )
+     (block $label$3
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
+ (func $8 (type $0)
+  (block $label$0
+   (nop)
+   (block $label$1
+    (nop)
+    (br $label$1)
+   )
+   (nop)
+  )
+ )
+ (func $9 (type $0)
+  (block $label$0
+   (nop)
+   (block $label$1
+    (nop)
+    (br $label$0)
+   )
+  )
+ )
+)
+

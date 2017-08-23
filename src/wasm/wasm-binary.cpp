@@ -1807,12 +1807,61 @@ void WasmBinaryBuilder::readGlobals() {
   }
 }
 
-void WasmBinaryBuilder::processExpressions() { // until an end or else marker, or the end of the function
+void WasmBinaryBuilder::processExpressions() {
+  if (debug) std::cerr << "== processExpressions" << std::endl;
+  definitelyUnreachable = false;
   while (1) {
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
       lastSeparator = ret;
+      if (debug) std::cerr << "== processExpressions finished" << std::endl;
+      return;
+    }
+    expressionStack.push_back(curr);
+    if (curr->type == unreachable) {
+      // once we see something unreachable, we don't want to add anything else
+      // to the stack, as it could be stacky code that is non-representable in
+      // our AST. but we do need to skip it
+      // if there is nothing else here, just stop. otherwise, go into unreachable
+      // mode. peek to see what to do
+      if (pos == endOfFunction) {
+        throw ParseException("Reached function end without seeing End opcode");
+      }
+      auto peek = input[pos];
+      if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
+        if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
+        lastSeparator = BinaryConsts::ASTNodes(peek);
+        pos++;
+        return;
+      } else {
+        skipUnreachableCode();
+        return;
+      }
+    }
+  }
+}
+
+void WasmBinaryBuilder::skipUnreachableCode() {
+  if (debug) std::cerr << "== skipUnreachableCode" << std::endl;
+  // preserve the stack, and restore it. it contains the instruction that made us
+  // unreachable, and we can ignore anything after it. things after it may pop,
+  // we want to undo that
+  auto savedStack = expressionStack;
+  // clear the stack. nothing should be popped from there anyhow, just stuff
+  // can be pushed and then popped. Popping past the top of the stack will
+  // result in uneachables being returned
+  expressionStack.clear();
+  while (1) {
+    // set the definitelyUnreachable flag each time, as sub-blocks may set and unset it
+    definitelyUnreachable = true;
+    Expression* curr;
+    auto ret = readExpression(curr);
+    if (!curr) {
+      if (debug) std::cerr << "== skipUnreachableCode finished" << std::endl;
+      lastSeparator = ret;
+      definitelyUnreachable = false;
+      expressionStack = savedStack;
       return;
     }
     expressionStack.push_back(curr);
@@ -1820,15 +1869,19 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
+  if (debug) std::cerr << "== popExpression" << std::endl;
   if (expressionStack.empty()) {
-    throw ParseException("attempted pop from empty stack at " + std::to_string(pos));
+    if (definitelyUnreachable) {
+      // in unreachable code, trying to pop past the polymorphic stack
+      // area results in receiving unreachables
+      if (debug) std::cerr << "== popping unreachable from polymorphic stack" << std::endl;
+      return allocator.alloc<Unreachable>();
+    }
+    throw ParseException("attempted pop from empty stack / beyond block start boundary at " + std::to_string(pos));
   }
+  // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
-  // to simulate the wasm polymorphic stack mode, leave a final
-  // unreachable, don't empty the stack in that case
-  if (!(expressionStack.size() == 1 && ret->type == unreachable)) {
-    expressionStack.pop_back();
-  }
+  expressionStack.pop_back();
   return ret;
 }
 
@@ -2222,7 +2275,6 @@ void WasmBinaryBuilder::visitBreak(Break *curr, uint8_t code) {
 void WasmBinaryBuilder::visitSwitch(Switch *curr) {
   if (debug) std::cerr << "zz node: Switch" << std::endl;
   curr->condition = popNonVoidExpression();
-
   auto numTargets = getU32LEB();
   if (debug) std::cerr << "targets: "<< numTargets<<std::endl;
   for (size_t i = 0; i < numTargets; i++) {

@@ -48,15 +48,20 @@ struct ExecutionResults {
       std::cout << "[fuzz-exec] imports, so quitting\n";
       return;
     }
-    for (auto& func : wasm.functions) {
+    ShellExternalInterface interface;
+    ModuleInstance instance(wasm, &interface);
+    // execute all exported methods (that are therefore preserved through opts)
+    for (auto& exp : wasm.exports) {
+      if (exp->kind != ExternalKind::Function) continue;
+      auto* func = wasm.getFunction(exp->value);
       if (func->result != none) {
         // this has a result
-        results[func->name] = run(func.get(), wasm);
-        std::cout << "[fuzz-exec] note result: " << func->name.str << " => " << results[func->name] << '\n';
+        results[exp->name] = run(func, wasm, instance);
+        std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
       } else {
         // no result, run it anyhow (it might modify memory etc.)
-        run(func.get(), wasm);
-        std::cout << "[fuzz-exec] no result for void func: " << func->name.str << '\n';
+        run(func, wasm, instance);
+        std::cout << "[fuzz-exec] no result for void func: " << exp->name << '\n';
       }
     }
     std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
@@ -76,12 +81,14 @@ struct ExecutionResults {
   bool operator==(ExecutionResults& other) {
     for (auto& iter : results) {
       auto name = iter.first;
-      if (other.results.find(name) != other.results.end()) {
-        std::cout << "[fuzz-exec] comparing " << name << '\n';
-        if (!areBitwiseEqual(results[name], other.results[name])) {
-          std::cout << "not identical!\n";
-          abort();
-        }
+      if (other.results.find(name) == other.results.end()) {
+        std::cout << "[fuzz-exec] missing " << name << '\n';
+        abort();
+      }
+      std::cout << "[fuzz-exec] comparing " << name << '\n';
+      if (!areBitwiseEqual(results[name], other.results[name])) {
+        std::cout << "not identical!\n";
+        abort();
       }
     }
     return true;
@@ -95,6 +102,15 @@ struct ExecutionResults {
     ShellExternalInterface interface;
     try {
       ModuleInstance instance(wasm, &interface);
+      return run(func, wasm, instance);
+    } catch (const TrapException&) {
+      // may throw in instance creation (init of offsets)
+      return Literal();
+    }
+  }
+
+  Literal run(Function* func, Module& wasm, ModuleInstance& instance) {
+    try {
       LiteralList arguments;
       // init hang support, if present
       if (wasm.getFunctionOrNull("hangLimitInitializer")) {
@@ -107,7 +123,6 @@ struct ExecutionResults {
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets) or call itself
       return Literal();
     }
   }

@@ -554,6 +554,10 @@ struct JSPrinter {
 
   JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_) {}
 
+  ~JSPrinter() {
+    free(buffer);
+  }
+
   void printAst() {
     print(ast);
     buffer[used] = 0;
@@ -652,6 +656,7 @@ struct JSPrinter {
     }
     if (node->isAssign()) {
       printAssign(node);
+      return;
     }
     IString type = node[0]->getIString();
     switch (type.str[0]) {
@@ -715,6 +720,7 @@ struct JSPrinter {
       }
       case 't': {
         if (type == TOPLEVEL) printToplevel(node);
+        else if (type == TRY) printTry(node);
         else abort();
         break;
       }
@@ -808,7 +814,6 @@ struct JSPrinter {
   }
 
   void printAssign(Ref node) {
-    assert(false && "printAssign still used!");
     auto* assign = node->asAssign();
     printChild(assign->target(), node, -1);
     space();
@@ -1135,6 +1140,15 @@ struct JSPrinter {
     emit('}');
   }
 
+  void printTry(Ref node) {
+    emit("try ");
+    printBlock(node[1]);
+    emit(" catch (");
+    printName(node[2]);
+    emit(") ");
+    printBlock(node[3]);
+  }
+
   void printSub(Ref node) {
     printChild(node[1], node, -1);
     emit('[');
@@ -1377,66 +1391,18 @@ public:
                                .push_back(makeRawArray());
     return ret;
   }
-  static Ref makeCall(IString target, Ref arg) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(1));
-    ret[2]->push_back(arg);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(2));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(4));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    ret[2]->push_back(arg3);
-    ret[2]->push_back(arg4);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4, Ref arg5, Ref arg6, Ref arg7, Ref arg8) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(8));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    ret[2]->push_back(arg3);
-    ret[2]->push_back(arg4);
-    ret[2]->push_back(arg5);
-    ret[2]->push_back(arg6);
-    ret[2]->push_back(arg7);
-    ret[2]->push_back(arg8);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4, Ref arg5, Ref arg6, Ref arg7, Ref arg8, Ref arg9, Ref arg10, Ref arg11, Ref arg12, Ref arg13, Ref arg14, Ref arg15, Ref arg16) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(16));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    ret[2]->push_back(arg3);
-    ret[2]->push_back(arg4);
-    ret[2]->push_back(arg5);
-    ret[2]->push_back(arg6);
-    ret[2]->push_back(arg7);
-    ret[2]->push_back(arg8);
-    ret[2]->push_back(arg9);
-    ret[2]->push_back(arg10);
-    ret[2]->push_back(arg11);
-    ret[2]->push_back(arg12);
-    ret[2]->push_back(arg13);
-    ret[2]->push_back(arg14);
-    ret[2]->push_back(arg15);
-    ret[2]->push_back(arg16);
-    return ret;
+
+  template<typename ...Ts>
+  static Ref makeCall(IString target, Ts... args) {
+    size_t nArgs = sizeof...(Ts);
+    Ref callArgs = makeRawArray(nArgs);
+    Ref argArray[] = {args...};
+    for (size_t i = 0; i < nArgs; ++i) {
+      callArgs->push_back(argArray[i]);
+    }
+    return &makeRawArray(3)->push_back(makeRawString(CALL))
+        .push_back(makeName(target))
+        .push_back(callArgs);
   }
 
   static void appendToCall(Ref call, Ref element) {
@@ -1610,10 +1576,24 @@ public:
     }
   }
 
+  static Ref makeTry(Ref try_, Ref arg, Ref catch_) {
+    assert(try_[0] == BLOCK);
+    assert(catch_[0] == BLOCK);
+    return &makeRawArray(3)->push_back(makeRawString(TRY))
+                            .push_back(try_)
+                            .push_back(arg)
+                            .push_back(catch_);
+  }
+
   static Ref makeDot(Ref obj, IString key) {
     return &makeRawArray(3)->push_back(makeRawString(DOT))
                             .push_back(obj)
                             .push_back(makeRawString(key));
+  }
+
+  template<typename ...Ts>
+  static Ref makeDot(Ref obj, Ref key, Ts... args) {
+    return makeDot(makeDot(obj, key), args...);
   }
 
   static Ref makeDot(Ref obj, Ref key) {
