@@ -48,10 +48,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     return new I64ToI32Lowering;
   }
 
+  ~I64ToI32Lowering() {
+    delete builder;
+  }
+
   void doWalkModule(Module* module) {
-    auto* moduleBuilder = builder = new Builder(*module);
+    if (builder == nullptr) builder = new Builder(*module);
     PostWalker<I64ToI32Lowering>::doWalkModule(module);
-    delete moduleBuilder;
   }
 
   void visitFunctionType(FunctionType* curr) {
@@ -82,8 +85,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void doWalkFunction(Function* func) {
-    // create builder here because this may be first entry to module if parallel
-    builder = new Builder(*getModule());
+    // create builder here if this is first entry to module for this object
+    if (builder == nullptr) builder = new Builder(*getModule());
     indexMap.clear();
     returnIndices.clear();
     labelIndices.clear();
@@ -143,7 +146,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       Name tmpName("i64toi32_i32$" + std::to_string(idx++));
       builder->addVar(func, tmpName, i32);
     }
-    delete builder;
   }
 
   void visitBlock(Block* curr) {
