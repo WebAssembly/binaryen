@@ -48,12 +48,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     return new I64ToI32Lowering;
   }
 
-  ~I64ToI32Lowering() {
-    delete builder;
-  }
-
   void doWalkModule(Module* module) {
-    if (builder == nullptr) builder = new Builder(*module);
+    if (!builder) builder = make_unique<Builder>(*module);
     PostWalker<I64ToI32Lowering>::doWalkModule(module);
   }
 
@@ -75,18 +71,16 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitGlobal(Global* curr) {
     if (curr->type == i64) {
-      builder = new Builder(*getModule());
       curr->type = i32;
       auto* high = new Global(*curr);
       high->name = makeHighName(curr->name);
       getModule()->addGlobal(high);
-      delete builder;
     }
   }
 
   void doWalkFunction(Function* func) {
     // create builder here if this is first entry to module for this object
-    if (builder == nullptr) builder = new Builder(*getModule());
+    if (!builder) builder = make_unique<Builder>(*getModule());
     indexMap.clear();
     returnIndices.clear();
     labelIndices.clear();
@@ -1154,7 +1148,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
 private:
-  Builder* builder;
+  std::unique_ptr<Builder> builder;
   std::unordered_map<Index, Index> indexMap;
   std::unordered_map<Expression*, Index> returnIndices;
   std::unordered_map<Name, Index> labelIndices;
