@@ -369,10 +369,12 @@ int main(int argc, const char* argv[]) {
       .add("--ctors", "-c", "Comma-separated list of global constructor functions to evaluate",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
-               if (!argument.empty() && argument[0] == '@')
-                   ctorsString = read_file<std::string>(argument.substr(1), Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-               else 
-                   ctorsString = argument;
+             if (!argument.empty() && argument[0] == '@'){
+               ctorsString = read_response_file(argument.substr(1), options.debug ? Flags::Debug : Flags::Release);
+             }
+             else{
+               ctorsString = argument;
+             }
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {

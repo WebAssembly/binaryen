@@ -44,6 +44,10 @@ T read_file(const std::string &filename, Flags::BinaryOption binary, Flags::Debu
 // Declare the valid explicit specializations.
 extern template std::string read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
 extern template std::vector<char> read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
+// Utility function to expand the response file 
+inline std::string read_response_file(const std::string& filename, Flags::DebugOption debug) {
+  return read_file<std::string>(filename, Flags::Text, debug);
+}
 
 class Output {
  public:
