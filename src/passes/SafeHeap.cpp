@@ -45,7 +45,7 @@ static Name getLoadName(Load* curr) {
 
 static Name getStoreName(Store* curr) {
   std::string ret = "SAFE_HEAP_STORE_";
-  ret += printWasmType(curr->type);
+  ret += printWasmType(curr->valueType);
   ret += std::to_string(curr->bytes) + "_";
   if (curr->isAtomic) {
     ret += "A";
@@ -131,10 +131,10 @@ struct SafeHeap : public Pass {
       store.type = none;
       for (Index bytes : { 1, 2, 4, 8 }) {
         store.bytes = bytes;
-        if (bytes > getWasmTypeSize(store.type)) continue;
+        if (bytes > getWasmTypeSize(store.valueType)) continue;
         for (Index align : { 1, 2, 4, 8 }) {
           store.align = align;
-          if (align > getWasmTypeSize(store.type)) continue;
+          if (align > getWasmTypeSize(store.valueType)) continue;
           for (auto isAtomic : { true, false }) {
             store.isAtomic = isAtomic;
             if (store.isAtomic && align != 1) continue;
@@ -206,7 +206,7 @@ struct SafeHeap : public Pass {
     );
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      makeBoundsCheck(curr->type, builder, 3)
+      makeBoundsCheck(curr->valueType, builder, 3)
     );
     // check proper alignment
     if (curr->align > 1) {
