@@ -37,6 +37,8 @@
 #include "wasm-emscripten.h"
 #include "wasm-module-building.h"
 
+#include "float-clamp.h"
+
 namespace wasm {
 
 using namespace cashew;
@@ -356,12 +358,6 @@ struct AdjustDebugInfo : public WalkerPass<PostWalker<AdjustDebugInfo, Visitor<A
 
 class Asm2WasmBuilder {
 public:
-  enum class TrapMode {
-    Allow,
-    Clamp,
-    JS
-  };
-
   Module& wasm;
 
   MixedArena &allocator;
@@ -387,7 +383,7 @@ public:
   Asm2WasmPreProcessor& preprocessor;
   bool debug;
     
-  TrapMode trapMode;
+  FloatTrapMode trapMode;
   PassOptions passOptions;
   bool legalizeJavaScriptFFI;
   bool runOptimizationPasses;
@@ -515,7 +511,7 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode, PassOptions passOptions, bool legalizeJavaScriptFFI, bool runOptimizationPasses, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, FloatTrapMode trapMode, PassOptions passOptions, bool legalizeJavaScriptFFI, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
@@ -716,7 +712,7 @@ private:
 
   // Some binary opts might trap, so emit them safely if necessary
   Expression* makeTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (trapMode == TrapMode::Allow) return builder.makeBinary(op, left, right);
+    if (trapMode == FloatTrapMode::Allow) return builder.makeBinary(op, left, right);
     // the wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
     switch (op) {
@@ -772,7 +768,7 @@ private:
 
   // Some binary opts might trap, so emit them safely if necessary
   Expression* makeTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (trapMode == TrapMode::Allow) return builder.makeBinary(op, left, right);
+    if (trapMode == FloatTrapMode::Allow) return builder.makeBinary(op, left, right);
     // wasm operation might trap if done over 0, so generate a safe call
     auto *call = allocator.alloc<Call>();
     switch (op) {
@@ -828,7 +824,7 @@ private:
 
   // Some conversions might trap, so emit them safely if necessary
   Expression* makeTrappingFloatToInt32(bool signed_, Expression* value) {
-    if (trapMode == TrapMode::Allow) {
+    if (trapMode == FloatTrapMode::Allow) {
       auto ret = allocator.alloc<Unary>();
       ret->value = value;
       bool isF64 = ret->value->type == f64;
@@ -845,7 +841,7 @@ private:
     auto input = ensureDouble(value);
     // We can handle this in one of two ways: clamping, which is fast, or JS, which
     // is precisely like JS but in order to do that we do a slow ffi
-    if (trapMode == TrapMode::JS) {
+    if (trapMode == FloatTrapMode::JS) {
       // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
       CallImport *ret = allocator.alloc<CallImport>();
       ret->target = F64_TO_INT;
@@ -864,7 +860,7 @@ private:
       }
       return ret;
     }
-    assert(trapMode == TrapMode::Clamp);
+    assert(trapMode == FloatTrapMode::Clamp);
     Call *ret = allocator.alloc<Call>();
     ret->target = F64_TO_INT;
     ret->operands.push_back(input);
@@ -912,7 +908,7 @@ private:
   }
 
   Expression* makeTrappingFloatToInt64(bool signed_, Expression* value) {
-    if (trapMode == TrapMode::Allow) {
+    if (trapMode == FloatTrapMode::Allow) {
       auto ret = allocator.alloc<Unary>();
       ret->value = value;
       bool isF64 = ret->value->type == f64;
@@ -1896,7 +1892,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           wasm.addImport(import);
         }
         return call;
-      } else if (trapMode != TrapMode::Allow &&
+      } else if (trapMode != FloatTrapMode::Allow &&
                  (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
                   ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
         return makeTrappingI32Binary(ret->op, ret->left, ret->right);
