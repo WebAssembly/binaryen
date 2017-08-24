@@ -90,10 +90,6 @@ Name I32_CTTZ("i32_cttz"),
      I64_CTTZ("i64_cttz"),
      I64_CTLZ("i64_ctlz"),
      I64_CTPOP("i64_ctpop"),
-     I64S_REM("i64s-rem"),
-     I64U_REM("i64u-rem"),
-     I64S_DIV("i64s-div"),
-     I64U_DIV("i64u-div"),
      F32_COPYSIGN("f32_copysign"),
      F64_COPYSIGN("f64_copysign"),
      LOAD1("load1"),
@@ -708,63 +704,6 @@ private:
     }
     assert(expr->type == f64);
     return expr;
-  }
-
-
-  // Some binary opts might trap, so emit them safely if necessary
-  Expression* makeTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (trapMode == FloatTrapMode::Allow) return builder.makeBinary(op, left, right);
-    // wasm operation might trap if done over 0, so generate a safe call
-    auto *call = allocator.alloc<Call>();
-    switch (op) {
-      case BinaryOp::RemSInt64: call->target = I64S_REM; break;
-      case BinaryOp::RemUInt64: call->target = I64U_REM; break;
-      case BinaryOp::DivSInt64: call->target = I64S_DIV; break;
-      case BinaryOp::DivUInt64: call->target = I64U_DIV; break;
-      default: WASM_UNREACHABLE();
-    }
-    call->operands.push_back(left);
-    call->operands.push_back(right);
-    call->type = i64;
-    static std::set<Name> addedFunctions;
-    if (addedFunctions.count(call->target) == 0) {
-      Expression* result = builder.makeBinary(op,
-        builder.makeGetLocal(0, i64),
-        builder.makeGetLocal(1, i64)
-      );
-      if (op == DivSInt64) {
-        // guard against signed division overflow
-        result = builder.makeIf(
-          builder.makeBinary(AndInt32,
-            builder.makeBinary(EqInt64,
-              builder.makeGetLocal(0, i64),
-              builder.makeConst(Literal(std::numeric_limits<int64_t>::min()))
-            ),
-            builder.makeBinary(EqInt64,
-              builder.makeGetLocal(1, i64),
-              builder.makeConst(Literal(int64_t(-1)))
-            )
-          ),
-          builder.makeConst(Literal(int64_t(0))),
-          result
-        );
-      }
-      addedFunctions.insert(call->target);
-      auto func = new Function;
-      func->name = call->target;
-      func->params.push_back(i64);
-      func->params.push_back(i64);
-      func->result = i64;
-      func->body = builder.makeIf(
-        builder.makeUnary(EqZInt64,
-          builder.makeGetLocal(1, i64)
-        ),
-        builder.makeConst(Literal(int64_t(0))),
-        result
-      );
-      wasm.addFunction(func);
-    }
-    return call;
   }
 
   // Some conversions might trap, so emit them safely if necessary
@@ -2173,10 +2112,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
                 if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
                 if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-                if (name == I64_UDIV) return makeTrappingI64Binary(BinaryOp::DivUInt64, left, right);
-                if (name == I64_SDIV) return makeTrappingI64Binary(BinaryOp::DivSInt64, left, right);
-                if (name == I64_UREM) return makeTrappingI64Binary(BinaryOp::RemUInt64, left, right);
-                if (name == I64_SREM) return makeTrappingI64Binary(BinaryOp::RemSInt64, left, right);
+                if (name == I64_UDIV) return makeTrappingI64Binary(BinaryOp::DivUInt64, left, right, trapMode, wasm, allocator, builder);
+                if (name == I64_SDIV) return makeTrappingI64Binary(BinaryOp::DivSInt64, left, right, trapMode, wasm, allocator, builder);
+                if (name == I64_UREM) return makeTrappingI64Binary(BinaryOp::RemUInt64, left, right, trapMode, wasm, allocator, builder);
+                if (name == I64_SREM) return makeTrappingI64Binary(BinaryOp::RemSInt64, left, right, trapMode, wasm, allocator, builder);
                 if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
                 if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
                 if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);

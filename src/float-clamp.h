@@ -24,6 +24,7 @@
 #include "mixed_arena.h"
 #include "wasm.h"
 #include "wasm-builder.h"
+#include "support/name.h"
 
 namespace wasm {
 
@@ -32,6 +33,11 @@ enum class FloatTrapMode {
   Clamp,
   JS
 };
+
+Name I64S_REM("i64s-rem"),
+     I64U_REM("i64u-rem"),
+     I64S_DIV("i64s-div"),
+     I64U_DIV("i64u-div");
 
 // Some binary opts might trap, so emit them safely if necessary
 Expression* makeTrappingI32Binary(
@@ -84,6 +90,63 @@ Expression* makeTrappingI32Binary(
         builder.makeGetLocal(1, i32)
       ),
       builder.makeConst(Literal(int32_t(0))),
+      result
+    );
+    wasm.addFunction(func);
+  }
+  return call;
+}
+
+Expression* makeTrappingI64Binary(
+    BinaryOp op, Expression* left, Expression* right,
+    FloatTrapMode trapMode, Module& wasm, MixedArena& allocator, Builder& builder) {
+  if (trapMode == FloatTrapMode::Allow) return builder.makeBinary(op, left, right);
+  // wasm operation might trap if done over 0, so generate a safe call
+  auto *call = allocator.alloc<Call>();
+  switch (op) {
+    case BinaryOp::RemSInt64: call->target = I64S_REM; break;
+    case BinaryOp::RemUInt64: call->target = I64U_REM; break;
+    case BinaryOp::DivSInt64: call->target = I64S_DIV; break;
+    case BinaryOp::DivUInt64: call->target = I64U_DIV; break;
+    default: WASM_UNREACHABLE();
+  }
+  call->operands.push_back(left);
+  call->operands.push_back(right);
+  call->type = i64;
+  static std::set<Name> addedFunctions;
+  if (addedFunctions.count(call->target) == 0) {
+    Expression* result = builder.makeBinary(op,
+      builder.makeGetLocal(0, i64),
+      builder.makeGetLocal(1, i64)
+    );
+    if (op == DivSInt64) {
+      // guard against signed division overflow
+      result = builder.makeIf(
+        builder.makeBinary(AndInt32,
+          builder.makeBinary(EqInt64,
+            builder.makeGetLocal(0, i64),
+            builder.makeConst(Literal(std::numeric_limits<int64_t>::min()))
+          ),
+          builder.makeBinary(EqInt64,
+            builder.makeGetLocal(1, i64),
+            builder.makeConst(Literal(int64_t(-1)))
+          )
+        ),
+        builder.makeConst(Literal(int64_t(0))),
+        result
+      );
+    }
+    addedFunctions.insert(call->target);
+    auto func = new Function;
+    func->name = call->target;
+    func->params.push_back(i64);
+    func->params.push_back(i64);
+    func->result = i64;
+    func->body = builder.makeIf(
+      builder.makeUnary(EqZInt64,
+        builder.makeGetLocal(1, i64)
+      ),
+      builder.makeConst(Literal(int64_t(0))),
       result
     );
     wasm.addFunction(func);
