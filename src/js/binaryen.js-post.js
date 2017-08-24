@@ -833,6 +833,14 @@
       Module['print'] = old;
       return ret;
     };
+    this['emitAsmjs'] = function() {
+      var old = Module['print'];
+      var ret = '';
+      Module['print'] = function(x) { ret += x + '\n' };
+      Module['_BinaryenModulePrintAsmjs'](module);
+      Module['print'] = old;
+      return ret;
+    };
     this['validate'] = function() {
       return Module['_BinaryenModuleValidate'](module);
     };
