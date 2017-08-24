@@ -368,6 +368,18 @@ void AtomicCmpxchg::finalize() {
   }
 }
 
+void AtomicWait::finalize() {
+  if (ptr->type == unreachable || expected->type == unreachable || timeout->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void AtomicWake::finalize() {
+  if (ptr->type == unreachable || wakeCount->type == unreachable) {
+    type = unreachable;
+  }
+}
+
 Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;

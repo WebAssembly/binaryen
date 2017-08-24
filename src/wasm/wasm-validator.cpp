@@ -261,6 +261,20 @@ void WasmValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->replacement->type, curr->type, curr, "Cmpxchg result type must match replacement");
   shouldBeIntOrUnreachable(curr->expected->type, curr, "Atomic operations are only valid on int types");
 }
+void WasmValidator::visitAtomicWait(AtomicWait* curr) {
+  if (!getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
+  shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWait must have type i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWait pointer type must be i32");
+  shouldBeIntOrUnreachable(curr->expected->type, curr, "AtomicWait expected type must be int");
+  shouldBeEqualOrFirstIsUnreachable(curr->expected->type, curr->expectedType, curr, "AtomicWait expected type must match operand");
+  shouldBeEqualOrFirstIsUnreachable(curr->timeout->type, i64, curr, "AtomicWait timeout type must be i64");
+}
+void WasmValidator::visitAtomicWake(AtomicWake* curr) {
+  if (!getModule()->memory.shared) fail("Atomic operation with non-shared memory", curr);
+  shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWake must have type i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWake pointer type must be i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->wakeCount->type, i32, curr, "AtomicWake wakeCount type must be i32");
+}
 void WasmValidator::validateMemBytes(uint8_t bytes, WasmType type, Expression* curr) {
   switch (bytes) {
     case 1:

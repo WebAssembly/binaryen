@@ -368,6 +368,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitAtomicRMW(AtomicRMW* curr) {
     o << '(';
+    prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     switch (curr->op) {
       case Add:  o << "add";  break;
@@ -388,6 +389,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     o << '(';
+    prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     o << "cmpxchg";
     restoreNormalColor(o);
@@ -398,6 +400,24 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->ptr);
     printFullLine(curr->expected);
     printFullLine(curr->replacement);
+    decIndent();
+  }
+  void visitAtomicWait(AtomicWait* curr) {
+    o << '(' ;
+    prepareColor(o);
+    o << printWasmType(curr->expectedType) << ".wait";
+    restoreNormalColor(o);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->expected);
+    printFullLine(curr->timeout);
+    decIndent();
+  }
+  void visitAtomicWake(AtomicWake* curr) {
+    printOpening(o, "wake");
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->wakeCount);
     decIndent();
   }
   void visitConst(Const *curr) {
@@ -562,8 +582,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitDrop(Drop *curr) {
-    o << '(';
-    prepareColor(o) << "drop";
+    printOpening(o, "drop");
     incIndent();
     printFullLine(curr->value);
     decIndent();
