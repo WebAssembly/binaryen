@@ -26,13 +26,20 @@
 
 namespace wasm {
 
+const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR"),
+           SEGFAULT_IMPORT("segfault"),
+           ALIGNFAULT_IMPORT("alignfault");
+
 static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
   ret += printWasmType(curr->type);
   ret += std::to_string(curr->bytes) + "_";
   ret += std::to_string(curr->signed_) + "_";
-  ret += std::to_string(curr->align) + "_";
-  ret += std::to_string(curr->isAtomic);
+  if (curr->isAtomic) {
+    ret += "A";
+  } else {
+    ret += std::to_string(curr->align);
+  }
   return ret;
 }
 
@@ -40,8 +47,11 @@ static Name getStoreName(Store* curr) {
   std::string ret = "SAFE_HEAP_STORE_";
   ret += printWasmType(curr->type);
   ret += std::to_string(curr->bytes) + "_";
-  ret += std::to_string(curr->align) + "_";
-  ret += std::to_string(curr->isAtomic);
+  if (curr->isAtomic) {
+    ret += "A";
+  } else {
+    ret += std::to_string(curr->align);
+  }
   return ret;
 }
 
@@ -54,12 +64,13 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     if (curr->type == unreachable) return;
     Builder builder(*getModule());
     replaceCurrent(
-      builder.makeCallImport(
+      builder.makeCall(
         getLoadName(curr),
         {
           curr->ptr,
           builder.makeConst(Literal(int32_t(curr->offset))),
-        }
+        },
+        curr->type
       )
     );
   }
@@ -68,13 +79,14 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     if (curr->type == unreachable) return;
     Builder builder(*getModule());
     replaceCurrent(
-      builder.makeCallImport(
+      builder.makeCall(
         getStoreName(curr),
         {
           curr->ptr,
-          curr->value,
           builder.makeConst(Literal(int32_t(curr->offset))),
-        }
+          curr->value,
+        },
+        none
       )
     );
   }
@@ -85,24 +97,48 @@ struct SafeHeap : public Pass {
     // add helper checking funcs
     addFuncs(module);
     // instrument loads and stores
-    PassRunner runner(module);
-    runner.setIsNested(true);
-    runner.add<AccessInstrumenter>();
-    runner.run();
+    PassRunner instrumenter(module);
+    instrumenter.setIsNested(true);
+    instrumenter.add<AccessInstrumenter>();
+    instrumenter.run();
   }
 
   void addFuncs(Module* module) {
     Load load;
-    for (load.type : { i32, i64, f32, f64 }) {
-      for (load.bytes : { 1, 2, 4, 8 }) {
+    for (auto type : { i32, i64, f32, f64 }) {
+      load.type = type;
+      for (Index bytes : { 1, 2, 4, 8 }) {
+        load.bytes = bytes;
         if (bytes > getWasmTypeSize(load.type)) continue;
-        for (load.signed_ : { true, false }) {
+        for (auto signed_ : { true, false }) {
+          load.signed_ = signed_;
           if (isWasmTypeFloat(load.type) && load.signed_) continue; 
-          for (load.align : { 1, 2, 4, 8 }) {
+          for (Index align : { 1, 2, 4, 8 }) {
+            load.align = align;
             if (align > getWasmTypeSize(load.type)) continue;
-            for (load.isAtomic : { true, false }) {
+            for (auto isAtomic : { true, false }) {
+              load.isAtomic = isAtomic;
+              if (load.isAtomic && align != 1) continue;
               addLoadFunc(&load, module);
             }
+          }
+        }
+      }
+    }
+    Store store;
+    for (auto valueType : { i32, i64, f32, f64 }) {
+      store.valueType = valueType;
+      store.type = none;
+      for (Index bytes : { 1, 2, 4, 8 }) {
+        store.bytes = bytes;
+        if (bytes > getWasmTypeSize(store.type)) continue;
+        for (Index align : { 1, 2, 4, 8 }) {
+          store.align = align;
+          if (align > getWasmTypeSize(store.type)) continue;
+          for (auto isAtomic : { true, false }) {
+            store.isAtomic = isAtomic;
+            if (store.isAtomic && align != 1) continue;
+            addStoreFunc(&store, module);
           }
         }
       }
@@ -116,69 +152,105 @@ struct SafeHeap : public Pass {
     func->params.push_back(i32); // offset
     func->vars.push_back(i32); // pointer + offset
     func->result = curr->type;
-    auto size = getWasmTypeSize(curr->type);
     Builder builder(*module);
-    auto* block = builder->makeBlock();
+    auto* block = builder.makeBlock();
     block->list.push_back(
-      builder->makeSetLocal(
+      builder.makeSetLocal(
         2,
-        builder->makeBinary(
+        builder.makeBinary(
           AddInt32,
-          builder->makeGetLocal(0, i32),
-          builder->makeGetLocal(1, i32)
+          builder.makeGetLocal(0, i32),
+          builder.makeGetLocal(1, i32)
         )
       )
     );
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      builder->makeIf(
-        builder->makeBinary(
-          GtUInt32,
-          builder->makeBinary(
-            AddInt32,
-            builder->makeGetLocal(2, i32),
-            builder->makeConst(Literal(int32_t(size)))
-          ),
-          builder->makeLoad(4, false, 0, 4,
-            builder->makeGetGlobal(DYNAMICTOP_PTR_IMPORT, i32), i32
-          );
-        )
-        builder->makeCall(SEGFAULT_IMPORT)
-      )
+      makeBoundsCheck(curr->type, builder, 2)
     );
     // check proper alignment
     if (curr->align > 1) {
       block->list.push_back(
-        builder->makeIf(
-          builder->makeBinary(
-            AndInt32,
-            builder->makeGetLocal(2, i32),
-            builder->makeConst(Literal(int32_t(curr->align - 1)))
-          )
-          builder->makeCall(ALIGNFAULT_IMPORT)
-        )
+        makeAlignCheck(curr->align, builder, 2)
       );
     }
-    /*
-  if ((dest|0) <= 0) segfault();
-  if ((dest + bytes|0) > (HEAP32[DYNAMICTOP_PTR>>2]|0)) segfault();
-  if ((bytes|0) == 4) {
-    if ((dest&3)) alignfault();
-    return HEAP32[dest>>2] | 0;
-  } else if ((bytes|0) == 1) {
-    if (unsigned) {
-      return HEAPU8[dest>>0] | 0;
-    } else {
-      return HEAP8[dest>>0] | 0;
-    }
-  }
-  if ((dest&1)) alignfault();
-  if (unsigned) return HEAPU16[dest>>1] | 0;
-  return HEAP16[dest>>1] | 0;
-*/
+    // do the load
+    auto* load = module->allocator.alloc<Load>();
+    *load = *curr; // basically the same as the template we are given!
+    load->ptr = builder.makeGetLocal(2, i32);
+    block->list.push_back(load);
     block->finalize(curr->type);
     func->body = block;
     module->addFunction(func);
+  }
+
+  void addStoreFunc(Store* curr, Module* module) {
+    auto* func = new Function;
+    func->name = getStoreName(curr);
+    func->params.push_back(i32); // pointer
+    func->params.push_back(i32); // offset
+    func->params.push_back(curr->valueType); // value
+    func->vars.push_back(i32); // pointer + offset
+    func->result = none;
+    Builder builder(*module);
+    auto* block = builder.makeBlock();
+    block->list.push_back(
+      builder.makeSetLocal(
+        3,
+        builder.makeBinary(
+          AddInt32,
+          builder.makeGetLocal(0, i32),
+          builder.makeGetLocal(1, i32)
+        )
+      )
+    );
+    // check for reading past valid memory: if pointer + offset + bytes
+    block->list.push_back(
+      makeBoundsCheck(curr->type, builder, 3)
+    );
+    // check proper alignment
+    if (curr->align > 1) {
+      block->list.push_back(
+        makeAlignCheck(curr->align, builder, 3)
+      );
+    }
+    // do the store
+    auto* store = module->allocator.alloc<Store>();
+    *store = *curr; // basically the same as the template we are given!
+    store->ptr = builder.makeGetLocal(3, i32);
+    store->value = builder.makeGetLocal(2, curr->valueType);
+    block->list.push_back(store);
+    block->finalize(none);
+    func->body = block;
+    module->addFunction(func);
+  }
+
+  Expression* makeAlignCheck(Address align, Builder& builder, Index local) {
+    return builder.makeIf(
+      builder.makeBinary(
+        AndInt32,
+        builder.makeGetLocal(local, i32),
+        builder.makeConst(Literal(int32_t(align - 1)))
+      ),
+      builder.makeCallImport(ALIGNFAULT_IMPORT, {}, none)
+    );
+  }
+
+  Expression* makeBoundsCheck(WasmType type, Builder& builder, Index local) {
+    return builder.makeIf(
+      builder.makeBinary(
+        GtUInt32,
+        builder.makeBinary(
+          AddInt32,
+          builder.makeGetLocal(local, i32),
+          builder.makeConst(Literal(int32_t(getWasmTypeSize(type))))
+        ),
+        builder.makeLoad(4, false, 0, 4,
+          builder.makeGetGlobal(DYNAMICTOP_PTR_IMPORT, i32), i32
+        )
+      ),
+      builder.makeCallImport(SEGFAULT_IMPORT, {}, none)
+    );
   }
 };
 
