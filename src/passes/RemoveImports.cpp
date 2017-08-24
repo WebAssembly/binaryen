@@ -15,7 +15,7 @@
  */
 
 //
-// Removeds function imports, and replaces them with nops. This is useful
+// Removes function imports, and replaces them with nops. This is useful
 // for running a module through the reference interpreter, which
 // does not validate imports for a JS environment (by removing
 // imports, we can at least get the reference interpreter to

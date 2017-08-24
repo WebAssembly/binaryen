@@ -27,7 +27,7 @@ from scripts.test.shared import (
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
-    requested, warnings
+    requested, warnings, has_shell_timeout
 )
 
 import scripts.test.s2wasm as s2wasm
@@ -321,12 +321,9 @@ for t in os.listdir(os.path.join('test', 'ctor-eval')):
     with open(out) as f:
       fail_if_not_identical(f.read(), actual)
 
-print '\n[ checking wasm-reduce ]\n'
+if has_shell_timeout():
+  print '\n[ checking wasm-reduce ]\n'
 
-# check if we have `timeout`, which the reducer depends on
-has_shell_timeout = (os.system('timeout 1s pwd') == 0)
-
-if has_shell_timeout:
   for t in os.listdir(os.path.join('test', 'reduce')):
     if t.endswith('.wast'):
       print '..', t

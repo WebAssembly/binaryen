@@ -186,12 +186,19 @@ if options.valgrind:
 os.environ['BINARYEN'] = os.getcwd()
 
 
+def get_platform():
+  return {'linux2': 'linux',
+          'darwin': 'mac',
+          'win32': 'windows',
+          'cygwin': 'windows'}[sys.platform]
+
+def has_shell_timeout():
+  return get_platform() != 'windows' and os.system('timeout 1s pwd') == 0
+
+
 def fetch_waterfall():
   rev = open(os.path.join(options.binaryen_test, 'revision')).read().strip()
-  buildername = {'linux2': 'linux',
-                 'darwin': 'mac',
-                 'win32': 'windows',
-                 'cygwin': 'windows'}[sys.platform]
+  buildername = get_platform()
   try:
     local_rev_path = os.path.join(options.binaryen_test, 'local-revision')
     local_rev = open(local_rev_path).read().strip()
