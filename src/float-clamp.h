@@ -24,6 +24,7 @@
 #include "mixed_arena.h"
 #include "wasm.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
 #include "support/name.h"
 
 namespace wasm {
@@ -53,9 +54,64 @@ Name I64S_REM("i64s-rem"),
      I64S_DIV("i64s-div"),
      I64U_DIV("i64u-div");
 
+void ensureBinaryFunc(FloatTrapContext const& context,
+                      Name name, BinaryOp op, WasmType type) {
+  static std::set<Name> addedFunctions;
+  if (addedFunctions.count(name) != 0) {
+    return;
+  }
+
+  bool is32Bit = type == i32;
+  Builder& builder = context.builder;
+  Expression* result = builder.makeBinary(op,
+    builder.makeGetLocal(0, type),
+    builder.makeGetLocal(1, type)
+  );
+  BinaryOp divSIntOp = is32Bit ? DivSInt32 : DivSInt64;
+  BinaryOp eqOp =      is32Bit ? EqInt32   : EqInt64;
+  UnaryOp eqZOp =      is32Bit ? EqZInt32  : EqZInt64;
+  Literal minLit = is32Bit ? Literal(std::numeric_limits<int32_t>::min())
+                           : Literal(std::numeric_limits<int64_t>::min());
+  Literal negLit = is32Bit ? Literal(int32_t(-1))
+                           : Literal(int64_t(-1));
+  Literal zeroLit = is32Bit ? Literal(int32_t(0))
+                            : Literal(int64_t(0));
+  if (op == divSIntOp) {
+    // guard against signed division overflow
+    result = builder.makeIf(
+      builder.makeBinary(AndInt32,
+        builder.makeBinary(eqOp,
+          builder.makeGetLocal(0, type),
+          builder.makeConst(minLit)
+        ),
+        builder.makeBinary(eqOp,
+          builder.makeGetLocal(1, type),
+          builder.makeConst(negLit)
+        )
+      ),
+      builder.makeConst(zeroLit),
+      result
+    );
+  }
+  addedFunctions.insert(name);
+  auto func = new Function;
+  func->name = name;
+  func->params.push_back(type);
+  func->params.push_back(type);
+  func->result = type;
+  func->body = builder.makeIf(
+    builder.makeUnary(eqZOp,
+      builder.makeGetLocal(1, type)
+    ),
+    builder.makeConst(zeroLit),
+    result
+  );
+  context.wasm.addFunction(func);
+}
+
 // Some binary opts might trap, so emit them safely if necessary
 Expression* makeTrappingI32Binary(
-    BinaryOp op, Expression* left, Expression* right, FloatTrapContext context) {
+    BinaryOp op, Expression* left, Expression* right, FloatTrapContext const& context) {
   if (context.trapMode == FloatTrapMode::Allow) {
     return context.builder.makeBinary(op, left, right);
   }
@@ -71,50 +127,12 @@ Expression* makeTrappingI32Binary(
   call->operands.push_back(left);
   call->operands.push_back(right);
   call->type = i32;
-  static std::set<Name> addedFunctions;
-  if (addedFunctions.count(call->target) == 0) {
-    Builder& builder = context.builder;
-    Expression* result = builder.makeBinary(op,
-      builder.makeGetLocal(0, i32),
-      builder.makeGetLocal(1, i32)
-    );
-    if (op == DivSInt32) {
-      // guard against signed division overflow
-      result = builder.makeIf(
-        builder.makeBinary(AndInt32,
-          builder.makeBinary(EqInt32,
-            builder.makeGetLocal(0, i32),
-            builder.makeConst(Literal(std::numeric_limits<int32_t>::min()))
-          ),
-          builder.makeBinary(EqInt32,
-            builder.makeGetLocal(1, i32),
-            builder.makeConst(Literal(int32_t(-1)))
-          )
-        ),
-        builder.makeConst(Literal(int32_t(0))),
-        result
-      );
-    }
-    addedFunctions.insert(call->target);
-    auto func = new Function;
-    func->name = call->target;
-    func->params.push_back(i32);
-    func->params.push_back(i32);
-    func->result = i32;
-    func->body = builder.makeIf(
-      builder.makeUnary(EqZInt32,
-        builder.makeGetLocal(1, i32)
-      ),
-      builder.makeConst(Literal(int32_t(0))),
-      result
-    );
-    context.wasm.addFunction(func);
-  }
+  ensureBinaryFunc(context, call->target, op, i32);
   return call;
 }
 
 Expression* makeTrappingI64Binary(
-    BinaryOp op, Expression* left, Expression* right, FloatTrapContext context) {
+    BinaryOp op, Expression* left, Expression* right, FloatTrapContext const& context) {
   if (context.trapMode == FloatTrapMode::Allow) {
     return context.builder.makeBinary(op, left, right);
   }
@@ -130,45 +148,7 @@ Expression* makeTrappingI64Binary(
   call->operands.push_back(left);
   call->operands.push_back(right);
   call->type = i64;
-  static std::set<Name> addedFunctions;
-  if (addedFunctions.count(call->target) == 0) {
-    Builder& builder = context.builder;
-    Expression* result = builder.makeBinary(op,
-      builder.makeGetLocal(0, i64),
-      builder.makeGetLocal(1, i64)
-    );
-    if (op == DivSInt64) {
-      // guard against signed division overflow
-      result = builder.makeIf(
-        builder.makeBinary(AndInt32,
-          builder.makeBinary(EqInt64,
-            builder.makeGetLocal(0, i64),
-            builder.makeConst(Literal(std::numeric_limits<int64_t>::min()))
-          ),
-          builder.makeBinary(EqInt64,
-            builder.makeGetLocal(1, i64),
-            builder.makeConst(Literal(int64_t(-1)))
-          )
-        ),
-        builder.makeConst(Literal(int64_t(0))),
-        result
-      );
-    }
-    addedFunctions.insert(call->target);
-    auto func = new Function;
-    func->name = call->target;
-    func->params.push_back(i64);
-    func->params.push_back(i64);
-    func->result = i64;
-    func->body = builder.makeIf(
-      builder.makeUnary(EqZInt64,
-        builder.makeGetLocal(1, i64)
-      ),
-      builder.makeConst(Literal(int64_t(0))),
-      result
-    );
-    context.wasm.addFunction(func);
-  }
+  ensureBinaryFunc(context, call->target, op, i64);
   return call;
 }
 
