@@ -34,6 +34,20 @@ enum class FloatTrapMode {
   JS
 };
 
+struct FloatTrapContext {
+  FloatTrapMode trapMode;
+  Module& wasm;
+  MixedArena& allocator;
+  Builder& builder;
+
+  FloatTrapContext(FloatTrapMode trapMode, Module& wasm,
+                   MixedArena& allocator, Builder& builder)
+    : trapMode(trapMode),
+      wasm(wasm),
+      allocator(allocator),
+      builder(builder) {}
+};
+
 Name I64S_REM("i64s-rem"),
      I64U_REM("i64u-rem"),
      I64S_DIV("i64s-div"),
@@ -41,11 +55,12 @@ Name I64S_REM("i64s-rem"),
 
 // Some binary opts might trap, so emit them safely if necessary
 Expression* makeTrappingI32Binary(
-    BinaryOp op, Expression* left, Expression* right,
-    FloatTrapMode trapMode, Module& wasm, MixedArena& allocator, Builder& builder) {
-  if (trapMode == FloatTrapMode::Allow) return builder.makeBinary(op, left, right);
+    BinaryOp op, Expression* left, Expression* right, FloatTrapContext context) {
+  if (context.trapMode == FloatTrapMode::Allow) {
+    return context.builder.makeBinary(op, left, right);
+  }
   // the wasm operation might trap if done over 0, so generate a safe call
-  auto *call = allocator.alloc<Call>();
+  auto *call = context.allocator.alloc<Call>();
   switch (op) {
     case BinaryOp::RemSInt32: call->target = I32S_REM; break;
     case BinaryOp::RemUInt32: call->target = I32U_REM; break;
@@ -58,6 +73,7 @@ Expression* makeTrappingI32Binary(
   call->type = i32;
   static std::set<Name> addedFunctions;
   if (addedFunctions.count(call->target) == 0) {
+    Builder& builder = context.builder;
     Expression* result = builder.makeBinary(op,
       builder.makeGetLocal(0, i32),
       builder.makeGetLocal(1, i32)
@@ -92,17 +108,18 @@ Expression* makeTrappingI32Binary(
       builder.makeConst(Literal(int32_t(0))),
       result
     );
-    wasm.addFunction(func);
+    context.wasm.addFunction(func);
   }
   return call;
 }
 
 Expression* makeTrappingI64Binary(
-    BinaryOp op, Expression* left, Expression* right,
-    FloatTrapMode trapMode, Module& wasm, MixedArena& allocator, Builder& builder) {
-  if (trapMode == FloatTrapMode::Allow) return builder.makeBinary(op, left, right);
+    BinaryOp op, Expression* left, Expression* right, FloatTrapContext context) {
+  if (context.trapMode == FloatTrapMode::Allow) {
+    return context.builder.makeBinary(op, left, right);
+  }
   // wasm operation might trap if done over 0, so generate a safe call
-  auto *call = allocator.alloc<Call>();
+  auto *call = context.allocator.alloc<Call>();
   switch (op) {
     case BinaryOp::RemSInt64: call->target = I64S_REM; break;
     case BinaryOp::RemUInt64: call->target = I64U_REM; break;
@@ -115,6 +132,7 @@ Expression* makeTrappingI64Binary(
   call->type = i64;
   static std::set<Name> addedFunctions;
   if (addedFunctions.count(call->target) == 0) {
+    Builder& builder = context.builder;
     Expression* result = builder.makeBinary(op,
       builder.makeGetLocal(0, i64),
       builder.makeGetLocal(1, i64)
@@ -149,7 +167,7 @@ Expression* makeTrappingI64Binary(
       builder.makeConst(Literal(int64_t(0))),
       result
     );
-    wasm.addFunction(func);
+    context.wasm.addFunction(func);
   }
   return call;
 }

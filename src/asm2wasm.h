@@ -380,6 +380,7 @@ public:
   bool debug;
     
   FloatTrapMode trapMode;
+  FloatTrapContext trapContext;
   PassOptions passOptions;
   bool legalizeJavaScriptFFI;
   bool runOptimizationPasses;
@@ -514,6 +515,7 @@ public:
        preprocessor(preprocessor),
        debug(debug),
        trapMode(trapMode),
+       trapContext(trapMode, wasm, allocator, builder),
        passOptions(passOptions),
        legalizeJavaScriptFFI(legalizeJavaScriptFFI),
        runOptimizationPasses(runOptimizationPasses),
@@ -1779,8 +1781,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       } else if (trapMode != FloatTrapMode::Allow &&
                  (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
                   ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
-        return makeTrappingI32Binary(ret->op, ret->left, ret->right,
-                                     trapMode, wasm, allocator, builder);
+        return makeTrappingI32Binary(ret->op, ret->left, ret->right, trapContext);
       }
       return ret;
     } else if (what == SUB) {
@@ -2112,10 +2113,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
                 if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
                 if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-                if (name == I64_UDIV) return makeTrappingI64Binary(BinaryOp::DivUInt64, left, right, trapMode, wasm, allocator, builder);
-                if (name == I64_SDIV) return makeTrappingI64Binary(BinaryOp::DivSInt64, left, right, trapMode, wasm, allocator, builder);
-                if (name == I64_UREM) return makeTrappingI64Binary(BinaryOp::RemUInt64, left, right, trapMode, wasm, allocator, builder);
-                if (name == I64_SREM) return makeTrappingI64Binary(BinaryOp::RemSInt64, left, right, trapMode, wasm, allocator, builder);
+                if (name == I64_UDIV) return makeTrappingI64Binary(BinaryOp::DivUInt64, left, right, trapContext);
+                if (name == I64_SDIV) return makeTrappingI64Binary(BinaryOp::DivSInt64, left, right, trapContext);
+                if (name == I64_UREM) return makeTrappingI64Binary(BinaryOp::RemUInt64, left, right, trapContext);
+                if (name == I64_SREM) return makeTrappingI64Binary(BinaryOp::RemSInt64, left, right, trapContext);
                 if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
                 if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
                 if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
