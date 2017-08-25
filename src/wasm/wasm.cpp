@@ -245,9 +245,7 @@ void If::finalize(WasmType type_) {
 }
 
 void If::finalize() {
-  if (condition->type == unreachable) {
-    type = unreachable;
-  } else if (ifFalse) {
+  if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
     } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
@@ -259,6 +257,17 @@ void If::finalize() {
     }
   } else {
     type = none; // if without else
+  }
+  // if the arms return a value, leave it even if the condition
+  // is unreachable, we still mark ourselves as having that type, e.g.
+  // (if (result i32)
+  //  (unreachable)
+  //  (i32.const 10)
+  //  (i32.const 20
+  // )
+  // otherwise, if the condition is unreachable, so is the if
+  if (type == none && condition->type == unreachable) {
+    type = unreachable;
   }
 }
 

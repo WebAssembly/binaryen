@@ -116,6 +116,14 @@ void WasmValidator::visitIf(If *curr) {
         shouldBeEqual(curr->ifFalse->type, unreachable, curr, "unreachable if-else must have unreachable false");
       }
     }
+    if (isConcreteWasmType(curr->ifTrue->type)) {
+      shouldBeEqual(curr->type, curr->ifTrue->type, curr, "if type must match concrete ifTrue");
+      shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->ifTrue->type, curr, "other arm must match concrete ifTrue");
+    }
+    if (isConcreteWasmType(curr->ifFalse->type)) {
+      shouldBeEqual(curr->type, curr->ifFalse->type, curr, "if type must match concrete ifFalse");
+      shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->ifFalse->type, curr, "other arm must match concrete ifFalse");
+    }
   }
 }
 

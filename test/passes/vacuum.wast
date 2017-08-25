@@ -596,17 +596,19 @@
   (func $unreachable-if-with-nop-arm-that-leaves-a-concrete-value-if-nop-is-removed
    (block $label$0
     (loop $label$1
-     (if
-      (br_if $label$0
-       (i32.load8_s
-        (i32.const 1634541608)
+     (drop
+      (if (result i32)
+       (br_if $label$0
+        (i32.load8_s
+         (i32.const 1634541608)
+        )
+        (loop $label$9
+         (br $label$9)
+        )
        )
-       (loop $label$9
-        (br $label$9)
-       )
+       (unreachable)
+       (i32.const 1920103026)
       )
-      (nop)
-      (i32.const 1920103026)
      )
     )
    )

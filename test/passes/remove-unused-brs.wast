@@ -945,24 +945,28 @@
   )
   (func $unreachable-if-that-could-be-a-br_if (result i64)
    (loop $label$3 (result i64)
-    (if
-     (unreachable)
-     (f64.const 1)
-     (br $label$3)
+    (drop
+     (if (result f64)
+      (unreachable)
+      (f64.const 1)
+      (br $label$3)
+     )
     )
     (i64.const 1)
    )
   )
   (func $nop-br-might-update-type
    (block $label$39
-    (if
-     (unreachable)
+    (drop
      (if (result i32)
-      (i32.const 1)
-      (br $label$39) ;; if we nop this, then the parent type must change
+      (unreachable)
+      (if (result i32)
+       (i32.const 1)
+       (br $label$39) ;; if we nop this, then the parent type must change
+       (i32.const 0)
+      )
       (i32.const 0)
      )
-     (i32.const 0)
     )
    )
   )
