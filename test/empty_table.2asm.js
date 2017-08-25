@@ -14,18 +14,18 @@ function asmFunc(global, env, buffer) {
  var Math_clz32 = global.Math.clz32;
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $1 = 0;
-  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $1 | 0;
+  var $$1 = 0;
+  if ((x | 0) == (0 | 0)) $$1 = 32; else $$1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return $$1 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $2 = 0, $3 = 0;
+  var count = 0, $$2 = 0, $$3 = 0;
   count = 0;
   b : {
    l : do {
-    $2 = count;
+    $$2 = count;
     if ((x | 0) == (0 | 0)) break b;
     x = x & (x - 1 | 0) | 0;
     count = count + 1 | 0;
@@ -33,8 +33,8 @@ function asmFunc(global, env, buffer) {
     break l;
    } while (1);
   };
-  $3 = $2;
-  return $3 | 0;
+  $$3 = $$2;
+  return $$3 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
