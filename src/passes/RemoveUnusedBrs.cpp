@@ -173,6 +173,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     auto* iff = (*currp)->dynCast<If>();
 
     if (iff) {
+      if (iff->condition->type == unreachable) {
+        // avoid all the branching, we never reach it anyhow
+        *currp = iff->condition;
+        return;
+      }
       self->pushTask(doVisitIf, currp);
       if (iff->ifFalse) {
       // we need to join up if-else control flow, and clear after the condition

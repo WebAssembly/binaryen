@@ -953,5 +953,18 @@
     (i64.const 1)
    )
   )
+  (func $nop-br-might-update-type
+   (block $label$39
+    (if
+     (unreachable)
+     (if (result i32)
+      (i32.const 1)
+      (br $label$39) ;; if we nop this, then the parent type must change
+      (i32.const 0)
+     )
+     (i32.const 0)
+    )
+   )
+  )
 )
 
