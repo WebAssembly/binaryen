@@ -332,6 +332,10 @@ void SetLocal::setTee(bool is) {
 void SetLocal::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
+  } else if (isTee()) {
+    type = value->type;
+  } else {
+    type = none;
   }
 }
 
