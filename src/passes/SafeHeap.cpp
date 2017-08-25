@@ -289,14 +289,22 @@ struct SafeHeap : public Pass {
   Expression* makeBoundsCheck(WasmType type, Builder& builder, Index local) {
     return builder.makeIf(
       builder.makeBinary(
-        GtUInt32,
+        OrInt32,
         builder.makeBinary(
-          AddInt32,
+          EqInt32,
           builder.makeGetLocal(local, i32),
-          builder.makeConst(Literal(int32_t(getWasmTypeSize(type))))
+          builder.makeConst(Literal(int32_t(0)))
         ),
-        builder.makeLoad(4, false, 0, 4,
-          builder.makeGetGlobal(DYNAMICTOP_PTR_IMPORT, i32), i32
+        builder.makeBinary(
+          GtUInt32,
+          builder.makeBinary(
+            AddInt32,
+            builder.makeGetLocal(local, i32),
+            builder.makeConst(Literal(int32_t(getWasmTypeSize(type))))
+          ),
+          builder.makeLoad(4, false, 0, 4,
+            builder.makeGetGlobal(DYNAMICTOP_PTR_IMPORT, i32), i32
+          )
         )
       ),
       builder.makeCallImport(SEGFAULT_IMPORT, {}, none)
