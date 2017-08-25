@@ -36,7 +36,9 @@ static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
   ret += printWasmType(curr->type);
   ret += "_" + std::to_string(curr->bytes) + "_";
-  ret += std::to_string(curr->signed_) + "_";
+  if (!isWasmTypeFloat(curr->type)) {
+    ret += std::to_string(curr->signed_) + "_";
+  }
   if (curr->isAtomic) {
     ret += "A";
   } else {
