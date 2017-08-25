@@ -22,6 +22,8 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
 
 namespace wasm {
@@ -33,7 +35,7 @@ const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR"),
 static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
   ret += printWasmType(curr->type);
-  ret += std::to_string(curr->bytes) + "_";
+  ret += "_" + std::to_string(curr->bytes) + "_";
   ret += std::to_string(curr->signed_) + "_";
   if (curr->isAtomic) {
     ret += "A";
@@ -46,7 +48,7 @@ static Name getLoadName(Load* curr) {
 static Name getStoreName(Store* curr) {
   std::string ret = "SAFE_HEAP_STORE_";
   ret += printWasmType(curr->valueType);
-  ret += std::to_string(curr->bytes) + "_";
+  ret += "_" + std::to_string(curr->bytes) + "_";
   if (curr->isAtomic) {
     ret += "A";
   } else {
@@ -94,16 +96,17 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
 
 struct SafeHeap : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    // add helper checking funcs
-    addFuncs(module);
     // instrument loads and stores
     PassRunner instrumenter(module);
     instrumenter.setIsNested(true);
     instrumenter.add<AccessInstrumenter>();
     instrumenter.run();
+    // add helper checking funcs and imports
+    addGlobals(module);
   }
 
-  void addFuncs(Module* module) {
+  void addGlobals(Module* module) {
+    // load funcs
     Load load;
     for (auto type : { i32, i64, f32, f64 }) {
       load.type = type;
@@ -115,16 +118,17 @@ struct SafeHeap : public Pass {
           if (isWasmTypeFloat(load.type) && load.signed_) continue; 
           for (Index align : { 1, 2, 4, 8 }) {
             load.align = align;
-            if (align > getWasmTypeSize(load.type)) continue;
+            if (align > bytes) continue;
             for (auto isAtomic : { true, false }) {
               load.isAtomic = isAtomic;
-              if (load.isAtomic && align != 1) continue;
+              if (load.isAtomic && align != bytes) continue;
               addLoadFunc(&load, module);
             }
           }
         }
       }
     }
+    // store funcs
     Store store;
     for (auto valueType : { i32, i64, f32, f64 }) {
       store.valueType = valueType;
@@ -134,14 +138,60 @@ struct SafeHeap : public Pass {
         if (bytes > getWasmTypeSize(store.valueType)) continue;
         for (Index align : { 1, 2, 4, 8 }) {
           store.align = align;
-          if (align > getWasmTypeSize(store.valueType)) continue;
+          if (align > bytes) continue;
           for (auto isAtomic : { true, false }) {
             store.isAtomic = isAtomic;
-            if (store.isAtomic && align != 1) continue;
+            if (store.isAtomic && align != bytes) continue;
             addStoreFunc(&store, module);
           }
         }
       }
+    }
+    // imports
+    bool hasDynamicTop = false,
+         hasSegfault = false,
+         hasAlignfault = false;
+    for (auto& import : module->imports) {
+      if (import->kind == ExternalKind::Global) {
+        if (import->module == ENV && import->base == DYNAMICTOP_PTR_IMPORT) {
+          hasDynamicTop = true;
+        }
+      } else if (import->kind == ExternalKind::Function) {
+        if (import->module == ENV) {
+          if (import->base == SEGFAULT_IMPORT) {
+            hasSegfault = true;
+          } else if (import->base == ALIGNFAULT_IMPORT) {
+            hasAlignfault = true;
+          }
+        }
+      }
+    }
+    if (!hasDynamicTop) {
+      auto* import = new Import;
+      import->name = DYNAMICTOP_PTR_IMPORT;
+      import->module = ENV;
+      import->base = DYNAMICTOP_PTR_IMPORT;
+      import->kind = ExternalKind::Global;
+      import->globalType = i32;
+      module->addImport(import);
+    }
+    if (!hasSegfault) {
+      auto* import = new Import;
+      import->name = SEGFAULT_IMPORT;
+      import->module = ENV;
+      import->base = SEGFAULT_IMPORT;
+      import->kind = ExternalKind::Function;
+      import->functionType = ensureFunctionType("v", module)->name;
+      module->addImport(import);
+    }
+    if (!hasAlignfault) {
+      auto* import = new Import;
+      import->name = ALIGNFAULT_IMPORT;
+      import->module = ENV;
+      import->base = ALIGNFAULT_IMPORT;
+      import->kind = ExternalKind::Function;
+      import->functionType = ensureFunctionType("v", module)->name;
+      module->addImport(import);
     }
   }
 
