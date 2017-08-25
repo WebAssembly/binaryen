@@ -82,6 +82,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->valueCanFlow = true; // start optimistic
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
+      if (iff->condition->type == unreachable) {
+        // avoid trying to optimize this, we never reach it anyhow
+        return;
+      }
       if (iff->ifFalse) {
         assert(self->ifStack.size() > 0);
         for (auto* flow : self->ifStack.back()) {
@@ -174,8 +178,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     if (iff) {
       if (iff->condition->type == unreachable) {
-        // avoid all the branching, we never reach it anyhow
-        *currp = iff->condition;
+        // avoid trying to optimize this, we never reach it anyhow
         return;
       }
       self->pushTask(doVisitIf, currp);
