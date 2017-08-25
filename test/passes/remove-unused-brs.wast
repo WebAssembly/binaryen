@@ -943,5 +943,15 @@
     )
    )
   )
+  (func $unreachable-if-that-could-be-a-br_if (result i64)
+   (loop $label$3
+    (if
+     (unreachable)
+     (f64.const 1)
+     (br $label$3)
+    )
+    (i64.const 1)
+   )
+  )
 )
 

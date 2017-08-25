@@ -31,6 +31,8 @@ namespace wasm {
 // condition and possible value, and the possible value must
 // not have side effects (as they would run unconditionally)
 static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue, PassOptions& options) {
+  // if the if isn't even taken, this is all dead code anyhow
+  if (ifCondition->type == unreachable) return false;
   if (!brValue) return true;
   EffectAnalyzer value(options, brValue);
   if (value.hasSideEffects()) return false;
