@@ -502,7 +502,7 @@
    (local $2 i32)
    (block $label$0
     (drop
-     (block
+     (block (result i32)
       (br $label$0)
       (get_local $2)
      )

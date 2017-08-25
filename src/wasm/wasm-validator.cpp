@@ -70,9 +70,7 @@ void WasmValidator::visitBlock(Block *curr) {
   if (curr->list.size() > 0) {
     auto backType = curr->list.back()->type;
     if (!isConcreteWasmType(curr->type)) {
-      if (isConcreteWasmType(backType)) {
-        shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
-      }
+      shouldBeFalse(isConcreteWasmType(backType), curr, "if block is not returning a value, final element should not flow out a value");
     } else {
       if (isConcreteWasmType(backType)) {
         shouldBeEqual(curr->type, backType, curr, "block with value and last element with value must match types");

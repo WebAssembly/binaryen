@@ -112,6 +112,10 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
     }
     // nothing branches here
     if (curr->list.size() > 0) {
+      // last element determines type
+      curr->type = curr->list.back()->type;
+      // if concrete, it doesn't matter if we have an unreachable child
+      if (isConcreteWasmType(curr->type)) return;
       // if we have an unreachable child, we are unreachable
       // (we don't need to recurse into children, they can't
       // break to us)
@@ -121,8 +125,6 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
           return;
         }
       }
-      // children are reachable, so last element determines type
-      curr->type = curr->list.back()->type;
     } else {
       curr->type = none;
     }

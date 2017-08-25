@@ -944,7 +944,7 @@
    )
   )
   (func $unreachable-if-that-could-be-a-br_if (result i64)
-   (loop $label$3
+   (loop $label$3 (result i64)
     (if
      (unreachable)
      (f64.const 1)

@@ -117,7 +117,7 @@
  )
  (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky (type $2)
   (drop
-   (block $label$1
+   (block $label$1 (result i32)
     (drop
      (br_if $label$1
       (i32.const 100)

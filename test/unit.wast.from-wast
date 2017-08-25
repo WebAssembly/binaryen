@@ -610,7 +610,9 @@
    )
    (block $block12
     (unreachable)
-    (i32.const 1)
+    (drop
+     (i32.const 1)
+    )
    )
   )
  )

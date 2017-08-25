@@ -853,9 +853,11 @@
   (unreachable)
  )
  (func $concrete_finale_in_unreachable (type $5) (result f64)
-  (unreachable)
   (drop
-   (f64.const 6.322092475576799e-96)
+   (block (result f64)
+    (unreachable)
+    (f64.const 6.322092475576799e-96)
+   )
   )
   (f64.const -1)
  )
@@ -897,7 +899,7 @@
  )
  (func $drop-unreachable-block-with-concrete-final (type $3)
   (drop
-   (block
+   (block (result i32)
     (drop
      (block
       (drop

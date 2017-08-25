@@ -174,6 +174,12 @@ static WasmType mergeTypes(std::vector<WasmType>& types) {
 // and there are no branches to it
 static void handleUnreachable(Block* block) {
   if (block->type == unreachable) return; // nothing to do
+  if (block->list.size() == 0) return; // nothing to do
+  // if we are concrete, stop - even an unreachable child
+  // won't change that (since we have a break with a value,
+  // or the final child flows out a value)
+  if (isConcreteWasmType(block->type)) return;
+  // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
@@ -183,7 +189,7 @@ static void handleUnreachable(Block* block) {
       if (!seeker.found) {
         block->type = unreachable;
       } else {
-        block->type = seeker.valueType;
+        assert(block->type == seeker.valueType);
       }
       return;
     }
@@ -199,19 +205,27 @@ void Block::finalize(WasmType type_) {
 
 void Block::finalize() {
   if (!name.is()) {
-    // nothing branches here, so this is easy
     if (list.size() > 0) {
-      // if we have an unreachable child, we are unreachable
-      // (we don't need to recurse into children, they can't
-      // break to us)
+      // nothing branches here, so this is easy
+      // normally the type is the type of the final child
+      type = list.back()->type;
+      // and even if we have an unreachable child somewhere,
+      // we still mark ourselves as having that type,
+      // (block (result i32)
+      //  (return)
+      //  (i32.const 10)
+      // )
+      if (isConcreteWasmType(type)) return;
+      // if we are unreachable, we are done
+      if (type == unreachable) return;
+      // we may still be unreachable if we have an unreachable
+      // child
       for (auto* child : list) {
         if (child->type == unreachable) {
           type = unreachable;
           return;
         }
       }
-      // children are reachable, so last element determines type
-      type = list.back()->type;
     } else {
       type = none;
     }
