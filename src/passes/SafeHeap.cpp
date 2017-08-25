@@ -25,6 +25,7 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
+#include "ast/import-utils.h"
 
 namespace wasm {
 
@@ -98,6 +99,8 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
 
 struct SafeHeap : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    // add imports
+    addImports(module);
     // instrument loads and stores
     PassRunner instrumenter(module);
     instrumenter.setIsNested(true);
@@ -105,6 +108,42 @@ struct SafeHeap : public Pass {
     instrumenter.run();
     // add helper checking funcs and imports
     addGlobals(module);
+  }
+
+  Name dynamicTopPtr, segfault, alignfault;
+
+  void addImports(Module* module) {
+    // imports
+    dynamicTopPtr = ImportUtils::getImport(*module, ENV, DYNAMICTOP_PTR_IMPORT);
+    if (!dynamicTopPtr.is()) {
+      auto* import = new Import;
+      import->name = dynamicTopPtr = DYNAMICTOP_PTR_IMPORT;
+      import->module = ENV;
+      import->base = DYNAMICTOP_PTR_IMPORT;
+      import->kind = ExternalKind::Global;
+      import->globalType = i32;
+      module->addImport(import);
+    }
+    segfault = ImportUtils::getImport(*module, ENV, SEGFAULT_IMPORT);
+    if (!segfault.is()) {
+      auto* import = new Import;
+      import->name = segfault = SEGFAULT_IMPORT;
+      import->module = ENV;
+      import->base = SEGFAULT_IMPORT;
+      import->kind = ExternalKind::Function;
+      import->functionType = ensureFunctionType("v", module)->name;
+      module->addImport(import);
+    }
+    alignfault = ImportUtils::getImport(*module, ENV, ALIGNFAULT_IMPORT);
+    if (!alignfault.is()) {
+      auto* import = new Import;
+      import->name = alignfault = ALIGNFAULT_IMPORT;
+      import->module = ENV;
+      import->base = ALIGNFAULT_IMPORT;
+      import->kind = ExternalKind::Function;
+      import->functionType = ensureFunctionType("v", module)->name;
+      module->addImport(import);
+    }
   }
 
   void addGlobals(Module* module) {
@@ -150,52 +189,6 @@ struct SafeHeap : public Pass {
           }
         }
       }
-    }
-    // imports
-    bool hasDynamicTop = false,
-         hasSegfault = false,
-         hasAlignfault = false;
-    for (auto& import : module->imports) {
-      if (import->kind == ExternalKind::Global) {
-        if (import->module == ENV && import->base == DYNAMICTOP_PTR_IMPORT) {
-          hasDynamicTop = true;
-        }
-      } else if (import->kind == ExternalKind::Function) {
-        if (import->module == ENV) {
-          if (import->base == SEGFAULT_IMPORT) {
-            hasSegfault = true;
-          } else if (import->base == ALIGNFAULT_IMPORT) {
-            hasAlignfault = true;
-          }
-        }
-      }
-    }
-    if (!hasDynamicTop) {
-      auto* import = new Import;
-      import->name = DYNAMICTOP_PTR_IMPORT;
-      import->module = ENV;
-      import->base = DYNAMICTOP_PTR_IMPORT;
-      import->kind = ExternalKind::Global;
-      import->globalType = i32;
-      module->addImport(import);
-    }
-    if (!hasSegfault) {
-      auto* import = new Import;
-      import->name = SEGFAULT_IMPORT;
-      import->module = ENV;
-      import->base = SEGFAULT_IMPORT;
-      import->kind = ExternalKind::Function;
-      import->functionType = ensureFunctionType("v", module)->name;
-      module->addImport(import);
-    }
-    if (!hasAlignfault) {
-      auto* import = new Import;
-      import->name = ALIGNFAULT_IMPORT;
-      import->module = ENV;
-      import->base = ALIGNFAULT_IMPORT;
-      import->kind = ExternalKind::Function;
-      import->functionType = ensureFunctionType("v", module)->name;
-      module->addImport(import);
     }
   }
 
@@ -286,7 +279,7 @@ struct SafeHeap : public Pass {
         builder.makeGetLocal(local, i32),
         builder.makeConst(Literal(int32_t(align - 1)))
       ),
-      builder.makeCallImport(ALIGNFAULT_IMPORT, {}, none)
+      builder.makeCallImport(alignfault, {}, none)
     );
   }
 
@@ -307,11 +300,11 @@ struct SafeHeap : public Pass {
             builder.makeConst(Literal(int32_t(getWasmTypeSize(type))))
           ),
           builder.makeLoad(4, false, 0, 4,
-            builder.makeGetGlobal(DYNAMICTOP_PTR_IMPORT, i32), i32
+            builder.makeGetGlobal(dynamicTopPtr, i32), i32
           )
         )
       ),
-      builder.makeCallImport(SEGFAULT_IMPORT, {}, none)
+      builder.makeCallImport(segfault, {}, none)
     );
   }
 };
