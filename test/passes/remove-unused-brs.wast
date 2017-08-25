@@ -966,5 +966,28 @@
     )
    )
   )
+  (func $no-flow-through-if-without-else (result f32)
+   (local $0 i32)
+   (local $2 f32)
+   (block $label$0
+    (if
+     (get_local $0)
+     (block $label$11
+      (return
+       (f32.const 239)
+      )
+      (if
+       (i32.const 0)
+       (return
+        (get_local $2)
+       )
+      )
+     )
+     (return
+      (f32.const -9223372036854775808)
+     )
+    )
+   )
+  )
 )
 

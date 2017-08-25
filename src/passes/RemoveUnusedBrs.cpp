@@ -74,7 +74,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         flows.push_back(currp);
         self->valueCanFlow = true; // start optimistic
       } else {
-        self->valueCanFlow = false;
+        self->stopValueFlow();
       }
     } else if (curr->is<Return>()) {
       flows.clear();
@@ -84,6 +84,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       auto* iff = curr->cast<If>();
       if (iff->condition->type == unreachable) {
         // avoid trying to optimize this, we never reach it anyhow
+        self->stopFlow();
         return;
       }
       if (iff->ifFalse) {
@@ -94,7 +95,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         self->ifStack.pop_back();
       } else {
         // if without else stops the flow of values
-        self->valueCanFlow = false;
+        self->stopValueFlow();
       }
     } else if (curr->is<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
@@ -132,14 +133,29 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     } else if (curr->is<Nop>()) {
       // ignore (could be result of a previous cycle)
-      self->valueCanFlow = false;
+      self->stopValueFlow();
     } else if (curr->is<Loop>()) {
       // do nothing - it's ok for values to flow out
     } else {
       // anything else stops the flow
-      flows.clear();
-      self->valueCanFlow = false;
+      self->stopFlow();
     }
+  }
+
+  void stopFlow() {
+    flows.clear();
+    valueCanFlow = false;
+  }
+
+  void stopValueFlow() {
+    flows.erase(std::remove_if(flows.begin(), flows.end(), [&](Expression** currp) {
+      auto* curr = *currp;
+      if (auto* ret = curr->dynCast<Return>()) {
+        return ret->value;
+      }
+      return curr->cast<Break>()->value;
+    }), flows.end());
+    valueCanFlow = false;
   }
 
   static void clear(RemoveUnusedBrs* self, Expression** currp) {
