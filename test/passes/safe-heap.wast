@@ -2,6 +2,7 @@
  (memory 100 100 shared)
  (func $loads
   (drop (i32.load (i32.const 1)))
+  (drop (i32.atomic.load (i32.const 1)))
   (drop (i32.load offset=31 (i32.const 2)))
   (drop (i32.load align=2 (i32.const 3)))
   (drop (i32.load align=1 (i32.const 4)))
@@ -17,6 +18,7 @@
  )
  (func $stores
   (i32.store (i32.const 1) (i32.const 100))
+  (i32.atomic.store (i32.const 1) (i32.const 100))
   (i32.store offset=31 (i32.const 2) (i32.const 200))
   (i32.store align=2 (i32.const 3) (i32.const 300))
   (i32.store align=1 (i32.const 4) (i32.const 400))
@@ -29,6 +31,13 @@
   (i64.store (i32.const 11) (i64.const 1100))
   (f32.store (i32.const 12) (f32.const 1200))
   (f64.store (i32.const 13) (f64.const 1300))
+ )
+)
+;; not shared
+(module
+ (memory 100 100)
+ (func $loads
+  (drop (i32.load (i32.const 1)))
  )
 )
 

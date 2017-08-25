@@ -122,6 +122,7 @@ struct SafeHeap : public Pass {
             for (auto isAtomic : { true, false }) {
               load.isAtomic = isAtomic;
               if (load.isAtomic && align != bytes) continue;
+              if (load.isAtomic && !module->memory.shared) continue;
               addLoadFunc(&load, module);
             }
           }
@@ -142,6 +143,7 @@ struct SafeHeap : public Pass {
           for (auto isAtomic : { true, false }) {
             store.isAtomic = isAtomic;
             if (store.isAtomic && align != bytes) continue;
+            if (store.isAtomic && !module->memory.shared) continue;
             addStoreFunc(&store, module);
           }
         }
