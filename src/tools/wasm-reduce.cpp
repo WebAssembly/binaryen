@@ -89,11 +89,11 @@ ProgramResult expected;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
-  bool verbose;
+  bool verbose, debugInfo;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working, bool verbose) : command(command), test(test), working(working), verbose(verbose) {}
+  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo) : command(command), test(test), working(working), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -136,6 +136,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           std::string currCommand = "bin/wasm-opt ";
           if (shrinking) currCommand += " --dce --vacuum ";
           currCommand += working + " -o " + test + " " + pass;
+          if (debugInfo) currCommand += " -g ";
           if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
           if (!ProgramResult(currCommand).failed()) {
             auto newSize = file_size(test);
@@ -204,6 +205,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // write the module out
     ModuleWriter writer;
     writer.setBinary(true);
+    writer.setDebugInfo(debugInfo);
     writer.write(*getModule(), test);
     // note that it is ok for the destructively-reduced module to be bigger
     // than the previous - each destructive reduction removes logical code,
@@ -471,7 +473,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
-  bool verbose = false;
+  bool verbose = false,
+       debugInfo = false;
   Options options("wasm-reduce", "Reduce a wasm file to a smaller one that has the same behavior on a given command");
   options
       .add("--command", "-cmd", "The command to run on the test, that we want to reduce while keeping the command's output identical. "
@@ -496,6 +499,11 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
              verbose = true;
+           })
+      .add("--debugInfo", "-g", "Keep debug info in binaries",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             debugInfo = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&](Options* o, const std::string& argument) {
@@ -528,6 +536,8 @@ int main(int argc, const char* argv[]) {
     }
   }
 
+// TODO: make previous a warning, and warn if read-write breaks things. allow both warnings to be ignored
+
   copy_file(input, working);
   std::cerr << "|input size: " << file_size(working) << "\n";
 
@@ -538,7 +548,7 @@ int main(int argc, const char* argv[]) {
   size_t lastPostPassesSize = 0;
 
   while (1) {
-    Reducer reducer(command, test, working, verbose);
+    Reducer reducer(command, test, working, verbose, debugInfo);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
