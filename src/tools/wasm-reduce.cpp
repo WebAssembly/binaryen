@@ -181,7 +181,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // before we do any changes, it should be valid to write out the module:
     // size should be as expected, and output should be as expected
     setModule(&wasm);
-    assert(writeAndTestReduction());
+    if (!writeAndTestReduction()) {
+      std::cerr << "\n|! WARNING: writing before destructive reduction fails, very unlikely reduction can work\n\n";
+    }
     // destroy!
     walkModule(&wasm);
     return reduced;
