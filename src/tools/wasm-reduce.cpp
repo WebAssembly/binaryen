@@ -474,7 +474,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
   bool verbose = false,
-       debugInfo = false;
+       debugInfo = false,
+       force = false;
   Options options("wasm-reduce", "Reduce a wasm file to a smaller one that has the same behavior on a given command");
   options
       .add("--command", "-cmd", "The command to run on the test, that we want to reduce while keeping the command's output identical. "
@@ -505,6 +506,11 @@ int main(int argc, const char* argv[]) {
            [&](Options* o, const std::string& argument) {
              debugInfo = true;
            })
+      .add("--force", "-f", "Force the reduction attempt, ignoring problems that imply it is unlikely to succeed",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             force = true;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [&](Options* o, const std::string& argument) {
                         input = argument;
@@ -524,6 +530,13 @@ int main(int argc, const char* argv[]) {
 
   std::cerr << "|expected result:\n" << expected << '\n';
 
+  auto stopIfNotForced = [&](std::string message, ProgramResult& result) {
+    std::cerr << "|! " << message << '\n' << result << '\n';
+    if (!force) {
+      Fatal() << "|! stopping, as it is very unlikely reduction can succeed (use -f to ignore this check)";
+    }
+  };
+
   std::cerr << "|checking that command has different behavior on invalid binary\n";
   {
     {
@@ -532,11 +545,23 @@ int main(int argc, const char* argv[]) {
     }
     ProgramResult result(command);
     if (result == expected) {
-      Fatal() << "running command on an invalid module should give different results: " << result;
+      stopIfNotForced("running command on an invalid module should give different results", result);
     }
   }
 
-// TODO: make previous a warning, and warn if read-write breaks things. allow both warnings to be ignored
+  std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
+  {
+    // read and write it
+    ProgramResult readWrite(std::string("bin/wasm-opt ") + input + " -o " + test);
+    if (readWrite.failed()) {
+      stopIfNotForced("failed to read and write the binary", readWrite);
+    } else {
+      ProgramResult result(command);
+      if (result != expected) {
+        stopIfNotForced("running command on the canonicalized module should give the same results", result);
+      }
+    }
+  }
 
   copy_file(input, working);
   std::cerr << "|input size: " << file_size(working) << "\n";
